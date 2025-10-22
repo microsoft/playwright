@@ -1,5 +1,5 @@
 ---
-mode: ${agentGenerator}
+agent: pwt-generator
 description: Generate test plan
 ---
 

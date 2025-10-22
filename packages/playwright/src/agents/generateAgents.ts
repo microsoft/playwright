@@ -32,7 +32,6 @@ interface AgentHeader {
 }
 
 interface Agent {
-  source: string;
   header: AgentHeader;
   instructions: string;
   examples: string[];
@@ -50,7 +49,7 @@ class AgentParser {
     const source = await fs.promises.readFile(filePath, 'utf-8');
     const { header, content } = this.extractYamlAndContent(source);
     const { instructions, examples } = this.extractInstructionsAndExamples(content);
-    return { source, header, instructions, examples };
+    return { header, instructions, examples };
   }
 
   static extractYamlAndContent(markdown: string): { header: AgentHeader; content: string } {
@@ -108,16 +107,20 @@ class AgentParser {
 }
 
 export class ClaudeGenerator {
-  static async init(config: FullConfigInternal, projectName: string) {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
     await initRepo(config, projectName, {
-      promptsFolder: '.claude/prompts',
+      promptsFolder: prompts ? '.claude/prompts' : undefined,
     });
 
     const agents = await AgentParser.loadAgents();
 
     await fs.promises.mkdir('.claude/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.claude/agents/${agent.header.name}.agent.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.claude/agents/${agent.header.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
+
+    await deleteFile(`.claude/agents/playwright-test-planner.md`, 'legacy planner agent');
+    await deleteFile(`.claude/agents/playwright-test-generator.md`, 'legacy generator agent');
+    await deleteFile(`.claude/agents/playwright-test-healer.md`, 'legacy healer agent');
 
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
@@ -133,10 +136,8 @@ export class ClaudeGenerator {
 
   static agentSpec(agent: Agent): string {
     const claudeToolMap = new Map<string, string[]>([
-      ['search', ['Glob', 'Grep']],
-      ['read', ['Read']],
-      ['edit', ['Edit', 'MultiEdit']],
-      ['write', ['Write']],
+      ['search', ['Glob', 'Grep', 'Read']],
+      ['edit', ['Edit', 'MultiEdit', 'Write']],
     ]);
 
     function asClaudeTool(tool: string): string {
@@ -146,10 +147,11 @@ export class ClaudeGenerator {
       return `mcp__${first}__${second}`;
     }
 
+    const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
     lines.push(`---`);
     lines.push(`name: ${agent.header.name}`);
-    lines.push(`description: ${agent.header.description}. Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}`);
+    lines.push(`description: ${agent.header.description}.${examples}`);
     lines.push(`tools: ${agent.header.tools.map(tool => asClaudeTool(tool)).join(', ')}`);
     lines.push(`model: ${agent.header.model}`);
     lines.push(`color: ${agent.header.color}`);
@@ -161,10 +163,10 @@ export class ClaudeGenerator {
 }
 
 export class OpencodeGenerator {
-  static async init(config: FullConfigInternal, projectName: string) {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
     await initRepo(config, projectName, {
-      agentDefault: 'Build',
-      promptsFolder: '.opencode/prompts'
+      defaultAgentName: 'Build',
+      promptsFolder: prompts ? '.opencode/prompts' : undefined
     });
 
     const agents = await AgentParser.loadAgents();
@@ -173,8 +175,13 @@ export class OpencodeGenerator {
       const prompt = [agent.instructions];
       prompt.push('');
       prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
-      await writeFile(`.opencode/prompts/${agent.header.name}.agent.md`, prompt.join('\n'), '🤖', 'agent definition');
+      await writeFile(`.opencode/prompts/${agent.header.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
     }
+
+    await deleteFile(`.opencode/prompts/playwright-test-planner.md`, 'legacy planner agent');
+    await deleteFile(`.opencode/prompts/playwright-test-generator.md`, 'legacy generator agent');
+    await deleteFile(`.opencode/prompts/playwright-test-healer.md`, 'legacy healer agent');
+
     await writeFile('opencode.json', OpencodeGenerator.configuration(agents), '🔧', 'opencode configuration');
 
     initRepoDone();
@@ -182,10 +189,8 @@ export class OpencodeGenerator {
 
   static configuration(agents: Agent[]): string {
     const opencodeToolMap = new Map<string, string[]>([
-      ['search', ['ls', 'glob', 'grep']],
-      ['read', ['read']],
-      ['edit', ['edit']],
-      ['write', ['write']],
+      ['search', ['ls', 'glob', 'grep', 'read']],
+      ['edit', ['edit', 'write']],
     ]);
 
     const asOpencodeTool = (tools: Record<string, boolean>, tool: string) => {
@@ -210,7 +215,7 @@ export class OpencodeGenerator {
       result['agent'][agent.header.name] = {
         description: agent.header.description,
         mode: 'subagent',
-        prompt: `{file:.opencode/prompts/${agent.header.name}.agent.md}`,
+        prompt: `{file:.opencode/prompts/${agent.header.name}.md}`,
         tools,
       };
       for (const tool of agent.header.tools)
@@ -226,69 +231,69 @@ export class OpencodeGenerator {
     return JSON.stringify(result, null, 2);
   }
 }
-export class AgentGenerator {
-  static async init(config: FullConfigInternal, projectName: string) {
-    const agentsFolder = process.env.AGENTS_FOLDER;
-    if (!agentsFolder) {
-      console.error('AGENTS_FOLDER environment variable is not set');
-      return;
-    }
+export class CopilotGenerator {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
 
     await initRepo(config, projectName, {
-      promptsFolder: path.join(agentsFolder, 'prompts')
+      defaultAgentName: 'agent',
+      promptsFolder: prompts ? '.github/prompts' : undefined,
+      promptSuffix: 'prompt'
     });
 
     const agents = await AgentParser.loadAgents();
 
-    await fs.promises.mkdir(agentsFolder, { recursive: true });
+    await fs.promises.mkdir('.github/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`${agentsFolder}/agents/${agent.header.name}.md`, agent.source, '🤖', 'agent definition');
+      await writeFile(`.github/agents/${agent.header.name}.agent.md`, CopilotGenerator.agentSpec(agent), '🤖', 'agent definition');
 
-    console.log('🔧 MCP configuration');
-    console.log(JSON.stringify({
-      mcpServers: {
-        'playwright-test': {
-          type: 'stdio',
-          command: 'npx',
-          args: [
-            `--prefix=${path.resolve(process.cwd())}`,
-            'playwright',
-            'run-test-mcp-server',
-            `--headless`,
-            `--config=${path.resolve(process.cwd())}`,
-          ],
-          tools: ['*']
-        }
-      }
-    }, null, 2));
+    await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'legacy planner chatmode');
+    await deleteFile(`.github/chatmodes/🎭 generator.chatmode.md`, 'legacy generator chatmode');
+    await deleteFile(`.github/chatmodes/🎭 healer.chatmode.md`, 'legacy healer chatmode');
+
+    await VSCodeGenerator.appendToMCPJson();
 
     initRepoDone();
+  }
+
+  static agentSpec(agent: Agent): string {
+    const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
+    const lines: string[] = [];
+    lines.push(`---`);
+    lines.push(`name: ${agent.header.name}`);
+    lines.push(`description: ${agent.header.description}.${examples}`);
+    lines.push(`tools:\n${agent.header.tools.map(tool => `  - ${tool}`).join('\n')}`);
+    lines.push(`model: Claude Sonnet 4`);
+    lines.push(`---`);
+    lines.push('');
+    lines.push(agent.instructions);
+    lines.push('');
+    return lines.join('\n');
   }
 }
 
 export class VSCodeGenerator {
   static async init(config: FullConfigInternal, projectName: string) {
     await initRepo(config, projectName, {
-      agentDefault: 'agent',
-      agentHealer: '🎭 healer',
-      agentGenerator: '🎭 generator',
-      agentPlanner: '🎭 planner',
-      promptsFolder: '.github/prompts'
+      promptsFolder: undefined
     });
     const agents = await AgentParser.loadAgents();
 
     const nameMap = new Map<string, string>([
-      ['playwright-test-planner', '🎭 planner'],
+      ['playwright-test-planner', ' 🎭 planner'],
       ['playwright-test-generator', '🎭 generator'],
       ['playwright-test-healer', '🎭 healer'],
     ]);
-
-    await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'old planner chatmode');
 
     await fs.promises.mkdir('.github/chatmodes', { recursive: true });
     for (const agent of agents)
       await writeFile(`.github/chatmodes/${nameMap.get(agent.header.name)}.chatmode.md`, VSCodeGenerator.agentSpec(agent), '🤖', 'chatmode definition');
 
+    await VSCodeGenerator.appendToMCPJson();
+
+    initRepoDone();
+  }
+
+  static async appendToMCPJson() {
     await fs.promises.mkdir('.vscode', { recursive: true });
 
     const mcpJsonPath = '.vscode/mcp.json';
@@ -310,8 +315,6 @@ export class VSCodeGenerator {
       args: ['playwright', 'run-test-mcp-server'],
     };
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
-
-    initRepoDone();
   }
 
   static agentSpec(agent: Agent): string {
@@ -353,6 +356,7 @@ export class VSCodeGenerator {
     for (const example of agent.examples)
       lines.push(`<example>${example}</example>`);
 
+    lines.push('');
     return lines.join('\n');
   }
 }
@@ -376,16 +380,14 @@ async function deleteFile(filePath: string, description: string) {
 }
 
 type RepoParams = {
-  promptsFolder: string;
-  agentDefault?: string;
-  agentHealer?: string;
-  agentGenerator?: string;
-  agentPlanner?: string;
+  promptsFolder?: string;
+  promptSuffix?: string;
+  defaultAgentName?: string;
 };
 
 async function initRepo(config: FullConfigInternal, projectName: string, options: RepoParams) {
   const project = seedProject(config, projectName);
-  console.log(`🎭 Using project "${project.project.name}" as a primary project`);
+  console.log(`- 🎭 Using project "${project.project.name}" as a primary project`);
 
   if (!fs.existsSync('specs')) {
     await fs.promises.mkdir('specs');
@@ -401,13 +403,21 @@ This is a directory for test plans.
     await writeFile(seedFile, seedFileContent, '🌱', 'default environment seed file');
   }
 
-  await fs.promises.mkdir(options.promptsFolder, { recursive: true });
+  if (options.promptsFolder) {
+    await fs.promises.mkdir(options.promptsFolder, { recursive: true });
 
-  for (const promptFile of await fs.promises.readdir(__dirname)) {
-    if (!promptFile.endsWith('.prompt.md'))
-      continue;
-    const content = await loadPrompt(promptFile, { ...options, seedFile: path.relative(process.cwd(), seedFile) });
-    await writeFile(path.join(options.promptsFolder, promptFile), content, '📝', 'prompt template');
+    for (const promptFile of await fs.promises.readdir(__dirname)) {
+      if (!promptFile.endsWith('.prompt.md'))
+        continue;
+      const shortName = promptFile.replace('.prompt.md', '');
+      const fileName = options.promptSuffix ? `${shortName}.${options.promptSuffix}.md` : `${shortName}.md`;
+      const content = await loadPrompt(promptFile, {
+        defaultAgentName: 'default',
+        ...options,
+        seedFile: path.relative(process.cwd(), seedFile)
+      });
+      await writeFile(path.join(options.promptsFolder, fileName), content, '📝', 'prompt template');
+    }
   }
 }
 
@@ -416,16 +426,8 @@ function initRepoDone() {
 }
 
 async function loadPrompt(file: string, params: Record<string, string>) {
-  const templateParams = {
-    agentDefault: params.agentDefault ?? 'default',
-    agentHealer: params.agentHealer ?? 'playwright-test-healer',
-    agentGenerator: params.agentGenerator ?? 'playwright-test-generator',
-    agentPlanner: params.agentPlanner ?? 'playwright-test-planner',
-    seedFile: params.seedFile,
-  };
-
   const content = await fs.promises.readFile(path.join(__dirname, file), 'utf-8');
-  return Object.entries(templateParams).reduce((acc, [key, value]) => {
+  return Object.entries(params).reduce((acc, [key, value]) => {
     return acc.replace(new RegExp(`\\\${${key}}`, 'g'), value);
   }, content);
 }

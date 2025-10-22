@@ -1,5 +1,5 @@
 ---
-mode: 🎭 generator
+agent: pwt-generator
 description: Generate test plan
 ---
 
