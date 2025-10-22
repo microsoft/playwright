@@ -137,8 +137,8 @@ test.describe(() => {
 
     await recorder.recorderPage.locator('.tab-aria .CodeMirror').click();
     await recorder.recorderPage.keyboard.press('Backspace');
-    // 3 highlighted tokens.
-    await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(3);
+    // 1 highlighted token
+    await expect(recorder.recorderPage.locator('.source-line-error-underline')).toHaveCount(1);
   });
 
   test('should generate valid javascript with multiline snapshot assertion', async ({ openRecorder }) => {
