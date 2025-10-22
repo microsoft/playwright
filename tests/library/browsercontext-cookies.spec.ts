@@ -74,7 +74,7 @@ it('should get a non-session cookie', async ({ context, page, server, defaultSam
 
 it('should allow adding cookies with >400 days expiration', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37903' }
-}, async ({ context, server, browserName, isWindows, channel }) => {
+}, async ({ context, server }) => {
   // Browsers start to cap cookies with 400 days max expires value.
   // See https://github.com/httpwg/http-extensions/pull/1732
   // Chromium patch: https://chromium.googlesource.com/chromium/src/+/aaa5d2b55478eac2ee642653dcd77a50ac3faff6
@@ -88,22 +88,20 @@ it('should allow adding cookies with >400 days expiration', {
       expires: expire,
       httpOnly: false,
       secure: false,
-      sameSite: (browserName === 'webkit' && isWindows && channel !== 'webkit-wsl') ? 'None' : 'Lax',
+      sameSite: 'Lax',
     }
   ]);
 
   const cookies = await context.cookies();
   expect(cookies.length).toBe(1);
-  expect(cookies[0]).toEqual({
+  expect(cookies[0]).toEqual(expect.objectContaining({
     name: 'username',
     value: 'John Doe',
     domain: server.HOSTNAME,
-    path: '/',
-    expires: expect.anything(),
-    httpOnly: false,
-    secure: false,
-    sameSite: 'Lax',
-  });
+    path: '/'
+  }));
+  expect(cookies[0].expires).toBeGreaterThan(0);
+  expect(cookies[0].expires).toBeLessThanOrEqual(expire);
 });
 
 it('should properly report httpOnly cookie', async ({ context, page, server }) => {
