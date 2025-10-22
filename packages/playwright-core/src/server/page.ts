@@ -860,7 +860,7 @@ export class Page extends SdkObject {
 
   async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
-    return snapshot.join('\n');
+    return snapshot.lines.join('\n');
   }
 }
 
@@ -1035,9 +1035,22 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string[]> {
+async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
+  const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
+  const frameBodySelector = `${frameSelector} >> body`;
+  const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
+  if (!child)
+    return { lines: [], isIncremental: false };
+  try {
+    return await snapshotFrameForAI(progress, child.frame, options);
+  } catch {
+    return { lines: [], isIncremental: false };
+  }
+}
+
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+  const { snapshot, iframeRefs, isIncremental } = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
@@ -1045,7 +1058,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.ariaSnapshot(node, { mode: 'ai', ...options });
+        return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
       }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
@@ -1059,6 +1072,21 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
 
   const lines = snapshot.split('\n');
   const result = [];
+
+  if (isIncremental) {
+    result.push(...lines);
+    for (const ref of iframeRefs) {
+      const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
+      if (!childSnapshot.lines.length)
+        continue;
+      if (childSnapshot.isIncremental)
+        result.push(...childSnapshot.lines);
+      else
+        result.push('- <changed> iframe [ref=' + ref + ']', ...childSnapshot.lines.map(l => '  ' + l));
+    }
+    return { lines: result, isIncremental };
+  }
+
   for (const line of lines) {
     const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
@@ -1068,21 +1096,11 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const frameSelector = `aria-ref=${ref} >> internal:control=enter-frame`;
-    const frameBodySelector = `${frameSelector} >> body`;
-    const child = await progress.race(frame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
-    if (!child) {
-      result.push(line);
-      continue;
-    }
-    try {
-      const childSnapshot = await snapshotFrameForAI(progress, child.frame, options);
-      result.push(line + ':', ...childSnapshot.map(l => leadingSpace + '  ' + l));
-    } catch {
-      result.push(line);
-    }
+    const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
+    result.push(childSnapshot.lines.length ? line + ':' : line);
+    result.push(...childSnapshot.lines.map(l => leadingSpace + '  ' + l));
   }
-  return result;
+  return { lines: result, isIncremental };
 }
 
 function ensureArrayLimit<T>(array: T[], limit: number): T[] {

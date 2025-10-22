@@ -38,6 +38,7 @@ export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<string, Element>;
   refs: Map<Element, string>;
+  iframeRefs: string[];
 };
 
 type AriaRef = {
@@ -95,6 +96,7 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
     refs: new Map<Element, string>(),
+    iframeRefs: [],
   };
 
   const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
@@ -144,6 +146,8 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       if (childAriaNode.ref) {
         snapshot.elements.set(childAriaNode.ref, element);
         snapshot.refs.set(element, childAriaNode.ref);
+        if (childAriaNode.role === 'iframe')
+          snapshot.iframeRefs.push(childAriaNode.ref);
       }
       ariaNode.children.push(childAriaNode);
     }
@@ -505,32 +509,30 @@ function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = 
   return map;
 }
 
-function hasIframeNodes(root: AriaNode): boolean {
-  if (root.role === 'iframe')
-    return true;
-  return (root.children || []).some(child => typeof child !== 'string' && hasIframeNodes(child));
-}
-
 function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
   const aKeys = Object.keys(a.props);
   const bKeys = Object.keys(b.props);
   return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previous?: AriaSnapshot): string {
-  if (hasIframeNodes(ariaSnapshot.root))
-    previous = undefined;
-
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previousSnapshot?: AriaSnapshot): string {
   const options = toInternalOptions(publicOptions);
-  const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-  const previousByRef = buildByRefMap(previous?.root);
+  const previousByRef = buildByRefMap(previousSnapshot?.root);
 
-  const visitText = (text: string, indent: string) => {
+  type RenderedNode = {
+    lines: string[],
+    children?: RenderedNode[],
+    changes: 'none' | 'new' | 'self' | 'descendants',
+    hasNewChildCount?: boolean,
+    ref?: string,
+  };
+
+  const visitText = (text: string, previousText: string | undefined): RenderedNode => {
     const escaped = yamlEscapeValueIfNeeded(renderString(text));
-    if (escaped)
-      lines.push(indent + '- text: ' + escaped);
+    const lines = escaped ? ['- text: ' + escaped] : [];
+    return { lines, changes: previousText === undefined ? 'new' : (text === previousText ? 'none' : 'self') };
   };
 
   const createKey = (ariaNode: AriaNode, renderCursorPointer: boolean): string => {
@@ -574,73 +576,98 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     return ariaNode?.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
   };
 
-  const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean, previousNode: AriaNode | undefined): { unchanged: boolean } => {
+  const visit = (ariaNode: AriaNode, renderCursorPointer: boolean, previousNode: AriaNode | undefined): RenderedNode => {
     if (ariaNode.ref)
       previousNode = previousByRef.get(ariaNode.ref);
 
-    const linesBefore = lines.length;
     const key = createKey(ariaNode, renderCursorPointer);
-    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
+    const escapedKey = '- ' + yamlEscapeKeyIfNeeded(key);
     const inCursorPointer = renderCursorPointer && !!ariaNode.ref && hasPointerCursor(ariaNode);
     const singleInlinedTextChild = getSingleInlinedTextChild(ariaNode);
 
-    // Whether ariaNode's subtree is the same as previousNode's, and can be replaced with just a ref.
-    let unchanged = !!previousNode && key === createKey(previousNode, renderCursorPointer) && arePropsEqual(ariaNode, previousNode);
+    const renderedNode: RenderedNode = {
+      lines: [],
+      changes: previousNode ? (key === createKey(previousNode, renderCursorPointer) && arePropsEqual(ariaNode, previousNode) ? 'none' : 'self') : 'new',
+      ref: ariaNode.ref,
+    };
 
     if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
       // Leaf node without children.
-      lines.push(escapedKey);
+      renderedNode.lines.push(escapedKey);
     } else if (singleInlinedTextChild !== undefined) {
       // Leaf node with just some text inside.
       // Unchanged when the previous node also had the same single text child.
-      unchanged = unchanged && getSingleInlinedTextChild(previousNode) === singleInlinedTextChild;
+      if (getSingleInlinedTextChild(previousNode) !== singleInlinedTextChild && renderedNode.changes !== 'new')
+        renderedNode.changes = 'self';
 
       const shouldInclude = includeText(ariaNode, singleInlinedTextChild);
       if (shouldInclude)
-        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
+        renderedNode.lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
       else
-        lines.push(escapedKey);
+        renderedNode.lines.push(escapedKey);
     } else {
       // Node with (optional) props and some children.
-      lines.push(escapedKey + ':');
+      renderedNode.lines.push(escapedKey + ':');
       for (const [name, value] of Object.entries(ariaNode.props))
-        lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
+        renderedNode.lines.push('  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
 
-      // All children must be the same.
-      unchanged = unchanged && previousNode?.children.length === ariaNode.children.length;
-
-      const childIndent = indent + '  ';
+      const renderedChildren: RenderedNode[] = [];
       for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
         const child = ariaNode.children[childIndex];
-        if (typeof child === 'string') {
-          unchanged = unchanged && previousNode?.children[childIndex] === child;
-          if (includeText(ariaNode, child))
-            visitText(child, childIndent);
-        } else {
-          const previousChild = previousNode?.children[childIndex];
-          const childResult = visit(child, childIndent, renderCursorPointer && !inCursorPointer, typeof previousChild !== 'string' ? previousChild : undefined);
-          unchanged = unchanged && childResult.unchanged;
-        }
+        const previousChild = previousNode?.children[childIndex];
+        if (typeof child === 'string')
+          renderedChildren.push(visitText(includeText(ariaNode, child) ? child : '', typeof previousChild === 'string' ? previousChild : undefined));
+        else
+          renderedChildren.push(visit(child, renderCursorPointer && !inCursorPointer, typeof previousChild !== 'string' ? previousChild : undefined));
       }
+      renderedNode.hasNewChildCount = ariaNode.children.length !== previousNode?.children.length;
+      renderedNode.children = renderedChildren;
+      if (renderedNode.changes === 'none' && (renderedNode.hasNewChildCount || renderedChildren.some(c => c.changes !== 'none')))
+        renderedNode.changes = 'descendants';
     }
 
-    if (unchanged && ariaNode.ref) {
-      // Replace the whole subtree with a single reference.
-      lines.splice(linesBefore);
-      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
-    }
-
-    return { unchanged };
+    return renderedNode;
   };
 
   // Do not render the root fragment, just its children.
   const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
+  const renderedNodes: RenderedNode[] = [];
   for (const nodeToRender of nodesToRender) {
     if (typeof nodeToRender === 'string')
-      visitText(nodeToRender, '');
+      renderedNodes.push(visitText(nodeToRender, undefined /* previousText */));
     else
-      visit(nodeToRender, '', !!options.renderCursorPointer, undefined);
+      renderedNodes.push(visit(nodeToRender, !!options.renderCursorPointer, undefined));
   }
+
+  const lines: string[] = [];
+  const visitRenderedNode = (node: RenderedNode, indent: string) => {
+    // Replace the whole subtree with a single reference when possible.
+    if (node.changes === 'none' && node.ref) {
+      if (indent) {
+        // No need to render unchanged root at all.
+        lines.push(indent + `- ref=${node.ref} [unchanged]`);
+      }
+      return;
+    }
+
+    const children = node.children || [];
+    const hasChildrenThatCannotBeRoot = children.some(c => {
+      return c.changes === 'new' || (c.changes !== 'none' && !c.ref);
+    });
+
+    const keepThisNode = !!indent || node.changes === 'self' || node.changes === 'new' || node.hasNewChildCount || hasChildrenThatCannotBeRoot;
+    if (keepThisNode) {
+      if (previousSnapshot && !indent)
+        node.lines[0] = '- <changed>' + node.lines[0].substring(1);
+      for (const line of node.lines)
+        lines.push(indent + line);
+      indent += '  ';
+    }
+    for (const child of children)
+      visitRenderedNode(child, indent);
+  };
+  for (const renderedNode of renderedNodes)
+    visitRenderedNode(renderedNode, '');
   return lines.join('\n');
 }
 
