@@ -242,7 +242,7 @@ export class AgentGenerator {
 
     await fs.promises.mkdir(agentsFolder, { recursive: true });
     for (const agent of agents)
-      await writeFile(`${agentsFolder}/${agent.header.name}.md`, agent.source, '🤖', 'agent definition');
+      await writeFile(`${agentsFolder}/agents/${agent.header.name}.md`, agent.source, '🤖', 'agent definition');
 
     console.log('🔧 MCP configuration');
     console.log(JSON.stringify({
