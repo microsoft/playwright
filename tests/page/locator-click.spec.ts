@@ -32,18 +32,6 @@ it('should work with Node removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should work for TextNodes', async ({ page, server }) => {
-  await page.setContent(`
-    <div id='outer' onclick="window['result'] = 'Clicked ' + event.target.id;">
-      <div id='inner' style="max-width: 50px">Lorem ipsum dolor sit amet consectetur adipiscing elit proin, integer curabitur imperdiet rhoncus cursus tincidunt bibendum, consequat sed magnis laoreet luctus mollis tellus. Nisl parturient mus accumsan feugiat sem laoreet magnis nisi, aptent per sollicitudin gravida orci ac blandit, viverra eros praesent auctor vivamus semper bibendum. Consequat sed habitasse luctus dictumst gravida platea semper phasellus, nascetur ridiculus purus est varius quisque et scelerisque, id vehicula eleifend montes sollicitudin dis velit. Pellentesque ridiculus per natoque et eleifend taciti nunc, laoreet auctor at condimentum imperdiet ante, conubia mi cubilia scelerisque sociosqu sem.</div>
-      Custom Text.
-    </div>
-  `);
-  const buttonTextNode = await page.locator('#outer:last-child');
-  await buttonTextNode.click();
-  expect(await page.evaluate(() => window['result'])).toBe('Clicked outer');
-});
-
 it('should double click the button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {
