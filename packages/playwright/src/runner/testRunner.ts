@@ -47,7 +47,7 @@ export const TestRunnerEvent = {
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.TestPaused]: [params: { errors: reporterTypes.TestError[] }];
+  [TestRunnerEvent.TestPaused]: [params: { errors: reporterTypes.TestError[], extraData: any }];
 };
 
 export type ListTestsParams = {
@@ -73,8 +73,9 @@ export type RunTestsParams = {
   projects?: string[];
   reuseContext?: boolean;
   connectWsEndpoint?: string;
-  pauseOnError?: 'mcp' | 'notify' | 'off';
-  pauseAtEnd?: 'mcp' | 'notify' | 'off';
+  actionTimeout?: number;
+  pauseOnError?: boolean;
+  pauseAtEnd?: boolean;
   doNotRunDepsOutsideProjectFilter?: boolean;
   disableConfigReporters?: boolean;
   failOnLoadErrors?: boolean;
@@ -316,6 +317,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
+        actionTimeout: params.actionTimeout,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),

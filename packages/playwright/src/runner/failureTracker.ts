@@ -24,14 +24,14 @@ export class FailureTracker {
   private _hasWorkerErrors = false;
   private _rootSuite: Suite | undefined;
   private _topLevelProjects: FullProjectInternal[] = [];
-  private _pauseOnError: 'mcp' | 'notify' | 'off';
-  private _pauseAtEnd: 'mcp' | 'notify' | 'off';
-  onTestPaused?: (params: { errors: TestError[] }) => void;
+  private _pauseOnError: boolean;
+  private _pauseAtEnd: boolean;
+  onTestPaused?: (params: { errors: TestError[], extraData: any }) => void;
 
-  constructor(config: FullConfigInternal, options?: { pauseOnError?: 'mcp' | 'notify' | 'off', pauseAtEnd?: 'mcp' | 'notify' | 'off' }) {
+  constructor(config: FullConfigInternal, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
     this._config = config;
-    this._pauseOnError = options?.pauseOnError ?? 'off';
-    this._pauseAtEnd = options?.pauseAtEnd ?? 'off';
+    this._pauseOnError = !!options?.pauseOnError;
+    this._pauseAtEnd = !!options?.pauseAtEnd;
   }
 
   onRootSuite(rootSuite: Suite, topLevelProjects: FullProjectInternal[]) {
@@ -54,7 +54,7 @@ export class FailureTracker {
   }
 
   pauseAtEnd(inProject: FullProjectInternal) {
-    return this._topLevelProjects.includes(inProject) ? this._pauseAtEnd : 'off';
+    return this._topLevelProjects.includes(inProject) && this._pauseAtEnd;
   }
 
   hasReachedMaxFailures() {

@@ -85,8 +85,9 @@ export const debugTest = defineTestTool({
         // For automatic recovery
         timeout: 0,
         workers: 1,
-        pauseOnError: 'mcp',
+        pauseOnError: true,
         disableConfigReporters: true,
+        actionTimeout: 5000,
       });
     }, progress);
 

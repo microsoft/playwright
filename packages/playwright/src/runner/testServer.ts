@@ -206,8 +206,8 @@ export class TestServerDispatcher implements TestServerInterface {
     const { status } = await this._testRunner.runTests(wireReporter, {
       ...params,
       doNotRunDepsOutsideProjectFilter: true,
-      pauseAtEnd: params.pauseAtEnd ? 'notify' : 'off',
-      pauseOnError: params.pauseOnError ? 'notify' : 'off',
+      pauseAtEnd: params.pauseAtEnd,
+      pauseOnError: params.pauseOnError,
     });
     return { status };
   }
