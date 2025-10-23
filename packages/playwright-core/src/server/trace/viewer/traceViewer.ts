@@ -53,16 +53,32 @@ export type TraceViewerAppOptions = {
   persistentContextOptions?: Parameters<BrowserType['launchPersistentContext']>[2];
 };
 
-function validateTraceUrl(traceUrl: string | undefined) {
-  if (!traceUrl)
-    return;
-  let traceFile = traceUrl;
-  // If .json is requested, we'll synthesize it.
-  if (traceUrl.endsWith('.json'))
-    traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length);
+const tracesDirMarker = 'traces.dir';
 
-  if (!traceUrl.startsWith('http://') && !traceUrl.startsWith('https://') && !fs.existsSync(traceFile) && !fs.existsSync(traceFile + '.trace'))
+function validateTraceUrl(traceUrl: string | undefined): string | undefined {
+  if (!traceUrl)
+    return traceUrl;
+
+  if (traceUrl.startsWith('http://') || traceUrl.startsWith('https://'))
+    return traceUrl;
+
+  if (traceUrl.endsWith('.json')) {
+    const traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length) + '.trace';
+    if (!fs.existsSync(traceFile))
+      throw new Error(`Trace file ${traceFile} does not exist!`);
+    // If .json is requested, we'll synthesize it.
+    return traceUrl;
+  }
+
+  try {
+    const stat = fs.statSync(traceUrl);
+    // If the path is a directory, add 'trace.dir' which has a special handler.
+    if (stat.isDirectory())
+      return path.join(traceUrl, tracesDirMarker);
+    return traceUrl;
+  } catch {
     throw new Error(`Trace file ${traceUrl} does not exist!`);
+  }
 }
 
 export async function startTraceViewerServer(options?: TraceViewerServerOptions): Promise<HttpServer> {
@@ -73,14 +89,8 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
-        try {
-          const stat = fs.statSync(filePath);
-          // If directory is requested, return all trace files inside.
-          if (stat?.isDirectory())
-            return sendTraceDescriptor(response, filePath);
-          if (stat)
-            return server.serveFile(request, response, filePath);
-        } catch {}
+        if (fs.existsSync(filePath))
+          return server.serveFile(request, response, url.searchParams.get('path')!);
 
         // If .json is requested, we'll synthesize it for zip-less operation.
         if (filePath.endsWith('.json')) {
@@ -89,7 +99,12 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
           // corresponding to a particular test, all have the same unique prefix.
           return sendTraceDescriptor(response, path.dirname(fullPrefix), path.basename(fullPrefix));
         }
-      } catch {}
+
+        // If 'trace.dir' is requested, return all trace files inside.
+        if (filePath.endsWith(tracesDirMarker))
+          return sendTraceDescriptor(response, path.dirname(filePath));
+      } catch {
+      }
       response.statusCode = 404;
       response.end();
       return true;
@@ -140,7 +155,7 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
 }
 
 export async function runTraceViewerApp(traceUrl: string | undefined, browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
-  validateTraceUrl(traceUrl);
+  traceUrl = validateTraceUrl(traceUrl);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrl, options);
   const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
@@ -150,7 +165,7 @@ export async function runTraceViewerApp(traceUrl: string | undefined, browserNam
 }
 
 export async function runTraceInBrowser(traceUrl: string | undefined, options: TraceViewerServerOptions) {
-  validateTraceUrl(traceUrl);
+  traceUrl = validateTraceUrl(traceUrl);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrl, options);
   await openTraceInBrowser(server.urlPrefix('human-readable'));

@@ -102,25 +102,6 @@ function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progre
   return promise;
 }
 
-function parseURL(url: string): URL | null {
-  try {
-    return new URL(url);
-  } catch (e) {
-    return null;
-  }
-}
-
-function isZipUrl(traceUrl: string): boolean {
-  if (traceUrl.endsWith('.zip'))
-    return true;
-  const url = parseURL(traceUrl);
-  // If it cannot be parsed, assume it is a file path.
-  if (!url)
-    return false;
-  // blob urls do not have .zip extension
-  return url.protocol !== 'file:';
-}
-
 async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<LoadedTrace> {
   await gc();
 
@@ -128,7 +109,7 @@ async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<Loa
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = isZipUrl(traceUrl) ? new ZipTraceModelBackend(traceUrl, fetchProgress) :  new FetchTraceModelBackend(traceUrl);
+    const backend = isLiveTrace(traceUrl) || traceUrl.endsWith('traces.dir') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
