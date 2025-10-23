@@ -20,9 +20,10 @@ import { computeBox, getElementComputedStyle, isElementVisible } from './domUtil
 import * as roleUtils from './roleUtils';
 import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
-import type { AriaProps, AriaRegex, AriaTextValue, AriaRole, AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import { type AriaProps, type AriaRegex, type AriaTextValue, type AriaRole, type AriaTemplateNode, ariaPropsEqual } from '@isomorphic/ariaSnapshot';
 import type { Box } from './domUtils';
 
+// Note: please keep in sync with ariaNodesEqual() below.
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
   name: string;
@@ -33,6 +34,16 @@ export type AriaNode = AriaProps & {
   receivesPointerEvents: boolean;
   props: Record<string, string>;
 };
+
+function ariaNodesEqual(a: AriaNode, b: AriaNode): boolean {
+  if (a.role !== b.role || a.name !== b.name)
+   return false;
+  if (!ariaPropsEqual(a, b) || hasPointerCursor(a) !== hasPointerCursor(b))
+    return false;
+  const aKeys = Object.keys(a.props);
+  const bKeys = Object.keys(b.props);
+  return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+}
 
 export type AriaSnapshot = {
   root: AriaNode;
@@ -509,24 +520,13 @@ function buildByRefMap(root: AriaNode | undefined, map: Map<string | undefined, 
   return map;
 }
 
-function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
-  // TODO: make this scalable.
-  if (a.active !== b.active || a.checked !== b.checked || a.disabled !== b.disabled || a.expanded !== b.expanded || a.selected !== b.selected || a.level !== b.level || a.pressed !== b.pressed)
-    return false;
-  if (hasPointerCursor(a) !== hasPointerCursor(b))
-    return false;
-  const aKeys = Object.keys(a.props);
-  const bKeys = Object.keys(b.props);
-  return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
-}
-
 function compareSnapshots(ariaSnapshot: AriaSnapshot, previousSnapshot: AriaSnapshot | undefined): Map<AriaNode, 'skip' | 'same' | 'changed'> {
   const previousByRef = buildByRefMap(previousSnapshot?.root);
   const result = new Map<AriaNode, 'skip' | 'same' | 'changed'>();
 
   // Returns whether ariaNode is the same as previousNode.
   const visit = (ariaNode: AriaNode, previousNode: AriaNode | undefined): boolean => {
-    let same: boolean = ariaNode.role === previousNode?.role && ariaNode.name === previousNode?.name && arePropsEqual(ariaNode, previousNode) && ariaNode.children.length === previousNode?.children.length;
+    let same: boolean = ariaNode.children.length === previousNode?.children.length && ariaNodesEqual(ariaNode, previousNode);
     let canBeSkipped = same;
 
     for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
@@ -540,7 +540,7 @@ function compareSnapshots(ariaSnapshot: AriaSnapshot, previousSnapshot: AriaSnap
         if (child.ref)
           previous = previousByRef.get(child.ref);
         const sameChild = visit(child, previous);
-        // New child, different order, or changed child with no ref -
+        // New child, different order of children, or changed child with no ref -
         // we have to include this node to list children in the right order.
         if (!previous || (!sameChild && !child.ref) || (previous !== previousChild))
           canBeSkipped = false;
