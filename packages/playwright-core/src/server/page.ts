@@ -1082,7 +1082,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
       if (childSnapshot.isIncremental)
         result.push(...childSnapshot.lines);
       else
-        result.push('- <changed> iframe [ref=' + ref + ']', ...childSnapshot.lines.map(l => '  ' + l));
+        result.push('- <changed> iframe [ref=' + ref + ']:', ...childSnapshot.lines.map(l => '  ' + l));
     }
     return { lines: result, isIncremental };
   }
