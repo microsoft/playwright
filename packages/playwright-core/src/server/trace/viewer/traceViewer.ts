@@ -72,15 +72,24 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
-        if (fs.existsSync(filePath))
-          return server.serveFile(request, response, url.searchParams.get('path')!);
+        let traceFile;
+        try {
+          const stat = fs.statSync(filePath);
+          // If directory is requested, find the trace file inside.
+          if (stat?.isDirectory())
+            traceFile = findTraceFile(filePath);
+          else if (stat)
+            return server.serveFile(request, response, filePath);
+        } catch {}
 
         // If .json is requested, we'll synthesize it for zip-less operation.
-        if (filePath.endsWith('.json')) {
-          const traceName = filePath.substring(0, filePath.length - '.json'.length);
+        if (!traceFile && filePath.endsWith('.json'))
+          traceFile = filePath.substring(0, filePath.length - '.json'.length);
+
+        if (traceFile) {
           response.statusCode = 200;
           response.setHeader('Content-Type', 'application/json');
-          response.end(JSON.stringify(traceDescriptor(traceName)));
+          response.end(JSON.stringify(traceDescriptor(traceFile)));
           return true;
         }
       } catch (e) {
@@ -237,6 +246,13 @@ class StdinServer implements Transport {
     this._pollTimer = setTimeout(() => {
       this._pollLoadTrace(url);
     }, 500);
+  }
+}
+
+function findTraceFile(traceDir: string) {
+  for (const name of fs.readdirSync(traceDir)) {
+    if (name.endsWith('.trace'))
+      return path.join(traceDir, name.substring(0, name.length - '.trace'.length));
   }
 }
 
