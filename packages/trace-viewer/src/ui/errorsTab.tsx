@@ -27,7 +27,7 @@ import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import { calculateSha1 } from './sourceTab';
 import type { StackFrame } from '@protocol/channels';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
   return (
@@ -91,7 +91,7 @@ export const ErrorsTab: React.FunctionComponent<{
   revealInSource: (error: modelUtil.ErrorDescription) => void,
   testRunMetadata: MetadataWithCommitInfo | undefined,
 }> = ({ errorsModel, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const errorContext = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)

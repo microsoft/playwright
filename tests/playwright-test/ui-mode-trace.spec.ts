@@ -715,3 +715,50 @@ test('should be able to create and dispose APIRequestContext inside Promise.all'
     /After Hooks[\d.]+m?s/,
   ]);
 });
+
+test('should partition action tree state by test', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await page.getByRole('button').click();
+      });
+      test('test2', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+        await page.evaluate('1+1');
+      });
+    `,
+  });
+
+  await page.getByTitle('Run all').click();
+  await page.getByTestId('test-tree').getByText('test1').click();
+
+  const actionsTree = page.getByTestId('actions-tree');
+  await actionsTree.getByRole('treeitem', { name: 'After Hooks' }).click();
+  await page.keyboard.press('ArrowRight');
+
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /After Hooks/ [expanded] [selected]:
+      - group:
+        - treeitem /Fixture \"page\"/
+        - treeitem /Fixture \"context\"/
+  `);
+
+  await page.getByTestId('test-tree').getByText('test2').click();
+
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /Evaluate/ [selected]
+    - treeitem /After Hooks/:
+      - /children: equal
+  `);
+
+  await page.getByTestId('test-tree').getByText('test1').click();
+
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /After Hooks/ [expanded] [selected]:
+      - group:
+        - treeitem /Fixture \"page\"/
+        - treeitem /Fixture \"context\"/
+  `);
+});

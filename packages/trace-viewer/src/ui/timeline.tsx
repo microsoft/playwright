@@ -42,15 +42,16 @@ type TimelineBar = {
 export const Timeline: React.FunctionComponent<{
   model: MultiTraceModel | undefined,
   consoleEntries: ConsoleEntry[] | undefined,
+  networkResources: Entry[] | undefined,
   boundaries: Boundaries,
   highlightedAction: ActionTraceEventInContext | undefined,
-  highlightedEntry: Entry | undefined,
-  highlightedConsoleEntry: ConsoleEntry | undefined,
+  highlightedResourceOrdinal: number | undefined,
+  highlightedConsoleEntryOrdinal: number | undefined,
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language,
-}> = ({ model, boundaries, consoleEntries, onSelected, highlightedAction, highlightedEntry, highlightedConsoleEntry, selectedTime, setSelectedTime, sdkLanguage }) => {
+}> = ({ model, boundaries, consoleEntries, networkResources, onSelected, highlightedAction, highlightedResourceOrdinal, highlightedConsoleEntryOrdinal, selectedTime, setSelectedTime, sdkLanguage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -118,14 +119,14 @@ export const Timeline: React.FunctionComponent<{
     for (const bar of bars) {
       if (highlightedAction)
         bar.active = bar.action === highlightedAction;
-      else if (highlightedEntry)
-        bar.active = bar.resource === highlightedEntry;
-      else if (highlightedConsoleEntry)
-        bar.active = bar.consoleMessage === highlightedConsoleEntry;
+      else if (highlightedResourceOrdinal !== undefined)
+        bar.active = bar.resource === networkResources?.[highlightedResourceOrdinal];
+      else if (highlightedConsoleEntryOrdinal !== undefined)
+        bar.active = bar.consoleMessage === consoleEntries?.[highlightedConsoleEntryOrdinal];
       else
         bar.active = false;
     }
-  }, [bars, highlightedAction, highlightedEntry, highlightedConsoleEntry]);
+  }, [bars, highlightedAction, highlightedResourceOrdinal, highlightedConsoleEntryOrdinal, consoleEntries, networkResources]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
