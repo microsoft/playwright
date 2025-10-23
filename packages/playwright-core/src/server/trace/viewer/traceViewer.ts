@@ -29,6 +29,7 @@ import { ProgressController } from '../../progress';
 import type { Transport } from '../../utils/httpServer';
 import type { BrowserType } from '../../browserType';
 import type { Page } from '../../page';
+import type http from 'http';
 
 export type TraceViewerServerOptions = {
   host?: string;
@@ -72,34 +73,23 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
-        let traceDir;
-        let tracePrefix;
         try {
           const stat = fs.statSync(filePath);
           // If directory is requested, return all trace files inside.
           if (stat?.isDirectory())
-            traceDir = filePath;
-          else if (stat)
+            return sendTraceDescriptor(response, filePath);
+          if (stat)
             return server.serveFile(request, response, filePath);
         } catch {}
 
         // If .json is requested, we'll synthesize it for zip-less operation.
-        if (!traceDir && filePath.endsWith('.json')) {
+        if (filePath.endsWith('.json')) {
           const fullPrefix = filePath.substring(0, filePath.length - '.json'.length);
-          traceDir = path.dirname(fullPrefix);
           // Live traces are stored in the common artifacts directory. Trace files
           // corresponding to a particular test, all have the same unique prefix.
-          tracePrefix = path.basename(fullPrefix);
+          return sendTraceDescriptor(response, path.dirname(fullPrefix), path.basename(fullPrefix));
         }
-
-        if (traceDir) {
-          response.statusCode = 200;
-          response.setHeader('Content-Type', 'application/json');
-          response.end(JSON.stringify(traceDescriptor(traceDir, tracePrefix)));
-          return true;
-        }
-      } catch (e) {
-      }
+      } catch {}
       response.statusCode = 404;
       response.end();
       return true;
@@ -253,6 +243,13 @@ class StdinServer implements Transport {
       this._pollLoadTrace(url);
     }, 500);
   }
+}
+
+function sendTraceDescriptor(response: http.ServerResponse, traceDir: string, tracePrefix?: string) {
+  response.statusCode = 200;
+  response.setHeader('Content-Type', 'application/json');
+  response.end(JSON.stringify(traceDescriptor(traceDir, tracePrefix)));
+  return true;
 }
 
 function traceDescriptor(traceDir: string, tracePrefix: string | undefined) {
