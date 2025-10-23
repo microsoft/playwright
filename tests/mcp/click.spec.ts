@@ -41,7 +41,7 @@ test('browser_click', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit" [active] [ref=e2]`),
+    pageState: expect.stringContaining(`button "Submit" [active] [ref=e2]`),
   });
 });
 
@@ -70,7 +70,7 @@ test('browser_click (double)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('heading', { name: 'Click me' }).dblclick();`,
-    pageState: expect.stringContaining(`- heading "Double clicked" [level=1] [ref=e3]`),
+    pageState: expect.stringContaining(`heading "Double clicked" [level=1] [ref=e3]`),
   });
 });
 
@@ -100,7 +100,7 @@ test('browser_click (right)', async ({ client, server }) => {
   });
   expect(result).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Menu' }).click({ button: 'right' });`,
-    pageState: expect.stringContaining(`- button "Right clicked"`),
+    pageState: expect.stringContaining(`button "Right clicked"`),
   });
 });
 
@@ -156,7 +156,7 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift', 'Alt'] });`,
-    pageState: expect.stringContaining(`- generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
+    pageState: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
   });
 });
 
