@@ -84,7 +84,8 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunctions: (() => Promise<void>)[] = [];
+  _onDidFinishTestFunctionCallback?: () => Promise<void>;
+  _onDidPauseTestCallback?: () => Promise<{ extraData: any, dispose: () => Promise<void> }>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -460,24 +461,14 @@ export class TestInfoImpl implements TestInfo {
   }
 
   async _didFinishTestFunction() {
-    if (this._pauseAtEnd() === 'notify' && !this._isFailure()) {
-      this._onTestPaused({ errors: [] });
+    const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
+    if (shouldPause) {
+      const customHandler = await this._onDidPauseTestCallback?.();
+      this._onTestPaused({ errors: this._isFailure() ? this.errors : [], extraData: customHandler?.extraData });
       await this._interruptedPromise;
-    } else if (this._pauseOnError() === 'notify' && this._isFailure()) {
-      this._onTestPaused({ errors: this.errors });
-      await this._interruptedPromise;
+      await customHandler?.dispose();
     }
-
-    for (const fn of this._onDidFinishTestFunctions)
-      await fn();
-  }
-
-  _pauseOnError() {
-    return this._workerParams.pauseOnError;
-  }
-
-  _pauseAtEnd() {
-    return this._workerParams.pauseAtEnd;
+    await this._onDidFinishTestFunctionCallback?.();
   }
 
   // ------------ TestInfo methods ------------

@@ -27,7 +27,7 @@ import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload } from '../common/ipc';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
 import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -577,7 +577,7 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
-      eventsHelper.addEventListener(worker, 'testPaused', params => {
+      eventsHelper.addEventListener(worker, 'testPaused', (params: TestPausedPayload) => {
         for (const error of params.errors)
           addLocationAndSnippetToError(this._config.config, error);
         this._failureTracker.onTestPaused?.(params);
