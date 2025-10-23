@@ -72,24 +72,30 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
     if (relativePath.startsWith('/file')) {
       try {
         const filePath = url.searchParams.get('path')!;
-        let traceFile;
+        let traceDir;
+        let tracePrefix;
         try {
           const stat = fs.statSync(filePath);
-          // If directory is requested, find the trace file inside.
+          // If directory is requested, return all trace files inside.
           if (stat?.isDirectory())
-            traceFile = findTraceFile(filePath);
+            traceDir = filePath;
           else if (stat)
             return server.serveFile(request, response, filePath);
         } catch {}
 
         // If .json is requested, we'll synthesize it for zip-less operation.
-        if (!traceFile && filePath.endsWith('.json'))
-          traceFile = filePath.substring(0, filePath.length - '.json'.length);
+        if (!traceDir && filePath.endsWith('.json')) {
+          const fullPrefix = filePath.substring(0, filePath.length - '.json'.length);
+          traceDir = path.dirname(fullPrefix);
+          // Live traces are stored in the common artifacts directory. Trace files
+          // corresponding to a particular test, all have the same unique prefix.
+          tracePrefix = path.basename(fullPrefix);
+        }
 
-        if (traceFile) {
+        if (traceDir) {
           response.statusCode = 200;
           response.setHeader('Content-Type', 'application/json');
-          response.end(JSON.stringify(traceDescriptor(traceFile)));
+          response.end(JSON.stringify(traceDescriptor(traceDir, tracePrefix)));
           return true;
         }
       } catch (e) {
@@ -249,22 +255,13 @@ class StdinServer implements Transport {
   }
 }
 
-function findTraceFile(traceDir: string) {
-  for (const name of fs.readdirSync(traceDir)) {
-    if (name.endsWith('.trace'))
-      return path.join(traceDir, name.substring(0, name.length - '.trace'.length));
-  }
-}
-
-function traceDescriptor(traceName: string) {
+function traceDescriptor(traceDir: string, tracePrefix: string | undefined) {
   const result: { entries: { name: string, path: string }[] } = {
     entries: []
   };
 
-  const traceDir = path.dirname(traceName);
-  const traceFile = path.basename(traceName);
   for (const name of fs.readdirSync(traceDir)) {
-    if (name.startsWith(traceFile))
+    if (!tracePrefix || name.startsWith(tracePrefix))
       result.entries.push({ name, path: path.join(traceDir, name) });
   }
 
