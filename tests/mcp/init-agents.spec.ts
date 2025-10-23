@@ -72,8 +72,3 @@ test('create seed file with --config', async ({  }) => {
   });
   expect(fs.existsSync(path.join(baseDir, 'custom', 'bar', 'e2e', 'seed.spec.ts'))).toBe(true);
 });
-
-async function ensureFiles(baseDir: string, files: string[]) {
-  for (const file of files)
-    expect(fs.existsSync(path.join(baseDir, file))).toBe(true);
-}
