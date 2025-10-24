@@ -220,7 +220,7 @@ export default defineConfig({
 });
 ```
 
-If you are uploading attachments from data folder to other location, you can use `attachmentsBaseURL` option to let html report where to look for them.
+If you are uploading attachments from a data folder to another location, you can use `attachmentsBaseURL` option to let html report know where to look for them.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
