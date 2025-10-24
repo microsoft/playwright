@@ -40,8 +40,8 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _context: TestContext;
   private _configOption: string | undefined;
 
-  constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
-    this._context = new TestContext(options);
+  constructor(configOption: string | undefined, pushClient: mcp.MDBPushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._context = new TestContext(pushClient, options);
     this._configOption = configOption;
   }
 
