@@ -519,29 +519,35 @@ function buildByRefMap(root: AriaNode | undefined, map: Map<string | undefined, 
 
 function compareSnapshots(ariaSnapshot: AriaSnapshot, previousSnapshot: AriaSnapshot | undefined): Map<AriaNode, 'skip' | 'same' | 'changed'> {
   const previousByRef = buildByRefMap(previousSnapshot?.root);
-  const result = new Map<AriaNode, 'same' | 'changed'>();
+  const result = new Map<AriaNode, 'skip' | 'same' | 'changed'>();
 
   // Returns whether ariaNode is the same as previousNode.
   const visit = (ariaNode: AriaNode, previousNode: AriaNode | undefined): boolean => {
     let same: boolean = ariaNode.children.length === previousNode?.children.length && ariaNodesEqual(ariaNode, previousNode);
     if (ariaNode.role === 'iframe')
       same = false;
+    let canBeSkipped = same;
 
     for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
       const child = ariaNode.children[childIndex];
       const previousChild = previousNode?.children[childIndex];
       if (typeof child === 'string') {
         same &&= child === previousChild;
+        canBeSkipped &&= child === previousChild;
       } else {
         let previous = typeof previousChild !== 'string' ? previousChild : undefined;
         if (child.ref)
           previous = previousByRef.get(child.ref);
         const sameChild = visit(child, previous);
+        // New child, different order of children, or changed child with no ref -
+        // we have to include this node to list children in the right order.
+        if (!previous || (!sameChild && !child.ref) || (previous !== previousChild))
+          canBeSkipped = false;
         same &&= (sameChild && previous === previousChild);
       }
     }
 
-    result.set(ariaNode, same ? 'same' : 'changed');
+    result.set(ariaNode, same ? 'same' : (canBeSkipped ? 'skip' : 'changed'));
     return same;
   };
 
@@ -608,31 +614,43 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
 
     // Replace the whole subtree with a single reference when possible.
     if (status === 'same' && ariaNode.ref) {
-      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
+      if (indent) {
+        // No need to render unchanged root at all.
+        lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
+      }
       return;
     }
 
-    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
     const singleInlinedTextChild = getSingleInlinedTextChild(ariaNode);
 
-    if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
-      // Leaf node without children.
-      lines.push(escapedKey);
-    } else if (singleInlinedTextChild !== undefined) {
-      // Leaf node with just some text inside.
-      const shouldInclude = includeText(ariaNode, singleInlinedTextChild);
-      if (shouldInclude)
-        lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
-      else
+    // We can skip this node and only render diff for changed children.
+    // This is possible when node has no indent, meaning all ancestors were also skipped.
+    const canSkipThisNode = !indent && status === 'skip';
+    if (!canSkipThisNode) {
+      // When producing a diff, add <changed> marker to all diff roots.
+      const isDiffRoot = !!previousSnapshot && !indent;
+      const escapedKey = indent + '- ' + (isDiffRoot ? '<changed> ' : '') + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
+
+      if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
+        // Leaf node without children.
         lines.push(escapedKey);
-    } else {
-      // Node with (optional) props and some children.
-      lines.push(escapedKey + ':');
-      for (const [name, value] of Object.entries(ariaNode.props))
-        lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
+      } else if (singleInlinedTextChild !== undefined) {
+        // Leaf node with just some text inside.
+        const shouldInclude = includeText(ariaNode, singleInlinedTextChild);
+        if (shouldInclude)
+          lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
+        else
+          lines.push(escapedKey);
+      } else {
+        // Node with (optional) props and some children.
+        lines.push(escapedKey + ':');
+        for (const [name, value] of Object.entries(ariaNode.props))
+          lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
+      }
+
+      indent += '  ';
     }
 
-    indent += '  ';
     if (singleInlinedTextChild === undefined) {
       const inCursorPointer = !!ariaNode.ref && renderCursorPointer && hasPointerCursor(ariaNode);
       for (const child of ariaNode.children) {

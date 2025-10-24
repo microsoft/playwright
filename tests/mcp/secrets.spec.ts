@@ -53,7 +53,7 @@ test('browser_type', async ({ startClient, server }) => {
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').fill(process.env['X-PASSWORD']);
 await page.getByRole('textbox').press('Enter');`,
-      pageState: expect.stringContaining(`- textbox`),
+      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
     });
   }
 
