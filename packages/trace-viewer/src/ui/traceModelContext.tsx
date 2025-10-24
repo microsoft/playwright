@@ -18,3 +18,7 @@ import * as React from 'react';
 import type { MultiTraceModel } from './modelUtil';
 
 export const TraceModelContext = React.createContext<MultiTraceModel | undefined>(undefined);
+
+export const useTraceModel = () => {
+  return React.useContext(TraceModelContext);
+};

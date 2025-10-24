@@ -24,7 +24,6 @@ import type { ContextEntry } from '../types/entries';
 import type { SourceLocation } from './modelUtil';
 import { MultiTraceModel } from './modelUtil';
 import { Workbench } from './workbench';
-import { TraceModelContext } from './traceModelContext';
 
 export const TraceView: React.FC<{
   item: { treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase },
@@ -89,19 +88,18 @@ export const TraceView: React.FC<{
     };
   }, [outputDir, item, setModel, counter, setCounter, pathSeparator]);
 
-  return <TraceModelContext.Provider value={model?.model}>
-    <Workbench
-      key='workbench'
-      showSourcesFirst={true}
-      rootDir={rootDir}
-      fallbackLocation={item.testFile}
-      isLive={model?.isLive}
-      status={item.treeItem?.status}
-      annotations={item.testCase?.annotations ?? []}
-      onOpenExternally={onOpenExternally}
-      revealSource={revealSource}
-    />
-  </TraceModelContext.Provider>;
+  return <Workbench
+    model={model?.model}
+    key='workbench'
+    showSourcesFirst={true}
+    rootDir={rootDir}
+    fallbackLocation={item.testFile}
+    isLive={model?.isLive}
+    status={item.treeItem?.status}
+    annotations={item.testCase?.annotations ?? []}
+    onOpenExternally={onOpenExternally}
+    revealSource={revealSource}
+  />;
 };
 
 const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefined => {

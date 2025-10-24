@@ -172,6 +172,34 @@ export function useSetting<S>(name: string | undefined, defaultValue: S): [S, Re
   return [value, setValueWrapper];
 }
 
+const partitions = new Map<string, Record<string, any>>();
+const hooks = new Map<string, { setter: React.Dispatch<React.SetStateAction<any>>, defaultValue: any }>();
+let currentPartition: string | undefined;
+
+export function usePartitionedState<S>(name: string, defaultValue?: S): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const [value, setValue] = React.useState<S | undefined>();
+  hooks.set(name, { setter: setValue, defaultValue });
+
+  const setValueWrapper = React.useCallback((newValue: React.SetStateAction<S>) => {
+    const state = partitions.get(currentPartition || 'default') || {};
+    state[name] = newValue;
+    partitions.set(currentPartition || 'default', state);
+    setValue(newValue as S);
+  }, [name]);
+
+  return [value as S, setValueWrapper];
+}
+
+export function togglePartition(partition: string) {
+  if (currentPartition === partition)
+    return;
+
+  currentPartition = partition;
+  const store = partitions.get(partition) || {};
+  for (const [name, value] of hooks.entries())
+    value.setter(store[name] || value.defaultValue);
+}
+
 declare global {
   interface Window {
     saveSettings?(): void;
