@@ -24,6 +24,7 @@ export type AriaRole = 'alert' | 'alertdialog' | 'application' | 'article' | 'ba
   'spinbutton' | 'status' | 'strong' | 'subscript' | 'superscript' | 'switch' | 'tab' | 'table' | 'tablist' | 'tabpanel' | 'term' | 'textbox' | 'time' | 'timer' |
   'toolbar' | 'tooltip' | 'tree' | 'treegrid' | 'treeitem';
 
+// Note: please keep in sync with ariaPropsEqual() below.
 export type AriaProps = {
   checked?: boolean | 'mixed';
   disabled?: boolean;
@@ -33,6 +34,10 @@ export type AriaProps = {
   pressed?: boolean | 'mixed';
   selected?: boolean;
 };
+
+export function ariaPropsEqual(a: AriaProps, b: AriaProps): boolean {
+  return a.active === b.active && a.checked === b.checked && a.disabled === b.disabled && a.expanded === b.expanded && a.selected === b.selected && a.level === b.level && a.pressed === b.pressed;
+}
 
 // We pass parsed template between worlds using JSON, make it easy.
 export type AriaRegex = { pattern: string };

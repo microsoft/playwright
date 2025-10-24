@@ -192,7 +192,8 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot, options: { omitSnapshot?: b
   lines.push(`- Page Title: ${tabSnapshot.title}`);
   lines.push(`- Page Snapshot:`);
   lines.push('```yaml');
-  lines.push(options.omitSnapshot ? '<snapshot>' : tabSnapshot.ariaSnapshot);
+  // TODO: perhaps not render page state when there are no changes?
+  lines.push(options.omitSnapshot ? '<snapshot>' : (tabSnapshot.ariaSnapshot || '<no changes>'));
   lines.push('```');
 
   return lines.join('\n');
