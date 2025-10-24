@@ -670,3 +670,24 @@ it('should not create incremental snapshots without tracks', async ({ page }) =>
       - listitem [ref=e5]: a span
   `);
 });
+
+it('should create incremental snapshot for children swap', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>item 1</li>
+      <li>item 2</li>
+    </ul>
+  `);
+  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]: item 1
+      - listitem [ref=e4]: item 2
+  `);
+
+  await page.evaluate(() => document.querySelector('ul').appendChild(document.querySelector('li')));
+  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+    - list [ref=e2]:
+      - ref=e4 [unchanged]
+      - ref=e3 [unchanged]
+  `);
+});
