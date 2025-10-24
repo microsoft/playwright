@@ -139,7 +139,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   async installBrowsers() {
     const executables = registry.defaultExecutables();
-    await registry.install(executables, false);
+    await registry.install(executables);
   }
 
   async loadConfig() {
