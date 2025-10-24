@@ -28,18 +28,21 @@ import { ProjectAndTagLabelsView } from './labels';
 export const TestFileView: React.FC<React.PropsWithChildren<{
   file: TestFileSummary;
   projectNames: string[];
-  isFileExpanded: (fileId: string) => boolean;
-  setFileExpanded: (fileId: string, expanded: boolean) => void;
-}>> = ({ file, projectNames, isFileExpanded, setFileExpanded }) => {
+  isFileExpanded?: (fileId: string) => boolean;
+  setFileExpanded?: (fileId: string, expanded: boolean) => void;
+  footer?: React.JSX.Element | string;
+}>> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
   const searchParams = React.useContext(SearchParamsContext);
   const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
   return <Chip
-    expanded={isFileExpanded(file.fileId)}
+    expanded={isFileExpanded ? isFileExpanded(file.fileId) : undefined}
     noInsets={true}
-    setExpanded={(expanded => setFileExpanded(file.fileId, expanded))}
+    setExpanded={setFileExpanded ? (expanded => setFileExpanded(file.fileId, expanded)) : undefined}
     header={<span className='chip-header-allow-selection'>
       {file.fileName}
-    </span>}>
+    </span>}
+    footer={footer}
+  >
     {file.tests.map(test =>
       <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
         <div className='hbox' style={{ alignItems: 'flex-start' }}>

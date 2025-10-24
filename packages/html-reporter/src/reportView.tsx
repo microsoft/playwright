@@ -27,6 +27,7 @@ import { TestCaseView } from './testCaseView';
 import { TestFilesHeader, TestFilesView } from './testFilesView';
 import './theme.css';
 import { useSetting } from '@web/uiUtils';
+import { Speedboard } from './speedboard';
 
 declare global {
   interface Window {
@@ -35,8 +36,9 @@ declare global {
 }
 
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
-const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId');
+const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId') && !params.has('speedboard');
 const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard');
 
 type TestModelSummary = {
   files: TestFileSummary[];
@@ -124,7 +126,7 @@ export const ReportView: React.FC<{
 
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
-      {report?.json() && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
+      {report && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
@@ -134,8 +136,12 @@ export const ReportView: React.FC<{
           projectNames={report?.json().projectNames || []}
         />
       </Route>
+      <Route predicate={speedboardRoutePredicate}>
+        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
+        {report && <Speedboard filter={filter} report={report} />}
+      </Route>
       <Route predicate={testCaseRoutePredicate}>
-        {!!report && <TestCaseViewLoader report={report} next={next} prev={prev} testId={testId} testIdToFileIdMap={testIdToFileIdMap} />}
+        {report && <TestCaseViewLoader report={report} next={next} prev={prev} testId={testId} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
   </div>;
