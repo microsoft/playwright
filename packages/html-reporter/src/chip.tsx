@@ -24,12 +24,13 @@ import { type AnchorID, useAnchor } from './links';
 
 export const Chip: React.FC<{
   header: React.JSX.Element | string,
+  footer?: React.JSX.Element | string,
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
   children?: any,
   dataTestId?: string,
-}> = ({ header, expanded, setExpanded, children, noInsets, dataTestId }) => {
+}> = ({ header, footer, expanded, setExpanded, children, noInsets, dataTestId }) => {
   const id = React.useId();
   return <div className='chip' data-testid={dataTestId}>
     <div
@@ -43,7 +44,10 @@ export const Chip: React.FC<{
       {setExpanded && !expanded && icons.rightArrow()}
       {header}
     </div>
-    {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>{children}</div>}
+    {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
+      {children}
+      {footer && <div className='chip-footer'>{footer}</div>}
+    </div>}
   </div>;
 };
 

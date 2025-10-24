@@ -64,10 +64,15 @@ export const GlobalFilterView: React.FC<{
         event => {
           event.preventDefault();
           const url = new URL(window.location.href);
+          const currentParams = new URLSearchParams(url.hash.slice(1));
           // If <form/> onSubmit happens immediately after <input/> onChange, the filterText state is not updated yet.
           // Using FormData here is a workaround to get the latest value.
           const q = new FormData(event.target as HTMLFormElement).get('q') as string;
-          url.hash = q ? '?' + new URLSearchParams({ q }) : '';
+          const params = new URLSearchParams({ q });
+          if (currentParams.has('speedboard'))
+            params.set('speedboard', '');
+          if (!!params.toString())
+            url.hash = '?' + params.toString();
           navigate(url);
         }
       }>
@@ -93,6 +98,9 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
+    <Link className='subnav-item' href='#?speedboard' title='Speedboard'>
+      {icons.clock()}
+    </Link>
     <SettingsButton />
   </nav>;
 };
@@ -135,24 +143,24 @@ const SettingsButton: React.FC = () => {
       }}
       onMouseDown={preventDefault}>
       {icons.settings()}
+      <Dialog
+        open={settingsOpen}
+        minWidth={150}
+        verticalOffset={4}
+        requestClose={() => setSettingsOpen(false)}
+        anchor={settingsRef}
+        dataTestId='settings-dialog'
+      >
+        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+          <input type='checkbox' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
+          Dark mode
+        </label>
+        <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
+          <input type='checkbox' checked={mergeFiles} onChange={() => setMergeFiles(!mergeFiles)}></input>
+          Merge files
+        </label>
+      </Dialog>
     </div>
-    <Dialog
-      open={settingsOpen}
-      minWidth={150}
-      verticalOffset={4}
-      requestClose={() => setSettingsOpen(false)}
-      anchor={settingsRef}
-      dataTestId='settings-dialog'
-    >
-      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
-        <input type='checkbox' checked={darkMode} onChange={() => setDarkMode(!darkMode)}></input>
-        Dark mode
-      </label>
-      <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 4 }} onClick={stopPropagation}>
-        <input type='checkbox' checked={mergeFiles} onChange={() => setMergeFiles(!mergeFiles)}></input>
-        Merge files
-      </label>
-    </Dialog>
   </>;
 };
 

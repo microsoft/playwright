@@ -56,6 +56,11 @@
   padding: 0;
 }
 
+.chip-footer {
+  border-top: 1px solid var(--color-border-default);
+  padding: 8px;
+}
+
 @media only screen and (max-width: 600px) {
   .chip-header {
     border-radius: 0;
