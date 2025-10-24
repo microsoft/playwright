@@ -489,6 +489,12 @@ export class Page extends SdkObject {
   }
 
   private async _performWaitForNavigationCheck(progress: Progress) {
+    // Allow skipping navigation checks for applications that manage navigation non-standardly.
+    // Some downstream users rely on this for scenarios like Electron apps with custom request
+    // interception and multi-window navigation handling.
+    if (process.env.PLAYWRIGHT_SKIP_NAVIGATION_CHECK)
+      return;
+
     const mainFrame = this.frameManager.mainFrame();
     if (!mainFrame || !mainFrame.pendingDocument())
       return;
