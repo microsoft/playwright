@@ -1,5 +1,5 @@
 ---
-mode: playwright-test-planner
+agent: pwt-planner
 description: Create test plan
 ---
 

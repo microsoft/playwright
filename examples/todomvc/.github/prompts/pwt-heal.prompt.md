@@ -1,5 +1,5 @@
 ---
-mode: 🎭 healer
+agent: pwt-healer
 description: Fix tests
 ---
 

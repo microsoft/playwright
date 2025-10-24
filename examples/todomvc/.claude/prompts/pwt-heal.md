@@ -1,5 +1,5 @@
 ---
-mode: ${agentHealer}
+agent: pwt-healer
 description: Fix tests
 ---
 
