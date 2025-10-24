@@ -71,7 +71,7 @@ export const GlobalFilterView: React.FC<{
           const params = new URLSearchParams({ q });
           if (currentParams.has('speedboard'))
             params.set('speedboard', '');
-          if (!!q.toString())
+          if (!!params.toString())
             url.hash = '?' + params.toString();
           navigate(url);
         }
