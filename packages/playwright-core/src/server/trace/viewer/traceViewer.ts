@@ -62,13 +62,9 @@ function validateTraceUrl(traceUrl: string | undefined): string | undefined {
   if (traceUrl.startsWith('http://') || traceUrl.startsWith('https://'))
     return traceUrl;
 
-  if (traceUrl.endsWith('.json')) {
-    const traceFile = traceUrl.substring(0, traceUrl.length - '.json'.length) + '.trace';
-    if (!fs.existsSync(traceFile))
-      throw new Error(`Trace file ${traceFile} does not exist!`);
-    // If .json is requested, we'll synthesize it.
+  // If .json is requested, we'll synthesize it.
+  if (traceUrl.endsWith('.json'))
     return traceUrl;
-  }
 
   try {
     const stat = fs.statSync(traceUrl);
