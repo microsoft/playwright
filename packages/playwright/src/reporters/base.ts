@@ -49,7 +49,7 @@ type TestSummary = {
 export type CommonReporterOptions = {
   configDir: string,
   _mode?: 'list' | 'test' | 'merge',
-  _isTestServer?: boolean,
+  isTestServer?: boolean,
   _commandHash?: string,
 };
 

@@ -106,8 +106,8 @@ export function createErrorCollectingReporter(screen: Screen): ErrorCollectingRe
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean): CommonReporterOptions {
   return {
     configDir: config.configDir,
+    isTestServer: isTestServer,
     _mode: mode,
-    _isTestServer: isTestServer,
     _commandHash: computeCommandHash(config),
   };
 }
