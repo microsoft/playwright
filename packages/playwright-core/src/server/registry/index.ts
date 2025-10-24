@@ -1080,7 +1080,7 @@ export class Registry {
       return await installDependenciesLinux(targets, dryRun);
   }
 
-  async install(executablesToInstall: Executable[], forceReinstall: boolean) {
+  async install(executablesToInstall: Executable[], options?: { force?: boolean }) {
     const executables = this._dedupe(executablesToInstall);
     await fs.promises.mkdir(registryDirectory, { recursive: true });
     const lockfilePath = path.join(registryDirectory, '__dirlock');
@@ -1115,7 +1115,7 @@ export class Registry {
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
         const { embedderName } = getEmbedderName();
-        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !forceReinstall && executable.executablePath(embedderName)) {
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !options?.force && executable.executablePath(embedderName)) {
           const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
           // eslint-disable-next-line no-restricted-properties
           process.stderr.write('\n' + wrapInASCIIBox([
@@ -1394,6 +1394,54 @@ export class Registry {
     for (const linkPath of brokenLinks)
       await fs.promises.unlink(linkPath).catch(e => {});
   }
+
+  private _defaultBrowsersToInstall(options: { shell?: 'no' | 'only' }): Executable[] {
+    let executables = this.defaultExecutables();
+    if (options.shell === 'no')
+      executables = executables.filter(e => e.name !== 'chromium-headless-shell');
+    if (options.shell === 'only')
+      executables = executables.filter(e => e.name !== 'chromium');
+    return executables;
+  }
+
+  suggestedBrowsersToInstall(): string {
+    return this.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
+  }
+
+  resolveBrowsers(aliases: string[], options: { shell?: 'no' | 'only' }): Executable[] {
+    if (aliases.length === 0)
+      return this._defaultBrowsersToInstall(options);
+
+    const faultyArguments: string[] = [];
+    const executables: Executable[] = [];
+    const handleArgument = (arg: string) => {
+      const executable = this.findExecutable(arg);
+      if (!executable || executable.installType === 'none')
+        faultyArguments.push(arg);
+      else
+        executables.push(executable);
+      if (executable?.browserName === 'chromium')
+        executables.push(this.findExecutable('ffmpeg')!);
+    };
+
+    for (const alias of aliases) {
+      if (alias === 'chromium') {
+        if (options.shell !== 'only')
+          handleArgument('chromium');
+        if (options.shell !== 'no')
+          handleArgument('chromium-headless-shell');
+      } else {
+        handleArgument(alias);
+      }
+    }
+
+    if (process.platform === 'win32')
+      executables.push(this.findExecutable('winldd')!);
+
+    if (faultyArguments.length)
+      throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${this.suggestedBrowsersToInstall()}`);
+    return executables;
+  }
 }
 
 export function browserDirectoryToMarkerFilePath(browserDirectory: string): string {
@@ -1431,7 +1479,7 @@ export async function installBrowsersForNpmInstall(browsers: string[]) {
     executables.push(executable);
   }
 
-  await registry.install(executables, false /* forceReinstall */);
+  await registry.install(executables);
 }
 
 // for launchApp -> UI Mode / Trace Viewer

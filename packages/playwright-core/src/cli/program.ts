@@ -34,7 +34,7 @@ import type { BrowserContext } from '../client/browserContext';
 import type { BrowserType } from '../client/browserType';
 import type { Page } from '../client/page';
 import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-import type { Executable, BrowserInfo } from '../server';
+import type { BrowserInfo } from '../server';
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import type { Command } from '../utilsBundle';
 
@@ -78,54 +78,6 @@ Examples:
   $ codegen
   $ codegen --target=python
   $ codegen -b webkit https://example.com`);
-
-function suggestedBrowsersToInstall() {
-  return registry.executables().filter(e => e.installType !== 'none' && e.type !== 'tool').map(e => e.name).join(', ');
-}
-
-function defaultBrowsersToInstall(options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
-  let executables = registry.defaultExecutables();
-  if (options.noShell)
-    executables = executables.filter(e => e.name !== 'chromium-headless-shell');
-  if (options.onlyShell)
-    executables = executables.filter(e => e.name !== 'chromium');
-  return executables;
-}
-
-function checkBrowsersToInstall(args: string[], options: { noShell?: boolean, onlyShell?: boolean }): Executable[] {
-  if (options.noShell && options.onlyShell)
-    throw new Error(`Only one of --no-shell and --only-shell can be specified`);
-
-  const faultyArguments: string[] = [];
-  const executables: Executable[] = [];
-  const handleArgument = (arg: string) => {
-    const executable = registry.findExecutable(arg);
-    if (!executable || executable.installType === 'none')
-      faultyArguments.push(arg);
-    else
-      executables.push(executable);
-    if (executable?.browserName === 'chromium')
-      executables.push(registry.findExecutable('ffmpeg')!);
-  };
-
-  for (const arg of args) {
-    if (arg === 'chromium') {
-      if (!options.onlyShell)
-        handleArgument('chromium');
-      if (!options.noShell)
-        handleArgument('chromium-headless-shell');
-    } else {
-      handleArgument(arg);
-    }
-  }
-
-  if (process.platform === 'win32')
-    executables.push(registry.findExecutable('winldd')!);
-
-  if (faultyArguments.length)
-    throw new Error(`Invalid installation targets: ${faultyArguments.map(name => `'${name}'`).join(', ')}. Expecting one of: ${suggestedBrowsersToInstall()}`);
-  return executables;
-}
 
 function printInstalledBrowsers(browsers: BrowserInfo[]) {
   const browserPaths = new Set<string>();
@@ -194,9 +146,6 @@ program
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
-      // For '--no-shell' option, commander sets `shell: false` instead.
-      if (options.shell === false)
-        options.noShell = true;
       if (isLikelyNpxGlobal()) {
         console.error(wrapInASCIIBox([
           `WARNING: It looks like you are running 'npx playwright install' without first`,
@@ -218,8 +167,10 @@ program
         ].join('\n'), 1));
       }
       try {
-        const hasNoArguments = !args.length;
-        const executables = hasNoArguments ? defaultBrowsersToInstall(options) : checkBrowsersToInstall(args, options);
+        if (options.shell === false && options.onlyShell)
+          throw new Error(`Only one of --no-shell and --only-shell can be specified`);
+        const shell = options.shell === false ? 'no' : options.onlyShell ? 'only' : undefined;
+        const executables = registry.resolveBrowsers(args, { shell });
         if (options.withDeps)
           await registry.installDeps(executables, !!options.dryRun);
         if (options.dryRun && options.list)
@@ -241,8 +192,8 @@ program
           const browsers = await registry.listInstalledBrowsers();
           printGroupedByPlaywrightVersion(browsers);
         } else {
-          const forceReinstall = hasNoArguments ? false : !!options.force;
-          await registry.install(executables, forceReinstall);
+          const force = args.length === 0 ? false : !!options.force;
+          await registry.install(executables, { force });
           await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
             e.name = 'Playwright Host validation warning';
             console.error(e);
@@ -259,7 +210,7 @@ Examples:
     Install default browsers.
 
   - $ install chrome firefox
-    Install custom browsers, supports ${suggestedBrowsersToInstall()}.`);
+    Install custom browsers, supports ${registry.suggestedBrowsersToInstall()}.`);
 
 program
     .command('uninstall')
@@ -281,10 +232,7 @@ program
     .option('--dry-run', 'Do not execute installation commands, only print them')
     .action(async function(args: string[], options: { dryRun?: boolean }) {
       try {
-        if (!args.length)
-          await registry.installDeps(defaultBrowsersToInstall({}), !!options.dryRun);
-        else
-          await registry.installDeps(checkBrowsersToInstall(args, {}), !!options.dryRun);
+        await registry.installDeps(registry.resolveBrowsers(args, {}), !!options.dryRun);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         gracefullyProcessExitDoNotHang(1);
@@ -295,7 +243,7 @@ Examples:
     Install dependencies for default browsers.
 
   - $ install-deps chrome firefox
-    Install dependencies for specific browsers, supports ${suggestedBrowsersToInstall()}.`);
+    Install dependencies for specific browsers, supports ${registry.suggestedBrowsersToInstall()}.`);
 
 const browsers = [
   { alias: 'cr', name: 'Chromium', type: 'chromium' },
