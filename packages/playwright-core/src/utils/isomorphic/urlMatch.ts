@@ -30,15 +30,27 @@ export function globToRegexPattern(glob: string): string {
       continue;
     }
     if (c === '*') {
+      const charBefore = glob[i - 1];
       let starCount = 1;
       while (glob[i + 1] === '*') {
         starCount++;
         i++;
       }
-      if (starCount > 1)
-        tokens.push('(.*)');
-      else
+      if (starCount > 1) {
+        const charAfter = glob[i + 1];
+        // Match either /..something../ or /.
+        if (charAfter === '/') {
+          if (charBefore === '/')
+            tokens.push('((.+/)|)');
+          else
+            tokens.push('(.*/)');
+          ++i;
+        } else {
+          tokens.push('(.*)');
+        }
+      } else {
         tokens.push('([^/]*)');
+      }
       continue;
     }
 
