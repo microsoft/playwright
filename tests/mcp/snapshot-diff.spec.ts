@@ -65,7 +65,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
   })).toHaveResponse({
     pageState: expect.stringContaining(`Page Snapshot:
 \`\`\`yaml
-- ref=e1 [unchanged]
+<no changes>
 \`\`\``),
   });
 
@@ -78,7 +78,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
   })).toHaveResponse({
     pageState: expect.stringContaining(`Page Snapshot:
 \`\`\`yaml
-- generic [ref=e1]:
+- <changed> generic [ref=e1]:
   - button "Button 1" [active] [ref=e2]
   - button "Button 2new text" [ref=e105]
   - ref=e4 [unchanged]
