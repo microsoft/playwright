@@ -1046,7 +1046,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         if (!node)
           return true;
         return injected.ariaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental', track: options.track }));
+      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental' && !frame.parentFrame(), track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1060,7 +1060,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
   const lines = snapshot.split('\n');
   const result = [];
   for (const line of lines) {
-    const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
+    const match = line.match(/^(\s*)-(?: <changed>)? iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
       result.push(line);
       continue;
