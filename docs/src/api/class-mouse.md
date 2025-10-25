@@ -80,6 +80,12 @@ X coordinate relative to the main frame's viewport in CSS pixels.
 
 Y coordinate relative to the main frame's viewport in CSS pixels.
 
+### option: Mouse.click.steps
+* since: v1.8
+- `steps` <[int]>
+
+Defaults to 1. Sends intermediate `mousemove` events.
+
 ### option: Mouse.click.button = %%-input-button-%%
 * since: v1.8
 
@@ -108,6 +114,12 @@ X coordinate relative to the main frame's viewport in CSS pixels.
 - `y` <[float]>
 
 Y coordinate relative to the main frame's viewport in CSS pixels.
+
+### option: Mouse.dblclick.steps
+* since: v1.8
+- `steps` <[int]>
+
+Defaults to 1. Sends intermediate `mousemove` events.
 
 ### option: Mouse.dblclick.button = %%-input-button-%%
 * since: v1.8

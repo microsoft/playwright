@@ -1410,6 +1410,7 @@ scheme.PageMouseUpResult = tOptional(tObject({}));
 scheme.PageMouseClickParams = tObject({
   x: tFloat,
   y: tFloat,
+  steps: tOptional(tInt),
   delay: tOptional(tFloat),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
   clickCount: tOptional(tInt),
@@ -1597,6 +1598,7 @@ scheme.FrameClickParams = tObject({
   noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
+  steps: tOptional(tInt),
   delay: tOptional(tFloat),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
   clickCount: tOptional(tInt),
@@ -2039,6 +2041,7 @@ scheme.ElementHandleClickParams = tObject({
   noWaitAfter: tOptional(tBoolean),
   modifiers: tOptional(tArray(tEnum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift']))),
   position: tOptional(tType('Point')),
+  steps: tOptional(tInt),
   delay: tOptional(tFloat),
   button: tOptional(tEnum(['left', 'right', 'middle'])),
   clickCount: tOptional(tInt),

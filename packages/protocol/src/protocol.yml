@@ -1890,6 +1890,7 @@ Page:
       parameters:
         x: float
         y: float
+        steps: int?
         delay: float?
         button:
           type: enum?
@@ -2246,6 +2247,7 @@ Frame:
             - Meta
             - Shift
         position: Point?
+        steps: int?
         delay: float?
         button:
           type: enum?
@@ -3002,6 +3004,7 @@ ElementHandle:
             - Meta
             - Shift
         position: Point?
+        steps: int?
         delay: float?
         button:
           type: enum?

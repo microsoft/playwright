@@ -20245,6 +20245,11 @@ export interface Mouse {
      * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
   }): Promise<void>;
 
   /**
@@ -20267,6 +20272,11 @@ export interface Mouse {
      * Time to wait between `mousedown` and `mouseup` in milliseconds. Defaults to 0.
      */
     delay?: number;
+
+    /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
   }): Promise<void>;
 
   /**
