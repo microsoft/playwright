@@ -5,11 +5,11 @@ title: "Web server"
 
 ## Introduction
 
-Playwright comes with a `webserver` option in the config file which gives you the ability to launch a local dev server before running your tests. This is ideal for when writing your tests during development and when you don't have a staging or production url to test against.
+Playwright comes with a `webServer` option in the config file which gives you the ability to launch a local dev server before running your tests. This is ideal for when writing your tests during development and when you don't have a staging or production url to test against.
 
 ## Configuring a web server
 
-Use the `webserver` property in your Playwright config to launch a development web server during the tests.
+Use the `webServer` property in your Playwright config to launch a development web server during the tests.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
