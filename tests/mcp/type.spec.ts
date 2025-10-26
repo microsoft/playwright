@@ -44,7 +44,7 @@ test('browser_type', async ({ client, server }) => {
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').fill('Hi!');
 await page.getByRole('textbox').press('Enter');`,
-      pageState: expect.stringContaining(`- textbox`),
+      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
     });
   }
 
@@ -79,7 +79,7 @@ test('browser_type (slowly)', async ({ client, server }) => {
 
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').pressSequentially('Hi!');`,
-      pageState: expect.stringContaining(`- textbox`),
+      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
     });
   }
   const response = await client.callTool({
