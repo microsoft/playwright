@@ -50,7 +50,6 @@ export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<string, Element>;
   refs: Map<Element, string>;
-  iframeRefs: string[];
 };
 
 type AriaRef = {
@@ -108,7 +107,6 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
     refs: new Map<Element, string>(),
-    iframeRefs: [],
   };
 
   const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
@@ -158,8 +156,6 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       if (childAriaNode.ref) {
         snapshot.elements.set(childAriaNode.ref, element);
         snapshot.refs.set(element, childAriaNode.ref);
-        if (childAriaNode.role === 'iframe')
-          snapshot.iframeRefs.push(childAriaNode.ref);
       }
       ariaNode.children.push(childAriaNode);
     }
@@ -528,6 +524,8 @@ function compareSnapshots(ariaSnapshot: AriaSnapshot, previousSnapshot: AriaSnap
   // Returns whether ariaNode is the same as previousNode.
   const visit = (ariaNode: AriaNode, previousNode: AriaNode | undefined): boolean => {
     let same: boolean = ariaNode.children.length === previousNode?.children.length && ariaNodesEqual(ariaNode, previousNode);
+    if (ariaNode.role === 'iframe')
+      same = false;
     let canBeSkipped = same;
 
     for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
