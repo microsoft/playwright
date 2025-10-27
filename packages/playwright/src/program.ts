@@ -37,7 +37,7 @@ import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
-import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, AgentGenerator } from './agents/generateAgents';
+import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -183,22 +183,21 @@ function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents');
   command.description('Initialize repository agents');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['vscode', 'claude', 'opencode', 'generic']);
+  option.choices(['claude', 'copilot', 'opencode', 'vscode', 'vscode-legacy']);
   command.addOption(option);
   command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
   command.option('--project <project>', 'Project to use for seed test');
+  command.option('--prompts', 'Whether to include prompts in the agent initialization');
   command.action(async opts => {
     const config = await loadConfigFromFile(opts.config);
     if (opts.loop === 'opencode') {
-      await OpencodeGenerator.init(config, opts.project);
-    } else if (opts.loop === 'vscode') {
+      await OpencodeGenerator.init(config, opts.project, opts.prompts);
+    } else if (opts.loop === 'vscode-legacy') {
       await VSCodeGenerator.init(config, opts.project);
     } else if (opts.loop === 'claude') {
-      await ClaudeGenerator.init(config, opts.project);
-    } else if (opts.loop === 'generic') {
-      await AgentGenerator.init(config, opts.project);
+      await ClaudeGenerator.init(config, opts.project, opts.prompts);
     } else {
-      command.help();
+      await CopilotGenerator.init(config, opts.project, opts.prompts);
       return;
     }
   });

@@ -1,9 +1,9 @@
 ---
-mode: ${agentPlanner}
+agent: pwt-planner
 description: Create test plan
 ---
 
 Create test plan for "add to cart" functionality of my app.
 
-- Seed file: `${seedFile}`
+- Seed file: `tests/seed.spec.ts`
 - Test plan: `specs/coverage.plan.md`
