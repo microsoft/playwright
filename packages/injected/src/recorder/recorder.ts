@@ -1785,6 +1785,9 @@ class Dialog {
       options.onCancel?.();
     };
 
+    // Ensure any clicks in the dialog are caught, rather than passing through to the page and thus closing the dialog
+    this._dialogElement.addEventListener('click', event => event.stopPropagation());
+
     const toolbarElement = this._recorder.document.createElement('x-pw-tools-list');
     const labelElement = this._recorder.document.createElement('label');
     labelElement.textContent = options.label;
