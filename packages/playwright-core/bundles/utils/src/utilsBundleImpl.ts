@@ -57,12 +57,15 @@ export const progress = progressLibrary;
 
 export { SocksProxyAgent } from 'socks-proxy-agent';
 
-import yamlLibrary from 'yaml';
-export const yaml = yamlLibrary;
-
 // @ts-ignore
 import wsLibrary, { WebSocketServer, Receiver, Sender } from 'ws';
 export const ws = wsLibrary;
 export const wsServer = WebSocketServer;
 export const wsReceiver = Receiver;
 export const wsSender = Sender;
+
+import yamlLibrary from 'yaml';
+export const yaml = yamlLibrary;
+
+import zodLibrary from 'zod';
+export const zod = zodLibrary;

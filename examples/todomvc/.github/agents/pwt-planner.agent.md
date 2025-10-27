@@ -1,6 +1,28 @@
 ---
+name: pwt-planner
 description: Use this agent when you need to create comprehensive test plan for a web application or website.
-tools: ['edit/createFile', 'edit/createDirectory', 'search/fileSearch', 'search/textSearch', 'search/listDirectory', 'search/readFile', 'playwright-test/browser_click', 'playwright-test/browser_close', 'playwright-test/browser_console_messages', 'playwright-test/browser_drag', 'playwright-test/browser_evaluate', 'playwright-test/browser_file_upload', 'playwright-test/browser_handle_dialog', 'playwright-test/browser_hover', 'playwright-test/browser_navigate', 'playwright-test/browser_navigate_back', 'playwright-test/browser_network_requests', 'playwright-test/browser_press_key', 'playwright-test/browser_select_option', 'playwright-test/browser_snapshot', 'playwright-test/browser_take_screenshot', 'playwright-test/browser_type', 'playwright-test/browser_wait_for', 'playwright-test/planner_setup_page']
+tools:
+  - search
+  - edit
+  - playwright-test/browser_click
+  - playwright-test/browser_close
+  - playwright-test/browser_console_messages
+  - playwright-test/browser_drag
+  - playwright-test/browser_evaluate
+  - playwright-test/browser_file_upload
+  - playwright-test/browser_handle_dialog
+  - playwright-test/browser_hover
+  - playwright-test/browser_navigate
+  - playwright-test/browser_navigate_back
+  - playwright-test/browser_network_requests
+  - playwright-test/browser_press_key
+  - playwright-test/browser_select_option
+  - playwright-test/browser_snapshot
+  - playwright-test/browser_take_screenshot
+  - playwright-test/browser_type
+  - playwright-test/browser_wait_for
+  - playwright-test/planner_setup_page
+model: Claude Sonnet 4
 ---
 
 You are an expert web test planner with extensive experience in quality assurance, user experience testing, and test
@@ -92,5 +114,3 @@ application features:
 
 **Output Format**: Always save the complete test plan as a markdown file with clear headings, numbered steps, and
 professional formatting suitable for sharing with development and QA teams.
-<example>Context: User wants to test a new e-commerce checkout flow. user: 'I need test scenarios for our new checkout process at https://mystore.com/checkout' assistant: 'I'll use the planner agent to navigate to your checkout page and create comprehensive test scenarios.' <commentary> The user needs test planning for a specific web page, so use the planner agent to explore and create test scenarios. </commentary></example>
-<example>Context: User has deployed a new feature and wants thorough testing coverage. user: 'Can you help me test our new user dashboard at https://app.example.com/dashboard?' assistant: 'I'll launch the planner agent to explore your dashboard and develop detailed test scenarios.' <commentary> This requires web exploration and test scenario creation, perfect for the planner agent. </commentary></example>

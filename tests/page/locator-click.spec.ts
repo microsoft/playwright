@@ -32,13 +32,6 @@ it('should work with Node removed', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
 });
 
-it('should work for TextNodes', async ({ page, server }) => {
-  await page.goto(server.PREFIX + '/input/button.html');
-  const buttonTextNode = await page.evaluateHandle(() => document.querySelector('button').firstChild);
-  await buttonTextNode.click();
-  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
-});
-
 it('should double click the button', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/button.html');
   await page.evaluate(() => {

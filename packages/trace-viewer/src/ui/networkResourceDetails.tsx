@@ -26,7 +26,7 @@ import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { msToString, useAsyncMemo } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 
@@ -38,7 +38,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   onClose: () => void;
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
 
   const requestBody = useAsyncMemo<RequestBody>(async () => {
     if (model && resource.request.postData) {
@@ -147,7 +147,7 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
 
   React.useEffect(() => {

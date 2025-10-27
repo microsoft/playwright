@@ -14,7 +14,13 @@
  * limitations under the License.
  */
 
-import { ProgramOption } from 'playwright-core/lib/utilsBundle';
+/* eslint-disable no-console */
+
+import fs from 'fs';
+
+import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
+import { registry } from 'playwright-core/lib/server';
+
 import * as mcpServer from './sdk/server';
 import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
@@ -33,7 +39,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--blocked-origins <origins>', 'semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.', semicolonSeparatedList)
       .option('--block-service-workers', 'block service workers')
       .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
-      .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf, headers.', commaSeparatedList)
+      .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
       .option('--config <path>', 'path to the configuration file.')
@@ -70,12 +76,21 @@ export function decorateCommand(command: Command, version: string) {
         setupExitWatchdog();
 
         if (options.vision) {
-          // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
           options.caps = 'vision';
         }
 
         const config = await resolveCLIConfig(options);
+
+        // Chromium browsers require ffmpeg to be installed to save video.
+        if (config.saveVideo && !checkFfmpeg()) {
+          console.error(colors.red(`\nError: ffmpeg required to save the video is not installed.`));
+          console.error(`\nPlease run the command below. It will install a local copy of ffmpeg and will not change any system-wide settings.`);
+          console.error(`\n    npx playwright install ffmpeg\n`);
+          // eslint-disable-next-line no-restricted-properties
+          process.exit(1);
+        }
+
         const browserContextFactory = contextFactory(config);
         const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
@@ -121,4 +136,13 @@ export function decorateCommand(command: Command, version: string) {
         };
         await mcpServer.start(factory, config.server);
       });
+}
+
+function checkFfmpeg(): boolean {
+  try {
+    const executable = registry.findExecutable('ffmpeg')!;
+    return fs.existsSync(executable.executablePath('javascript')!);
+  } catch (error) {
+    return false;
+  }
 }

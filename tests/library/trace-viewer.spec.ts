@@ -19,6 +19,7 @@
 
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
+import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
 import fs from 'fs';
 import path from 'path';
 import type http from 'http';
@@ -153,6 +154,32 @@ test('should show tracing.group in the action list with location', async ({ runA
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
+  await expect(traceViewer.actionTitles).toHaveText([
+    /Create page/,
+    /Navigate to "data:"/,
+    /^Expect "toHaveTitle"[\d]+ms$/,
+    /^Expect "toHaveURL"[\d]+ms$/,
+    /Set content/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
+    /Evaluate/,
+    /Evaluate/,
+    /Click/,
+    /Wait for navigation/,
+    /Wait for event "response"/,
+    /Wait for timeout/,
+    /Navigate to "\/frames\/frame.html"/,
+    /Set viewport size/,
+    /Hover/,
+    /Close page/,
+  ]);
+});
+
+test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
+  const traceDir = test.info().outputPath('unzipped-trace');
+  await extractZip(traceFile, { dir: traceDir });
+  const traceViewer = await showTraceViewer(traceDir);
   await expect(traceViewer.actionTitles).toHaveText([
     /Create page/,
     /Navigate to "data:"/,

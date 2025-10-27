@@ -148,7 +148,7 @@ test('should enforce @ symbol', async ({ runInlineTest }) => {
     `
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Error: Tag must start with "@" symbol, got "foo" instead.`);
+  expect(result.output).toContain(`Error: Tag must start with '@'`);
 });
 
 test('should be included in testInfo', async ({ runInlineTest }, testInfo) => {

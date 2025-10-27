@@ -23,18 +23,17 @@ import { isTextualMimeType } from '@isomorphic/mimeType';
 import { Expandable } from '@web/components/expandable';
 import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 import type { Attachment, MultiTraceModel } from './modelUtil';
-import type { AfterActionTraceEventAttachment } from '@trace/trace';
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
-  reveal?: any;
+  reveal: any;
 };
 
 const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> = ({ attachment, reveal }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const [expanded, setExpanded] = React.useState(false);
   const [attachmentText, setAttachmentText] = React.useState<string | null>(null);
   const [placeholder, setPlaceholder] = React.useState<string | null>(null);
@@ -94,9 +93,9 @@ const ExpandableAttachment: React.FunctionComponent<ExpandableAttachmentProps> =
 };
 
 export const AttachmentsTab: React.FunctionComponent<{
-  revealedAttachment?: [AfterActionTraceEventAttachment, number],
-}> = ({ revealedAttachment }) => {
-  const model = React.useContext(TraceModelContext);
+  revealedAttachmentCallId?: { callId: string },
+}> = ({ revealedAttachmentCallId }) => {
+  const model = useTraceModel();
   const { diffMap, screenshots, attachments } = React.useMemo(() => {
     const attachments = new Set(model?.visibleAttachments ?? []);
     const screenshots = new Set<Attachment>();
@@ -149,16 +148,12 @@ export const AttachmentsTab: React.FunctionComponent<{
       return <div className='attachment-item' key={attachmentKey(a, i)}>
         <ExpandableAttachment
           attachment={a}
-          reveal={(!!revealedAttachment && isEqualAttachment(a, revealedAttachment[0])) ? revealedAttachment : undefined}
+          reveal={!!revealedAttachmentCallId && a.callId === revealedAttachmentCallId.callId ? revealedAttachmentCallId : undefined}
         />
       </div>;
     })}
   </div>;
 };
-
-function isEqualAttachment(a: Attachment, b: AfterActionTraceEventAttachment): boolean {
-  return a.name === b.name && a.path === b.path && a.sha1 === b.sha1;
-}
 
 export function attachmentURL(model: MultiTraceModel | undefined, attachment: Attachment) {
   if (model && attachment.sha1)

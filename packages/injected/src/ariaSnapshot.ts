@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { ariaPropsEqual } from '@isomorphic/ariaSnapshot';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
 
 import { computeBox, getElementComputedStyle, isElementVisible } from './domUtils';
@@ -23,6 +24,7 @@ import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 import type { AriaProps, AriaRegex, AriaTextValue, AriaRole, AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Box } from './domUtils';
 
+// Note: please keep in sync with ariaNodesEqual() below.
 export type AriaNode = AriaProps & {
   role: AriaRole | 'fragment' | 'iframe';
   name: string;
@@ -34,10 +36,21 @@ export type AriaNode = AriaProps & {
   props: Record<string, string>;
 };
 
+function ariaNodesEqual(a: AriaNode, b: AriaNode): boolean {
+  if (a.role !== b.role || a.name !== b.name)
+    return false;
+  if (!ariaPropsEqual(a, b) || hasPointerCursor(a) !== hasPointerCursor(b))
+    return false;
+  const aKeys = Object.keys(a.props);
+  const bKeys = Object.keys(b.props);
+  return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+}
+
 export type AriaSnapshot = {
   root: AriaNode;
   elements: Map<string, Element>;
   refs: Map<Element, string>;
+  iframeRefs: string[];
 };
 
 type AriaRef = {
@@ -95,6 +108,7 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
     root: { role: 'fragment', name: '', children: [], element: rootElement, props: {}, box: computeBox(rootElement), receivesPointerEvents: true },
     elements: new Map<string, Element>(),
     refs: new Map<Element, string>(),
+    iframeRefs: [],
   };
 
   const visit = (ariaNode: AriaNode, node: Node, parentElementVisible: boolean) => {
@@ -144,6 +158,8 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
       if (childAriaNode.ref) {
         snapshot.elements.set(childAriaNode.ref, element);
         snapshot.refs.set(element, childAriaNode.ref);
+        if (childAriaNode.role === 'iframe')
+          snapshot.iframeRefs.push(childAriaNode.ref);
       }
       ariaNode.children.push(childAriaNode);
     }
@@ -495,7 +511,7 @@ function matchesNodeDeep(root: AriaNode, template: AriaTemplateNode, collectAll:
   return results;
 }
 
-function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = new Map()): Map<string, AriaNode> {
+function buildByRefMap(root: AriaNode | undefined, map: Map<string | undefined, AriaNode> = new Map()): Map<string | undefined, AriaNode> {
   if (root?.ref)
     map.set(root.ref, root);
   for (const child of root?.children || []) {
@@ -505,18 +521,83 @@ function buildByRefMap(root: AriaNode | undefined, map: Map<string, AriaNode> = 
   return map;
 }
 
-function arePropsEqual(a: AriaNode, b: AriaNode): boolean {
-  const aKeys = Object.keys(a.props);
-  const bKeys = Object.keys(b.props);
-  return aKeys.length === bKeys.length && aKeys.every(k => a.props[k] === b.props[k]);
+function compareSnapshots(ariaSnapshot: AriaSnapshot, previousSnapshot: AriaSnapshot | undefined): Map<AriaNode, 'skip' | 'same' | 'changed'> {
+  const previousByRef = buildByRefMap(previousSnapshot?.root);
+  const result = new Map<AriaNode, 'skip' | 'same' | 'changed'>();
+
+  // Returns whether ariaNode is the same as previousNode.
+  const visit = (ariaNode: AriaNode, previousNode: AriaNode | undefined): boolean => {
+    let same: boolean = ariaNode.children.length === previousNode?.children.length && ariaNodesEqual(ariaNode, previousNode);
+    let canBeSkipped = same;
+
+    for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
+      const child = ariaNode.children[childIndex];
+      const previousChild = previousNode?.children[childIndex];
+      if (typeof child === 'string') {
+        same &&= child === previousChild;
+        canBeSkipped &&= child === previousChild;
+      } else {
+        let previous = typeof previousChild !== 'string' ? previousChild : undefined;
+        if (child.ref)
+          previous = previousByRef.get(child.ref);
+        const sameChild = visit(child, previous);
+        // New child, different order of children, or changed child with no ref -
+        // we have to include this node to list children in the right order.
+        if (!previous || (!sameChild && !child.ref) || (previous !== previousChild))
+          canBeSkipped = false;
+        same &&= (sameChild && previous === previousChild);
+      }
+    }
+
+    result.set(ariaNode, same ? 'same' : (canBeSkipped ? 'skip' : 'changed'));
+    return same;
+  };
+
+  visit(ariaSnapshot.root, previousByRef.get(previousSnapshot?.root?.ref));
+  return result;
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previous?: AriaSnapshot): string {
+// Chooses only the changed parts of the snapshot and returns them as new roots.
+function filterSnapshotDiff(nodes: (AriaNode | string)[], statusMap: Map<AriaNode, 'skip' | 'same' | 'changed'>): (AriaNode | string)[] {
+  const result: (AriaNode | string)[] = [];
+
+  const visit = (ariaNode: AriaNode) => {
+    const status = statusMap.get(ariaNode);
+    if (status === 'same') {
+      // No need to render unchanged root at all.
+    } else if (status === 'skip') {
+      // Only render changed children.
+      for (const child of ariaNode.children) {
+        if (typeof child !== 'string')
+          visit(child);
+      }
+    } else {
+      // Render this node's subtree.
+      result.push(ariaNode);
+    }
+  };
+
+  for (const node of nodes) {
+    if (typeof node === 'string')
+      result.push(node);
+    else
+      visit(node);
+  }
+  return result;
+}
+
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previousSnapshot?: AriaSnapshot): string {
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
-  const previousByRef = buildByRefMap(previous?.root);
+
+  // Do not render the root fragment, just its children.
+  let nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
+
+  const statusMap = compareSnapshots(ariaSnapshot, previousSnapshot);
+  if (previousSnapshot)
+    nodesToRender = filterSnapshotDiff(nodesToRender, statusMap);
 
   const visitText = (text: string, indent: string) => {
     const escaped = yamlEscapeValueIfNeeded(renderString(text));
@@ -565,27 +646,23 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     return ariaNode?.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
   };
 
-  const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean, previousNode: AriaNode | undefined): { unchanged: boolean } => {
-    if (ariaNode.ref)
-      previousNode = previousByRef.get(ariaNode.ref);
+  const visit = (ariaNode: AriaNode, indent: string, renderCursorPointer: boolean) => {
+    // Replace the whole subtree with a single reference when possible.
+    if (statusMap.get(ariaNode) === 'same' && ariaNode.ref) {
+      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
+      return;
+    }
 
-    const linesBefore = lines.length;
-    const key = createKey(ariaNode, renderCursorPointer);
-    const escapedKey = indent + '- ' + yamlEscapeKeyIfNeeded(key);
-    const inCursorPointer = renderCursorPointer && !!ariaNode.ref && hasPointerCursor(ariaNode);
+    // When producing a diff, add <changed> marker to all diff roots.
+    const isDiffRoot = !!previousSnapshot && !indent;
+    const escapedKey = indent + '- ' + (isDiffRoot ? '<changed> ' : '') + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
     const singleInlinedTextChild = getSingleInlinedTextChild(ariaNode);
-
-    // Whether ariaNode's subtree is the same as previousNode's, and can be replaced with just a ref.
-    let unchanged = !!previousNode && key === createKey(previousNode, renderCursorPointer) && arePropsEqual(ariaNode, previousNode);
 
     if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
       // Leaf node without children.
       lines.push(escapedKey);
     } else if (singleInlinedTextChild !== undefined) {
       // Leaf node with just some text inside.
-      // Unchanged when the previous node also had the same single text child.
-      unchanged = unchanged && getSingleInlinedTextChild(previousNode) === singleInlinedTextChild;
-
       const shouldInclude = includeText(ariaNode, singleInlinedTextChild);
       if (shouldInclude)
         lines.push(escapedKey + ': ' + yamlEscapeValueIfNeeded(renderString(singleInlinedTextChild)));
@@ -597,40 +674,22 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       for (const [name, value] of Object.entries(ariaNode.props))
         lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
 
-      // All children must be the same.
-      unchanged = unchanged && previousNode?.children.length === ariaNode.children.length;
-
       const childIndent = indent + '  ';
-      for (let childIndex = 0 ; childIndex < ariaNode.children.length; childIndex++) {
-        const child = ariaNode.children[childIndex];
-        if (typeof child === 'string') {
-          unchanged = unchanged && previousNode?.children[childIndex] === child;
-          if (includeText(ariaNode, child))
-            visitText(child, childIndent);
-        } else {
-          const previousChild = previousNode?.children[childIndex];
-          const childResult = visit(child, childIndent, renderCursorPointer && !inCursorPointer, typeof previousChild !== 'string' ? previousChild : undefined);
-          unchanged = unchanged && childResult.unchanged;
-        }
+      const inCursorPointer = !!ariaNode.ref && renderCursorPointer && hasPointerCursor(ariaNode);
+      for (const child of ariaNode.children) {
+        if (typeof child === 'string')
+          visitText(includeText(ariaNode, child) ? child : '', childIndent);
+        else
+          visit(child, childIndent, renderCursorPointer && !inCursorPointer);
       }
     }
-
-    if (unchanged && ariaNode.ref) {
-      // Replace the whole subtree with a single reference.
-      lines.splice(linesBefore);
-      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
-    }
-
-    return { unchanged };
   };
 
-  // Do not render the root fragment, just its children.
-  const nodesToRender = ariaSnapshot.root.role === 'fragment' ? ariaSnapshot.root.children : [ariaSnapshot.root];
   for (const nodeToRender of nodesToRender) {
     if (typeof nodeToRender === 'string')
       visitText(nodeToRender, '');
     else
-      visit(nodeToRender, '', !!options.renderCursorPointer, undefined);
+      visit(nodeToRender, '', !!options.renderCursorPointer);
   }
   return lines.join('\n');
 }

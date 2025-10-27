@@ -106,6 +106,8 @@ export const CodeMirrorWrapper: React.FC<SourceProps> = ({
         lineNumbers,
         lineWrapping: wrapLines,
         placeholder,
+        matchBrackets: true,
+        autoCloseBrackets: true,
       });
       codemirrorRef.current = { cm };
       if (isFocused)

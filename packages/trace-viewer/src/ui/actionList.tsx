@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { ActionTraceEvent, AfterActionTraceEventAttachment } from '@trace/trace';
+import type { ActionTraceEvent } from '@trace/trace';
 import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
@@ -34,11 +34,13 @@ export interface ActionListProps {
   selectedAction: ActionTraceEventInContext | undefined,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
+  treeState: TreeState,
+  setTreeState: (treeState: TreeState) => void,
   sdkLanguage: Language | undefined;
   onSelected?: (action: ActionTraceEventInContext) => void,
   onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole?: () => void,
-  revealAttachment(attachment: AfterActionTraceEventAttachment): void,
+  revealActionAttachment?(callId: string): void,
   isLive?: boolean,
 }
 
@@ -49,14 +51,15 @@ export const ActionList: React.FC<ActionListProps> = ({
   selectedAction,
   selectedTime,
   setSelectedTime,
+  treeState,
+  setTreeState,
   sdkLanguage,
   onSelected,
   onHighlighted,
   revealConsole,
-  revealAttachment,
+  revealActionAttachment,
   isLive,
 }) => {
-  const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const { rootItem, itemMap } = React.useMemo(() => modelUtil.buildActionTree(actions), [actions]);
 
   const { selectedItem } = React.useMemo(() => {
@@ -73,8 +76,9 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [setSelectedTime]);
 
   const render = React.useCallback((item: ActionTreeItem) => {
-    return renderAction(item.action!, { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration: true, showBadges: true });
-  }, [isLive, revealConsole, revealAttachment, sdkLanguage]);
+    const showAttachments = !!revealActionAttachment && !!item.action?.attachments?.length;
+    return renderAction(item.action!, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action!.callId), isLive, showDuration: true, showBadges: true, showAttachments });
+  }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
     return !selectedTime || !item.action || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum);
@@ -111,14 +115,14 @@ export const renderAction = (
   options: {
     sdkLanguage?: Language,
     revealConsole?: () => void,
-    revealAttachment?(attachment: AfterActionTraceEventAttachment): void,
+    revealActionAttachment?(): void,
     isLive?: boolean,
     showDuration?: boolean,
     showBadges?: boolean,
+    showAttachments?: boolean,
   }) => {
-  const { sdkLanguage, revealConsole, revealAttachment, isLive, showDuration, showBadges } = options;
+  const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
   const { errors, warnings } = modelUtil.stats(action);
-  const showAttachments = !!action.attachments?.length && !!revealAttachment;
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 
@@ -135,7 +139,7 @@ export const renderAction = (
     <div className='hbox'>
       <span className='action-title-method' title={title}>{elements}</span>
       {(showDuration || showBadges || showAttachments || isSkipped) && <div className='spacer'></div>}
-      {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealAttachment(action.attachments![0])} />}
+      {showAttachments && <ToolbarButton icon='attach' title='Open Attachment' onClick={() => revealActionAttachment?.()} />}
       {showDuration && !isSkipped && <div className='action-duration'>{time || <span className='codicon codicon-loading'></span>}</div>}
       {isSkipped && <span className={clsx('action-skipped', 'codicon', testStatusIcon('skipped'))} title='skipped'></span>}
       {showBadges && <div className='action-icons' onClick={() => revealConsole?.()}>

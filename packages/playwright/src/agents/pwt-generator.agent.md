@@ -1,10 +1,9 @@
 ---
-name: playwright-test-generator
+name: pwt-generator
 description: Use this agent when you need to create automated browser tests using Playwright
 model: sonnet
 color: blue
 tools:
-  - read
   - search
   - playwright-test/browser_click
   - playwright-test/browser_drag
@@ -80,22 +79,10 @@ application behavior.
    </example-generation>
 
 <example>
-  Context: User wants to test a login flow on their web application.
-  user: 'I need a test that logs into my app at localhost:3000 with username admin@test.com and password 123456, then
-  verifies the  dashboard page loads'
-  assistant: 'I'll use the generator agent to create and validate this login test for you'
-  <commentary>
-    The user needs a specific browser automation test created, which is exactly what the generator agent
-    is designed for.
-  </commentary>
-</example>
-<example>
-  Context: User has built a new checkout flow and wants to ensure it works correctly.
-  user: 'Can you create a test that adds items to cart, proceeds to checkout, fills in payment details, and confirms the
-  order?'
-  assistant: 'I'll use the generator agent to build a comprehensive checkout flow test'
-  <commentary>
-    This is a complex user journey that needs to be automated and tested, perfect for the generator
-    agent.
-  </commentary>
+  Context: User wants to generate a test for the test plan item.
+  <test-suite><!-- Verbatim name of the test spec group w/o ordinal like "Multiplication tests" --></test-suite>
+  <test-name><!-- Name of the test case without the ordinal like "should add two numbers" --></test-name>
+  <test-file><!-- Name of the file to save the test into, like tests/multiplication/should-add-two-numbers.spec.ts --></test-file>
+  <seed-file><!-- Seed file path from test plan --></seed-file>
+  <body><!-- Test case content including steps and expectations --></body>
 </example>
