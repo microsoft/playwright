@@ -1,6 +1,7 @@
 ---
 name: pwt-planner
-description: Use this agent when you need to create comprehensive test plan for a web application or website.
+description: Use this agent when you need to create comprehensive test plan for
+  a web application or website
 tools:
   - search
   - edit

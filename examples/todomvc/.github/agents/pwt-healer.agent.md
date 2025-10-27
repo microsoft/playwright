@@ -1,6 +1,6 @@
 ---
 name: pwt-healer
-description: Use this agent when you need to debug and fix failing Playwright tests.
+description: Use this agent when you need to debug and fix failing Playwright tests
 tools:
   - search
   - edit

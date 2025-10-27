@@ -136,7 +136,7 @@ export class ClaudeGenerator {
 
   static agentSpec(agent: Agent): string {
     const claudeToolMap = new Map<string, string[]>([
-      ['search', ['Glob', 'Grep', 'Read']],
+      ['search', ['Glob', 'Grep', 'Read', 'LS']],
       ['edit', ['Edit', 'MultiEdit', 'Write']],
     ]);
 
@@ -149,13 +149,15 @@ export class ClaudeGenerator {
 
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
+    const header = {
+      name: agent.header.name,
+      description: agent.header.description + examples,
+      tools: agent.header.tools.map(tool => asClaudeTool(tool)).join(', '),
+      model: agent.header.model,
+      color: agent.header.color,
+    };
     lines.push(`---`);
-    lines.push(`name: ${agent.header.name}`);
-    lines.push(`description: ${agent.header.description}.${examples}`);
-    lines.push(`tools: ${agent.header.tools.map(tool => asClaudeTool(tool)).join(', ')}`);
-    lines.push(`model: ${agent.header.model}`);
-    lines.push(`color: ${agent.header.color}`);
-    lines.push(`---`);
+    lines.push(yaml.stringify(header, { lineWidth: 100000 }) + `---`);
     lines.push('');
     lines.push(agent.instructions);
     return lines.join('\n');
@@ -258,12 +260,14 @@ export class CopilotGenerator {
   static agentSpec(agent: Agent): string {
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
+    const header = {
+      name: agent.header.name,
+      description: agent.header.description + examples,
+      tools: agent.header.tools,
+      model: 'Claude Sonnet 4',
+    };
     lines.push(`---`);
-    lines.push(`name: ${agent.header.name}`);
-    lines.push(`description: ${agent.header.description}.${examples}`);
-    lines.push(`tools:\n${agent.header.tools.map(tool => `  - ${tool}`).join('\n')}`);
-    lines.push(`model: Claude Sonnet 4`);
-    lines.push(`---`);
+    lines.push(yaml.stringify(header) + `---`);
     lines.push('');
     lines.push(agent.instructions);
     lines.push('');
@@ -362,7 +366,7 @@ export class VSCodeGenerator {
 }
 
 async function writeFile(filePath: string, content: string, icon: string, description: string) {
-  console.log(`- ${icon} ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
+  console.log(` ${icon} ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
   await mkdirIfNeeded(filePath);
   await fs.promises.writeFile(filePath, content, 'utf-8');
 }
@@ -375,7 +379,7 @@ async function deleteFile(filePath: string, description: string) {
     return;
   }
 
-  console.log(`- ✂️  ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
+  console.log(` ✂️  ${path.relative(process.cwd(), filePath)} ${colors.dim('- ' + description)}`);
   await fs.promises.unlink(filePath);
 }
 
@@ -387,7 +391,7 @@ type RepoParams = {
 
 async function initRepo(config: FullConfigInternal, projectName: string, options: RepoParams) {
   const project = seedProject(config, projectName);
-  console.log(`- 🎭 Using project "${project.project.name}" as a primary project`);
+  console.log(` 🎭 Using project "${project.project.name}" as a primary project`);
 
   if (!fs.existsSync('specs')) {
     await fs.promises.mkdir('specs');
@@ -422,7 +426,7 @@ This is a directory for test plans.
 }
 
 function initRepoDone() {
-  console.log('✅ Done.');
+  console.log(' ✅ Done.');
 }
 
 async function loadPrompt(file: string, params: Record<string, string>) {
