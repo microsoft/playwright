@@ -532,28 +532,8 @@ steps.push(new ProgramStep({
   ],
   shell: true,
   cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-  concurrent: watchMode, // feeds into trace-viewer's `public` directory, so it needs to be finished before trace-viewer build starts
+  concurrent: true,
 }));
-
-if (watchMode) {
-  // the build above outputs into `packages/trace-viewer/public`, where the `vite build` for `packages/trace-viewer` is supposed to pick it up.
-  // there's a bug in `vite build --watch` though where the public dir is only copied over initially, but its not watched.
-  // to work around this, we run a second watch build of the service worker into the final output.
-  // bug: https://github.com/vitejs/vite/issues/18655
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: [
-      'vite', '--config', 'vite.sw.config.ts',
-      'build', '--watch', '--minify=false',
-      '--outDir', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'lib', 'vite', 'traceViewer'),
-      '--emptyOutDir=false',
-      '--clearScreen=false',
-    ],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-    concurrent: true
-  }));
-}
 
 // Build/watch web packages.
 for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
@@ -568,31 +548,6 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
     ],
     shell: true,
     cwd: path.join(__dirname, '..', '..', 'packages', webPackage),
-    concurrent: true,
-  }));
-}
-
-// web packages dev server
-if (watchMode) {
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44223', '--base', '/trace/', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'trace-viewer'),
-    concurrent: true,
-  }));
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44224', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'html-reporter'),
-    concurrent: true,
-  }));
-  steps.push(new ProgramStep({
-    command: 'npx',
-    args: ['vite', '--port', '44225', '--clearScreen=false'],
-    shell: true,
-    cwd: path.join(__dirname, '..', '..', 'packages', 'recorder'),
     concurrent: true,
   }));
 }

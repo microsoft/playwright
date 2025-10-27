@@ -92,6 +92,10 @@ it('should work with glob', async () => {
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidc/foo')).toBeFalsy();
   expect(globToRegex('http://localhost:3000/signin-oidc*').test('http://localhost:3000/signin-oidcnice')).toBeTruthy();
 
+  expect(globToRegex('**/*.js').test('/foo.js')).toBeTruthy();
+  expect(globToRegex('asd/**.js').test('/foo.js')).toBeFalsy();
+  expect(globToRegex('**/*.js').test('bar_foo.js')).toBeFalsy();
+
   // range [] is NOT supported
   expect(globToRegex('**/api/v[0-9]').test('http://example.com/api/v[0-9]')).toBeTruthy();
   expect(globToRegex('**/api/v[0-9]').test('http://example.com/api/version')).toBeFalsy();
@@ -127,6 +131,12 @@ it('should work with glob', async () => {
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**?a=b')).toBeTruthy();
   expect(urlMatches(undefined, 'https://localhost:3000/?a=b', '**=b')).toBeTruthy();
 
+  // Custom schema.
+  expect(urlMatches(undefined, 'my.custom.protocol://foo', 'my.custom.protocol://**')).toBeTruthy();
+  expect(urlMatches(undefined, 'my.p://foo', 'my.{p,y}://**')).toBeFalsy();
+  expect(urlMatches(undefined, 'my.p://foo/', 'my.{p,y}://**')).toBeTruthy();
+  expect(urlMatches(undefined, 'file:///foo/', 'f*e://**')).toBeTruthy();
+
   // This is not supported, we treat ? as a query separator.
   expect(globToRegex('http://localhost:8080/?imple/path.js').test('http://localhost:8080/Simple/path.js')).toBeFalsy();
   expect(urlMatches(undefined, 'http://playwright.dev/', 'http://playwright.?ev')).toBeFalsy();
@@ -139,6 +149,10 @@ it('should work with glob', async () => {
   expect(urlMatches('http://playwright.dev/foo', 'http://playwright.dev/foo?bar', '\\\\?bar')).toBeTruthy();
   expect(urlMatches('http://first.host/', 'http://second.host/foo', '**/foo')).toBeTruthy();
   expect(urlMatches('http://playwright.dev/', 'http://localhost/', '*//localhost/')).toBeTruthy();
+
+  // /**/ should match /.
+  expect(urlMatches(undefined, 'https://foo/bar.js', 'https://foo/**/bar.js')).toBeTruthy();
+  expect(urlMatches(undefined, 'https://foo/bar.js', 'https://foo/**/**/bar.js')).toBeTruthy();
 
   const customPrefixes = ['about', 'data', 'chrome', 'edge', 'file'];
   for (const prefix of customPrefixes) {

@@ -19,6 +19,7 @@
 
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
+import extractZip from '../../packages/playwright-core/bundles/zip/src/third_party/extract-zip';
 import fs from 'fs';
 import path from 'path';
 import type http from 'http';
@@ -175,6 +176,32 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
+test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
+  const traceDir = test.info().outputPath('unzipped-trace');
+  await extractZip(traceFile, { dir: traceDir });
+  const traceViewer = await showTraceViewer(traceDir);
+  await expect(traceViewer.actionTitles).toHaveText([
+    /Create page/,
+    /Navigate to "data:"/,
+    /^Expect "toHaveTitle"[\d]+ms$/,
+    /^Expect "toHaveURL"[\d]+ms$/,
+    /Set content/,
+    /toHaveText.*locator/,
+    /toBeHidden.*getByTestId/,
+    /toBeHidden.*getByTestId/,
+    /Evaluate/,
+    /Evaluate/,
+    /Click/,
+    /Wait for navigation/,
+    /Wait for event "response"/,
+    /Wait for timeout/,
+    /Navigate to "\/frames\/frame.html"/,
+    /Set viewport size/,
+    /Hover/,
+    /Close page/,
+  ]);
+});
+
 test('should show action context on locators and other common actions', async ({
   runAndTrace,
   page,
@@ -303,7 +330,7 @@ test('should show params and return value', async ({ showTraceViewer }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate');
   await expect(traceViewer.callLines).toHaveText([
-    '',
+    /Evaluate/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     /expression:"\({↵    a↵  }\) => {↵    console\.log\(\'Info\'\);↵    console\.warn\(\'Warning\'\);↵    console/,
@@ -329,7 +356,7 @@ test('should show null as a param', async ({ showTraceViewer, browserName }) => 
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.selectAction('Evaluate', 1);
   await expect(traceViewer.callLines).toHaveText([
-    '',
+    /Evaluate/,
     /start:[\d\.]+m?s/,
     /duration:[\d]+ms/,
     'expression:"() => 1 + 1"',
@@ -406,6 +433,39 @@ test('should filter network requests by resource type', async ({ page, runAndTra
   await expect(traceViewer.networkRequests.getByText('font.woff2')).toBeVisible();
 });
 
+test('should filter network requests by multiple resource types', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
+  });
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+
+  const { networkRequests } = traceViewer;
+
+  await traceViewer.page.getByText('JS', { exact: true }).click();
+  await expect(networkRequests).toHaveCount(1);
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+  await expect(networkRequests.getByText('style.css')).toBeVisible();
+  await expect(networkRequests).toHaveCount(2);
+
+  await traceViewer.page.getByText('Image', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests.getByText('image.png')).toBeVisible();
+  await expect(networkRequests).toHaveCount(3);
+
+  await traceViewer.page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkRequests).toHaveCount(2);
+  await expect(networkRequests.getByText('script.js')).toBeVisible();
+  await expect(networkRequests.getByText('image.png')).toBeVisible();
+
+  await traceViewer.page.getByText('All', { exact: true }).click();
+  await expect(networkRequests).toHaveCount(9);
+});
+
 test('should show font preview', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);
@@ -473,20 +533,17 @@ test('should have network request overrides 2', async ({ page, server, runAndTra
   await expect.soft(traceViewer.networkRequests).toContainText([/script.jsGET200application\/javascript.*continued/]);
 });
 
-test('should show snapshot URL', async ({ page, runAndTrace, server }) => {
+test('should show snapshot URL and copy button', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate('2+2');
   });
   await traceViewer.snapshotFrame('Evaluate');
-  const browserFrameAddressBarLocator = traceViewer.page.locator('.browser-frame-address-bar');
-  await expect(browserFrameAddressBarLocator).toHaveText(server.EMPTY_PAGE);
-  const copySelectorLocator = browserFrameAddressBarLocator.getByRole('button', { name: 'Copy' });
-  await expect(copySelectorLocator).toBeHidden();
-  await browserFrameAddressBarLocator.hover();
-  await expect(copySelectorLocator).toBeVisible();
+  const addressBar = traceViewer.page.locator('.browser-frame-address-bar');
+  await expect(addressBar).toHaveText(server.EMPTY_PAGE);
+
   await traceViewer.page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
-  await copySelectorLocator.click();
+  await addressBar.getByRole('button', { name: 'Copy' }).click();
   expect(await traceViewer.page.evaluate(() => navigator.clipboard.readText())).toBe(server.EMPTY_PAGE);
 });
 

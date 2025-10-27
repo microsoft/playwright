@@ -59,7 +59,7 @@ export type ErrorDescription = {
   message: string;
 };
 
-export type Attachment = trace.AfterActionTraceEventAttachment;
+export type Attachment = trace.AfterActionTraceEventAttachment & { callId: string };
 
 export class MultiTraceModel {
   readonly startTime: number;
@@ -112,7 +112,7 @@ export class MultiTraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
-    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, traceUrl })) ?? []);
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUrl })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);

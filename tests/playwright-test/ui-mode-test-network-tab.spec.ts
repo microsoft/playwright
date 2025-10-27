@@ -59,6 +59,47 @@ test('should filter network requests by resource type', async ({ runUITest, serv
   await expect(networkItems.getByText('font.woff2')).toBeVisible();
 });
 
+test('should filter network requests by multiple resource types', async ({ runUITest, server }) => {
+  server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
+
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByText('network tab test').dblclick();
+  await page.getByText('Network', { exact: true }).click();
+
+  const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  await expect(networkItems).toHaveCount(9);
+
+  await page.getByText('JS', { exact: true }).click();
+  await expect(networkItems).toHaveCount(1);
+  await expect(networkItems.getByText('script.js')).toBeVisible();
+
+  await page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkItems.getByText('script.js')).toBeVisible();
+  await expect(networkItems.getByText('style.css')).toBeVisible();
+  await expect(networkItems).toHaveCount(2);
+
+  await page.getByText('Image', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkItems.getByText('image.png')).toBeVisible();
+  await expect(networkItems).toHaveCount(3);
+
+  await page.getByText('CSS', { exact: true }).click({ modifiers: ['ControlOrMeta'] });
+  await expect(networkItems).toHaveCount(2);
+  await expect(networkItems.getByText('script.js')).toBeVisible();
+  await expect(networkItems.getByText('image.png')).toBeVisible();
+
+  await page.getByText('All', { exact: true }).click();
+  await expect(networkItems).toHaveCount(9);
+});
+
 test('should filter network requests by url', async ({ runUITest, server }) => {
   const { page } = await runUITest({
     'network-tab.test.ts': `
@@ -199,30 +240,4 @@ test('should not duplicate network entries from beforeAll', {
   await page.getByText('first test').dblclick();
   await page.getByText('Network', { exact: true }).click();
   await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
-});
-
-test('should not preserve selection across test runs', async ({ runUITest, server }) => {
-  server.setRoute('/api/endpoint', (_, res) => res.setHeader('Content-Type', 'application/json').end());
-
-  const { page } = await runUITest({
-    'a.spec.ts': `
-      import { test } from '@playwright/test';
-
-      test('some test', async ({ page }) => {
-        await page.goto('${server.PREFIX}/network-tab/network.html');
-        // await page.evaluate(() => (window as any).donePromise);
-      });
-    `,
-  });
-
-  await page.getByText('some test').dblclick();
-  await page.getByText('Network', { exact: true }).click();
-
-  await page.getByText('network.html', { exact: true }).click();
-  await expect(page.getByText('General')).toBeVisible();
-
-  await page.getByText('some test').dblclick();
-  await expect(page.getByText('network.html', { exact: true })).toBeVisible();
-
-  await expect(page.getByText('General')).not.toBeVisible();
 });

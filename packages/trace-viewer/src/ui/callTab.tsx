@@ -24,6 +24,7 @@ import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
 import type { ActionTraceEventInContext } from './modelUtil';
+import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{
   action: ActionTraceEventInContext | undefined,
@@ -40,12 +41,14 @@ export const CallTab: React.FunctionComponent<{
   const startTimeMillis = action.startTime - startTimeOffset;
   const startTime = msToString(startTimeMillis);
 
+  const { title } = renderTitleForCall(action);
+
   return (
     <div className='call-tab'>
-      <div className='call-line'>{action.title}</div>
+      <div className='call-line'>{title}</div>
       <div className='call-section'>Time</div>
-      <DateTimeCallLine name='start:' value={startTime} />
-      <DateTimeCallLine name='duration:' value={renderDuration(action)} />
+      {renderProperty({ name: 'start', type: 'literal', text: startTime })}
+      {renderProperty({ name: 'duration', type: 'literal', text: renderDuration(action) })}
       {
         !!paramKeys.length && <>
           <div className='call-section'>Parameters</div>
@@ -64,11 +67,9 @@ export const CallTab: React.FunctionComponent<{
   );
 };
 
-const DateTimeCallLine: React.FC<{ name: string, value: string }> = ({ name, value }) => <div className='call-line'>{name}<span className='call-value datetime' title={value}>{value}</span></div>;
-
 type Property = {
   name: string;
-  type: 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
+  type: 'literal' | 'string' | 'number' | 'object' | 'locator' | 'handle' | 'bigint' | 'boolean' | 'symbol' | 'undefined' | 'function';
   text: string;
 };
 
@@ -88,7 +89,7 @@ function renderProperty(property: Property) {
   return (
     <div key={property.name} className='call-line'>
       {property.name}:<span className={clsx('call-value', property.type)} title={property.text}>{text}</span>
-      { ['string', 'number', 'object', 'locator'].includes(property.type) &&
+      { ['literal', 'string', 'number', 'object', 'locator'].includes(property.type) &&
         <CopyToClipboard value={property.text} />
       }
     </div>

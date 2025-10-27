@@ -26,7 +26,7 @@ import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { msToString, useAsyncMemo } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 
@@ -38,7 +38,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   onClose: () => void;
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
   const [selectedTab, setSelectedTab] = React.useState('request');
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
 
   const requestBody = useAsyncMemo<RequestBody>(async () => {
     if (model && resource.request.postData) {
@@ -110,7 +110,7 @@ const RequestTab: React.FunctionComponent<{
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>General</div>
     <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
     <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
@@ -138,7 +138,7 @@ const RequestTab: React.FunctionComponent<{
 const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     <div className='network-request-details-header'>Response Headers</div>
     <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
   </div>;
@@ -147,7 +147,7 @@ const ResponseTab: React.FunctionComponent<{
 const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const [responseBody, setResponseBody] = React.useState<{ dataUrl?: string, text?: string, mimeType?: string, font?: BufferSource } | null>(null);
 
   React.useEffect(() => {
@@ -177,10 +177,10 @@ const BodyTab: React.FunctionComponent<{
     readResources();
   }, [resource, model]);
 
-  return <div className='network-request-details-tab'>
+  return <div className='vbox network-request-details-tab'>
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
-    {responseBody && responseBody.dataUrl && <img draggable='false' src={responseBody.dataUrl} />}
+    {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
     {responseBody && responseBody.text && <CodeMirrorWrapper text={responseBody.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>}
   </div>;
 };

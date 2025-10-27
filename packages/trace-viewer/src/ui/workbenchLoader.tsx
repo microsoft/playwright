@@ -22,7 +22,6 @@ import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorp
 import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
 import { Dialog } from '@web/shared/dialog';
 import { DefaultSettingsView } from './defaultSettingsView';
-import { TraceModelContext } from './traceModelContext';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -187,9 +186,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         <DefaultSettingsView />
       </DialogToolbarButton>
     </div>
-    <TraceModelContext.Provider value={model}>
-      <Workbench inert={showFileUploadDropArea} />
-    </TraceModelContext.Provider>
+    <Workbench model={model} inert={showFileUploadDropArea} />
     {fileForLocalModeError && <div className='drop-target'>
       <div>Trace Viewer uses Service Workers to show traces. To view trace:</div>
       <div style={{ paddingTop: 20 }}>
@@ -215,7 +212,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         input.type = 'file';
         input.click();
         input.addEventListener('change', e => handleFileInputChange(e));
-      }} type='button'>Select file(s)</button>
+      }} type='button'>Select file</button>
       <div style={{ maxWidth: 400 }}>Playwright Trace Viewer is a Progressive Web App, it does not send your trace anywhere,
         it opens it locally.</div>
     </div>}

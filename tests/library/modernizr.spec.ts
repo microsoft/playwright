@@ -95,6 +95,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
   it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
+  it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
   const iPhone = playwright.devices['iPhone 12'];
   const context = await browser.newContext({
     ...iPhone,
@@ -111,6 +112,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.overflowscrolling = false;
     expected.mediasource = true;
     expected.scrolltooptions = false;
+    expected.hairline = false;
 
     delete expected.webglextensions;
     delete actual.webglextensions;

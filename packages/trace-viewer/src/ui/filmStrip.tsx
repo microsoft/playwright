@@ -22,7 +22,7 @@ import type { PageEntry } from '../types/entries';
 import type { ActionTraceEventInContext } from './modelUtil';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 export type FilmStripPreviewPoint = {
   x: number;
@@ -39,7 +39,7 @@ export const FilmStrip: React.FunctionComponent<{
   boundaries: Boundaries,
   previewPoint?: FilmStripPreviewPoint,
 }> = ({ boundaries, previewPoint }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const lanesRef = React.useRef<HTMLDivElement>(null);
 
@@ -90,7 +90,7 @@ const FilmStripLane: React.FunctionComponent<{
   page: PageEntry,
   width: number,
 }> = ({ boundaries, page, width }) => {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   const viewportSize = { width: 0, height: 0 };
   const screencastFrames = page.screencastFrames;
   for (const frame of screencastFrames) {

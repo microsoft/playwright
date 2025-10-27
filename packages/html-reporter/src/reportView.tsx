@@ -90,11 +90,11 @@ export const ReportView: React.FC<{
           break;
         case 'p':
           event.preventDefault();
-          navigate(filterWithQuery(q, 's:passed', false));
+          navigate(filterWithQuery(searchParams, 's:passed', false));
           break;
         case 'f':
           event.preventDefault();
-          navigate(filterWithQuery(q, 's:failed', false));
+          navigate(filterWithQuery(searchParams, 's:failed', false));
           break;
         case 'ArrowLeft':
           if (prev) {
@@ -113,7 +113,7 @@ export const ReportView: React.FC<{
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [prev, next, filterParam, q]);
+  }, [prev, next, filterParam, q, searchParams]);
 
   React.useEffect(() => {
     if (reportTitle)

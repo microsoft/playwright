@@ -26,10 +26,10 @@ import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
-import { TraceModelContext } from './traceModelContext';
+import { useTraceModel } from './traceModelContext';
 
 function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sources: Map<string, SourceModel>, rootDir?: string, fallbackLocation?: SourceLocation) {
-  const model = React.useContext(TraceModelContext);
+  const model = useTraceModel();
   return useAsyncMemo<{ source: SourceModel, targetLine?: number, fileName?: string, highlight: SourceHighlight[], location?: SourceLocation }>(async () => {
     const actionLocation = stack?.[selectedFrame];
     const location = actionLocation?.file ? actionLocation : fallbackLocation;

@@ -240,8 +240,8 @@ it.describe('page screenshot', () => {
     await verifyViewport(page, 500, 500);
   });
 
-  it('should allow transparency', async ({ page, browserName, platform, headless }) => {
-    it.fail(browserName === 'firefox');
+  it('should allow transparency', async ({ page, browserName, channel }) => {
+    it.fail(browserName === 'firefox' || channel?.startsWith('bidi-chrom'));
 
     await page.setViewportSize({ width: 300, height: 300 });
     await page.setContent(`

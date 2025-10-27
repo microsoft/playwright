@@ -59,7 +59,7 @@ In the test file in VS Code you will see your new generated actions added to you
 ### Generating locators
 
 You can generate locators with the test generator.
-- Click on the **Pick locator** button form the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element.
+- Click on the **Pick locator** button from the testing sidebar and then hover over elements in the browser window to see the [locator](./locators.md) highlighted underneath each element.
 - Click the element you require and it will now show up in the **Pick locator** box in VS Code.
 - Press <kbd>Enter</kbd> on your keyboard to copy the locator into the clipboard and then paste anywhere in your code. Or press 'escape' if you want to cancel.
 

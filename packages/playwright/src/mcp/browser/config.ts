@@ -328,7 +328,7 @@ async function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName:
     fileName = fileName.split('\\').join('/');
     const resolvedFile = path.resolve(dir, fileName);
     if (!resolvedFile.startsWith(path.resolve(dir) + path.sep))
-      throw new Error(`Resolved file path for ${fileName} is outside of the output directory`);
+      throw new Error(`Resolved file path ${resolvedFile} is outside of the output directory ${dir}. Use relative file names to stay within the output directory.`);
     return resolvedFile;
   }
 

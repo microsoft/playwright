@@ -35,10 +35,9 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import { ServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
-import { ensureSeedTest, seedProject } from './mcp/test/seed';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
-import { initClaudeCodeRepo, initOpencodeRepo, initVSCodeRepo } from './agents/generateAgents';
+import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, AgentGenerator } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -184,24 +183,24 @@ function addInitAgentsCommand(program: Command) {
   const command = program.command('init-agents');
   command.description('Initialize repository agents');
   const option = command.createOption('--loop <loop>', 'Agentic loop provider');
-  option.choices(['vscode', 'claude', 'opencode']);
+  option.choices(['vscode', 'claude', 'opencode', 'generic']);
   command.addOption(option);
   command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
   command.option('--project <project>', 'Project to use for seed test');
   command.action(async opts => {
+    const config = await loadConfigFromFile(opts.config);
     if (opts.loop === 'opencode') {
-      await initOpencodeRepo();
+      await OpencodeGenerator.init(config, opts.project);
     } else if (opts.loop === 'vscode') {
-      await initVSCodeRepo();
+      await VSCodeGenerator.init(config, opts.project);
     } else if (opts.loop === 'claude') {
-      await initClaudeCodeRepo();
+      await ClaudeGenerator.init(config, opts.project);
+    } else if (opts.loop === 'generic') {
+      await AgentGenerator.init(config, opts.project);
     } else {
       command.help();
       return;
     }
-    const config = await loadConfigFromFile(opts.config);
-    const project = seedProject(config, opts.project);
-    await ensureSeedTest(project, true);
   });
 }
 

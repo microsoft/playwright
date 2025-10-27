@@ -263,15 +263,49 @@ Blob reports contain all the details about the test run and can be used later to
 npx playwright test --reporter=blob
 ```
 
-By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found). The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project` and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. The output file name can be overridden in the configuration file or pass as `'PLAYWRIGHT_BLOB_OUTPUT_FILE'` environment variable.
+By default, the report is written into the `blob-report` directory in the package.json directory or current working directory (if no package.json is found).
+
+The report file name looks like `report-<hash>.zip` or `report-<hash>-<shard_number>.zip` when [sharding](./test-sharding.md) is used. The hash is an optional value computed from `--grep`, `--grepInverted`, `--project`, [`property: TestConfig.tag`] and file filters passed as command line arguments. The hash guarantees that running Playwright with different command line options will produce different but stable between runs report names. The output file name can be overridden in the configuration file or passed as `'PLAYWRIGHT_BLOB_OUTPUT_FILE'` environment variable.
+
+<Tabs
+  groupId="blob-report"
+  defaultValue="shards"
+  values={[
+    {label: 'Shards', value: 'shards'},
+    {label: 'Environments', value: 'environments'},
+  ]
+}>
+
+<TabItem value="shards">
+
+When using blob report to merge multiple shards, you don't have to pass any options.
 
 ```js title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
-  reporter: [['blob', { outputFile: `./blob-report/report-${os.platform()}.zip` }]],
+  reporter: 'blob',
 });
 ```
+
+</TabItem>
+
+<TabItem value="environments">
+
+When running tests in different environments, you might want to use [`property: TestConfig.tag`] to add a global tag corresponding to the environment. This tag will bring clarity to the merged report, and it will be used to produce a unique blob report name.
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  reporter: 'blob',
+  tag: process.env.CI_ENVIRONMENT_NAME,  // for example "@APIv2" or "@linux"
+});
+```
+
+</TabItem>
+
+</Tabs>
 
 Blob report supports following configuration options and environment variables:
 

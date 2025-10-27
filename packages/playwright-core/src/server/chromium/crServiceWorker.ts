@@ -31,7 +31,7 @@ export class CRServiceWorker extends Worker {
     super(browserContext, url);
     this._session = session;
     this.browserContext = browserContext;
-    if (!!process.env.PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS)
+    if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
     session.once('Runtime.executionContextCreated', event => {
       this.createExecutionContext(new CRExecutionContext(session, event.context));

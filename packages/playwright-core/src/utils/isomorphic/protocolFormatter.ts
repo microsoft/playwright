@@ -17,6 +17,10 @@
 import { methodMetainfo } from './protocolMetainfo';
 
 export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
+  return _formatProtocolParam(params, alternatives)?.replaceAll('\n', '\\n');
+}
+
+function _formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
   if (!params)
     return undefined;
 

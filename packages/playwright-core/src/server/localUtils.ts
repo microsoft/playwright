@@ -60,12 +60,8 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
   const stackSession = params.stacksId ? stackSessions.get(params.stacksId) : undefined;
   if (stackSession?.callStacks.length) {
     await progress.race(stackSession.writer);
-    if (process.env.PW_LIVE_TRACE_STACKS) {
-      zipFile.addFile(stackSession.file, 'trace.stacks');
-    } else {
-      const buffer = Buffer.from(JSON.stringify(serializeClientSideCallMetadata(stackSession.callStacks)));
-      zipFile.addBuffer(buffer, 'trace.stacks');
-    }
+    const buffer = Buffer.from(JSON.stringify(serializeClientSideCallMetadata(stackSession.callStacks)));
+    zipFile.addBuffer(buffer, 'trace.stacks');
   }
 
   // Collect sources from stacks.

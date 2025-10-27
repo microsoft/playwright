@@ -253,3 +253,51 @@ it.describe(() => {
     expect(await page.evaluate(async () => (await (window as any).queryLocalFonts()).length > 0)).toBe(true);
   });
 });
+
+it('local network request is allowed from public origin', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37861' }
+}, async ({ page, context, server, browserName }) => {
+  it.fail(browserName === 'webkit');
+  if (browserName === 'chromium')
+    await context.grantPermissions(['local-network-access']);
+  const serverRequests = [];
+  server.setRoute('/cors', (req, res) => {
+    serverRequests.push(`${req.method} ${req.url}`);
+    if (req.method === 'OPTIONS') {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': '*',
+      });
+      res.end();
+      return;
+    }
+    res.writeHead(200, { 'Content-type': 'text/plain', 'Access-Control-Allow-Origin': '*' });
+    res.end('Hello there!');
+  });
+  const clientRequests = [];
+  // Has to be a public origin.
+  await page.goto('https://demo.playwright.dev/todomvc/');
+  page.on('request', request => {
+    clientRequests.push(`${request.method()} ${request.url()}`);
+  });
+  const response = await page.evaluate(async url => {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: '',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Custom-Header': 'test-value'
+      }
+    });
+    return await response.text();
+  }, server.CROSS_PROCESS_PREFIX + '/cors').catch(e => e.message);
+  expect(response).toBe('Hello there!');
+  expect(serverRequests).toEqual([
+    'OPTIONS /cors',
+    'POST /cors',
+  ]);
+  expect(clientRequests).toEqual([
+    `POST ${server.CROSS_PROCESS_PREFIX}/cors`,
+  ]);
+});

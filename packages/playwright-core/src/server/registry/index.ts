@@ -26,7 +26,7 @@ import { installDependenciesLinux, installDependenciesWindows, validateDependenc
 import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../utils/debugLogger';
-import {  hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
+import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
 import { fetchData, NET_DEFAULT_TIMEOUT } from '../utils/network';
 import { spawnAsync } from '../utils/spawnAsync';
 import { getEmbedderName } from '../utils/userAgent';
@@ -60,34 +60,68 @@ if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
 
 const EXECUTABLE_PATHS = {
   'chromium': {
-    'linux': ['chrome-linux', 'chrome'],
-    'mac': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'win': ['chrome-win', 'chrome.exe'],
+    '<unknown>': undefined,
+    'linux-x64': ['chrome-linux', 'chrome'],
+    'linux-arm64': ['chrome-linux', 'chrome'],
+    'mac-x64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'mac-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
+    'win-x64': ['chrome-win', 'chrome.exe'],
   },
   'chromium-headless-shell': {
-    'linux': ['chrome-linux', 'headless_shell'],
-    'mac': ['chrome-mac', 'headless_shell'],
-    'win': ['chrome-win', 'headless_shell.exe'],
+    '<unknown>': undefined,
+    'linux-x64': ['chrome-linux', 'headless_shell'],
+    'linux-arm64': ['chrome-linux', 'headless_shell'],
+    'mac-x64': ['chrome-mac', 'headless_shell'],
+    'mac-arm64': ['chrome-mac', 'headless_shell'],
+    'win-x64': ['chrome-win', 'headless_shell.exe'],
+  },
+  'chromium-tip-of-tree': {
+    '<unknown>': undefined,
+    'linux-x64': ['chrome-linux64', 'chrome'],
+    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'mac-x64': ['chrome-mac-x64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
+    'mac-arm64': ['chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
+    'win-x64': ['chrome-win64', 'chrome.exe'],
+  },
+  'chromium-tip-of-tree-headless-shell': {
+    '<unknown>': undefined,
+    'linux-x64': ['chrome-headless-shell-linux64', 'chrome-headless-shell'],
+    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'mac-x64': ['chrome-headless-shell-mac-x64', 'chrome-headless-shell'],
+    'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
+    'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
   },
   'firefox': {
-    'linux': ['firefox', 'firefox'],
-    'mac': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
-    'win': ['firefox', 'firefox.exe'],
+    '<unknown>': undefined,
+    'linux-x64': ['firefox', 'firefox'],
+    'linux-arm64': ['firefox', 'firefox'],
+    'mac-x64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'mac-arm64': ['firefox', 'Nightly.app', 'Contents', 'MacOS', 'firefox'],
+    'win-x64': ['firefox', 'firefox.exe'],
   },
   'webkit': {
-    'linux': ['pw_run.sh'],
-    'mac': ['pw_run.sh'],
-    'win': ['Playwright.exe'],
+    '<unknown>': undefined,
+    'linux-x64': ['pw_run.sh'],
+    'linux-arm64': ['pw_run.sh'],
+    'mac-x64': ['pw_run.sh'],
+    'mac-arm64': ['pw_run.sh'],
+    'win-x64': ['Playwright.exe'],
   },
   'ffmpeg': {
-    'linux': ['ffmpeg-linux'],
-    'mac': ['ffmpeg-mac'],
-    'win': ['ffmpeg-win64.exe'],
+    '<unknown>': undefined,
+    'linux-x64': ['ffmpeg-linux'],
+    'linux-arm64': ['ffmpeg-linux'],
+    'mac-x64': ['ffmpeg-mac'],
+    'mac-arm64': ['ffmpeg-mac'],
+    'win-x64': ['ffmpeg-win64.exe'],
   },
   'winldd': {
-    'linux': undefined,
-    'mac': undefined,
-    'win': ['PrintDeps.exe'],
+    '<unknown>': undefined,
+    'linux-x64': undefined,
+    'linux-arm64': undefined,
+    'mac-x64': undefined,
+    'mac-arm64': undefined,
+    'win-x64': ['PrintDeps.exe'],
   },
 };
 
@@ -529,13 +563,7 @@ export class Registry {
   constructor(browsersJSON: BrowsersJSON) {
     const descriptors = readDescriptors(browsersJSON);
     const findExecutablePath = (dir: string, name: keyof typeof EXECUTABLE_PATHS) => {
-      let tokens = undefined;
-      if (process.platform === 'linux')
-        tokens = EXECUTABLE_PATHS[name]['linux'];
-      else if (process.platform === 'darwin')
-        tokens = EXECUTABLE_PATHS[name]['mac'];
-      else if (process.platform === 'win32')
-        tokens = EXECUTABLE_PATHS[name]['win'];
+      const tokens = EXECUTABLE_PATHS[name][shortPlatform];
       return tokens ? path.join(dir, ...tokens) : undefined;
     };
     const executablePathOrDie = (name: string, e: string | undefined, installByDefault: boolean, sdkLanguage: string) => {
@@ -604,7 +632,7 @@ export class Registry {
     });
 
     const chromiumTipOfTreeHeadlessShell = descriptors.find(d => d.name === 'chromium-tip-of-tree-headless-shell')!;
-    const chromiumTipOfTreeHeadlessShellExecutable = findExecutablePath(chromiumTipOfTreeHeadlessShell.dir, 'chromium-headless-shell');
+    const chromiumTipOfTreeHeadlessShellExecutable = findExecutablePath(chromiumTipOfTreeHeadlessShell.dir, 'chromium-tip-of-tree-headless-shell');
     this._executables.push({
       type: 'channel',
       name: 'chromium-tip-of-tree-headless-shell',
@@ -622,7 +650,7 @@ export class Registry {
     });
 
     const chromiumTipOfTree = descriptors.find(d => d.name === 'chromium-tip-of-tree')!;
-    const chromiumTipOfTreeExecutable = findExecutablePath(chromiumTipOfTree.dir, 'chromium');
+    const chromiumTipOfTreeExecutable = findExecutablePath(chromiumTipOfTree.dir, 'chromium-tip-of-tree');
     this._executables.push({
       type: 'tool',
       name: 'chromium-tip-of-tree',

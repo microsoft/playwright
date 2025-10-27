@@ -130,7 +130,7 @@ export const ConsoleTab: React.FunctionComponent<{
   boundaries: Boundaries,
   consoleModel: ConsoleTabModel,
   selectedTime?: Boundaries | undefined,
-  onEntryHovered?: (entry: ConsoleEntry | undefined) => void,
+  onEntryHovered?: (ordinal: number | undefined) => void,
   onAccepted?: (entry: ConsoleEntry) => void,
 }> = ({ consoleModel, boundaries, onEntryHovered, onAccepted }) => {
   if (!consoleModel.entries.length)
@@ -140,7 +140,7 @@ export const ConsoleTab: React.FunctionComponent<{
     <ConsoleListView
       name='console'
       onAccepted={onAccepted}
-      onHighlighted={onEntryHovered}
+      onHighlighted={entry => onEntryHovered?.(entry ? consoleModel.entries.indexOf(entry) : undefined)}
       items={consoleModel.entries}
       isError={entry => entry.isError}
       isWarning={entry => entry.isWarning}

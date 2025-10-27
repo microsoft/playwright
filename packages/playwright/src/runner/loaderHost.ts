@@ -40,7 +40,7 @@ export class InProcessLoaderHost {
   }
 
   async loadTestFile(file: string, testErrors: TestError[]): Promise<Suite> {
-    const result = await loadTestFile(file, this._config.config.rootDir, testErrors);
+    const result = await loadTestFile(file, this._config, testErrors);
     this._poolBuilder.buildPools(result, testErrors);
     return result;
   }

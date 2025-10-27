@@ -38,6 +38,7 @@ type ReportData = {
   eventPatchers: JsonEventPatchers;
   reportFile: string;
   metadata: BlobReportMetadata;
+  tags: string[];
 };
 
 export async function createMergedReport(config: FullConfigInternal, dir: string, reporterDescriptions: ReporterDescription[], rootDirOverride: string | undefined) {
@@ -76,13 +77,15 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
 
   await dispatchEvents(eventData.prologue);
-  for (const { reportFile, eventPatchers, metadata } of eventData.reports) {
+  for (const { reportFile, eventPatchers, metadata, tags } of eventData.reports) {
     const reportJsonl = await fs.promises.readFile(reportFile);
     const events = parseTestEvents(reportJsonl);
     new JsonStringInternalizer(stringPool).traverse(events);
     eventPatchers.patchers.push(new AttachmentPathPatcher(dir));
     if (metadata.name)
       eventPatchers.patchers.push(new GlobalErrorPatcher(metadata.name));
+    if (tags.length)
+      eventPatchers.patchers.push(new GlobalErrorPatcher(tags.join(' ')));
     eventPatchers.patchEvents(events);
     await dispatchEvents(events);
   }
@@ -219,13 +222,16 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       eventPatchers.patchers.push(new PathSeparatorPatcher(metadata.pathSeparator));
     eventPatchers.patchEvents(parsedEvents);
 
+    let tags: string[] = [];
     for (const event of parsedEvents) {
-      if (event.method === 'onConfigure')
+      if (event.method === 'onConfigure') {
         configureEvents.push(event);
-      else if (event.method === 'onProject')
+        tags = event.params.config.tags || [];
+      } else if (event.method === 'onProject') {
         projectEvents.push(event);
-      else if (event.method === 'onEnd')
+      } else if (event.method === 'onEnd') {
         endEvents.push(event);
+      }
     }
 
     // Save information about the reports to stream their test events later.
@@ -233,6 +239,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       eventPatchers,
       reportFile: localPath,
       metadata,
+      tags,
     });
   }
 

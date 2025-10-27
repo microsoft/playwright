@@ -38,26 +38,32 @@ export function useAsyncMemo<T>(fn: () => Promise<T>, deps: React.DependencyList
 // Tracks the element's bounding box.
 export function useMeasure<T extends Element>() {
   const ref = React.useRef<T | null>(null);
-  return [useMeasureForRef(ref), ref] as const;
+  const [measure] = useMeasureForRef(ref);
+  return [measure, ref] as const;
 }
 
-export function useMeasureForRef<T extends Element>(ref?: React.RefObject<T | null>) {
+export function useMeasureForRef<T extends Element>(ref?: React.RefObject<T | null>): [DOMRect, () => void] {
   const [measure, setMeasure] = React.useState(new DOMRect(0, 0, 10, 10));
+  const recalculateMeasure = React.useCallback(() => {
+    const target = ref?.current;
+    if (target)
+      setMeasure(target.getBoundingClientRect());
+  }, [ref]);
+
   React.useLayoutEffect(() => {
     const target = ref?.current;
     if (!target)
       return;
-    const update = () => setMeasure(target.getBoundingClientRect());
-    update();
-    const resizeObserver = new ResizeObserver(update);
+    recalculateMeasure();
+    const resizeObserver = new ResizeObserver(recalculateMeasure);
     resizeObserver.observe(target);
-    window.addEventListener('resize', update);
+    window.addEventListener('resize', recalculateMeasure);
     return () => {
       resizeObserver.disconnect();
-      window.removeEventListener('resize', update);
+      window.removeEventListener('resize', recalculateMeasure);
     };
-  }, [ref]);
-  return measure;
+  }, [recalculateMeasure, ref]);
+  return [measure, recalculateMeasure];
 }
 
 export function msToString(ms: number): string {
@@ -164,6 +170,34 @@ export function useSetting<S>(name: string | undefined, defaultValue: S): [S, Re
     }
   }, [defaultValue, name]);
   return [value, setValueWrapper];
+}
+
+const partitions = new Map<string, Record<string, any>>();
+const hooks = new Map<string, { setter: React.Dispatch<React.SetStateAction<any>>, defaultValue: any }>();
+let currentPartition: string | undefined;
+
+export function usePartitionedState<S>(name: string, defaultValue?: S): [S, React.Dispatch<React.SetStateAction<S>>] {
+  const [value, setValue] = React.useState<S | undefined>();
+  hooks.set(name, { setter: setValue, defaultValue });
+
+  const setValueWrapper = React.useCallback((newValue: React.SetStateAction<S>) => {
+    const state = partitions.get(currentPartition || 'default') || {};
+    state[name] = newValue;
+    partitions.set(currentPartition || 'default', state);
+    setValue(newValue as S);
+  }, [name]);
+
+  return [value as S, setValueWrapper];
+}
+
+export function togglePartition(partition: string) {
+  if (currentPartition === partition)
+    return;
+
+  currentPartition = partition;
+  const store = partitions.get(partition) || {};
+  for (const [name, value] of hooks.entries())
+    value.setter(store[name] || value.defaultValue);
 }
 
 declare global {

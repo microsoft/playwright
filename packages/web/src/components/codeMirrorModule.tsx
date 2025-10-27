@@ -26,7 +26,8 @@ import 'codemirror/mode/clike/clike';
 import 'codemirror/mode/markdown/markdown';
 import 'codemirror/addon/display/placeholder';
 import 'codemirror/addon/mode/simple';
-import 'codemirror/mode/yaml/yaml';
+import 'codemirror/addon/edit/matchbrackets';
+import 'codemirror/addon/edit/closebrackets';
 
 export type CodeMirror = typeof codemirrorType;
 export default codemirror;

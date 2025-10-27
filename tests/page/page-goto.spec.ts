@@ -453,7 +453,7 @@ it('should disable timeout when its set to 0', async ({ page, server }) => {
   expect(loaded).toBe(true);
 });
 
-it('should fail when replaced by another navigation', async ({ page, server, browserName }) => {
+it('should fail when replaced by another navigation', async ({ page, server, browserName, channel }) => {
   let anotherPromise;
   server.setRoute('/empty.html', (req, res) => {
     anotherPromise = page.goto(server.PREFIX + '/one-style.html');
@@ -466,8 +466,11 @@ it('should fail when replaced by another navigation', async ({ page, server, bro
   } else if (browserName === 'webkit') {
     expect(error.message).toContain(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`);
   } else if (browserName === 'firefox') {
-    // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
-    expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
+    if (channel?.startsWith('moz-firefox'))
+      expect(error.message).toContain('page.goto: Protocol error (browsingContext.navigate): unknown error');
+    else
+      // Firefox might yield either NS_BINDING_ABORTED or 'navigation interrupted by another one'
+      expect(error.message.includes(`page.goto: Navigation to "${server.PREFIX + '/empty.html'}" is interrupted by another navigation to "${server.PREFIX + '/one-style.html'}"`) || error.message.includes('NS_BINDING_ABORTED')).toBe(true);
   }
 });
 

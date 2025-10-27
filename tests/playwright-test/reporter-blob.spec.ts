@@ -912,6 +912,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
     'playwright.config.ts': `
       module.exports = {
         retries: 1,
+        tag: process.env.GLOBAL_TAG,
         reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
       };
     `,
@@ -951,7 +952,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
       test.skip('skipped 3', async ({}) => {});
     `
   };
-  const result = await runInlineTest(files, { shard: `1/3` }, { PWTEST_BOT_NAME: 'macos-node16-ttest' });
+  const result = await runInlineTest(files, { shard: `1/3` }, { GLOBAL_TAG: '@macos-node16-ttest' });
   expect(result.exitCode).toBe(1);
 
   const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
@@ -964,7 +965,7 @@ test('onError in the report', async ({ runInlineTest, mergeReports, showReport, 
   await expect(page.locator('.subnav-item:has-text("Failed") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Flaky") .counter')).toHaveText('0');
   await expect(page.locator('.subnav-item:has-text("Skipped") .counter')).toHaveText('1');
-  await expect(page.getByTestId('report-errors')).toContainText('(macos-node16-ttest) Error: Error in teardown');
+  await expect(page.getByTestId('report-errors')).toContainText('(@macos-node16-ttest) Error: Error in teardown');
 });
 
 test('preserve config fields', async ({ runInlineTest, mergeReports }) => {
@@ -1353,11 +1354,12 @@ test('support PLAYWRIGHT_BLOB_OUTPUT_FILE environment variable', async ({ runInl
   expect(fs.existsSync(file), 'Default directory should not be cleaned up if output file is specified.').toBe(true);
 });
 
-test('keep projects with same name different bot name separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
+test('keep projects with same name different global tag separate', async ({ runInlineTest, mergeReports, showReport, page }) => {
   const files = (reportName: string) => ({
     'playwright.config.ts': `
       module.exports = {
-        reporter: [['blob', { fileName: '${reportName}.zip' }]],
+        reporter: [['blob']],
+        tag: process.env.GLOBAL_TAG,
         projects: [
           { name: 'foo' },
         ]
@@ -1369,10 +1371,13 @@ test('keep projects with same name different bot name separate', async ({ runInl
     `,
   });
 
-  await runInlineTest(files('first'), undefined, { PWTEST_BOT_NAME: 'first' });
-  await runInlineTest(files('second'), undefined, { PWTEST_BOT_NAME: 'second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest(files('first'), undefined, { GLOBAL_TAG: '@first' });
+  await runInlineTest(files('second'), undefined, { GLOBAL_TAG: '@second', PWTEST_BLOB_DO_NOT_REMOVE: '1' });
 
   const reportDir = test.info().outputPath('blob-report');
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles.sort()).toEqual(['report-1b98925.zip', 'report-562ed66.zip']);
+
   const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
   expect(exitCode).toBe(0);
   await showReport();

@@ -30,15 +30,27 @@ export function globToRegexPattern(glob: string): string {
       continue;
     }
     if (c === '*') {
+      const charBefore = glob[i - 1];
       let starCount = 1;
       while (glob[i + 1] === '*') {
         starCount++;
         i++;
       }
-      if (starCount > 1)
-        tokens.push('(.*)');
-      else
+      if (starCount > 1) {
+        const charAfter = glob[i + 1];
+        // Match either /..something../ or /.
+        if (charAfter === '/') {
+          if (charBefore === '/')
+            tokens.push('((.+/)|)');
+          else
+            tokens.push('(.*/)');
+          ++i;
+        } else {
+          tokens.push('(.*)');
+        }
+      } else {
         tokens.push('([^/]*)');
+      }
       continue;
     }
 
@@ -132,8 +144,13 @@ function resolveGlobBase(baseURL: string | undefined, match: string): string {
         return token;
       // Handle special case of http*://, note that the new schema has to be
       // a web schema so that slashes are properly inserted after domain.
-      if (index === 0 && token.endsWith(':'))
-        return mapToken(token, 'http:');
+      if (index === 0 && token.endsWith(':')) {
+        // Replace any pattern with http:
+        if (token.indexOf('*') !== -1 || token.indexOf('{') !== -1)
+          return mapToken(token, 'http:');
+        // Preserve explicit schema as is as it may affect trailing slashes after domain.
+        return token;
+      }
       const questionIndex = token.indexOf('?');
       if (questionIndex === -1)
         return mapToken(token, `$_${index}_$`);

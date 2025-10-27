@@ -20,7 +20,6 @@ import './workbenchLoader.css';
 import { Workbench } from './workbench';
 
 import type { ContextEntry } from '../types/entries';
-import { TraceModelContext } from './traceModelContext';
 
 export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>(undefined);
@@ -49,9 +48,7 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
     };
   }, [traceJson, counter]);
 
-  return <TraceModelContext.Provider value={model}>
-    <Workbench isLive={true} />
-  </TraceModelContext.Provider>;
+  return <Workbench isLive={true} model={model} />;
 };
 
 async function loadSingleTraceFile(traceJson: string): Promise<MultiTraceModel> {

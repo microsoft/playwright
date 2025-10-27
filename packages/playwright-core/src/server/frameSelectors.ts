@@ -119,10 +119,8 @@ export class FrameSelectors {
     const match = body.match(/^f(\d+)e\d+$/);
     if (!match)
       return frame;
-    const frameIndex = +match[1];
-    const page = this.frame._page;
-    const frameId = page.lastSnapshotFrameIds[frameIndex - 1];
-    const jumptToFrame = frameId ? page.frameManager.frame(frameId) : null;
+    const frameSeq = +match[1];
+    const jumptToFrame = this.frame._page.frameManager.frames().find(frame => frame.seq === frameSeq);
     if (!jumptToFrame)
       throw new InvalidSelectorError(`Invalid frame in aria-ref selector "${selector}"`);
     return jumptToFrame;
