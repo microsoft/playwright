@@ -831,3 +831,30 @@ test('attachments are reported in onStepEnd', { annotation: { type: 'issue', des
     '[hook] After Hooks: 2 attachments in result',
   ]);
 });
+
+test('is passed tty', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37867' } }, async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    constructor(options) {
+      console.log('%% tty=' + options.tty);
+    }
+  }
+  let result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async () => {});
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+  expect(result.outputLines).toEqual(['tty=undefined']);
+
+  result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async () => {});
+    `,
+  }, { 'reporter': '', 'workers': 1 }, { PLAYWRIGHT_FORCE_TTY: '1' });
+  expect(result.outputLines).toEqual(['tty=interactive']);
+});

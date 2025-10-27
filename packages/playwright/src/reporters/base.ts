@@ -48,8 +48,8 @@ type TestSummary = {
 
 export type CommonReporterOptions = {
   configDir: string,
+  tty?: 'interactive',
   _mode?: 'list' | 'test' | 'merge',
-  _isTestServer?: boolean,
   _commandHash?: string,
 };
 

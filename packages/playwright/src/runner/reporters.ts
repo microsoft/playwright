@@ -17,7 +17,7 @@
 import { calculateSha1 } from 'playwright-core/lib/utils';
 
 import { loadReporter } from './loadUtils';
-import { formatError } from '../reporters/base';
+import { formatError, terminalScreen } from '../reporters/base';
 import { BlobReporter } from '../reporters/blob';
 import DotReporter from '../reporters/dot';
 import EmptyReporter from '../reporters/empty';
@@ -106,8 +106,8 @@ export function createErrorCollectingReporter(screen: Screen): ErrorCollectingRe
 function reporterOptions(config: FullConfigInternal, mode: 'list' | 'test' | 'merge', isTestServer: boolean): CommonReporterOptions {
   return {
     configDir: config.configDir,
+    tty: (!isTestServer && terminalScreen.isTTY) ? 'interactive' : undefined,
     _mode: mode,
-    _isTestServer: isTestServer,
     _commandHash: computeCommandHash(config),
   };
 }
