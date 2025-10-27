@@ -73,7 +73,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
             title={renderTitle(tab)}
             selected={snapshotTab === tab}
             onSelect={() => setSnapshotTab(tab)}
-          ></TabbedPaneTab>;
+          />;
         })}
       </div>
       <div style={{ flex: 'auto' }}></div>
