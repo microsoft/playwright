@@ -44,6 +44,11 @@ body .drop-target {
   margin-bottom: 30px;
 }
 
+.drop-target .info {
+  max-width: 400px;
+  text-align: center;
+}
+
 .drop-target .processing-error {
   font-size: 24px;
   color: #e74c3c;
@@ -63,6 +68,11 @@ body .drop-target {
   border: none;
   margin: 30px 0;
   cursor: pointer;
+}
+
+.drop-target .version {
+  color: var(--vscode-disabledForeground);
+  margin-top: 8px;
 }
 
 .progress-dialog {
