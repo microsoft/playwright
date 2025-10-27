@@ -58,7 +58,7 @@ test('browser_select_option', async ({ client, server }) => {
 - Page Title: Title
 - Page Snapshot:
 \`\`\`yaml
-- <changed> combobox [ref=e2]:
+- combobox [ref=e2]:
   - option "Foo"
   - option "Bar" [selected]
 \`\`\``,
@@ -90,8 +90,8 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
   })).toHaveResponse({
     code: `await page.getByRole('listbox').selectOption(['bar', 'baz']);`,
     pageState: expect.stringContaining(`
-- <changed> option "Bar" [selected] [ref=e4]
-- <changed> option "Baz" [selected] [ref=e5]`),
+  - option "Bar" [selected] [ref=e4]
+  - option "Baz" [selected] [ref=e5]`),
   });
 });
 
