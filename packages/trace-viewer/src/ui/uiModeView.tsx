@@ -36,7 +36,7 @@ import { FiltersView } from './uiModeFiltersView';
 import { TestListView } from './uiModeTestListView';
 import { TraceView } from './uiModeTraceView';
 import { SettingsView } from './settingsView';
-import { DefaultSettingsView } from './defaultSettingsView';
+import { useDarkModeCheckbox, useMergeFilesCheckbox, usePopulateCanvasCheckbox } from './defaultSettingsView';
 
 let xtermSize = { cols: 80, rows: 24 };
 const xtermDataSource: XtermDataSource = {
@@ -395,6 +395,12 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [closeInstallDialog, testServerConnection]);
 
+  const settingsView = [
+    useDarkModeCheckbox(),
+    useMergeFilesCheckbox(),
+    usePopulateCanvasCheckbox()
+  ];
+
   return <div className='vbox ui-mode'>
     {!hasBrowsers && <dialog ref={dialogRef}>
       <div className='title'><span className='codicon codicon-lightbulb'></span>Install browsers</div>
@@ -520,7 +526,7 @@ export const UIModeView: React.FC<{}> = ({
           />
           <div className='section-title'>Settings</div>
         </Toolbar>
-        {settingsVisible && <DefaultSettingsView />}
+        {settingsVisible && <SettingsView settings={settingsView} />}
       </div>
       }
     />
