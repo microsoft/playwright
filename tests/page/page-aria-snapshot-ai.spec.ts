@@ -638,17 +638,33 @@ it('should create incremental snapshot for text change', async ({ page }) => {
   `);
 });
 
-it('should not produce incremental snapshot for iframes', async ({ page }) => {
+it('should produce incremental snapshot for iframes', async ({ page }) => {
   await page.setContent(`
-    <iframe srcdoc="<h1>hello</h1>"></iframe>
+    <iframe srcdoc="
+      <li>
+        <span style='display:none'>outer text</span>
+        <button>a button</button>
+        <iframe src='data:text/html,<li>inner text</li>' style='display:none'></iframe>
+      </li>
+    "></iframe>
   `);
   expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
     - iframe [ref=e2]:
-      - heading "hello" [level=1] [ref=f1e2]
+      - listitem [ref=f1e2]:
+        - button "a button" [ref=f1e3]
   `);
+
+  await page.frames()[1].evaluate(() => {
+    document.querySelector('span').style.display = 'block';
+    document.querySelector('iframe').style.display = 'block';
+  });
   expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
-    - <changed> iframe [ref=e2]:
-      - heading "hello" [level=1] [ref=f1e2]
+    - <changed> listitem [ref=f1e2]:
+      - generic [ref=f1e4]: outer text
+      - ref=f1e3 [unchanged]
+      - iframe [ref=f1e5]
+    - <changed> iframe [ref=f1e5]:
+      - listitem [ref=f2e2]: inner text
   `);
 });
 
