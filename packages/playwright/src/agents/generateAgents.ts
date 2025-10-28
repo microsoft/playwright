@@ -253,6 +253,36 @@ export class CopilotGenerator {
     await deleteFile(`.github/chatmodes/🎭 healer.chatmode.md`, 'legacy healer chatmode');
 
     await VSCodeGenerator.appendToMCPJson();
+    const cwdFolder = path.basename(process.cwd());
+
+    const mcpConfig = {
+      'mcpServers': {
+        'playwright-test': {
+          'type': 'stdio',
+          'command': 'npx',
+          'args': [
+            `--prefix=/home/runner/work/${cwdFolder}/${cwdFolder}`,
+            'playwright',
+            'run-test-mcp-server',
+            '--headless',
+            `--config=/home/runner/work/${cwdFolder}/${cwdFolder}`
+          ],
+          'tools': ['*']
+        }
+      }
+    };
+
+    if (!fs.existsSync('.github/copilot-setup-steps.yml')) {
+      const yaml = fs.readFileSync(path.join(__dirname, 'copilot-setup-steps.yml'), 'utf-8');
+      await writeFile('.github/workflows/copilot-setup-steps.yml', yaml, '🔧', 'GitHub Copilot setup steps');
+    }
+
+    console.log('');
+    console.log('');
+    console.log(' 🔧 TODO: GitHub > Settings > Copilot > Coding agent > MCP configuration');
+    console.log('------------------------------------------------------------------');
+    console.log(JSON.stringify(mcpConfig, null, 2));
+    console.log('------------------------------------------------------------------');
 
     initRepoDone();
   }
