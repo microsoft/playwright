@@ -1287,3 +1287,33 @@ it('should click shadow root button', { annotation: { type: 'issue', description
 
   await page.locator('my-button').click();
 });
+
+it('should click with tweened mouse movement', async ({ page, browserName, isAndroid }) => {
+  it.skip(isAndroid, 'Bad rounding');
+
+  await page.setContent(`
+    <body style="margin: 0; padding: 0; height: 500px; width: 500px;">
+      <div style="position: relative; top: 280px; left: 150px; width: 100px; height: 40px">Click me</div>
+    </body>
+  `);
+
+  // The test becomes flaky on WebKit without next line.
+  if (browserName === 'webkit')
+    await page.evaluate(() => new Promise(requestAnimationFrame));
+  await page.mouse.move(100, 100);
+  await page.evaluate(() => {
+    window['result'] = [];
+    document.addEventListener('mousemove', event => {
+      window['result'].push([event.clientX, event.clientY]);
+    });
+  });
+  // Centerpoint at 150 + 100/2, 280 + 40/2 = 200, 300
+  await page.locator('div').click({ steps: 5 });
+  expect(await page.evaluate('result')).toEqual([
+    [120, 140],
+    [140, 180],
+    [160, 220],
+    [180, 260],
+    [200, 300]
+  ]);
+});

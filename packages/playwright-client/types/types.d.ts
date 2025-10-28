@@ -12789,6 +12789,11 @@ export interface Locator {
     };
 
     /**
+     * Defaults to 1. Sends interpolated `mousemove` events between the cursor origin position and the destination.
+     */
+    steps?: number;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12904,6 +12909,11 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends interpolated `mousemove` events between the cursor origin position and the destination.
+     */
+    steps?: number;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -20293,7 +20303,7 @@ export interface Mouse {
    */
   move(x: number, y: number, options?: {
     /**
-     * Defaults to 1. Sends intermediate `mousemove` events.
+     * Defaults to 1. Sends interpolated `mousemove` events between the cursor origin position and the destination.
      */
     steps?: number;
   }): Promise<void>;

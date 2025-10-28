@@ -1602,6 +1602,7 @@ scheme.FrameClickParams = tObject({
   clickCount: tOptional(tInt),
   timeout: tFloat,
   trial: tOptional(tBoolean),
+  steps: tOptional(tInt),
 });
 scheme.FrameClickResult = tOptional(tObject({}));
 scheme.FrameContentParams = tOptional(tObject({}));
@@ -1629,6 +1630,7 @@ scheme.FrameDblclickParams = tObject({
   button: tOptional(tEnum(['left', 'right', 'middle'])),
   timeout: tFloat,
   trial: tOptional(tBoolean),
+  steps: tOptional(tInt),
 });
 scheme.FrameDblclickResult = tOptional(tObject({}));
 scheme.FrameDispatchEventParams = tObject({

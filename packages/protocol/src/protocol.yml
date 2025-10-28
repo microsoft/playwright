@@ -2256,6 +2256,7 @@ Frame:
         clickCount: int?
         timeout: float
         trial: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true
@@ -2311,6 +2312,7 @@ Frame:
           - middle
         timeout: float
         trial: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true

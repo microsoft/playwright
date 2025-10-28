@@ -2803,6 +2803,7 @@ export type FrameClickParams = {
   clickCount?: number,
   timeout: number,
   trial?: boolean,
+  steps?: number,
 };
 export type FrameClickOptions = {
   strict?: boolean,
@@ -2814,6 +2815,7 @@ export type FrameClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   trial?: boolean,
+  steps?: number,
 };
 export type FrameClickResult = void;
 export type FrameContentParams = {};
@@ -2849,6 +2851,7 @@ export type FrameDblclickParams = {
   button?: 'left' | 'right' | 'middle',
   timeout: number,
   trial?: boolean,
+  steps?: number,
 };
 export type FrameDblclickOptions = {
   strict?: boolean,
@@ -2858,6 +2861,7 @@ export type FrameDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   trial?: boolean,
+  steps?: number,
 };
 export type FrameDblclickResult = void;
 export type FrameDispatchEventParams = {
