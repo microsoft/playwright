@@ -400,7 +400,6 @@ it('should continue preload link requests', async ({ page, server, browserName }
 it('should respect set-cookie in redirect response', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' }
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'Firefox does not respect set-cookie in redirect response');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a href="/set-cookie-redirect">Set cookie</a>');
   server.setRoute('/set-cookie-redirect', (request, response) => {
@@ -429,7 +428,6 @@ it('continue should not propagate cookie override to redirects', {
     { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35168' },
   ]
 }, async ({ page, server, browserName }) => {
-  it.fixme(browserName === 'firefox', 'We currently clear all headers during interception in firefox');
   server.setRoute('/set-cookie', (request, response) => {
     response.writeHead(200, { 'Set-Cookie': 'foo=bar;' });
     response.end();
