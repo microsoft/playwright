@@ -323,7 +323,7 @@ test('test_debug w/ console.log in test', async ({ startClient }) => {
     },
   })).toHaveTextResponse(expect.stringContaining(`
 Running 1 test using 1 worker
-[out] console.log
+console.log
 [err] console.error
 ### Paused on error:
 Error: expect(locator).toBeVisible() failed`));

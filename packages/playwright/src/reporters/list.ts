@@ -38,12 +38,10 @@ class ListReporter extends TerminalReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
-  private _prefixStdio?: string;
 
-  constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions & { prefixStdio?: string }) {
+  constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super(options);
     this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
-    this._prefixStdio = options?.prefixStdio;
   }
 
   override onBegin(suite: Suite) {
@@ -164,10 +162,7 @@ class ListReporter extends TerminalReporter {
       return;
     const text = chunk.toString('utf-8');
     this._updateLineCountAndNewLineFlagForOutput(text);
-    if (this._prefixStdio)
-      stream.write(`[${stdio}] ${chunk}`);
-    else
-      stream.write(chunk);
+    stream.write(chunk);
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {

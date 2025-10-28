@@ -138,45 +138,93 @@ export class TestContext {
   }
 
   async runSeedTest(seedFile: string, projectName: string, progress: ProgressCallback) {
-    const { screen } = this.createScreen(progress);
-    const configDir = this.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen });
-    const testRunner = await this.createTestRunner();
+    await this.runWithGlobalSetup(async (testRunner, reporter) => {
+      const result = await testRunner.runTests(reporter, {
+        headed: !this.options?.headless,
+        locations: ['/' + escapeRegExp(seedFile) + '/'],
+        projects: [projectName],
+        timeout: 0,
+        workers: 1,
+        pauseAtEnd: true,
+        disableConfigReporters: true,
+        failOnLoadErrors: true,
+      });
+      // Ideally, we should check that page was indeed created and browser mcp has kicked in.
+      // However, that is handled in the upper layer, so hard to check here.
+      if (result.status === 'passed' && !reporter.suite?.allTests().length)
+        throw new Error('seed test not found.');
 
-    const result = await testRunner.runTests(reporter, {
-      headed: !this.options?.headless,
-      locations: ['/' + escapeRegExp(seedFile) + '/'],
-      projects: [projectName],
-      timeout: 0,
-      workers: 1,
-      pauseAtEnd: true,
-      disableConfigReporters: true,
-      failOnLoadErrors: true,
-    });
-
-    // Ideally, we should check that page was indeed created and browser mcp has kicked in.
-    // However, that is handled in the upper layer, so hard to check here.
-    if (result.status === 'passed' && !reporter.suite?.allTests().length)
-      throw new Error('seed test not found.');
-
-    if (result.status !== 'passed')
-      throw new Error('Errors while running the seed test.');
+      if (result.status !== 'passed')
+        throw new Error('Errors while running the seed test.');
+    }, progress);
   }
 
-  createScreen(progress: ProgressCallback) {
-    const stream = new StringWriteStream(progress);
-    const screen = {
-      ...terminalScreen,
-      isTTY: false,
-      colors: noColors,
-      stdout: stream as unknown as NodeJS.WriteStream,
-      stderr: stream as unknown as NodeJS.WriteStream,
-    };
-    return { screen, stream };
+  async runWithGlobalSetup(
+    callback: (testRunner: TestRunner, reporter: ListReporter) => Promise<void>,
+    progress: ProgressCallback): Promise<void> {
+    const { screen, claimStdio, releaseStdio } = createScreen(progress);
+    const configDir = this.configLocation.configDir;
+    const testRunner = await this.createTestRunner();
+
+    claimStdio();
+    try {
+      const setupReporter = new ListReporter({ configDir, screen, includeTestId: true });
+      const { status } = await testRunner.runGlobalSetup([setupReporter]);
+      if (status !== 'passed')
+        throw new Error('Failed to run global setup');
+    } finally {
+      releaseStdio();
+    }
+
+    try {
+      const reporter = new ListReporter({ configDir, screen, includeTestId: true });
+      return await callback(testRunner, reporter);
+    } finally {
+      claimStdio();
+      await testRunner.runGlobalTeardown().finally(() => {
+        releaseStdio();
+      });
+    }
   }
 
   async close() {
   }
+}
+
+export function createScreen(progress: ProgressCallback) {
+  const stdout = new StringWriteStream(progress, 'stdout');
+  const stderr = new StringWriteStream(progress, 'stderr');
+
+  const screen = {
+    ...terminalScreen,
+    isTTY: false,
+    colors: noColors,
+    stdout: stdout as unknown as NodeJS.WriteStream,
+    stderr: stderr as unknown as NodeJS.WriteStream,
+  };
+
+  /* eslint-disable no-restricted-properties */
+  const originalStdoutWrite = process.stdout.write;
+  const originalStderrWrite = process.stderr.write;
+
+  const claimStdio = () => {
+    process.stdout.write = (chunk: string | Buffer) => {
+      stdout.write(chunk);
+      return true;
+    };
+    process.stderr.write = (chunk: string | Buffer) => {
+      stderr.write(chunk);
+      return true;
+    };
+  };
+
+  const releaseStdio = () => {
+    process.stdout.write = originalStdoutWrite;
+    process.stderr.write = originalStderrWrite;
+  };
+  /* eslint-enable no-restricted-properties */
+
+  return { screen, claimStdio, releaseStdio };
 }
 
 const bestPracticesMarkdown = `

@@ -183,6 +183,7 @@ test('planner_setup_page (loading error)', async ({ startClient }) => {
 });
 
 test('planner_setup_page (wrong test location)', async ({ startClient }) => {
+  await writeFiles({});
   const { client } = await startClient();
   expect(await client.callTool({
     name: 'planner_setup_page',
@@ -196,6 +197,7 @@ test('planner_setup_page (wrong test location)', async ({ startClient }) => {
 });
 
 test('planner_setup_page (no test location)', async ({ startClient }) => {
+  await writeFiles({});
   const { client } = await startClient();
   expect(await client.callTool({
     name: 'planner_setup_page',
