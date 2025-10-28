@@ -11212,6 +11212,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
     };
 
     /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -11293,6 +11298,11 @@ export interface ElementHandle<T=Node> extends JSHandle<T> {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12789,6 +12799,11 @@ export interface Locator {
     };
 
     /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -12904,6 +12919,11 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends intermediate `mousemove` events.
+     */
+    steps?: number;
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`

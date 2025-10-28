@@ -103,6 +103,11 @@ A selector to search for an element to drop onto. If there are multiple elements
 A point to use relative to the top-left corner of element padding box. If not specified, uses some visible point of the
 element.
 
+## input-move-steps
+- `steps` <[int]>
+
+Defaults to 1. Sends intermediate `mousemove` events.
+
 ## input-modifiers
 - `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>>
 

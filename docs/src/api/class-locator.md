@@ -466,6 +466,8 @@ await page.Locator("canvas").ClickAsync(new() {
 });
 ```
 
+### option: Locator.click.steps = %%-input-move-steps-%%
+* since: v1.14
 
 ### option: Locator.click.button = %%-input-button-%%
 * since: v1.14
@@ -552,6 +554,9 @@ When all steps combined have not finished during the specified [`option: timeout
 :::note
 `element.dblclick()` dispatches two `click` events and a single `dblclick` event.
 :::
+
+### option: Locator.dblclick.steps = %%-input-move-steps-%%
+* since: v1.14
 
 ### option: Locator.dblclick.button = %%-input-button-%%
 * since: v1.14

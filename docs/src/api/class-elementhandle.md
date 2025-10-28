@@ -204,6 +204,9 @@ If the element is detached from the DOM at any moment during the action, this me
 When all steps combined have not finished during the specified [`option: timeout`], this method throws a
 [TimeoutError]. Passing zero timeout disables this.
 
+### option: ElementHandle.click.steps = %%-input-move-steps-%%
+* since: v1.8
+
 ### option: ElementHandle.click.button = %%-input-button-%%
 * since: v1.8
 
@@ -259,6 +262,9 @@ When all steps combined have not finished during the specified [`option: timeout
 :::note
 `elementHandle.dblclick()` dispatches two `click` events and a single `dblclick` event.
 :::
+
+### option: ElementHandle.dblclick.steps = %%-input-move-steps-%%
+* since: v1.8
 
 ### option: ElementHandle.dblclick.button = %%-input-button-%%
 * since: v1.8
