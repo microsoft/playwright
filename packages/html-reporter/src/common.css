@@ -312,6 +312,10 @@ dialog {
   margin-right: 0;
 }
 
+.subnav-item .octicon.octicon-clock {
+  margin-right: 0;
+  color: var(--color-fg-default) !important;
+}
 @media only screen and (max-width: 600px) {
   .subnav-item, .form-control {
     border-radius: 0 !important;
