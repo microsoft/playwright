@@ -32,6 +32,7 @@ import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 import type * as channels from '@protocol/channels';
+import { ProtocolError } from '../protocolError';
 
 
 export class BidiBrowser extends Browser {
@@ -69,10 +70,18 @@ export class BidiBrowser extends Browser {
       ],
     });
 
-    await browser._browserSession.send('network.addDataCollector', {
-      dataTypes: [bidi.Network.DataType.Response],
-      maxEncodedDataSize: 20_000_000, // same default as in CDP: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/inspector/inspector_network_agent.cc;l=134;drc=4128411589187a396829a827f59a655bed876aa7
-    });
+    try {
+      await browser._browserSession.send('network.addDataCollector', {
+        dataTypes: [bidi.Network.DataType.Response],
+        maxEncodedDataSize: 20_000_000, // same default as in CDP: https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/core/inspector/inspector_network_agent.cc;l=134;drc=4128411589187a396829a827f59a655bed876aa7
+      });
+    } catch (err) {
+      // Tolerate Protocol error for network.addDataCollector, since
+      // Firefox 140 ESR doesn't implement it yet.
+      if (!(err instanceof ProtocolError)) {
+        throw err;
+      }
+    }
 
     if (options.persistent) {
       const context = new BidiBrowserContext(browser, undefined, options.persistent);
@@ -377,7 +386,14 @@ export class BidiBrowserContext extends BrowserContext {
       this._browser._browserSession.send('emulation.setScreenOrientationOverride', {
         screenOrientation: getScreenOrientation(!!this._options.isMobile, this._options.viewport),
         userContexts: [this._userContextId()],
-      })
+      }).catch((err) => {
+          // Tolerate Protocol error for
+          // emulation.setScreenOrientationOverride, Firefox 140 ESR
+          // doesn't implement it yet.
+          if (!(err instanceof ProtocolError)) {
+            throw err;
+          }
+        })
     ]);
   }
 
