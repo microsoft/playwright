@@ -497,7 +497,7 @@ await page.Locator("canvas").ClickAsync(new() {
 ### option: Locator.click.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
-### option: Locator.click.moveSteps = %%-input-mousemove-steps-%%
+### option: Locator.click.steps = %%-input-mousemove-steps-%%
 * since: v1.57
 
 ## async method: Locator.count
@@ -583,7 +583,7 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: Locator.dblclick.trial = %%-input-trial-with-modifiers-%%
 * since: v1.14
 
-### option: Locator.dblclick.moveSteps = %%-input-mousemove-steps-%%
+### option: Locator.dblclick.steps = %%-input-mousemove-steps-%%
 * since: v1.57
 
 ## method: Locator.describe

@@ -3518,6 +3518,7 @@ export type ElementHandleClickParams = {
   clickCount?: number,
   timeout: number,
   trial?: boolean,
+  steps?: number,
 };
 export type ElementHandleClickOptions = {
   force?: boolean,
@@ -3528,6 +3529,7 @@ export type ElementHandleClickOptions = {
   button?: 'left' | 'right' | 'middle',
   clickCount?: number,
   trial?: boolean,
+  steps?: number,
 };
 export type ElementHandleClickResult = void;
 export type ElementHandleContentFrameParams = {};
@@ -3543,6 +3545,7 @@ export type ElementHandleDblclickParams = {
   button?: 'left' | 'right' | 'middle',
   timeout: number,
   trial?: boolean,
+  steps?: number,
 };
 export type ElementHandleDblclickOptions = {
   force?: boolean,
@@ -3551,6 +3554,7 @@ export type ElementHandleDblclickOptions = {
   delay?: number,
   button?: 'left' | 'right' | 'middle',
   trial?: boolean,
+  steps?: number,
 };
 export type ElementHandleDblclickResult = void;
 export type ElementHandleDispatchEventParams = {

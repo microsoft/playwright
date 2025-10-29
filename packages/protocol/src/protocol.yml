@@ -3014,6 +3014,7 @@ ElementHandle:
         clickCount: int?
         timeout: float
         trial: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true
@@ -3049,6 +3050,7 @@ ElementHandle:
           - middle
         timeout: float
         trial: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true
