@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes } from 'playwright-core/lib/utils';
+import { captureRawStack, monotonicTime, sanitizeForFilePath, stringifyStackFrames, currentZone, createGuid, escapeWithQuotes, ManualPromise } from 'playwright-core/lib/utils';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -29,7 +29,7 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -68,6 +68,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _onTestPaused: (payload: TestPausedPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
@@ -76,14 +77,15 @@ export class TestInfoImpl implements TestInfo {
   readonly _tracing: TestTracing;
   readonly _uniqueSymbol;
 
-  _wasInterrupted = false;
+  private _interruptedPromise = new ManualPromise<void>();
   _lastStepId = 0;
   private readonly _requireFile: string;
   readonly _projectInternal: FullProjectInternal;
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunctions: (() => Promise<void>)[] = [];
+  _onDidFinishTestFunctionCallback?: () => Promise<void>;
+  _onDidPauseTestCallback?: () => Promise<{ extraData: any, dispose: () => Promise<void> }>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -161,11 +163,13 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
+    onTestPaused: (payload: TestPausedPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
+    this._onTestPaused = onTestPaused;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
     this._requireFile = test?._requireFile ?? '';
@@ -383,7 +387,7 @@ export class TestInfoImpl implements TestInfo {
 
   _interrupt() {
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
-    this._wasInterrupted = true;
+    this._interruptedPromise.resolve();
     this._timeoutManager.interrupt();
     // Do not overwrite existing failure (for example, unhandled rejection) with "interrupted".
     if (this.status === 'passed')
@@ -437,7 +441,7 @@ export class TestInfoImpl implements TestInfo {
     } catch (error) {
       // When interrupting, we arrive here with a TimeoutManagerError, but we should not
       // consider it a timeout.
-      if (!this._wasInterrupted && (error instanceof TimeoutManagerError))
+      if (!this._interruptedPromise.isDone() && (error instanceof TimeoutManagerError))
         this._failWithError(error);
       throw error;
     }
@@ -454,6 +458,17 @@ export class TestInfoImpl implements TestInfo {
 
   _setDebugMode() {
     this._timeoutManager.setIgnoreTimeouts();
+  }
+
+  async _didFinishTestFunction() {
+    const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
+    if (shouldPause) {
+      const customHandler = await this._onDidPauseTestCallback?.();
+      this._onTestPaused({ errors: this._isFailure() ? this.errors : [], extraData: customHandler?.extraData });
+      await this._interruptedPromise;
+      await customHandler?.dispose();
+    }
+    await this._onDidFinishTestFunctionCallback?.();
   }
 
   // ------------ TestInfo methods ------------
@@ -620,14 +635,6 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
-  }
-
-  _pauseOnError(): boolean {
-    return this._workerParams.pauseOnError;
-  }
-
-  _pauseAtEnd(): boolean {
-    return this._workerParams.pauseAtEnd;
   }
 }
 

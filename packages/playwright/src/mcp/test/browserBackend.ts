@@ -15,8 +15,6 @@
  */
 
 import * as mcp from '../sdk/exports';
-import { currentTestInfo } from '../../common/globals';
-import { stripAnsiEscapes } from '../../util';
 import { defaultConfig, FullConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { Tab } from '../browser/tab';
@@ -24,22 +22,15 @@ import { Tab } from '../browser/tab';
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { BrowserContextFactory } from '../browser/browserContextFactory';
-import type { ClientInfo } from '../sdk/server';
+import type { TestInfo } from '../../../test';
 
-export async function runBrowserBackendAtEnd(context: playwright.BrowserContext, errorMessage?: string) {
-  const testInfo = currentTestInfo();
-  if (!testInfo)
-    return;
+export type TestPausedExtraData = {
+  mcpUrl: string;
+  contextState: string;
+};
 
-  const shouldPause = errorMessage ? testInfo?._pauseOnError() : testInfo?._pauseAtEnd();
-  if (!shouldPause)
-    return;
-
+export async function runBrowserBackendOnTestPause(testInfo: TestInfo, context: playwright.BrowserContext) {
   const lines: string[] = [];
-  if (errorMessage)
-    lines.push(`### Paused on error:`, stripAnsiEscapes(errorMessage));
-  else
-    lines.push(`### Paused at end of test. ready for interaction`);
 
   for (let i = 0; i < context.pages().length; i++) {
     const page = context.pages()[i];
@@ -51,7 +42,7 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
         `- Page Title: ${await page.title()}`.trim()
     );
     // Only print console errors when pausing on error, not when everything works as expected.
-    let console = errorMessage ? await Tab.collectConsoleMessages(page) : [];
+    let console = testInfo.errors.length ? await Tab.collectConsoleMessages(page) : [];
     console = console.filter(msg => !msg.type || msg.type === 'error');
     if (console.length) {
       lines.push('- Console Messages:');
@@ -66,21 +57,29 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
     );
   }
 
-  lines.push('');
-  if (errorMessage)
-    lines.push(`### Task`, `Try recovering from the error prior to continuing`);
-
   const config: FullConfig = {
     ...defaultConfig,
     capabilities: ['testing'],
   };
 
-  await mcp.runOnPauseBackendLoop(new BrowserServerBackend(config, identityFactory(context)), lines.join('\n'));
+  const factory: mcp.ServerBackendFactory = {
+    name: 'Playwright',
+    nameInConfig: 'playwright',
+    version: '0.0.0',
+    create: () => new BrowserServerBackend(config, identityFactory(context))
+  };
+  const httpServer = await mcp.startHttpServer({ port: 0 });
+  const mcpUrl = await mcp.installHttpTransport(httpServer, factory, true);
+  const dispose = async () => {
+    await new Promise(cb => httpServer.close(cb));
+  };
+  const extraData = { mcpUrl, contextState: lines.join('\n') } as TestPausedExtraData;
+  return { extraData, dispose };
 }
 
 function identityFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
   return {
-    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+    createContext: async (clientInfo: mcp.ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
       return {
         browserContext,
         close: async () => {}
