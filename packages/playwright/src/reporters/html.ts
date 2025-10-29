@@ -150,10 +150,10 @@ class HtmlReporter implements ReporterV2 {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = !this._options._isTestServer && (this._open === 'always' || (!ok && this._open === 'on-failure'));
+    const shouldOpen = !!process.stdin.isTTY && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
-    } else if (this._options._mode === 'test' && !this._options._isTestServer) {
+    } else if (this._options._mode === 'test' && !!process.stdin.isTTY) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';

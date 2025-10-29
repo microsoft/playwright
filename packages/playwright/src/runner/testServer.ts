@@ -40,6 +40,8 @@ const originalStdoutWrite = process.stdout.write;
 // eslint-disable-next-line no-restricted-properties
 const originalStderrWrite = process.stderr.write;
 
+const originalStdinIsTTY = process.stdin.isTTY;
+
 class TestServer {
   private _configLocation: ConfigLocation;
   private _configCLIOverrides: ConfigCLIOverrides;
@@ -250,10 +252,17 @@ export class TestServerDispatcher implements TestServerInterface {
       };
       process.stdout.write = stdoutWrite;
       process.stderr.write = stderrWrite;
+
+      // Override isTTY to prevent reporters from thinking they can block and wait for user SIGINT.
+      // We don't have a test for this, so be careful!
+      // https://github.com/microsoft/playwright/issues/37867
+      // @ts-expect-error types are wrong, isTTY can be undefined
+      process.stdin.isTTY = undefined;
     } else {
       debug.log = originalDebugLog;
       process.stdout.write = originalStdoutWrite;
       process.stderr.write = originalStderrWrite;
+      process.stdin.isTTY = originalStdinIsTTY;
     }
     /* eslint-enable no-restricted-properties */
   }
