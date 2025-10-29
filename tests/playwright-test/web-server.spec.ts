@@ -946,3 +946,81 @@ test('should throw helpful error when command is empty', async ({ runInlineTest 
   expect(result.exitCode).toBe(1);
   expect(result.output).toContain('config.webServer.command cannot be empty');
 });
+
+test('should wait for stdout', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'server.js': `
+      setTimeout(() => { console.log('server started'); }, 1000);
+      setTimeout(() => {}, 100000);
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: [
+          {
+            command: 'node server.js',
+            stdout: 'pipe',
+            wait: { stdout: /started/ },
+          }
+        ],
+      };
+    `,
+  }, undefined);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('server started');
+});
+
+test('should wait for stderr', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {});
+    `,
+    'server.js': `
+      setTimeout(() => { console.error('server started'); }, 1000);
+      setTimeout(() => {}, 100000);
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: [{
+          command: 'node server.js',
+          stdout: 'pipe',
+          wait: { stderr: /started/ },
+        }],
+      };
+    `,
+  }, undefined);
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toContain('server started');
+});
+
+test('should wait for time', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({}) => {
+        console.log('TEST: ' + Date.now());
+      });
+    `,
+    'server.js': `
+      console.log('SETUP: ' + Date.now());
+      setTimeout(() => {}, 100000);
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        webServer: [{
+          command: 'node server.js',
+          stdout: 'pipe',
+          wait: { time: 2000 },
+        }],
+      };
+    `,
+  }, undefined);
+  const [, setupTime] = /SETUP: (\d+)/.exec(result.output)!;
+  const [, testTime] = /TEST: (\d+)/.exec(result.output)!;
+  expect(+testTime - +setupTime).toBeGreaterThan(2000);
+  expect(result.exitCode).toBe(0);
+});

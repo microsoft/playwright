@@ -10171,6 +10171,17 @@ interface TestConfigWebServer {
   stdout?: "pipe"|"ignore";
 
   /**
+   * Consider command started only when given output has been produced or a time in milliseconds has passed.
+   */
+  wait?: {
+    stdout?: RegExp;
+
+    stderr?: RegExp;
+
+    time?: number;
+  };
+
+  /**
    * How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
    */
   timeout?: number;
