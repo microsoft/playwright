@@ -187,33 +187,45 @@ export const SnapshotView: React.FunctionComponent<{
   </div>;
 };
 
+const SNAPSHOT_WRAPPER_PADDING = 10 * 2;
+const WINDOW_HEADER_HEIGHT = 40;
+const MIN_BROWSER_FRAME_SCALED_WIDTH = 100;
+const MIN_BROWSER_FRAME_SCALED_HEIGHT = 80 - SNAPSHOT_WRAPPER_PADDING;
+
 const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
   snapshotInfo: SnapshotInfo,
 }>> = ({ snapshotInfo, children }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
-  const windowHeaderHeight = 40;
   const snapshotContainerSize = {
     width: snapshotInfo.viewport.width,
     height: snapshotInfo.viewport.height,
   };
 
-  const renderedBrowserFrameSize = {
+  const renderedBrowserExpectedFrameSize = {
     width: Math.max(snapshotContainerSize.width, 480),
-    height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
+    height: Math.max(snapshotContainerSize.height + WINDOW_HEADER_HEIGHT, 320),
   };
 
-  const scale = Math.min(measure.width / renderedBrowserFrameSize.width, measure.height / renderedBrowserFrameSize.height, 1);
+  const actualMeasuredHeight = Math.max(measure.height - SNAPSHOT_WRAPPER_PADDING, 0);
+  // Calculate ideal size for the snapshot size (including browser frame) to fit within the bounds
+  const idealScale = Math.min(measure.width / renderedBrowserExpectedFrameSize.width, actualMeasuredHeight / renderedBrowserExpectedFrameSize.height, 1);
+  // Prevent window from scaling below a minimum size
+  const actualWidth = Math.max(idealScale * renderedBrowserExpectedFrameSize.width, MIN_BROWSER_FRAME_SCALED_WIDTH);
+  const actualHeight = Math.max(idealScale * renderedBrowserExpectedFrameSize.height, MIN_BROWSER_FRAME_SCALED_HEIGHT);
+  // Using new minimum sizes, calculate the final scale
+  const actualScale = Math.min(actualWidth / renderedBrowserExpectedFrameSize.width, actualHeight / renderedBrowserExpectedFrameSize.height);
   const translate = {
-    x: (measure.width - renderedBrowserFrameSize.width) / 2,
-    y: (measure.height - renderedBrowserFrameSize.height) / 2,
+    // Don't let the browser clip out of bounds when it's at the min size
+    x: (Math.max(measure.width, MIN_BROWSER_FRAME_SCALED_WIDTH) - renderedBrowserExpectedFrameSize.width) / 2,
+    y: (Math.max(actualMeasuredHeight, MIN_BROWSER_FRAME_SCALED_HEIGHT) - renderedBrowserExpectedFrameSize.height) / 2,
   };
 
   return <div ref={ref} className='snapshot-wrapper'>
     <div className='snapshot-container' style={{
-      width: renderedBrowserFrameSize.width + 'px',
-      height: renderedBrowserFrameSize.height + 'px',
-      transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
+      width: renderedBrowserExpectedFrameSize.width + 'px',
+      height: renderedBrowserExpectedFrameSize.height + 'px',
+      transform: `translate(${translate.x}px, ${translate.y}px) scale(${actualScale})`,
     }}>
       <BrowserFrame url={snapshotInfo.url} />
       <div className='snapshot-browser-body'>
