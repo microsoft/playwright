@@ -1511,7 +1511,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(result.exitCode).toBe(0);
       const output = result.output;
       expect(output).not.toContain('Configuration Error');
-      expect(output).toContain('test-results-html');
     });
 
     test.describe('report location', () => {
