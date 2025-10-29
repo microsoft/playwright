@@ -118,10 +118,6 @@ export class ClaudeGenerator {
     for (const agent of agents)
       await writeFile(`.claude/agents/${agent.header.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
-    await deleteFile(`.claude/agents/playwright-test-planner.md`, 'legacy planner agent');
-    await deleteFile(`.claude/agents/playwright-test-generator.md`, 'legacy generator agent');
-    await deleteFile(`.claude/agents/playwright-test-healer.md`, 'legacy healer agent');
-
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
         'playwright-test': {
@@ -179,10 +175,6 @@ export class OpencodeGenerator {
       prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
       await writeFile(`.opencode/prompts/${agent.header.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
     }
-
-    await deleteFile(`.opencode/prompts/playwright-test-planner.md`, 'legacy planner agent');
-    await deleteFile(`.opencode/prompts/playwright-test-generator.md`, 'legacy generator agent');
-    await deleteFile(`.opencode/prompts/playwright-test-healer.md`, 'legacy healer agent');
 
     await writeFile('opencode.json', OpencodeGenerator.configuration(agents), '🔧', 'opencode configuration');
 

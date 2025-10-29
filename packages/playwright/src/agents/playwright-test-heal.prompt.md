@@ -1,5 +1,5 @@
 ---
-agent: pwt-healer
+agent: playwright-test-healer
 description: Fix tests
 ---
 
