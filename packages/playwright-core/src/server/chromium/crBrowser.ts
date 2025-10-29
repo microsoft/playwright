@@ -49,6 +49,7 @@ export class CRBrowser extends Browser {
   _serviceWorkers = new Map<string, CRServiceWorker>();
   _devtools?: CRDevTools;
   private _version = '';
+  private _majorVersion = 0;
 
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
@@ -68,6 +69,10 @@ export class CRBrowser extends Browser {
 
     const version = await session.send('Browser.getVersion');
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
+    try {
+      browser._majorVersion = +browser._version.split('.')[0];
+    } catch {
+    }
     browser._userAgent = version.userAgent;
     // We don't trust the option as it may lie in case of connectOverCDP where remote browser
     // may have been launched with different options.
@@ -128,6 +133,10 @@ export class CRBrowser extends Browser {
 
   version(): string {
     return this._version;
+  }
+
+  majorVersion() {
+    return this._majorVersion;
   }
 
   userAgent(): string {

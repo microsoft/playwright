@@ -36,6 +36,10 @@ export class CRServiceWorker extends Worker {
     session.once('Runtime.executionContextCreated', event => {
       this.createExecutionContext(new CRExecutionContext(session, event.context));
     });
+    if (this.browserContext._browser.majorVersion() >= 143)
+      session.on('Inspector.workerScriptLoaded', () => this.workerScriptLoaded());
+    else
+      this.workerScriptLoaded();
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
       this.updateRequestInterception();

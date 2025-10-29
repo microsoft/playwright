@@ -870,22 +870,27 @@ export class Worker extends SdkObject {
   };
 
   readonly url: string;
-  private _executionContextPromise: Promise<js.ExecutionContext>;
-  private _executionContextCallback: (value: js.ExecutionContext) => void;
+  private _executionContextPromise = new ManualPromise<js.ExecutionContext>();
+  private _workerScriptLoaded = false;
   existingExecutionContext: js.ExecutionContext | null = null;
   readonly openScope = new LongStandingScope();
 
   constructor(parent: SdkObject, url: string) {
     super(parent, 'worker');
     this.url = url;
-    this._executionContextCallback = () => {};
-    this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   createExecutionContext(delegate: js.ExecutionContextDelegate) {
     this.existingExecutionContext = new js.ExecutionContext(this, delegate, 'worker');
-    this._executionContextCallback(this.existingExecutionContext);
+    if (this._workerScriptLoaded)
+      this._executionContextPromise.resolve(this.existingExecutionContext);
     return this.existingExecutionContext;
+  }
+
+  workerScriptLoaded() {
+    this._workerScriptLoaded = true;
+    if (this.existingExecutionContext)
+      this._executionContextPromise.resolve(this.existingExecutionContext);
   }
 
   didClose() {

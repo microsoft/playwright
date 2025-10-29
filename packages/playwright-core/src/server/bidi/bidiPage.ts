@@ -126,6 +126,7 @@ export class BidiPage implements PageDelegate {
       const delegate = new BidiExecutionContext(this._session, realmInfo);
       const worker = new Worker(this._page, realmInfo.origin);
       this._realmToWorkerContext.set(realmInfo.realm, worker.createExecutionContext(delegate));
+      worker.workerScriptLoaded();
       this._page.addWorker(realmInfo.realm, worker);
       return;
     }

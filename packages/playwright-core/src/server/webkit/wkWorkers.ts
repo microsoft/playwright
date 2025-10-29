@@ -49,6 +49,7 @@ export class WKWorkers {
         });
         this._workerSessions.set(event.workerId, workerSession);
         worker.createExecutionContext(new WKExecutionContext(workerSession, undefined));
+        worker.workerScriptLoaded();
         this._page.addWorker(event.workerId, worker);
         workerSession.on('Console.messageAdded', event => this._onConsoleMessage(worker, event));
         Promise.all([
