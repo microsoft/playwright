@@ -24,6 +24,7 @@ import type { CIInfo, GitCommitInfo, MetadataWithCommitInfo } from '@testIsomorp
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { linkifyText } from '@web/renderUtils';
 import { SearchParamsContext } from './links';
+import { formatUrl } from './utils';
 
 class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, { error: Error | null, errorInfo: React.ErrorInfo | null }> {
   override state: { error: Error | null, errorInfo: React.ErrorInfo | null } = {
@@ -90,7 +91,7 @@ const CiInfoView: React.FC<{ info: CIInfo }> = ({ info }) => {
   const link = info.prHref || info.commitHref;
   return <div className='metadata-section' role='list'>
     <div role='listitem'>
-      <a href={link} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>
+      <a href={formatUrl(link)} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>
     </div>
   </div>;
 };
@@ -105,7 +106,7 @@ const GitCommitInfoView: React.FC<{ ci?: CIInfo, commit: GitCommitInfo }> = ({ c
 
   return <div className='metadata-section' role='list'>
     <div role='listitem'>
-      {link && <a href={link} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>}
+      {link && <a href={formatUrl(link)} target='_blank' rel='noopener noreferrer' title={title}>{title}</a>}
       {!link && <span title={title}>{title}</span>}
     </div>
     <div role='listitem' className='hbox'>

@@ -25,6 +25,7 @@ import { trace } from './icons';
 import { Expandable } from './expandable';
 import { Label } from './labels';
 import { filterWithQuery } from './filter';
+import { formatUrl } from './utils';
 
 export function navigate(href: string | URL) {
   window.history.pushState({}, '', href);
@@ -52,7 +53,7 @@ export const Link: React.FunctionComponent<LinkProps> = ({ click, ctrlClick, chi
   return <a {...rest} style={{ textDecoration: 'none', color: 'var(--color-fg-default)', cursor: 'pointer' }} onClick={e => {
     if (click) {
       e.preventDefault();
-      navigate(e.metaKey || e.ctrlKey ? ctrlClick || click : click);
+      navigate(formatUrl(e.metaKey || e.ctrlKey ? ctrlClick || click : click));
     }
   }}>{children}</a>;
 };
@@ -84,8 +85,8 @@ export const AttachmentLink: React.FunctionComponent<{
       {attachment.contentType === kMissingContentType ? icons.warning() : icons.attachment()}
       {attachment.path && (
         openInNewTab
-          ? <a href={href || attachment.path} target='_blank' rel='noreferrer'>{linkName || attachment.name}</a>
-          : <a href={href || attachment.path} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>
+          ? <a href={formatUrl(href || attachment.path)} target='_blank' rel='noreferrer'>{linkName || attachment.name}</a>
+          : <a href={formatUrl(href || attachment.path)} download={downloadFileNameForAttachment(attachment)}>{linkName || attachment.name}</a>
       )}
       {!attachment.path && (
         openInNewTab
@@ -137,7 +138,7 @@ export const TraceLink: React.FC<{ test: TestCaseSummary, trailingSeparator?: bo
   return (
     <>
       <LinkBadge
-        href={generateTraceUrl(firstTraces)}
+        href={formatUrl(generateTraceUrl(firstTraces))}
         title='View Trace'
         className='button trace-link'
         dim={dim}>
