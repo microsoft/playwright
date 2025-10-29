@@ -340,7 +340,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       config.preOnlyTestFilters.push(test => testIdSet.has(test.id));
     }
 
-    const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test', true);
+    const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test');
     const reporter = new InternalReporter([...configReporters, userReporter]);
     const stop = new ManualPromise();
     const tasks = [
@@ -453,7 +453,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal): Promise
   // Legacy webServer support.
   webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
-  const reporters = await createReporters(config, listOnly ? 'list' : 'test', false);
+  const reporters = await createReporters(config, listOnly ? 'list' : 'test');
   const lastRun = new LastRunReporter(config);
   if (config.cliLastFailed)
     await lastRun.filterLastFailed();
