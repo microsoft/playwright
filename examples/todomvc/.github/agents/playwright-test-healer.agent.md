@@ -1,5 +1,5 @@
 ---
-name: pwt-healer
+name: playwright-test-healer
 description: Use this agent when you need to debug and fix failing Playwright tests
 tools:
   - search

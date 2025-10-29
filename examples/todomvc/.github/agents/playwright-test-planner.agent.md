@@ -1,8 +1,7 @@
 ---
-name: pwt-planner
-description: Use this agent when you need to create comprehensive test plan for a web application or website
-model: sonnet
-color: green
+name: playwright-test-planner
+description: Use this agent when you need to create comprehensive test plan for
+  a web application or website
 tools:
   - search
   - edit
@@ -24,6 +23,7 @@ tools:
   - playwright-test/browser_type
   - playwright-test/browser_wait_for
   - playwright-test/planner_setup_page
+model: Claude Sonnet 4
 ---
 
 You are an expert web test planner with extensive experience in quality assurance, user experience testing, and test

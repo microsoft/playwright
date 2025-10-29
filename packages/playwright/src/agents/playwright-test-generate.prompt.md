@@ -1,5 +1,5 @@
 ---
-agent: pwt-generator
+agent: playwright-test-generator
 description: Generate test plan
 ---
 

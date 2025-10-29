@@ -8,7 +8,7 @@ Parameters:
 - Seed file (optional): the seed file to use, defaults to `tests/seed.spec.ts`
 - Test plan file (optional): the test plan file to write, under `specs/` folder.
 
-1. Call #pwt-planner subagent with prompt:
+1. Call #playwright-test-planner subagent with prompt:
 
 <plan>
   <task-text><!-- the task --></task-text>
@@ -16,7 +16,7 @@ Parameters:
   <plan-file><!-- path to test plan file to generate --></plan-file>
 </plan>
 
-2. For each test case from the test plan file (1.1, 1.2, ...), one after another, not in parallel, call #pwt-generator subagent with prompt:
+2. For each test case from the test plan file (1.1, 1.2, ...), one after another, not in parallel, call #playwright-test-generator subagent with prompt:
 
 <generate>
   <test-suite><!-- Verbatim name of the test spec group w/o ordinal like "Multiplication tests" --></test-suite>
@@ -26,6 +26,6 @@ Parameters:
   <body><!-- Test case content including steps and expectations --></body>
 </generate>
 
-3. Call #pwt-healer subagent with prompt:
+3. Call #playwright-test-healer subagent with prompt:
 
 <heal>Run all tests and fix the failing ones one after another.</heal>
