@@ -17,7 +17,7 @@
 import type { HTMLReportOptions, TestAttachment, TestCase, TestResult, TestStep } from './types';
 import * as React from 'react';
 import { TreeItem } from './treeItem';
-import { msToString } from './utils';
+import { formatUrl, msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
 import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './links';
@@ -144,8 +144,8 @@ export const TestResultView: React.FC<{
     {!!screenshots.length && <AutoChip header='Screenshots' revealOnAnchorId={screenshotAnchors}>
       {screenshots.map((a, i) => {
         return <Anchor key={`screenshot-${i}`} id={`attachment-${result.attachments.indexOf(a)}`}>
-          <a href={a.path}>
-            <img className='screenshot' src={a.path} />
+          <a href={formatUrl(a.path)}>
+            <img className='screenshot' src={formatUrl(a.path)} />
           </a>
           <AttachmentLink attachment={a} result={result}></AttachmentLink>
         </Anchor>;
@@ -154,7 +154,7 @@ export const TestResultView: React.FC<{
 
     {!!traces.length && <Anchor id='attachment-trace'><AutoChip header='Traces' revealOnAnchorId='attachment-trace'>
       {<div>
-        <a href={generateTraceUrl(traces)}>
+        <a href={formatUrl(generateTraceUrl(traces))}>
           <img className='screenshot' src={traceImage} style={{ width: 192, height: 117, marginLeft: 20 }} />
         </a>
         {traces.map((a, i) => <AttachmentLink key={`trace-${i}`} attachment={a} result={result} linkName={traces.length === 1 ? 'trace' : `trace-${i + 1}`}></AttachmentLink>)}
@@ -164,7 +164,7 @@ export const TestResultView: React.FC<{
     {!!videos.length && <Anchor id='attachment-video'><AutoChip header='Videos' revealOnAnchorId='attachment-video'>
       {videos.map(a => <div key={a.path}>
         <video controls>
-          <source src={a.path} type={a.contentType}/>
+          <source src={formatUrl(a.path)} type={a.contentType}/>
         </video>
         <AttachmentLink attachment={a} result={result}></AttachmentLink>
       </div>)}
@@ -195,7 +195,13 @@ const StepTreeItem: React.FC<{
 }> = ({ test, step, result, depth }) => {
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
-    {step.attachments.length > 0 && <a style={{ float: 'right' }} title={`reveal attachment`} href={testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` })} onClick={evt => { evt.stopPropagation(); }}>{icons.attachment()}</a>}
+    {step.attachments.length > 0 && <a
+      style={{ float: 'right' }}
+      title={`reveal attachment`}
+      href={formatUrl(testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` }))}
+      onClick={evt => { evt.stopPropagation(); }}>
+      {icons.attachment()}
+    </a>}
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span>{step.title}</span>
     {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}

@@ -47,3 +47,23 @@ export function hashStringToInt(str: string) {
     hash = str.charCodeAt(i) + ((hash << 8) - hash);
   return Math.abs(hash % 6);
 }
+
+// Preserves any query parameters that could be used for serving the report from storage,
+// or for anything else. We don't use any query params in the report anyway.
+export function formatUrl(url: string): string;
+export function formatUrl(url: string | undefined): string | undefined;
+export function formatUrl(url: string | undefined): string | undefined {
+  if (!url)
+    return url;
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (parsed.origin === window.location.origin) {
+      for (const [key, value] of new URLSearchParams(window.location.search))
+        parsed.searchParams.append(key, value);
+      return parsed.toString();
+    }
+    return url;
+  } catch {
+    return url;
+  }
+}
