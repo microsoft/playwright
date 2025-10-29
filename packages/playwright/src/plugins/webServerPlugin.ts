@@ -16,7 +16,7 @@
 import net from 'net';
 import path from 'path';
 
-import { launchProcess, isURLAvailable, monotonicTime, raceAgainstDeadline } from 'playwright-core/lib/utils';
+import { launchProcess, isURLAvailable, monotonicTime, raceAgainstDeadline, ManualPromise } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
@@ -29,6 +29,7 @@ import type { ReporterV2 } from '../reporters/reporterV2';
 export type WebServerPluginOptions = {
   command: string;
   url?: string;
+  wait?: { stdout?: RegExp, stderr?: RegExp, time?: number };
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
   gracefulShutdown?: { signal: 'SIGINT' | 'SIGTERM', timeout?: number };
@@ -55,6 +56,8 @@ export class WebServerPlugin implements TestRunnerPlugin {
   private _options: WebServerPluginOptions;
   private _checkPortOnly: boolean;
   private _reporter?: ReporterV2;
+  private _waitForStdioPromise: ManualPromise | undefined;
+
   name = 'playwright:webserver';
 
   constructor(options: WebServerPluginOptions, checkPortOnly: boolean) {
@@ -138,28 +141,62 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     debugWebServer(`Process started`);
 
+    if (this._options.wait?.stdout || this._options.wait?.stderr)
+      this._waitForStdioPromise = new ManualPromise();
+    let stdoutWaitCollector = this._options.wait?.stdout ? '' : undefined;
+    let stderrWaitCollector = this._options.wait?.stderr ? '' : undefined;
+
+    const resolveStdioPromise = () => {
+      stderrWaitCollector = undefined;
+      stdoutWaitCollector = undefined;
+      this._waitForStdioPromise?.resolve();
+    };
+
     launchedProcess.stderr!.on('data', data => {
+      if (stderrWaitCollector !== undefined) {
+        stderrWaitCollector += data.toString();
+        if (this._options.wait?.stderr?.test(stderrWaitCollector))
+          resolveStdioPromise();
+      }
+
       if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
         this._reporter!.onStdErr?.(prefixOutputLines(data.toString(), this._options.name));
     });
+
     launchedProcess.stdout!.on('data', data => {
+      if (stdoutWaitCollector !== undefined) {
+        stdoutWaitCollector += data.toString();
+        if (this._options.wait?.stdout?.test(stdoutWaitCollector))
+          resolveStdioPromise();
+      }
+
       if (debugWebServer.enabled || this._options.stdout === 'pipe')
         this._reporter!.onStdOut?.(prefixOutputLines(data.toString(), this._options.name));
     });
   }
 
   private async _waitForProcess() {
-    if (!this._isAvailableCallback) {
+    // options.time is immune to the timeout.
+    if (this._options.wait?.time)
+      await new Promise(resolve => setTimeout(resolve, this._options.wait!.time));
+
+    if (!this._isAvailableCallback && !this._waitForStdioPromise) {
       this._processExitedPromise.catch(() => {});
       return;
     }
+
     debugWebServer(`Waiting for availability...`);
     const launchTimeout = this._options.timeout || 60 * 1000;
     const cancellationToken = { canceled: false };
-    const { timedOut } = (await Promise.race([
-      raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), monotonicTime() + launchTimeout),
-      this._processExitedPromise,
-    ]));
+    const deadline = monotonicTime() + launchTimeout;
+
+    const racingPromises = [this._processExitedPromise];
+    if (this._isAvailableCallback)
+      racingPromises.push(raceAgainstDeadline(() => waitFor(this._isAvailableCallback!, cancellationToken), deadline));
+    if (this._waitForStdioPromise)
+      racingPromises.push(raceAgainstDeadline(() => this._waitForStdioPromise!, deadline));
+
+    const { timedOut } = await Promise.race(racingPromises);
     cancellationToken.canceled = true;
     if (timedOut)
       throw new Error(`Timed out waiting ${launchTimeout}ms from config.webServer.`);
