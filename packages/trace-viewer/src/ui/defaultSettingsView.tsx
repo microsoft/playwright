@@ -14,40 +14,47 @@
  * limitations under the License.
  */
 
+import * as React from 'react';
+import { type Setting, SettingsView } from './settingsView';
 import { useDarkModeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
-import type { Setting } from './settingsView';
 
-export function useDarkModeCheckbox(): Setting {
-  const [darkMode, setDarkMode] = useDarkModeSetting();
-  return {
-    type: 'check',
-    value: darkMode,
-    set: setDarkMode,
-    name: 'Dark mode'
-  };
-}
-
-export function useMergeFilesCheckbox(): Setting {
-  const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
-  return {
-    type: 'check',
-    value: mergeFiles,
-    set: setMergeFiles,
-    name: 'Merge files'
-  };
-}
-
-export function usePopulateCanvasCheckbox(): Setting {
+/**
+ * A view of the collection of standard settings used between various applications
+ */
+export const DefaultSettingsView: React.FC<{
+  location: 'ui-mode' | 'trace-viewer'
+}> = ({ location }) => {
   const [
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
-  return {
-    type: 'check',
-    value: shouldPopulateCanvasFromScreenshot,
-    set: setShouldPopulateCanvasFromScreenshot,
-    name: 'Display canvas content',
-    title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
-  };
-}
+  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
+
+  return (
+    <SettingsView
+      settings={[
+        {
+          type: 'check',
+          value: darkMode,
+          set: setDarkMode,
+          name: 'Dark mode'
+        },
+        ...(location === 'ui-mode' ? [{
+          type: 'check',
+          value: mergeFiles,
+          set: setMergeFiles,
+          name: 'Merge files'
+        } satisfies Setting] : []),
+        {
+          type: 'check',
+          value: shouldPopulateCanvasFromScreenshot,
+          set: setShouldPopulateCanvasFromScreenshot,
+          name: 'Display canvas content',
+          title: 'Attempt to display the captured canvas appearance in the snapshot preview. May not be accurate.',
+        },
+      ]}
+    />
+  );
+};

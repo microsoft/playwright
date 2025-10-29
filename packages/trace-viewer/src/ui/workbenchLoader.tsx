@@ -21,8 +21,7 @@ import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
 import { DialogToolbarButton } from '@web/components/dialogToolbarButton';
 import { Dialog } from '@web/shared/dialog';
-import { useDarkModeCheckbox, usePopulateCanvasCheckbox } from './defaultSettingsView';
-import { SettingsView } from './settingsView';
+import { DefaultSettingsView } from './defaultSettingsView';
 
 export const WorkbenchLoader: React.FunctionComponent<{
 }> = () => {
@@ -184,12 +183,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
       <DialogToolbarButton icon='settings-gear' title='Settings' dialogDataTestId='settings-toolbar-dialog'>
-        <SettingsView
-          settings={[
-            useDarkModeCheckbox(),
-            usePopulateCanvasCheckbox()
-          ]}
-        />
+        <DefaultSettingsView location='trace-viewer' />
       </DialogToolbarButton>
     </div>
     <Workbench model={model} inert={showFileUploadDropArea} />
