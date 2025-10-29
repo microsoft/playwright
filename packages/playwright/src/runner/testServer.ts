@@ -253,6 +253,7 @@ export class TestServerDispatcher implements TestServerInterface {
       process.stdout.write = stdoutWrite;
       process.stderr.write = stderrWrite;
 
+      // Override isTTY to prevent reporters from thinking they can block and wait for user SIGINT.
       // We don't have a test for this, so be careful!
       // https://github.com/microsoft/playwright/issues/37867
       // @ts-expect-error types are wrong, isTTY can be undefined
