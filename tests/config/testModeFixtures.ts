@@ -39,6 +39,7 @@ export const testModeTest = test.extend<TestModeTestFixtures, TestModeWorkerOpti
       'service': new DefaultTestMode(),
       'service2': new DefaultTestMode(),
       'service-grid': new DefaultTestMode(),
+      'wsl': new DefaultTestMode(),
       'driver': new DriverTestMode(),
     }[mode];
     const playwright = await testMode.setup();
