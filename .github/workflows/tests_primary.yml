@@ -25,7 +25,6 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  DEBUG_GIT_COMMIT_INFO: 1
 
 jobs:
   test_linux:
@@ -177,7 +176,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PWTEST_BOT_NAME: "vscode-extension"
-      DEBUG_GIT_COMMIT_INFO: ""
     steps:
     - uses: actions/checkout@v5
     - uses: actions/setup-node@v5

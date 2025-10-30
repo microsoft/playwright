@@ -47,6 +47,23 @@ test('seed test runs in first top-level project by default', async ({ startClien
   expect(fs.existsSync(path.join(baseDir, 'third', 'seed.spec.ts'))).toBe(false);
 });
 
+test('respects provided seed test', async ({ startClient }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {});
+    `,
+  });
+
+  const { client } = await startClient();
+  expect(await client.callTool({
+    name: 'planner_setup_page',
+    arguments: {
+      seedFile: 'a.test.ts',
+    },
+  })).toHaveTextResponse(expect.stringContaining(`### Paused at end of test. ready for interaction`));
+});
+
 test('seed test runs in first top-level project with dependencies', async ({ startClient }) => {
   const baseDir = await writeFiles({
     'playwright.config.ts': `

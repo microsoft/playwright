@@ -15,9 +15,9 @@
  */
 
 import { z } from '../sdk/bundle';
-import ListReporter from '../../reporters/list';
 import ListModeReporter from '../../reporters/listModeReporter';
 import { defineTestTool } from './testTool';
+import { createScreen } from './testContext';
 
 export const listTests = defineTestTool({
   schema: {
@@ -29,7 +29,7 @@ export const listTests = defineTestTool({
   },
 
   handle: async (context, _, progress) => {
-    const { screen } = context.createScreen(progress);
+    const { screen } = createScreen(progress);
     const reporter = new ListModeReporter({ screen, includeTestId: true });
     const testRunner = await context.createTestRunner();
     await testRunner.listTests(reporter, {});
@@ -51,15 +51,13 @@ export const runTests = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const { screen } = context.createScreen(progress);
-    const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
-    const testRunner = await context.createTestRunner();
-    await testRunner.runTests(reporter, {
-      locations: params.locations,
-      projects: params.projects,
-      disableConfigReporters: true,
-    });
+    await context.runWithGlobalSetup(async (testRunner, reporter) => {
+      await testRunner.runTests(reporter, {
+        locations: params.locations,
+        projects: params.projects,
+        disableConfigReporters: true,
+      });
+    }, progress);
 
     return { content: [] };
   },
@@ -80,19 +78,17 @@ export const debugTest = defineTestTool({
   },
 
   handle: async (context, params, progress) => {
-    const { screen } = context.createScreen(progress);
-    const configDir = context.configLocation.configDir;
-    const reporter = new ListReporter({ configDir, screen, includeTestId: true, prefixStdio: 'out' });
-    const testRunner = await context.createTestRunner();
-    await testRunner.runTests(reporter, {
-      headed: !context.options?.headless,
-      testIds: [params.test.id],
-      // For automatic recovery
-      timeout: 0,
-      workers: 1,
-      pauseOnError: true,
-      disableConfigReporters: true,
-    });
+    await context.runWithGlobalSetup(async (testRunner, reporter) => {
+      await testRunner.runTests(reporter, {
+        headed: !context.options?.headless,
+        testIds: [params.test.id],
+        // For automatic recovery
+        timeout: 0,
+        workers: 1,
+        pauseOnError: true,
+        disableConfigReporters: true,
+      });
+    }, progress);
 
     return { content: [] };
   },

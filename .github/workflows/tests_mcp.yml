@@ -23,7 +23,6 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  DEBUG_GIT_COMMIT_INFO: 1
 
 jobs:
   test_mcp:
