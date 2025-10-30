@@ -106,7 +106,8 @@ export const TabbedPaneTab: React.FunctionComponent<{
     onClick={() => onSelect?.(id)}
     role='tab'
     title={title}
-    aria-controls={ariaControls}>
+    aria-controls={ariaControls}
+    aria-selected={selected}>
     <div className='tabbed-pane-tab-label'>{title}</div>
     {!!count && <div className='tabbed-pane-tab-counter'>{count}</div>}
     {!!errorCount && <div className='tabbed-pane-tab-counter error'>{errorCount}</div>}

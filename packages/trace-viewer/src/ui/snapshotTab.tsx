@@ -65,15 +65,17 @@ export const SnapshotTabsView: React.FunctionComponent<{
   return <div className='snapshot-tab vbox'>
     <Toolbar>
       <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
-      {['action', 'before', 'after'].map(tab => {
-        return <TabbedPaneTab
-          key={tab}
-          id={tab}
-          title={renderTitle(tab)}
-          selected={snapshotTab === tab}
-          onSelect={() => setSnapshotTab(tab as 'action' | 'before' | 'after')}
-        ></TabbedPaneTab>;
-      })}
+      <div className='hbox' style={{ height: '100%' }} role='tablist'>
+        {(['action', 'before', 'after'] as const).map(tab => {
+          return <TabbedPaneTab
+            key={tab}
+            id={tab}
+            title={renderTitle(tab)}
+            selected={snapshotTab === tab}
+            onSelect={() => setSnapshotTab(tab)}
+          />;
+        })}
+      </div>
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
         const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
