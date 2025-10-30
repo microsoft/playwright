@@ -187,7 +187,12 @@ export function firstRootPath(clientInfo: ClientInfo): string | undefined {
     return undefined;
   const firstRootUri = clientInfo.roots[0]?.uri;
   const url = firstRootUri ? new URL(firstRootUri) : undefined;
-  return url ? fileURLToPath(url) : undefined;
+  try {
+    return url ? fileURLToPath(url) : undefined;
+  } catch (error) {
+    serverDebug(error);
+    return undefined;
+  }
 }
 
 function mergeTextParts(result: CallToolResult): CallToolResult {
