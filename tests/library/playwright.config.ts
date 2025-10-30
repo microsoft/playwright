@@ -83,7 +83,6 @@ if (channel === 'webkit-wsl') {
   webServer = {
     command: 'wsl.exe -d playwright -- bash -lc \'/home/pwuser/node/bin/npx playwright run-server --port=3777\'',
     url: 'http://localhost:3777',
-    reuseExistingServer: !process.env.CI,
   };
 }
 
