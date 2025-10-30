@@ -78,6 +78,14 @@ if (mode === 'service2') {
     }
   };
 }
+if (channel === 'webkit-wsl') {
+  connectOptions = { wsEndpoint: 'ws://localhost:3777/' };
+  webServer = {
+    command: 'wsl -d playwright -- npx playwright run-server --port=3777',
+    url: 'http://localhost:3777',
+    reuseExistingServer: !process.env.CI,
+  };
+}
 
 const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeWorkerOptions> = {
   testDir,
