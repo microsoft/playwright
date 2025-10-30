@@ -183,7 +183,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       {model.title && <div className='title'>{model.title}</div>}
       <div className='spacer'></div>
       <DialogToolbarButton icon='settings-gear' title='Settings' dialogDataTestId='settings-toolbar-dialog'>
-        <DefaultSettingsView />
+        <DefaultSettingsView location='trace-viewer' />
       </DialogToolbarButton>
     </div>
     <Workbench model={model} inert={showFileUploadDropArea} />
