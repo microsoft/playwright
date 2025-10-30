@@ -309,6 +309,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
   }
 
   get(target: Object, matcherName: string | symbol, receiver: any): any {
+    if (matcherName === 'toThrowError')
+      matcherName = 'toThrow';
     let matcher = Reflect.get(target, matcherName, receiver);
     if (typeof matcherName !== 'string')
       return matcher;
