@@ -7729,6 +7729,27 @@ interface AsymmetricMatchers {
    */
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
   /**
+   * `expect.arrayOf()` matches array of objects created from the
+   * [`constructor`](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-array-of-option-constructor)
+   * or a corresponding primitive type. Use it inside
+   * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
+   * to perform pattern matching.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Match instance of a class.
+   * class Example {}
+   * expect([new Example(), new Example()]).toEqual(expect.arrayOf(Example));
+   *
+   * // Match any string.
+   * expect(['a', 'b', 'c']).toEqual(expect.arrayOf(String));
+   * ```
+   *
+   * @param constructor Constructor of the expected object like `ExampleClass`, or a primitive boxed type like `Number`.
+   */
+  arrayOf(sample: unknown): AsymmetricMatcher;
+  /**
    * Compares floating point numbers for approximate equality. Use this method inside
    * [expect(value).toEqual(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-to-equal)
    * to perform pattern matching. When just comparing two numbers, prefer
@@ -8111,6 +8132,7 @@ interface GenericAssertions<R> {
    * - [expect(value).any(constructor)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-any)
    * - [expect(value).anything()](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-anything)
    * - [expect(value).arrayContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-array-containing)
+   * - [expect(value).arrayOf(constructor)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-array-of)
    * - [expect(value).closeTo(expected[, numDigits])](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-close-to)
    * - [expect(value).objectContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-object-containing)
    * - [expect(value).stringContaining(expected)](https://playwright.dev/docs/api/class-genericassertions#generic-assertions-string-containing)

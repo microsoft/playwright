@@ -1301,3 +1301,21 @@ test('multiple custom asymmetric matchers in async expect should present the cor
   expect(result.output).toContain('-   \"aProperty\": isUndefined<>');
   expect(result.output).toContain('+   \"aProperty\": \"foo\"');
 });
+
+test('should support arrayOf', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'expect-test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect([1,2,3]).toEqual(expect.arrayOf(expect.any(Number)));
+      });
+      test('fail', () => {
+        expect([1,2,'3']).toEqual(expect.arrayOf(expect.any(Number)));
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('ArrayOf Any<Number>');
+});

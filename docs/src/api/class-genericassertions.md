@@ -354,6 +354,7 @@ expect(value).toEqual({ prop: 1 });
 * [`method: GenericAssertions.any`]
 * [`method: GenericAssertions.anything`]
 * [`method: GenericAssertions.arrayContaining`]
+* [`method: GenericAssertions.arrayOf`]
 * [`method: GenericAssertions.closeTo`]
 * [`method: GenericAssertions.objectContaining`]
 * [`method: GenericAssertions.stringContaining`]
@@ -624,6 +625,28 @@ expect([1, 2, 3]).not.toEqual(expect.arrayContaining([1, 4]));
 
 Expected array that is a subset of the received value.
 
+
+## method: GenericAssertions.arrayOf
+* since: v1.57
+
+`expect.arrayOf()` matches array of objects created from the [`param: constructor`] or a corresponding primitive type. Use it inside [`method: GenericAssertions.toEqual`] to perform pattern matching.
+
+**Usage**
+
+```js
+// Match instance of a class.
+class Example {}
+expect([new Example(), new Example()]).toEqual(expect.arrayOf(Example));
+
+// Match any string.
+expect(['a', 'b', 'c']).toEqual(expect.arrayOf(String));
+```
+
+### param: GenericAssertions.arrayOf.constructor
+* since: v1.57
+- `constructor` <[Function]>
+
+Constructor of the expected object like `ExampleClass`, or a primitive boxed type like `Number`.
 
 
 ## method: GenericAssertions.closeTo

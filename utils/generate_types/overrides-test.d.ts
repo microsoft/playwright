@@ -321,6 +321,7 @@ interface AsymmetricMatchers {
   any(sample: unknown): AsymmetricMatcher;
   anything(): AsymmetricMatcher;
   arrayContaining(sample: Array<unknown>): AsymmetricMatcher;
+  arrayOf(sample: unknown): AsymmetricMatcher;
   closeTo(sample: number, precision?: number): AsymmetricMatcher;
   objectContaining(sample: Record<string, unknown>): AsymmetricMatcher;
   stringContaining(sample: string): AsymmetricMatcher;
