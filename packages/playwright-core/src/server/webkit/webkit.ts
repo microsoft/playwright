@@ -22,7 +22,6 @@ import { wrapInASCIIBox } from '../utils/ascii';
 import { BrowserType, kNoXServerRunningError } from '../browserType';
 import { WKBrowser } from '../webkit/wkBrowser';
 import { spawnAsync } from '../utils/spawnAsync';
-import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
