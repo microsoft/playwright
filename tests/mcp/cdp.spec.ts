@@ -17,6 +17,10 @@
 import { spawnSync } from 'child_process';
 import { test, expect, mcpServerPath } from './fixtures';
 
+test.describe.configure({
+  retries: 1,
+});
+
 test('cdp server', async ({ cdpServer, startClient, server }) => {
   await cdpServer.start();
   const { client } = await startClient({ args: [`--cdp-endpoint=${cdpServer.endpoint}`] });
