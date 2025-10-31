@@ -2396,6 +2396,13 @@ await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.aria.yml' }
 Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
 
+### option: LocatorAssertions.toMatchAriaSnapshot#2.exact
+* since: v1.57
+* langs: js
+- `exact` <[boolean]>
+
+When `true`, saves the raw accessibility tree content without using regexes.
+
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50
 

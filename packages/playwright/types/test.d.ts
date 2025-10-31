@@ -9537,6 +9537,11 @@ interface LocatorAssertions {
    */
   toMatchAriaSnapshot(options?: {
     /**
+     * When `true`, saves the raw accessibility tree content without using regexes.
+     */
+    exact?: boolean;
+
+    /**
      * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates sequential names if not
      * specified.
      */

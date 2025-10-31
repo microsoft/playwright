@@ -35,6 +35,7 @@ type ToMatchAriaSnapshotExpected = {
   name?: string;
   path?: string;
   timeout?: number;
+  exact?: boolean;
 } | string;
 
 export async function toMatchAriaSnapshot(
@@ -122,7 +123,8 @@ export async function toMatchAriaSnapshot(
         generateMissingBaseline) {
       if (expectedPath) {
         await fs.promises.mkdir(path.dirname(expectedPath), { recursive: true });
-        await fs.promises.writeFile(expectedPath, typedReceived.regex, 'utf8');
+        const contentToSave = (expectedParam && typeof expectedParam !== 'string' && expectedParam.exact) ? typedReceived.raw : typedReceived.regex;
+        await fs.promises.writeFile(expectedPath, contentToSave, 'utf8');
         const relativePath = path.relative(process.cwd(), expectedPath);
         if (updateSnapshots === 'missing') {
           const message = `A snapshot doesn't exist at ${relativePath}, writing actual.`;
