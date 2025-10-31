@@ -722,7 +722,7 @@ test('should partition action tree state by test', async ({ runUITest }) => {
       import { test, expect } from '@playwright/test';
       test('test1', async ({ page }) => {
         await page.setContent('<button>Submit</button>');
-        await page.getByRole('button').click();
+        await page.evaluate('1+1');
       });
       test('test2', async ({ page }) => {
         await page.setContent('<button>Submit</button>');
@@ -749,13 +749,14 @@ test('should partition action tree state by test', async ({ runUITest }) => {
 
   await expect(actionsTree).toMatchAriaSnapshot(`
     - treeitem /Evaluate/ [selected]
-    - treeitem /After Hooks/:
+    - treeitem /After Hooks/ [expanded=false]:
       - /children: equal
   `);
 
   await page.getByTestId('test-tree').getByText('test1').click();
 
   await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /Evaluate/ [selected=false]
     - treeitem /After Hooks/ [expanded] [selected]:
       - group:
         - treeitem /Fixture \"page\"/
