@@ -41,13 +41,6 @@ jobs:
     - name: Prefer Git Bash over WSL bash
       shell: powershell
       run: echo "C:\Program Files\Git\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-    - name: Update WSL2 to latest version
-      run: |
-          wsl --version
-          wsl --update
-          wsl --shutdown
-          wsl
-      shell: powershell
     - name: Enable WSL2 networkingMode=mirrored
       run: |
         Add-Content -Path $env:USERPROFILE\.wslconfig -Value "[wsl2]`nnetworkingMode=mirrored"
