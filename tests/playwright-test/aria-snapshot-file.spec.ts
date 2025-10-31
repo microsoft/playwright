@@ -251,3 +251,48 @@ test('should respect config.expect.toMatchAriaSnapshot.pathTemplate', async ({ r
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should save aria snapshot in raw mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world 123</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', exact: true });
+        expect(fs.readFileSync('a.spec.ts-snapshots/test.aria.yml', { encoding: 'utf8' })).toEqual('- heading "hello world 123" [level=1]');
+      });
+    `
+  }, { 'update-snapshots': 'all' });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should save aria snapshot in regex mode', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world 123</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', exact: false });
+        expect(fs.readFileSync('a.spec.ts-snapshots/test.aria.yml', { encoding: 'utf8' })).toEqual('- heading /hello world \\\\d+/ [level=1]');
+      });
+    `
+  }, { 'update-snapshots': 'all' });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should save aria snapshot in regex mode without exact argument', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      import fs from 'fs';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>hello world 123</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+        expect(fs.readFileSync('a.spec.ts-snapshots/test.aria.yml', { encoding: 'utf8' })).toEqual('- heading /hello world \\\\d+/ [level=1]');
+      });
+    `
+  }, { 'update-snapshots': 'all' });
+  expect(result.exitCode).toBe(0);
+});
