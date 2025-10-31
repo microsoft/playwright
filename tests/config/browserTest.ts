@@ -128,7 +128,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     await removeFolders(dirs);
   },
 
-  launchPersistent: async ({ createUserDataDir, browserType }, run) => {
+  launchPersistent: async ({ createUserDataDir, browserType, mode }, run) => {
+    test.skip(mode !== 'default', 'Remote persistent contexts are not supported');
+
     let persistentContext: BrowserContext | undefined;
     await run(async options => {
       if (persistentContext)
@@ -142,7 +144,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
       await persistentContext.close();
   },
 
-  startRemoteServer: async ({ childProcess, browserType, channel }, run) => {
+  startRemoteServer: async ({ childProcess, browserType, channel, mode }, run) => {
+    test.skip(mode !== 'default', 'Starting remote server is not supported in remote modes');
+
     let server: PlaywrightServer | undefined;
     const fn = async (kind: 'launchServer' | 'run-server', options?: RemoteServerOptions) => {
       if (server)
