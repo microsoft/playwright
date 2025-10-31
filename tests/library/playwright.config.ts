@@ -81,7 +81,7 @@ if (mode === 'service2') {
 if (channel === 'webkit-wsl') {
   connectOptions = { wsEndpoint: 'ws://localhost:3777/' };
   webServer = {
-    command: 'wsl.exe -d playwright -- bash -lc \'/home/pwuser/node/bin/npx playwright run-server --port=3777\'',
+    command: 'wsl.exe -d playwright -u pwuser -- bash -lc \'/home/pwuser/node/bin/npx playwright run-server --port=3777\'',
     url: 'http://localhost:3777',
   };
 }
