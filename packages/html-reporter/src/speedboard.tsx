@@ -41,10 +41,12 @@ export function SlowestTests({ filter, report }: { filter: Filter, report: Loade
     }}
     projectNames={report.json().projectNames}
     footer={
-      <button className='link-badge' onClick={() => setLength(l => l + 10)}>
-        {icons.downArrow()}
-        Show more
-      </button>
+      length < slowestTests.length
+        ? <button className='link-badge' onClick={() => setLength(l => l + 10)}>
+          {icons.downArrow()}
+          Show more
+        </button>
+        : undefined
     }
   />;
 }
