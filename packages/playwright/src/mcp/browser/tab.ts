@@ -40,6 +40,7 @@ export type TabSnapshot = {
   url: string;
   title: string;
   ariaSnapshot: string;
+  ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   consoleMessages: ConsoleMessage[];
   downloads: { download: playwright.Download, finished: boolean, outputFile: string }[];
@@ -56,6 +57,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _modalStates: ModalState[] = [];
   private _downloads: { download: playwright.Download, finished: boolean, outputFile: string }[] = [];
   private _initializedPromise: Promise<void>;
+  private _needsFullSnapshot = false;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -217,14 +219,15 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return this._requests;
   }
 
-  async captureSnapshot(mode: 'full' | 'incremental'): Promise<TabSnapshot> {
+  async captureSnapshot(): Promise<TabSnapshot> {
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot = await this.page._snapshotForAI({ mode, track: 'response' });
+      const snapshot = await this.page._snapshotForAI({ track: 'response' });
       tabSnapshot = {
         url: this.page.url(),
         title: await this.page.title(),
-        ariaSnapshot: snapshot,
+        ariaSnapshot: snapshot.full,
+        ariaSnapshotDiff: this._needsFullSnapshot ? undefined : snapshot.incremental,
         modalStates: [],
         consoleMessages: [],
         downloads: this._downloads,
@@ -235,6 +238,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       tabSnapshot.consoleMessages = this._recentConsoleMessages;
       this._recentConsoleMessages = [];
     }
+    // If we failed to capture a snapshot this time, make sure we do a full one next time,
+    // to avoid reporting deltas against un-reported snapshot.
+    this._needsFullSnapshot = !tabSnapshot;
     return tabSnapshot ?? {
       url: this.page.url(),
       title: '',

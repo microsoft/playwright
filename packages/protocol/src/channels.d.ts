@@ -2549,15 +2549,14 @@ export type PageRequestsResult = {
 };
 export type PageSnapshotForAIParams = {
   track?: string,
-  mode?: 'full' | 'incremental',
   timeout: number,
 };
 export type PageSnapshotForAIOptions = {
   track?: string,
-  mode?: 'full' | 'incremental',
 };
 export type PageSnapshotForAIResult = {
-  snapshot: string,
+  full: string,
+  incremental?: string,
 };
 export type PageStartJSCoverageParams = {
   resetOnNavigation?: boolean,

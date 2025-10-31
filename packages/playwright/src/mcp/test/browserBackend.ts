@@ -61,7 +61,7 @@ export async function runBrowserBackendAtEnd(context: playwright.BrowserContext,
     lines.push(
         `- Page Snapshot:`,
         '```yaml',
-        await (page as Page)._snapshotForAI(),
+        (await (page as Page)._snapshotForAI()).full,
         '```',
     );
   }

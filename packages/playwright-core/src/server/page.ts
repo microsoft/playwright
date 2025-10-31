@@ -858,9 +858,9 @@ export class Page extends SdkObject {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
+  async snapshotForAI(progress: Progress, options: { track?: string }): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
-    return snapshot.lines.join('\n');
+    return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
   }
 }
 
@@ -1035,9 +1035,9 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string }): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const { snapshot, iframeRefs, isIncremental } = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
@@ -1046,7 +1046,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         if (!node)
           return true;
         return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental', track: options.track }));
+      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1057,50 +1057,50 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
     }
   });
 
-  const lines = snapshot.split('\n');
-  const result = [];
+  const childSnapshotPromises = snapshot.iframeRefs.map(ref => snapshotFrameRefForAI(progress, frame, ref, options));
+  const childSnapshots = await Promise.all(childSnapshotPromises);
 
-  if (isIncremental) {
-    result.push(...lines);
-    for (const ref of iframeRefs) {
-      const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
-      if (!childSnapshot.lines.length)
-        continue;
-      if (childSnapshot.isIncremental)
-        result.push(...childSnapshot.lines);
-      else
-        result.push('- <changed> iframe [ref=' + ref + ']:', ...childSnapshot.lines.map(l => '  ' + l));
+  const full = [];
+  let incremental: string[] | undefined;
+
+  if (snapshot.incremental !== undefined) {
+    incremental = snapshot.incremental.split('\n');
+    for (let i = 0; i < snapshot.iframeRefs.length; i++) {
+      const childSnapshot = childSnapshots[i];
+      if (childSnapshot.incremental)
+        incremental.push(...childSnapshot.incremental);
+      else if (childSnapshot.full.length)
+        incremental.push('- <changed> iframe [ref=' + snapshot.iframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
     }
-    return { lines: result, isIncremental };
   }
 
-  for (const line of lines) {
+  for (const line of snapshot.full.split('\n')) {
     const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
-      result.push(line);
+      full.push(line);
       continue;
     }
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
-    result.push(childSnapshot.lines.length ? line + ':' : line);
-    result.push(...childSnapshot.lines.map(l => leadingSpace + '  ' + l));
+    const childSnapshot = childSnapshots[snapshot.iframeRefs.indexOf(ref)] ?? { full: [] };
+    full.push(childSnapshot.full.length ? line + ':' : line);
+    full.push(...childSnapshot.full.map(l => leadingSpace + '  ' + l));
   }
 
-  return { lines: result, isIncremental };
+  return { full, incremental };
 }
 
-async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
+async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
   if (!child)
-    return { lines: [], isIncremental: false };
+    return { full: [] };
   try {
     return await snapshotFrameForAI(progress, child.frame, options);
   } catch {
-    return { lines: [], isIncremental: false };
+    return { full: [] };
   }
 }
 
