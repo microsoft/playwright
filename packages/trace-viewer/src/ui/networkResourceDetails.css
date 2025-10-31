@@ -17,7 +17,7 @@
 .network-request-details-tab {
   user-select: text;
   line-height: 24px;
-  margin-left: 10px;
+  margin-left: 12px;
   overflow: auto;
 }
 
@@ -40,6 +40,8 @@
 .network-request-details-header {
   margin: 3px 0;
   font-weight: bold;
+  user-select: none;
+  cursor: pointer;
 }
 
 .network-request-details-general {

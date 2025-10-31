@@ -24,7 +24,7 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { msToString, useAsyncMemo } from '@web/uiUtils';
+import { msToString, useAsyncMemo, useSetting } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
 
@@ -105,33 +105,60 @@ const CopyDropdown: React.FC<{
   );
 };
 
+const DetailsSection: React.FC<{
+  title: string;
+  children?: React.ReactNode
+}> = ({ title, children }) => {
+  const [isOpen, setIsOpen] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
+
+  return (
+    <details className='network-request-details-section' open={isOpen} aria-label={title}>
+      <summary className='network-request-details-header' onClick={event => {
+        event.preventDefault();
+        setIsOpen(!isOpen);
+      }}>
+        {title}
+      </summary>
+      {children}
+    </details>
+  );
+};
+
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
   return <div className='vbox network-request-details-tab'>
-    <div className='network-request-details-header'>General</div>
-    <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
-    <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
-      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
-        {`${resource.response.status} ${resource.response.statusText}`}
-      </span></div>}
-    {resource.request.queryString.length ? <>
-      <div className='network-request-details-header'>Query String Parameters</div>
-      <div className='network-request-details-headers'>
-        {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
-      </div>
-    </> : null}
-    <div className='network-request-details-header'>Request Headers</div>
-    <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    <div className='network-request-details-header'>Time</div>
-    <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
-    <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
+    <DetailsSection title='General'>
+      <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
+      <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
+      {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
+        Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+          {`${resource.response.status} ${resource.response.statusText}`}
+        </span></div>}
+    </DetailsSection>
 
-    {requestBody && <div className='network-request-details-header'>Request Body</div>}
-    {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
+    {resource.request.queryString.length ?
+      <DetailsSection title='Query String Parameters'>
+        <div className='network-request-details-headers'>
+          {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
+        </div>
+      </DetailsSection>
+      : null}
+
+    <DetailsSection title='Request Headers'>
+      <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    </DetailsSection>
+
+    <DetailsSection title='Time'>
+      <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
+      <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
+    </DetailsSection>
+
+    {requestBody && <DetailsSection title='Request Body'>
+      <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
+    </DetailsSection>}
   </div>;
 };
 
@@ -139,8 +166,9 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   return <div className='vbox network-request-details-tab'>
-    <div className='network-request-details-header'>Response Headers</div>
-    <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    <DetailsSection title='Response Headers'>
+      <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    </DetailsSection>
   </div>;
 };
 
