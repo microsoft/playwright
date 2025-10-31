@@ -143,11 +143,8 @@ X coordinate relative to the main frame's viewport in CSS pixels.
 
 Y coordinate relative to the main frame's viewport in CSS pixels.
 
-### option: Mouse.move.steps
+### option: Mouse.move.steps = %%-input-mousemove-steps-%%
 * since: v1.8
-- `steps` <[int]>
-
-Defaults to 1. Sends intermediate `mousemove` events.
 
 ## async method: Mouse.up
 * since: v1.8

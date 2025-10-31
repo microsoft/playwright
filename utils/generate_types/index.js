@@ -551,6 +551,7 @@ class TypesGenerator {
         'GenericAssertions.any',
         'GenericAssertions.anything',
         'GenericAssertions.arrayContaining',
+        'GenericAssertions.arrayOf',
         'GenericAssertions.closeTo',
         'GenericAssertions.objectContaining',
         'GenericAssertions.stringContaining',

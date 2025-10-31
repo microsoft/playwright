@@ -40,7 +40,7 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
         onChange={e => onFilterStateChange({ ...filterState, searchValue: e.target.value })}
       />
 
-      <div className='network-filters-resource-types'>
+      <div className='network-filters-resource-types' role='tablist' aria-multiselectable='true'>
         <div
           title='All'
           onClick={() => onFilterStateChange({ ...filterState, resourceTypes: new Set() })}
@@ -63,6 +63,8 @@ export const NetworkFilters = ({ filterState, onFilterStateChange }: {
               onFilterStateChange({ ...filterState, resourceTypes: newType });
             }}
             className={`network-filters-resource-type ${filterState.resourceTypes.has(resourceType) ? 'selected' : ''}`}
+            role='tab'
+            aria-selected={filterState.resourceTypes.has(resourceType)}
           >
             {resourceType}
           </div>

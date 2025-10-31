@@ -65,7 +65,7 @@ export type WorkbenchProps = {
 export const Workbench: React.FunctionComponent<WorkbenchProps> = props => {
   const partition = props.model?.traceUrl ?? 'default';
   return <TraceModelContext.Provider value={props.model}>
-    <PartitionedWorkbench partition={partition} {...props} />;
+    <PartitionedWorkbench partition={partition} {...props} />
   </TraceModelContext.Provider>;
 };
 

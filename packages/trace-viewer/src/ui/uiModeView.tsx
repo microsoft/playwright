@@ -520,7 +520,7 @@ export const UIModeView: React.FC<{}> = ({
           />
           <div className='section-title'>Settings</div>
         </Toolbar>
-        {settingsVisible && <DefaultSettingsView />}
+        {settingsVisible && <DefaultSettingsView location='ui-mode' />}
       </div>
       }
     />

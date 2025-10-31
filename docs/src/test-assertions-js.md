@@ -94,6 +94,7 @@ Prefer [auto-retrying](#auto-retrying-assertions) assertions whenever possible. 
 | [`method: GenericAssertions.any`] | Matches any instance of a class/primitive |
 | [`method: GenericAssertions.anything`] | Matches anything |
 | [`method: GenericAssertions.arrayContaining`] | Array contains specific elements |
+| [`method: GenericAssertions.arrayOf`] | Array contains elements of specific type |
 | [`method: GenericAssertions.closeTo`] | Number is approximately equal |
 | [`method: GenericAssertions.objectContaining`] | Object contains specific properties |
 | [`method: GenericAssertions.stringContaining`] | String contains a substring |

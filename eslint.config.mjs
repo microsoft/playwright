@@ -309,6 +309,13 @@ function reactPackageSection(packageName) {
     rules: {
       ...baseRules,
       "no-console": 2,
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "JSXElement > JSXText[value=/^;\n/]",
+          message: 'Unexpected semicolon after JSX element',
+        },
+      ]
     },
   };
 }

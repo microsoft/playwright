@@ -15,14 +15,16 @@
  */
 
 import * as React from 'react';
-import { SettingsView } from './settingsView';
+import { type Setting, SettingsView } from './settingsView';
 import { useDarkModeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
 
 /**
  * A view of the collection of standard settings used between various applications
  */
-export const DefaultSettingsView: React.FC<{}> = () => {
+export const DefaultSettingsView: React.FC<{
+  location: 'ui-mode' | 'trace-viewer'
+}> = ({ location }) => {
   const [
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
@@ -39,12 +41,12 @@ export const DefaultSettingsView: React.FC<{}> = () => {
           set: setDarkMode,
           name: 'Dark mode'
         },
-        {
+        ...(location === 'ui-mode' ? [{
           type: 'check',
           value: mergeFiles,
           set: setMergeFiles,
           name: 'Merge files'
-        },
+        } satisfies Setting] : []),
         {
           type: 'check',
           value: shouldPopulateCanvasFromScreenshot,

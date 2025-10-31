@@ -895,6 +895,36 @@ await page.GetByTestId("testid").HoverAsync();`);
     await expect(glassPane.locator('> x-pw-dialog .accept > x-div').evaluate(elem => getComputedStyle(elem).clipPath)).resolves.toBe('url("#icon-check")');
     await expect(glassPane.locator('> svg > defs > clipPath#icon-check')).toBeAttached();
   });
+
+  test('should keep dialog open when clicking inside', async ({ openRecorder }) => {
+    const { page } = await openRecorder();
+    await page.setContent('<div>hello</div>');
+
+    const assertTextButton = page.getByTitle('Assert text');
+    const helloContent = page.getByText('hello');
+
+    await assertTextButton.click();
+    await helloContent.click();
+
+    const dialog = page.locator('x-pw-dialog');
+    await expect(dialog).toBeVisible();
+
+    await page.locator('x-pw-dialog x-pw-tools-list').click();
+    await expect(dialog).toBeVisible();
+
+    await page.locator('x-pw-dialog textarea').click();
+    await expect(dialog).toBeVisible();
+
+    await page.locator('x-pw-dialog .accept').click();
+    await expect(dialog).toBeHidden();
+
+    await assertTextButton.click();
+    await helloContent.click();
+    await expect(dialog).toBeVisible();
+    // Like the user clicking outside the dialog
+    await page.locator('x-pw-glass').click();
+    await expect(dialog).toBeHidden();
+  });
 });
 
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {

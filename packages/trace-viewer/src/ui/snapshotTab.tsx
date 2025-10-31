@@ -65,15 +65,17 @@ export const SnapshotTabsView: React.FunctionComponent<{
   return <div className='snapshot-tab vbox'>
     <Toolbar>
       <ToolbarButton className='pick-locator' title='Pick locator' icon='target' toggled={isInspecting} onClick={() => setIsInspecting(!isInspecting)} />
-      {['action', 'before', 'after'].map(tab => {
-        return <TabbedPaneTab
-          key={tab}
-          id={tab}
-          title={renderTitle(tab)}
-          selected={snapshotTab === tab}
-          onSelect={() => setSnapshotTab(tab as 'action' | 'before' | 'after')}
-        ></TabbedPaneTab>;
-      })}
+      <div className='hbox' style={{ height: '100%' }} role='tablist'>
+        {(['action', 'before', 'after'] as const).map(tab => {
+          return <TabbedPaneTab
+            key={tab}
+            id={tab}
+            title={renderTitle(tab)}
+            selected={snapshotTab === tab}
+            onSelect={() => setSnapshotTab(tab)}
+          />;
+        })}
+      </div>
       <div style={{ flex: 'auto' }}></div>
       <ToolbarButton icon='link-external' title='Open snapshot in a new tab' disabled={!snapshotUrls?.popoutUrl} onClick={() => {
         const win = window.open(snapshotUrls?.popoutUrl || '', '_blank');
@@ -187,41 +189,53 @@ export const SnapshotView: React.FunctionComponent<{
   </div>;
 };
 
+const kWindowHeaderHeight = 40;
+const kMinBrowserFrameScaledWidth = 100;
+const kMinBrowserFrameScaledHeight = 60;
+
 const SnapshotWrapper: React.FunctionComponent<React.PropsWithChildren<{
   snapshotInfo: SnapshotInfo,
 }>> = ({ snapshotInfo, children }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
 
-  const windowHeaderHeight = 40;
   const snapshotContainerSize = {
     width: snapshotInfo.viewport.width,
     height: snapshotInfo.viewport.height,
   };
 
-  const renderedBrowserFrameSize = {
+  const renderedBrowserExpectedFrameSize = {
     width: Math.max(snapshotContainerSize.width, 480),
-    height: Math.max(snapshotContainerSize.height + windowHeaderHeight, 320),
+    height: Math.max(snapshotContainerSize.height + kWindowHeaderHeight, 320),
   };
 
-  const scale = Math.min(measure.width / renderedBrowserFrameSize.width, measure.height / renderedBrowserFrameSize.height, 1);
+  // Calculate ideal size for the snapshot size (including browser frame) to fit within the bounds
+  const idealScale = Math.min(measure.width / renderedBrowserExpectedFrameSize.width, measure.height / renderedBrowserExpectedFrameSize.height, 1);
+  // Prevent window from scaling below a minimum size
+  const actualWidth = Math.max(idealScale * renderedBrowserExpectedFrameSize.width, kMinBrowserFrameScaledWidth);
+  const actualHeight = Math.max(idealScale * renderedBrowserExpectedFrameSize.height, kMinBrowserFrameScaledHeight);
+  // Using new minimum sizes, calculate the final scale
+  const actualScale = Math.min(actualWidth / renderedBrowserExpectedFrameSize.width, actualHeight / renderedBrowserExpectedFrameSize.height);
   const translate = {
-    x: (measure.width - renderedBrowserFrameSize.width) / 2,
-    y: (measure.height - renderedBrowserFrameSize.height) / 2,
+    // Don't let the browser clip out of bounds when it's at the min size
+    x: (Math.max(measure.width, kMinBrowserFrameScaledWidth) - renderedBrowserExpectedFrameSize.width) / 2,
+    y: (Math.max(measure.height, kMinBrowserFrameScaledHeight) - renderedBrowserExpectedFrameSize.height) / 2,
   };
 
-  return <div ref={ref} className='snapshot-wrapper'>
-    <div className='snapshot-container' style={{
-      width: renderedBrowserFrameSize.width + 'px',
-      height: renderedBrowserFrameSize.height + 'px',
-      transform: `translate(${translate.x}px, ${translate.y}px) scale(${scale})`,
-    }}>
-      <BrowserFrame url={snapshotInfo.url} />
-      <div className='snapshot-browser-body'>
-        <div style={{
-          width: snapshotContainerSize.width + 'px',
-          height: snapshotContainerSize.height + 'px',
-        }}>
-          {children}
+  return <div className='snapshot-wrapper'>
+    <div ref={ref} className='snapshot-content-measure'>
+      <div className='snapshot-container' style={{
+        width: renderedBrowserExpectedFrameSize.width + 'px',
+        height: renderedBrowserExpectedFrameSize.height + 'px',
+        transform: `translate(${translate.x}px, ${translate.y}px) scale(${actualScale})`,
+      }}>
+        <BrowserFrame url={snapshotInfo.url} />
+        <div className='snapshot-browser-body'>
+          <div style={{
+            width: snapshotContainerSize.width + 'px',
+            height: snapshotContainerSize.height + 'px',
+          }}>
+            {children}
+          </div>
         </div>
       </div>
     </div>

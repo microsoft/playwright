@@ -234,6 +234,9 @@ When all steps combined have not finished during the specified [`option: timeout
 ### option: ElementHandle.click.trial = %%-input-trial-%%
 * since: v1.11
 
+### option: ElementHandle.click.steps = %%-input-mousemove-steps-%%
+* since: v1.57
+
 ## async method: ElementHandle.contentFrame
 * since: v1.8
 - returns: <[null]|[Frame]>
@@ -286,6 +289,9 @@ When all steps combined have not finished during the specified [`option: timeout
 
 ### option: ElementHandle.dblclick.trial = %%-input-trial-%%
 * since: v1.11
+
+### option: ElementHandle.dblclick.steps = %%-input-mousemove-steps-%%
+* since: v1.57
 
 ## async method: ElementHandle.dispatchEvent
 * since: v1.8
