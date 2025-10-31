@@ -23,7 +23,7 @@ env:
 jobs:
   test_webkit_wsl:
     name: "Tests @ WebKit WSL ${{ matrix.headed && '(headed)' || '' }}"
-    runs-on: ["self-hosted", "1ES.Pool=DevDivPlaywrightWindows11"]
+    runs-on: windows-latest
     strategy:
       fail-fast: false
       matrix:
