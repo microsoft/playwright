@@ -1,0 +1,72 @@
+name: Tests @ WebKit WSL
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+      - 'packages/playwright/src/mcp/**'
+      - 'tests/mcp/**'
+    branches:
+      - main
+      - release-*
+  workflow_dispatch:
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+
+jobs:
+  test_webkit_wsl:
+    name: "Tests @ WebKit WSL ${{ matrix.headed && '(headed)' || '' }}"
+    runs-on: ["self-hosted", "1ES.Pool=DevDivPlaywrightWindows11"]
+    strategy:
+      fail-fast: false
+      matrix:
+        headed: [true, false]
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@v5
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 20
+    # TODO: This should be part of the self-hosted runner image, I'm working on fixing it in the image.
+    # See https://github.com/microsoft/playwright/issues/37036
+    - name: Prefer Git Bash over WSL bash
+      shell: powershell
+      run: echo "C:\Program Files\Git\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+    - name: Enable WSL2 networkingMode=mirrored
+      run: |
+        Add-Content -Path $env:USERPROFILE\.wslconfig -Value "[wsl2]`nnetworkingMode=mirrored"
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+        PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
+    - run: npm run build
+    - run: npx playwright install webkit-wsl ffmpeg
+    - name: Run tests
+      run: npm run wtest -- ${{ matrix.headed && '--headed' || '' }}
+      env:
+        PWTEST_CHANNEL: webkit-wsl
+        PWTEST_MODE: wsl
+    - name: Azure Login
+      if: always()
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+    - run: ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
+      if: always()
+      shell: bash
+    - uses: actions/upload-artifact@v5
+      if: ${{ always() }}
+      with:
+        name: webkit-wsl-${{ matrix.headed && 'headed' || 'headless' }}-results
+        path: test-results
