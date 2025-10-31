@@ -23,7 +23,7 @@ if [ ! -f "/home/$Username/node/bin/node" ]; then
   mkdir -p /home/$Username/node
   curl -fsSL https://nodejs.org/dist/v22.17.0/node-v22.17.0-linux-x64.tar.xz -o /home/$Username/node/node-v22.17.0-linux-x64.tar.xz
   tar -xJf /home/$Username/node/node-v22.17.0-linux-x64.tar.xz -C /home/$Username/node --strip-components=1
-  echo 'export PATH=/home/$Username/node/bin:$PATH' >> /home/$Username/.bashrc
+  sudo -u $Username echo 'export PATH=/home/$Username/node/bin:\`$PATH' >> /home/$Username/.profile
 fi
 /home/$Username/node/bin/node cli.js install-deps webkit
 sudo -u $Username PLAYWRIGHT_SKIP_BROWSER_GC=1 /home/$Username/node/bin/node cli.js install webkit
