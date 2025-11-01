@@ -231,17 +231,34 @@ async function collectFiles(testDir: string, respectGitIgnore: boolean): Promise
     }
 
     for (const entry of entries) {
+      let isDirectory = entry.isDirectory();
+      let isFile = entry.isFile();
+
       if (entry.name === '.' || entry.name === '..')
         continue;
-      if (entry.isFile() && entry.name === '.gitignore')
+      if (isFile && entry.name === '.gitignore')
         continue;
-      if (entry.isDirectory() && entry.name === 'node_modules')
+      if (isDirectory && entry.name === 'node_modules')
         continue;
       const entryPath = path.join(dir, entry.name);
-      const entryStatus = checkIgnores(entryPath, rules, entry.isDirectory(), status);
-      if (entry.isDirectory() && entryStatus !== 'ignored')
+
+      // Handle symlinks by resolving them to their target paths
+      if (entry.isSymbolicLink()) {
+        try {
+          const resolvedPath = await fs.promises.realpath(entryPath);
+          const resolvedStat = await fs.promises.stat(resolvedPath);
+          isDirectory = resolvedStat.isDirectory();
+          isFile = resolvedStat.isFile();
+        } catch (error) {
+          // If symlink resolution fails, skip this entry
+          continue;
+        }
+      }
+
+      const entryStatus = checkIgnores(entryPath, rules, isDirectory, status);
+      if (isDirectory && entryStatus !== 'ignored')
         await visit(entryPath, rules, entryStatus);
-      else if (entry.isFile() && entryStatus === 'included')
+      else if (isFile && entryStatus === 'included')
         files.push(entryPath);
     }
   };
