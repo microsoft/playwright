@@ -178,6 +178,10 @@ export interface Commands {
     returnType: Bidi.Storage.SetCookieParameters;
   };
 
+  'network.setExtraHeaders': {
+    params: Bidi.Network.SetExtraHeadersParameters;
+    returnType: Bidi.Network.SetExtraHeadersResult;
+  };
   'network.addDataCollector': {
     params: Bidi.Network.AddDataCollectorParameters;
     returnType: Bidi.Network.AddDataCollectorResult;

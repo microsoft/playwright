@@ -222,6 +222,8 @@ export class BidiBrowserContext extends BrowserContext {
         userContexts: [this._userContextId()],
       }));
     }
+    if (this._options.extraHTTPHeaders || this._options.locale)
+      promises.push(this.doUpdateExtraHTTPHeaders());
     await Promise.all(promises);
   }
 
@@ -320,6 +322,13 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateExtraHTTPHeaders(): Promise<void> {
+    let allHeaders = this._options.extraHTTPHeaders || [];
+    if (this._options.locale)
+      allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
+    await this._browser._browserSession.send('network.setExtraHeaders', {
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      userContexts: [this._userContextId()],
+    });
   }
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
