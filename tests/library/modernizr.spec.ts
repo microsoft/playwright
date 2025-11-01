@@ -112,7 +112,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.overflowscrolling = false;
     expected.mediasource = true;
     expected.scrolltooptions = false;
-    expected.hairline = false;
 
     delete expected.webglextensions;
     delete actual.webglextensions;
@@ -127,6 +126,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.mediastream = false;
     if (headless)
       expected.todataurlwebp = true;
+    expected.hairline = false;
 
     // GHA
     delete actual.variablefonts;
@@ -141,6 +141,7 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.todataurlwebp = true;
     expected.webaudio = false;
     expected.gamepads = false;
+    expected.hairline = false;
 
     delete expected.datalistelem;
 
