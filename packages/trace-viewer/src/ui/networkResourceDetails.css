@@ -16,8 +16,6 @@
 
 .network-request-details-tab {
   user-select: text;
-  line-height: 24px;
-  margin-left: 12px;
   overflow: auto;
 }
 
@@ -37,11 +35,18 @@
   margin-left: 10px;
 }
 
+.expandable-title {
+  padding-left: 3px;
+}
+
+.expandable-content {
+  margin-left: 0;
+  padding-left: 28px;
+}
+
 .network-request-details-header {
-  margin: 3px 0;
+  margin: 3px 0 3px 14px;
   font-weight: bold;
-  user-select: none;
-  cursor: pointer;
 }
 
 .network-request-details-general {
@@ -51,6 +56,18 @@
 
 .network-request-details-tab .cm-wrapper {
   overflow: hidden;
+}
+
+.expandable:has(.cm-wrapper) {
+  max-height: 100%;
+}
+
+.expandable-content:has(.cm-wrapper) {
+  height: 100%;
+}
+
+.expandable-content {
+  line-height: 24px;
 }
 
 .network-font-preview {

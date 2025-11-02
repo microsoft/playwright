@@ -27,6 +27,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { msToString, useAsyncMemo, useSetting } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
+import { Expandable } from '@web/components/expandable';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 
@@ -105,23 +106,19 @@ const CopyDropdown: React.FC<{
   );
 };
 
-const DetailsSection: React.FC<{
+const ExpandableSection: React.FC<{
   title: string;
   children?: React.ReactNode
 }> = ({ title, children }) => {
-  const [isOpen, setIsOpen] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
-
-  return (
-    <details className='network-request-details-section' open={isOpen} aria-label={title}>
-      <summary className='network-request-details-header' onClick={event => {
-        event.preventDefault();
-        setIsOpen(!isOpen);
-      }}>
-        {title}
-      </summary>
-      {children}
-    </details>
-  );
+  const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
+  return <Expandable
+    expanded={expanded}
+    setExpanded={setExpanded}
+    expandOnTitleClick
+    title={<span className='network-request-details-header'>{title}</span>}
+  >
+    {children}
+  </Expandable>;
 };
 
 const RequestTab: React.FunctionComponent<{
@@ -130,35 +127,35 @@ const RequestTab: React.FunctionComponent<{
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
   return <div className='vbox network-request-details-tab'>
-    <DetailsSection title='General'>
+    <ExpandableSection title='General'>
       <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
       <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
       {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
         Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
           {`${resource.response.status} ${resource.response.statusText}`}
         </span></div>}
-    </DetailsSection>
+    </ExpandableSection>
 
     {resource.request.queryString.length ?
-      <DetailsSection title='Query String Parameters'>
+      <ExpandableSection title='Query String Parameters'>
         <div className='network-request-details-headers'>
           {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
         </div>
-      </DetailsSection>
+      </ExpandableSection>
       : null}
 
-    <DetailsSection title='Request Headers'>
+    <ExpandableSection title='Request Headers'>
       <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    </DetailsSection>
+    </ExpandableSection>
 
-    <DetailsSection title='Time'>
+    <ExpandableSection title='Time'>
       <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
       <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
-    </DetailsSection>
+    </ExpandableSection>
 
-    {requestBody && <DetailsSection title='Request Body'>
+    {requestBody && <ExpandableSection title='Request Body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
-    </DetailsSection>}
+    </ExpandableSection>}
   </div>;
 };
 
@@ -166,9 +163,9 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   return <div className='vbox network-request-details-tab'>
-    <DetailsSection title='Response Headers'>
+    <ExpandableSection title='Response Headers'>
       <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    </DetailsSection>
+    </ExpandableSection>
   </div>;
 };
 

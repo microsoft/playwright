@@ -29,3 +29,7 @@
   user-select: none;
   cursor: pointer;
 }
+
+.expandable-content {
+  margin-left: 25px;
+}

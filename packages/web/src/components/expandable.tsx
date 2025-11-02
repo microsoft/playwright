@@ -24,7 +24,8 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   expanded: boolean,
   expandOnTitleClick?: boolean,
 }>> = ({ title, children, setExpanded, expanded, expandOnTitleClick }) => {
-  const id = React.useId();
+  const titleId = React.useId();
+  const regionId = React.useId();
 
   const onClick = React.useCallback(() => setExpanded(!expanded), [expanded, setExpanded]);
 
@@ -36,9 +37,10 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   return <div className={clsx('expandable', expanded && 'expanded')}>
     {expandOnTitleClick ?
       <div
+        id={titleId}
         role='button'
         aria-expanded={expanded}
-        aria-controls={id}
+        aria-controls={regionId}
         className='expandable-title'
         onClick={onClick}>
         {chevron}
@@ -48,6 +50,6 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
         {chevron}
         {title}
       </div>}
-    {expanded && <div id={id} role='region' style={{ marginLeft: 25 }}>{children}</div>}
+    {expanded && <div id={regionId} aria-labelledby={titleId} role='region' className='expandable-content'>{children}</div>}
   </div>;
 };

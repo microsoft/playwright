@@ -196,14 +196,14 @@ test('should display list of query parameters (only if present)', async ({ runUI
 
   await page.getByText('call-with-query-params').click();
 
-  const group = page.getByRole('group', { name: 'Query String Parameters' });
-  await expect(group.getByText('param1: value1')).toBeVisible();
-  await expect(group.getByText('param1: value2')).toBeVisible();
-  await expect(group.getByText('param2: value2')).toBeVisible();
+  const region = page.getByRole('region', { name: 'Query String Parameters' });
+  await expect(region.getByText('param1: value1')).toBeVisible();
+  await expect(region.getByText('param1: value2')).toBeVisible();
+  await expect(region.getByText('param2: value2')).toBeVisible();
 
   await page.getByText('endpoint').click();
 
-  await expect(group).toBeHidden();
+  await expect(region).toBeHidden();
 });
 
 test('should not duplicate network entries from beforeAll', {
@@ -258,22 +258,21 @@ test('should toggle sections inside network details', async ({ runUITest, server
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
   const requestPanel = page.getByRole('tabpanel', { name: 'Request' });
 
-  // Make sure to assert with useInnerText, because .textContent always includes text even if details is collapsed
-  await requestPanel.getByText('Request Headers').click();
-  await expect(requestPanel.getByRole('group', { name: 'Request Headers' })).toHaveText('Request Headers', { useInnerText: true });
-  await expect(requestPanel.getByRole('group', { name: 'Time' })).toHaveText(/Time\nStart: .+\nDuration: \d+ms/,  { useInnerText: true });
+  await requestPanel.getByRole('button', { name: 'Request Headers' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
 
-  await requestPanel.getByText('Time').click();
-  await expect(requestPanel.getByRole('group', { name: 'Request Headers' })).toHaveText('Request Headers', { useInnerText: true });
-  await expect(requestPanel.getByRole('group', { name: 'Time' })).toHaveText('Time', { useInnerText: true });
+  await requestPanel.getByRole('button', { name: 'Time' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toBeHidden();
 
-  await requestPanel.getByText('Time').click();
-  await expect(requestPanel.getByRole('group', { name: 'Request Headers' })).toHaveText('Request Headers', { useInnerText: true });
-  await expect(requestPanel.getByRole('group', { name: 'Time' })).toHaveText(/Time\nStart: .+\nDuration: \d+ms/, { useInnerText: true });
+  await requestPanel.getByRole('button', { name: 'Time' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
 
   // Re-opening should preserve open state
   await page.getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
-  await expect(requestPanel.getByRole('group', { name: 'Request Headers' })).toHaveText('Request Headers', { useInnerText: true });
-  await expect(requestPanel.getByRole('group', { name: 'Time' })).toHaveText(/Time\nStart: .+\nDuration: \d+ms/, { useInnerText: true });
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
 });
