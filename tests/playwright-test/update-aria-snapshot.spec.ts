@@ -706,4 +706,84 @@ test.describe('update-source-method', () => {
     const result2 = await runInlineTest({});
     expect(result2.exitCode).toBe(0);
   });
+
+  test('should update when option raw is specified', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      '.git/marker': '',
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<input value="hello world 123">\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot('',
+          {
+            timeout: 2500,
+            update: 'raw'
+          });
+      });
+    `
+    });
+
+    expect(result.exitCode).toBe(1);
+    const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+    const data = fs.readFileSync(patchPath, 'utf-8');
+    expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -2,7 +2,9 @@
+       import { test, expect } from '@playwright/test';
+       test('test', async ({ page }) => {
+         await page.setContent(\`<input value="hello world 123">\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot('',
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - textbox: hello world 123
++        \`,
+           {
+             timeout: 2500,
+             update: 'raw'
+`);
+
+    execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+    const result2 = await runInlineTest({});
+    expect(result2.exitCode).toBe(0);
+  });
+
+  test('should update when option relaxed is specified', async ({ runInlineTest }, testInfo) => {
+    const result = await runInlineTest({
+      '.git/marker': '',
+      'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<input value="hello world 123">\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot('',
+          {
+            timeout: 2500,
+            update: 'relaxed'
+          });
+      });
+    `
+    });
+
+    expect(result.exitCode).toBe(1);
+    const patchPath = testInfo.outputPath('test-results/rebaselines.patch');
+    const data = fs.readFileSync(patchPath, 'utf-8');
+    expect(trimPatch(data)).toBe(`diff --git a/a.spec.ts b/a.spec.ts
+--- a/a.spec.ts
++++ b/a.spec.ts
+@@ -2,7 +2,9 @@
+       import { test, expect } from '@playwright/test';
+       test('test', async ({ page }) => {
+         await page.setContent(\`<input value="hello world 123">\`);
+-        await expect(page.locator('body')).toMatchAriaSnapshot('',
++        await expect(page.locator('body')).toMatchAriaSnapshot(\`
++          - textbox: /hello world \\\\d+/
++        \`,
+           {
+             timeout: 2500,
+             update: 'relaxed'
+`);
+
+    execSync(`patch -p1 < ${patchPath}`, { cwd: testInfo.outputPath() });
+    const result2 = await runInlineTest({});
+    expect(result2.exitCode).toBe(0);
+  });
 });
