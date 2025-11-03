@@ -2373,6 +2373,11 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 ### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
 
+### option: LocatorAssertions.toMatchAriaSnapshot.update
+* since: v1.57
+* langs: js
+- `update` <["raw"]|["relaxed"]>
+
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.50
 * langs: js
@@ -2396,12 +2401,14 @@ await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.aria.yml' }
 Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
 
-### option: LocatorAssertions.toMatchAriaSnapshot#2.exact
+### option: LocatorAssertions.toMatchAriaSnapshot#2.update
 * since: v1.57
 * langs: js
-- `exact` <[boolean]>
+- `update` <["raw"]|["relaxed"]>
 
-When `true`, saves the raw accessibility tree content without using regexes.
+Controls how the snapshot is updated.
+- `'raw'` saves the raw accessibility tree content without using regexes.
+- `'relaxed'` (default) saves the accessibility tree content with regexes to make it more resilient to minor changes.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50

@@ -35,14 +35,14 @@ type ToMatchAriaSnapshotExpected = {
   name?: string;
   path?: string;
   timeout?: number;
-  exact?: boolean;
+  update?: 'raw' | 'relaxed';
 } | string;
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherState,
   locator: LocatorEx,
   expectedParam?: ToMatchAriaSnapshotExpected,
-  options: { timeout?: number } = {},
+  options: { timeout?: number, update?: 'raw' | 'relaxed'; } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
 
@@ -58,9 +58,12 @@ export async function toMatchAriaSnapshot(
   let expected: string;
   let timeout: number;
   let expectedPath: string | undefined;
+  let updateMode: 'raw' | 'relaxed' = 'relaxed';
+
   if (isString(expectedParam)) {
     expected = expectedParam;
     timeout = options.timeout ?? this.timeout;
+    updateMode = options.update ?? 'relaxed';
   } else {
     const legacyPath = testInfo._resolveSnapshotPaths('aria', expectedParam?.name, 'dontUpdateSnapshotIndex', '.yml').absoluteSnapshotPath;
     expectedPath = testInfo._resolveSnapshotPaths('aria', expectedParam?.name, 'updateSnapshotIndex').absoluteSnapshotPath;
@@ -70,6 +73,7 @@ export async function toMatchAriaSnapshot(
       expectedPath = legacyPath;
     expected = await fs.promises.readFile(expectedPath, 'utf8').catch(() => '');
     timeout = expectedParam?.timeout ?? this.timeout;
+    updateMode = expectedParam?.update ?? 'relaxed';
   }
 
   const generateMissingBaseline = updateSnapshots === 'missing' && !expected;
@@ -123,7 +127,7 @@ export async function toMatchAriaSnapshot(
         generateMissingBaseline) {
       if (expectedPath) {
         await fs.promises.mkdir(path.dirname(expectedPath), { recursive: true });
-        const contentToSave = (expectedParam && typeof expectedParam !== 'string' && expectedParam.exact) ? typedReceived.raw : typedReceived.regex;
+        const contentToSave = updateMode === 'raw' ? typedReceived.raw : typedReceived.regex;
         await fs.promises.writeFile(expectedPath, contentToSave, 'utf8');
         const relativePath = path.relative(process.cwd(), expectedPath);
         if (updateSnapshots === 'missing') {
@@ -137,7 +141,8 @@ export async function toMatchAriaSnapshot(
         }
         return { pass: true, message: () => '', name: 'toMatchAriaSnapshot' };
       } else {
-        const suggestedRebaseline = `\`\n${escapeTemplateString(indent(typedReceived.regex, '{indent}  '))}\n{indent}\``;
+        const contentToSave = updateMode === 'raw' ? typedReceived.raw : typedReceived.regex;
+        const suggestedRebaseline = `\`\n${escapeTemplateString(indent(contentToSave, '{indent}  '))}\n{indent}\``;
         if (updateSnapshots === 'missing') {
           const message = 'A snapshot is not provided, generating new baseline.';
           testInfo._hasNonRetriableError = true;

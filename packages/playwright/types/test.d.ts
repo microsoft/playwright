@@ -9518,6 +9518,8 @@ interface LocatorAssertions {
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    update?: "raw"|"relaxed";
   }): Promise<void>;
 
   /**
@@ -9537,11 +9539,6 @@ interface LocatorAssertions {
    */
   toMatchAriaSnapshot(options?: {
     /**
-     * When `true`, saves the raw accessibility tree content without using regexes.
-     */
-    exact?: boolean;
-
-    /**
      * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates sequential names if not
      * specified.
      */
@@ -9551,6 +9548,11 @@ interface LocatorAssertions {
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    /**
+     * Controls how the snapshot is updated.
+     */
+    update?: "raw"|"relaxed";
   }): Promise<void>;
 
   /**

@@ -259,7 +259,7 @@ test('should save aria snapshot in raw mode', async ({ runInlineTest }) => {
       import fs from 'fs';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world 123</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', exact: true });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', update: 'raw' });
         expect(fs.readFileSync('a.spec.ts-snapshots/test.aria.yml', { encoding: 'utf8' })).toEqual('- heading "hello world 123" [level=1]');
       });
     `
@@ -274,7 +274,7 @@ test('should save aria snapshot in regex mode', async ({ runInlineTest }) => {
       import fs from 'fs';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world 123</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', exact: false });
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml', update: 'relaxed' });
         expect(fs.readFileSync('a.spec.ts-snapshots/test.aria.yml', { encoding: 'utf8' })).toEqual('- heading /hello world \\\\d+/ [level=1]');
       });
     `
