@@ -9519,6 +9519,9 @@ interface LocatorAssertions {
      */
     timeout?: number;
 
+    /**
+     * Controls how the snapshot is updated.
+     */
     update?: "raw"|"relaxed";
   }): Promise<void>;
 
