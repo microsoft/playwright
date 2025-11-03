@@ -1288,8 +1288,9 @@ it('should click shadow root button', { annotation: { type: 'issue', description
   await page.locator('my-button').click();
 });
 
-it('should click with tweened mouse movement', async ({ page, browserName, isAndroid }) => {
+it('should click with tweened mouse movement', async ({ page, browserName, isAndroid, headless }) => {
   it.skip(isAndroid, 'Bad rounding');
+  it.skip(!headless, 'System cursor tends to interfere with this test');
 
   await page.setContent(`
     <body style="margin: 0; padding: 0; height: 500px; width: 500px;">

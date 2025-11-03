@@ -319,37 +319,54 @@ test('selected attribute', async ({ page }) => {
       <tr aria-selected="true">
         <td>Row</td>
       </tr>
+      <tr>
+        <td>Row 2</td>
+      </tr>
     </table>
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - row
+    - row
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - row [selected]
+    - row
   `);
 
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - row [selected=true]
+    - row [selected=false]
+  `);
+
+  await expect(page.locator('table')).toMatchAriaSnapshot(`
+    - table:
+      - rowgroup:
+        - row [selected=true]
+        - row [selected=false]
   `);
 
   {
     const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - row [selected=false]
       - row [selected=false]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(`expect(locator).toMatchAriaSnapshot(expected) failed
 
 Locator: locator('body')
 Timeout: 1000ms
-- Expected  - 1
-+ Received  + 4
+- Expected  - 2
++ Received  + 6
 
+- - row [selected=false]
 - - row [selected=false]
 + - table:
 +   - rowgroup:
 +     - row "Row" [selected]:
 +       - cell "Row"
++     - row \"Row 2\":
++       - cell \"Row 2\"
 
 Call log:
 `);
