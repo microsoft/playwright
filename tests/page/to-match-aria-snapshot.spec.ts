@@ -878,3 +878,30 @@ test('treat bad regex as a string', async ({ page }) => {
   expect(stripAnsi(error.message)).toContain('-   - /url: /[a/');
   expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
 });
+
+test('should not match regex with raw update', async ({ page }) => {
+  {
+    await page.setContent(`<h1>Issues 12</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "Issues 12"
+    `, { update: 'raw' });
+  }
+  {
+    await page.setContent(`<h1>Issues 1/2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "Issues 1/2"
+    `, { update: 'raw' });
+  }
+  {
+    await page.setContent(`<h1>Issues 1[</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "Issues 1["
+    `, { update: 'raw' });
+  }
+  {
+    await page.setContent(`<h1>Issues 1]]2</h1>`);
+    await expect(page.locator('body')).toMatchAriaSnapshot(`
+      - heading "Issues 1]]2"
+    `, { update: 'raw' });
+  }
+});
