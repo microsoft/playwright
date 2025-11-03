@@ -17,7 +17,7 @@
 import { escapeForAttributeSelector, escapeForTextSelector, escapeRegExp, quoteCSSAttributeValue } from '@isomorphic/stringUtils';
 
 import { beginDOMCaches, closestCrossShadow, endDOMCaches, isElementVisible, isInsideScope, parentElementOrShadowHost } from './domUtils';
-import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName } from './roleUtils';
+import { beginAriaCaches, endAriaCaches, getAriaRole, getElementAccessibleName, getCSSContent } from './roleUtils';
 import { elementText, getElementLabels } from './selectorUtils';
 
 import type { InjectedScript } from './injectedScript';
@@ -309,9 +309,14 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
 
   const title = element.getAttribute('title');
   if (title) {
+    // Always prefer the exact, full title text
     candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(title, true)}]`, score: kTitleScoreExact }]);
-    for (const alternative of suitableTextAlternatives(title))
-      candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBonus }]);
+    // Only add truncated alternatives if the title is very long (>100 chars) to avoid ambiguity
+    if (title.length > 100) {
+      for (const alternative of suitableTextAlternatives(title))
+        candidates.push([{ engine: 'internal:attr', selector: `[title=${escapeForAttributeSelector(alternative.text, false)}]`, score: kTitleScore - alternative.scoreBonus + 50 }]);
+        // Add penalty (+50) to truncated versions so full text is always preferred
+    }
   }
 
   const alt = element.getAttribute('alt');
@@ -343,19 +348,28 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false);
-    if (ariaName) {
-      const roleToken = { engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact };
-      candidates.push([roleToken]);
-      for (const alternative of suitableTextAlternatives(ariaName))
-        candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBonus }]);
+    if (ariaName && ariaName.trim() && !isSpecialCharacterName(ariaName)) {
+      const cleanedName = removeIconTextFromAccessibleName(element, ariaName);
+      const trimmedName = cleanedName.trim();
+      if (trimmedName) {
+        const roleToken = { engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(trimmedName, true)}]`, score: kRoleWithNameScoreExact };
+        candidates.push([roleToken]);
+        for (const alternative of suitableTextAlternatives(trimmedName))
+          candidates.push([{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(alternative.text, false)}]`, score: kRoleWithNameScore - alternative.scoreBonus }]);
+      }
     } else {
-      const roleToken = { engine: 'internal:role', selector: `${ariaRole}`, score: kRoleWithoutNameScore };
-      for (const alternative of textAlternatives)
-        candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
-      if (isTargetNode && text.length <= 80) {
+      const improvedLocator = findImprovedLocatorForRole(injectedScript, element, ariaRole);
+      if (improvedLocator) {
+        candidates.push(improvedLocator);
+      } else {
+        const roleToken = { engine: 'internal:role', selector: `${ariaRole}`, score: kRoleWithoutNameScore };
+        for (const alternative of textAlternatives)
+          candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
+        if (isTargetNode && text.length <= 80) {
         // Do not use regex for parent elements (for performance).
-        const re = new RegExp('^' + escapeRegExp(text) + '$');
-        candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
+          const re = new RegExp('^' + escapeRegExp(text) + '$');
+          candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
+        }
       }
     }
   }
@@ -577,4 +591,167 @@ function cssEscapeCharacter(s: string, i: number): string {
       (c >= 0x0041 && c <= 0x005a) || (c >= 0x0061 && c <= 0x007a))
     return s.charAt(i);
   return '\\' + s.charAt(i);
+}
+
+function isSpecialCharacterName(name: string): boolean {
+  if (!name || !name.trim()) return true;
+  const trimmed = name.trim();
+
+  // Check 1: Icon/emoji Unicode ranges and common UI symbols (language-agnostic)
+  // Check 2: Short non-alphanumeric strings like "×", "•" (language-agnostic)
+  // Check 3: Generic English words commonly used in international UIs
+  // Note: English terms are checked as they appear globally in web UIs. Language-specific
+  // generic terms (e.g., "fermer" in French for "close") may still generate locators,
+  // which is acceptable as they remain functional and usable.
+  return /^[\u2190-\u27BF\u2B00-\u2BFF\u1F000-\u1FA6F\u1FA70-\u1FAFF\uE000-\uF8FF\uFFF0-\uFFFF⚙️⚙🔧×✕✖•·…⋮⋯xX✗✘]+$/.test(trimmed) ||
+         (trimmed.length <= 2 && /^[^\w\s]*$/.test(trimmed)) ||
+         /^(icon|svg|image|img|graphic|logo|menu|hamburger|close|button|link|click here|more|toggle|expand|collapse|open|[A-Z]{2,})$/i.test(trimmed);
+}
+
+function findImprovedLocatorForRole(injectedScript: InjectedScript, element: Element, ariaRole: string): SelectorToken[] | null {
+  // Priority 1: Check aria-label attribute
+  const ariaLabel = element.getAttribute('aria-label');
+  if (ariaLabel && ariaLabel.trim() && !isSpecialCharacterName(ariaLabel)) {
+    return [{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaLabel.trim(), true)}]`, score: kRoleWithNameScore }];
+  }
+
+  // Priority 2: Check title attribute (tooltip text)
+  const titleAttr = element.getAttribute('title');
+  if (titleAttr && titleAttr.trim() && !isSpecialCharacterName(titleAttr)) {
+    return [{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(titleAttr.trim(), true)}]`, score: kRoleWithNameScore + 10 }];
+  }
+
+  // Priority 3: Check for img alt text inside the element
+  const imgElement = element.querySelector('img');
+  if (imgElement) {
+    const imgAlt = imgElement.getAttribute('alt');
+    if (imgAlt && imgAlt.trim() && !isSpecialCharacterName(imgAlt)) {
+      return [{ engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(imgAlt.trim(), true)}]`, score: kRoleWithNameScore + 5 }];
+    }
+  }
+
+  // Priority 4: Look for nearby elements with meaningful text that could help identify this element
+  // NOTE: We are conservative here to avoid false positives where unrelated text is used
+  const parent = parentElementOrShadowHost(element);
+  if (!parent) return null;
+
+  // Look for IMMEDIATE sibling elements with meaningful text (only adjacent siblings)
+  const siblings = Array.from(parent.children);
+  const currentIndex = siblings.indexOf(element);
+
+  // CONSERVATIVE: Only check immediate previous sibling (index - 1)
+  // This is safer than checking ±2 siblings which might be unrelated
+  if (currentIndex > 0) {
+    const prevSibling = siblings[currentIndex - 1];
+    const siblingText = elementText(injectedScript._evaluator._cacheText, prevSibling).normalized;
+    const siblingRole = getAriaRole(prevSibling);
+
+    // Only use sibling text if it's a semantic heading/label element
+    if (siblingText && siblingText.trim().length > 2 && !isSpecialCharacterName(siblingText)) {
+      if (siblingRole && ['heading', 'label'].includes(siblingRole)) {
+        // Use role-based filter chain: heading >> button
+        return [
+          { engine: 'internal:role', selector: `${siblingRole}[name=${escapeForAttributeSelector(siblingText.trim(), false)}]`, score: kRoleWithNameScore },
+          { engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore }
+        ];
+      }
+    }
+  }
+
+  // CONSERVATIVE: Look for DIRECT parent (depth = 1 only) with a semantic role
+  // Avoid going up 3 levels which is too risky for false positives
+  if (parent) {
+    const parentRole = getAriaRole(parent);
+    // Only use parent if it has a meaningful semantic container role
+    // Includes ARIA landmark roles and semantic HTML5 container roles for better global coverage
+    if (parentRole && ['region', 'group', 'article', 'section', 'navigation', 'banner', 'complementary', 'contentinfo', 'form', 'main', 'search'].includes(parentRole)) {
+      const parentName = getElementAccessibleName(parent, false);
+      if (parentName && parentName.trim() && !isSpecialCharacterName(parentName)) {
+        return [
+          { engine: 'internal:role', selector: `${parentRole}[name=${escapeForAttributeSelector(parentName.trim(), false)}]`, score: kRoleWithNameScore + 50 },
+          { engine: 'internal:role', selector: ariaRole, score: kRoleWithoutNameScore }
+        ];
+      }
+    }
+  }
+
+  // If we can't find a safe contextual selector, return null
+  // This will cause the system to fall back to CSS selectors or nth-child
+  return null;
+}
+
+function isIconElement(element: Element): boolean {
+  const nodeName = element.nodeName.toLowerCase();
+
+  // Check for icon tag names - includes standard elements, custom elements ending with -icon,
+  // and known icon library custom element prefixes for better global coverage
+  if (nodeName === 'i' ||
+      nodeName === 'svg' ||
+      nodeName.endsWith('-icon') ||
+      /^(lucide|heroicon|feather|phosphor|tabler|iconify)(-|$)/.test(nodeName))
+    return true;
+
+  // Check for common icon CSS class patterns - expanded for global icon library coverage
+  // Includes: FontAwesome, Material Design Icons, Bootstrap Icons, Glyphicons, Lucide,
+  // Heroicons, Feather, Tabler, Remix Icons, Phosphor, IcoMoon, Iconify, and generic patterns
+  const className = element.className || '';
+  if (typeof className === 'string') {
+    // Split by space to check individual classes, as className contains all classes
+    const classes = className.split(/\s+/);
+    for (const cls of classes) {
+      if (/^(icon|fa[slrb]?|mdi|bi|glyphicon|lucide|heroicon|feather|ti|tabler|ri|ph|im|iconify)(-|$)|(-icon)(-|$)|^material-icons?$/i.test(cls))
+        return true;
+    }
+  }
+
+  // Check for icon-like ARIA attributes on any element (language-agnostic, globally applicable)
+  if ((element.getAttribute('aria-hidden') === 'true' && !element.textContent?.trim()) || element.getAttribute('role') === 'img')
+    return true;
+
+  // Check for data attributes used by modern icon libraries (library-specific conventions)
+  if (element.hasAttribute('data-icon') || element.hasAttribute('data-lucide') || element.hasAttribute('data-feather'))
+    return true;
+
+  // Check for empty/single-character elements that look like icons
+  const textLen = (element.textContent?.trim() || '').length;
+  return (textLen <= 1) && ['i', 'span', 'em'].includes(nodeName);
+}
+
+function removeIconTextFromAccessibleName(element: Element, accessibleName: string): string {
+  const iconTexts: string[] = [];
+  const MAX_DEPTH = 50; // Prevent stack overflow from pathologically deep DOM trees
+
+  const collectIconText = (el: Element, depth: number) => {
+    if (depth > MAX_DEPTH) return; // Safety limit for deeply nested structures
+
+    if (isIconElement(el)) {
+      const before = getCSSContent(el, '::before');
+      const after = getCSSContent(el, '::after');
+      if (before) iconTexts.push(before);
+      if (after) iconTexts.push(after);
+      // Only collect direct text nodes, not nested element text
+      for (const node of Array.from(el.childNodes)) {
+        if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim())
+          iconTexts.push(node.textContent.trim());
+      }
+    }
+    for (const child of Array.from(el.children))
+      collectIconText(child, depth + 1);
+  };
+
+  collectIconText(element, 0);
+
+  // Optimize: Use single regex replacement instead of multiple string replacements
+  let cleanedName = accessibleName;
+  // Filter out empty strings and whitespace-only entries before building regex
+  const validIconTexts = iconTexts.filter(text => text && text.trim().length > 0);
+  if (validIconTexts.length > 0) {
+    const escapedTexts = validIconTexts.map(text => escapeRegExp(text));
+    const regex = new RegExp(escapedTexts.join('|'), 'g');
+    cleanedName = cleanedName.replace(regex, '');
+  }
+
+  // Normalize whitespace and trim. This handles cases where icon removal
+  // leaves leading/trailing spaces or multiple consecutive spaces.
+  return cleanedName.replace(/\s+/g, ' ').trim();
 }
