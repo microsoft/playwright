@@ -1898,6 +1898,6 @@ In this config:
 * since: v1.57.0
 - `update` <["raw"]|["relaxed"]>
 
-Controls how the snapshot is updated.
-- `'raw'` saves the raw accessibility tree content without using regexes.
-- `'relaxed'` (default) saves the accessibility tree content with regexes to make it more resilient to minor changes.
+Defines how snapshots are written when updating via [TestConfig.updateSnapshots](../test-api/class-testconfig.md#test-config-update-snapshots). Defaults to `'relaxed'`.
+* `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for numbers) to reduce flakiness from minor changes.
+* `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values change.

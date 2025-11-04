@@ -914,42 +914,42 @@ test('should match with update param', async ({ page }) => {
     await page.setContent(`<h1>Issues 1/2</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading ${/Issues 1[/]2/}
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 1[</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading ${/Issues 1\[/}
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 1]]2</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading ${/Issues 1[\]]]2/}
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 12</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading "Issues 12"
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 1/2</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading "Issues 1/2"
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 1[</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading "Issues 1["
-    `, { update: 'relaxed' });
+    `);
   }
   {
     await page.setContent(`<h1>Issues 1]]2</h1>`);
     await expect(page.locator('body')).toMatchAriaSnapshot(`
       - heading "Issues 1]]2"
-    `, { update: 'relaxed' });
+    `);
   }
 });
