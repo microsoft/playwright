@@ -326,7 +326,9 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       candidates.push([{ engine: 'internal:attr', selector: `[alt=${escapeForAttributeSelector(alternative.text, false)}]`, score: kAltTextScore - alternative.scoreBonus }]);
   }
 
-  const text = elementText(injectedScript._evaluator._cacheText, element).normalized;
+  const rawText = elementText(injectedScript._evaluator._cacheText, element).normalized;
+  // Clean icon text from element text to avoid using icon content as selectors
+  const text = rawText ? removeIconTextFromAccessibleName(element, rawText) : '';
   const textAlternatives = text ? suitableTextAlternatives(text) : [];
   if (text) {
     if (isTargetNode) {
@@ -361,16 +363,19 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
       const improvedLocator = findImprovedLocatorForRole(injectedScript, element, ariaRole);
       if (improvedLocator) {
         candidates.push(improvedLocator);
-      } else {
+      } else if (text && text.trim()) {
+        // Only add hasText filters if there's meaningful text after icon removal
         const roleToken = { engine: 'internal:role', selector: `${ariaRole}`, score: kRoleWithoutNameScore };
         for (const alternative of textAlternatives)
           candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(alternative.text, false), score: kTextScore - alternative.scoreBonus }]);
         if (isTargetNode && text.length <= 80) {
-        // Do not use regex for parent elements (for performance).
+          // Do not use regex for parent elements (for performance).
           const re = new RegExp('^' + escapeRegExp(text) + '$');
           candidates.push([roleToken, { engine: 'internal:has-text', selector: escapeForTextSelector(re, false), score: kTextScoreRegex }]);
         }
       }
+      // Note: If no text after icon removal, don't add role-based candidates.
+      // Let the selector generation fall through to CSS selectors or nth-child in generateSelectorFor()
     }
   }
 
