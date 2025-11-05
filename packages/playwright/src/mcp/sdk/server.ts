@@ -29,6 +29,7 @@ export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextp
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 const serverDebug = debug('pw:mcp:server');
+const serverDebugResponse = debug('pw:mcp:server:response');
 
 export type ClientInfo = {
   name: string;
@@ -101,7 +102,10 @@ export function createServer(name: string, version: string, backend: ServerBacke
       if (!initializePromise)
         initializePromise = initializeServer(server, backend, runHeartbeat);
       await initializePromise;
-      return mergeTextParts(await backend.callTool(request.params.name, request.params.arguments || {}, progress));
+      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress);
+      const mergedResult = mergeTextParts(toolResult);
+      serverDebugResponse('callResult', mergedResult);
+      return mergedResult;
     } catch (error) {
       return {
         content: [{ type: 'text', text: '### Result\n' + String(error) }],
