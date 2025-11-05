@@ -1894,10 +1894,9 @@ In this config:
 1. Forward slashes `"/"` can be used as path separators on any platform.
 
 ## assertions-aria-snapshot-update
-* langs: js
-* since: v1.57.0
+* since: v1.57
 - `update` <["raw"]|["relaxed"]>
 
-Defines how snapshots are written when updating via [TestConfig.updateSnapshots](../test-api/class-testconfig.md#test-config-update-snapshots). Defaults to `'relaxed'`.
+Defines how snapshots are written when updating via [`property: TestConfig.updateSnapshots`]. Defaults to `'relaxed'`.
 * `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for numbers) to reduce flakiness from minor changes.
 * `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values change.
