@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { z } from '../sdk/bundle';
 import { defineTestTool } from './testTool';
 
@@ -33,5 +36,92 @@ export const setupPage = defineTestTool({
     const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
     await context.runSeedTest(seed.file, seed.projectName, progress);
     return { content: [] };
+  },
+});
+
+const planSchema = z.object({
+  overview: z.string().describe('A brief overview of the application to be tested'),
+  suites: z.array(z.object({
+    name: z.string().describe('The name of the suite'),
+    seedFile: z.string().describe('A seed file that was used to setup the page for testing.'),
+    tests: z.array(z.object({
+      name: z.string().describe('The name of the test'),
+      file: z.string().describe('The file the test should be saved to, for example: "tests/<suite-name>/<test-name>.spec.ts".'),
+      steps: z.array(z.string().describe(`The steps to be executed to perform the test. For example: 'Click on the "Submit" button'`)),
+      expectedResults: z.array(z.string().describe('The expected results of the steps for test to verify.')),
+    })),
+  })),
+});
+
+export const submitTestPlan = defineTestTool({
+  schema: {
+    name: 'planner_submit_plan',
+    title: 'Submit test plan',
+    description: 'Submit the test plan to the test planner',
+    inputSchema: planSchema,
+    type: 'readOnly',
+  },
+
+  handle: async (context, params) => {
+    return {
+      content: [{
+        type: 'text',
+        text: JSON.stringify(params, null, 2),
+      }],
+    };
+  },
+});
+
+export const saveTestPlan = defineTestTool({
+  schema: {
+    name: 'planner_save_plan',
+    title: 'Save test plan as markdown file',
+    description: 'Save the test plan as a markdown file',
+    inputSchema: planSchema.extend({
+      name: z.string().describe('The name of the test plan, for example: "Test Plan".'),
+      fileName: z.string().describe('The file to save the test plan to, for example: "spec/test.plan.md". Relative to the workspace root.'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params) => {
+    const lines: string[] = [];
+    lines.push(`# ${params.name}`);
+    lines.push(``);
+    lines.push(`## Application Overview`);
+    lines.push(``);
+    lines.push(params.overview);
+    lines.push(``);
+    lines.push(`## Test Scenarios`);
+    for (let i = 0; i < params.suites.length; i++) {
+      lines.push(``);
+      const suite = params.suites[i];
+      lines.push(`### ${i + 1}. ${suite.name}`);
+      lines.push(``);
+      lines.push(`**Seed:** \`${suite.seedFile}\``);
+      for (let j = 0; j < suite.tests.length; j++) {
+        lines.push(``);
+        const test = suite.tests[j];
+        lines.push(`#### ${i + 1}.${j + 1}. ${test.name}`);
+        lines.push(``);
+        lines.push(`**File:** \`${test.file}\``);
+        lines.push(``);
+        lines.push(`**Steps:**`);
+        for (let k = 0; k < test.steps.length; k++)
+          lines.push(`  ${k + 1}. ${test.steps[k]}`);
+        lines.push(``);
+        lines.push(`**Expected Results:**`);
+        for (const result of test.expectedResults)
+          lines.push(`  - ${result}`);
+      }
+    }
+    lines.push(``);
+    await fs.promises.writeFile(path.resolve(context.rootPath, params.fileName), lines.join('\n'));
+    return {
+      content: [{
+        type: 'text',
+        text: `Test plan saved to ${params.fileName}`,
+      }],
+    };
   },
 });
