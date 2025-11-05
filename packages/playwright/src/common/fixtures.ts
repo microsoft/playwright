@@ -65,7 +65,13 @@ type OptionOverrides = {
 };
 
 function isFixtureTuple(value: any): value is FixtureTuple {
-  return Array.isArray(value) && typeof value[1] === 'object';
+  if (!Array.isArray(value) || value.length !== 2)
+    return false;
+  const options = value[1];
+  if (typeof options !== 'object' || options === null || Array.isArray(options))
+    return false;
+  // Check if the second element has at least one fixture option key
+  return 'option' in options || 'scope' in options || 'auto' in options || 'timeout' in options || 'box' in options || 'title' in options;
 }
 
 function isFixtureOption(value: any): value is FixtureTuple {

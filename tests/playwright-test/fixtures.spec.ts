@@ -834,3 +834,63 @@ test('should error if use is not called', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain(`use() was not called in fixture "fixture"`);
 });
+
+test('should handle array of objects in option fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        experiments: [[], { option: true }],
+        doExperimentalStuff: [async ({ experiments }, use) => {
+          console.log('@@' + JSON.stringify(experiments));
+          await use(experiments);
+        }, { auto: true, box: true }],
+      });
+
+      test.describe('suite', () => {
+        test.use({
+          experiments: [
+            { key: 'key1', val: 'true' },
+            { key: 'key2', val: 'true' },
+            { key: 'key3', val: 'true' },
+            { key: 'key4', val: 'true' },
+          ]
+        });
+
+        test('should pass entire array', async ({ page }) => {
+        });
+      });
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('@@[{"key":"key1","val":"true"},{"key":"key2","val":"true"},{"key":"key3","val":"true"},{"key":"key4","val":"true"}]');
+});
+
+test('should handle array of exactly two objects in option fixtures', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        config: [[], { option: true }],
+        logger: [async ({ config }, use) => {
+          console.log('##' + JSON.stringify(config));
+          await use(config);
+        }, { auto: true, box: true }],
+      });
+
+      test.describe('suite', () => {
+        test.use({
+          config: [
+            { name: 'first', value: 1 },
+            { name: 'second', value: 2 },
+          ]
+        });
+
+        test('should pass entire array of two objects', async ({ page }) => {
+        });
+      });
+    `,
+  });
+  expect(result.passed).toBe(1);
+  expect(result.output).toContain('##[{"name":"first","value":1},{"name":"second","value":2}]');
+});
