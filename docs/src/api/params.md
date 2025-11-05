@@ -1897,6 +1897,6 @@ In this config:
 * since: v1.57
 - `update` <["raw"]|["relaxed"]>
 
-Defines how snapshots are written when updating via [`property: TestConfig.updateSnapshots`]. Defaults to `'relaxed'`.
+Defines how snapshots are written when updating. Defaults to `'relaxed'`.
 * `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for numbers) to reduce flakiness from minor changes.
 * `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values change.

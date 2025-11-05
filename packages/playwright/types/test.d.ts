@@ -9520,9 +9520,7 @@ interface LocatorAssertions {
     timeout?: number;
 
     /**
-     * Defines how snapshots are written when updating via
-     * [TestConfig.updateSnapshots](https://playwright.dev/docs/test-api/class-testconfig#test-config-update-snapshots). Defaults to
-     * `'relaxed'`.
+     * Defines how snapshots are written when updating. Defaults to `'relaxed'`.
      * - `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for
      *   numbers) to reduce flakiness from minor changes.
      * - `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values
@@ -9559,9 +9557,7 @@ interface LocatorAssertions {
     timeout?: number;
 
     /**
-     * Defines how snapshots are written when updating via
-     * [TestConfig.updateSnapshots](https://playwright.dev/docs/test-api/class-testconfig#test-config-update-snapshots). Defaults to
-     * `'relaxed'`.
+     * Defines how snapshots are written when updating. Defaults to `'relaxed'`.
      * - `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for
      *   numbers) to reduce flakiness from minor changes.
      * - `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values
