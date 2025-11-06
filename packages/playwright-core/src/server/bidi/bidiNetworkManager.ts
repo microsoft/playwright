@@ -54,7 +54,7 @@ export class BidiNetworkManager {
     eventsHelper.removeEventListeners(this._eventListeners);
   }
 
-  private _onBeforeRequestSent(param: bidi.Network.BeforeRequestSentParameters) {
+  private async _onBeforeRequestSent(param: bidi.Network.BeforeRequestSentParameters) {
     if (param.request.url.startsWith('data:'))
       return;
     const redirectedFrom = param.redirectCount ? (this._requests.get(param.request.request) || null) : null;
@@ -79,7 +79,8 @@ export class BidiNetworkManager {
         route = new BidiRouteImpl(this._session, param.request.request);
       }
     }
-    const request = new BidiRequest(frame, redirectedFrom, param, route);
+    const requestData = await getNetworkData(this._session, param.request, bidi.Network.DataType.Request).catch(() => null);
+    const request = new BidiRequest(frame, redirectedFrom, param, route, requestData);
     this._requests.set(request._id, request);
     this._page.frameManager.requestStarted(request.request, route);
   }
@@ -88,11 +89,7 @@ export class BidiNetworkManager {
     const request = this._requests.get(params.request.request);
     if (!request)
       return;
-    const getResponseBody = async () => {
-      const { bytes } = await this._session.send('network.getData', { request: params.request.request, dataType: bidi.Network.DataType.Response });
-      const encoding = bytes.type === 'base64' ? 'base64' : 'utf8';
-      return Buffer.from(bytes.value, encoding);
-    };
+    const getResponseBody = async () => (await getNetworkData(this._session, params.request, bidi.Network.DataType.Response))!;
     const timings = params.request.timings;
     const startTime = timings.requestTime;
     function relativeToStart(time: number): number {
@@ -236,14 +233,12 @@ class BidiRequest {
   // store the first and only Route in the chain (if any).
   _originalRequestRoute: BidiRouteImpl | undefined;
 
-  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidi.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
+  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidi.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined, postData: Buffer | null) {
     this._id = payload.request.request;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
-    // TODO: missing in the spec?
-    const postDataBuffer = null;
     this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined, payload.request.url,
-        resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
+        resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method, postData, fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);
@@ -389,4 +384,12 @@ function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: 
       }
     default: return 'other';
   }
+}
+
+async function getNetworkData(session: BidiSession, request: bidi.Network.RequestData, dataType: bidi.Network.DataType): Promise<Buffer | null> {
+  if (dataType === 'request' && !request.bodySize)
+    return null;
+  const { bytes } = await session.send('network.getData', { request: request.request, dataType });
+  const encoding = bytes.type === 'base64' ? 'base64' : 'utf8';
+  return Buffer.from(bytes.value, encoding);
 }
