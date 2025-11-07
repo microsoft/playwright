@@ -50,12 +50,16 @@ export class BidiBrowser extends Browser {
     browser._bidiSessionInfo = await browser._browserSession.send('session.new', {
       capabilities: {
         alwaysMatch: {
-          acceptInsecureCerts: options.persistent?.internalIgnoreHTTPSErrors || options.persistent?.ignoreHTTPSErrors,
-          proxy: getProxyConfiguration(options.originalLaunchOptions.proxyOverride ?? options.proxy),
-          unhandledPromptBehavior: {
+          'acceptInsecureCerts': options.persistent?.internalIgnoreHTTPSErrors || options.persistent?.ignoreHTTPSErrors,
+          'proxy': getProxyConfiguration(options.originalLaunchOptions.proxyOverride ?? options.proxy),
+          'unhandledPromptBehavior': {
             default: bidi.Session.UserPromptHandlerType.Ignore,
           },
-          webSocketUrl: true
+          'webSocketUrl': true,
+          // Chrome with WebDriver BiDi does not support prerendering
+          // yet because WebDriver BiDi behavior is not specified. See
+          // https://github.com/w3c/webdriver-bidi/issues/321.
+          'goog:prerenderingDisabled': true,
         },
       }
     });
