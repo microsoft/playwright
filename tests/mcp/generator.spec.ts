@@ -28,32 +28,34 @@ test('generator tools intent', async ({ startClient }) => {
     if (tool.inputSchema.properties?.intent)
       toolsWithIntent.push(tool.name);
   }
+  toolsWithIntent.sort();
 
   expect(toolsWithIntent).toEqual([
+    'browser_click',
     'browser_close',
-    'browser_resize',
-    'browser_handle_dialog',
+    'browser_drag',
     'browser_evaluate',
     'browser_file_upload',
     'browser_fill_form',
+    'browser_handle_dialog',
+    'browser_hover',
     'browser_install',
-    'browser_press_key',
-    'browser_type',
-    'browser_navigate',
-    'browser_navigate_back',
-    'browser_mouse_move_xy',
     'browser_mouse_click_xy',
     'browser_mouse_drag_xy',
-    'browser_click',
-    'browser_drag',
-    'browser_hover',
+    'browser_mouse_move_xy',
+    'browser_navigate',
+    'browser_navigate_back',
+    'browser_press_key',
+    'browser_resize',
+    'browser_run_code',
     'browser_select_option',
     'browser_tabs',
-    'browser_wait_for',
+    'browser_type',
     'browser_verify_element_visible',
-    'browser_verify_text_visible',
     'browser_verify_list_visible',
+    'browser_verify_text_visible',
     'browser_verify_value',
+    'browser_wait_for',
   ]);
 });
 
