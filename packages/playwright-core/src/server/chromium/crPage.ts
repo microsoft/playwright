@@ -750,6 +750,10 @@ class FrameSession {
     session.once('Runtime.executionContextCreated', async event => {
       worker.createExecutionContext(new CRExecutionContext(session, event.context));
     });
+    if (this._crPage._browserContext._browser.majorVersion() >= 143)
+      session.on('Inspector.workerScriptLoaded', () => worker.workerScriptLoaded());
+    else
+      worker.workerScriptLoaded();
     // This might fail if the target is closed before we initialize.
     session._sendMayFail('Runtime.enable');
     // TODO: attribute workers to the right frame.

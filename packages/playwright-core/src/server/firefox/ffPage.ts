@@ -280,6 +280,7 @@ export class FFPage implements PageDelegate {
     this._page.addWorker(workerId, worker);
     workerSession.once('Runtime.executionContextCreated', event => {
       worker.createExecutionContext(new FFExecutionContext(workerSession, event.executionContextId));
+      worker.workerScriptLoaded();
     });
     workerSession.on('Runtime.console', event => {
       const { type, args, location } = event;
