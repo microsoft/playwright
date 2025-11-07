@@ -109,13 +109,15 @@ const CopyDropdown: React.FC<{
 const ExpandableSection: React.FC<{
   title: string;
   children?: React.ReactNode
-}> = ({ title, children }) => {
+  className?: string;
+}> = ({ title, children, className }) => {
   const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
   return <Expandable
     expanded={expanded}
     setExpanded={setExpanded}
     expandOnTitleClick
     title={<span className='network-request-details-header'>{title}</span>}
+    className={className}
   >
     {children}
   </Expandable>;
@@ -153,7 +155,7 @@ const RequestTab: React.FunctionComponent<{
       <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
     </ExpandableSection>
 
-    {requestBody && <ExpandableSection title='Request Body'>
+    {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
     </ExpandableSection>}
   </div>;

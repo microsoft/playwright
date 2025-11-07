@@ -23,7 +23,8 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
   setExpanded: (expanded: boolean) => void,
   expanded: boolean,
   expandOnTitleClick?: boolean,
-}>> = ({ title, children, setExpanded, expanded, expandOnTitleClick }) => {
+  className?: string;
+}>> = ({ title, children, setExpanded, expanded, expandOnTitleClick, className }) => {
   const titleId = React.useId();
   const regionId = React.useId();
 
@@ -34,7 +35,7 @@ export const Expandable: React.FunctionComponent<React.PropsWithChildren<{
     style={{ cursor: 'pointer', color: 'var(--vscode-foreground)', marginLeft: '5px' }}
     onClick={!expandOnTitleClick ? onClick : undefined} />;
 
-  return <div className={clsx('expandable', expanded && 'expanded')}>
+  return <div className={clsx('expandable', expanded && 'expanded', className)}>
     {expandOnTitleClick ?
       <div
         id={titleId}
