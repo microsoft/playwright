@@ -26,6 +26,7 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 
+import * as network from '../network';
 import type { RegisteredListener } from '../utils/eventsHelper';
 import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
@@ -298,6 +299,16 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
+    const locale = this._browserContext._options.locale;
+    const allHeaders = network.mergeHeaders([
+      this._browserContext._options.extraHTTPHeaders,
+      this._page.extraHTTPHeaders(),
+      locale ? network.singleHeader('Accept-Language', locale) : undefined,
+    ]);
+    await this._session.send('network.setExtraHeaders', {
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      contexts: [this._session.sessionId],
+    });
   }
 
   async updateEmulateMedia(): Promise<void> {
