@@ -56,7 +56,7 @@ export class ProcessHost extends EventEmitter {
         ...process.env,
         ...this._extraEnv,
       },
-      execArgv: options.execArgv,
+      ...(options.execArgv ? { execArgv: options.execArgv } : {}),
       stdio: [
         'ignore',
         options.onStdOut ? 'pipe' : 'inherit',

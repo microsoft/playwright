@@ -1366,7 +1366,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { defineConfig } from '@playwright/test';
+   * import { defineConfig} from '@playwright/test';
    *
    * export default defineConfig({
    *   ignoreSnapshots: !process.env.CI,
@@ -1381,8 +1381,8 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) to expose different entry points
    * based on conditions.
    *
-   * These conditions are added to Node.js's default conditions (`node`, `import`, `require`, etc.) and apply only
-   * when running tests, not when loading the configuration file.
+   * These conditions are added to Node.js's default conditions (`node`, `import`, `require`, etc.) and apply only when
+   * running tests, not when loading the configuration file.
    *
    * **Usage**
    *
@@ -1396,7 +1396,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    * ```
    *
    */
-  importConditions?: string[];
+  importConditions?: Array<string>;
 
   /**
    * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and

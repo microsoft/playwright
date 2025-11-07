@@ -258,10 +258,28 @@ Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()`
 **Usage**
 
 ```js title="playwright.config.ts"
-import { defineConfig } from '@playwright/test';
+import { defineConfig} from '@playwright/test';
 
 export default defineConfig({
   ignoreSnapshots: !process.env.CI,
+});
+```
+
+## property: TestConfig.importConditions
+* since: v1.57
+- type: ?<[Array]<[string]>>
+
+Additional Node.js import conditions to use when resolving package exports. This is useful for packages that use [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) to expose different entry points based on conditions.
+
+These conditions are added to Node.js's default conditions (`node`, `import`, `require`, etc.) and apply only when running tests, not when loading the configuration file.
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  importConditions: ['custom', 'development'],
 });
 ```
 

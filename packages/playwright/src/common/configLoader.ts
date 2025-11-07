@@ -261,6 +261,15 @@ function validateConfig(file: string, config: Config) {
     if (!fs.existsSync(path.resolve(file, '..', config.tsconfig)))
       throw errorWithFile(file, `config.tsconfig does not exist`);
   }
+
+  if ('importConditions' in config && config.importConditions !== undefined) {
+    if (!Array.isArray(config.importConditions))
+      throw errorWithFile(file, `config.importConditions must be an array`);
+    config.importConditions.forEach((condition, index) => {
+      if (typeof condition !== 'string')
+        throw errorWithFile(file, `config.importConditions[${index}] must be a string`);
+    });
+  }
 }
 
 function validateProject(file: string, project: Project, title: string) {
