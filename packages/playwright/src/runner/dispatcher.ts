@@ -218,10 +218,12 @@ export class Dispatcher {
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
     const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
     const outputDir = projectConfig.project.outputDir;
+    const execArgv = this._config.importConditions?.map(condition => `--conditions=${condition}`);
     const worker = new WorkerHost(testGroup, {
       parallelIndex,
       config: loaderData,
       extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
+      execArgv,
       outputDir,
       pauseOnError: this._failureTracker.pauseOnError(),
       pauseAtEnd: this._failureTracker.pauseAtEnd(projectConfig),

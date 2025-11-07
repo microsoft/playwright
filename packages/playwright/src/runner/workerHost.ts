@@ -33,6 +33,7 @@ type WorkerHostOptions = {
   parallelIndex: number;
   config: SerializedConfig;
   extraEnv: Record<string, string | undefined>;
+  execArgv?: string[];
   outputDir: string;
   pauseOnError: boolean;
   pauseAtEnd: boolean;
@@ -43,6 +44,7 @@ export class WorkerHost extends ProcessHost {
   readonly workerIndex: number;
   private _hash: string;
   private _params: WorkerInitParams;
+  private _execArgv?: string[];
   private _didFail = false;
 
   constructor(testGroup: TestGroup, options: WorkerHostOptions) {
@@ -55,6 +57,7 @@ export class WorkerHost extends ProcessHost {
     this.workerIndex = workerIndex;
     this.parallelIndex = options.parallelIndex;
     this._hash = testGroup.workerHash;
+    this._execArgv = options.execArgv;
 
     this._params = {
       workerIndex: this.workerIndex,
@@ -73,6 +76,7 @@ export class WorkerHost extends ProcessHost {
     return await this.startRunner(this._params, {
       onStdOut: chunk => this.emit('stdOut', stdioChunkToParams(chunk)),
       onStdErr: chunk => this.emit('stdErr', stdioChunkToParams(chunk)),
+      execArgv: this._execArgv,
     });
   }
 

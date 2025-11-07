@@ -48,7 +48,7 @@ export class ProcessHost extends EventEmitter {
     this._extraEnv = env;
   }
 
-  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
+  async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void, execArgv?: string[] } = {}): Promise<ProcessExitData | undefined> {
     assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(require.resolve('../common/process'), {
       detached: false,
@@ -56,6 +56,7 @@ export class ProcessHost extends EventEmitter {
         ...process.env,
         ...this._extraEnv,
       },
+      execArgv: options.execArgv,
       stdio: [
         'ignore',
         options.onStdOut ? 'pipe' : 'inherit',

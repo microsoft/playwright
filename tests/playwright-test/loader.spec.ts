@@ -1161,3 +1161,104 @@ test('should dynamically import re-exported cjs namespace', {
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should use custom import conditions from config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        importConditions: ['custom']
+      };
+    `,
+    'node_modules/conditional-pkg/package.json': JSON.stringify({
+      name: 'conditional-pkg',
+      exports: {
+        '.': {
+          'custom': './custom.js',
+          'default': './default.js'
+        }
+      }
+    }),
+    'node_modules/conditional-pkg/custom.js': `
+      export const value = 'custom-export';
+    `,
+    'node_modules/conditional-pkg/default.js': `
+      export const value = 'default-export';
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import { value } from 'conditional-pkg';
+      test('should use custom condition', () => {
+        expect(value).toBe('custom-export');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should use default exports without custom import conditions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'node_modules/conditional-pkg/package.json': JSON.stringify({
+      name: 'conditional-pkg',
+      exports: {
+        '.': {
+          'custom': './custom.js',
+          'default': './default.js'
+        }
+      }
+    }),
+    'node_modules/conditional-pkg/custom.js': `
+      export const value = 'custom-export';
+    `,
+    'node_modules/conditional-pkg/default.js': `
+      export const value = 'default-export';
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import { value } from 'conditional-pkg';
+      test('should use default condition', () => {
+        expect(value).toBe('default-export');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+test('should support multiple import conditions', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        importConditions: ['custom1', 'custom2']
+      };
+    `,
+    'node_modules/multi-conditional/package.json': JSON.stringify({
+      name: 'multi-conditional',
+      exports: {
+        '.': {
+          'custom1': './first.js',
+          'custom2': './second.js',
+          'default': './default.js'
+        }
+      }
+    }),
+    'node_modules/multi-conditional/first.js': `
+      export const value = 'first-condition';
+    `,
+    'node_modules/multi-conditional/second.js': `
+      export const value = 'second-condition';
+    `,
+    'node_modules/multi-conditional/default.js': `
+      export const value = 'default-condition';
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import { value } from 'multi-conditional';
+      test('should use first matching condition', () => {
+        expect(value).toBe('first-condition');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
