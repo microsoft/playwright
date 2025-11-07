@@ -61,19 +61,19 @@ if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
 const EXECUTABLE_PATHS = {
   'chromium': {
     '<unknown>': undefined,
-    'linux-x64': ['chrome-linux', 'chrome'],
-    'linux-arm64': ['chrome-linux', 'chrome'],
-    'mac-x64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'mac-arm64': ['chrome-mac', 'Chromium.app', 'Contents', 'MacOS', 'Chromium'],
-    'win-x64': ['chrome-win', 'chrome.exe'],
+    'linux-x64': ['chrome-linux64', 'chrome'],
+    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'mac-x64': ['chrome-mac-x64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
+    'mac-arm64': ['chrome-mac-arm64', 'Google Chrome for Testing.app', 'Contents', 'MacOS', 'Google Chrome for Testing'],
+    'win-x64': ['chrome-win64', 'chrome.exe'],
   },
   'chromium-headless-shell': {
     '<unknown>': undefined,
-    'linux-x64': ['chrome-linux', 'headless_shell'],
-    'linux-arm64': ['chrome-linux', 'headless_shell'],
-    'mac-x64': ['chrome-mac', 'headless_shell'],
-    'mac-arm64': ['chrome-mac', 'headless_shell'],
-    'win-x64': ['chrome-win', 'headless_shell.exe'],
+    'linux-x64': ['chrome-headless-shell-linux64', 'chrome-headless-shell'],
+    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'mac-x64': ['chrome-headless-shell-mac-x64', 'chrome-headless-shell'],
+    'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
+    'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
   },
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
