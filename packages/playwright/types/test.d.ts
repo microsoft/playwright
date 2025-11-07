@@ -1366,7 +1366,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * ```js
    * // playwright.config.ts
-   * import { defineConfig} from '@playwright/test';
+   * import { defineConfig } from '@playwright/test';
    *
    * export default defineConfig({
    *   ignoreSnapshots: !process.env.CI,

@@ -258,7 +258,7 @@ Whether to skip snapshot expectations, such as `expect(value).toMatchSnapshot()`
 **Usage**
 
 ```js title="playwright.config.ts"
-import { defineConfig} from '@playwright/test';
+import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   ignoreSnapshots: !process.env.CI,
