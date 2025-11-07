@@ -1377,6 +1377,28 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   ignoreSnapshots?: boolean;
 
   /**
+   * Additional Node.js import conditions to use when resolving package exports. This is useful for packages that use
+   * [conditional exports](https://nodejs.org/api/packages.html#conditional-exports) to expose different entry points
+   * based on conditions.
+   *
+   * These conditions are added to Node.js's default conditions (`node`, `import`, `require`, etc.) and apply only
+   * when running tests, not when loading the configuration file.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // playwright.config.ts
+   * import { defineConfig } from '@playwright/test';
+   *
+   * export default defineConfig({
+   *   importConditions: ['custom', 'development'],
+   * });
+   * ```
+   *
+   */
+  importConditions?: string[];
+
+  /**
    * The maximum number of test failures for the whole test suite run. After reaching this number, testing will stop and
    * exit with an error. Setting to zero (default) disables this behavior.
    *
