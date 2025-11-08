@@ -19,10 +19,11 @@ import zodToJsonSchema from 'zod-to-json-schema';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
-import { runMainBackend, runOnPauseBackendLoop } from '../../packages/playwright/lib/mcp/sdk/mdb';
+import * as mcp from '../../packages/playwright/lib/mcp/sdk/exports';
 import * as mcpBundle from '../../packages/playwright/lib/mcp/sdk/bundle';
-
 import { test, expect } from './fixtures';
+
+import type http from 'http';
 
 test('call top level tool', async () => {
   const { mdbUrl } = await startMDBAndCLI();
@@ -38,8 +39,8 @@ test('call top level tool', async () => {
     description: 'Pause in gdb',
     inputSchema: expect.any(Object),
   }, {
-    name: 'cli_pause_in_gdb_twice',
-    description: 'Pause in gdb twice',
+    name: 'cli_restart',
+    description: 'Restart the process',
     inputSchema: expect.any(Object),
   }, {
     name: 'gdb_bt',
@@ -119,7 +120,7 @@ test('outer and inner roots available', async () => {
   await mdbClient.close();
 });
 
-test('reset on pause tools', async () => {
+test('should reset', async () => {
   const { mdbUrl, log } = await startMDBAndCLI();
   const mdbClient = await createMDBClient(mdbUrl);
 
@@ -153,6 +154,41 @@ test('reset on pause tools', async () => {
     'CLI: callTool cli_echo',
   ]);
 
+  const restartResult = await mdbClient.client.callTool({
+    name: 'cli_restart',
+    arguments: {},
+  });
+  expect(restartResult.content).toEqual([{ type: 'text', text: 'Restarted' }]);
+
+  const pauseResult = await mdbClient.client.callTool({
+    name: 'cli_pause_in_gdb',
+    arguments: {},
+  });
+  expect(pauseResult.content).toEqual([{ type: 'text', text: 'Paused on exception' }]);
+
+  const btResult2 = await mdbClient.client.callTool({
+    name: 'gdb_bt',
+    arguments: {},
+  });
+  expect(btResult2.content).toEqual([{ type: 'text', text: 'Backtrace' }]);
+
+  await expect.poll(() => log).toEqual([
+    'CLI: initialize',
+    'CLI: callTool cli_pause_in_gdb',
+    'GDB: listTools',
+    'GDB: initialize',
+    'GDB: callTool gdb_bt',
+    'CLI: afterCallTool gdb_bt',
+    'GDB: serverClosed',
+    'CLI: callTool cli_echo',
+    'CLI: callTool cli_restart',
+    'CLI: callTool cli_pause_in_gdb',
+    'GDB: listTools',
+    'GDB: initialize',
+    'GDB: callTool gdb_bt',
+    'CLI: afterCallTool gdb_bt',
+  ]);
+
   await mdbClient.close();
 });
 
@@ -183,10 +219,10 @@ async function startMDBAndCLI(): Promise<{ mdbUrl: string, log: string[] }> {
     name: 'CLI',
     nameInConfig: 'cli',
     version: '0.0.0',
-    create: () => new CLIBackend(log)
+    create: pushClient => new CLIBackend(log, pushClient)
   };
 
-  const mdbUrl = (await runMainBackend(cliBackendFactory, { port: 0 }))!;
+  const mdbUrl = (await mcp.runMainBackend(cliBackendFactory, { port: 0 }))!;
   mdbUrlBox.mdbUrl = mdbUrl;
   return { mdbUrl, log };
 }
@@ -209,9 +245,12 @@ async function createMDBClient(mdbUrl: string, roots: any[] | undefined = undefi
 class CLIBackend {
   private _roots: any[] | undefined;
   private _log: string[] = [];
+  private _pushClient: (url: string, message: string) => Promise<void>;
+  private _gdbServer: http.Server | undefined;
 
-  constructor(log: string[]) {
+  constructor(log: string[], pushClient: (url: string, message: string) => Promise<void>) {
     this._log = log;
+    this._pushClient = pushClient;
   }
 
   async initialize(server, clientInfo) {
@@ -230,8 +269,8 @@ class CLIBackend {
       description: 'Pause in gdb',
       inputSchema: zodToJsonSchema(z.object({})) as any,
     }, {
-      name: 'cli_pause_in_gdb_twice',
-      description: 'Pause in gdb twice',
+      name: 'cli_restart',
+      description: 'Restart the process',
       inputSchema: zodToJsonSchema(z.object({})) as any,
     }, {
       name: 'gdb_bt',
@@ -253,13 +292,21 @@ class CLIBackend {
     if (name === 'cli_echo')
       return { content: [{ type: 'text', text: `Echo: ${args?.message as string}, roots: ${stringifyRoots(this._roots)}` }] };
     if (name === 'cli_pause_in_gdb') {
-      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception');
+      const factory = {
+        name: 'gdb',
+        nameInConfig: 'gdb',
+        version: '0.0.0',
+        create: () => new GDBBackend(this._log),
+      };
+      this._gdbServer = await mcp.startHttpServer({ port: 0 });
+      const mcpUrl = await mcp.installHttpTransport(this._gdbServer, factory, true);
+      await this._pushClient(mcpUrl, 'Paused on exception');
       return { content: [{ type: 'text', text: 'Done' }] };
     }
-    if (name === 'cli_pause_in_gdb_twice') {
-      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception 1');
-      await runOnPauseBackendLoop(new GDBBackend(this._log), 'Paused on exception 2');
-      return { content: [{ type: 'text', text: 'Done' }] };
+    if (name === 'cli_restart') {
+      this._gdbServer.close();
+      this._gdbServer = undefined;
+      return { content: [{ type: 'text', text: 'Restarted' }] };
     }
     throw new Error(`Unknown tool: ${name}`);
   }

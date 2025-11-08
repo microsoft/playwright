@@ -108,6 +108,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
     this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
+    this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', params));
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
@@ -203,6 +204,8 @@ export class TestServerDispatcher implements TestServerInterface {
     const { status } = await this._testRunner.runTests(wireReporter, {
       ...params,
       doNotRunDepsOutsideProjectFilter: true,
+      pauseAtEnd: params.pauseAtEnd,
+      pauseOnError: params.pauseOnError,
     });
     return { status };
   }

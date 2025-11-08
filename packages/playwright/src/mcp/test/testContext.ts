@@ -22,12 +22,13 @@ import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
-import { fileExistsAsync } from '../../util';
+import { stripAnsiEscapes, fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 
-import type { ProgressCallback } from '../sdk/server';
 import type { ConfigLocation } from '../../common/config';
+import type { ProgressCallback, MDBPushClientCallback } from '../sdk/exports';
+import type { TestPausedExtraData } from './browserBackend';
 
 export type SeedFile = {
   file: string;
@@ -71,13 +72,15 @@ ${step.code}
 }
 
 export class TestContext {
+  private _pushClient: MDBPushClientCallback;
   private _testRunner: TestRunner | undefined;
   readonly options?: { muteConsole?: boolean, headless?: boolean };
   configLocation!: ConfigLocation;
   rootPath!: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(options?: { muteConsole?: boolean, headless?: boolean }) {
+  constructor(pushClient: MDBPushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._pushClient = pushClient;
     this.options = options;
   }
 
@@ -98,6 +101,22 @@ export class TestContext {
     this._testRunner = testRunner;
     testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {
       this._testRunner?.emit(TestRunnerEvent.TestFilesChanged, testFiles);
+    });
+    testRunner.on(TestRunnerEvent.TestPaused, params => {
+      const extraData = params.extraData as TestPausedExtraData;
+      const introMessage: string[] = [];
+      if (params.errors.length) {
+        introMessage.push(`### Paused on error:`);
+        for (const error of params.errors)
+          introMessage.push(stripAnsiEscapes(error.message || ''));
+      } else {
+        introMessage.push(`### Paused at end of test. ready for interaction`);
+      }
+      introMessage.push(extraData.contextState);
+      introMessage.push('');
+      if (params.errors.length)
+        introMessage.push(`### Task`, `Try recovering from the error prior to continuing`);
+      void this._pushClient(extraData.mcpUrl, introMessage.join('\n'));
     });
     this._testRunner = testRunner;
     return testRunner;

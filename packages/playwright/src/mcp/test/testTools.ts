@@ -87,6 +87,7 @@ export const debugTest = defineTestTool({
         workers: 1,
         pauseOnError: true,
         disableConfigReporters: true,
+        actionTimeout: 5000,
       });
     }, progress);
 
