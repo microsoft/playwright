@@ -162,50 +162,6 @@ SelectorEngine:
     contentScript: boolean?
 
 
-AXNode:
-  type: object
-  properties:
-    role: string
-    name: string
-    valueString: string?
-    valueNumber: float?
-    description: string?
-    keyshortcuts: string?
-    roledescription: string?
-    valuetext: string?
-    disabled: boolean?
-    expanded: boolean?
-    focused: boolean?
-    modal: boolean?
-    multiline: boolean?
-    multiselectable: boolean?
-    readonly: boolean?
-    required: boolean?
-    selected: boolean?
-    checked:
-      type: enum?
-      literals:
-      - checked
-      - unchecked
-      - mixed
-    pressed:
-      type: enum?
-      literals:
-      - pressed
-      - released
-      - mixed
-    level: int?
-    valuemin: float?
-    valuemax: float?
-    autocomplete: string?
-    haspopup: string?
-    invalid: string?
-    orientation: string?
-    children:
-      type: array?
-      items: AXNode
-
-
 SetNetworkCookie:
   type: object
   properties:
@@ -1922,15 +1878,6 @@ Page:
         slowMo: true
         snapshot: true
         pausesBeforeAction: true
-
-    accessibilitySnapshot:
-      title: Accessibility snapshot
-      group: getter
-      parameters:
-        interestingOnly: boolean?
-        root: ElementHandle?
-      returns:
-        rootAXNode: AXNode?
 
     pageErrors:
       title: Get page errors

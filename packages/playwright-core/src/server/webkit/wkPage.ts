@@ -30,7 +30,6 @@ import { TargetClosedError } from '../errors';
 import { helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding } from '../page';
-import { getAccessibilityTree } from './wkAccessibility';
 import { WKSession } from './wkConnection';
 import { createHandle, WKExecutionContext } from './wkExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
@@ -43,7 +42,6 @@ import { translatePathToWSL } from './webkit';
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
 import type { RegisteredListener } from '../utils/eventsHelper';
-import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { JSHandle } from '../javascript';
 import type { InitScript, PageDelegate } from '../page';
@@ -989,10 +987,6 @@ export class WKPage implements PageDelegate {
     if (!result || result.object.subtype === 'null')
       throw new Error(dom.kUnableToAdoptErrorMessage);
     return createHandle(to, result.object) as dom.ElementHandle<T>;
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
-    return getAccessibilityTree(this._session, needle);
   }
 
   async inputActionEpilogue(): Promise<void> {

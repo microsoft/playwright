@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-export { Accessibility } from './accessibility';
 export { Android, AndroidDevice, AndroidInput, AndroidSocket, AndroidWebView } from './android';
 export { Browser } from './browser';
 export { BrowserContext } from './browserContext';

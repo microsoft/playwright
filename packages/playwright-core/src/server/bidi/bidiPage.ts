@@ -28,7 +28,6 @@ import * as bidi from './third_party/bidiProtocol';
 
 import * as network from '../network';
 import type { RegisteredListener } from '../utils/eventsHelper';
-import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
@@ -574,10 +573,6 @@ export class BidiPage implements PageDelegate {
     const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
     return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
-    throw new Error('Method not implemented.');
   }
 
   async inputActionEpilogue(): Promise<void> {

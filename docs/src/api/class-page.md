@@ -557,13 +557,6 @@ Emitted when [WebSocket] request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
-## property: Page.accessibility
-* since: v1.8
-* langs: csharp, js, python
-* deprecated: This property is discouraged. Please use other libraries such as
-  [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
-- type: <[Accessibility]>
-
 ## async method: Page.addInitScript
 * since: v1.8
 
