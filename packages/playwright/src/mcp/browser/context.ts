@@ -90,6 +90,7 @@ export class Context {
     const { browserContext } = await this._ensureBrowserContext();
     const page = await browserContext.newPage();
     this._currentTab = this._tabs.find(t => t.page === page)!;
+    await this._currentTab.initializedPromise;
     return this._currentTab;
   }
 

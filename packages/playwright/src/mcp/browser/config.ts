@@ -46,6 +46,7 @@ export type CLIOptions = {
   host?: string;
   ignoreHttpsErrors?: boolean;
   initScript?: string[];
+  initPage?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
   sandbox?: boolean;
@@ -218,6 +219,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
     },
     server: {
@@ -264,6 +266,9 @@ function configFromEnv(): Config {
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  const initPage = envToString(process.env.PLAYWRIGHT_MCP_INIT_PAGE);
+  if (initPage)
+    options.initPage = [initPage];
   const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
   if (initScript)
     options.initScript = [initScript];

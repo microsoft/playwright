@@ -23,6 +23,7 @@ import { logUnhandledError } from '../log';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
+import { requireOrImport } from '../../transform/transform';
 
 import type { Context } from './context';
 import type { Page } from '../../../../playwright-core/src/client/page';
@@ -56,7 +57,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _downloads: { download: playwright.Download, finished: boolean, outputFile: string }[] = [];
-  private _initializedPromise: Promise<void>;
+  readonly initializedPromise: Promise<void>;
   private _needsFullSnapshot = false;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
@@ -83,7 +84,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
-    this._initializedPromise = this._initialize();
+    this.initializedPromise = this._initialize();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {
@@ -107,6 +108,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const requests = await this.page.requests().catch(() => []);
     for (const request of requests)
       this._requests.add(request);
+    for (const initPage of this.context.config.browser.initPage || []) {
+      try {
+        const { default: func } = await requireOrImport(initPage);
+        await func({ page: this.page });
+      } catch (e) {
+        logUnhandledError(e);
+      }
+    }
   }
 
   modalStates(): ModalState[] {
@@ -210,12 +219,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async consoleMessages(type?: 'error'): Promise<ConsoleMessage[]> {
-    await this._initializedPromise;
+    await this.initializedPromise;
     return this._consoleMessages.filter(message => type ? message.type === type : true);
   }
 
   async requests(): Promise<Set<playwright.Request>> {
-    await this._initializedPromise;
+    await this.initializedPromise;
     return this._requests;
   }
 
