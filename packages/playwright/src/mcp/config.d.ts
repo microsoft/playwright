@@ -70,6 +70,11 @@ export type Config = {
     remoteEndpoint?: string;
 
     /**
+     * Paths to TypeScript files to add as initialization scripts for Playwright page.
+     */
+    initPage?: string[];
+
+    /**
      * Paths to JavaScript files to add as initialization scripts.
      * The scripts will be evaluated in every page before any of the page's scripts.
      */
