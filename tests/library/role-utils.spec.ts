@@ -153,26 +153,28 @@ test('wpt accname non-manual', async ({ page, asset, server, browserName }) => {
   }
 });
 
-test('axe-core implicit-role', async ({ page, asset, server }) => {
-  await page.goto(server.EMPTY_PAGE);
-  const testCases = require(asset('axe-core/implicit-role'));
-  for (const testCase of testCases) {
-    await test.step(`checking ${JSON.stringify(testCase)}`, async () => {
-      await page.setContent(`
-        <body>
-          ${testCase.html}
-        </body>
-      `);
-      // Use $eval to force injected script.
-      const received = await page.$eval('body', (_, selector) => {
-        const element = document.querySelector(selector);
-        if (!element)
-          throw new Error(`Unable to resolve "${selector}"`);
-        return (window as any).__injectedScript.utils.getAriaRole(element);
-      }, testCase.target);
-      expect.soft(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
-    });
-  }
+['implicit-role', 'implicit-role-playwright'].forEach(filename => {
+  test(`axe-core ${filename}`, async ({ page, asset, server }) => {
+    await page.goto(server.EMPTY_PAGE);
+    const testCases = require(asset(`axe-core/${filename}`));
+    for (const testCase of testCases) {
+      await test.step(`checking ${JSON.stringify(testCase)}`, async () => {
+        await page.setContent(`
+          <body>
+            ${testCase.html}
+          </body>
+        `);
+        // Use $eval to force injected script.
+        const received = await page.$eval('body', (_, selector) => {
+          const element = document.querySelector(selector);
+          if (!element)
+            throw new Error(`Unable to resolve "${selector}"`);
+          return (window as any).__injectedScript.utils.getAriaRole(element);
+        }, testCase.target);
+        expect.soft(received, `checking ${JSON.stringify(testCase)}`).toBe(testCase.role);
+      });
+    }
+  });
 });
 
 test('axe-core accessible-text', async ({ page, asset, server }) => {

@@ -178,8 +178,28 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
       return 'columnheader';
     if (e.getAttribute('scope') === 'row')
       return 'rowheader';
-    const table = closestCrossShadow(e, 'table');
-    const role = table ? getExplicitAriaRole(table) : '';
+    const table = closestCrossShadow(e, 'table') as HTMLTableElement | undefined;
+    if (!table)
+      return 'cell';
+
+    const rows = [...table.rows];
+    const position = getCellPosition(table.rows, e as HTMLTableCellElement);
+
+    if (position) {
+      const { x, y } = position;
+
+      const containingRow = rows[y];
+      if (containingRow) {
+        if (everyNodeIsTH(containingRow.cells))
+          return 'columnheader';
+      }
+
+      const containingColumnCells = rows.map(row => row.cells[x]);
+      if (everyNodeIsTH(containingColumnCells))
+        return 'rowheader';
+    }
+
+    const role = getExplicitAriaRole(table);
     return (role === 'grid' || role === 'treegrid') ? 'gridcell' : 'cell';
   },
   'THEAD': () => 'rowgroup',
@@ -187,6 +207,29 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'TR': () => 'row',
   'UL': () => 'list',
 };
+
+function getCellPosition(rows: HTMLCollectionOf<HTMLTableRowElement>, thElement: HTMLTableCellElement): { x: number, y: number } | undefined {
+  for (let y = 0; y < rows.length; y++) {
+    const row = rows[y];
+    for (let x = 0; x < row.cells.length; x++) {
+      const cell = row.cells[x];
+
+      if (cell.contains(thElement))
+        return { x, y };
+    }
+  }
+
+  return undefined;
+}
+
+function everyNodeIsTH(nodes: HTMLCollectionOf<HTMLTableCellElement> | HTMLTableCellElement[]): boolean {
+  for (const cell of nodes) {
+    if (cell.nodeName.toUpperCase() !== 'TH')
+      return false;
+  }
+
+  return true;
+}
 
 const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
   'DD': ['DL', 'DIV'],
