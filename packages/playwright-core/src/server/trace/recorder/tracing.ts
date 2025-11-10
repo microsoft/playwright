@@ -24,6 +24,7 @@ import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
 import { createGuid  } from '../../utils/crypto';
+import { getPlaywrightVersion } from '../../utils/userAgent';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
@@ -33,7 +34,6 @@ import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 import { isAbortError } from '../../progress';
-import { getPlaywrightVersion } from '../../../utils';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import type { NameValue } from '../../../utils/isomorphic/types';
