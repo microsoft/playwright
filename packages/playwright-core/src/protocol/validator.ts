@@ -97,35 +97,6 @@ scheme.SelectorEngine = tObject({
   source: tString,
   contentScript: tOptional(tBoolean),
 });
-scheme.AXNode = tObject({
-  role: tString,
-  name: tString,
-  valueString: tOptional(tString),
-  valueNumber: tOptional(tFloat),
-  description: tOptional(tString),
-  keyshortcuts: tOptional(tString),
-  roledescription: tOptional(tString),
-  valuetext: tOptional(tString),
-  disabled: tOptional(tBoolean),
-  expanded: tOptional(tBoolean),
-  focused: tOptional(tBoolean),
-  modal: tOptional(tBoolean),
-  multiline: tOptional(tBoolean),
-  multiselectable: tOptional(tBoolean),
-  readonly: tOptional(tBoolean),
-  required: tOptional(tBoolean),
-  selected: tOptional(tBoolean),
-  checked: tOptional(tEnum(['checked', 'unchecked', 'mixed'])),
-  pressed: tOptional(tEnum(['pressed', 'released', 'mixed'])),
-  level: tOptional(tInt),
-  valuemin: tOptional(tFloat),
-  valuemax: tOptional(tFloat),
-  autocomplete: tOptional(tString),
-  haspopup: tOptional(tString),
-  invalid: tOptional(tString),
-  orientation: tOptional(tString),
-  children: tOptional(tArray(tType('AXNode'))),
-});
 scheme.SetNetworkCookie = tObject({
   name: tString,
   value: tString,
@@ -1425,13 +1396,6 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tFloat,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
-scheme.PageAccessibilitySnapshotParams = tObject({
-  interestingOnly: tOptional(tBoolean),
-  root: tOptional(tChannel(['ElementHandle'])),
-});
-scheme.PageAccessibilitySnapshotResult = tObject({
-  rootAXNode: tOptional(tType('AXNode')),
-});
 scheme.PagePageErrorsParams = tOptional(tObject({}));
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),

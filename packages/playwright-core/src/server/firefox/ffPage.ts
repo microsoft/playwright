@@ -20,7 +20,6 @@ import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { InitScript } from '../page';
 import { Page, Worker } from '../page';
-import { getAccessibilityTree } from './ffAccessibility';
 import { FFSession } from './ffConnection';
 import { createHandle, FFExecutionContext } from './ffExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
@@ -280,6 +279,7 @@ export class FFPage implements PageDelegate {
     this._page.addWorker(workerId, worker);
     workerSession.once('Runtime.executionContextCreated', event => {
       worker.createExecutionContext(new FFExecutionContext(workerSession, event.executionContextId));
+      worker.workerScriptLoaded();
     });
     workerSession.on('Runtime.console', event => {
       const { type, args, location } = event;
@@ -534,10 +534,6 @@ export class FFPage implements PageDelegate {
     if (!result.remoteObject)
       throw new Error(dom.kUnableToAdoptErrorMessage);
     return createHandle(to, result.remoteObject) as dom.ElementHandle<T>;
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle) {
-    return getAccessibilityTree(this._session, needle);
   }
 
   async inputActionEpilogue(): Promise<void> {

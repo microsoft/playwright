@@ -28,7 +28,6 @@ import { helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
 import { registry } from '../registry';
-import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
@@ -324,10 +323,6 @@ export class CRPage implements PageDelegate {
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     return this._sessionForHandle(handle)._adoptElementHandle<T>(handle, to);
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle) {
-    return getAccessibilityTree(this._mainFrameSession._client, needle);
   }
 
   async inputActionEpilogue(): Promise<void> {
@@ -750,6 +745,10 @@ class FrameSession {
     session.once('Runtime.executionContextCreated', async event => {
       worker.createExecutionContext(new CRExecutionContext(session, event.context));
     });
+    if (this._crPage._browserContext._browser.majorVersion() >= 143)
+      session.on('Inspector.workerScriptLoaded', () => worker.workerScriptLoaded());
+    else
+      worker.workerScriptLoaded();
     // This might fail if the target is closed before we initialize.
     session._sendMayFail('Runtime.enable');
     // TODO: attribute workers to the right frame.

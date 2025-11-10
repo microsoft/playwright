@@ -26,7 +26,11 @@ class WSTransport {
     this._ws = new ws.WebSocket(url);
   }
   onmessage(listener: (message: string) => void) {
-    this._ws.addEventListener('message', event => listener(event.data.toString()));
+    this._ws.addEventListener('message', event => {
+      if (process.env.PWTEST_DEBUG)
+        console.log('[test-server >>]', event.data.toString());
+      listener(event.data.toString());
+    });
   }
   onopen(listener: () => void) {
     this._ws.addEventListener('open', listener);
@@ -38,6 +42,8 @@ class WSTransport {
     this._ws.addEventListener('close', listener);
   }
   send(data: string) {
+    if (process.env.PWTEST_DEBUG)
+      console.log('[test-server <<]', data);
     this._ws.send(data);
   }
   close() {
@@ -53,6 +59,7 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onTestFilesChanged(params => this.events.push(['testFilesChanged', params]));
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
+    this.onTestPaused(params => this.events.push(['testPaused', params]));
   }
 }
 
@@ -255,4 +262,68 @@ test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFile
       `,
   });
   expect(await testServerConnection.runTests({})).toEqual({ status: 'passed' });
+});
+
+test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+      });
+      `,
+  });
+
+  const promise = testServerConnection.runTests({ pauseAtEnd: true });
+  await expect.poll(() => testServerConnection.events.find(e => e[0] === 'testPaused')).toEqual(['testPaused', { errors: [] }]);
+  await testServerConnection.stopTests({});
+  expect(await promise).toEqual({ status: 'interrupted' });
+});
+
+test('pauseOnError', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+        expect(1).toBe(2);
+      });
+      `,
+  });
+
+  const promise = testServerConnection.runTests({ pauseOnError: true });
+  await expect.poll(() => testServerConnection.events.some(e => e[0] === 'testPaused')).toBeTruthy();
+  expect(testServerConnection.events.find(e => e[0] === 'testPaused')[1]).toEqual({
+    errors: [
+      expect.objectContaining({
+        message: expect.stringContaining('toBe'),
+        stack: expect.stringContaining('a.test.ts:4:19'),
+        location: {
+          file: expect.stringContaining('a.test.ts'),
+          line: 4,
+          column: 19,
+        },
+      }),
+    ]
+  });
+
+  await testServerConnection.stopTests({});
+  expect(await promise).toEqual({ status: 'interrupted' });
+});
+
+test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+      });
+      `,
+  });
+
+  expect(await testServerConnection.runTests({ pauseOnError: true })).toEqual({ status: 'passed' });
+  expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
 });

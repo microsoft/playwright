@@ -26,8 +26,8 @@ import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
 
+import * as network from '../network';
 import type { RegisteredListener } from '../utils/eventsHelper';
-import type * as accessibility from '../accessibility';
 import type * as frames from '../frames';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
@@ -126,6 +126,7 @@ export class BidiPage implements PageDelegate {
       const delegate = new BidiExecutionContext(this._session, realmInfo);
       const worker = new Worker(this._page, realmInfo.origin);
       this._realmToWorkerContext.set(realmInfo.realm, worker.createExecutionContext(delegate));
+      worker.workerScriptLoaded();
       this._page.addWorker(realmInfo.realm, worker);
       return;
     }
@@ -297,6 +298,16 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
+    const locale = this._browserContext._options.locale;
+    const allHeaders = network.mergeHeaders([
+      this._browserContext._options.extraHTTPHeaders,
+      this._page.extraHTTPHeaders(),
+      locale ? network.singleHeader('Accept-Language', locale) : undefined,
+    ]);
+    await this._session.send('network.setExtraHeaders', {
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      contexts: [this._session.sessionId],
+    });
   }
 
   async updateEmulateMedia(): Promise<void> {
@@ -562,10 +573,6 @@ export class BidiPage implements PageDelegate {
     const nodeId = await fromContext.nodeIdForElementHandle(handle);
     const executionContext = toBidiExecutionContext(to);
     return await executionContext.remoteObjectForNodeId(to, nodeId) as dom.ElementHandle<T>;
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}> {
-    throw new Error('Method not implemented.');
   }
 
   async inputActionEpilogue(): Promise<void> {

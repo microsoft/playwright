@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import { Accessibility } from './accessibility';
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
@@ -89,7 +88,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   _routes: RouteHandler[] = [];
   _webSocketRoutes: WebSocketRouteHandler[] = [];
 
-  readonly accessibility: Accessibility;
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
@@ -121,7 +119,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._platform, this._browserContext._timeoutSettings);
 
-    this.accessibility = new Accessibility(this._channel);
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
     this.request = this._browserContext.request;
