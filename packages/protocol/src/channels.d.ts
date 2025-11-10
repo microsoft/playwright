@@ -221,36 +221,6 @@ export type SelectorEngine = {
   contentScript?: boolean,
 };
 
-export type AXNode = {
-  role: string,
-  name: string,
-  valueString?: string,
-  valueNumber?: number,
-  description?: string,
-  keyshortcuts?: string,
-  roledescription?: string,
-  valuetext?: string,
-  disabled?: boolean,
-  expanded?: boolean,
-  focused?: boolean,
-  modal?: boolean,
-  multiline?: boolean,
-  multiselectable?: boolean,
-  readonly?: boolean,
-  required?: boolean,
-  selected?: boolean,
-  checked?: 'checked' | 'unchecked' | 'mixed',
-  pressed?: 'pressed' | 'released' | 'mixed',
-  level?: number,
-  valuemin?: number,
-  valuemax?: number,
-  autocomplete?: string,
-  haspopup?: string,
-  invalid?: string,
-  orientation?: string,
-  children?: AXNode[],
-};
-
 export type SetNetworkCookie = {
   name: string,
   value: string,
@@ -2090,7 +2060,6 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseClick(params: PageMouseClickParams, progress?: Progress): Promise<PageMouseClickResult>;
   mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
-  accessibilitySnapshot(params: PageAccessibilitySnapshotParams, progress?: Progress): Promise<PageAccessibilitySnapshotResult>;
   pageErrors(params?: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
   requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
@@ -2481,17 +2450,6 @@ export type PageTouchscreenTapOptions = {
 
 };
 export type PageTouchscreenTapResult = void;
-export type PageAccessibilitySnapshotParams = {
-  interestingOnly?: boolean,
-  root?: ElementHandleChannel,
-};
-export type PageAccessibilitySnapshotOptions = {
-  interestingOnly?: boolean,
-  root?: ElementHandleChannel,
-};
-export type PageAccessibilitySnapshotResult = {
-  rootAXNode?: AXNode,
-};
 export type PagePageErrorsParams = {};
 export type PagePageErrorsOptions = {};
 export type PagePageErrorsResult = {

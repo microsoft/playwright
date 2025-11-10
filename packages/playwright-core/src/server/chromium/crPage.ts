@@ -28,7 +28,6 @@ import { helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
 import { registry } from '../registry';
-import { getAccessibilityTree } from './crAccessibility';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
@@ -324,10 +323,6 @@ export class CRPage implements PageDelegate {
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {
     return this._sessionForHandle(handle)._adoptElementHandle<T>(handle, to);
-  }
-
-  async getAccessibilityTree(needle?: dom.ElementHandle) {
-    return getAccessibilityTree(this._mainFrameSession._client, needle);
   }
 
   async inputActionEpilogue(): Promise<void> {

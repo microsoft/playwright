@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as accessibility from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import { TargetClosedError, TimeoutError } from './errors';
@@ -81,7 +80,6 @@ export interface PageDelegate {
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
   setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
 
-  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
 
@@ -155,7 +153,6 @@ export class Page extends SdkObject {
   initScripts: InitScript[] = [];
   readonly screenshotter: Screenshotter;
   readonly frameManager: frames.FrameManager;
-  readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
   readonly coverage: any;
@@ -178,7 +175,6 @@ export class Page extends SdkObject {
     this.attribution.page = this;
     this.delegate = delegate;
     this.browserContext = browserContext;
-    this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
