@@ -33,6 +33,7 @@ import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
 import { isAbortError } from '../../progress';
+import { getPlaywrightVersion } from '../../../utils';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import type { NameValue } from '../../../utils/isomorphic/types';
@@ -107,6 +108,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       type: 'context-options',
       origin: 'library',
       browserName: '',
+      playwrightVersion: getPlaywrightVersion(),
       options: {},
       platform: process.platform,
       wallTime: 0,
