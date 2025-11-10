@@ -70,7 +70,7 @@ const EXECUTABLE_PATHS = {
   'chromium-headless-shell': {
     '<unknown>': undefined,
     'linux-x64': ['chrome-headless-shell-linux64', 'chrome-headless-shell'],
-    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'linux-arm64': ['chrome-linux', 'headless_shell'],  // non-cft build
     'mac-x64': ['chrome-headless-shell-mac-x64', 'chrome-headless-shell'],
     'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
     'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
@@ -86,7 +86,7 @@ const EXECUTABLE_PATHS = {
   'chromium-tip-of-tree-headless-shell': {
     '<unknown>': undefined,
     'linux-x64': ['chrome-headless-shell-linux64', 'chrome-headless-shell'],
-    'linux-arm64': ['chrome-linux', 'chrome'],  // non-cft build
+    'linux-arm64': ['chrome-linux', 'headless_shell'],  // non-cft build
     'mac-x64': ['chrome-headless-shell-mac-x64', 'chrome-headless-shell'],
     'mac-arm64': ['chrome-headless-shell-mac-arm64', 'chrome-headless-shell'],
     'win-x64': ['chrome-headless-shell-win64', 'chrome-headless-shell.exe'],
