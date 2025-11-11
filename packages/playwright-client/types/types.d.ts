@@ -20310,20 +20310,19 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
-   * Request's post body, if any.
+   * The request body, if present.
    */
   body(): Promise<null|string>;
 
   /**
-   * Request's post body in a binary form, if any.
+   * The request body in a binary form. Returns null if the request has no body.
    */
   bodyBuffer(): Promise<null|Buffer>;
 
   /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-   *
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
    */
   bodyJSON(): Promise<null|Serializable>;
 
@@ -20424,20 +20423,19 @@ export interface Request {
   method(): string;
 
   /**
-   * Request's post body, if any.
+   * The request body, if present.
    */
   postData(): null|string;
 
   /**
-   * Request's post body in a binary form, if any.
+   * The request body in a binary form. Returns null if the request has no body.
    */
   postDataBuffer(): null|Buffer;
 
   /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-   *
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
    */
   postDataJSON(): null|Serializable;
 

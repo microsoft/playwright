@@ -27,33 +27,27 @@ An object with all the request HTTP headers associated with this request. The he
 * since: v1.57
 - returns: <[null]|[string]>
 
-Request's post body, if any.
+The request body, if present.
 
 ## async method: Request.bodyBuffer
 * since: v1.57
 - returns: <[null]|[Buffer]>
 
-Request's post body in a binary form, if any.
+The request body in a binary form. Returns null if the request has no body.
 
 ## async method: Request.bodyJSON
 * since: v1.57
 * langs: js, python
 - returns: <[null]|[Serializable]>
 
-Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-
-When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-Otherwise it will be parsed as JSON.
+Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
 
 ## async method: Request.bodyJSON
 * since: v1.57
 * langs: csharp
 - returns: <[null]|[JsonElement]>
 
-Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-
-When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-Otherwise it will be parsed as JSON.
+Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
 
 ## method: Request.failure
 * since: v1.8
@@ -183,33 +177,27 @@ Request's method (GET, POST, etc.)
 * since: v1.8
 - returns: <[null]|[string]>
 
-Request's post body, if any.
+The request body, if present.
 
 ## method: Request.postDataBuffer
 * since: v1.8
 - returns: <[null]|[Buffer]>
 
-Request's post body in a binary form, if any.
+The request body in a binary form. Returns null if the request has no body.
 
 ## method: Request.postDataJSON
 * since: v1.8
 * langs: js, python
 - returns: <[null]|[Serializable]>
 
-Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-
-When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-Otherwise it will be parsed as JSON.
+Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
 
 ## method: Request.postDataJSON
 * since: v1.12
 * langs: csharp
 - returns: <[null]|[JsonElement]>
 
-Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
-
-When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-Otherwise it will be parsed as JSON.
+Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
 
 ## method: Request.redirectedFrom
 * since: v1.8

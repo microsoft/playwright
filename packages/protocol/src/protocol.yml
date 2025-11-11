@@ -3378,6 +3378,8 @@ Request:
   commands:
 
     body:
+      title: Get request body
+      group: getter
       internal: true
       returns:
         body: binary?
