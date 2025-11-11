@@ -1545,6 +1545,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *
    * Test files that took more than `threshold` milliseconds are considered slow, and the slowest ones are reported, no
    * more than `max` number of them. Passing zero as `max` reports all test files that exceed the threshold.
+   * @deprecated This feature is discouraged and will be removed in the future. Its detection is incomplete.
    */
   reportSlowTests?: null|{
     /**
@@ -2022,6 +2023,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
 
   /**
    * See [testConfig.reportSlowTests](https://playwright.dev/docs/api/class-testconfig#test-config-report-slow-tests).
+   * @deprecated This feature is discouraged and will be removed in the future. Its detection is incomplete.
    */
   reportSlowTests: null|{
     /**

@@ -472,6 +472,7 @@ export default defineConfig({
 
 ## property: TestConfig.reportSlowTests
 * since: v1.10
+* deprecated: This feature is discouraged and will be removed in the future. Its detection is incomplete.
 - type: ?<[null]|[Object]>
   - `max` <[int]> The maximum number of slow test files to report. Defaults to `5`.
   - `threshold` <[float]> Test file duration in milliseconds that is considered slow. Defaults to 5 minutes.
