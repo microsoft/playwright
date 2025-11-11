@@ -1088,6 +1088,7 @@ test('should include metainfo', async ({ showTraceViewer }) => {
   await expect(callLine.getByText('duration')).toHaveText(/duration:[\dms]+/);
   await expect(callLine.getByText('engine')).toHaveText(/engine:[\w]+/);
   await expect(callLine.getByText('platform')).toHaveText(/platform:[\w]+/);
+  await expect(callLine.getByText('playwright version')).toHaveText(/playwright version:[\w.]+/);
   await expect(callLine.getByText('width')).toHaveText(/width:[\d]+/);
   await expect(callLine.getByText('height')).toHaveText(/height:[\d]+/);
   await expect(callLine.getByText('pages')).toHaveText(/pages:1/);
