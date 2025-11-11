@@ -42,13 +42,6 @@ The request body in a binary form. Returns null if the request has no body.
 
 Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
 
-## async method: Request.bodyJSON
-* since: v1.57
-* langs: csharp
-- returns: <[null]|[JsonElement]>
-
-Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
-
 ## method: Request.failure
 * since: v1.8
 - returns: <[null]|[string]>
