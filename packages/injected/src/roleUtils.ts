@@ -183,7 +183,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
       return 'cell';
 
     const rows = [...table.rows];
-    const position = getCellPosition(table.rows, e as HTMLTableCellElement);
+    const position = getCellPosition(rows, e);
 
     if (position) {
       const { x, y } = position;
@@ -194,13 +194,14 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
           return 'columnheader';
       }
 
-      const containingColumnCells = rows.map(row => row.cells[x]);
+      // If the cell doesn't exist (out of range), continue checking the column
+      const containingColumnCells = rows.map(row => row.cells[x]).filter(cell => !!cell);
       if (everyNodeIsTH(containingColumnCells))
         return 'rowheader';
     }
 
-    const role = getExplicitAriaRole(table);
-    return (role === 'grid' || role === 'treegrid') ? 'gridcell' : 'cell';
+    const tableRole = getExplicitAriaRole(table);
+    return (tableRole === 'grid' || tableRole === 'treegrid') ? 'gridcell' : 'cell';
   },
   'THEAD': () => 'rowgroup',
   'TIME': () => 'time',
@@ -208,7 +209,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'UL': () => 'list',
 };
 
-function getCellPosition(rows: HTMLCollectionOf<HTMLTableRowElement>, thElement: HTMLTableCellElement): { x: number, y: number } | undefined {
+function getCellPosition(rows: HTMLTableRowElement[], thElement: Element): { x: number, y: number } | undefined {
   for (let y = 0; y < rows.length; y++) {
     const row = rows[y];
     for (let x = 0; x < row.cells.length; x++) {
