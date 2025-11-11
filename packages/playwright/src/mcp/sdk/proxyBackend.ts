@@ -18,7 +18,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 
 import * as mcpBundle from './bundle';
 
-import type { ServerBackend, ClientInfo, Server } from './server';
+import type { ServerBackend, ClientInfo } from './server';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Tool, CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
@@ -43,7 +43,7 @@ export class ProxyBackend implements ServerBackend {
     this._contextSwitchTool = this._defineContextSwitchTool();
   }
 
-  async initialize(server: Server, clientInfo: ClientInfo): Promise<void> {
+  async initialize(clientInfo: ClientInfo): Promise<void> {
     this._clientInfo = clientInfo;
   }
 

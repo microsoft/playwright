@@ -33,7 +33,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { CustomMessageRequestPayload, CustomMessageResponsePayload, DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
@@ -264,6 +264,17 @@ export class WorkerMain extends ProcessRunner {
       this._fatalErrors = [];
       this._skipRemainingTestsInSuite = undefined;
       this._runFinished.resolve();
+    }
+  }
+
+  async customMessage(payload: CustomMessageRequestPayload): Promise<CustomMessageResponsePayload> {
+    try {
+      if (this._currentTest?.testId !== payload.testId)
+        throw new Error('Test has already stopped');
+      const response = await this._currentTest._onCustomMessageCallback?.(payload.request);
+      return { response };
+    } catch (error) {
+      return { response: {}, error: testInfoError(error) };
     }
   }
 

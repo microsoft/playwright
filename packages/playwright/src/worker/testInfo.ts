@@ -85,7 +85,7 @@ export class TestInfoImpl implements TestInfo {
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunctionCallback?: () => Promise<void>;
-  _onDidPauseTestCallback?: () => Promise<{ extraData: any, dispose: () => Promise<void> }>;
+  _onCustomMessageCallback?: (data: any) => Promise<any>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
@@ -463,10 +463,8 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
-      const customHandler = await this._onDidPauseTestCallback?.();
-      this._onTestPaused({ errors: this._isFailure() ? this.errors : [], extraData: customHandler?.extraData });
+      this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
       await this._interruptedPromise;
-      await customHandler?.dispose();
     }
     await this._onDidFinishTestFunctionCallback?.();
   }

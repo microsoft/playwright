@@ -33,7 +33,7 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import { MDBServerBackendFactory, runMainBackend } from './mcp/sdk/exports';
+import * as mcp from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
@@ -162,20 +162,14 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
     setupExitWatchdog();
-    const backendFactory: MDBServerBackendFactory = {
+    const factory: mcp.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: pushClient => new TestServerBackend(options.config, pushClient, { muteConsole: options.port === undefined, headless: options.headless }),
+      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
     };
-    const mdbUrl = await runMainBackend(
-        backendFactory,
-        {
-          port: options.port === undefined ? undefined : +options.port
-        },
-    );
-    if (mdbUrl)
-      console.error('MCP Listening on: ', mdbUrl);
+    // TODO: add all options from mcp.startHttpServer.
+    await mcp.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
   });
 }
 

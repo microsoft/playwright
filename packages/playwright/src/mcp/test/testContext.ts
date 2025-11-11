@@ -23,13 +23,12 @@ import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
-import { stripAnsiEscapes, fileExistsAsync } from '../../util';
+import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 
 import type { ConfigLocation } from '../../common/config';
-import type { ProgressCallback, MDBPushClientCallback } from '../sdk/exports';
-import type { TestPausedExtraData } from './browserBackend';
+import type { ProgressCallback } from '../sdk/exports';
 
 export type SeedFile = {
   file: string;
@@ -72,8 +71,10 @@ ${step.code}
   }
 }
 
+type PushClientCallback = (sendMessage: (request: any) => Promise<any>) => Promise<void>;
+
 export class TestContext {
-  private _pushClient: MDBPushClientCallback;
+  private _pushClient: PushClientCallback;
   private _testRunner: TestRunner | undefined;
   readonly options?: { muteConsole?: boolean, headless?: boolean };
   readonly computedHeaded: boolean;
@@ -81,7 +82,7 @@ export class TestContext {
   rootPath!: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(pushClient: MDBPushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
+  constructor(pushClient: PushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._pushClient = pushClient;
     this.options = options;
     if (options?.headless !== undefined)
@@ -104,25 +105,13 @@ export class TestContext {
       await this._testRunner.stopTests();
     const testRunner = new TestRunner(this.configLocation!, {});
     await testRunner.initialize({});
-    this._testRunner = testRunner;
-    testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {
-      this._testRunner?.emit(TestRunnerEvent.TestFilesChanged, testFiles);
-    });
     testRunner.on(TestRunnerEvent.TestPaused, params => {
-      const extraData = params.extraData as TestPausedExtraData;
-      const introMessage: string[] = [];
-      if (params.errors.length) {
-        introMessage.push(`### Paused on error:`);
-        for (const error of params.errors)
-          introMessage.push(stripAnsiEscapes(error.message || ''));
-      } else {
-        introMessage.push(`### Paused at end of test. ready for interaction`);
-      }
-      introMessage.push(extraData.contextState);
-      introMessage.push('');
-      if (params.errors.length)
-        introMessage.push(`### Task`, `Try recovering from the error prior to continuing`);
-      void this._pushClient(extraData.mcpUrl, introMessage.join('\n'));
+      void this._pushClient(async (request: any) => {
+        const response = await params.sendMessage({ request });
+        if (response.error)
+          throw new Error(response.error.message);
+        return response.response;
+      });
     });
     this._testRunner = testRunner;
     return testRunner;
