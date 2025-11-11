@@ -2497,6 +2497,12 @@ export interface Page {
     };
 
     /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6399,6 +6405,12 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -13072,6 +13084,12 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not

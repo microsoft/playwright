@@ -1102,6 +1102,9 @@ await Page.DragAndDropAsync("#source", "#target", new()
 ### option: Page.dragAndDrop.targetPosition = %%-input-target-position-%%
 * since: v1.14
 
+### option: Page.dragAndDrop.steps = %%-input-drag-steps-%%
+* since: v1.57
+
 ## async method: Page.emulateMedia
 * since: v1.8
 
