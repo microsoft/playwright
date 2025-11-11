@@ -174,13 +174,15 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'TEXTAREA': () => 'textbox',
   'TFOOT': () => 'rowgroup',
   'TH': (e: Element) => {
+    // We always assume a TH must be some header type. In absence of other information, this will default to column
+    const defaultRole = 'columnheader';
     if (e.getAttribute('scope') === 'col')
       return 'columnheader';
     if (e.getAttribute('scope') === 'row')
       return 'rowheader';
     const table = closestCrossShadow(e, 'table') as HTMLTableElement | undefined;
     if (!table)
-      return 'cell';
+      return defaultRole;
 
     const rows = [...table.rows];
     const position = getCellPosition(rows, e);
@@ -200,8 +202,7 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
         return 'rowheader';
     }
 
-    const tableRole = getExplicitAriaRole(table);
-    return (tableRole === 'grid' || tableRole === 'treegrid') ? 'gridcell' : 'cell';
+    return defaultRole;
   },
   'THEAD': () => 'rowgroup',
   'TIME': () => 'time',
