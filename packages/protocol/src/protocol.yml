@@ -3377,6 +3377,11 @@ Request:
 
   commands:
 
+    body:
+      internal: true
+      returns:
+        body: binary?
+
     response:
       internal: true
       returns:

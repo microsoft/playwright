@@ -20310,6 +20310,24 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * Request's post body, if any.
+   */
+  body(): Promise<null|string>;
+
+  /**
+   * Request's post body in a binary form, if any.
+   */
+  bodyBuffer(): Promise<null|Buffer>;
+
+  /**
+   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+   *
+   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+   * Otherwise it will be parsed as JSON.
+   */
+  bodyJSON(): Promise<null|Serializable>;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**

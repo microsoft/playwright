@@ -23,6 +23,38 @@ request is  issued to a redirected url.
 
 An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
+## async method: Request.body
+* since: v1.57
+- returns: <[null]|[string]>
+
+Request's post body, if any.
+
+## async method: Request.bodyBuffer
+* since: v1.57
+- returns: <[null]|[Buffer]>
+
+Request's post body in a binary form, if any.
+
+## async method: Request.bodyJSON
+* since: v1.57
+* langs: js, python
+- returns: <[null]|[Serializable]>
+
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
+
+## async method: Request.bodyJSON
+* since: v1.57
+* langs: csharp
+- returns: <[null]|[JsonElement]>
+
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
+
 ## method: Request.failure
 * since: v1.8
 - returns: <[null]|[string]>
