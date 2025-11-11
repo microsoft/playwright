@@ -1666,6 +1666,14 @@ export class Frame extends SdkObject {
   private _asLocator(selector: string) {
     return asLocator(this._page.browserContext._browser.sdkLanguage(), selector);
   }
+
+  async getSelectedText(): Promise<string> {
+    const context = await this._utilityContext();
+    const injectedScript = await context.injectedScript();
+    return injectedScript.evaluate(injectedScript => {
+      return injectedScript.getSelectedText();
+    });
+  }
 }
 
 class SignalBarrier {

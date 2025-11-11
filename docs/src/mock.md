@@ -317,7 +317,7 @@ Once you have recorded a HAR file you can modify it by opening the hashed .txt f
 ```json
 [
   {
-    "name": "Playwright",
+    "name": "playwright",
     "id": 100
   },
   // ... other fruits

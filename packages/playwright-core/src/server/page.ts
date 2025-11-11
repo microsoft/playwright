@@ -35,6 +35,7 @@ import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSer
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 
+import { ElementHandle } from './dom';
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
 import type * as network from './network';
@@ -857,6 +858,18 @@ export class Page extends SdkObject {
   async snapshotForAI(progress: Progress, options: { track?: string }): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
     return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
+  }
+
+  async getSelectedText(): Promise<{text: string }> {
+    return {
+      text: await this.mainFrame().getSelectedText(),
+    };
+  }
+
+  async selectorAtPoint(x: number, y: number): Promise<{selector: string }> {
+    return {
+      selector: `(${x}, ${y})`,
+    };
   }
 }
 

@@ -3116,6 +3116,20 @@ export interface Page {
   }): Locator;
 
   /**
+   * - from Qanary fork
+   *
+   * Get selected text.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.getSelectedText();
+   * ```
+   *
+   */
+  getSelectedText(): Promise<string>;
+
+  /**
    * Returns the main resource response. In case of multiple redirects, the navigation will resolve with the response of
    * the last redirect. If cannot go back, returns `null`.
    *
@@ -4193,6 +4207,22 @@ export interface Page {
      */
     timeout?: number;
   }): Promise<Array<string>>;
+
+  /**
+   * - from Qanary fork
+   *
+   * Retrieve selector corresponding to the coordinates.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.selectorAtPoint(0, 0);
+   * ```
+   *
+   * @param x
+   * @param y
+   */
+  selectorAtPoint(x: number, y: number): Promise<string>;
 
   /**
    * **NOTE** Use locator-based

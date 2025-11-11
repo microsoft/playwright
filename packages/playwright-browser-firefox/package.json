@@ -4,14 +4,14 @@
   "description": "Playwright package that automatically installs Firefox",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/qanary-labs/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=18"
   },
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "Microsoft Corporation X Qanary Labs"
   },
   "license": "Apache-2.0",
   "exports": {

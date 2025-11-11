@@ -1186,6 +1186,17 @@ scheme.PageWebSocketEvent = tObject({
 scheme.PageWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });
+scheme.PageGetSelectedTextParams = tOptional(tObject({}));
+scheme.PageGetSelectedTextResult = tObject({
+  text: tString,
+});
+scheme.PageSelectorAtPointParams = tObject({
+  x: tFloat,
+  y: tFloat,
+});
+scheme.PageSelectorAtPointResult = tObject({
+  selector: tString,
+});
 scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });

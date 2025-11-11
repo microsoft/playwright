@@ -1,17 +1,17 @@
 {
   "name": "playwright-core",
   "version": "1.57.0-next",
-  "description": "A high-level API to automate web browsers",
+  "description": "Qanary's fork of Playwright with extra features",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/microsoft/playwright.git"
+    "url": "git+https://github.com/qanary-labs/playwright.git"
   },
   "homepage": "https://playwright.dev",
   "engines": {
     "node": ">=18"
   },
   "author": {
-    "name": "Microsoft Corporation"
+    "name": "Microsoft Corporation X Qanary Labs"
   },
   "license": "Apache-2.0",
   "exports": {

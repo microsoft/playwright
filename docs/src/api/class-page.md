@@ -878,6 +878,72 @@ When all steps combined have not finished during the specified [`option: timeout
 `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 :::
 
+## method: Page.getSelectedText
+* since: v1.57
+* from Qanary fork
+- returns: <[Promise<string>]>
+
+Get selected text.
+
+**Usage**
+
+```js
+await page.getSelectedText();
+```
+
+```java
+page.getSelectedText();
+```
+
+```python async
+await page.getSelectedText()
+```
+
+```python sync
+page.getSelectedText()
+```
+
+```csharp
+await page.GetSelectedTextAsync();
+```
+
+## method: Page.selectorAtPoint
+* since: v1.57
+* from Qanary fork
+- returns: <[Promise<string>]>
+
+Retrieve selector corresponding to the coordinates.
+
+**Usage**
+
+```js
+await page.selectorAtPoint(0, 0);
+```
+
+```java
+page.selectorAtPoint(0, 0);
+```
+
+```python async
+await page.selectorAtPoint(0, 0)
+```
+
+```python sync
+page.selectorAtPoint(0, 0)
+```
+
+```csharp
+await page.SelectorAtPointAsync(0, 0);
+```
+
+### param: Page.selectorAtPoint.x
+* since: v1.57
+- `x` <[float]>
+
+### param: Page.selectorAtPoint.y
+* since: v1.57
+- `y` <[float]>
+
 ### param: Page.dblclick.selector = %%-input-selector-%%
 * since: v1.8
 

@@ -1528,6 +1528,19 @@ Page:
 
   commands:
 
+    getSelectedText:
+      title: Get selected text
+      returns:
+        text: string
+
+    selectorAtPoint:
+      title: Retrieve selector corresponding to the coordinates
+      parameters:
+        x: float
+        y: float
+      returns:
+        selector: string
+
     addInitScript:
       title: Add init script
       group: configuration

@@ -1609,6 +1609,20 @@ export class InjectedScript {
     }
     return mIndex === matchers.length;
   }
+
+  getSelectedText(): string {
+    const selection = this.window.getSelection();
+    if (selection && selection.toString().trim().length > 0)
+      return selection.toString();
+
+    const active = this.document.activeElement;
+    if (active instanceof HTMLInputElement || active instanceof HTMLTextAreaElement) {
+      const start = active.selectionStart ?? 0;
+      const end = active.selectionEnd ?? active.value.length;
+      return active.value.slice(start, end);
+    }
+    return '';
+  }
 }
 
 function oneLine(s: string): string {
