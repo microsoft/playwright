@@ -342,7 +342,7 @@ it.describe('Drag and drop', () => {
       expect(await eventsHandle.jsonValue()).toEqual(steplessEvents);
 
       await drag(page, 4);
-      expect(await eventsHandle.jsonValue()).toEqual([
+      await expect.poll(() => eventsHandle.jsonValue()).toEqual([
         ...steplessEvents,
         { type: 'mousemove', x: 50, y: 50 },
         { type: 'mousedown', x: 50, y: 50 },
