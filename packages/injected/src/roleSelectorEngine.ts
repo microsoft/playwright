@@ -164,13 +164,17 @@ function queryRole(scope: SelectorRoot, options: RoleEngineOptions, internal: bo
   };
 
   const query = (root: Element | ShadowRoot | Document) => {
-    const shadows: ShadowRoot[] = [];
+    const shadows: (ShadowRoot | Element)[] = [];
     if ((root as Element).shadowRoot)
       shadows.push((root as Element).shadowRoot!);
+    if ((root as HTMLSlotElement).assignedElements)
+      shadows.push(...(root as HTMLSlotElement).assignedElements());
     for (const element of root.querySelectorAll('*')) {
       match(element);
       if (element.shadowRoot)
         shadows.push(element.shadowRoot);
+      if ((element as HTMLSlotElement).assignedElements)
+        shadows.push(...(element as HTMLSlotElement).assignedElements());
     }
     shadows.forEach(query);
   };

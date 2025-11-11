@@ -1288,6 +1288,19 @@ it('should click shadow root button', { annotation: { type: 'issue', description
   await page.locator('my-button').click();
 });
 
+it('should click into shadow root dialog with slotted div', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38166' } }, async ({ page }) => {
+  await page.setContent(`
+    <my-dialog>
+      <template shadowrootmode="open">
+        <dialog open><slot></slot></dialog>
+      </template>
+      <div><button>Foo</button></div>
+    </my-dialog>
+  `);
+
+  await page.getByRole('dialog').getByRole('button', { name: 'Foo' }).click();
+});
+
 it('should click with tweened mouse movement', async ({ page, browserName, isAndroid, headless }) => {
   it.skip(isAndroid, 'Bad rounding');
   it.skip(!headless, 'System cursor tends to interfere with this test');
