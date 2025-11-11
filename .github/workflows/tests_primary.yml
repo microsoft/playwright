@@ -161,7 +161,6 @@ jobs:
         job_name: "web-components-html-reporter"
 
     - run: npm run test-web
-      if: ${{ !cancelled() }}
       env:
         PWTEST_BOT_NAME: "web-components-web"
     - name: Upload blob report
