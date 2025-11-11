@@ -29,7 +29,9 @@ export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
   private _tools: TestTool<any>[] = [
+    plannerTools.saveTestPlan,
     plannerTools.setupPage,
+    plannerTools.submitTestPlan,
     generatorTools.setupPage,
     generatorTools.generatorReadLog,
     generatorTools.generatorWriteTest,
