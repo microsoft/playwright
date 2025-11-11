@@ -12956,7 +12956,9 @@ export interface Locator {
 
   /**
    * Returns locator description previously set with
-   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
+   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
+   * description when available.
    *
    * **Usage**
    *

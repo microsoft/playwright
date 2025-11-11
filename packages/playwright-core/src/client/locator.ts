@@ -393,7 +393,7 @@ export class Locator implements api.Locator {
   }
 
   toString() {
-    return asLocator('javascript', this._selector);
+    return this.description() || asLocator('javascript', this._selector);
   }
 }
 
