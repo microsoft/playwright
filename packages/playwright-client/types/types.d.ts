@@ -20423,16 +20423,22 @@ export interface Request {
   method(): string;
 
   /**
+   * **NOTE** Use [request.body()](https://playwright.dev/docs/api/class-request#request-body) instead.
+   *
    * The request body, if present.
    */
   postData(): null|string;
 
   /**
+   * **NOTE** Use [request.bodyBuffer()](https://playwright.dev/docs/api/class-request#request-body-buffer) instead.
+   *
    * The request body in a binary form. Returns null if the request has no body.
    */
   postDataBuffer(): null|Buffer;
 
   /**
+   * **NOTE** Use [request.bodyJSON()](https://playwright.dev/docs/api/class-request#request-body-json) instead.
+   *
    * Returns the request body as a parsed JSON object. If the request `Content-Type` is
    * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
    * it parses the body as JSON.

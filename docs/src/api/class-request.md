@@ -175,12 +175,14 @@ Request's method (GET, POST, etc.)
 
 ## method: Request.postData
 * since: v1.8
+* discouraged: Use [`method: Request.body`] instead.
 - returns: <[null]|[string]>
 
 The request body, if present.
 
 ## method: Request.postDataBuffer
 * since: v1.8
+* discouraged: Use [`method: Request.bodyBuffer`] instead.
 - returns: <[null]|[Buffer]>
 
 The request body in a binary form. Returns null if the request has no body.
@@ -188,6 +190,7 @@ The request body in a binary form. Returns null if the request has no body.
 ## method: Request.postDataJSON
 * since: v1.8
 * langs: js, python
+* discouraged: Use [`method: Request.bodyJSON`] instead.
 - returns: <[null]|[Serializable]>
 
 Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
@@ -195,6 +198,7 @@ Returns the request body as a parsed JSON object. If the request `Content-Type` 
 ## method: Request.postDataJSON
 * since: v1.12
 * langs: csharp
+* discouraged: Use [`method: Request.bodyJSON`] instead.
 - returns: <[null]|[JsonElement]>
 
 Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
