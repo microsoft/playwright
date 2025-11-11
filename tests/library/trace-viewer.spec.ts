@@ -481,6 +481,22 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
   await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
 });
 
+test('should syntax highlight body', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(`${server.PREFIX}/network-tab/network.html`);
+    await page.evaluate(() => (window as any).donePromise);
+  });
+  await traceViewer.selectAction('Navigate');
+  await traceViewer.showNetworkTab();
+
+  await traceViewer.page.getByText('HTML', { exact: true }).click();
+  await expect(traceViewer.networkRequests).toHaveCount(1);
+  await traceViewer.networkRequests.getByText('network.html').click();
+  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
+  const keyword = traceViewer.page.locator('.network-request-details-tab').getByText('const').first();
+  await expect(keyword).toHaveClass('cm-keyword');
+});
+
 test('should filter network requests by url', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(`${server.PREFIX}/network-tab/network.html`);

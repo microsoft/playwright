@@ -25,8 +25,6 @@
     "itest": "playwright test --config=tests/installation/playwright.config.ts",
     "stest": "playwright test --config=tests/stress/playwright.config.ts",
     "biditest": "playwright test --config=tests/bidi/playwright.config.ts",
-    "test-html-reporter": "playwright test --config=packages/html-reporter",
-    "test-web": "playwright test --config=packages/web",
     "ttest": "node ./tests/playwright-test/stable-test-runner/node_modules/@playwright/test/cli test --config=tests/playwright-test/playwright.config.ts",
     "ct": "playwright test tests/components/test-all.spec.js --reporter=list",
     "test": "playwright test --config=tests/library/playwright.config.ts",
