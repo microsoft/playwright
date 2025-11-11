@@ -630,7 +630,7 @@ Locator description.
 * since: v1.57
 - returns: <[null]|[string]>
 
-Returns locator description previously set with [`method: Locator.describe`].
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the description when available.
 
 **Usage**
 
