@@ -343,7 +343,8 @@ function buildTextCandidates(injectedScript: InjectedScript, element: Element, i
   const ariaRole = getAriaRole(element);
   if (ariaRole && !['none', 'presentation'].includes(ariaRole)) {
     const ariaName = getElementAccessibleName(element, false);
-    if (ariaName) {
+    // \p{Co} means "Private Use" characters - these are often used for icon fonts and make for bad locators.
+    if (ariaName && !ariaName.match(/^\p{Co}+$/u)) {
       const roleToken = { engine: 'internal:role', selector: `${ariaRole}[name=${escapeForAttributeSelector(ariaName, true)}]`, score: kRoleWithNameScoreExact };
       candidates.push([roleToken]);
       for (const alternative of suitableTextAlternatives(ariaName))
