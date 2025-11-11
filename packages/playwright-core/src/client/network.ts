@@ -310,8 +310,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   }
 }
 
-
-
 export class Route extends ChannelOwner<channels.RouteChannel> implements api.Route {
   private _handlingPromise: ManualPromise<boolean> | null = null;
   _context!: BrowserContext;
