@@ -234,6 +234,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['ElementHandle.uncheck', { title: 'Uncheck', slowMo: true, snapshot: true, pausesBeforeInput: true, }],
   ['ElementHandle.waitForElementState', { title: 'Wait for state', snapshot: true, pausesBeforeAction: true, }],
   ['ElementHandle.waitForSelector', { title: 'Wait for selector', snapshot: true, }],
+  ['Request.body', { title: 'Get request body', group: 'getter', }],
   ['Request.response', { internal: true, }],
   ['Request.rawRequestHeaders', { internal: true, }],
   ['Route.redirectNavigationRequest', { internal: true, }],
