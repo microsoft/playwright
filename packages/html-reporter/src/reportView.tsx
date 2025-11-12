@@ -146,7 +146,7 @@ export const ReportView: React.FC<{
       </Route>
       <Route predicate={speedboardRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
-        {report && <Speedboard filter={filter} report={report} />}
+        {report && <Speedboard report={report} tests={testModel.tests} />}
       </Route>
       <Route predicate={testCaseRoutePredicate}>
         {report && <TestCaseViewLoader report={report} next={next} prev={prev} testId={testId} testIdToFileIdMap={testIdToFileIdMap} />}

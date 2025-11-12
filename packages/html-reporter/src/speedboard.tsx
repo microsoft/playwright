@@ -15,33 +15,29 @@
  */
 
 import React from 'react';
-import { Filter } from './filter';
 import { LoadedReport } from './loadedReport';
 import { TestFileView } from './testFileView';
 import * as icons from './icons';
+import { TestCaseSummary } from './types';
 
-export function Speedboard({ filter, report }: { filter: Filter, report: LoadedReport}) {
+export function Speedboard({ report, tests }: { report: LoadedReport, tests: TestCaseSummary[] }) {
   return <>
-    <SlowestTests filter={filter} report={report} />
+    <SlowestTests report={report} tests={tests} />
   </>;
 }
 
-export function SlowestTests({ filter, report }: { filter: Filter, report: LoadedReport}) {
+export function SlowestTests({ report, tests }: { report: LoadedReport, tests: TestCaseSummary[] }) {
   const [length, setLength] = React.useState(50);
-  const slowestTests = React.useMemo(() => {
-    const tests = report.json().files.flatMap(file => file.tests).filter(t => filter.matches(t));
-    return tests.sort((a, b) => b.duration - a.duration);
-  }, [report, filter]);
   return <TestFileView
     file={{
       fileId: 'slowest',
       fileName: 'Slowest Tests',
-      tests: slowestTests.slice(0, length),
+      tests: tests.slice(0, length),
       stats: null as any,
     }}
     projectNames={report.json().projectNames}
     footer={
-      length < slowestTests.length
+      length < tests.length
         ? <button className='link-badge' onClick={() => setLength(l => l + 50)}>
           {icons.downArrow()}
           Show 50 more
