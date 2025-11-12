@@ -2224,6 +2224,7 @@ Frame:
         sourcePosition: Point?
         targetPosition: Point?
         strict: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true

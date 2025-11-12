@@ -1582,6 +1582,7 @@ scheme.FrameDragAndDropParams = tObject({
   sourcePosition: tOptional(tType('Point')),
   targetPosition: tOptional(tType('Point')),
   strict: tOptional(tBoolean),
+  steps: tOptional(tInt),
 });
 scheme.FrameDragAndDropResult = tOptional(tObject({}));
 scheme.FrameDblclickParams = tObject({

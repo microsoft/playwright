@@ -875,6 +875,9 @@ Locator of the element to drag to.
 ### option: Locator.dragTo.targetPosition = %%-input-target-position-%%
 * since: v1.18
 
+### option: Locator.dragTo.steps = %%-input-drag-steps-%%
+* since: v1.57
+
 ## async method: Locator.elementHandle
 * since: v1.14
 * discouraged: Always prefer using [Locator]s and web assertions over [ElementHandle]s because latter are inherently racy.
