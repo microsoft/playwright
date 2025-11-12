@@ -74,9 +74,6 @@ export const ReportView: React.FC<{
   }, [report, filter, mergeFiles, speedboard]);
 
   const { prev, next } = React.useMemo(() => {
-    if (!testId)
-      return { prev: undefined, next: undefined };
-
     const index = testModel.tests.findIndex(t => t.testId === testId);
     const prev = index > 0 ? testModel.tests[index - 1] : undefined;
     const next = index < testModel.tests.length - 1 ? testModel.tests[index + 1] : undefined;
