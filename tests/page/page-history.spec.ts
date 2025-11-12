@@ -304,3 +304,15 @@ it('should reload proper page', async ({ page, server }) => {
   await expect(page.locator('h1')).toHaveText('main: 2');
   await expect(popup.locator('h1')).toHaveText('popup: 2');
 });
+
+it('WebKit should not crash on page reload', {
+  annotation: [{ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37766' }],
+}, async ({ page, asset }) => {
+  await page.context().routeFromHAR(asset('pw.dev-11-11-25.zip'));
+  await page.goto('https://playwright.dev');
+  await page.click('text=Get started');
+  await page.reload();
+  // Page should not crash on second reload.
+  await page.reload();
+  await expect(page.getByRole('link', { name: 'Introduction', exact: true })).toBeVisible();
+});
