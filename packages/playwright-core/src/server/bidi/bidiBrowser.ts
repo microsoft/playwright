@@ -134,16 +134,13 @@ export class BidiBrowser extends Browser {
   private _onBrowsingContextCreated(event: bidi.BrowsingContext.Info) {
     if (event.parent) {
       const parentFrameId = event.parent;
-      for (const page of this._bidiPages.values()) {
-        const parentFrame = page._page.frameManager.frame(parentFrameId);
-        if (!parentFrame)
-          continue;
+      const page = this._findPageForFrame(parentFrameId);
+      if (page) {
         page._session.addFrameBrowsingContext(event.context);
         page._page.frameManager.frameAttached(event.context, parentFrameId);
         const frame = page._page.frameManager.frame(event.context);
         if (frame)
           frame._url = event.url;
-        return;
       }
       return;
     }
@@ -153,7 +150,7 @@ export class BidiBrowser extends Browser {
     if (!context)
       return;
     const session = this._connection.createMainFrameBrowsingContextSession(event.context);
-    const opener = event.originalOpener && this._bidiPages.get(event.originalOpener);
+    const opener = event.originalOpener && this._findPageForFrame(event.originalOpener);
     const page = new BidiPage(context, session, opener || null);
     page._page.mainFrame()._url = event.url;
     this._bidiPages.set(event.context, page);
@@ -183,6 +180,13 @@ export class BidiBrowser extends Browser {
     for (const page of this._bidiPages.values()) {
       if (page._onRealmDestroyed(event))
         return;
+    }
+  }
+
+  private _findPageForFrame(frameId: string) {
+    for (const page of this._bidiPages.values()) {
+      if (page._page.frameManager.frame(frameId))
+        return page;
     }
   }
 }
