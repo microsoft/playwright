@@ -298,11 +298,9 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    const locale = this._browserContext._options.locale;
     const allHeaders = network.mergeHeaders([
       this._browserContext._options.extraHTTPHeaders,
       this._page.extraHTTPHeaders(),
-      locale ? network.singleHeader('Accept-Language', locale) : undefined,
     ]);
     await this._session.send('network.setExtraHeaders', {
       headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
