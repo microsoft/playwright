@@ -27,7 +27,7 @@ export function Speedboard({ filter, report }: { filter: Filter, report: LoadedR
 }
 
 export function SlowestTests({ filter, report }: { filter: Filter, report: LoadedReport}) {
-  const [length, setLength] = React.useState(10);
+  const [length, setLength] = React.useState(50);
   const slowestTests = React.useMemo(() => {
     const tests = report.json().files.flatMap(file => file.tests).filter(t => filter.matches(t));
     return tests.sort((a, b) => b.duration - a.duration);
@@ -42,9 +42,9 @@ export function SlowestTests({ filter, report }: { filter: Filter, report: Loade
     projectNames={report.json().projectNames}
     footer={
       length < slowestTests.length
-        ? <button className='link-badge' onClick={() => setLength(l => l + 10)}>
+        ? <button className='link-badge' onClick={() => setLength(l => l + 50)}>
           {icons.downArrow()}
-          Show more
+          Show 50 more
         </button>
         : undefined
     }
