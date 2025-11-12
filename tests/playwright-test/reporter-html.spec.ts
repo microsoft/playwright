@@ -2007,21 +2007,21 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
         await smokeLabelButton.click();
-        await expect(page).toHaveURL(/@smoke/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@smoke');
         await expect(searchInput).toHaveValue('@smoke ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
-        await expect(page).not.toHaveURL(/@smoke/);
+        await expect(page).not.toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@smoke');
 
         const regressionLabelButton = page.locator('.test-file-test', { has: page.getByText('@regression passes', { exact: true }) }).locator('.label', { hasText: 'regression' });
         await regressionLabelButton.click();
-        await expect(page).toHaveURL(/@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression');
         await expect(searchInput).toHaveValue('@regression ');
         await searchInput.clear();
         await page.keyboard.press('Enter');
         await expect(searchInput).toHaveValue('');
-        await expect(page).not.toHaveURL(/@regression/);
+        await expect(page).not.toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression');
       });
 
       test('filter should update stats', async ({ runInlineTest, showReport, page }) => {
@@ -2146,7 +2146,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@smoke fails');
         await expect(searchInput).toHaveValue('s:failed @smoke ');
-        await expect(page).toHaveURL(/s:failed%20@smoke/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === 's:failed @smoke');
 
         await passedNavMenu.click();
         await smokeLabelButton.click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
@@ -2156,7 +2156,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveText('@regression passes');
         await expect(searchInput).toHaveValue('s:passed @regression ');
-        await expect(page).toHaveURL(/s:passed%20@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === 's:passed @regression');
 
         await allNavMenu.click();
         await regressionLabelButton.click();
@@ -2165,7 +2165,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title')).toHaveCount(2);
         await expect(searchInput).toHaveValue('@regression ');
-        await expect(page).toHaveURL(/@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression');
       });
 
       test('tests should be filtered by label input in search field', async ({ runInlineTest, showReport, page }) => {
@@ -2348,7 +2348,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await smokeButton.click();
 
         await expect(searchInput).toHaveValue('@smoke ');
-        await expect(page).toHaveURL(/@smoke/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@smoke');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -2357,7 +2357,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await regressionButton.click();
 
         await expect(searchInput).toHaveValue('@smoke @regression ');
-        await expect(page).toHaveURL(/@smoke%20@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@smoke @regression');
         await expect(page.locator('.chip')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -2366,7 +2366,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await smokeButton.click();
 
         await expect(searchInput).toHaveValue('@regression ');
-        await expect(page).toHaveURL(/@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -2375,7 +2375,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await flakyButton.click();
 
         await expect(searchInput).toHaveValue('@regression @flaky ');
-        await expect(page).toHaveURL(/@regression%20@flaky/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression @flaky');
         await expect(page.locator('.chip')).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -2384,7 +2384,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await regressionButton.click();
 
         await expect(searchInput).toHaveValue('@flaky ');
-        await expect(page).toHaveURL(/@flaky/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@flaky');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -2393,7 +2393,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await flakyButton.click();
 
         await expect(searchInput).toHaveValue('');
-        await expect(page).not.toHaveURL(/@/);
+        await expect(page).not.toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q').includes('@'));
         await expect(page.locator('.chip')).toHaveCount(3);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -2403,7 +2403,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await smokeButton.click();
 
         await expect(searchInput).toHaveValue('@smoke ');
-        await expect(page).toHaveURL(/@smoke/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@smoke');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
@@ -2412,7 +2412,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await regressionButton.click();
 
         await expect(searchInput).toHaveValue('@regression ');
-        await expect(page).toHaveURL(/@regression/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@regression');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(0);
@@ -2421,7 +2421,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await flakyButton.click();
 
         await expect(searchInput).toHaveValue('@flaky ');
-        await expect(page).toHaveURL(/@flaky/);
+        await expect(page).toHaveURL(url => new URLSearchParams(url.hash.slice(1)).get('q') === '@flaky');
         await expect(page.locator('.chip')).toHaveCount(2);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(0);
         await expect(page.locator('.chip', { hasText: 'b.test.js' })).toHaveCount(1);
