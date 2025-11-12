@@ -3207,6 +3207,58 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.keyboard.up('Alt');
       });
     });
+
+    test.describe('speedboard', () => {
+      test('clicking on label should not exit speedboard', async ({ runInlineTest, showReport, page }) => {
+        test.setTimeout(10000);
+        await runInlineTest({
+          'playwright.config.ts': `
+          module.exports = {
+            projects: [{ name: 'foo' }, { name: 'bar' }],
+          };
+        `,
+          'a.test.js': `
+            import { test, expect } from '@playwright/test';
+            import timers from 'timers/promises';
+            test.beforeEach(async () => {
+              if (test.info().project.name === 'foo')
+                await timers.setTimeout(500);
+            });
+            test('one', async () => {
+              await timers.setTimeout(100);
+            });
+            test('two', async () => {
+              await timers.setTimeout(200);
+            });
+            test('three', async () => {
+              await timers.setTimeout(300);
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+        await showReport();
+        await page.getByRole('link', { name: 'Speedboard' }).click();
+        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+          - button "Slowest Tests"
+          - region:
+            - link "three"
+            - text: /foo/
+            - link "two"
+            - text: /foo/
+            - link "one"
+            - text: /foo/
+            - link "three"
+            - text: /bar/
+            - link "two"
+            - text: /bar/
+            - link "one"
+            - text: /bar/
+        `);
+        await page.getByText('foo').first().click();
+        await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+          - button "Slowest Tests"
+        `);
+      });
+    })
   });
 }
 
