@@ -582,7 +582,7 @@ export class WKPage implements PageDelegate {
         location
       } = this._lastConsoleMessage;
       for (let i = count; i < event.count; ++i)
-        this._page.addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+        this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text);
       this._lastConsoleMessage.count = event.count;
     }
   }

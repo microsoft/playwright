@@ -109,10 +109,9 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     });
     this._channel.on('console', event => {
       const consoleMessage = new ConsoleMessage(this._platform, event, Page.fromNullable(event.page));
+      Worker.fromNullable(event.worker)?.emit(Events.Worker.Console, consoleMessage);
+      consoleMessage.page()?.emit(Events.Page.Console, consoleMessage);
       this.emit(Events.BrowserContext.Console, consoleMessage);
-      const page = consoleMessage.page();
-      if (page)
-        page.emit(Events.Page.Console, consoleMessage);
     });
     this._channel.on('pageError', ({ error, page }) => {
       const pageObject = Page.from(page);
