@@ -3265,6 +3265,42 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.getByRole('link', { name: 'Failed' }).click();
         await expect(page.getByRole('main')).toContainText('No tests found');
       });
+
+      test('next/prev buttons should follow speed', async ({ runInlineTest, showReport, page }) => {
+        await runInlineTest({
+          'playwright.config.ts': `
+          module.exports = {};
+        `,
+          'a.test.js': `
+            import { test, expect } from '@playwright/test';
+            import timers from 'timers/promises';
+            test('one', async () => {
+              await timers.setTimeout(100);
+            });
+            test('two', async () => {
+              await timers.setTimeout(200);
+            });
+            test('three', async () => {
+              await timers.setTimeout(300);
+            });
+          `,
+        }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+        await showReport();
+        await page.getByRole('link', { name: 'Speedboard' }).click();
+        await page.getByRole('link', { name: 'three' }).click();
+        await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
+        await expect(page.getByRole('link', { name: 'previous' })).not.toBeVisible();
+
+        await page.getByRole('link', { name: 'next' }).click();
+        await expect(page.getByText('two')).toBeVisible();
+
+        await page.getByRole('link', { name: 'next' }).click();
+        await expect(page.getByText('three')).toBeVisible();
+        await expect(page.getByRole('link', { name: 'next' })).not.toBeVisible();
+
+        await page.getByRole('link', { name: 'previous' }).click();
+        await expect(page.getByText('two')).toBeVisible();
+      });
     })
   });
 }

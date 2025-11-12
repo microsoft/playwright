@@ -33,7 +33,12 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   footer?: React.JSX.Element | string;
 }>> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
+  const linkedSearchParams = new URLSearchParams();
+  if (searchParams.has('q'))
+    linkedSearchParams.set('q', searchParams.get('q')!);
+  if (searchParams.has('speedboard'))
+    linkedSearchParams.set('speedboard', '');
+  const filterParam = linkedSearchParams.size ? '&' + linkedSearchParams : '';
   return <Chip
     expanded={isFileExpanded ? isFileExpanded(file.fileId) : undefined}
     noInsets={true}

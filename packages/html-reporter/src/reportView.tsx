@@ -38,7 +38,7 @@ declare global {
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
 const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId') && !params.has('speedboard');
 const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
-export const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard');
+const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard') && !params.has('testId');
 
 type TestModelSummary = {
   files: TestFileSummary[];
@@ -52,6 +52,7 @@ export const ReportView: React.FC<{
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
+  const speedboard = searchParams.has('speedboard');
   const [mergeFiles] = useSetting('mergeFiles', false);
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
@@ -70,10 +71,17 @@ export const ReportView: React.FC<{
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
   const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report?.json().files || [], filter), [report, filter]);
   const testModel = React.useMemo(() => {
-    return mergeFiles ? createMergedFilesModel(report, filter) : createFilesModel(report, filter);
-  }, [report, filter, mergeFiles]);
+    if (speedboard)
+      return createSpeedboardFilesModel(report, filter);
+    if (mergeFiles)
+      return createMergedFilesModel(report, filter);
+    return createFilesModel(report, filter);
+  }, [report, filter, mergeFiles, speedboard]);
 
   const { prev, next } = React.useMemo(() => {
+    if (!testId)
+      return { prev: undefined, next: undefined };
+
     const index = testModel.tests.findIndex(t => t.testId === testId);
     const prev = index > 0 ? testModel.tests[index - 1] : undefined;
     const next = index < testModel.tests.length - 1 ? testModel.tests[index + 1] : undefined;
@@ -251,4 +259,14 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   for (const group of groups)
     result.tests.push(...group.tests);
   return result;
+}
+
+function createSpeedboardFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+  const files = report?.json().files || [];
+  const tests = files.flatMap(file => file.tests).filter(t => filter.matches(t));
+  tests.sort((a, b) => b.duration - a.duration);
+  return {
+    files: [],
+    tests,
+  }
 }

@@ -27,7 +27,6 @@ import { linkifyText } from '@web/renderUtils';
 import { Dialog } from '@web/shared/dialog';
 import { useDarkModeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
-import { speedboardRoutePredicate } from './reportView';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -91,7 +90,6 @@ const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const speedboardActive = speedboardRoutePredicate(searchParams);
 
   return <nav>
     <Link className='subnav-item' href='#?'>
@@ -102,7 +100,7 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
-    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={speedboardActive}>
+    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={searchParams.has('speedboard')}>
       {icons.clock()}
     </Link>
     <SettingsButton />
