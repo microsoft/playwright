@@ -3210,7 +3210,6 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
     test.describe('speedboard', () => {
       test('clicking on label should not exit speedboard', async ({ runInlineTest, showReport, page }) => {
-        test.setTimeout(10000);
         await runInlineTest({
           'playwright.config.ts': `
           module.exports = {
