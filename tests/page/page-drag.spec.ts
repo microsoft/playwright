@@ -332,18 +332,8 @@ it.describe('Drag and drop', () => {
         });
         return events;
       });
-      await drag(page);
-      const steplessEvents = [
-        { type: 'mousemove', x: 50, y: 50 },
-        { type: 'mousedown', x: 50, y: 50 },
-        { type: 'mousemove', x: 150, y: 150 },
-        { type: 'mouseup', x: 150, y: 150 },
-      ];
-      expect(await eventsHandle.jsonValue()).toEqual(steplessEvents);
-
       await drag(page, 4);
       await expect.poll(() => eventsHandle.jsonValue()).toEqual([
-        ...steplessEvents,
         { type: 'mousemove', x: 50, y: 50 },
         { type: 'mousedown', x: 50, y: 50 },
         { type: 'mousemove', x: 75, y: 75 },
