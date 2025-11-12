@@ -42,6 +42,7 @@ export const Chip: React.FC<{
       title={typeof header === 'string' ? header : undefined}>
       {setExpanded && !!expanded && icons.downArrow()}
       {setExpanded && !expanded && icons.rightArrow()}
+      {!setExpanded && <span className='octicon' style={{ width: 16, height: 16 }} />}
       {header}
     </div>
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
