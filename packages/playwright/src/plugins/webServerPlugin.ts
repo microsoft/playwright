@@ -25,11 +25,10 @@ import type { FullConfig } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-
 export type WebServerPluginOptions = {
   command: string;
   url?: string;
-  wait?: { stdout?: RegExp, stderr?: RegExp, time?: number };
+  wait?: { stdout?: RegExp, stderr?: RegExp };
   ignoreHTTPSErrors?: boolean;
   timeout?: number;
   gracefulShutdown?: { signal: 'SIGINT' | 'SIGTERM', timeout?: number };
@@ -143,43 +142,44 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
     if (this._options.wait?.stdout || this._options.wait?.stderr)
       this._waitForStdioPromise = new ManualPromise();
-    let stdoutWaitCollector = this._options.wait?.stdout ? '' : undefined;
-    let stderrWaitCollector = this._options.wait?.stderr ? '' : undefined;
-
-    const resolveStdioPromise = () => {
-      stderrWaitCollector = undefined;
-      stdoutWaitCollector = undefined;
-      this._waitForStdioPromise?.resolve();
+    const stdioWaitCollectors = {
+      stdout: this._options.wait?.stdout ? '' : undefined,
+      stderr: this._options.wait?.stderr ? '' : undefined,
     };
 
-    launchedProcess.stderr!.on('data', data => {
-      if (stderrWaitCollector !== undefined) {
-        stderrWaitCollector += data.toString();
-        if (this._options.wait?.stderr?.test(stderrWaitCollector))
-          resolveStdioPromise();
-      }
+    launchedProcess.stdout!.on('data', data => {
+      if (debugWebServer.enabled || this._options.stdout === 'pipe')
+        this._reporter!.onStdOut?.(prefixOutputLines(data.toString(), this._options.name));
+    });
 
+    launchedProcess.stderr!.on('data', data => {
       if (debugWebServer.enabled || (this._options.stderr === 'pipe' || !this._options.stderr))
         this._reporter!.onStdErr?.(prefixOutputLines(data.toString(), this._options.name));
     });
 
-    launchedProcess.stdout!.on('data', data => {
-      if (stdoutWaitCollector !== undefined) {
-        stdoutWaitCollector += data.toString();
-        if (this._options.wait?.stdout?.test(stdoutWaitCollector))
-          resolveStdioPromise();
-      }
+    const resolveStdioPromise = () => {
+      stdioWaitCollectors.stdout = undefined;
+      stdioWaitCollectors.stderr = undefined;
+      this._waitForStdioPromise?.resolve();
+    };
 
-      if (debugWebServer.enabled || this._options.stdout === 'pipe')
-        this._reporter!.onStdOut?.(prefixOutputLines(data.toString(), this._options.name));
-    });
+    for (const stdio of ['stdout', 'stderr'] as const) {
+      launchedProcess[stdio]!.on('data', data => {
+        if (!this._options.wait?.[stdio] || stdioWaitCollectors[stdio] === undefined)
+          return;
+        stdioWaitCollectors[stdio] += data.toString();
+        this._options.wait[stdio].lastIndex = 0;
+        const result = this._options.wait[stdio].exec(stdioWaitCollectors[stdio]);
+        if (result) {
+          for (const [key, value] of Object.entries(result.groups || {}))
+            process.env[key.toUpperCase()] = value;
+          resolveStdioPromise();
+        }
+      });
+    }
   }
 
   private async _waitForProcess() {
-    // options.time is immune to the timeout.
-    if (this._options.wait?.time)
-      await new Promise(resolve => setTimeout(resolve, this._options.wait!.time));
-
     if (!this._isAvailableCallback && !this._waitForStdioPromise) {
       this._processExitedPromise.catch(() => {});
       return;
