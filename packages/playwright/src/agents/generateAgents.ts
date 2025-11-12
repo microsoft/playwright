@@ -243,26 +243,13 @@ export class CopilotGenerator {
     await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'legacy planner chatmode');
     await deleteFile(`.github/chatmodes/🎭 generator.chatmode.md`, 'legacy generator chatmode');
     await deleteFile(`.github/chatmodes/🎭 healer.chatmode.md`, 'legacy healer chatmode');
+    await deleteFile(`.github/agents/ 🎭 planner.agent.md`, 'legacy planner agent');
+    await deleteFile(`.github/agents/🎭 generator.agent.md`, 'legacy generator agent');
+    await deleteFile(`.github/agents/🎭 healer.agent.md`, 'legacy healer agent');
 
     await VSCodeGenerator.appendToMCPJson();
-    const cwdFolder = path.basename(process.cwd());
 
-    const mcpConfig = {
-      'mcpServers': {
-        'playwright-test': {
-          'type': 'stdio',
-          'command': 'npx',
-          'args': [
-            `--prefix=/home/runner/work/${cwdFolder}/${cwdFolder}`,
-            'playwright',
-            'run-test-mcp-server',
-            '--headless',
-            `--config=/home/runner/work/${cwdFolder}/${cwdFolder}`
-          ],
-          'tools': ['*']
-        }
-      }
-    };
+    const mcpConfig = { mcpServers: CopilotGenerator.mcpServers };
 
     if (!fs.existsSync('.github/copilot-setup-steps.yml')) {
       const yaml = fs.readFileSync(path.join(__dirname, 'copilot-setup-steps.yml'), 'utf-8');
@@ -283,10 +270,11 @@ export class CopilotGenerator {
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
     const header = {
-      name: agent.header.name,
-      description: agent.header.description + examples,
-      tools: agent.header.tools,
-      model: 'Claude Sonnet 4',
+      'name': agent.header.name,
+      'description': agent.header.description + examples,
+      'tools': agent.header.tools,
+      'model': 'Claude Sonnet 4',
+      'mcp-servers': CopilotGenerator.mcpServers,
     };
     lines.push(`---`);
     lines.push(yaml.stringify(header) + `---`);
@@ -295,6 +283,18 @@ export class CopilotGenerator {
     lines.push('');
     return lines.join('\n');
   }
+
+  static mcpServers = {
+    'playwright-test': {
+      'type': 'stdio',
+      'command': 'npx',
+      'args': [
+        'playwright',
+        'run-test-mcp-server'
+      ],
+      'tools': ['*']
+    },
+  };
 }
 
 export class VSCodeGenerator {

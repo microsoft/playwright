@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
@@ -75,6 +76,7 @@ export class TestContext {
   private _pushClient: MDBPushClientCallback;
   private _testRunner: TestRunner | undefined;
   readonly options?: { muteConsole?: boolean, headless?: boolean };
+  readonly computedHeaded: boolean;
   configLocation!: ConfigLocation;
   rootPath!: string;
   generatorJournal: GeneratorJournal | undefined;
@@ -82,6 +84,10 @@ export class TestContext {
   constructor(pushClient: MDBPushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._pushClient = pushClient;
     this.options = options;
+    if (options?.headless !== undefined)
+      this.computedHeaded = !options.headless;
+    else
+      this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
   }
 
   initialize(rootPath: string | undefined, configLocation: ConfigLocation) {
@@ -159,7 +165,7 @@ export class TestContext {
   async runSeedTest(seedFile: string, projectName: string, progress: ProgressCallback) {
     await this.runWithGlobalSetup(async (testRunner, reporter) => {
       const result = await testRunner.runTests(reporter, {
-        headed: !this.options?.headless,
+        headed: this.computedHeaded,
         locations: ['/' + escapeRegExp(seedFile) + '/'],
         projects: [projectName],
         timeout: 0,
