@@ -27,6 +27,7 @@ import { linkifyText } from '@web/renderUtils';
 import { Dialog } from '@web/shared/dialog';
 import { useDarkModeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
+import { speedboardRoutePredicate } from './reportView';
 
 export const HeaderView: React.FC<{
   title: string | undefined,
@@ -89,6 +90,9 @@ export const GlobalFilterView: React.FC<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
+  const searchParams = React.useContext(SearchParamsContext);
+  const speedboardActive = speedboardRoutePredicate(searchParams);
+
   return <nav>
     <Link className='subnav-item' href='#?'>
       <span className='subnav-item-label'>All</span>
@@ -98,7 +102,7 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
-    <Link className='subnav-item' href='#?speedboard' title='Speedboard'>
+    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={speedboardActive}>
       {icons.clock()}
     </Link>
     <SettingsButton />
@@ -109,9 +113,11 @@ const NavLink: React.FC<{
   token: string,
   count: number,
 }> = ({ token, count }) => {
-  const searchParams = React.useContext(SearchParamsContext);
-  const queryToken = `s:${token}`;
+  const searchParams = new URLSearchParams(React.useContext(SearchParamsContext));
+  searchParams.delete('speedboard');
 
+  const queryToken = `s:${token}`;
+  
   const clickUrl = filterWithQuery(searchParams, queryToken, false);
   const ctrlClickUrl = filterWithQuery(searchParams, queryToken, true);
 

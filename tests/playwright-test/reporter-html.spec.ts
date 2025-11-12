@@ -3236,7 +3236,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           `,
         }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
         await showReport();
+
+        await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'false');
         await page.getByRole('link', { name: 'Speedboard' }).click();
+        await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
+
         await expect(page.getByRole('main')).toMatchAriaSnapshot(`
           - button "Slowest Tests"
           - region:
@@ -3257,6 +3261,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByRole('main')).toMatchAriaSnapshot(`
           - button "Slowest Tests"
         `);
+
+        await page.getByRole('link', { name: 'Failed' }).click();
+        await expect(page.getByRole('main')).toContainText('No tests found');
       });
     })
   });
