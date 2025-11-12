@@ -22,7 +22,7 @@ import path from 'path';
 import { chromiumSwitches } from './chromiumSwitches';
 import { CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
+import { debugMode, headersArrayToObject } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
@@ -36,9 +36,7 @@ import { WebSocketTransport } from '../transport';
 import { CRDevTools } from './crDevTools';
 import { Browser } from '../browser';
 import { removeFolders } from '../utils/fileUtils';
-import { gracefullyCloseSet } from '../utils/processLauncher';
 
-import type { HTTPRequestParams } from '../utils/network';
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { SdkObject } from '../instrumentation';
 import type { Progress } from '../progress';
@@ -47,8 +45,6 @@ import type { ConnectionTransport, ProtocolRequest } from '../transport';
 import type { BrowserContext } from '../browserContext';
 import type * as types from '../types';
 import type * as channels from '@protocol/channels';
-import type http from 'http';
-import type stream from 'stream';
 
 const ARTIFACTS_FOLDER = path.join(os.tmpdir(), 'playwright-artifacts-');
 
@@ -77,10 +73,6 @@ export class Chromium extends BrowserType {
   }
 
   override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }) {
-    return await this._connectOverCDPInternal(progress, endpointURL, options);
-  }
-
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -93,9 +85,6 @@ export class Chromium extends BrowserType {
     const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
-      const cb = onClose;
-      onClose = undefined; // Make sure to only call onClose once.
-      await cb?.();
     };
 
     let chromeTransport: WebSocketTransport | undefined;
@@ -119,8 +108,8 @@ export class Chromium extends BrowserType {
         protocolLogger: helper.debugProtocolLogger(),
         browserLogsCollector: new RecentLogsCollector(),
         artifactsDir,
-        downloadsPath: options.downloadsPath || artifactsDir,
-        tracesDir: options.tracesDir || artifactsDir,
+        downloadsPath: artifactsDir,
+        tracesDir: artifactsDir,
         originalLaunchOptions: {},
       };
       validateBrowserContextOptions(persistent, browserOptions);
@@ -188,112 +177,6 @@ export class Chromium extends BrowserType {
     // Note that it's fine to reuse the transport, since our connection ignores kBrowserCloseMessageId.
     const message: ProtocolRequest = { method: 'Browser.close', id: kBrowserCloseMessageId, params: {} };
     transport.send(message);
-  }
-
-  override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
-    await progress.race(this._createArtifactDirs(options));
-
-    if (!hubUrl.endsWith('/'))
-      hubUrl = hubUrl + '/';
-
-    const args = this._innerDefaultArgs(options);
-    args.push('--remote-debugging-port=0');
-    const isEdge = options.channel && options.channel.startsWith('msedge');
-    let desiredCapabilities = {
-      'browserName': isEdge ? 'MicrosoftEdge' : 'chrome',
-      [isEdge ? 'ms:edgeOptions' : 'goog:chromeOptions']: { args }
-    };
-
-    if (process.env.SELENIUM_REMOTE_CAPABILITIES) {
-      const remoteCapabilities = parseSeleniumRemoteParams({ name: 'capabilities', value: process.env.SELENIUM_REMOTE_CAPABILITIES }, progress);
-      if (remoteCapabilities)
-        desiredCapabilities = { ...desiredCapabilities, ...remoteCapabilities };
-    }
-
-    let headers: { [key: string]: string } = {};
-    if (process.env.SELENIUM_REMOTE_HEADERS) {
-      const remoteHeaders = parseSeleniumRemoteParams({ name: 'headers', value: process.env.SELENIUM_REMOTE_HEADERS }, progress);
-      if (remoteHeaders)
-        headers = remoteHeaders;
-    }
-
-    progress.log(`<selenium> connecting to ${hubUrl}`);
-    const response = await fetchData(progress, {
-      url: hubUrl + 'session',
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        ...headers,
-      },
-      data: JSON.stringify({
-        capabilities: { alwaysMatch: desiredCapabilities }
-      }),
-    }, seleniumErrorHandler);
-    const value = JSON.parse(response).value;
-    const sessionId = value.sessionId;
-    progress.log(`<selenium> connected to sessionId=${sessionId}`);
-
-    const disconnectFromSelenium = async () => {
-      progress.log(`<selenium> disconnecting from sessionId=${sessionId}`);
-      // Do not pass "progress" to disconnect even after the progress has aborted.
-      await fetchData(undefined, {
-        url: hubUrl + 'session/' + sessionId,
-        method: 'DELETE',
-        headers,
-      }).catch(error => progress.log(`<error disconnecting from selenium>: ${error}`));
-      progress.log(`<selenium> disconnected from sessionId=${sessionId}`);
-      gracefullyCloseSet.delete(disconnectFromSelenium);
-    };
-    gracefullyCloseSet.add(disconnectFromSelenium);
-
-    try {
-      const capabilities = value.capabilities;
-      let endpointURL: URL;
-
-      if (capabilities['se:cdp']) {
-        // Selenium 4 - use built-in CDP websocket proxy.
-        progress.log(`<selenium> using selenium v4`);
-        const endpointURLString = addProtocol(capabilities['se:cdp']);
-        endpointURL = new URL(endpointURLString);
-        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1')
-          endpointURL.hostname = new URL(hubUrl).hostname;
-        progress.log(`<selenium> retrieved endpoint ${endpointURL.toString()} for sessionId=${sessionId}`);
-      } else {
-        // Selenium 3 - resolve target node IP to use instead of localhost ws url.
-        progress.log(`<selenium> using selenium v3`);
-        const maybeChromeOptions = capabilities['goog:chromeOptions'];
-        const chromeOptions = maybeChromeOptions && typeof maybeChromeOptions === 'object' ? maybeChromeOptions : undefined;
-        const debuggerAddress = chromeOptions && typeof chromeOptions.debuggerAddress === 'string' ? chromeOptions.debuggerAddress : undefined;
-        const chromeOptionsURL = typeof maybeChromeOptions === 'string' ? maybeChromeOptions : undefined;
-        // TODO(dgozman): figure out if we can make ChromeDriver to return 127.0.0.1 instead of localhost.
-        const endpointURLString = addProtocol(debuggerAddress || chromeOptionsURL).replace('localhost', '127.0.0.1');
-        progress.log(`<selenium> retrieved endpoint ${endpointURLString} for sessionId=${sessionId}`);
-        endpointURL = new URL(endpointURLString);
-        if (endpointURL.hostname === 'localhost' || endpointURL.hostname === '127.0.0.1') {
-          const sessionInfoUrl = new URL(hubUrl).origin + '/grid/api/testsession?session=' + sessionId;
-          try {
-            const sessionResponse = await fetchData(progress, {
-              url: sessionInfoUrl,
-              method: 'GET',
-              headers,
-            }, seleniumErrorHandler);
-            const proxyId = JSON.parse(sessionResponse).proxyId;
-            endpointURL.hostname = new URL(proxyId).hostname;
-            progress.log(`<selenium> resolved endpoint ip ${endpointURL.toString()} for sessionId=${sessionId}`);
-          } catch (e) {
-            progress.log(`<selenium> unable to resolve endpoint ip for sessionId=${sessionId}, running in standalone?`);
-          }
-        }
-      }
-
-      return await this._connectOverCDPInternal(progress, endpointURL.toString(), {
-        ...options,
-        headers: headersObjectToArray(headers),
-      }, disconnectFromSelenium);
-    } catch (e) {
-      await disconnectFromSelenium();
-      throw e;
-    }
   }
 
   override async defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string) {
@@ -409,40 +292,4 @@ async function urlToWSEndpoint(progress: Progress, endpointURL: string, headers:
     `This does not look like a DevTools server, try connecting via ws://.`)
   );
   return JSON.parse(json).webSocketDebuggerUrl;
-}
-
-async function seleniumErrorHandler(params: HTTPRequestParams, response: http.IncomingMessage) {
-  const body = await streamToString(response);
-  let message = body;
-  try {
-    const json = JSON.parse(body);
-    message = json.value.localizedMessage || json.value.message;
-  } catch (e) {
-  }
-  return new Error(`Error connecting to Selenium at ${params.url}: ${message}`);
-}
-
-function addProtocol(url: string) {
-  if (!['ws://', 'wss://', 'http://', 'https://'].some(protocol => url.startsWith(protocol)))
-    return 'http://' + url;
-  return url;
-}
-
-function streamToString(stream: stream.Readable): Promise<string> {
-  return new Promise<string>((resolve, reject) => {
-    const chunks: Buffer[] = [];
-    stream.on('data', chunk => chunks.push(Buffer.from(chunk)));
-    stream.on('error', reject);
-    stream.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-  });
-}
-
-function parseSeleniumRemoteParams(env: {name: string, value: string}, progress: Progress) {
-  try {
-    const parsed = JSON.parse(env.value);
-    progress.log(`<selenium> using additional ${env.name} "${env.value}"`);
-    return parsed;
-  } catch (e) {
-    progress.log(`<selenium> ignoring additional ${env.name} "${env.value}": ${e}`);
-  }
 }
