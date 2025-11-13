@@ -30,8 +30,8 @@ it('should work', async ({ page, server, browserName, headless, isLinux }) => {
 it('should handle nested frames', async ({ page, server }) => {
   await page.setViewportSize({ width: 616, height: 500 });
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
-  const nestedFrame = page.frames().find(frame => frame.name() === 'dos');
-  const elementHandle = await nestedFrame.$('div');
+  const nestedFrame = page.frameLocator('[name="2frames"]').frameLocator('[name=dos]');
+  const elementHandle = await nestedFrame.locator('div').elementHandle();
   const box = await elementHandle.boundingBox();
   expect(box).toEqual({ x: 24, y: 224, width: 268, height: 18 });
 });
