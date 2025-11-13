@@ -38,7 +38,7 @@ export function SlowestTests({ report, tests }: { report: LoadedReport, tests: T
     projectNames={report.json().projectNames}
     footer={
       length < tests.length
-        ? <button className='link-badge' onClick={() => setLength(l => l + 50)}>
+        ? <button className='link-badge fullwidth-link' style={{ padding: '8px 5px' }} onClick={() => setLength(l => l + 50)}>
           {icons.downArrow()}
           Show 50 more
         </button>

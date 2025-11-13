@@ -260,5 +260,5 @@ function createSpeedboardFilesModel(report: LoadedReport | undefined, filter: Fi
   return {
     files: [],
     tests,
-  }
+  };
 }

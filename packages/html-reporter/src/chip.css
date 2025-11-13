@@ -58,7 +58,6 @@
 
 .chip-footer {
   border-top: 1px solid var(--color-border-default);
-  padding: 8px 0px;
 }
 
 @media only screen and (max-width: 600px) {

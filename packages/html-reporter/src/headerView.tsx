@@ -115,7 +115,7 @@ const NavLink: React.FC<{
   searchParams.delete('speedboard');
 
   const queryToken = `s:${token}`;
-  
+
   const clickUrl = filterWithQuery(searchParams, queryToken, false);
   const ctrlClickUrl = filterWithQuery(searchParams, queryToken, true);
 
