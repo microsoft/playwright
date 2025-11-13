@@ -68,6 +68,7 @@ export const TestCaseView: React.FC<{
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>
     <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
+    {/* If there are no results, display test annotations. Otherwise test annotations will be displayed alongside runtime annotations in individual result pane */}
     {test.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
       {visibleTestAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
     </AutoChip>}

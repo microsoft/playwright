@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
@@ -26,8 +27,8 @@ import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 
-import type { ProgressCallback } from '../sdk/server';
 import type { ConfigLocation } from '../../common/config';
+import type { ProgressCallback } from '../sdk/exports';
 
 export type SeedFile = {
   file: string;
@@ -70,15 +71,24 @@ ${step.code}
   }
 }
 
+type PushClientCallback = (sendMessage: (request: any) => Promise<any>) => Promise<void>;
+
 export class TestContext {
+  private _pushClient: PushClientCallback;
   private _testRunner: TestRunner | undefined;
   readonly options?: { muteConsole?: boolean, headless?: boolean };
+  readonly computedHeaded: boolean;
   configLocation!: ConfigLocation;
   rootPath!: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(options?: { muteConsole?: boolean, headless?: boolean }) {
+  constructor(pushClient: PushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._pushClient = pushClient;
     this.options = options;
+    if (options?.headless !== undefined)
+      this.computedHeaded = !options.headless;
+    else
+      this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
   }
 
   initialize(rootPath: string | undefined, configLocation: ConfigLocation) {
@@ -95,9 +105,13 @@ export class TestContext {
       await this._testRunner.stopTests();
     const testRunner = new TestRunner(this.configLocation!, {});
     await testRunner.initialize({});
-    this._testRunner = testRunner;
-    testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {
-      this._testRunner?.emit(TestRunnerEvent.TestFilesChanged, testFiles);
+    testRunner.on(TestRunnerEvent.TestPaused, params => {
+      void this._pushClient(async (request: any) => {
+        const response = await params.sendMessage({ request });
+        if (response.error)
+          throw new Error(response.error.message);
+        return response.response;
+      });
     });
     this._testRunner = testRunner;
     return testRunner;
@@ -140,7 +154,7 @@ export class TestContext {
   async runSeedTest(seedFile: string, projectName: string, progress: ProgressCallback) {
     await this.runWithGlobalSetup(async (testRunner, reporter) => {
       const result = await testRunner.runTests(reporter, {
-        headed: !this.options?.headless,
+        headed: this.computedHeaded,
         locations: ['/' + escapeRegExp(seedFile) + '/'],
         projects: [projectName],
         timeout: 0,

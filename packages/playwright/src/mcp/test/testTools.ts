@@ -80,13 +80,14 @@ export const debugTest = defineTestTool({
   handle: async (context, params, progress) => {
     await context.runWithGlobalSetup(async (testRunner, reporter) => {
       await testRunner.runTests(reporter, {
-        headed: !context.options?.headless,
+        headed: context.computedHeaded,
         testIds: [params.test.id],
         // For automatic recovery
         timeout: 0,
         workers: 1,
         pauseOnError: true,
         disableConfigReporters: true,
+        actionTimeout: 5000,
       });
     }, progress);
 

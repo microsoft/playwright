@@ -22,7 +22,8 @@ import os from 'os';
 
 test.slow();
 
-test('should close the browser when the node process closes', async ({ startRemoteServer, isWindows, server }) => {
+test('should close the browser when the node process closes', async ({ startRemoteServer, isWindows, server, mode }) => {
+  test.skip(mode === 'wsl', 'Remove server cannot start on Windows with WebKit WSL params');
   const remoteServer = await startRemoteServer('launchServer', { url: server.EMPTY_PAGE });
   try {
     if (isWindows)

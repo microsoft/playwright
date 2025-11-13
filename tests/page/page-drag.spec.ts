@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ElementHandle, Route } from 'playwright-core';
+import type { ElementHandle, Page, Route } from 'playwright-core';
 import { test as it, expect } from './pageTest';
 import { attachFrame } from '../config/utils';
 
@@ -291,6 +291,58 @@ it.describe('Drag and drop', () => {
     await page.goto(server.PREFIX + '/drag-n-drop.html');
     await page.dragAndDrop('#source', '#target');
     expect(await page.$eval('#target', target => target.contains(document.querySelector('#source')))).toBe(true); // could not find source in target
+  });
+
+  [{
+    title: 'dragAndDrop',
+    drag: (page: Page, steps?: number) => page.dragAndDrop('#red', '#blue', { steps }),
+  }, {
+    title: 'dragTo',
+    drag: (page: Page, steps?: number) => page.locator('#red').dragTo(page.locator('#blue'), { steps }),
+  }].forEach(({ title, drag }) => {
+    it(`should ${title} with tweened mouse movement`, async ({ page }) => {
+      await page.setContent(`
+        <body style="margin: 0; padding: 0;">
+          <div style="width:100px;height:100px;background:red;" id="red"></div>
+          <div style="width:300px;height:100px;background:blue;" id="blue"></div>
+        </body>
+      `);
+      const eventsHandle = await page.evaluateHandle(() => {
+        const events = [];
+        document.addEventListener('mousedown', event => {
+          events.push({
+            type: 'mousedown',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        document.addEventListener('mouseup', event => {
+          events.push({
+            type: 'mouseup',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        document.addEventListener('mousemove', event => {
+          events.push({
+            type: 'mousemove',
+            x: event.pageX,
+            y: event.pageY,
+          });
+        });
+        return events;
+      });
+      await drag(page, 4);
+      await expect.poll(() => eventsHandle.jsonValue()).toEqual([
+        { type: 'mousemove', x: 50, y: 50 },
+        { type: 'mousedown', x: 50, y: 50 },
+        { type: 'mousemove', x: 75, y: 75 },
+        { type: 'mousemove', x: 100, y: 100 },
+        { type: 'mousemove', x: 125, y: 125 },
+        { type: 'mousemove', x: 150, y: 150 },
+        { type: 'mouseup', x: 150, y: 150 },
+      ]);
+    });
   });
 
   it('should allow specifying the position', async ({ page, server }) => {

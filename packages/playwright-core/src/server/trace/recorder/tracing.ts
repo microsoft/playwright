@@ -24,6 +24,7 @@ import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
 import { createGuid  } from '../../utils/crypto';
+import { getPlaywrightVersion } from '../../utils/userAgent';
 import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
@@ -107,6 +108,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       type: 'context-options',
       origin: 'library',
       browserName: '',
+      playwrightVersion: getPlaywrightVersion(),
       options: {},
       platform: process.platform,
       wallTime: 0,

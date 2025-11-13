@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-import * as accessibility from './accessibility';
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import { TargetClosedError, TimeoutError } from './errors';
@@ -81,7 +80,6 @@ export interface PageDelegate {
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
   setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
 
-  getAccessibilityTree(needle?: dom.ElementHandle): Promise<{tree: accessibility.AXNode, needle: accessibility.AXNode | null}>;
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
 
@@ -155,7 +153,6 @@ export class Page extends SdkObject {
   initScripts: InitScript[] = [];
   readonly screenshotter: Screenshotter;
   readonly frameManager: frames.FrameManager;
-  readonly accessibility: accessibility.Accessibility;
   private _workers = new Map<string, Worker>();
   readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
   readonly coverage: any;
@@ -178,7 +175,6 @@ export class Page extends SdkObject {
     this.attribution.page = this;
     this.delegate = delegate;
     this.browserContext = browserContext;
-    this.accessibility = new accessibility.Accessibility(delegate.getAccessibilityTree.bind(delegate));
     this.keyboard = new input.Keyboard(delegate.rawKeyboard, this);
     this.mouse = new input.Mouse(delegate.rawMouse, this);
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
@@ -365,8 +361,8 @@ export class Page extends SdkObject {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(this, type, text, args, location);
+  addConsoleMessage(worker: Worker | null, type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
+    const message = new ConsoleMessage(this, worker, type, text, args, location);
     const intercepted = this.frameManager.interceptConsoleMessage(message);
     if (intercepted) {
       args.forEach(arg => arg.dispose());
@@ -858,9 +854,9 @@ export class Page extends SdkObject {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<string> {
+  async snapshotForAI(progress: Progress, options: { track?: string }): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
-    return snapshot.lines.join('\n');
+    return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
   }
 }
 
@@ -870,22 +866,27 @@ export class Worker extends SdkObject {
   };
 
   readonly url: string;
-  private _executionContextPromise: Promise<js.ExecutionContext>;
-  private _executionContextCallback: (value: js.ExecutionContext) => void;
+  private _executionContextPromise = new ManualPromise<js.ExecutionContext>();
+  private _workerScriptLoaded = false;
   existingExecutionContext: js.ExecutionContext | null = null;
   readonly openScope = new LongStandingScope();
 
   constructor(parent: SdkObject, url: string) {
     super(parent, 'worker');
     this.url = url;
-    this._executionContextCallback = () => {};
-    this._executionContextPromise = new Promise(x => this._executionContextCallback = x);
   }
 
   createExecutionContext(delegate: js.ExecutionContextDelegate) {
     this.existingExecutionContext = new js.ExecutionContext(this, delegate, 'worker');
-    this._executionContextCallback(this.existingExecutionContext);
+    if (this._workerScriptLoaded)
+      this._executionContextPromise.resolve(this.existingExecutionContext);
     return this.existingExecutionContext;
+  }
+
+  workerScriptLoaded() {
+    this._workerScriptLoaded = true;
+    if (this.existingExecutionContext)
+      this._executionContextPromise.resolve(this.existingExecutionContext);
   }
 
   didClose() {
@@ -1035,9 +1036,9 @@ class FrameThrottler {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string }): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
-  const { snapshot, iframeRefs, isIncremental } = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
+  const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
       const context = await progress.race(frame._utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
@@ -1046,7 +1047,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         if (!node)
           return true;
         return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', incremental: options.mode === 'incremental', track: options.track }));
+      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', track: options.track }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
@@ -1057,50 +1058,50 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
     }
   });
 
-  const lines = snapshot.split('\n');
-  const result = [];
+  const childSnapshotPromises = snapshot.iframeRefs.map(ref => snapshotFrameRefForAI(progress, frame, ref, options));
+  const childSnapshots = await Promise.all(childSnapshotPromises);
 
-  if (isIncremental) {
-    result.push(...lines);
-    for (const ref of iframeRefs) {
-      const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
-      if (!childSnapshot.lines.length)
-        continue;
-      if (childSnapshot.isIncremental)
-        result.push(...childSnapshot.lines);
-      else
-        result.push('- <changed> iframe [ref=' + ref + ']:', ...childSnapshot.lines.map(l => '  ' + l));
+  const full = [];
+  let incremental: string[] | undefined;
+
+  if (snapshot.incremental !== undefined) {
+    incremental = snapshot.incremental.split('\n');
+    for (let i = 0; i < snapshot.iframeRefs.length; i++) {
+      const childSnapshot = childSnapshots[i];
+      if (childSnapshot.incremental)
+        incremental.push(...childSnapshot.incremental);
+      else if (childSnapshot.full.length)
+        incremental.push('- <changed> iframe [ref=' + snapshot.iframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
     }
-    return { lines: result, isIncremental };
   }
 
-  for (const line of lines) {
+  for (const line of snapshot.full.split('\n')) {
     const match = line.match(/^(\s*)- iframe (?:\[active\] )?\[ref=([^\]]*)\]/);
     if (!match) {
-      result.push(line);
+      full.push(line);
       continue;
     }
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const childSnapshot = await snapshotFrameRefForAI(progress, frame, ref, options);
-    result.push(childSnapshot.lines.length ? line + ':' : line);
-    result.push(...childSnapshot.lines.map(l => leadingSpace + '  ' + l));
+    const childSnapshot = childSnapshots[snapshot.iframeRefs.indexOf(ref)] ?? { full: [] };
+    full.push(childSnapshot.full.length ? line + ':' : line);
+    full.push(...childSnapshot.full.map(l => leadingSpace + '  ' + l));
   }
 
-  return { lines: result, isIncremental };
+  return { full, incremental };
 }
 
-async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ lines: string[], isIncremental: boolean }> {
+async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
   if (!child)
-    return { lines: [], isIncremental: false };
+    return { full: [] };
   try {
     return await snapshotFrameForAI(progress, child.frame, options);
   } catch {
-    return { lines: [], isIncremental: false };
+    return { full: [] };
   }
 }
 

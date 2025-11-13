@@ -39,13 +39,16 @@ import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
+import type { TestPausedParams } from './failureTracker';
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
+  TestPaused: 'testPaused',
 } as const;
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
+  [TestRunnerEvent.TestPaused]: [params: TestPausedParams];
 };
 
 export type ListTestsParams = {
@@ -71,6 +74,7 @@ export type RunTestsParams = {
   projects?: string[];
   reuseContext?: boolean;
   connectWsEndpoint?: string;
+  actionTimeout?: number;
   pauseOnError?: boolean;
   pauseAtEnd?: boolean;
   doNotRunDepsOutsideProjectFilter?: boolean;
@@ -314,6 +318,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),
         _optionContextReuseMode: params.reuseContext ? 'when-possible' : undefined,
         _optionConnectOptions: params.connectWsEndpoint ? { wsEndpoint: params.connectWsEndpoint } : undefined,
+        actionTimeout: params.actionTimeout,
       },
       ...(params.updateSnapshots ? { updateSnapshots: params.updateSnapshots } : {}),
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
@@ -349,6 +354,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...createRunTestsTasks(config),
     ];
     const testRun = new TestRun(config, reporter, { pauseOnError: params.pauseOnError, pauseAtEnd: params.pauseAtEnd });
+    testRun.failureTracker.onTestPaused = params => this.emit(TestRunnerEvent.TestPaused, params);
     const run = runTasks(testRun, tasks, 0, stop).then(async status => {
       this._testRun = undefined;
       return status;

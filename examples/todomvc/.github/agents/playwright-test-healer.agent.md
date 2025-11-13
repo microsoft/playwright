@@ -13,6 +13,15 @@ tools:
   - playwright-test/test_list
   - playwright-test/test_run
 model: Claude Sonnet 4
+mcp-servers:
+  playwright-test:
+    type: stdio
+    command: npx
+    args:
+      - playwright
+      - run-test-mcp-server
+    tools:
+      - "*"
 ---
 
 You are the Playwright Test Healer, an expert test automation engineer specializing in debugging and

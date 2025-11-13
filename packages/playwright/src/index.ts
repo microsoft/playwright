@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { runBrowserBackendAtEnd } from './mcp/test/browserBackend';
+import { createCustomMessageHandler } from './mcp/test/browserBackend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -237,7 +237,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       (testInfo as TestInfoImpl)._setDebugMode();
 
     playwright._defaultContextOptions = _combinedContextOptions;
-    playwright._defaultContextTimeout = (testInfo as TestInfoImpl)._pauseOnError() ? 5000 : actionTimeout || 0;
+    playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
     playwright._defaultContextOptions = undefined;
@@ -417,14 +417,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      (testInfo as TestInfoImpl)._onDidFinishTestFunctions.unshift(() => runBrowserBackendAtEnd(context, testInfo.errors[0]?.message));
+      (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await use(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    (testInfo as TestInfoImpl)._onDidFinishTestFunctions.unshift(() => runBrowserBackendAtEnd(context, testInfo.errors[0]?.message));
+    (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -647,7 +647,7 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunctions.push(() => this.didFinishTestFunction());
+    testInfo._onDidFinishTestFunctionCallback = () => this.didFinishTestFunction();
 
     this._screenshotRecorder.fixOrdinal();
 
@@ -681,7 +681,7 @@ class ArtifactsRecorder {
     try {
       // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       await page._wrapApiCall(async () => {
-        this._pageSnapshot = await page._snapshotForAI({ timeout: 5000 });
+        this._pageSnapshot = (await page._snapshotForAI({ timeout: 5000 })).full;
       }, { internal: true });
     } catch {}
   }

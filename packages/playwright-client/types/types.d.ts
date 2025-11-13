@@ -2497,6 +2497,12 @@ export interface Page {
     };
 
     /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -5168,13 +5174,6 @@ export interface Page {
   workers(): Array<Worker>;
 
   /**
-   * @deprecated This property is discouraged. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to
-   * test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration
-   * with Axe.
-   */
-  accessibility: Accessibility;
-
-  /**
    * Playwright has ability to mock clock and passage of time.
    */
   clock: Clock;
@@ -6406,6 +6405,12 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -10326,15 +10331,32 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10344,7 +10366,17 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
@@ -10352,7 +10384,26 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
   url(): string;
+
+  /**
+   * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
+   * terminated.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
 }
 
 /**
@@ -12963,7 +13014,9 @@ export interface Locator {
 
   /**
    * Returns locator description previously set with
-   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
+   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
+   * description when available.
    *
    * **Usage**
    *
@@ -13079,6 +13132,12 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
@@ -15770,97 +15829,6 @@ export namespace errors {
 class TimeoutError extends Error {
 }
 
-}
-
-/**
- * The Accessibility class provides methods for inspecting Chromium's accessibility tree. The accessibility tree is
- * used by assistive technology such as [screen readers](https://en.wikipedia.org/wiki/Screen_reader) or
- * [switches](https://en.wikipedia.org/wiki/Switch_access).
- *
- * Accessibility is a very platform-specific thing. On different platforms, there are different screen readers that
- * might have wildly different output.
- *
- * Rendering engines of Chromium, Firefox and WebKit have a concept of "accessibility tree", which is then translated
- * into different platform-specific APIs. Accessibility namespace gives access to this Accessibility Tree.
- *
- * Most of the accessibility tree gets filtered out when converting from internal browser AX Tree to Platform-specific
- * AX-Tree or by assistive technologies themselves. By default, Playwright tries to approximate this filtering,
- * exposing only the "interesting" nodes of the tree.
- */
-export interface Accessibility {
-  /**
-   * Captures the current state of the accessibility tree. The returned object represents the root accessible node of
-   * the page.
-   *
-   * **NOTE** The Chromium accessibility tree contains nodes that go unused on most platforms and by most screen
-   * readers. Playwright will discard them as well for an easier to process tree, unless
-   * [`interestingOnly`](https://playwright.dev/docs/api/class-accessibility#accessibility-snapshot-option-interesting-only)
-   * is set to `false`.
-   *
-   * **Usage**
-   *
-   * An example of dumping the entire accessibility tree:
-   *
-   * ```js
-   * const snapshot = await page.accessibility.snapshot();
-   * console.log(snapshot);
-   * ```
-   *
-   * An example of logging the focused node's name:
-   *
-   * ```js
-   * const snapshot = await page.accessibility.snapshot();
-   * const node = findFocusedNode(snapshot);
-   * console.log(node && node.name);
-   *
-   * function findFocusedNode(node) {
-   *   if (node.focused)
-   *     return node;
-   *   for (const child of node.children || []) {
-   *     const foundNode = findFocusedNode(child);
-   *     if (foundNode)
-   *       return foundNode;
-   *   }
-   *   return null;
-   * }
-   * ```
-   *
-   * @deprecated This method is deprecated. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test
-   * page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with
-   * Axe.
-   * @param options
-   */
-  snapshot(options?: AccessibilitySnapshotOptions): Promise<null|AccessibilityNode>;
-
-}
-
-type AccessibilityNode = {
-  role: string;
-  name: string;
-  value?: string|number;
-  description?: string;
-  keyshortcuts?: string;
-  roledescription?: string;
-  valuetext?: string;
-  disabled?: boolean;
-  expanded?: boolean;
-  focused?: boolean;
-  modal?: boolean;
-  multiline?: boolean;
-  multiselectable?: boolean;
-  readonly?: boolean;
-  required?: boolean;
-  selected?: boolean;
-  checked?: boolean|"mixed";
-  pressed?: boolean|"mixed";
-  level?: number;
-  valuemin?: number;
-  valuemax?: number;
-  autocomplete?: string;
-  haspopup?: string;
-  invalid?: string;
-  orientation?: string;
-  children?: AccessibilityNode[];
 }
 
 export const devices: Devices;
@@ -20408,6 +20376,23 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * The request body, if present.
+   */
+  body(): Promise<null|string>;
+
+  /**
+   * The request body in a binary form. Returns null if the request has no body.
+   */
+  bodyBuffer(): Promise<null|Buffer>;
+
+  /**
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
+   */
+  bodyJSON(): Promise<null|Serializable>;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**
@@ -20504,20 +20489,25 @@ export interface Request {
   method(): string;
 
   /**
-   * Request's post body, if any.
+   * **NOTE** Use [request.body()](https://playwright.dev/docs/api/class-request#request-body) instead.
+   *
+   * The request body, if present.
    */
   postData(): null|string;
 
   /**
-   * Request's post body in a binary form, if any.
+   * **NOTE** Use [request.bodyBuffer()](https://playwright.dev/docs/api/class-request#request-body-buffer) instead.
+   *
+   * The request body in a binary form. Returns null if the request has no body.
    */
   postDataBuffer(): null|Buffer;
 
   /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+   * **NOTE** Use [request.bodyJSON()](https://playwright.dev/docs/api/class-request#request-body-json) instead.
    *
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
    */
   postDataJSON(): null|Serializable;
 
@@ -21766,18 +21756,6 @@ export interface WebSocket {
    */
   waitForEvent(event: 'socketerror', optionsOrPredicate?: { predicate?: (string: string) => boolean | Promise<boolean>, timeout?: number } | ((string: string) => boolean | Promise<boolean>)): Promise<string>;
 
-}
-
-interface AccessibilitySnapshotOptions {
-  /**
-   * Prune uninteresting nodes from the tree. Defaults to `true`.
-   */
-  interestingOnly?: boolean;
-
-  /**
-   * The root DOM element for the snapshot. Defaults to the whole page.
-   */
-  root?: ElementHandle;
 }
 
 export interface LaunchOptions {

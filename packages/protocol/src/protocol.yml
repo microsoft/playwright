@@ -162,50 +162,6 @@ SelectorEngine:
     contentScript: boolean?
 
 
-AXNode:
-  type: object
-  properties:
-    role: string
-    name: string
-    valueString: string?
-    valueNumber: float?
-    description: string?
-    keyshortcuts: string?
-    roledescription: string?
-    valuetext: string?
-    disabled: boolean?
-    expanded: boolean?
-    focused: boolean?
-    modal: boolean?
-    multiline: boolean?
-    multiselectable: boolean?
-    readonly: boolean?
-    required: boolean?
-    selected: boolean?
-    checked:
-      type: enum?
-      literals:
-      - checked
-      - unchecked
-      - mixed
-    pressed:
-      type: enum?
-      literals:
-      - pressed
-      - released
-      - mixed
-    level: int?
-    valuemin: float?
-    valuemax: float?
-    autocomplete: string?
-    haspopup: string?
-    invalid: string?
-    orientation: string?
-    children:
-      type: array?
-      items: AXNode
-
-
 SetNetworkCookie:
   type: object
   properties:
@@ -1486,7 +1442,8 @@ BrowserContext:
     console:
       parameters:
         $mixin: ConsoleMessage
-        page: Page
+        page: Page?
+        worker: Worker?
 
     close:
 
@@ -1923,15 +1880,6 @@ Page:
         snapshot: true
         pausesBeforeAction: true
 
-    accessibilitySnapshot:
-      title: Accessibility snapshot
-      group: getter
-      parameters:
-        interestingOnly: boolean?
-        root: ElementHandle?
-      returns:
-        rootAXNode: AXNode?
-
     pageErrors:
       title: Get page errors
       group: getter
@@ -1977,16 +1925,12 @@ Page:
     snapshotForAI:
       internal: true
       parameters:
+        # When track is present, an incremental snapshot is returned when possible.
         track: string?
-        mode:
-          # defaults to "full"
-          type: enum?
-          literals:
-          - full
-          - incremental
         timeout: float
       returns:
-        snapshot: string
+        full: string
+        incremental: string?
 
     startJSCoverage:
       title: Start JS coverage
@@ -2281,6 +2225,7 @@ Frame:
         sourcePosition: Point?
         targetPosition: Point?
         strict: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true
@@ -2837,6 +2782,8 @@ Frame:
 Worker:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     url: string
 
@@ -2859,6 +2806,15 @@ Worker:
         arg: SerializedArgument
       returns:
         handle: JSHandle
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
 
   events:
 
@@ -3433,6 +3389,12 @@ Request:
     hasResponse: boolean
 
   commands:
+
+    body:
+      title: Get request body
+      group: getter
+      returns:
+        body: binary?
 
     response:
       internal: true

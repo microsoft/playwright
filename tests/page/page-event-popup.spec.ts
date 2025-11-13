@@ -148,7 +148,7 @@ it('should work with clicking target=_blank and rel=noopener', async ({ page, se
 
 it('should report popup opened from iframes', async ({ page, server, browserName }) => {
   await page.goto(server.PREFIX + '/frames/two-frames.html');
-  const frame = page.frame('uno');
+  const frame = page.frames()[1];
   expect(frame).toBeTruthy();
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),

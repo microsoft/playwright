@@ -1,4 +1,4 @@
-name: "PR: bump driver Node.js"
+name: "PR: bump driver/Docker Node.js"
 on:
   workflow_dispatch:
   schedule:
@@ -16,7 +16,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 20
-      - run: node utils/build/update-playwright-driver-version.mjs
+      - run: node utils/build/update-playwright-node.mjs
       - name: Prepare branch
         id: prepare-branch
         run: |
@@ -25,13 +25,13 @@ jobs:
               exit 0;
           fi
           echo "HAS_CHANGES=1" >> $GITHUB_OUTPUT
-          BRANCH_NAME="roll-driver-nodejs/$(date +%Y-%b-%d)"
+          BRANCH_NAME="roll-platform-nodejs/$(date +%Y-%b-%d)"
           echo "BRANCH_NAME=$BRANCH_NAME" >> $GITHUB_OUTPUT
           git config --global user.name microsoft-playwright-automation[bot]
           git config --global user.email 203992400+microsoft-playwright-automation[bot]@users.noreply.github.com
           git checkout -b "$BRANCH_NAME"
           git add .
-          git commit -m "chore(driver): roll driver to recent Node.js LTS version"
+          git commit -m "chore: roll driver/Dockerfile to recent Node.js LTS version"
           git push origin $BRANCH_NAME
       - uses: actions/create-github-app-token@v2
         id: app-token
@@ -49,5 +49,5 @@ jobs:
               repo: 'playwright',
               head: 'microsoft:${{ steps.prepare-branch.outputs.BRANCH_NAME }}',
               base: 'main',
-              title: 'chore(driver): roll driver to recent Node.js LTS version',
+              title: 'chore: roll driver/Dockerfile to recent Node.js LTS version',
             });

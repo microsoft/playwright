@@ -15,7 +15,7 @@
  */
 
 import { ElementHandle } from './elementHandle';
-import { asLocator, locatorCustomDescription } from '../utils/isomorphic/locatorGenerators';
+import { asLocatorDescription, locatorCustomDescription } from '../utils/isomorphic/locatorGenerators';
 import { getByAltTextSelector, getByLabelSelector, getByPlaceholderSelector, getByRoleSelector, getByTestIdSelector, getByTextSelector, getByTitleSelector } from '../utils/isomorphic/locatorUtils';
 import { escapeForTextSelector } from '../utils/isomorphic/stringUtils';
 import { isString } from '../utils/isomorphic/rtti';
@@ -393,7 +393,7 @@ export class Locator implements api.Locator {
   }
 
   toString() {
-    return asLocator('javascript', this._selector);
+    return asLocatorDescription('javascript', this._selector);
   }
 }
 

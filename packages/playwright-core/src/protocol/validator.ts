@@ -97,35 +97,6 @@ scheme.SelectorEngine = tObject({
   source: tString,
   contentScript: tOptional(tBoolean),
 });
-scheme.AXNode = tObject({
-  role: tString,
-  name: tString,
-  valueString: tOptional(tString),
-  valueNumber: tOptional(tFloat),
-  description: tOptional(tString),
-  keyshortcuts: tOptional(tString),
-  roledescription: tOptional(tString),
-  valuetext: tOptional(tString),
-  disabled: tOptional(tBoolean),
-  expanded: tOptional(tBoolean),
-  focused: tOptional(tBoolean),
-  modal: tOptional(tBoolean),
-  multiline: tOptional(tBoolean),
-  multiselectable: tOptional(tBoolean),
-  readonly: tOptional(tBoolean),
-  required: tOptional(tBoolean),
-  selected: tOptional(tBoolean),
-  checked: tOptional(tEnum(['checked', 'unchecked', 'mixed'])),
-  pressed: tOptional(tEnum(['pressed', 'released', 'mixed'])),
-  level: tOptional(tInt),
-  valuemin: tOptional(tFloat),
-  valuemax: tOptional(tFloat),
-  autocomplete: tOptional(tString),
-  haspopup: tOptional(tString),
-  invalid: tOptional(tString),
-  orientation: tOptional(tString),
-  children: tOptional(tArray(tType('AXNode'))),
-});
 scheme.SetNetworkCookie = tObject({
   name: tString,
   value: tString,
@@ -839,12 +810,14 @@ scheme.EventTargetWaitForEventInfoParams = tObject({
 });
 scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.WorkerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
 scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.WorkerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
@@ -923,7 +896,8 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tInt,
     columnNumber: tInt,
   }),
-  page: tChannel(['Page']),
+  page: tOptional(tChannel(['Page'])),
+  worker: tOptional(tChannel(['Worker'])),
 });
 scheme.BrowserContextCloseEvent = tOptional(tObject({}));
 scheme.BrowserContextDialogEvent = tObject({
@@ -1425,13 +1399,6 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tFloat,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
-scheme.PageAccessibilitySnapshotParams = tObject({
-  interestingOnly: tOptional(tBoolean),
-  root: tOptional(tChannel(['ElementHandle'])),
-});
-scheme.PageAccessibilitySnapshotResult = tObject({
-  rootAXNode: tOptional(tType('AXNode')),
-});
 scheme.PagePageErrorsParams = tOptional(tObject({}));
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
@@ -1466,11 +1433,11 @@ scheme.PageRequestsResult = tObject({
 });
 scheme.PageSnapshotForAIParams = tObject({
   track: tOptional(tString),
-  mode: tOptional(tEnum(['full', 'incremental'])),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({
-  snapshot: tString,
+  full: tString,
+  incremental: tOptional(tString),
 });
 scheme.PageStartJSCoverageParams = tObject({
   resetOnNavigation: tOptional(tBoolean),
@@ -1618,6 +1585,7 @@ scheme.FrameDragAndDropParams = tObject({
   sourcePosition: tOptional(tType('Point')),
   targetPosition: tOptional(tType('Point')),
   strict: tOptional(tBoolean),
+  steps: tOptional(tInt),
 });
 scheme.FrameDragAndDropResult = tOptional(tObject({}));
 scheme.FrameDblclickParams = tObject({
@@ -1949,6 +1917,11 @@ scheme.WorkerEvaluateExpressionHandleParams = tObject({
 scheme.WorkerEvaluateExpressionHandleResult = tObject({
   handle: tChannel(['ElementHandle', 'JSHandle']),
 });
+scheme.WorkerUpdateSubscriptionParams = tObject({
+  event: tEnum(['console']),
+  enabled: tBoolean,
+});
+scheme.WorkerUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.JSHandleInitializer = tObject({
   preview: tString,
 });
@@ -2257,6 +2230,10 @@ scheme.RequestInitializer = tObject({
   hasResponse: tBoolean,
 });
 scheme.RequestResponseEvent = tOptional(tObject({}));
+scheme.RequestBodyParams = tOptional(tObject({}));
+scheme.RequestBodyResult = tObject({
+  body: tOptional(tBinary),
+});
 scheme.RequestResponseParams = tOptional(tObject({}));
 scheme.RequestResponseResult = tObject({
   response: tOptional(tChannel(['Response'])),

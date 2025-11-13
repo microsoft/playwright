@@ -222,3 +222,15 @@ it('description should return description for locator with multiple describe cal
   const locator3 = locator2.locator('button');
   expect(locator3.description()).toBe(null);
 });
+
+it('toString() returns formatted locator', async ({ page }) => {
+  const locator = page.getByRole('button', { name: 'Submit' });
+  expect(locator.toString()).toBe(`getByRole('button', { name: 'Submit' })`);
+  expect(locator.description()).toBe(null);
+});
+
+it('toString() prefers description', async ({ page }) => {
+  const locator = page.getByRole('button', { name: 'Submit' }).describe('Submit button');
+  expect(locator.toString()).toBe(`Submit button`);
+  expect(locator.toString()).toBe(locator.description());
+});

@@ -20,7 +20,9 @@ async function generateChromiumProtocol(executablePath) {
   const browser = await playwright.launch({ executablePath, args: ['--remote-debugging-port=9339'] });
   const page = await browser.newPage();
   await page.goto(`http://localhost:9339/json/protocol`);
-  const json = JSON.parse(await page.evaluate(() => document.documentElement.innerText));
+  const text = await page.evaluate(() => document.documentElement.innerText);
+  // Replace broken comment in the protocol.
+  const json = JSON.parse(text.replace('*://*:*/*.css', '<example>'));
   await browser.close();
   await fs.promises.writeFile(outputPath, jsonToTS(json));
   console.log(`Wrote protocol.d.ts to ${path.relative(process.cwd(), outputPath)}`);

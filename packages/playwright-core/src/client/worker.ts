@@ -19,18 +19,25 @@ import { TargetClosedError } from './errors';
 import { Events } from './events';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
+import { TimeoutSettings } from './timeoutSettings';
+import { Waiter } from './waiter';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
 import type * as structs from '../../types/structs';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
+import type { WaitForEventOptions } from './types';
 
 
 export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.Worker {
   _page: Page | undefined;  // Set for web workers.
   _context: BrowserContext | undefined;  // Set for service workers.
   readonly _closedScope = new LongStandingScope();
+
+  static fromNullable(worker: channels.WorkerChannel | undefined): Worker | null {
+    return worker ? Worker.from(worker) : null;
+  }
 
   static from(worker: channels.WorkerChannel): Worker {
     return (worker as any)._object;
@@ -62,5 +69,20 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
     assertMaxArguments(arguments.length, 2);
     const result = await this._channel.evaluateExpressionHandle({ expression: String(pageFunction), isFunction: typeof pageFunction === 'function', arg: serializeArgument(arg) });
     return JSHandle.from(result.handle) as any as structs.SmartHandle<R>;
+  }
+
+  async waitForEvent(event: string, optionsOrPredicate: WaitForEventOptions = {}): Promise<any> {
+    return await this._wrapApiCall(async () => {
+      const timeoutSettings = this._page?._timeoutSettings ?? this._context?._timeoutSettings ?? new TimeoutSettings(this._platform);
+      const timeout = timeoutSettings.timeout(typeof optionsOrPredicate === 'function' ? {} : optionsOrPredicate);
+      const predicate = typeof optionsOrPredicate === 'function' ? optionsOrPredicate : optionsOrPredicate.predicate;
+      const waiter = Waiter.createForEvent(this, event);
+      waiter.rejectOnTimeout(timeout, `Timeout ${timeout}ms exceeded while waiting for event "${event}"`);
+      if (event !== Events.Worker.Close)
+        waiter.rejectOnEvent(this, Events.Worker.Close, () => new TargetClosedError());
+      const result = await waiter.waitForEvent(this, event, predicate as any);
+      waiter.dispose();
+      return result;
+    });
   }
 }

@@ -63,10 +63,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       ref: 'e3',
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Page Snapshot:
-\`\`\`yaml
-<no changes>
-\`\`\``),
+    pageState: expect.not.stringContaining(`Page Snapshot`),
   });
 
   expect(await client.callTool({
