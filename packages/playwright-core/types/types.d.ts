@@ -2497,6 +2497,12 @@ export interface Page {
     };
 
     /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6399,6 +6405,12 @@ export interface Frame {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
@@ -10319,15 +10331,32 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10337,7 +10366,17 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
@@ -10345,7 +10384,26 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
   url(): string;
+
+  /**
+   * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
+   * terminated.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
 }
 
 /**
@@ -12956,7 +13014,9 @@ export interface Locator {
 
   /**
    * Returns locator description previously set with
-   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
+   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
+   * description when available.
    *
    * **Usage**
    *
@@ -13072,6 +13132,12 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
@@ -20310,6 +20376,23 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * The request body, if present.
+   */
+  body(): Promise<null|string>;
+
+  /**
+   * The request body in a binary form. Returns null if the request has no body.
+   */
+  bodyBuffer(): Promise<null|Buffer>;
+
+  /**
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
+   */
+  bodyJSON(): Promise<null|Serializable>;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**
@@ -20406,20 +20489,25 @@ export interface Request {
   method(): string;
 
   /**
-   * Request's post body, if any.
+   * **NOTE** Use [request.body()](https://playwright.dev/docs/api/class-request#request-body) instead.
+   *
+   * The request body, if present.
    */
   postData(): null|string;
 
   /**
-   * Request's post body in a binary form, if any.
+   * **NOTE** Use [request.bodyBuffer()](https://playwright.dev/docs/api/class-request#request-body-buffer) instead.
+   *
+   * The request body in a binary form. Returns null if the request has no body.
    */
   postDataBuffer(): null|Buffer;
 
   /**
-   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+   * **NOTE** Use [request.bodyJSON()](https://playwright.dev/docs/api/class-request#request-body-json) instead.
    *
-   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
-   * Otherwise it will be parsed as JSON.
+   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
+   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
+   * it parses the body as JSON.
    */
   postDataJSON(): null|Serializable;
 

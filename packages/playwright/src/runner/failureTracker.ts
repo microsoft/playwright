@@ -18,6 +18,11 @@ import type { TestResult, TestError } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
 
+export type TestPausedParams = {
+  errors: TestError[];
+  sendMessage: (params: { request: any }) => Promise<{ response: any, error?: TestError }>;
+};
+
 export class FailureTracker {
   private _config: FullConfigInternal;
   private _failureCount = 0;
@@ -26,7 +31,7 @@ export class FailureTracker {
   private _topLevelProjects: FullProjectInternal[] = [];
   private _pauseOnError: boolean;
   private _pauseAtEnd: boolean;
-  onTestPaused?: (params: { errors: TestError[], extraData: any }) => void;
+  onTestPaused?: (params: TestPausedParams) => void;
 
   constructor(config: FullConfigInternal, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
     this._config = config;

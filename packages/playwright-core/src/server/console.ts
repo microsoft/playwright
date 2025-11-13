@@ -15,7 +15,7 @@
  */
 
 import type * as js from './javascript';
-import type { Page } from './page';
+import type { Page, Worker } from './page';
 import type { ConsoleMessageLocation } from './types';
 
 export class ConsoleMessage {
@@ -24,9 +24,11 @@ export class ConsoleMessage {
   private _args: js.JSHandle[];
   private _location: ConsoleMessageLocation;
   private _page: Page | null;
+  private _worker: Worker | null;
 
-  constructor(page: Page | null, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
+  constructor(page: Page | null, worker: Worker | null, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
     this._page = page;
+    this._worker = worker;
     this._type = type;
     this._text = text;
     this._args = args;
@@ -35,6 +37,10 @@ export class ConsoleMessage {
 
   page() {
     return this._page;
+  }
+
+  worker() {
+    return this._worker;
   }
 
   type(): string {

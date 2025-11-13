@@ -31,8 +31,6 @@ type ViewportSize = { width: number; height: number };
 
 export type CLIOptions = {
   allowedHosts?: string[];
-  allowedOrigins?: string[];
-  blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
   caps?: string[];
@@ -46,6 +44,7 @@ export type CLIOptions = {
   host?: string;
   ignoreHttpsErrors?: boolean;
   initScript?: string[];
+  initPage?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
   sandbox?: boolean;
@@ -79,10 +78,6 @@ export const defaultConfig: FullConfig = {
       viewport: null,
     },
   },
-  network: {
-    allowedOrigins: undefined,
-    blockedOrigins: undefined,
-  },
   server: {},
   saveTrace: false,
   timeouts: {
@@ -99,7 +94,6 @@ export type FullConfig = Config & {
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
   },
-  network: NonNullable<Config['network']>,
   saveTrace: boolean;
   server: NonNullable<Config['server']>,
   timeouts: {
@@ -218,6 +212,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
     },
     server: {
@@ -226,10 +221,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       allowedHosts: cliOptions.allowedHosts,
     },
     capabilities: cliOptions.caps as ToolCapability[],
-    network: {
-      allowedOrigins: cliOptions.allowedOrigins,
-      blockedOrigins: cliOptions.blockedOrigins,
-    },
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     saveVideo: cliOptions.saveVideo,
@@ -250,8 +241,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
 function configFromEnv(): Config {
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
-  options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
-  options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
@@ -264,6 +253,9 @@ function configFromEnv(): Config {
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
   options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  const initPage = envToString(process.env.PLAYWRIGHT_MCP_INIT_PAGE);
+  if (initPage)
+    options.initPage = [initPage];
   const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
   if (initScript)
     options.initScript = [initScript];
@@ -366,10 +358,6 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
     ...pickDefined(base),
     ...pickDefined(overrides),
     browser,
-    network: {
-      ...pickDefined(base.network),
-      ...pickDefined(overrides.network),
-    },
     server: {
       ...pickDefined(base.server),
       ...pickDefined(overrides.server),
@@ -379,12 +367,6 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
       ...pickDefined(overrides.timeouts),
     },
   } as FullConfig;
-}
-
-export function semicolonSeparatedList(value: string | undefined): string[] | undefined {
-  if (!value)
-    return undefined;
-  return value.split(';').map(v => v.trim());
 }
 
 export function commaSeparatedList(value: string | undefined): string[] | undefined {

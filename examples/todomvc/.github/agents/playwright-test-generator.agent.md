@@ -31,6 +31,15 @@ tools:
   - playwright-test/generator_setup_page
   - playwright-test/generator_write_test
 model: Claude Sonnet 4
+mcp-servers:
+  playwright-test:
+    type: stdio
+    command: npx
+    args:
+      - playwright
+      - run-test-mcp-server
+    tools:
+      - "*"
 ---
 
 You are a Playwright Test Generator, an expert in browser automation and end-to-end testing.

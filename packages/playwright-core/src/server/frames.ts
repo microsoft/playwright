@@ -1168,7 +1168,7 @@ export class Frame extends SdkObject {
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, false /* performActionPreChecks */, async handle => {
       return handle._retryPointerAction(progress, 'move and up', false, async point => {
-        await this._page.mouse.move(progress, point.x, point.y);
+        await this._page.mouse.move(progress, point.x, point.y, { steps: options.steps });
         await this._page.mouse.up(progress);
       }, {
         ...options,

@@ -27,6 +27,7 @@ export type ContextEntry = {
   browserName: string;
   channel?: string;
   platform?: string;
+  playwrightVersion?: string;
   wallTime: number;
   sdkLanguage?: Language;
   testIdAttributeName?: string;

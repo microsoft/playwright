@@ -113,6 +113,7 @@ export type PointerActionOptions = {
 export type DragActionOptions = {
   sourcePosition?: Point;
   targetPosition?: Point;
+  steps?: number;
 };
 
 

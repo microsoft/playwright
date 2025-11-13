@@ -120,10 +120,12 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
       const page = message.page()!;
-      if (this._shouldDispatchEvent(page, 'console')) {
+      const workerDispatcher = WorkerDispatcher.fromNullable(this, message.worker());
+      if (this._shouldDispatchEvent(page, 'console') || workerDispatcher?._subscriptions.has('console')) {
         const pageDispatcher = PageDispatcher.from(this, page);
         this._dispatchEvent('console', {
           page: pageDispatcher,
+          worker: workerDispatcher,
           ...pageDispatcher.serializeConsoleMessage(message),
         });
       }

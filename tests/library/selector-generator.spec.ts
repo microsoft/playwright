@@ -661,4 +661,23 @@ it.describe('selector generator', () => {
       `internal:label=\"Toggle Todo\"i >> nth=0`,
     ]);
   });
+
+  it('should not use icon fonts aria name', async ({ page }) => {
+    await page.setContent(`
+      <style>
+        .icon-foo:before {
+          content: "\\F1D4";
+        }
+        .icon-bar:before {
+          content: "\\F0000";
+        }
+      </style>
+      <div>
+        <button><i class="icon-foo"></i></button>
+        <button><i class="icon-bar"></i></button>
+      </div>
+    `);
+    expect.soft(await generate(page, 'button:first-child')).toBe('internal:role=button >> nth=0');
+    expect.soft(await generate(page, 'button:last-child')).toBe('internal:role=button >> nth=1');
+  });
 });

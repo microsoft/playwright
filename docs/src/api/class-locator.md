@@ -630,7 +630,7 @@ Locator description.
 * since: v1.57
 - returns: <[null]|[string]>
 
-Returns locator description previously set with [`method: Locator.describe`].
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the description when available.
 
 **Usage**
 
@@ -874,6 +874,9 @@ Locator of the element to drag to.
 
 ### option: Locator.dragTo.targetPosition = %%-input-target-position-%%
 * since: v1.18
+
+### option: Locator.dragTo.steps = %%-input-drag-steps-%%
+* since: v1.57
 
 ## async method: Locator.elementHandle
 * since: v1.14

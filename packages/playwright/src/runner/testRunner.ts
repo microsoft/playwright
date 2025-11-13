@@ -39,6 +39,7 @@ import type { ConfigLocation, FullConfigInternal } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
+import type { TestPausedParams } from './failureTracker';
 
 export const TestRunnerEvent = {
   TestFilesChanged: 'testFilesChanged',
@@ -47,7 +48,7 @@ export const TestRunnerEvent = {
 
 export type TestRunnerEventMap = {
   [TestRunnerEvent.TestFilesChanged]: [testFiles: string[]];
-  [TestRunnerEvent.TestPaused]: [params: { errors: reporterTypes.TestError[], extraData: any }];
+  [TestRunnerEvent.TestPaused]: [params: TestPausedParams];
 };
 
 export type ListTestsParams = {
