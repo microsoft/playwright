@@ -103,6 +103,6 @@ export class WKWorkers {
       lineNumber: (lineNumber || 1) - 1,
       columnNumber: (columnNumber || 1) - 1
     };
-    this._page.addConsoleMessage(derivedType, handles, location, handles.length ? undefined : text);
+    this._page.addConsoleMessage(worker, derivedType, handles, location, handles.length ? undefined : text);
   }
 }

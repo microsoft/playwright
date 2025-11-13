@@ -1442,7 +1442,8 @@ BrowserContext:
     console:
       parameters:
         $mixin: ConsoleMessage
-        page: Page
+        page: Page?
+        worker: Worker?
 
     close:
 
@@ -2781,6 +2782,8 @@ Frame:
 Worker:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     url: string
 
@@ -2803,6 +2806,15 @@ Worker:
         arg: SerializedArgument
       returns:
         handle: JSHandle
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
 
   events:
 

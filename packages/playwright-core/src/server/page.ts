@@ -361,8 +361,8 @@ export class Page extends SdkObject {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(this, type, text, args, location);
+  addConsoleMessage(worker: Worker | null, type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
+    const message = new ConsoleMessage(this, worker, type, text, args, location);
     const intercepted = this.frameManager.interceptConsoleMessage(message);
     if (intercepted) {
       args.forEach(arg => arg.dispose());

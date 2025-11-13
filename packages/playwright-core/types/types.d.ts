@@ -10331,15 +10331,32 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10349,7 +10366,17 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
@@ -10357,7 +10384,26 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
   url(): string;
+
+  /**
+   * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
+   * terminated.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
+
+  /**
+   * Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or
+   * `console.dir`. Console is not supported for Service Workers.
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
 }
 
 /**

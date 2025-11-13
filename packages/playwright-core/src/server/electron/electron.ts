@@ -114,7 +114,7 @@ export class ElectronApplication extends SdkObject {
     if (!this._nodeExecutionContext)
       return;
     const args = event.args.map(arg => createHandle(this._nodeExecutionContext!, arg));
-    const message = new ConsoleMessage(null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    const message = new ConsoleMessage(null, null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
     this.emit(ElectronApplication.Events.Console, message);
   }
 

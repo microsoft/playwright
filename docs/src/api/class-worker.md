@@ -58,6 +58,12 @@ foreach(var pageWorker in page.Workers)
 
 Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is terminated.
 
+## event: Worker.console
+* since: v1.57
+- argument: <[ConsoleMessage]>
+
+Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or `console.dir`. Console is not supported for Service Workers.
+
 ## async method: Worker.evaluate
 * since: v1.8
 - returns: <[Serializable]>
@@ -123,3 +129,58 @@ Performs action and waits for the Worker to close.
 
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
+
+## async method: Worker.waitForEvent
+* since: v1.57
+* langs: js, python
+  - alias-python: expect_event
+- returns: <[any]>
+
+Waits for event to fire and passes its value into the predicate function.
+Returns when the predicate returns truthy value.
+Will throw an error if the page is closed before the event is fired.
+Returns the event data value.
+
+**Usage**
+
+```js
+// Start waiting for download before clicking. Note no await.
+const consolePromise = worker.waitForEvent('console');
+await worker.evaluate('console.log(42)');
+const consoleMessage = await consolePromise;
+```
+
+```python async
+async with worker.expect_event("console") as event_info:
+    await worker.evaluate("console.log(42)")
+message = await event_info.value
+```
+
+```python sync
+with worker.expect_event("console") as event_info:
+    worker.evaluate("console.log(42)")
+message = event_info.value
+```
+
+## async method: Worker.waitForEvent
+* since: v1.57
+* langs: python
+- returns: <[EventContextManager]>
+
+### param: Worker.waitForEvent.event = %%-wait-for-event-event-%%
+* since: v1.57
+
+### param: Worker.waitForEvent.optionsOrPredicate
+* since: v1.57
+* langs: js
+- `optionsOrPredicate` ?<[function]|[Object]>
+  - `predicate` <[function]> Receives the event data and resolves to truthy value when the waiting should resolve.
+  - `timeout` ?<[float]> Maximum time to wait for in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or [`method: Page.setDefaultTimeout`] methods.
+
+Either a predicate that receives an event or an options object. Optional.
+
+### option: Worker.waitForEvent.predicate = %%-wait-for-event-predicate-%%
+* since: v1.57
+
+### option: Worker.waitForEvent.timeout = %%-wait-for-event-timeout-%%
+* since: v1.57
