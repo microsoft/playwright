@@ -42,9 +42,16 @@ export function padImageToSize(image: ImageData, size: { width: number, height: 
 
 export function scaleImageToSize(image: ImageData, size: { width: number; height: number }): ImageData {
   const { data: src, width: w1, height: h1 } = image;
-  const w2 = size.width | 0, h2 = size.height | 0;
+  const w2 = Math.max(1, Math.floor(size.width));
+  const h2 = Math.max(1, Math.floor(size.height));
+
   if (w1 === w2 && h1 === h2)
     return image;
+
+  if (w1 <= 0 || h1 <= 0)
+    throw new Error('Invalid input image');
+  if (size.width <= 0 || size.height <= 0 || !isFinite(size.width) || !isFinite(size.height))
+    throw new Error('Invalid output dimensions');
 
   const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
@@ -61,7 +68,6 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
   const dstRowStride = w2 * 4;
 
   // Precompute X: indices, weights, and byte offsets (idx*4)
-  const xIdx = new Int32Array(w2 * 4);
   const xOff = new Int32Array(w2 * 4); // byte offsets = xIdx*4
   const xW = new Float32Array(w2 * 4);
   const wx = new Float32Array(4);
@@ -76,13 +82,11 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
     const i1 = clamp(sxi + 0, 0, w1 - 1);
     const i2 = clamp(sxi + 1, 0, w1 - 1);
     const i3 = clamp(sxi + 2, 0, w1 - 1);
-    xIdx[b + 0] = i0; xIdx[b + 1] = i1; xIdx[b + 2] = i2; xIdx[b + 3] = i3;
     xOff[b + 0] = i0 << 2; xOff[b + 1] = i1 << 2; xOff[b + 2] = i2 << 2; xOff[b + 3] = i3 << 2;
     xW[b + 0] = wx[0]; xW[b + 1] = wx[1]; xW[b + 2] = wx[2]; xW[b + 3] = wx[3];
   }
 
   // Precompute Y: indices, weights, and row-base byte offsets (y*rowStride)
-  const yIdx = new Int32Array(h2 * 4);
   const yRow = new Int32Array(h2 * 4); // row base in bytes
   const yW = new Float32Array(h2 * 4);
   const wy = new Float32Array(4);
@@ -97,7 +101,6 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
     const j1 = clamp(syi + 0, 0, h1 - 1);
     const j2 = clamp(syi + 1, 0, h1 - 1);
     const j3 = clamp(syi + 2, 0, h1 - 1);
-    yIdx[b + 0] = j0; yIdx[b + 1] = j1; yIdx[b + 2] = j2; yIdx[b + 3] = j3;
     yRow[b + 0] = j0 * srcRowStride;
     yRow[b + 1] = j1 * srcRowStride;
     yRow[b + 2] = j2 * srcRowStride;
@@ -131,5 +134,5 @@ export function scaleImageToSize(image: ImageData, size: { width: number; height
     }
   }
 
-  return { data: Buffer.from(dst), width: w2, height: h2 };
+  return { data: Buffer.from(dst.buffer), width: w2, height: h2 };
 }
