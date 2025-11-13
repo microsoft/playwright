@@ -1383,6 +1383,7 @@ export namespace Network {
 }
 export namespace Network {
   export const enum DataType {
+    Request = 'request',
     Response = 'response',
   }
 }

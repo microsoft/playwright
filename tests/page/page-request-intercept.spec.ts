@@ -191,7 +191,7 @@ it('should intercept multipart/form-data request body', async ({ page, server, a
     page.click('input[type=submit]', { noWaitAfter: true })
   ]);
   expect(request.method()).toBe('POST');
-  expect(request.postData()).toContain(fs.readFileSync(filePath, 'utf8'));
+  expect(await request.body()).toContain(fs.readFileSync(filePath, 'utf8'));
 });
 
 it('should fulfill intercepted response using alias', async ({ page, server, isElectron, electronMajorVersion, isAndroid }) => {
@@ -307,7 +307,7 @@ it('request.postData is not null when fetching FormData with a Blob', {
   const postDataPromise = new Promise<string>(resolve => resolvePostData = resolve);
   await page.route(server.PREFIX + '/upload', async (route, request) => {
     expect(request.method()).toBe('POST');
-    resolvePostData(await request.postData());
+    resolvePostData(await request.body());
     await route.fulfill({
       status: 200,
       body: 'ok',

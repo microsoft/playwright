@@ -20,12 +20,12 @@ import { test as it, expect } from './pageTest';
 
 it('should intercept @smoke', async ({ page, server }) => {
   let intercepted = false;
-  await page.route('**/empty.html', (route, request) => {
+  await page.route('**/empty.html', async (route, request) => {
     expect(route.request()).toBe(request);
     expect(request.url()).toContain('empty.html');
     expect(request.headers()['user-agent']).toBeTruthy();
     expect(request.method()).toBe('GET');
-    expect(request.postData()).toBe(null);
+    expect(await request.body()).toBe(null);
     expect(request.isNavigationRequest()).toBe(true);
     expect(request.resourceType()).toBe('document');
     expect(request.frame() === page.mainFrame()).toBe(true);
@@ -1044,7 +1044,7 @@ it('should intercept when postData is more than 1MB', async ({ page, server }) =
   const POST_BODY = '0'.repeat(2 * 1024 * 1024); // 2MB
   await page.route('**/404.html', async route => {
     await route.abort();
-    interceptionCallback(route.request().postData());
+    interceptionCallback(await route.request().body());
   });
   await page.evaluate(POST_BODY => fetch('/404.html', {
     method: 'POST',

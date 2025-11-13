@@ -21,13 +21,13 @@ import type { Route } from '@playwright/test';
 it('should intercept', async ({ browser, server }) => {
   const context = await browser.newContext();
   let intercepted = false;
-  await context.route('**/empty.html', route => {
+  await context.route('**/empty.html', async route => {
     intercepted = true;
     const request = route.request();
     expect(request.url()).toContain('empty.html');
     expect(request.headers()['user-agent']).toBeTruthy();
     expect(request.method()).toBe('GET');
-    expect(request.postData()).toBe(null);
+    expect(await request.body()).toBe(null);
     expect(request.isNavigationRequest()).toBe(true);
     expect(request.resourceType()).toBe('document');
     expect(request.frame() === page.mainFrame()).toBe(true);
