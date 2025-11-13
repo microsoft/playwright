@@ -42,9 +42,8 @@ export type ProgressParams = { message?: string, progress?: number, total?: numb
 export type ProgressCallback = (params: ProgressParams) => void;
 
 export interface ServerBackend {
-  initialize?(server: Server, clientInfo: ClientInfo): Promise<void>;
+  initialize?(clientInfo: ClientInfo): Promise<void>;
   listTools(): Promise<Tool[]>;
-  afterCallTool?(name: string, args: CallToolRequest['params']['arguments'], result: CallToolResult): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
 }
@@ -135,7 +134,7 @@ const initializeServer = async (server: Server, backend: ServerBackend, runHeart
     timestamp: Date.now(),
   };
 
-  await backend.initialize?.(server, clientInfo);
+  await backend.initialize?.(clientInfo);
   if (runHeartbeat)
     startHeartbeat(server);
 };

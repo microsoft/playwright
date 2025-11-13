@@ -87,8 +87,18 @@ export type AttachmentPayload = {
 export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
+  testId: string;
   errors: TestInfoErrorImpl[];
-  extraData: any;
+};
+
+export type CustomMessageRequestPayload = {
+  testId: string;
+  request: any;
+};
+
+export type CustomMessageResponsePayload = {
+  response: any;
+  error?: TestInfoErrorImpl;
 };
 
 export type TestEndPayload = {
