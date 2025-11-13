@@ -619,6 +619,8 @@ class JobDispatcher {
         const result = test._appendTestResult();
         this._reporter.onTestBegin?.(test, result);
         result.status = 'skipped';
+        // This must mirror _onTestEnd() above
+        result.annotations = [...test.annotations];
         this._reportTestEnd(test, result);
       }
       return true;
