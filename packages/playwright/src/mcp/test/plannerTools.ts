@@ -34,8 +34,8 @@ export const setupPage = defineTestTool({
 
   handle: async (context, params) => {
     const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
-    const { output, isError } = await context.runSeedTest(seed.file, seed.projectName);
-    return { content: output.map(text => ({ type: 'text', text })), isError };
+    const { output, status } = await context.runSeedTest(seed.file, seed.projectName);
+    return { content: [{ type: 'text', text: output }], isError: status !== 'paused' };
   },
 });
 

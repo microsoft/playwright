@@ -20,7 +20,7 @@ import path from 'path';
 
 import { noColors, escapeRegExp, ManualPromise } from 'playwright-core/lib/utils';
 
-import { TerminalScreen, terminalScreen } from '../../reporters/base';
+import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
@@ -29,7 +29,10 @@ import { ensureSeedFile, seedProject } from './seed';
 import { firstRootPath } from '../sdk/exports';
 import { resolveConfigLocation } from '../../common/configLoader';
 import { parseResponse } from '../browser/response';
+import { logUnhandledError } from '../log';
 
+import type { TerminalScreen } from '../../reporters/base';
+import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
 import type { ClientInfo } from '../sdk/exports';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
@@ -81,8 +84,8 @@ type TestRunnerAndScreen = {
   claimStdio: () => void;
   releaseStdio: () => void;
   output: string[];
-  testPaused: ManualPromise<void>;
-  sendMessageToPausedTest?: (params: BrowserMCPRequest) => Promise<BrowserMCPResponse>;
+  waitForTestPaused: () => Promise<void>;
+  sendMessageToPausedTest?: (params: { request: BrowserMCPRequest }) => Promise<{ response: BrowserMCPResponse, error?: any }>;
 };
 
 export class TestContext {
@@ -113,11 +116,14 @@ export class TestContext {
   private async _cleanupTestRunner() {
     if (!this._testRunnerAndScreen)
       return;
-    await this._testRunnerAndScreen.testRunner.stopTests().catch(() => {});
+    await this._testRunnerAndScreen.testRunner.stopTests();
     this._testRunnerAndScreen.claimStdio();
-    await this._testRunnerAndScreen.testRunner.runGlobalTeardown().catch(() => {});
-    this._testRunnerAndScreen.releaseStdio();
-    this._testRunnerAndScreen = undefined;
+    try {
+      await this._testRunnerAndScreen.testRunner.runGlobalTeardown();
+    } finally {
+      this._testRunnerAndScreen.releaseStdio();
+      this._testRunnerAndScreen = undefined;
+    }
   }
 
   async createTestRunner() {
@@ -125,21 +131,17 @@ export class TestContext {
 
     const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
+    const testPaused = new ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
       testRunner,
-      testPaused: new ManualPromise<void>(),
+      waitForTestPaused: () => testPaused,
     };
     this._testRunnerAndScreen = testRunnerAndScreen;
 
     testRunner.on(TestRunnerEvent.TestPaused, params => {
-      testRunnerAndScreen.sendMessageToPausedTest = async request => {
-        const { response, error } = await params.sendMessage({ request });
-        if (error)
-          throw new Error(error.message);
-        return response;
-      };
-      testRunnerAndScreen.testPaused.resolve();
+      testRunnerAndScreen.sendMessageToPausedTest = params.sendMessage;
+      testPaused.resolve();
     });
     return testRunnerAndScreen;
   }
@@ -178,26 +180,25 @@ export class TestContext {
     };
   }
 
-  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string[], isError: boolean }> {
-    return await this.runWithGlobalSetupAndPossiblePause(async (testRunner, reporter) => {
-      const result = await testRunner.runTests(reporter, {
-        headed: this.computedHeaded,
-        locations: ['/' + escapeRegExp(seedFile) + '/'],
-        projects: [projectName],
-        timeout: 0,
-        workers: 1,
-        pauseAtEnd: true,
-        disableConfigReporters: true,
-        failOnLoadErrors: true,
-      });
-      if (result.status === 'passed' && !reporter.suite?.allTests().length)
-        throw new Error('seed test not found.');
-      if (result.status !== 'passed')
-        throw new Error('Errors while running the seed test.');
+  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+    const result = await this.runTestsWithGlobalSetupAndPossiblePause({
+      headed: this.computedHeaded,
+      locations: ['/' + escapeRegExp(seedFile) + '/'],
+      projects: [projectName],
+      timeout: 0,
+      workers: 1,
+      pauseAtEnd: true,
+      disableConfigReporters: true,
+      failOnLoadErrors: true,
     });
+    if (result.status === 'passed')
+      result.output += '\nError: seed test not found.';
+    else if (result.status !== 'paused')
+      result.output += '\nError while running the seed test.';
+    return result;
   }
 
-  async runWithGlobalSetupAndPossiblePause(callback: (testRunner: TestRunner, reporter: ListReporter) => Promise<void>): Promise<{ output: string[], isError: boolean }> {
+  async runTestsWithGlobalSetupAndPossiblePause(params: RunTestsParams): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const configDir = this._configLocation.configDir;
     const testRunnerAndScreen = await this.createTestRunner();
     const { testRunner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
@@ -207,55 +208,66 @@ export class TestContext {
       const setupReporter = new ListReporter({ configDir, screen, includeTestId: true });
       const { status } = await testRunner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
-        return { output: testRunnerAndScreen.output, isError: true };
+        return { output: testRunnerAndScreen.output.join('\n'), status };
     } finally {
       releaseStdio();
     }
 
+    let status: FullResultStatus | 'paused' = 'passed';
+
     const cleanup = async () => {
       claimStdio();
-      await testRunner.runGlobalTeardown().finally(() => {
+      try {
+        const result = await testRunner.runGlobalTeardown();
+        if (status === 'passed')
+          status = result.status;
+      } finally {
         releaseStdio();
-      });
+      }
     };
 
     try {
       const reporter = new ListReporter({ configDir, screen, includeTestId: true });
-      await Promise.race([
-        callback(testRunner, reporter),
-        testRunnerAndScreen.testPaused,
+      status = await Promise.race([
+        testRunner.runTests(reporter, params).then(result => result.status),
+        testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
       ]);
 
-      if (testRunnerAndScreen.testPaused.isDone()) {
-        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ initialize: { clientInfo: this._clientInfo } });
-        testRunnerAndScreen.output.push(response.initialize!.pausedMessage);
-        return { output: testRunnerAndScreen.output, isError: false };
+      if (status === 'paused') {
+        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
+        if (response.error)
+          throw new Error(response.error.message);
+        testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
+        return { output: testRunnerAndScreen.output.join('\n'), status };
       }
     } catch (e) {
-      await cleanup();
+      status = 'failed';
       testRunnerAndScreen.output.push(String(e));
-      return { output: testRunnerAndScreen.output, isError: true };
+      await cleanup();
+      return { output: testRunnerAndScreen.output.join('\n'), status };
     }
 
     await cleanup();
-    return { output: testRunnerAndScreen.output, isError: false };
+    return { output: testRunnerAndScreen.output.join('\n'), status };
   }
 
   async close() {
-    await this._cleanupTestRunner().catch(() => {});
+    await this._cleanupTestRunner().catch(logUnhandledError);
   }
 
   async sendMessageToPausedTest(request: BrowserMCPRequest): Promise<BrowserMCPResponse> {
     const sendMessage = this._testRunnerAndScreen?.sendMessageToPausedTest;
     if (!sendMessage)
       throw new Error('Must setup test before interacting with the page');
-    const result = await sendMessage(request);
+    const result = await sendMessage({ request });
+    if (result.error)
+      throw new Error(result.error.message);
     if (typeof request?.callTool?.arguments?.['intent'] === 'string') {
-      const response = parseResponse(result.callTool!);
+      const response = parseResponse(result.response.callTool!);
       if (response && !response.isError && response.code)
         this.generatorJournal?.logStep(request.callTool.arguments['intent'], response.code);
     }
-    return result;
+    return result.response;
   }
 }
 

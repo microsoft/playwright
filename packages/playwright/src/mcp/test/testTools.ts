@@ -48,14 +48,12 @@ export const runTests = defineTestTool({
   },
 
   handle: async (context, params) => {
-    const { output, isError } = await context.runWithGlobalSetupAndPossiblePause(async (testRunner, reporter) => {
-      await testRunner.runTests(reporter, {
-        locations: params.locations,
-        projects: params.projects,
-        disableConfigReporters: true,
-      });
+    const { output } = await context.runTestsWithGlobalSetupAndPossiblePause({
+      locations: params.locations,
+      projects: params.projects,
+      disableConfigReporters: true,
     });
-    return { content: output.map(text => ({ type: 'text', text })), isError };
+    return { content: [{ type: 'text', text: output }] };
   },
 });
 
@@ -74,18 +72,16 @@ export const debugTest = defineTestTool({
   },
 
   handle: async (context, params) => {
-    const { output, isError } = await context.runWithGlobalSetupAndPossiblePause(async (testRunner, reporter) => {
-      await testRunner.runTests(reporter, {
-        headed: context.computedHeaded,
-        testIds: [params.test.id],
-        // For automatic recovery
-        timeout: 0,
-        workers: 1,
-        pauseOnError: true,
-        disableConfigReporters: true,
-        actionTimeout: 5000,
-      });
+    const { output, status } = await context.runTestsWithGlobalSetupAndPossiblePause({
+      headed: context.computedHeaded,
+      testIds: [params.test.id],
+      // For automatic recovery
+      timeout: 0,
+      workers: 1,
+      pauseOnError: true,
+      disableConfigReporters: true,
+      actionTimeout: 5000,
     });
-    return { content: output.map(text => ({ type: 'text', text })), isError };
+    return { content: [{ type: 'text', text: output }], isError: status !== 'paused' && status !== 'passed' };
   },
 });
