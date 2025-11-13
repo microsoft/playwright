@@ -178,7 +178,7 @@ export const TestResultView: React.FC<{
       )}
     </AutoChip>}
 
-    {result.status === 'skipped' && <NoDataChip>Test skipped</NoDataChip>}
+    {result.status === 'skipped' && <NoDataChip>Test run skipped</NoDataChip>}
   </div>;
 };
 
