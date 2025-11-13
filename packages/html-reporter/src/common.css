@@ -216,7 +216,7 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
 }
 
 .subnav-item[aria-selected="true"] {
-  background: var(--color-canvas-subtle);
+  background: var(--color-control-transparent-bg-hover);
 }
 
 .subnav-item:first-child {
