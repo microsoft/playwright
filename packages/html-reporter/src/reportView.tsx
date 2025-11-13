@@ -35,6 +35,11 @@ declare global {
   }
 }
 
+// These are extracted to preserve the function identity between renders to avoid re-triggering effects.
+const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId') && !params.has('speedboard');
+const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
+const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard');
+
 type TestModelSummary = {
   files: TestFileSummary[];
   tests: TestCaseSummary[];
@@ -127,7 +132,7 @@ export const ReportView: React.FC<{
   return <div className='htmlreport vbox px-4 pb-4'>
     <main>
       {report && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
-      <Route predicate={React.useCallback(params => !params.has('testId') && !params.has('speedboard'), [])}>
+      <Route predicate={testFilesRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         <TestFilesView
           files={testModel.files}
@@ -136,11 +141,11 @@ export const ReportView: React.FC<{
           projectNames={report?.json().projectNames || []}
         />
       </Route>
-      <Route predicate={React.useCallback(params => params.has('speedboard') && !params.has('testId'), [])}>
+      <Route predicate={speedboardRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
         {report && <Speedboard report={report} tests={testModel.tests} />}
       </Route>
-      <Route predicate={React.useCallback(params => params.has('testId'), [])}>
+      <Route predicate={testCaseRoutePredicate}>
         {report && <TestCaseViewLoader report={report} next={next} prev={prev} testId={testId} testIdToFileIdMap={testIdToFileIdMap} />}
       </Route>
     </main>
