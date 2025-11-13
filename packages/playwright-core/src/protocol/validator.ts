@@ -317,6 +317,7 @@ scheme.LocalUtilsConnectResult = tObject({
 scheme.LocalUtilsTracingStartedParams = tObject({
   tracesDir: tOptional(tString),
   traceName: tString,
+  live: tOptional(tBoolean),
 });
 scheme.LocalUtilsTracingStartedResult = tObject({
   stacksId: tString,

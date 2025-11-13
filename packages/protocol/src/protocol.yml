@@ -709,6 +709,7 @@ LocalUtils:
       parameters:
         tracesDir: string?
         traceName: string
+        live: boolean?
       returns:
         stacksId: string
 
