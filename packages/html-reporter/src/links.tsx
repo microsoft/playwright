@@ -214,8 +214,8 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   return <div ref={ref}>{children}</div>;
 }
 
-export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
-  const params = new URLSearchParams();
+export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }, searchParams: URLSearchParams) {
+  const params = new URLSearchParams(searchParams);
   if (test)
     params.set('testId', test.testId);
   if (test && result)

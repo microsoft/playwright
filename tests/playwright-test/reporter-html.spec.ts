@@ -3291,16 +3291,17 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByRole('link', { name: 'previous' })).not.toBeVisible();
 
         await page.getByRole('link', { name: 'next' }).click();
-        await expect(page.getByText('two')).toBeVisible();
+        await expect(page.locator('.test-file-title').getByText('two')).toBeVisible();
+        await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
 
         await page.getByRole('link', { name: 'next' }).click();
-        await expect(page.getByText('three')).toBeVisible();
+        await expect(page.locator('.test-file-title').getByText('three')).toBeVisible();
         await expect(page.getByRole('link', { name: 'next' })).not.toBeVisible();
 
         await page.getByRole('link', { name: 'previous' }).click();
-        await expect(page.getByText('two')).toBeVisible();
+        await expect(page.locator('.test-file-title').getByText('two')).toBeVisible();
       });
-    })
+    });
   });
 }
 

@@ -214,10 +214,7 @@ function cacheSearchValues(test: TestCaseSummary & { [searchValuesSymbol]?: Sear
 const SEARCH_PARAM_GROUP_REGEX = /("[^"]*"|"[^"]*$|\S+)/g;
 
 export function filterWithQuery(searchParams: URLSearchParams, token: string, append: boolean): string {
-  const result = new URLSearchParams();
-  if (searchParams.has('speedboard'))
-    result.set('speedboard', '');
-
+  const result = new URLSearchParams(searchParams);
   const existingQuery = searchParams.get('q') ?? '';
   const tokens = [...existingQuery.matchAll(SEARCH_PARAM_GROUP_REGEX)].map(m => {
     const rawValue = m[0];

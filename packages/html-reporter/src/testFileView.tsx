@@ -56,7 +56,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={testResultHref({ test }) + filterParam} title={[...test.path, test.title].join(' › ')}>
+              <Link href={testResultHref({ test }, searchParams) + filterParam} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
               <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
@@ -66,11 +66,11 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
         </div>
         <div className='test-file-details-row'>
           <div className='test-file-details-row-items'>
-            <Link href={testResultHref({ test })} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
+            <Link href={testResultHref({ test }, searchParams)} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
               <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
             </Link>
-            {imageDiffBadge(test)}
-            {videoBadge(test)}
+            <ImageDiffBadge test={test} />
+            <VideoBadge test={test} />
             <TraceLink test={test} dim={true} />
           </div>
         </div>
@@ -79,16 +79,18 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   </Chip>;
 };
 
-function imageDiffBadge(test: TestCaseSummary): React.JSX.Element | undefined {
+function ImageDiffBadge({ test }: { test: TestCaseSummary }) {
+  const searchParams = React.useContext(SearchParamsContext);
   for (const result of test.results) {
     for (const attachment of result.attachments) {
       if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
-        return <LinkBadge href={testResultHref({ test, result, anchor: `attachment-${result.attachments.indexOf(attachment)}` })} title='View images' dim={true}>{image()}</LinkBadge>;
+        return <LinkBadge href={testResultHref({ test, result, anchor: `attachment-${result.attachments.indexOf(attachment)}` }, searchParams)} title='View images' dim={true}>{image()}</LinkBadge>;
     }
   }
 }
 
-function videoBadge(test: TestCaseSummary): React.JSX.Element | undefined {
+function VideoBadge({ test }: { test: TestCaseSummary }) {
+  const searchParams = React.useContext(SearchParamsContext);
   const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
-  return resultWithVideo ? <LinkBadge href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' })} title='View video' dim={true}>{video()}</LinkBadge> : undefined;
+  return resultWithVideo ? <LinkBadge href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' }, searchParams)} title='View video' dim={true}>{video()}</LinkBadge> : undefined;
 }

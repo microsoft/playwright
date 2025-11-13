@@ -52,9 +52,9 @@ export const TestCaseView: React.FC<{
       title={test.title}
       leftSuperHeader={<div className='test-case-path'>{test.path.join(' › ')}</div>}
       rightSuperHeader={<>
-        <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
+        <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }, searchParams) + filterParam}>« previous</Link></div>
         <div style={{ width: 10 }}></div>
-        <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
+        <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }, searchParams) + filterParam}>next »</Link></div>
       </>}
     />
     <div className='hbox' style={{ lineHeight: '24px' }}>
