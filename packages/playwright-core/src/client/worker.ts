@@ -45,6 +45,9 @@ export class Worker extends ChannelOwner<channels.WorkerChannel> implements api.
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.WorkerInitializer) {
     super(parent, type, guid, initializer);
+    this._setEventToSubscriptionMapping(new Map<string, channels.WorkerUpdateSubscriptionParams['event']>([
+      [Events.Worker.Console, 'console'],
+    ]));
     this._channel.on('close', () => {
       if (this._page)
         this._page._workers.delete(this);

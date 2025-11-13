@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 import { Worker } from '../page';
-import { CRExecutionContext } from './crExecutionContext';
+import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { CRNetworkManager } from './crNetworkManager';
 import { BrowserContext } from '../browserContext';
 import * as network from '../network';
+import { ConsoleMessage } from '../console';
+import { toConsoleMessageLocation } from './crProtocolHelper';
 
 import type { CRBrowserContext } from './crBrowser';
 import type { CRSession } from './crConnection';
@@ -48,6 +50,14 @@ export class CRServiceWorker extends Worker {
       this.updateOffline();
       this._networkManager.addSession(session, undefined, true /* isMain */).catch(() => {});
     }
+
+    session.on('Runtime.consoleAPICalled', event => {
+      if (!this.existingExecutionContext)
+        return;
+      const args = event.args.map(o => createHandle(this.existingExecutionContext!, o));
+      const message = new ConsoleMessage(null, this, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+      this.browserContext.emit(BrowserContext.Events.Console, message);
+    });
 
     session.send('Runtime.enable', {}).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
