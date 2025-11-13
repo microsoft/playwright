@@ -66,9 +66,3 @@ const LabelsClickView: React.FC<{
     {labels.map(label => <Label key={label} label={label} trimAtSymbolPrefix={true} onClick={onClickHandle} />)}
   </>;
 };
-
-const LabelsLinkView: React.FC<{
-  labels: string[],
-}> = ({ labels }) => <>
-  {labels.map((label, index) => <Label key={index} label={label} trimAtSymbolPrefix={true} href={`#?q=${label}`} />)}
-</>;
