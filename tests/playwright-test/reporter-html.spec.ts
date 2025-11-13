@@ -3240,6 +3240,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await page.getByRole('link', { name: 'Speedboard' }).click();
         await expect(page.getByRole('link', { name: 'Speedboard' })).toHaveAttribute('aria-selected', 'true');
 
+        await page.pause();
+
         await expect(page.getByRole('main')).toMatchAriaSnapshot(`
           - button "Slowest Tests"
           - region:
