@@ -33,12 +33,6 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   footer?: React.JSX.Element | string;
 }>> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
   const searchParams = React.useContext(SearchParamsContext);
-  const linkedSearchParams = new URLSearchParams();
-  if (searchParams.has('q'))
-    linkedSearchParams.set('q', searchParams.get('q')!);
-  if (searchParams.has('speedboard'))
-    linkedSearchParams.set('speedboard', '');
-  const filterParam = linkedSearchParams.size ? '&' + linkedSearchParams : '';
   return <Chip
     expanded={isFileExpanded ? isFileExpanded(file.fileId) : undefined}
     noInsets={true}
@@ -56,7 +50,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={testResultHref({ test }, searchParams) + filterParam} title={[...test.path, test.title].join(' › ')}>
+              <Link href={testResultHref({ test }, searchParams)} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
               <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
