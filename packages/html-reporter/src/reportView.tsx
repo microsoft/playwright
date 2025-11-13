@@ -106,12 +106,14 @@ export const ReportView: React.FC<{
         case 'ArrowLeft':
           if (prev) {
             event.preventDefault();
+            searchParams.delete('testId');
             navigate(testResultHref({ test: prev }, searchParams) + filterParam);
           }
           break;
         case 'ArrowRight':
           if (next) {
             event.preventDefault();
+            searchParams.delete('testId');
             navigate(testResultHref({ test: next }, searchParams) + filterParam);
           }
           break;
