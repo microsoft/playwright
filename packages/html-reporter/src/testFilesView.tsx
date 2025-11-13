@@ -20,7 +20,7 @@ import { TestFileView } from './testFileView';
 import './testFileView.css';
 import './chip.css';
 import { msToString } from './utils';
-import { AutoChip } from './chip';
+import { AutoChip, NoDataChip } from './chip';
 import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
@@ -62,7 +62,7 @@ export const TestFilesView: React.FC<{
           }}>
         </TestFileView>;
       })
-      : <div className='chip-header test-file-no-files'>No tests found</div>}
+      : <NoDataChip>No tests found</NoDataChip>}
   </>;
 };
 

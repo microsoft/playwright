@@ -72,3 +72,5 @@ export const AutoChip: React.FC<{
     {children}
   </Chip>;
 };
+
+export const NoDataChip: React.FC<React.PropsWithChildren<{}>> = ({ children }) => <div className='chip-header chip-no-data'>{children}</div>;
