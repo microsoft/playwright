@@ -34,6 +34,8 @@ import { createGuid } from '../utils/crypto';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
+import { ElementHandleDispatcher } from './elementHandlerDispatcher';
+import { JSHandleDispatcher } from './jsHandleDispatcher';
 
 import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
@@ -119,14 +121,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('pageError', { error: serializeError(error), page: PageDispatcher.from(this, page) });
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
-      const page = message.page()!;
+      const pageDispatcher = PageDispatcher.fromNullable(this, message.page());
       const workerDispatcher = WorkerDispatcher.fromNullable(this, message.worker());
-      if (this._shouldDispatchEvent(page, 'console') || workerDispatcher?._subscriptions.has('console')) {
-        const pageDispatcher = PageDispatcher.from(this, page);
+      if (this._shouldDispatchEvent(message.page(), 'console') || workerDispatcher?._subscriptions.has('console')) {
         this._dispatchEvent('console', {
           page: pageDispatcher,
           worker: workerDispatcher,
-          ...pageDispatcher.serializeConsoleMessage(message),
+          ...this.serializeConsoleMessage(message, workerDispatcher || pageDispatcher!),
         });
       }
     });
@@ -198,13 +199,27 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return this._shouldDispatchEvent(request.frame()?._page?.initializedOrUndefined(), event);
   }
 
-  private _shouldDispatchEvent(page: Page | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
+  private _shouldDispatchEvent(page: Page | null | undefined, event: channels.BrowserContextUpdateSubscriptionParams['event'] & channels.PageUpdateSubscriptionParams['event']): boolean {
     if (this._subscriptions.has(event))
       return true;
     const pageDispatcher = page ? this.connection.existingDispatcher<PageDispatcher>(page) : undefined;
     if (pageDispatcher?._subscriptions.has(event))
       return true;
     return false;
+  }
+
+  serializeConsoleMessage(message: ConsoleMessage, jsScope: PageDispatcher | WorkerDispatcher) {
+    return {
+      type: message.type(),
+      text: message.text(),
+      args: message.args().map(a => {
+        const elementHandle = a.asElement();
+        if (elementHandle)
+          return ElementHandleDispatcher.from(FrameDispatcher.from(this, elementHandle._frame), elementHandle);
+        return JSHandleDispatcher.fromJSHandle(jsScope, a);
+      }),
+      location: message.location(),
+    };
   }
 
   async createTempFiles(params: channels.BrowserContextCreateTempFilesParams, progress: Progress): Promise<channels.BrowserContextCreateTempFilesResult> {

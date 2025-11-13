@@ -62,7 +62,7 @@ Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs
 * since: v1.57
 - argument: <[ConsoleMessage]>
 
-Emitted when JavaScript within the Web Worker calls one of console API methods, e.g. `console.log` or `console.dir`. Console is not supported for Service Workers.
+Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
 
 ## async method: Worker.evaluate
 * since: v1.8

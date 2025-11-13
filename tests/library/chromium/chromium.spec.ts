@@ -684,3 +684,63 @@ test('PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK', async ({ mode, context, page, 
 
   delete process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK;
 });
+
+test('should emit console messages from service worker', async ({ page, context, server }) => {
+  const emptyPage = await context.newPage();
+  await emptyPage.goto(server.EMPTY_PAGE);
+  const emptyPageMessages = [];
+  emptyPage.on('console', message => emptyPageMessages.push(message));
+
+  const [worker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html')
+  ]);
+
+  const [message, pageMessage] = await Promise.all([
+    worker.waitForEvent('console'),
+    page.waitForEvent('console'),
+    worker.evaluate(() => console.log('hello from service worker', {
+      i: 'am',
+      am: 1,
+      complex: {
+        yup: true,
+      },
+    })),
+  ]);
+
+  expect(message).toBe(pageMessage);
+  expect(emptyPageMessages).toHaveLength(0);
+
+  // Should be able to access the message after closing the page.
+  await page.close();
+
+  expect(message.text()).toContain('hello from service worker');
+  expect(message.type()).toBe('log');
+  const args = message.args();
+  expect(args).toHaveLength(2);
+  expect(await args[0].jsonValue()).toBe('hello from service worker');
+  expect(await args[1].jsonValue()).toEqual({
+    i: 'am',
+    am: 1,
+    complex: {
+      yup: true,
+    }
+  });
+});
+
+test('should capture console.log from ServiceWorker start', async ({ context, page, server }) => {
+  server.setRoute('/serviceworkers/empty/sw.js', (req, res) => {
+    res.writeHead(200, 'OK', { 'Content-Type': 'text/javascript' });
+    res.write(`console.log('Hello from the first line of sw.js');`);
+    res.end();
+  });
+
+  const [worker] = await Promise.all([
+    context.waitForEvent('serviceworker'),
+    page.goto(server.PREFIX + '/serviceworkers/empty/sw.html'),
+  ]);
+
+  const consoleMessage = await worker.waitForEvent('console');
+  expect(consoleMessage.text()).toBe('Hello from the first line of sw.js');
+  expect(consoleMessage.type()).toBe('log');
+});

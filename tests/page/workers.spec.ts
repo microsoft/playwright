@@ -110,6 +110,22 @@ it('should report console event on the worker', async function({ page }) {
   expect(message1).toBe(message3);
 });
 
+it('should report console event on the worker when not listening on page or context', async function({ page }) {
+  const [worker] = await Promise.all([
+    page.waitForEvent('worker'),
+    page.evaluate(() => {
+      (window as any).worker = new Worker(URL.createObjectURL(new Blob(['42'], { type: 'application/javascript' })));
+    }),
+  ]);
+  const [message] = await Promise.all([
+    worker.waitForEvent('console'),
+    worker.evaluate(() => {
+      console.log('hello from worker');
+    }),
+  ]);
+  expect(message.text()).toBe('hello from worker');
+});
+
 it('should report errors', async function({ page }) {
   const errorPromise = new Promise<Error>(x => page.on('pageerror', x));
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob([`
