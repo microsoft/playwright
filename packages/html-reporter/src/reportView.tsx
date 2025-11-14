@@ -38,7 +38,7 @@ declare global {
 // These are extracted to preserve the function identity between renders to avoid re-triggering effects.
 const testFilesRoutePredicate = (params: URLSearchParams) => !params.has('testId') && !params.has('speedboard');
 const testCaseRoutePredicate = (params: URLSearchParams) => params.has('testId');
-const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard');
+const speedboardRoutePredicate = (params: URLSearchParams) => params.has('speedboard') && !params.has('testId');
 
 type TestModelSummary = {
   files: TestFileSummary[];
@@ -52,6 +52,7 @@ export const ReportView: React.FC<{
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
+  const speedboard = searchParams.has('speedboard');
   const [mergeFiles] = useSetting('mergeFiles', false);
   const testId = searchParams.get('testId');
   const q = searchParams.get('q')?.toString() || '';
@@ -70,8 +71,12 @@ export const ReportView: React.FC<{
   const filter = React.useMemo(() => Filter.parse(filterText), [filterText]);
   const filteredStats = React.useMemo(() => filter.empty() ? undefined : computeStats(report?.json().files || [], filter), [report, filter]);
   const testModel = React.useMemo(() => {
-    return mergeFiles ? createMergedFilesModel(report, filter) : createFilesModel(report, filter);
-  }, [report, filter, mergeFiles]);
+    if (speedboard)
+      return createSpeedboardFilesModel(report, filter);
+    if (mergeFiles)
+      return createMergedFilesModel(report, filter);
+    return createFilesModel(report, filter);
+  }, [report, filter, mergeFiles, speedboard]);
 
   const { prev, next } = React.useMemo(() => {
     const index = testModel.tests.findIndex(t => t.testId === testId);
@@ -92,22 +97,28 @@ export const ReportView: React.FC<{
           break;
         case 'p':
           event.preventDefault();
+          searchParams.delete('testId');
+          searchParams.delete('speedboard');
           navigate(filterWithQuery(searchParams, 's:passed', false));
           break;
         case 'f':
           event.preventDefault();
+          searchParams.delete('testId');
+          searchParams.delete('speedboard');
           navigate(filterWithQuery(searchParams, 's:failed', false));
           break;
         case 'ArrowLeft':
           if (prev) {
             event.preventDefault();
-            navigate(testResultHref({ test: prev }) + filterParam);
+            searchParams.delete('testId');
+            navigate(testResultHref({ test: prev }, searchParams) + filterParam);
           }
           break;
         case 'ArrowRight':
           if (next) {
             event.preventDefault();
-            navigate(testResultHref({ test: next }) + filterParam);
+            searchParams.delete('testId');
+            navigate(testResultHref({ test: next }, searchParams) + filterParam);
           }
           break;
       }
@@ -138,7 +149,7 @@ export const ReportView: React.FC<{
       </Route>
       <Route predicate={speedboardRoutePredicate}>
         <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
-        {report && <Speedboard filter={filter} report={report} />}
+        {report && <Speedboard report={report} tests={testModel.tests} />}
       </Route>
       <Route predicate={testCaseRoutePredicate}>
         {report && <TestCaseViewLoader report={report} next={next} prev={prev} testId={testId} testIdToFileIdMap={testIdToFileIdMap} />}
@@ -251,4 +262,14 @@ function createMergedFilesModel(report: LoadedReport | undefined, filter: Filter
   for (const group of groups)
     result.tests.push(...group.tests);
   return result;
+}
+
+function createSpeedboardFilesModel(report: LoadedReport | undefined, filter: Filter): TestModelSummary {
+  const files = report?.json().files || [];
+  const tests = files.flatMap(file => file.tests).filter(t => filter.matches(t));
+  tests.sort((a, b) => b.duration - a.duration);
+  return {
+    files: [],
+    tests,
+  };
 }

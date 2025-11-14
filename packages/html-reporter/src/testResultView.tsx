@@ -20,7 +20,7 @@ import { TreeItem } from './treeItem';
 import { formatUrl, msToString } from './utils';
 import { AutoChip } from './chip';
 import { traceImage } from './images';
-import { Anchor, AttachmentLink, generateTraceUrl, testResultHref } from './links';
+import { Anchor, AttachmentLink, generateTraceUrl, SearchParamsContext, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
 import type { ImageDiff } from '@web/shared/imageDiffView';
 import { ImageDiffView } from '@web/shared/imageDiffView';
@@ -193,12 +193,13 @@ const StepTreeItem: React.FC<{
   step: TestStep;
   depth: number,
 }> = ({ test, step, result, depth }) => {
+  const searchParams = React.useContext(SearchParamsContext);
   return <TreeItem title={<span aria-label={step.title}>
     <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
     {step.attachments.length > 0 && <a
       style={{ float: 'right' }}
       title={`reveal attachment`}
-      href={formatUrl(testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` }))}
+      href={formatUrl(testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` }, searchParams))}
       onClick={evt => { evt.stopPropagation(); }}>
       {icons.attachment()}
     </a>}

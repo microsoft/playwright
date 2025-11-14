@@ -44,7 +44,6 @@ export const TestCaseView: React.FC<{
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = React.useContext(SearchParamsContext);
 
-  const filterParam = searchParams.has('q') ? '&q=' + searchParams.get('q') : '';
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 
   return <>
@@ -52,9 +51,9 @@ export const TestCaseView: React.FC<{
       title={test.title}
       leftSuperHeader={<div className='test-case-path'>{test.path.join(' › ')}</div>}
       rightSuperHeader={<>
-        <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }) + filterParam}>« previous</Link></div>
+        <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }, searchParams)}>« previous</Link></div>
         <div style={{ width: 10 }}></div>
-        <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }) + filterParam}>next »</Link></div>
+        <div className={clsx(!next && 'hidden')}><Link href={testResultHref({ test: next }, searchParams)}>next »</Link></div>
       </>}
     />
     <div className='hbox' style={{ lineHeight: '24px' }}>

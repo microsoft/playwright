@@ -65,6 +65,9 @@ export const ProjectLink: React.FunctionComponent<{
   projectName: string,
 }> = ({  projectNames, projectName }) => {
   const searchParams = React.useContext(SearchParamsContext);
+  if (searchParams.has('testId'))
+    searchParams.delete('speedboard');
+  searchParams.delete('testId');
   return <Link click={filterWithQuery(searchParams, `p:${projectName}`, false)} ctrlClick={filterWithQuery(searchParams, `p:${projectName}`, true)}>
     <Label label={projectName} colorIndex={projectNames.indexOf(projectName) % 6} />
   </Link>;
@@ -214,8 +217,8 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   return <div ref={ref}>{children}</div>;
 }
 
-export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
-  const params = new URLSearchParams();
+export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }, searchParams: URLSearchParams) {
+  const params = new URLSearchParams(searchParams);
   if (test)
     params.set('testId', test.testId);
   if (test && result)
