@@ -99,6 +99,7 @@ function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progre
     return loadedTrace;
   const promise = innerLoadTrace(traceUrl, progress);
   loadedTraces.set(traceUrl, promise);
+  promise.catch(() => loadedTraces.delete(traceUrl));
   return promise;
 }
 
