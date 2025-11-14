@@ -155,7 +155,7 @@ test('wpt accname non-manual', async ({ page, asset, server, browserName }) => {
 
 test('axe-core implicit-role', async ({ page, asset, server }) => {
   await page.goto(server.EMPTY_PAGE);
-  const testCases = require(asset(`axe-core/implicit-role`));
+  const testCases = require(asset('axe-core/implicit-role'));
   for (const testCase of testCases) {
     await test.step(`checking ${JSON.stringify(testCase)}`, async () => {
       await page.setContent(`
