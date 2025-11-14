@@ -122,6 +122,11 @@ export class VideoRecorder {
     if (this._isStopped)
       return;
 
+    if (timestamp - this._lastFrameTimestamp < 1 / fps) {
+      this._lastFrameBuffer = frame;
+      return;
+    }
+
     if (this._lastFrameBuffer) {
       const durationSec = timestamp - this._lastFrameTimestamp;
       const repeatCount = Math.max(1, Math.round(fps * durationSec));
