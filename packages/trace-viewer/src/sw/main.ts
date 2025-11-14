@@ -118,7 +118,14 @@ async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<Loa
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (error instanceof TraceVersionError)
       throw new Error(`Could not load trace from ${traceUrl}. ${error.message}`);
-    throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+
+    let message = `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`;
+
+    const lnaPermission = await navigator.permissions.query({ name: 'local-network-access' as PermissionName }).catch(() => { });
+    if (lnaPermission && lnaPermission.state !== 'granted')
+      message += `\n\nIf your trace is in a local or private network, please grant Local Network Access in your browser's site settings and reload.`;
+
+    throw new Error(message);
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   return { traceModel, snapshotServer };
