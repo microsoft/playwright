@@ -113,6 +113,7 @@ const NavLink: React.FC<{
 }> = ({ token, count }) => {
   const searchParams = new URLSearchParams(React.useContext(SearchParamsContext));
   searchParams.delete('speedboard');
+  searchParams.delete('testId');
 
   const queryToken = `s:${token}`;
 

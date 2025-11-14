@@ -59,6 +59,9 @@ const LabelsClickView: React.FC<{
 
   const onClickHandle = React.useCallback((e: React.MouseEvent, label: string) => {
     e.preventDefault();
+    if (searchParams.has('testId'))
+      searchParams.delete('speedboard');
+    searchParams.delete('testId');
     navigate(filterWithQuery(searchParams, label, e.metaKey || e.ctrlKey));
   }, [searchParams]);
 

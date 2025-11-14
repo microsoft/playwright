@@ -97,10 +97,14 @@ export const ReportView: React.FC<{
           break;
         case 'p':
           event.preventDefault();
+          searchParams.delete('testId');
+          searchParams.delete('speedboard');
           navigate(filterWithQuery(searchParams, 's:passed', false));
           break;
         case 'f':
           event.preventDefault();
+          searchParams.delete('testId');
+          searchParams.delete('speedboard');
           navigate(filterWithQuery(searchParams, 's:failed', false));
           break;
         case 'ArrowLeft':

@@ -65,6 +65,9 @@ export const ProjectLink: React.FunctionComponent<{
   projectName: string,
 }> = ({  projectNames, projectName }) => {
   const searchParams = React.useContext(SearchParamsContext);
+  if (searchParams.has('testId'))
+    searchParams.delete('speedboard');
+  searchParams.delete('testId');
   return <Link click={filterWithQuery(searchParams, `p:${projectName}`, false)} ctrlClick={filterWithQuery(searchParams, `p:${projectName}`, true)}>
     <Label label={projectName} colorIndex={projectNames.indexOf(projectName) % 6} />
   </Link>;
