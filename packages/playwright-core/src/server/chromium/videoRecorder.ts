@@ -133,6 +133,7 @@ export class VideoRecorder {
       for (let i = 0; i < repeatCount; ++i)
         this._frameQueue.push(this._lastFrameBuffer);
       this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
+      this._lastFrameTimestamp += repeatCount / fps;
     }
 
     this._lastFrameBuffer = frame;
