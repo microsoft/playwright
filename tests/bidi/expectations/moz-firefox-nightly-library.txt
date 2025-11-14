@@ -5,7 +5,6 @@ library/browsercontext-page-event.spec.ts › should have about:blank for empty 
 library/browsertype-connect.spec.ts › launchServer › should be able to connect 20 times to a single server without warnings [timeout]
 library/browsertype-connect.spec.ts › launchServer › should saveAs videos from remote browser [timeout]
 library/browsertype-connect.spec.ts › run-server › should saveAs videos from remote browser [timeout]
-library/capabilities.spec.ts › should not crash when clicking a label with a <input type="file"/> [timeout]
 library/channels.spec.ts › should work with the domain module [timeout]
 library/chromium/chromium.spec.ts › PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 › serviceWorker(), and fromServiceWorker() work [timeout]
 library/chromium/chromium.spec.ts › PW_EXPERIMENTAL_SERVICE_WORKER_NETWORK_EVENTS=1 › setExtraHTTPHeaders [timeout]
