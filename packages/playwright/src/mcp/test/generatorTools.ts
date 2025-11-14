@@ -34,11 +34,11 @@ export const setupPage = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params, progress) => {
+  handle: async (context, params) => {
     const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
     context.generatorJournal = new GeneratorJournal(context.rootPath, params.plan, seed);
-    await context.runSeedTest(seed.file, seed.projectName, progress);
-    return { content: [] };
+    const { output, status } = await context.runSeedTest(seed.file, seed.projectName);
+    return { content: [{ type: 'text', text: output }], isError: status !== 'paused' };
   },
 });
 

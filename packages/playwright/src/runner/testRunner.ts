@@ -82,7 +82,7 @@ export type RunTestsParams = {
   failOnLoadErrors?: boolean;
 };
 
-type FullResultStatus = reporterTypes.FullResult['status'];
+export type FullResultStatus = reporterTypes.FullResult['status'];
 
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;

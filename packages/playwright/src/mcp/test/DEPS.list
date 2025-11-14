@@ -5,6 +5,7 @@
 ../browser/response.ts
 ../browser/tab.ts
 ../browser/tools/
+../log.ts
 ../../reporters
 ../../runner
 ../../transform
