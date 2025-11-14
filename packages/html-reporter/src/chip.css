@@ -50,6 +50,7 @@
   border-bottom-right-radius: 6px;
   padding: 16px;
   margin-bottom: 12px;
+  overflow: hidden;
 }
 
 .chip-body-no-insets {
