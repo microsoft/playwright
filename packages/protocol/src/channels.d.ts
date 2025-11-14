@@ -533,9 +533,11 @@ export type LocalUtilsConnectResult = {
 export type LocalUtilsTracingStartedParams = {
   tracesDir?: string,
   traceName: string,
+  live?: boolean,
 };
 export type LocalUtilsTracingStartedOptions = {
   tracesDir?: string,
+  live?: boolean,
 };
 export type LocalUtilsTracingStartedResult = {
   stacksId: string,
