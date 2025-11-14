@@ -869,9 +869,28 @@ export class Page extends SdkObject {
   }
 
   async selectorAtPoint(x: number, y: number): Promise<{selector: string }> {
+    // TODO
     return {
       selector: `(${x}, ${y})`,
     };
+  }
+
+  async generateSelectors(selector: string): Promise<string[]> {
+    const mainFrame = this.frameManager.mainFrame();
+    const element = await mainFrame.querySelector(selector, {
+      strict: false
+    });
+
+    if (!element)
+      throw new Error(`no element found for selector ${selector}`);
+
+    const script = await (await mainFrame._utilityContext()).injectedScript();
+    return script.evaluate<string[], ElementHandle<Element>>((script, innerElement): string[] => {
+      return script.generateSelector(innerElement, {
+        testIdAttributeName: 'TODO',
+        multiple: true,
+      }).selectors;
+    }, element);
   }
 }
 

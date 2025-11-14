@@ -101,6 +101,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.clockSetSystemTime', { title: 'Set system time "{timeNumber|timeString}"', }],
   ['Page.getSelectedText', { title: 'Get selected text', }],
   ['Page.selectorAtPoint', { title: 'Retrieve selector corresponding to the coordinates', }],
+  ['Page.generateSelectors', { title: 'Get all selectors possible for the specified selector', }],
   ['Page.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['Page.close', { title: 'Close page', pausesBeforeAction: true, }],
   ['Page.consoleMessages', { title: 'Get console messages', group: 'getter', }],

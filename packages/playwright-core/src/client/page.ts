@@ -855,6 +855,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async selectorAtPoint(x: number, y: number): Promise<string> {
     return (await this._channel.selectorAtPoint({ x, y })).selector;
   }
+
+  async generateSelectors(selector: string): Promise<string[]> {
+    return (await this._channel.generateSelectors({ selector })).selectors;
+  }
 }
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {

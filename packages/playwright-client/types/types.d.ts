@@ -2779,6 +2779,23 @@ export interface Page {
   frames(): Array<Frame>;
 
   /**
+   * - from Qanary fork
+   *
+   * Get all selectors possible for the specified selector.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.generateSelectors('#id');
+   * ```
+   *
+   * Will generate all selectors available for the element defined by the selector parameter and return them.
+   * @param selector A selector to search for an element. If there are multiple elements satisfying the selector, the first will be
+   * used.
+   */
+  generateSelectors(selector: string): Promise<Array<string>>;
+
+  /**
    * **NOTE** Use locator-based
    * [locator.getAttribute(name[, options])](https://playwright.dev/docs/api/class-locator#locator-get-attribute)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).

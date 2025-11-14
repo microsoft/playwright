@@ -878,10 +878,43 @@ When all steps combined have not finished during the specified [`option: timeout
 `page.dblclick()` dispatches two `click` events and a single `dblclick` event.
 :::
 
-## method: Page.getSelectedText
+### param: Page.dblclick.selector = %%-input-selector-%%
+* since: v1.8
+
+### option: Page.dblclick.button = %%-input-button-%%
+* since: v1.8
+
+### option: Page.dblclick.force = %%-input-force-%%
+* since: v1.8
+
+### option: Page.dblclick.delay = %%-input-down-up-delay-%%
+* since: v1.8
+
+### option: Page.dblclick.modifiers = %%-input-modifiers-%%
+* since: v1.8
+
+### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
+* since: v1.8
+
+### option: Page.dblclick.position = %%-input-position-%%
+* since: v1.8
+
+### option: Page.dblclick.strict = %%-input-strict-%%
+* since: v1.14
+
+### option: Page.dblclick.timeout = %%-input-timeout-%%
+* since: v1.8
+
+### option: Page.dblclick.timeout = %%-input-timeout-js-%%
+* since: v1.8
+
+### option: Page.dblclick.trial = %%-input-trial-with-modifiers-%%
+* since: v1.11
+
+## async method: Page.getSelectedText
 * since: v1.57
 * from Qanary fork
-- returns: <[Promise<string>]>
+- returns: <[string]>
 
 Get selected text.
 
@@ -907,10 +940,10 @@ page.getSelectedText()
 await page.GetSelectedTextAsync();
 ```
 
-## method: Page.selectorAtPoint
+## async method: Page.selectorAtPoint
 * since: v1.57
 * from Qanary fork
-- returns: <[Promise<string>]>
+- returns: <[string]>
 
 Retrieve selector corresponding to the coordinates.
 
@@ -944,38 +977,39 @@ await page.SelectorAtPointAsync(0, 0);
 * since: v1.57
 - `y` <[float]>
 
-### param: Page.dblclick.selector = %%-input-selector-%%
-* since: v1.8
+## async method: Page.generateSelectors
+* since: v1.57
+* from Qanary fork
+- returns: <[Array]<[string]>>
 
-### option: Page.dblclick.button = %%-input-button-%%
-* since: v1.8
+Get all selectors possible for the specified selector.
 
-### option: Page.dblclick.force = %%-input-force-%%
-* since: v1.8
+**Usage**
 
-### option: Page.dblclick.delay = %%-input-down-up-delay-%%
-* since: v1.8
+```js
+await page.generateSelectors('#id');
+```
 
-### option: Page.dblclick.modifiers = %%-input-modifiers-%%
-* since: v1.8
+```java
+page.generateSelectors("#id");
+```
 
-### option: Page.dblclick.noWaitAfter = %%-input-no-wait-after-removed-%%
-* since: v1.8
+```python async
+await page.generateSelectors("#id")
+```
 
-### option: Page.dblclick.position = %%-input-position-%%
-* since: v1.8
+```python sync
+page.generateSelectors("#id")
+```
 
-### option: Page.dblclick.strict = %%-input-strict-%%
-* since: v1.14
+```csharp
+await page.GenerateSelectorsAsync("#id");
+```
 
-### option: Page.dblclick.timeout = %%-input-timeout-%%
-* since: v1.8
+Will generate all selectors available for the element defined by the selector parameter and return them.
 
-### option: Page.dblclick.timeout = %%-input-timeout-js-%%
-* since: v1.8
-
-### option: Page.dblclick.trial = %%-input-trial-with-modifiers-%%
-* since: v1.11
+### param: Page.generateSelectors.selector = %%-input-selector-%%
+* since: v1.57
 
 ## async method: Page.dispatchEvent
 * since: v1.8

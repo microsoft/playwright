@@ -2036,6 +2036,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   _type_Page: boolean;
   getSelectedText(params?: PageGetSelectedTextParams, progress?: Progress): Promise<PageGetSelectedTextResult>;
   selectorAtPoint(params: PageSelectorAtPointParams, progress?: Progress): Promise<PageSelectorAtPointResult>;
+  generateSelectors(params: PageGenerateSelectorsParams, progress?: Progress): Promise<PageGenerateSelectorsResult>;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
   consoleMessages(params?: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
@@ -2134,6 +2135,15 @@ export type PageSelectorAtPointOptions = {
 };
 export type PageSelectorAtPointResult = {
   selector: string,
+};
+export type PageGenerateSelectorsParams = {
+  selector: string,
+};
+export type PageGenerateSelectorsOptions = {
+
+};
+export type PageGenerateSelectorsResult = {
+  selectors: string[],
 };
 export type PageAddInitScriptParams = {
   source: string,
