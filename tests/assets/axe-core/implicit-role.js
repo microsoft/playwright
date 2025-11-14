@@ -455,7 +455,7 @@ module.exports = [
     target: '#target',
     role: 'rowheader',
   },
-  // TH in tbody with TD sibling -> rowheader (even with TDs in same column)
+  // TH in tbody with TD sibling -> rowheader
   {
     html: '<table><thead><tr><th>A</th><th>B</th></thead><tbody><tr><th id="target">1</th><td>2</td></tr><tr><td>3</td><td>4</td></tr></tbody></table>',
     target: '#target',
