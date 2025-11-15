@@ -342,7 +342,7 @@ it('should record overridden requests to har', async ({ contextFactory, server }
   await page1.route('**/echo_redir', async route => {
     await route.fallback({
       url: server.PREFIX + '/echo',
-      postData: +route.request().postData() + 10,
+      postData: +(await route.request().body()) + 10,
     });
   });
   expect(await page1.evaluate(fetchFunction, { path: '/echo_redir', body: '1' })).toBe('11');

@@ -104,7 +104,7 @@ export class Request extends SdkObject {
   private _url: string;
   private _resourceType: string;
   private _method: string;
-  private _postData: Buffer | null;
+  private _postData: Buffer | null | (() => Promise<Buffer>);
   readonly _headers: HeadersArray;
   private _headersMap = new Map<string, string>();
   readonly _frame: frames.Frame | null = null;
@@ -122,7 +122,7 @@ export class Request extends SdkObject {
   };
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
+    url: string, resourceType: string, method: string, postData: Buffer | null | (() => Promise<Buffer>), headers: HeadersArray) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
@@ -173,8 +173,22 @@ export class Request extends SdkObject {
     return this._overrides?.method || this._method;
   }
 
+  async body(): Promise<Buffer | null> {
+    if (this._overrides?.postData)
+      return this._overrides?.postData;
+    if (typeof this._postData === 'function')
+      return await this._postData();
+    else
+      return this._postData;
+  }
+
   postDataBuffer(): Buffer | null {
-    return this._overrides?.postData || this._postData;
+    if (this._overrides?.postData)
+      return this._overrides?.postData;
+    if (typeof this._postData === 'function')
+      return null;
+    else
+      return this._postData;
   }
 
   headers(): HeadersArray {

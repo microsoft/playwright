@@ -214,7 +214,7 @@ it('should return postData', async ({ page, server }) => {
   page.on('request', r => request = r);
   await page.evaluate(() => fetch('./post', { method: 'POST', body: JSON.stringify({ foo: 'bar' }) }));
   expect(request).toBeTruthy();
-  expect(request.postData()).toBe('{"foo":"bar"}');
+  expect(await request.body()).toBe('{"foo":"bar"}');
 });
 
 it('should work with binary post data', async ({ page, server }) => {
@@ -226,7 +226,7 @@ it('should work with binary post data', async ({ page, server }) => {
     await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(256).keys())) });
   });
   expect(request).toBeTruthy();
-  const buffer = request.postDataBuffer();
+  const buffer = await request.bodyBuffer();
   expect(buffer.length).toBe(256);
   for (let i = 0; i < 256; ++i)
     expect(buffer[i]).toBe(i);
@@ -242,7 +242,7 @@ it('should work with binary post data and interception', async ({ page, server }
     await fetch('./post', { method: 'POST', body: new Uint8Array(Array.from(Array(256).keys())) });
   });
   expect(request).toBeTruthy();
-  const buffer = request.postDataBuffer();
+  const buffer = await request.bodyBuffer();
   expect(buffer.length).toBe(256);
   for (let i = 0; i < 256; ++i)
     expect(buffer[i]).toBe(i);
@@ -255,12 +255,12 @@ it('should override post data content type', async ({ page, server }) => {
     request = req;
     res.end();
   });
-  await page.route('**/post', (route, request) => {
+  await page.route('**/post', async (route, request) => {
     const headers = request.headers();
     headers['content-type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
     void route.continue({
       headers,
-      postData: request.postData()
+      postData: await request.body()
     });
   });
   await page.evaluate(async () => {
@@ -270,9 +270,9 @@ it('should override post data content type', async ({ page, server }) => {
   expect(request.headers['content-type']).toBe('application/x-www-form-urlencoded; charset=UTF-8');
 });
 
-it('should get |undefined| with postData() when there is no post data', async ({ page, server }) => {
+it('should get |undefined| with body() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.request().postData()).toBe(null);
+  expect(await response.request().body()).toBe(null);
 });
 
 it('should parse the json post data', async ({ page, server }) => {
@@ -282,7 +282,7 @@ it('should parse the json post data', async ({ page, server }) => {
   page.on('request', r => request = r);
   await page.evaluate(() => fetch('./post', { method: 'POST', body: JSON.stringify({ foo: 'bar' }) }));
   expect(request).toBeTruthy();
-  expect(request.postDataJSON()).toEqual({ 'foo': 'bar' });
+  expect(await request.bodyJSON()).toEqual({ 'foo': 'bar' });
 });
 
 it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server }) => {
@@ -293,7 +293,7 @@ it('should parse the data if content-type is application/x-www-form-urlencoded',
   await page.setContent(`<form method='POST' action='/post'><input type='text' name='foo' value='bar'><input type='number' name='baz' value='123'><input type='submit'></form>`);
   await page.click('input[type=submit]');
   expect(request).toBeTruthy();
-  expect(request.postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
+  expect(await request.bodyJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 
 it('should parse the data if content-type is application/x-www-form-urlencoded; charset=UTF-8', async ({ page, server }) => {
@@ -307,12 +307,12 @@ it('should parse the data if content-type is application/x-www-form-urlencoded; 
     },
     body: 'foo=bar&baz=123'
   }));
-  expect((await requestPromise).postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
+  expect(await (await requestPromise).bodyJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 
-it('should get |undefined| with postDataJSON() when there is no post data', async ({ page, server }) => {
+it('should get |undefined| with bodyJSON() when there is no post data', async ({ page, server }) => {
   const response = await page.goto(server.EMPTY_PAGE);
-  expect(response.request().postDataJSON()).toBe(null);
+  expect(await response.request().bodyJSON()).toBe(null);
 });
 
 it('should return multipart/form-data', async ({ page, server, browserName, browserMajorVersion }) => {
@@ -337,7 +337,7 @@ it('should return multipart/form-data', async ({ page, server, browserName, brow
   expect(contentType).toMatch(re);
   const b = contentType.match(re)[1]!;
   const expected = `--${b}\r\nContent-Disposition: form-data; name=\"name1\"\r\n\r\nvalue1\r\n--${b}\r\nContent-Disposition: form-data; name=\"file\"; filename=\"foo.txt\"\r\nContent-Type: application/octet-stream\r\n\r\nfile-value\r\n--${b}\r\nContent-Disposition: form-data; name=\"name2\"\r\n\r\nvalue2\r\n--${b}\r\nContent-Disposition: form-data; name=\"name2\"\r\n\r\nanother-value2\r\n--${b}--\r\n`;
-  expect(request.postDataBuffer().toString('utf8')).toEqual(expected);
+  expect((await request.bodyBuffer()).toString('utf8')).toEqual(expected);
 });
 
 it('should return event source', async ({ page, server }) => {
