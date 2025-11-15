@@ -1898,3 +1898,10 @@ In this config:
 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
 1. Forward slashes `"/"` can be used as path separators on any platform.
 
+## assertions-aria-snapshot-update
+* since: v1.57
+- `update` <["raw"]|["relaxed"]>
+
+Defines how snapshots are written when updating. Defaults to `'relaxed'`.
+* `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for numbers) to reduce flakiness from minor changes.
+* `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values change.
