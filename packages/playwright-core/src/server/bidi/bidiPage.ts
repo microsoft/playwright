@@ -95,7 +95,6 @@ export class BidiPage implements PageDelegate {
     this._onFrameAttached(this._session.sessionId, null);
     await Promise.all([
       this.updateHttpCredentials(),
-      this.updateRequestInterception(),
       // If the page is created by the Playwright client's call, some initialization
       // may be pending. Wait for it to complete before reporting the page as new.
     ]);
@@ -343,7 +342,7 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.requestInterceptors.length > 0);
   }
 
   async updateOffline() {
