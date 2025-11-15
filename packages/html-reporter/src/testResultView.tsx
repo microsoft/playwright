@@ -18,7 +18,7 @@ import type { HTMLReportOptions, TestAttachment, TestCase, TestResult, TestStep 
 import * as React from 'react';
 import { TreeItem } from './treeItem';
 import { formatUrl, msToString } from './utils';
-import { AutoChip } from './chip';
+import { AutoChip, NoDataChip } from './chip';
 import { traceImage } from './images';
 import { Anchor, AttachmentLink, generateTraceUrl, SearchParamsContext, testResultHref } from './links';
 import { statusIcon } from './statusIcon';
@@ -177,6 +177,8 @@ export const TestResultView: React.FC<{
         </Anchor>
       )}
     </AutoChip>}
+
+    {result.status === 'skipped' && <NoDataChip>Test run skipped</NoDataChip>}
   </div>;
 };
 
