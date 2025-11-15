@@ -24,9 +24,10 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { msToString, useAsyncMemo } from '@web/uiUtils';
+import { msToString, useAsyncMemo, useSetting } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
+import { Expandable } from '@web/components/expandable';
 
 type RequestBody = { text: string, mimeType?: string } | null;
 
@@ -105,33 +106,58 @@ const CopyDropdown: React.FC<{
   );
 };
 
+const ExpandableSection: React.FC<{
+  title: string;
+  children?: React.ReactNode
+  className?: string;
+}> = ({ title, children, className }) => {
+  const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
+  return <Expandable
+    expanded={expanded}
+    setExpanded={setExpanded}
+    expandOnTitleClick
+    title={<span className='network-request-details-header'>{title}</span>}
+    className={className}
+  >
+    {children}
+  </Expandable>;
+};
+
 const RequestTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
   return <div className='vbox network-request-details-tab'>
-    <div className='network-request-details-header'>General</div>
-    <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
-    <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-    {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
-      Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
-        {`${resource.response.status} ${resource.response.statusText}`}
-      </span></div>}
-    {resource.request.queryString.length ? <>
-      <div className='network-request-details-header'>Query String Parameters</div>
-      <div className='network-request-details-headers'>
-        {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
-      </div>
-    </> : null}
-    <div className='network-request-details-header'>Request Headers</div>
-    <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    <div className='network-request-details-header'>Time</div>
-    <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
-    <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
+    <ExpandableSection title='General'>
+      <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
+      <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
+      {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
+        Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
+          {`${resource.response.status} ${resource.response.statusText}`}
+        </span></div>}
+    </ExpandableSection>
 
-    {requestBody && <div className='network-request-details-header'>Request Body</div>}
-    {requestBody && <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>}
+    {resource.request.queryString.length ?
+      <ExpandableSection title='Query String Parameters'>
+        <div className='network-request-details-headers'>
+          {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
+        </div>
+      </ExpandableSection>
+      : null}
+
+    <ExpandableSection title='Request Headers'>
+      <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    </ExpandableSection>
+
+    <ExpandableSection title='Time'>
+      <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
+      <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
+    </ExpandableSection>
+
+    {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
+      <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
+    </ExpandableSection>}
   </div>;
 };
 
@@ -139,8 +165,9 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   return <div className='vbox network-request-details-tab'>
-    <div className='network-request-details-header'>Response Headers</div>
-    <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    <ExpandableSection title='Response Headers'>
+      <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
+    </ExpandableSection>
   </div>;
 };
 

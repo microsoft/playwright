@@ -196,14 +196,14 @@ test('should display list of query parameters (only if present)', async ({ runUI
 
   await page.getByText('call-with-query-params').click();
 
-  await expect(page.getByText('Query String Parameters')).toBeVisible();
-  await expect(page.getByText('param1: value1')).toBeVisible();
-  await expect(page.getByText('param1: value2')).toBeVisible();
-  await expect(page.getByText('param2: value2')).toBeVisible();
+  const region = page.getByRole('region', { name: 'Query String Parameters' });
+  await expect(region.getByText('param1: value1')).toBeVisible();
+  await expect(region.getByText('param1: value2')).toBeVisible();
+  await expect(region.getByText('param2: value2')).toBeVisible();
 
   await page.getByText('endpoint').click();
 
-  await expect(page.getByText('Query String Parameters')).not.toBeVisible();
+  await expect(region).toBeHidden();
 });
 
 test('should not duplicate network entries from beforeAll', {
@@ -240,4 +240,39 @@ test('should not duplicate network entries from beforeAll', {
   await page.getByText('first test').dblclick();
   await page.getByText('Network', { exact: true }).click();
   await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
+});
+
+test('should toggle sections inside network details', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await page.getByRole('tab', { name: 'Network' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  const requestPanel = page.getByRole('tabpanel', { name: 'Request' });
+
+  await requestPanel.getByRole('button', { name: 'Request Headers' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
+
+  await requestPanel.getByRole('button', { name: 'Time' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toBeHidden();
+
+  await requestPanel.getByRole('button', { name: 'Time' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
+
+  // Re-opening should preserve open state
+  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
 });

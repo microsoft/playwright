@@ -16,8 +16,6 @@
 
 .network-request-details-tab {
   user-select: text;
-  line-height: 24px;
-  margin-left: 10px;
   overflow: auto;
 }
 
@@ -37,8 +35,18 @@
   margin-left: 10px;
 }
 
+.network-request-details-tab .expandable-title {
+  padding-left: 3px;
+}
+
+.network-request-details-tab .expandable-content {
+  margin-left: 0;
+  padding-left: 28px;
+  line-height: 24px;
+}
+
 .network-request-details-header {
-  margin: 3px 0;
+  margin: 3px 0 3px 14px;
   font-weight: bold;
 }
 
@@ -49,6 +57,14 @@
 
 .network-request-details-tab .cm-wrapper {
   overflow: hidden;
+}
+
+.network-request-request-body {
+  max-height: 100%;
+}
+
+.network-request-request-body .expandable-content {
+  height: 100%;
 }
 
 .network-font-preview {
