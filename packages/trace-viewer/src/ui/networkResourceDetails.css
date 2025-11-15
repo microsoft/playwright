@@ -35,13 +35,14 @@
   margin-left: 10px;
 }
 
-.expandable-title {
+.network-request-details-tab .expandable-title {
   padding-left: 3px;
 }
 
-.expandable-content {
+.network-request-details-tab .expandable-content {
   margin-left: 0;
   padding-left: 28px;
+  line-height: 24px;
 }
 
 .network-request-details-header {
@@ -64,10 +65,6 @@
 
 .network-request-request-body .expandable-content {
   height: 100%;
-}
-
-.expandable-content {
-  line-height: 24px;
 }
 
 .network-font-preview {
