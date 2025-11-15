@@ -71,7 +71,7 @@ it('should work inside closed shadow root', async ({ page, server, browserName }
     </script>
   `);
 
-  const frame = page.frame({ name: 'myframe' });
+  const frame = page.frames()[1];
   const element = await frame.frameElement();
   expect(await element.getAttribute('name')).toBe('myframe');
 });
@@ -87,7 +87,7 @@ it('should work inside declarative shadow root', async ({ page, server, browserN
       <span>footer</span>
     </div>
   `);
-  const frame = page.frame({ name: 'myframe' });
+  const frame = page.frames()[1];
   const element = await frame.frameElement();
   expect(await element.getAttribute('name')).toBe('myframe');
 });
