@@ -70,6 +70,7 @@ export class BidiBrowser extends Browser {
         'network',
         'log',
         'script',
+        'input',
       ],
     });
 
