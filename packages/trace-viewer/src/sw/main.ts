@@ -99,6 +99,7 @@ function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progre
     return loadedTrace;
   const promise = innerLoadTrace(traceUrl, progress);
   loadedTraces.set(traceUrl, promise);
+  promise.catch(() => loadedTraces.delete(traceUrl));
   return promise;
 }
 
@@ -118,7 +119,17 @@ async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<Loa
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (error instanceof TraceVersionError)
       throw new Error(`Could not load trace from ${traceUrl}. ${error.message}`);
-    throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+
+    let message = `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`;
+
+    // The local-network-access implementation doesn't allow detecting violations, so we can only suspect it as a possible failure reason.
+    // Obtaining the permission is done by issuing a `fetch`, but it doesn't work from a service worker.
+    // Since all our requests go through the service worker, we cannot open the permission prompt for them.
+    const lnaPermission = await navigator.permissions.query({ name: 'local-network-access' as PermissionName }).catch(() => { });
+    if (lnaPermission && lnaPermission.state !== 'granted')
+      message += `\n\nIf your trace is in a local or private network, please grant Local Network Access in your browser's site settings and reload.`;
+
+    throw new Error(message);
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   return { traceModel, snapshotServer };
