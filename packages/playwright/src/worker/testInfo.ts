@@ -37,6 +37,7 @@ export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.
 
 interface TestStepData {
   title: string;
+  shortTitle?: string;
   category: TestStepCategory;
   location?: Location;
   apiName?: string;
@@ -374,7 +375,7 @@ export class TestInfoImpl implements TestInfo {
       this._tracing.appendBeforeActionForStep({
         stepId,
         parentId: parentStep?.stepId,
-        title: step.title,
+        title: step.shortTitle ?? step.title,
         category: step.category,
         params: step.params,
         stack: step.location ? [step.location] : [],

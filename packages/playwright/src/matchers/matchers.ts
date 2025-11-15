@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
+import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
@@ -22,6 +22,7 @@ import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
 import { toMatchText } from './toMatchText';
+import { toHaveScreenshotStepTitle } from './toMatchSnapshot';
 import { takeFirst } from '../common/config';
 import { currentTestInfo } from '../common/globals';
 import { TestInfoImpl } from '../worker/testInfo';
@@ -35,6 +36,7 @@ import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 
 export interface LocatorEx extends Locator {
+  _selector: string;
   _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }>;
 }
 
@@ -489,4 +491,18 @@ export async function toPass(
     return { message: () => message, pass: !!this.isNot };
   }
   return { pass: !this.isNot, message: () => '' };
+}
+
+export function computeMatcherTitleSuffix(matcherName: string, receiver: any, args: any[]): { short?: string, long?: string } {
+  if (matcherName === 'toHaveScreenshot') {
+    const title = toHaveScreenshotStepTitle(...args);
+    return { short: title ? `(${title})` : '' };
+  }
+  if (receiver && typeof receiver === 'object' && receiver.constructor?.name === 'Locator') {
+    try {
+      return { long: ' ' + asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
+    } catch {
+    }
+  }
+  return {};
 }

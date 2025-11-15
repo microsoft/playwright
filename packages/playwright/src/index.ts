@@ -268,8 +268,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           // and connect it to the existing expect step.
           if (zone.apiName)
             data.apiName = zone.apiName;
-          if (zone.title)
-            data.title = zone.title;
+          if (zone.shortTitle || zone.title)
+            data.title = zone.shortTitle ?? zone.title;
           data.stepId = zone.stepId;
           return;
         }

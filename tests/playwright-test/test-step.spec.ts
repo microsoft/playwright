@@ -534,7 +534,7 @@ test('should nest steps based on zones', async ({ runInlineTest }) => {
             }),
             test.step('parent2', async () => {
               await test.step('child2', async () => {
-                await expect(page.locator('body')).toBeVisible();
+                await expect(page.locator('body').describe('main element')).toBeVisible();
               });
             }),
           ]);
@@ -562,7 +562,7 @@ test.step |    child1 @ a.test.ts:23
 pw:api    |      Click locator('body') @ a.test.ts:24
 test.step |  parent2 @ a.test.ts:27
 test.step |    child2 @ a.test.ts:28
-expect    |      Expect "toBeVisible" @ a.test.ts:29
+expect    |      Expect "toBeVisible" main element @ a.test.ts:29
 hook      |After Hooks
 hook      |  afterEach hook @ a.test.ts:15
 test.step |    in afterEach @ a.test.ts:16
@@ -892,7 +892,7 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:4
-expect    |Checking color @ a.test.ts:6
+expect    |Checking color locator('div') @ a.test.ts:6
 hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
@@ -1087,14 +1087,14 @@ fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:4
 expect    |Expect "poll toBe" @ a.test.ts:13
-expect    |  Expect "toHaveText" @ a.test.ts:7
+expect    |  Expect "toHaveText" locator('div') @ a.test.ts:7
 test.step |  iteration 1 @ a.test.ts:9
-expect    |    Expect "toBeVisible" @ a.test.ts:10
+expect    |    Expect "toBeVisible" locator('div') @ a.test.ts:10
 expect    |  Expect "toBe" @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
-expect    |  Expect "toHaveText" @ a.test.ts:7
+expect    |  Expect "toHaveText" locator('div') @ a.test.ts:7
 test.step |  iteration 2 @ a.test.ts:9
-expect    |    Expect "toBeVisible" @ a.test.ts:10
+expect    |    Expect "toBeVisible" locator('div') @ a.test.ts:10
 expect    |  Expect "toBe" @ a.test.ts:6
 hook      |After Hooks
 fixture   |  Fixture "page"
@@ -1451,7 +1451,7 @@ pw:api    |  Wait for event "response" @ a.test.ts:7
 pw:api    |  Click locator('div') @ a.test.ts:14
 pw:api    |  Get content @ a.test.ts:8
 pw:api    |  Get content @ a.test.ts:9
-expect    |  Expect "toContainText" @ a.test.ts:10
+expect    |  Expect "toContainText" locator('div') @ a.test.ts:10
 expect    |Expect "toBe" @ a.test.ts:18
 hook      |After Hooks
 fixture   |  Fixture "page"
@@ -1745,7 +1745,7 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 pw:api    |Set content @ a.test.ts:16
-expect    |Expect "toBeInvisible" @ a.test.ts:17
+expect    |Expect "toBeInvisible" locator('div') @ a.test.ts:17
 expect    |  Expect "poll toBe" @ a.test.ts:7
 pw:api    |    Query count locator('div').filter({ visible: true }) @ a.test.ts:7
 expect    |    Expect "toBe" @ a.test.ts:7
@@ -1829,7 +1829,7 @@ pw:api    |      Navigate to "data:" @ a.test.ts:16
 pw:api    |  Set content @ a.test.ts:22
 test.step |  inner step @ a.test.ts:23
 pw:api    |    Navigate to "data:" @ a.test.ts:24
-expect    |Expect "toBeVisible" @ a.test.ts:32
+expect    |Expect "toBeVisible" locator('body') @ a.test.ts:32
 expect    |Expect "toBe" @ a.test.ts:33
 expect    |Expect "toBe" @ a.test.ts:34
 expect    |Expect "toBe" @ a.test.ts:35
