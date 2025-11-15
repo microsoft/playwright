@@ -26,6 +26,7 @@ const fps = 25;
 export class VideoRecorder {
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
+  private _launchTimestamp: number = 0;
   private _lastWritePromise: Promise<void> = Promise.resolve();
   private _lastFrameTimestamp: number = 0;
   private _lastFrameBuffer: Buffer | null = null;
@@ -115,6 +116,7 @@ export class VideoRecorder {
     });
     this._process = launchedProcess;
     this._gracefullyClose = gracefullyClose;
+    this._launchTimestamp = monotonicTime();
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
@@ -122,16 +124,23 @@ export class VideoRecorder {
     if (this._isStopped)
       return;
 
+    if (timestamp - this._lastFrameTimestamp < 1 / fps) {
+      this._lastFrameBuffer = frame;
+      return;
+    }
+
     if (this._lastFrameBuffer) {
       const durationSec = timestamp - this._lastFrameTimestamp;
       const repeatCount = Math.max(1, Math.round(fps * durationSec));
       for (let i = 0; i < repeatCount; ++i)
         this._frameQueue.push(this._lastFrameBuffer);
       this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
+      this._lastFrameTimestamp += repeatCount / fps;
+    } else {
+      this._lastFrameTimestamp = timestamp - (monotonicTime() - this._launchTimestamp) / 1000;
     }
 
     this._lastFrameBuffer = frame;
-    this._lastFrameTimestamp = timestamp;
     this._lastWriteTimestamp = monotonicTime();
   }
 
