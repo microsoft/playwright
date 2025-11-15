@@ -22,7 +22,6 @@ import type * as channels from '@protocol/channels';
 
 export class Selectors {
   private readonly _builtinEngines: Set<string>;
-  private readonly _builtinEnginesInMainWorld: Set<string>;
   readonly _engines: Map<string, channels.SelectorEngine>;
   readonly guid = `selectors@${createGuid()}`;
   private _testIdAttributeName: string;
@@ -32,7 +31,6 @@ export class Selectors {
     this._builtinEngines = new Set([
       'css', 'css:light',
       'xpath', 'xpath:light',
-      '_react', '_vue',
       'text', 'text:light',
       'id', 'id:light',
       'data-testid', 'data-testid:light',
@@ -45,9 +43,6 @@ export class Selectors {
       'role', 'internal:attr', 'internal:label', 'internal:text',
       'internal:role', 'internal:testid', 'internal:describe',
       'aria-ref'
-    ]);
-    this._builtinEnginesInMainWorld = new Set([
-      '_react', '_vue',
     ]);
     this._engines = new Map();
     this._testIdAttributeName = testIdAttributeName ?? 'data-testid';
@@ -83,8 +78,6 @@ export class Selectors {
       if (!custom && !this._builtinEngines.has(name))
         throw new InvalidSelectorError(`Unknown engine "${name}" while parsing selector ${stringifySelector(parsed)}`);
       if (custom && !custom.contentScript)
-        needsMainWorld = true;
-      if (this._builtinEnginesInMainWorld.has(name))
         needsMainWorld = true;
     });
     return {
