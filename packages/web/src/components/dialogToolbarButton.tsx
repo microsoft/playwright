@@ -21,20 +21,27 @@ import { Dialog } from '../shared/dialog';
 export interface DialogToolbarButtonProps {
   title?: string;
   icon?: string;
+  buttonChildren?: React.ReactNode;
+  anchorRef?: React.RefObject<HTMLElement | null>;
   dialogDataTestId?: string;
 }
 
-export const DialogToolbarButton: React.FC<React.PropsWithChildren<DialogToolbarButtonProps>> = ({ title, icon, dialogDataTestId, children }) => {
-  const hostingRef = React.useRef<HTMLButtonElement>(null);
+export const DialogToolbarButton: React.FC<React.PropsWithChildren<DialogToolbarButtonProps>> = ({ title, icon, buttonChildren, anchorRef, dialogDataTestId, children }) => {
+  const buttonRef = React.useRef<HTMLButtonElement>(null);
+  const anchor = anchorRef ?? buttonRef;
+
   const [open, setOpen] = React.useState(false);
   return (
     <>
       <ToolbarButton
-        ref={hostingRef}
+        ref={buttonRef}
         icon={icon}
         title={title}
         onClick={() => setOpen(current => !current)}
-      />
+      >
+        {buttonChildren}
+      </ToolbarButton>
+
       <Dialog
         style={{
           backgroundColor: 'var(--vscode-sideBar-background)',
@@ -44,7 +51,7 @@ export const DialogToolbarButton: React.FC<React.PropsWithChildren<DialogToolbar
         // TODO: Temporary spacing until design of toolbar buttons is revisited
         verticalOffset={8}
         requestClose={() => setOpen(false)}
-        anchor={hostingRef}
+        anchor={anchor}
         dataTestId={dialogDataTestId}
       >
         {children}
