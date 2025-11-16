@@ -58,6 +58,7 @@ test('planner_setup_page', async ({ startClient }) => {
     arguments: {
       element: 'Submit button',
       ref: 'e2',
+      intent: 'Click on the "Submit" button',
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,

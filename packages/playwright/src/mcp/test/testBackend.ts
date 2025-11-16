@@ -14,22 +14,16 @@
  * limitations under the License.
  */
 
-import { debug } from 'playwright-core/lib/utilsBundle';
-import { ManualPromise } from 'playwright-core/lib/utils';
-
 import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
 import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
 import { browserTools } from '../browser/tools';
-import { resolveConfigLocation } from '../../common/configLoader';
-import { parseResponse } from '../browser/response';
+import { z as zod } from  '../sdk/bundle';
 
 import type { TestTool } from './testTool';
-import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
-
-const errorsDebug = debug('pw:mcp:errors');
+import type { Tool as BrowserTool } from '../browser/tools/tool';
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';
@@ -44,103 +38,55 @@ export class TestServerBackend implements mcp.ServerBackend {
     testTools.listTests,
     testTools.runTests,
     testTools.debugTest,
+    ...browserTools.map(tool => wrapBrowserTool(tool)),
   ];
-  private _context: TestContext;
+  private _options: { muteConsole?: boolean, headless?: boolean };
+  private _context: TestContext | undefined;
   private _configOption: string | undefined;
-  private _clientInfo: mcp.ClientInfo | undefined;
-  private _onPauseClient: { sendMessage: (request: BrowserMCPRequest) => Promise<BrowserMCPResponse>, tools: mcp.Tool[] } | undefined;
-  private _interruptPromise: ManualPromise<mcp.CallToolResult> | undefined;
-  private _progress: mcp.CallToolResult['content'] = [];
-  private _progressCallback: mcp.ProgressCallback;
 
   constructor(configOption: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
-    this._context = new TestContext(this._pushClient.bind(this), options);
+    this._options = options || {};
     this._configOption = configOption;
-    this._progressCallback = (params: mcp.ProgressParams) => {
-      if (params.message)
-        this._progress.push({ type: 'text', text: params.message });
-    };
-  }
-
-  private async _pushClient(sendMessage: (request: BrowserMCPRequest) => Promise<BrowserMCPResponse>) {
-    try {
-      const initializeResponse = await sendMessage({ initialize: { clientInfo: this._clientInfo! } });
-      const listToolsResponse = await sendMessage({ listTools: {} });
-      const tools = listToolsResponse.listTools!;
-      this._onPauseClient = { sendMessage, tools };
-      this._interruptPromise?.resolve({
-        content: [{
-          type: 'text',
-          text: initializeResponse.initialize!.pausedMessage,
-        }],
-      });
-      this._interruptPromise = undefined;
-    } catch {
-    }
   }
 
   async initialize(clientInfo: mcp.ClientInfo): Promise<void> {
-    this._clientInfo = clientInfo;
-    const rootPath = mcp.firstRootPath(clientInfo);
-
-    if (this._configOption) {
-      this._context.initialize(rootPath, resolveConfigLocation(this._configOption));
-      return;
-    }
-
-    if (rootPath) {
-      this._context.initialize(rootPath, resolveConfigLocation(rootPath));
-      return;
-    }
-
-    this._context.initialize(rootPath, resolveConfigLocation(undefined));
+    this._context = new TestContext(clientInfo, this._configOption, this._options);
   }
 
   async listTools(): Promise<mcp.Tool[]> {
-    return [
-      ...this._tools.map(tool => mcp.toMcpTool(tool.schema)),
-      ...browserTools.map(tool => mcp.toMcpTool(tool.schema, { addIntent: true })),
-    ];
+    return this._tools.map(tool => mcp.toMcpTool(tool.schema));
   }
 
   async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
-    if (this._onPauseClient?.tools.find(tool => tool.name === name)) {
-      const callToolRespone = await this._onPauseClient.sendMessage({ callTool: { name, arguments: args } });
-      const result = callToolRespone.callTool!;
-      const response = parseResponse(result);
-      if (response && !response.isError && response.code && typeof args?.['intent'] === 'string')
-        this._context.generatorJournal?.logStep(args['intent'], response.code);
-      return result;
-    }
-
-    await this._onPauseClient?.sendMessage({ close: {} }).catch(errorsDebug);
-    this._onPauseClient = undefined;
-
-    const resultPromise = new ManualPromise<mcp.CallToolResult>();
-    const interruptPromise = new ManualPromise<mcp.CallToolResult>();
-    this._interruptPromise = interruptPromise;
-
-    this._callTestTool(name, args).then(result => {
-      resultPromise.resolve(result);
-    }).catch(e => {
-      resultPromise.resolve({ content: [{ type: 'text', text: String(e) }], isError: true });
-    });
-
-    const result = await Promise.race([interruptPromise, resultPromise]);
-    result.content.unshift(...this._progress);
-    this._progress.length = 0;
-    return result;
-  }
-
-  private async _callTestTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
     const tool = this._tools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
-    const parsedArguments = tool.schema.inputSchema.parse(args || {});
-    return await tool.handle(this._context!, parsedArguments, this._progressCallback);
+    try {
+      return await tool.handle(this._context!, tool.schema.inputSchema.parse(args || {}));
+    } catch (e) {
+      return { content: [{ type: 'text', text: String(e) }], isError: true };
+    }
   }
 
   serverClosed() {
     void this._context!.close();
   }
+}
+
+const typesWithIntent = ['action', 'assertion', 'input'];
+
+function wrapBrowserTool(tool: BrowserTool): TestTool {
+  const inputSchema = typesWithIntent.includes(tool.schema.type) ? (tool.schema.inputSchema as any).extend({
+    intent: zod.string().describe('The intent of the call, for example the test step description plan idea')
+  }) : tool.schema.inputSchema;
+  return {
+    schema: {
+      ...tool.schema,
+      inputSchema,
+    },
+    handle: async (context: TestContext, params: any) => {
+      const response = await context.sendMessageToPausedTest({ callTool: { name: tool.schema.name, arguments: params } });
+      return response.callTool!;
+    },
+  };
 }

@@ -89,6 +89,8 @@ export const GlobalFilterView: React.FC<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
+  const searchParams = React.useContext(SearchParamsContext);
+
   return <nav>
     <Link className='subnav-item' href='#?'>
       <span className='subnav-item-label'>All</span>
@@ -98,7 +100,7 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
-    <Link className='subnav-item' href='#?speedboard' title='Speedboard'>
+    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={searchParams.has('speedboard')}>
       {icons.clock()}
     </Link>
     <SettingsButton />
@@ -109,7 +111,10 @@ const NavLink: React.FC<{
   token: string,
   count: number,
 }> = ({ token, count }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = new URLSearchParams(React.useContext(SearchParamsContext));
+  searchParams.delete('speedboard');
+  searchParams.delete('testId');
+
   const queryToken = `s:${token}`;
 
   const clickUrl = filterWithQuery(searchParams, queryToken, false);

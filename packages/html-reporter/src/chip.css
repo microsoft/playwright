@@ -50,6 +50,7 @@
   border-bottom-right-radius: 6px;
   padding: 16px;
   margin-bottom: 12px;
+  overflow: hidden;
 }
 
 .chip-body-no-insets {
@@ -58,7 +59,6 @@
 
 .chip-footer {
   border-top: 1px solid var(--color-border-default);
-  padding: 8px;
 }
 
 @media only screen and (max-width: 600px) {

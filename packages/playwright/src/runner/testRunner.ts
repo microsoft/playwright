@@ -82,7 +82,7 @@ export type RunTestsParams = {
   failOnLoadErrors?: boolean;
 };
 
-type FullResultStatus = reporterTypes.FullResult['status'];
+export type FullResultStatus = reporterTypes.FullResult['status'];
 
 export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;
@@ -324,10 +324,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       ...(params.updateSourceMethod ? { updateSourceMethod: params.updateSourceMethod } : {}),
       ...(params.workers ? { workers: params.workers } : {}),
     };
-    if (params.trace === 'on')
-      process.env.PW_LIVE_TRACE_STACKS = '1';
-    else
-      process.env.PW_LIVE_TRACE_STACKS = undefined;
 
     const config = await this._loadConfigOrReportError(new InternalReporter([userReporter]), overrides);
     if (!config)

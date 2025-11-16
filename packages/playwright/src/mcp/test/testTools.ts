@@ -17,7 +17,6 @@
 import { z } from '../sdk/bundle';
 import ListModeReporter from '../../reporters/listModeReporter';
 import { defineTestTool } from './testTool';
-import { createScreen } from './testContext';
 
 export const listTests = defineTestTool({
   schema: {
@@ -28,13 +27,11 @@ export const listTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, _, progress) => {
-    const { screen } = createScreen(progress);
+  handle: async context => {
+    const { testRunner, screen, output } = await context.createTestRunner();
     const reporter = new ListModeReporter({ screen, includeTestId: true });
-    const testRunner = await context.createTestRunner();
     await testRunner.listTests(reporter, {});
-
-    return { content: [] };
+    return { content: output.map(text => ({ type: 'text', text })) };
   },
 });
 
@@ -50,16 +47,13 @@ export const runTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params, progress) => {
-    await context.runWithGlobalSetup(async (testRunner, reporter) => {
-      await testRunner.runTests(reporter, {
-        locations: params.locations,
-        projects: params.projects,
-        disableConfigReporters: true,
-      });
-    }, progress);
-
-    return { content: [] };
+  handle: async (context, params) => {
+    const { output } = await context.runTestsWithGlobalSetupAndPossiblePause({
+      locations: params.locations,
+      projects: params.projects,
+      disableConfigReporters: true,
+    });
+    return { content: [{ type: 'text', text: output }] };
   },
 });
 
@@ -77,20 +71,17 @@ export const debugTest = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params, progress) => {
-    await context.runWithGlobalSetup(async (testRunner, reporter) => {
-      await testRunner.runTests(reporter, {
-        headed: context.computedHeaded,
-        testIds: [params.test.id],
-        // For automatic recovery
-        timeout: 0,
-        workers: 1,
-        pauseOnError: true,
-        disableConfigReporters: true,
-        actionTimeout: 5000,
-      });
-    }, progress);
-
-    return { content: [] };
+  handle: async (context, params) => {
+    const { output, status } = await context.runTestsWithGlobalSetupAndPossiblePause({
+      headed: context.computedHeaded,
+      testIds: [params.test.id],
+      // For automatic recovery
+      timeout: 0,
+      workers: 1,
+      pauseOnError: true,
+      disableConfigReporters: true,
+      actionTimeout: 5000,
+    });
+    return { content: [{ type: 'text', text: output }], isError: status !== 'paused' && status !== 'passed' };
   },
 });

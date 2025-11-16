@@ -40,8 +40,7 @@ export const Chip: React.FC<{
       className={clsx('chip-header', setExpanded && ' expanded-' + expanded)}
       onClick={() => setExpanded?.(!expanded)}
       title={typeof header === 'string' ? header : undefined}>
-      {setExpanded && !!expanded && icons.downArrow()}
-      {setExpanded && !expanded && icons.rightArrow()}
+      {setExpanded ? (expanded ? <icons.downArrow /> : <icons.rightArrow />) : <icons.spacer />}
       {header}
     </div>
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
