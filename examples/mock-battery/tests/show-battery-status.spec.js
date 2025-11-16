@@ -4,7 +4,6 @@ const { test, expect } = require('@playwright/test');
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
     const mockBattery = {
-      level: 0.90,
       charging: true,
       chargingTime: 1800, // seconds
       dischargingTime: Infinity,
