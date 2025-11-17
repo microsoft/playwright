@@ -769,6 +769,19 @@ When set to `minimal`, only record information necessary for routing from HAR. T
   - alias-python: record_har_url_filter
 - `recordHarUrlFilter` ?<[string]|[RegExp]>
 
+## context-option-recordselectors
+* langs: js
+- `recordSelectors` <[boolean]>
+
+Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }` describing the action so you can consume the selectors in your own tooling.
+
+## context-option-recordselectors-csharp-java-python
+* langs: csharp, java, python
+  - alias-python: record_selectors
+- `recordSelectors` <[boolean]>
+
+Same as [`option: recordSelectors`] in JavaScript.
+
 ## context-option-recordvideo
 * langs: js
 - `recordVideo` <[Object]>
@@ -1013,6 +1026,8 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordhar-content-%%
 - %%-context-option-recordhar-mode-%%
 - %%-context-option-recordhar-url-filter-%%
+- %%-context-option-recordselectors-%%
+- %%-context-option-recordselectors-csharp-java-python-%%
 - %%-context-option-recordvideo-%%
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
@@ -1897,4 +1912,3 @@ In this config:
 1. Second project **does** have a name, so its snapshots will be stored in `<configDir>/__screenshots__/chromium/example.spec.ts/..`.
 1. Since `snapshotPathTemplate` resolves to relative path, it will be resolved relative to `configDir`.
 1. Forward slashes `"/"` can be used as path separators on any platform.
-

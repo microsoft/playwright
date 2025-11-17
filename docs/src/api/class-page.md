@@ -557,6 +557,12 @@ Emitted when [WebSocket] request is sent.
 Emitted when a dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is spawned by the
 page.
 
+## event: Page.recorderaction
+* since: v1.57
+- argument: <[RecorderActionPayload]>
+
+Same as [`event: BrowserContext.recorderaction`], but emitted only for actions originating from this page. Requires [`option: Browser.newContext.recordSelectors`].
+
 ## async method: Page.addInitScript
 * since: v1.8
 

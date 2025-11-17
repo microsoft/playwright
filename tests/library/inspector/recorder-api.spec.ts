@@ -18,6 +18,7 @@ import { test, expect } from './inspectorTest';
 
 import type { Page } from '@playwright/test';
 import type * as actions from '@recorder/actions';
+import type * as channels from '@protocol/channels';
 
 class RecorderLog {
   actions: (actions.ActionInContext & { code: string })[] = [];
@@ -31,11 +32,12 @@ class RecorderLog {
   }
 }
 
-async function startRecording(context) {
+async function startRecording(context, params: Partial<channels.BrowserContextEnableRecorderParams> = {}) {
   const log = new RecorderLog();
   await (context as any)._enableRecorder({
     mode: 'recording',
     recorderMode: 'api',
+    ...params,
   }, log);
   return {
     action: (name: string) => log.actions.filter(a => a.action.name === name),
@@ -150,4 +152,45 @@ test('should disable recorder', async ({ context }) => {
   await (context as any)._disableRecorder();
   await page.getByRole('button', { name: 'Submit' }).click();
   expect(log.action('click')).toHaveLength(2);
+});
+
+test('should collect multiple selectors when requested', async ({ context }) => {
+  const log = await startRecording(context, { collectSelectors: true });
+  const page = await context.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  const clickActions = log.action('click');
+  expect(clickActions[0].action.selectors?.length).toBeGreaterThan(1);
+});
+
+test('should emit recorder action events for recordSelectors option', async ({ context }) => {
+  const recordedContext = await context.browser().newContext({ recordSelectors: true });
+  const events: { action: string, selector: string, selectors: string[], role?: string, text?: string }[] = [];
+  recordedContext.on('recorderaction' as any, (payload: { action: string, selector: string, selectors: string[], role?: string, text?: string }) => events.push(payload));
+
+  const page = await recordedContext.newPage();
+  await page.setContent(`<button>Submit</button>`);
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  expect(events).toHaveLength(1);
+  expect(events[0].action).toBe('click');
+  expect(events[0].selectors.length).toBeGreaterThan(1);
+  await recordedContext.close();
+});
+
+test('should emit recorder action for each fill', async ({ context }) => {
+  const recordedContext = await context.browser().newContext({ recordSelectors: true });
+  const events: { action: string, value?: string }[] = [];
+  recordedContext.on('recorderaction' as any, (payload: { action: string, value?: string }) => events.push(payload));
+
+  const page = await recordedContext.newPage();
+  await page.setContent(`<input type="text" />`);
+  await page.getByRole('textbox').fill('Hello');
+  await page.getByRole('textbox').fill('World');
+
+  const fills = events.filter(e => e.action === 'fill');
+  expect(fills).toHaveLength(2);
+  expect(fills.map(e => e.value)).toEqual(['Hello', 'World']);
+  await recordedContext.close();
 });

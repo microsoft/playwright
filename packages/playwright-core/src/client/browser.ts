@@ -79,14 +79,16 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
       ...this._browserType._playwright._defaultContextOptions,
       ...options,
     });
-    const contextOptions = await prepareBrowserContextParams(this._platform, options);
-    const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
+    const { recordSelectors, ...contextOptions } = options;
+    const contextParams = await prepareBrowserContextParams(this._platform, contextOptions as BrowserContextOptions);
+    const response = forReuse ? await this._channel.newContextForReuse(contextParams) : await this._channel.newContext(contextParams);
     const context = BrowserContext.from(response.context);
     if (forReuse)
       context._forReuse = true;
     if (options.logger)
       context._logger = options.logger;
     await context._initializeHarFromOptions(options.recordHar);
+    await context._initializeSelectorRecorder(recordSelectors);
     await this._instrumentation.runAfterCreateBrowserContext(context);
     return context;
   }

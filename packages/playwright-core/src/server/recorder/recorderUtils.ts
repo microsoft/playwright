@@ -89,8 +89,6 @@ export function shouldMergeAction(action: actions.ActionInContext, lastAction: a
   if (!lastAction)
     return false;
   switch (action.action.name) {
-    case 'fill':
-      return isSameAction(action, lastAction) && isSameSelector(action, lastAction);
     case 'navigate':
       return isSameAction(action, lastAction);
     case 'click':

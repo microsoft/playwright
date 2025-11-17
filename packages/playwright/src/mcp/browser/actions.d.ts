@@ -41,6 +41,7 @@ export type ActionBase = {
 
 export type ActionWithSelector = ActionBase & {
   selector: string,
+  selectors?: string[],
   ref?: string,
 };
 

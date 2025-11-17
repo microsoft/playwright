@@ -294,6 +294,23 @@ Service workers are only supported on Chromium-based browsers.
 
 Emitted when new service worker is created in the context.
 
+## event: BrowserContext.recorderaction
+* since: v1.57
+- argument: <[RecorderActionPayload]>
+
+Emitted when [`option: Browser.newContext.recordSelectors`] is enabled. Playwright records user interactions in programmatic mode and emits this event for every action that targets an element. Subscribe to [`event: Page.recorderaction`] if you need to attribute actions to individual pages.
+
+```js
+const context = await browser.newContext({ recordSelectors: true });
+context.on('recorderaction', action => {
+  console.log(action.action);
+  console.log(action.selector);
+  console.log(action.selectors);
+  console.log(action.role, action.text);
+  console.log(action.value);
+});
+```
+
 ## async method: BrowserContext.addCookies
 * since: v1.8
 

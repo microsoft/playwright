@@ -65,6 +65,7 @@ export type BrowserContextOptions = Omit<channels.BrowserNewContextOptions, 'vie
   videosPath?: string;
   videoSize?: Size;
   storageState?: string | SetStorageState;
+  recordSelectors?: boolean;
   har?: {
     path: string;
     fallback?: 'abort'|'continue';

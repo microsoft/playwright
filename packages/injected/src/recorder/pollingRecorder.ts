@@ -37,7 +37,7 @@ export class PollingRecorder implements RecorderDelegate {
   private _pollRecorderModeTimer: number | undefined;
   private _lastStateJSON: string | undefined;
 
-  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api' }) {
+  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api', collectSelectors?: boolean }) {
     this._recorder = new Recorder(injectedScript, options);
     this._embedder = injectedScript.window as any;
 

@@ -78,6 +78,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
   private _onRecorderEventSink: RecorderEventSink | undefined;
+  private _selectorRecorderEnabled = false;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -179,6 +180,82 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       updateContent: recordHar.content ?? (recordHar.omitContent ? 'omit' : defaultContent),
       updateMode: recordHar.mode ?? 'full',
     });
+  }
+
+  async _initializeSelectorRecorder(recordSelectors: BrowserContextOptions['recordSelectors']) {
+    if (!recordSelectors || this._selectorRecorderEnabled)
+      return;
+    this._selectorRecorderEnabled = true;
+    await this._enableRecorder({
+      mode: 'recording',
+      recorderMode: 'api',
+      collectSelectors: true,
+    }, {
+      actionAdded: (page: Page, actionInContext: actions.ActionInContext, code: string) => {
+        this._emitRecorderAction(page, actionInContext, code);
+      },
+    });
+  }
+
+  private _emitRecorderAction(page: Page, actionInContext: actions.ActionInContext, _code: string) {
+    const simplified = this._simplifyRecordedAction(actionInContext);
+    if (!simplified)
+      return;
+    this.emit(Events.BrowserContext.RecorderAction, simplified);
+    page?.emit(Events.Page.RecorderAction, simplified);
+  }
+
+  private _simplifyRecordedAction(actionInContext: actions.ActionInContext) {
+    const action = actionInContext.action as actions.ActionWithSelector;
+    if (!action.selector)
+      return null;
+    const metadata = this._metadataFromSelectors(action.selector, action.selectors || []);
+    const value = this._actionValue(actionInContext.action as actions.Action);
+    return {
+      action: action.name,
+      selector: action.selector,
+      selectors: action.selectors || [],
+      role: metadata.role,
+      text: metadata.text,
+      value,
+    };
+  }
+
+  private _metadataFromSelectors(primary: string, selectors: string[]): { role?: string, text?: string } {
+    const candidates = [primary, ...selectors];
+    let fallbackText: string | undefined;
+    for (const selector of candidates) {
+      fallbackText = fallbackText || selector;
+      const metadata = this._parseInternalRole(selector);
+      if (metadata)
+        return metadata;
+    }
+    return { role: 'element', text: fallbackText };
+  }
+
+  private _parseInternalRole(selector: string): { role?: string, text?: string } | null {
+    const roleMatch = selector.match(/internal:role=([a-z0-9-]+)/i);
+    if (!roleMatch)
+      return null;
+    const role = roleMatch[1].toLowerCase();
+    const nameMatch = selector.match(/\[name=(?:"([^"]*)"|'([^']*)')/i);
+    const text = nameMatch ? (nameMatch[1] ?? nameMatch[2]) : undefined;
+    return { role, text };
+  }
+
+  private _actionValue(action: actions.Action): string | undefined {
+    switch (action.name) {
+      case 'fill':
+        return (action as actions.FillAction).text;
+      case 'assertText':
+        return (action as actions.AssertTextAction).text;
+      case 'assertValue':
+        return (action as actions.AssertValueAction).value;
+      case 'setInputFiles':
+        return (action as actions.SetInputFilesAction).files.join(', ');
+      default:
+        return undefined;
+    }
   }
 
   private _onPage(page: Page): void {

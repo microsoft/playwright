@@ -27,7 +27,7 @@ import { connectOverWebSocket } from './webSocket';
 import { TimeoutSettings } from './timeoutSettings';
 
 import type { Playwright } from './playwright';
-import type { ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
+import type { BrowserContextOptions, ConnectOptions, LaunchOptions, LaunchPersistentContextOptions, LaunchServerOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 import type { ChildProcess } from 'child_process';
@@ -98,7 +98,8 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ...this._playwright._defaultContextOptions,
       ...options,
     });
-    const contextParams = await prepareBrowserContextParams(this._platform, options);
+    const { recordSelectors, ...contextOptions } = options;
+    const contextParams = await prepareBrowserContextParams(this._platform, contextOptions as BrowserContextOptions);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,
       ignoreDefaultArgs: Array.isArray(options.ignoreDefaultArgs) ? options.ignoreDefaultArgs : undefined,
@@ -114,6 +115,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       browser._connectToBrowserType(this, options, logger);
       const context = BrowserContext.from(result.context);
       await context._initializeHarFromOptions(options.recordHar);
+      await context._initializeSelectorRecorder(recordSelectors);
       return context;
     });
     await this._instrumentation.runAfterCreateBrowserContext(context);

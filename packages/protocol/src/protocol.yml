@@ -1327,6 +1327,7 @@ BrowserContext:
           literals:
           - default
           - api
+        collectSelectors: boolean?
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?
