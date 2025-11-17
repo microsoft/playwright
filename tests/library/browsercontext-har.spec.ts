@@ -358,6 +358,14 @@ it('should record overridden requests to har', async ({ contextFactory, server }
   expect(await page2.evaluate(fetchFunction, { path: '/echo', body: '12' })).toBe('12');
 });
 
+it('should replay requests with multiple set-cookie headers properly', async ({ context, asset }) => {
+  const path = asset('har-fulfill.har');
+  await context.routeFromHAR(path);
+  const page = await context.newPage();
+  await page.goto('http://no.playwright/');
+  expect(await page.context().cookies()).toEqual([expect.objectContaining({ name: 'playwright', value: 'works' }), expect.objectContaining({ name: 'with', value: 'multiple-set-cookie-headers' })]);
+});
+
 it('should disambiguate by header', async ({ contextFactory, server }, testInfo) => {
   server.setRoute('/echo', async (req, res) => {
     res.end(req.headers['baz']);
