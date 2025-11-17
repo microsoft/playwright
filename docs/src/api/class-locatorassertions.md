@@ -2374,6 +2374,7 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 * since: v1.49
 
 ### option: LocatorAssertions.toMatchAriaSnapshot.update = %%-assertions-aria-snapshot-update-%%
+* langs: js
 
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.50
@@ -2399,6 +2400,7 @@ Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.update = %%-assertions-aria-snapshot-update-%%
+* langs: js
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50

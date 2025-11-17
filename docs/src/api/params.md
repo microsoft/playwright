@@ -1900,6 +1900,7 @@ In this config:
 
 ## assertions-aria-snapshot-update
 * since: v1.57
+* langs: js
 - `update` <["raw"]|["relaxed"]>
 
 Defines how snapshots are written when updating. Defaults to `'relaxed'`.
