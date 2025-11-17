@@ -39,7 +39,7 @@ export const TestListView: React.FC<{
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
   testModel?: TeleSuiteUpdaterTestModel,
-  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
+  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>, locations: Set<string>) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
   watchedTreeIds: { value: Set<string> },
@@ -139,7 +139,8 @@ export const TestListView: React.FC<{
 
   const runTreeItem = (treeItem: TreeItem) => {
     setSelectedTreeItemId(treeItem.id);
-    runTests('bounce-if-busy', testTree.collectTestIds(treeItem));
+    const { testIds, locations } = testTree.collectTestIds(treeItem);
+    runTests('bounce-if-busy', testIds, locations);
   };
 
   const handleTagClick = (e: React.MouseEvent, tag: string) => {

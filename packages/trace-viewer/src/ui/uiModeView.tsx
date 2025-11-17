@@ -88,7 +88,7 @@ export const UIModeView: React.FC<{}> = ({
   const [watchAll, setWatchAll] = useSetting<boolean>('watch-all', false);
   const [watchedTreeIds, setWatchedTreeIds] = React.useState<{ value: Set<string> }>({ value: new Set() });
   const commandQueue = React.useRef(Promise.resolve());
-  const runTestBacklog = React.useRef<Set<string>>(new Set());
+  const runTestBacklog = React.useRef<{ testIds: Set<string>, locations: Set<string> }>({ testIds: new Set(), locations: new Set() });
   const [collapseAllCount, setCollapseAllCount] = React.useState(0);
   const [expandAllCount, setExpandAllCount] = React.useState(0);
   const [isDisconnected, setIsDisconnected] = React.useState(false);
@@ -251,16 +251,19 @@ export const UIModeView: React.FC<{}> = ({
     return { testTree };
   }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, mergeFiles]);
 
-  const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>) => {
+  const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>, locations: Set<string>) => {
     if (!testServerConnection || !testModel)
       return;
     if (mode === 'bounce-if-busy' && isRunningTest)
       return;
 
-    runTestBacklog.current = new Set([...runTestBacklog.current, ...testIds]);
+    for (const testId of testIds)
+      runTestBacklog.current.testIds.add(testId);
+    for (const location of locations)
+      runTestBacklog.current.locations.add(location);
     commandQueue.current = commandQueue.current.then(async () => {
-      const testIds = runTestBacklog.current;
-      runTestBacklog.current = new Set();
+      const { testIds, locations } = runTestBacklog.current;
+      runTestBacklog.current = { testIds: new Set(), locations: new Set() };
       if (!testIds.size)
         return;
 
@@ -282,7 +285,7 @@ export const UIModeView: React.FC<{}> = ({
       setRunningState({ testIds });
 
       await testServerConnection.runTests({
-        locations: queryParams.args,
+        locations: [...locations],
         grep: queryParams.grep,
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
@@ -301,6 +304,8 @@ export const UIModeView: React.FC<{}> = ({
       setRunningState(oldState => oldState ? ({ ...oldState, completed: true }) : undefined);
     });
   }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker]);
+
+  const runVisibleTests = React.useCallback(() => runTests('bounce-if-busy', visibleTestIds, new Set(queryParams.args)), [runTests, visibleTestIds]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -329,12 +334,16 @@ export const UIModeView: React.FC<{}> = ({
       const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
 
       const testIds: string[] = [];
+      const locations: string[] = [];
       const set = new Set(params.testFiles);
       if (watchAll) {
         const visit = (treeItem: TreeItem) => {
           const fileName = treeItem.location.file;
-          if (fileName && set.has(fileName))
-            testIds.push(...testTree.collectTestIds(treeItem));
+          if (fileName && set.has(fileName)) {
+            const { testIds: ids, locations: locs } = testTree.collectTestIds(treeItem);
+            testIds.push(...ids);
+            locations.push(...locs);
+          }
           if (treeItem.kind === 'group' && treeItem.subKind === 'folder')
             treeItem.children.forEach(visit);
         };
@@ -343,11 +352,14 @@ export const UIModeView: React.FC<{}> = ({
         for (const treeId of watchedTreeIds.value) {
           const treeItem = testTree.treeItemById(treeId);
           const fileName = treeItem?.location.file;
-          if (fileName && set.has(fileName))
-            testIds.push(...testTree.collectTestIds(treeItem));
+          if (fileName && set.has(fileName)) {
+            const { testIds: ids, locations: locs } = testTree.collectTestIds(treeItem);
+            testIds.push(...ids);
+            locations.push(...locs);
+          }
         }
       }
-      runTests('queue-if-busy', new Set(testIds));
+      runTests('queue-if-busy', new Set(testIds), new Set(locations));
     });
     return () => disposable.dispose();
   }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles]);
@@ -365,14 +377,14 @@ export const UIModeView: React.FC<{}> = ({
         testServerConnection?.stopTestsNoReply({});
       } else if (e.code === 'F5') {
         e.preventDefault();
-        runTests('bounce-if-busy', visibleTestIds);
+        runVisibleTests();
       }
     };
     addEventListener('keydown', onShortcutEvent);
     return () => {
       removeEventListener('keydown', onShortcutEvent);
     };
-  }, [runTests, reloadTests, testServerConnection, visibleTestIds, isShowingOutput]);
+  }, [runVisibleTests, reloadTests, testServerConnection, isShowingOutput]);
 
   const dialogRef = React.useRef<HTMLDialogElement>(null);
   const openInstallDialog = React.useCallback((e: React.MouseEvent) => {
@@ -456,7 +468,7 @@ export const UIModeView: React.FC<{}> = ({
           projectFilters={projectFilters}
           setProjectFilters={setProjectFilters}
           testModel={testModel}
-          runTests={() => runTests('bounce-if-busy', visibleTestIds)} />
+          runTests={() => runVisibleTests()} />
         <Toolbar className='section-toolbar' noMinHeight={true}>
           {!isRunningTest && !progress && <div className='section-title'>Tests</div>}
           {!isRunningTest && progress && <div data-testid='status-line' className='status-line'>
@@ -465,7 +477,7 @@ export const UIModeView: React.FC<{}> = ({
           {isRunningTest && progress && <div data-testid='status-line' className='status-line'>
             <div>Running {progress.passed}/{runningState.testIds.size} passed ({(progress.passed / runningState.testIds.size) * 100 | 0}%)</div>
           </div>}
-          <ToolbarButton icon='play' title='Run all — F5' onClick={() => runTests('bounce-if-busy', visibleTestIds)} disabled={isRunningTest || isLoading}></ToolbarButton>
+          <ToolbarButton icon='play' title='Run all — F5' onClick={() => runVisibleTests()} disabled={isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='debug-stop' title={'Stop — ' + (isMac ? '⇧F5' : 'Shift + F5')} onClick={() => testServerConnection?.stopTests({})} disabled={!isRunningTest || isLoading}></ToolbarButton>
           <ToolbarButton icon='eye' title='Watch all' toggled={watchAll} onClick={() => {
             setWatchedTreeIds({ value: new Set() });
