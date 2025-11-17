@@ -66,6 +66,14 @@ if (queryParams.updateSnapshots && !['all', 'changed', 'none', 'missing'].includ
 
 const isMac = navigator.platform === 'MacIntel';
 
+function escapeRegex(text: string) {
+  // playwright interprets absolute paths as regex,
+  // removing the leading slash prevents that.
+  if (text.startsWith('/'))
+    text = text.substring(1);
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 export const UIModeView: React.FC<{}> = ({
 }) => {
   const [filterText, setFilterText] = React.useState<string>('');
@@ -285,7 +293,7 @@ export const UIModeView: React.FC<{}> = ({
       setRunningState({ testIds });
 
       await testServerConnection.runTests({
-        locations: [...locations],
+        locations: [...locations].map(escapeRegex),
         grep: queryParams.grep,
         grepInvert: queryParams.grepInvert,
         testIds: [...testIds],
