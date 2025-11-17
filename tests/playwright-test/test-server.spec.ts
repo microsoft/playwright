@@ -60,6 +60,7 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
     this.onTestPaused(params => this.events.push(['testPaused', params]));
+    this.onReport(params => this.events.push(['report', params]));
   }
 }
 
@@ -247,7 +248,7 @@ test('timeout override', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ timeout: 42 })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ timeout: 42, locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFiles }) => {
@@ -261,7 +262,7 @@ test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFile
       });
       `,
   });
-  expect(await testServerConnection.runTests({})).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
@@ -324,6 +325,6 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ pauseOnError: true })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
 });
