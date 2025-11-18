@@ -6,6 +6,41 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.57
+
+### Highlights
+
+- Speedboard
+- webserver: wait for output, capturing
+
+### New APIs
+
+- config.tag
+- worker.on('console')
+- serviceWorker.on('console')
+- locator.description()
+
+### Miscellaneous
+
+- global tag
+- Service Worker networking
+- various VS Code improvements
+
+### Breaking Changes
+- delete `page.accessibility`
+- Chrome for Testing everywhere but linux-arm64
+
+### Browser Versions
+
+- Chromium 143.0.7499.4
+- Mozilla Firefox 142.0.1
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome TODO
+- Microsoft Edge TODO
+
 ## Version 1.56
 
 <LiteYouTube
