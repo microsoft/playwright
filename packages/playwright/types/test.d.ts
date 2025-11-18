@@ -10211,8 +10211,6 @@ interface TestConfigWebServer {
      * `process.env['MY_SERVER_PORT']`.
      */
     stderr?: RegExp;
-
-    time?: number;
   };
 
   /**
