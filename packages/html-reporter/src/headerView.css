@@ -38,6 +38,11 @@
   line-height: 1.25;
 }
 
+.header-setting-theme {
+  display: grid;
+  margin-left: 22px
+}
+
 @media only screen and (max-width: 600px) {
   .header-view {
     padding: 0;

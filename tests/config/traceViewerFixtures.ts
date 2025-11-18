@@ -49,7 +49,7 @@ class TraceViewerPage {
   sourceCodeTab: Locator;
 
   settingsDialog: Locator;
-  darkModeSetting: Locator;
+  themeSetting: Locator;
   displayCanvasContentSetting: Locator;
 
   constructor(public page: Page) {
@@ -67,7 +67,7 @@ class TraceViewerPage {
     this.sourceCodeTab = page.getByRole('tabpanel', { name: 'Source' });
 
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
-    this.darkModeSetting = page.locator('.setting').getByText('Dark mode');
+    this.themeSetting = this.settingsDialog.getByRole('combobox', { name: 'Theme' });
     this.displayCanvasContentSetting = page.locator('.setting').getByText('Display canvas content');
   }
 
