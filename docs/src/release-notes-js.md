@@ -8,27 +8,73 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.57
 
-### Highlights
+### Speedboard
 
-- Speedboard
-- webserver: wait for output, capturing
+In HTML reporter, there's a new tab we call "Speedboard":
+
+![Speedboard](./images/speedboard.png)
+
+It shows you all your executed tests sorted by slowness,
+and can help you understand where your test suite is taking longer than expected.
+Take a look at yours - maybe you'll find some tests that are spending a longer time waiting than they should! 
+
+### Chrome for Testing
+
+Starting with this release, Playwright switches from its own build of Chromium, to using Google's [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/) builds.
+Both headed and headless browsers are subject to this.
+Your tests should still be passing after upgrading to Playwright 1.57.
+We're expecting no functional changes to come from this switch - the biggest change is the new icon and title in your toolbar:
+
+![new and old logo](./images/cft-logo-change.png)
+
+If you still see an unexpected behaviour change, please [file an issue](https://github.com/microsoft/playwright/issues/new).
+
+On Arm64 Linux, we continue to use our own build of Chromium.
+
+### Waiting for webserver output
+
+[`property: TestConfig.webServer`] added a `wait` field. Pass a regular expression, and Playwright will wait until the webserver logs match it.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  webServer: {
+    command: 'npm run start',
+    wait: {
+      stdout: '/Listening on port (?<my_server_port>\\d+)/'
+    },
+  },
+});
+```
+
+If you include a named capture group into the expression, then Playwright will provide the capture group contents via environment variables:
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+
+test('homepage', async ({ page }) => {
+  await page.goto('/');
+});
+```
+
+This is not just useful for capturing varying ports of dev servers:
+You can also use it to wait for readiness of a service that doesn't expose an HTTP readiness check, but instead prints a readiness message to stdout or stderr.
+
+### Breaking Changes
+
+- After 3 years of being deprecated, we removed `Page#accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
+- [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`] are deprecated in favour of the async [`method: Request.body`], [`method: Request.bodyBuffer`], [`method: Request.bodyJSON`].
 
 ### New APIs
 
-- config.tag
-- worker.on('console')
+* Option [`property: TestConfig.webServer`] added a `wait` field for specifying output  a process kill signal other than the default `SIGKILL`.
+- New property [`property: TestConfig.tag`] that's useful for differentiating between CI environments.
+- [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it.
+- [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
 - serviceWorker.on('console')
-- locator.description()
-
-### Miscellaneous
-
-- global tag
-- Service Worker networking
-- various VS Code improvements
-
-### Breaking Changes
-- delete `page.accessibility`
-- Chrome for Testing everywhere but linux-arm64
 
 ### Browser Versions
 
