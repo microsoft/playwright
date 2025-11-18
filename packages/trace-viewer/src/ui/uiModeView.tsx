@@ -257,16 +257,19 @@ export const UIModeView: React.FC<{}> = ({
     return { testTree };
   }, [filterText, testModel, statusFilters, projectFilters, runningState, isRunningTest, mergeFiles]);
 
-  const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>, locations: Set<string>) => {
+  const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testTree: TestTree, testItems: Iterable<TreeItem>) => {
     if (!testServerConnection || !testModel)
       return;
     if (mode === 'bounce-if-busy' && isRunningTest)
       return;
 
-    for (const testId of testIds)
-      runTestBacklog.current.testIds.add(testId);
-    for (const location of locations)
-      runTestBacklog.current.locations.add(location);
+    for (const testItem of testItems) {
+      const { testIds, locations } = testTree.collectTestIds(testItem);
+      for (const testId of testIds)
+        runTestBacklog.current.testIds.add(testId);
+      for (const location of locations)
+        runTestBacklog.current.locations.add(location);
+    }
     commandQueue.current = commandQueue.current.then(async () => {
       const { testIds, locations } = runTestBacklog.current;
       runTestBacklog.current = { testIds: new Set(), locations: new Set() };
@@ -311,10 +314,7 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker]);
 
-  const runVisibleTests = React.useCallback(() => {
-    const { testIds, locations } = testTree.collectTestIds(testTree.rootItem);
-    runTests('bounce-if-busy', testIds, locations);
-  }, [runTests, testTree]);
+  const runVisibleTests = React.useCallback(() => runTests('bounce-if-busy', testTree, [testTree.rootItem]), [runTests, testTree]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)
@@ -342,17 +342,13 @@ export const UIModeView: React.FC<{}> = ({
       const testModel = teleSuiteUpdater.asModel();
       const testTree = new TestTree('', testModel.rootSuite, testModel.loadErrors, projectFilters, queryParams.pathSeparator, mergeFiles);
 
-      const testIds: string[] = [];
-      const locations: string[] = [];
+      const testItems = new Set<TreeItem>();
       const set = new Set(params.testFiles);
       if (watchAll) {
         const visit = (treeItem: TreeItem) => {
           const fileName = treeItem.location.file;
-          if (fileName && set.has(fileName)) {
-            const { testIds: ids, locations: locs } = testTree.collectTestIds(treeItem);
-            testIds.push(...ids);
-            locations.push(...locs);
-          }
+          if (fileName && set.has(fileName))
+            testItems.add(treeItem);
           if (treeItem.kind === 'group' && treeItem.subKind === 'folder')
             treeItem.children.forEach(visit);
         };
@@ -361,14 +357,11 @@ export const UIModeView: React.FC<{}> = ({
         for (const treeId of watchedTreeIds.value) {
           const treeItem = testTree.treeItemById(treeId);
           const fileName = treeItem?.location.file;
-          if (fileName && set.has(fileName)) {
-            const { testIds: ids, locations: locs } = testTree.collectTestIds(treeItem);
-            testIds.push(...ids);
-            locations.push(...locs);
-          }
+          if (fileName && set.has(fileName))
+            testItems.add(treeItem);
         }
       }
-      runTests('queue-if-busy', new Set(testIds), new Set(locations));
+      runTests('queue-if-busy', testTree, testItems);
     });
     return () => disposable.dispose();
   }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles]);
