@@ -456,7 +456,7 @@ The list of reporters to use. Each reporter can be:
 * A module name like `'my-awesome-reporter'`.
 * A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
 
-You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
+You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`. If the property is not specified, Playwright uses the `'dot'` reporter when the CI environment variable is set, and the `'list'` reporter otherwise.
 
 Learn more in the [reporters guide](../test-reporters.md).
 
