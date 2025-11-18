@@ -20,7 +20,7 @@ Take a look at yours - maybe you'll find some tests that are spending a longer t
 
 ### Chrome for Testing
 
-Starting with this release, Playwright switches from its own build of Chromium, to using Google's [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/) builds.
+Starting with this release, Playwright switches from Chromium, to using [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/) builds.
 Both headed and headless browsers are subject to this.
 Your tests should still be passing after upgrading to Playwright 1.57.
 We're expecting no functional changes to come from this switch - the biggest change is the new icon and title in your toolbar:
@@ -29,9 +29,11 @@ We're expecting no functional changes to come from this switch - the biggest cha
 
 If you still see an unexpected behaviour change, please [file an issue](https://github.com/microsoft/playwright/issues/new).
 
-On Arm64 Linux, we continue to use our own build of Chromium.
+On Arm64 Linux, Playwright continues to use Chromium.
 
 ### Waiting for webserver output
+
+TODO: also add this to docs
 
 [`property: TestConfig.webServer`] added a `wait` field. Pass a regular expression, and Playwright will wait until the webserver logs match it.
 
@@ -66,16 +68,16 @@ You can also use it to wait for readiness of a service that doesn't expose an HT
 ### Breaking Changes
 
 - After 3 years of being deprecated, we removed `Page#accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
-- [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`] are deprecated in favour of the async [`method: Request.body`], [`method: Request.bodyBuffer`], [`method: Request.bodyJSON`].
 
 ### New APIs
 
-* Option [`property: TestConfig.webServer`] added a `wait` field for specifying output  a process kill signal other than the default `SIGKILL`.
-- New property [`property: TestConfig.tag`] that's useful for differentiating between CI environments.
+* Option [`property: TestConfig.webServer`] added a `wait` field TODO.
+- New property [`property: TestConfig.tag`] adds a tag to all tests in this run that's useful when using merge-report (TODO: link).
 - [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it.
 - [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
-- New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the clicked element. 
-- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [`class: BrowserContext`] objects and routes.
+- New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the target element. 
+- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [`class: BrowserContext`] objects and routes. TODO: mention opt-out. 
+- new method [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`] TODO
 
 ### Browser Versions
 
