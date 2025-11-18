@@ -30,8 +30,8 @@ export interface TabbedPaneTabModel {
 
 export const TabbedPane: React.FunctionComponent<{
   tabs: TabbedPaneTabModel[],
-  leftToolbar?: React.ReactElement[],
-  rightToolbar?: React.ReactElement[],
+  leftToolbar?: React.ReactNode[],
+  rightToolbar?: React.ReactNode[],
   selectedTab?: string,
   setSelectedTab?: (tab: string) => void,
   dataTestId?: string,
