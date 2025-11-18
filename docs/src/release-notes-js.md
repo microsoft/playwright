@@ -74,7 +74,8 @@ You can also use it to wait for readiness of a service that doesn't expose an HT
 - New property [`property: TestConfig.tag`] that's useful for differentiating between CI environments.
 - [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it.
 - [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
-- serviceWorker.on('console')
+- New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the clicked element. 
+- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [`class: BrowserContext`] objects and routes.
 
 ### Browser Versions
 
