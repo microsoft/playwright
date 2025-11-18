@@ -292,17 +292,6 @@ export class TestTree {
     this.rootItem = shortRoot;
   }
 
-  testIds(): Set<string> {
-    const result = new Set<string>();
-    const visit = (treeItem: TreeItem) => {
-      if (treeItem.kind === 'case')
-        treeItem.tests.forEach(t => result.add(t.id));
-      treeItem.children.forEach(visit);
-    };
-    visit(this.rootItem);
-    return result;
-  }
-
   fileNames(): string[] {
     const result = new Set<string>();
     const visit = (treeItem: TreeItem) => {
@@ -373,17 +362,17 @@ export function sortAndPropagateStatus(treeItem: TreeItem) {
 
 function collectTestIds(treeItem: TreeItem): { testIds: Set<string>, locations: Set<string> } {
   const testIds = new Set<string>();
-  const locations = new Set<string>(); // TODO
+  const locations = new Set<string>();
   const visit = (treeItem: TreeItem) => {
     if (treeItem.kind !== 'test' && treeItem.kind !== 'case') {
       treeItem.children.forEach(visit);
       return;
     }
 
-    let file: TreeItem = treeItem;
-    while (file && file.parent && !(file.kind === 'group' && file.subKind === 'file'))
-      file = file.parent;
-    locations.add(file.location.file);
+    let fileItem: TreeItem = treeItem;
+    while (fileItem && fileItem.parent && !(fileItem.kind === 'group' && fileItem.subKind === 'file'))
+      fileItem = fileItem.parent;
+    locations.add(fileItem.location.file);
 
     if (treeItem.kind === 'case')
       treeItem.tests.forEach(test => testIds.add(test.id));

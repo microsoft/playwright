@@ -88,7 +88,6 @@ export const UIModeView: React.FC<{}> = ({
   const [testModel, setTestModel] = React.useState<TeleSuiteUpdaterTestModel>();
   const [progress, setProgress] = React.useState<TeleSuiteUpdaterProgress & { total: number } | undefined>();
   const [selectedItem, setSelectedItem] = React.useState<{ treeItem?: TreeItem, testFile?: SourceLocation, testCase?: reporterTypes.TestCase }>({});
-  const [visibleTestIds, setVisibleTestIds] = React.useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = React.useState<boolean>(false);
   const [runningState, setRunningState] = React.useState<{ testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean } | undefined>();
   const isRunningTest = runningState && !runningState.completed;
@@ -255,9 +254,8 @@ export const UIModeView: React.FC<{}> = ({
     testTree.sortAndPropagateStatus();
     testTree.shortenRoot();
     testTree.flattenForSingleProject();
-    setVisibleTestIds(testTree.testIds());
     return { testTree };
-  }, [filterText, testModel, statusFilters, projectFilters, setVisibleTestIds, runningState, isRunningTest, mergeFiles]);
+  }, [filterText, testModel, statusFilters, projectFilters, runningState, isRunningTest, mergeFiles]);
 
   const runTests = React.useCallback((mode: 'queue-if-busy' | 'bounce-if-busy', testIds: Set<string>, locations: Set<string>) => {
     if (!testServerConnection || !testModel)
@@ -313,7 +311,10 @@ export const UIModeView: React.FC<{}> = ({
     });
   }, [projectFilters, isRunningTest, testModel, testServerConnection, updateSnapshots, singleWorker]);
 
-  const runVisibleTests = React.useCallback(() => runTests('bounce-if-busy', visibleTestIds, new Set(queryParams.args)), [runTests, visibleTestIds]);
+  const runVisibleTests = React.useCallback(() => {
+    const { testIds, locations } = testTree.collectTestIds(testTree.rootItem);
+    runTests('bounce-if-busy', testIds, locations);
+  }, [runTests, testTree]);
 
   React.useEffect(() => {
     if (!testServerConnection || !teleSuiteUpdater)

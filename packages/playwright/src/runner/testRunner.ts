@@ -60,7 +60,7 @@ export type ListTestsParams = {
 
 export type RunTestsParams = {
   timeout?: number;
-  locations?: string[];
+  locations: string[];
   grep?: string;
   grepInvert?: string;
   testIds?: string[];
@@ -331,7 +331,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
     config.cliListOnly = false;
     config.cliPassWithNoTests = true;
-    config.cliArgs = params.locations ?? ['dont-match-anything']; // for performance reasons, we require test runner users to pass `locations`. they can opt out by passing [].
+    config.cliArgs = params.locations;
     config.cliGrep = params.grep;
     config.cliGrepInvert = params.grepInvert;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
