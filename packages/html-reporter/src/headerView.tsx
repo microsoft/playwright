@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import './headerView.css';
 import * as icons from './icons';
-import { Link, navigate, SearchParamsContext } from './links';
+import { Link, navigate, useSearchParams } from './links';
 import { statusIcon } from './statusIcon';
 import { filterWithQuery } from './filter';
 import { linkifyText } from '@web/renderUtils';
@@ -48,12 +48,12 @@ export const GlobalFilterView: React.FC<{
   filterText: string,
   setFilterText: (filterText: string) => void,
 }> = ({ stats, filterText, setFilterText }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   React.useEffect(() => {
     // Add an extra space such that users can easily add to query
     const query = searchParams.get('q');
     setFilterText(query ? `${query.trim()} ` : '');
-  }, [searchParams, setFilterText]);
+  }, [searchParams.toString(), setFilterText]);
 
   return (<>
     <div className='pt-3'>
@@ -89,7 +89,7 @@ export const GlobalFilterView: React.FC<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
 
   return <nav>
     <Link className='subnav-item' href='#?'>
@@ -111,7 +111,7 @@ const NavLink: React.FC<{
   token: string,
   count: number,
 }> = ({ token, count }) => {
-  const searchParams = new URLSearchParams(React.useContext(SearchParamsContext));
+  const searchParams = useSearchParams();
   searchParams.delete('speedboard');
   searchParams.delete('testId');
 

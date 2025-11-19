@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { clsx } from '@web/uiUtils';
 import { formatUrl, hashStringToInt } from './utils';
-import { navigate, ProjectLink, SearchParamsContext } from './links';
+import { navigate, ProjectLink, useSearchParams } from './links';
 import { filterWithQuery } from './filter';
 import './labels.css';
 
@@ -55,7 +55,7 @@ export const ProjectAndTagLabelsView: React.FC<{
 const LabelsClickView: React.FC<{
   labels: string[],
 }> = ({ labels }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
 
   const onClickHandle = React.useCallback((e: React.MouseEvent, label: string) => {
     e.preventDefault();
