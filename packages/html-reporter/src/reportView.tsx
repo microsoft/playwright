@@ -20,7 +20,7 @@ import './colors.css';
 import './common.css';
 import { Filter, filterWithQuery } from './filter';
 import { HeaderView, GlobalFilterView } from './headerView';
-import { navigate, Route, SearchParamsContext, testResultHref } from './links';
+import { navigate, Route, testResultHref, useSearchParams } from './links';
 import type { LoadedReport } from './loadedReport';
 import './reportView.css';
 import { TestCaseView } from './testCaseView';
@@ -48,7 +48,7 @@ type TestModelSummary = {
 export const ReportView: React.FC<{
   report: LoadedReport | undefined,
 }> = ({ report }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
@@ -165,7 +165,7 @@ const TestCaseViewLoader: React.FC<{
   prev?: TestCaseSummary,
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, next, prev, testId }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   const [test, setTest] = React.useState<TestCase | 'loading' | 'not-found'>('loading');
   const run = +(searchParams.get('run') || '0');
 
