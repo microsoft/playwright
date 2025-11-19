@@ -21,6 +21,12 @@ import type * as reporterTypes from '../../types/testReporter';
 
 // -- Reuse boundary -- Everything below this line is reused in the vscode extension.
 
+export class TestServerConnectionClosedError extends Error {
+  constructor() {
+    super('Test server connection closed');
+  }
+}
+
 export interface TestServerTransport {
   onmessage(listener: (message: string) => void): void;
   onopen(listener: () => void): void;
@@ -118,6 +124,9 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
       this._isClosed = true;
       this._onCloseEmitter.fire();
       clearInterval(pingInterval);
+      for (const callback of this._callbacks.values())
+        callback.reject(new TestServerConnectionClosedError());
+      this._callbacks.clear();
     });
   }
 
