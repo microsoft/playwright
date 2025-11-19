@@ -83,11 +83,6 @@ You can also use it to wait for readiness of a service that doesn't expose an HT
 - Mozilla Firefox 142.0.1
 - WebKit 26.0
 
-This version was also tested against the following stable channels:
-
-- Google Chrome TODO
-- Microsoft Edge TODO
-
 ## Version 1.56
 
 <LiteYouTube
