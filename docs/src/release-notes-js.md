@@ -33,8 +33,6 @@ On Arm64 Linux, Playwright continues to use Chromium.
 
 ### Waiting for webserver output
 
-TODO: also add this to docs
-
 [`property: TestConfig.webServer`] added a `wait` field. Pass a regular expression, and Playwright will wait until the webserver logs match it.
 
 ```js
@@ -71,13 +69,13 @@ You can also use it to wait for readiness of a service that doesn't expose an HT
 
 ### New APIs
 
-* Option [`property: TestConfig.webServer`] added a `wait` field TODO.
-- New property [`property: TestConfig.tag`] adds a tag to all tests in this run that's useful when using merge-report (TODO: link).
-- [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it.
+- New property [`property: TestConfig.tag`] adds a tag to all tests in this run that's useful when using [merge-reports](./test-sharding.md#merging-reports-from-multiple-shards).
+- [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it. You can opt out of this using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE` environment variable.
 - [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
 - New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the target element. 
-- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [`class: BrowserContext`] objects and routes. TODO: mention opt-out. 
-- new method [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`] TODO
+- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [BrowserContext](./api/class-browsercontext.md) and its routes. You can opt out using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK` environment variable.
+- New methods [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`].
+- Option [`property: TestConfig.webServer`] added a `wait` field to check readiness based on stdout/stderr.
 
 ### Browser Versions
 
