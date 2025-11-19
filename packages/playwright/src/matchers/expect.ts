@@ -24,6 +24,7 @@ import {
 
 import { ExpectError, isJestError } from './matcherHint';
 import {
+  computeMatcherTitleSuffix,
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -55,7 +56,7 @@ import {
   toPass
 } from './matchers';
 import { toMatchAriaSnapshot } from './toMatchAriaSnapshot';
-import { toHaveScreenshot, toHaveScreenshotStepTitle, toMatchSnapshot } from './toMatchSnapshot';
+import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 import {
   INVERTED_COLOR,
   RECEIVED_COLOR,
@@ -114,7 +115,7 @@ export const printReceivedStringContainExpectedResult = (
 type ExpectMessage = string | { message?: string };
 
 function createMatchers(actual: unknown, info: ExpectMetaInfo, prefix: string[]): any {
-  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(info, prefix));
+  return new Proxy(expectLibrary(actual), new ExpectMetaInfoProxyHandler(actual, info, prefix));
 }
 
 const userMatchersSymbol = Symbol('userMatchers');
@@ -300,10 +301,12 @@ type ExpectMetaInfo = {
 };
 
 class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
+  private _actual: any;
   private _info: ExpectMetaInfo;
   private _prefix: string[];
 
-  constructor(info: ExpectMetaInfo, prefix: string[]) {
+  constructor(actual: any, info: ExpectMetaInfo, prefix: string[]) {
+    this._actual = actual;
     this._info = { ...info };
     this._prefix = prefix;
   }
@@ -344,11 +347,11 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         return matcher.call(target, ...args);
 
       const customMessage = this._info.message || '';
-      const argsSuffix = computeArgsSuffix(matcherName, args);
-
-      const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${argsSuffix}`;
-      const title = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
-      const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${argsSuffix}`;
+      const suffixes = computeMatcherTitleSuffix(matcherName, this._actual, args);
+      const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
+      const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
+      const longTitle = shortTitle + (suffixes.long || '');
+      const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
@@ -359,7 +362,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const stepInfo = {
         category: 'expect' as const,
         apiName,
-        title,
+        title: longTitle,
+        shortTitle,
         params: args[0] ? { expected: args[0] } : undefined,
         infectParentStepsWithError: this._info.isSoft,
       };
@@ -441,13 +445,6 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
 
     throw new Error(message);
   }
-}
-
-function computeArgsSuffix(matcherName: string, args: any[]) {
-  let value = '';
-  if (matcherName === 'toHaveScreenshot')
-    value = toHaveScreenshotStepTitle(...args);
-  return value ? `(${value})` : '';
 }
 
 export const expect: Expect<{}> = createExpect({}, [], {}).extend(customMatchers);
