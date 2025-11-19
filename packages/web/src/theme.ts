@@ -24,8 +24,8 @@ declare global {
   }
 }
 
-export type Theme = 'dark-mode' | 'light-mode' | 'system';
-type DocumentTheme = Exclude<Theme, 'system'>;
+type DocumentTheme = 'dark-mode' | 'light-mode';
+export type Theme = DocumentTheme | 'system';
 
 const kDefaultTheme: Theme = 'system';
 const kThemeSettingsKey = 'theme';
@@ -49,15 +49,10 @@ export function applyTheme() {
     document.body.classList.add('inactive');
   }, false);
 
-  const theme = currentTheme();
-  const documentTheme: DocumentTheme = theme === 'system'
-    ? (prefersDarkScheme.matches ? 'dark-mode' : 'light-mode')
-    : theme;
-  document.documentElement.classList.add(documentTheme);
+  updateDocumentTheme(currentTheme());
 
-  prefersDarkScheme.addEventListener('change', e => {
-    if (currentTheme() === 'system')
-      updateDocumentTheme(e.matches ? 'dark-mode' : 'light-mode');
+  prefersDarkScheme.addEventListener('change', () => {
+    updateDocumentTheme(currentTheme());
   });
 }
 
@@ -71,7 +66,8 @@ function updateDocumentTheme(newTheme: Theme) {
   if (oldDocumentTheme === newDocumentTheme)
     return;
 
-  document.documentElement.classList.remove(oldDocumentTheme);
+  if (oldDocumentTheme)
+    document.documentElement.classList.remove(oldDocumentTheme);
   document.documentElement.classList.add(newDocumentTheme);
   for (const listener of listeners)
     listener(newDocumentTheme);
@@ -89,8 +85,12 @@ function currentTheme(): Theme {
   return settings.getString(kThemeSettingsKey, kDefaultTheme);
 }
 
-export function currentDocumentTheme(): DocumentTheme {
-  return document.documentElement.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+export function currentDocumentTheme(): DocumentTheme | null {
+  if (document.documentElement.classList.contains('dark-mode'))
+    return 'dark-mode';
+  if (document.documentElement.classList.contains('light-mode'))
+    return 'light-mode';
+  return null;
 }
 
 export function useThemeSetting(): [Theme, (value: Theme) => void] {
