@@ -53,7 +53,7 @@ export const GlobalFilterView: React.FC<{
     // Add an extra space such that users can easily add to query
     const query = searchParams.get('q');
     setFilterText(query ? `${query.trim()} ` : '');
-  }, [searchParams, setFilterText]);
+  }, [searchParams.toString(), setFilterText]);
 
   return (<>
     <div className='pt-3'>
