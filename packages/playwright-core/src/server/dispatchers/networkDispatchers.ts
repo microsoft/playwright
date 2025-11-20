@@ -67,7 +67,7 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 
   async body(params: channels.RequestBodyParams, progress: Progress): Promise<channels.RequestBodyResult> {
-    const postData = this._object.postDataBuffer();
+    const postData = await this._object.body();
     return { body: postData === null ? undefined : postData };
   }
 
