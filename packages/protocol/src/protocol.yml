@@ -468,13 +468,6 @@ LaunchOptions:
       items: NameValue
     headless: boolean?
     devtools: boolean?
-    proxy:
-      type: object?
-      properties:
-        server: string
-        bypass: string?
-        username: string?
-        password: string?
     downloadsPath: string?
     tracesDir: string?
     chromiumSandbox: boolean?
@@ -482,7 +475,59 @@ LaunchOptions:
     cdpPort: int?
 
 
-ContextOptions:
+CommonContextOptions:
+  type: mixin
+  properties:
+    acceptDownloads:
+      type: enum?
+      literals:
+      - accept
+      - deny
+      - internal-browser-default
+    bypassCSP: boolean?
+    colorScheme:
+      type: enum?
+      literals:
+      - dark
+      - light
+      - no-preference
+      - no-override
+    extraHTTPHeaders:
+      type: array?
+      items: NameValue
+    geolocation:
+      type: object?
+      properties:
+        longitude: float
+        latitude: float
+        accuracy: float?
+    httpCredentials:
+      type: object?
+      properties:
+        username: string
+        password: string
+        origin: string?
+        send:
+          type: enum?
+          literals:
+          - always
+          - unauthorized
+    ignoreHTTPSErrors: boolean?
+    locale: string?
+    offline: boolean?
+    recordVideo:
+      type: object?
+      properties:
+        dir: string
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+    timezoneId: string?
+
+# TODO: it seems like we should move more options to CommonContextOptions and support them everywhere.
+AdvancedContextOptions:
   type: mixin
   properties:
     noDefaultViewport: boolean?
@@ -496,7 +541,6 @@ ContextOptions:
       properties:
         width: int
         height: int
-    ignoreHTTPSErrors: boolean?
     clientCertificates:
       type: array?
       items:
@@ -508,44 +552,13 @@ ContextOptions:
           passphrase: string?
           pfx: binary?
     javaScriptEnabled: boolean?
-    bypassCSP: boolean?
     userAgent: string?
-    locale: string?
-    timezoneId: string?
-    geolocation:
-      type: object?
-      properties:
-        longitude: float
-        latitude: float
-        accuracy: float?
     permissions:
       type: array?
       items: string
-    extraHTTPHeaders:
-      type: array?
-      items: NameValue
-    offline: boolean?
-    httpCredentials:
-      type: object?
-      properties:
-        username: string
-        password: string
-        origin: string?
-        send:
-          type: enum?
-          literals:
-          - always
-          - unauthorized
     deviceScaleFactor: float?
     isMobile: boolean?
     hasTouch: boolean?
-    colorScheme:
-      type: enum?
-      literals:
-      - dark
-      - light
-      - no-preference
-      - no-override
     reducedMotion:
       type: enum?
       literals:
@@ -558,12 +571,6 @@ ContextOptions:
       - active
       - none
       - no-override
-    acceptDownloads:
-      type: enum?
-      literals:
-      - accept
-      - deny
-      - internal-browser-default
     contrast:
       type: enum?
       literals:
@@ -571,15 +578,6 @@ ContextOptions:
       - more
       - no-override
     baseURL: string?
-    recordVideo:
-      type: object?
-      properties:
-        dir: string
-        size:
-          type: object?
-          properties:
-            width: int
-            height: int
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -590,6 +588,13 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
+    proxy:
+      type: object?
+      properties:
+        server: string
+        bypass: string?
+        username: string?
+        password: string?
 
 
 LocalUtils:
@@ -968,6 +973,13 @@ BrowserType:
       parameters:
         $mixin: LaunchOptions
         slowMo: float?
+        proxy:
+          type: object?
+          properties:
+            server: string
+            bypass: string?
+            username: string?
+            password: string?
       returns:
         browser: Browser
 
@@ -975,7 +987,8 @@ BrowserType:
       title: Launch persistent context
       parameters:
         $mixin1: LaunchOptions
-        $mixin2: ContextOptions
+        $mixin2: CommonContextOptions
+        $mixin3: AdvancedContextOptions
         userDataDir: string
         slowMo: float?
       returns:
@@ -985,6 +998,8 @@ BrowserType:
     connectOverCDP:
       title: Connect over CDP
       parameters:
+        $mixin: CommonContextOptions
+        tracesDir: string?
         endpointURL: string
         headers:
           type: array?
@@ -1022,14 +1037,8 @@ Browser:
     newContext:
       title: Create context
       parameters:
-        $mixin: ContextOptions
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
+        $mixin1: CommonContextOptions
+        $mixin2: AdvancedContextOptions
         storageState:
           type: object?
           properties:
@@ -1045,14 +1054,8 @@ Browser:
     newContextForReuse:
       internal: true
       parameters:
-        $mixin: ContextOptions
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
+        $mixin1: CommonContextOptions
+        $mixin2: AdvancedContextOptions
         storageState:
           type: object?
           properties:
@@ -1151,7 +1154,8 @@ BrowserContext:
     options:
       type: object
       properties:
-        $mixin: ContextOptions
+        $mixin1: CommonContextOptions
+        $mixin2: AdvancedContextOptions
 
   commands:
 
@@ -3847,6 +3851,7 @@ Electron:
     launch:
       title: Launch electron
       parameters:
+        $mixin: CommonContextOptions
         executablePath: string?
         args:
           type: array?
@@ -3856,49 +3861,6 @@ Electron:
           type: array?
           items: NameValue
         timeout: float
-        acceptDownloads:
-          type: enum?
-          literals:
-          - accept
-          - deny
-          - internal-browser-default
-        bypassCSP: boolean?
-        colorScheme:
-          type: enum?
-          literals:
-          - dark
-          - light
-          - no-preference
-          - no-override
-        extraHTTPHeaders:
-          type: array?
-          items: NameValue
-        geolocation:
-          type: object?
-          properties:
-            longitude: float
-            latitude: float
-            accuracy: float?
-        httpCredentials:
-          type: object?
-          properties:
-            username: string
-            password: string
-            origin: string?
-        ignoreHTTPSErrors: boolean?
-        locale: string?
-        offline: boolean?
-        recordVideo:
-          type: object?
-          properties:
-            dir: string
-            size:
-              type: object?
-              properties:
-                width: int
-                height: int
-        strictSelectors: boolean?
-        timezoneId: string?
         tracesDir: string?
         selectorEngines:
           type: array?
@@ -4146,18 +4108,12 @@ AndroidDevice:
     launchBrowser:
       title: Launch browser
       parameters:
-        $mixin: ContextOptions
+        $mixin1: CommonContextOptions
+        $mixin2: AdvancedContextOptions
         pkg: string?
         args:
           type: array?
           items: string
-        proxy:
-          type: object?
-          properties:
-            server: string
-            bypass: string?
-            username: string?
-            password: string?
 
       returns:
         context: BrowserContext

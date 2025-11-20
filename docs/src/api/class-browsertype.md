@@ -161,6 +161,10 @@ Connecting over the Chrome DevTools Protocol is only supported for Chromium-base
 This connection is significantly lower fidelity than the Playwright protocol connection via [`method: BrowserType.connect`]. If you are experiencing issues or attempting to use advanced functionality, you probably want to use [`method: BrowserType.connect`].
 :::
 
+:::note
+Most options, such as [`option: BrowserType.connectOverCDP.geolocation`] or [`option: BrowserType.connectOverCDP.colorScheme`], are applied to the existing persistent [BrowserContext] of the browser, if any. However, some options do not have an immediate effect on existing [Page]s. To ensure all options are applied, create a new page in the context.
+:::
+
 **Usage**
 
 ```js
@@ -232,6 +236,61 @@ Logger sink for Playwright logging. Optional.
 
 Maximum time in milliseconds to wait for the connection to be established. Defaults to
 `30000` (30 seconds). Pass `0` to disable timeout.
+
+### option: BrowserType.connectOverCDP.acceptdownloads = %%-context-option-acceptdownloads-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.bypassCSP = %%-context-option-bypasscsp-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.colorScheme = %%-context-option-colorscheme-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.colorScheme = %%-context-option-colorscheme-csharp-python-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.extraHTTPHeaders = %%-context-option-extrahttpheaders-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.geolocation = %%-context-option-geolocation-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.httpcredentials = %%-context-option-httpcredentials-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.ignoreHTTPSErrors = %%-context-option-ignorehttpserrors-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.locale = %%-context-option-locale-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.offline = %%-context-option-offline-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordhar = %%-context-option-recordhar-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordharpath = %%-context-option-recordhar-path-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordHarOmitContent = %%-context-option-recordhar-omit-content-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordvideo = %%-context-option-recordvideo-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordvideodir = %%-context-option-recordvideo-dir-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.recordvideosize = %%-context-option-recordvideo-size-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.timezoneId = %%-context-option-timezoneid-%%
+* since: v1.58
+
+### option: BrowserType.connectOverCDP.tracesDir = %%-browser-option-tracesdir-%%
+* since: v1.58
+
 
 ## method: BrowserType.executablePath
 * since: v1.8

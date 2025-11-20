@@ -194,8 +194,11 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   async _connectOverCDP(endpointURL: string, params: api.ConnectOverCDPOptions = {}): Promise<Browser>  {
     if (this.name() !== 'chromium')
       throw new Error('Connecting over CDP is only supported in Chromium.');
+    const contextOptions = await prepareBrowserContextParams(this._platform, params);
     const headers = params.headers ? headersObjectToArray(params.headers) : undefined;
     const result = await this._channel.connectOverCDP({
+      ...contextOptions,
+      tracesDir: params.tracesDir,
       endpointURL,
       headers,
       slowMo: params.slowMo,
@@ -203,8 +206,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     });
     const browser = Browser.from(result.browser);
     browser._connectToBrowserType(this, {}, params.logger);
-    if (result.defaultContext)
-      await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
+    if (result.defaultContext) {
+      const defaultContext = BrowserContext.from(result.defaultContext);
+      if (params.logger)
+        defaultContext._logger = params.logger;
+      defaultContext.tracing._tracesDir = params.tracesDir;
+      await defaultContext._initializeHarFromOptions(params.recordHar);
+      await this._instrumentation.runAfterCreateBrowserContext(defaultContext);
+    }
     return browser;
   }
 }

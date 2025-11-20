@@ -76,11 +76,11 @@ export class Chromium extends BrowserType {
     return super.launchPersistentContext(progress, userDataDir, options);
   }
 
-  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }) {
+  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, tracesDir?: string } & types.BrowserContextOptions) {
     return await this._connectOverCDPInternal(progress, endpointURL, options);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & types.BrowserContextOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -109,7 +109,7 @@ export class Chromium extends BrowserType {
       chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
 
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
-      const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
+      const persistent: types.BrowserContextOptions = { ...options, noDefaultViewport: true };
       const browserOptions: BrowserOptions = {
         slowMo: options.slowMo,
         name: 'chromium',

@@ -14732,6 +14732,15 @@ export interface BrowserType<Unused = {}> {
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
    * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    *
+   * **NOTE** Most options, such as
+   * [`geolocation`](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp-option-geolocation)
+   * or
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp-option-color-scheme),
+   * are applied to the existing persistent [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) of
+   * the browser, if any. However, some options do not have an immediate effect on existing
+   * [Page](https://playwright.dev/docs/api/class-page)s. To ensure all options are applied, create a new page in the
+   * context.
+   *
    * **Usage**
    *
    * ```js
@@ -14761,6 +14770,15 @@ export interface BrowserType<Unused = {}> {
    * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
    * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   *
+   * **NOTE** Most options, such as
+   * [`geolocation`](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp-option-geolocation)
+   * or
+   * [`colorScheme`](https://playwright.dev/docs/api/class-browsertype#browser-type-connect-over-cdp-option-color-scheme),
+   * are applied to the existing persistent [BrowserContext](https://playwright.dev/docs/api/class-browsercontext) of
+   * the browser, if any. However, some options do not have an immediate effect on existing
+   * [Page](https://playwright.dev/docs/api/class-page)s. To ensure all options are applied, create a new page in the
+   * context.
    *
    * **Usage**
    *
@@ -21902,9 +21920,49 @@ export interface LaunchOptions {
 
 export interface ConnectOverCDPOptions {
   /**
+   * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
+   */
+  acceptDownloads?: boolean;
+
+  /**
+   * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
+   */
+  bypassCSP?: boolean;
+
+  /**
+   * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
+   * media feature, supported values are `'light'` and `'dark'`. See
+   * [page.emulateMedia([options])](https://playwright.dev/docs/api/class-page#page-emulate-media) for more details.
+   * Passing `null` resets emulation to system defaults. Defaults to `'light'`.
+   */
+  colorScheme?: null|"light"|"dark"|"no-preference";
+
+  /**
    * @deprecated Use the first argument instead.
    */
   endpointURL?: string;
+
+  /**
+   * An object containing additional HTTP headers to be sent with every request. Defaults to none.
+   */
+  extraHTTPHeaders?: { [key: string]: string; };
+
+  geolocation?: {
+    /**
+     * Latitude between -90 and 90.
+     */
+    latitude: number;
+
+    /**
+     * Longitude between -180 and 180.
+     */
+    longitude: number;
+
+    /**
+     * Non-negative accuracy value. Defaults to `0`.
+     */
+    accuracy?: number;
+  };
 
   /**
    * Additional HTTP headers to be sent with connect request. Optional.
@@ -21912,10 +21970,124 @@ export interface ConnectOverCDPOptions {
   headers?: { [key: string]: string; };
 
   /**
+   * Credentials for [HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication). If no
+   * origin is specified, the username and password are sent to any servers upon unauthorized responses.
+   */
+  httpCredentials?: {
+    username: string;
+
+    password: string;
+
+    /**
+     * Restrain sending http credentials on specific origin (scheme://host:port).
+     */
+    origin?: string;
+
+    /**
+     * This option only applies to the requests sent from corresponding
+     * [APIRequestContext](https://playwright.dev/docs/api/class-apirequestcontext) and does not affect requests sent from
+     * the browser. `'always'` - `Authorization` header with basic authentication credentials will be sent with the each
+     * API request. `'unauthorized` - the credentials are only sent when 401 (Unauthorized) response with
+     * `WWW-Authenticate` header is received. Defaults to `'unauthorized'`.
+     */
+    send?: "unauthorized"|"always";
+  };
+
+  /**
+   * Whether to ignore HTTPS errors when sending network requests. Defaults to `false`.
+   */
+  ignoreHTTPSErrors?: boolean;
+
+  /**
+   * Specify user locale, for example `en-GB`, `de-DE`, etc. Locale will affect `navigator.language` value,
+   * `Accept-Language` request header value as well as number and date formatting rules. Defaults to the system default
+   * locale. Learn more about emulation in our [emulation guide](https://playwright.dev/docs/emulation#locale--timezone).
+   */
+  locale?: string;
+
+  /**
    * Logger sink for Playwright logging. Optional.
    * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
    */
   logger?: Logger;
+
+  /**
+   * Whether to emulate network being offline. Defaults to `false`. Learn more about
+   * [network emulation](https://playwright.dev/docs/emulation#offline).
+   */
+  offline?: boolean;
+
+  /**
+   * Enables [HAR](http://www.softwareishard.com/blog/har-12-spec) recording for all pages into `recordHar.path` file.
+   * If not specified, the HAR is not recorded. Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * the HAR to be saved.
+   */
+  recordHar?: {
+    /**
+     * Optional setting to control whether to omit request content from the HAR. Defaults to `false`. Deprecated, use
+     * `content` policy instead.
+     */
+    omitContent?: boolean;
+
+    /**
+     * Optional setting to control resource content management. If `omit` is specified, content is not persisted. If
+     * `attach` is specified, resources are persisted as separate files or entries in the ZIP archive. If `embed` is
+     * specified, content is stored inline the HAR file as per HAR specification. Defaults to `attach` for `.zip` output
+     * files and to `embed` for all other file extensions.
+     */
+    content?: "omit"|"embed"|"attach";
+
+    /**
+     * Path on the filesystem to write the HAR file to. If the file name ends with `.zip`, `content: 'attach'` is used by
+     * default.
+     */
+    path: string;
+
+    /**
+     * When set to `minimal`, only record information necessary for routing from HAR. This omits sizes, timing, page,
+     * cookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to `full`.
+     */
+    mode?: "full"|"minimal";
+
+    /**
+     * A glob or regex pattern to filter requests that are stored in the HAR. When a
+     * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) via the context
+     * options was provided and the passed URL is a path, it gets merged via the
+     * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor. Defaults to none.
+     */
+    urlFilter?: string|RegExp;
+  };
+
+  /**
+   * Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded.
+   * Make sure to await
+   * [browserContext.close([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-close) for
+   * videos to be saved.
+   */
+  recordVideo?: {
+    /**
+     * Path to the directory to put videos into.
+     */
+    dir: string;
+
+    /**
+     * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
+     * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+     * each page will be scaled down if necessary to fit the specified size.
+     */
+    size?: {
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
+  };
 
   /**
    * Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going
@@ -21928,6 +22100,18 @@ export interface ConnectOverCDPOptions {
    * `0` to disable timeout.
    */
   timeout?: number;
+
+  /**
+   * Changes the timezone of the context. See
+   * [ICU's metaZones.txt](https://cs.chromium.org/chromium/src/third_party/icu/source/data/misc/metaZones.txt?rcl=faee8bc70570192d82d2978a71e2a615788597d1)
+   * for a list of supported timezone IDs. Defaults to the system timezone.
+   */
+  timezoneId?: string;
+
+  /**
+   * If specified, traces are saved into this directory.
+   */
+  tracesDir?: string;
 }
 
 export interface ConnectOptions {

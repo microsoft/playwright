@@ -18,6 +18,7 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
+import path from 'path';
 import { getUserAgent } from '../../../packages/playwright-core/lib/server/utils/userAgent';
 import { suppressCertificateWarning } from '../../config/utils';
 import type { Frame } from '../../../packages/playwright-core/lib/server/frames';
@@ -586,6 +587,88 @@ test('should not reuse utility worlds between two clients', async ({ browserType
     await browser2.close();
 
     expect(result).toBeUndefined();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should bypassCSP', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { bypassCSP: true });
+    const context = cdpBrowser.contexts()[0];
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/csp.html');
+    await page.addScriptTag({ content: 'window["__injected"] = 42;' }).catch(e => void e);
+    expect(await page.evaluate('window["__injected"]')).toBe(42);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should recordVideo', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port],
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, {
+      recordVideo: { dir: testInfo.outputPath('video') },
+    });
+    const context = cdpBrowser.contexts()[0];
+    const page = await context.newPage();
+    await page.setContent(`<style>body {background:red}</style>`);
+    await page.waitForTimeout(1000);
+    await context.close();
+    const videoPath = await page.video().path();
+    expect(fs.statSync(videoPath).size).toBeGreaterThan(0);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should recordHar', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, {
+      recordHar: { path: testInfo.outputPath('har.zip') },
+    });
+    const context = cdpBrowser.contexts()[0];
+    const page = await context.newPage();
+    await page.goto(server.EMPTY_PAGE);
+    await context.close();
+    expect(fs.existsSync(testInfo.outputPath('har.zip'))).toBeTruthy();
+    expect(fs.statSync(testInfo.outputPath('har.zip')).size).toBeGreaterThan(0);
+    await cdpBrowser.close();
+  } finally {
+    await browserServer.close();
+  }
+});
+
+test('should respect tracesDir', async ({ browserType, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const tracesDir = testInfo.outputPath('traces');
+    const cdpBrowser = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { tracesDir });
+    const context = cdpBrowser.contexts()[0];
+    await context.tracing.start({ name: 'name1', snapshots: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/one-style.html');
+    await context.tracing.stopChunk({ path: testInfo.outputPath('trace1.zip') });
+    expect(fs.existsSync(path.join(tracesDir, 'name1.trace'))).toBe(true);
+    expect(fs.existsSync(path.join(tracesDir, 'name1.network'))).toBe(true);
+    await cdpBrowser.close();
   } finally {
     await browserServer.close();
   }
