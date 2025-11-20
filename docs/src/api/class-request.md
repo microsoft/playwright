@@ -23,32 +23,6 @@ request is  issued to a redirected url.
 
 An object with all the request HTTP headers associated with this request. The header names are lower-cased.
 
-## async method: Request.body
-* since: v1.57
-- returns: <[null]|[string]>
-
-The request body, if present.
-
-## async method: Request.bodyBuffer
-* since: v1.57
-- returns: <[null]|[Buffer]>
-
-The request body in a binary form. Returns null if the request has no body.
-
-## async method: Request.bodyJSON
-* since: v1.57
-* langs: js, python
-- returns: <[null]|[Serializable]>
-
-Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
-
-## async method: Request.bodyJSON
-* since: v1.57
-* langs: csharp
-- returns: <[null]|[JsonElement]>
-
-Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
-
 ## method: Request.failure
 * since: v1.8
 - returns: <[null]|[string]>
@@ -175,33 +149,35 @@ Request's method (GET, POST, etc.)
 
 ## method: Request.postData
 * since: v1.8
-* discouraged: Use [`method: Request.body`] instead.
 - returns: <[null]|[string]>
 
-The request body, if present.
+Request's post body, if any.
 
 ## method: Request.postDataBuffer
 * since: v1.8
-* discouraged: Use [`method: Request.bodyBuffer`] instead.
 - returns: <[null]|[Buffer]>
 
-The request body in a binary form. Returns null if the request has no body.
+Request's post body in a binary form, if any.
 
 ## method: Request.postDataJSON
 * since: v1.8
 * langs: js, python
-* discouraged: Use [`method: Request.bodyJSON`] instead.
 - returns: <[null]|[Serializable]>
 
-Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
 
 ## method: Request.postDataJSON
 * since: v1.12
 * langs: csharp
-* discouraged: Use [`method: Request.bodyJSON`] instead.
 - returns: <[null]|[JsonElement]>
 
-Returns the request body as a parsed JSON object. If the request `Content-Type` is `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise, it parses the body as JSON.
+Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
+
+When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+Otherwise it will be parsed as JSON.
 
 ## method: Request.redirectedFrom
 * since: v1.8
