@@ -49,11 +49,11 @@ export const GlobalFilterView: React.FC<{
   setFilterText: (filterText: string) => void,
 }> = ({ stats, filterText, setFilterText }) => {
   const searchParams = useSearchParams();
+  const query = searchParams.get('q');
   React.useEffect(() => {
     // Add an extra space such that users can easily add to query
-    const query = searchParams.get('q');
     setFilterText(query ? `${query.trim()} ` : '');
-  }, [searchParams.toString(), setFilterText]);
+  }, [query, setFilterText]);
 
   return (<>
     <div className='pt-3'>
