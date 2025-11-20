@@ -63,17 +63,17 @@ test('homepage', async ({ page }) => {
 This is not just useful for capturing varying ports of dev servers:
 You can also use it to wait for readiness of a service that doesn't expose an HTTP readiness check, but instead prints a readiness message to stdout or stderr.
 
-### Breaking Changes
+### Breaking Change
 
-- After 3 years of being deprecated, we removed `Page#accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
+After 3 years of being deprecated, we removed `Page#accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 ### New APIs
 
-- New property [`property: TestConfig.tag`] adds a tag to all tests in this run that's useful when using [merge-reports](./test-sharding.md#merging-reports-from-multiple-shards).
+- New property [`property: TestConfig.tag`] adds a tag to all tests in this run. This is useful when using [merge-reports](./test-sharding.md#merging-reports-from-multiple-shards).
 - [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it. You can opt out of this using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE` environment variable.
 - [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
 - New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the target element. 
-- [Service Worker network events](./service-workers.md#network-events-and-routing) are now reported to [BrowserContext](./api/class-browsercontext.md) and its routes. You can opt out using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK` environment variable.
+- Network requests issued by [Service Workers](./service-workers.md#network-events-and-routing) are now reported and can be routed through the [BrowserContext](./api/class-browsercontext.md), only in Chromium. You can opt out using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK` environment variable.
 - New methods [`method: Request.postData`], [`method: Request.postDataBuffer`] and [`method: Request.postDataJSON`].
 - Option [`property: TestConfig.webServer`] added a `wait` field to check readiness based on stdout/stderr.
 
