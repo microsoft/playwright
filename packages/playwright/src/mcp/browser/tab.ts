@@ -308,7 +308,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     }
 
     await callOnPageNoTrace(this.page, page => {
-      return page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+      return page.evaluate(() => new Promise(f => setTimeout(f, 1000))).catch(() => {});
     });
   }
 }
