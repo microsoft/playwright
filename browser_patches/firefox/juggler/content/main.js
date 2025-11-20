@@ -31,7 +31,7 @@ export function initialize(browsingContext, docShell) {
             heading: NaN,
             speed: NaN,
           },
-          timestamp: Date.now()
+          timestamp: Date.now() + 24 * 60 * 60 * 1000,  // Make sure it does not expire for a day.
         });
       } else {
         browsingContext.setGeolocationServiceOverride();
