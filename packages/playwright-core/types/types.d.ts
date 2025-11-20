@@ -20379,23 +20379,6 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
-   * The request body, if present.
-   */
-  body(): Promise<null|string>;
-
-  /**
-   * The request body in a binary form. Returns null if the request has no body.
-   */
-  bodyBuffer(): Promise<null|Buffer>;
-
-  /**
-   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
-   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
-   * it parses the body as JSON.
-   */
-  bodyJSON(): Promise<null|Serializable>;
-
-  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**
@@ -20492,25 +20475,20 @@ export interface Request {
   method(): string;
 
   /**
-   * **NOTE** Use [request.body()](https://playwright.dev/docs/api/class-request#request-body) instead.
-   *
-   * The request body, if present.
+   * Request's post body, if any.
    */
   postData(): null|string;
 
   /**
-   * **NOTE** Use [request.bodyBuffer()](https://playwright.dev/docs/api/class-request#request-body-buffer) instead.
-   *
-   * The request body in a binary form. Returns null if the request has no body.
+   * Request's post body in a binary form, if any.
    */
   postDataBuffer(): null|Buffer;
 
   /**
-   * **NOTE** Use [request.bodyJSON()](https://playwright.dev/docs/api/class-request#request-body-json) instead.
+   * Returns parsed request's body for `form-urlencoded` and JSON as a fallback if any.
    *
-   * Returns the request body as a parsed JSON object. If the request `Content-Type` is
-   * `application/x-www-form-urlencoded`, this method returns a key/value object parsed from the form data. Otherwise,
-   * it parses the body as JSON.
+   * When the response is `application/x-www-form-urlencoded` then a key/value object of the values will be returned.
+   * Otherwise it will be parsed as JSON.
    */
   postDataJSON(): null|Serializable;
 

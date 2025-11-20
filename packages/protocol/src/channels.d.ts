@@ -3829,16 +3829,10 @@ export interface RequestEventTarget {
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
-  body(params?: RequestBodyParams, progress?: Progress): Promise<RequestBodyResult>;
   response(params?: RequestResponseParams, progress?: Progress): Promise<RequestResponseResult>;
   rawRequestHeaders(params?: RequestRawRequestHeadersParams, progress?: Progress): Promise<RequestRawRequestHeadersResult>;
 }
 export type RequestResponseEvent = {};
-export type RequestBodyParams = {};
-export type RequestBodyOptions = {};
-export type RequestBodyResult = {
-  body?: Binary,
-};
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {
