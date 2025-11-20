@@ -223,6 +223,7 @@ test('test_debug / evaluate', async ({ startClient }) => {
     name: 'browser_evaluate',
     arguments: {
       function: '() => 21+21',
+      intent: 'Calculate 21+21',
     },
   })).toHaveResponse({
     result: `42`,
@@ -241,6 +242,7 @@ test('test_debug / evaluate x 2', async ({ startClient }) => {
     name: 'browser_evaluate',
     arguments: {
       function: '() => 21+21',
+      intent: 'Calculate 21+21',
     },
   })).toHaveResponse({
     result: `42`,
@@ -254,13 +256,15 @@ test('test_debug / evaluate x 2', async ({ startClient }) => {
   })).toEqual({
     content: [
       { type: 'text', text: expect.stringContaining(`Paused on error`) },
-    ]
+    ],
+    isError: false,
   });
 
   expect(await client.callTool({
     name: 'browser_evaluate',
     arguments: {
       function: '() => 21+23',
+      intent: 'Calculate 21+23',
     },
   })).toHaveResponse({
     result: `44`,
@@ -281,6 +285,7 @@ test('test_debug / evaluate (with element)', async ({ startClient }) => {
       function: 'element => element.textContent',
       element: 'button',
       ref: 'e2',
+      intent: 'Get button text',
     },
   })).toHaveResponse({
     result: `"Submit"`,
@@ -427,7 +432,7 @@ Error: expect(locator).toBeVisible() failed`));
 
   expect(await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
+    arguments: { url: server.HELLO_WORLD, intent: 'Go to hello world' },
   })).toHaveResponse({
     pageState: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title2`),
   });

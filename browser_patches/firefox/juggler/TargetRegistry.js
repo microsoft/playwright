@@ -13,7 +13,7 @@ const Cr = Components.results;
 const helper = new Helper();
 
 const IDENTITY_NAME = 'JUGGLER ';
-const HUNDRED_YEARS = 1000 * 60 * 60 * 24 * 365 * 100;
+const HUNDRED_YEARS = 60 * 60 * 24 * 365 * 100;
 
 const ALL_PERMISSIONS = [
   'geo',
@@ -1153,7 +1153,7 @@ class BrowserContext {
         secure,
         cookie.httpOnly || false,
         cookie.expires === undefined || cookie.expires === -1 /* isSession */,
-        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires,
+        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires * 1000,
         { userContextId: this.userContextId || undefined } /* originAttributes */,
         protocolToSameSite[cookie.sameSite],
         Ci.nsICookie.SCHEME_UNSET
@@ -1183,7 +1183,7 @@ class BrowserContext {
         value: cookie.value,
         domain: cookie.host,
         path: cookie.path,
-        expires: cookie.isSession ? -1 : cookie.expiry,
+        expires: cookie.isSession ? -1 : cookie.expiry / 1000,
         size: cookie.name.length + cookie.value.length,
         httpOnly: cookie.isHttpOnly,
         secure: cookie.isSecure,

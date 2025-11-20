@@ -22,7 +22,7 @@ import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
 
 import * as mcpServer from './sdk/server';
-import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
+import { commaSeparatedList, dotenvFileLoader, headerParser, numberParser, resolutionParser, resolveCLIConfig } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
 import { ProxyBackend } from './sdk/proxyBackend';
@@ -35,8 +35,6 @@ import type { MCPProvider } from './sdk/proxyBackend';
 export function decorateCommand(command: Command, version: string) {
   command
       .option('--allowed-hosts <hosts...>', 'comma-separated list of hosts this server is allowed to serve from. Defaults to the host the server is bound to. Pass \'*\' to disable the host check.', commaSeparatedList)
-      .option('--allowed-origins <origins>', 'semicolon-separated list of origins to allow the browser to request. Default is to allow all.', semicolonSeparatedList)
-      .option('--blocked-origins <origins>', 'semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.', semicolonSeparatedList)
       .option('--block-service-workers', 'block service workers')
       .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
       .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
@@ -50,6 +48,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--headless', 'run browser in headless mode, headed by default')
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
       .option('--ignore-https-errors', 'ignore https errors')
+      .option('--init-page <path...>', 'path to TypeScript file to evaluate on Playwright page object')
       .option('--init-script <path...>', 'path to JavaScript file to add as an initialization script. The script will be evaluated in every page before any of the page\'s scripts. Can be specified multiple times.')
       .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
       .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".')

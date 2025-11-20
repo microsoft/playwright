@@ -335,10 +335,6 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
       />
-      <div className='workbench-actions-status-bar'>
-        {!!hiddenActionsCount && <span className='workbench-actions-hidden-count' title={hiddenActionsCount + ' actions hidden by filters'}>{hiddenActionsCount} hidden</span>}
-        <ActionsFilterButton counters={model?.actionCounters} />
-      </div>
     </div>
   };
   const metadataTab: TabbedPaneTabModel = {
@@ -346,6 +342,8 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     title: 'Metadata',
     component: <MetadataView model={model}/>
   };
+
+  const actionsFilterWithCount = selectedNavigatorTab === 'actions' && <ActionsFilterButton counters={model?.actionCounters} hiddenActionsCount={hiddenActionsCount} />;
 
   return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
     {!hideTimeline && <Timeline
@@ -381,6 +379,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}
+            rightToolbar={[actionsFilterWithCount]}
             selectedTab={selectedNavigatorTab}
             setSelectedTab={setSelectedNavigatorTab}
           />
@@ -405,9 +404,16 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   </div>;
 };
 
-const ActionsFilterButton: React.FC<{ counters?: Map<string, number> }> = ({ counters }) => {
+const ActionsFilterButton: React.FC<{ counters?: Map<string, number>; hiddenActionsCount: number }> = ({ counters, hiddenActionsCount }) => {
   const [actionsFilter, setActionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
-  return <DialogToolbarButton icon='filter' title='Filter actions' dialogDataTestId='actions-filter-dialog'>
+
+  const iconRef = React.useRef<HTMLButtonElement>(null);
+  const buttonChildren = <>
+    {hiddenActionsCount > 0 && <span className='workbench-actions-hidden-count' title={hiddenActionsCount + ' actions hidden by filters'}>{hiddenActionsCount} hidden</span>}
+    <span ref={iconRef} className='codicon codicon-filter'></span>
+  </>;
+
+  return <DialogToolbarButton title='Filter actions' dialogDataTestId='actions-filter-dialog' buttonChildren={buttonChildren} anchorRef={iconRef} >
     <SettingsView
       settings={[
         {

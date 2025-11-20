@@ -108,6 +108,11 @@ element.
 
 Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between Playwright's current cursor position and the provided destination. When set to 1, emits a single `mousemove` event at the destination location.
 
+## input-drag-steps
+- `steps` <[int]>
+
+Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup` of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+
 ## input-modifiers
 - `modifiers` <[Array]<[KeyboardModifier]<"Alt"|"Control"|"ControlOrMeta"|"Meta"|"Shift">>>
 

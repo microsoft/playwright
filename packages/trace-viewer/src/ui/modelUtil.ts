@@ -67,6 +67,7 @@ export class MultiTraceModel {
   readonly browserName: string;
   readonly channel?: string;
   readonly platform?: string;
+  readonly playwrightVersion?: string;
   readonly wallTime?: number;
   readonly title?: string;
   readonly options: trace.BrowserContextEventOptions;
@@ -98,6 +99,7 @@ export class MultiTraceModel {
     this.channel = libraryContext?.channel;
     this.testIdAttributeName = libraryContext?.testIdAttributeName;
     this.platform = libraryContext?.platform || '';
+    this.playwrightVersion = contexts.find(c => c.playwrightVersion)?.playwrightVersion;
     this.title = libraryContext?.title || '';
     this.options = libraryContext?.options || {};
     // Next call updates all timestamps for all events in library contexts, so it must be done first.

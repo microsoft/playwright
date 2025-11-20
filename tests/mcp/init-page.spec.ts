@@ -14,16 +14,24 @@
  * limitations under the License.
  */
 
-import type { z } from 'zod';
-import type { TestContext } from './testContext.js';
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolSchema } from '../sdk/tool.js';
+import fs from 'fs';
 
-export type TestTool<Input extends z.Schema = z.Schema> = {
-  schema: ToolSchema<Input>;
-  handle: (context: TestContext, params: z.output<Input>) => Promise<CallToolResult>;
-};
+import { test, expect } from './fixtures';
 
-export function defineTestTool<Input extends z.Schema>(tool: TestTool<Input>): TestTool<Input> {
-  return tool;
-}
+test('--init-page', async ({ startClient }) => {
+  const initPagePath = test.info().outputPath('aa.ts');
+  await fs.promises.writeFile(initPagePath, `
+    export default async ({ page }) => {
+      await page.setContent('<div>Hello world</div>');
+    };
+  `);
+  const { client } = await startClient({
+    args: [`--init-page=${initPagePath}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: { url: 'about:blank' },
+  })).toHaveResponse({
+    pageState: expect.stringContaining('Hello world'),
+  });
+});

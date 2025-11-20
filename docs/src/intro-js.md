@@ -79,13 +79,11 @@ package.json
 package-lock.json            # Or yarn.lock / pnpm-lock.yaml
 tests/
   example.spec.ts            # Minimal example test
-tests-examples/
-  demo-todo-app.spec.ts      # Richer example tests
 ```
 
 The [playwright.config](./test-configuration.md) centralizes configuration: target browsers, timeouts, retries, projects, reporters and more. In existing projects dependencies are added to your current `package.json`.
 
-`tests/` contains a minimal starter test. `tests-examples/` provides richer samples (e.g. a todo app) to explore patterns.
+`tests/` contains a minimal starter test.
 
 ## Running the Example Test
 

@@ -27,9 +27,9 @@ export class VideoRecorder {
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
   private _lastWritePromise: Promise<void> = Promise.resolve();
-  private _lastFrameTimestamp: number = 0;
-  private _lastFrameBuffer: Buffer | null = null;
-  private _lastWriteTimestamp: number = 0;
+  private _firstFrameTimestamp: number = 0;
+  private _lastFrame: { timestamp: number, frameNumber: number, buffer: Buffer } | null = null;
+  private _lastWriteNodeTime: number = 0;
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
@@ -122,17 +122,20 @@ export class VideoRecorder {
     if (this._isStopped)
       return;
 
-    if (this._lastFrameBuffer) {
-      const durationSec = timestamp - this._lastFrameTimestamp;
-      const repeatCount = Math.max(1, Math.round(fps * durationSec));
+    if (!this._firstFrameTimestamp)
+      this._firstFrameTimestamp = timestamp;
+
+    const frameNumber = Math.floor((timestamp - this._firstFrameTimestamp) * fps);
+
+    if (this._lastFrame) {
+      const repeatCount = frameNumber - this._lastFrame.frameNumber;
       for (let i = 0; i < repeatCount; ++i)
-        this._frameQueue.push(this._lastFrameBuffer);
+        this._frameQueue.push(this._lastFrame.buffer);
       this._lastWritePromise = this._lastWritePromise.then(() => this._sendFrames());
     }
 
-    this._lastFrameBuffer = frame;
-    this._lastFrameTimestamp = timestamp;
-    this._lastWriteTimestamp = monotonicTime();
+    this._lastFrame = { buffer: frame, timestamp, frameNumber };
+    this._lastWriteNodeTime = monotonicTime();
   }
 
   private async _sendFrames() {
@@ -148,9 +151,12 @@ export class VideoRecorder {
   }
 
   async stop() {
-    if (this._isStopped)
+    if (this._isStopped || !this._lastFrame)
       return;
-    this.writeFrame(Buffer.from([]), this._lastFrameTimestamp + (monotonicTime() - this._lastWriteTimestamp) / 1000);
+    // Pad with at least 1s of the last frame in the end for convenience.
+    // This also ensures non-empty videos with 1 frame.
+    const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
+    this.writeFrame(Buffer.from([]), this._lastFrame.timestamp + addTime);
     this._isStopped = true;
     await this._lastWritePromise;
     await this._gracefullyClose!();

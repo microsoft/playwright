@@ -22,6 +22,7 @@ import type * as channels from '@protocol/channels';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
+  private _isLive = false;
   _tracesDir: string | undefined;
   private _stacksId: string | undefined;
   private _isTracing = false;
@@ -37,6 +38,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   async start(options: { name?: string, title?: string, snapshots?: boolean, screenshots?: boolean, sources?: boolean, _live?: boolean } = {}) {
     await this._wrapApiCall(async () => {
       this._includeSources = !!options.sources;
+      this._isLive = !!options._live;
       await this._channel.tracingStart({
         name: options.name,
         snapshots: options.snapshots,
@@ -44,14 +46,14 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
         live: options._live,
       });
       const { traceName } = await this._channel.tracingStartChunk({ name: options.name, title: options.title });
-      await this._startCollectingStacks(traceName);
+      await this._startCollectingStacks(traceName, this._isLive);
     });
   }
 
   async startChunk(options: { name?: string, title?: string } = {}) {
     await this._wrapApiCall(async () => {
       const { traceName } = await this._channel.tracingStartChunk(options);
-      await this._startCollectingStacks(traceName);
+      await this._startCollectingStacks(traceName, this._isLive);
     });
   }
 
@@ -63,12 +65,12 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await this._channel.tracingGroupEnd();
   }
 
-  private async _startCollectingStacks(traceName: string) {
+  private async _startCollectingStacks(traceName: string, live: boolean) {
     if (!this._isTracing) {
       this._isTracing = true;
       this._connection.setIsTracing(true);
     }
-    const result = await this._connection.localUtils()?.tracingStarted({ tracesDir: this._tracesDir, traceName });
+    const result = await this._connection.localUtils()?.tracingStarted({ tracesDir: this._tracesDir, traceName, live });
     this._stacksId = result?.stacksId;
   }
 

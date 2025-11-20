@@ -831,3 +831,58 @@ test('attachments are reported in onStepEnd', { annotation: { type: 'issue', des
     '[hook] After Hooks: 2 attachments in result',
   ]);
 });
+
+test('should have static annotations on result when all tests are skipped', async ({ runInlineTest }) => {
+  class TestReporter implements Reporter {
+    onTestEnd(test: TestCase, result: TestResult): void {
+      for (const annotation of result.annotations)
+        console.log(`%%annotation: ${annotation.type} ${annotation.description || ''}`);
+    }
+  }
+
+  const result = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test.skip('test', {
+        annotation: [{ type: 'foo', description: 'desc' }, { type: 'bar' }],
+      }, async () => {});
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(result.outputLines).toEqual([
+    'annotation: foo desc',
+    'annotation: bar',
+    'annotation: skip',
+  ]);
+
+  const resultMany = await runInlineTest({
+    'reporter.ts': `module.exports = ${TestReporter.toString()}`,
+    'playwright.config.ts': `module.exports = { reporter: './reporter' };`,
+    'a.spec.ts': `
+      import { test } from '@playwright/test';
+      test.skip('test', {
+        annotation: [{ type: 'foo', description: 'desc' }, { type: 'bar' }],
+      }, async () => {});
+
+      test.skip('test2', {
+        annotation: [{ type: 'foobar', description: 'another' }],
+      }, async () => {});
+
+      test.skip('test3', {
+        annotation: [{ type: 'warning', description: 'one more' }],
+      }, async () => {});
+    `,
+  }, { 'reporter': '', 'workers': 1 });
+
+  expect(resultMany.outputLines).toEqual([
+    'annotation: foo desc',
+    'annotation: bar',
+    'annotation: skip',
+    'annotation: foobar another',
+    'annotation: skip',
+    'annotation: warning one more',
+    'annotation: skip',
+  ]);
+});

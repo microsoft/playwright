@@ -91,6 +91,7 @@ export class TraceModernizer {
         contextEntry.channel = event.channel;
         contextEntry.title = event.title;
         contextEntry.platform = event.platform;
+        contextEntry.playwrightVersion = event.playwrightVersion;
         contextEntry.wallTime = event.wallTime;
         contextEntry.startTime = event.monotonicTime;
         contextEntry.sdkLanguage = event.sdkLanguage;

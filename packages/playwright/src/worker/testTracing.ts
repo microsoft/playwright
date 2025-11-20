@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ManualPromise, SerializedFS, calculateSha1, createGuid, monotonicTime } from 'playwright-core/lib/utils';
+import { ManualPromise, SerializedFS, calculateSha1, createGuid, getPlaywrightVersion, monotonicTime } from 'playwright-core/lib/utils';
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
 import { filteredStackTrace } from '../util';
@@ -57,6 +57,7 @@ export class TestTracing {
       type: 'context-options',
       origin: 'testRunner',
       browserName: '',
+      playwrightVersion: getPlaywrightVersion(),
       options: {},
       platform: process.platform,
       wallTime: Date.now(),

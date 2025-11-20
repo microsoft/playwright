@@ -108,11 +108,19 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       this.emit(Events.BrowserContext.ServiceWorker, serviceWorker);
     });
     this._channel.on('console', event => {
-      const consoleMessage = new ConsoleMessage(this._platform, event, Page.fromNullable(event.page));
+      const worker = Worker.fromNullable(event.worker);
+      const page = Page.fromNullable(event.page);
+      const consoleMessage = new ConsoleMessage(this._platform, event, page, worker);
+      worker?.emit(Events.Worker.Console, consoleMessage);
+      page?.emit(Events.Page.Console, consoleMessage);
+      if (worker && this._serviceWorkers.has(worker)) {
+        const scope = this._serviceWorkerScope(worker);
+        for (const page of this._pages) {
+          if (scope && page.url().startsWith(scope))
+            page.emit(Events.Page.Console, consoleMessage);
+        }
+      }
       this.emit(Events.BrowserContext.Console, consoleMessage);
-      const page = consoleMessage.page();
-      if (page)
-        page.emit(Events.Page.Console, consoleMessage);
     });
     this._channel.on('pageError', ({ error, page }) => {
       const pageObject = Page.from(page);
@@ -252,6 +260,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (!func)
       return;
     await bindingCall.call(func);
+  }
+
+  private _serviceWorkerScope(serviceWorker: Worker) {
+    try {
+      let url = new URL('.', serviceWorker.url()).href;
+      if (!url.endsWith('/'))
+        url += '/';
+      return url;
+    } catch {
+      return null;
+    }
   }
 
   setDefaultNavigationTimeout(timeout: number | undefined) {

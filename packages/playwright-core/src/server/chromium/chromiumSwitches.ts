@@ -42,6 +42,8 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'AutoDeElevate',
   // See https://github.com/microsoft/playwright/issues/37714
   'RenderDocument',
+  // Prevents downloading optimization hints on startup.
+  'OptimizationHints',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
@@ -82,4 +84,11 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   // Edge can potentially restart on Windows (msRelaunchNoCompatLayer) which looses its file descriptors (stdout/stderr) and CDP (3/4). Disable until fixed upstream.
   '--edge-skip-compat-layer-relaunch',
   assistantMode ? '' : '--enable-automation',
+  // This disables Chrome for Testing infobar that is visible in the persistent context.
+  // The switch is ignored everywhere else, including Chromium/Chrome/Edge.
+  '--disable-infobars',
+  // Less annoying popups.
+  '--disable-search-engine-choice-screen',
+  // Prevents the "three dots" menu crash in IdentityManager::HasPrimaryAccount for ephemeral contexts.
+  '--disable-sync',
 ].filter(Boolean);

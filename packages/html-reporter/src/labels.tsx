@@ -17,7 +17,7 @@
 import * as React from 'react';
 import { clsx } from '@web/uiUtils';
 import { formatUrl, hashStringToInt } from './utils';
-import { navigate, ProjectLink, SearchParamsContext } from './links';
+import { navigate, ProjectLink, useSearchParams } from './links';
 import { filterWithQuery } from './filter';
 import './labels.css';
 
@@ -41,25 +41,27 @@ export const ProjectAndTagLabelsView: React.FC<{
   projectNames: string[],
   activeProjectName: string,
   otherLabels: string[],
-  useLinks?: boolean,
   style?: React.CSSProperties,
-}> = ({ projectNames, activeProjectName, otherLabels, useLinks, style }) => {
+}> = ({ projectNames, activeProjectName, otherLabels, style }) => {
   // We can have an empty project name if we have no projects specified in the config
   const hasProjectNames = projectNames.length > 0 && !!activeProjectName;
 
   return (hasProjectNames || otherLabels.length > 0) && <span className='label-row' style={style ?? {}}>
     <ProjectLink projectNames={projectNames} projectName={activeProjectName} />
-    {!!useLinks ? <LabelsLinkView labels={otherLabels} /> : <LabelsClickView labels={otherLabels} />}
+    <LabelsClickView labels={otherLabels} />
   </span>;
 };
 
 const LabelsClickView: React.FC<{
   labels: string[],
 }> = ({ labels }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
 
   const onClickHandle = React.useCallback((e: React.MouseEvent, label: string) => {
     e.preventDefault();
+    if (searchParams.has('testId'))
+      searchParams.delete('speedboard');
+    searchParams.delete('testId');
     navigate(filterWithQuery(searchParams, label, e.metaKey || e.ctrlKey));
   }, [searchParams]);
 
@@ -67,9 +69,3 @@ const LabelsClickView: React.FC<{
     {labels.map(label => <Label key={label} label={label} trimAtSymbolPrefix={true} onClick={onClickHandle} />)}
   </>;
 };
-
-const LabelsLinkView: React.FC<{
-  labels: string[],
-}> = ({ labels }) => <>
-  {labels.map((label, index) => <Label key={index} label={label} trimAtSymbolPrefix={true} href={`#?q=${label}`} />)}
-</>;

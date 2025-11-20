@@ -38,6 +38,7 @@ export type ContextCreatedTraceEvent = {
   browserName: string,
   channel?: string,
   platform: string,
+  playwrightVersion?: string,
   wallTime: number,
   monotonicTime: number,
   title?: string,

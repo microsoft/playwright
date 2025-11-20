@@ -1920,7 +1920,7 @@ is guaranteed to exist.
     }
     
     /**
-     * Set permission settings for given requesting and embedding origins.
+     * Set permission settings for given embedding and embedded origins.
      */
     export type setPermissionParameters = {
       /**
@@ -1932,15 +1932,15 @@ is guaranteed to exist.
        */
       setting: PermissionSetting;
       /**
-       * Requesting origin the permission applies to, all origins if not specified.
+       * Embedding origin the permission applies to, all origins if not specified.
        */
       origin?: string;
       /**
-       * Embedding origin the permission applies to. It is ignored unless the requesting origin is
-present and valid. If the requesting origin is provided but the embedding origin isn't, the
-requesting origin is used as the embedding origin.
+       * Embedded origin the permission applies to. It is ignored unless the embedding origin is
+present and valid. If the embedding origin is provided but the embedded origin isn't, the
+embedding origin is used as the embedded origin.
        */
-      embeddingOrigin?: string;
+      embeddedOrigin?: string;
       /**
        * Context to override. When omitted, default browser context is used.
        */
@@ -1949,7 +1949,8 @@ requesting origin is used as the embedding origin.
     export type setPermissionReturnValue = {
     }
     /**
-     * Grant specific permissions to the given origin and reject all others.
+     * Grant specific permissions to the given origin and reject all others. Deprecated. Use
+setPermission instead.
      */
     export type grantPermissionsParameters = {
       permissions: PermissionType[];
@@ -9126,6 +9127,10 @@ for the preferred input type).
      * Fired when debugging target has reloaded after crash
      */
     export type targetReloadedAfterCrashPayload = void;
+    /**
+     * Fired on worker targets when main worker script and any imported scripts have been evaluated.
+     */
+    export type workerScriptLoadedPayload = void;
     
     /**
      * Disables inspector domain notifications.
@@ -10465,7 +10470,7 @@ If the opcode isn't 1, then payloadData is a base64 encoded string representing 
       /**
        * Type of this initiator.
        */
-      type: "parser"|"script"|"preload"|"SignedExchange"|"preflight"|"other";
+      type: "parser"|"script"|"preload"|"SignedExchange"|"preflight"|"FedCM"|"other";
       /**
        * Initiator JavaScript stack trace, set for Script only.
 Requires the Debugger domain to be enabled.
@@ -10899,8 +10904,8 @@ extra headers.
     export interface NetworkConditions {
       /**
        * Only matching requests will be affected by these conditions. Patterns use the URLPattern constructor string
-syntax (https://urlpattern.spec.whatwg.org/). If the pattern is empty, all requests are matched (including p2p
-connections).
+syntax (https://urlpattern.spec.whatwg.org/) and must be absolute. If the pattern is empty, all requests are
+matched (including p2p connections).
        */
       urlPattern: string;
       /**
@@ -10931,6 +10936,18 @@ connections).
        * WebRTC packetReordering feature.
        */
       packetReordering?: boolean;
+    }
+    export interface BlockPattern {
+      /**
+       * URL pattern to match. Patterns use the URLPattern constructor string syntax
+(https://urlpattern.spec.whatwg.org/) and must be absolute. Example: `<example>`.
+       */
+      urlPattern: string;
+      /**
+       * Whether or not to block the pattern. If false, a matching request will not be blocked even if it matches a later
+`BlockPattern`.
+       */
+      block: boolean;
     }
     export type DirectSocketDnsQueryType = "ipv4"|"ipv6";
     export interface DirectTCPSocketOptions {
@@ -11818,76 +11835,6 @@ preemptively (e.g. a cache hit).
      */
     export type policyUpdatedPayload = void;
     /**
-     * Fired once when parsing the .wbn file has succeeded.
-The event contains the information about the web bundle contents.
-     */
-    export type subresourceWebBundleMetadataReceivedPayload = {
-      /**
-       * Request identifier. Used to match this information to another event.
-       */
-      requestId: RequestId;
-      /**
-       * A list of URLs of resources in the subresource Web Bundle.
-       */
-      urls: string[];
-    }
-    /**
-     * Fired once when parsing the .wbn file has failed.
-     */
-    export type subresourceWebBundleMetadataErrorPayload = {
-      /**
-       * Request identifier. Used to match this information to another event.
-       */
-      requestId: RequestId;
-      /**
-       * Error message
-       */
-      errorMessage: string;
-    }
-    /**
-     * Fired when handling requests for resources within a .wbn file.
-Note: this will only be fired for resources that are requested by the webpage.
-     */
-    export type subresourceWebBundleInnerResponseParsedPayload = {
-      /**
-       * Request identifier of the subresource request
-       */
-      innerRequestId: RequestId;
-      /**
-       * URL of the subresource resource.
-       */
-      innerRequestURL: string;
-      /**
-       * Bundle request identifier. Used to match this information to another event.
-This made be absent in case when the instrumentation was enabled only
-after webbundle was parsed.
-       */
-      bundleRequestId?: RequestId;
-    }
-    /**
-     * Fired when request for resources within a .wbn file failed.
-     */
-    export type subresourceWebBundleInnerResponseErrorPayload = {
-      /**
-       * Request identifier of the subresource request
-       */
-      innerRequestId: RequestId;
-      /**
-       * URL of the subresource resource.
-       */
-      innerRequestURL: string;
-      /**
-       * Error message
-       */
-      errorMessage: string;
-      /**
-       * Bundle request identifier. Used to match this information to another event.
-This made be absent in case when the instrumentation was enabled only
-after webbundle was parsed.
-       */
-      bundleRequestId?: RequestId;
-    }
-    /**
      * Is sent whenever a new report is added.
 And after 'enableReportingApi' for all existing reports.
      */
@@ -12116,7 +12063,9 @@ and overrideNetworkState commands, which can be used together to the same effect
     export type emulateNetworkConditionsReturnValue = {
     }
     /**
-     * Activates emulation of network conditions for individual requests using URL match patterns.
+     * Activates emulation of network conditions for individual requests using URL match patterns. Unlike the deprecated
+Network.emulateNetworkConditions this method does not affect `navigator` state. Use Network.overrideNetworkState to
+explicitly modify `navigator` behavior.
      */
     export type emulateNetworkConditionsByRuleParameters = {
       /**
@@ -12346,9 +12295,14 @@ attribute, user, password.
      */
     export type setBlockedURLsParameters = {
       /**
+       * Patterns to match in the order in which they are given. These patterns
+also take precedence over any wildcard patterns defined in `urls`.
+       */
+      urlPatterns?: BlockPattern[];
+      /**
        * URL patterns to block. Wildcards ('*') are allowed.
        */
-      urls: string[];
+      urls?: string[];
     }
     export type setBlockedURLsReturnValue = {
     }
@@ -15924,7 +15878,7 @@ https://github.com/WICG/nav-speculation/blob/main/speculation-rules-tags.md
 mojom::SpeculationAction (although PrefetchWithSubresources is omitted as it
 isn't being used by clients).
      */
-    export type SpeculationAction = "Prefetch"|"Prerender";
+    export type SpeculationAction = "Prefetch"|"Prerender"|"PrerenderUntilScript";
     /**
      * Corresponds to mojom::SpeculationTargetHint.
 See https://github.com/WICG/nav-speculation/blob/main/triggers.md#window-name-targeting-hints
@@ -21835,6 +21789,7 @@ Error was thrown.
     "Inspector.detached": Inspector.detachedPayload;
     "Inspector.targetCrashed": Inspector.targetCrashedPayload;
     "Inspector.targetReloadedAfterCrash": Inspector.targetReloadedAfterCrashPayload;
+    "Inspector.workerScriptLoaded": Inspector.workerScriptLoadedPayload;
     "LayerTree.layerPainted": LayerTree.layerPaintedPayload;
     "LayerTree.layerTreeDidChange": LayerTree.layerTreeDidChangePayload;
     "Log.entryAdded": Log.entryAddedPayload;
@@ -21880,10 +21835,6 @@ Error was thrown.
     "Network.responseReceivedEarlyHints": Network.responseReceivedEarlyHintsPayload;
     "Network.trustTokenOperationDone": Network.trustTokenOperationDonePayload;
     "Network.policyUpdated": Network.policyUpdatedPayload;
-    "Network.subresourceWebBundleMetadataReceived": Network.subresourceWebBundleMetadataReceivedPayload;
-    "Network.subresourceWebBundleMetadataError": Network.subresourceWebBundleMetadataErrorPayload;
-    "Network.subresourceWebBundleInnerResponseParsed": Network.subresourceWebBundleInnerResponseParsedPayload;
-    "Network.subresourceWebBundleInnerResponseError": Network.subresourceWebBundleInnerResponseErrorPayload;
     "Network.reportingApiReportAdded": Network.reportingApiReportAddedPayload;
     "Network.reportingApiReportUpdated": Network.reportingApiReportUpdatedPayload;
     "Network.reportingApiEndpointsChangedForOrigin": Network.reportingApiEndpointsChangedForOriginPayload;

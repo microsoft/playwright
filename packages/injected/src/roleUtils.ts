@@ -174,19 +174,57 @@ const kImplicitRoleByTagName: { [tagName: string]: (e: Element) => AriaRole | nu
   'TEXTAREA': () => 'textbox',
   'TFOOT': () => 'rowgroup',
   'TH': (e: Element) => {
-    if (e.getAttribute('scope') === 'col')
+    const scope = e.getAttribute('scope');
+    if (scope === 'col' || scope === 'colgroup')
       return 'columnheader';
-    if (e.getAttribute('scope') === 'row')
+    if (scope === 'row' || scope === 'rowgroup')
       return 'rowheader';
-    const table = closestCrossShadow(e, 'table');
-    const role = table ? getExplicitAriaRole(table) : '';
-    return (role === 'grid' || role === 'treegrid') ? 'gridcell' : 'cell';
+
+    const nextSibling = e.nextElementSibling;
+    const prevSibling = e.previousElementSibling;
+
+    const row = !!e.parentElement && elementSafeTagName(e.parentElement) === 'TR' ? e.parentElement : undefined;
+
+    // Chromium/Safari: A TH that is the only cell in a table is not labeling any content, thus it's technically not a header. Do not assign a role.
+    // Firefox: Follows the spec and assigns `columnheader`. We prioritize Chrome/Safari semantics.
+    if (!nextSibling && !prevSibling) {
+      if (row) {
+        const table = closestCrossShadow(row, 'table') as HTMLTableElement | undefined;
+        // If there's only one row in the table, this TH has no column to head
+        if (table && table.rows.length <= 1)
+          return null;
+      }
+      return 'columnheader';
+    }
+
+    // Tables are built up incrementally by iterating over them in a particular pattern. In order to emulate this,
+    // we check only immediate siblings and occasionally the parent row
+    // This doesn't seem to directly follow the spec, but matches Chromium behavior
+    // https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/accessibility/ax_node_object.cc;l=1585-1623
+    if (isHeaderCell(nextSibling) && isHeaderCell(prevSibling))
+      return 'columnheader';
+
+    if (isNonEmptyDataCell(nextSibling) || isNonEmptyDataCell(prevSibling))
+      return 'rowheader';
+
+    // As long as we didn't exclude it above, it's still a TH, so default to columnheader
+    return 'columnheader';
   },
   'THEAD': () => 'rowgroup',
   'TIME': () => 'time',
   'TR': () => 'row',
   'UL': () => 'list',
 };
+
+function isHeaderCell(element: Element | null): boolean {
+  return !!element && elementSafeTagName(element) === 'TH';
+}
+
+function isNonEmptyDataCell(element: Element | null): boolean {
+  if (!element || elementSafeTagName(element) !== 'TD')
+    return false;
+  return !!(element.textContent?.trim() || element.children.length > 0);
+}
 
 const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
   'DD': ['DL', 'DIV'],

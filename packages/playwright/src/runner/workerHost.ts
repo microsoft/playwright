@@ -24,7 +24,7 @@ import { stdioChunkToParams } from '../common/ipc';
 import { artifactsFolderName } from '../isomorphic/folders';
 
 import type { TestGroup } from './testGroups';
-import type { RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
+import type { CustomMessageRequestPayload, CustomMessageResponsePayload, RunPayload, SerializedConfig, WorkerInitParams } from '../common/ipc';
 
 
 let lastWorkerIndex = 0;
@@ -88,6 +88,10 @@ export class WorkerHost extends ProcessHost {
 
   runTestGroup(runPayload: RunPayload) {
     this.sendMessageNoReply({ method: 'runTestGroup', params: runPayload });
+  }
+
+  async sendCustomMessage(payload: CustomMessageRequestPayload) {
+    return await this.sendMessage({ method: 'customMessage', params: payload }) as CustomMessageResponsePayload;
   }
 
   hash() {
