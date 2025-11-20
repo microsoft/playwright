@@ -779,6 +779,31 @@ export default defineConfig({
 });
 ```
 
+If your webserver runs on varying ports, use `wait` to capture the port:
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  webServer: {
+    command: 'npm run start',
+    wait: {
+      stdout: '/Listening on port (?<my_server_port>\\d+)/'
+    },
+  },
+});
+```
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+
+test('homepage', async ({ page }) => {
+  await page.goto('/');
+});
+```
+
 ## property: TestConfig.workers
 * since: v1.10
 - type: ?<[int]|[string]>
