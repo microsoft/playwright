@@ -318,8 +318,6 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
 }
 
 function escapeWinCmdArg(str: string): string {
-  return str.replace(/\\/g, '\\\\')
-      .replace(/"/g, '\\"')
-      .replace(/[&<>^|]/g, '^$&')
-      .replace(/%/g, '%%');
+  return str.replace(/"/g, '\\"')
+    .replace(/%([^%].)/g, '%^$1');
 }
