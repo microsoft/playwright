@@ -269,8 +269,9 @@ for (const scenario of ['launch', 'connect'] as const) {
 
     test('should reset mouse position', {
       annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22432' },
-    }, async ({ reusedContext, browserName, platform }) => {
+    }, async ({ reusedContext, browserName, platform, headless }) => {
       // Note: this test only reproduces the issue locally when run with --repeat-each=20.
+      test.skip(!headless, 'headed browser has mouse jiggles');
 
       const pageContent = `
         <style>
