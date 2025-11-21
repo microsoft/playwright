@@ -198,7 +198,7 @@ export class Electron extends SdkObject {
       // On Windows, we need to quote the executable path and arguments due to shell: true.
       // We allso pass the arguments as a single string due to DEP0190,
       // see https://github.com/microsoft/playwright/issues/38278.
-      command = [command, ...electronArguments].map(arg => `"${escapeWinCmdArg(arg)}"`).join(' ');
+      command = [command, ...electronArguments].map(arg => `"${escapeDoubleQuotes(arg)}"`).join(' ');
       electronArguments = [];
     }
 
@@ -317,6 +317,6 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
   }
 }
 
-function escapeWinCmdArg(str: string): string {
-  return str.replace(/"/g, '\\"').replace(/%([^%].)/g, '%^$1');
+function escapeDoubleQuotes(str: string): string {
+  return str.replace(/"/g, '\\"');
 }

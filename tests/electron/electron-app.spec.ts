@@ -130,10 +130,10 @@ test('should script application', async ({ electronApp }) => {
 });
 
 test('should preserve args', async ({ launchElectronApp, isMac }) => {
-  const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar', '%PATH%', '& <>^|\\"']);
+  const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar', '& <>^|\\"']);
   const argv = await electronApp.evaluate(async () => globalThis.argv);
   const electronPath = isMac ? path.join('dist', 'Electron.app') : path.join('dist', 'electron');
-  expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar', '%^PATH%', '& <>^|\\"']);
+  expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar', '& <>^|\\"']);
 });
 
 test('should return windows', async ({ electronApp, newWindow }) => {
