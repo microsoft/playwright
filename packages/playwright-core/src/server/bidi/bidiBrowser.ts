@@ -138,10 +138,13 @@ export class BidiBrowser extends Browser {
       const page = this._findPageForFrame(parentFrameId);
       if (page) {
         page._session.addFrameBrowsingContext(event.context);
-        page._page.frameManager.frameAttached(event.context, parentFrameId);
-        const frame = page._page.frameManager.frame(event.context);
-        if (frame)
-          frame._url = event.url;
+        const frame = page._page.frameManager.frameAttached(event.context, parentFrameId);
+        frame._url = event.url;
+        page._getFrameNode(frame).then(node => {
+          const attributes = node?.value?.attributes;
+          frame._name = attributes?.name ?? attributes?.id ?? '';
+        });
+        return;
       }
       return;
     }

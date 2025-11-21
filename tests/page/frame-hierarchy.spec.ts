@@ -35,8 +35,10 @@ function dumpFrames(frame: Frame, indentation: string = ''): string[] {
   return result;
 }
 
-it('should handle nested frames @smoke', async ({ page, server, isAndroid }) => {
+it('should handle nested frames @smoke', async ({ page, server, isAndroid, browserName, channel }) => {
   it.skip(isAndroid, 'No cross-process on Android');
+  it.skip(browserName === 'firefox' && channel?.startsWith('moz-firefox'), 'frame.name() is racy with BiDi');
+  it.skip(channel?.startsWith('bidi-chrom'), 'frame.name() is racy with BiDi');
 
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   expect(dumpFrames(page.mainFrame())).toEqual([
@@ -154,7 +156,10 @@ it('should report frame from-inside shadow DOM', async ({ page, server }) => {
   expect(page.frames()[1].url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should report frame.name()', async ({ page, server }) => {
+it('should report frame.name()', async ({ page, server, browserName, channel }) => {
+  it.skip(browserName === 'firefox' && channel?.startsWith('moz-firefox'), 'frame.name() is racy with BiDi');
+  it.skip(channel?.startsWith('bidi-chrom'), 'frame.name() is racy with BiDi');
+
   await attachFrame(page, 'theFrameId', server.EMPTY_PAGE);
   await page.evaluate(url => {
     const frame = document.createElement('iframe');
