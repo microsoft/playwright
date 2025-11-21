@@ -311,11 +311,26 @@ This version was also tested against the following stable channels:
 
   Here is an example following the [authentication guide](./auth.md#basic-shared-account-in-all-tests):
 
-  ```js title="tests/auth.setup.ts"
+  ```js tab=node-cjs title="tests/auth.setup.ts"
   import { test as setup, expect } from '@playwright/test';
   import path from 'path';
 
   const authFile = path.join(__dirname, '../playwright/.auth/user.json');
+
+  setup('authenticate', async ({ page }) => {
+    await page.goto('/');
+    // ... perform authentication steps ...
+
+    // make sure to save indexedDB
+    await page.context().storageState({ path: authFile, indexedDB: true });
+  });
+  ```
+
+  ```js tab=node-esm title="tests/auth.setup.ts"
+  import { test as setup, expect } from '@playwright/test';
+  import { join } from 'path';
+
+  const authFile = join(import.meta.dirname, '../playwright/.auth/user.json');
 
   setup('authenticate', async ({ page }) => {
     await page.goto('/');
@@ -828,8 +843,12 @@ See [the clock guide](./clock.md) for more details.
 ### Miscellaneous
 
 - Method [`method: Locator.setInputFiles`] now supports uploading a directory for `<input type=file webkitdirectory>` elements.
-  ```js
+  ```js tab=node-cjs
   await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+  ```
+
+  ```js tab=node-esm
+  await page.getByLabel('Upload directory').setInputFiles(path.join(import.meta.dirname, 'mydir'));
   ```
 
 - Multiple methods like [`method: Locator.click`] or [`method: Locator.press`] now support a `ControlOrMeta` modifier key. This key maps to `Meta` on macOS and maps to `Control` on Windows and Linux.

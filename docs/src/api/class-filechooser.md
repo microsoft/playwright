@@ -3,12 +3,20 @@
 
 [FileChooser] objects are dispatched by the page in the [`event: Page.fileChooser`] event.
 
-```js
+```js tab=node-cjs
 // Start waiting for file chooser before clicking. Note no await.
 const fileChooserPromise = page.waitForEvent('filechooser');
 await page.getByText('Upload file').click();
 const fileChooser = await fileChooserPromise;
 await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
+```
+
+```js tab=node-esm
+// Start waiting for file chooser before clicking. Note no await.
+const fileChooserPromise = page.waitForEvent('filechooser');
+await page.getByText('Upload file').click();
+const fileChooser = await fileChooserPromise;
+await fileChooser.setFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 ```
 
 ```java

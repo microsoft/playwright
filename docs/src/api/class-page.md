@@ -340,9 +340,15 @@ Emitted when attachment download started. User can access basic file operations 
 Emitted when a file chooser is supposed to appear, such as after clicking the  `<input type=file>`. Playwright can
 respond to it via setting the input files using [`method: FileChooser.setFiles`] that can be uploaded after that.
 
-```js
+```js tab=node-cjs
 page.on('filechooser', async fileChooser => {
   await fileChooser.setFiles(path.join(__dirname, '/tmp/myfile.pdf'));
+});
+```
+
+```js tab=node-esm
+page.on('filechooser', async fileChooser => {
+  await fileChooser.setFiles(path.join(import.meta.dirname, '/tmp/myfile.pdf'));
 });
 ```
 

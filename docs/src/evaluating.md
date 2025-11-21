@@ -387,7 +387,7 @@ Math.random = () => 42;
 
 Next, add init script to the page.
 
-```js
+```js tab=node-cjs
 import { test, expect } from '@playwright/test';
 import path from 'path';
 
@@ -395,6 +395,17 @@ test.beforeEach(async ({ page }) => {
   // Add script for every test in the beforeEach hook.
   // Make sure to correctly resolve the script path.
   await page.addInitScript({ path: path.resolve(__dirname, '../mocks/preload.js') });
+});
+```
+
+```js tab=node-esm
+import { test, expect } from '@playwright/test';
+import { resolve } from 'path';
+
+test.beforeEach(async ({ page }) => {
+  // Add script for every test in the beforeEach hook.
+  // Make sure to correctly resolve the script path.
+  await page.addInitScript({ path: resolve(import.meta.dirname, '../mocks/preload.js') });
 });
 ```
 

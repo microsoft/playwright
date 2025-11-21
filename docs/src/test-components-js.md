@@ -817,7 +817,7 @@ export default defineConfig({
 
 You can specify plugins via Vite config for testing settings. Note that once you start specifying plugins, you are responsible for specifying the framework plugin as well, `vue()` in this case:
 
-```js
+```js tab=node-cjs
 import { defineConfig, devices } from '@playwright/experimental-ct-vue';
 
 import { resolve } from 'path';
@@ -855,6 +855,51 @@ export default defineConfig({
       resolve: {
         alias: {
           '@': resolve(__dirname, './src'),
+        },
+      },
+    },
+  },
+});
+```
+
+```js tab=node-esm
+import { defineConfig, devices } from '@playwright/experimental-ct-vue';
+
+import { resolve } from 'path';
+import vue from '@vitejs/plugin-vue';
+import AutoImport from 'unplugin-auto-import/vite';
+import Components from 'unplugin-vue-components/vite';
+
+export default defineConfig({
+  testDir: './tests/component',
+  use: {
+    trace: 'on-first-retry',
+    ctViteConfig: {
+      plugins: [
+        vue(),
+        AutoImport({
+          imports: [
+            'vue',
+            'vue-router',
+            '@vueuse/head',
+            'pinia',
+            {
+              '@/store': ['useStore'],
+            },
+          ],
+          dts: 'src/auto-imports.d.ts',
+          eslintrc: {
+            enabled: true,
+          },
+        }),
+        Components({
+          dirs: ['src/components'],
+          extensions: ['vue'],
+        }),
+      ],
+      resolve: {
+        alias: {
+          '@': resolve(import.meta.dirname, './src'),
         },
       },
     },

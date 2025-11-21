@@ -15,11 +15,34 @@ The snippet below retrieves the [service worker](https://developer.chrome.com/do
 
 Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
 
-```js
+```js tab=node-cjs
 const { chromium } = require('playwright');
 
 (async () => {
   const pathToExtension = require('path').join(__dirname, 'my-extension');
+  const userDataDir = '/tmp/test-user-data-dir';
+  const browserContext = await chromium.launchPersistentContext(userDataDir, {
+    channel: 'chromium',
+    args: [
+      `--disable-extensions-except=${pathToExtension}`,
+      `--load-extension=${pathToExtension}`
+    ]
+  });
+  let [serviceWorker] = browserContext.serviceWorkers();
+  if (!serviceWorker)
+    serviceWorker = await browserContext.waitForEvent('serviceworker');
+
+  // Test the service worker as you would any other worker.
+  await browserContext.close();
+})();
+```
+
+```js tab=node-esm
+import { chromium } from 'playwright';
+import { join } from 'path';
+
+(async () => {
+  const pathToExtension = join(import.meta.dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
   const browserContext = await chromium.launchPersistentContext(userDataDir, {
     channel: 'chromium',
@@ -109,7 +132,7 @@ Note the use of the `chromium` channel that allows to run extensions in headless
 
 First, add fixtures that will load the extension:
 
-```js title="fixtures.ts"
+```js tab=node-cjs title="fixtures.ts"
 import { test as base, chromium, type BrowserContext } from '@playwright/test';
 import path from 'path';
 
@@ -119,6 +142,39 @@ export const test = base.extend<{
 }>({
   context: async ({ }, use) => {
     const pathToExtension = path.join(__dirname, 'my-extension');
+    const context = await chromium.launchPersistentContext('', {
+      channel: 'chromium',
+      args: [
+        `--disable-extensions-except=${pathToExtension}`,
+        `--load-extension=${pathToExtension}`,
+      ],
+    });
+    await use(context);
+    await context.close();
+  },
+  extensionId: async ({ context }, use) => {
+    // for manifest v3:
+    let [serviceWorker] = context.serviceWorkers();
+    if (!serviceWorker)
+      serviceWorker = await context.waitForEvent('serviceworker');
+
+    const extensionId = serviceWorker.url().split('/')[2];
+    await use(extensionId);
+  },
+});
+export const expect = test.expect;
+```
+
+```js tab=node-esm title="fixtures.ts"
+import { test as base, chromium, type BrowserContext } from '@playwright/test';
+import { join } from 'path';
+
+export const test = base.extend<{
+  context: BrowserContext;
+  extensionId: string;
+}>({
+  context: async ({ }, use) => {
+    const pathToExtension = join(import.meta.dirname, 'my-extension');
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       args: [

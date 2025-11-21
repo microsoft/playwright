@@ -532,7 +532,7 @@ Note that you still need to specify the capital `A` in `Shift-A` to produce the 
 
 You can select input files for upload using the [`method: Locator.setInputFiles`] method. It expects first argument to point to an [input element](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input) with the type `"file"`. Multiple files can be passed in the array. If some of the file paths are relative, they are resolved relative to the current working directory. Empty array clears the selected files.
 
-```js
+```js tab=node-cjs
 // Select one file
 await page.getByLabel('Upload file').setInputFiles(path.join(__dirname, 'myfile.pdf'));
 
@@ -544,6 +544,20 @@ await page.getByLabel('Upload files').setInputFiles([
 
 // Select a directory
 await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+```
+
+```js tab=node-esm
+// Select one file
+await page.getByLabel('Upload file').setInputFiles(path.join(import.meta.dirname, 'myfile.pdf'));
+
+// Select multiple files
+await page.getByLabel('Upload files').setInputFiles([
+  path.join(import.meta.dirname, 'file1.txt'),
+  path.join(import.meta.dirname, 'file2.txt'),
+]);
+
+// Select a directory
+await page.getByLabel('Upload directory').setInputFiles(path.join(import.meta.dirname, 'mydir'));
 
 // Remove all the selected files
 await page.getByLabel('Upload file').setInputFiles([]);
@@ -641,12 +655,20 @@ await page.GetByLabel("Upload file").SetInputFilesAsync(new FilePayload
 If you don't have input element in hand (it is created dynamically), you can handle the [`event: Page.fileChooser`] event
 or use a corresponding waiting method upon your action:
 
-```js
+```js tab=node-cjs
 // Start waiting for file chooser before clicking. Note no await.
 const fileChooserPromise = page.waitForEvent('filechooser');
 await page.getByLabel('Upload file').click();
 const fileChooser = await fileChooserPromise;
 await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
+```
+
+```js tab=node-esm
+// Start waiting for file chooser before clicking. Note no await.
+const fileChooserPromise = page.waitForEvent('filechooser');
+await page.getByLabel('Upload file').click();
+const fileChooser = await fileChooserPromise;
+await fileChooser.setFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 ```
 
 ```java

@@ -259,7 +259,7 @@ npx playwright test
 
 To make environment variables easier to manage, consider something like `.env` files. Here is an example that uses [`dotenv`](https://www.npmjs.com/package/dotenv) package to read environment variables directly in the configuration file.
 
-```js title="playwright.config.ts"
+```js tab=node-cjs title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -269,6 +269,24 @@ dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 // Alternatively, read from "../my.env" file.
 dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
+
+export default defineConfig({
+  use: {
+    baseURL: process.env.STAGING === '1' ? 'http://staging.example.test/' : 'http://example.test/',
+  }
+});
+```
+
+```js tab=node-esm title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+import dotenv from 'dotenv';
+import { resolve } from 'path';
+
+// Read from ".env" file.
+dotenv.config({ path: resolve(import.meta.dirname, '.env') });
+
+// Alternatively, read from "../my.env" file.
+dotenv.config({ path: resolve(import.meta.dirname, '..', 'my.env') });
 
 export default defineConfig({
   use: {
@@ -308,13 +326,31 @@ See for example this CSV file, in our example `input.csv`:
 
 Based on this we'll generate some tests by using the [csv-parse](https://www.npmjs.com/package/csv-parse) library from NPM:
 
-```js title="test.spec.ts"
+```js tab=node-cjs title="test.spec.ts"
 import fs from 'fs';
 import path from 'path';
 import { test } from '@playwright/test';
 import { parse } from 'csv-parse/sync';
 
 const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
+  columns: true,
+  skip_empty_lines: true
+});
+
+for (const record of records) {
+  test(`foo: ${record.test_case}`, async ({ page }) => {
+    console.log(record.test_case, record.some_value, record.some_other_value);
+  });
+}
+```
+
+```js tab=node-esm title="test.spec.ts"
+import fs from 'fs';
+import { join } from 'path';
+import { test } from '@playwright/test';
+import { parse } from 'csv-parse/sync';
+
+const records = parse(fs.readFileSync(join(import.meta.dirname, 'input.csv')), {
   columns: true,
   skip_empty_lines: true
 });
