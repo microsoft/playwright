@@ -1195,19 +1195,6 @@ scheme.PageGetSelectedTextParams = tOptional(tObject({}));
 scheme.PageGetSelectedTextResult = tObject({
   text: tString,
 });
-scheme.PageSelectorAtPointParams = tObject({
-  x: tFloat,
-  y: tFloat,
-});
-scheme.PageSelectorAtPointResult = tObject({
-  selector: tString,
-});
-scheme.PageGenerateSelectorsParams = tObject({
-  selector: tString,
-});
-scheme.PageGenerateSelectorsResult = tObject({
-  selectors: tArray(tString),
-});
 scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });

@@ -1536,23 +1536,6 @@ Page:
       returns:
         text: string
 
-    selectorAtPoint:
-      title: Retrieve selector corresponding to the coordinates
-      parameters:
-        x: float
-        y: float
-      returns:
-        selector: string
-
-    generateSelectors:
-      title: Get all selectors possible for the specified selector
-      parameters:
-        selector: string
-      returns:
-        selectors:
-          type: array
-          items: string
-
     addInitScript:
       title: Add init script
       group: configuration

@@ -364,15 +364,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return this._page.getSelectedText();
   }
 
-  async selectorAtPoint(params: channels.PageSelectorAtPointParams, progress: Progress): Promise<channels.PageSelectorAtPointResult> {
-    return this._page.selectorAtPoint(params.x, params.y);
-  }
-
-  async generateSelectors(params: channels.PageGenerateSelectorsParams, progress: Progress): Promise<channels.PageGenerateSelectorsResult> {
-    const selectors = await this._page.generateSelectors(params.selector);
-    return { selectors: selectors };
-  }
-
   _onFrameAttached(frame: Frame) {
     this._dispatchEvent('frameAttached', { frame: FrameDispatcher.from(this.parentScope(), frame) });
   }

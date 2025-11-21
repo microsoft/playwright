@@ -1504,10 +1504,9 @@ export class Recorder {
   generateSelector(element: Element, options: Partial<GenerateSelectorOptions> = {}) {
     const finalOptions: GenerateSelectorOptions = {
       testIdAttributeName: this.state.testIdAttributeName,
+      multiple: true,
       ...options,
     };
-    if (finalOptions.multiple === undefined)
-      finalOptions.multiple = this._collectSelectors;
     return this.injectedScript.generateSelector(element, finalOptions);
   }
 
