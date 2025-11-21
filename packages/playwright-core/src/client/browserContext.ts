@@ -247,6 +247,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     switch (action.name) {
       case 'fill':
         return (action as actions.FillAction).text;
+      case 'press':
+        return (action as actions.PressAction).key;
       case 'assertText':
         return (action as actions.AssertTextAction).text;
       case 'assertValue':
