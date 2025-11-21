@@ -357,7 +357,13 @@ export const UIModeView: React.FC<{}> = ({
       } else {
         for (const treeId of watchedTreeIds.value) {
           const treeItem = testTree.treeItemById(treeId);
-          const fileName = treeItem?.location.file;
+          if (!treeItem)
+            continue;
+
+          let fileItem = treeItem;
+          while (!(fileItem.kind === 'group' && (fileItem.subKind === 'file' || fileItem.subKind === 'folder')) && fileItem.parent)
+            fileItem = fileItem.parent;
+          const fileName = fileItem?.location.file;
           if (fileName && set.has(fileName)) {
             const filter = testTree.collectTestIds(treeItem);
             locations.push(...filter.locations);
