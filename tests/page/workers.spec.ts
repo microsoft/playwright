@@ -22,7 +22,9 @@ import type { ConsoleMessage } from 'playwright-core';
 import fs from 'fs';
 import { kTargetClosedErrorMessage } from '../config/errors';
 
-it('Page.workers @smoke', async function({ page, server }) {
+it('Page.workers @smoke', async function({ page, server, browserName, browserMajorVersion }) {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   await Promise.all([
     page.waitForEvent('worker'),
     page.goto(server.PREFIX + '/worker/worker.html')]);
@@ -83,14 +85,18 @@ it('should have JSHandles for console logs', async function({ page, browserName 
   expect(await (await log.args()[3].getProperty('origin')).jsonValue()).toBe('null');
 });
 
-it('should evaluate', async function({ page }) {
+it('should evaluate', async function({ page, browserName, browserMajorVersion }) {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   const workerCreatedPromise = page.waitForEvent('worker');
   await page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], { type: 'application/javascript' }))));
   const worker = await workerCreatedPromise;
   expect(await worker.evaluate('1+1')).toBe(2);
 });
 
-it('should report console event on the worker', async function({ page }) {
+it('should report console event on the worker', async function({ page, browserName, browserMajorVersion }) {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.evaluate(() => {
@@ -110,7 +116,9 @@ it('should report console event on the worker', async function({ page }) {
   expect(message1).toBe(message3);
 });
 
-it('should report console event on the worker when not listening on page or context', async function({ page }) {
+it('should report console event on the worker when not listening on page or context', async function({ page, browserName, browserMajorVersion }) {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.evaluate(() => {
@@ -185,6 +193,8 @@ it('should attribute network activity for worker inside iframe to the iframe', a
 
 it('should report network activity', async function({ page, server, browserName, browserMajorVersion, asset }) {
   it.skip(browserName === 'firefox' && browserMajorVersion < 114, 'https://github.com/microsoft/playwright/issues/21760');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   const [worker] = await Promise.all([
     page.waitForEvent('worker'),
     page.goto(server.PREFIX + '/worker/worker.html'),
@@ -275,8 +285,10 @@ it('should dispatch console messages when page has workers', async function({ pa
   expect(message.text()).toBe('foo');
 });
 
-it('should report and intercept network from nested worker', async function({ page, server, browserName }) {
+it('should report and intercept network from nested worker', async function({ page, server, browserName, browserMajorVersion }) {
   it.fixme(browserName === 'webkit', 'https://github.com/microsoft/playwright/issues/27376');
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   await page.route('**/simple.json', async route => {
     const json = { foo: 'not bar' };
     await route.fulfill({ json });
@@ -306,7 +318,9 @@ it('should report and intercept network from nested worker', async function({ pa
 
 it('should support extra http headers', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31747' }
-}, async ({ page, server }) => {
+}, async ({ page, server, browserName, browserMajorVersion }) => {
+  it.skip(browserName === 'chromium' && browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
   await page.setExtraHTTPHeaders({ foo: 'bar' });
   const [worker, request1] = await Promise.all([
     page.waitForEvent('worker'),

@@ -186,9 +186,6 @@ const NSActivityOptions ActivityOptions =
             NSURL *cookieFile = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/cookie.db", _userDataDir]];
             [configuration _setCookieStorageFile:cookieFile];
 
-            NSURL *applicationCacheDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/ApplicationCache", _userDataDir]];
-            [configuration setApplicationCacheDirectory:applicationCacheDirectory];
-
             NSURL *cacheStorageDirectory = [NSURL fileURLWithPath:[NSString stringWithFormat:@"%@/CacheStorage", _userDataDir]];
             [configuration _setCacheStorageDirectory:cacheStorageDirectory];
 

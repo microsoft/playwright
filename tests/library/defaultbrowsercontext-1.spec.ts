@@ -113,6 +113,7 @@ it('should support bypassCSP option', async ({ server, launchPersistent }) => {
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({ content: 'window["__injected"] = 42;' });
   expect(await page.evaluate('__injected')).toBe(42);
+  expect(await page.evaluate('window["__inlineScriptValue"]')).toBe(42);
 });
 
 it('should support javascriptEnabled option', async ({ launchPersistent, browserName }) => {

@@ -196,6 +196,7 @@ export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _originToPermissions = new Map<string, string[]>();
   private _initScriptIds = new Map<InitScript, string>();
+  private _interceptId: bidi.Network.Intercept | undefined;
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -376,6 +377,18 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+    if (this.requestInterceptors.length > 0 && !this._interceptId) {
+      const { intercept } = await this._browser._browserSession.send('network.addIntercept', {
+        phases: [bidi.Network.InterceptPhase.BeforeRequestSent],
+        urlPatterns: [{ type: 'pattern' }],
+      });
+      this._interceptId = intercept;
+    }
+    if (this.requestInterceptors.length === 0 && this._interceptId) {
+      const intercept = this._interceptId;
+      this._interceptId = undefined;
+      await this._browser._browserSession.send('network.removeIntercept', { intercept });
+    }
   }
 
   override async doUpdateDefaultViewport() {

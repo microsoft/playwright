@@ -785,6 +785,7 @@ export class Frame extends SdkObject {
         } else if (element) {
           log = `  locator resolved to ${visible ? 'visible' : 'hidden'} ${injected.previewNode(element)}`;
         }
+        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
         return { log, element, visible, attached: !!element };
       }, { info: resolved.info, root: resolved.frame === this ? scope : undefined }));
       const { log, visible, attached } = await progress.race(result.evaluate(r => ({ log: r.log, visible: r.visible, attached: r.attached })));
@@ -1115,6 +1116,7 @@ export class Frame extends SdkObject {
         } else if (element) {
           log = `  locator resolved to ${injected.previewNode(element)}`;
         }
+        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
         return { log, success: !!element, element };
       }, { info: resolved.info, callId: progress.metadata.id }));
       const { log, success } = await progress.race(result.evaluate(r => ({ log: r.log, success: r.success })));
@@ -1444,6 +1446,8 @@ export class Frame extends SdkObject {
         throw injected.strictModeViolationError(info!.parsed, elements);
       else if (elements.length)
         log = `  locator resolved to ${injected.previewNode(elements[0])}`;
+      if (info)
+        injected.checkDeprecatedSelectorUsage(info.parsed, elements);
       return { log, ...await injected.expect(elements[0], options, elements) };
     }, { info, options, callId: progress.metadata.id }));
 

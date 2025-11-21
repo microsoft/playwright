@@ -130,10 +130,10 @@ test('should script application', async ({ electronApp }) => {
 });
 
 test('should preserve args', async ({ launchElectronApp, isMac }) => {
-  const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar']);
+  const electronApp = await launchElectronApp('electron-app-args.js', ['foo', 'bar', '& <>^|\\"']);
   const argv = await electronApp.evaluate(async () => globalThis.argv);
   const electronPath = isMac ? path.join('dist', 'Electron.app') : path.join('dist', 'electron');
-  expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar']);
+  expect(argv).toEqual([expect.stringContaining(electronPath), expect.stringContaining(path.join('electron', 'electron-app-args.js')), 'foo', 'bar', '& <>^|\\"']);
 });
 
 test('should return windows', async ({ electronApp, newWindow }) => {
@@ -213,6 +213,7 @@ test('should bypass csp', async ({ launchElectronApp, server }) => {
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({ content: 'window["__injected"] = 42;' });
   expect(await page.evaluate('window["__injected"]')).toBe(42);
+  expect(await page.evaluate('window["__inlineScriptValue"]')).toBe(42);
 });
 
 test('should create page for browser view', async ({ launchElectronApp }) => {

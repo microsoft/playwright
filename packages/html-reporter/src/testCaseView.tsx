@@ -20,7 +20,7 @@ import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
 import './common.css';
-import { Link, SearchParamsContext, testResultHref, TraceLink } from './links';
+import { Link, testResultHref, TraceLink, useSearchParams } from './links';
 import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
@@ -42,7 +42,7 @@ export const TestCaseView: React.FC<{
   options?: HTMLReportOptions,
 }> = ({ projectNames, test, testRunMetadata, run, next, prev, options }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
 
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
 

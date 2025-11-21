@@ -30,8 +30,48 @@ test('--init-page', async ({ startClient }) => {
   });
   expect(await client.callTool({
     name: 'browser_snapshot',
-    arguments: { url: 'about:blank' },
+    arguments: {},
   })).toHaveResponse({
     pageState: expect.stringContaining('Hello world'),
+  });
+});
+
+test('--init-page w/ --init-script', async ({ startClient, server }) => {
+  server.setContent('/', `
+    <div>Hello world</div>
+  `, 'text/html');
+
+  const initPagePath = test.info().outputPath('initPage.ts');
+  await fs.promises.writeFile(initPagePath, `
+    export default async ({ page }) => {
+      await page.context().grantPermissions(['geolocation']);
+      await page.context().setGeolocation({ latitude: 37.7749, longitude: -122.4194 });
+    };
+  `);
+  const initScriptPath = test.info().outputPath('initScript.js');
+  await fs.promises.writeFile(initScriptPath, `
+    const options = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
+    function success(pos) { console.log(pos.coords.latitude, pos.coords.longitude); }
+    function error(error) { console.error(error); }
+    navigator.geolocation.getCurrentPosition(success, error, options);
+  `);
+
+  const { client } = await startClient({
+    args: [`--init-page=${initPagePath}`, `--init-script=${initScriptPath}`],
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  })).toHaveResponse({
+    pageState: expect.stringContaining('Hello world'),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_console_messages',
+    arguments: {},
+  })).toHaveResponse({
+    result: expect.stringContaining('37.7749 -122.4194'),
   });
 });
