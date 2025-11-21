@@ -534,16 +534,16 @@ You can select input files for upload using the [`method: Locator.setInputFiles`
 
 ```js
 // Select one file
-await page.getByLabel('Upload file').setInputFiles(path.join(__dirname, 'myfile.pdf'));
+await page.getByLabel('Upload file').setInputFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 
 // Select multiple files
 await page.getByLabel('Upload files').setInputFiles([
-  path.join(__dirname, 'file1.txt'),
-  path.join(__dirname, 'file2.txt'),
+  path.join(import.meta.dirname, 'file1.txt'),
+  path.join(import.meta.dirname, 'file2.txt'),
 ]);
 
 // Select a directory
-await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+await page.getByLabel('Upload directory').setInputFiles(path.join(import.meta.dirname, 'mydir'));
 
 // Remove all the selected files
 await page.getByLabel('Upload file').setInputFiles([]);
@@ -646,7 +646,7 @@ or use a corresponding waiting method upon your action:
 const fileChooserPromise = page.waitForEvent('filechooser');
 await page.getByLabel('Upload file').click();
 const fileChooser = await fileChooserPromise;
-await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
+await fileChooser.setFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 ```
 
 ```java

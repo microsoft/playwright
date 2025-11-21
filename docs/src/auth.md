@@ -54,7 +54,7 @@ Create `tests/auth.setup.ts` that will prepare authenticated browser state for a
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 
-const authFile = path.join(__dirname, '../playwright/.auth/user.json');
+const authFile = path.join(import.meta.dirname, '../playwright/.auth/user.json');
 
 setup('authenticate', async ({ page }) => {
   // Perform authentication steps. Replace these actions with your own.

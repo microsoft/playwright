@@ -16,10 +16,11 @@ The snippet below retrieves the [service worker](https://developer.chrome.com/do
 Note the use of the `chromium` channel that allows to run extensions in headless mode. Alternatively, you can launch the browser in headed mode.
 
 ```js
-const { chromium } = require('playwright');
+import { chromium } from 'playwright';
+import { join } from 'path';
 
 (async () => {
-  const pathToExtension = require('path').join(__dirname, 'my-extension');
+  const pathToExtension = join(import.meta.dirname, 'my-extension');
   const userDataDir = '/tmp/test-user-data-dir';
   const browserContext = await chromium.launchPersistentContext(userDataDir, {
     channel: 'chromium',
@@ -118,7 +119,7 @@ export const test = base.extend<{
   extensionId: string;
 }>({
   context: async ({ }, use) => {
-    const pathToExtension = path.join(__dirname, 'my-extension');
+    const pathToExtension = path.join(import.meta.dirname, 'my-extension');
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       args: [

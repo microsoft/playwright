@@ -78,7 +78,7 @@ import path from 'path';
 import childProcess from 'child_process';
 
 const EXECUTABLE_PATH = path.join(
-    __dirname,
+    import.meta.dirname,
     '../../webview2-app/bin/Debug/net8.0-windows/webview2.exe',
 );
 

@@ -265,10 +265,10 @@ import dotenv from 'dotenv';
 import path from 'path';
 
 // Read from ".env" file.
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+dotenv.config({ path: path.resolve(import.meta.dirname, '.env') });
 
 // Alternatively, read from "../my.env" file.
-dotenv.config({ path: path.resolve(__dirname, '..', 'my.env') });
+dotenv.config({ path: path.resolve(import.meta.dirname, '..', 'my.env') });
 
 export default defineConfig({
   use: {
@@ -314,7 +314,7 @@ import path from 'path';
 import { test } from '@playwright/test';
 import { parse } from 'csv-parse/sync';
 
-const records = parse(fs.readFileSync(path.join(__dirname, 'input.csv')), {
+const records = parse(fs.readFileSync(path.join(import.meta.dirname, 'input.csv')), {
   columns: true,
   skip_empty_lines: true
 });

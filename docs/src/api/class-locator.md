@@ -2351,16 +2351,16 @@ For inputs with a `[webkitdirectory]` attribute, only a single directory path is
 
 ```js
 // Select one file
-await page.getByLabel('Upload file').setInputFiles(path.join(__dirname, 'myfile.pdf'));
+await page.getByLabel('Upload file').setInputFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 
 // Select multiple files
 await page.getByLabel('Upload files').setInputFiles([
-  path.join(__dirname, 'file1.txt'),
-  path.join(__dirname, 'file2.txt'),
+  path.join(import.meta.dirname, 'file1.txt'),
+  path.join(import.meta.dirname, 'file2.txt'),
 ]);
 
 // Select a directory
-await page.getByLabel('Upload directory').setInputFiles(path.join(__dirname, 'mydir'));
+await page.getByLabel('Upload directory').setInputFiles(path.join(import.meta.dirname, 'mydir'));
 
 // Remove all the selected files
 await page.getByLabel('Upload file').setInputFiles([]);

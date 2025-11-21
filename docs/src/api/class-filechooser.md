@@ -8,7 +8,7 @@
 const fileChooserPromise = page.waitForEvent('filechooser');
 await page.getByText('Upload file').click();
 const fileChooser = await fileChooserPromise;
-await fileChooser.setFiles(path.join(__dirname, 'myfile.pdf'));
+await fileChooser.setFiles(path.join(import.meta.dirname, 'myfile.pdf'));
 ```
 
 ```java

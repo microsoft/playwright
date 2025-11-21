@@ -394,7 +394,7 @@ import path from 'path';
 test.beforeEach(async ({ page }) => {
   // Add script for every test in the beforeEach hook.
   // Make sure to correctly resolve the script path.
-  await page.addInitScript({ path: path.resolve(__dirname, '../mocks/preload.js') });
+  await page.addInitScript({ path: path.resolve(import.meta.dirname, '../mocks/preload.js') });
 });
 ```
 
