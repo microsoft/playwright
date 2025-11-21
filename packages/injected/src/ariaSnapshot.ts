@@ -202,7 +202,9 @@ export function generateAriaTree(rootElement: Element, publicOptions: AriaTreeOp
 
     if (ariaNode.role === 'link' && element.hasAttribute('href')) {
       const href = element.getAttribute('href')!;
-      ariaNode.props['url'] = href;
+      // Remove link prefix added in trace viewer snapshots
+      const linkPrefix = 'link://';
+      ariaNode.props['url'] = href.startsWith(linkPrefix) ? href.slice(linkPrefix.length) : href;
     }
 
     if (ariaNode.role === 'textbox' && element.hasAttribute('placeholder') && element.getAttribute('placeholder') !== ariaNode.name) {
