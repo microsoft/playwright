@@ -68,9 +68,16 @@ export class HarRouter {
       // test when HAR was recorded but we'd abort it immediately.
       if (response.status === -1)
         return;
+
+      // route.fulfill does not support multiple set-cookie headers. We need to merge them into one.
+      const setCookieHeaders = response.headers!.filter(h => h.name.toLowerCase() === 'set-cookie');
+      const transformedHeaders = response.headers!.filter(h => h.name.toLowerCase() !== 'set-cookie');
+      if (setCookieHeaders.length > 1)
+        transformedHeaders.push({ name: 'set-cookie', value: setCookieHeaders.map(h => h.value).join('\n') });
+
       await route.fulfill({
         status: response.status,
-        headers: Object.fromEntries(response.headers!.map(h => [h.name, h.value])),
+        headers: Object.fromEntries(transformedHeaders.map(h => [h.name, h.value])),
         body: response.body!
       });
       return;
