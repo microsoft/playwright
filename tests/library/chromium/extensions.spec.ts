@@ -69,7 +69,9 @@ it.describe('MV3', () => {
     await context.close();
   });
 
-  it('should support request/response events in the service worker', async ({ launchPersistentContext, asset, server }) => {
+  it('should support request/response events in the service worker', async ({ launchPersistentContext, asset, server, browserMajorVersion }) => {
+    it.skip(browserMajorVersion < 143, 'needs workerScriptLoaded event');
+
     server.setRoute('/empty.html', (req, res) => {
       res.writeHead(200, { 'Content-Type': 'text/html', 'x-response-foobar': 'BarFoo' });
       res.end(`<span>hello world!</span>`);
