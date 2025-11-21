@@ -213,6 +213,7 @@ test('should bypass csp', async ({ launchElectronApp, server }) => {
   await page.goto(server.PREFIX + '/csp.html');
   await page.addScriptTag({ content: 'window["__injected"] = 42;' });
   expect(await page.evaluate('window["__injected"]')).toBe(42);
+  expect(await page.evaluate('window["__inlineScriptValue"]')).toBe(42);
 });
 
 test('should create page for browser view', async ({ launchElectronApp }) => {
