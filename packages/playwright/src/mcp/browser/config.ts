@@ -132,6 +132,12 @@ async function validateConfig(config: FullConfig): Promise<void> {
         throw new Error(`Init script file does not exist: ${script}`);
     }
   }
+  if (config.browser.initPage) {
+    for (const page of config.browser.initPage) {
+      if (!await fileExistsAsync(page))
+        throw new Error(`Init page file does not exist: ${page}`);
+    }
+  }
   if (config.sharedBrowserContext && config.saveVideo)
     throw new Error('saveVideo is not supported when sharedBrowserContext is true');
 }
