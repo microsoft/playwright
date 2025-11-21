@@ -297,7 +297,7 @@ for (const [name, item] of Object.entries(protocol)) {
         if (!method.title && !method.internal)
           throw new Error(`Method "${className}.${methodName}" must have a "title" because it is not "internal" in protocol.yml`);
         if (method.group && method.internal)
-          throw new Error(`Method "${className}.${methodName}" must not specify "group" because it is "internal" in protocol.yml`);
+          throw new Error(`Method "${className}.${methodName}" must should not specify "group" because it is "internal" in protocol.yml`);
         if (method.group && !['getter', 'configuration', 'route', 'default'].includes(method.group))
           throw new Error(`Unknown group "${method.group}" for method "${className}.${methodName}" in protocol.yml`);
         const internalProp = method.internal ? ` internal: ${method.internal},` : '';

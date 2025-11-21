@@ -195,10 +195,11 @@ export class Electron extends SdkObject {
       // On Windows in order to run .cmd files, shell: true is required.
       // https://github.com/nodejs/node/issues/52554
       shell = true;
-      // On Windows, we need to quote the executable path due to shell: true.
-      command = `"${command}"`;
-      // On Windows, we need to quote the arguments due to shell: true.
-      electronArguments = electronArguments.map(arg => `"${arg}"`);
+      // On Windows, we need to quote the executable path and arguments due to shell: true.
+      // We allso pass the arguments as a single string due to DEP0190,
+      // see https://github.com/microsoft/playwright/issues/38278.
+      command = [command, ...electronArguments].map(arg => `"${escapeDoubleQuotes(arg)}"`).join(' ');
+      electronArguments = [];
     }
 
     // When debugging Playwright test that runs Electron, NODE_OPTIONS
@@ -314,4 +315,8 @@ async function waitForLine(progress: Progress, process: childProcess.ChildProces
   } finally {
     eventsHelper.removeEventListeners(listeners);
   }
+}
+
+function escapeDoubleQuotes(str: string): string {
+  return str.replace(/"/g, '\\"');
 }

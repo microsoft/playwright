@@ -18,7 +18,7 @@ import type { TestCaseSummary, TestFileSummary } from './types';
 import * as React from 'react';
 import { msToString } from './utils';
 import { Chip } from './chip';
-import { Link, LinkBadge, SearchParamsContext, testResultHref, TraceLink } from './links';
+import { Link, LinkBadge, testResultHref, TraceLink, useSearchParams } from './links';
 import { statusIcon } from './statusIcon';
 import './testFileView.css';
 import { video, image } from './icons';
@@ -32,7 +32,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
   setFileExpanded?: (fileId: string, expanded: boolean) => void;
   footer?: React.JSX.Element | string;
 }>> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   return <Chip
     expanded={isFileExpanded ? isFileExpanded(file.fileId) : undefined}
     noInsets={true}
@@ -74,7 +74,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
 };
 
 function ImageDiffBadge({ test }: { test: TestCaseSummary }) {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   for (const result of test.results) {
     for (const attachment of result.attachments) {
       if (attachment.contentType.startsWith('image/') && !!attachment.name.match(/-(expected|actual|diff)/))
@@ -84,7 +84,7 @@ function ImageDiffBadge({ test }: { test: TestCaseSummary }) {
 }
 
 function VideoBadge({ test }: { test: TestCaseSummary }) {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   const resultWithVideo = test.results.find(result => result.attachments.some(attachment => attachment.name === 'video'));
   return resultWithVideo ? <LinkBadge href={testResultHref({ test, result: resultWithVideo, anchor: 'attachment-video' }, searchParams)} title='View video' dim={true}>{video()}</LinkBadge> : undefined;
 }

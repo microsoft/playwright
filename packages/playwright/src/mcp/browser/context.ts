@@ -90,7 +90,6 @@ export class Context {
     const { browserContext } = await this._ensureBrowserContext();
     const page = await browserContext.newPage();
     this._currentTab = this._tabs.find(t => t.page === page)!;
-    await this._currentTab.initializedPromise;
     return this._currentTab;
   }
 
@@ -202,6 +201,20 @@ export class Context {
     Context._allContexts.delete(this);
   }
 
+  private async _setupRequestInterception(context: playwright.BrowserContext) {
+    if (this.config.network?.allowedOrigins?.length) {
+      await context.route('**', route => route.abort('blockedbyclient'));
+
+      for (const origin of this.config.network.allowedOrigins)
+        await context.route(originOrHostGlob(origin), route => route.continue());
+    }
+
+    if (this.config.network?.blockedOrigins?.length) {
+      for (const origin of this.config.network.blockedOrigins)
+        await context.route(originOrHostGlob(origin), route => route.abort('blockedbyclient'));
+    }
+  }
+
   async ensureBrowserContext(): Promise<playwright.BrowserContext> {
     const { browserContext } = await this._ensureBrowserContext();
     return browserContext;
@@ -226,6 +239,7 @@ export class Context {
       selectors.setTestIdAttribute(this.config.testIdAttribute);
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
+    await this._setupRequestInterception(browserContext);
     if (this.sessionLog)
       await InputRecorder.create(this, browserContext);
     for (const page of browserContext.pages())
@@ -250,6 +264,18 @@ export class Context {
       code: `process.env['${secretName}']`,
     };
   }
+}
+
+function originOrHostGlob(originOrHost: string) {
+  try {
+    const url = new URL(originOrHost);
+    // localhost:1234 will parse as protocol 'localhost:' and 'null' origin.
+    if (url.origin !== 'null')
+      return `${url.origin}/**`;
+  } catch {
+  }
+  // Support for legacy host-only mode.
+  return `*://${originOrHost}/**`;
 }
 
 export class InputRecorder {

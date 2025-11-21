@@ -66,11 +66,6 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     this.addObjectListener(Request.Events.Response, () => this._dispatchEvent('response', {}));
   }
 
-  async body(params: channels.RequestBodyParams, progress: Progress): Promise<channels.RequestBodyResult> {
-    const postData = this._object.postDataBuffer();
-    return { body: postData === null ? undefined : postData };
-  }
-
   async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {
     return { headers: await progress.race(this._object.rawRequestHeaders()) };
   }

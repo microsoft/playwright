@@ -111,7 +111,7 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       if (distroInfo?.version === '')
         return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
-    return { hostPlatform: ('ubuntu20.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
+    return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
   if (platform === 'win32')
     return { hostPlatform: 'win64', isOfficiallySupportedPlatform: true };

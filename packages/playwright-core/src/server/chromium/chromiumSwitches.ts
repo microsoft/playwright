@@ -47,7 +47,7 @@ const disabledFeatures = (assistantMode?: boolean) => [
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
-export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
+export const chromiumSwitches = (assistantMode?: boolean, channel?: string, android?: boolean) => [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',
@@ -90,5 +90,5 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   // Less annoying popups.
   '--disable-search-engine-choice-screen',
   // Prevents the "three dots" menu crash in IdentityManager::HasPrimaryAccount for ephemeral contexts.
-  '--disable-sync',
+  android ? '' : '--disable-sync',
 ].filter(Boolean);
