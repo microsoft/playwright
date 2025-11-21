@@ -468,7 +468,7 @@ it('should not auto play audio', {
     });
   });
   await page.goto('http://127.0.0.1/audio.html');
-  await expect(page.locator('#log')).toHaveText('State: suspended');
+  await expect(page.locator('#log')).toHaveText('State: interrupted');
 });
 
 it('should not crash on feature detection for PublicKeyCredential', {
