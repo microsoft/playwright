@@ -275,6 +275,7 @@ export class InjectedScript {
     const result = this.querySelectorAll(selector, root);
     if (strict && result.length > 1)
       throw this.strictModeViolationError(selector, result);
+    this.checkDeprecatedSelectorUsage(selector, result);
     return result[0];
   }
 
@@ -1228,26 +1229,42 @@ export class InjectedScript {
     return oneLine(`<${element.nodeName.toLowerCase()}${attrText}>${trimStringWithEllipsis(text, 50)}</${element.nodeName.toLowerCase()}>`);
   }
 
-  strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
+  private _generateSelectors(elements: Element[]) {
     this._evaluator.begin();
     beginAriaCaches();
     beginDOMCaches();
     try {
       // Firefox is slow to access DOM bindings in the utility world, making it very expensive to generate a lot of selectors.
       const maxElements = this._isUtilityWorld && this._browserName === 'firefox' ? 2 : 10;
-      const infos = matches.slice(0, maxElements).map(m => ({
+      const infos = elements.slice(0, maxElements).map(m => ({
         preview: this.previewNode(m),
         selector: this.generateSelectorSimple(m),
       }));
-      const lines = infos.map((info, i) => `\n    ${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
-      if (infos.length < matches.length)
-        lines.push('\n    ...');
-      return this.createStacklessError(`strict mode violation: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
+      return infos.map((info, i) => `${i + 1}) ${info.preview} aka ${asLocator(this._sdkLanguage, info.selector)}`);
     } finally {
       endDOMCaches();
       endAriaCaches();
       this._evaluator.end();
     }
+  }
+
+  strictModeViolationError(selector: ParsedSelector, matches: Element[]): Error {
+    const lines = this._generateSelectors(matches).map(line => `\n    ` + line);
+    if (lines.length < matches.length)
+      lines.push('\n    ...');
+    return this.createStacklessError(`strict mode violation: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} elements:${lines.join('')}\n`);
+  }
+
+  checkDeprecatedSelectorUsage(selector: ParsedSelector, matches: Element[]) {
+    if (!matches.length)
+      return;
+    const deperecated = selector.parts.find(part => part.name === '_react' || part.name === '_vue');
+    if (!deperecated)
+      return;
+    const lines = this._generateSelectors(matches).map(line => `\n    ` + line);
+    if (lines.length < matches.length)
+      lines.push('\n    ...');
+    throw this.createStacklessError(`"${deperecated.name}" selector is not supported: ${asLocator(this._sdkLanguage, stringifySelector(selector))} resolved to ${matches.length} element${matches.length === 1 ? '' : 's'}:${lines.join('')}\n`);
   }
 
   createStacklessError(message: string): Error {
