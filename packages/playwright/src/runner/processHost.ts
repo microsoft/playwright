@@ -51,6 +51,9 @@ export class ProcessHost extends EventEmitter {
   async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
     assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(require.resolve('../common/process'), {
+      // Note: we pass detached:false, so that workers are in the same process group.
+      // This way Ctrl+C or a kill command can shutdown all workers in case they misbehave.
+      // Otherwise user can end up with a bunch of workers stuck in a busy loop without self-destructing.
       detached: false,
       env: {
         ...process.env,

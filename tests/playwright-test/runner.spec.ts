@@ -115,43 +115,50 @@ test('should report subprocess creation error', async ({ runInlineTest }, testIn
   expect(result.output).toContain('Error: worker process exited unexpectedly (code=42, signal=null)');
 });
 
-test('should ignore subprocess creation error because of SIGINT', async ({ interactWithTestRunner }, testInfo) => {
-  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+test.describe(() => {
+  // Since we create worker processes in the same process group, SIGINT is issued concurrently to
+  // all processes. Therefore, we might end up with a dead worker before the runner starts to shutdown.
+  // This in turn leads to the "worker process exited unexpectedly" error. Retries should help.
+  test.describe.configure({ retries: 2 });
 
-  const readyFile = testInfo.outputPath('ready.txt');
-  const testProcess = await interactWithTestRunner({
-    'hang.js': `
-      require('fs').writeFileSync(${JSON.stringify(readyFile)}, 'ready');
-      setInterval(() => {}, 1000);
-    `,
-    'preload.js': `
-      require('child_process').spawnSync(
-        process.argv[0],
-        [require('path').resolve('./hang.js')],
-        { env: { ...process.env, NODE_OPTIONS: '' } },
-      );
-    `,
-    'a.spec.js': `
-      import { test, expect } from '@playwright/test';
-      test('fails', () => {});
-      test('skipped', () => {});
-      // Infect subprocesses to immediately hang when spawning a worker.
-      process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js'))}';
-    `
+  test('should ignore subprocess creation error because of SIGINT', async ({ interactWithTestRunner }, testInfo) => {
+    test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+
+    const readyFile = testInfo.outputPath('ready.txt');
+    const testProcess = await interactWithTestRunner({
+      'hang.js': `
+        require('fs').writeFileSync(${JSON.stringify(readyFile)}, 'ready');
+        setInterval(() => {}, 1000);
+      `,
+      'preload.js': `
+        require('child_process').spawnSync(
+          process.argv[0],
+          [require('path').resolve('./hang.js')],
+          { env: { ...process.env, NODE_OPTIONS: '' } },
+        );
+      `,
+      'a.spec.js': `
+        import { test, expect } from '@playwright/test';
+        test('fails', () => {});
+        test('skipped', () => {});
+        // Infect subprocesses to immediately hang when spawning a worker.
+        process.env.NODE_OPTIONS = '--require ${JSON.stringify(testInfo.outputPath('preload.js'))}';
+      `
+    });
+
+    while (!fs.existsSync(readyFile))
+      await new Promise(f => setTimeout(f, 100));
+    process.kill(-testProcess.process.pid!, 'SIGINT');
+
+    const { exitCode } = await testProcess.exited;
+    expect.soft(exitCode).toBe(130);
+
+    const result = parseTestRunnerOutput(testProcess.output);
+    expect.soft(result.passed).toBe(0);
+    expect.soft(result.failed).toBe(0);
+    expect.soft(result.didNotRun).toBe(2);
+    expect.soft(result.output).not.toContain('worker process exited unexpectedly');
   });
-
-  while (!fs.existsSync(readyFile))
-    await new Promise(f => setTimeout(f, 100));
-  process.kill(-testProcess.process.pid!, 'SIGINT');
-
-  const { exitCode } = await testProcess.exited;
-  expect.soft(exitCode).toBe(130);
-
-  const result = parseTestRunnerOutput(testProcess.output);
-  expect.soft(result.passed).toBe(0);
-  expect.soft(result.failed).toBe(0);
-  expect.soft(result.didNotRun).toBe(2);
-  expect.soft(result.output).not.toContain('worker process exited unexpectedly');
 });
 
 test('sigint should stop workers', async ({ interactWithTestRunner }) => {
