@@ -815,3 +815,21 @@ test('should run test defined outside of .spec.ts file', async ({ runUITest }) =
         ✅ one <=
   `);
 });
+
+test('should run test defined outside of testdir', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `export default { testDir: 'tests' };`,
+    'tests/example.spec.ts': `
+      import '../src/impl';
+    `,
+    'src/impl.ts': `
+      import { test } from '@playwright/test';
+      test('external', async () => {});
+    `,
+  });
+  await page.getByRole('treeitem', { name: 'external' }).dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ external <=
+  `);
+});
