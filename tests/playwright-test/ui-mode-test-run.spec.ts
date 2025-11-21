@@ -798,3 +798,20 @@ test('should not leak websocket connections', {
 
   await expect.poll(() => ws1.isClosed()).toBe(true);
 });
+
+test('should run test defined outside of .spec.ts file', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'example.spec.ts': `
+      import './impl';
+    `,
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {});
+    `,
+  });
+  await page.getByRole('treeitem', { name: 'one' }).dblclick();
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ one <=
+  `);
+});
