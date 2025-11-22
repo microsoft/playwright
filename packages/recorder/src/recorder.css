@@ -67,6 +67,11 @@
   align-items: center;
 }
 
+.setting-theme {
+  display: grid;
+  margin-left: 22px
+}
+
 .setting label {
   text-overflow: ellipsis;
   white-space: nowrap;

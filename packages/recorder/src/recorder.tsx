@@ -26,7 +26,7 @@ import * as React from 'react';
 import { CallLogView } from './callLog';
 import './recorder.css';
 import { asLocator } from '@isomorphic/locatorGenerators';
-import { useDarkModeSetting } from '@web/theme';
+import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { copy, useSetting } from '@web/uiUtils';
 import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
@@ -50,7 +50,7 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
   const [ariaSnapshotErrors, setAriaSnapshotErrors] = React.useState<SourceHighlight[]>();
   const [settingsOpen, setSettingsOpen] = React.useState(false);
-  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [theme, setTheme] = useThemeSetting();
   const [autoExpect, setAutoExpect] = useSetting<boolean>('autoExpect', false);
   const settingsButtonRef = React.useRef<HTMLButtonElement>(null);
   window.playwrightSelectSource = selectedSourceId => setSelectedFileId(selectedSourceId);
@@ -203,9 +203,13 @@ export const Recorder: React.FC<RecorderProps> = ({
         anchor={settingsButtonRef}
         dataTestId='settings-dialog'
       >
-        <div key='dark-mode-setting' className='setting'>
-          <input type='checkbox' id='dark-mode-setting' checked={darkMode} onChange={() => setDarkMode(!darkMode)} />
-          <label htmlFor='dark-mode-setting'>Dark mode</label>
+        <div key='dark-mode-setting' className='setting setting-theme'>
+          <label htmlFor='dark-mode-setting'>Theme:</label>
+          <select id='dark-mode-setting' value={theme} onChange={e => setTheme(e.target.value as Theme)}>
+            {kThemeOptions.map(option => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
+          </select>
         </div>
         <div key='auto-expect-setting' className='setting' title='Automatically generate assertions while recording'>
           <input type='checkbox' id='auto-expect-setting' checked={autoExpect} onChange={() => {

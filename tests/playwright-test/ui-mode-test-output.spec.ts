@@ -46,7 +46,7 @@ test('should work after theme switch', async ({ runUITest, writeFiles }) => {
   await expect(page.getByTestId('output')).toContainText(`Hello world 1`);
 
   await page.getByText('Settings', { exact: true }).click();
-  await page.getByLabel('Dark mode').click();
+  await page.getByRole('combobox', { name: 'Theme' }).selectOption('Dark mode');
   await writeFiles({
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
