@@ -108,9 +108,10 @@ const CopyDropdown: React.FC<{
 
 const ExpandableSection: React.FC<{
   title: string;
+  data?: { name: string, value: React.ReactNode }[],
   children?: React.ReactNode
   className?: string;
-}> = ({ title, children, className }) => {
+}> = ({ title, data, children, className }) => {
   const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
   return <Expandable
     expanded={expanded}
@@ -119,6 +120,17 @@ const ExpandableSection: React.FC<{
     title={<span className='network-request-details-header'>{title}</span>}
     className={className}
   >
+    {data && <table className='network-request-details-table'>
+      <tbody>
+        {data.map(({ name, value }, index) => (
+          value !== null &&
+          (<tr key={index}>
+            <td>{name}</td>
+            <td>{value}</td>
+          </tr>)
+        ))}
+      </tbody>
+    </table>}
     {children}
   </Expandable>;
 };
@@ -128,33 +140,26 @@ const RequestTab: React.FunctionComponent<{
   startTimeOffset: number;
   requestBody: RequestBody,
 }> = ({ resource, startTimeOffset, requestBody }) => {
+  const generalData = React.useMemo(() =>
+    Object.entries({
+      'URL': resource.request.url,
+      'Method': resource.request.method,
+      'Status Code': resource.response.status !== -1 && <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText}</span>,
+    }).map(([name, value]) => ({ name, value })),
+  [resource]);
+
+  const timeData = React.useMemo(() =>
+    Object.entries({
+      'Start': msToString(startTimeOffset),
+      'Duration': msToString(resource.time),
+    }).map(([name, value]) => ({ name, value })),
+  [startTimeOffset, resource]);
+
   return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='General'>
-      <div className='network-request-details-url'>{`URL: ${resource.request.url}`}</div>
-      <div className='network-request-details-general'>{`Method: ${resource.request.method}`}</div>
-      {resource.response.status !== -1 && <div className='network-request-details-general' style={{ display: 'flex' }}>
-        Status Code: <span className={statusClass(resource.response.status)} style={{ display: 'inline-flex' }}>
-          {`${resource.response.status} ${resource.response.statusText}`}
-        </span></div>}
-    </ExpandableSection>
-
-    {resource.request.queryString.length ?
-      <ExpandableSection title='Query String Parameters'>
-        <div className='network-request-details-headers'>
-          {resource.request.queryString.map(param => `${param.name}: ${param.value}`).join('\n')}
-        </div>
-      </ExpandableSection>
-      : null}
-
-    <ExpandableSection title='Request Headers'>
-      <div className='network-request-details-headers'>{resource.request.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    </ExpandableSection>
-
-    <ExpandableSection title='Time'>
-      <div className='network-request-details-general'>{`Start: ${msToString(startTimeOffset)}`}</div>
-      <div className='network-request-details-general'>{`Duration: ${msToString(resource.time)}`}</div>
-    </ExpandableSection>
-
+    <ExpandableSection title='General' data={generalData}/>
+    {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' data={resource.request.queryString}/>}
+    <ExpandableSection title='Request Headers' data={resource.request.headers}/>
+    <ExpandableSection title='Time' data={timeData}/>
     {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
     </ExpandableSection>}
@@ -165,9 +170,7 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='Response Headers'>
-      <div className='network-request-details-headers'>{resource.response.headers.map(pair => `${pair.name}: ${pair.value}`).join('\n')}</div>
-    </ExpandableSection>
+    <ExpandableSection title='Response Headers' data={resource.response.headers} />
   </div>;
 };
 

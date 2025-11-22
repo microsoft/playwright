@@ -23,20 +23,9 @@
   flex: none;
 }
 
-.network-request-details-url {
-  white-space: normal;
-  word-wrap: break-word;
-  margin-left: 10px;
-}
-
-.network-request-details-headers {
-  white-space: pre;
-  overflow: hidden;
-  margin-left: 10px;
-}
-
 .network-request-details-tab .expandable-title {
   padding-left: 3px;
+  background-color: var(--vscode-sideBar-background);
 }
 
 .network-request-details-tab .expandable-content {
@@ -50,9 +39,22 @@
   font-weight: bold;
 }
 
-.network-request-details-general {
-  white-space: pre;
-  margin-left: 10px;
+.network-request-details-table {
+  width: 100%;
+  line-height: 18px;
+  padding: 8px 0 8px 8px;
+  white-space: pre-wrap;
+}
+
+.network-request-details-table td:first-of-type {
+  width: 30%;
+  min-width: 160px;
+  vertical-align: top;
+}
+
+.network-request-details-table td:nth-of-type(2) {
+  word-break: break-all;
+  vertical-align: center;
 }
 
 .network-request-details-tab .cm-wrapper {

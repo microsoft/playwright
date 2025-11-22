@@ -197,9 +197,14 @@ test('should display list of query parameters (only if present)', async ({ runUI
   await page.getByText('call-with-query-params').click();
 
   const region = page.getByRole('region', { name: 'Query String Parameters' });
-  await expect(region.getByText('param1: value1')).toBeVisible();
-  await expect(region.getByText('param1: value2')).toBeVisible();
-  await expect(region.getByText('param2: value2')).toBeVisible();
+  await expect(region).toMatchAriaSnapshot(
+      `- table:
+         - rowgroup:
+           - 'row "param1 value1"'
+           - 'row "param1 value2"'
+           - 'row "param2 value2"'
+      `
+  );
 
   await page.getByText('endpoint').click();
 
@@ -260,7 +265,7 @@ test('should toggle sections inside network details', async ({ runUITest, server
 
   await requestPanel.getByRole('button', { name: 'Request Headers' }).click();
   await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
-  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start.+Duration\d+ms/);
 
   await requestPanel.getByRole('button', { name: 'Time' }).click();
   await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
@@ -268,11 +273,11 @@ test('should toggle sections inside network details', async ({ runUITest, server
 
   await requestPanel.getByRole('button', { name: 'Time' }).click();
   await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
-  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start.+Duration\d+ms/);
 
   // Re-opening should preserve open state
   await page.getByRole('tabpanel', { name: 'Network' }).getByRole('button', { name: 'Close' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
   await expect(requestPanel.getByRole('region', { name: 'Request Headers' })).toBeHidden();
-  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start: .+Duration: \d+ms/);
+  await expect(requestPanel.getByRole('region', { name: 'Time' })).toHaveText(/Start.+Duration\d+ms/);
 });
