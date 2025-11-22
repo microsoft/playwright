@@ -88,7 +88,7 @@ export interface TestServerInterface {
   }>;
 
   runTests(params: {
-    locations?: string[];
+    locations: string[];
     grep?: string;
     grepInvert?: string;
     testIds?: string[];

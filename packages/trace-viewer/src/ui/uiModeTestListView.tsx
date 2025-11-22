@@ -39,7 +39,7 @@ export const TestListView: React.FC<{
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
   testModel?: TeleSuiteUpdaterTestModel,
-  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
+  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', filter: { testIds: Iterable<string>, locations: Iterable<string> }) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
   watchedTreeIds: { value: Set<string> },

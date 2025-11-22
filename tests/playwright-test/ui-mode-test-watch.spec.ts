@@ -350,3 +350,35 @@ test('should have watch icon highlighted when a test is focused and watch on the
         ◯ passes 👁
   `);
 });
+
+test('should watch test defined outside of .spec.ts file', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'example.spec.ts': `
+      import './impl';
+    `,
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => {});
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'one' }).click();
+  await page.getByRole('treeitem', { name: 'one' }).getByRole('button', { name: 'Watch' }).click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ example.spec.ts
+        ◯ one 👁 <=
+  `);
+
+  await writeFiles({
+    'impl.ts': `
+      import { test } from '@playwright/test';
+      test('one', async () => { /* modified */ });
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ example.spec.ts
+        ✅ one 👁 <=
+  `);
+});
