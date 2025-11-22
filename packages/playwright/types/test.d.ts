@@ -9545,6 +9545,15 @@ interface LocatorAssertions {
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    /**
+     * Defines how snapshots are written when updating. Defaults to `'relaxed'`.
+     * - `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for
+     *   numbers) to reduce flakiness from minor changes.
+     * - `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values
+     *   change.
+     */
+    update?: "raw"|"relaxed";
   }): Promise<void>;
 
   /**
@@ -9573,6 +9582,15 @@ interface LocatorAssertions {
      * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
      */
     timeout?: number;
+
+    /**
+     * Defines how snapshots are written when updating. Defaults to `'relaxed'`.
+     * - `'relaxed'` - Writes an ARIA snapshot that uses flexible patterns (for example, regular expressions for
+     *   numbers) to reduce flakiness from minor changes.
+     * - `'raw'` - Writes the exact ARIA snapshot without transformations. This is strict and will fail if values
+     *   change.
+     */
+    update?: "raw"|"relaxed";
   }): Promise<void>;
 
   /**

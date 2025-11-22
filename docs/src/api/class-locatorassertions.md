@@ -2373,6 +2373,9 @@ assertThat(page.locator("body")).matchesAriaSnapshot("""
 ### option: LocatorAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.49
 
+### option: LocatorAssertions.toMatchAriaSnapshot.update = %%-assertions-aria-snapshot-update-%%
+* langs: js
+
 ## async method: LocatorAssertions.toMatchAriaSnapshot#2
 * since: v1.50
 * langs: js
@@ -2395,6 +2398,9 @@ await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'body.aria.yml' }
 
 Name of the snapshot to store in the snapshot folder corresponding to this test.
 Generates sequential names if not specified.
+
+### option: LocatorAssertions.toMatchAriaSnapshot#2.update = %%-assertions-aria-snapshot-update-%%
+* langs: js
 
 ### option: LocatorAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
 * since: v1.50
