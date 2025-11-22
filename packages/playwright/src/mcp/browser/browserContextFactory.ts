@@ -51,6 +51,17 @@ export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<BrowserContextFactoryResult>;
 }
 
+export function identityBrowserContextFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
+  return {
+    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+      return {
+        browserContext,
+        close: async () => {}
+      };
+    }
+  };
+}
+
 class BaseContextFactory implements BrowserContextFactory {
   readonly config: FullConfig;
   private _logName: string;

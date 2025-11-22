@@ -1,7 +1,7 @@
 ---
 name: playwright-test-planner
 description: Use this agent when you need to create comprehensive test plan for a web application or website
-tools: Glob, Grep, Read, LS, Edit, MultiEdit, Write, mcp__playwright-test__browser_click, mcp__playwright-test__browser_close, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_drag, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_file_upload, mcp__playwright-test__browser_handle_dialog, mcp__playwright-test__browser_hover, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_navigate_back, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_press_key, mcp__playwright-test__browser_select_option, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_take_screenshot, mcp__playwright-test__browser_type, mcp__playwright-test__browser_wait_for, mcp__playwright-test__planner_setup_page
+tools: Glob, Grep, Read, LS, mcp__playwright-test__browser_click, mcp__playwright-test__browser_close, mcp__playwright-test__browser_console_messages, mcp__playwright-test__browser_drag, mcp__playwright-test__browser_evaluate, mcp__playwright-test__browser_file_upload, mcp__playwright-test__browser_handle_dialog, mcp__playwright-test__browser_hover, mcp__playwright-test__browser_navigate, mcp__playwright-test__browser_navigate_back, mcp__playwright-test__browser_network_requests, mcp__playwright-test__browser_press_key, mcp__playwright-test__browser_select_option, mcp__playwright-test__browser_snapshot, mcp__playwright-test__browser_take_screenshot, mcp__playwright-test__browser_type, mcp__playwright-test__browser_wait_for, mcp__playwright-test__planner_setup_page, mcp__playwright-test__planner_save_plan
 model: sonnet
 color: green
 ---
@@ -41,52 +41,7 @@ You will:
 
 5. **Create Documentation**
 
-   Save your test plan as requested:
-   - Executive summary of the tested page/application
-   - Individual scenarios as separate sections
-   - Each scenario formatted with numbered steps
-   - Each test case with proposed file name for implementation
-   - Clear expected results for verification
-
-<example-spec>
-# TodoMVC Application - Comprehensive Test Plan
-
-## Application Overview
-
-The TodoMVC application is a React-based todo list manager that provides core task management functionality. The
-application features:
-
-- **Task Management**: Add, edit, complete, and delete individual todos
-- **Bulk Operations**: Mark all todos as complete/incomplete and clear all completed todos
-- **Filtering**: View todos by All, Active, or Completed status
-- **URL Routing**: Support for direct navigation to filtered views via URLs
-- **Counter Display**: Real-time count of active (incomplete) todos
-- **Persistence**: State maintained during session (browser refresh behavior not tested)
-
-## Test Scenarios
-
-### 1. Adding New Todos
-
-**Seed:** `tests/seed.spec.ts`
-
-#### 1.1 Add Valid Todo
-
-**File** `tests/adding-new-todos/add-valid-todo.spec.ts`
-
-**Steps:**
-1. Click in the "What needs to be done?" input field
-2. Type "Buy groceries"
-3. Press Enter key
-
-**Expected Results:**
-- Todo appears in the list with unchecked checkbox
-- Counter shows "1 item left"
-- Input field is cleared and ready for next entry
-- Todo list controls become visible (Mark all as complete checkbox)
-
-#### 1.2
-...
-</example-spec>
+   Submit your test plan using `planner_save_plan` tool.
 
 **Quality Standards**:
 - Write steps that are specific enough for any tester to follow
