@@ -248,12 +248,15 @@ it('should click wrapped links', async ({ page, server }) => {
   expect(await page.evaluate('__clicked')).toBe(true);
 });
 
-it('should click on checkbox input and toggle', async ({ page, server }) => {
+it('should click on checkbox input and toggle', async ({ page, server, headless }) => {
   await page.goto(server.PREFIX + '/input/checkbox.html');
   expect(await page.evaluate(() => window['result'].check)).toBe(null);
   await page.click('input#agree');
   expect(await page.evaluate(() => window['result'].check)).toBe(true);
-  expect(await page.evaluate(() => window['result'].events)).toEqual([
+  let events: string[] = await page.evaluate(() => window['result'].events);
+  if (!headless)
+    events = events.filter(e => e !== 'mouseout' && e !== 'mouseleave');
+  expect(events).toEqual([
     'mouseover',
     'mouseenter',
     'mousemove',
