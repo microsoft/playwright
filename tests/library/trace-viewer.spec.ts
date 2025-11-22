@@ -1194,6 +1194,20 @@ test('should pick locator', async ({ page, runAndTrace, server }) => {
   await expect(traceViewer.page.locator('.cm-wrapper').last()).toContainText(`- button "Submit"`);
 });
 
+test('should generate aria snapshot with unaltered urls', async ({ page, runAndTrace, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<a href="https://example.com">Example link</a>');
+  });
+  const snapshot = await traceViewer.snapshotFrame('Set content');
+  await traceViewer.page.getByTitle('Pick locator').click();
+  await snapshot.getByRole('link').click();
+  await expect(traceViewer.page.locator('.cm-wrapper').last()).toContainText(`
+    - link "Example link":
+      - /url: https://example.com
+  `);
+});
+
 test('should update highlight when typing locator', async ({ page, runAndTrace, server }) => {
   const traceViewer = await runAndTrace(async () => {
     await page.goto(server.EMPTY_PAGE);
