@@ -19,10 +19,10 @@ import { defaultConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { Tab } from '../browser/tab';
 import { stripAnsiEscapes } from '../../util';
+import { identityBrowserContextFactory } from '../browser/browserContextFactory';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
-import type { BrowserContextFactory } from '../browser/browserContextFactory';
 import type { TestInfo } from '../../../test';
 
 export type BrowserMCPRequest = {
@@ -45,7 +45,7 @@ export function createCustomMessageHandler(testInfo: TestInfo, context: playwrig
     if (data.initialize) {
       if (backend)
         throw new Error('MCP backend is already initialized');
-      backend = new BrowserServerBackend({ ...defaultConfig, capabilities: ['testing'] }, identityFactory(context));
+      backend = new BrowserServerBackend({ ...defaultConfig, capabilities: ['testing'] }, identityBrowserContextFactory(context));
       await backend.initialize(data.initialize.clientInfo);
       const pausedMessage = await generatePausedMessage(testInfo, context);
       return { initialize: { pausedMessage } };
@@ -114,15 +114,4 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
     lines.push(`### Task`, `Try recovering from the error prior to continuing`);
 
   return lines.join('\n');
-}
-
-function identityFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
-  return {
-    createContext: async (clientInfo: mcp.ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
-      return {
-        browserContext,
-        close: async () => {}
-      };
-    }
-  };
 }

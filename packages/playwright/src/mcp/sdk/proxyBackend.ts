@@ -26,7 +26,7 @@ import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 export type MCPProvider = {
   name: string;
   description: string;
-  connect(): Promise<Transport>;
+  connect(): Transport;
 };
 
 const errorsDebug = debug('pw:mcp:errors');
@@ -127,7 +127,7 @@ export class ProxyBackend implements ServerBackend {
     client.setRequestHandler(mcpBundle.ListRootsRequestSchema, () => ({ roots: this._clientInfo?.roots || [] }));
     client.setRequestHandler(mcpBundle.PingRequestSchema, () => ({}));
 
-    const transport = await factory.connect();
+    const transport = factory.connect();
     await client.connect(transport);
     this._currentClient = client;
     return client;

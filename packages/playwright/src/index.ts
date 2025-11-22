@@ -23,6 +23,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler } from './mcp/test/browserBackend';
+import { performTask } from './agents/performTask';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -57,6 +58,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
+  _perform: (task: string) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -457,6 +459,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     } else {
       await request.dispose();
     }
+  },
+
+  _perform: async ({ context }, use) => {
+    await use(async (task: string) => {
+      await performTask(context, task);
+    });
   },
 });
 

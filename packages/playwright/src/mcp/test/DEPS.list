@@ -2,6 +2,7 @@
 ../sdk/
 ../browser/config.ts
 ../browser/browserServerBackend.ts
+../browser/browserContextFactory.ts
 ../browser/response.ts
 ../browser/tab.ts
 ../browser/tools/

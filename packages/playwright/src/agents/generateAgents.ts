@@ -22,88 +22,15 @@ import { mkdirIfNeeded } from 'playwright-core/lib/utils';
 
 import { FullConfigInternal } from '../common/config';
 import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';
+import { parseAgentSpec } from './agentParser';
 
-interface AgentHeader {
-  name: string;
-  description: string;
-  model: string;
-  color: string;
-  tools: string[];
-}
-
-interface Agent {
-  header: AgentHeader;
-  instructions: string;
-  examples: string[];
-}
+import type { AgentSpec } from './agent';
 
 /* eslint-disable no-console */
 
-class AgentParser {
-  static async loadAgents(): Promise<Agent[]> {
-    const files = await fs.promises.readdir(__dirname);
-    return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => AgentParser.parseFile(path.join(__dirname, file))));
-  }
-
-  static async parseFile(filePath: string): Promise<Agent> {
-    const source = await fs.promises.readFile(filePath, 'utf-8');
-    const { header, content } = this.extractYamlAndContent(source);
-    const { instructions, examples } = this.extractInstructionsAndExamples(content);
-    return { header, instructions, examples };
-  }
-
-  static extractYamlAndContent(markdown: string): { header: AgentHeader; content: string } {
-    const lines = markdown.split('\n');
-
-    if (lines[0] !== '---')
-      throw new Error('Markdown file must start with YAML front matter (---)');
-
-    let yamlEndIndex = -1;
-    for (let i = 1; i < lines.length; i++) {
-      if (lines[i] === '---') {
-        yamlEndIndex = i;
-        break;
-      }
-    }
-
-    if (yamlEndIndex === -1)
-      throw new Error('YAML front matter must be closed with ---');
-
-    const yamlLines = lines.slice(1, yamlEndIndex);
-    const yamlRaw = yamlLines.join('\n');
-    const contentLines = lines.slice(yamlEndIndex + 1);
-    const content = contentLines.join('\n');
-
-    let header: AgentHeader;
-    try {
-      header = yaml.parse(yamlRaw) as AgentHeader;
-    } catch (error: any) {
-      throw new Error(`Failed to parse YAML header: ${error.message}`);
-    }
-
-    if (!header.name)
-      throw new Error('YAML header must contain a "name" field');
-
-    if (!header.description)
-      throw new Error('YAML header must contain a "description" field');
-
-    return { header, content };
-  }
-
-  static extractInstructionsAndExamples(content: string): { instructions: string; examples: string[] } {
-    const examples: string[] = [];
-
-    const instructions = content.split('<example>')[0].trim();
-    const exampleRegex = /<example>([\s\S]*?)<\/example>/g;
-    let match: RegExpExecArray | null;
-
-    while ((match = exampleRegex.exec(content)) !== null) {
-      const example = match[1].trim();
-      examples.push(example.replace(/[\n]/g, ' ').replace(/ +/g, ' '));
-    }
-
-    return { instructions, examples };
-  }
+async function loadAgentSpecs(): Promise<AgentSpec[]> {
+  const files = await fs.promises.readdir(__dirname);
+  return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => parseAgentSpec(path.join(__dirname, file))));
 }
 
 export class ClaudeGenerator {
@@ -112,11 +39,11 @@ export class ClaudeGenerator {
       promptsFolder: prompts ? '.claude/prompts' : undefined,
     });
 
-    const agents = await AgentParser.loadAgents();
+    const agents = await loadAgentSpecs();
 
     await fs.promises.mkdir('.claude/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.claude/agents/${agent.header.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
@@ -130,7 +57,7 @@ export class ClaudeGenerator {
     initRepoDone();
   }
 
-  static agentSpec(agent: Agent): string {
+  static agentSpec(agent: AgentSpec): string {
     const claudeToolMap = new Map<string, string[]>([
       ['search', ['Glob', 'Grep', 'Read', 'LS']],
       ['edit', ['Edit', 'MultiEdit', 'Write']],
@@ -146,11 +73,11 @@ export class ClaudeGenerator {
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
     const header = {
-      name: agent.header.name,
-      description: agent.header.description + examples,
-      tools: agent.header.tools.map(tool => asClaudeTool(tool)).join(', '),
-      model: agent.header.model,
-      color: agent.header.color,
+      name: agent.name,
+      description: agent.description + examples,
+      tools: agent.tools.map(tool => asClaudeTool(tool)).join(', '),
+      model: agent.model,
+      color: agent.color,
     };
     lines.push(`---`);
     lines.push(yaml.stringify(header, { lineWidth: 100000 }) + `---`);
@@ -167,13 +94,13 @@ export class OpencodeGenerator {
       promptsFolder: prompts ? '.opencode/prompts' : undefined
     });
 
-    const agents = await AgentParser.loadAgents();
+    const agents = await loadAgentSpecs();
 
     for (const agent of agents) {
       const prompt = [agent.instructions];
       prompt.push('');
       prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
-      await writeFile(`.opencode/prompts/${agent.header.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
+      await writeFile(`.opencode/prompts/${agent.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
     }
 
     await writeFile('opencode.json', OpencodeGenerator.configuration(agents), '🔧', 'opencode configuration');
@@ -181,7 +108,7 @@ export class OpencodeGenerator {
     initRepoDone();
   }
 
-  static configuration(agents: Agent[]): string {
+  static configuration(agents: AgentSpec[]): string {
     const opencodeToolMap = new Map<string, string[]>([
       ['search', ['ls', 'glob', 'grep', 'read']],
       ['edit', ['edit', 'write']],
@@ -206,13 +133,13 @@ export class OpencodeGenerator {
     result['agent'] = {};
     for (const agent of agents) {
       const tools: Record<string, boolean> = {};
-      result['agent'][agent.header.name] = {
-        description: agent.header.description,
+      result['agent'][agent.name] = {
+        description: agent.description,
         mode: 'subagent',
-        prompt: `{file:.opencode/prompts/${agent.header.name}.md}`,
+        prompt: `{file:.opencode/prompts/${agent.name}.md}`,
         tools,
       };
-      for (const tool of agent.header.tools)
+      for (const tool of agent.tools)
         asOpencodeTool(tools, tool);
     }
 
@@ -234,11 +161,11 @@ export class CopilotGenerator {
       promptSuffix: 'prompt'
     });
 
-    const agents = await AgentParser.loadAgents();
+    const agents = await loadAgentSpecs();
 
     await fs.promises.mkdir('.github/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.github/agents/${agent.header.name}.agent.md`, CopilotGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.github/agents/${agent.name}.agent.md`, CopilotGenerator.agentSpec(agent), '🤖', 'agent definition');
 
     await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'legacy planner chatmode');
     await deleteFile(`.github/chatmodes/🎭 generator.chatmode.md`, 'legacy generator chatmode');
@@ -266,13 +193,13 @@ export class CopilotGenerator {
     initRepoDone();
   }
 
-  static agentSpec(agent: Agent): string {
+  static agentSpec(agent: AgentSpec): string {
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
     const header = {
-      'name': agent.header.name,
-      'description': agent.header.description + examples,
-      'tools': agent.header.tools,
+      'name': agent.name,
+      'description': agent.description + examples,
+      'tools': agent.tools,
       'model': 'Claude Sonnet 4',
       'mcp-servers': CopilotGenerator.mcpServers,
     };
@@ -302,7 +229,7 @@ export class VSCodeGenerator {
     await initRepo(config, projectName, {
       promptsFolder: undefined
     });
-    const agents = await AgentParser.loadAgents();
+    const agents = await loadAgentSpecs();
 
     const nameMap = new Map<string, string>([
       ['playwright-test-planner', ' 🎭 planner'],
@@ -312,7 +239,7 @@ export class VSCodeGenerator {
 
     await fs.promises.mkdir('.github/chatmodes', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.github/chatmodes/${nameMap.get(agent.header.name)}.chatmode.md`, VSCodeGenerator.agentSpec(agent), '🤖', 'chatmode definition');
+      await writeFile(`.github/chatmodes/${nameMap.get(agent.name)}.chatmode.md`, VSCodeGenerator.agentSpec(agent), '🤖', 'chatmode definition');
 
     await VSCodeGenerator.appendToMCPJson();
 
@@ -343,7 +270,7 @@ export class VSCodeGenerator {
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
   }
 
-  static agentSpec(agent: Agent): string {
+  static agentSpec(agent: AgentSpec): string {
     const vscodeToolMap = new Map<string, string[]>([
       ['search', ['search/listDirectory', 'search/fileSearch', 'search/textSearch']],
       ['read', ['search/readFile']],
@@ -359,7 +286,7 @@ export class VSCodeGenerator {
         return `${vscodeMcpName}/${second}`;
       return vscodeToolMap.get(first) || first;
     }
-    const tools = agent.header.tools.map(asVscodeTool).flat().sort((a, b) => {
+    const tools = agent.tools.map(asVscodeTool).flat().sort((a, b) => {
       // VSCode insists on the specific tools order when editing agent config.
       const indexA = vscodeToolsOrder.indexOf(a);
       const indexB = vscodeToolsOrder.indexOf(b);
@@ -374,7 +301,7 @@ export class VSCodeGenerator {
 
     const lines: string[] = [];
     lines.push(`---`);
-    lines.push(`description: ${agent.header.description}.`);
+    lines.push(`description: ${agent.description}.`);
     lines.push(`tools: [${tools}]`);
     lines.push(`---`);
     lines.push('');
