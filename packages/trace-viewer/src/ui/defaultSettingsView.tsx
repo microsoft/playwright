@@ -16,7 +16,7 @@
 
 import * as React from 'react';
 import { type Setting, SettingsView } from './settingsView';
-import { useDarkModeSetting } from '@web/theme';
+import { kThemeOptions, type Theme, useThemeSetting } from '@web/theme';
 import { useSetting } from '@web/uiUtils';
 
 /**
@@ -29,18 +29,19 @@ export const DefaultSettingsView: React.FC<{
     shouldPopulateCanvasFromScreenshot,
     setShouldPopulateCanvasFromScreenshot,
   ] = useSetting('shouldPopulateCanvasFromScreenshot', false);
-  const [darkMode, setDarkMode] = useDarkModeSetting();
+  const [theme, setTheme] = useThemeSetting();
   const [mergeFiles, setMergeFiles] = useSetting('mergeFiles', false);
 
   return (
     <SettingsView
       settings={[
         {
-          type: 'check',
-          value: darkMode,
-          set: setDarkMode,
-          name: 'Dark mode'
-        },
+          type: 'select',
+          value: theme,
+          set: setTheme,
+          name: 'Theme',
+          options: kThemeOptions
+        } satisfies Setting<Theme>,
         ...(location === 'ui-mode' ? [{
           type: 'check',
           value: mergeFiles,
