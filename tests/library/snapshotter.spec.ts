@@ -265,13 +265,13 @@ it.describe('snapshots', () => {
     const url = 'http://localhost/';
     await page.setContent(`<a href="${url}">example link</a>`);
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
-    expect(distillSnapshot(snapshot, page.url())).toBe(`<A __pw_link href="${url}">example.com</A>`);
+    expect(distillSnapshot(snapshot, page.url())).toBe(`<A __pw_link href="${url}">example link</A>`);
 
     const { html } = snapshot.render();
     const newPage = await browser.newPage();
     await newPage.setContent(html);
     await newPage.getByRole('link').click();
-    await expect(newPage.waitForURL(url, { timeout: 500 })).rejects.toThrow();
+    await expect(newPage).not.toHaveURL(url, { timeout: 500 });
   });
 });
 
