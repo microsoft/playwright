@@ -1,0 +1,492 @@
+{
+  "facb950333d3cbebad4cb469c846c6a03a72dce8": {
+    "result": {
+      "role": "assistant",
+      "content": "I'll help you navigate to the form, fill it out with the specified details, and complete the order. Let me start by navigating to the page.",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 4484,
+      "output": 126
+    }
+  },
+  "f65dd22f0f79ffd6398d42230797a4a53c72c9ab": {
+    "result": {
+      "role": "assistant",
+      "content": "Navigate to the form page to start the ordering process",
+      "toolCalls": [
+        {
+          "name": "browser_navigate",
+          "arguments": {
+            "url": "http://localhost:<PORT>/evals/fill-form.html"
+          },
+          "id": "tooluse_BCc-AvDnQWmc8O81Stj2YQ"
+        }
+      ]
+    },
+    "usage": {
+      "input": 4540,
+      "output": 93
+    }
+  },
+  "eb63c3301417583c538a6501c36797d42e161a1a": {
+    "result": {
+      "role": "assistant",
+      "content": "Take a snapshot to see the current page state",
+      "toolCalls": [
+        {
+          "name": "browser_snapshot",
+          "arguments": {},
+          "id": "tooluse_EQPPTsKBT_G_YsVMHNZnAw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 5242,
+      "output": 61
+    }
+  },
+  "190598029fe374115a87b39e2d631689f712f8c5": {
+    "result": {
+      "role": "assistant",
+      "content": "Fill out the form for the first item - blue table",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 5878,
+      "output": 350
+    }
+  },
+  "73845baea403b9e42331b19667593fbf028c3429": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Table as the product type",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Product Type dropdown",
+            "ref": "e7",
+            "values": [
+              "Table"
+            ]
+          },
+          "id": "tooluse_WVHv7CI3R-WqyOj6O7LTKg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 5913,
+      "output": 116
+    }
+  },
+  "5cac5e0e4742f5674f0c4c7fd933d7e4c84f0513": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Blue as the color",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 6165,
+      "output": 99
+    }
+  },
+  "67a472d6a9e6e9c965eaa82a70a4bdbb7485eca6": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Color dropdown",
+            "ref": "e10",
+            "values": [
+              "Blue"
+            ]
+          },
+          "id": "tooluse_f86G0fVES260pD2OGjYdCA"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6194,
+      "output": 93
+    }
+  },
+  "65f822bec8f70205e0d58e9a2ee09a3707ed6401": {
+    "result": {
+      "role": "assistant",
+      "content": "Fill in customer information for the order",
+      "toolCalls": [
+        {
+          "name": "browser_fill_form",
+          "arguments": {
+            "fields": [
+              {
+                "name": "Full Name",
+                "ref": "e13",
+                "type": "textbox",
+                "value": "John Doe"
+              },
+              {
+                "name": "Email Address",
+                "ref": "e16",
+                "type": "textbox",
+                "value": "john@doe.me"
+              },
+              {
+                "name": "Street Address",
+                "ref": "e19",
+                "type": "textbox",
+                "value": "123 Main St"
+              },
+              {
+                "name": "City",
+                "ref": "e22",
+                "type": "textbox",
+                "value": "Anytown"
+              },
+              {
+                "name": "State/Province",
+                "ref": "e25",
+                "type": "textbox",
+                "value": "XYZ"
+              },
+              {
+                "name": "ZIP/Postal Code",
+                "ref": "e28",
+                "type": "textbox",
+                "value": "12345"
+              }
+            ]
+          },
+          "id": "tooluse_ztCsxsUlTueuOPgHsO83dA"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6441,
+      "output": 343
+    }
+  },
+  "6b1f789361769bb90eb776cff6df695394e90ff5": {
+    "result": {
+      "role": "assistant",
+      "content": "Click the Order button to submit the first order",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 6879,
+      "output": 82
+    }
+  },
+  "f036e1c5e71f07be6729fc6fc0ef5a7514564633": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Order button",
+            "ref": "e29"
+          },
+          "id": "tooluse_7Bw_du6XShCs0VM46yds3A"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6912,
+      "output": 72
+    }
+  },
+  "44e579cf6dfa27d84426d8afbffda3bb20e978b5": {
+    "result": {
+      "role": "assistant",
+      "content": "Accept the order confirmation dialog",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 7064,
+      "output": 61
+    }
+  },
+  "b1043d04c5761a4273d3c6d358e18727ae53bedd": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_handle_dialog",
+          "arguments": {
+            "accept": true
+          },
+          "id": "tooluse_CBKRGvaMT8-0bxI3LmpgLQ"
+        }
+      ]
+    },
+    "usage": {
+      "input": 7093,
+      "output": 55
+    }
+  },
+  "4a20e94c802689f0e5795cc01d0754593c95b8d9": {
+    "result": {
+      "role": "assistant",
+      "content": "Click Place Another Order button to order the second item",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 7955,
+      "output": 85
+    }
+  },
+  "02d0f1acdf58e14bfacf4fb3d1a04973726b3f6a": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Place Another Order button",
+            "ref": "e58"
+          },
+          "id": "tooluse_mEVX8xrBQ-u7BPjnZ7PPKQ"
+        }
+      ]
+    },
+    "usage": {
+      "input": 7989,
+      "output": 74
+    }
+  },
+  "19504162e60fbdd96072af88bd669b3e88860524": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Desk as the product type for the second order",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 8688,
+      "output": 107
+    }
+  },
+  "302dcb0c44750d90fdf69073db4a6533d657af9c": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Product Type dropdown",
+            "ref": "e7",
+            "values": [
+              "Desk"
+            ]
+          },
+          "id": "tooluse_BaMRqzC-QbeyPBC-9RP0aw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 8723,
+      "output": 95
+    }
+  },
+  "b40f9a90caa41102d3b795a22a005ad9042b659e": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Green as the color for the desk",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 8971,
+      "output": 11
+    }
+  },
+  "9c502c32a6f3797f941b683c19473c89cec2a1b4": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Color dropdown",
+            "ref": "e10",
+            "values": [
+              "Green"
+            ]
+          },
+          "id": "tooluse_bvxZZXldSu28CR0zYOoIng"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9003,
+      "output": 93
+    }
+  },
+  "ce3d6682dda9339c3efd384e5bd23e9aef4852fc": {
+    "result": {
+      "role": "assistant",
+      "content": "Fill in the customer information for the second order",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 9250,
+      "output": 250
+    }
+  },
+  "92858cba54b40fc65bc94e7f1ffd16f427f3f1b0": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_fill_form",
+          "arguments": {
+            "fields": [
+              {
+                "name": "Full Name",
+                "ref": "e13",
+                "type": "textbox",
+                "value": "John Doe"
+              },
+              {
+                "name": "Email Address",
+                "ref": "e16",
+                "type": "textbox",
+                "value": "john@doe.me"
+              },
+              {
+                "name": "Street Address",
+                "ref": "e19",
+                "type": "textbox",
+                "value": "123 Main St"
+              },
+              {
+                "name": "City",
+                "ref": "e22",
+                "type": "textbox",
+                "value": "Anytown"
+              },
+              {
+                "name": "State/Province",
+                "ref": "e25",
+                "type": "textbox",
+                "value": "XYZ"
+              },
+              {
+                "name": "ZIP/Postal Code",
+                "ref": "e28",
+                "type": "textbox",
+                "value": "12345"
+              }
+            ]
+          },
+          "id": "tooluse_MiTMyTOaRoCmK0EapkxU7g"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9283,
+      "output": 240
+    }
+  },
+  "3c11d68c47519b7364a7dd5c1be26d6b7cd16a66": {
+    "result": {
+      "role": "assistant",
+      "content": "Click the Order button to submit the second order",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 9714,
+      "output": 12
+    }
+  },
+  "334effd07d305facef120ed49d47eca9546b9ed2": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Order button",
+            "ref": "e29"
+          },
+          "id": "tooluse_jana5W7FSLiGM40Y58vxuA"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9747,
+      "output": 72
+    }
+  },
+  "3e70d82f485d3bb257053e605a888e391d8458f3": {
+    "result": {
+      "role": "assistant",
+      "content": "Accept the order confirmation dialog for the second order",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 9899,
+      "output": 12
+    }
+  },
+  "f6df99806ce1301aedf58fd2ebfc77b3645f849b": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_handle_dialog",
+          "arguments": {
+            "accept": true
+          },
+          "id": "tooluse_j3MT0SvtSBuucN6YXXxfZg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9932,
+      "output": 55
+    }
+  },
+  "c6d1b1ddc05aa572b48a0abfebaf84117d38aefd": {
+    "result": {
+      "role": "assistant",
+      "content": "Report the total price and maximum estimated delivery time for both orders",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 10795,
+      "output": 88
+    }
+  },
+  "b2b70eb2a30bcd06f1cd7819b9a7d4e275a528b6": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "report_result",
+          "arguments": {
+            "deliveryDays": 3,
+            "price": 653.96
+          },
+          "id": "tooluse_CR5rFd09QRGnH5-Lt3-pGw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 10831,
+      "output": 75
+    }
+  }
+}

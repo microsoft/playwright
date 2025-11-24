@@ -1,0 +1,186 @@
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order Form</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 20px;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .container {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 30px;
+      text-align: center;
+      font-size: 28px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #555;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 5px;
+      font-size: 14px;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+
+    input[type="text"]:focus,
+    input[type="email"]:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn-order {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      margin-top: 10px;
+    }
+
+    .btn-order:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn-order:active {
+      transform: translateY(0);
+    }
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Product Order Form</h1>
+    <form id="orderForm">
+
+      <div class="form-group">
+        <label for="productType">Product Type *</label>
+        <select id="productType" name="productType" required>
+          <option value="">Select a product</option>
+          <option value="chair">Chair</option>
+          <option value="sofa">Sofa</option>
+          <option value="desk">Desk</option>
+          <option value="table">Table</option>
+          <option value="cabinet">Cabinet</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="color">Color *</label>
+        <select id="color" name="color" required>
+          <option value="">Select a color</option>
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="black">Black</option>
+          <option value="white">White</option>
+          <option value="brown">Brown</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="name">Full Name *</label>
+        <input type="text" id="name" name="name" placeholder="Enter your full name" required>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address *</label>
+        <input type="email" id="email" name="email" placeholder="your.email@example.com" required>
+      </div>
+
+      <div class="form-group">
+        <label for="address">Street Address *</label>
+        <input type="text" id="address" name="address" placeholder="123 Main Street" required>
+      </div>
+
+      <div class="form-group">
+        <label for="city">City *</label>
+        <input type="text" id="city" name="city" placeholder="City" required>
+      </div>
+
+      <div class="form-group">
+        <label for="state">State/Province *</label>
+        <input type="text" id="state" name="state" placeholder="State" required>
+      </div>
+
+      <div class="form-group">
+        <label for="zipCode">ZIP/Postal Code *</label>
+        <input type="text" id="zipCode" name="zipCode" placeholder="12345" required>
+      </div>
+
+      <button type="button" class="btn-order">Order</button>
+    </form>
+  </div>
+
+  <script>
+    const form = document.getElementById('orderForm');
+
+    const submit = () => {
+      location.href = './fill-form-submit.html#?' + new URLSearchParams(new FormData(form)).toString();
+    };
+
+    document.querySelector('.btn-order').addEventListener('click', () => {
+      if (form.checkValidity()) {
+        if (window.confirm(`Please confirm your order for a ${form.color.value} ${form.productType.value}.`))
+          submit();
+      } else {
+        form.reportValidity();
+      }
+    });
+
+    form.addEventListener('submit', e => {
+      e.preventDefault();
+      submit();
+    });
+  </script>
+</body>

@@ -30,7 +30,7 @@
     "test": "playwright test --config=tests/library/playwright.config.ts",
     "test-mcp": "playwright test --config=tests/mcp/playwright.config.ts",
     "ctest-mcp": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome",
-    "etest-mcp": "playwright test --config=tests/mcp/playwright.config.extension.ts",
+    "eval-mcp": "playwright test --config=tests/mcp/playwright.config.ts --project=eval",
     "eslint": "eslint --cache",
     "tsc": "tsc -p . && tsc -p packages/html-reporter/",
     "doc": "node utils/doclint/cli.js",

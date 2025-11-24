@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 import * as path from 'path';
+import dotenv from 'dotenv';
 
 import { defineConfig } from '@playwright/test';
 
 import type { TestOptions } from './fixtures';
 import type { ReporterDescription } from '@playwright/test';
+
+dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 
 const rootTestDir = path.join(__dirname, '..');
 const testDir = path.join(rootTestDir, 'mcp');
@@ -44,7 +47,6 @@ const metadata = {
 
 export default defineConfig<TestOptions>({
   testDir: rootTestDir,
-  grepInvert: /extension/,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
@@ -55,5 +57,14 @@ export default defineConfig<TestOptions>({
     { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
     { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
     ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
+    {
+      name: 'eval',
+      testDir,
+      testMatch: /.*\.eval\.ts/,
+      repeatEach: 3, // Generate three different trajectories per test.
+      timeout: process.env.CI ? 30_000 : 180_000,  // CI should be cache-only, but local use of LLM is slow.
+      use: { mcpBrowser: 'chromium' },
+      metadata: { ...metadata, browserName: 'chromium' },
+    }
   ],
 });
