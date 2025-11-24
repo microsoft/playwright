@@ -17,8 +17,10 @@
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 import { playwrightCtConfigText } from './playwright-test-fixtures';
-import ws from 'ws';
 import type { TestChildProcess } from '../config/commonFixtures';
+import ws from 'ws';
+import fs from 'fs';
+import path from 'path';
 
 class WSTransport {
   private _ws: ws.WebSocket;
@@ -327,4 +329,46 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
 
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
+});
+
+test('should accept snapshots via test server API', async ({ startTestServer, writeFiles }, testInfo) => {
+  await writeFiles({
+    'snapshot.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('text snapshot', () => {
+        expect('actual content').toMatchSnapshot('snapshot.txt');
+      });
+    `,
+  });
+
+  const testServerConnection = await startTestServer();
+
+  // Run the test - will fail with missing snapshot
+  await testServerConnection.runTests({});
+
+  // Create a fake "actual" file to accept
+  const testDir = testInfo.outputPath();
+  const actualFile = path.join(testDir, 'test-results', 'snapshot-text-snapshot-chromium', 'snapshot-actual.txt');
+  const expectedFile = path.join(testDir, 'snapshot.test.ts-snapshots', 'snapshot.txt');
+
+  fs.mkdirSync(path.dirname(actualFile), { recursive: true });
+  fs.writeFileSync(actualFile, 'actual content');
+
+  // Accept the snapshot
+  const result = await testServerConnection.acceptSnapshots({
+    paths: [[actualFile, expectedFile]]
+  });
+
+  // Verify the result
+  expect(result.status).toBe(true);
+  expect(result.accepted).toBe(1);
+  expect(result.failed).toBe(0);
+
+  // Verify the file was copied
+  expect(fs.existsSync(expectedFile)).toBeTruthy();
+  expect(fs.readFileSync(expectedFile, 'utf-8')).toBe('actual content');
+
+  // Re-run the test - should pass now
+  const testResult = await testServerConnection.runTests({});
+  expect(testResult.status).toBe('passed');
 });

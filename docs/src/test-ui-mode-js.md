@@ -99,6 +99,10 @@ The "Attachments" tab allows you to explore attachments. If you're doing [visual
 
 ![ui mode with attachments](https://github.com/microsoft/playwright/assets/13063165/bb83b406-84ed-4380-a96c-0e62d1388093)
 
+### Accepting snapshots
+
+When a test has snapshot failures, you can accept the new snapshots directly from UI mode. Click the "Accept Snapshots" button that appears when a test has snapshot errors. This will copy the actual snapshots to replace the expected snapshots, similar to running tests with the `--update-snapshots` flag. A status message will confirm how many snapshots were accepted.
+
 ## Metadata
 
 Next to the Actions tab you will find the Metadata tab which will show you more information on your test such as the Browser, viewport size, test duration and more.

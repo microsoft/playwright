@@ -83,14 +83,27 @@
 }
 
 .status-line {
-  flex: auto;
+  flex: none;
   white-space: nowrap;
-  line-height: 22px;
-  padding-left: 10px;
+  line-height: 16px;
+  padding: 4px 8px;
   display: flex;
   flex-direction: row;
   align-items: center;
-  height: 30px;
+  height: auto;
+  min-height: 20px;
+  font-size: 11px;
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .status-line > div {

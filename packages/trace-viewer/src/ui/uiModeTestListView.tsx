@@ -32,6 +32,14 @@ import type { TestServerConnection } from '@testIsomorphic/testServerConnection'
 import { TagView } from './tag';
 import type { TeleSuiteUpdaterTestModel } from '@testIsomorphic/teleSuiteUpdater';
 
+// Internal type for expect errors with matcher results (not in public API)
+type ExpectError = Error & {
+  matcherResult?: {
+    actual?: unknown;
+    expected?: unknown;
+  };
+};
+
 const TestTreeView = TreeView<TreeItem>;
 
 export const TestListView: React.FC<{
@@ -40,6 +48,7 @@ export const TestListView: React.FC<{
   testServerConnection: TestServerConnection | undefined,
   testModel?: TeleSuiteUpdaterTestModel,
   runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', filter: { testIds: Iterable<string>, locations: Iterable<string> }) => void,
+  acceptSnapshots: (paths: [string, string][]) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
   watchedTreeIds: { value: Set<string> },
@@ -50,7 +59,7 @@ export const TestListView: React.FC<{
   requestedExpandAllCount: number,
   setFilterText: (text: string) => void,
   onRevealSource: () => void,
-}> = ({ filterText, testModel, testServerConnection, testTree, runTests, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, requestedExpandAllCount, setFilterText, onRevealSource }) => {
+}> = ({ filterText, testModel, testServerConnection, testTree, runTests, acceptSnapshots, runningState, watchAll, watchedTreeIds, setWatchedTreeIds, isLoading, onItemSelected, requestedCollapseAllCount, requestedExpandAllCount, setFilterText, onRevealSource }) => {
   const [treeState, setTreeState] = React.useState<TreeState>({ expandedItems: new Map() });
   const [selectedTreeItemId, setSelectedTreeItemId] = React.useState<string | undefined>();
   const [collapseAllCount, setCollapseAllCount] = React.useState(requestedCollapseAllCount);
@@ -142,6 +151,80 @@ export const TestListView: React.FC<{
     runTests('bounce-if-busy', testTree.collectTestIds(treeItem));
   };
 
+  const hasSnapshotErrors = React.useCallback((treeItem: TreeItem): boolean => {
+    if (!testModel)
+      return false;
+
+    const filter = testTree.collectTestIds(treeItem);
+    const testIdSet = new Set(filter.testIds);
+    for (const test of testModel.rootSuite.allTests()) {
+      if (testIdSet.has(test.id)) {
+        for (const result of test.results) {
+          if (result.errors && result.errors.length > 0) {
+            // Check for screenshot/image snapshot failures (stored as attachments)
+            const hasExpected = result.attachments.some(a => a.name.includes('-expected.'));
+            const hasActual = result.attachments.some(a => a.name.includes('-actual.'));
+            if (hasExpected && hasActual)
+              return true;
+
+            // Check for text snapshot failures (stored in matcherResult)
+            for (const error of result.errors) {
+              const expectError = error as ExpectError;
+              if (expectError?.matcherResult) {
+                const matcherResult = expectError.matcherResult;
+                if (typeof matcherResult.actual === 'string' && typeof matcherResult.expected === 'string')
+                  return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }, [testModel, testTree]);
+
+  const acceptTreeItemSnapshots = (treeItem: TreeItem) => {
+    setSelectedTreeItemId(treeItem.id);
+
+    const updates: [string, string][] = [];
+
+    const filter = testTree.collectTestIds(treeItem);
+    const testIdSet = new Set(filter.testIds);
+    for (const test of testModel!.rootSuite.allTests()) {
+      if (testIdSet.has(test.id)) {
+        for (const result of test.results) {
+          if (result.errors && result.errors.length > 0) {
+            // Collect paths from attachments (works for both screenshot and text snapshots)
+            for (const attachment of result.attachments) {
+              if (attachment.name.includes('-actual.') && attachment.path) {
+                // Find the corresponding -expected attachment
+                const baseName = attachment.name.replace('-actual.', '-expected.');
+                const expectedAttachment = result.attachments.find(a => a.name === baseName);
+                if (expectedAttachment?.path) {
+                  updates.push([attachment.path, expectedAttachment.path]);
+                }
+              }
+            }
+
+            // Also check matcherResult for backwards compatibility
+            for (const error of result.errors) {
+              const expectError = error as ExpectError;
+              if (expectError?.matcherResult) {
+                const matcherResult = expectError.matcherResult;
+                if (typeof matcherResult.actual === 'string' && typeof matcherResult.expected === 'string')
+                  updates.push([matcherResult.actual, matcherResult.expected]);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Only call API if we have snapshots to accept
+    if (updates.length > 0)
+      acceptSnapshots(updates);
+  };
+
   const handleTagClick = (e: React.MouseEvent, tag: string) => {
     e.preventDefault();
     e.stopPropagation();
@@ -175,6 +258,7 @@ export const TestListView: React.FC<{
         {!!treeItem.duration && treeItem.status !== 'skipped' && <div id={timeId} className='ui-mode-tree-item-time'>{msToString(treeItem.duration)}</div>}
         <Toolbar noMinHeight={true} noShadow={true}>
           <ToolbarButton icon='play' title='Run' onClick={() => runTreeItem(treeItem)} disabled={!!runningState && !runningState.completed}></ToolbarButton>
+          {hasSnapshotErrors(treeItem) && <ToolbarButton icon='check' title='Accept snapshots' onClick={() => acceptTreeItemSnapshots(treeItem)}></ToolbarButton>}
           <ToolbarButton icon='go-to-file' title='Show source' onClick={onRevealSource} style={(treeItem.kind === 'group' && treeItem.subKind === 'folder') ? { visibility: 'hidden' } : {}}></ToolbarButton>
           {!watchAll && <ToolbarButton icon='eye' title='Watch' onClick={() => {
             if (watchedTreeIds.value.has(treeItem.id))
