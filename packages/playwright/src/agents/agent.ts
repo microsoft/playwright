@@ -18,8 +18,8 @@ import { Loop } from '../mcp/sdk/bundle';
 
 import type z from 'zod';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { CallToolResult, Tool } from '@modelcontextprotocol/sdk/types.js';
-import type { Loop as LoopType } from 'tiny-loop';
+import type { Tool } from '@modelcontextprotocol/sdk/types.js';
+import type * as tinyLoop from 'tiny-loop';
 
 type Logger = (category: string, text: string, details?: string) => void;
 
@@ -34,7 +34,7 @@ export type AgentSpec = {
 };
 
 export class Agent<T extends z.ZodSchema<any>> {
-  readonly loop: LoopType;
+  readonly loop: tinyLoop.Loop;
   readonly spec: AgentSpec;
   readonly clients: Map<string, Client>;
   readonly resultSchema: Tool['inputSchema'];
@@ -80,12 +80,12 @@ export class Agent<T extends z.ZodSchema<any>> {
     if (agentToolNames.size > 0)
       throw new Error(`Required tools not found: ${Array.from(agentToolNames).join(', ')}`);
 
-    const callTool: (params: { name: string, arguments: any}) => Promise<CallToolResult> = async params => {
+    const callTool: (params: { name: string, arguments: any}) => Promise<tinyLoop.ToolResult> = async params => {
       const [serverName, toolName] = params.name.split('__');
       const client = clients[serverName];
       if (!client)
         throw new Error(`Unknown server: ${serverName}`);
-      return await client.callTool({ name: toolName, arguments: params.arguments }) as CallToolResult;
+      return await client.callTool({ name: toolName, arguments: params.arguments }) as tinyLoop.ToolResult;
     };
     return { clients, tools, callTool };
   }
