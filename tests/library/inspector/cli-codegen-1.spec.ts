@@ -105,7 +105,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     ]);
 
     // Do not trigger double click.
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(1000);
 
     const [sources] = await Promise.all([
       recorder.waitForOutput('JavaScript', `click();\n  await`),
@@ -130,7 +130,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     ]);
 
     // Do not trigger double click.
-    await page.waitForTimeout(200);
+    await page.waitForTimeout(1000);
 
     await Promise.all([
       recorder.waitForOutput('JavaScript', `click();\n  await`),
