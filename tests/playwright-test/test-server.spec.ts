@@ -60,6 +60,7 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
     this.onTestPaused(params => this.events.push(['testPaused', params]));
+    this.onReport(params => this.events.push(['report', params]));
   }
 }
 
@@ -166,7 +167,7 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const tests = await testServerConnection.runTests({ trace: 'on' });
+  const tests = await testServerConnection.runTests({ trace: 'on', locations: [] });
   expect(tests).toEqual({ status: 'passed' });
   await expect.poll(() => testServerConnection.events).toEqual(expect.arrayContaining([
     ['stdio', { type: 'stderr', text: 'this goes to stderr\n' }],
@@ -247,7 +248,7 @@ test('timeout override', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ timeout: 42 })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ timeout: 42, locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFiles }) => {
@@ -261,7 +262,7 @@ test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFile
       });
       `,
   });
-  expect(await testServerConnection.runTests({})).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
@@ -275,7 +276,7 @@ test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseAtEnd: true });
+  const promise = testServerConnection.runTests({ pauseAtEnd: true, locations: [] });
   await expect.poll(() => testServerConnection.events.find(e => e[0] === 'testPaused')).toEqual(['testPaused', { errors: [] }]);
   await testServerConnection.stopTests({});
   expect(await promise).toEqual({ status: 'interrupted' });
@@ -293,7 +294,7 @@ test('pauseOnError', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseOnError: true });
+  const promise = testServerConnection.runTests({ pauseOnError: true, locations: [] });
   await expect.poll(() => testServerConnection.events.some(e => e[0] === 'testPaused')).toBeTruthy();
   expect(testServerConnection.events.find(e => e[0] === 'testPaused')[1]).toEqual({
     errors: [
@@ -324,6 +325,6 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ pauseOnError: true })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
 });
