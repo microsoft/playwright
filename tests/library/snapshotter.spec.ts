@@ -261,10 +261,17 @@ it.describe('snapshots', () => {
     expect(snapshot2.html).toEqual([[1, 13]]);
   });
 
-  it('should not navigate on anchor clicks', async ({ page, toImpl, snapshotter }) => {
-    await page.setContent('<a href="https://example.com">example.com</a>');
+  it('should not navigate on anchor clicks', async ({ page, toImpl, snapshotter, browser }) => {
+    const url = 'http://localhost/';
+    await page.setContent(`<a href="${url}">example link</a>`);
     const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
-    expect(distillSnapshot(snapshot, page.url())).toBe('<A href="link://https://example.com">example.com</A>');
+    expect(distillSnapshot(snapshot, page.url())).toBe(`<A __pw_link href="${url}">example link</A>`);
+
+    const { html } = snapshot.render();
+    const newPage = await browser.newPage();
+    await newPage.setContent(html);
+    await newPage.getByRole('link').click();
+    await expect(newPage).not.toHaveURL(url, { timeout: 500 });
   });
 });
 
