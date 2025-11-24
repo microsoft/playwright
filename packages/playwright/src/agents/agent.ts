@@ -52,8 +52,9 @@ export class Agent<T extends z.ZodSchema<any>> {
     try {
       return await this.loop.run<z.output<T>>(`${prompt}\n\nTask:\n${task}\n\nParams:\n${JSON.stringify(params, null, 2)}`, {
         ...options,
-        tools,
-        callTool,
+        // TODO: fix types in tiny-loop
+        tools: tools as any,
+        callTool: callTool as any,
         resultSchema: this.resultSchema
       });
     } finally {

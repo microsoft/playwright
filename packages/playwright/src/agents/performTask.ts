@@ -36,8 +36,9 @@ export async function performTask(context: playwright.BrowserContext, task: stri
 
   try {
     return await loop.run(task, {
-      tools: await backend.listTools(),
-      callTool,
+      // TODO: fix types in tiny-loop
+      tools: await backend.listTools() as any,
+      callTool: callTool as any,
       logger,
     });
   } finally {

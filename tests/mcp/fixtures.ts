@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
+import { Loop } from 'tiny-loop';
+import debug from 'debug';
 
 import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -65,6 +67,7 @@ type TestFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   mcpHeadless: boolean;
+  loop: Loop;
 };
 
 type WorkerFixtures = {
@@ -184,6 +187,28 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpBrowser: ['chrome', { option: true }],
 
   mcpServerType: ['mcp', { option: true }],
+
+  loop: async ({ server }, use) => {
+    const provider = 'copilot';
+    const cacheFile = path.join(__dirname, '__cache__', provider, sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
+    const dataBefore = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
+    let cache = {};
+    try {
+      cache = JSON.parse(dataBefore);
+    } catch {
+    }
+    const caches = { before: cache, after: {} };
+    await use(new Loop(provider, {
+      caches,
+      secrets: { PORT: String(server.PORT) },
+      logger: (category, ...args) => debug(category)(...args),
+    }));
+    const dataAfter = JSON.stringify(caches.after, null, 2);
+    if (test.info().status === 'passed' && dataBefore !== dataAfter) {
+      await fs.promises.mkdir(path.dirname(cacheFile), { recursive: true });
+      await fs.promises.writeFile(cacheFile, dataAfter);
+    }
+  },
 });
 
 async function createTransport(mcpServerType: TestOptions['mcpServerType'], options: { args: string[], env: NodeJS.ProcessEnv, cwd: string }): Promise<{
@@ -311,4 +336,8 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
   });
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };
+}
+
+function sanitizeFileName(name: string): string {
+  return name.replace('.ts', '').replace(/[^a-zA-Z0-9_]+/g, '-');
 }

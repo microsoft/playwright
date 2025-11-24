@@ -1,0 +1,404 @@
+{
+  "facb950333d3cbebad4cb469c846c6a03a72dce8": {
+    "result": {
+      "role": "assistant",
+      "content": "I'll help you navigate to the form, fill it out with the specified details, and report back the results. Let me start by navigating to the page.",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 4484,
+      "output": 136
+    }
+  },
+  "e9daf936478b73139df8f3ea61bc82a1a13c3cdb": {
+    "result": {
+      "role": "assistant",
+      "content": "Navigate to the form page",
+      "toolCalls": [
+        {
+          "name": "browser_navigate",
+          "arguments": {
+            "url": "http://localhost:<PORT>/evals/fill-form.html"
+          },
+          "id": "tooluse_2QTlFMmcQlqV0a1rVultZw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 4541,
+      "output": 88
+    }
+  },
+  "7dc1192eb36584ccdef322c804036a775f23f7a2": {
+    "result": {
+      "role": "assistant",
+      "content": "Check the current state of the form before filling",
+      "toolCalls": [
+        {
+          "name": "browser_snapshot",
+          "arguments": {},
+          "id": "tooluse_Xq-IYmyLTua6t1KRVizOew"
+        }
+      ]
+    },
+    "usage": {
+      "input": 5238,
+      "output": 61
+    }
+  },
+  "e960fd42b63a75629d10e2b064a712cf4bb222c8": {
+    "result": {
+      "role": "assistant",
+      "content": "Fill the first order form for a blue table",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 5874,
+      "output": 126
+    }
+  },
+  "ab8368051e5eb0335afc2627359409ff6e527b22": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Table as the product type for the first order",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Product Type dropdown",
+            "ref": "e7",
+            "values": [
+              "Table"
+            ]
+          },
+          "id": "tooluse_qDJgPasgTZazcKmtzotHZg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 5907,
+      "output": 120
+    }
+  },
+  "eefa023ed6d14b88656c764ec83bf98bee091d0a": {
+    "result": {
+      "role": "assistant",
+      "content": "Select Blue as the color",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 6163,
+      "output": 99
+    }
+  },
+  "c7ddf8898251a2d2a7fcadf36e226a14f2d32955": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Color dropdown",
+            "ref": "e10",
+            "values": [
+              "Blue"
+            ]
+          },
+          "id": "tooluse_K_TcaZuDTaaPDZT-qhxH0g"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6192,
+      "output": 93
+    }
+  },
+  "5ccb74547a127df0533ca011b1ac02fb9df840c3": {
+    "result": {
+      "role": "assistant",
+      "content": "Fill in all the customer details in the form",
+      "toolCalls": [
+        {
+          "name": "browser_fill_form",
+          "arguments": {
+            "fields": [
+              {
+                "name": "Full Name",
+                "ref": "e13",
+                "type": "textbox",
+                "value": "John Doe"
+              },
+              {
+                "name": "Email Address",
+                "ref": "e16",
+                "type": "textbox",
+                "value": "john@doe.me"
+              },
+              {
+                "name": "Street Address",
+                "ref": "e19",
+                "type": "textbox",
+                "value": "123 Main St"
+              },
+              {
+                "name": "City",
+                "ref": "e22",
+                "type": "textbox",
+                "value": "Anytown"
+              },
+              {
+                "name": "State/Province",
+                "ref": "e25",
+                "type": "textbox",
+                "value": "XYZ"
+              },
+              {
+                "name": "ZIP/Postal Code",
+                "ref": "e28",
+                "type": "textbox",
+                "value": "12345"
+              }
+            ]
+          },
+          "id": "tooluse_fevjVnF0S2OhEUg_pdQNog"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6439,
+      "output": 345
+    }
+  },
+  "1ef5b1de2508c7962e6e4b4dcefe59c11179680d": {
+    "result": {
+      "role": "assistant",
+      "content": "Submit the order form",
+      "toolCalls": []
+    },
+    "usage": {
+      "input": 6879,
+      "output": 77
+    }
+  },
+  "f096f02c459d6fa500047ad6ba5e65c0e5222e20": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Order button",
+            "ref": "e29"
+          },
+          "id": "tooluse_cDuf7VYITsOk3SPizGkdbw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6907,
+      "output": 72
+    }
+  },
+  "a28b9ead7a286733ddbf6c52fd0c3ed1d5954725": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_handle_dialog",
+          "arguments": {
+            "accept": true
+          },
+          "id": "tooluse_A0g51QouRsWL9CsOTx5Ycg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 7059,
+      "output": 55
+    }
+  },
+  "fb6f4514207d7e27fa9a5c6da79320dd6d5ab572": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Place Another Order button",
+            "ref": "e58"
+          },
+          "id": "tooluse_4U7nwg7ZTMiom22WRl-FJw"
+        }
+      ]
+    },
+    "usage": {
+      "input": 7920,
+      "output": 74
+    }
+  },
+  "4a73f42e2d9bdb78c9a2e5390bc7a964fbb343c0": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Product Type dropdown",
+            "ref": "e7",
+            "values": [
+              "Desk"
+            ]
+          },
+          "id": "tooluse_67fzJrlgS06obb4sPHxk-Q"
+        }
+      ]
+    },
+    "usage": {
+      "input": 8618,
+      "output": 95
+    }
+  },
+  "cf8bc3f7c495171c5541706d297582791b7c316f": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_select_option",
+          "arguments": {
+            "element": "Color dropdown",
+            "ref": "e10",
+            "values": [
+              "Green"
+            ]
+          },
+          "id": "tooluse_CroDBxgYS1akDERsrWsRAg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 8865,
+      "output": 93
+    }
+  },
+  "995ae7de03de31d0deaa9f9c415b682386ea0290": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_fill_form",
+          "arguments": {
+            "fields": [
+              {
+                "name": "Full Name",
+                "ref": "e13",
+                "type": "textbox",
+                "value": "John Doe"
+              },
+              {
+                "name": "Email Address",
+                "ref": "e16",
+                "type": "textbox",
+                "value": "john@doe.me"
+              },
+              {
+                "name": "Street Address",
+                "ref": "e19",
+                "type": "textbox",
+                "value": "123 Main St"
+              },
+              {
+                "name": "City",
+                "ref": "e22",
+                "type": "textbox",
+                "value": "Anytown"
+              },
+              {
+                "name": "State/Province",
+                "ref": "e25",
+                "type": "textbox",
+                "value": "XYZ"
+              },
+              {
+                "name": "ZIP/Postal Code",
+                "ref": "e28",
+                "type": "textbox",
+                "value": "12345"
+              }
+            ]
+          },
+          "id": "tooluse_DLFD9lwrQb2Oc_4NpnYOYg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9111,
+      "output": 240
+    }
+  },
+  "6ec90af600847bd4dd2a0fa6b8ea5c08fd0e59d0": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_click",
+          "arguments": {
+            "element": "Order button",
+            "ref": "e29"
+          },
+          "id": "tooluse_oNWDYmu7RTClOEuCTrn7Sg"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9541,
+      "output": 72
+    }
+  },
+  "c46467b8f90fdfbfdf5081dda99e2055b6f6152f": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "browser_handle_dialog",
+          "arguments": {
+            "accept": true
+          },
+          "id": "tooluse_qBV8FnNVTMiBZ8oLuUVYOQ"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9692,
+      "output": 55
+    }
+  },
+  "c9ebdba51d456673a83fd1ec4e484fea864ef5b7": {
+    "result": {
+      "role": "assistant",
+      "content": "",
+      "toolCalls": [
+        {
+          "name": "report_result",
+          "arguments": {
+            "deliveryDays": 3,
+            "price": 653.96
+          },
+          "id": "tooluse_Tsf2nC_CR6CMtZL91D0ovA"
+        }
+      ]
+    },
+    "usage": {
+      "input": 10554,
+      "output": 75
+    }
+  }
+}
