@@ -108,16 +108,17 @@ const CopyDropdown: React.FC<{
 
 const ExpandableSection: React.FC<{
   title: string;
+  showCount?: boolean,
   data?: { name: string, value: React.ReactNode }[],
   children?: React.ReactNode
   className?: string;
-}> = ({ title, data, children, className }) => {
+}> = ({ title, data, showCount, children, className }) => {
   const [expanded, setExpanded] = useSetting(`trace-viewer-network-details-${title.replaceAll(' ', '-')}`, true);
   return <Expandable
     expanded={expanded}
     setExpanded={setExpanded}
     expandOnTitleClick
-    title={<span className='network-request-details-header'>{title}</span>}
+    title={<span className='network-request-details-header'>{title}{showCount && ` (${data?.length ?? 0})`}</span>}
     className={className}
   >
     {data && <table className='network-request-details-table'>
@@ -157,8 +158,8 @@ const RequestTab: React.FunctionComponent<{
 
   return <div className='vbox network-request-details-tab'>
     <ExpandableSection title='General' data={generalData}/>
-    {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' data={resource.request.queryString}/>}
-    <ExpandableSection title='Request Headers' data={resource.request.headers}/>
+    {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
+    <ExpandableSection title='Request Headers' showCount data={resource.request.headers}/>
     <ExpandableSection title='Time' data={timeData}/>
     {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
@@ -170,7 +171,7 @@ const ResponseTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='Response Headers' data={resource.response.headers} />
+    <ExpandableSection title='Response Headers' showCount data={resource.response.headers} />
   </div>;
 };
 
