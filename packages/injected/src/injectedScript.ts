@@ -1256,9 +1256,11 @@ export class InjectedScript {
   }
 
   checkDeprecatedSelectorUsage(selector: ParsedSelector, matches: Element[]) {
+    const kDeprecatedSelectors = new Set(['_react', '_vue', 'xpath:light', 'text:light', 'id:light',
+      'data-testid:light', 'data-test-id:light', 'data-test:light']);
     if (!matches.length)
       return;
-    const deperecated = selector.parts.find(part => part.name === '_react' || part.name === '_vue');
+    const deperecated = selector.parts.find(part => kDeprecatedSelectors.has(part.name));
     if (!deperecated)
       return;
     const lines = this._generateSelectors(matches).map(line => `\n    ` + line);
