@@ -207,7 +207,7 @@ This project incorporates components from the projects listed below. The origina
 -	statuses@2.0.2 (https://github.com/jshttp/statuses)
 -	stoppable@1.1.0 (https://github.com/hunterloftis/stoppable)
 -	supports-color@7.2.0 (https://github.com/chalk/supports-color)
--	tiny-loop@0.0.6 (https://github.com/pavelfeldman/tiny-loop)
+-	tiny-loop@0.0.10 (https://github.com/pavelfeldman/tiny-loop)
 -	to-regex-range@5.0.1 (https://github.com/micromatch/to-regex-range)
 -	toidentifier@1.0.1 (https://github.com/component/toidentifier)
 -	type-is@2.0.1 (https://github.com/jshttp/type-is)
@@ -5884,7 +5884,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF supports-color@7.2.0 AND INFORMATION
 
-%% tiny-loop@0.0.6 NOTICES AND INFORMATION BEGIN HERE
+%% tiny-loop@0.0.10 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Apache License
                            Version 2.0, January 2004
@@ -6088,7 +6088,7 @@ Apache License
    See the License for the specific language governing permissions and
    limitations under the License.
 =========================================
-END OF tiny-loop@0.0.6 AND INFORMATION
+END OF tiny-loop@0.0.10 AND INFORMATION
 
 %% to-regex-range@5.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
