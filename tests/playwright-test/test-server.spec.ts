@@ -17,8 +17,10 @@
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 import { playwrightCtConfigText } from './playwright-test-fixtures';
-import ws from 'ws';
 import type { TestChildProcess } from '../config/commonFixtures';
+import ws from 'ws';
+import fs from 'fs';
+import path from 'path';
 
 class WSTransport {
   private _ws: ws.WebSocket;
@@ -327,4 +329,60 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
 
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
+});
+
+test('should accept snapshots via test server API', async ({ startTestServer, writeFiles }, testInfo) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('pass', () => {});
+    `,
+  });
+
+  const testServerConnection = await startTestServer();
+
+  // Create source and destination files to test the copy API
+  const testDir = testInfo.outputPath();
+  const sourceFile = path.join(testDir, 'source', 'actual.txt');
+  const destFile = path.join(testDir, 'dest', 'expected.txt');
+
+  fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
+  fs.writeFileSync(sourceFile, 'snapshot content');
+
+  // Accept the snapshot (copy source to dest)
+  const result = await testServerConnection.acceptSnapshots({
+    paths: [[sourceFile, destFile]]
+  });
+
+  // Verify the API response
+  expect(result.status).toBe(true);
+  expect(result.accepted).toBe(1);
+  expect(result.failed).toBe(0);
+  expect(result.errors).toBeUndefined();
+
+  // Verify the file was copied and destination directory was created
+  expect(fs.existsSync(destFile)).toBeTruthy();
+  expect(fs.readFileSync(destFile, 'utf-8')).toBe('snapshot content');
+});
+
+test('should report errors when accepting snapshots fails', async ({ startTestServer, writeFiles }, testInfo) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('pass', () => {});
+    `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const testDir = testInfo.outputPath();
+
+  // Try to copy from non-existent source
+  const result = await testServerConnection.acceptSnapshots({
+    paths: [[path.join(testDir, 'nonexistent.txt'), path.join(testDir, 'dest.txt')]]
+  });
+
+  expect(result.status).toBe(false);
+  expect(result.accepted).toBe(0);
+  expect(result.failed).toBe(1);
+  expect(result.errors).toHaveLength(1);
 });
