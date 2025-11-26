@@ -205,7 +205,7 @@ export class TestContext {
 
     claimStdio();
     try {
-      const setupReporter = new ListReporter({ configDir, screen, includeTestId: true });
+      const setupReporter = new McpReporter({ configDir, screen, includeTestId: true });
       const { status } = await testRunner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
         return { output: testRunnerAndScreen.output.join('\n'), status };
@@ -227,7 +227,7 @@ export class TestContext {
     };
 
     try {
-      const reporter = new ListReporter({ configDir, screen, includeTestId: true });
+      const reporter = new McpReporter({ configDir, screen, includeTestId: true });
       status = await Promise.race([
         testRunner.runTests(reporter, params).then(result => result.status),
         testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
@@ -269,6 +269,10 @@ export class TestContext {
     }
     return result.response;
   }
+}
+
+class McpReporter extends ListReporter {
+  override onTestPaused() {}
 }
 
 export function createScreen() {
