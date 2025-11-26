@@ -1424,11 +1424,13 @@ export class Recorder {
   readonly document: Document;
   private _delegate: RecorderDelegate = {};
   private _collectSelectors: boolean;
+  private _hideOverlay: boolean;
 
-  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api', collectSelectors?: boolean }) {
+  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api', collectSelectors?: boolean, hideOverlay?: boolean }) {
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
     this._collectSelectors = !!options?.collectSelectors;
+    this._hideOverlay = !!options?.hideOverlay;
     this.highlight = injectedScript.createHighlight();
     this._tools = {
       'none': new NoneTool(),
@@ -1443,7 +1445,7 @@ export class Recorder {
     };
     this._currentTool = this._tools.none;
     this._currentTool.install?.();
-    if (injectedScript.window.top === injectedScript.window) {
+    if (!this._hideOverlay && injectedScript.window.top === injectedScript.window) {
       this.overlay = new Overlay(this);
       this.overlay.setUIState(this.state);
     }
