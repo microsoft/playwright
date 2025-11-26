@@ -891,6 +891,10 @@ stages:
 tests:
   stage: test
   image: mcr.microsoft.com/playwright:v%%VERSION%%-noble
+  artifacts:
+    when: always
+    paths:
+      - playwright-report/
   script:
   ...
 ```
