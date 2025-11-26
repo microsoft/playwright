@@ -61,13 +61,13 @@ runs:
         fi
       shell: bash
       env:
-        PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+        PW_TAG: "@${{ inputs.bot-name }}"
     - name: Run tests
       if: inputs.shell != 'bash'
       run: ${{ inputs.command }}
       shell: ${{ inputs.shell }}
       env:
-        PWTEST_BOT_NAME: ${{ inputs.bot-name }}
+        PW_TAG: "@${{ inputs.bot-name }}"
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
