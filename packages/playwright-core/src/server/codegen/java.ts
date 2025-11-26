@@ -190,8 +190,8 @@ export class JavaLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  generateFooter(saveStorage: string | undefined): string {
-    const storageStateLine = saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().setPath(${quote(saveStorage)}));\n` : '';
+  generateFooter(options: LanguageGeneratorOptions): string {
+    const storageStateLine = options.saveStorage ? `\n      context.storageState(new BrowserContext.StorageStateOptions().setPath(${quote(options.saveStorage)}));\n` : '';
     if (this._mode === 'junit') {
       return `${storageStateLine}  }
 }`;

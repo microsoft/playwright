@@ -1056,6 +1056,7 @@ scheme.BrowserContextEnableRecorderParams = tObject({
   language: tOptional(tString),
   mode: tOptional(tEnum(['inspecting', 'recording'])),
   recorderMode: tOptional(tEnum(['default', 'api'])),
+  snippet: tOptional(tEnum(['standalone', 'addition'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
   launchOptions: tOptional(tAny),

@@ -24,8 +24,10 @@ import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler } from './mcp/test/browserBackend';
 import { performTask } from './agents/performTask';
+import { findTestEndPosition } from './transform/babelHighlightUtils';
+import { filteredStackTrace } from './util';
 
-import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
+import type { Fixtures, Location, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
 import type { TestInfoImpl, TestStepInternal } from './worker/testInfo';
 import type { ClientInstrumentationListener } from '../../playwright-core/src/client/clientInstrumentation';
@@ -231,12 +233,37 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   }, { box: true }],
 
-  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute, headless }, use, _testInfo) => {
+    const testInfo = _testInfo as TestInfoImpl;
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode() === 'inspector')
-      (testInfo as TestInfoImpl)._setDebugMode();
+      testInfo._setDebugMode();
+
+    if (testInfo._configInternal.configCLIOverrides.pause && !headless) {
+      testInfo._onTestPausedCallback = async () => {
+        const page = playwright._allPages()[0];
+        if (!page)
+          return;
+        await page.context()._enableRecorder({
+          snippet: 'addition',
+          testIdAttributeName: testIdAttribute,
+        });
+
+        let location: Location | undefined;
+        if (testInfo.error) {
+          if (testInfo.error.stack)
+            location = filteredStackTrace(testInfo.error.stack.split('\n'))[0];
+        } else {
+          const source = await fs.promises.readFile(testInfo.file, 'utf-8');
+          location = findTestEndPosition(source, testInfo);
+        }
+        location ??= testInfo;
+        await page.pause({ location: location } as any);
+      };
+    }
+
 
     playwright._defaultContextOptions = _combinedContextOptions;
     playwright._defaultContextTimeout = actionTimeout || 0;
@@ -275,6 +302,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           data.stepId = zone.stepId;
           return;
         }
+
+        if (data.apiName === 'page.pause' && data.frames.length === 0 && channel.params?.location)
+          data.frames.push(channel.params.location);
 
         // In the general case, create a step for each api call and connect them through the stepId.
         const step = testInfo._addStep({

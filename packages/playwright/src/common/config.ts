@@ -102,7 +102,7 @@ export class FullConfigInternal {
       fullyParallel: takeFirst(configCLIOverrides.fullyParallel, userConfig.fullyParallel, false),
       globalSetup: this.globalSetups[0] ?? null,
       globalTeardown: this.globalTeardowns[0] ?? null,
-      globalTimeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
+      globalTimeout: takeFirst((configCLIOverrides.debug || configCLIOverrides.pause) ? 0 : undefined, configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
       maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),

@@ -21,17 +21,17 @@ import type * as actions from '@recorder/actions';
 
 export function generateCode(actions: actions.ActionInContext[], languageGenerator: LanguageGenerator, options: LanguageGeneratorOptions) {
   const header = languageGenerator.generateHeader(options);
-  const footer = languageGenerator.generateFooter(options.saveStorage);
-  const actionTexts = actions.map(a => generateActionText(languageGenerator, a, !!options.generateAutoExpect)).filter(Boolean) as string[];
-  const text = [header, ...actionTexts, footer].join('\n');
+  const footer = languageGenerator.generateFooter(options);
+  const actionTexts = actions.map(a => generateActionText(languageGenerator, a, options)).filter(Boolean) as string[];
+  const text = [header, ...actionTexts, footer].filter(Boolean).join('\n');
   return { header, footer, actionTexts, text };
 }
 
-function generateActionText(generator: LanguageGenerator, action: actions.ActionInContext, generateAutoExpect: boolean): string | undefined {
-  let text = generator.generateAction(action);
+function generateActionText(generator: LanguageGenerator, action: actions.ActionInContext, options: LanguageGeneratorOptions): string | undefined {
+  let text = generator.generateAction(action, options);
   if (!text)
     return;
-  if (generateAutoExpect && action.action.preconditionSelector) {
+  if (options.generateAutoExpect && action.action.preconditionSelector) {
     const expectAction: actions.ActionInContext = {
       frame: action.frame,
       startTime: action.startTime,
@@ -42,7 +42,7 @@ function generateActionText(generator: LanguageGenerator, action: actions.Action
         signals: [],
       },
     };
-    const expectText = generator.generateAction(expectAction);
+    const expectText = generator.generateAction(expectAction, options);
     if (expectText)
       text = expectText + '\n\n' + text;
   }

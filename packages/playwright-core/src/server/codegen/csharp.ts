@@ -221,9 +221,9 @@ export class CSharpLanguageGenerator implements LanguageGenerator {
     return formatter.format();
   }
 
-  generateFooter(saveStorage: string | undefined): string {
+  generateFooter(options: LanguageGeneratorOptions): string {
     const offset = this._mode === 'library' ? '' : '        ';
-    let storageStateLine = saveStorage ? `\n${offset}await context.StorageStateAsync(new()\n${offset}{\n${offset}    Path = ${quote(saveStorage)}\n${offset}});\n` : '';
+    let storageStateLine = options.saveStorage ? `\n${offset}await context.StorageStateAsync(new()\n${offset}{\n${offset}    Path = ${quote(options.saveStorage)}\n${offset}});\n` : '';
     if (this._mode !== 'library')
       storageStateLine += `    }\n}\n`;
     return storageStateLine;

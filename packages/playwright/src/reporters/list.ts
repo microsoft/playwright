@@ -165,8 +165,24 @@ class ListReporter extends TerminalReporter {
     stream.write(chunk);
   }
 
+  override onTestPaused(test: TestCase, result: TestResult) {
+    super.onTestPaused(test, result);
+    if (result.errors.length) {
+      if (!process.env.PW_TEST_DEBUG_REPORTERS)
+        this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+      this.writeLine(this.formatFailure(test));
+      this.writeLine(this.screen.colors.yellow('  Test paused on error. Press Ctrl+C to exit.'));
+    } else {
+      this.writeLine();
+      this.writeLine(this.screen.colors.yellow('  Test paused at end. Press Ctrl+C to exit.'));
+    }
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
+
+    if (this.paused.has(result))
+      return;
 
     const title = this.formatTestTitle(test);
     let prefix = '';

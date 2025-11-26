@@ -184,11 +184,11 @@ def run(playwright: Playwright) -> None {
     return formatter.format();
   }
 
-  generateFooter(saveStorage: string | undefined): string {
+  generateFooter(options: LanguageGeneratorOptions): string {
     if (this._isPyTest) {
       return '';
     } else if (this._isAsync) {
-      const storageStateLine = saveStorage ? `\n    await context.storage_state(path=${quote(saveStorage)})` : '';
+      const storageStateLine = options.saveStorage ? `\n    await context.storage_state(path=${quote(options.saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     await context.close()
     await browser.close()
@@ -202,7 +202,7 @@ async def main() -> None:
 asyncio.run(main())
 `;
     } else {
-      const storageStateLine = saveStorage ? `\n    context.storage_state(path=${quote(saveStorage)})` : '';
+      const storageStateLine = options.saveStorage ? `\n    context.storage_state(path=${quote(options.saveStorage)})` : '';
       return `\n    # ---------------------${storageStateLine}
     context.close()
     browser.close()

@@ -295,6 +295,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
+    pause: options.pause ? true : undefined,
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
@@ -325,6 +326,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
     overrides.debug = true;
+    overrides.pause = true;
     process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
@@ -387,7 +389,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
-  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
+  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1 --pause" options` }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
@@ -403,6 +405,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--output <dir>', { description: `Folder for output artifacts (default: "test-results")` }],
   ['--only-changed [ref]', { description: `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.` }],
   ['--pass-with-no-tests', { description: `Makes test run succeed even if no tests were found` }],
+  ['--pause', { description: `Pause test execution at end of test` }],
   ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],

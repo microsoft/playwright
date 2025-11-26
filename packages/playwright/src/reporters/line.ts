@@ -78,9 +78,24 @@ class LineReporter extends TerminalReporter {
       this._updateLine(test, result, step.parent);
   }
 
+  override onTestPaused(test: TestCase, result: TestResult) {
+    super.onTestPaused(test, result);
+    if (result.errors.length) {
+      if (!process.env.PW_TEST_DEBUG_REPORTERS)
+        this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+      this.writeLine(this.formatFailure(test));
+      this.writeLine(this.screen.colors.yellow('    Test paused on error. Press Ctrl+C to exit.'));
+    } else {
+      this.writeLine();
+      this.writeLine(this.screen.colors.yellow('    Test paused at end. Press Ctrl+C to exit.'));
+    }
+    this.writeLine();
+    this.writeLine();
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted')) {
+    if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted') && !this.paused.has(result)) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
         this.screen.stdout.write(`\u001B[1A\u001B[2K`);
       this.writeLine(this.formatFailure(test, ++this._failures));

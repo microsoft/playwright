@@ -153,6 +153,7 @@ export class TerminalReporter implements ReporterV2 {
   suite!: Suite;
   totalTestCount = 0;
   result!: FullResult;
+  paused = new Set<TestResult>();
   private fileDurations = new Map<string, { duration: number, workers: Set<number> }>();
   private _options: TerminalReporterOptions;
   private _fatalErrors: TestError[] = [];
@@ -189,6 +190,10 @@ export class TerminalReporter implements ReporterV2 {
       return;
     (result as any)[kOutputSymbol] = (result as any)[kOutputSymbol] || [];
     (result as any)[kOutputSymbol].push(output);
+  }
+
+  onTestPaused(test: TestCase, result: TestResult) {
+    this.paused.add(result);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
@@ -312,7 +317,7 @@ export class TerminalReporter implements ReporterV2 {
   epilogue(full: boolean) {
     const summary = this.generateSummary();
     const summaryMessage = this.generateSummaryMessage(summary);
-    if (full && summary.failuresToPrint.length && !this._options.omitFailures)
+    if (full && summary.failuresToPrint.length && !this._options.omitFailures && !this.paused.size)
       this._printFailures(summary.failuresToPrint);
     this._printSlowTests();
     this._printSummary(summaryMessage);

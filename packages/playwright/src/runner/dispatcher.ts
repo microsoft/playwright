@@ -585,6 +585,14 @@ class JobDispatcher {
   }
 
   private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+    const { result, test } = data;
+    result.errors = params.errors;
+    result.error = result.errors[0];
+    this._reporter.onTestPaused?.(test, result);
+
     const sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())

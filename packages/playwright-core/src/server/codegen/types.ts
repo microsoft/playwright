@@ -26,6 +26,7 @@ export type LanguageGeneratorOptions = {
   deviceName?: string;
   saveStorage?: string;
   generateAutoExpect?: boolean;
+  snippet?: 'standalone' | 'addition';
 };
 
 export interface LanguageGenerator {
@@ -33,7 +34,7 @@ export interface LanguageGenerator {
   groupName: string;
   name: string;
   highlighter: Language;
-  generateHeader(options: LanguageGeneratorOptions): string;
-  generateAction(actionInContext: actions.ActionInContext): string;
-  generateFooter(saveStorage: string | undefined): string;
+  generateHeader(options: LanguageGeneratorOptions): string | undefined;
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string;
+  generateFooter(options: LanguageGeneratorOptions): string | undefined;
 }

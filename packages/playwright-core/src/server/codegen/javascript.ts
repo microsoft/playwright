@@ -35,13 +35,13 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     this._isTest = isTest;
   }
 
-  generateAction(actionInContext: actions.ActionInContext): string {
+  generateAction(actionInContext: actions.ActionInContext, options: LanguageGeneratorOptions): string {
     const action = actionInContext.action;
     if (this._isTest && (action.name === 'openPage' || action.name === 'closePage'))
       return '';
 
     const pageAlias = actionInContext.frame.pageAlias;
-    const formatter = new JavaScriptFormatter(2);
+    const formatter = new JavaScriptFormatter(options.snippet === 'addition' ? 0 : 2);
 
     if (action.name === 'openPage') {
       formatter.add(`const ${pageAlias} = await context.newPage();`);
@@ -131,16 +131,20 @@ export class JavaScriptLanguageGenerator implements LanguageGenerator {
     return asLocator('javascript', selector);
   }
 
-  generateHeader(options: LanguageGeneratorOptions): string {
+  generateHeader(options: LanguageGeneratorOptions): string | undefined {
+    if (options.snippet === 'addition')
+      return;
     if (this._isTest)
       return this.generateTestHeader(options);
     return this.generateStandaloneHeader(options);
   }
 
-  generateFooter(saveStorage: string | undefined): string {
+  generateFooter(options: LanguageGeneratorOptions): string | undefined {
+    if (options.snippet === 'addition')
+      return;
     if (this._isTest)
-      return this.generateTestFooter(saveStorage);
-    return this.generateStandaloneFooter(saveStorage);
+      return this.generateTestFooter(options.saveStorage);
+    return this.generateStandaloneFooter(options.saveStorage);
   }
 
   generateTestHeader(options: LanguageGeneratorOptions): string {

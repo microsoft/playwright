@@ -1327,6 +1327,11 @@ BrowserContext:
           literals:
           - default
           - api
+        snippet:
+          type: enum?
+          literals:
+          - standalone
+          - addition
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
         launchOptions: json?

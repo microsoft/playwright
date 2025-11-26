@@ -40,7 +40,7 @@ export class JsonlLanguageGenerator implements LanguageGenerator {
     return JSON.stringify(options);
   }
 
-  generateFooter(saveStorage: string | undefined): string {
+  generateFooter(options: LanguageGeneratorOptions): string {
     return '';
   }
 }
