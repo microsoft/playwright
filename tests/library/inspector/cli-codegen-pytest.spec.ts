@@ -42,8 +42,7 @@ def browser_context_args(browser_context_args, playwright):
 
 
 def test_example(page: Page) -> None:
-    page.goto("${server.EMPTY_PAGE}")
-`);
+    page.goto("${server.EMPTY_PAGE}")`);
 });
 
 test('should save the codegen output to a file if specified', async ({ runCLI, server }, testInfo) => {
@@ -53,8 +52,7 @@ from playwright.sync_api import Page, expect
 
 
 def test_example(page: Page) -> None:
-    page.goto("${server.EMPTY_PAGE}")
-`);
+    page.goto("${server.EMPTY_PAGE}")`);
 });
 
 test('should work with --save-har', async ({ runCLI }, testInfo) => {
