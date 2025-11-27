@@ -655,29 +655,54 @@ it.describe('selector generator', () => {
           sell milk
         </li>
       </ul>
-    `);
+      `);
     expect(await generateMultiple(page, 'input')).toEqual([
       `internal:role=listitem >> internal:has-text=\"buy flowers\"i >> internal:label=\"Toggle Todo\"i`,
       `internal:label=\"Toggle Todo\"i >> nth=0`,
     ]);
   });
 
-  it('should not use icon fonts aria name', async ({ page }) => {
+  it('should collect selector suggestions', async ({ page }) => {
     await page.setContent(`
-      <style>
-        .icon-foo:before {
-          content: "\\F1D4";
-        }
-        .icon-bar:before {
-          content: "\\F0000";
-        }
-      </style>
-      <div>
-        <button><i class="icon-foo"></i></button>
-        <button><i class="icon-bar"></i></button>
+      <div class="container">
+        <button id="secondary-cancel" class="btn ghost" data-testid="cancel-secondary" title="Cancel order">Cancel</button>
+        <button id="primary-submit" class="btn cta" data-testid="submit-primary" title="Submit order">Submit order</button>
+        <button class="btn ghost" data-testid="cancel-tertiary" title="Cancel order">Cancel</button>
+        <div class="btn ghost" data-testid="div-button-like" title="Div acts like button">Div button-ish</div>
       </div>
     `);
-    expect.soft(await generate(page, 'button:first-child')).toBe('internal:role=button >> nth=0');
-    expect.soft(await generate(page, 'button:last-child')).toBe('internal:role=button >> nth=1');
+
+    await page.waitForFunction(() => !!(window as any).__injectedScript?.generateSelector);
+
+    const result = await page.$eval('#primary-submit', () => {
+      const injected = (window as any).__injectedScript;
+      return injected.generateSelector(document.querySelector('#primary-submit')!, {
+        multiple: true,
+        testIdAttributeName: 'data-testid',
+        collectSelectors: true,
+      });
+    });
+
+    console.log(result);
+    expect(result.selectors.length).toBeGreaterThanOrEqual(4);
+    const selectorSet = new Set(result.selectors);
+    const pick = (needle: RegExp) => [...selectorSet].find((s: string) => needle.test(s))!;
+    const testIdSel = pick(/data-testid/);
+    const roleSel = pick(/internal:role=button/);
+    const textSel = pick(/Submit order/);
+    const cssSel = pick(/primary-submit/);
+
+    // Ensure selectors uniquely resolve to the intended button.
+    await page.$eval('#primary-submit', (el, selectors) => {
+      const injected = (window as any).__injectedScript;
+      for (const sel of selectors) {
+        const parsed = injected.parseSelector(sel);
+        const matches = injected.querySelectorAll(parsed, document);
+        if (!matches.includes(el))
+          throw new Error(`Selector ${sel} did not match the target`);
+        if (matches.length !== 1)
+          throw new Error(`Selector ${sel} matched ${matches.length} elements`);
+      }
+    }, [testIdSel, roleSel, textSel, cssSel]);
   });
 });

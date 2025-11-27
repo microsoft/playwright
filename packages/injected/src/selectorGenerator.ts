@@ -72,7 +72,10 @@ export type GenerateSelectorOptions = {
   root?: Element | Document;
   forTextExpect?: boolean;
   multiple?: boolean;
+  collectSelectors?: boolean;
 };
+
+export type SelectorSuggestionType = 'role' | 'label' | 'text' | 'testId' | 'attr' | 'css' | 'cssNoId';
 
 export function generateSelector(injectedScript: InjectedScript, targetElement: Element, options: GenerateSelectorOptions): { selector: string, selectors: string[], elements: Element[] } {
   injectedScript._evaluator.begin();
@@ -80,11 +83,24 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
   beginAriaCaches();
   beginDOMCaches();
   try {
+    const suggestionStore = options.collectSelectors ? new Map<SelectorSuggestionType, { tokens: SelectorToken[], score: number }>() : null;
+    const considerSuggestion = (tokens: SelectorToken[] | null) => {
+      if (!suggestionStore || !tokens)
+        return;
+      const type = classifyTokens(tokens);
+      if (!type)
+        return;
+      const score = combineScores(tokens);
+      const existing = suggestionStore.get(type);
+      if (!existing || score < existing.score)
+        suggestionStore.set(type, { tokens, score });
+    };
+
     let selectors: string[] = [];
     if (options.forTextExpect) {
       let targetTokens = cssFallback(injectedScript, targetElement.ownerDocument.documentElement, options);
       for (let element: Element | undefined = targetElement; element; element = parentElementOrShadowHost(element)) {
-        const tokens = generateSelectorFor(cache, injectedScript, element, { ...options, noText: true });
+        const tokens = generateSelectorFor(cache, injectedScript, element, { ...options, noText: true }, considerSuggestion);
         if (!tokens)
           continue;
         const score = combineScores(tokens);
@@ -93,6 +109,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
           break;
         }
       }
+      considerSuggestion(targetTokens);
       selectors = [joinTokens(targetTokens)];
     } else {
       // Note: this matches InjectedScript.retarget().
@@ -102,8 +119,8 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
           targetElement = interactiveParent;
       }
       if (options.multiple) {
-        const withText = generateSelectorFor(cache, injectedScript, targetElement, options);
-        const withoutText = generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true });
+        const withText = generateSelectorFor(cache, injectedScript, targetElement, options, considerSuggestion);
+        const withoutText = generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true }, considerSuggestion);
         let tokens = [withText, withoutText];
 
         // Clear cache to re-generate without css id.
@@ -111,9 +128,9 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
         cache.disallowText.clear();
 
         if (withText && hasCSSIdToken(withText))
-          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noCSSId: true }));
+          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noCSSId: true }, considerSuggestion));
         if (withoutText && hasCSSIdToken(withoutText))
-          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true, noCSSId: true }));
+          tokens.push(generateSelectorFor(cache, injectedScript, targetElement, { ...options, noText: true, noCSSId: true }, considerSuggestion));
 
         tokens = tokens.filter(Boolean);
         if (!tokens.length) {
@@ -122,14 +139,22 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
           if (hasCSSIdToken(css))
             tokens.push(cssFallback(injectedScript, targetElement, { ...options, noCSSId: true }));
         }
+        tokens.forEach(considerSuggestion);
         selectors = [...new Set(tokens.map(t => joinTokens(t!)))];
       } else {
-        const targetTokens = generateSelectorFor(cache, injectedScript, targetElement, options) || cssFallback(injectedScript, targetElement, options);
+        const targetTokens = generateSelectorFor(cache, injectedScript, targetElement, options, considerSuggestion) || cssFallback(injectedScript, targetElement, options);
+        considerSuggestion(targetTokens);
         selectors = [joinTokens(targetTokens)];
       }
     }
     const selector = selectors[0];
     const parsedSelector = injectedScript.parseSelector(selector);
+    const allSelectors = new Set(selectors);
+    if (suggestionStore) {
+      for (const entry of suggestionStore.values())
+        allSelectors.add(joinTokens(entry.tokens));
+      selectors = [...allSelectors];
+    }
     return {
       selector,
       selectors,
@@ -144,7 +169,7 @@ export function generateSelector(injectedScript: InjectedScript, targetElement: 
 
 type InternalOptions = GenerateSelectorOptions & { noText?: boolean, noCSSId?: boolean, isRecursive?: boolean };
 
-function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targetElement: Element, options: InternalOptions): SelectorToken[] | null {
+function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targetElement: Element, options: InternalOptions, onSuggestion?: (tokens: SelectorToken[]) => void): SelectorToken[] | null {
   if (options.root && !isInsideScope(options.root, targetElement))
     throw new Error(`Target element must belong to the root's subtree`);
 
@@ -177,11 +202,14 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
       // Somehow this selector just does not match the target. Oh well.
       continue;
     }
-
     if (elements.length === 1) {
       // Perfect strict match. All other candidates are strictly worse because they are sorted by score.
       updateResult(candidate);
-      break;
+      onSuggestion?.(candidate);
+      if (!options.collectSelectors)
+        break;
+      // When collecting suggestions, continue to gather other candidate types.
+      continue;
     }
 
     const index = elements.indexOf(targetElement);
@@ -189,7 +217,9 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
       // Do not generate locators with nth=6 or worse.
       continue;
     }
-    updateResult([...candidate, { engine: 'nth', selector: String(index), score: kNthScore }]);
+    const disambiguated = [...candidate, { engine: 'nth', selector: String(index), score: kNthScore }];
+    onSuggestion?.(disambiguated);
+    updateResult(disambiguated);
 
     if (options.isRecursive) {
       // Limit nesting to two levels: parent >>> target.
@@ -217,13 +247,15 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
       const cacheMap = noText ? cache.disallowText : cache.allowText;
       let parentTokens = cacheMap.get(parent);
       if (parentTokens === undefined) {
-        parentTokens = generateSelectorFor(cache, injectedScript, parent, { ...options, isRecursive: true, noText }) || cssFallback(injectedScript, parent, options);
+        parentTokens = generateSelectorFor(cache, injectedScript, parent, { ...options, isRecursive: true, noText }, onSuggestion) || cssFallback(injectedScript, parent, options);
         cacheMap.set(parent, parentTokens);
       }
       if (!parentTokens)
         continue;
 
-      updateResult([...parentTokens, ...inParent]);
+      const nested = [...parentTokens, ...inParent];
+      onSuggestion?.(nested);
+      updateResult(nested);
     }
   }
   return result;
@@ -371,6 +403,23 @@ function makeSelectorForId(id: string) {
 
 function hasCSSIdToken(tokens: SelectorToken[]) {
   return tokens.some(token => token.engine === 'css' && (token.selector.startsWith('#') || token.selector.startsWith('[id="')));
+}
+
+function classifyTokens(tokens: SelectorToken[]): SelectorSuggestionType | null {
+  const hasEngine = (engine: string) => tokens.some(token => token.engine === engine);
+  if (hasEngine('internal:role'))
+    return 'role';
+  if (hasEngine('internal:label'))
+    return 'label';
+  if (hasEngine('internal:testid'))
+    return 'testId';
+  if (hasEngine('internal:text') || hasEngine('internal:has-text'))
+    return 'text';
+  if (hasEngine('internal:attr'))
+    return 'attr';
+  if (tokens.some(token => token.engine === 'css'))
+    return hasCSSIdToken(tokens) ? 'css' : 'cssNoId';
+  return null;
 }
 
 function cssFallback(injectedScript: InjectedScript, targetElement: Element, options: InternalOptions): SelectorToken[] {

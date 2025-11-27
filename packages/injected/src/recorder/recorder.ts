@@ -269,6 +269,7 @@ class RecordActionTool implements RecorderTool {
       this._performAction({
         name: checkbox.checked ? 'check' : 'uncheck',
         selector: this._hoveredModel!.selector,
+        selectors: this._hoveredModel!.selectors,
         signals: [],
       });
       return;
@@ -282,6 +283,7 @@ class RecordActionTool implements RecorderTool {
         action: {
           name: 'click',
           selector: this._hoveredModel!.selector,
+          selectors: this._hoveredModel!.selectors,
           position: positionForEvent(event),
           signals: [],
           button: buttonForEvent(event),
@@ -311,6 +313,7 @@ class RecordActionTool implements RecorderTool {
     this._performAction({
       name: 'click',
       selector: this._hoveredModel!.selector,
+      selectors: this._hoveredModel!.selectors,
       position: positionForEvent(event),
       signals: [],
       button: buttonForEvent(event),
@@ -416,6 +419,7 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: 'setInputFiles',
         selector: this._activeModel!.selector,
+        selectors: this._activeModel!.selectors,
         signals: [],
         files: [...((target as HTMLInputElement).files || [])].map(file => file.name),
       });
@@ -427,6 +431,7 @@ class RecordActionTool implements RecorderTool {
         name: 'fill',
         // must use hoveredModel instead of activeModel for it to work in webkit
         selector: this._hoveredModel!.selector,
+        selectors: this._hoveredModel!.selectors,
         signals: [],
         text: target.value,
       });
@@ -445,6 +450,7 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: 'fill',
         selector: this._activeModel!.selector,
+        selectors: this._activeModel!.selectors,
         signals: [],
         text: target.isContentEditable ? target.innerText : (target as HTMLInputElement).value,
       });
@@ -455,6 +461,7 @@ class RecordActionTool implements RecorderTool {
       this._recordAction({
         name: 'select',
         selector: this._activeModel!.selector,
+        selectors: this._activeModel!.selectors,
         options: [...selectElement.selectedOptions].map(option => option.value),
         signals: []
       });
@@ -479,6 +486,7 @@ class RecordActionTool implements RecorderTool {
         this._performAction({
           name: checkbox.checked ? 'uncheck' : 'check',
           selector: this._activeModel!.selector,
+          selectors: this._activeModel!.selectors,
           signals: [],
         });
         return;
@@ -488,6 +496,7 @@ class RecordActionTool implements RecorderTool {
     this._performAction({
       name: 'press',
       selector: this._activeModel!.selector,
+      selectors: this._activeModel!.selectors,
       signals: [],
       key: event.key,
       modifiers: modifiersForEvent(event),
@@ -523,6 +532,7 @@ class RecordActionTool implements RecorderTool {
         cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
+          selectors: model.selectors,
           position: actionPosition,
           signals: [],
           button: 'left',
@@ -535,6 +545,7 @@ class RecordActionTool implements RecorderTool {
         cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
+          selectors: model.selectors,
           position: actionPosition,
           signals: [],
           button: 'right',
@@ -547,6 +558,7 @@ class RecordActionTool implements RecorderTool {
         cb: () => this._performAction({
           name: 'click',
           selector: model.selector,
+          selectors: model.selectors,
           position: actionPosition,
           signals: [],
           button: 'left',
@@ -559,6 +571,7 @@ class RecordActionTool implements RecorderTool {
         cb: () => this._performAction({
           name: 'hover',
           selector: model.selector,
+          selectors: model.selectors,
           position: actionPosition,
           signals: [],
         }),
@@ -1507,6 +1520,7 @@ export class Recorder {
     const finalOptions: GenerateSelectorOptions = {
       testIdAttributeName: this.state.testIdAttributeName,
       multiple: true,
+      collectSelectors: this.collectSelectors(),
       ...options,
     };
     return this.injectedScript.generateSelector(element, finalOptions);
