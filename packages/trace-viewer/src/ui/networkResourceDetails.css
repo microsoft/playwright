@@ -39,6 +39,11 @@
   font-weight: bold;
 }
 
+.network-request-details-header-count {
+  color: var(--vscode-editorCodeLens-foreground);
+  font-weight: normal;
+}
+
 .network-request-details-table {
   width: 100%;
   line-height: 18px;
