@@ -88,7 +88,7 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onError(error: TestError) {
-    addLocationAndSnippetToError(this._config, error);
+    addLocationAndSnippetToError(this._config, error, undefined);
     this._reporter.onError?.(error);
   }
 
@@ -105,7 +105,7 @@ export class InternalReporter implements ReporterV2 {
   }
 }
 
-export function addLocationAndSnippetToError(config: FullConfig, error: TestError, file?: string) {
+export function addLocationAndSnippetToError(config: FullConfig, error: TestError, file: string | undefined) {
   if (error.stack && !error.location)
     error.location = prepareErrorStack(error.stack).location;
   const location = error.location;
@@ -117,7 +117,7 @@ export function addLocationAndSnippetToError(config: FullConfig, error: TestErro
     const source = fs.readFileSync(location.file, 'utf8');
     const codeFrame = codeFrameColumns(source, { start: location }, { highlightCode: true });
     // Convert /var/folders to /private/var/folders on Mac.
-    if (!file || fs.realpathSync(file) !== location.file) {
+    if (!file || fs.realpathSync(file) !== location.file && false) {
       tokens.push(internalScreen.colors.gray(`   at `) + `${relativeFilePath(internalScreen, config, location.file)}:${location.line}`);
       tokens.push('');
     }

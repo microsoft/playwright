@@ -396,7 +396,7 @@ class JobDispatcher {
     }
     step.duration = params.wallTime - step.startTime.getTime();
     if (params.error) {
-      addLocationAndSnippetToError(this._config.config, params.error);
+      addLocationAndSnippetToError(this._config.config, params.error, test.location.file);
       step.error = params.error;
     }
     if (params.suggestedRebaseline)
@@ -439,7 +439,7 @@ class JobDispatcher {
       return;
     const { result } = data;
     for (const error of params.errors)
-      addLocationAndSnippetToError(this._config.config, error);
+      addLocationAndSnippetToError(this._config.config, error, data.test.location.file);
     result.errors.push(...params.errors);
     result.error = result.errors[0];
   }
@@ -455,7 +455,7 @@ class JobDispatcher {
       this._reporter.onTestBegin?.(test, result);
     }
     for (const error of errors)
-      addLocationAndSnippetToError(this._config.config, error);
+      addLocationAndSnippetToError(this._config.config, error, test.location.file);
     result.errors.push(...errors);
     result.error = result.errors[0];
     result.status = errors.length ? 'failed' : 'skipped';
@@ -603,24 +603,24 @@ class JobDispatcher {
   }
 
   private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
     const sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
         const response = await worker.sendCustomMessage({ testId: params.testId, request: message.request });
         if (response.error)
-          addLocationAndSnippetToError(this._config.config, response.error);
+          addLocationAndSnippetToError(this._config.config, response.error, data.test.location.file);
         return response;
       } catch (e) {
         const error = serializeError(e);
-        addLocationAndSnippetToError(this._config.config, error);
+        addLocationAndSnippetToError(this._config.config, error, data.test.location.file);
         return { response: undefined, error };
       }
     };
-
-    const data = this._dataByTestId.get(params.testId);
-    if (!data)
-      return;
 
     this._failureTracker.onTestPaused?.({ errors: data.result.errors, sendMessage });
   }
