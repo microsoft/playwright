@@ -84,11 +84,15 @@ export type AttachmentPayload = {
   stepId?: string;
 };
 
+export type TestErrorPayload = {
+  testId: string;
+  errors: TestInfoErrorImpl[];
+};
+
 export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
-  errors: TestInfoErrorImpl[];
 };
 
 export type CustomMessageRequestPayload = {
@@ -105,7 +109,6 @@ export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  errors: TestInfoErrorImpl[];
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];
@@ -120,7 +123,6 @@ export type StepBeginPayload = {
   category: string;
   wallTime: number;  // milliseconds since unix epoch
   location?: { file: string, line: number, column: number };
-  errors: TestInfoErrorImpl[];
 };
 
 export type StepEndPayload = {

@@ -28,7 +28,7 @@ import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestErrorPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
 import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -322,7 +322,6 @@ class JobDispatcher {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
       params.status = 'interrupted';
-      params.errors = [];
     }
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
@@ -333,8 +332,6 @@ class JobDispatcher {
     this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     result.duration = params.duration;
-    result.errors.push(...params.errors);
-    result.error = result.errors[0];
     result.status = params.status;
     result.annotations = params.annotations;
     test.annotations = [...params.annotations]; // last test result wins
@@ -382,8 +379,6 @@ class JobDispatcher {
     };
     steps.set(params.stepId, step);
     (parentStep || result).steps.push(step);
-    result.errors.push(...params.errors);
-    result.error = result.errors[0];
     this._reporter.onStepBegin?.(test, result, step);
   }
 
@@ -429,6 +424,17 @@ class JobDispatcher {
       else
         this._reporter.onStdErr?.('Internal error: step id not found: ' + params.stepId);
     }
+  }
+
+  private _onErrors(params: TestErrorPayload) {
+    const data = this._dataByTestId.get(params.testId)!;
+    if (!data)
+      return;
+    const { result } = data;
+    for (const error of params.errors)
+      addLocationAndSnippetToError(this._config.config, error);
+    result.errors.push(...params.errors);
+    result.error = result.errors[0];
   }
 
   private _failTestWithErrors(test: TestCase, errors: TestError[]) {
@@ -580,6 +586,7 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
+      eventsHelper.addEventListener(worker, 'errors', this._onErrors.bind(this)),
       eventsHelper.addEventListener(worker, 'testPaused', this._onTestPaused.bind(this, worker)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
       eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
@@ -602,9 +609,11 @@ class JobDispatcher {
       }
     };
 
-    for (const error of params.errors)
-      addLocationAndSnippetToError(this._config.config, error);
-    this._failureTracker.onTestPaused?.({ ...params, sendMessage });
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
+    this._failureTracker.onTestPaused?.({ errors: data.result.errors, sendMessage });
   }
 
   skipWholeJob(): boolean {

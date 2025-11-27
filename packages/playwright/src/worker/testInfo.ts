@@ -30,7 +30,7 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestErrorPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -70,6 +70,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _onError: (errors: TestErrorPayload) => void;
   private _onTestPaused: (payload: TestPausedPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -166,12 +167,14 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
+    onError: (payload: TestErrorPayload) => void,
     onTestPaused: (payload: TestPausedPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
+    this._onError = onError;
     this._onTestPaused = onTestPaused;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
@@ -362,8 +365,6 @@ export class TestInfoImpl implements TestInfo {
     this._stepMap.set(stepId, step);
 
     if (!step.group) {
-      const errors = this.errors.slice(this._reportedError);
-      this._reportedError = this.errors.length;
       const payload: StepBeginPayload = {
         testId: this.testId,
         stepId,
@@ -372,7 +373,6 @@ export class TestInfoImpl implements TestInfo {
         category: step.category,
         wallTime: Date.now(),
         location: step.location,
-        errors,
       };
       this._onStepBegin(payload);
     }
@@ -470,12 +470,20 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
-      this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
+      this._emitErrors();
+      this._onTestPaused({ testId: this.testId });
       await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step', location }, async () => {
         await this._interruptedPromise;
       });
     }
     await this._onDidFinishTestFunctionCallback?.();
+  }
+
+  _emitErrors() {
+    const errors = this.errors.slice(this._reportedError);
+    this._reportedError = this.errors.length;
+    if (errors.length)
+      this._onError({ testId: this.testId, errors });
   }
 
   _errorLocation(): Location | undefined {
