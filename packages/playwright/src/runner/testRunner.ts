@@ -100,6 +100,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
+  private _startingEnv: NodeJS.ProcessEnv = {};
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     super();
@@ -119,6 +120,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     setPlaywrightTestProcessEnv();
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
+    this._startingEnv = { ...process.env };
   }
 
   resizeTerminal(params: { cols: number, rows: number }) {
@@ -153,22 +155,29 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     throw new Error('Failed to load config: ' + (error ? error.message : 'Unknown error'));
   }
 
-  async runGlobalSetup(userReporters: AnyReporter[]): Promise<{ status: FullResultStatus }> {
+  async runGlobalSetup(userReporters: AnyReporter[]): Promise<{ status: FullResultStatus, env: [string, string | null][] }> {
     await this.runGlobalTeardown();
 
     const reporter = new InternalReporter(userReporters);
     const config = await this._loadConfigOrReportError(reporter, this._configCLIOverrides);
     if (!config)
-      return { status: 'failed' };
+      return { status: 'failed', env: [] };
 
     const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
       ...createGlobalSetupTasks(config),
     ]);
+
+    const env: [string, string | null][] = [];
+    for (const key of new Set([...Object.keys(process.env), ...Object.keys(this._startingEnv)])) {
+      if (this._startingEnv[key] !== process.env[key])
+        env.push([key, process.env[key] ?? null]);
+    }
+
     if (status !== 'passed')
       await cleanup();
     else
       this._globalSetup = { cleanup };
-    return { status };
+    return { status, env };
   }
 
   async runGlobalTeardown() {
