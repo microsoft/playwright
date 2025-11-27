@@ -120,6 +120,7 @@ export type StepBeginPayload = {
   category: string;
   wallTime: number;  // milliseconds since unix epoch
   location?: { file: string, line: number, column: number };
+  errors: TestInfoErrorImpl[];
 };
 
 export type StepEndPayload = {

@@ -19,8 +19,15 @@ import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures'
 
 class LocationReporter implements Reporter {
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
-    if (step.title.startsWith('Paused'))
-      console.log(`\n%%${step.title} at :${step.location?.line}:${step.location?.column}\n`);
+    if (step.title.startsWith('Paused')) {
+      console.log('\n');
+      console.log(`%%${step.title} at :${step.location?.line}:${step.location?.column}`);
+      if (result.error)
+        console.log(`%%result.error at :${result.error.location?.line}:${result.error.location?.column}`);
+      for (const [index, error] of result.errors.entries())
+        console.log(`%%result.errors[${index}] at :${error.location?.line}:${error.location?.column}`);
+      console.log('\n');
+    }
   }
 }
 
@@ -42,7 +49,7 @@ test('--debug should pause at end', async ({ interactWithTestRunner }) => {
   await testProcess.waitForOutput('Paused at End');
   await testProcess.kill('SIGINT');
   expect(testProcess.output).toContain('TEARDOWN');
-  expect(testProcess.outputLines()).toContain('Paused at End at :4:7');
+  expect(testProcess.outputLines()).toEqual(['Paused at End at :4:7']);
 
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.interrupted).toBe(1);
@@ -57,7 +64,8 @@ test('--debug should pause on error', async ({ interactWithTestRunner }) => {
     'a.test.js': `
       import { test, expect } from '@playwright/test';
       test('pass', () => {
-        throw new Error('error');
+        expect.soft(1).toBe(2);
+        expect(2).toBe(3);
         console.log('after error'.toUpperCase());
       });
     `
@@ -66,7 +74,12 @@ test('--debug should pause on error', async ({ interactWithTestRunner }) => {
   expect(testProcess.output).not.toContain('AFTER ERROR');
   await testProcess.kill('SIGINT');
   expect(testProcess.output).not.toContain('AFTER ERROR');
-  expect(testProcess.outputLines()).toContain('Paused on Error at :4:15');
+  expect(testProcess.outputLines()).toEqual([
+    'Paused on Error at :4:24',
+    'result.error at :4:24',
+    'result.errors[0] at :4:24',
+    'result.errors[1] at :5:19',
+  ]);
 
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.failed).toBe(1);

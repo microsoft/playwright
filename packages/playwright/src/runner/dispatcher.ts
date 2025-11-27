@@ -333,7 +333,7 @@ class JobDispatcher {
     this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     result.duration = params.duration;
-    result.errors = params.errors;
+    result.errors.push(...params.errors);
     result.error = result.errors[0];
     result.status = params.status;
     result.annotations = params.annotations;
@@ -382,6 +382,8 @@ class JobDispatcher {
     };
     steps.set(params.stepId, step);
     (parentStep || result).steps.push(step);
+    result.errors.push(...params.errors);
+    result.error = result.errors[0];
     this._reporter.onStepBegin?.(test, result, step);
   }
 
@@ -439,7 +441,7 @@ class JobDispatcher {
       result = test._appendTestResult();
       this._reporter.onTestBegin?.(test, result);
     }
-    result.errors = [...errors];
+    result.errors.push(...errors);
     result.error = result.errors[0];
     result.status = errors.length ? 'failed' : 'skipped';
     this._reportTestEnd(test, result);

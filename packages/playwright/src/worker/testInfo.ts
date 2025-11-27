@@ -122,6 +122,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
+  _reportedError = 0;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -361,6 +362,8 @@ export class TestInfoImpl implements TestInfo {
     this._stepMap.set(stepId, step);
 
     if (!step.group) {
+      const errors = this.errors.slice(this._reportedError);
+      this._reportedError = this.errors.length;
       const payload: StepBeginPayload = {
         testId: this.testId,
         stepId,
@@ -369,6 +372,7 @@ export class TestInfoImpl implements TestInfo {
         category: step.category,
         wallTime: Date.now(),
         location: step.location,
+        errors,
       };
       this._onStepBegin(payload);
     }

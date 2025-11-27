@@ -94,6 +94,7 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
+    this._addSnippetToTestErrors(test, result);
     this._reporter.onStepBegin?.(test, result, step);
   }
 

@@ -622,7 +622,7 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     testId: testInfo.testId,
     duration: testInfo.duration,
     status: testInfo.status!,
-    errors: testInfo.errors,
+    errors: testInfo.errors.slice(testInfo._reportedError),
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,
