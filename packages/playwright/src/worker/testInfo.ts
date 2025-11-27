@@ -123,7 +123,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
-  _reportedError = 0;
+  private _reportedErrorCount = 0;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -480,20 +480,20 @@ export class TestInfoImpl implements TestInfo {
   }
 
   _emitErrors() {
-    const errors = this.errors.slice(this._reportedError);
-    this._reportedError = this.errors.length;
+    const errors = this.errors.slice(this._reportedErrorCount);
+    this._reportedErrorCount = this.errors.length;
     if (errors.length)
       this._onError({ testId: this.testId, errors });
   }
 
-  _errorLocation(): Location | undefined {
+  private _errorLocation(): Location | undefined {
     if (this.error?.stack)
       return filteredStackTrace(this.error.stack.split('\n'))[0];
   }
 
   async _testEndLocation() {
     const source = await fs.promises.readFile(this.file, 'utf-8');
-    return findTestEndPosition(source, this);
+    return findTestEndPosition(source, { file: this.file, line: this.line, column: this.column });
   }
 
   // ------------ TestInfo methods ------------

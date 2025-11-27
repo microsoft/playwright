@@ -52,18 +52,18 @@ function containsPosition(location: T.SourceLocation, position: Location): boole
   return true;
 }
 
-export function findTestEndPosition(text: string, location: Location): Location | undefined {
-  const ast = getAst(text, location.file);
+export function findTestEndPosition(text: string, testStartLocation: Location): Location | undefined {
+  const ast = getAst(text, testStartLocation.file);
   if (!ast)
     return;
   let result: Location | undefined;
   traverse(ast, {
     enter(path) {
-      if (t.isCallExpression(path.node) && path.node.loc && containsPosition(path.node.loc, location)) {
+      if (t.isCallExpression(path.node) && path.node.loc && containsPosition(path.node.loc, testStartLocation)) {
         const callNode = path.node;
         const funcNode = callNode.arguments[callNode.arguments.length - 1];
         if (callNode.arguments.length >= 2 && t.isFunction(funcNode) && funcNode.body.loc)
-          result = { file: location.file, ...funcNode.body.loc.end };
+          result = { file: testStartLocation.file, ...funcNode.body.loc.end };
       }
     }
   });
