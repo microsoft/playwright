@@ -406,7 +406,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture' | 'test.step', location?: Location, group?: string }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();
@@ -465,7 +465,9 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
-      await this._interruptedPromise;
+      await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step' }, async () => {
+        await this._interruptedPromise;
+      });
     }
     await this._onDidFinishTestFunctionCallback?.();
   }
