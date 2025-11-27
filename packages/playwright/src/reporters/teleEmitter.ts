@@ -34,11 +34,11 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
+  private _resultKnownErrorsCounts = new Map<string, number>();
   private _resultKnownAttachmentCounts = new Map<string, number>();
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
-  private readonly _reportedErrorsSymbol = Symbol('reportedErrors');
 
   constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
@@ -79,6 +79,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       timeout: test.timeout,
       annotations: []
     };
+    this._sendNewErrors(result, test.id);
     this._sendNewAttachments(result, test.id);
     this._messageSink({
       method: 'onTestEnd',
@@ -88,26 +89,22 @@ export class TeleReporterEmitter implements ReporterV2 {
       }
     });
 
-    this._resultKnownAttachmentCounts.delete((result as any)[this._idSymbol]);
+    const resultId = (result as any)[this._idSymbol] as string;
+    this._resultKnownAttachmentCounts.delete(resultId);
+    this._resultKnownErrorsCounts.delete(resultId);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
     (step as any)[this._idSymbol] = createGuid();
+    this._sendNewErrors(result, test.id);
     this._messageSink({
       method: 'onStepBegin',
       params: {
         testId: test.id,
         resultId: (result as any)[this._idSymbol],
         step: this._serializeStepStart(step),
-        errors: this._unreportedErrors(result),
       }
     });
-  }
-
-  private _unreportedErrors(result: reporterTypes.TestResult) {
-    const index = (result as any)[this._reportedErrorsSymbol] ?? 0;
-    (result as any)[this._reportedErrorsSymbol] = result.errors.length;
-    return result.errors.slice(index);
   }
 
   onStepEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
@@ -256,9 +253,24 @@ export class TeleReporterEmitter implements ReporterV2 {
       id: (result as any)[this._idSymbol],
       duration: result.duration,
       status: result.status,
-      errors: this._unreportedErrors(result),
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
+  }
+
+  private _sendNewErrors(result: reporterTypes.TestResult, testId: string) {
+    const resultId = (result as any)[this._idSymbol] as string;
+    const knownErrorCount = this._resultKnownErrorsCounts.get(resultId) ?? 0;
+    if (result.errors.length > knownErrorCount) {
+      this._messageSink({
+        method: 'onTestErrors',
+        params: {
+          testId,
+          resultId: (result as any)[this._idSymbol],
+          errors: result.errors.slice(knownErrorCount),
+        }
+      });
+    }
+    this._resultKnownErrorsCounts.set(resultId, result.errors.length);
   }
 
   private _sendNewAttachments(result: reporterTypes.TestResult, testId: string) {
