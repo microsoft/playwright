@@ -31,7 +31,8 @@ class LocationReporter implements Reporter {
   }
 }
 
-test('--debug should pause at end', async ({ interactWithTestRunner }) => {
+test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
   const testProcess = await interactWithTestRunner({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
@@ -56,6 +57,7 @@ test('--debug should pause at end', async ({ interactWithTestRunner }) => {
 });
 
 test('--debug should pause on error', async ({ interactWithTestRunner, mergeReports }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
   const testProcess = await interactWithTestRunner({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
