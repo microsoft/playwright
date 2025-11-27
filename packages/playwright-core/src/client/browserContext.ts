@@ -211,13 +211,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return null;
     const metadata = this._metadataFromSelectors(action.selector, action.selectors || []);
     const value = this._actionValue(actionInContext.action as actions.Action);
+    const sensitive = this._actionSensitive(actionInContext.action as actions.Action);
     return {
       action: action.name,
       selector: action.selector,
       selectors: action.selectors || [],
       role: metadata.role,
       text: metadata.text,
-      value,
+      sensitive: sensitive,
+      value: value,
     };
   }
 
@@ -257,6 +259,15 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
         return (action as actions.SetInputFilesAction).files.join(', ');
       default:
         return undefined;
+    }
+  }
+
+  private _actionSensitive(action: actions.Action): boolean {
+    switch (action.name) {
+      case 'fill':
+        return (action as actions.FillAction).sensitive;
+      default:
+        return false;
     }
   }
 

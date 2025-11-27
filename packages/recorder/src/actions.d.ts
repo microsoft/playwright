@@ -71,6 +71,7 @@ export type UncheckAction = ActionWithSelector & {
 export type FillAction = ActionWithSelector & {
   name: 'fill',
   text: string,
+  sensitive: boolean;
 };
 
 export type NavigateAction = ActionBase & {

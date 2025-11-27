@@ -773,7 +773,7 @@ When set to `minimal`, only record information necessary for routing from HAR. T
 * langs: js
 - `recordSelectors` <[boolean]>
 
-Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }` describing the action so you can consume the selectors in your own tooling.
+Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value, sensitive }` describing the action so you can consume the selectors in your own tooling.
 
 ## context-option-recordselectors-csharp-java-python
 * langs: csharp, java, python

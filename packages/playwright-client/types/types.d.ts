@@ -10150,8 +10150,8 @@ export interface Browser {
 
     /**
      * Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is
-     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }`
-     * describing the action so you can consume the selectors in your own tooling.
+     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value,
+     * sensitive }` describing the action so you can consume the selectors in your own tooling.
      */
     recordSelectors?: boolean;
 
@@ -15408,8 +15408,8 @@ export interface BrowserType<Unused = {}> {
 
     /**
      * Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is
-     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }`
-     * describing the action so you can consume the selectors in your own tooling.
+     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value,
+     * sensitive }` describing the action so you can consume the selectors in your own tooling.
      */
     recordSelectors?: boolean;
 
@@ -17098,8 +17098,8 @@ export interface AndroidDevice {
 
     /**
      * Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is
-     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }`
-     * describing the action so you can consume the selectors in your own tooling.
+     * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value,
+     * sensitive }` describing the action so you can consume the selectors in your own tooling.
      */
     recordSelectors?: boolean;
 
@@ -20568,6 +20568,11 @@ export interface RecorderActionPayload {
   selectors: Array<string>;
 
   /**
+   * Value recorded for value-carrying actions considered sensitive or not, based on input type (eg. `password` or not).
+   */
+  sensitive: boolean;
+
+  /**
    * Element text captured at the moment of the action, if any.
    */
   text: string;
@@ -20575,6 +20580,8 @@ export interface RecorderActionPayload {
   /**
    * Value recorded for value-carrying actions. For example, the text passed to `locator.fill()` or the list of files
    * passed to `setInputFiles()`.
+   *
+   * Element text captured at the moment of the action, if any.
    */
   value: string;
 }
@@ -22534,8 +22541,8 @@ export interface BrowserContextOptions {
 
   /**
    * Enables the built-in recorder in programmatic mode without opening the inspector UI. Every user interaction is
-   * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value }`
-   * describing the action so you can consume the selectors in your own tooling.
+   * captured and Playwright emits the `recorderaction` event with `{ action, selector, selectors, role, text, value,
+   * sensitive }` describing the action so you can consume the selectors in your own tooling.
    */
   recordSelectors?: boolean;
 

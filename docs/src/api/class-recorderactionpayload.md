@@ -39,3 +39,11 @@ Element text captured at the moment of the action, if any.
 - type: <[string]>
 
 Value recorded for value-carrying actions. For example, the text passed to `locator.fill()` or the list of files passed to `setInputFiles()`.
+
+Element text captured at the moment of the action, if any.
+
+## property: RecorderActionPayload.sensitive
+* since: v1.57
+- type: <[boolean]>
+
+Value recorded for value-carrying actions considered sensitive or not, based on input type (eg. `password` or not).
