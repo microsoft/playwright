@@ -14,12 +14,21 @@
  * limitations under the License.
  */
 
+import { Reporter, TestCase, TestResult, TestStep } from 'packages/playwright-test/reporter';
 import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
+
+class LocationReporter implements Reporter {
+  onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
+    if (step.title.startsWith('Paused'))
+      console.log(`\n%%${step.title} at :${step.location?.line}:${step.location?.column}\n`);
+  }
+}
 
 test('--debug should pause at end', async ({ interactWithTestRunner }) => {
   const testProcess = await interactWithTestRunner({
+    'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
-      module.exports = {};
+      module.exports = { reporter: [['list'], ['./location-reporter.js']] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -29,10 +38,11 @@ test('--debug should pause at end', async ({ interactWithTestRunner }) => {
         console.log('teardown'.toUpperCase());
       });
     `
-  }, { debug: true, reporter: 'list' }, { PLAYWRIGHT_FORCE_TTY: 'true' });
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
   await testProcess.waitForOutput('Paused at End');
   await testProcess.kill('SIGINT');
   expect(testProcess.output).toContain('TEARDOWN');
+  expect(testProcess.outputLines()).toContain('Paused at End at :4:7');
 
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.interrupted).toBe(1);
@@ -40,8 +50,9 @@ test('--debug should pause at end', async ({ interactWithTestRunner }) => {
 
 test('--debug should pause on error', async ({ interactWithTestRunner }) => {
   const testProcess = await interactWithTestRunner({
+    'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
-      module.exports = {};
+      module.exports = { reporter: [['list'], ['./location-reporter.js']] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -50,11 +61,12 @@ test('--debug should pause on error', async ({ interactWithTestRunner }) => {
         console.log('after error'.toUpperCase());
       });
     `
-  }, { debug: true, reporter: 'list' }, { PLAYWRIGHT_FORCE_TTY: 'true' });
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
   await testProcess.waitForOutput('Paused on Error');
   expect(testProcess.output).not.toContain('AFTER ERROR');
   await testProcess.kill('SIGINT');
   expect(testProcess.output).not.toContain('AFTER ERROR');
+  expect(testProcess.outputLines()).toContain('Paused on Error at :4:15');
 
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.failed).toBe(1);

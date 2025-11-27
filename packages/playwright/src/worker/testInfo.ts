@@ -24,6 +24,7 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { findTestEndPosition } from '../transform/babelHighlightUtils';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -464,22 +465,23 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
+      const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
       this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
-
-      let location: Location | undefined;
-      if (this.error) {
-        if (this.error.stack)
-          location = filteredStackTrace(this.error.stack.split('\n'))[0];
-      } else {
-        const source = await fs.promises.readFile(this.file, 'utf-8');
-        location = findTestEndPosition(source, this);
-      }
-      location ??= this;
       await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step', location }, async () => {
         await this._interruptedPromise;
       });
     }
     await this._onDidFinishTestFunctionCallback?.();
+  }
+
+  _errorLocation(): Location | undefined {
+    if (this.error?.stack)
+      return filteredStackTrace(this.error.stack.split('\n'))[0];
+  }
+
+  async _testEndLocation() {
+    const source = await fs.promises.readFile(this.file, 'utf-8');
+    return findTestEndPosition(source, this);
   }
 
   // ------------ TestInfo methods ------------
