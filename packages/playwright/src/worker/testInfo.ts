@@ -465,7 +465,17 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
-      await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step' }, async () => {
+
+      let location: Location | undefined;
+      if (this.error) {
+        if (this.error.stack)
+          location = filteredStackTrace(this.error.stack.split('\n'))[0];
+      } else {
+        const source = await fs.promises.readFile(this.file, 'utf-8');
+        location = findTestEndPosition(source, this);
+      }
+      location ??= this;
+      await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step', location }, async () => {
         await this._interruptedPromise;
       });
     }
