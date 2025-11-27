@@ -369,7 +369,7 @@ export class TeleReporterReceiver {
     result._stepMap = new Map();
   }
 
-  private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart, errors: reporterTypes.TestError[]) {
+  private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart, errors: reporterTypes.TestError[] = []) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
