@@ -68,7 +68,6 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
-    this._addSnippetToTestErrors(test, result);
     this._reporter.onTestEnd?.(test, result);
   }
 
@@ -94,27 +93,15 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onStepBegin(test: TestCase, result: TestResult, step: TestStep) {
-    this._addSnippetToTestErrors(test, result);
     this._reporter.onStepBegin?.(test, result, step);
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    this._addSnippetToStepError(test, step);
     this._reporter.onStepEnd?.(test, result, step);
   }
 
   printsToStdio() {
     return this._reporter.printsToStdio ? this._reporter.printsToStdio() : true;
-  }
-
-  private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
-    for (const error of result.errors)
-      addLocationAndSnippetToError(this._config, error, test.location.file);
-  }
-
-  private _addSnippetToStepError(test: TestCase, step: TestStep) {
-    if (step.error)
-      addLocationAndSnippetToError(this._config, step.error, test.location.file);
   }
 }
 

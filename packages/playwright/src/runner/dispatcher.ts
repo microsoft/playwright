@@ -395,8 +395,10 @@ class JobDispatcher {
       return;
     }
     step.duration = params.wallTime - step.startTime.getTime();
-    if (params.error)
+    if (params.error) {
+      addLocationAndSnippetToError(this._config.config, params.error);
       step.error = params.error;
+    }
     if (params.suggestedRebaseline)
       addSuggestedRebaseline(step.location!, params.suggestedRebaseline);
     step.annotations = params.annotations;
@@ -452,6 +454,8 @@ class JobDispatcher {
       result = test._appendTestResult();
       this._reporter.onTestBegin?.(test, result);
     }
+    for (const error of errors)
+      addLocationAndSnippetToError(this._config.config, error);
     result.errors.push(...errors);
     result.error = result.errors[0];
     result.status = errors.length ? 'failed' : 'skipped';
