@@ -502,7 +502,7 @@ function formatTestTitle(screen: Screen, config: FullConfig, test: TestCase, ste
   const projectLabel = options.includeTestId ? `project=` : '';
   const projectTitle = projectName ? `[${projectLabel}${projectName}] › ` : '';
   const testTitle = `${testId}${projectTitle}${location} › ${titles.join(' › ')}`;
-  const extraTags = test.tags.filter(t => !testTitle.includes(t));
+  const extraTags = test.tags.filter(t => !testTitle.includes(t) && !config.tags.includes(t));
   return `${testTitle}${stepSuffix(step)}${extraTags.length ? ' ' + extraTags.join(' ') : ''}`;
 }
 
