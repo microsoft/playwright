@@ -181,7 +181,7 @@ export type JsonOnStepBeginEvent = {
     testId: string;
     resultId: string;
     step: JsonTestStepStart;
-    errors: reporterTypes.TestError[];
+    errors?: reporterTypes.TestError[];
   };
 };
 
