@@ -370,7 +370,7 @@ export class TeleReporterReceiver {
     // Errors are only present here from legacy blobs. These override all _onTestErrors events
     if (!!payload.errors) {
       result.errors = payload.errors;
-      result.error = result.errors?.[0];
+      result.error = result.errors[0];
     }
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)
