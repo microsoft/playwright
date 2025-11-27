@@ -55,11 +55,11 @@ test('--debug should pause at end', async ({ interactWithTestRunner }) => {
   expect(result.interrupted).toBe(1);
 });
 
-test('--debug should pause on error', async ({ interactWithTestRunner }) => {
+test('--debug should pause on error', async ({ interactWithTestRunner, mergeReports }) => {
   const testProcess = await interactWithTestRunner({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
-      module.exports = { reporter: [['list'], ['./location-reporter.js']] };
+      module.exports = { reporter: [['list'], ['blob'], ['./location-reporter.js']] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -83,4 +83,7 @@ test('--debug should pause on error', async ({ interactWithTestRunner }) => {
 
   const result = parseTestRunnerOutput(testProcess.output);
   expect(result.failed).toBe(1);
+
+  const merged = await mergeReports('blob-report', undefined, { additionalArgs: ['--reporter', 'location-reporter.js'] });
+  expect(merged.outputLines).toEqual(testProcess.outputLines());
 });

@@ -38,6 +38,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
+  private readonly _reportedErrorsSymbol = Symbol('reportedErrors');
 
   constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
@@ -97,9 +98,16 @@ export class TeleReporterEmitter implements ReporterV2 {
       params: {
         testId: test.id,
         resultId: (result as any)[this._idSymbol],
-        step: this._serializeStepStart(step)
+        step: this._serializeStepStart(step),
+        errors: this._unreportedErrors(result),
       }
     });
+  }
+
+  private _unreportedErrors(result: reporterTypes.TestResult) {
+    const index = (result as any)[this._reportedErrorsSymbol] ?? 0;
+    (result as any)[this._reportedErrorsSymbol] = result.errors.length;
+    return result.errors.slice(index);
   }
 
   onStepEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
@@ -248,7 +256,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       id: (result as any)[this._idSymbol],
       duration: result.duration,
       status: result.status,
-      errors: result.errors,
+      errors: this._unreportedErrors(result),
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }

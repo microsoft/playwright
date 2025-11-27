@@ -181,6 +181,7 @@ export type JsonOnStepBeginEvent = {
     testId: string;
     resultId: string;
     step: JsonTestStepStart;
+    errors: reporterTypes.TestError[];
   };
 };
 
@@ -287,7 +288,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onStepBegin') {
-      this._onStepBegin(params.testId, params.resultId, params.step);
+      this._onStepBegin(params.testId, params.resultId, params.step, params.errors);
       return;
     }
     if (method === 'onAttach') {
@@ -353,7 +354,7 @@ export class TeleReporterReceiver {
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
-    result.errors = payload.errors;
+    result.errors.push(...payload.errors);
     result.error = result.errors?.[0];
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)
@@ -368,7 +369,7 @@ export class TeleReporterReceiver {
     result._stepMap = new Map();
   }
 
-  private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart) {
+  private _onStepBegin(testId: string, resultId: string, payload: JsonTestStepStart, errors: reporterTypes.TestError[]) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
     const parentStep = payload.parentStepId ? result._stepMap.get(payload.parentStepId) : undefined;
@@ -380,6 +381,8 @@ export class TeleReporterReceiver {
     else
       result.steps.push(step);
     result._stepMap.set(payload.id, step);
+    result.errors.push(...errors);
+    result.error = result.errors[0];
     this._reporter.onStepBegin?.(test, result, step);
   }
 
