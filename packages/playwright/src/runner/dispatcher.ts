@@ -427,6 +427,11 @@ class JobDispatcher {
   }
 
   private _onErrors(params: TestErrorPayload) {
+    if (this._failureTracker.hasReachedMaxFailures()) {
+      // Do not show more than one error to avoid confusion.
+      return;
+    }
+
     const data = this._dataByTestId.get(params.testId)!;
     if (!data)
       return;
@@ -586,7 +591,7 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
-      eventsHelper.addEventListener(worker, 'errors', this._onErrors.bind(this)),
+      eventsHelper.addEventListener(worker, 'testErrors', this._onErrors.bind(this)),
       eventsHelper.addEventListener(worker, 'testPaused', this._onTestPaused.bind(this, worker)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
       eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),

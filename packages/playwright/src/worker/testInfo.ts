@@ -70,7 +70,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
-  private _onError: (errors: TestErrorPayload) => void;
+  private _onErrors: (errors: TestErrorPayload) => void;
   private _onTestPaused: (payload: TestPausedPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -167,14 +167,14 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
-    onError: (payload: TestErrorPayload) => void,
+    onErrors: (payload: TestErrorPayload) => void,
     onTestPaused: (payload: TestPausedPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
-    this._onError = onError;
+    this._onErrors = onErrors;
     this._onTestPaused = onTestPaused;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
@@ -481,9 +481,9 @@ export class TestInfoImpl implements TestInfo {
 
   _emitErrors() {
     const errors = this.errors.slice(this._reportedErrorCount);
-    this._reportedErrorCount = this.errors.length;
+    this._reportedErrorCount = Math.max(this._reportedErrorCount, this.errors.length);
     if (errors.length)
-      this._onError({ testId: this.testId, errors });
+      this._onErrors({ testId: this.testId, errors });
   }
 
   private _errorLocation(): Location | undefined {
@@ -491,9 +491,11 @@ export class TestInfoImpl implements TestInfo {
       return filteredStackTrace(this.error.stack.split('\n'))[0];
   }
 
-  async _testEndLocation() {
-    const source = await fs.promises.readFile(this.file, 'utf-8');
-    return findTestEndPosition(source, { file: this.file, line: this.line, column: this.column });
+  async _testEndLocation(): Promise<Location | undefined> {
+    try {
+      const source = await fs.promises.readFile(this.file, 'utf-8');
+      return findTestEndPosition(source, { file: this.file, line: this.line, column: this.column });
+    } catch {}
   }
 
   // ------------ TestInfo methods ------------

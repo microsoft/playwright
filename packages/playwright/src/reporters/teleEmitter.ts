@@ -96,6 +96,9 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
     (step as any)[this._idSymbol] = createGuid();
+    // This is here to support "test paused" step, where we want to see all errors
+    // at the time of the pause. If we were to have `onTestError()` reporter api, this
+    // won't be needed.
     this._sendNewErrors(result, test.id);
     this._messageSink({
       method: 'onStepBegin',

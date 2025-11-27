@@ -15,32 +15,8 @@
  */
 
 import path from 'path';
-import { traverse, babelParse, ParseResult, T, types as t } from './babelBundle';
+import { traverse, babelParse, T, types as t } from './babelBundle';
 import type { Location } from '../../types/testReporter';
-
-const astCache = new Map<string, { text: string, ast?: ParseResult }>();
-
-export function pruneAstCaches(fsPathsToRetain: string[]) {
-  const retain = new Set(fsPathsToRetain);
-  for (const key of astCache.keys()) {
-    if (!retain.has(key))
-      astCache.delete(key);
-  }
-}
-
-function getAst(text: string, fsPath: string) {
-  const cached = astCache.get(fsPath);
-  let ast = cached?.ast;
-  if (!cached || cached.text !== text) {
-    try {
-      ast = babelParse(text, path.basename(fsPath), false);
-      astCache.set(fsPath, { text, ast });
-    } catch (e) {
-      astCache.set(fsPath, { text, ast: undefined });
-    }
-  }
-  return ast;
-}
 
 function containsPosition(location: T.SourceLocation, position: Location): boolean {
   if (position.line < location.start.line || position.line > location.end.line)
@@ -53,9 +29,7 @@ function containsPosition(location: T.SourceLocation, position: Location): boole
 }
 
 export function findTestEndPosition(text: string, testStartLocation: Location): Location | undefined {
-  const ast = getAst(text, testStartLocation.file);
-  if (!ast)
-    return;
+  const ast = babelParse(text, path.basename(testStartLocation.file), false);
   let result: Location | undefined;
   traverse(ast, {
     enter(path) {

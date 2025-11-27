@@ -56,6 +56,40 @@ test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
   expect(result.interrupted).toBe(1);
 });
 
+test('--debug should pause at end with setup project', async ({ interactWithTestRunner, }) => {
+  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
+  const testProcess = await interactWithTestRunner({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = {
+        reporter: [['list'], ['./location-reporter.js']],
+        projects: [
+          { name: 'setup', testMatch: /setup\\.test\\.js/ },
+          { name: 'main', dependencies: ['setup'] }
+        ]
+      };
+    `,
+    'setup.test.js': `
+      import { test } from '@playwright/test';
+      test('setup', () => {
+      });
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        console.log('main test started');
+      });
+    `
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
+  await testProcess.waitForOutput('main test started');
+  await testProcess.waitForOutput('Paused at End');
+  await testProcess.kill('SIGINT');
+  expect(testProcess.outputLines()).toEqual(['Paused at End at :5:7']);
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.interrupted).toBe(1);
+});
+
 test('--debug should pause on error', async ({ interactWithTestRunner, mergeReports }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
   const testProcess = await interactWithTestRunner({

@@ -58,7 +58,7 @@ test('-x should work', async ({ runInlineTest }) => {
         });
       }
     `
-  }, { '-x': true, 'workers': 1 });
+  }, { '-x': true });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output.split('\n').filter(l => l.includes('expect(')).length).toBe(2);
