@@ -15,6 +15,8 @@
  */
 
 import util from 'util';
+import fs from 'fs';
+import path from 'path';
 
 import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer } from 'playwright-core/lib/server';
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
@@ -134,6 +136,31 @@ export class TestServerDispatcher implements TestServerInterface {
   }
 
   async ping() {}
+
+  async acceptSnapshots(params: Parameters<TestServerInterface['acceptSnapshots']>[0]): ReturnType<TestServerInterface['acceptSnapshots']> {
+    let accepted = 0;
+    let failed = 0;
+    const errors: string[] = [];
+
+    for (const [source, dest] of params.paths) {
+      try {
+        // Ensure destination directory exists before copying
+        await fs.promises.mkdir(path.dirname(dest), { recursive: true });
+        await fs.promises.copyFile(source, dest);
+        accepted++;
+      } catch (e) {
+        failed++;
+        errors.push(`Failed to copy ${source} to ${dest}: ${(e as Error).message}`);
+      }
+    }
+
+    return {
+      status: failed === 0,
+      accepted,
+      failed,
+      errors: errors.length > 0 ? errors : undefined,
+    };
+  }
 
   async open(params: Parameters<TestServerInterface['open']>[0]): ReturnType<TestServerInterface['open']> {
     if (isUnderTest())

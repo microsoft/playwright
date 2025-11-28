@@ -240,6 +240,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     return await this._sendMessage('runTests', params);
   }
 
+  async acceptSnapshots(params: Parameters<TestServerInterface['acceptSnapshots']>[0]): ReturnType<TestServerInterface['acceptSnapshots']> {
+    return await this._sendMessage('acceptSnapshots', params);
+  }
+
   async findRelatedTestFiles(params: Parameters<TestServerInterface['findRelatedTestFiles']>[0]): ReturnType<TestServerInterface['findRelatedTestFiles']> {
     return await this._sendMessage('findRelatedTestFiles', params);
   }

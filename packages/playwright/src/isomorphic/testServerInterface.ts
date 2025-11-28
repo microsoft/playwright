@@ -109,6 +109,16 @@ export interface TestServerInterface {
     status: reporterTypes.FullResult['status'];
   }>;
 
+  /**
+   * Accepts snapshot updates by copying actual snapshots to expected locations.
+   */
+  acceptSnapshots(param: { paths: [string, string][]}): Promise<{
+    status: boolean;
+    accepted: number;
+    failed: number;
+    errors?: string[];
+  }>;
+
   findRelatedTestFiles(params: {
     files: string[];
   }): Promise<{ testFiles: string[]; errors?: reporterTypes.TestError[]; }>;
