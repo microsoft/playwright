@@ -5,37 +5,43 @@
       "name": "chromium",
       "revision": "1202",
       "installByDefault": true,
-      "browserVersion": "143.0.7499.25"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
       "revision": "1202",
       "installByDefault": true,
-      "browserVersion": "143.0.7499.25"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Headless Shell"
     },
     {
       "name": "chromium-tip-of-tree",
       "revision": "1384",
       "installByDefault": false,
-      "browserVersion": "143.0.7499.25"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
       "revision": "1384",
       "installByDefault": false,
-      "browserVersion": "143.0.7499.25"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Canary Headless Shell"
     },
     {
       "name": "firefox",
       "revision": "1497",
       "installByDefault": true,
-      "browserVersion": "144.0.2"
+      "browserVersion": "144.0.2",
+      "title": "Firefox"
     },
     {
       "name": "firefox-beta",
       "revision": "1493",
       "installByDefault": false,
-      "browserVersion": "145.0b10"
+      "browserVersion": "145.0b10",
+      "title": "Firefox Beta"
     },
     {
       "name": "webkit",
@@ -55,7 +61,8 @@
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "26.0"
+      "browserVersion": "26.0",
+      "title": "WebKit"
     },
     {
       "name": "ffmpeg",

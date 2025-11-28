@@ -24,7 +24,7 @@ const CDNS = [
   'https://cdn.playwright.dev',
 ];
 
-const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*is chunked: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading (\w+) .*$/gm;
+const DL_STAT_BLOCK = /^.*from url: (.*)$\n^.*to location: (.*)$\n^.*response status code: (.*)$\n^.*is chunked: (.*)$\n^.*total bytes: (\d+)$\n^.*download complete, size: (\d+)$\n^.*SUCCESS downloading.*\(playwright ([a-zA-Z-]+) v\d+\).*$/gm;
 
 const parsedDownloads = (rawLogs: string) => {
   const out: { url: string, status: number, name: string }[] = [];
@@ -123,7 +123,7 @@ test(`playwright cdn should not timeout on redirect`, {
       expectToExitWithError: true
     });
     // Steps after the extraction will fail, but the download should succeed without timeouts.
-    expect(result).toContain(`pw:install SUCCESS downloading Chromium`);
+    expect(result).toContain(`pw:install SUCCESS downloading Chrome`);
     expect(result).not.toContain(`timed out after 1000ms`);
   } finally {
     await new Promise(resolve => server.close(resolve));
