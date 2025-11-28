@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { noColors, escapeRegExp, ManualPromise } from 'playwright-core/lib/utils';
+import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-core/lib/utils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
@@ -64,7 +64,7 @@ export class GeneratorJournal {
     const result: string[] = [];
     result.push(`# Plan`);
     result.push(this._plan);
-    result.push(`# Seed file: ${path.relative(this._rootPath, this._seed.file)}`);
+    result.push(`# Seed file: ${toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
     result.push('```ts');
     result.push(this._seed.content);
     result.push('```');
