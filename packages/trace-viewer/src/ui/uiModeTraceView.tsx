@@ -58,7 +58,7 @@ export const TraceView: React.FC<{
       return;
     }
 
-    if (!outputDir) {
+    if (!outputDir || item.treeItem?.status === 'scheduled') {
       setModel(undefined);
       return;
     }
