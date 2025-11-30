@@ -581,6 +581,7 @@ ContextOptions:
             width: int
             height: int
     strictSelectors: boolean?
+    visibleOnly: boolean?
     serviceWorkers:
       type: enum?
       literals:
@@ -3892,6 +3893,7 @@ Electron:
                 width: int
                 height: int
         strictSelectors: boolean?
+        visibleOnly: boolean?
         timezoneId: string?
         tracesDir: string?
         selectorEngines:

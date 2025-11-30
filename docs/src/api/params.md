@@ -819,6 +819,14 @@ on selectors that imply single target DOM element will throw when more than one 
 This option does not affect any Locator APIs (Locators are always strict). Defaults to `false`.
 See [Locator] to learn more about the strict mode.
 
+## context-option-visible-only
+- `visibleOnly` <[boolean]>
+
+If set to true, all selector-based methods in this context will only match visible elements by default. This is equivalent
+to appending `>> visible=true` to every selector. Useful for applications that keep hidden elements in the DOM
+(such as React Native Web routing, React SSR streaming, or Next.js cacheComponents). Individual selectors can
+still explicitly use `visible=false` to match hidden elements when needed. Defaults to `false`.
+
 ## context-option-service-worker-policy
 - `serviceWorkers` <[ServiceWorkerPolicy]<"allow"|"block">>
 
@@ -1017,6 +1025,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-dir-%%
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
+- %%-context-option-visible-only-%%
 - %%-context-option-service-worker-policy-%%
 
 ## browser-option-args
