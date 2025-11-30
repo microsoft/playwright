@@ -10160,6 +10160,14 @@ export interface Browser {
        */
       height: number;
     };
+
+    /**
+     * If set to true, all selector-based methods in this context will only match visible elements by default. This is
+     * equivalent to appending `>> visible=true` to every selector. Useful for applications that keep hidden elements in
+     * the DOM (such as React Native Web routing, React SSR streaming, or Next.js cacheComponents). Individual selectors
+     * can still explicitly use `visible=false` to match hidden elements when needed. Defaults to `false`.
+     */
+    visibleOnly?: boolean;
   }): Promise<Page>;
 
   /**
@@ -15377,6 +15385,14 @@ export interface BrowserType<Unused = {}> {
        */
       height: number;
     };
+
+    /**
+     * If set to true, all selector-based methods in this context will only match visible elements by default. This is
+     * equivalent to appending `>> visible=true` to every selector. Useful for applications that keep hidden elements in
+     * the DOM (such as React Native Web routing, React SSR streaming, or Next.js cacheComponents). Individual selectors
+     * can still explicitly use `visible=false` to match hidden elements when needed. Defaults to `false`.
+     */
+    visibleOnly?: boolean;
   }): Promise<BrowserContext>;
 
   /**
@@ -17043,6 +17059,14 @@ export interface AndroidDevice {
        */
       height: number;
     };
+
+    /**
+     * If set to true, all selector-based methods in this context will only match visible elements by default. This is
+     * equivalent to appending `>> visible=true` to every selector. Useful for applications that keep hidden elements in
+     * the DOM (such as React Native Web routing, React SSR streaming, or Next.js cacheComponents). Individual selectors
+     * can still explicitly use `visible=false` to match hidden elements when needed. Defaults to `false`.
+     */
+    visibleOnly?: boolean;
   }): Promise<BrowserContext>;
 
   /**
@@ -22471,6 +22495,14 @@ export interface BrowserContextOptions {
    *
    */
   viewport?: null|ViewportSize;
+
+  /**
+   * If set to true, all selector-based methods in this context will only match visible elements by default. This is
+   * equivalent to appending `>> visible=true` to every selector. Useful for applications that keep hidden elements in
+   * the DOM (such as React Native Web routing, React SSR streaming, or Next.js cacheComponents). Individual selectors
+   * can still explicitly use `visible=false` to match hidden elements when needed. Defaults to `false`.
+   */
+  visibleOnly?: boolean;
 }
 
 export interface ViewportSize {
