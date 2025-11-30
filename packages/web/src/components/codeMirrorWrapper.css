@@ -185,3 +185,7 @@
 .CodeMirror-placeholder {
   color: var(--vscode-input-placeholderForeground) !important;
 }
+
+.CodeMirror-dialog-top {
+  padding-top: 8px !important;
+}
