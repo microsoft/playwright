@@ -46,7 +46,27 @@ export class FrameSelectors {
 
   private _parseSelector(selector: string | ParsedSelector, options?: types.StrictOptions): SelectorInfo {
     const strict = typeof options?.strict === 'boolean' ? options.strict : !!this.frame._page.browserContext._options.strictSelectors;
+    const visibleOnly = !!this.frame._page.browserContext._options.visibleOnly;
+
+    if (visibleOnly) {
+      if (typeof selector === 'string') {
+        if (!this._hasVisiblePart(selector))
+          selector = selector + ' >> visible=true';
+      } else { // selector is a ParsedSelector object
+        if (!this._parsedSelectorHasVisiblePart(selector))
+          selector = { ...selector, parts: [...selector.parts, { name: 'visible', body: 'true', source: 'true' }] };
+      }
+    }
+
     return this.frame._page.browserContext.selectors().parseSelector(selector, strict);
+  }
+
+  private _hasVisiblePart(selector: string): boolean {
+    return /\bvisible\s*=/.test(selector);
+  }
+
+  private _parsedSelectorHasVisiblePart(selector: ParsedSelector): boolean {
+    return selector.parts.some(part => part.name === 'visible');
   }
 
   async query(selector: string, options?: types.StrictOptions & { mainWorld?: boolean }, scope?: ElementHandle): Promise<ElementHandle<Element> | null> {
