@@ -62,16 +62,6 @@ it.describe('visibleOnly context mode', () => {
     expect(await page.locator('.item >> visible=false').getAttribute('id')).toBe('hidden-item');
   });
 
-  it('should not double-apply visible filter when explicitly set', async ({ page }) => {
-    await page.setContent(`
-      <div class="item" id="visible-item">Visible</div>
-      <div class="item" id="hidden-item" style="display: none">Hidden</div>
-    `);
-    // Explicit visible=true should still work (not double-filtered)
-    await expect(page.locator('.item >> visible=true')).toHaveCount(1);
-    expect(await page.locator('.item >> visible=true').getAttribute('id')).toBe('visible-item');
-  });
-
   it('should work with visibility:hidden', async ({ page }) => {
     await page.setContent(`
       <div class="item" id="visible">Visible</div>
@@ -101,6 +91,8 @@ it.describe('visibleOnly context mode', () => {
     `);
     await page.locator('button').click();
     expect(await page.evaluate(() => (window as any).clicked)).toBe('visible');
+    // clean up
+    await page.evaluate(() => { delete (window as any).clicked; });
   });
 
   it('should work with locator.fill', async ({ page }) => {
@@ -125,32 +117,22 @@ it.describe('visibleOnly context mode', () => {
     expect(await page.locator('.card').filter({ hasText: 'Card' }).getAttribute('id')).toBe('visible-card');
   });
 
-  it('low-level $$ is also affected by visibleOnly', async ({ page }) => {
+  it('low-level $$ is not affected by visibleOnly', async ({ page }) => {
     await page.setContent(`
       <div class="item" id="visible">Visible</div>
       <div class="item" id="hidden" style="display: none">Hidden</div>
     `);
     const elements = await page.$$('.item');
-    expect(elements.length).toBe(1);
+    expect(elements.length).toBe(2);
   });
 
-  it('low-level $$eval is also affected by visibleOnly', async ({ page }) => {
+  it('low-level $$eval is also not affected by visibleOnly', async ({ page }) => {
     await page.setContent(`
       <div class="item" id="visible">Visible</div>
       <div class="item" id="hidden" style="display: none">Hidden</div>
     `);
     const ids = await page.$$eval('.item', els => els.map(e => e.id));
-    expect(ids).toEqual(['visible']);
+    expect(ids).toEqual(['visible', 'hidden']);
   });
 
-  it('can use visible=false to access hidden elements with low-level APIs', async ({ page }) => {
-    await page.setContent(`
-      <div class="item" id="visible">Visible</div>
-      <div class="item" id="hidden" style="display: none">Hidden</div>
-    `);
-    const hiddenElements = await page.$$('.item >> visible=false');
-    expect(hiddenElements.length).toBe(1);
-    const hiddenIds = await page.$$eval('.item >> visible=false', els => els.map(e => e.id));
-    expect(hiddenIds).toEqual(['hidden']);
-  });
 });

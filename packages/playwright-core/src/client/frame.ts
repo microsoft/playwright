@@ -323,6 +323,13 @@ export class Frame extends ChannelOwner<channels.FrameChannel> implements api.Fr
   }
 
   locator(selector: string, options?: LocatorOptions): Locator {
+    // Apply visibleOnly context option if enabled and no explicit visible option is set.
+    // Skip if the selector string already contains a visible= clause (explicit override).
+    const visibleOnly = this._page?._browserContext._options.visibleOnly;
+    const selectorHasVisibleClause = /\bvisible\s*=/.test(selector);
+    if (visibleOnly && options?.visible === undefined && !selectorHasVisibleClause) {
+      options = { ...options, visible: true };
+    }
     return new Locator(this, selector, options);
   }
 
