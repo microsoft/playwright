@@ -109,7 +109,7 @@ export class ExpectError extends Error {
 }
 
 export function isJestError(e: unknown): e is JestError {
-  return e instanceof Error && 'matcherResult' in e;
+  return e instanceof Error && 'matcherResult' in e && !!e.matcherResult;
 }
 
 export const callLogText = (log: string[] | undefined) => {
