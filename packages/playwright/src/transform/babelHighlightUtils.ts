@@ -18,12 +18,12 @@ import path from 'path';
 import { traverse, babelParse, T, types as t } from './babelBundle';
 import type { Location } from '../../types/testReporter';
 
-function containsPosition(location: T.SourceLocation, position: Location): boolean {
-  if (position.line < location.start.line || position.line > location.end.line)
+function containsLocation(range: T.SourceLocation, location: Location): boolean {
+  if (location.line < range.start.line || location.line > range.end.line)
     return false;
-  if (position.line === location.start.line && position.column < location.start.column)
+  if (location.line === range.start.line && location.column < range.start.column)
     return false;
-  if (position.line === location.end.line && position.column > location.end.column)
+  if (location.line === range.end.line && location.column > range.end.column)
     return false;
   return true;
 }
@@ -33,7 +33,7 @@ export function findTestEndPosition(text: string, testStartLocation: Location): 
   let result: Location | undefined;
   traverse(ast, {
     enter(path) {
-      if (t.isCallExpression(path.node) && path.node.loc && containsPosition(path.node.loc, testStartLocation)) {
+      if (t.isCallExpression(path.node) && path.node.loc && containsLocation(path.node.loc, testStartLocation)) {
         const callNode = path.node;
         const funcNode = callNode.arguments[callNode.arguments.length - 1];
         if (callNode.arguments.length >= 2 && t.isFunction(funcNode) && funcNode.body.loc)

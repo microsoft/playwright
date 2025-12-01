@@ -84,7 +84,7 @@ export type AttachmentPayload = {
   stepId?: string;
 };
 
-export type TestErrorPayload = {
+export type TestErrorsPayload = {
   testId: string;
   errors: TestInfoErrorImpl[];
 };

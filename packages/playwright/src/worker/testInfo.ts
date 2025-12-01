@@ -30,7 +30,7 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestErrorPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestErrorsPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -70,7 +70,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
-  private _onErrors: (errors: TestErrorPayload) => void;
+  private _onErrors: (errors: TestErrorsPayload) => void;
   private _onTestPaused: (payload: TestPausedPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -167,7 +167,7 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
-    onErrors: (payload: TestErrorPayload) => void,
+    onErrors: (payload: TestErrorsPayload) => void,
     onTestPaused: (payload: TestPausedPayload) => void,
   ) {
     this.testId = test?.id ?? '';
@@ -491,7 +491,7 @@ export class TestInfoImpl implements TestInfo {
       return filteredStackTrace(this.error.stack.split('\n'))[0];
   }
 
-  async _testEndLocation(): Promise<Location | undefined> {
+  private async _testEndLocation(): Promise<Location | undefined> {
     try {
       const source = await fs.promises.readFile(this.file, 'utf-8');
       return findTestEndPosition(source, { file: this.file, line: this.line, column: this.column });
