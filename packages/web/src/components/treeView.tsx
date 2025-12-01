@@ -35,6 +35,7 @@ export type TreeViewProps<T> = {
   title?: (item: T) => string,
   icon?: (item: T) => string | undefined,
   isError?: (item: T) => boolean,
+  isStriped?: boolean,
   isVisible?: (item: T) => boolean,
   selectedItem?: T,
   onAccepted?: (item: T) => void,
@@ -56,6 +57,7 @@ export function TreeView<T extends TreeItem>({
   title,
   icon,
   isError,
+  isStriped,
   isVisible,
   selectedItem,
   onAccepted,
@@ -128,7 +130,7 @@ export function TreeView<T extends TreeItem>({
 
   return <div className={clsx(`tree-view vbox`, name + '-tree-view')} data-testid={dataTestId || (name + '-tree')}>
     <div
-      className={clsx('tree-view-content')}
+      className={clsx('tree-view-content', isStriped && 'tree-view-striped')}
       role={treeItems.size > 0 ? 'tree' : undefined}
       tabIndex={0}
       onKeyDown={event => {

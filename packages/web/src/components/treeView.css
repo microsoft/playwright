@@ -86,11 +86,6 @@
   background-color: var(--vscode-inputValidation-errorBackground);
 }
 
-.tree-view-entry.warning {
-  color: var(--vscode-list-warningForeground);
-  background-color: var(--vscode-inputValidation-warningBackground);
-}
-
-.tree-view-entry.info {
-  background-color: var(--vscode-inputValidation-infoBackground);
+.tree-view-striped > [role="treeitem"]:nth-child(odd) {
+  background-color: var(--vscode-tree-tableOddRowsBackground);
 }

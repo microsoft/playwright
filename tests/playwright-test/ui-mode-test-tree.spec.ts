@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { dumpTestTree, expect, retries, test } from './ui-mode-fixtures';
 
 test.describe.configure({ mode: 'parallel', retries });
 
@@ -630,4 +630,27 @@ test('should merge files', async ({ runUITest }) => {
           - treeitem "[icon-circle-outline] second"
           - treeitem "[icon-circle-outline] fifth"
   `);
+});
+
+test('should apply striped background to actions tree but not test tree', async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('Striped test', async ({ page }) => {
+        await page.goto('about:blank');
+        await page.click('body');
+      });
+    `,
+  });
+
+  await page.getByTitle('Run all').click();
+  await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
+
+  const actionsTree = page.getByTestId('actions-tree');
+  const actionsTreeContent = actionsTree.locator('.tree-view-content');
+  await expect(actionsTreeContent).toHaveClass(/tree-view-striped/);
+
+  const testTree = page.getByTestId('test-tree');
+  const testTreeContent = testTree.locator('.tree-view-content');
+  await expect(testTreeContent).not.toHaveClass(/tree-view-striped/);
 });

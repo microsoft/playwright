@@ -106,6 +106,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isError={isError}
       isVisible={isVisible}
       render={render}
+      isStriped={true}
     />
   </div>;
 };
