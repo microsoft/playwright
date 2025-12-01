@@ -128,9 +128,7 @@ export class SnapshotRenderer {
             attrName = '_' + attrName;
           }
           let attrValue = value;
-          if (isAnchor && attr.toLowerCase() === 'href')
-            result.push(' ', '__pw_link');
-          else if (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute)
+          if (!isAnchor && (attr.toLowerCase() === 'href' || attr.toLowerCase() === 'src' || attr === kCurrentSrcAttribute))
             attrValue = rewriteURLForCustomProtocol(value);
           result.push(' ', attrName, '="', escapeHTMLAttribute(attrValue), '"');
         }
@@ -371,10 +369,8 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         visit(shadowRoot);
       }
 
-      for (const element of root.querySelectorAll('[__pw_link]')) {
+      for (const element of root.querySelectorAll('a'))
         element.addEventListener('click', event => { event.preventDefault(); });
-        element.removeAttribute('__pw_link');
-      }
 
       if ('adoptedStyleSheets' in (root as any)) {
         const adoptedSheets: CSSStyleSheet[] = [...(root as any).adoptedStyleSheets];
