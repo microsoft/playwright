@@ -426,7 +426,7 @@ class JobDispatcher {
     }
   }
 
-  private _onErrors(params: TestErrorsPayload) {
+  private _onTestErrors(params: TestErrorsPayload) {
     if (this._failureTracker.hasReachedMaxFailures()) {
       // Do not show more than one error to avoid confusion.
       return;
@@ -593,7 +593,7 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
-      eventsHelper.addEventListener(worker, 'testErrors', this._onErrors.bind(this)),
+      eventsHelper.addEventListener(worker, 'testErrors', this._onTestErrors.bind(this)),
       eventsHelper.addEventListener(worker, 'testPaused', this._onTestPaused.bind(this, worker)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
       eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
