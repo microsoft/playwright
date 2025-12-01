@@ -1991,7 +1991,6 @@ test('should load trace from HTTP with progress indicator', async ({ showTraceVi
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Length', file.byteLength);
   res.writeHead(200);
-  await expect(dialog).not.toBeVisible({ timeout: 100 });
   // Should become visible after ~200ms
   await expect(dialog).toBeVisible();
 

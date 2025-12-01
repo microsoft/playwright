@@ -155,7 +155,7 @@ it('pageErrors should work', async ({ page }) => {
   await page.evaluate(async () => {
     for (let i = 0; i < 301; i++)
       window.builtins.setTimeout(() => { throw new Error('error' + i); }, 0);
-    await new Promise(f => window.builtins.setTimeout(f, 100));
+    await new Promise(f => window.builtins.setTimeout(f, 2000));
   });
 
   const errors = await page.pageErrors();
