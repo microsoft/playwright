@@ -43,7 +43,7 @@ test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
       test('pass', () => {
       });
       test.afterEach(() => {
-        console.log('teardown'.toUpperCase());
+        console.log('teardown'.toUpperCase()); // uppercase so we dont confuse it with source snippets
       });
     `
   }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
