@@ -48,6 +48,35 @@ test('should merge trace events', async ({ runUITest }) => {
   ]);
 });
 
+test('should work with non-existing rootDir and testDir outside of it', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38367' },
+}, async ({ runUITest }) => {
+  const { page } = await runUITest({
+    'playwright.config.ts': `
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        testDir: './nothingness',
+        projects: [
+          { name: 'main', testDir: './tests' },
+        ],
+      });
+    `,
+    'tests/a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('example test', async ({ page }) => {
+        await page.setContent('<button>Submit</button>');
+      });
+    `,
+  });
+
+  await page.getByText('example test').dblclick();
+  await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
+    - treeitem /Before Hooks/
+    - treeitem /Set content/ [selected]
+    - treeitem /After Hooks/
+  `);
+});
+
 test('should merge web assertion events', async ({  runUITest }, testInfo) => {
   const { page } = await runUITest({
     'a.test.ts': `
