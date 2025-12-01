@@ -139,7 +139,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "page"',
     '  Fixture "context"',
   ]);
-  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
 
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
@@ -156,7 +156,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "context"',
     '  afterAll hook',
   ]);
-  expect(trace2.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace2.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {
@@ -482,7 +482,7 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
     'Set content',
     'Click',
   ]);
-  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
   expect(trace2.titles).toEqual([
@@ -490,7 +490,7 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
     'Fill "value"',
     'Click',
   ]);
-  expect(trace1.traceModel.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should not delete others contexts', async ({ runInlineTest }) => {

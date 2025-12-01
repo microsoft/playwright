@@ -19,8 +19,6 @@ import type { SnapshotRenderer } from './snapshotRenderer';
 import type { SnapshotStorage } from './snapshotStorage';
 import type { ResourceSnapshot } from '@trace/snapshot';
 
-type Point = { x: number, y: number };
-
 export class SnapshotServer {
   private _snapshotStorage: SnapshotStorage;
   private _resourceLoader: (sha1: string) => Promise<Blob | undefined>;
@@ -114,12 +112,6 @@ export class SnapshotServer {
       status: resource.response.status,
       statusText: resource.response.statusText,
     });
-  }
-}
-
-declare global {
-  interface Window {
-    showSnapshot: (url: string, point?: Point) => Promise<void>;
   }
 }
 

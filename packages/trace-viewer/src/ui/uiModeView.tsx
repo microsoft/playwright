@@ -22,7 +22,7 @@ import { TeleSuiteUpdater, type TeleSuiteUpdaterProgress, type TeleSuiteUpdaterT
 import type { TeleTestCase } from '@testIsomorphic/teleReceiver';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import { SplitView } from '@web/components/splitView';
-import type { SourceLocation } from './modelUtil';
+import type { SourceLocation } from '@isomorphic/trace/traceModel';
 import './uiModeView.css';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { Toolbar } from '@web/components/toolbar';
