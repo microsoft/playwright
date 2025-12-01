@@ -260,19 +260,6 @@ it.describe('snapshots', () => {
     // Second snapshot should be just a copy of the first one.
     expect(snapshot2.html).toEqual([[1, 13]]);
   });
-
-  it('should not navigate on anchor clicks', async ({ page, toImpl, snapshotter, browser }) => {
-    const url = 'http://localhost/';
-    await page.setContent(`<a href="${url}">example link</a>`);
-    const snapshot = await snapshotter.captureSnapshot(toImpl(page), 'call@1', 'snapshot@call@1');
-    expect(distillSnapshot(snapshot, page.url())).toBe(`<A __pw_link href="${url}">example link</A>`);
-
-    const { html } = snapshot.render();
-    const newPage = await browser.newPage();
-    await newPage.setContent(html);
-    await newPage.getByRole('link').click();
-    await expect(newPage).not.toHaveURL(url, { timeout: 500 });
-  });
 });
 
 function distillSnapshot(snapshot, url: string, options: { distillTarget: boolean, distillBoundingRect: boolean } = { distillTarget: true, distillBoundingRect: true }) {

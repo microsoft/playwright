@@ -2101,3 +2101,32 @@ test('should survive service worker restart', async ({ page, runAndTrace, server
   const snapshot2 = await traceViewer.snapshotFrame('Set content');
   await expect(snapshot2.locator('body')).toHaveText('Old world');
 });
+
+test('should not navigate on anchor clicks', async ({ runAndTrace, page, server }) => {
+  const url = server.EMPTY_PAGE;
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent(`
+      <a href="${url}">link1</a>
+      <a href="${url}" target="_blank">link2</a>
+      <a href="${url}" target="_top">link3</a>
+    `);
+  });
+  const snapshot = await traceViewer.snapshotFrame('Set content');
+  const frame = await snapshot.owner().elementHandle().then(handle => handle.contentFrame());
+
+  const checkLink = async (name: string) => {
+    let newPageOpened = false;
+    traceViewer.page.context().on('page', () => {
+      newPageOpened = true;
+    });
+    await snapshot.getByRole('link', { name }).click();
+    await traceViewer.page.waitForTimeout(500);
+    await expect(traceViewer.page).not.toHaveURL(url, { timeout: 500 });
+    expect(frame.url()).not.toBe(url);
+    expect(newPageOpened).toBe(false);
+  };
+
+  await checkLink('link1');
+  await checkLink('link2');
+  await checkLink('link3');
+});
