@@ -18,7 +18,7 @@ import './filmStrip.css';
 import type { Boundaries, Size } from './geometry';
 import * as React from 'react';
 import { useMeasure, upperBound } from '@web/uiUtils';
-import type { PageEntry } from '../types/entries';
+import type { PageEntry } from '@isomorphic/trace/entries';
 import type { ActionTraceEventInContext } from './modelUtil';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';

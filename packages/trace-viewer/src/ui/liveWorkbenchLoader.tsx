@@ -19,7 +19,7 @@ import { MultiTraceModel } from './modelUtil';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 
 export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson }) => {
   const [model, setModel] = React.useState<MultiTraceModel | undefined>(undefined);

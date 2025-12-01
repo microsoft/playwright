@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
+import { TraceModel } from '@isomorphic/trace/traceModel';
+import { TraceVersionError } from '@isomorphic/trace/traceModernizer';
+
 import { Progress, splitProgress } from './progress';
-import { SnapshotServer } from './snapshotServer';
-import { TraceModel } from './traceModel';
 import { FetchTraceModelBackend, traceFileURL, ZipTraceModelBackend } from './traceModelBackends';
-import { TraceVersionError } from './traceModernizer';
 
 type Client = {
   id: string;

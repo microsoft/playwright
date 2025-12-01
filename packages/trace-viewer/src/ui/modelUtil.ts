@@ -20,7 +20,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
-import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
+import type { ActionEntry, ContextEntry, PageEntry } from '@isomorphic/trace/entries';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
 

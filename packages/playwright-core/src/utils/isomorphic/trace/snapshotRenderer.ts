@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { escapeHTMLAttribute, escapeHTML } from '@isomorphic/stringUtils';
+import { escapeHTMLAttribute, escapeHTML } from '../stringUtils';
 
 import type { FrameSnapshot, NodeNameAttributesChildNodesSnapshot, NodeSnapshot, RenderedFrameSnapshot, ResourceSnapshot, SubtreeReferenceSnapshot } from '@trace/snapshot';
-import type { PageEntry } from '../types/entries';
-import type { LRUCache } from './lruCache';
+import type { PageEntry } from './entries';
+import type { LRUCache } from '../lruCache';
 
 function findClosest<T>(items: T[], metric: (v: T) => number, target: number) {
   return items.find((item, index) => {
@@ -254,7 +254,9 @@ declare global {
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
   function applyPlaywrightAttributes(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-    const searchParams = new URLSearchParams(location.search);
+    // eslint-disable-next-line no-restricted-globals
+    const win = window;
+    const searchParams = new URLSearchParams(win.location.search);
     const shouldPopulateCanvasFromScreenshot = searchParams.has('shouldPopulateCanvasFromScreenshot');
     const isUnderTest = searchParams.has('isUnderTest');
 
@@ -268,7 +270,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       viewport,
       frames: new WeakMap(),
     };
-    window['__playwright_frame_bounding_rects__'] = frameBoundingRectsInfo;
+    win['__playwright_frame_bounding_rects__'] = frameBoundingRectsInfo;
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
         ' match the center of the clicked element. This is likely due to a difference between' +
@@ -279,7 +281,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     const targetElements: Element[] = [];
     const canvasElements: HTMLCanvasElement[] = [];
 
-    let topSnapshotWindow: Window = window;
+    let topSnapshotWindow: Window = win;
     while (topSnapshotWindow !== topSnapshotWindow.parent && !topSnapshotWindow.location.pathname.match(/\/page@[a-z0-9]+$/))
       topSnapshotWindow = topSnapshotWindow.parent;
 
@@ -342,7 +344,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
         } else {
           // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
-          const url = new URL(window.location.href);
+          const url = new URL(win.location.href);
           // We can be loading iframe from within iframe, reset base to be absolute.
           const index = url.pathname.lastIndexOf('/snapshot/');
           if (index !== -1)
@@ -354,10 +356,10 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
 
       {
         const body = root.querySelector(`body[__playwright_custom_elements__]`);
-        if (body && window.customElements) {
+        if (body && win.customElements) {
           const customElements = (body.getAttribute('__playwright_custom_elements__') || '').split(',');
           for (const elementName of customElements)
-            window.customElements.define(elementName, class extends HTMLElement {});
+            win.customElements.define(elementName, class extends HTMLElement {});
         }
       }
 
@@ -387,7 +389,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     };
 
     const onLoad = () => {
-      window.removeEventListener('load', onLoad);
+      win.removeEventListener('load', onLoad);
       for (const element of scrollTops) {
         element.scrollTop = +element.getAttribute('__playwright_scroll_top_')!;
         element.removeAttribute('__playwright_scroll_top_');
@@ -401,19 +403,19 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
       }
 
-      document.styleSheets[0].disabled = true;
+      win.document.styleSheets[0].disabled = true;
 
-      const search = new URL(window.location.href).searchParams;
-      const isTopFrame = window === topSnapshotWindow;
+      const search = new URL(win.location.href).searchParams;
+      const isTopFrame = win === topSnapshotWindow;
 
       if (search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
         const pointY = +search.get('pointY')!;
         const hasInputTarget = search.has('hasInputTarget');
         const hasTargetElements = targetElements.length > 0;
-        const roots = document.documentElement ? [document.documentElement] : [];
+        const roots = win.document.documentElement ? [win.document.documentElement] : [];
         for (const target of (hasTargetElements ? targetElements : roots)) {
-          const pointElement = document.createElement('x-pw-pointer');
+          const pointElement = win.document.createElement('x-pw-pointer');
           pointElement.style.position = 'fixed';
           pointElement.style.backgroundColor = '#f44336';
           pointElement.style.width = '20px';
@@ -436,7 +438,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
             // "Warning symbol" indicates that action point is not 100% correct.
             // Note that action point is relative to the top frame, so we can only compare in the top frame.
             if (isTopFrame && (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10)) {
-              const warningElement = document.createElement('x-pw-pointer-warning');
+              const warningElement = win.document.createElement('x-pw-pointer-warning');
               warningElement.textContent = '⚠';
               warningElement.style.fontSize = '19px';
               warningElement.style.color = 'white';
@@ -445,13 +447,13 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
               pointElement.appendChild(warningElement);
               pointElement.setAttribute('title', kPointerWarningTitle);
             }
-            document.documentElement.appendChild(pointElement);
+            win.document.documentElement.appendChild(pointElement);
           } else if (isTopFrame && !hasInputTarget) {
             // For actions without a target element, e.g. page.mouse.move(),
             // show the point at the recorded location, which is relative to the top frame.
             pointElement.style.left = pointX + 'px';
             pointElement.style.top = pointY + 'px';
-            document.documentElement.appendChild(pointElement);
+            win.document.documentElement.appendChild(pointElement);
           }
         }
       }
@@ -459,7 +461,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       if (canvasElements.length > 0) {
         function drawCheckerboard(context: CanvasRenderingContext2D, canvas: HTMLCanvasElement) {
           function createCheckerboardPattern() {
-            const pattern = document.createElement('canvas');
+            const pattern = win.document.createElement('canvas');
             pattern.width = pattern.width / Math.floor(pattern.width / 24);
             pattern.height = pattern.height / Math.floor(pattern.height / 24);
             const context = pattern.getContext('2d')!;
@@ -492,7 +494,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
               continue;
             }
 
-            let currWindow: Window = window;
+            let currWindow: Window = win;
             while (currWindow !== topSnapshotWindow) {
               const iframe = currWindow.frameElement!;
               currWindow = currWindow.parent;
@@ -553,10 +555,10 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       }
     };
 
-    const onDOMContentLoaded = () => visit(document);
+    const onDOMContentLoaded = () => visit(win.document);
 
-    window.addEventListener('load', onLoad);
-    window.addEventListener('DOMContentLoaded', onDOMContentLoaded);
+    win.addEventListener('load', onLoad);
+    win.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
   return `\n(${applyPlaywrightAttributes.toString()})(${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
