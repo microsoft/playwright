@@ -133,7 +133,7 @@ export type JsonFullResult = {
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
-  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnTestErrorsEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
+  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnTestErrorEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
 
 export type JsonOnConfigureEvent = {
   method: 'onConfigure';
@@ -199,12 +199,12 @@ export type JsonOnAttachEvent = {
   params: JsonTestResultOnAttach;
 };
 
-export type JsonOnTestErrorsEvent = {
-  method: 'onTestErrors';
+export type JsonOnTestErrorEvent = {
+  method: 'onTestError';
   params: {
     testId: string;
     resultId: string;
-    errors: reporterTypes.TestError[];
+    error: reporterTypes.TestError;
   }
 };
 
@@ -304,8 +304,8 @@ export class TeleReporterReceiver {
       this._onAttach(params.testId, params.resultId, params.attachments);
       return;
     }
-    if (method === 'onTestErrors') {
-      this._onTestErrors(params.testId, params.resultId, params.errors);
+    if (method === 'onTestError') {
+      this._onTestError(params.testId, params.resultId, params.error);
       return;
     }
     if (method === 'onStepEnd') {
@@ -421,10 +421,10 @@ export class TeleReporterReceiver {
     })));
   }
 
-  private _onTestErrors(testId: string, resultId: string, errors: reporterTypes.TestError[]) {
+  private _onTestError(testId: string, resultId: string, error: reporterTypes.TestError) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
-    result.errors.push(...errors);
+    result.errors.push(error);
     result.error = result.errors[0];
   }
 

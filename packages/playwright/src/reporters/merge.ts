@@ -404,7 +404,7 @@ class IdsPatcher {
       case 'onProject':
         this._onProject(params.project);
         return;
-      case 'onTestErrors':
+      case 'onTestError':
       case 'onAttach':
       case 'onTestBegin':
       case 'onStepBegin':
@@ -517,9 +517,9 @@ class PathSeparatorPatcher {
       step.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       return;
     }
-    if (jsonEvent.method === 'onTestErrors') {
-      const errors = jsonEvent.params.errors;
-      errors.forEach(error => this._updateErrorLocations(error));
+    if (jsonEvent.method === 'onTestError') {
+      this._updateErrorLocations(jsonEvent.params.error);
+      return;
     }
     if (jsonEvent.method === 'onAttach') {
       const attach = jsonEvent.params;

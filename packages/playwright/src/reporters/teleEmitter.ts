@@ -72,6 +72,17 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
+  onTestError(test: reporterTypes.TestCase, result: reporterTypes.TestResult, error: reporterTypes.TestError): void {
+    this._messageSink({
+      method: 'onTestError',
+      params: {
+        testId: test.id,
+        resultId: (result as any)[this._idSymbol],
+        error,
+      }
+    });
+  }
+
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
@@ -79,7 +90,6 @@ export class TeleReporterEmitter implements ReporterV2 {
       timeout: test.timeout,
       annotations: []
     };
-    this._sendNewErrors(result, test.id);
     this._sendNewAttachments(result, test.id);
     this._messageSink({
       method: 'onTestEnd',
@@ -96,10 +106,6 @@ export class TeleReporterEmitter implements ReporterV2 {
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
     (step as any)[this._idSymbol] = createGuid();
-    // This is here to support "test paused" step, where we want to see all errors
-    // at the time of the pause. If we were to have `onTestError()` reporter api, this
-    // won't be needed.
-    this._sendNewErrors(result, test.id);
     this._messageSink({
       method: 'onStepBegin',
       params: {
@@ -258,22 +264,6 @@ export class TeleReporterEmitter implements ReporterV2 {
       status: result.status,
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
-  }
-
-  private _sendNewErrors(result: reporterTypes.TestResult, testId: string) {
-    const resultId = (result as any)[this._idSymbol] as string;
-    const knownErrorCount = this._resultKnownErrorsCounts.get(resultId) ?? 0;
-    if (result.errors.length > knownErrorCount) {
-      this._messageSink({
-        method: 'onTestErrors',
-        params: {
-          testId,
-          resultId: (result as any)[this._idSymbol],
-          errors: result.errors.slice(knownErrorCount),
-        }
-      });
-    }
-    this._resultKnownErrorsCounts.set(resultId, result.errors.length);
   }
 
   private _sendNewAttachments(result: reporterTypes.TestResult, testId: string) {
