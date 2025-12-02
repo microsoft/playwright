@@ -41,11 +41,17 @@ runs:
         npm ci
         echo "::endgroup::"
       shell: bash
+    - name: Check disk usage
+      if: always() && runner.os == 'Linux'
+      run: ./utils/disk_usage.sh
     - run: |
         echo "::group::npm run build"
         npm run build
         echo "::endgroup::"
       shell: bash
+    - name: Check disk usage
+      if: always() && runner.os == 'Linux'
+      run: ./utils/disk_usage.sh
     - run: |
         echo "::group::npx playwright install --with-deps"
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
@@ -68,6 +74,9 @@ runs:
       shell: ${{ inputs.shell }}
       env:
         PW_TAG: "@${{ inputs.bot-name }}"
+    - name: Check disk usage
+      if: always() && runner.os == 'Linux'
+      run: ./utils/disk_usage.sh
     - name: Azure Login
       uses: azure/login@v2
       if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
