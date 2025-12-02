@@ -45,14 +45,14 @@ const browserTabs = defineTool({
       }
       case 'close': {
         await context.closeTab(params.index);
-        response.setIncludeSnapshot('full');
+        response.setIncludeFullSnapshot();
         return;
       }
       case 'select': {
         if (params.index === undefined)
           throw new Error('Tab index is required');
         await context.selectTab(params.index);
-        response.setIncludeSnapshot('full');
+        response.setIncludeFullSnapshot();
         return;
       }
     }

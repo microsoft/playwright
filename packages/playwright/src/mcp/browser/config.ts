@@ -59,6 +59,7 @@ export type CLIOptions = {
   saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
+  snapshotMode?: 'incremental' | 'full' | 'none';
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
@@ -86,6 +87,9 @@ export const defaultConfig: FullConfig = {
   },
   server: {},
   saveTrace: false,
+  snapshot: {
+    mode: 'incremental',
+  },
   timeouts: {
     action: 5000,
     navigation: 60000,
@@ -103,6 +107,9 @@ export type FullConfig = Config & {
   network: NonNullable<Config['network']>,
   saveTrace: boolean;
   server: NonNullable<Config['server']>,
+  snapshot: {
+    mode: 'incremental' | 'full' | 'none';
+  },
   timeouts: {
     action: number;
     navigation: number;
@@ -243,6 +250,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     saveVideo: cliOptions.saveVideo,
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
+    snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -384,6 +392,10 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
     server: {
       ...pickDefined(base.server),
       ...pickDefined(overrides.server),
+    },
+    snapshot: {
+      ...pickDefined(base.snapshot),
+      ...pickDefined(overrides.snapshot),
     },
     timeouts: {
       ...pickDefined(base.timeouts),

@@ -175,5 +175,11 @@ export type Config = {
    * Whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.
    */
   imageResponses?: 'allow' | 'omit';
-};
 
+  snapshot?: {
+    /**
+     * When taking snapshots for responses, specifies the mode to use.
+     */
+    mode?: 'incremental' | 'full' | 'none';
+  }
+};
