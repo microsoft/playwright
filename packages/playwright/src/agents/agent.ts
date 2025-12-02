@@ -18,7 +18,6 @@ import { Loop } from '../mcp/sdk/bundle';
 
 import type z from 'zod';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { Tool } from '@modelcontextprotocol/sdk/types.js';
 import type * as tinyLoop from 'tiny-loop';
 
 type Logger = (category: string, text: string, details?: string) => void;
@@ -33,14 +32,18 @@ export type AgentSpec = {
   examples: string[];
 };
 
+type LoopOptions = ConstructorParameters<typeof tinyLoop.Loop>[1] & {
+  loopName: 'copilot' | 'claude' | 'openai';
+};
+
 export class Agent<T extends z.ZodSchema<any>> {
   readonly loop: tinyLoop.Loop;
   readonly spec: AgentSpec;
   readonly clients: Map<string, Client>;
-  readonly resultSchema: Tool['inputSchema'];
+  readonly resultSchema: tinyLoop.Schema;
 
-  constructor(loopName: 'copilot' | 'claude' | 'openai', spec: AgentSpec, clients: Map<string, Client>, resultSchema: Tool['inputSchema']) {
-    this.loop = new Loop(loopName);
+  constructor(loopOptions: LoopOptions, spec: AgentSpec, clients: Map<string, Client>, resultSchema: tinyLoop.Schema) {
+    this.loop = new Loop(loopOptions.loopName, loopOptions);
     this.spec = spec;
     this.clients = clients;
     this.resultSchema = resultSchema;
@@ -52,9 +55,8 @@ export class Agent<T extends z.ZodSchema<any>> {
     try {
       return await this.loop.run<z.output<T>>(`${prompt}\n\nTask:\n${task}\n\nParams:\n${JSON.stringify(params, null, 2)}`, {
         ...options,
-        // TODO: fix types in tiny-loop
-        tools: tools as any,
-        callTool: callTool as any,
+        tools,
+        callTool,
         resultSchema: this.resultSchema
       });
     } finally {
@@ -65,7 +67,7 @@ export class Agent<T extends z.ZodSchema<any>> {
   private async _initClients() {
     const clients: Record<string, Client> = {};
     const agentToolNames = new Set<string>(this.spec.tools);
-    const tools: Tool[] = [];
+    const tools: tinyLoop.Tool[] = [];
 
     for (const [name, client] of this.clients.entries()) {
       const list = await client.listTools();
@@ -73,7 +75,7 @@ export class Agent<T extends z.ZodSchema<any>> {
         if (!agentToolNames.has(name + '/' + tool.name))
           continue;
         agentToolNames.delete(name + '/' + tool.name);
-        tools.push({ ...tool, name: name + '__' + tool.name });
+        tools.push({ ...tool as tinyLoop.Tool, name: name + '__' + tool.name });
       }
       clients[name] = client;
     }

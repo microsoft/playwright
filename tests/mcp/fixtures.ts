@@ -27,12 +27,18 @@ import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
+import { Agent } from '../../packages/playwright/lib/agents/agent';
+import { wrapInClient } from '../../packages/playwright/lib/mcp/sdk/server';
+import { parseAgentSpec } from '../../packages/playwright/lib/agents/agentParser';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
+import type { Agent as AgentType } from '../../packages/playwright/src/agents/agent';
+import type * as tinyLoop from 'tiny-loop';
+import type * as mcp from '../../packages/playwright/src/mcp/sdk/exports';
 
 export { parseResponse };
 
@@ -58,6 +64,7 @@ export type StartClient = (options?: {
   env?: NodeJS.ProcessEnv,
 }) => Promise<{ client: Client, stderr: () => string }>;
 
+type AgentFactory = (backend: mcp.ServerBackend, fileName: string, reportToolName: string, resultSchema: tinyLoop.Schema) => Promise<AgentType<any>>;
 
 type TestFixtures = {
   client: Client;
@@ -67,7 +74,8 @@ type TestFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   mcpHeadless: boolean;
-  loop: Loop;
+  loop: tinyLoop.Loop;
+  createAgent: AgentFactory;
 };
 
 type WorkerFixtures = {
@@ -190,26 +198,61 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
 
   loop: async ({ server }, use) => {
     const provider = 'copilot';
-    const cacheFile = path.join(__dirname, '__cache__', provider, sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
-    const dataBefore = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
-    let cache = {};
-    try {
-      cache = JSON.parse(dataBefore);
-    } catch {
-    }
-    const caches = { before: cache, after: {} };
+    const caches = await loadLoopCaches(provider);
     await use(new Loop(provider, {
       caches,
       secrets: { PORT: String(server.PORT) },
       logger: (category, ...args) => debug(category)(...args),
     }));
-    const dataAfter = JSON.stringify(caches.after, null, 2);
-    if (test.info().status === 'passed' && dataBefore !== dataAfter) {
-      await fs.promises.mkdir(path.dirname(cacheFile), { recursive: true });
-      await fs.promises.writeFile(cacheFile, dataAfter);
-    }
+    await saveLoopCaches(caches);
+  },
+
+  createAgent: async ({ server }, use) => {
+    const provider = 'copilot';
+    let client: Client | undefined;
+    let caches: any;
+    await use(async (backend: mcp.ServerBackend, fileName: string, reportToolName: string, resultSchema: tinyLoop.Schema) => {
+      client = await wrapInClient(backend, { name: 'client', version: '1.0.0' });
+      const spec = await parseAgentSpec(path.join(__dirname, '../../packages/playwright/src/agents', fileName));
+      spec.tools = spec.tools.filter(tool => tool.startsWith('playwright-test/') && tool !== 'playwright-test/' + reportToolName);
+      spec.instructions = spec.instructions.replace('`' + reportToolName + '`', '`report_result`');
+      caches = await loadLoopCaches(provider);
+      const loopOptions: ConstructorParameters<typeof tinyLoop.Loop>[1] = {
+        caches,
+        secrets: { PORT: String(server.PORT) },
+        logger: (category, ...args) => debug(category)(...args),
+      };
+      const agent = new Agent({ ...loopOptions, loopName: provider }, spec, new Map([['playwright-test', client]]), resultSchema);
+      return agent as unknown as AgentType<any>;
+    });
+    if (caches)
+      await saveLoopCaches(caches);
+    await client?.close();
   },
 });
+
+const kEmptyCacheData = '{}';
+
+async function loadLoopCaches(provider: string) {
+  const cacheFile = path.join(__dirname, '__cache__', provider, sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
+  const dataBefore = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => kEmptyCacheData);
+  let cache = {};
+  try {
+    cache = JSON.parse(dataBefore);
+  } catch {
+  }
+  return { before: cache, after: {}, dataBefore, cacheFile };
+}
+
+async function saveLoopCaches(caches: { before: any, after: any, dataBefore: string, cacheFile: string }) {
+  const dataAfter = JSON.stringify(caches.after, null, 2);
+  if (caches.dataBefore === dataAfter)
+    return;
+  if (test.info().status !== 'passed' && caches.dataBefore !== kEmptyCacheData)
+    return;
+  await fs.promises.mkdir(path.dirname(caches.cacheFile), { recursive: true });
+  await fs.promises.writeFile(caches.cacheFile, dataAfter);
+}
 
 async function createTransport(mcpServerType: TestOptions['mcpServerType'], options: { args: string[], env: NodeJS.ProcessEnv, cwd: string }): Promise<{
   transport: Transport,
