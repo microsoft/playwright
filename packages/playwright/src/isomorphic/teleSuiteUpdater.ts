@@ -61,7 +61,7 @@ export class TeleSuiteUpdater {
     this._receiver = new TeleReporterReceiver(this._createReporter(), {
       mergeProjects: true,
       mergeTestCases: true,
-      resolvePath: (rootDir, relativePath) => rootDir + options.pathSeparator + relativePath,
+      resolvePath: createPathResolve(options.pathSeparator),
       clearPreviousResultsWhenTestBegins: true,
     });
     this._options = options;
@@ -71,8 +71,8 @@ export class TeleSuiteUpdater {
     return {
       version: () => 'v2',
 
-      onConfigure: (c: reporterTypes.FullConfig) => {
-        this.config = c;
+      onConfigure: (config: reporterTypes.FullConfig) => {
+        this.config = config;
         // TeleReportReceiver is merging everything into a single suite, so when we
         // run one test, we still get many tests via rootSuite.allTests().length.
         // To work around that, have a dedicated per-run receiver that will only have
@@ -86,8 +86,9 @@ export class TeleSuiteUpdater {
         }, {
           mergeProjects: true,
           mergeTestCases: false,
-          resolvePath: (rootDir, relativePath) => rootDir + this._options.pathSeparator + relativePath,
+          resolvePath: createPathResolve(this._options.pathSeparator),
         });
+        void this._lastRunReceiver.dispatch({ method: 'onConfigure', params: { config } });
       },
 
       onBegin: (suite: reporterTypes.Suite) => {
@@ -176,4 +177,25 @@ export class TeleSuiteUpdater {
       progress: this.progress,
     };
   }
+}
+
+function createPathResolve(pathSeparator: string) {
+  return (rootDir: string, relativePath: string) => {
+    const segments: string[] = [];
+    for (const segment of [...rootDir.split(pathSeparator), ...relativePath.split(pathSeparator)]) {
+      // Careful with "C:\\" on win32 and "/root" on posix.
+      const isAfterDrive = pathSeparator === '\\' && segments.length === 1 && segments[0].endsWith(':');
+      const isFirst = !segments.length;
+      if (!segment && !isFirst && !isAfterDrive)
+        continue;
+      if (segment === '.')
+        continue;
+      if (segment === '..') {
+        segments.pop();
+        continue;
+      }
+      segments.push(segment);
+    }
+    return segments.join(pathSeparator);
+  };
 }
