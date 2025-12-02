@@ -141,8 +141,6 @@ jobs:
   test_vscode_extension:
     name: VSCode Extension
     runs-on: ubuntu-latest
-    env:
-      PWTEST_BOT_NAME: "vscode-extension"
     steps:
     - uses: actions/checkout@v5
     - uses: actions/setup-node@v6
@@ -167,12 +165,14 @@ jobs:
     - name: Run extension tests
       run: npm run test -- --workers=1
       working-directory: ./playwright-vscode
+      env:
+        PW_TAG: "@vscode-extension"
     - name: Upload blob report
       if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: playwright-vscode/blob-report
-        job_name: ${{ env.PWTEST_BOT_NAME }}
+        job_name: vscode-extension
 
   test_package_installations:
     name: "Installation Test ${{ matrix.os }}"

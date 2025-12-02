@@ -31,7 +31,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report'), fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['blob', { outputDir: path.join(__dirname, '..', '..', 'blob-report') }],
   ] : [
     ['list']
   ];
@@ -51,6 +51,7 @@ export default defineConfig<TestOptions>({
   forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   reporter: reporters(),
+  tag: process.env.PW_TAG,
   projects: [
     { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
     { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },

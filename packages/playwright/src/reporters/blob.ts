@@ -52,6 +52,7 @@ export class BlobReporter extends TeleReporterEmitter {
     const metadata: BlobReportMetadata = {
       version: currentBlobReportVersion,
       userAgent: getUserAgent(),
+      // TODO: remove after some time, recommend config.tag instead.
       name: process.env.PWTEST_BOT_NAME,
       shard: config.shard ?? undefined,
       pathSeparator: path.sep,

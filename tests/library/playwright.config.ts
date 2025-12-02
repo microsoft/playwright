@@ -46,7 +46,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['blob'],
   ] : [
     ['html', { open: 'on-failure', title: 'Playwright Library Tests' }]
   ];
@@ -100,6 +100,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
   reporter: reporters(),
+  tag: process.env.PW_TAG,
   projects: [],
   use: {
     connectOptions,
