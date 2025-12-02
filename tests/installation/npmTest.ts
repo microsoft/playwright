@@ -38,7 +38,7 @@ const expect = _expect.extend({
     const downloaded = new Set();
     let index = 0;
     while (true) {
-      const match = received.substring(index).match(/(chromium|chromium headless shell|firefox|webkit|winldd|ffmpeg)[\s\d\.]+\(?playwright build v\d+\)? downloaded/im);
+      const match = received.substring(index).match(/\(playwright (chromium|chromium-headless-shell|firefox|webkit|winldd|ffmpeg) v\d+\) downloaded/im);
       if (!match)
         break;
       downloaded.add(match[1].replace(/\s/g, '-').toLowerCase());
