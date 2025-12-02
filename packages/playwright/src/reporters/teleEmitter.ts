@@ -98,8 +98,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       }
     });
 
-    const resultId = (result as any)[this._idSymbol] as string;
-    this._resultKnownAttachmentCounts.delete(resultId);
+    this._resultKnownAttachmentCounts.delete((result as any)[this._idSymbol]);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
@@ -109,7 +108,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       params: {
         testId: test.id,
         resultId: (result as any)[this._idSymbol],
-        step: this._serializeStepStart(step),
+        step: this._serializeStepStart(step)
       }
     });
   }
