@@ -1,6 +1,7 @@
 ---
 id: locators
-title: "Locators"
+title: "Locators"<img width="1507" height="626" alt="image" src="https://github.com/user-attachments/assets/b586c19f-25c1-4bae-ab84-34e641422449" />
+
 ---
 
 ## Introduction
@@ -819,7 +820,7 @@ await page
 page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart"))
+               new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
