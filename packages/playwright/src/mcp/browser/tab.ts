@@ -163,8 +163,18 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
+    if (!this._shouldCaptureConsoleMessage(message.type))
+      return;
     this._consoleMessages.push(message);
     this._recentConsoleMessages.push(message);
+  }
+
+  private _shouldCaptureConsoleMessage(type: ConsoleMessage['type']): boolean {
+    if (!this.context.config.console?.logLevels)
+      return true;
+    if (type === undefined)
+      return false;
+    return this.context.config.console.logLevels.includes(type);
   }
 
   private _onClose() {

@@ -181,5 +181,14 @@ export type Config = {
      * When taking snapshots for responses, specifies the mode to use.
      */
     mode?: 'incremental' | 'full' | 'none';
-  }
+  };
+
+  console?: {
+    /**
+     * List of console message levels to return to the client.
+     * Use an empty array to disable forwarding console messages.
+     * If not specified, all levels are forwarded.
+     */
+    logLevels?: string[];
+  };
 };

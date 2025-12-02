@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { devices } from 'playwright-core';
+import { devices, ConsoleMessage } from 'playwright-core';
 import { dotenv, debug } from 'playwright-core/lib/utilsBundle';
 import { fileExistsAsync } from '../../util';
 import { firstRootPath } from '../sdk/server';
@@ -67,7 +67,29 @@ export type CLIOptions = {
   userAgent?: string;
   userDataDir?: string;
   viewportSize?: ViewportSize;
+  consoleLogLevels?: string[];
 };
+
+const validConsoleLogLevels = new Set<ReturnType<ConsoleMessage['type']>>([
+  'log',
+  'debug',
+  'info',
+  'error',
+  'warning',
+  'dir',
+  'dirxml',
+  'table',
+  'trace',
+  'clear',
+  'startGroup',
+  'startGroupCollapsed',
+  'endGroup',
+  'assert',
+  'profile',
+  'profileEnd'
+]);
+
+const noneLogLevels = 'none';
 
 export const defaultConfig: FullConfig = {
   browser: {
@@ -94,6 +116,9 @@ export const defaultConfig: FullConfig = {
     action: 5000,
     navigation: 60000,
   },
+  console: {
+    logLevels: undefined,
+  },
 };
 
 type BrowserUserConfig = NonNullable<Config['browser']>;
@@ -114,6 +139,9 @@ export type FullConfig = Config & {
     action: number;
     navigation: number;
   },
+  console: {
+    logLevels?: ReturnType<ConsoleMessage['type']>[];
+  },
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -129,6 +157,7 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
   await validateConfig(result);
+  result = normalizeConfig(result);
   return result;
 }
 
@@ -147,6 +176,16 @@ async function validateConfig(config: FullConfig): Promise<void> {
   }
   if (config.sharedBrowserContext && config.saveVideo)
     throw new Error('saveVideo is not supported when sharedBrowserContext is true');
+  validateLoglevels(config.console?.logLevels);
+}
+
+function normalizeConfig(config: FullConfig): FullConfig {
+  return {
+    ...config,
+    console: {
+      logLevels: normalizeLogLevels(config.console?.logLevels),
+    },
+  };
 }
 
 export function configFromCLIOptions(cliOptions: CLIOptions): Config {
@@ -254,6 +293,9 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
+    console: {
+      logLevels: cliOptions.consoleLogLevels,
+    },
     timeouts: {
       action: cliOptions.timeoutAction,
       navigation: cliOptions.timeoutNavigation,
@@ -261,6 +303,30 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   };
 
   return result;
+}
+
+function normalizeLogLevels(logLevels: string[] | undefined): ReturnType<ConsoleMessage['type']>[] | undefined {
+  if (!logLevels)
+    return undefined;
+  if (logLevels.includes(noneLogLevels))
+    return [];
+  return Array.from(new Set(logLevels as ReturnType<ConsoleMessage['type']>[]));
+}
+
+function validateLoglevels(logLevels: string[] | undefined): void {
+  if (logLevels === undefined)
+    return;
+  if (!Array.isArray(logLevels) || logLevels.some(level => typeof level !== 'string'))
+    throw new Error('Console log levels must be an array of strings, possibly empty');
+  if (logLevels.includes(noneLogLevels)) {
+    if (logLevels.length > 1)
+      throw new Error(`Cannot specify "${noneLogLevels}" with other log levels`);
+    return;
+  }
+  for (const level of logLevels) {
+    if (!validConsoleLogLevels.has(level as ReturnType<ConsoleMessage['type']>))
+      throw new Error(`Invalid console log level: ${level}`);
+  }
 }
 
 function configFromEnv(): Config {
@@ -304,6 +370,7 @@ function configFromEnv(): Config {
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  options.consoleLogLevels = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CONSOLE_LOG_LEVELS);
   return configFromCLIOptions(options);
 }
 
@@ -400,6 +467,10 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
     timeouts: {
       ...pickDefined(base.timeouts),
       ...pickDefined(overrides.timeouts),
+    },
+    console: {
+      ...pickDefined(base.console),
+      ...pickDefined(overrides.console),
     },
   } as FullConfig;
 }
