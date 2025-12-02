@@ -139,19 +139,32 @@ export const WorkbenchLoader: React.FunctionComponent<{
         navigator.serviceWorker.addEventListener('message', swListener);
         setProgress({ done: 0, total: 1 });
 
-        const params = new URLSearchParams();
-        params.set('trace', traceURL);
-        const response = await fetch(`contexts?${params.toString()}`);
-        if (!response.ok) {
+        async function tryFetch(traceURL: string): Promise<string | undefined> {
+          const params = new URLSearchParams();
+          params.set('trace', traceURL);
+          const response = await fetch(`contexts?${params.toString()}`);
+          if (!response.ok) {
+            const { error } = await response.json();
+            setProcessingErrorMessage(error);
+            return error;
+          }
+          const contextEntries = await response.json();
+          const model = new MultiTraceModel(traceURL, contextEntries);
+          setProgress({ done: 0, total: 0 });
+          setProcessingErrorMessage(null);
+          setModel(model);
+        }
+
+        let error = await tryFetch(traceURL);
+        if (error?.includes('please grant permission for Local Network Access')) {
+          // fetching the asset opens the permission prompt. but only from window, not from SW (https://issues.chromium.org/issues/460180743)
+          await fetch(traceURL, { headers: { 'x-pw-serviceworker': 'skip' } });
+          error = await tryFetch(traceURL);
+        }
+        if (error) {
           if (!isServer)
             setTraceURL(undefined);
-          setProcessingErrorMessage((await response.json()).error);
-          return;
         }
-        const contextEntries = await response.json();
-        const model = new MultiTraceModel(traceURL, contextEntries);
-        setProgress({ done: 0, total: 0 });
-        setModel(model);
       } finally {
         navigator.serviceWorker.removeEventListener('message', swListener);
       }
