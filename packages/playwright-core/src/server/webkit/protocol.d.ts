@@ -6791,17 +6791,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type goForwardReturnValue = {
     }
     /**
-     * Navigates current page to the given URL.
-     */
-    export type navigateParameters = {
-      /**
-       * URL to navigate the page to.
-       */
-      url: string;
-    }
-    export type navigateReturnValue = {
-    }
-    /**
      * Override's the user agent of the inspected page
      */
     export type overrideUserAgentParameters = {
@@ -9405,7 +9394,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.reload": Page.reloadParameters;
     "Page.goBack": Page.goBackParameters;
     "Page.goForward": Page.goForwardParameters;
-    "Page.navigate": Page.navigateParameters;
     "Page.overrideUserAgent": Page.overrideUserAgentParameters;
     "Page.overridePlatform": Page.overridePlatformParameters;
     "Page.overrideSetting": Page.overrideSettingParameters;
@@ -9712,7 +9700,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.reload": Page.reloadReturnValue;
     "Page.goBack": Page.goBackReturnValue;
     "Page.goForward": Page.goForwardReturnValue;
-    "Page.navigate": Page.navigateReturnValue;
     "Page.overrideUserAgent": Page.overrideUserAgentReturnValue;
     "Page.overridePlatform": Page.overridePlatformReturnValue;
     "Page.overrideSetting": Page.overrideSettingReturnValue;
