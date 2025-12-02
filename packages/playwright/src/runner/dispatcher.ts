@@ -436,10 +436,11 @@ class JobDispatcher {
     if (!data)
       return;
     const { test, result } = data;
-    result.errors.push(...params.errors);
-    result.error = result.errors[0];
-    for (const error of result.errors)
+    for (const error of params.errors) {
+      result.errors.push(error);
+      result.error = result.errors[0];
       this._reporter.onTestError?.(test, result, error);
+    }
   }
 
   private _failTestWithErrors(test: TestCase, errors: TestError[]) {
@@ -452,10 +453,11 @@ class JobDispatcher {
       result = test._appendTestResult();
       this._reporter.onTestBegin?.(test, result);
     }
-    result.errors.push(...errors);
-    result.error = result.errors[0];
-    for (const error of result.errors)
+    for (const error of errors) {
+      result.errors.push(error);
+      result.error = result.errors[0];
       this._reporter.onTestError?.(test, result, error);
+    }
     result.status = errors.length ? 'failed' : 'skipped';
     this._reportTestEnd(test, result);
     this._failedTests.add(test);
