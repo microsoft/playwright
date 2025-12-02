@@ -24,7 +24,7 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
-import { findTestEndPosition } from '../transform/babelHighlightUtils';
+import { findTestEndLocation } from '../transform/babelHighlightUtils';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -494,7 +494,7 @@ export class TestInfoImpl implements TestInfo {
   private async _testEndLocation(): Promise<Location | undefined> {
     try {
       const source = await fs.promises.readFile(this.file, 'utf-8');
-      return findTestEndPosition(source, { file: this.file, line: this.line, column: this.column });
+      return findTestEndLocation(source, { file: this.file, line: this.line, column: this.column });
     } catch {}
   }
 

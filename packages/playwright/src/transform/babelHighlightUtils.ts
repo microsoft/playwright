@@ -28,7 +28,7 @@ function containsLocation(range: T.SourceLocation, location: Location): boolean 
   return true;
 }
 
-export function findTestEndPosition(text: string, testStartLocation: Location): Location | undefined {
+export function findTestEndLocation(text: string, testStartLocation: Location): Location | undefined {
   const ast = babelParse(text, path.basename(testStartLocation.file), false);
   let result: Location | undefined;
   traverse(ast, {
