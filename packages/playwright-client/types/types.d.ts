@@ -14999,14 +14999,6 @@ export interface BrowserType<Unused = {}> {
     deviceScaleFactor?: number;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-     * [`headless`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context-option-headless)
-     * option will be set `false`.
-     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
-     */
-    devtools?: boolean;
-
-    /**
      * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
      * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
      * created in is closed.
@@ -15085,9 +15077,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Whether to run browser in headless mode. More details for
      * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
-     * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
-     * `true`.
+     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
      */
     headless?: boolean;
 
@@ -15429,14 +15419,6 @@ export interface BrowserType<Unused = {}> {
     chromiumSandbox?: boolean;
 
     /**
-     * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-     * [`headless`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-server-option-headless) option
-     * will be set `false`.
-     * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
-     */
-    devtools?: boolean;
-
-    /**
      * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
      * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
      * created in is closed.
@@ -15480,9 +15462,7 @@ export interface BrowserType<Unused = {}> {
     /**
      * Whether to run browser in headless mode. More details for
      * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
-     * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
-     * `true`.
+     * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
      */
     headless?: boolean;
 
@@ -21764,14 +21744,6 @@ export interface LaunchOptions {
   chromiumSandbox?: boolean;
 
   /**
-   * **Chromium-only** Whether to auto-open a Developer Tools panel for each tab. If this option is `true`, the
-   * [`headless`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-headless) option will be
-   * set `false`.
-   * @deprecated Use [debugging tools](https://playwright.dev/docs/debug) instead.
-   */
-  devtools?: boolean;
-
-  /**
    * If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and
    * is deleted when browser is closed. In either case, the downloads are deleted when the browser context they were
    * created in is closed.
@@ -21815,9 +21787,7 @@ export interface LaunchOptions {
   /**
    * Whether to run browser in headless mode. More details for
    * [Chromium](https://developers.google.com/web/updates/2017/04/headless-chrome) and
-   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true` unless the
-   * [`devtools`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-devtools) option is
-   * `true`.
+   * [Firefox](https://hacks.mozilla.org/2017/12/using-headless-mode-in-firefox/). Defaults to `true`.
    */
   headless?: boolean;
 
