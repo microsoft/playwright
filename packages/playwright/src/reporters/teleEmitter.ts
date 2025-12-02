@@ -34,7 +34,6 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
-  private _resultKnownErrorsCounts = new Map<string, number>();
   private _resultKnownAttachmentCounts = new Map<string, number>();
   // In case there is blob reporter and UI mode, make sure one does override
   // the id assigned by the other.
@@ -101,7 +100,6 @@ export class TeleReporterEmitter implements ReporterV2 {
 
     const resultId = (result as any)[this._idSymbol] as string;
     this._resultKnownAttachmentCounts.delete(resultId);
-    this._resultKnownErrorsCounts.delete(resultId);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
