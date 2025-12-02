@@ -2141,6 +2141,10 @@ export module Protocol {
        * The sample rate of the primary audio track in hertz.
        */
       sampleRate: number;
+      /**
+       * Whether the track contains protected contents
+       */
+      isProtected?: boolean;
     }
     /**
      * A structure holding media element's audio-specific statistics and configurations.
@@ -2173,6 +2177,10 @@ export module Protocol {
       width: number;
       spatialVideoMetadata?: SpatialVideoMetadata;
       videoProjectionMetadata?: VideoProjectionMetadata;
+      /**
+       * Whether the track contains protected contents
+       */
+      isProtected?: boolean;
     }
     /**
      * WebCodecs VideoColorSpace
