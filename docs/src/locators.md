@@ -1,7 +1,6 @@
 ---
 id: locators
 title: "Locators"
-
 ---
 
 ## Introduction
