@@ -1,6 +1,6 @@
 ---
 id: locators
-title: "Locators"<img width="1507" height="626" alt="image" src="https://github.com/user-attachments/assets/b586c19f-25c1-4bae-ab84-34e641422449" />
+title: "Locators"
 
 ---
 
