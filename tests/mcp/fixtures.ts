@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
-import { Loop } from 'tiny-loop';
+import { Loop } from '@lowire/loop';
 import debug from 'debug';
 
 import { test as baseTest, expect as baseExpect } from '@playwright/test';
@@ -189,21 +189,23 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpServerType: ['mcp', { option: true }],
 
   loop: async ({ server }, use) => {
-    const provider = 'copilot';
-    const cacheFile = path.join(__dirname, '__cache__', provider, sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
+    const cacheFile = path.join(__dirname, '__cache__', 'copilot', sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
     const dataBefore = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
     let cache = {};
     try {
       cache = JSON.parse(dataBefore);
     } catch {
     }
-    const caches = { before: cache, after: {} };
-    await use(new Loop(provider, {
-      caches,
-      secrets: { PORT: String(server.PORT) },
-      logger: (category, ...args) => debug(category)(...args),
-    }));
-    const dataAfter = JSON.stringify(caches.after, null, 2);
+    const loop = new Loop('github', {
+      model: 'claude-sonnet-4.5',
+      cache: {
+        messages: cache,
+        secrets: { PORT: String(server.PORT) },
+      },
+      debug,
+    });
+    await use(loop);
+    const dataAfter = JSON.stringify(loop.cache(), null, 2);
     if (test.info().status === 'passed' && dataBefore !== dataAfter) {
       await fs.promises.mkdir(path.dirname(cacheFile), { recursive: true });
       await fs.promises.writeFile(cacheFile, dataAfter);

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { colors } from 'playwright-core/lib/utils';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { identityBrowserContextFactory } from '../mcp/browser/browserContextFactory';
 import { BrowserServerBackend } from '../mcp/browser/browserServerBackend';
@@ -23,38 +23,24 @@ import { Loop } from '../mcp/sdk/bundle';
 import { wrapInClient } from '../mcp/sdk/server';
 
 import type * as playwright from 'playwright-core';
-import type * as tinyLoop from 'tiny-loop';
+import type * as lowireLoop from '@lowire/loop';
 
 export async function performTask(context: playwright.BrowserContext, task: string) {
   const backend = new BrowserServerBackend(defaultConfig, identityBrowserContextFactory(context));
   const client = await wrapInClient(backend, { name: 'Internal', version: '0.0.0' });
-  const loop = new Loop('copilot');
+  const loop = new Loop('github', { model: 'claude-sonnet-4.5' });
 
-  const callTool: (params: { name: string, arguments: any}) => Promise<tinyLoop.ToolResult> = async params => {
-    return await client.callTool(params) as tinyLoop.ToolResult;
+  const callTool: (params: { name: string, arguments: any}) => Promise<lowireLoop.ToolResult> = async params => {
+    return await client.callTool(params) as lowireLoop.ToolResult;
   };
 
   try {
     return await loop.run(task, {
-      // TODO: fix types in tiny-loop
-      tools: await backend.listTools() as any,
-      callTool: callTool as any,
-      logger,
+      tools: await backend.listTools(),
+      callTool,
+      debug,
     });
   } finally {
     await client.close();
   }
-}
-
-function logger(category: string, text: string, details = '') {
-  const trimmedText = trim(text, 100);
-  const trimmedDetails = trim(details, 100 - trimmedText.length - 1);
-  // eslint-disable-next-line no-console
-  console.log(colors.bold(colors.green(category)), trimmedText, colors.dim(trimmedDetails));
-}
-
-function trim(text: string, maxLength: number) {
-  if (text.length <= maxLength)
-    return text;
-  return text.slice(0, maxLength - 3) + '...';
 }
