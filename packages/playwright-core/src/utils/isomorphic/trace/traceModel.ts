@@ -20,7 +20,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
-import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
+import type { ActionEntry, ContextEntry, PageEntry } from '@isomorphic/trace/entries';
 import type { StackFrame } from '@protocol/channels';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
@@ -61,7 +61,7 @@ export type ErrorDescription = {
 
 export type Attachment = trace.AfterActionTraceEventAttachment & { callId: string };
 
-export class MultiTraceModel {
+export class TraceModel {
   readonly startTime: number;
   readonly endTime: number;
   readonly browserName: string;

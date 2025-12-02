@@ -21,7 +21,7 @@ import type * as traceV5 from './versions/traceV5';
 import type * as traceV6 from './versions/traceV6';
 import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
-import type { ActionEntry, ContextEntry, PageEntry } from '../types/entries';
+import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
 
 export class TraceVersionError extends Error {
@@ -299,6 +299,7 @@ export class TraceModernizer {
       class: metadata.type,
       method: metadata.method,
       params: metadata.params,
+      // eslint-disable-next-line no-restricted-globals
       wallTime: metadata.wallTime || Date.now(),
       log: metadata.log,
       beforeSnapshot: metadata.snapshots.find(s => s.title === 'before')?.snapshotName,

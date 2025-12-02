@@ -15,14 +15,14 @@
 */
 
 import * as React from 'react';
-import { MultiTraceModel } from './modelUtil';
+import { TraceModel } from '@isomorphic/trace/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 
 export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson }) => {
-  const [model, setModel] = React.useState<MultiTraceModel | undefined>(undefined);
+  const [model, setModel] = React.useState<TraceModel | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -36,7 +36,7 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
         const model = await loadSingleTraceFile(traceJson);
         setModel(model);
       } catch {
-        const model = new MultiTraceModel('', []);
+        const model = new TraceModel('', []);
         setModel(model);
       } finally {
         setCounter(counter + 1);
@@ -51,10 +51,10 @@ export const LiveWorkbenchLoader: React.FC<{ traceJson: string }> = ({ traceJson
   return <Workbench isLive={true} model={model} />;
 };
 
-async function loadSingleTraceFile(traceJson: string): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(traceJson: string): Promise<TraceModel> {
   const params = new URLSearchParams();
   params.set('trace', traceJson);
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new MultiTraceModel(traceJson, contextEntries);
+  return new TraceModel(traceJson, contextEntries);
 }

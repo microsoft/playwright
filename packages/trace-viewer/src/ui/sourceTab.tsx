@@ -21,7 +21,7 @@ import './sourceTab.css';
 import { StackTraceView } from './stackTrace';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
-import type { SourceLocation, SourceModel } from './modelUtil';
+import type { SourceLocation, SourceModel } from '@isomorphic/trace/traceModel';
 import type { StackFrame } from '@protocol/channels';
 import { CopyToClipboard } from './copyToClipboard';
 import { ToolbarButton } from '@web/components/toolbarButton';

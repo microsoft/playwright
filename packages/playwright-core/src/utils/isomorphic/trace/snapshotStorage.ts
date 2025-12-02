@@ -15,10 +15,10 @@
  */
 
 import { rewriteURLForCustomProtocol, SnapshotRenderer } from './snapshotRenderer';
-import { LRUCache } from './lruCache';
+import { LRUCache } from '../lruCache';
 
 import type { FrameSnapshot, ResourceSnapshot } from '@trace/snapshot';
-import type { PageEntry } from '../types/entries';
+import type { PageEntry } from './entries';
 
 
 export class SnapshotStorage {

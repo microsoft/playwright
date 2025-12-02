@@ -19,9 +19,9 @@ import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';
 
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from './entries';
 
-export interface TraceModelBackend {
+export interface TraceLoaderBackend {
   entryNames(): Promise<string[]>;
   hasEntry(entryName: string): Promise<boolean>;
   readText(entryName: string): Promise<string | undefined>;
@@ -30,16 +30,16 @@ export interface TraceModelBackend {
   traceURL(): string;
 }
 
-export class TraceModel {
+export class TraceLoader {
   contextEntries: ContextEntry[] = [];
   private _snapshotStorage: SnapshotStorage | undefined;
-  private _backend!: TraceModelBackend;
+  private _backend!: TraceLoaderBackend;
   private _resourceToContentType = new Map<string, string>();
 
   constructor() {
   }
 
-  async load(backend: TraceModelBackend, unzipProgress: (done: number, total: number) => void) {
+  async load(backend: TraceLoaderBackend, unzipProgress: (done: number, total: number) => void) {
     this._backend = backend;
 
     const ordinals: string[] = [];

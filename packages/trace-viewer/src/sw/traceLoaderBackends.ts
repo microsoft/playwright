@@ -17,13 +17,13 @@
 import * as zipImport from '@zip.js/zip.js/lib/zip-no-worker-inflate.js';
 
 import type * as zip from '@zip.js/zip.js';
-import type { TraceModelBackend } from './traceModel';
+import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
 
 const zipjs = zipImport as typeof zip;
 
 type Progress = (done: number, total: number) => undefined;
 
-export class ZipTraceModelBackend implements TraceModelBackend {
+export class ZipTraceLoaderBackend implements TraceLoaderBackend {
   private _zipReader: zip.ZipReader<unknown>;
   private _entriesPromise: Promise<Map<string, zip.Entry>>;
   private _traceURL: string;
@@ -94,7 +94,7 @@ export class ZipTraceModelBackend implements TraceModelBackend {
   }
 }
 
-export class FetchTraceModelBackend implements TraceModelBackend {
+export class FetchTraceLoaderBackend implements TraceLoaderBackend {
   private _entriesPromise: Promise<Map<string, string>>;
   private _path: string;
 

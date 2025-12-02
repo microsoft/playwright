@@ -17,7 +17,8 @@
 import './snapshotTab.css';
 import * as React from 'react';
 import type { ActionTraceEvent } from '@trace/trace';
-import { type MultiTraceModel, nextActionByStartTime, previousActionByEndTime } from './modelUtil';
+import { nextActionByStartTime, previousActionByEndTime } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { Toolbar } from '@web/components/toolbar';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { clsx, useMeasure, useSetting } from '@web/uiUtils';
@@ -40,7 +41,7 @@ export type HighlightedElement = {
 
 export const SnapshotTabsView: React.FunctionComponent<{
   action: ActionTraceEvent | undefined,
-  model?: MultiTraceModel,
+  model?: TraceModel,
   sdkLanguage: Language,
   testIdAttributeName: string,
   isInspecting: boolean,
