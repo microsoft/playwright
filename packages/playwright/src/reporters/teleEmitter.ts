@@ -71,6 +71,17 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
+  onTestError(test: reporterTypes.TestCase, result: reporterTypes.TestResult, error: reporterTypes.TestError): void {
+    this._messageSink({
+      method: 'onTestError',
+      params: {
+        testId: test.id,
+        resultId: (result as any)[this._idSymbol],
+        error,
+      }
+    });
+  }
+
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
@@ -248,7 +259,6 @@ export class TeleReporterEmitter implements ReporterV2 {
       id: (result as any)[this._idSymbol],
       duration: result.duration,
       status: result.status,
-      errors: result.errors,
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }

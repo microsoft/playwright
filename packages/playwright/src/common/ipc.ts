@@ -84,11 +84,15 @@ export type AttachmentPayload = {
   stepId?: string;
 };
 
+export type TestErrorsPayload = {
+  testId: string;
+  errors: TestInfoErrorImpl[];
+};
+
 export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
-  errors: TestInfoErrorImpl[];
 };
 
 export type CustomMessageRequestPayload = {
@@ -105,7 +109,6 @@ export type TestEndPayload = {
   testId: string;
   duration: number;
   status: TestStatus;
-  errors: TestInfoErrorImpl[];
   hasNonRetriableError: boolean;
   expectedStatus: TestStatus;
   annotations: { type: string, description?: string }[];

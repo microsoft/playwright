@@ -24,12 +24,13 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { findTestEndLocation } from '../transform/babelHighlightUtils';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestErrorsPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -69,6 +70,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
+  private _onErrors: (errors: TestErrorsPayload) => void;
   private _onTestPaused: (payload: TestPausedPayload) => void;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
@@ -121,6 +123,7 @@ export class TestInfoImpl implements TestInfo {
   readonly outputDir: string;
   readonly snapshotDir: string;
   errors: TestInfoErrorImpl[] = [];
+  private _reportedErrorCount = 0;
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
   private _workerParams: WorkerInitParams;
 
@@ -164,12 +167,14 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
+    onErrors: (payload: TestErrorsPayload) => void,
     onTestPaused: (payload: TestPausedPayload) => void,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
     this._onStepEnd = onStepEnd;
     this._onAttach = onAttach;
+    this._onErrors = onErrors;
     this._onTestPaused = onTestPaused;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
@@ -406,7 +411,7 @@ export class TestInfoImpl implements TestInfo {
     this._tracing.appendForError(serialized);
   }
 
-  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture', location?: Location, group?: string }, cb: () => Promise<any>) {
+  async _runAsStep(stepInfo: { title: string, category: 'hook' | 'fixture' | 'test.step', location?: Location, group?: string }, cb: () => Promise<any>) {
     const step = this._addStep(stepInfo);
     try {
       await cb();
@@ -464,10 +469,33 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
-      this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
-      await this._interruptedPromise;
+      const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
+      this._emitErrors();
+      this._onTestPaused({ testId: this.testId });
+      await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step', location }, async () => {
+        await this._interruptedPromise;
+      });
     }
     await this._onDidFinishTestFunctionCallback?.();
+  }
+
+  _emitErrors() {
+    const errors = this.errors.slice(this._reportedErrorCount);
+    this._reportedErrorCount = Math.max(this._reportedErrorCount, this.errors.length);
+    if (errors.length)
+      this._onErrors({ testId: this.testId, errors });
+  }
+
+  private _errorLocation(): Location | undefined {
+    if (this.error?.stack)
+      return filteredStackTrace(this.error.stack.split('\n'))[0];
+  }
+
+  private async _testEndLocation(): Promise<Location | undefined> {
+    try {
+      const source = await fs.promises.readFile(this.file, 'utf-8');
+      return findTestEndLocation(source, { file: this.file, line: this.line, column: this.column });
+    } catch {}
   }
 
   // ------------ TestInfo methods ------------

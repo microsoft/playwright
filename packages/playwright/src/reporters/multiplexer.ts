@@ -54,6 +54,11 @@ export class Multiplexer implements ReporterV2 {
       wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
+  onTestError(test: TestCase, result: TestResult, error: TestError) {
+    for (const reporter of this._reporters)
+      wrap(() => reporter.onTestError?.(test, result, error));
+  }
+
   onTestEnd(test: TestCase, result: TestResult) {
     for (const reporter of this._reporters)
       wrap(() => reporter.onTestEnd?.(test, result));

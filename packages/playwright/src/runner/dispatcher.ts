@@ -28,7 +28,7 @@ import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
 import type { FullConfigInternal } from '../common/config';
-import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
+import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestErrorsPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
 import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
@@ -322,7 +322,6 @@ class JobDispatcher {
       // Do not show more than one error to avoid confusion, but report
       // as interrupted to indicate that we did actually start the test.
       params.status = 'interrupted';
-      params.errors = [];
     }
     const data = this._dataByTestId.get(params.testId);
     if (!data) {
@@ -333,8 +332,6 @@ class JobDispatcher {
     this._remainingByTestId.delete(params.testId);
     const { result, test } = data;
     result.duration = params.duration;
-    result.errors = params.errors;
-    result.error = result.errors[0];
     result.status = params.status;
     result.annotations = params.annotations;
     test.annotations = [...params.annotations]; // last test result wins
@@ -429,6 +426,23 @@ class JobDispatcher {
     }
   }
 
+  private _onTestErrors(params: TestErrorsPayload) {
+    if (this._failureTracker.hasReachedMaxFailures()) {
+      // Do not show more than one error to avoid confusion.
+      return;
+    }
+
+    const data = this._dataByTestId.get(params.testId)!;
+    if (!data)
+      return;
+    const { test, result } = data;
+    for (const error of params.errors) {
+      result.errors.push(error);
+      result.error = result.errors[0];
+      this._reporter.onTestError?.(test, result, error);
+    }
+  }
+
   private _failTestWithErrors(test: TestCase, errors: TestError[]) {
     const runData = this._dataByTestId.get(test.id);
     // There might be a single test that has started but has not finished yet.
@@ -439,8 +453,11 @@ class JobDispatcher {
       result = test._appendTestResult();
       this._reporter.onTestBegin?.(test, result);
     }
-    result.errors = [...errors];
-    result.error = result.errors[0];
+    for (const error of errors) {
+      result.errors.push(error);
+      result.error = result.errors[0];
+      this._reporter.onTestError?.(test, result, error);
+    }
     result.status = errors.length ? 'failed' : 'skipped';
     this._reportTestEnd(test, result);
     this._failedTests.add(test);
@@ -578,6 +595,7 @@ class JobDispatcher {
       eventsHelper.addEventListener(worker, 'stepBegin', this._onStepBegin.bind(this)),
       eventsHelper.addEventListener(worker, 'stepEnd', this._onStepEnd.bind(this)),
       eventsHelper.addEventListener(worker, 'attach', this._onAttach.bind(this)),
+      eventsHelper.addEventListener(worker, 'testErrors', this._onTestErrors.bind(this)),
       eventsHelper.addEventListener(worker, 'testPaused', this._onTestPaused.bind(this, worker)),
       eventsHelper.addEventListener(worker, 'done', this._onDone.bind(this)),
       eventsHelper.addEventListener(worker, 'exit', this.onExit.bind(this)),
@@ -585,24 +603,28 @@ class JobDispatcher {
   }
 
   private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
+    const { test, result } = data;
+
     const sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
         const response = await worker.sendCustomMessage({ testId: params.testId, request: message.request });
         if (response.error)
-          addLocationAndSnippetToError(this._config.config, response.error);
+          addLocationAndSnippetToError(this._config.config, response.error, test.location.file);
         return response;
       } catch (e) {
         const error = serializeError(e);
-        addLocationAndSnippetToError(this._config.config, error);
+        addLocationAndSnippetToError(this._config.config, error, test.location.file);
         return { response: undefined, error };
       }
     };
 
-    for (const error of params.errors)
-      addLocationAndSnippetToError(this._config.config, error);
-    this._failureTracker.onTestPaused?.({ ...params, sendMessage });
+    this._failureTracker.onTestPaused?.({ errors: result.errors, sendMessage });
   }
 
   skipWholeJob(): boolean {

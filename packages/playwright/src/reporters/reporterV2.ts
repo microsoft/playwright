@@ -22,6 +22,7 @@ export interface ReporterV2 {
   onTestBegin?(test: TestCase, result: TestResult): void;
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
+  onTestError?(test: TestCase, result: TestResult, error: TestError): void;
   onTestEnd?(test: TestCase, result: TestResult): void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   onExit?(): void | Promise<void>;
