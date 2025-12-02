@@ -69,6 +69,7 @@ export class InternalReporter implements ReporterV2 {
 
   onTestError(test: TestCase, result: TestResult, error: TestError): void {
     addLocationAndSnippetToError(this._config, error, test.location.file);
+    this._reporter.onTestError?.(test, result, error);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {

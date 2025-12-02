@@ -367,7 +367,7 @@ export class TeleReporterReceiver {
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
-    // Errors are only present here from legacy blobs. These override all _onTestErrors events
+    // Errors are only present here from legacy blobs. These override all _onTestError events
     if (!!payload.errors) {
       result.errors = payload.errors;
       result.error = result.errors[0];
