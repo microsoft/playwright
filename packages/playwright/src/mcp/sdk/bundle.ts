@@ -31,7 +31,7 @@ const ListRootsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js'
 const ProgressNotificationSchema: typeof import('@modelcontextprotocol/sdk/types.js').ProgressNotificationSchema = bundle.ProgressNotificationSchema;
 const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListToolsRequestSchema = bundle.ListToolsRequestSchema;
 const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = bundle.PingRequestSchema;
-const Loop: typeof import('tiny-loop').Loop = bundle.Loop;
+const Loop: typeof import('@lowire/loop').Loop = bundle.Loop;
 const z: typeof import('zod') = bundle.z;
 
 export {
