@@ -63,7 +63,7 @@ This is not just useful for capturing varying ports of dev servers. You can also
 
 ### Breaking Change
 
-After 3 years of being deprecated, we removed `Page#accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
+After 3 years of being deprecated, we removed `page.accessibility` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
 
 ### New APIs
 
@@ -77,7 +77,7 @@ After 3 years of being deprecated, we removed `Page#accessibility` from our API.
 ### Browser Versions
 
 - Chromium 143.0.7499.4
-- Mozilla Firefox 142.0.1
+- Mozilla Firefox 144.0.2
 - WebKit 26.0
 
 ## Version 1.56
