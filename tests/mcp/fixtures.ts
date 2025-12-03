@@ -343,3 +343,8 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
 function sanitizeFileName(name: string): string {
   return name.replace('.ts', '').replace(/[^a-zA-Z0-9_]+/g, '-');
 }
+
+export const lowireMeta = {
+  'dev.lowire/history': true,
+  'dev.lowire/state': true,
+};

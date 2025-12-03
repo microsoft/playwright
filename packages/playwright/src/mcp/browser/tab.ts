@@ -132,10 +132,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._modalStates = this._modalStates.filter(state => state !== modalState);
   }
 
-  modalStatesMarkdown(): string[] {
-    return renderModalStates(this.context, this.modalStates());
-  }
-
   private _dialogShown(dialog: playwright.Dialog) {
     this.setModalState({
       type: 'dialog',
@@ -349,8 +345,8 @@ function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
   };
 }
 
-export function renderModalStates(context: Context, modalStates: ModalState[]): string[] {
-  const result: string[] = ['### Modal state'];
+export function renderModalStates(modalStates: ModalState[]): string[] {
+  const result: string[] = [];
   if (modalStates.length === 0)
     result.push('- There is no modal state present');
   for (const state of modalStates)
