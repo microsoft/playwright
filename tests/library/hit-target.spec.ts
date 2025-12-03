@@ -290,7 +290,7 @@ it('should click into frame inside closed shadow root', async ({ page, server })
     </script>
   `);
 
-  const frame = page.frame({ name: 'myframe' });
+  const frame = page.frames()[1];
   await frame.locator('text=click me').click();
   expect(await page.evaluate('window.__clicked')).toBe(true);
 });
