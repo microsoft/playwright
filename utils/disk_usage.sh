@@ -28,3 +28,13 @@ echo ""
 echo "--- 5. HEAVIEST FOLDERS (Top 20 in current dir) ---"
 # Find and print the top 20 largest folders (depth 3)
 du -h -d 3 . | sort -hr | head -n 20
+
+echo ""
+echo "--- 6. Temp dir usage ---"
+echo "Temp dir: $TMPDIR"
+du -sh $TMPDIR
+
+echo ""
+echo "--- 7. HEAVIEST FOLDERS (Top 20 in temp dir) ---"
+# Find and print the top 20 largest folders (depth 3)
+du -h -d 3 $TMPDIR | sort -hr | head -n 20
