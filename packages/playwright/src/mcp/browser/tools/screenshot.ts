@@ -19,7 +19,7 @@ import fs from 'fs';
 import { mkdirIfNeeded, scaleImageToSize } from 'playwright-core/lib/utils';
 import { jpegjs, PNG } from 'playwright-core/lib/utilsBundle';
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 import * as javascript from '../codegen';
 import { dateAsFileName } from './utils';

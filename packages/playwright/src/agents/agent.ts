@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { Loop } from '../mcp/sdk/bundle';
+import { Loop } from 'playwright-core/lib/mcpBundle';
 
 import type z from 'zod';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';

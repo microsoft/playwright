@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 
 const browserTabs = defineTool({

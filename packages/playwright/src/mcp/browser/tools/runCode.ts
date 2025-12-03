@@ -18,7 +18,7 @@ import vm from 'vm';
 
 import { ManualPromise } from 'playwright-core/lib/utils';
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
