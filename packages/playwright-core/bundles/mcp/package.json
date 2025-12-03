@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.17.5",
-    "@lowire/loop": "^0.0.4",
+    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@lowire/loop": "^0.0.6",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   }
