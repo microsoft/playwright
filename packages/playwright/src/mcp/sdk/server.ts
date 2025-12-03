@@ -17,8 +17,8 @@
 import { fileURLToPath } from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import * as mcpBundle from 'playwright-core/lib/mcpBundle';
 
-import * as mcpBundle from './bundle';
 import { installHttpTransport, startHttpServer } from './http';
 import { InProcessTransport } from './inProcessTransport';
 

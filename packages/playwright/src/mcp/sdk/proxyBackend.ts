@@ -15,8 +15,7 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-
-import * as mcpBundle from './bundle';
+import * as mcpBundle from 'playwright-core/lib/mcpBundle';
 
 import type { ServerBackend, ClientInfo } from './server';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';

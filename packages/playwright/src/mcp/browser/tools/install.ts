@@ -17,7 +17,7 @@
 import { fork } from 'child_process';
 import path from 'path';
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 
 const install = defineTool({

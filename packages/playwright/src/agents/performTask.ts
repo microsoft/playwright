@@ -15,11 +15,11 @@
  */
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { Loop } from 'playwright-core/lib/mcpBundle';
 
 import { identityBrowserContextFactory } from '../mcp/browser/browserContextFactory';
 import { BrowserServerBackend } from '../mcp/browser/browserServerBackend';
 import { defaultConfig } from '../mcp/browser/config';
-import { Loop } from '../mcp/sdk/bundle';
 import { wrapInClient } from '../mcp/sdk/server';
 
 import type * as playwright from 'playwright-core';
