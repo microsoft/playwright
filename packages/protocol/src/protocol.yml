@@ -467,7 +467,6 @@ LaunchOptions:
       type: array?
       items: NameValue
     headless: boolean?
-    devtools: boolean?
     proxy:
       type: object?
       properties:

@@ -123,8 +123,6 @@ export class BidiChromium extends BrowserType {
       chromeArguments.push('--enable-unsafe-swiftshader');
     }
 
-    if (options.devtools)
-      chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
       chromeArguments.push('--headless');
 

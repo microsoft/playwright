@@ -113,7 +113,6 @@ for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
   if (executablePath && !process.env.TEST_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
-  const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
 
   const projectTemplate: typeof config.projects[0] = {
@@ -127,7 +126,6 @@ for (const browserName of browserNames) {
       video: video ? 'on' : undefined,
       launchOptions: {
         executablePath,
-        devtools
       },
       trace: trace ? 'on' : undefined,
     },

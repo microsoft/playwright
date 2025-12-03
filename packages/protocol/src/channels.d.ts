@@ -887,7 +887,6 @@ export type BrowserTypeLaunchParams = {
   timeout: number,
   env?: NameValue[],
   headless?: boolean,
-  devtools?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -913,7 +912,6 @@ export type BrowserTypeLaunchOptions = {
   handleSIGHUP?: boolean,
   env?: NameValue[],
   headless?: boolean,
-  devtools?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -943,7 +941,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
   timeout: number,
   env?: NameValue[],
   headless?: boolean,
-  devtools?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1026,7 +1023,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   handleSIGHUP?: boolean,
   env?: NameValue[],
   headless?: boolean,
-  devtools?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
