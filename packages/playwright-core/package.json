@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.57.0-next",
+  "version": "1.58.0-next",
   "description": "Qanary's fork of Playwright with extra features",
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
     "./package.json": "./package.json",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/cli/program": "./lib/cli/program.js",
+    "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",
     "./lib/server/utils/image_tools/stats": "./lib/server/utils/image_tools/stats.js",

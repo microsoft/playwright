@@ -215,6 +215,10 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background-color: var(--color-canvas-subtle);
 }
 
+.subnav-item[aria-selected="true"] {
+  background: var(--color-control-transparent-bg-hover);
+}
+
 .subnav-item:first-child {
   border-top-left-radius: 6px;
   border-bottom-left-radius: 6px;

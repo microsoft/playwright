@@ -108,7 +108,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
     this._dispatchEvent = (method, params) => this.transport.sendEvent?.(method, params);
     this._testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => this._dispatchEvent('testFilesChanged', { testFiles }));
-    this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', params));
+    this._testRunner.on(TestRunnerEvent.TestPaused, params => this._dispatchEvent('testPaused', { errors: params.errors }));
   }
 
   private async _wireReporter(messageSink: (message: any) => void) {
@@ -157,8 +157,8 @@ export class TestServerDispatcher implements TestServerInterface {
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     const { reporter, report } = await this._collectingReporter();
     this._globalSetupReport = report;
-    const { status } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
-    return { report, status };
+    const { status, env } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
+    return { report, status, env };
   }
 
   async runGlobalTeardown() {

@@ -316,7 +316,7 @@ async function runTests(watchOptions: WatchModeOptions, testServerConnection: Te
   await testServerConnection.runTests({
     grep: watchOptions.grep,
     testIds: options?.testIds,
-    locations: watchOptions?.files,
+    locations: watchOptions?.files ?? [], // TODO: always collect locations based on knowledge about tree, so that we don't have to load all tests
     projects: watchOptions.projects,
     connectWsEndpoint,
     reuseContext: connectWsEndpoint ? true : undefined,

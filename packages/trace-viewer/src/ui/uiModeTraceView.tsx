@@ -20,9 +20,9 @@ import '@web/common.css';
 import '@web/third_party/vscode/codicon.css';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
-import type { ContextEntry } from '../types/entries';
-import type { SourceLocation } from './modelUtil';
-import { MultiTraceModel } from './modelUtil';
+import type { ContextEntry } from '@isomorphic/trace/entries';
+import type { SourceLocation } from '@isomorphic/trace/traceModel';
+import { TraceModel } from '@isomorphic/trace/traceModel';
 import { Workbench } from './workbench';
 
 export const TraceView: React.FC<{
@@ -32,7 +32,7 @@ export const TraceView: React.FC<{
   revealSource?: boolean,
   pathSeparator: string,
 }> = ({ item, rootDir, onOpenExternally, revealSource, pathSeparator }) => {
-  const [model, setModel] = React.useState<{ model: MultiTraceModel, isLive: boolean } | undefined>(undefined);
+  const [model, setModel] = React.useState<{ model: TraceModel, isLive: boolean } | undefined>(undefined);
   const [counter, setCounter] = React.useState(0);
   const pollTimer = React.useRef<NodeJS.Timeout | null>(null);
 
@@ -75,7 +75,7 @@ export const TraceView: React.FC<{
         const model = await loadSingleTraceFile(traceLocation);
         setModel({ model, isLive: true });
       } catch {
-        const model = new MultiTraceModel('', []);
+        const model = new TraceModel('', []);
         model.errorDescriptors.push(...result.errors.flatMap(error => !!error.message ? [{ message: error.message }] : []));
         setModel({ model, isLive: false });
       } finally {
@@ -110,10 +110,10 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(url: string): Promise<MultiTraceModel> {
+async function loadSingleTraceFile(url: string): Promise<TraceModel> {
   const params = new URLSearchParams();
   params.set('trace', url);
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new MultiTraceModel(url, contextEntries);
+  return new TraceModel(url, contextEntries);
 }

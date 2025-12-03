@@ -81,6 +81,7 @@ export class BidiPage implements PageDelegate {
       eventsHelper.addEventListener(bidiSession, 'browsingContext.downloadEnd', this._onDownloadEnded.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'browsingContext.userPromptOpened', this._onUserPromptOpened.bind(this)),
       eventsHelper.addEventListener(bidiSession, 'log.entryAdded', this._onLogEntryAdded.bind(this)),
+      eventsHelper.addEventListener(bidiSession, 'input.fileDialogOpened', this._onFileDialogOpened.bind(this)),
     ];
 
     // Initialize main frame.
@@ -95,7 +96,6 @@ export class BidiPage implements PageDelegate {
     this._onFrameAttached(this._session.sessionId, null);
     await Promise.all([
       this.updateHttpCredentials(),
-      this.updateRequestInterception(),
       // If the page is created by the Playwright client's call, some initialization
       // may be pending. Wait for it to complete before reporting the page as new.
     ]);
@@ -286,7 +286,18 @@ export class BidiPage implements PageDelegate {
 
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page.addConsoleMessage(entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
+    this._page.addConsoleMessage(null, entry.method, entry.args.map(arg => createHandle(context, arg)), location, params.text || undefined);
+  }
+
+  private async _onFileDialogOpened(params: bidi.Input.FileDialogInfo) {
+    if (!params.element)
+      return;
+    const frame = this._page.frameManager.frame(params.context);
+    if (!frame)
+      return;
+    const executionContext = await frame._mainContext();
+    const handle = await toBidiExecutionContext(executionContext).remoteObjectForNodeId(executionContext, { sharedId: params.element.sharedId });
+    await this._page._onFileChooserOpened(handle as dom.ElementHandle);
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
@@ -298,11 +309,9 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateExtraHTTPHeaders(): Promise<void> {
-    const locale = this._browserContext._options.locale;
     const allHeaders = network.mergeHeaders([
       this._browserContext._options.extraHTTPHeaders,
       this._page.extraHTTPHeaders(),
-      locale ? network.singleHeader('Accept-Language', locale) : undefined,
     ]);
     await this._session.send('network.setExtraHeaders', {
       headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
@@ -345,7 +354,7 @@ export class BidiPage implements PageDelegate {
   }
 
   async updateRequestInterception(): Promise<void> {
-    await this._networkManager.setRequestInterception(this._page.needsRequestInterception());
+    await this._networkManager.setRequestInterception(this._page.requestInterceptors.length > 0);
   }
 
   async updateOffline() {

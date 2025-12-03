@@ -668,7 +668,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async consoleMessages(): Promise<ConsoleMessage[]> {
     const { messages } = await this._channel.consoleMessages();
-    return messages.map(message => new ConsoleMessage(this._platform, message, this));
+    return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
   }
 
   async pageErrors(): Promise<Error[]> {

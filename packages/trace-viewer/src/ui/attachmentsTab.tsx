@@ -25,7 +25,7 @@ import { linkifyText } from '@web/renderUtils';
 import { clsx, useFlash } from '@web/uiUtils';
 import { useTraceModel } from './traceModelContext';
 
-import type { Attachment, MultiTraceModel } from './modelUtil';
+import type { Attachment, TraceModel } from '@isomorphic/trace/traceModel';
 
 type ExpandableAttachmentProps = {
   attachment: Attachment;
@@ -155,13 +155,13 @@ export const AttachmentsTab: React.FunctionComponent<{
   </div>;
 };
 
-export function attachmentURL(model: MultiTraceModel | undefined, attachment: Attachment) {
+export function attachmentURL(model: TraceModel | undefined, attachment: Attachment) {
   if (model && attachment.sha1)
     return model.createRelativeUrl(`sha1/${attachment.sha1}`) ;
   return `file?path=${encodeURIComponent(attachment.path!)}`;
 }
 
-function downloadURL(model: MultiTraceModel | undefined, attachment: Attachment) {
+function downloadURL(model: TraceModel | undefined, attachment: Attachment) {
   let suffix = attachment.contentType ? `&dn=${encodeURIComponent(attachment.name)}` : '';
   if (attachment.contentType)
     suffix += `&dct=${encodeURIComponent(attachment.contentType)}`;

@@ -2497,6 +2497,12 @@ export interface Page {
     };
 
     /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -6431,6 +6437,12 @@ export interface Frame {
     };
 
     /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
+
+    /**
      * When true, the call requires selector to resolve to a single element. If given selector resolves to more than one
      * element, the call throws an exception.
      */
@@ -10349,15 +10361,30 @@ export interface Worker {
   on(event: 'close', listener: (worker: Worker) => any): this;
 
   /**
+   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+   */
+  on(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
    * terminated.
    */
   addListener(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+   */
+  addListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -10367,7 +10394,17 @@ export interface Worker {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (worker: Worker) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
 
   /**
    * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
@@ -10375,7 +10412,24 @@ export interface Worker {
    */
   prependListener(event: 'close', listener: (worker: Worker) => any): this;
 
+  /**
+   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+   */
+  prependListener(event: 'console', listener: (consoleMessage: ConsoleMessage) => any): this;
+
   url(): string;
+
+  /**
+   * Emitted when this dedicated [WebWorker](https://developer.mozilla.org/en-US/docs/Web/API/Web_Workers_API) is
+   * terminated.
+   */
+  waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
+
+  /**
+   * Emitted when JavaScript within the worker calls one of console API methods, e.g. `console.log` or `console.dir`.
+   */
+  waitForEvent(event: 'console', optionsOrPredicate?: { predicate?: (consoleMessage: ConsoleMessage) => boolean | Promise<boolean>, timeout?: number } | ((consoleMessage: ConsoleMessage) => boolean | Promise<boolean>)): Promise<ConsoleMessage>;
+
 }
 
 /**
@@ -12986,7 +13040,9 @@ export interface Locator {
 
   /**
    * Returns locator description previously set with
-   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe).
+   * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
+   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
+   * description when available.
    *
    * **Usage**
    *
@@ -13102,6 +13158,12 @@ export interface Locator {
 
       y: number;
     };
+
+    /**
+     * Defaults to 1. Sends `n` interpolated `mousemove` events to represent travel between the `mousedown` and `mouseup`
+     * of the drag. When set to 1, emits a single `mousemove` event at the destination location.
+     */
+    steps?: number;
 
     /**
      * Drops on the target element at this point relative to the top-left corner of the element's padding box. If not
@@ -18850,6 +18912,13 @@ export interface ConsoleMessage {
   text(): string;
 
   type(): "log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"timeEnd";
+
+  /**
+   * The web worker or service worker that produced this console message, if any. Note that console messages from web
+   * workers also have non-null
+   * [consoleMessage.page()](https://playwright.dev/docs/api/class-consolemessage#console-message-page).
+   */
+  worker(): null|Worker;
 }
 
 /**

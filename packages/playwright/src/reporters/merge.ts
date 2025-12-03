@@ -58,10 +58,15 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const eventData = await mergeEvents(dir, shardFiles, stringPool, printStatus, rootDirOverride);
   // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
+  const pathPackage = pathSeparator === '/' ? path.posix : path.win32;
   const receiver = new TeleReporterReceiver(multiplexer, {
     mergeProjects: false,
     mergeTestCases: false,
-    resolvePath: (rootDir, relativePath) => stringPool.internString(rootDir + pathSeparator + relativePath),
+    // When merging on a different OS, an absolute path like `C:\foo\bar` from win may look like
+    // a relative path on posix, and vice versa.
+    // Therefore, we cannot use `path.resolve()` here - it will resolve relative-looking paths
+    // against `process.cwd()`, while we just want to normalize ".." and "." segments.
+    resolvePath: (rootDir, relativePath) => stringPool.internString(pathPackage.normalize(pathPackage.join(rootDir, relativePath))),
     configOverrides: config.config,
   });
   printStatus(`processing test events`);
@@ -404,6 +409,7 @@ class IdsPatcher {
       case 'onProject':
         this._onProject(params.project);
         return;
+      case 'onTestError':
       case 'onAttach':
       case 'onTestBegin':
       case 'onStepBegin':
@@ -498,7 +504,7 @@ class PathSeparatorPatcher {
       test.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
       const testResult = jsonEvent.params.result;
       testResult.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
-      testResult.errors.forEach(error => this._updateErrorLocations(error));
+      testResult.errors?.forEach(error => this._updateErrorLocations(error));
       (testResult.attachments ?? []).forEach(attachment => {
         if (attachment.path)
           attachment.path = this._updatePath(attachment.path);
@@ -514,6 +520,10 @@ class PathSeparatorPatcher {
       const step = jsonEvent.params.step;
       this._updateErrorLocations(step.error);
       step.annotations?.forEach(annotation => this._updateAnnotationLocation(annotation));
+      return;
+    }
+    if (jsonEvent.method === 'onTestError') {
+      this._updateErrorLocations(jsonEvent.params.error);
       return;
     }
     if (jsonEvent.method === 'onAttach') {

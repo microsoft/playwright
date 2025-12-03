@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { MultiTraceModel } from './modelUtil';
+import { TraceModel } from '@isomorphic/trace/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
@@ -28,7 +28,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [isServer, setIsServer] = React.useState<boolean>(false);
   const [traceURL, setTraceURL] = React.useState<string>();
   const [uploadedTraceName, setUploadedTraceName] = React.useState<string>();
-  const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
+  const [model, setModel] = React.useState<TraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
@@ -149,7 +149,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
           return;
         }
         const contextEntries = await response.json();
-        const model = new MultiTraceModel(traceURL, contextEntries);
+        const model = new TraceModel(traceURL, contextEntries);
         setProgress({ done: 0, total: 0 });
         setModel(model);
       } finally {
@@ -228,4 +228,4 @@ export const WorkbenchLoader: React.FunctionComponent<{
   </div>;
 };
 
-export const emptyModel = new MultiTraceModel('', []);
+export const emptyModel = new TraceModel('', []);

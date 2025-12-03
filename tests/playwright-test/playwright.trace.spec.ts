@@ -1331,7 +1331,7 @@ test('should record trace snapshot for more obscure commands', async ({ runInlin
     'After Hooks',
   ]);
 
-  const snapshots = trace.traceModel.storage();
+  const snapshots = trace.loader.storage();
   const snapshotFrameOrPageId = snapshots.snapshotsForTest()[0];
 
   const countAction = trace.actions.find(a => a.method === 'queryCount');

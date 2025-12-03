@@ -709,6 +709,7 @@ LocalUtils:
       parameters:
         tracesDir: string?
         traceName: string
+        live: boolean?
       returns:
         stacksId: string
 
@@ -1442,7 +1443,8 @@ BrowserContext:
     console:
       parameters:
         $mixin: ConsoleMessage
-        page: Page
+        page: Page?
+        worker: Worker?
 
     close:
 
@@ -2237,6 +2239,7 @@ Frame:
         sourcePosition: Point?
         targetPosition: Point?
         strict: boolean?
+        steps: int?
       flags:
         slowMo: true
         snapshot: true
@@ -2793,6 +2796,8 @@ Frame:
 Worker:
   type: interface
 
+  extends: EventTarget
+
   initializer:
     url: string
 
@@ -2815,6 +2820,15 @@ Worker:
         arg: SerializedArgument
       returns:
         handle: JSHandle
+
+    updateSubscription:
+      internal: true
+      parameters:
+        event:
+          type: enum
+          literals:
+          - console
+        enabled: boolean
 
   events:
 

@@ -486,6 +486,7 @@ type BrowsersJSON = {
     name: string,
     revision: string,
     browserVersion?: string,
+    title?: string,
     installByDefault: boolean,
     revisionOverrides?: {[os: string]: string},
   }[]
@@ -496,6 +497,7 @@ type BrowsersJSONDescriptor = {
   revision: string,
   hasRevisionOverride: boolean
   browserVersion?: string,
+  title?: string,
   installByDefault: boolean,
   dir: string,
 };
@@ -519,6 +521,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
       hasRevisionOverride: !!revisionOverride,
       // We only put browser version for the supported operating systems.
       browserVersion: revisionOverride ? undefined : obj.browserVersion,
+      title: obj['title'],
       installByDefault: !!obj.installByDefault,
       // Method `isBrowserDirectory` determines directory to be browser iff
       // it starts with some browser name followed by '-'. Some browser names
@@ -1247,13 +1250,7 @@ export class Registry {
         logPolitely(message);
     }
 
-    const displayName = descriptor.name.split('-').map(word => {
-      return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
-    }).join(' ');
-    const title = descriptor.browserVersion
-      ? `${displayName} ${descriptor.browserVersion} (playwright build v${descriptor.revision})`
-      : `${displayName} playwright build v${descriptor.revision}`;
-
+    const title = calculateDownloadTitle(descriptor);
     const downloadFileName = `playwright-download-${descriptor.name}-${hostPlatform}-${descriptor.revision}.zip`;
     // PLAYWRIGHT_DOWNLOAD_CONNECTION_TIMEOUT is a misnomer, it actually controls the socket's
     // max idle timeout. Unfortunately, we cannot rename it without breaking existing user workflows.
@@ -1521,6 +1518,14 @@ function lowercaseAllKeys(json: any): any {
   for (const [key, value] of Object.entries(json))
     result[key.toLowerCase()] = lowercaseAllKeys(value);
   return result;
+}
+
+function calculateDownloadTitle(descriptor: BrowsersJSONDescriptor) {
+  const title = descriptor.title ?? descriptor.name.split('-').map(word => {
+    return word === 'ffmpeg' ? 'FFMPEG' : word.charAt(0).toUpperCase() + word.slice(1);
+  }).join(' ');
+  const version = descriptor.browserVersion ? ' ' + descriptor.browserVersion : '';
+  return `${title}${version} (playwright ${descriptor.name} v${descriptor.revision})`;
 }
 
 export const registry = new Registry(require('../../../browsers.json'));

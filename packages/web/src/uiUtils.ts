@@ -209,11 +209,11 @@ declare global {
 export class Settings {
   onChangeEmitter = new EventTarget();
 
-  getString(name: string, defaultValue: string): string {
+  getString<T extends string>(name: string, defaultValue: T): T {
     return localStorage[name] || defaultValue;
   }
 
-  setString(name: string, value: string) {
+  setString<T extends string>(name: string, value: T) {
     localStorage[name] = value;
     this.onChangeEmitter.dispatchEvent(new Event(name));
     window.saveSettings?.();

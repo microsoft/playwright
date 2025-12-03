@@ -33,7 +33,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { CustomMessageRequestPayload, CustomMessageResponsePayload, DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
@@ -118,7 +118,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => {});
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => {}, () => {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
@@ -267,11 +267,23 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
+  async customMessage(payload: CustomMessageRequestPayload): Promise<CustomMessageResponsePayload> {
+    try {
+      if (this._currentTest?.testId !== payload.testId)
+        throw new Error('Test has already stopped');
+      const response = await this._currentTest._onCustomMessageCallback?.(payload.request);
+      return { response };
+    } catch (error) {
+      return { response: {}, error: testInfoError(error) };
+    }
+  }
+
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment),
+        errors => this.dispatchEvent('testErrors', errors),
         testPausedPayload => this.dispatchEvent('testPaused', testPausedPayload));
 
     const processAnnotation = (annotation: TestAnnotation) => {
@@ -320,6 +332,7 @@ export class WorkerMain extends ProcessRunner {
     if (isSkipped && nextTest && !hasAfterAllToRunBeforeNextTest) {
       // Fast path - this test is skipped, and there are more tests that will handle cleanup.
       testInfo.status = 'skipped';
+      testInfo._emitErrors();
       this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
       return;
     }
@@ -486,6 +499,7 @@ export class WorkerMain extends ProcessRunner {
 
     this._currentTest = null;
     setCurrentTestInfo(null);
+    testInfo._emitErrors();
     this.dispatchEvent('testEnd', buildTestEndPayload(testInfo));
 
     const preserveOutput = this._config.config.preserveOutput === 'always' ||
@@ -611,7 +625,6 @@ function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
     testId: testInfo.testId,
     duration: testInfo.duration,
     status: testInfo.status!,
-    errors: testInfo.errors,
     hasNonRetriableError: testInfo._hasNonRetriableError,
     expectedStatus: testInfo.expectedStatus,
     annotations: testInfo.annotations,

@@ -17,8 +17,8 @@
 import { fileURLToPath } from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import * as mcpBundle from 'playwright-core/lib/mcpBundle';
 
-import * as mcpBundle from './bundle';
 import { installHttpTransport, startHttpServer } from './http';
 import { InProcessTransport } from './inProcessTransport';
 
@@ -27,6 +27,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 const serverDebug = debug('pw:mcp:server');
 const serverDebugResponse = debug('pw:mcp:server:response');
@@ -42,9 +43,8 @@ export type ProgressParams = { message?: string, progress?: number, total?: numb
 export type ProgressCallback = (params: ProgressParams) => void;
 
 export interface ServerBackend {
-  initialize?(server: Server, clientInfo: ClientInfo): Promise<void>;
+  initialize?(clientInfo: ClientInfo): Promise<void>;
   listTools(): Promise<Tool[]>;
-  afterCallTool?(name: string, args: CallToolRequest['params']['arguments'], result: CallToolResult): Promise<void>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
 }
@@ -61,9 +61,18 @@ export async function connect(factory: ServerBackendFactory, transport: Transpor
   await server.connect(transport);
 }
 
-export async function wrapInProcess(backend: ServerBackend): Promise<Transport> {
+export function wrapInProcess(backend: ServerBackend): Transport {
   const server = createServer('Internal', '0.0.0', backend, false);
   return new InProcessTransport(server);
+}
+
+export async function wrapInClient(backend: ServerBackend, options: { name: string, version: string }): Promise<Client> {
+  const server = createServer('Internal', '0.0.0', backend, false);
+  const transport = new InProcessTransport(server);
+  const client = new mcpBundle.Client({ name: options.name, version: options.version });
+  await client.connect(transport);
+  await client.ping();
+  return client;
 }
 
 export function createServer(name: string, version: string, backend: ServerBackend, runHeartbeat: boolean): Server {
@@ -135,7 +144,7 @@ const initializeServer = async (server: Server, backend: ServerBackend, runHeart
     timestamp: Date.now(),
   };
 
-  await backend.initialize?.(server, clientInfo);
+  await backend.initialize?.(clientInfo);
   if (runHeartbeat)
     startHeartbeat(server);
 };

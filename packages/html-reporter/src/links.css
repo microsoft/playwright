@@ -57,6 +57,15 @@
   fill: var(--color-fg-muted);
 }
 
+.fullwidth-link {
+  width: 100%;
+  text-align: left;
+}
+
+.fullwidth-link:hover {
+  background-color: var(--color-canvas-subtle);
+}
+
 .trace-link {
   /* Trace link button has 1px border and 4px padding, so we need 3px right margin to match content on the other side of divider */
   margin-right: 3px;

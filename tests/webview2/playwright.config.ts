@@ -39,8 +39,9 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
   reporter: process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['blob'],
   ] : 'line',
+  tag: process.env.PW_TAG,
   projects: [],
   globalSetup: './globalSetup.ts',
 };

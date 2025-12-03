@@ -482,6 +482,9 @@ Optional event-specific initialization properties.
 ### option: Frame.dragAndDrop.targetPosition = %%-input-target-position-%%
 * since: v1.14
 
+### option: Frame.dragAndDrop.steps = %%-input-drag-steps-%%
+* since: v1.57
+
 ## async method: Frame.evalOnSelector
 * since: v1.9
 * discouraged: This method does not wait for the element to pass the actionability

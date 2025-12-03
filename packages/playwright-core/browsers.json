@@ -3,43 +3,49 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1200",
+      "revision": "1202",
       "installByDefault": true,
-      "browserVersion": "143.0.7499.4"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1200",
+      "revision": "1202",
       "installByDefault": true,
-      "browserVersion": "143.0.7499.4"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Headless Shell"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1380",
+      "revision": "1384",
       "installByDefault": false,
-      "browserVersion": "143.0.7488.0"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1380",
+      "revision": "1384",
       "installByDefault": false,
-      "browserVersion": "143.0.7488.0"
+      "browserVersion": "143.0.7499.25",
+      "title": "Chrome Canary Headless Shell"
     },
     {
       "name": "firefox",
-      "revision": "1496",
+      "revision": "1497",
       "installByDefault": true,
-      "browserVersion": "142.0.1"
+      "browserVersion": "144.0.2",
+      "title": "Firefox"
     },
     {
       "name": "firefox-beta",
-      "revision": "1491",
+      "revision": "1493",
       "installByDefault": false,
-      "browserVersion": "143.0b10"
+      "browserVersion": "145.0b10",
+      "title": "Firefox Beta"
     },
     {
       "name": "webkit",
-      "revision": "2227",
+      "revision": "2232",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
@@ -55,7 +61,8 @@
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "26.0"
+      "browserVersion": "26.0",
+      "title": "WebKit"
     },
     {
       "name": "ffmpeg",

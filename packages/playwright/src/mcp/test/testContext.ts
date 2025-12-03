@@ -15,20 +15,27 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
-import { noColors, escapeRegExp } from 'playwright-core/lib/utils';
+import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-core/lib/utils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
-import { stripAnsiEscapes, fileExistsAsync } from '../../util';
+import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
+import { firstRootPath } from '../sdk/exports';
+import { resolveConfigLocation } from '../../common/configLoader';
+import { parseResponse } from '../browser/response';
+import { logUnhandledError } from '../log';
 
+import type { TerminalScreen } from '../../reporters/base';
+import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
-import type { ProgressCallback, MDBPushClientCallback } from '../sdk/exports';
-import type { TestPausedExtraData } from './browserBackend';
+import type { ClientInfo } from '../sdk/exports';
+import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {
   file: string;
@@ -57,7 +64,7 @@ export class GeneratorJournal {
     const result: string[] = [];
     result.push(`# Plan`);
     result.push(this._plan);
-    result.push(`# Seed file: ${path.relative(this._rootPath, this._seed.file)}`);
+    result.push(`# Seed file: ${toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
     result.push('```ts');
     result.push(this._seed.content);
     result.push('```');
@@ -71,60 +78,77 @@ ${step.code}
   }
 }
 
+type TestRunnerAndScreen = {
+  testRunner: TestRunner;
+  screen: TerminalScreen;
+  claimStdio: () => void;
+  releaseStdio: () => void;
+  output: string[];
+  waitForTestPaused: () => Promise<void>;
+  sendMessageToPausedTest?: (params: { request: BrowserMCPRequest }) => Promise<{ response: BrowserMCPResponse, error?: any }>;
+};
+
 export class TestContext {
-  private _pushClient: MDBPushClientCallback;
-  private _testRunner: TestRunner | undefined;
-  readonly options?: { muteConsole?: boolean, headless?: boolean };
-  configLocation!: ConfigLocation;
-  rootPath!: string;
+  private _clientInfo: ClientInfo;
+  private _testRunnerAndScreen: TestRunnerAndScreen | undefined;
+  readonly computedHeaded: boolean;
+  private readonly _configLocation: ConfigLocation;
+  readonly rootPath: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(pushClient: MDBPushClientCallback, options?: { muteConsole?: boolean, headless?: boolean }) {
-    this._pushClient = pushClient;
-    this.options = options;
-  }
+  constructor(clientInfo: ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
+    this._clientInfo = clientInfo;
 
-  initialize(rootPath: string | undefined, configLocation: ConfigLocation) {
-    this.configLocation = configLocation;
-    this.rootPath = rootPath || configLocation.configDir;
+    const rootPath = firstRootPath(clientInfo);
+    this._configLocation = resolveConfigLocation(configPath || rootPath);
+    this.rootPath = rootPath || this._configLocation.configDir;
+
+    if (options?.headless !== undefined)
+      this.computedHeaded = !options.headless;
+    else
+      this.computedHeaded = !process.env.CI && !(os.platform() === 'linux' && !process.env.DISPLAY);
   }
 
   existingTestRunner(): TestRunner | undefined {
-    return this._testRunner;
+    return this._testRunnerAndScreen?.testRunner;
   }
 
-  async createTestRunner(): Promise<TestRunner> {
-    if (this._testRunner)
-      await this._testRunner.stopTests();
-    const testRunner = new TestRunner(this.configLocation!, {});
+  private async _cleanupTestRunner() {
+    if (!this._testRunnerAndScreen)
+      return;
+    await this._testRunnerAndScreen.testRunner.stopTests();
+    this._testRunnerAndScreen.claimStdio();
+    try {
+      await this._testRunnerAndScreen.testRunner.runGlobalTeardown();
+    } finally {
+      this._testRunnerAndScreen.releaseStdio();
+      this._testRunnerAndScreen = undefined;
+    }
+  }
+
+  async createTestRunner() {
+    await this._cleanupTestRunner();
+
+    const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
-    this._testRunner = testRunner;
-    testRunner.on(TestRunnerEvent.TestFilesChanged, testFiles => {
-      this._testRunner?.emit(TestRunnerEvent.TestFilesChanged, testFiles);
-    });
+    const testPaused = new ManualPromise<void>();
+    const testRunnerAndScreen: TestRunnerAndScreen = {
+      ...createScreen(),
+      testRunner,
+      waitForTestPaused: () => testPaused,
+    };
+    this._testRunnerAndScreen = testRunnerAndScreen;
+
     testRunner.on(TestRunnerEvent.TestPaused, params => {
-      const extraData = params.extraData as TestPausedExtraData;
-      const introMessage: string[] = [];
-      if (params.errors.length) {
-        introMessage.push(`### Paused on error:`);
-        for (const error of params.errors)
-          introMessage.push(stripAnsiEscapes(error.message || ''));
-      } else {
-        introMessage.push(`### Paused at end of test. ready for interaction`);
-      }
-      introMessage.push(extraData.contextState);
-      introMessage.push('');
-      if (params.errors.length)
-        introMessage.push(`### Task`, `Try recovering from the error prior to continuing`);
-      void this._pushClient(extraData.mcpUrl, introMessage.join('\n'));
+      testRunnerAndScreen.sendMessageToPausedTest = params.sendMessage;
+      testPaused.resolve();
     });
-    this._testRunner = testRunner;
-    return testRunner;
+    return testRunnerAndScreen;
   }
 
   async getOrCreateSeedFile(seedFile: string | undefined, projectName: string | undefined) {
-    const configDir = this.configLocation.configDir;
-    const testRunner = await this.createTestRunner();
+    const configDir = this._configLocation.configDir;
+    const { testRunner } = await this.createTestRunner();
     const config = await testRunner.loadConfig();
     const project = seedProject(config, projectName);
 
@@ -156,63 +180,101 @@ export class TestContext {
     };
   }
 
-  async runSeedTest(seedFile: string, projectName: string, progress: ProgressCallback) {
-    await this.runWithGlobalSetup(async (testRunner, reporter) => {
-      const result = await testRunner.runTests(reporter, {
-        headed: !this.options?.headless,
-        locations: ['/' + escapeRegExp(seedFile) + '/'],
-        projects: [projectName],
-        timeout: 0,
-        workers: 1,
-        pauseAtEnd: true,
-        disableConfigReporters: true,
-        failOnLoadErrors: true,
-      });
-      // Ideally, we should check that page was indeed created and browser mcp has kicked in.
-      // However, that is handled in the upper layer, so hard to check here.
-      if (result.status === 'passed' && !reporter.suite?.allTests().length)
-        throw new Error('seed test not found.');
-
-      if (result.status !== 'passed')
-        throw new Error('Errors while running the seed test.');
-    }, progress);
+  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+    const result = await this.runTestsWithGlobalSetupAndPossiblePause({
+      headed: this.computedHeaded,
+      locations: ['/' + escapeRegExp(seedFile) + '/'],
+      projects: [projectName],
+      timeout: 0,
+      workers: 1,
+      pauseAtEnd: true,
+      disableConfigReporters: true,
+      failOnLoadErrors: true,
+    });
+    if (result.status === 'passed')
+      result.output += '\nError: seed test not found.';
+    else if (result.status !== 'paused')
+      result.output += '\nError while running the seed test.';
+    return result;
   }
 
-  async runWithGlobalSetup(
-    callback: (testRunner: TestRunner, reporter: ListReporter) => Promise<void>,
-    progress: ProgressCallback): Promise<void> {
-    const { screen, claimStdio, releaseStdio } = createScreen(progress);
-    const configDir = this.configLocation.configDir;
-    const testRunner = await this.createTestRunner();
+  async runTestsWithGlobalSetupAndPossiblePause(params: RunTestsParams): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+    const configDir = this._configLocation.configDir;
+    const testRunnerAndScreen = await this.createTestRunner();
+    const { testRunner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
 
     claimStdio();
     try {
       const setupReporter = new ListReporter({ configDir, screen, includeTestId: true });
       const { status } = await testRunner.runGlobalSetup([setupReporter]);
       if (status !== 'passed')
-        throw new Error('Failed to run global setup');
+        return { output: testRunnerAndScreen.output.join('\n'), status };
     } finally {
       releaseStdio();
     }
 
+    let status: FullResultStatus | 'paused' = 'passed';
+
+    const cleanup = async () => {
+      claimStdio();
+      try {
+        const result = await testRunner.runGlobalTeardown();
+        if (status === 'passed')
+          status = result.status;
+      } finally {
+        releaseStdio();
+      }
+    };
+
     try {
       const reporter = new ListReporter({ configDir, screen, includeTestId: true });
-      return await callback(testRunner, reporter);
-    } finally {
-      claimStdio();
-      await testRunner.runGlobalTeardown().finally(() => {
-        releaseStdio();
-      });
+      status = await Promise.race([
+        testRunner.runTests(reporter, params).then(result => result.status),
+        testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
+      ]);
+
+      if (status === 'paused') {
+        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
+        if (response.error)
+          throw new Error(response.error.message);
+        testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
+        return { output: testRunnerAndScreen.output.join('\n'), status };
+      }
+    } catch (e) {
+      status = 'failed';
+      testRunnerAndScreen.output.push(String(e));
+      await cleanup();
+      return { output: testRunnerAndScreen.output.join('\n'), status };
     }
+
+    await cleanup();
+    return { output: testRunnerAndScreen.output.join('\n'), status };
   }
 
   async close() {
+    await this._cleanupTestRunner().catch(logUnhandledError);
+  }
+
+  async sendMessageToPausedTest(request: BrowserMCPRequest): Promise<BrowserMCPResponse> {
+    const sendMessage = this._testRunnerAndScreen?.sendMessageToPausedTest;
+    if (!sendMessage)
+      throw new Error('Must setup test before interacting with the page');
+    const result = await sendMessage({ request });
+    if (result.error)
+      throw new Error(result.error.message);
+    if (typeof request?.callTool?.arguments?.['intent'] === 'string') {
+      const response = parseResponse(result.response.callTool!);
+      if (response && !response.isError && response.code)
+        this.generatorJournal?.logStep(request.callTool.arguments['intent'], response.code);
+    }
+    return result.response;
   }
 }
 
-export function createScreen(progress: ProgressCallback) {
-  const stdout = new StringWriteStream(progress, 'stdout');
-  const stderr = new StringWriteStream(progress, 'stderr');
+export function createScreen() {
+  const output: string[] = [];
+  const stdout = new StringWriteStream(output, 'stdout');
+  const stderr = new StringWriteStream(output, 'stderr');
 
   const screen = {
     ...terminalScreen,
@@ -243,7 +305,7 @@ export function createScreen(progress: ProgressCallback) {
   };
   /* eslint-enable no-restricted-properties */
 
-  return { screen, claimStdio, releaseStdio };
+  return { screen, claimStdio, releaseStdio, output };
 }
 
 const bestPracticesMarkdown = `

@@ -22,7 +22,8 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { runBrowserBackendOnTestPause } from './mcp/test/browserBackend';
+import { createCustomMessageHandler } from './mcp/test/browserBackend';
+import { performTask } from './agents/performTask';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -57,6 +58,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
+  _perform: (task: string) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -268,8 +270,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           // and connect it to the existing expect step.
           if (zone.apiName)
             data.apiName = zone.apiName;
-          if (zone.title)
-            data.title = zone.title;
+          if (zone.shortTitle || zone.title)
+            data.title = zone.shortTitle ?? zone.title;
           data.stepId = zone.stepId;
           return;
         }
@@ -417,14 +419,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      (testInfo as TestInfoImpl)._onDidPauseTestCallback = () => runBrowserBackendOnTestPause(testInfo, context);
+      (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await use(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    (testInfo as TestInfoImpl)._onDidPauseTestCallback = () => runBrowserBackendOnTestPause(testInfo, context);
+    (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -457,6 +459,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     } else {
       await request.dispose();
     }
+  },
+
+  _perform: async ({ context }, use) => {
+    await use(async (task: string) => {
+      await performTask(context, task);
+    });
   },
 });
 

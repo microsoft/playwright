@@ -25,7 +25,7 @@ import '@web/third_party/vscode/codicon.css';
 import { msToString } from '@web/uiUtils';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
-import type { SourceLocation } from './modelUtil';
+import type { SourceLocation } from '@isomorphic/trace/traceModel';
 import { testStatusIcon } from './testUtils';
 import './uiModeTestListView.css';
 import type { TestServerConnection } from '@testIsomorphic/testServerConnection';
@@ -39,7 +39,7 @@ export const TestListView: React.FC<{
   testTree: TestTree,
   testServerConnection: TestServerConnection | undefined,
   testModel?: TeleSuiteUpdaterTestModel,
-  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', testIds: Set<string>) => void,
+  runTests: (mode: 'bounce-if-busy' | 'queue-if-busy', filter: { testIds: Iterable<string>, locations: Iterable<string> }) => void,
   runningState?: { testIds: Set<string>, itemSelectedByUser?: boolean, completed?: boolean },
   watchAll: boolean,
   watchedTreeIds: { value: Set<string> },

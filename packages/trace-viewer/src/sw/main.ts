@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import { SnapshotServer } from '@isomorphic/trace/snapshotServer';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { TraceVersionError } from '@isomorphic/trace/traceModernizer';
+
 import { Progress, splitProgress } from './progress';
-import { SnapshotServer } from './snapshotServer';
-import { TraceModel } from './traceModel';
-import { FetchTraceModelBackend, traceFileURL, ZipTraceModelBackend } from './traceModelBackends';
-import { TraceVersionError } from './traceModernizer';
+import { FetchTraceLoaderBackend, traceFileURL, ZipTraceLoaderBackend } from './traceLoaderBackends';
 
 type Client = {
   id: string;
@@ -59,7 +60,7 @@ self.addEventListener('activate', function(event: any) {
 });
 
 type LoadedTrace = {
-  traceModel: TraceModel;
+  traceLoader: TraceLoader;
   snapshotServer: SnapshotServer;
 };
 
@@ -105,23 +106,23 @@ function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progre
 async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<LoadedTrace> {
   await gc();
 
-  const traceModel = new TraceModel();
+  const traceLoader = new TraceLoader();
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = isLiveTrace(traceUrl) || traceUrl.endsWith('traces.dir') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
-    await traceModel.load(backend, unzipProgress);
+    const backend = isLiveTrace(traceUrl) || traceUrl.endsWith('traces.dir') ? new FetchTraceLoaderBackend(traceUrl) : new ZipTraceLoaderBackend(traceUrl, fetchProgress);
+    await traceLoader.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error(error);
-    if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
+    if (error?.message?.includes('Cannot find .trace file') && await traceLoader.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (error instanceof TraceVersionError)
       throw new Error(`Could not load trace from ${traceUrl}. ${error.message}`);
     throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
-  const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
-  return { traceModel, snapshotServer };
+  const snapshotServer = new SnapshotServer(traceLoader.storage(), sha1 => traceLoader.resourceForSha1(sha1));
+  return { traceLoader, snapshotServer };
 }
 
 async function doFetch(event: FetchEvent): Promise<Response> {
@@ -204,7 +205,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       return errorResponse;
 
     if (relativePath === '/contexts') {
-      return new Response(JSON.stringify(loadedTrace!.traceModel.contextEntries), {
+      return new Response(JSON.stringify(loadedTrace!.traceLoader.contextEntries), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -221,7 +222,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
 
     if (relativePath.startsWith('/sha1/')) {
-      const blob = await loadedTrace!.traceModel.resourceForSha1(relativePath.slice('/sha1/'.length));
+      const blob = await loadedTrace!.traceLoader.resourceForSha1(relativePath.slice('/sha1/'.length));
       if (blob)
         return new Response(blob, { status: 200, headers: downloadHeaders(url.searchParams) });
       return new Response(null, { status: 404 });

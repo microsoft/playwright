@@ -57,7 +57,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _downloads: { download: playwright.Download, finished: boolean, outputFile: string }[] = [];
-  readonly initializedPromise: Promise<void>;
+  // TODO: split into Tab and TabHeader
+  private _initializedPromise: Promise<void>;
   private _needsFullSnapshot = false;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
@@ -84,7 +85,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
-    this.initializedPromise = this._initialize();
+    this._initializedPromise = this._initialize();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {
@@ -186,10 +187,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async waitForLoadState(state: 'load', options?: { timeout?: number }): Promise<void> {
+    await this._initializedPromise;
     await callOnPageNoTrace(this.page, page => page.waitForLoadState(state, options).catch(logUnhandledError));
   }
 
   async navigate(url: string) {
+    await this._initializedPromise;
     this._clearCollectedArtifacts();
 
     const downloadEvent = callOnPageNoTrace(this.page, page => page.waitForEvent('download').catch(logUnhandledError));
@@ -219,16 +222,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async consoleMessages(type?: 'error'): Promise<ConsoleMessage[]> {
-    await this.initializedPromise;
+    await this._initializedPromise;
     return this._consoleMessages.filter(message => type ? message.type === type : true);
   }
 
   async requests(): Promise<Set<playwright.Request>> {
-    await this.initializedPromise;
+    await this._initializedPromise;
     return this._requests;
   }
 
   async captureSnapshot(): Promise<TabSnapshot> {
+    await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
       const snapshot = await this.page._snapshotForAI({ track: 'response' });
@@ -282,14 +286,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async waitForCompletion(callback: () => Promise<void>) {
+    await this._initializedPromise;
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
   }
 
   async refLocator(params: { element: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {
+    await this._initializedPromise;
     return (await this.refLocators([params]))[0];
   }
 
   async refLocators(params: { element: string, ref: string }[]): Promise<{ locator: Locator, resolved: string }[]> {
+    await this._initializedPromise;
     return Promise.all(params.map(async param => {
       try {
         const locator = this.page.locator(`aria-ref=${param.ref}`).describe(param.element) as Locator;
@@ -308,7 +315,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     }
 
     await callOnPageNoTrace(this.page, page => {
-      return page.evaluate(() => new Promise(f => setTimeout(f, 1000)));
+      return page.evaluate(() => new Promise(f => setTimeout(f, 1000))).catch(() => {});
     });
   }
 }

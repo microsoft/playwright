@@ -362,8 +362,8 @@ export class Page extends SdkObject {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  addConsoleMessage(type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(this, type, text, args, location);
+  addConsoleMessage(worker: Worker | null, type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
+    const message = new ConsoleMessage(this, worker, type, text, args, location);
     const intercepted = this.frameManager.interceptConsoleMessage(message);
     if (intercepted) {
       args.forEach(arg => arg.dispose());
@@ -486,6 +486,8 @@ export class Page extends SdkObject {
   }
 
   private async _performWaitForNavigationCheck(progress: Progress) {
+    if (process.env.PLAYWRIGHT_SKIP_NAVIGATION_CHECK)
+      return;
     const mainFrame = this.frameManager.mainFrame();
     if (!mainFrame || !mainFrame.pendingDocument())
       return;

@@ -109,7 +109,6 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         auto configuration = adoptWK(WKWebsiteDataStoreConfigurationCreate());
         if (g_options.userDataDir.length()) {
             std::string profileFolder = toUTF8String(g_options.userDataDir, g_options.userDataDir.length());
-            WKWebsiteDataStoreConfigurationSetApplicationCacheDirectory(configuration.get(), toWK(profileFolder + "\\ApplicationCache").get());
             WKWebsiteDataStoreConfigurationSetNetworkCacheDirectory(configuration.get(), toWK(profileFolder + "\\Cache").get());
             WKWebsiteDataStoreConfigurationSetCacheStorageDirectory(configuration.get(), toWK(profileFolder + "\\CacheStorage").get());
             WKWebsiteDataStoreConfigurationSetIndexedDBDatabaseDirectory(configuration.get(), toWK(profileFolder + "\\Databases" + "\\IndexedDB").get());

@@ -150,3 +150,9 @@ The text of the console message.
 One of the following values: `'log'`, `'debug'`, `'info'`, `'error'`, `'warning'`, `'dir'`, `'dirxml'`, `'table'`,
 `'trace'`, `'clear'`, `'startGroup'`, `'startGroupCollapsed'`, `'endGroup'`, `'assert'`, `'profile'`, `'profileEnd'`,
 `'count'`, `'timeEnd'`.
+
+## method: ConsoleMessage.worker
+* since: v1.57
+- returns: <[null]|[Worker]>
+
+The web worker or service worker that produced this console message, if any. Note that console messages from web workers also have non-null [`method: ConsoleMessage.page`].

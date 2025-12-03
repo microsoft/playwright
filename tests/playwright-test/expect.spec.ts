@@ -1319,3 +1319,19 @@ test('should support arrayOf', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('ArrayOf Any<Number>');
 });
+
+test('should account for undefined matcherResult', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fails', async () => {
+        await expect(new Promise(f => setTimeout(f, 500))).rejects.toThrow();
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(0);
+  expect(result.output).toContain('Error: expect(received).rejects.toThrow()');
+  expect(result.output).toContain('Received promise resolved instead of rejected');
+  expect(result.output).toContain('Resolved to value: undefined');
+});

@@ -37,7 +37,7 @@ export const Route: React.FunctionComponent<{
   predicate: (params: URLSearchParams) => boolean,
   children: any
 }> = ({ predicate, children }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   return predicate(searchParams) ? children : null;
 };
 
@@ -64,7 +64,10 @@ export const ProjectLink: React.FunctionComponent<{
   projectNames: string[],
   projectName: string,
 }> = ({  projectNames, projectName }) => {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
+  if (searchParams.has('testId'))
+    searchParams.delete('speedboard');
+  searchParams.delete('testId');
   return <Link click={filterWithQuery(searchParams, `p:${projectName}`, false)} ctrlClick={filterWithQuery(searchParams, `p:${projectName}`, true)}>
     <Label label={projectName} colorIndex={projectNames.indexOf(projectName) % 6} />
   </Link>;
@@ -150,7 +153,11 @@ export const TraceLink: React.FC<{ test: TestCaseSummary, trailingSeparator?: bo
   );
 };
 
-export const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
+const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
+
+export function useSearchParams() {
+  return new URLSearchParams(React.useContext(SearchParamsContext));
+}
 
 export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildren> = ({ children }) => {
   const [searchParams, setSearchParams] = React.useState<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
@@ -182,7 +189,7 @@ const kMissingContentType = 'x-playwright/missing';
 export type AnchorID = string | string[] | ((id: string) => boolean) | undefined;
 
 export function useAnchor(id: AnchorID, onReveal: React.EffectCallback) {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   const isAnchored = useIsAnchored(id);
   React.useEffect(() => {
     if (isAnchored)
@@ -191,7 +198,7 @@ export function useAnchor(id: AnchorID, onReveal: React.EffectCallback) {
 }
 
 export function useIsAnchored(id: AnchorID) {
-  const searchParams = React.useContext(SearchParamsContext);
+  const searchParams = useSearchParams();
   const anchor = searchParams.get('anchor');
   if (anchor === null)
     return false;
@@ -214,8 +221,8 @@ export function Anchor({ id, children }: React.PropsWithChildren<{ id: AnchorID 
   return <div ref={ref}>{children}</div>;
 }
 
-export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }) {
-  const params = new URLSearchParams();
+export function testResultHref({ test, result, anchor }: { test?: TestCase | TestCaseSummary, result?: TestResult | TestResultSummary, anchor?: string }, searchParams: URLSearchParams) {
+  const params = new URLSearchParams(searchParams);
   if (test)
     params.set('testId', test.testId);
   if (test && result)

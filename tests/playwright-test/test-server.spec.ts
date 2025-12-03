@@ -60,14 +60,15 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
     this.onTestPaused(params => this.events.push(['testPaused', params]));
+    this.onReport(params => this.events.push(['report', params]));
   }
 }
 
-const test = baseTest.extend<{ startTestServer: () => Promise<TestServerConnectionUnderTest> }>({
+const test = baseTest.extend<{ startTestServer: (options?: { env?: NodeJS.ProcessEnv }) => Promise<TestServerConnectionUnderTest> }>({
   startTestServer: async ({ startCLICommand }, use, testInfo) => {
     let testServerProcess: TestChildProcess | undefined;
-    await use(async () => {
-      testServerProcess = await startCLICommand({}, 'test-server');
+    await use(async options => {
+      testServerProcess = await startCLICommand({}, 'test-server', [], {}, options?.env);
       await testServerProcess.waitForOutput('Listening on');
       const line = testServerProcess.output.split('\n').find(l => l.includes('Listening on'));
       const wsEndpoint = line!.split(' ')[2];
@@ -166,7 +167,7 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const tests = await testServerConnection.runTests({ trace: 'on' });
+  const tests = await testServerConnection.runTests({ trace: 'on', locations: [] });
   expect(tests).toEqual({ status: 'passed' });
   await expect.poll(() => testServerConnection.events).toEqual(expect.arrayContaining([
     ['stdio', { type: 'stderr', text: 'this goes to stderr\n' }],
@@ -247,7 +248,7 @@ test('timeout override', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ timeout: 42 })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ timeout: 42, locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFiles }) => {
@@ -261,7 +262,7 @@ test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFile
       });
       `,
   });
-  expect(await testServerConnection.runTests({})).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
 
 test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
@@ -275,7 +276,7 @@ test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseAtEnd: true });
+  const promise = testServerConnection.runTests({ pauseAtEnd: true, locations: [] });
   await expect.poll(() => testServerConnection.events.find(e => e[0] === 'testPaused')).toEqual(['testPaused', { errors: [] }]);
   await testServerConnection.stopTests({});
   expect(await promise).toEqual({ status: 'interrupted' });
@@ -293,7 +294,7 @@ test('pauseOnError', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseOnError: true });
+  const promise = testServerConnection.runTests({ pauseOnError: true, locations: [] });
   await expect.poll(() => testServerConnection.events.some(e => e[0] === 'testPaused')).toBeTruthy();
   expect(testServerConnection.events.find(e => e[0] === 'testPaused')[1]).toEqual({
     errors: [
@@ -324,6 +325,40 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  expect(await testServerConnection.runTests({ pauseOnError: true })).toEqual({ status: 'passed' });
+  expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
+});
+
+test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      export default { globalSetup: './global-setup.ts' };
+    `,
+    'global-setup.ts': `
+      export default async function() {
+        delete process.env.MAGIC_BEFORE;
+        process.env.MAGIC_AFTER = '43';
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {});
+    `,
+  });
+
+  const testServerConnection = await startTestServer({ env: { 'MAGIC_BEFORE': '42' } });
+  await testServerConnection.initialize({});
+
+  const result1 = await testServerConnection.runGlobalSetup({});
+  expect(result1.status).toBe('passed');
+  expect(result1.env).toContainEqual(['MAGIC_BEFORE', null]);
+  expect(result1.env).toContainEqual(['MAGIC_AFTER', '43']);
+
+  await testServerConnection.runGlobalTeardown({});
+
+  // Second time in the same process still works.
+  const result2 = await testServerConnection.runGlobalSetup({});
+  expect(result2.status).toBe('passed');
+  expect(result2.env).toContainEqual(['MAGIC_BEFORE', null]);
+  expect(result2.env).toContainEqual(['MAGIC_AFTER', '43']);
 });

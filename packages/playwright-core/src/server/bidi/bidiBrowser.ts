@@ -70,6 +70,7 @@ export class BidiBrowser extends Browser {
         'network',
         'log',
         'script',
+        'input',
       ],
     });
 
@@ -134,16 +135,13 @@ export class BidiBrowser extends Browser {
   private _onBrowsingContextCreated(event: bidi.BrowsingContext.Info) {
     if (event.parent) {
       const parentFrameId = event.parent;
-      for (const page of this._bidiPages.values()) {
-        const parentFrame = page._page.frameManager.frame(parentFrameId);
-        if (!parentFrame)
-          continue;
+      const page = this._findPageForFrame(parentFrameId);
+      if (page) {
         page._session.addFrameBrowsingContext(event.context);
         page._page.frameManager.frameAttached(event.context, parentFrameId);
         const frame = page._page.frameManager.frame(event.context);
         if (frame)
           frame._url = event.url;
-        return;
       }
       return;
     }
@@ -153,7 +151,7 @@ export class BidiBrowser extends Browser {
     if (!context)
       return;
     const session = this._connection.createMainFrameBrowsingContextSession(event.context);
-    const opener = event.originalOpener && this._bidiPages.get(event.originalOpener);
+    const opener = event.originalOpener && this._findPageForFrame(event.originalOpener);
     const page = new BidiPage(context, session, opener || null);
     page._page.mainFrame()._url = event.url;
     this._bidiPages.set(event.context, page);
@@ -185,12 +183,20 @@ export class BidiBrowser extends Browser {
         return;
     }
   }
+
+  private _findPageForFrame(frameId: string) {
+    for (const page of this._bidiPages.values()) {
+      if (page._page.frameManager.frame(frameId))
+        return page;
+    }
+  }
 }
 
 export class BidiBrowserContext extends BrowserContext {
   declare readonly _browser: BidiBrowser;
   private _originToPermissions = new Map<string, string[]>();
   private _initScriptIds = new Map<InitScript, string>();
+  private _interceptId: bidi.Network.Intercept | undefined;
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
@@ -226,7 +232,7 @@ export class BidiBrowserContext extends BrowserContext {
         userContexts: [this._userContextId()],
       }));
     }
-    if (this._options.extraHTTPHeaders || this._options.locale)
+    if (this._options.extraHTTPHeaders)
       promises.push(this.doUpdateExtraHTTPHeaders());
     await Promise.all(promises);
   }
@@ -326,9 +332,7 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateExtraHTTPHeaders(): Promise<void> {
-    let allHeaders = this._options.extraHTTPHeaders || [];
-    if (this._options.locale)
-      allHeaders = network.mergeHeaders([allHeaders, network.singleHeader('Accept-Language', this._options.locale)]);
+    const allHeaders = this._options.extraHTTPHeaders || [];
     await this._browser._browserSession.send('network.setExtraHeaders', {
       headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
       userContexts: [this._userContextId()],
@@ -373,6 +377,18 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+    if (this.requestInterceptors.length > 0 && !this._interceptId) {
+      const { intercept } = await this._browser._browserSession.send('network.addIntercept', {
+        phases: [bidi.Network.InterceptPhase.BeforeRequestSent],
+        urlPatterns: [{ type: 'pattern' }],
+      });
+      this._interceptId = intercept;
+    }
+    if (this.requestInterceptors.length === 0 && this._interceptId) {
+      const intercept = this._interceptId;
+      this._interceptId = undefined;
+      await this._browser._browserSession.send('network.removeIntercept', { intercept });
+    }
   }
 
   override async doUpdateDefaultViewport() {

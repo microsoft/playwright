@@ -32,7 +32,7 @@ it('should work @smoke', async ({ browser, browserName }) => {
     await context.close();
   }
   {
-    const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Buenos_Aires' });
+    const context = await browser.newContext({ locale: 'en-US', timezoneId: browserName === 'firefox' ? 'America/Argentina/Buenos_Aires' : 'America/Buenos_Aires' });
     const page = await context.newPage();
     expect(await page.evaluate(func)).toBe('Sat Nov 19 2016 15:12:34 GMT-0300 (Argentina Standard Time)');
     await context.close();
@@ -55,10 +55,15 @@ it('should throw for invalid timezone IDs when creating pages', async ({ browser
         expect(error.message).toContain(`Expected "timezone" to be a valid timezone ID (e.g., "Europe/Berlin") or a valid timezone offset (e.g., "+01:00"), got ${timezoneId}`);
     } else {
       let error = null;
-      const context = await browser.newContext({ timezoneId });
-      await context.newPage().catch(e => error = e);
+      let context = null;
+      try {
+        context = await browser.newContext({ timezoneId });
+        await context.newPage();
+      } catch (e) {
+        error = e;
+      }
       expect(error.message).toContain(`Invalid timezone ID: ${timezoneId}`);
-      await context.close();
+      await context?.close();
     }
   }
 });

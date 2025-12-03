@@ -456,7 +456,7 @@ The list of reporters to use. Each reporter can be:
 * A module name like `'my-awesome-reporter'`.
 * A relative path to the reporter like `'./reporters/my-awesome-reporter.js'`.
 
-You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`.
+You can pass options to the reporter in a tuple like `['json', { outputFile: './report.json' }]`. If the property is not specified, Playwright uses the `'dot'` reporter when the CI environment variable is set, and the `'list'` reporter otherwise.
 
 Learn more in the [reporters guide](../test-reporters.md).
 
@@ -704,10 +704,9 @@ export default defineConfig({
   - `reuseExistingServer` ?<[boolean]> If true, it will re-use an existing server on the `port` or `url` when available. If no server is running on that `port` or `url`, it will run the command to start a new server. If `false`, it will throw if an existing process is listening on the `port` or `url`. This should be commonly set to `!process.env.CI` to allow the local dev server when running tests locally.
   - `stderr` ?<["pipe"|"ignore"]> Whether to pipe the stderr of the command to the process stderr or ignore it. Defaults to `"pipe"`.
   - `stdout` ?<["pipe"|"ignore"]> If `"pipe"`, it will pipe the stdout of the command to the process stdout. If `"ignore"`, it will ignore the stdout of the command. Default to `"ignore"`.
-  - `wait` ?<[Object]> Consider command started only when given output has been produced or a time in milliseconds has passed.
-    - `stdout` ?<[RegExp]>
-    - `stderr` ?<[RegExp]>
-    - `time` ?<[int]>
+  - `wait` ?<[Object]> Consider command started only when given output has been produced.
+    - `stdout` ?<[RegExp]> Regular expression to wait for in the `stdout` of the command output. Named capture groups are stored in the environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in `process.env['MY_SERVER_PORT']`.
+    - `stderr` ?<[RegExp]> Regular expression to wait for in the `stderr` of the command output. Named capture groups are stored in the environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in `process.env['MY_SERVER_PORT']`.
   - `timeout` ?<[int]> How long to wait for the process to start up and be available in milliseconds. Defaults to 60000.
   - `url` ?<[string]> The url on your http server that is expected to return a 2xx, 3xx, 400, 401, 402, or 403 status code when the server is ready to accept connections. Redirects (3xx status codes) are being followed and the new location is checked. Either `port` or `url` should be specified.
 
@@ -777,6 +776,31 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:3000',
   },
+});
+```
+
+If your webserver runs on varying ports, use `wait` to capture the port:
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  webServer: {
+    command: 'npm run start',
+    wait: {
+      stdout: '/Listening on port (?<my_server_port>\\d+)/'
+    },
+  },
+});
+```
+
+```js
+import { test, expect } from '@playwright/test';
+
+test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+
+test('homepage', async ({ page }) => {
+  await page.goto('/');
 });
 ```
 

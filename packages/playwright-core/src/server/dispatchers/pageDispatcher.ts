@@ -40,7 +40,6 @@ import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
-import type { ConsoleMessage } from '../console';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -61,7 +60,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return PageDispatcher.fromNullable(parentScope, page)!;
   }
 
-  static fromNullable(parentScope: BrowserContextDispatcher, page: Page | undefined): PageDispatcher | undefined {
+  static fromNullable(parentScope: BrowserContextDispatcher, page: Page | null | undefined): PageDispatcher | undefined {
     if (!page)
       return undefined;
     const result = parentScope.connection.existingDispatcher<PageDispatcher>(page);
@@ -124,20 +123,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   page(): Page {
     return this._page;
-  }
-
-  serializeConsoleMessage(message: ConsoleMessage) {
-    return {
-      type: message.type(),
-      text: message.text(),
-      args: message.args().map(a => {
-        const elementHandle = a.asElement();
-        if (elementHandle)
-          return ElementHandleDispatcher.from(FrameDispatcher.from(this.parentScope(), elementHandle._frame), elementHandle);
-        return JSHandleDispatcher.fromJSHandle(this, a);
-      }),
-      location: message.location(),
-    };
   }
 
   async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<void> {
@@ -292,7 +277,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Otherwise, if subscription is added in a different task from this call (either before or after),
     // there is a chance for a duplicate or a lost console message.
     this._subscriptions.add('console');
-    return { messages: this._page.consoleMessages().map(message => this.serializeConsoleMessage(message)) };
+    return { messages: this._page.consoleMessages().map(message => this.parentScope().serializeConsoleMessage(message, this)) };
   }
 
   async pageErrors(params: channels.PagePageErrorsParams, progress: Progress): Promise<channels.PagePageErrorsResult> {
@@ -422,6 +407,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
 export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel, PageDispatcher | BrowserContextDispatcher> implements channels.WorkerChannel {
   _type_Worker = true;
+  _type_EventTarget = true;
+
+  readonly _subscriptions = new Set<channels.WorkerUpdateSubscriptionParams['event']>();
 
   static fromNullable(scope: PageDispatcher | BrowserContextDispatcher, worker: Worker | null): WorkerDispatcher | undefined {
     if (!worker)
@@ -443,6 +431,13 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionHandleResult> {
     return { handle: JSHandleDispatcher.fromJSHandle(this, await progress.race(this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)))) };
+  }
+
+  async updateSubscription(params: channels.WorkerUpdateSubscriptionParams, progress: Progress): Promise<void> {
+    if (params.enabled)
+      this._subscriptions.add(params.event);
+    else
+      this._subscriptions.delete(params.event);
   }
 }
 

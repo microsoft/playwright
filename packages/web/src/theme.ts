@@ -24,6 +24,19 @@ declare global {
   }
 }
 
+type DocumentTheme = 'dark-mode' | 'light-mode';
+export type Theme = DocumentTheme | 'system';
+
+const kDefaultTheme: Theme = 'system';
+const kThemeSettingsKey = 'theme';
+export const kThemeOptions: { label: string; value: Theme }[] = [
+  { label: 'Dark mode', value: 'dark-mode' },
+  { label: 'Light mode', value: 'light-mode' },
+  { label: 'System', value: 'system' },
+] as const satisfies { label: string; value: Theme }[];
+
+const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
 export function applyTheme() {
   if (document.playwrightThemeInitialized)
     return;
@@ -36,49 +49,57 @@ export function applyTheme() {
     document.body.classList.add('inactive');
   }, false);
 
-  const prefersDarkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-  const defaultTheme = prefersDarkScheme.matches ? 'dark-mode' : 'light-mode';
+  updateDocumentTheme(currentTheme());
 
-  const currentTheme = settings.getString('theme', defaultTheme);
-  if (currentTheme === 'dark-mode')
-    document.documentElement.classList.add('dark-mode');
-  else
-    document.documentElement.classList.add('light-mode');
+  prefersDarkScheme.addEventListener('change', () => {
+    updateDocumentTheme(currentTheme());
+  });
 }
 
-type Theme = 'dark-mode' | 'light-mode';
+const listeners = new Set<(theme: DocumentTheme) => void>();
+function updateDocumentTheme(newTheme: Theme) {
+  const oldDocumentTheme = currentDocumentTheme();
+  const newDocumentTheme = newTheme === 'system'
+    ? (prefersDarkScheme.matches ? 'dark-mode' : 'light-mode')
+    : newTheme;
 
-const listeners = new Set<(theme: Theme) => void>();
-export function toggleTheme() {
-  const oldTheme = currentTheme();
-  const newTheme = oldTheme === 'dark-mode' ? 'light-mode' : 'dark-mode';
+  if (oldDocumentTheme === newDocumentTheme)
+    return;
 
-  if (oldTheme)
-    document.documentElement.classList.remove(oldTheme);
-  document.documentElement.classList.add(newTheme);
-  settings.setString('theme', newTheme);
+  if (oldDocumentTheme)
+    document.documentElement.classList.remove(oldDocumentTheme);
+  document.documentElement.classList.add(newDocumentTheme);
   for (const listener of listeners)
-    listener(newTheme);
+    listener(newDocumentTheme);
 }
 
-export function addThemeListener(listener: (theme: 'light-mode' | 'dark-mode') => void) {
+export function addThemeListener(listener: (theme: DocumentTheme) => void) {
   listeners.add(listener);
 }
 
-export function removeThemeListener(listener: (theme: Theme) => void) {
+export function removeThemeListener(listener: (theme: DocumentTheme) => void) {
   listeners.delete(listener);
 }
 
-export function currentTheme(): Theme {
-  return document.documentElement.classList.contains('dark-mode') ? 'dark-mode' : 'light-mode';
+function currentTheme(): Theme {
+  return settings.getString(kThemeSettingsKey, kDefaultTheme);
 }
 
-export function useDarkModeSetting(): [boolean, (value: boolean) => void] {
-  const [theme, setTheme] = React.useState(currentTheme() === 'dark-mode');
-  return [theme, (value: boolean) => {
-    const current = currentTheme() === 'dark-mode';
-    if (current !== value)
-      toggleTheme();
-    setTheme(value);
-  }];
+export function currentDocumentTheme(): DocumentTheme | null {
+  if (document.documentElement.classList.contains('dark-mode'))
+    return 'dark-mode';
+  if (document.documentElement.classList.contains('light-mode'))
+    return 'light-mode';
+  return null;
+}
+
+export function useThemeSetting(): [Theme, (value: Theme) => void] {
+  const [theme, setTheme] = React.useState<Theme>(currentTheme());
+
+  React.useEffect(() => {
+    settings.setString(kThemeSettingsKey, theme);
+    updateDocumentTheme(theme);
+  }, [theme]);
+
+  return [theme, setTheme];
 }

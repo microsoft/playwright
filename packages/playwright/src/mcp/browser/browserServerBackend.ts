@@ -40,7 +40,7 @@ export class BrowserServerBackend implements ServerBackend {
     this._tools = filteredTools(config);
   }
 
-  async initialize(server: mcpServer.Server, clientInfo: mcpServer.ClientInfo): Promise<void> {
+  async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {
     this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo) : undefined;
     this._context = new Context({
       config: this._config,

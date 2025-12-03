@@ -19,7 +19,7 @@ import './xtermWrapper.css';
 import type { ITheme, Terminal } from '@xterm/xterm';
 import type { FitAddon } from '@xterm/addon-fit';
 import type { XtermModule } from './xtermModule';
-import { currentTheme, addThemeListener, removeThemeListener } from '../theme';
+import { currentDocumentTheme, addThemeListener, removeThemeListener } from '../theme';
 import { useMeasure } from '../uiUtils';
 
 export type XtermDataSource = {
@@ -33,7 +33,7 @@ export const XtermWrapper: React.FC<{ source: XtermDataSource }> = ({
   source,
 }) => {
   const [measure, xtermElement] = useMeasure<HTMLDivElement>();
-  const [theme, setTheme] = React.useState(currentTheme());
+  const [theme, setTheme] = React.useState(currentDocumentTheme());
   const [modulePromise] = React.useState<Promise<XtermModule>>(import('./xtermModule').then(m => m.default));
   const terminal = React.useRef<{ terminal: Terminal, fitAddon: FitAddon } | null>(null);
 

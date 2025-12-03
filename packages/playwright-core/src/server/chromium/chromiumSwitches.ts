@@ -42,10 +42,12 @@ const disabledFeatures = (assistantMode?: boolean) => [
   'AutoDeElevate',
   // See https://github.com/microsoft/playwright/issues/37714
   'RenderDocument',
+  // Prevents downloading optimization hints on startup.
+  'OptimizationHints',
   assistantMode ? 'AutomationControlled' : '',
 ].filter(Boolean);
 
-export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
+export const chromiumSwitches = (assistantMode?: boolean, channel?: string, android?: boolean) => [
   '--disable-field-trial-config', // https://source.chromium.org/chromium/chromium/src/+/main:testing/variations/README.md
   '--disable-background-networking',
   '--disable-background-timer-throttling',
@@ -85,4 +87,8 @@ export const chromiumSwitches = (assistantMode?: boolean, channel?: string) => [
   // This disables Chrome for Testing infobar that is visible in the persistent context.
   // The switch is ignored everywhere else, including Chromium/Chrome/Edge.
   '--disable-infobars',
+  // Less annoying popups.
+  '--disable-search-engine-choice-screen',
+  // Prevents the "three dots" menu crash in IdentityManager::HasPrimaryAccount for ephemeral contexts.
+  android ? '' : '--disable-sync',
 ].filter(Boolean);

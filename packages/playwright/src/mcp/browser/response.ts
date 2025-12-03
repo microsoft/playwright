@@ -75,8 +75,12 @@ export class Response {
     return this._images;
   }
 
-  setIncludeSnapshot(full?: 'full') {
-    this._includeSnapshot = full ?? 'incremental';
+  setIncludeSnapshot() {
+    this._includeSnapshot = this._context.config.snapshot.mode;
+  }
+
+  setIncludeFullSnapshot() {
+    this._includeSnapshot = 'full';
   }
 
   setIncludeTabs() {

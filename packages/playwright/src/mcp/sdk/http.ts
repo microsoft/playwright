@@ -20,8 +20,8 @@ import http from 'http';
 import crypto from 'crypto';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import * as mcpBundle from 'playwright-core/lib/mcpBundle';
 
-import * as mcpBundle from './bundle';
 import * as mcpServer from './server';
 
 import type { ServerBackendFactory } from './server';

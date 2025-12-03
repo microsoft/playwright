@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool, defineTool } from './tool';
 import * as javascript from '../codegen';
 
@@ -30,7 +30,7 @@ const snapshot = defineTool({
 
   handle: async (context, params, response) => {
     await context.ensureTab();
-    response.setIncludeSnapshot('full');
+    response.setIncludeFullSnapshot();
   },
 });
 

@@ -59,6 +59,7 @@ export type CLIOptions = {
   saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
+  snapshotMode?: 'incremental' | 'full' | 'none';
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
@@ -86,6 +87,9 @@ export const defaultConfig: FullConfig = {
   },
   server: {},
   saveTrace: false,
+  snapshot: {
+    mode: 'incremental',
+  },
   timeouts: {
     action: 5000,
     navigation: 60000,
@@ -103,6 +107,9 @@ export type FullConfig = Config & {
   network: NonNullable<Config['network']>,
   saveTrace: boolean;
   server: NonNullable<Config['server']>,
+  snapshot: {
+    mode: 'incremental' | 'full' | 'none';
+  },
   timeouts: {
     action: number;
     navigation: number;
@@ -130,6 +137,12 @@ async function validateConfig(config: FullConfig): Promise<void> {
     for (const script of config.browser.initScript) {
       if (!await fileExistsAsync(script))
         throw new Error(`Init script file does not exist: ${script}`);
+    }
+  }
+  if (config.browser.initPage) {
+    for (const page of config.browser.initPage) {
+      if (!await fileExistsAsync(page))
+        throw new Error(`Init page file does not exist: ${page}`);
     }
   }
   if (config.sharedBrowserContext && config.saveVideo)
@@ -237,6 +250,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     saveVideo: cliOptions.saveVideo,
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
+    snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -378,6 +392,10 @@ function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
     server: {
       ...pickDefined(base.server),
       ...pickDefined(overrides.server),
+    },
+    snapshot: {
+      ...pickDefined(base.snapshot),
+      ...pickDefined(overrides.snapshot),
     },
     timeouts: {
       ...pickDefined(base.timeouts),

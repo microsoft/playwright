@@ -533,9 +533,11 @@ export type LocalUtilsConnectResult = {
 export type LocalUtilsTracingStartedParams = {
   tracesDir?: string,
   traceName: string,
+  live?: boolean,
 };
 export type LocalUtilsTracingStartedOptions = {
   tracesDir?: string,
+  live?: boolean,
 };
 export type LocalUtilsTracingStartedResult = {
   stacksId: string,
@@ -1622,7 +1624,8 @@ export type BrowserContextConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
-  page: PageChannel,
+  page?: PageChannel,
+  worker?: WorkerChannel,
 };
 export type BrowserContextCloseEvent = {};
 export type BrowserContextDialogEvent = {
@@ -2806,6 +2809,7 @@ export type FrameDragAndDropParams = {
   sourcePosition?: Point,
   targetPosition?: Point,
   strict?: boolean,
+  steps?: number,
 };
 export type FrameDragAndDropOptions = {
   force?: boolean,
@@ -2813,6 +2817,7 @@ export type FrameDragAndDropOptions = {
   sourcePosition?: Point,
   targetPosition?: Point,
   strict?: boolean,
+  steps?: number,
 };
 export type FrameDragAndDropResult = void;
 export type FrameDblclickParams = {
@@ -3292,10 +3297,11 @@ export type WorkerInitializer = {
 export interface WorkerEventTarget {
   on(event: 'close', callback: (params: WorkerCloseEvent) => void): this;
 }
-export interface WorkerChannel extends WorkerEventTarget, Channel {
+export interface WorkerChannel extends WorkerEventTarget, EventTargetChannel {
   _type_Worker: boolean;
   evaluateExpression(params: WorkerEvaluateExpressionParams, progress?: Progress): Promise<WorkerEvaluateExpressionResult>;
   evaluateExpressionHandle(params: WorkerEvaluateExpressionHandleParams, progress?: Progress): Promise<WorkerEvaluateExpressionHandleResult>;
+  updateSubscription(params: WorkerUpdateSubscriptionParams, progress?: Progress): Promise<WorkerUpdateSubscriptionResult>;
 }
 export type WorkerCloseEvent = {};
 export type WorkerEvaluateExpressionParams = {
@@ -3320,6 +3326,14 @@ export type WorkerEvaluateExpressionHandleOptions = {
 export type WorkerEvaluateExpressionHandleResult = {
   handle: JSHandleChannel,
 };
+export type WorkerUpdateSubscriptionParams = {
+  event: 'console',
+  enabled: boolean,
+};
+export type WorkerUpdateSubscriptionOptions = {
+
+};
+export type WorkerUpdateSubscriptionResult = void;
 
 export interface WorkerEvents {
   'close': WorkerCloseEvent;

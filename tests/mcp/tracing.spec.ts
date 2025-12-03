@@ -64,6 +64,7 @@ test('check that trace is saved with browser_start_tracing', async ({ startClien
   expect(files).toEqual([
     'resources',
     expect.stringMatching(/trace-\d+\.network/),
+    expect.stringMatching(/trace-\d+\.stacks/),
     expect.stringMatching(/trace-\d+\.trace/),
   ]);
 });
@@ -102,6 +103,7 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   expect(files).toEqual([
     'resources',
     expect.stringMatching(/trace-\d+\.network/),
+    expect.stringMatching(/trace-\d+\.stacks/),
     expect.stringMatching(/trace-\d+\.trace/),
   ]);
 });
