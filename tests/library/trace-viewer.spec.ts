@@ -26,7 +26,8 @@ import type http from 'http';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
-import { rafraf, roundBox } from 'tests/page/pageTest';
+import { rafraf, roundBox } from '../page/pageTest';
+import { parseTrace } from '../config/utils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -709,6 +710,36 @@ test('should work with adopted style sheets and all: unset', async ({ page, runA
     await expect(frame.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
     await expect(frame.locator('button')).toHaveCSS('padding', '5px');
   }
+});
+
+test('empty adopted style sheets should not prevent node refs', async ({ page }) => {
+  const traceFile = test.info().outputPath('trace.zip');
+  await page.context().tracing.start({ snapshots: true });
+  await page.setContent('<button>Hello</button>');
+  await page.evaluate(() => {
+    const sheet = new CSSStyleSheet();
+    document.adoptedStyleSheets = [sheet];
+
+    const sheet2 = new CSSStyleSheet();
+    for (const element of [document.createElement('div'), document.createElement('span')]) {
+      const root = element.attachShadow({
+        mode: 'open'
+      });
+      root.append('foo');
+      root.adoptedStyleSheets = [sheet2];
+      document.body.appendChild(element);
+    }
+  });
+  await page.evaluate('2 + 2');
+  await page.context().tracing.stop({ path: traceFile });
+
+  const trace = await parseTrace(traceFile);
+  const snapshots = trace.loader.storage();
+  const secondEvaluate = trace.actions.findLast(a => a.method === 'evaluateExpression');
+  expect(secondEvaluate.beforeSnapshot).toBeTruthy();
+  const snapshot = snapshots.snapshotByName(snapshots.snapshotsForTest()[0], secondEvaluate.beforeSnapshot);
+  // Second snapshot should be just a copy of the first one.
+  expect(snapshot.snapshot().html).toEqual([[1, 9]]);
 });
 
 test('should work with nesting CSS selectors', async ({ page, runAndTrace }) => {
@@ -2167,4 +2198,48 @@ test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
   await expect(frame6.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   const frame7 = await traceViewer.snapshotFrame('Evaluate', 4);
   await expect(frame7.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
+});
+
+test('should preserve custom doctype', async ({ runAndTrace, page }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<!DOCTYPE foo><body>hi</body>');
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect.poll(() => frame.locator('body').evaluate(() => document.doctype.name)).toBe('foo');
+});
+
+test('should replace meta charset attr that specifies charset', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<meta charset="shift-jis" />');
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta charset="utf-8">');
+});
+
+test('should replace meta content attr that specifies charset', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<meta http-equiv="Content-Type" content="text/html; charset=Shift_JIS">');
+  });
+  const frame = await traceViewer.snapshotFrame('Set content');
+  await expect.poll(() => frame.locator('body').evaluate(() => document.querySelector('meta')?.outerHTML.toLowerCase())).toBe('<meta http-equiv="content-type" content="text/html; charset=utf-8">');
+});
+
+test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) => {
+  await page.route('**/empty.html', route => {
+    void route.fulfill({
+      body: `<iframe srcdoc="<button>Hello iframe</button>"></iframe>`,
+      contentType: 'text/html'
+    }).catch(() => {});
+  });
+
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.EMPTY_PAGE);
+    await expect(page.frameLocator('iframe').locator('button')).toHaveText('Hello iframe');
+    await page.evaluate('2+2');
+  });
+
+  const frame = await traceViewer.snapshotFrame('Evaluate');
+  await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
