@@ -104,7 +104,10 @@ export class SnapshotServer {
     headers.set('Access-Control-Allow-Origin', '*');
     headers.delete('Content-Length');
     headers.set('Content-Length', String(content.size));
-    headers.set('Cache-Control', 'public, max-age=31536000');
+    if (this._snapshotStorage.hasResourceOverride(resource.request.url))
+      headers.set('Cache-Control', 'no-store, no-cache, max-age=0');
+    else
+      headers.set('Cache-Control', 'public, max-age=31536000');
     const { status } = resource.response;
     const isNullBodyStatus = status === 101 || status === 204 || status === 205 || status === 304;
     return new Response(isNullBodyStatus ? null : content, {
