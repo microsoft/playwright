@@ -123,3 +123,68 @@ test('--debug should pause on error', async ({ interactWithTestRunner, mergeRepo
   const merged = await mergeReports('blob-report', undefined, { additionalArgs: ['--reporter', 'location-reporter.js'] });
   expect(merged.outputLines).toEqual(testProcess.outputLines());
 });
+
+test('--debug should open inspector and pause on end', async ({ interactWithTestRunner, playwright }) => {
+  const testProcess = await interactWithTestRunner({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: [['list'], ['./location-reporter.js']] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+      });
+    `
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', PWTEST_UNDER_TEST: 'true' });
+
+  await testProcess.waitForOutput('PWTEST_RECORDER_WS_ENDPOINT');
+  const wsEndpoint = testProcess.outputLines().find(line => line.startsWith('PWTEST_RECORDER_WS_ENDPOINT')).split('=')[1];
+  const recorderBrowser = await playwright.chromium.connectOverCDP(wsEndpoint);
+  const recorder = recorderBrowser.contexts()[0].pages()[0];
+
+  await expect(recorder.locator('.source-line-paused')).toContainText(`await page.setContent('<div>hello</div>');`);
+  await recorder.getByRole('button', { name: 'Resume' }).click();
+
+  await testProcess.waitForOutput('Paused at End');
+  await expect(recorder.locator('.source-line-paused')).toContainText(`});`);
+
+  await recorder.getByRole('button', { name: 'Resume' }).click();
+  await testProcess.exited;
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.passed).toBe(1);
+});
+
+test('--debug should open inspector and pause on error', async ({ interactWithTestRunner, playwright }) => {
+  const testProcess = await interactWithTestRunner({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: [['list'], ['./location-reporter.js']] };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+        expect(1).toBe(2);
+      });
+    `
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', PWTEST_UNDER_TEST: 'true' });
+
+  await testProcess.waitForOutput('PWTEST_RECORDER_WS_ENDPOINT');
+  const wsEndpoint = testProcess.outputLines().find(line => line.startsWith('PWTEST_RECORDER_WS_ENDPOINT')).split('=')[1];
+  const recorderBrowser = await playwright.chromium.connectOverCDP(wsEndpoint);
+  const recorder = recorderBrowser.contexts()[0].pages()[0];
+
+  await expect(recorder.locator('.source-line-paused')).toContainText(`await page.setContent('<div>hello</div>');`);
+  await recorder.getByRole('button', { name: 'Resume' }).click();
+
+  await testProcess.waitForOutput('Paused on Error');
+  await expect(recorder.locator('.source-line-paused')).toContainText(`expect(1).toBe(2);`);
+
+  await recorder.getByRole('button', { name: 'Resume' }).click();
+  await testProcess.exited;
+
+  const result = parseTestRunnerOutput(testProcess.output);
+  expect(result.failed).toBe(1);
+});

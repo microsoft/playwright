@@ -231,12 +231,19 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   }, { box: true }],
 
-  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, _testInfo) => {
+    const testInfo = _testInfo as TestInfoImpl;
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode() === 'inspector')
-      (testInfo as TestInfoImpl)._setDebugMode();
+      testInfo._setDebugMode();
+    testInfo._onTestPausedCallback = (location, resume) => {
+      const page = playwright._allPages()[0];
+      if (!page || page.context().browser()?._options.headless)
+        return;
+      void page.pause({ __location: location }).then(resume);
+    };
 
     playwright._defaultContextOptions = _combinedContextOptions;
     playwright._defaultContextTimeout = actionTimeout || 0;
@@ -275,6 +282,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           data.stepId = zone.stepId;
           return;
         }
+
+        if (data.apiName === 'page.pause' && data.frames.length === 0 && channel.params?.__location)
+          data.frames = [channel.params.__location];
 
         // In the general case, create a step for each api call and connect them through the stepId.
         const step = testInfo._addStep({

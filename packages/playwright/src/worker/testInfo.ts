@@ -88,6 +88,7 @@ export class TestInfoImpl implements TestInfo {
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunctionCallback?: () => Promise<void>;
+  _onTestPausedCallback?: (location: Location, resume: () => void) => void;
   _onCustomMessageCallback?: (data: any) => Promise<any>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
@@ -473,7 +474,12 @@ export class TestInfoImpl implements TestInfo {
       this._emitErrors();
       this._onTestPaused({ testId: this.testId });
       await this._runAsStep({ title: this._isFailure() ? 'Paused on Error' : 'Paused at End', category: 'test.step', location }, async () => {
-        await this._interruptedPromise;
+        const continuationSignals: Promise<void>[] = [
+          this._interruptedPromise
+        ];
+        if (this._onTestPausedCallback)
+          continuationSignals.push(new Promise(resolve => this._onTestPausedCallback!(location, resolve)));
+        await Promise.race(continuationSignals);
       });
     }
     await this._onDidFinishTestFunctionCallback?.();

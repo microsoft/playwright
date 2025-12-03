@@ -59,6 +59,9 @@ export class RecorderApp {
     this._page = page;
     this._recorder = recorder;
     this.wsEndpointForTest = wsEndpointForTest;
+    if (isUnderTest())
+      // eslint-disable-next-line no-console
+      console.log(`%%PWTEST_RECORDER_WS_ENDPOINT=${this.wsEndpointForTest}`);
 
     // Make a copy of options to modify them later.
     this._languageGeneratorOptions = {
