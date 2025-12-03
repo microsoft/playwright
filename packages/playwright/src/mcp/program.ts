@@ -43,6 +43,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
       .option('--config <path>', 'path to the configuration file.')
+      .option('--config-json <json>', 'configuration as a JSON string (mutually exclusive with --config)')
       .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
       .option('--executable-path <path>', 'path to the browser executable.')
       .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright MCP Bridge" browser extension to be installed.')

@@ -39,6 +39,7 @@ export type CLIOptions = {
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
   config?: string;
+  configJson?: string;
   device?: string;
   executablePath?: string;
   grantPermissions?: string[];
@@ -121,11 +122,11 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 }
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
-  const configInFile = await loadConfig(cliOptions.config);
+  const config = await loadConfig(cliOptions.config, cliOptions.configJson);
   const envOverrides = configFromEnv();
   const cliOverrides = configFromCLIOptions(cliOptions);
   let result = defaultConfig;
-  result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, config);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
   await validateConfig(result);
@@ -307,7 +308,18 @@ function configFromEnv(): Config {
   return configFromCLIOptions(options);
 }
 
-async function loadConfig(configFile: string | undefined): Promise<Config> {
+async function loadConfig(configFile: string | undefined, configJson: string | undefined): Promise<Config> {
+  if (configFile && configJson)
+    throw new Error('Cannot specify both --config and --config-json. Please use only one.');
+
+  if (configJson) {
+    try {
+      return JSON.parse(configJson);
+    } catch (error) {
+      throw new Error(`Failed to parse --config-json: ${error}`);
+    }
+  }
+
   if (!configFile)
     return {};
 

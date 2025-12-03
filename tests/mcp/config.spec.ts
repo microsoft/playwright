@@ -46,6 +46,43 @@ test('config user data dir', async ({ startClient, server }, testInfo) => {
   expect(files.length).toBeGreaterThan(0);
 });
 
+test.describe('--config-json', () => {
+  test('should accept valid JSON configuration', async ({ startClient, server }, testInfo) => {
+    server.setContent('/', `
+      <title>Title</title>
+      <body>Hello, world!</body>
+    `, 'text/html');
+
+    const config: Config = {
+      browser: {
+        userDataDir: testInfo.outputPath('user-data-dir'),
+      },
+    };
+
+    const { client } = await startClient({ args: ['--config-json', JSON.stringify(config)] });
+    expect(await client.callTool({
+      name: 'browser_navigate',
+      arguments: { url: server.PREFIX },
+    })).toHaveResponse({
+      pageState: expect.stringContaining(`Hello, world!`),
+    });
+
+    const files = await fs.promises.readdir(config.browser!.userDataDir!);
+    expect(files.length).toBeGreaterThan(0);
+  });
+
+  test('should reject invalid JSON', async ({ startClient }) => {
+    await expect(startClient({ args: ['--config-json', '{invalid json}'] })).rejects.toThrow();
+  });
+
+  test('should reject when both --config and --config-json are specified', async ({ startClient }, testInfo) => {
+    const configPath = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configPath, '{}');
+
+    await expect(startClient({ args: ['--config', configPath, '--config-json', '{}'] })).rejects.toThrow();
+  });
+});
+
 test('executable path', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({ args: ['--executable-path', testInfo.outputPath('missing-executable')] });
   expect(await client.callTool({
