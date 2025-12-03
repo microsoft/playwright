@@ -43,6 +43,7 @@ runs:
       shell: bash
     - name: Check disk usage
       if: always() && runner.os == 'Linux'
+      shell: bash
       run: ./utils/disk_usage.sh
     - run: |
         echo "::group::npm run build"
@@ -51,6 +52,7 @@ runs:
       shell: bash
     - name: Check disk usage
       if: always() && runner.os == 'Linux'
+      shell: bash
       run: ./utils/disk_usage.sh
     - run: |
         echo "::group::npx playwright install --with-deps"
@@ -76,6 +78,7 @@ runs:
         PW_TAG: "@${{ inputs.bot-name }}"
     - name: Check disk usage
       if: always() && runner.os == 'Linux'
+      shell: bash
       run: ./utils/disk_usage.sh
     - name: Azure Login
       uses: azure/login@v2
