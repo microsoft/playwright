@@ -2129,3 +2129,42 @@ test('should not navigate on anchor clicks', async ({ runAndTrace, page, server 
   await checkLink('link2');
   await checkLink('link3');
 });
+
+test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
+  const traceViewer = await runAndTrace(async () => {
+    await page.setContent('<style>button { color: red; }</style><button>Hello</button>');
+    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+
+    await page.setContent('<style>@media { button { color: red; } }</style><button>Hello</button>');
+    await page.evaluate(() => {
+      window['rule'] = document.styleSheets[0].cssRules[0];
+      void 0;
+    });
+    await page.evaluate(() => { window['rule'].cssRules[0].style.color = 'black'; });
+    await page.evaluate(() => { window['rule'].insertRule('button:not(.disabled) { color: green; }', 1); });
+
+    await page.route('**/style.css', route => {
+      route.fulfill({ body: 'button { color: red; }', }).catch(() => {});
+    });
+    await page.goto(server.EMPTY_PAGE);
+    await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
+    await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+  });
+
+  const frame1 = await traceViewer.snapshotFrame('Set content', 0);
+  await expect(frame1.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  const frame2 = await traceViewer.snapshotFrame('Evaluate', 0);
+  await expect(frame2.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
+
+  const frame3 = await traceViewer.snapshotFrame('Set content', 1);
+  await expect(frame3.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  const frame4 = await traceViewer.snapshotFrame('Evaluate', 2);
+  await expect(frame4.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
+  const frame5 = await traceViewer.snapshotFrame('Evaluate', 3);
+  await expect(frame5.locator('button')).toHaveCSS('color', 'rgb(0, 128, 0)');
+
+  const frame6 = await traceViewer.snapshotFrame('Set content', 2);
+  await expect(frame6.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
+  const frame7 = await traceViewer.snapshotFrame('Evaluate', 4);
+  await expect(frame7.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
+});

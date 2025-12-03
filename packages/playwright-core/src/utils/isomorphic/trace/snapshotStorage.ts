@@ -28,6 +28,7 @@ export class SnapshotStorage {
   }>();
   private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
   private _contextToResources = new Map<string, ResourceSnapshot[]>();
+  private _resourceUrlsWithOverrides = new Set<string>();
 
   addResource(contextId: string, resource: ResourceSnapshot): void {
     resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
@@ -67,6 +68,18 @@ export class SnapshotStorage {
     // Resources are not necessarily sorted in the trace file, so sort them now.
     for (const resources of this._contextToResources.values())
       resources.sort((a, b) => (a._monotonicTime || 0) - (b._monotonicTime || 0));
+    // Resources that have overrides should not be cached, otherwise we might get stale content
+    // while serving snapshots with different override values.
+    for (const frameSnapshots of this._frameSnapshots.values()) {
+      for (const snapshot of frameSnapshots.raw) {
+        for (const override of snapshot.resourceOverrides)
+          this._resourceUrlsWithOverrides.add(override.url);
+      }
+    }
+  }
+
+  hasResourceOverride(url: string) {
+    return this._resourceUrlsWithOverrides.has(url);
   }
 
   private _ensureResourcesForContext(contextId: string): ResourceSnapshot[] {
