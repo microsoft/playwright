@@ -77,7 +77,7 @@ test('executable path', async ({ startClient, server }) => {
   });
 });
 
-test('persistent context', async ({ startClient, server }) => {
+test('persistent context', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
     <body>
     </body>
@@ -87,7 +87,9 @@ test('persistent context', async ({ startClient, server }) => {
     </script>
   `, 'text/html');
 
-  const { client } = await startClient();
+  const { client } = await startClient({
+    args: [`--user-data-dir=${testInfo.outputPath('user-data-dir')}`],
+  });
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
@@ -101,7 +103,9 @@ test('persistent context', async ({ startClient, server }) => {
     name: 'browser_close',
   });
 
-  const { client: client2 } = await startClient();
+  const { client: client2 } = await startClient({
+    args: [`--user-data-dir=${testInfo.outputPath('user-data-dir')}`],
+  });
   expect(await client2.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
