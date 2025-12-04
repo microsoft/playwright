@@ -15,9 +15,12 @@
  */
 
 import { test as it } from './pageTest';
+import './perform-task.cache';
 
 // @ts-ignore
-it.skip('perform task', async ({ page, _perform }) => {
-  await page.goto(`https://playwright.dev/`);
-  await _perform('Click the get started button');
+it('perform task', async ({ page, _perform }) => {
+  await page.goto('https://demo.playwright.dev/todomvc');
+  await _perform('Add "Buy groceries" todo');
+  await _perform('Add "Walk the dog" todo');
+  await _perform('Add "Read a book" todo');
 });
