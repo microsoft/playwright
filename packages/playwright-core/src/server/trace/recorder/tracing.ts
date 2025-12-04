@@ -33,6 +33,7 @@ import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
+import { WebSocket } from '../../network';
 import { isAbortError } from '../../progress';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
@@ -216,6 +217,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._startScreencast();
     if (this._state.options.snapshots)
       await this._snapshotter?.start();
+    // Start WebSocket tracing for all existing and new pages
+    this._startWebSocketTracing();
     return { traceName: this._state.traceName };
   }
 
@@ -282,6 +285,73 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       return;
     for (const page of this._context.pages())
       page.setScreencastOptions(null);
+  }
+
+  private _startWebSocketTracing() {
+    if (!(this._context instanceof BrowserContext))
+      return;
+    // Track WebSockets on existing pages
+    for (const page of this._context.pages())
+      this._startWebSocketTracingInPage(page);
+    // Track WebSockets on new pages
+    this._eventListeners.push(
+        eventsHelper.addEventListener(this._context, BrowserContext.Events.Page, this._startWebSocketTracingInPage.bind(this)),
+    );
+  }
+
+  private _startWebSocketTracingInPage(page: Page) {
+    this._eventListeners.push(
+        eventsHelper.addEventListener(page, Page.Events.WebSocket, (ws: WebSocket) => {
+          this._onWebSocketCreated(ws, page);
+        }),
+    );
+  }
+
+  private _onWebSocketCreated(ws: WebSocket, page: Page) {
+    const wsGuid = ws.guid;
+    const event: trace.WebSocketCreatedTraceEvent = {
+      type: 'websocket-created',
+      wsGuid,
+      timestamp: monotonicTime(),
+      url: ws.url(),
+      pageId: page.guid,
+    };
+    this._appendTraceEvent(event);
+
+    // Listen to WebSocket events
+    const frameListener = (frameEvent: { opcode: number, data: string }, direction: 'sent' | 'received') => {
+      const frameTraceEvent: trace.WebSocketFrameTraceEvent = {
+        type: 'websocket-frame',
+        wsGuid,
+        timestamp: monotonicTime(),
+        opcode: frameEvent.opcode,
+        data: frameEvent.data,
+        direction,
+      };
+      this._appendTraceEvent(frameTraceEvent);
+    };
+
+    this._eventListeners.push(
+        eventsHelper.addEventListener(ws, WebSocket.Events.FrameSent, (e: { opcode: number, data: string }) => frameListener(e, 'sent')),
+        eventsHelper.addEventListener(ws, WebSocket.Events.FrameReceived, (e: { opcode: number, data: string }) => frameListener(e, 'received')),
+        eventsHelper.addEventListener(ws, WebSocket.Events.SocketError, (error: string) => {
+          const errorEvent: trace.WebSocketErrorTraceEvent = {
+            type: 'websocket-error',
+            wsGuid,
+            timestamp: monotonicTime(),
+            error,
+          };
+          this._appendTraceEvent(errorEvent);
+        }),
+        eventsHelper.addEventListener(ws, WebSocket.Events.Close, () => {
+          const closeEvent: trace.WebSocketClosedTraceEvent = {
+            type: 'websocket-closed',
+            wsGuid,
+            timestamp: monotonicTime(),
+          };
+          this._appendTraceEvent(closeEvent);
+        }),
+    );
   }
 
   private _allocateNewTraceFile(state: RecordingState) {

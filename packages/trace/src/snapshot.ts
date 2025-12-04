@@ -18,6 +18,23 @@ import type { Entry as HAREntry } from './har';
 
 export type ResourceSnapshot = HAREntry;
 
+export type WebSocketFrame = {
+  opcode: number; // 1 = text, 2 = binary
+  data: string;
+  timestamp: number;
+  direction: 'sent' | 'received';
+};
+
+export type WebSocketSnapshot = {
+  wsGuid: string;
+  url: string;
+  pageId?: string;
+  createdTimestamp: number;
+  closedTimestamp?: number;
+  error?: string;
+  frames: WebSocketFrame[];
+};
+
 // Text node.
 export type TextNodeSnapshot = string;
 // Subtree reference, "x snapshots ago, node #y". Could point to a text node.

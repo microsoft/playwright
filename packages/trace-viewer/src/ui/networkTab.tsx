@@ -15,10 +15,11 @@
  */
 
 import type { Entry } from '@trace/har';
+import type { WebSocketSnapshot } from '@trace/snapshot';
 import * as React from 'react';
 import type { Boundaries } from './geometry';
 import './networkTab.css';
-import { NetworkResourceDetails } from './networkResourceDetails';
+import { NetworkResourceDetails, WebSocketDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
 import { context } from '@isomorphic/trace/traceModel';
@@ -31,6 +32,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 
 type NetworkTabModel = {
   resources: Entry[],
+  websockets: WebSocketSnapshot[],
   contextIdMap: ContextIdMap,
 };
 
@@ -44,8 +46,10 @@ type RenderedEntry = {
   size: number,
   start: number,
   route: string,
-  resource: Entry,
+  resource?: Entry,
+  websocket?: WebSocketSnapshot,
   contextId: string,
+  isWebSocket: boolean,
 };
 type ColumnName = keyof RenderedEntry;
 type Sorting = { by: ColumnName, negate: boolean};
@@ -61,8 +65,17 @@ export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: 
     });
     return filtered;
   }, [model, selectedTime]);
+  const websockets = React.useMemo(() => {
+    const websockets = model?.websockets || [];
+    const filtered = websockets.filter(ws => {
+      if (!selectedTime)
+        return true;
+      return ws.createdTimestamp >= selectedTime.minimum && ws.createdTimestamp <= selectedTime.maximum;
+    });
+    return filtered;
+  }, [model, selectedTime]);
   const contextIdMap = React.useMemo(() => new ContextIdMap(model), [model]);
-  return { resources, contextIdMap };
+  return { resources, websockets, contextIdMap };
 }
 
 export const NetworkTab: React.FunctionComponent<{
@@ -76,11 +89,14 @@ export const NetworkTab: React.FunctionComponent<{
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
   const { renderedEntries } = React.useMemo(() => {
-    const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
+    // Combine HTTP resources and WebSocket entries
+    const httpEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i));
+    const wsEntries = networkModel.websockets.map((ws, i) => renderWebSocketEntry(ws, boundaries, networkModel.contextIdMap, networkModel.resources.length + i));
+    const allEntries = [...httpEntries, ...wsEntries].filter(filterEntry(filterState));
     if (sorting)
-      sort(renderedEntries, sorting);
-    return { renderedEntries };
-  }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
+      sort(allEntries, sorting);
+    return { renderedEntries: allEntries };
+  }, [networkModel.resources, networkModel.websockets, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
@@ -91,7 +107,7 @@ export const NetworkTab: React.FunctionComponent<{
     setSelectedEntry(undefined);
   }, []);
 
-  if (!networkModel.resources.length)
+  if (!networkModel.resources.length && !networkModel.websockets.length)
     return <PlaceholderPanel text='No network calls' />;
 
   const grid = <NetworkGridView
@@ -106,11 +122,22 @@ export const NetworkTab: React.FunctionComponent<{
     columnWidths={columnWidths}
     setColumnWidths={setColumnWidths}
     isError={item => item.status.code >= 400 || item.status.code === -1}
-    isInfo={item => !!item.route}
+    isInfo={item => !!item.route || item.isWebSocket}
     render={(item, column) => renderCell(item, column)}
     sorting={sorting}
     setSorting={setSorting}
   />;
+
+  const renderDetails = () => {
+    if (!selectedEntry)
+      return null;
+    if (selectedEntry.isWebSocket && selectedEntry.websocket)
+      return <WebSocketDetails websocket={selectedEntry.websocket} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />;
+    if (selectedEntry.resource)
+      return <NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />;
+    return null;
+  };
+
   return <>
     <NetworkFilters filterState={filterState} onFilterStateChange={onFilterStateChange} />
     {!selectedEntry && grid}
@@ -120,7 +147,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
+        main={renderDetails()}
         sidebar={grid}
       />}
   </>;
@@ -223,13 +250,13 @@ class ContextIdMap {
 
   contextId(resource: Entry): string {
     if (resource.pageref)
-      return this._pageId(resource.pageref);
+      return this.pageId(resource.pageref);
     else if (resource._apiRequest)
       return this._apiRequestContextId(resource);
     return '';
   }
 
-  private _pageId(pageref: string): string {
+  pageId(pageref: string): string {
     let shortId = this._pagerefToShortId.get(pageref);
     if (!shortId) {
       ++this._lastPageId;
@@ -293,6 +320,43 @@ const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator
     route: routeStatus,
     resource,
     contextId: contextIdGenerator.contextId(resource),
+    isWebSocket: false,
+  };
+};
+
+const renderWebSocketEntry = (ws: WebSocketSnapshot, boundaries: Boundaries, contextIdGenerator: ContextIdMap, ordinal: number): RenderedEntry => {
+  let resourceName: string;
+  try {
+    const url = new URL(ws.url);
+    resourceName = url.pathname.substring(url.pathname.lastIndexOf('/') + 1);
+    if (!resourceName)
+      resourceName = url.host;
+    if (url.search)
+      resourceName += url.search;
+  } catch {
+    resourceName = ws.url;
+  }
+
+  const duration = ws.closedTimestamp ? ws.closedTimestamp - ws.createdTimestamp : 0;
+  const totalFrameSize = ws.frames.reduce((sum, frame) => {
+    // For binary frames, data is base64-encoded, so decode the size
+    const frameSize = frame.opcode === 2 ? Math.ceil(frame.data.length * 3 / 4) : frame.data.length;
+    return sum + frameSize;
+  }, 0);
+
+  return {
+    ordinal,
+    name: { name: resourceName, url: ws.url },
+    method: 'WS',
+    status: { code: ws.error ? -1 : 101, text: ws.error || 'Switching Protocols' },
+    contentType: 'websocket',
+    duration,
+    size: totalFrameSize,
+    start: ws.createdTimestamp - boundaries.minimum,
+    route: '',
+    websocket: ws,
+    contextId: ws.pageId ? contextIdGenerator.pageId(ws.pageId) : '',
+    isWebSocket: true,
   };
 };
 
@@ -369,6 +433,7 @@ const resourceTypePredicates: Record<ResourceType, (contentType: string) => bool
   'JS': contentType => contentType.includes('javascript'),
   'Font': contentType => contentType.includes('font'),
   'Image': contentType => contentType.includes('image'),
+  'WS': contentType => contentType === 'websocket',
 };
 
 function filterEntry({ searchValue, resourceTypes }: FilterState) {
