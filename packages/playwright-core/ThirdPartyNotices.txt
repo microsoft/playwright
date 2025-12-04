@@ -4,11 +4,12 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
--	@lowire/loop@0.0.4 (https://github.com/pavelfeldman/lowire)
--	@modelcontextprotocol/sdk@1.17.5 (https://github.com/modelcontextprotocol/typescript-sdk)
+-	@lowire/loop@0.0.6 (https://github.com/pavelfeldman/lowire)
+-	@modelcontextprotocol/sdk@1.24.2 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
--	ajv@6.12.6 (https://github.com/ajv-validator/ajv)
+-	ajv-formats@3.0.1 (https://github.com/ajv-validator/ajv-formats)
+-	ajv@8.17.1 (https://github.com/ajv-validator/ajv)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	body-parser@2.2.0 (https://github.com/expressjs/body-parser)
 -	brace-expansion@1.1.12 (https://github.com/juliangruber/brace-expansion)
@@ -46,7 +47,7 @@ This project incorporates components from the projects listed below. The origina
 -	express-rate-limit@7.5.1 (https://github.com/express-rate-limit/express-rate-limit)
 -	express@5.1.0 (https://github.com/expressjs/express)
 -	fast-deep-equal@3.1.3 (https://github.com/epoberezkin/fast-deep-equal)
--	fast-json-stable-stringify@2.1.0 (https://github.com/epoberezkin/fast-json-stable-stringify)
+-	fast-uri@3.1.0 (https://github.com/fastify/fast-uri)
 -	finalhandler@2.1.0 (https://github.com/pillarjs/finalhandler)
 -	forwarded@0.2.0 (https://github.com/jshttp/forwarded)
 -	fresh@2.0.0 (https://github.com/jshttp/fresh)
@@ -68,9 +69,10 @@ This project incorporates components from the projects listed below. The origina
 -	is-promise@4.0.0 (https://github.com/then/is-promise)
 -	is-wsl@2.2.0 (https://github.com/sindresorhus/is-wsl)
 -	isexe@2.0.0 (https://github.com/isaacs/isexe)
+-	jose@6.1.3 (https://github.com/panva/jose)
 -	jpeg-js@0.4.4 (https://github.com/eugeneware/jpeg-js)
 -	jsbn@1.1.0 (https://github.com/andyperlitch/jsbn)
--	json-schema-traverse@0.4.1 (https://github.com/epoberezkin/json-schema-traverse)
+-	json-schema-traverse@1.0.0 (https://github.com/epoberezkin/json-schema-traverse)
 -	math-intrinsics@1.1.0 (https://github.com/es-shims/math-intrinsics)
 -	media-typer@1.1.0 (https://github.com/jshttp/media-typer)
 -	merge-descriptors@2.0.0 (https://github.com/sindresorhus/merge-descriptors)
@@ -96,10 +98,10 @@ This project incorporates components from the projects listed below. The origina
 -	proxy-addr@2.0.7 (https://github.com/jshttp/proxy-addr)
 -	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
 -	pump@3.0.2 (https://github.com/mafintosh/pump)
--	punycode@2.3.1 (https://github.com/mathiasbynens/punycode.js)
 -	qs@6.14.0 (https://github.com/ljharb/qs)
 -	range-parser@1.2.1 (https://github.com/jshttp/range-parser)
 -	raw-body@3.0.0 (https://github.com/stream-utils/raw-body)
+-	require-from-string@2.0.2 (https://github.com/floatdrop/require-from-string)
 -	retry@0.12.0 (https://github.com/tim-kos/node-retry)
 -	router@2.2.0 (https://github.com/pillarjs/router)
 -	safe-buffer@5.2.1 (https://github.com/feross/safe-buffer)
@@ -123,7 +125,6 @@ This project incorporates components from the projects listed below. The origina
 -	toidentifier@1.0.1 (https://github.com/component/toidentifier)
 -	type-is@2.0.1 (https://github.com/jshttp/type-is)
 -	unpipe@1.0.0 (https://github.com/stream-utils/unpipe)
--	uri-js@4.4.1 (https://github.com/garycourt/uri-js)
 -	vary@1.1.2 (https://github.com/jshttp/vary)
 -	which@2.0.2 (https://github.com/isaacs/node-which)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
@@ -131,10 +132,10 @@ This project incorporates components from the projects listed below. The origina
 -	yaml@2.6.0 (https://github.com/eemeli/yaml)
 -	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
--	zod-to-json-schema@3.24.6 (https://github.com/StefanTerdell/zod-to-json-schema)
+-	zod-to-json-schema@3.25.0 (https://github.com/StefanTerdell/zod-to-json-schema)
 -	zod@3.25.76 (https://github.com/colinhacks/zod)
 
-%% @lowire/loop@0.0.4 NOTICES AND INFORMATION BEGIN HERE
+%% @lowire/loop@0.0.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Apache License
                            Version 2.0, January 2004
@@ -338,9 +339,9 @@ Apache License
    See the License for the specific language governing permissions and
    limitations under the License.
 =========================================
-END OF @lowire/loop@0.0.4 AND INFORMATION
+END OF @lowire/loop@0.0.6 AND INFORMATION
 
-%% @modelcontextprotocol/sdk@1.17.5 NOTICES AND INFORMATION BEGIN HERE
+%% @modelcontextprotocol/sdk@1.24.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -364,7 +365,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @modelcontextprotocol/sdk@1.17.5 AND INFORMATION
+END OF @modelcontextprotocol/sdk@1.24.2 AND INFORMATION
 
 %% accepts@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -421,11 +422,11 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF agent-base@7.1.4 AND INFORMATION
 
-%% ajv@6.12.6 NOTICES AND INFORMATION BEGIN HERE
+%% ajv-formats@3.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-The MIT License (MIT)
+MIT License
 
-Copyright (c) 2015-2017 Evgeny Poberezkin
+Copyright (c) 2020 Evgeny Poberezkin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -445,7 +446,33 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF ajv@6.12.6 AND INFORMATION
+END OF ajv-formats@3.0.1 AND INFORMATION
+
+%% ajv@8.17.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2015-2021 Evgeny Poberezkin
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF ajv@8.17.1 AND INFORMATION
 
 %% balanced-match@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1422,31 +1449,42 @@ SOFTWARE.
 =========================================
 END OF fast-deep-equal@3.1.3 AND INFORMATION
 
-%% fast-json-stable-stringify@2.1.0 NOTICES AND INFORMATION BEGIN HERE
+%% fast-uri@3.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
-This software is released under the MIT license:
+Copyright (c) 2011-2021, Gary Court until https://github.com/garycourt/uri-js/commit/a1acf730b4bba3f1097c9f52e7d9d3aba8cdcaae
+Copyright (c) 2021-present The Fastify team
+All rights reserved.
 
-Copyright (c) 2017 Evgeny Poberezkin
-Copyright (c) 2013 James Halliday
+The Fastify team members are listed at https://github.com/fastify/fastify#team.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+    * Redistributions of source code must retain the above copyright
+      notice, this list of conditions and the following disclaimer.
+    * Redistributions in binary form must reproduce the above copyright
+      notice, this list of conditions and the following disclaimer in the
+      documentation and/or other materials provided with the distribution.
+    * The names of any contributors may not be used to endorse or promote
+      products derived from this software without specific prior written
+      permission.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS AND CONTRIBUTORS BE LIABLE FOR ANY
+DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+(INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+                                  *   *   *
+
+The complete list of contributors can be found at:
+- https://github.com/garycourt/uri-js/graphs/contributors
 =========================================
-END OF fast-json-stable-stringify@2.1.0 AND INFORMATION
+END OF fast-uri@3.1.0 AND INFORMATION
 
 %% finalhandler@2.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1937,6 +1975,32 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF isexe@2.0.0 AND INFORMATION
 
+%% jose@6.1.3 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) 2018 Filip Skokan
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+=========================================
+END OF jose@6.1.3 AND INFORMATION
+
 %% jpeg-js@0.4.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (c) 2014, Eugene Ware
@@ -2012,7 +2076,7 @@ Address all questions regarding this license to:
 =========================================
 END OF jsbn@1.1.0 AND INFORMATION
 
-%% json-schema-traverse@0.4.1 NOTICES AND INFORMATION BEGIN HERE
+%% json-schema-traverse@1.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -2036,7 +2100,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF json-schema-traverse@0.4.1 AND INFORMATION
+END OF json-schema-traverse@1.0.0 AND INFORMATION
 
 %% math-intrinsics@1.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2656,31 +2720,6 @@ THE SOFTWARE.
 =========================================
 END OF pump@3.0.2 AND INFORMATION
 
-%% punycode@2.3.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright Mathias Bynens <https://mathiasbynens.be/>
-
-Permission is hereby granted, free of charge, to any person obtaining
-a copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be
-included in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
-NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
-LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
-OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
-WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-=========================================
-END OF punycode@2.3.1 AND INFORMATION
-
 %% qs@6.14.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 BSD 3-Clause License
@@ -2769,6 +2808,32 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
 END OF raw-body@3.0.0 AND INFORMATION
+
+%% require-from-string@2.0.2 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+The MIT License (MIT)
+
+Copyright (c) Vsevolod Strukchinsky <floatdrop@gmail.com> (github.com/floatdrop)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF require-from-string@2.0.2 AND INFORMATION
 
 %% retry@0.12.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3346,22 +3411,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF unpipe@1.0.0 AND INFORMATION
 
-%% uri-js@4.4.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-Copyright 2011 Gary Court. All rights reserved.
-
-Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
-
-1.	Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
-
-2.	Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
-
-THIS SOFTWARE IS PROVIDED BY GARY COURT "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL GARY COURT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-The views and conclusions contained in the software and documentation are those of the authors and should not be interpreted as representing official policies, either expressed or implied, of Gary Court.
-=========================================
-END OF uri-js@4.4.1 AND INFORMATION
-
 %% vary@1.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
@@ -3524,7 +3573,7 @@ SOFTWARE.
 =========================================
 END OF yazl@2.5.1 AND INFORMATION
 
-%% zod-to-json-schema@3.24.6 NOTICES AND INFORMATION BEGIN HERE
+%% zod-to-json-schema@3.25.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 ISC License
 
@@ -3542,7 +3591,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
-END OF zod-to-json-schema@3.24.6 AND INFORMATION
+END OF zod-to-json-schema@3.25.0 AND INFORMATION
 
 %% zod@3.25.76 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3572,6 +3621,6 @@ END OF zod@3.25.76 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 129
+Total Packages: 130
 =========================================
 END OF SUMMARY
