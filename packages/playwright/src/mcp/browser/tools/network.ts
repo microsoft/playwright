@@ -27,26 +27,34 @@ const requests = defineTabTool({
     name: 'browser_network_requests',
     title: 'List network requests',
     description: 'Returns all network requests since loading the page',
-    inputSchema: z.object({}),
+    inputSchema: z.object({
+      includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+    }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response) => {
     const requests = await tab.requests();
-    for (const request of requests)
-      response.addResult(await renderRequest(request));
+    for (const request of requests) {
+      const rendered = await renderRequest(request, params.includeStatic);
+      if (rendered)
+        response.addResult(rendered);
+    }
   },
 });
 
-async function renderRequest(request: playwright.Request) {
+async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
+  const response = (request as Request)._hasResponse ? await request.response() : undefined;
+  const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
+  const isSuccessfulRequest = !response || response.status() < 400;
+
+  if (isStaticRequest && isSuccessfulRequest && !includeStatic)
+    return undefined;
+
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
-  const hasResponse = (request as Request)._hasResponse;
-  if (hasResponse) {
-    const response = await request.response();
-    if (response)
-      result.push(`=> [${response.status()}] ${response.statusText()}`);
-  }
+  if (response)
+    result.push(`=> [${response.status()}] ${response.statusText()}`);
   return result.join(' ');
 }
 
