@@ -991,75 +991,6 @@ export module Protocol {
       evicted?: boolean;
     };
   }
-  export module Accessibility {
-    export type AXTree = {
-      role: string;
-      name: string;
-      children?: AXTree[];
-      selected?: boolean;
-      focused?: boolean;
-      pressed?: boolean;
-      focusable?: boolean;
-      haspopup?: string;
-      required?: boolean;
-      invalid?: boolean;
-      modal?: boolean;
-      editable?: boolean;
-      busy?: boolean;
-      multiline?: boolean;
-      readonly?: boolean;
-      checked?: ("mixed"|true);
-      expanded?: boolean;
-      disabled?: boolean;
-      multiselectable?: boolean;
-      value?: string;
-      description?: string;
-      roledescription?: string;
-      valuetext?: string;
-      orientation?: string;
-      autocomplete?: string;
-      keyshortcuts?: string;
-      level?: number;
-      tag?: string;
-      foundObject?: boolean;
-    };
-    export type getFullAXTreeParameters = {
-      objectId?: string;
-    };
-    export type getFullAXTreeReturnValue = {
-      tree: {
-        role: string;
-        name: string;
-        children?: AXTree[];
-        selected?: boolean;
-        focused?: boolean;
-        pressed?: boolean;
-        focusable?: boolean;
-        haspopup?: string;
-        required?: boolean;
-        invalid?: boolean;
-        modal?: boolean;
-        editable?: boolean;
-        busy?: boolean;
-        multiline?: boolean;
-        readonly?: boolean;
-        checked?: ("mixed"|true);
-        expanded?: boolean;
-        disabled?: boolean;
-        multiselectable?: boolean;
-        value?: string;
-        description?: string;
-        roledescription?: string;
-        valuetext?: string;
-        orientation?: string;
-        autocomplete?: string;
-        keyshortcuts?: string;
-        level?: number;
-        tag?: string;
-        foundObject?: boolean;
-      };
-    };
-  }
   export interface Events {
     "Browser.attachedToTarget": Browser.attachedToTargetPayload;
     "Browser.detachedFromTarget": Browser.detachedFromTargetPayload;
@@ -1182,7 +1113,6 @@ export module Protocol {
     "Network.resumeInterceptedRequest": Network.resumeInterceptedRequestParameters;
     "Network.fulfillInterceptedRequest": Network.fulfillInterceptedRequestParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
-    "Accessibility.getFullAXTree": Accessibility.getFullAXTreeParameters;
   }
   export interface CommandReturnValues {
     "Browser.enable": Browser.enableReturnValue;
@@ -1265,6 +1195,5 @@ export module Protocol {
     "Network.resumeInterceptedRequest": Network.resumeInterceptedRequestReturnValue;
     "Network.fulfillInterceptedRequest": Network.fulfillInterceptedRequestReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
-    "Accessibility.getFullAXTree": Accessibility.getFullAXTreeReturnValue;
   }
 }
