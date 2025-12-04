@@ -217,9 +217,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.waitForLoadState('load', { timeout: 5000 });
   }
 
-  async consoleMessages(type?: 'error'): Promise<ConsoleMessage[]> {
+  async consoleMessages(level: ConsoleMessageLevel): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
-    return this._consoleMessages.filter(message => type ? message.type === type : true);
+    return this._consoleMessages.filter(message => shouldIncludeMessage(level, message.type));
   }
 
   async requests(): Promise<Set<playwright.Request>> {
@@ -244,7 +244,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     });
     if (tabSnapshot) {
       // Assign console message late so that we did not lose any to modal state.
-      tabSnapshot.consoleMessages = this._recentConsoleMessages;
+      tabSnapshot.consoleMessages = this._recentConsoleMessages.filter(message => shouldIncludeMessage(this.context.config.console.level, message.type));
       this._recentConsoleMessages = [];
     }
     // If we failed to capture a snapshot this time, make sure we do a full one next time,
@@ -317,7 +317,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 }
 
 export type ConsoleMessage = {
-  type: ReturnType<playwright.ConsoleMessage['type']> | undefined;
+  type: ReturnType<playwright.ConsoleMessage['type']>;
   text: string;
   toString(): string;
 };
@@ -352,6 +352,45 @@ export function renderModalStates(modalStates: ModalState[]): string[] {
   for (const state of modalStates)
     result.push(`- [${state.description}]: can be handled by the "${state.clearedBy}" tool`);
   return result;
+}
+
+type ConsoleMessageType = ReturnType<playwright.ConsoleMessage['type']>;
+type ConsoleMessageLevel = 'error' | 'warning' | 'info' | 'debug';
+const consoleMessageLevels: ConsoleMessageLevel[] = ['error', 'warning', 'info', 'debug'];
+
+function shouldIncludeMessage(thresholdLevel: ConsoleMessageLevel, type: ConsoleMessageType): boolean {
+  const messageLevel = consoleLevelForMessageType(type);
+  return consoleMessageLevels.indexOf(messageLevel) <= consoleMessageLevels.indexOf(thresholdLevel);
+}
+
+function consoleLevelForMessageType(type: ConsoleMessageType): ConsoleMessageLevel {
+  switch (type) {
+    case 'assert':
+    case 'error':
+      return 'error';
+    case 'warning':
+      return 'warning';
+    case 'count':
+    case 'dir':
+    case 'dirxml':
+    case 'info':
+    case 'log':
+    case 'table':
+    case 'time':
+    case 'timeEnd':
+      return 'info';
+    case 'clear':
+    case 'debug':
+    case 'endGroup':
+    case 'profile':
+    case 'profileEnd':
+    case 'startGroup':
+    case 'startGroupCollapsed':
+    case 'trace':
+      return 'debug';
+    default:
+      return 'info';
+  }
 }
 
 const tabSymbol = Symbol('tabSymbol');

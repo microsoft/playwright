@@ -24,12 +24,12 @@ const console = defineTabTool({
     title: 'Get console messages',
     description: 'Returns all console messages',
     inputSchema: z.object({
-      onlyErrors: z.boolean().optional().describe('Only return error messages'),
+      level: z.enum(['error', 'warning', 'info', 'debug']).default('info').describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".'),
     }),
     type: 'readOnly',
   },
   handle: async (tab, params, response) => {
-    const messages = await tab.consoleMessages(params.onlyErrors ? 'error' : undefined);
+    const messages = await tab.consoleMessages(params.level);
     messages.map(message => response.addResult(message.toString()));
   },
 });
