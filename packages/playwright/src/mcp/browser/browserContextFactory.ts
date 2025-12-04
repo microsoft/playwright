@@ -239,6 +239,8 @@ class PersistentContextFactory implements BrowserContextFactory {
     await browserContext.close().catch(() => {});
     await afterClose();
     this._userDataDirs.delete(userDataDir);
+    if (process.env.PWMCP_PROFILES_DIR_FOR_TEST && userDataDir.startsWith(process.env.PWMCP_PROFILES_DIR_FOR_TEST))
+      await fs.promises.rm(userDataDir, { recursive: true }).catch(logUnhandledError);
     testDebug('close browser context complete (persistent)');
   }
 
