@@ -21,6 +21,7 @@ They can act as a **network proxy** between the page and the external network to
 Many sites that use Service Workers simply use them as a transparent optimization technique. While users might notice a faster experience, the app's implementation is unaware of their existence. Running the app with or without Service Workers enabled appears functionally equivalent.
 
 ## How to Disable Service Workers
+* langs: js
 
 Playwright allows to disable Service Workers during testing. This makes tests more predictable and performant. However, if your actual page uses a Service Worker, the behavior might be different.
 
@@ -36,6 +37,24 @@ export default defineConfig({
 });
 ```
 
+## How to Disable Service Workers
+* langs: python
+
+Playwright allows to disable Service Workers during testing. This makes tests more predictable and performant. However, if your actual page uses a Service Worker, the behavior might be different.
+
+To disable service workers, set `service_workers` context option to `"block"`.
+
+```python title="conftest.py"
+import pytest
+
+@pytest.fixture(scope="session")
+def browser_context_args(browser_context_args):
+    return {
+        **browser_context_args,
+        "service_workers": "block"
+    }
+```
+
 ## Accessing Service Workers and Waiting for Activation
 
 You can use [`method: BrowserContext.serviceWorkers`] to list the Service [Worker]s, or specifically watch for the Service [Worker] if you anticipate a page will trigger its [registration](https://developer.mozilla.org/en-US/docs/Web/API/ServiceWorkerContainer/register):
@@ -44,6 +63,18 @@ You can use [`method: BrowserContext.serviceWorkers`] to list the Service [Worke
 const serviceWorkerPromise = context.waitForEvent('serviceworker');
 await page.goto('/example-with-a-service-worker.html');
 const serviceworker = await serviceWorkerPromise;
+```
+
+```python sync
+with context.expect_event("serviceworker") as worker_info:
+  page.goto("/example-with-a-service-worker.html")
+service_worker = worker_info.value
+```
+
+```python async
+async with context.expect_event("serviceworker") as worker_info:
+  await page.goto("/example-with-a-service-worker.html")
+service_worker = await worker_info.value
 ```
 
 [`event: BrowserContext.serviceWorker`] event is fired ***before*** the Service Worker has taken control over the page, so ***before*** evaluating in the worker with [`method: Worker.evaluate`] you should wait on its activation.
@@ -59,6 +90,28 @@ await page.evaluate(async () => {
     window.navigator.serviceWorker.addEventListener('controllerchange', resolve);
   });
 });
+```
+
+```python sync
+page.evaluate("""async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(resolve => {
+    window.navigator.serviceWorker.addEventListener('controllerchange', resolve);
+  });
+}""")
+```
+
+```python async
+await page.evaluate("""async () => {
+  const registration = await window.navigator.serviceWorker.getRegistration();
+  if (registration.active?.state === 'activated')
+    return;
+  await new Promise(resolve => {
+    window.navigator.serviceWorker.addEventListener('controllerchange', resolve);
+  });
+}""")
 ```
 
 ## Network Events and Routing
@@ -124,6 +177,28 @@ await context.route('**', async route => {
     await route.continue();
   }
 });
+```
+
+```python sync
+def handle_route(route: Route):
+  if route.request.service_worker:
+    # NB: accessing route.request.frame here would THROW
+    route.fulfill(content_type="text/plain", status=200, body="from sw")
+  else:
+    route.continue_()
+
+context.route("**", handle_route)
+```
+
+```python async
+async def handle_route(route: Route):
+  if route.request.service_worker:
+    # NB: accessing route.request.frame here would THROW
+    await route.fulfill(content_type="text/plain", status=200, body="from sw")
+  else:
+    await route.continue_()
+
+await context.route("**", handle_route)
 ```
 
 ## Known Limitations
