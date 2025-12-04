@@ -25,21 +25,34 @@ import { wrapInClient } from '../mcp/sdk/server';
 import type * as playwright from 'playwright-core';
 import type * as lowireLoop from '@lowire/loop';
 
-export async function performTask(context: playwright.BrowserContext, task: string) {
+export type PerformTaskOptions = {
+  provider?: 'github' | 'openai' | 'anthropic' | 'google';
+  model?: string;
+  maxTokens?: number;
+  reasoning?: boolean;
+  temperature?: number;
+};
+
+export async function performTask(context: playwright.BrowserContext, task: string, options: PerformTaskOptions) {
   const backend = new BrowserServerBackend(defaultConfig, identityBrowserContextFactory(context));
   const client = await wrapInClient(backend, { name: 'Internal', version: '0.0.0' });
-  const loop = new Loop('github', { model: 'claude-sonnet-4.5' });
-
   const callTool: (params: { name: string, arguments: any}) => Promise<lowireLoop.ToolResult> = async params => {
     return await client.callTool(params) as lowireLoop.ToolResult;
   };
 
+  const loop = new Loop(options.provider ?? 'github', {
+    model: options.model ?? 'claude-sonnet-4.5',
+    reasoning: options.reasoning,
+    temperature: options.temperature,
+    maxTokens: options.maxTokens,
+    summarize: true,
+    debug,
+    callTool,
+    tools: await backend.listTools(),
+  });
+
   try {
-    return await loop.run(task, {
-      tools: await backend.listTools(),
-      callTool,
-      debug,
-    });
+    return await loop.run(task);
   } finally {
     await client.close();
   }

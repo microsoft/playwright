@@ -36,6 +36,7 @@ import type { APIRequestContext as APIRequestContextImpl } from '../../playwrigh
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
+import type { PerformTaskOptions } from './agents/performTask';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -58,7 +59,7 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
-  _perform: (task: string) => Promise<void>;
+  _perform: (task: string, options?: PerformTaskOptions) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -462,8 +463,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   },
 
   _perform: async ({ context }, use) => {
-    await use(async (task: string) => {
-      await performTask(context, task);
+    await use(async (task: string, options?: PerformTaskOptions) => {
+      await performTask(context, task, options ?? {});
     });
   },
 });
