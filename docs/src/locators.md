@@ -1611,7 +1611,7 @@ rowLocator
         .setHas(page.getByRole(
             AriaRole.BUTTON,
             new Page.GetByRoleOptions().setName("Say goodbye"))))
-    .screenshot(new Page.ScreenshotOptions().setPath("screenshot.png"));
+    .screenshot(new Locator.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
 ```
 
 ```csharp
