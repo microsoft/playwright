@@ -23,7 +23,6 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler } from './mcp/test/browserBackend';
-import { performTask } from './agents/performTask';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -36,7 +35,6 @@ import type { APIRequestContext as APIRequestContextImpl } from '../../playwrigh
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
-import type { PerformTaskOptions } from './agents/performTask';
 
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
@@ -59,7 +57,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
-  _perform: (task: string, options?: PerformTaskOptions) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -128,6 +125,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true, box: true }],
+  agent: [({ contextOptions }, use) => use(contextOptions.agent), { option: true, box: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true, box: true }],
   colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true, box: true }],
   deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true, box: true }],
@@ -158,6 +156,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _combinedContextOptions: [async ({
     acceptDownloads,
+    agent,
     bypassCSP,
     clientCertificates,
     colorScheme,
@@ -184,6 +183,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
+    if (agent !== undefined)
+      options.agent = agent;
     if (bypassCSP !== undefined)
       options.bypassCSP = bypassCSP;
     if (colorScheme !== undefined)
@@ -460,12 +461,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     } else {
       await request.dispose();
     }
-  },
-
-  _perform: async ({ context }, use, testInfo) => {
-    await use(async (task: string, options?: PerformTaskOptions) => {
-      await performTask(testInfo, context, task, options ?? {});
-    });
   },
 });
 
@@ -794,4 +789,3 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
-export { performCache } from './agents/performTask';

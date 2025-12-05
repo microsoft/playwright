@@ -267,6 +267,9 @@ await browser.CloseAsync();
 ### option: Browser.newContext.storageStatePath = %%-csharp-java-context-option-storage-state-path-%%
 * since: v1.9
 
+### option: Browser.newContext.agent = %%-js-context-option-agent-%%
+* since: v1.58
+
 ## async method: Browser.newPage
 * since: v1.8
 - returns: <[Page]>

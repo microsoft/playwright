@@ -1008,6 +1008,12 @@ export type BrowserTypeLaunchPersistentContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   userDataDir: string,
   slowMo?: number,
 };
@@ -1090,6 +1096,12 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1211,6 +1223,12 @@ export type BrowserNewContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   proxy?: {
     server: string,
     bypass?: string,
@@ -1279,6 +1297,12 @@ export type BrowserNewContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   proxy?: {
     server: string,
     bypass?: string,
@@ -1350,6 +1374,12 @@ export type BrowserNewContextForReuseParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   proxy?: {
     server: string,
     bypass?: string,
@@ -1418,6 +1448,12 @@ export type BrowserNewContextForReuseOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   proxy?: {
     server: string,
     bypass?: string,
@@ -1553,6 +1589,12 @@ export type BrowserContextInitializer = {
     serviceWorkers?: 'allow' | 'block',
     selectorEngines?: SelectorEngine[],
     testIdAttributeName?: string,
+    agent?: {
+      provider: string,
+      model: string,
+      cacheDir?: string,
+      cacheMode?: 'ignore' | 'force' | 'auto',
+    },
   },
 };
 export interface BrowserContextEventTarget {
@@ -4836,6 +4878,12 @@ export type AndroidDeviceLaunchBrowserParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -4902,6 +4950,12 @@ export type AndroidDeviceLaunchBrowserOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  agent?: {
+    provider: string,
+    model: string,
+    cacheDir?: string,
+    cacheMode?: 'ignore' | 'force' | 'auto',
+  },
   pkg?: string,
   args?: string[],
   proxy?: {

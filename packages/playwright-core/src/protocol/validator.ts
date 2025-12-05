@@ -602,6 +602,12 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheDir: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+  })),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
 });
@@ -694,6 +700,12 @@ scheme.BrowserNewContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheDir: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -765,6 +777,12 @@ scheme.BrowserNewContextForReuseParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheDir: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -881,6 +899,12 @@ scheme.BrowserContextInitializer = tObject({
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
     selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
     testIdAttributeName: tOptional(tString),
+    agent: tOptional(tObject({
+      provider: tString,
+      model: tString,
+      cacheDir: tOptional(tString),
+      cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    })),
   }),
 });
 scheme.BrowserContextBindingCallEvent = tObject({
@@ -2770,6 +2794,12 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheDir: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+  })),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({

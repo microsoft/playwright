@@ -54,6 +54,7 @@ import type * as api from '../../types/types';
 import type { ByRoleOptions } from '../utils/isomorphic/locatorUtils';
 import type { URLMatch } from '../utils/isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
+import type z from 'zod';
 
 type PDFOptions = Omit<channels.PagePdfParams, 'width' | 'height' | 'margin'> & {
   width?: string | number,
@@ -116,6 +117,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageInitializer) {
     super(parent, type, guid, initializer);
+    this._instrumentation.onPage(this);
     this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._platform, this._browserContext._timeoutSettings);
 
@@ -842,6 +844,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await platform.fs().promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
+  }
+
+  async perform(task: string, options: { key?: string, maxTurns?: number } = {}): Promise<void> {
+    throw new Error('Not implemented in playwright-core');
+  }
+
+  extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: { maxTurns?: number } = {}): Promise<z.infer<Schema>> {
+    throw new Error('Not implemented in playwright-core');
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
