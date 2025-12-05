@@ -158,7 +158,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
         let error = await tryFetch(traceURL);
         if (error?.includes('please grant permission for Local Network Access')) {
           // fetching the asset opens the permission prompt. but only from window, not from SW (https://issues.chromium.org/issues/460180743)
-          await fetch(traceURL, { headers: { 'x-pw-serviceworker': 'skip' } });
+          await fetch(traceURL, { method: 'HEAD', headers: { 'x-pw-serviceworker': 'skip' } });
           error = await tryFetch(traceURL);
         }
         if (error) {
