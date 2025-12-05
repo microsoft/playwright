@@ -462,9 +462,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
   },
 
-  _perform: async ({ context }, use) => {
+  _perform: async ({ context }, use, testInfo) => {
     await use(async (task: string, options?: PerformTaskOptions) => {
-      await performTask(context, task, options ?? {});
+      await performTask(testInfo, context, task, options ?? {});
     });
   },
 });
@@ -794,3 +794,4 @@ export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFix
 export { defineConfig } from './common/configLoader';
 export { mergeTests } from './common/testType';
 export { mergeExpects } from './matchers/expect';
+export { performCache } from './agents/performTask';
