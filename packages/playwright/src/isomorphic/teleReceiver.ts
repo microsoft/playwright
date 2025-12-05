@@ -96,8 +96,7 @@ export type JsonTestResultEnd = {
   id: string;
   duration: number;
   status: reporterTypes.TestStatus;
-  /** No longer emitted, but kept for backwards compatibility */
-  errors?: reporterTypes.TestError[];
+  errors: reporterTypes.TestError[];
   /** No longer emitted, but kept for backwards compatibility */
   attachments?: JsonAttachment[];
   annotations?: TestAnnotation[];
@@ -133,7 +132,7 @@ export type JsonFullResult = {
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
-  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnTestErrorEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
+  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
 
 export type JsonOnConfigureEvent = {
   method: 'onConfigure';
@@ -197,15 +196,6 @@ export type JsonOnStepEndEvent = {
 export type JsonOnAttachEvent = {
   method: 'onAttach';
   params: JsonTestResultOnAttach;
-};
-
-export type JsonOnTestErrorEvent = {
-  method: 'onTestError';
-  params: {
-    testId: string;
-    resultId: string;
-    error: reporterTypes.TestError;
-  }
 };
 
 export type JsonOnErrorEvent = {
@@ -304,10 +294,6 @@ export class TeleReporterReceiver {
       this._onAttach(params.testId, params.resultId, params.attachments);
       return;
     }
-    if (method === 'onTestError') {
-      this._onTestError(params.testId, params.resultId, params.error);
-      return;
-    }
     if (method === 'onStepEnd') {
       this._onStepEnd(params.testId, params.resultId, params.step);
       return;
@@ -367,11 +353,8 @@ export class TeleReporterReceiver {
     const result = test.results.find(r => r._id === payload.id)!;
     result.duration = payload.duration;
     result.status = payload.status;
-    // Errors are only present here from legacy blobs. These override all _onTestError events
-    if (!!payload.errors) {
-      result.errors = payload.errors;
-      result.error = result.errors[0];
-    }
+    result.errors = payload.errors;
+    result.error = result.errors?.[0];
     // Attachments are only present here from legacy blobs. These override all _onAttach events
     if (!!payload.attachments)
       result.attachments = this._parseAttachments(payload.attachments);
@@ -419,13 +402,6 @@ export class TeleReporterReceiver {
       path: a.path,
       body: a.base64 && (globalThis as any).Buffer ? Buffer.from(a.base64, 'base64') : undefined,
     })));
-  }
-
-  private _onTestError(testId: string, resultId: string, error: reporterTypes.TestError) {
-    const test = this._tests.get(testId)!;
-    const result = test.results.find(r => r._id === resultId)!;
-    result.errors.push(error);
-    result.error = result.errors[0];
   }
 
   private _onError(error: reporterTypes.TestError) {
