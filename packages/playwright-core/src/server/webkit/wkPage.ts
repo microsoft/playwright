@@ -38,6 +38,7 @@ import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { debugLogger } from '../utils/debugLogger';
 import { translatePathToWSL } from './webkit';
+import { VideoRecorder } from '../chromium/videoRecorder';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -47,6 +48,7 @@ import type { JSHandle } from '../javascript';
 import type { InitScript, PageDelegate } from '../page';
 import type { Progress } from '../progress';
 import type * as types from '../types';
+import { registry } from '../registry';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
@@ -75,8 +77,12 @@ export class WKPage implements PageDelegate {
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
-  private _recordingVideoFile: string | null = null;
   private _screencastGeneration: number = 0;
+
+  private _videoRecorder: VideoRecorder | null = null;
+  private _screencastId: string | null = null;
+  private _screencastClients = new Set<unknown>();
+
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
     this._pageProxySession = pageProxySession;
@@ -128,16 +134,7 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         promises.push(this._grantPermissions(key, value));
     }
-    if (this._browserContext._options.recordVideo) {
-      const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
-      promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this._startVideo({
-          // validateBrowserContextOptions ensures correct video size.
-          ...this._browserContext._options.recordVideo!.size!,
-          outputFile,
-        });
-      }));
-    }
+    promises.push(this._initializeVideoRecording());
     await Promise.all(promises);
   }
 
@@ -817,7 +814,6 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._stopVideo();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -834,23 +830,25 @@ export class WKPage implements PageDelegate {
     return 0;
   }
 
-  private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
-    assert(!this._recordingVideoFile);
-    const { screencastId } = await this._pageProxySession.send('Screencast.startVideo', {
-      file: this._browserContext._browser.options.channel === 'webkit-wsl' ? await translatePathToWSL(options.outputFile) : options.outputFile,
-      width: options.width,
-      height: options.height,
-      toolbarHeight: this._toolbarHeight()
-    });
-    this._recordingVideoFile = options.outputFile;
-    this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this._page.waitForInitializedOrError());
-  }
-
-  async _stopVideo(): Promise<void> {
-    if (!this._recordingVideoFile)
+  private async _initializeVideoRecording() {
+    if (!this._browserContext._options.recordVideo)
       return;
-    await this._pageProxySession.sendMayFail('Screencast.stopVideo');
-    this._recordingVideoFile = null;
+    const screencastId = createGuid();
+    const outputFile = path.join(this._browserContext._options.recordVideo.dir, screencastId + '.webm');
+    const screencastOptions = {
+      // validateBrowserContextOptions ensures correct video size.
+      ...this._browserContext._options.recordVideo.size!,
+      outputFile,
+    };
+    await this._browserContext._ensureVideosPath();
+    // Note: it is important to start video recorder before sending Screencast.startScreencast,
+    // and it is equally important to send Screencast.startScreencast before sending Target.resume.
+    await this._createVideoRecorder(screencastId, screencastOptions);
+    await this._startVideoRecording(screencastOptions);
+    this._page.waitForInitializedOrError().then(p => {
+      if (p instanceof Error)
+        this._stopVideoRecording().catch(() => {});
+    });
   }
 
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
@@ -928,13 +926,10 @@ export class WKPage implements PageDelegate {
   }
 
   async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
-    if (options) {
-      const so = { ...options, toolbarHeight: this._toolbarHeight() };
-      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', so);
-      this._screencastGeneration = generation;
-    } else {
-      await this._pageProxySession.send('Screencast.stopScreencast');
-    }
+    if (options)
+      await this._startScreencast(this, { ...options, toolbarHeight: this._toolbarHeight() });
+    else
+      await this._stopScreencast(this);
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
@@ -945,9 +940,63 @@ export class WKPage implements PageDelegate {
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
+      frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
+  }
+
+  async _startScreencast(client: unknown, options: Protocol.Screencast.startScreencastParameters) {
+    this._screencastClients.add(client);
+    if (this._screencastClients.size === 1) {
+      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', options);
+      this._screencastGeneration = generation;
+    }
+  }
+
+  async _stopScreencast(client: unknown) {
+    this._screencastClients.delete(client);
+    if (!this._screencastClients.size)
+      await this._pageProxySession.sendMayFail('Screencast.stopScreencast');
+  }
+
+  async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
+    assert(!this._screencastId);
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
+    this._videoRecorder = await VideoRecorder.launch(this._page, ffmpegPath, options);
+    this._screencastId = screencastId;
+  }
+
+  async _startVideoRecording(options: types.PageScreencastOptions) {
+    const screencastId = this._screencastId;
+    assert(screencastId);
+    this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
+    const gotFirstFrame = new Promise(f => this._pageProxySession.once('Screencast.screencastFrame', f));
+    await this._startScreencast(this._videoRecorder, {
+      quality: 90,
+      width: options.width,
+      height: options.height,
+      toolbarHeight: this._toolbarHeight(),
+    });
+    // Wait for the first frame before reporting video to the client.
+    gotFirstFrame.then(() => {
+      this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this._page.waitForInitializedOrError());
+    });
+  }
+
+  async _stopVideoRecording(): Promise<void> {
+    if (!this._screencastId)
+      return;
+    const screencastId = this._screencastId;
+    this._screencastId = null;
+    const recorder = this._videoRecorder!;
+    this._videoRecorder = null;
+    await this._stopScreencast(recorder);
+    await recorder.stop().catch(() => {});
+    // Keep the video artifact in the map until encoding is fully finished, if the context
+    // starts closing before the video is fully written to disk it will wait for it.
+    const video = this._browserContext._browser._takeVideo(screencastId);
+    video?.reportFinished();
   }
 
   rafCountForStablePosition(): number {

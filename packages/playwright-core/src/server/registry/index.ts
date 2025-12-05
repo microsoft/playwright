@@ -1416,7 +1416,7 @@ export class Registry {
         faultyArguments.push(arg);
       else
         executables.push(executable);
-      if (executable?.browserName === 'chromium')
+      if (executable?.browserName)
         executables.push(this.findExecutable('ffmpeg')!);
     };
 
