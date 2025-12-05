@@ -143,8 +143,8 @@ test('should respect test.slow', async ({ runInlineTest }) => {
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
 
-test('should ignore test.setTimeout when debugging', async ({ interactWithTestRunner }) => {
-  const testProcess = await interactWithTestRunner({
+test('should ignore test.setTimeout when debugging', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
@@ -159,15 +159,15 @@ test('should ignore test.setTimeout when debugging', async ({ interactWithTestRu
         await new Promise(f => setTimeout(f, 2000));
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
-  await testProcess.waitForOutput('Paused at End');
-  await testProcess.kill('SIGINT');
+  }, { debug: true });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should ignore globalTimeout when debugging', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34911' },
-}, async ({ interactWithTestRunner }) => {
-  const testProcess = await interactWithTestRunner({
+}, async ({ runInlineTest }) => {
+  const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
         globalTimeout: 100,
@@ -179,9 +179,9 @@ test('should ignore globalTimeout when debugging', {
         await new Promise(f => setTimeout(f, 2000));
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
-  await testProcess.waitForOutput('Paused at End');
-  await testProcess.kill('SIGINT');
+  }, { debug: true });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
 });
 
 test('should respect fixture timeout', async ({ runInlineTest }) => {

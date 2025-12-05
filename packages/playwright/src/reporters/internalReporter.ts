@@ -67,12 +67,8 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  onTestError(test: TestCase, result: TestResult, error: TestError): void {
-    addLocationAndSnippetToError(this._config, error, test.location.file);
-    this._reporter.onTestError?.(test, result, error);
-  }
-
   onTestEnd(test: TestCase, result: TestResult) {
+    this._addSnippetToTestErrors(test, result);
     this._reporter.onTestEnd?.(test, result);
   }
 
@@ -93,7 +89,7 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onError(error: TestError) {
-    addLocationAndSnippetToError(this._config, error, undefined);
+    addLocationAndSnippetToError(this._config, error);
     this._reporter.onError?.(error);
   }
 
@@ -102,17 +98,26 @@ export class InternalReporter implements ReporterV2 {
   }
 
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
-    if (step.error)
-      addLocationAndSnippetToError(this._config, step.error, test.location.file);
+    this._addSnippetToStepError(test, step);
     this._reporter.onStepEnd?.(test, result, step);
   }
 
   printsToStdio() {
     return this._reporter.printsToStdio ? this._reporter.printsToStdio() : true;
   }
+
+  private _addSnippetToTestErrors(test: TestCase, result: TestResult) {
+    for (const error of result.errors)
+      addLocationAndSnippetToError(this._config, error, test.location.file);
+  }
+
+  private _addSnippetToStepError(test: TestCase, step: TestStep) {
+    if (step.error)
+      addLocationAndSnippetToError(this._config, step.error, test.location.file);
+  }
 }
 
-export function addLocationAndSnippetToError(config: FullConfig, error: TestError, file: string | undefined) {
+export function addLocationAndSnippetToError(config: FullConfig, error: TestError, file?: string) {
   if (error.stack && !error.location)
     error.location = prepareErrorStack(error.stack).location;
   const location = error.location;
