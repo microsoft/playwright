@@ -29,6 +29,7 @@ import { PoolBuilder } from '../common/poolBuilder';
 import { ProcessRunner } from '../common/process';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { loadTestFile } from '../common/testLoader';
+import { TimeoutManagerError  } from './timeoutManager';
 
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
@@ -396,6 +397,14 @@ export class WorkerMain extends ProcessRunner {
       });
     })().catch(() => {});  // Ignore the top-level error, it is already inside TestInfo.errors.
 
+    try {
+      await testInfo._runWithTimeout({ type: 'test' }, () => testInfo._didFinishTestFunction());
+    } catch (error) {
+      // interrupt leads to TimeoutManagerError
+      if (!(error instanceof TimeoutManagerError))
+        throw error;
+    }
+
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
 
@@ -407,14 +416,6 @@ export class WorkerMain extends ProcessRunner {
     const afterHooksSlot = { timeout: afterHooksTimeout, elapsed: 0 };
     await testInfo._runAsStep({ title: 'After Hooks', category: 'hook' }, async () => {
       let firstAfterHooksError: Error | undefined;
-
-      try {
-        // Run "immediately upon test function finish" callback.
-        await testInfo._runWithTimeout({ type: 'test', slot: afterHooksSlot }, () => testInfo._didFinishTestFunction());
-      } catch (error) {
-        firstAfterHooksError = firstAfterHooksError ?? error;
-      }
-
       try {
         // Run "afterEach" hooks, unless we failed at beforeAll stage.
         if (shouldRunAfterEachHooks)

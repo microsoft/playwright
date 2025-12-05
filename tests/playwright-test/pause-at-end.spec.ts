@@ -21,7 +21,7 @@ class LocationReporter implements Reporter {
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title.startsWith('Paused')) {
       console.log('\n');
-      console.log(`%%${step.title} at :${step.location?.line}:${step.location?.column}`);
+      console.log(`%%${step.titlePath().join(' > ')} at :${step.location?.line}:${step.location?.column}`);
       if (result.error)
         console.log(`%%result.error at :${result.error.location?.line}:${result.error.location?.column}`);
       for (const [index, error] of result.errors.entries())
