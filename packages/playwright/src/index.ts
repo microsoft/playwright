@@ -41,6 +41,7 @@ import type { PerformTaskOptions } from './agents/performTask';
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
+
 setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
 
 if ((process as any)['__pw_initiator__']) {
