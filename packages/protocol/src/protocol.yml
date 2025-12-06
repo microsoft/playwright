@@ -589,7 +589,18 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
-
+    agent:
+      type: object?
+      properties:
+        provider: string
+        model: string
+        cacheDir: string?
+        cacheMode:
+          type: enum?
+          literals:
+          - ignore
+          - force
+          - auto
 
 LocalUtils:
   type: interface

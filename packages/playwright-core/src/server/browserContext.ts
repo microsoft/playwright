@@ -168,7 +168,7 @@ export abstract class BrowserContext extends SdkObject {
   }
 
   static reusableContextHash(params: channels.BrowserNewContextForReuseParams): string {
-    const paramsCopy = { ...params };
+    const paramsCopy = { ...params, agent: undefined };
 
     if (paramsCopy.selectorEngines?.length === 0)
       delete paramsCopy.selectorEngines;

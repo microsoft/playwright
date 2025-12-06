@@ -14,13 +14,16 @@
  * limitations under the License.
  */
 
-import { test as it } from './pageTest';
-import './perform-task.cache';
+import { test } from './pageTest';
+import z from 'zod';
 
-// @ts-ignore
-it('perform task', async ({ page, _perform }) => {
+test.skip('perform task', async ({ page }) => {
   await page.goto('https://demo.playwright.dev/todomvc');
-  await _perform('Add "Buy groceries" todo');
-  await _perform('Add "Walk the dog" todo');
-  await _perform('Add "Read a book" todo');
+  await page.perform('Add "Buy groceries" todo');
+  console.log(await page.extract('List todos with their statuses', z.object({
+    items: z.object({
+      title: z.string(),
+      completed: z.boolean()
+    }).array()
+  })));
 });

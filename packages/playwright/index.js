@@ -14,4 +14,7 @@
  * limitations under the License.
  */
 
-module.exports = require('playwright-core');
+const playwright = require('playwright-core');
+const { decoratePage } = require('./lib/agents/pageDecorator');
+decoratePage(playwright);
+module.exports = playwright;

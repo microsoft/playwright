@@ -128,6 +128,10 @@ for (const browserName of browserNames) {
         executablePath,
       },
       trace: trace ? 'on' : undefined,
+      agent: {
+        provider: 'github',
+        model: 'claude-sonnet-4.5'
+      }
     },
     metadata: {
       platform: process.platform,
