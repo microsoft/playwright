@@ -6532,119 +6532,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        */
       partitionKey?: string;
     }
-    /**
-     * Accessibility Node
-     */
-    export interface AXNode {
-      /**
-       * The role.
-       */
-      role: string;
-      /**
-       * A human readable name for the node.
-       */
-      name?: string;
-      /**
-       * The current value of the node.
-       */
-      value?: any;
-      /**
-       * An additional human readable description of the node.
-       */
-      description?: string;
-      /**
-       * Keyboard shortcuts associated with this node.
-       */
-      keyshortcuts?: string;
-      /**
-       * A human readable alternative to the role.
-       */
-      roledescription?: string;
-      /**
-       * A description of the current value.
-       */
-      valuetext?: string;
-      /**
-       * Whether the node is disabled.
-       */
-      disabled?: boolean;
-      /**
-       * Whether the node is expanded or collapsed.
-       */
-      expanded?: boolean;
-      /**
-       * Whether the node is focused.
-       */
-      focused?: boolean;
-      /**
-       * Whether the node is modal.
-       */
-      modal?: boolean;
-      /**
-       * Whether more than one child can be selected.
-       */
-      multiselectable?: boolean;
-      /**
-       * Whether the node is read only.
-       */
-      readonly?: boolean;
-      /**
-       * Whether the node is required.
-       */
-      required?: boolean;
-      /**
-       * Whether the node is selected in its parent node.
-       */
-      selected?: boolean;
-      /**
-       * Whether the checkbox is checked, or "mixed".
-       */
-      checked?: "true"|"false"|"mixed";
-      /**
-       * Whether the toggle button is checked, or "mixed".
-       */
-      pressed?: "true"|"false"|"mixed";
-      /**
-       * The level of a heading.
-       */
-      level?: number;
-      /**
-       * The minimum value in a node.
-       */
-      valuemin?: number;
-      /**
-       * The maximum value in a node.
-       */
-      valuemax?: number;
-      /**
-       * What kind of autocomplete is supported by a control.
-       */
-      autocomplete?: string;
-      /**
-       * What kind of popup is currently being shown for a node.
-       */
-      haspopup?: string;
-      /**
-       * Whether and in what way this node's value is invalid.
-       */
-      invalid?: "true"|"false"|"grammar"|"spelling";
-      /**
-       * Whether the node is oriented horizontally or vertically.
-       */
-      orientation?: string;
-      /**
-       * Whether the node is focusable.
-       */
-      focusable?: boolean;
-      /**
-       * Child AXNodes of this node, if any.
-       */
-      children?: AXNode[];
-      /**
-       * True if this AXNode corresponds with the ObjectId passed into acessibilitySnapshot.
-       */
-      found?: boolean;
-    }
     export interface Insets {
       top: number;
       right: number;
@@ -7128,21 +7015,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       text: string;
     }
     export type insertTextReturnValue = {
-    }
-    /**
-     * Serializes and returns all of the accessibility nodes of the page.
-     */
-    export type accessibilitySnapshotParameters = {
-      /**
-       * Object Id of a node to find in the accessibility tree.
-       */
-      objectId?: string;
-    }
-    export type accessibilitySnapshotReturnValue = {
-      /**
-       * The root AXNode.
-       */
-      axNode: AXNode;
     }
     /**
      * Intercepts file chooser dialog
@@ -8569,6 +8441,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Base64 data
        */
       data: string;
+      timestamp: number;
       deviceWidth: number;
       deviceHeight: number;
     }
@@ -9425,7 +9298,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveParameters;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideParameters;
     "Page.insertText": Page.insertTextParameters;
-    "Page.accessibilitySnapshot": Page.accessibilitySnapshotParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideParameters;
     "Page.createUserWorld": Page.createUserWorldParameters;
@@ -9731,7 +9603,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Page.archive": Page.archiveReturnValue;
     "Page.setScreenSizeOverride": Page.setScreenSizeOverrideReturnValue;
     "Page.insertText": Page.insertTextReturnValue;
-    "Page.accessibilitySnapshot": Page.accessibilitySnapshotReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.setDefaultBackgroundColorOverride": Page.setDefaultBackgroundColorOverrideReturnValue;
     "Page.createUserWorld": Page.createUserWorldReturnValue;
