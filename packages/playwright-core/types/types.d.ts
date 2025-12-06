@@ -22097,9 +22097,9 @@ export interface BrowserContextOptions {
     model: string;
 
     /**
-     * Cache folder to use/generate code for performed actions into. Cache is not used if not specified (default).
+     * Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
      */
-    cacheDir?: string;
+    cacheFile?: string;
 
     /**
      * Cache control, defauls to 'auto'

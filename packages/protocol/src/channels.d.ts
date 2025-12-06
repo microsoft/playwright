@@ -1011,7 +1011,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   userDataDir: string,
@@ -1099,7 +1099,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   slowMo?: number,
@@ -1226,7 +1226,7 @@ export type BrowserNewContextParams = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   proxy?: {
@@ -1300,7 +1300,7 @@ export type BrowserNewContextOptions = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   proxy?: {
@@ -1377,7 +1377,7 @@ export type BrowserNewContextForReuseParams = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   proxy?: {
@@ -1451,7 +1451,7 @@ export type BrowserNewContextForReuseOptions = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   proxy?: {
@@ -1592,7 +1592,7 @@ export type BrowserContextInitializer = {
     agent?: {
       provider: string,
       model: string,
-      cacheDir?: string,
+      cacheFile?: string,
       cacheMode?: 'ignore' | 'force' | 'auto',
     },
   },
@@ -2111,6 +2111,8 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
+  perform(params: PagePerformParams, progress?: Progress): Promise<PagePerformResult>;
+  extract(params: PageExtractParams, progress?: Progress): Promise<PageExtractResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -2614,6 +2616,27 @@ export type PageUpdateSubscriptionOptions = {
 
 };
 export type PageUpdateSubscriptionResult = void;
+export type PagePerformParams = {
+  task: string,
+  key?: string,
+  maxTurns?: number,
+};
+export type PagePerformOptions = {
+  key?: string,
+  maxTurns?: number,
+};
+export type PagePerformResult = void;
+export type PageExtractParams = {
+  query: string,
+  schema: any,
+  maxTurns?: number,
+};
+export type PageExtractOptions = {
+  maxTurns?: number,
+};
+export type PageExtractResult = {
+  result: any,
+};
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
@@ -4881,7 +4904,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   pkg?: string,
@@ -4953,7 +4976,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   agent?: {
     provider: string,
     model: string,
-    cacheDir?: string,
+    cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
   },
   pkg?: string,

@@ -128,10 +128,6 @@ for (const browserName of browserNames) {
         executablePath,
       },
       trace: trace ? 'on' : undefined,
-      agent: {
-        provider: 'github',
-        model: 'claude-sonnet-4.5'
-      }
     },
     metadata: {
       platform: process.platform,
@@ -146,17 +142,26 @@ for (const browserName of browserNames) {
     }
   };
 
-  config.projects.push({
+  const libraryProject = {
     name: `${browserName}-library`,
     testDir: path.join(testDir, 'library'),
     ...projectTemplate,
-  });
+  };
+  config.projects.push(libraryProject);
 
-  config.projects.push({
+  const pageProject = {
     name: `${browserName}-page`,
     testDir: path.join(testDir, 'page'),
     ...projectTemplate,
-  });
+  };
+  pageProject.use.agent = {
+    provider: 'github',
+    model: 'claude-sonnet-4.5',
+    cacheFile: path.join(testDir, 'page', 'agent-cache.json'),
+    cacheMode: process.env.CI ? 'force' : 'auto',
+  };
+
+  config.projects.push(pageProject);
 }
 
 export default config;

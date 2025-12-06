@@ -605,7 +605,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   agent: tOptional(tObject({
     provider: tString,
     model: tString,
-    cacheDir: tOptional(tString),
+    cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
   })),
   userDataDir: tString,
@@ -703,7 +703,7 @@ scheme.BrowserNewContextParams = tObject({
   agent: tOptional(tObject({
     provider: tString,
     model: tString,
-    cacheDir: tOptional(tString),
+    cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
   })),
   proxy: tOptional(tObject({
@@ -780,7 +780,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   agent: tOptional(tObject({
     provider: tString,
     model: tString,
-    cacheDir: tOptional(tString),
+    cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
   })),
   proxy: tOptional(tObject({
@@ -902,7 +902,7 @@ scheme.BrowserContextInitializer = tObject({
     agent: tOptional(tObject({
       provider: tString,
       model: tString,
-      cacheDir: tOptional(tString),
+      cacheFile: tOptional(tString),
       cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
     })),
   }),
@@ -1506,6 +1506,20 @@ scheme.PageUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
+scheme.PagePerformParams = tObject({
+  task: tString,
+  key: tOptional(tString),
+  maxTurns: tOptional(tInt),
+});
+scheme.PagePerformResult = tOptional(tObject({}));
+scheme.PageExtractParams = tObject({
+  query: tString,
+  schema: tAny,
+  maxTurns: tOptional(tInt),
+});
+scheme.PageExtractResult = tObject({
+  result: tAny,
+});
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,
@@ -2797,7 +2811,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   agent: tOptional(tObject({
     provider: tString,
     model: tString,
-    cacheDir: tOptional(tString),
+    cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
   })),
   pkg: tOptional(tString),

@@ -594,7 +594,7 @@ ContextOptions:
       properties:
         provider: string
         model: string
-        cacheDir: string?
+        cacheFile: string?
         cacheMode:
           type: enum?
           literals:
@@ -2020,6 +2020,22 @@ Page:
           - requestFinished
           - requestFailed
         enabled: boolean
+
+    perform:
+      internal: true
+      parameters:
+        task: string
+        key: string?
+        maxTurns: int?
+
+    extract:
+      internal: true
+      parameters:
+        query: string
+        schema: json
+        maxTurns: int?
+      returns:
+        result: json
 
   events:
 
