@@ -765,6 +765,20 @@ Double click on an action from your test in the actions sidebar. This will filte
 
 Use the timeline to filter actions, by clicking a start point and dragging to an ending point. The network tab will also be filtered to only show the network requests that were made during the actions selected.
 
+#### WebSocket connections
+
+The Network tab also displays WebSocket connections made during your test. WebSocket entries are shown with a "WS" method indicator and can be filtered using the type filter. Click on a WebSocket connection to see detailed information:
+
+- **Info tab**: Shows the WebSocket URL, connection status, timing information, and frame statistics (total frames, sent/received count, text/binary breakdown).
+- **Frames tab**: Displays all WebSocket frames exchanged during the connection. Each frame shows:
+  - Direction (sent ↑ or received ↓)
+  - Frame type (text or binary)
+  - Timestamp
+  - Data size
+  - Content preview
+
+Click on any frame in the list to view its full content. This is particularly useful for debugging real-time communication in applications using WebSocket-based protocols like Socket.IO or custom WebSocket implementations.
+
 ### Metadata
 
 Next to the Actions tab you will find the Metadata tab which will show you more information on your test such as the Browser, viewport size, test duration and more.

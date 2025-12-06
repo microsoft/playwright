@@ -862,6 +862,63 @@ test('should not emit after w/o before', async ({ browserType, mode }, testInfo)
   expect(call2after).toBe(call2before);
 });
 
+test('should record WebSocket trace events', async ({ context, page, server }, testInfo) => {
+  server.onceWebSocketConnection(ws => {
+    ws.on('message', data => {
+      ws.send('echo: ' + data);
+    });
+  });
+
+  await context.tracing.start({ snapshots: true });
+
+  // Create WebSocket connection and exchange messages
+  await page.evaluate(host => {
+    return new Promise<void>((resolve, reject) => {
+      const ws = new WebSocket('ws://' + host + '/ws');
+      ws.addEventListener('open', () => {
+        ws.send('hello');
+        ws.send('world');
+      });
+      let messageCount = 0;
+      ws.addEventListener('message', () => {
+        messageCount++;
+        if (messageCount === 2)
+          ws.close();
+      });
+      ws.addEventListener('close', () => resolve());
+      ws.addEventListener('error', reject);
+    });
+  }, server.HOST);
+
+  await context.tracing.stop({ path: testInfo.outputPath('trace.zip') });
+
+  const { events } = await parseTraceRaw(testInfo.outputPath('trace.zip'));
+
+  // Find WebSocket events
+  const wsCreated = events.filter((e: any) => e.type === 'websocket-created');
+  const wsFrames = events.filter((e: any) => e.type === 'websocket-frame');
+  const wsClosed = events.filter((e: any) => e.type === 'websocket-closed');
+
+  // Verify WebSocket connection was recorded
+  expect(wsCreated.length).toBe(1);
+  expect(wsCreated[0].url).toContain('/ws');
+
+  // Verify frames were recorded (2 sent + 2 received = 4 frames)
+  expect(wsFrames.length).toBe(4);
+
+  const sentFrames = wsFrames.filter((f: any) => f.direction === 'sent');
+  const receivedFrames = wsFrames.filter((f: any) => f.direction === 'received');
+  expect(sentFrames.length).toBe(2);
+  expect(receivedFrames.length).toBe(2);
+
+  // Verify frame content
+  expect(sentFrames.map((f: any) => f.data).sort()).toEqual(['hello', 'world']);
+  expect(receivedFrames.map((f: any) => f.data).sort()).toEqual(['echo: hello', 'echo: world']);
+
+  // Verify WebSocket was closed
+  expect(wsClosed.length).toBe(1);
+});
+
 function expectRed(pixels: Buffer, offset: number) {
   const r = pixels.readUInt8(offset);
   const g = pixels.readUInt8(offset + 1);

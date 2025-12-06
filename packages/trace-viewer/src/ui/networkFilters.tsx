@@ -16,7 +16,7 @@
 
 import './networkFilters.css';
 
-const resourceTypes = ['Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image'] as const;
+const resourceTypes = ['Fetch', 'HTML', 'JS', 'CSS', 'Font', 'Image', 'WS'] as const;
 export type ResourceType = typeof resourceTypes[number];
 
 export type FilterState = {

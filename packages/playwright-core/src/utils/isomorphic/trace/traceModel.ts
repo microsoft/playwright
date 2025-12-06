@@ -17,7 +17,7 @@
 import { getActionGroup } from '@isomorphic/protocolFormatter';
 
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot, WebSocketSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { ActionTraceEvent } from '@trace/trace';
 import type { ActionEntry, ContextEntry, PageEntry } from '@isomorphic/trace/entries';
@@ -85,6 +85,7 @@ export class TraceModel {
   readonly testIdAttributeName: string | undefined;
   readonly sources: Map<string, SourceModel>;
   resources: ResourceSnapshot[];
+  websockets: WebSocketSnapshot[];
   readonly actionCounters: Map<string, number>;
   readonly traceUrl: string;
 
@@ -114,11 +115,13 @@ export class TraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
+    this.websockets = [...contexts.map(c => c.websockets)].flat();
     this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUrl })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
     this.resources.sort((a1, a2) => a1._monotonicTime! - a2._monotonicTime!);
+    this.websockets.sort((a1, a2) => a1.createdTimestamp - a2.createdTimestamp);
     this.errorDescriptors = this.hasStepData ? this._errorDescriptorsFromTestRunner() : this._errorDescriptorsFromActions();
     this.sources = collectSources(this.actions, this.errorDescriptors);
 

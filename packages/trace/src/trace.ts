@@ -165,6 +165,36 @@ export type ErrorTraceEvent = {
   stack?: StackFrame[];
 };
 
+export type WebSocketFrameTraceEvent = {
+  type: 'websocket-frame';
+  wsGuid: string;
+  timestamp: number;
+  opcode: number; // 1 = text, 2 = binary
+  data: string;
+  direction: 'sent' | 'received';
+};
+
+export type WebSocketCreatedTraceEvent = {
+  type: 'websocket-created';
+  wsGuid: string;
+  timestamp: number;
+  url: string;
+  pageId?: string;
+};
+
+export type WebSocketClosedTraceEvent = {
+  type: 'websocket-closed';
+  wsGuid: string;
+  timestamp: number;
+};
+
+export type WebSocketErrorTraceEvent = {
+  type: 'websocket-error';
+  wsGuid: string;
+  timestamp: number;
+  error: string;
+};
+
 export type TraceEvent =
     ContextCreatedTraceEvent |
     ScreencastFrameTraceEvent |
@@ -178,4 +208,8 @@ export type TraceEvent =
     ResourceSnapshotTraceEvent |
     FrameSnapshotTraceEvent |
     StdioTraceEvent |
-    ErrorTraceEvent;
+    ErrorTraceEvent |
+    WebSocketCreatedTraceEvent |
+    WebSocketFrameTraceEvent |
+    WebSocketClosedTraceEvent |
+    WebSocketErrorTraceEvent;

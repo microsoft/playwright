@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot, WebSocketSnapshot, WebSocketFrame } from '@trace/snapshot';
 import * as React from 'react';
 import './networkResourceDetails.css';
 import { TabbedPane } from '@web/components/tabbedPane';
@@ -284,4 +284,153 @@ function formatBody(body: string | null, contentType: string): string {
     return decodeURIComponent(bodyStr);
 
   return bodyStr;
+}
+
+// WebSocket Details Component
+export const WebSocketDetails: React.FunctionComponent<{
+  websocket: WebSocketSnapshot;
+  startTimeOffset: number;
+  onClose: () => void;
+}> = ({ websocket, startTimeOffset, onClose }) => {
+  const [selectedTab, setSelectedTab] = React.useState('info');
+
+  return <TabbedPane
+    dataTestId='websocket-details'
+    leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose} />]}
+    tabs={[
+      {
+        id: 'info',
+        title: 'Info',
+        render: () => <WebSocketInfoTab websocket={websocket} startTimeOffset={startTimeOffset} />,
+      },
+      {
+        id: 'frames',
+        title: `Frames (${websocket.frames.length})`,
+        render: () => <WebSocketFramesTab websocket={websocket} />,
+      },
+    ]}
+    selectedTab={selectedTab}
+    setSelectedTab={setSelectedTab} />;
+};
+
+const WebSocketInfoTab: React.FunctionComponent<{
+  websocket: WebSocketSnapshot;
+  startTimeOffset: number;
+}> = ({ websocket, startTimeOffset }) => {
+  const duration = websocket.closedTimestamp ? websocket.closedTimestamp - websocket.createdTimestamp : 0;
+  const status = websocket.error ? 'Error' : (websocket.closedTimestamp ? 'Closed' : 'Open');
+
+  const generalData = React.useMemo(() =>
+    Object.entries({
+      'URL': websocket.url,
+      'Status': status,
+      'Protocol': 'WebSocket',
+    }).map(([name, value]) => ({ name, value })),
+  [websocket, status]);
+
+  const timeData = React.useMemo(() =>
+    Object.entries({
+      'Start': msToString(startTimeOffset),
+      'Duration': duration > 0 ? msToString(duration) : 'N/A (still open)',
+    }).map(([name, value]) => ({ name, value })),
+  [startTimeOffset, duration]);
+
+  const statsData = React.useMemo(() => {
+    const sentFrames = websocket.frames.filter(f => f.direction === 'sent');
+    const receivedFrames = websocket.frames.filter(f => f.direction === 'received');
+    const sentBytes = sentFrames.reduce((sum, f) => sum + (f.opcode === 2 ? Math.ceil(f.data.length * 3 / 4) : f.data.length), 0);
+    const receivedBytes = receivedFrames.reduce((sum, f) => sum + (f.opcode === 2 ? Math.ceil(f.data.length * 3 / 4) : f.data.length), 0);
+
+    return Object.entries({
+      'Total Frames': String(websocket.frames.length),
+      'Frames Sent': String(sentFrames.length),
+      'Frames Received': String(receivedFrames.length),
+      'Bytes Sent': `${sentBytes} bytes`,
+      'Bytes Received': `${receivedBytes} bytes`,
+    }).map(([name, value]) => ({ name, value }));
+  }, [websocket]);
+
+  return <div className='vbox network-request-details-tab'>
+    <ExpandableSection title='General' data={generalData}/>
+    <ExpandableSection title='Time' data={timeData}/>
+    <ExpandableSection title='Statistics' data={statsData}/>
+    {websocket.error && <ExpandableSection title='Error'>
+      <div className='network-request-error'>{websocket.error}</div>
+    </ExpandableSection>}
+  </div>;
+};
+
+const WebSocketFramesTab: React.FunctionComponent<{
+  websocket: WebSocketSnapshot;
+}> = ({ websocket }) => {
+  const [selectedFrame, setSelectedFrame] = React.useState<WebSocketFrame | undefined>(undefined);
+
+  if (websocket.frames.length === 0)
+    return <div className='network-request-details-tab'>No frames recorded</div>;
+
+  return <div className='vbox network-request-details-tab websocket-frames-tab'>
+    <div className='websocket-frames-list'>
+      <table className='websocket-frames-table'>
+        <thead>
+          <tr>
+            <th>Direction</th>
+            <th>Type</th>
+            <th>Time</th>
+            <th>Size</th>
+            <th>Preview</th>
+          </tr>
+        </thead>
+        <tbody>
+          {websocket.frames.map((frame, index) => {
+            const isText = frame.opcode === 1;
+            const size = isText ? frame.data.length : Math.ceil(frame.data.length * 3 / 4);
+            const preview = isText ? frame.data.substring(0, 100) : `[Binary: ${size} bytes]`;
+            const relativeTime = frame.timestamp - websocket.createdTimestamp;
+
+            return (
+              <tr
+                key={index}
+                className={`websocket-frame-row ${frame.direction} ${selectedFrame === frame ? 'selected' : ''}`}
+                onClick={() => setSelectedFrame(frame)}
+              >
+                <td className='websocket-frame-direction'>
+                  <span className={`codicon codicon-arrow-${frame.direction === 'sent' ? 'up' : 'down'}`} />
+                  {frame.direction === 'sent' ? 'Sent' : 'Received'}
+                </td>
+                <td>{isText ? 'Text' : 'Binary'}</td>
+                <td>{msToString(relativeTime)}</td>
+                <td>{size} B</td>
+                <td className='websocket-frame-preview'>{preview}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+    {selectedFrame && <div className='websocket-frame-detail'>
+      <ExpandableSection title={`Frame Data (${selectedFrame.direction === 'sent' ? 'Sent' : 'Received'})`}>
+        <CodeMirrorWrapper
+          text={formatWebSocketFrameData(selectedFrame)}
+          mimeType={selectedFrame.opcode === 1 ? 'application/json' : 'text/plain'}
+          readOnly
+          lineNumbers={true}
+        />
+      </ExpandableSection>
+    </div>}
+  </div>;
+};
+
+function formatWebSocketFrameData(frame: WebSocketFrame): string {
+  if (frame.opcode === 2) {
+    // Binary data - show as base64
+    return `[Binary data - base64 encoded]\n${frame.data}`;
+  }
+
+  // Try to parse as JSON for pretty formatting
+  try {
+    const parsed = JSON.parse(frame.data);
+    return JSON.stringify(parsed, null, 2);
+  } catch {
+    return frame.data;
+  }
 }

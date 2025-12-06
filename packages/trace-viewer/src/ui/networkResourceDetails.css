@@ -152,3 +152,89 @@
 .yellow-circle::before {
   background-color: var(--vscode-charts-yellow);
 }
+
+/* WebSocket Frames Styles */
+.websocket-frames-tab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.websocket-frames-list {
+  flex: 1 1 40%;
+  min-height: 100px;
+  overflow: auto;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.websocket-frames-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.websocket-frames-table th {
+  background-color: var(--vscode-sideBar-background);
+  padding: 6px 8px;
+  text-align: left;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.websocket-frame-row {
+  cursor: pointer;
+}
+
+.websocket-frame-row:hover {
+  background-color: var(--vscode-list-hoverBackground);
+}
+
+.websocket-frame-row.selected {
+  background-color: var(--vscode-list-activeSelectionBackground);
+  color: var(--vscode-list-activeSelectionForeground);
+}
+
+.websocket-frame-row td {
+  padding: 4px 8px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.websocket-frame-direction {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.websocket-frame-row.sent .websocket-frame-direction .codicon {
+  color: var(--vscode-charts-green);
+}
+
+.websocket-frame-row.received .websocket-frame-direction .codicon {
+  color: var(--vscode-charts-blue);
+}
+
+.websocket-frame-preview {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--vscode-editor-font-family);
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+}
+
+.websocket-frame-detail {
+  flex: 1 1 300px;
+  min-height: 200px;
+  max-height: 50%;
+  overflow: auto;
+  border-top: 1px solid var(--vscode-panel-border);
+}
+
+.network-request-error {
+  color: var(--vscode-charts-red);
+  padding: 8px;
+}

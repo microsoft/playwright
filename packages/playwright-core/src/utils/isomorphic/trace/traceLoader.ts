@@ -148,6 +148,7 @@ function createEmptyContext(): ContextEntry {
     },
     pages: [],
     resources: [],
+    websockets: [],
     actions: [],
     events: [],
     errors: [],

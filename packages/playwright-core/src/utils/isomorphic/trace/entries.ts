@@ -15,7 +15,7 @@
  */
 
 import type { Language } from '../locatorGenerators';
-import type { ResourceSnapshot } from '@trace/snapshot';
+import type { ResourceSnapshot, WebSocketSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 
 // *Entry structures are used to pass the trace between the sw and the page.
@@ -35,6 +35,7 @@ export type ContextEntry = {
   options: trace.BrowserContextEventOptions;
   pages: PageEntry[];
   resources: ResourceSnapshot[];
+  websockets: WebSocketSnapshot[];
   actions: ActionEntry[];
   events: (trace.EventTraceEvent | trace.ConsoleMessageTraceEvent)[];
   stdio: trace.StdioTraceEvent[];

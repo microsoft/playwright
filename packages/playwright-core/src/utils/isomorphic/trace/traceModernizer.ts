@@ -23,6 +23,7 @@ import type * as traceV7 from './versions/traceV7';
 import type * as traceV8 from './versions/traceV8';
 import type { ActionEntry, ContextEntry, PageEntry } from './entries';
 import type { SnapshotStorage } from './snapshotStorage';
+import type { WebSocketSnapshot } from '@trace/snapshot';
 
 export class TraceVersionError extends Error {
   constructor(message: string) {
@@ -43,6 +44,7 @@ export class TraceModernizer {
   private _pageEntries = new Map<string, PageEntry>();
   private _jsHandles = new Map<string, { preview: string }>();
   private _consoleObjects = new Map<string, { type: string, text: string, location: { url: string, lineNumber: number, columnNumber: number }, args?: { preview: string, value: string }[] }>();
+  private _websockets = new Map<string, WebSocketSnapshot>();
 
   constructor(contextEntry: ContextEntry, snapshotStorage: SnapshotStorage) {
     this._contextEntry = contextEntry;
@@ -168,6 +170,42 @@ export class TraceModernizer {
       case 'frame-snapshot':
         this._snapshotStorage.addFrameSnapshot(this._contextEntry.contextId, event.snapshot, this._pageEntry(event.snapshot.pageId).screencastFrames);
         break;
+      case 'websocket-created': {
+        const ws: WebSocketSnapshot = {
+          wsGuid: event.wsGuid,
+          url: event.url,
+          pageId: event.pageId,
+          createdTimestamp: event.timestamp,
+          frames: [],
+        };
+        this._websockets.set(event.wsGuid, ws);
+        contextEntry.websockets.push(ws);
+        break;
+      }
+      case 'websocket-frame': {
+        const ws = this._websockets.get(event.wsGuid);
+        if (ws) {
+          ws.frames.push({
+            opcode: event.opcode,
+            data: event.data,
+            timestamp: event.timestamp,
+            direction: event.direction,
+          });
+        }
+        break;
+      }
+      case 'websocket-closed': {
+        const ws = this._websockets.get(event.wsGuid);
+        if (ws)
+          ws.closedTimestamp = event.timestamp;
+        break;
+      }
+      case 'websocket-error': {
+        const ws = this._websockets.get(event.wsGuid);
+        if (ws)
+          ws.error = event.error;
+        break;
+      }
     }
     // Make sure there is a page entry for each page, even without screencast frames,
     // to show in the metadata view.
