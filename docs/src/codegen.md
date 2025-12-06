@@ -155,25 +155,6 @@ You can generate [locators](/locators.md) with the test generator.
 
 ![picking a locator](https://github.com/microsoft/playwright/assets/13063165/1478f56f-422f-4276-9696-0674041f11dc)
 
-## Docker DevContainers & GitHub Codespaces
-
-For Docker and GitHub Codespaces environments, you can generate tests using the `noVNC` viewer built into the Playwright Docker image. In order for the VNC webviewer to be accessible outside of the container, you can enable the `desktop-lite` feature and specify the `webPort` in your `.devcontainer/devcontainer.json` file: 
-
-```json
-{
-  "image": "mcr.microsoft.com/playwright:v1.57.0",
-  "forwardPorts": [6080],
-  "features": {
-    "desktop-lite": {
-      "webPort": "6080"
-    }
-  }
-}
-```
-
-Once this is enabled you can open the port specified in a new browser tab and you will have access to the `noVNC` web viewer, and will be able to record tests and use codegen directly on your container.
-
-
 ## Emulation
 
 You can use the test generator to generate tests using emulation so as to generate a test for a specific viewport, device, color scheme, as well as emulate the geolocation, language or timezone. The test generator can also generate a test while preserving authenticated state.
