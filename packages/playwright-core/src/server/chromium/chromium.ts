@@ -316,10 +316,8 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
 
-    if (os.platform() === 'darwin') {
-      // See https://issues.chromium.org/issues/40277080
-      chromeArguments.push('--enable-unsafe-swiftshader');
-    }
+    // See https://issues.chromium.org/issues/40277080
+    chromeArguments.push('--enable-unsafe-swiftshader');
 
     if (options.headless) {
       chromeArguments.push('--headless');
