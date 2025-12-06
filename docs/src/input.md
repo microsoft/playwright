@@ -33,7 +33,7 @@ page.getByRole(AriaRole.TEXTBOX).fill("Peter");
 page.getByLabel("Birth date").fill("2020-02-02");
 
 // Time input
-page.getByLabel("Appointment time").fill("13-15");
+page.getByLabel("Appointment time").fill("13:15");
 
 // Local datetime input
 page.getByLabel("Local time").fill("2020-03-02T05:15");
