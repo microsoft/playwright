@@ -856,7 +856,7 @@ export class Page extends SdkObject {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string }): Promise<{ full: string, incremental?: string }> {
+  async snapshotForAI(progress: Progress, options: { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
     return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
   }

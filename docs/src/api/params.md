@@ -375,7 +375,7 @@ Emulates consistent window screen size available inside web page via `window.scr
 - `agent` <[Object]>
   - `provider` <[string]> LLM provider to use
   - `model` <[string]> Model identifier within provider
-  - `cacheDir` ?<[string]> Cache folder to use/generate code for performed actions into. Cache is not used if not specified (default).
+  - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
   - `cacheMode` ?<['force'|'ignore'|'auto']> Cache control, defauls to 'auto'
 
 Agent settings for [`method: Page.perform`] and [`method: Page.extract`].

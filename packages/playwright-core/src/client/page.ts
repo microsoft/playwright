@@ -847,11 +847,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async perform(task: string, options: { key?: string, maxTurns?: number } = {}): Promise<void> {
-    throw new Error('Not implemented in playwright-core');
+    await this._channel.perform({ task, ...options });
   }
 
-  extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: { maxTurns?: number } = {}): Promise<z.infer<Schema>> {
-    throw new Error('Not implemented in playwright-core');
+  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: { maxTurns?: number } = {}): Promise<z.infer<Schema>> {
+    const { result } = await this._channel.extract({ query, schema: this._platform.zodToJsonSchema(schema), ...options });
+    return result;
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
