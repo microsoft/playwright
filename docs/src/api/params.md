@@ -373,10 +373,11 @@ Emulates consistent window screen size available inside web page via `window.scr
 ## js-context-option-agent
 * langs: js
 - `agent` <[Object]>
-  - `provider` <[string]> LLM provider to use
-  - `model` <[string]> Model identifier within provider
+  - `provider` <[string]> LLM provider to use.
+  - `model` <[string]> Model identifier within provider.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
-  - `cacheMode` ?<['force'|'ignore'|'auto']> Cache control, defauls to 'auto'
+  - `cacheMode` ?<['force'|'ignore'|'auto']> Cache control, defaults to 'auto'.
+  - `secrets` ?<[Object]<[string], [string]>> Secrets to hide from the LLM.
 
 Agent settings for [`method: Page.perform`] and [`method: Page.extract`].
 

@@ -22087,12 +22087,12 @@ export interface BrowserContextOptions {
    */
   agent?: {
     /**
-     * LLM provider to use
+     * LLM provider to use.
      */
     provider: string;
 
     /**
-     * Model identifier within provider
+     * Model identifier within provider.
      */
     model: string;
 
@@ -22102,9 +22102,14 @@ export interface BrowserContextOptions {
     cacheFile?: string;
 
     /**
-     * Cache control, defauls to 'auto'
+     * Cache control, defaults to 'auto'.
      */
     cacheMode?: 'force'|'ignore'|'auto';
+
+    /**
+     * Secrets to hide from the LLM.
+     */
+    secrets?: { [key: string]: string; };
   };
 
   /**

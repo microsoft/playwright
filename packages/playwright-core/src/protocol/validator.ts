@@ -607,6 +607,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     model: tString,
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
   })),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
@@ -705,6 +706,7 @@ scheme.BrowserNewContextParams = tObject({
     model: tString,
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -782,6 +784,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
     model: tString,
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -904,6 +907,7 @@ scheme.BrowserContextInitializer = tObject({
       model: tString,
       cacheFile: tOptional(tString),
       cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+      secrets: tOptional(tArray(tType('NameValue'))),
     })),
   }),
 });
@@ -2813,6 +2817,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     model: tString,
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
   })),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),

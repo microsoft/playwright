@@ -601,6 +601,9 @@ ContextOptions:
           - ignore
           - force
           - auto
+        secrets:
+          type: array?
+          items: NameValue
 
 LocalUtils:
   type: interface
