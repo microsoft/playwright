@@ -499,6 +499,7 @@ export module Protocol {
       data: string;
       deviceWidth: number;
       deviceHeight: number;
+      timestamp: number;
     }
     export type closeParameters = {
       runBeforeUnload?: boolean;
