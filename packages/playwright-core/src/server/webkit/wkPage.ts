@@ -916,7 +916,7 @@ export class WKPage implements PageDelegate {
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
     const generation = this._screencastGeneration;
-    this._page.screencast.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._pageProxySession.send('Screencast.screencastFrameAck', { generation }).catch(e => debugLogger.log('error', e));
     });
     const buffer = Buffer.from(event.data, 'base64');

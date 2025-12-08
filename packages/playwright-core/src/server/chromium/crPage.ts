@@ -876,7 +876,7 @@ class FrameSession {
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
-    this._page.screencast.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
     });
     const buffer = Buffer.from(payload.data, 'base64');

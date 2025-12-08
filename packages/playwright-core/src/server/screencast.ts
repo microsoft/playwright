@@ -46,12 +46,12 @@ export class Screencast {
     this._frameThrottler.setThrottlingEnabled(!!options);
   }
 
-  throttleScreencastFrameAck(ack: () => void) {
+  throttleFrameAck(ack: () => void) {
     // Don't ack immediately, tracing has smart throttling logic that is implemented here.
     this._frameThrottler.ack(ack);
   }
 
-  temporarilyDisableTracingScreencastThrottling() {
+  temporarilyDisableThrottling() {
     this._frameThrottler.recharge();
   }
 

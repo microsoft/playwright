@@ -491,7 +491,7 @@ export class FFPage implements PageDelegate {
     if (!this._screencastId)
       return;
     const screencastId = this._screencastId;
-    this._page.screencast.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._session.send('Page.screencastFrameAck', { screencastId }).catch(e => debugLogger.log('error', e));
     });
 
