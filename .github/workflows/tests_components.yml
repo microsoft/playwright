@@ -34,7 +34,7 @@ jobs:
             node-version: 22
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: ${{ matrix.node-version }}
