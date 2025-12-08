@@ -8441,6 +8441,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * Base64 data
        */
       data: string;
+      timestamp: number;
       deviceWidth: number;
       deviceHeight: number;
     }
