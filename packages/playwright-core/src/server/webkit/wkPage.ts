@@ -821,9 +821,9 @@ export class WKPage implements PageDelegate {
   }
 
   private async _initializeVideoRecording() {
-    const screencastOptions = await this._page.initializeVideoRecorder();
+    const screencastOptions = await this._page.screencast.initializeVideoRecorder();
     if (screencastOptions)
-      await this._page._startVideoRecording(screencastOptions);
+      await this._page.screencast.startVideoRecording(screencastOptions);
   }
 
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
@@ -916,7 +916,7 @@ export class WKPage implements PageDelegate {
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
     const generation = this._screencastGeneration;
-    this._page.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleScreencastFrameAck(() => {
       this._pageProxySession.send('Screencast.screencastFrameAck', { generation }).catch(e => debugLogger.log('error', e));
     });
     const buffer = Buffer.from(event.data, 'base64');

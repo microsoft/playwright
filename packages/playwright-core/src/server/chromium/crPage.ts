@@ -439,7 +439,7 @@ class FrameSession {
 
     let screencastOptions: types.PageScreencastOptions | undefined;
     if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow)
-      screencastOptions = await this._crPage._page.initializeVideoRecorder();
+      screencastOptions = await this._crPage._page.screencast.initializeVideoRecorder();
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
@@ -529,7 +529,7 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
       if (screencastOptions)
-        promises.push(this._crPage._page._startVideoRecording(screencastOptions));
+        promises.push(this._crPage._page.screencast.startVideoRecording(screencastOptions));
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
@@ -876,7 +876,7 @@ class FrameSession {
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
-    this._page.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleScreencastFrameAck(() => {
       this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
     });
     const buffer = Buffer.from(payload.data, 'base64');
