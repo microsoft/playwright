@@ -260,6 +260,12 @@ export class Dispatcher {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
       this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
     });
+    worker.onRequest('setStorageValue', async (params: { fileName: string, key: string, value: string }) => {
+      this._setStorageValue(params.fileName, params.key, params.value);
+    });
+    worker.onRequest('getStorageValue', async (params: { fileName: string, key: string }) => {
+      return this._getStorageValue(params.fileName, params.key);
+    });
     return worker;
   }
 
@@ -273,6 +279,13 @@ export class Dispatcher {
     this._isStopped = true;
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
     this._checkFinished();
+  }
+
+  private _setStorageValue(fileName: string, key: string, value: string) {
+  }
+
+  private _getStorageValue(fileName: string, key: string) {
+    return {};
   }
 }
 
