@@ -88,6 +88,7 @@ export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
+  stepId: string;
   errors: TestInfoErrorImpl[];
 };
 

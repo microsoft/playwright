@@ -35,7 +35,8 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
   private _resultKnownAttachmentCounts = new Map<string, number>();
-  // In case there is blob reporter and UI mode, make sure one does override
+  private _resultKnownErrorCounts = new Map<string, number>();
+  // In case there is blob reporter and UI mode, make sure one doesn't override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
 
@@ -71,6 +72,22 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
+  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep) {
+    const resultId = (result as any)[this._idSymbol];
+    const stepId = (step as any)[this._idSymbol];
+    this._resultKnownErrorCounts.set(resultId, result.errors.length);
+    this._messageSink({
+      method: 'onTestPaused',
+      params: {
+        testId: test.id,
+        resultId,
+        stepId,
+        errors: result.errors,
+      }
+    });
+    // backchannel to be implemented
+  }
+
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
     const testEnd: teleReceiver.JsonTestEnd = {
       testId: test.id,
@@ -87,7 +104,9 @@ export class TeleReporterEmitter implements ReporterV2 {
       }
     });
 
-    this._resultKnownAttachmentCounts.delete((result as any)[this._idSymbol]);
+    const resultId = (result as any)[this._idSymbol];
+    this._resultKnownAttachmentCounts.delete(resultId);
+    this._resultKnownErrorCounts.delete(resultId);
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
@@ -244,11 +263,12 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   private _serializeResultEnd(result: reporterTypes.TestResult): teleReceiver.JsonTestResultEnd {
+    const id = (result as any)[this._idSymbol];
     return {
-      id: (result as any)[this._idSymbol],
+      id,
       duration: result.duration,
       status: result.status,
-      errors: result.errors,
+      errors: this._resultKnownErrorCounts.has(id) ? result.errors.slice(this._resultKnownAttachmentCounts.get(id)) : result.errors,
       annotations: result.annotations?.length ? this._relativeAnnotationLocations(result.annotations) : undefined,
     };
   }
