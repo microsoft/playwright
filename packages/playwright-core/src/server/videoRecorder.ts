@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { assert, debugLogger, monotonicTime } from '../../utils';
-import { Page } from '../page';
-import { launchProcess } from '../utils/processLauncher';
+import { assert, debugLogger, monotonicTime } from '../utils';
+import { Page } from './page';
+import { launchProcess } from './utils/processLauncher';
 
-import type * as types from '../types';
+import type * as types from './types';
 import type { ChildProcess } from 'child_process';
 
 const fps = 25;

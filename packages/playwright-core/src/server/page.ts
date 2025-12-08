@@ -36,7 +36,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
-import { VideoRecorder } from './chromium/videoRecorder';
+import { VideoRecorder } from './videoRecorder';
 import { registry } from './registry';
 
 import type { Artifact } from './artifact';
