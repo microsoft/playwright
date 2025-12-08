@@ -18,58 +18,41 @@ import type * as playwright from 'playwright-core';
 import type { Tab } from '../tab';
 
 export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>): Promise<R> {
-  const requests = new Set<playwright.Request>();
-  let frameNavigated = false;
-  let waitCallback: () => void = () => {};
-  const waitBarrier = new Promise<void>(f => { waitCallback = f; });
+  const requests: playwright.Request[] = [];
 
-  const responseListener = (request: playwright.Request) => {
-    requests.delete(request);
-    if (!requests.size)
-      waitCallback();
-  };
-
-  const requestListener = (request: playwright.Request) => {
-    requests.add(request);
-    void request.response().then(() => responseListener(request)).catch(() => {});
-  };
-
-  const frameNavigateListener = (frame: playwright.Frame) => {
-    if (frame.parentFrame())
-      return;
-    frameNavigated = true;
-    dispose();
-    clearTimeout(timeout);
-    void tab.waitForLoadState('load').then(waitCallback);
-  };
-
-  const onTimeout = () => {
-    dispose();
-    waitCallback();
-  };
-
-  tab.page.on('request', requestListener);
-  tab.page.on('requestfailed', responseListener);
-  tab.page.on('framenavigated', frameNavigateListener);
-  const timeout = setTimeout(onTimeout, 10000);
-
-  const dispose = () => {
+  const requestListener = (request: playwright.Request) => requests.push(request);
+  const disposeListeners = () => {
     tab.page.off('request', requestListener);
-    tab.page.off('requestfailed', responseListener);
-    tab.page.off('framenavigated', frameNavigateListener);
-    clearTimeout(timeout);
   };
+  tab.page.on('request', requestListener);
 
+  let result: R;
   try {
-    const result = await callback();
-    if (!requests.size && !frameNavigated)
-      waitCallback();
-    await waitBarrier;
-    await tab.waitForTimeout(1000);
-    return result;
+    result = await callback();
+    await tab.waitForTimeout(500);
   } finally {
-    dispose();
+    disposeListeners();
   }
+
+  const requestedNavigation = requests.some(request => request.isNavigationRequest());
+  if (requestedNavigation) {
+    await tab.page.mainFrame().waitForLoadState('load', { timeout: 10000 }).catch(() => {});
+    return result;
+  }
+
+  const promises: Promise<any>[] = [];
+  for (const request of requests) {
+    if (['document', 'stylesheet', 'script', 'xhr', 'fetch'].includes(request.resourceType()))
+      promises.push(request.response().then(r => r?.finished()).catch(() => {}));
+    else
+      promises.push(request.response().catch(() => {}));
+  }
+  const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
+  await Promise.race([Promise.all(promises), timeout]);
+  if (requests.length)
+    await tab.waitForTimeout(500);
+
+  return result;
 }
 
 export async function callOnPageNoTrace<T>(page: playwright.Page, callback: (page: playwright.Page) => Promise<T>): Promise<T> {
