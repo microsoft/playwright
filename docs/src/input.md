@@ -101,7 +101,7 @@ await page.getByLabel('XL').check();
 page.getByLabel("I agree to the terms above").check();
 
 // Assert the checked state
-assertTrue(page.getByLabel("Subscribe to newsletter")).isChecked();
+assertThat(page.getByLabel("Subscribe to newsletter")).isChecked();
 
 // Select the radio button
 page.getByLabel("XL").check();
