@@ -14,13 +14,32 @@
  * limitations under the License.
  */
 
-import { test as it } from './pageTest';
-import './perform-task.cache';
+import { test, expect } from './pageTest';
+import z from 'zod';
 
-// @ts-ignore
-it('perform task', async ({ page, _perform }) => {
+test('page.perform', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/evals/fill-form.html');
+  await page.perform('Fill out the form with the following details:\n' +
+    'Name: John Smith\n' +
+    'Address: 1045 La Avenida St, Mountain View, CA 94043\n' +
+    'Email: john.smith@at-microsoft.com');
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - textbox "Full Name *": John Smith
+    - textbox "Email Address *": john.smith@at-microsoft.com
+    - textbox "Street Address *": 1045 La Avenida St
+    - textbox "City *": Mountain View
+    - textbox "State/Province *": CA
+    - textbox "ZIP/Postal Code *": 94043
+  `);
+});
+
+test.skip('extract task', async ({ page }) => {
   await page.goto('https://demo.playwright.dev/todomvc');
-  await _perform('Add "Buy groceries" todo');
-  await _perform('Add "Walk the dog" todo');
-  await _perform('Add "Read a book" todo');
+  await page.perform('Add "Buy groceries" todo');
+  console.log(await page.extract('List todos with their statuses', z.object({
+    items: z.object({
+      title: z.string(),
+      completed: z.boolean()
+    }).array()
+  })));
 });

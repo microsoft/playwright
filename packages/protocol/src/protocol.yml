@@ -589,7 +589,18 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
-
+    agent:
+      type: object?
+      properties:
+        provider: string
+        model: string
+        cacheFile: string?
+        cacheMode:
+          type: enum?
+          literals:
+          - ignore
+          - force
+          - auto
 
 LocalUtils:
   type: interface
@@ -2009,6 +2020,22 @@ Page:
           - requestFinished
           - requestFailed
         enabled: boolean
+
+    perform:
+      internal: true
+      parameters:
+        task: string
+        key: string?
+        maxTurns: int?
+
+    extract:
+      internal: true
+      parameters:
+        query: string
+        schema: json
+        maxTurns: int?
+      returns:
+        result: json
 
   events:
 

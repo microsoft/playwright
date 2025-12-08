@@ -370,6 +370,16 @@ It makes the execution of the tests non-deterministic.
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
 
+## js-context-option-agent
+* langs: js
+- `agent` <[Object]>
+  - `provider` <[string]> LLM provider to use
+  - `model` <[string]> Model identifier within provider
+  - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
+  - `cacheMode` ?<['force'|'ignore'|'auto']> Cache control, defauls to 'auto'
+
+Agent settings for [`method: Page.perform`] and [`method: Page.extract`].
+
 ## fetch-param-url
 - `url` <[string]>
 
