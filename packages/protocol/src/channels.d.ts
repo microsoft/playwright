@@ -1013,6 +1013,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   userDataDir: string,
   slowMo?: number,
@@ -1101,6 +1102,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   slowMo?: number,
 };
@@ -1228,6 +1230,7 @@ export type BrowserNewContextParams = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   proxy?: {
     server: string,
@@ -1302,6 +1305,7 @@ export type BrowserNewContextOptions = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   proxy?: {
     server: string,
@@ -1379,6 +1383,7 @@ export type BrowserNewContextForReuseParams = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   proxy?: {
     server: string,
@@ -1453,6 +1458,7 @@ export type BrowserNewContextForReuseOptions = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   proxy?: {
     server: string,
@@ -1594,6 +1600,7 @@ export type BrowserContextInitializer = {
       model: string,
       cacheFile?: string,
       cacheMode?: 'ignore' | 'force' | 'auto',
+      secrets?: NameValue[],
     },
   },
 };
@@ -4906,6 +4913,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   pkg?: string,
   args?: string[],
@@ -4978,6 +4986,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     model: string,
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
+    secrets?: NameValue[],
   },
   pkg?: string,
   args?: string[],

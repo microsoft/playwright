@@ -18,6 +18,7 @@ import { z } from '../../mcpBundle';
 
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
+import type * as actions from './actions';
 import type { Context } from './context';
 
 type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSchema'> & {
@@ -68,7 +69,7 @@ const click = defineTool({
 
   handle: async (context, params) => {
     const [selector] = await context.refSelectors([params]);
-    return await context.runAction({
+    return await context.runActionAndWait({
       method: 'click',
       selector,
       options: {
@@ -99,7 +100,7 @@ const drag = defineTool({
       { ref: params.endRef, element: params.endElement },
     ]);
 
-    return await context.runAction({
+    return await context.runActionAndWait({
       method: 'drag',
       sourceSelector,
       targetSelector
@@ -121,7 +122,7 @@ const hover = defineTool({
 
   handle: async (context, params) => {
     const [selector] = await context.refSelectors([params]);
-    return await context.runAction({
+    return await context.runActionAndWait({
       method: 'hover',
       selector,
       options: {
@@ -145,10 +146,10 @@ const selectOption = defineTool({
 
   handle: async (context, params) => {
     const [selector] = await context.refSelectors([params]);
-    return await context.runAction({
+    return await context.runActionAndWait({
       method: 'selectOption',
       selector,
-      values: params.values
+      labels: params.values
     });
   },
 });
@@ -164,7 +165,7 @@ const pressKey = defineTool({
   },
 
   handle: async (context, params) => {
-    return await context.runAction({
+    return await context.runActionAndWait({
       method: 'pressKey',
       key: params.key
     });
@@ -188,20 +189,63 @@ const type = defineTool({
   handle: async (context, params) => {
     const [selector] = await context.refSelectors([params]);
     if (params.slowly) {
-      return await context.runAction({
+      return await context.runActionAndWait({
         method: 'pressSequentially',
         selector,
         text: params.text,
         submit: params.submit,
       });
     } else {
-      return await context.runAction({
+      return await context.runActionAndWait({
         method: 'fill',
         selector,
         text: params.text,
         submit: params.submit,
       });
     }
+  },
+});
+
+const fillForm = defineTool({
+  schema: {
+    name: 'browser_fill_form',
+    title: 'Fill form',
+    description: 'Fill multiple form fields',
+    inputSchema: z.object({
+      fields: z.array(z.object({
+        name: z.string().describe('Human-readable field name'),
+        type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),
+        ref: z.string().describe('Exact target field reference from the page snapshot'),
+        value: z.string().describe('Value to fill in the field. If the field is a checkbox, the value should be `true` or `false`. If the field is a combobox, the value should be the text of the option.'),
+      })).describe('Fields to fill in'),
+    }),
+  },
+
+  handle: async (context, params) => {
+    const actions: actions.Action[] = [];
+    for (const field of params.fields) {
+      const [selector] = await context.refSelectors([{ ref: field.ref, element: field.name }]);
+      if (field.type === 'textbox' || field.type === 'slider') {
+        actions.push({
+          method: 'fill',
+          selector,
+          text: field.value,
+        });
+      } else if (field.type === 'checkbox' || field.type === 'radio') {
+        actions.push({
+          method: 'setChecked',
+          selector,
+          checked: field.value === 'true',
+        });
+      } else if (field.type === 'combobox') {
+        actions.push({
+          method: 'selectOption',
+          selector,
+          labels: [field.value],
+        });
+      }
+    }
+    return await context.runActionsAndWait(actions);
   },
 });
 
@@ -213,4 +257,5 @@ export default [
   selectOption,
   pressKey,
   type,
+  fillForm,
 ];

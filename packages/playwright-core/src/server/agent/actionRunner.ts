@@ -17,8 +17,9 @@
 import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
+import type { NameValue } from '@protocol/channels';
 
-export async function runAction(progress: Progress, page: Page, action: actions.Action) {
+export async function runAction(progress: Progress, page: Page, action: actions.Action, secrets: NameValue[]) {
   const frame = page.mainFrame();
   switch (action.method) {
     case 'click':
@@ -31,20 +32,30 @@ export async function runAction(progress: Progress, page: Page, action: actions.
       await frame.hover(progress, action.selector, { ...action.options, ...strictTrue });
       break;
     case 'selectOption':
-      await frame.selectOption(progress, action.selector, [], action.values.map(a => ({ value: a })), { ...strictTrue });
+      await frame.selectOption(progress, action.selector, [], action.labels.map(a => ({ label: a })), { ...strictTrue });
       break;
     case 'pressKey':
       await page.keyboard.press(progress, action.key);
       break;
-    case 'pressSequentially':
-      await frame.type(progress, action.selector, action.text, { ...strictTrue });
+    case 'pressSequentially': {
+      const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
+      await frame.type(progress, action.selector, secret, { ...strictTrue });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
       break;
-    case 'fill':
-      await frame.fill(progress, action.selector, action.text, { ...strictTrue });
+    }
+    case 'fill': {
+      const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
+      await frame.fill(progress, action.selector, secret, { ...strictTrue });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
+      break;
+    }
+    case 'setChecked':
+      if (action.checked)
+        await frame.check(progress, action.selector, { ...strictTrue });
+      else
+        await frame.uncheck(progress, action.selector, { ...strictTrue });
       break;
   }
 }

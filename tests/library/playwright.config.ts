@@ -154,12 +154,6 @@ for (const browserName of browserNames) {
     testDir: path.join(testDir, 'page'),
     ...projectTemplate,
   };
-  pageProject.use.agent = {
-    provider: 'github',
-    model: 'claude-sonnet-4.5',
-    cacheFile: path.join(testDir, 'page', 'agent-cache.json'),
-    cacheMode: process.env.CI ? 'force' : 'auto',
-  };
 
   config.projects.push(pageProject);
 }

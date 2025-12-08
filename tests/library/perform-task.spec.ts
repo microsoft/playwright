@@ -14,8 +14,27 @@
  * limitations under the License.
  */
 
-import { test, expect } from './pageTest';
+import path from 'path';
 import z from 'zod';
+
+import { browserTest as test, expect } from '../config/browserTest';
+
+test.use({
+  contextOptions: async ({ contextOptions }, use, testInfo) => {
+    await use({
+      ...contextOptions,
+      agent: {
+        provider: 'github',
+        model: 'claude-sonnet-4.5',
+        cacheFile: path.join(testInfo.project.testDir, 'agent-cache.json'),
+        cacheMode: process.env.CI ? 'force' : 'auto',
+        secrets: {
+          'x-secret-email': 'secret-email@at-microsoft.com',
+        }
+      },
+    });
+  }
+});
 
 test('page.perform', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/evals/fill-form.html');
@@ -30,6 +49,14 @@ test('page.perform', async ({ page, server }) => {
     - textbox "City *": Mountain View
     - textbox "State/Province *": CA
     - textbox "ZIP/Postal Code *": 94043
+  `);
+});
+
+test('page.perform secret', async ({ page, server }) => {
+  await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
+  await page.perform('Enter x-secret-email into the email field');
+  await expect(page.locator('body')).toMatchAriaSnapshot(`
+    - textbox "Email Address": secret-email@at-microsoft.com
   `);
 });
 
