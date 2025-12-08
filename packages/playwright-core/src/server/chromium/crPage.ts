@@ -289,17 +289,21 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
-    if (options) {
-      await this._mainFrameSession._startScreencast(this, {
-        format: 'jpeg',
-        quality: options.quality,
-        maxWidth: options.width,
-        maxHeight: options.height
-      });
-    } else {
-      await this._mainFrameSession._stopScreencast(this);
-    }
+  async startScreencast(options: { width: number; height: number; quality: number; }): Promise<void> {
+    await this._mainFrameSession._client.send('Page.startScreencast', {
+      format: 'jpeg',
+      quality: options.quality,
+      maxWidth: options.width,
+      maxHeight: options.height,
+    });
+  }
+
+  async _stopScreencast() {
+    await this._mainFrameSession._client._sendMayFail('Page.stopScreencast');
+  }
+
+  stopScreencast(): Promise<void> {
+    return this._mainFrameSession._stopScreencast(this);
   }
 
   rafCountForStablePosition(): number {

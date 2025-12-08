@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { BrowserContext } from './browserContext';
 import { ConsoleMessage } from './console';
 import { TargetClosedError, TimeoutError } from './errors';
@@ -25,7 +27,7 @@ import * as input from './input';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import { Screenshotter, validateScreenshotOptions } from './screenshotter';
-import { LongStandingScope, assert, renderTitleForCall, trimStringWithEllipsis } from '../utils';
+import { LongStandingScope, assert, createGuid, mkdirIfNeeded, renderTitleForCall, trimStringWithEllipsis } from '../utils';
 import { asLocator } from '../utils';
 import { getComparator } from './utils/comparators';
 import { debugLogger } from './utils/debugLogger';
@@ -34,6 +36,8 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
+import { VideoRecorder } from './chromium/videoRecorder';
+import { registry } from './registry';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -78,7 +82,8 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
+  startScreencast(options: { width: number, height: number, quality: number }): Promise<void>;
+  stopScreencast(): Promise<void>;
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
@@ -164,6 +169,10 @@ export class Page extends SdkObject {
   private _lastLocatorHandlerUid = 0;
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
+
+  private _videoRecorder: VideoRecorder | null = null;
+  private _screencastId: string | null = null;
+  private _screencastClients = new Set<unknown>();
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -828,7 +837,7 @@ export class Page extends SdkObject {
   }
 
   setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
-    this.delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
+    this._setScreencastOptions(options).catch(e => debugLogger.log('error', e));
     this._frameThrottler.setThrottlingEnabled(!!options);
   }
 
@@ -839,6 +848,90 @@ export class Page extends SdkObject {
 
   temporarilyDisableTracingScreencastThrottling() {
     this._frameThrottler.recharge();
+  }
+
+
+  private async _setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+    if (options)
+      await this._startScreencast(this, options);
+    else
+      await this._stopScreencast(this);
+  }
+
+  async initializeVideoRecorder(): Promise<types.PageScreencastOptions | undefined> {
+    if (!this.browserContext._options.recordVideo)
+      return undefined;
+    const screencastId = createGuid();
+    const outputFile = path.join(this.browserContext._options.recordVideo.dir, screencastId + '.webm');
+    const screencastOptions = {
+      // validateBrowserContextOptions ensures correct video size.
+      ...this.browserContext._options.recordVideo.size!,
+      outputFile,
+    };
+    await mkdirIfNeeded(path.join(this.browserContext._options.recordVideo.dir, 'dummy'));
+    // Note: it is important to start video recorder before sending Screencast.startScreencast,
+    // and it is equally important to send Screencast.startScreencast before sending Target.resume.
+    await this._createVideoRecorder(screencastId, screencastOptions);
+    this.waitForInitializedOrError().then(p => {
+      if (p instanceof Error)
+        this._stopVideoRecording().catch(() => {});
+    });
+    return screencastOptions;
+  }
+
+  async _startScreencast(client: unknown, options: { width: number, height: number, quality: number }) {
+    this._screencastClients.add(client);
+    if (this._screencastClients.size === 1) {
+      await this.delegate.startScreencast({
+        width: options.width,
+        height: options.height,
+        quality: options.quality,
+      });
+    }
+  }
+
+  async _stopScreencast(client: unknown) {
+    this._screencastClients.delete(client);
+    if (!this._screencastClients.size)
+      await this.delegate.stopScreencast();
+  }
+
+  async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
+    assert(!this._screencastId);
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this.browserContext._browser.sdkLanguage());
+    this._videoRecorder = await VideoRecorder.launch(this, ffmpegPath, options);
+    this._screencastId = screencastId;
+  }
+
+  async _startVideoRecording(options: types.PageScreencastOptions) {
+    const screencastId = this._screencastId;
+    assert(screencastId);
+    this.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
+    const gotFirstFrame = new Promise(f => this.once(Page.Events.ScreencastFrame, f));
+    await this._startScreencast(this._videoRecorder, {
+      quality: 90,
+      width: options.width,
+      height: options.height,
+    });
+    // Wait for the first frame before reporting video to the client.
+    gotFirstFrame.then(() => {
+      this.browserContext._browser._videoStarted(this.browserContext, screencastId, options.outputFile, this.waitForInitializedOrError());
+    });
+  }
+
+  async _stopVideoRecording(): Promise<void> {
+    if (!this._screencastId)
+      return;
+    const screencastId = this._screencastId;
+    this._screencastId = null;
+    const recorder = this._videoRecorder!;
+    this._videoRecorder = null;
+    await this._stopScreencast(recorder);
+    await recorder.stop().catch(() => {});
+    // Keep the video artifact in the map until encoding is fully finished, if the context
+    // starts closing before the video is fully written to disk it will wait for it.
+    const video = this.browserContext._browser._takeVideo(screencastId);
+    video?.reportFinished();
   }
 
   async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
