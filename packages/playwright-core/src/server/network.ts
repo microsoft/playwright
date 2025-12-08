@@ -94,6 +94,24 @@ export function stripFragmentFromUrl(url: string): string {
   return url.substring(0, url.indexOf('#'));
 }
 
+export type ResourceType = 'document'
+| 'stylesheet'
+| 'image'
+| 'media'
+| 'font'
+| 'script'
+| 'fetch'
+| 'xhr'
+| 'websocket'
+| 'eventsource'
+| 'manifest'
+| 'texttrack'
+| 'beacon'
+| 'ping'
+| 'cspreport'
+// 'prefetch', 'signedexchange', 'preflight', 'fedcm'
+| 'other';
+
 export class Request extends SdkObject {
   private _response: Response | null = null;
   private _redirectedFrom: Request | null;
@@ -102,7 +120,7 @@ export class Request extends SdkObject {
   readonly _isFavicon: boolean;
   _failureText: string | null = null;
   private _url: string;
-  private _resourceType: string;
+  private _resourceType: ResourceType;
   private _method: string;
   private _postData: Buffer | null;
   readonly _headers: HeadersArray;
@@ -122,7 +140,7 @@ export class Request extends SdkObject {
   };
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: string, method: string, postData: Buffer | null, headers: HeadersArray) {
+    url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
@@ -165,7 +183,7 @@ export class Request extends SdkObject {
     return this._overrides?.url || this._url;
   }
 
-  resourceType(): string {
+  resourceType(): ResourceType {
     return this._resourceType;
   }
 
@@ -431,7 +449,7 @@ export type SecurityDetails = {
 export class Response extends SdkObject {
   private _request: Request;
   private _contentPromise: Promise<Buffer> | null = null;
-  _finishedPromise = new ManualPromise<void>();
+  private _finishedPromise = new ManualPromise<void>();
   private _status: number;
   private _statusText: string;
   private _url: string;
@@ -555,6 +573,10 @@ export class Response extends SdkObject {
 
   request(): Request {
     return this._request;
+  }
+
+  finished(): Promise<void> {
+    return this._finishedPromise;
   }
 
   frame(): frames.Frame | null {

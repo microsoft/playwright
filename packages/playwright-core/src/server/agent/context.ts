@@ -58,6 +58,7 @@ export class Context {
     const disposeListeners = () => {
       this.page.browserContext.off(BrowserContext.Events.Request, requestListener);
     };
+    this.page.browserContext.on(BrowserContext.Events.Request, requestListener);
 
     let result: R;
     try {
@@ -69,17 +70,21 @@ export class Context {
 
     const requestedNavigation = requests.some(request => request.isNavigationRequest());
     if (requestedNavigation) {
-      await this.page.performActionPreChecks(this.progress);
+      await this.page.mainFrame().waitForLoadState(this.progress, 'load');
       return result;
     }
 
-    const fiveSeconds = new Promise<void>(resolve => setTimeout(resolve, 1000));
+    const promises: Promise<any>[] = [];
     for (const request of requests) {
-      if (request.failure())
-        continue;
-      const response = Promise.race([request.response(), fiveSeconds]);
-      await this.progress.race(response);
+      if (['document', 'stylesheet', 'script', 'xhr', 'fetch'].includes(request.resourceType()))
+        promises.push(request.response().then(r => r?.finished()));
+      else
+        promises.push(request.response());
     }
+    await this.progress.race(promises, { timeout: 5000 });
+    if (requests.length)
+      await this.progress.wait(500);
+
     return result;
   }
 

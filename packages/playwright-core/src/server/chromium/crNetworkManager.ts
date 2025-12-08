@@ -596,13 +596,12 @@ class InterceptableRequest {
       url,
       postDataEntries = null,
     } = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
-    const type = (requestWillBeSentEvent.type || '').toLowerCase();
     let postDataBuffer = null;
     const entries = postDataEntries?.filter(entry => entry.bytes);
     if (entries && entries.length)
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
 
-    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, type, method, postDataBuffer,  headersOverride || headersObjectToArray(headers));
+    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers));
   }
 }
 
@@ -835,5 +834,44 @@ class ResponseExtraInfoTracker {
 
   private _stopTracking(requestId: string) {
     this._requests.delete(requestId);
+  }
+}
+
+function toResourceType(type: Protocol.Network.ResourceType): network.ResourceType {
+  switch (type) {
+    case 'Document':
+      return 'document';
+    case 'Stylesheet':
+      return 'stylesheet';
+    case 'Image':
+      return 'image';
+    case 'Media':
+      return 'media';
+    case 'Font':
+      return 'font';
+    case 'Script':
+      return 'script';
+    case 'TextTrack':
+      return 'texttrack';
+    case 'XHR':
+      return 'xhr';
+    case 'Fetch':
+      return 'fetch';
+    case 'EventSource':
+      return 'eventsource';
+    case 'WebSocket':
+      return 'websocket';
+    case 'Manifest':
+      return 'manifest';
+    case 'Ping':
+      return 'ping';
+    case 'CSPViolationReport':
+      return 'cspreport';
+    case 'Prefetch':
+    case 'SignedExchange':
+    case 'Preflight':
+    case 'FedCM':
+    default:
+      return 'other';
   }
 }
