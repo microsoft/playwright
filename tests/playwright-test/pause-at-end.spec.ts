@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-import { Reporter, TestCase, TestResult, TestStep } from 'packages/playwright-test/reporter';
+import { TestCase, TestResult, TestStep } from 'packages/playwright-test/reporter';
+import { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
-class LocationReporter implements Reporter {
+class LocationReporter implements ReporterV2 {
   private _foundErrors = 0;
+  version() {
+    return 'v2' as const;
+  }
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
       console.log(`%%onStepBegin: ${step.titlePath().join(' > ')} at :${step.location?.line}:${step.location?.column}`);
@@ -28,7 +32,7 @@ class LocationReporter implements Reporter {
   async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
     console.log(`%%onTestPaused`);
     this._printErrors(result);
-    return { action: process.env.ACTION };
+    return { action: process.env.ACTION as 'continue' | 'abort' };
   }
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {

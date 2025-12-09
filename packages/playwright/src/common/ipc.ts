@@ -92,8 +92,8 @@ export type TestPausedPayload = {
   errors: TestInfoErrorImpl[];
 };
 
-export type TestPauseResponsePayload = {
-  action: 'continue' | 'abort';
+export type ResumePayload = {
+  action?: 'continue' | 'abort';
 };
 
 export type GetStorageValuePayload = {

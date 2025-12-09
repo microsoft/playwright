@@ -65,7 +65,7 @@ export class WorkerMain extends ProcessRunner {
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
   private _activeSuites = new Map<Suite, TestAnnotation[]>();
-  private _pauseEndPromise?: ManualPromise<ipc.TestPauseResponsePayload>;
+  private _resumePromise?: ManualPromise<ipc.ResumePayload>;
 
   constructor(params: ipc.WorkerInitParams) {
     super();
@@ -279,8 +279,8 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
-  pauseEnd(payload: ipc.TestPauseResponsePayload) {
-    this._pauseEndPromise?.resolve(payload);
+  resume(payload: ipc.ResumePayload) {
+    this._resumePromise?.resolve(payload);
   }
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
@@ -289,9 +289,9 @@ export class WorkerMain extends ProcessRunner {
       onStepEnd: payload => this.dispatchEvent('stepEnd', payload),
       onAttach: payload => this.dispatchEvent('attach', payload),
       onTestPaused: payload => {
-        this._pauseEndPromise = new ManualPromise();
+        this._resumePromise = new ManualPromise();
         this.dispatchEvent('testPaused', payload);
-        return this._pauseEndPromise;
+        return this._resumePromise;
       },
       onGetStorageValue: payload => this.sendRequest('getStorageValue', payload),
       onSetStorageValue: payload => this.sendMessageNoReply('setStorageValue', payload),

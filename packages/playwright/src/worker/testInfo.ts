@@ -70,7 +70,7 @@ type TestInfoCallbacks = {
   onStepBegin?: (payload: ipc.StepBeginPayload) => void;
   onStepEnd?: (payload: ipc.StepEndPayload) => void;
   onAttach?: (payload: ipc.AttachmentPayload) => void;
-  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.TestPauseResponsePayload>;
+  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
   onGetStorageValue?: (payload: ipc.GetStorageValuePayload) => Promise<any>;
   onSetStorageValue?: (payload: ipc.SetStorageValuePayload) => void;
 };
@@ -467,10 +467,17 @@ export class TestInfoImpl implements TestInfo {
     if (shouldPause) {
       const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
       const step = this._addStep({ category: 'hook', title: 'Paused', location });
-      const { action } = await this._callbacks.onTestPaused!({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] });
+      const result = await Promise.race([
+        this._callbacks.onTestPaused!({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
+        this._interruptedPromise.then(() => 'interrupted' as const),
+      ]);
       step.complete({});
-      if (action === 'abort')
-        this._interrupt();
+      if (result !== 'interrupted') {
+        if (result.action === 'abort')
+          this._interrupt();
+        if (result.action === undefined)
+          await this._interruptedPromise;
+      }
     }
     await this._onDidFinishTestFunctionCallback?.();
   }

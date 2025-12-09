@@ -61,6 +61,7 @@ export class Multiplexer implements ReporterV2 {
       if (disposition)
         return disposition;
     }
+    return { action: undefined };
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
