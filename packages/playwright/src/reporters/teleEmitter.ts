@@ -85,6 +85,7 @@ export class TeleReporterEmitter implements ReporterV2 {
         errors: result.errors,
       }
     });
+    return { action: undefined };
   }
 
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
