@@ -18,14 +18,15 @@ import { Reporter, TestCase, TestResult, TestStep } from 'packages/playwright-te
 import { test, expect } from './playwright-test-fixtures';
 
 class LocationReporter implements Reporter {
+  private _foundErrors = 0;
   onStepBegin(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
       console.log(`%%onStepBegin: ${step.titlePath().join(' > ')} at :${step.location?.line}:${step.location?.column}`);
       this._printErrors(result);
     }
   }
-  async onTestPaused(test: TestCase, result: TestResult) {
-    console.log('%%onTestPaused');
+  async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
+    console.log(`%%onTestPaused`);
     this._printErrors(result);
     return { action: process.env.ACTION };
   }
@@ -43,8 +44,11 @@ class LocationReporter implements Reporter {
     console.log(chunk);
   }
   private _printErrors(result: TestResult) {
-    for (const [index, error] of result.errors.entries())
-      console.log(`%%result.errors[${index}] at :${error.location?.line}:${error.location?.column}`);
+    for (const [index, error] of result.errors.entries()) {
+      if (index >= this._foundErrors)
+        console.log(`%%result.errors[${index}] at :${error.location?.line}:${error.location?.column}`);
+    }
+    this._foundErrors = result.errors.length;
   }
 }
 
@@ -59,15 +63,15 @@ test('--debug should pause at end', async ({ runInlineTest }) => {
       test('pass', () => {
       });
       test.afterEach(() => {
-        console.log('teardown'.toUpperCase()); // uppercase so we dont confuse it with source snippets
+        console.log('%%teardown');
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'continue' });
-  expect(result.output).toContain('TEARDOWN');
+  }, { debug: true }, { ACTION: 'continue' });
   expect(result.outputLines).toEqual([
     'onStepBegin: After Hooks > Paused at :4:7',
     'onTestPaused',
     'onStepEnd: After Hooks > Paused',
+    'teardown',
     'onTestEnd',
   ]);
 });
@@ -95,7 +99,7 @@ test('--debug should pause at end with setup project', async ({ runInlineTest })
         console.log('main test started');
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'continue' });
+  }, { debug: true }, { ACTION: 'continue' });
   expect(result.outputLines).toContain('onStepBegin: After Hooks > Paused at :5:7');
 });
 
@@ -113,19 +117,14 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
         console.log('%%after error');
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'abort' });
-  const errorState = [
-    'result.errors[0] at :4:24',
-    'result.errors[1] at :5:19',
-  ];
+  }, { debug: true }, { ACTION: 'abort' });
   expect(result.outputLines).toEqual([
     'onStepBegin: After Hooks > Paused at :4:24',
     'onTestPaused',
-    ...errorState,
+    'result.errors[0] at :4:24',
+    'result.errors[1] at :5:19',
     'onStepEnd: After Hooks > Paused',
-    ...errorState,
     'onTestEnd',
-    ...errorState,
   ]);
 
   const merged = await mergeReports('blob-report', undefined, { additionalArgs: ['--reporter', 'location-reporter.js'] });
@@ -133,6 +132,7 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
     'onStepBegin: After Hooks > Paused at :4:24',
     'onStepEnd: After Hooks > Paused',
     'onTestEnd',
-    ...errorState,
+    'result.errors[0] at :4:24',
+    'result.errors[1] at :5:19',
   ]);
 });
