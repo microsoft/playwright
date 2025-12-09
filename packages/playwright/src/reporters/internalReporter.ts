@@ -71,7 +71,7 @@ export class InternalReporter implements ReporterV2 {
     this._addSnippetToTestErrors(test, result);
     if (step)
       this._addSnippetToStepError(test, step);
-    return await this._reporter.onTestPaused?.(test, result, step);
+    return await this._reporter.onTestPaused?.(test, result, step) ?? { action: undefined };
   }
 
   onTestEnd(test: TestCase, result: TestResult) {

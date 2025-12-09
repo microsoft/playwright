@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
+import type { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should run fixture teardown on timeout', async ({ runInlineTest }) => {
