@@ -315,7 +315,7 @@ export class BidiPage implements PageDelegate {
       this._page.extraHTTPHeaders(),
     ]);
     await this._session.send('network.setExtraHeaders', {
-      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string' as 'string', value } })),
       contexts: [this._session.sessionId],
     });
   }
@@ -337,6 +337,7 @@ export class BidiPage implements PageDelegate {
     const emulatedSize = this._page.emulatedSize();
     if (!emulatedSize)
       return;
+    const screenSize = emulatedSize.screen;
     const viewportSize = emulatedSize.viewport;
     await Promise.all([
       this._session.send('browsingContext.setViewport', {
@@ -349,7 +350,14 @@ export class BidiPage implements PageDelegate {
       }),
       this._session.send('emulation.setScreenOrientationOverride', {
         contexts: [this._session.sessionId],
-        screenOrientation: getScreenOrientation(!!options.isMobile, viewportSize)
+        screenOrientation: getScreenOrientation(!!options.isMobile, screenSize)
+      }),
+      this._session.send('emulation.setScreenSettingsOverride', {
+        contexts: [this._session.sessionId],
+        screenArea: {
+          width: screenSize.width,
+          height: screenSize.height,
+        }
       })
     ]);
   }
