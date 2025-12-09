@@ -343,6 +343,7 @@ export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
 
 export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
   const file = await resolveFile(config, clientInfo, fileName, options);
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
   debug('pw:mcp:file')(options.reason, file);
   return file;
 }

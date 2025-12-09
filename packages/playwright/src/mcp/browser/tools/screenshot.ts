@@ -51,7 +51,6 @@ const screenshot = defineTabTool({
       throw new Error('fullPage cannot be used with element screenshots.');
 
     const fileType = params.type || 'png';
-    const fileName = await tab.context.outputFile(params.filename || dateAsFileName(fileType), { origin: 'llm', reason: 'Saving screenshot' });
     const options: playwright.PageScreenshotOptions = {
       type: fileType,
       quality: fileType === 'png' ? undefined : 90,
@@ -61,6 +60,7 @@ const screenshot = defineTabTool({
     const isElementScreenshot = params.element && params.ref;
 
     const screenshotTarget = isElementScreenshot ? params.element : (params.fullPage ? 'full page' : 'viewport');
+    const fileName = await response.addFile(params.filename || dateAsFileName(fileType), { origin: 'llm', reason: `Screenshot of ${screenshotTarget}` });
     response.addCode(`// Screenshot ${screenshotTarget} and save it as ${fileName}`);
 
     // Only get snapshot when element screenshot is needed
@@ -75,8 +75,6 @@ const screenshot = defineTabTool({
 
     await mkdirIfNeeded(fileName);
     await fs.promises.writeFile(fileName, buffer);
-
-    response.addResult(`Took the ${screenshotTarget} screenshot and saved it as ${fileName}`);
 
     response.addImage({
       contentType: fileType === 'png' ? 'image/png' : 'image/jpeg',
