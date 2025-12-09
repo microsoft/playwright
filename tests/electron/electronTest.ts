@@ -38,7 +38,6 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   electronMajorVersion: [({}, use) => use(parseInt(require('electron/package.json').version.split('.')[0], 10)), { scope: 'worker' }],
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
-  isWebView2: [false, { scope: 'worker' }],
   isHeadlessShell: [false, { scope: 'worker' }],
 
   createUserDataDir: async ({ mode }, run) => {

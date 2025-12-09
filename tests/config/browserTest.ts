@@ -98,7 +98,6 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [false, { scope: 'worker' }],
   electronMajorVersion: [0, { scope: 'worker' }],
-  isWebView2: [false, { scope: 'worker' }],
 
   isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
     await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell' || (!channel && headless)));
