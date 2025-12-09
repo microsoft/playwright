@@ -21,9 +21,8 @@ import { attachFrame } from '../config/utils';
 import fs from 'fs';
 import formidable from 'formidable';
 
-test('should upload multiple large files', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
+test('should upload multiple large files', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(isWebView2);
   test.skip(mode.startsWith('service'));
   test.slow();
 
