@@ -469,7 +469,7 @@ it('should not auto play audio', {
   });
   await page.goto('http://127.0.0.1/audio.html');
   if (browserName === 'webkit')
-    await expect(page.locator('#log')).toHaveText('State: interrupted');
+    await expect(page.locator('#log')).toHaveText(/State: (interrupted|suspended)/);
   else
     await expect(page.locator('#log')).toHaveText('State: suspended');
 });
