@@ -279,7 +279,7 @@ test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
   const promise = testServerConnection.runTests({ pauseAtEnd: true, locations: [] });
   await expect.poll(() => testServerConnection.events.find(e => e[0] === 'testPaused')).toEqual(['testPaused', { errors: [] }]);
   await testServerConnection.stopTests({});
-  expect(await promise).toEqual({ status: 'passed' });
+  expect(await promise).toEqual({ status: 'interrupted' });
 });
 
 test('pauseOnError', async ({ startTestServer, writeFiles }) => {
@@ -311,7 +311,7 @@ test('pauseOnError', async ({ startTestServer, writeFiles }) => {
   });
 
   await testServerConnection.stopTests({});
-  expect(await promise).toEqual({ status: 'failed' });
+  expect(await promise).toEqual({ status: 'interrupted' });
 });
 
 test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
