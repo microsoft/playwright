@@ -92,6 +92,10 @@ export type TestPausedPayload = {
   errors: TestInfoErrorImpl[];
 };
 
+export type TestPauseResponsePayload = {
+  action: 'continue' | 'abort';
+};
+
 export type GetStorageValuePayload = {
   fileName: string;
   key: string;
@@ -151,10 +155,6 @@ export type TestEntry = {
 export type RunPayload = {
   file: string;
   entries: TestEntry[];
-};
-
-export type PauseEndPayload = {
-  action: 'continue' | 'abort';
 };
 
 export type DonePayload = {

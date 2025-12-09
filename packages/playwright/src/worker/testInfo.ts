@@ -70,7 +70,7 @@ type TestInfoCallbacks = {
   onStepBegin?: (payload: ipc.StepBeginPayload) => void;
   onStepEnd?: (payload: ipc.StepEndPayload) => void;
   onAttach?: (payload: ipc.AttachmentPayload) => void;
-  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.PauseEndPayload>;
+  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.TestPauseResponsePayload>;
   onGetStorageValue?: (payload: ipc.GetStorageValuePayload) => Promise<any>;
   onSetStorageValue?: (payload: ipc.SetStorageValuePayload) => void;
 };
