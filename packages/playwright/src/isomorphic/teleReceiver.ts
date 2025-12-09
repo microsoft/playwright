@@ -368,7 +368,6 @@ export class TeleReporterReceiver {
     result.errors.push(...errors);
     result.error = result.errors[0];
     void this._reporter.onTestPaused?.(test, result, step);
-    // backchannel to be implemented
   }
 
   private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {

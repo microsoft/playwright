@@ -142,6 +142,10 @@ export type RunPayload = {
   entries: TestEntry[];
 };
 
+export type PauseEndPayload = {
+  action: 'continue' | 'abort';
+};
+
 export type DonePayload = {
   fatalErrors: TestInfoErrorImpl[];
   skipTestsDueToSetupFailure: string[];  // test ids

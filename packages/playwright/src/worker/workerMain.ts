@@ -33,7 +33,7 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { CustomMessageRequestPayload, CustomMessageResponsePayload, DonePayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type { CustomMessageRequestPayload, CustomMessageResponsePayload, DonePayload, PauseEndPayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
@@ -65,6 +65,7 @@ export class WorkerMain extends ProcessRunner {
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
   private _activeSuites = new Map<Suite, TestAnnotation[]>();
+  private _pauseEndPromise?: ManualPromise<PauseEndPayload>;
 
   constructor(params: WorkerInitParams) {
     super();
@@ -118,7 +119,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => {});
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => Promise.resolve({ action: 'abort' }));
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
@@ -278,12 +279,21 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
+  pauseEnd(payload: PauseEndPayload) {
+    this._pauseEndPromise?.resolve(payload);
+  }
+
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
     const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
         stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
         stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
         attachment => this.dispatchEvent('attach', attachment),
-        testPausedPayload => this.dispatchEvent('testPaused', testPausedPayload));
+        testPausedPayload => {
+          this._pauseEndPromise = new ManualPromise();
+          this.dispatchEvent('testPaused', testPausedPayload);
+          return this._pauseEndPromise;
+        }
+    );
 
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);

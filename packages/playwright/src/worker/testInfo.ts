@@ -30,7 +30,7 @@ import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
+import type { AttachmentPayload, PauseEndPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -70,7 +70,7 @@ export class TestInfoImpl implements TestInfo {
   private _onStepBegin: (payload: StepBeginPayload) => void;
   private _onStepEnd: (payload: StepEndPayload) => void;
   private _onAttach: (payload: AttachmentPayload) => void;
-  private _onTestPaused: (payload: TestPausedPayload) => void;
+  private _onTestPaused: (payload: TestPausedPayload) => Promise<PauseEndPayload>;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
@@ -165,7 +165,7 @@ export class TestInfoImpl implements TestInfo {
     onStepBegin: (payload: StepBeginPayload) => void,
     onStepEnd: (payload: StepEndPayload) => void,
     onAttach: (payload: AttachmentPayload) => void,
-    onTestPaused: (payload: TestPausedPayload) => void,
+    onTestPaused: (payload: TestPausedPayload) => Promise<PauseEndPayload>,
   ) {
     this.testId = test?.id ?? '';
     this._onStepBegin = onStepBegin;
@@ -466,10 +466,11 @@ export class TestInfoImpl implements TestInfo {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
       const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
-      const step = this._addStep({ category: 'test.step', title: 'Paused', location });
-      this._onTestPaused({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] });
-      await this._interruptedPromise;
+      const step = this._addStep({ category: 'hook', title: 'Paused', location });
+      const { action } = await this._onTestPaused({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] });
       step.complete({});
+      if (action === 'abort')
+        this._interrupt();
     }
     await this._onDidFinishTestFunctionCallback?.();
   }

@@ -72,7 +72,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
-  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep) {
+  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step?: reporterTypes.TestStep) {
     const resultId = (result as any)[this._idSymbol];
     const stepId = (step as any)[this._idSymbol];
     this._resultKnownErrorCounts.set(resultId, result.errors.length);
@@ -85,7 +85,6 @@ export class TeleReporterEmitter implements ReporterV2 {
         errors: result.errors,
       }
     });
-    // backchannel to be implemented
   }
 
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {

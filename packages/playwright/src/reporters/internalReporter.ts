@@ -67,9 +67,10 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult, step: TestStep) {
+  async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
     this._addSnippetToTestErrors(test, result);
-    this._addSnippetToStepError(test, step);
+    if (step)
+      this._addSnippetToStepError(test, step);
     return await this._reporter.onTestPaused?.(test, result, step);
   }
 
@@ -128,6 +129,9 @@ export function addLocationAndSnippetToError(config: FullConfig, error: TestErro
     error.location = prepareErrorStack(error.stack).location;
   const location = error.location;
   if (!location)
+    return;
+
+  if (!!error.snippet)
     return;
 
   try {

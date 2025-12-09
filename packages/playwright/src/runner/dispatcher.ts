@@ -584,7 +584,7 @@ class JobDispatcher {
     ];
   }
 
-  private async _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+  private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
@@ -612,8 +612,10 @@ class JobDispatcher {
     result.errors = params.errors;
     result.error = result.errors[0];
 
-    // TODO: respect disposition
-    await this._reporter.onTestPaused?.(test, result, step);
+    void this._reporter.onTestPaused?.(test, result, step).then(params => {
+      if (params?.action)
+        worker.sendPauseEnd({ action: params.action });
+    });
     this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }
 

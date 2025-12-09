@@ -24,9 +24,10 @@ class LocationReporter implements Reporter {
       this._printErrors(result);
     }
   }
-  onTestPaused(test: TestCase, result: TestResult) {
+  async onTestPaused(test: TestCase, result: TestResult) {
     console.log('%%onTestPaused');
     this._printErrors(result);
+    return { action: process.env.ACTION };
   }
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
@@ -47,9 +48,8 @@ class LocationReporter implements Reporter {
   }
 }
 
-test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
-  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
-  const testProcess = await interactWithTestRunner({
+test('--debug should pause at end', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
       module.exports = { reporter: './location-reporter.js' };
@@ -62,11 +62,9 @@ test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
         console.log('teardown'.toUpperCase()); // uppercase so we dont confuse it with source snippets
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
-  await testProcess.waitForOutput('onTestPaused');
-  await testProcess.kill('SIGINT');
-  expect(testProcess.output).toContain('TEARDOWN');
-  expect(testProcess.outputLines()).toEqual([
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'continue' });
+  expect(result.output).toContain('TEARDOWN');
+  expect(result.outputLines).toEqual([
     'onStepBegin: After Hooks > Paused at :4:7',
     'onTestPaused',
     'onStepEnd: After Hooks > Paused',
@@ -74,9 +72,8 @@ test('--debug should pause at end', async ({ interactWithTestRunner, }) => {
   ]);
 });
 
-test('--debug should pause at end with setup project', async ({ interactWithTestRunner, }) => {
-  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
-  const testProcess = await interactWithTestRunner({
+test('--debug should pause at end with setup project', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
       module.exports = {
@@ -98,16 +95,12 @@ test('--debug should pause at end with setup project', async ({ interactWithTest
         console.log('main test started');
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
-  await testProcess.waitForOutput('main test started');
-  await testProcess.waitForOutput('onTestPaused');
-  await testProcess.kill('SIGINT');
-  expect(testProcess.outputLines()).toContain('onStepBegin: After Hooks > Paused at :5:7');
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'continue' });
+  expect(result.outputLines).toContain('onStepBegin: After Hooks > Paused at :5:7');
 });
 
-test('--debug should pause on error', async ({ interactWithTestRunner, mergeReports }) => {
-  test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
-  const testProcess = await interactWithTestRunner({
+test('--debug should pause on error', async ({ runInlineTest, mergeReports }) => {
+  const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
       module.exports = { reporter: [['blob'], ['./location-reporter.js']] };
@@ -117,19 +110,15 @@ test('--debug should pause on error', async ({ interactWithTestRunner, mergeRepo
       test('pass', () => {
         expect.soft(1).toBe(2);
         expect(2).toBe(3);
-        console.log('after error'.toUpperCase());
+        console.log('%%after error');
       });
     `
-  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true' });
-  await testProcess.waitForOutput('onTestPaused');
-  expect(testProcess.output).not.toContain('AFTER ERROR');
-  await testProcess.kill('SIGINT');
-  expect(testProcess.output).not.toContain('AFTER ERROR');
+  }, { debug: true }, { PLAYWRIGHT_FORCE_TTY: 'true', ACTION: 'abort' });
   const errorState = [
     'result.errors[0] at :4:24',
     'result.errors[1] at :5:19',
   ];
-  expect(testProcess.outputLines()).toEqual([
+  expect(result.outputLines).toEqual([
     'onStepBegin: After Hooks > Paused at :4:24',
     'onTestPaused',
     ...errorState,
