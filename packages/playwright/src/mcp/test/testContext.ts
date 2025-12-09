@@ -22,6 +22,7 @@ import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-c
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
+import { Multiplexer } from '../../reporters/multiplexer';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
@@ -227,7 +228,15 @@ export class TestContext {
     };
 
     try {
-      const reporter = new ListReporter({ configDir, screen, includeTestId: true });
+      const reporter = new Multiplexer([
+        new ListReporter({ configDir, screen, includeTestId: true }),
+        {
+          version: () => 'v2',
+          onTestPaused() {
+            return new Promise(() => {}); // stall
+          }
+        }
+      ]);
       status = await Promise.race([
         testRunner.runTests(reporter, params).then(result => result.status),
         testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
