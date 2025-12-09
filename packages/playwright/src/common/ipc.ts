@@ -92,6 +92,17 @@ export type TestPausedPayload = {
   errors: TestInfoErrorImpl[];
 };
 
+export type GetStorageValuePayload = {
+  fileName: string;
+  key: string;
+};
+
+export type SetStorageValuePayload = {
+  fileName: string;
+  key: string;
+  value: any;
+};
+
 export type CustomMessageRequestPayload = {
   testId: string;
   request: any;

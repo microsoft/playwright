@@ -58,9 +58,10 @@ export class ProgressController {
         this._onCallLog?.(message);
       },
       metadata: this.metadata,
-      race: <T>(promise: Promise<T> | Promise<T>[]) => {
+      race: <T>(promise: Promise<T> | Promise<T>[], options?: { timeout?: number }) => {
         const promises = Array.isArray(promise) ? promise : [promise];
-        return Promise.race([...promises, this._forceAbortPromise]);
+        const timerPromise = options?.timeout ? new Promise<void>(f => setTimeout(f, options.timeout)) : null;
+        return Promise.race([...promises, ...(timerPromise ? [timerPromise] : []), this._forceAbortPromise]);
       },
       wait: async (timeout: number) => {
         let timer: NodeJS.Timeout;

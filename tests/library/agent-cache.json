@@ -1,36 +1,4 @@
 {
-  "Fill out the form with the following details:\nName: John Doe\nAddress: 123 Main St, Anytown, XYZ state\nZip Code: 12345\nEmail: john@doe.me": [
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Full Name *\"i]",
-      "text": "John Doe"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Email Address *\"i]",
-      "text": "john@doe.me"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Street Address *\"i]",
-      "text": "123 Main St"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"City *\"i]",
-      "text": "Anytown"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"State/Province *\"i]",
-      "text": "XYZ"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
-      "text": "12345"
-    }
-  ],
   "Fill out the form with the following details:\nName: John Smith\nAddress: 1045 La Avenida St, Mountain View, CA 94043\nEmail: john.smith@at-microsoft.com": [
     {
       "method": "fill",
@@ -61,6 +29,13 @@
       "method": "fill",
       "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
       "text": "94043"
+    }
+  ],
+  "Enter x-secret-email into the email field": [
+    {
+      "method": "fill",
+      "selector": "internal:role=textbox[name=\"Email Address\"i]",
+      "text": "x-secret-email"
     }
   ]
 }

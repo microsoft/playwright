@@ -25,7 +25,7 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium

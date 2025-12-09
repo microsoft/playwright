@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { ManualPromise, setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { serializeError } from '../util';
 
@@ -40,6 +40,14 @@ export class ProcessRunner {
   protected dispatchEvent(method: string, params: any) {
     const response: ProtocolResponse = { method, params };
     sendMessageToParent({ method: '__dispatch__', params: response });
+  }
+
+  protected async sendRequest(method: string, params?: any): Promise<any> {
+    return await sendRequestToParent(method, params);
+  }
+
+  protected async sendMessageNoReply(method: string, params?: any) {
+    void sendRequestToParent(method, params).catch(() => {});
   }
 }
 
@@ -84,6 +92,8 @@ process.on('message', async (message: any) => {
       sendMessageToParent({ method: '__dispatch__', params: response });
     }
   }
+  if (message.method === '__response__')
+    handleResponseFromParent(message.params as ProtocolResponse);
 });
 
 const kForceExitTimeout = +(process.env.PWTEST_FORCE_EXIT_TIMEOUT || 30000);
@@ -119,4 +129,26 @@ function sendMessageToParent(message: { method: string, params?: any }) {
     }
     // Can throw when closing.
   }
+}
+
+let lastId = 0;
+const requestCallbacks = new Map<number, ManualPromise<any>>();
+
+async function sendRequestToParent(method: string, params?: any): Promise<any> {
+  const id = ++lastId;
+  sendMessageToParent({ method: '__request__', params: { id, method, params } });
+  const promise = new ManualPromise<any>();
+  requestCallbacks.set(id, promise);
+  return promise;
+}
+
+function handleResponseFromParent(response: ProtocolResponse) {
+  const promise = requestCallbacks.get(response.id!);
+  if (!promise)
+    return;
+  requestCallbacks.delete(response.id!);
+  if (response.error)
+    promise.reject(new Error(response.error.message));
+  else
+    promise.resolve(response.result);
 }

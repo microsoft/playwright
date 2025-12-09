@@ -405,7 +405,7 @@ export abstract class BrowserContext extends SdkObject {
     const pageOrError = await progress.race(page.waitForInitializedOrError());
     if (pageOrError instanceof Error)
       throw pageOrError;
-    await page.mainFrame()._waitForLoadState(progress, 'load');
+    await page.mainFrame().waitForLoadState(progress, 'load');
     return page;
   }
 

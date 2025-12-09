@@ -478,26 +478,27 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
-    if (options) {
-      const { screencastId } = await this._session.send('Page.startScreencast', options);
-      this._screencastId = screencastId;
-    } else {
-      await this._session.send('Page.stopScreencast');
-    }
+  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
+    const { screencastId } = await this._session.send('Page.startScreencast', options);
+    this._screencastId = screencastId;
+  }
+
+  async stopScreencast(): Promise<void> {
+    await this._session.send('Page.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
     if (!this._screencastId)
       return;
     const screencastId = this._screencastId;
-    this._page.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._session.send('Page.screencastFrameAck', { screencastId }).catch(e => debugLogger.log('error', e));
     });
 
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
+      frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
       width: event.deviceWidth,
       height: event.deviceHeight,
     });

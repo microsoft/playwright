@@ -85,26 +85,25 @@ type CachedActions = Record<string, actions.Action[]>;
 const allCaches = new Map<string, CachedActions>();
 
 async function cachedPerform(context: Context, options: channels.PagePerformParams): Promise<boolean> {
-  const agentSettings = context.page.browserContext._options.agent;
-  if (!agentSettings?.cacheFile || agentSettings.cacheMode === 'ignore')
+  if (!context.options?.cacheFile || context.options.cacheMode === 'ignore')
     return false;
 
-  const cache = await cachedActions(agentSettings.cacheFile);
+  const cache = await cachedActions(context.options.cacheFile);
   const cacheKey = options.key ?? options.task;
   const actions = cache[cacheKey];
   if (!actions) {
-    if (agentSettings.cacheMode === 'force')
+    if (context.options.cacheMode === 'force')
       throw new Error(`No cached actions for key "${cacheKey}", but cache mode is set to "force"`);
     return false;
   }
 
   for (const action of actions)
-    await runAction(context.progress, context.page, action);
+    await runAction(context.progress, context.page, action, context.options.secrets ?? []);
   return true;
 }
 
 async function updateCache(context: Context, options: channels.PagePerformParams) {
-  const cacheFile = context.page.browserContext._options.agent?.cacheFile;
+  const cacheFile = context.options?.cacheFile;
   if (!cacheFile)
     return;
   const cache = await cachedActions(cacheFile);

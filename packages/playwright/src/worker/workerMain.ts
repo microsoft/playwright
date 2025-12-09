@@ -33,19 +33,19 @@ import { loadTestFile } from '../common/testLoader';
 import type { TimeSlot } from './timeoutManager';
 import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { CustomMessageRequestPayload, CustomMessageResponsePayload, DonePayload, PauseEndPayload, RunPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestInfoErrorImpl, WorkerInitParams } from '../common/ipc';
+import type * as ipc from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
 import type { TestAnnotation } from '../../types/test';
 
 export class WorkerMain extends ProcessRunner {
-  private _params: WorkerInitParams;
+  private _params: ipc.WorkerInitParams;
   private _config!: FullConfigInternal;
   private _project!: FullProjectInternal;
   private _poolBuilder!: PoolBuilder;
   private _fixtureRunner: FixtureRunner;
 
   // Accumulated fatal errors that cannot be attributed to a test.
-  private _fatalErrors: TestInfoErrorImpl[] = [];
+  private _fatalErrors: ipc.TestInfoErrorImpl[] = [];
   // Whether we should skip running remaining tests in this suite because
   // of a setup error, usually beforeAll hook.
   private _skipRemainingTestsInSuite: Suite | undefined;
@@ -65,9 +65,9 @@ export class WorkerMain extends ProcessRunner {
   // These suites still need afterAll hooks to be executed for the proper cleanup.
   // Contains dynamic annotations originated by modifiers with a callback, e.g. `test.skip(() => true)`.
   private _activeSuites = new Map<Suite, TestAnnotation[]>();
-  private _pauseEndPromise?: ManualPromise<PauseEndPayload>;
+  private _pauseEndPromise?: ManualPromise<ipc.PauseEndPayload>;
 
-  constructor(params: WorkerInitParams) {
+  constructor(params: ipc.WorkerInitParams) {
     super();
     process.env.TEST_WORKER_INDEX = String(params.workerIndex);
     process.env.TEST_PARALLEL_INDEX = String(params.parallelIndex);
@@ -119,7 +119,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, () => {}, () => {}, () => {}, () => Promise.resolve({ action: 'abort' }));
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, {});
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});
@@ -135,12 +135,12 @@ export class WorkerMain extends ProcessRunner {
 
     if (this._fatalErrors.length) {
       this._appendProcessTeardownDiagnostics(this._fatalErrors[this._fatalErrors.length - 1]);
-      const payload: TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
+      const payload: ipc.TeardownErrorsPayload = { fatalErrors: this._fatalErrors };
       this.dispatchEvent('teardownErrors', payload);
     }
   }
 
-  private _appendProcessTeardownDiagnostics(error: TestInfoErrorImpl) {
+  private _appendProcessTeardownDiagnostics(error: ipc.TestInfoErrorImpl) {
     if (!this._lastRunningTests.length)
       return;
     const count = this._totalRunningTests === 1 ? '1 test' : `${this._totalRunningTests} tests`;
@@ -214,7 +214,7 @@ export class WorkerMain extends ProcessRunner {
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
   }
 
-  async runTestGroup(runPayload: RunPayload) {
+  async runTestGroup(runPayload: ipc.RunPayload) {
     this._runFinished = new ManualPromise<void>();
     const entries = new Map(runPayload.entries.map(e => [e.testId, e]));
     let fatalUnknownTestIds: string[] | undefined;
@@ -251,7 +251,7 @@ export class WorkerMain extends ProcessRunner {
       this._fatalErrors.push(testInfoError(e));
       void this._stop();
     } finally {
-      const donePayload: DonePayload = {
+      const donePayload: ipc.DonePayload = {
         fatalErrors: this._fatalErrors,
         skipTestsDueToSetupFailure: [],
         fatalUnknownTestIds,
@@ -268,7 +268,7 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
-  async customMessage(payload: CustomMessageRequestPayload): Promise<CustomMessageResponsePayload> {
+  async customMessage(payload: ipc.CustomMessageRequestPayload): Promise<ipc.CustomMessageResponsePayload> {
     try {
       if (this._currentTest?.testId !== payload.testId)
         throw new Error('Test has already stopped');
@@ -279,22 +279,23 @@ export class WorkerMain extends ProcessRunner {
     }
   }
 
-  pauseEnd(payload: PauseEndPayload) {
+  pauseEnd(payload: ipc.PauseEndPayload) {
     this._pauseEndPromise?.resolve(payload);
   }
 
   private async _runTest(test: TestCase, retry: number, nextTest: TestCase | undefined) {
-    const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry,
-        stepBeginPayload => this.dispatchEvent('stepBegin', stepBeginPayload),
-        stepEndPayload => this.dispatchEvent('stepEnd', stepEndPayload),
-        attachment => this.dispatchEvent('attach', attachment),
-        testPausedPayload => {
-          this._pauseEndPromise = new ManualPromise();
-          this.dispatchEvent('testPaused', testPausedPayload);
-          return this._pauseEndPromise;
-        }
-    );
-
+    const testInfo = new TestInfoImpl(this._config, this._project, this._params, test, retry, {
+      onStepBegin: payload => this.dispatchEvent('stepBegin', payload),
+      onStepEnd: payload => this.dispatchEvent('stepEnd', payload),
+      onAttach: payload => this.dispatchEvent('attach', payload),
+      onTestPaused: payload => {
+        this._pauseEndPromise = new ManualPromise();
+        this.dispatchEvent('testPaused', payload);
+        return this._pauseEndPromise;
+      },
+      onGetStorageValue: payload => this.sendRequest('getStorageValue', payload),
+      onSetStorageValue: payload => this.sendMessageNoReply('setStorageValue', payload),
+    });
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);
       switch (annotation.type) {
@@ -620,14 +621,14 @@ export class WorkerMain extends ProcessRunner {
   }
 }
 
-function buildTestBeginPayload(testInfo: TestInfoImpl): TestBeginPayload {
+function buildTestBeginPayload(testInfo: TestInfoImpl): ipc.TestBeginPayload {
   return {
     testId: testInfo.testId,
     startWallTime: testInfo._startWallTime,
   };
 }
 
-function buildTestEndPayload(testInfo: TestInfoImpl): TestEndPayload {
+function buildTestEndPayload(testInfo: TestInfoImpl): ipc.TestEndPayload {
   return {
     testId: testInfo.testId,
     duration: testInfo.duration,
@@ -661,4 +662,4 @@ function calculateMaxTimeout(t1: number, t2: number) {
   return (!t1 || !t2) ? 0 : Math.max(t1, t2);
 }
 
-export const create = (params: WorkerInitParams) => new WorkerMain(params);
+export const create = (params: ipc.WorkerInitParams) => new WorkerMain(params);

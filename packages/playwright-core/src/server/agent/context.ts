@@ -22,8 +22,12 @@ import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
+import type { BrowserContextOptions } from '../types';
+
+type AgentOptions = BrowserContextOptions['agent'];
 
 export class Context {
+  readonly options: AgentOptions;
   readonly progress: Progress;
   readonly page: Page;
   readonly actions: actions.Action[] = [];
@@ -31,11 +35,20 @@ export class Context {
   constructor(progress: Progress, page: Page) {
     this.progress = progress;
     this.page = page;
+    this.options = page.browserContext._options.agent;
   }
 
-  async runAction(action: actions.Action) {
-    await this.waitForCompletion(() => runAction(this.progress, this.page, action));
-    this.actions.push(action);
+  async runActionAndWait(action: actions.Action) {
+    return await this.runActionsAndWait([action]);
+  }
+
+  async runActionsAndWait(action: actions.Action[]) {
+    await this.waitForCompletion(async () => {
+      for (const a of action) {
+        await runAction(this.progress, this.page, a, this.options?.secrets ?? []);
+        this.actions.push(a);
+      }
+    });
     return await this.snapshotResult();
   }
 
@@ -45,6 +58,7 @@ export class Context {
     const disposeListeners = () => {
       this.page.browserContext.off(BrowserContext.Events.Request, requestListener);
     };
+    this.page.browserContext.on(BrowserContext.Events.Request, requestListener);
 
     let result: R;
     try {
@@ -56,22 +70,28 @@ export class Context {
 
     const requestedNavigation = requests.some(request => request.isNavigationRequest());
     if (requestedNavigation) {
-      await this.page.performActionPreChecks(this.progress);
+      await this.page.mainFrame().waitForLoadState(this.progress, 'load');
       return result;
     }
 
-    const fiveSeconds = new Promise<void>(resolve => setTimeout(resolve, 1000));
+    const promises: Promise<any>[] = [];
     for (const request of requests) {
-      if (request.failure())
-        continue;
-      const response = Promise.race([request.response(), fiveSeconds]);
-      await this.progress.race(response);
+      if (['document', 'stylesheet', 'script', 'xhr', 'fetch'].includes(request.resourceType()))
+        promises.push(request.response().then(r => r?.finished()));
+      else
+        promises.push(request.response());
     }
+    await this.progress.race(promises, { timeout: 5000 });
+    if (requests.length)
+      await this.progress.wait(500);
+
     return result;
   }
 
   async snapshotResult(): Promise<loopTypes.ToolResult> {
-    const { full } = await this.page.snapshotForAI(this.progress);
+    let { full } = await this.page.snapshotForAI(this.progress);
+    full = this._redactText(full);
+
     const text = [`# Page snapshot\n${full}`];
 
     return {
@@ -93,5 +113,19 @@ export class Context {
         throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
       }
     }));
+  }
+
+  private _redactText(text: string): string {
+    const secrets = this.options?.secrets;
+    if (!secrets)
+      return text;
+
+    const redactText = (text: string) => {
+      for (const { name, value } of secrets)
+        text = text.replaceAll(value, `<secret>${name}</secret>`);
+      return text;
+    };
+
+    return redactText(text);
   }
 }

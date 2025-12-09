@@ -37,7 +37,7 @@ export type HoverAction = {
 export type SelectOptionAction = {
   method: 'selectOption';
   selector: string;
-  values: string[];
+  labels: string[];
 };
 
 export type PressAction = {
@@ -59,4 +59,10 @@ export type FillAction = {
   submit?: boolean;
 };
 
-export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction;
+export type SetChecked = {
+  method: 'setChecked';
+  selector: string;
+  checked: boolean;
+};
+
+export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction | SetChecked;
