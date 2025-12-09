@@ -280,21 +280,15 @@ it.describe('page screenshot', () => {
     expect(screenshot).toMatchSnapshot('screenshot-clip-odd-size.png');
   });
 
-  it('should work for canvas', async ({ page, server, isElectron, isMac, isLinux, isWindows, macVersion, browserName, isHeadlessShell, headless, channel }) => {
-    it.fixme(isElectron && isMac, 'Fails on the bots');
-    it.fixme(browserName === 'webkit' && !headless && (isLinux || (isWindows && channel === 'webkit-wsl')), 'WebKit has slightly different corners on gtk4.');
+  it('should work for canvas', async ({ page, server }) => {
     await page.setViewportSize({ width: 500, height: 500 });
     await page.goto(server.PREFIX + '/screenshots/canvas.html');
     const screenshot = await page.screenshot();
-    if ((!isHeadlessShell && browserName === 'chromium' && isMac && os.arch() === 'arm64' && macVersion >= 14) ||
-        (browserName === 'webkit' && isLinux && os.arch() === 'x64') || channel === 'webkit-wsl')
-      expect(screenshot).toMatchSnapshot('screenshot-canvas-with-accurate-corners.png');
-    else
-      expect(screenshot).toMatchSnapshot('screenshot-canvas.png');
+    // Allow 4 corners to be rendered differently on various platforms/browsers.
+    expect(screenshot).toMatchSnapshot('screenshot-canvas.png', { maxDiffPixels: 4 });
   });
 
-  it('should capture canvas changes', async ({ page, isElectron, browserName, isMac }) => {
-    it.fixme(browserName === 'webkit' && isMac, 'https://github.com/microsoft/playwright/issues/8796,https://github.com/microsoft/playwright/issues/16180');
+  it('should capture canvas changes', async ({ page, isElectron }) => {
     it.skip(isElectron);
     await page.goto('data:text/html,<canvas></canvas>');
     await page.evaluate(() => {
@@ -324,11 +318,8 @@ it.describe('page screenshot', () => {
     }
   });
 
-  it('should work for webgl', async ({ page, server, browserName, platform, channel }) => {
-    it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
-    it.fixme(browserName === 'chromium' && platform === 'darwin' && os.arch() === 'arm64', 'SwiftShader is not available on macOS-arm64 - https://github.com/microsoft/playwright/issues/28216');
-    it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
-
+  it('should work for webgl', async ({ page, server, browserName, platform }) => {
+    it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'WebGL is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
     await page.setViewportSize({ width: 640, height: 480 });
     await page.goto(server.PREFIX + '/screenshots/webgl.html');
     const screenshot = await page.screenshot();
