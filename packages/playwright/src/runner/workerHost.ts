@@ -68,6 +68,10 @@ export class WorkerHost extends ProcessHost {
     };
   }
 
+  artifactsDir() {
+    return this._params.artifactsDir;
+  }
+
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
     return await this.startRunner(this._params, {

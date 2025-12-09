@@ -96,15 +96,12 @@ export type ResumePayload = {
   action?: 'continue' | 'abort';
 };
 
-export type GetStorageValuePayload = {
-  fileName: string;
-  key: string;
+export type CloneStoragePayload = {
+  storageFile: string;
 };
 
-export type SetStorageValuePayload = {
-  fileName: string;
-  key: string;
-  value: any;
+export type UpstreamStoragePayload = {
+  workerFile: string;
 };
 
 export type CustomMessageRequestPayload = {
