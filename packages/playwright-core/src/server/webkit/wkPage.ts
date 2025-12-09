@@ -124,7 +124,7 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         promises.push(this._grantPermissions(key, value));
     }
-    promises.push(this._initializeVideoRecording());
+    promises.push(this._page.screencast.initializeVideoRecording());
     await Promise.all(promises);
   }
 
@@ -818,12 +818,6 @@ export class WKPage implements PageDelegate {
     if (this._page.browserContext._browser?.options.headful)
       return hostPlatform === 'mac10.15' ? 55 : 59;
     return 0;
-  }
-
-  private async _initializeVideoRecording() {
-    const screencastOptions = await this._page.screencast.initializeVideoRecorder();
-    if (screencastOptions)
-      await this._page.screencast.startVideoRecording(screencastOptions);
   }
 
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {

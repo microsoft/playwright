@@ -55,7 +55,7 @@ export class Screencast {
     this._frameThrottler.recharge();
   }
 
-  async initializeVideoRecorder(): Promise<types.PageScreencastOptions | undefined> {
+  async initializeVideoRecording() {
     const recordVideo = this._page.browserContext._options.recordVideo;
     if (!recordVideo)
       return undefined;
@@ -70,14 +70,15 @@ export class Screencast {
     // Note: it is important to start video recorder before sending Screencast.startScreencast,
     // and it is equally important to send Screencast.startScreencast before sending Target.resume.
     await this._createVideoRecorder(screencastId, screencastOptions);
-    this._page.waitForInitializedOrError().then(p => {
-      if (p instanceof Error)
-        this.stopVideoRecording().catch(() => {});
-    });
-    return screencastOptions;
+    try {
+      await this._startVideoRecording(screencastOptions);
+    } catch (e) {
+      this.stopVideoRecording().catch(() => {});
+      throw e;
+    }
   }
 
-  async startVideoRecording(options: types.PageScreencastOptions) {
+  private async _startVideoRecording(options: types.PageScreencastOptions) {
     const screencastId = this._screencastId;
     assert(screencastId);
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));

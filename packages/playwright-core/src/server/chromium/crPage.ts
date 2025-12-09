@@ -104,9 +104,19 @@ export class CRPage implements PageDelegate {
         this._page.setEmulatedSizeFromWindowOpen({ viewport: viewportSize, screen: viewportSize });
     }
 
-    this._mainFrameSession._initialize(bits.hasUIWindow).then(
-        () => this._page.reportAsNew(this._opener?._page, undefined),
-        error => this._page.reportAsNew(this._opener?._page, error));
+    this._mainFrameSession._initialize(bits.hasUIWindow)
+        .then(async () => {
+          await this._initializeVideoRecording(bits.hasUIWindow);
+          await this._mainFrameSession.resume();
+        }).then(
+            () => this._page.reportAsNew(this._opener?._page, undefined),
+            error => this._page.reportAsNew(this._opener?._page, error));
+  }
+
+  private async _initializeVideoRecording(hasUIWindow: boolean) {
+    if (this._page.isStorageStatePage || !hasUIWindow)
+      return;
+    await this._page.screencast.initializeVideoRecording();
   }
 
   private async _forAllFrameSessions(cb: (frame: FrameSession) => Promise<any>) {
@@ -437,10 +447,6 @@ class FrameSession {
       this._windowId = windowId;
     }
 
-    let screencastOptions: types.PageScreencastOptions | undefined;
-    if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow)
-      screencastOptions = await this._crPage._page.screencast.initializeVideoRecorder();
-
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
       this._addRendererListeners();
@@ -528,9 +534,12 @@ class FrameSession {
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
-      if (screencastOptions)
-        promises.push(this._crPage._page.screencast.startVideoRecording(screencastOptions));
     }
+    await Promise.all(promises);
+  }
+
+  async resume() {
+    const promises: Promise<any>[] = [];
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
     await Promise.all(promises);
@@ -706,7 +715,7 @@ class FrameSession {
       }
       const frameSession = new FrameSession(this._crPage, session, targetId, this);
       this._crPage._sessions.set(targetId, frameSession);
-      frameSession._initialize(false).catch(e => e);
+      frameSession._initialize(false).then(() => frameSession.resume()).catch(e => e);
       return;
     }
 
