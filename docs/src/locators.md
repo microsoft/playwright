@@ -910,7 +910,7 @@ expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have
 
 ```csharp
 // 5 in-stock items
-await Expect(Page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
+await Expect(Page.GetByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
     .ToHaveCountAsync(5);
 ```
 
