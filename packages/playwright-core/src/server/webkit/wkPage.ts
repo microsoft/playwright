@@ -821,9 +821,12 @@ export class WKPage implements PageDelegate {
   }
 
   private async _initializeVideoRecording() {
-    const screencastOptions = await this._page.screencast.initializeVideoRecorder();
-    if (screencastOptions)
-      await this._page.screencast.startVideoRecording(screencastOptions);
+    const screencast = this._page.screencast;
+    const videoOptions = await screencast.launchVideoRecorder();
+    if (!videoOptions)
+      return;
+    await screencast.waitForVideoRecorderInitialized();
+    await screencast.startVideoRecording(videoOptions);
   }
 
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {

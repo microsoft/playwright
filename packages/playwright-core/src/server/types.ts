@@ -42,10 +42,17 @@ export type PointerActionWaitOptions = CommonActionOptions & {
   trial?: boolean;
 };
 
-export type PageScreencastOptions = {
+export type VideoOptions = {
   width: number,
   height: number,
   outputFile: string,
+};
+
+export type ScreencastFrame = {
+  buffer: Buffer,
+  frameSwapWallTime: number,
+  width: number,
+  height: number,
 };
 
 export type Credentials = {
