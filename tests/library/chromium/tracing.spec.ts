@@ -102,6 +102,6 @@ it('should support a buffer without a path', async ({ browser, server }) => {
   await page.goto(server.PREFIX + '/grid.html');
   await rafraf(page);
   const trace = await browser.stopTracing();
-  expect(trace.toString()).toContain('screenshot');
+  expect(trace.toString().includes('screenshot')).toBe(true);
   await page.close();
 });

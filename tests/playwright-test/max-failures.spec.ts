@@ -186,20 +186,20 @@ test('max-failures should not consider retries as failures', async ({ runInlineT
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
-        maxFailures: 10,
-        retries: 10,
+        maxFailures: 5,
+        retries: 5,
       };
     `,
     'example.spec.ts': `
       import { test, expect } from '@playwright/test';
 
       test('I fail 9 times 1', () => {
-        if (test.info().retry < 9)
+        if (test.info().retry < 4)
           throw new Error('failing intentionally');
       });
 
       test('I fail 9 times 2', () => {
-        if (test.info().retry < 9)
+        if (test.info().retry < 4)
           throw new Error('failing intentionally');
       });
     `,
