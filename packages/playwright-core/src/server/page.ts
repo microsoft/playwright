@@ -34,6 +34,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
+import { Screencast } from './screencast';
 
 import type { Artifact } from './artifact';
 import type * as dom from './dom';
@@ -78,7 +79,8 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void>;
+  startScreencast(options: { width: number, height: number, quality: number }): Promise<void>;
+  stopScreencast(): Promise<void>;
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
@@ -165,9 +167,7 @@ export class Page extends SdkObject {
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
 
-  // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
-  // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
-  private _frameThrottler = new FrameThrottler(10, 35, 200);
+  readonly screencast: Screencast;
   closeReason: string | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
@@ -180,6 +180,7 @@ export class Page extends SdkObject {
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this.screenshotter = new Screenshotter(this);
     this.frameManager = new frames.FrameManager(this);
+    this.screencast = new Screencast(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
     this.coverage = delegate.coverage ? delegate.coverage() : null;
@@ -256,7 +257,7 @@ export class Page extends SdkObject {
 
   _didClose() {
     this.frameManager.dispose();
-    this._frameThrottler.dispose();
+    this.screencast.stopFrameThrottler();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
@@ -267,7 +268,7 @@ export class Page extends SdkObject {
 
   _didCrash() {
     this.frameManager.dispose();
-    this._frameThrottler.dispose();
+    this.screencast.stopFrameThrottler();
     this.emit(Page.Events.Crash);
     this._crashed = true;
     this.instrumentation.onPageClose(this);
@@ -827,20 +828,6 @@ export class Page extends SdkObject {
     return this._pageBindings.get(name) || this.browserContext._pageBindings.get(name);
   }
 
-  setScreencastOptions(options: { width: number, height: number, quality: number } | null) {
-    this.delegate.setScreencastOptions(options).catch(e => debugLogger.log('error', e));
-    this._frameThrottler.setThrottlingEnabled(!!options);
-  }
-
-  throttleScreencastFrameAck(ack: () => void) {
-    // Don't ack immediately, tracing has smart throttling logic that is implemented here.
-    this._frameThrottler.ack(ack);
-  }
-
-  temporarilyDisableTracingScreencastThrottling() {
-    this._frameThrottler.recharge();
-  }
-
   async safeNonStallingEvaluateInAllFrames(expression: string, world: types.World, options: { throwOnJSErrors?: boolean } = {}) {
     await Promise.all(this.frames().map(async frame => {
       try {
@@ -972,71 +959,6 @@ export class InitScript {
   }
 }
 
-class FrameThrottler {
-  private _acks: (() => void)[] = [];
-  private _defaultInterval: number;
-  private _throttlingInterval: number;
-  private _nonThrottledFrames: number;
-  private _budget: number;
-  private _throttlingEnabled = false;
-  private _timeoutId: NodeJS.Timeout | undefined;
-
-  constructor(nonThrottledFrames: number, defaultInterval: number, throttlingInterval: number) {
-    this._nonThrottledFrames = nonThrottledFrames;
-    this._budget = nonThrottledFrames;
-    this._defaultInterval = defaultInterval;
-    this._throttlingInterval = throttlingInterval;
-    this._tick();
-  }
-
-  dispose() {
-    if (this._timeoutId) {
-      clearTimeout(this._timeoutId);
-      this._timeoutId = undefined;
-    }
-  }
-
-  setThrottlingEnabled(enabled: boolean) {
-    this._throttlingEnabled = enabled;
-  }
-
-  recharge() {
-    // Send all acks, reset budget.
-    for (const ack of this._acks)
-      ack();
-    this._acks = [];
-    this._budget = this._nonThrottledFrames;
-    if (this._timeoutId) {
-      clearTimeout(this._timeoutId);
-      this._tick();
-    }
-  }
-
-  ack(ack: () => void) {
-    if (!this._timeoutId) {
-      // Already disposed.
-      ack();
-      return;
-    }
-    this._acks.push(ack);
-  }
-
-  private _tick() {
-    const ack = this._acks.shift();
-    if (ack) {
-      --this._budget;
-      ack();
-    }
-
-    if (this._throttlingEnabled && this._budget <= 0) {
-      // Non-throttled frame budget is exceeded. Next ack will be throttled.
-      this._timeoutId = setTimeout(() => this._tick(), this._throttlingInterval);
-    } else {
-      // Either not throttling, or still under budget. Next ack will be after the default timeout.
-      this._timeoutId = setTimeout(() => this._tick(), this._defaultInterval);
-    }
-  }
-}
 
 async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string }): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.

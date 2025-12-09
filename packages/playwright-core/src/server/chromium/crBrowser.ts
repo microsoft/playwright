@@ -554,7 +554,7 @@ export class CRBrowserContext extends BrowserContext {
   }
 
   async stopVideoRecording() {
-    await Promise.all(this._crPages().map(crPage => crPage._mainFrameSession._stopVideoRecording()));
+    await Promise.all(this._crPages().map(crPage => crPage._page.screencast.stopVideoRecording()));
   }
 
   onClosePersistent() {

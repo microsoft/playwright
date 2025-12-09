@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import { assert } from '../../utils';
 import { headersArrayToObject } from '../../utils/isomorphic/headers';
-import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
 import { hostPlatform } from '../utils/hostPlatform';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
@@ -75,7 +72,6 @@ export class WKPage implements PageDelegate {
   // Holds window features for the next popup being opened via window.open,
   // until the popup page proxy arrives.
   private _nextWindowOpenPopupFeatures?: string[];
-  private _recordingVideoFile: string | null = null;
   private _screencastGeneration: number = 0;
 
   constructor(browserContext: WKBrowserContext, pageProxySession: WKSession, opener: WKPage | null) {
@@ -128,16 +124,7 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         promises.push(this._grantPermissions(key, value));
     }
-    if (this._browserContext._options.recordVideo) {
-      const outputFile = path.join(this._browserContext._options.recordVideo.dir, createGuid() + '.webm');
-      promises.push(this._browserContext._ensureVideosPath().then(() => {
-        return this._startVideo({
-          // validateBrowserContextOptions ensures correct video size.
-          ...this._browserContext._options.recordVideo!.size!,
-          outputFile,
-        });
-      }));
-    }
+    promises.push(this._initializeVideoRecording());
     await Promise.all(promises);
   }
 
@@ -817,7 +804,6 @@ export class WKPage implements PageDelegate {
   }
 
   async closePage(runBeforeUnload: boolean): Promise<void> {
-    await this._stopVideo();
     await this._pageProxySession.sendMayFail('Target.close', {
       targetId: this._session.sessionId,
       runBeforeUnload
@@ -834,23 +820,10 @@ export class WKPage implements PageDelegate {
     return 0;
   }
 
-  private async _startVideo(options: types.PageScreencastOptions): Promise<void> {
-    assert(!this._recordingVideoFile);
-    const { screencastId } = await this._pageProxySession.send('Screencast.startVideo', {
-      file: this._browserContext._browser.options.channel === 'webkit-wsl' ? await translatePathToWSL(options.outputFile) : options.outputFile,
-      width: options.width,
-      height: options.height,
-      toolbarHeight: this._toolbarHeight()
-    });
-    this._recordingVideoFile = options.outputFile;
-    this._browserContext._browser._videoStarted(this._browserContext, screencastId, options.outputFile, this._page.waitForInitializedOrError());
-  }
-
-  async _stopVideo(): Promise<void> {
-    if (!this._recordingVideoFile)
-      return;
-    await this._pageProxySession.sendMayFail('Screencast.stopVideo');
-    this._recordingVideoFile = null;
+  private async _initializeVideoRecording() {
+    const screencastOptions = await this._page.screencast.initializeVideoRecorder();
+    if (screencastOptions)
+      await this._page.screencast.startVideoRecording(screencastOptions);
   }
 
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
@@ -927,24 +900,29 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
-    if (options) {
-      const so = { ...options, toolbarHeight: this._toolbarHeight() };
-      const { generation } = await this._pageProxySession.send('Screencast.startScreencast', so);
-      this._screencastGeneration = generation;
-    } else {
-      await this._pageProxySession.send('Screencast.stopScreencast');
-    }
+  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
+    const { generation } = await this._pageProxySession.send('Screencast.startScreencast', {
+      quality: options.quality,
+      width: options.width,
+      height: options.height,
+      toolbarHeight: this._toolbarHeight(),
+    });
+    this._screencastGeneration = generation;
+  }
+
+  async stopScreencast(): Promise<void> {
+    await this._pageProxySession.sendMayFail('Screencast.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
     const generation = this._screencastGeneration;
-    this._page.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._pageProxySession.send('Screencast.screencastFrameAck', { generation }).catch(e => debugLogger.log('error', e));
     });
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
+      frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
