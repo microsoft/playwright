@@ -49,12 +49,12 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
 
   const proxyURL = getProxyForUrl(params.url);
   if (proxyURL) {
+    const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
-      const parsedProxyURL = normalizeProxyURL(proxyURL);
       parsedProxyURL.pathname = url.toString();
       url = parsedProxyURL;
     } else {
-      options.agent = new HttpsProxyAgent(normalizeProxyURL(proxyURL));
+      options.agent = new HttpsProxyAgent(parsedProxyURL);
       options.rejectUnauthorized = false;
     }
   }
