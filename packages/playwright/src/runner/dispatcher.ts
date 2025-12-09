@@ -598,11 +598,20 @@ class JobDispatcher {
   }
 
   private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
+    const { result, test, steps } = data;
+    const step = steps.get(params.stepId);
+    if (!step)
+      return;
+
     const sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
-        const response = await worker.sendCustomMessage({ testId: params.testId, request: message.request });
+        const response = await worker.sendCustomMessage({ testId: test.id, request: message.request });
         if (response.error)
           addLocationAndSnippetToError(this._config.config, response.error);
         return response;
@@ -613,8 +622,12 @@ class JobDispatcher {
       }
     };
 
-    for (const error of params.errors)
-      addLocationAndSnippetToError(this._config.config, error);
+    result.errors = params.errors;
+    result.error = result.errors[0];
+
+    void this._reporter.onTestPaused?.(test, result, step).then(params => {
+      worker.sendResume(params);
+    });
     this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }
 
