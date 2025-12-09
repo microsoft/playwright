@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './inspectorTest';
-import * as url from 'url';
 import fs from 'fs';
 
 test.describe('cli codegen', () => {
@@ -200,7 +199,7 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Choose File" }).SetInputFi
     const { page, recorder } = await openRecorder();
 
     server.setRoute('/download', (req, res) => {
-      const pathName = url.parse(req.url!).path;
+      const pathName = new URL(req.url, 'http://localhost').pathname;
       if (pathName === '/download') {
         res.setHeader('Content-Type', 'application/octet-stream');
         res.setHeader('Content-Disposition', 'attachment; filename=file.txt');

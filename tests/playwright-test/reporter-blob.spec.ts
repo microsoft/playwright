@@ -17,7 +17,6 @@
 import * as fs from 'fs';
 import type { PlaywrightTestConfig } from '@playwright/test';
 import path from 'path';
-import url from 'url';
 import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
 import { expect as baseExpect, test as baseTest, stripAnsi } from './playwright-test-fixtures';
@@ -684,7 +683,7 @@ test('generate html with attachment urls', async ({ runInlineTest, mergeReports,
 
   const oldServeFile = server.serveFile;
   server.serveFile = async (req, res) => {
-    const pathName = url.parse(req.url!).pathname!;
+    const pathName = new URL(req.url, 'http://localhost').pathname!;
     const filePath = path.join(reportDir, pathName.substring(1));
     return oldServeFile.call(server, req, res, filePath);
   };
