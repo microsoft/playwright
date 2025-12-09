@@ -626,8 +626,8 @@ class JobDispatcher {
     result.error = result.errors[0];
 
     void this._reporter.onTestPaused?.(test, result, step).then(params => {
-      if (params?.action)
-        worker.sendPauseEnd({ action: params.action });
+      const action = params?.action ?? 'continue'; // if no reporter implements pausing, continue as normal
+      worker.sendPauseEnd({ action });
     });
     this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }
