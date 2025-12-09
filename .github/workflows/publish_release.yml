@@ -23,7 +23,7 @@ jobs:
       contents: read   # This is required for actions/checkout to succeed
     environment: allow-publish-driver-to-cdn # This is required for OIDC login (azure/login)
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: 20
@@ -71,7 +71,7 @@ jobs:
     runs-on: ubuntu-24.04
     if: github.repository == 'microsoft/playwright'
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: 20

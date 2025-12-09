@@ -18,7 +18,7 @@ jobs:
     if: github.repository == 'microsoft/playwright'
     environment: allow-publishing-docker-to-acr
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: 20
