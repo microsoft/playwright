@@ -62,7 +62,6 @@ class TestServerConnectionUnderTest extends TestServerConnection {
     this.onTestFilesChanged(params => this.events.push(['testFilesChanged', params]));
     this.onStdio(params => this.events.push(['stdio', params]));
     this.onLoadTraceRequested(params => this.events.push(['loadTraceRequested', params]));
-    this.onTestPaused(params => this.events.push(['testPaused', params]));
     this.onReport(params => this.events.push(['report', params]));
   }
 }

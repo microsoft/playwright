@@ -126,7 +126,6 @@ export interface TestServerInterfaceEvents {
   onStdio: Event<{ type: 'stdout' | 'stderr', text?: string, buffer?: string }>;
   onTestFilesChanged: Event<{ testFiles: string[] }>;
   onLoadTraceRequested: Event<{ traceUrl: string }>;
-  onTestPaused: Event<{ errors: reporterTypes.TestError[] }>;
 }
 
 export interface TestServerInterfaceEventEmitters {
@@ -134,5 +133,4 @@ export interface TestServerInterfaceEventEmitters {
   dispatchEvent(event: 'stdio', params: { type: 'stdout' | 'stderr', text?: string, buffer?: string }): void;
   dispatchEvent(event: 'testFilesChanged', params: { testFiles: string[] }): void;
   dispatchEvent(event: 'loadTraceRequested', params: { traceUrl: string }): void;
-  dispatchEvent(event: 'testPaused', params: { errors: reporterTypes.TestError[] }): void;
 }
