@@ -156,7 +156,12 @@ it('should keep reduced motion and color emulation after reload', async ({ page,
   // Force CanonicalBrowsingContext replacement in Firefox.
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   await page.goto(server.EMPTY_PAGE);
 

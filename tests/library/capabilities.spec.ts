@@ -24,7 +24,12 @@ it('SharedArrayBuffer should work @smoke', async function({ contextFactory, http
   httpsServer.setRoute('/sharedarraybuffer', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
     res.setHeader('Cross-Origin-Embedder-Policy', 'require-corp');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   await page.goto(httpsServer.PREFIX + '/sharedarraybuffer');
   expect(await page.evaluate(() => typeof SharedArrayBuffer)).toBe('function');

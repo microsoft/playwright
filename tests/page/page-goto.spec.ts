@@ -119,7 +119,12 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
 it('should work with Cross-Origin-Opener-Policy and interception', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   const requests = new Set();
   const events = [];
@@ -155,7 +160,12 @@ it('should work with Cross-Origin-Opener-Policy after redirect', async ({ page, 
   server.setRedirect('/redirect', '/empty.html');
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   const requests = new Set();
   const events = [];

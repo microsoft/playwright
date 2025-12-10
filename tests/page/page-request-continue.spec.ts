@@ -299,7 +299,12 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
     serverRequests.push(req.url);
     serverHeaders ??= req.headers;
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
 
   const intercepted = [];
