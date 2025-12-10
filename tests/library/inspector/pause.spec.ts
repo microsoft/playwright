@@ -169,6 +169,25 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
+  it('should disable timeout on paused actions', async ({ page, recorderPageGetter }) => {
+    await page.setContent('<button>Submit</button>');
+    const scriptPromise = (async () => {
+      // @ts-ignore
+      await page.pause({ __testHookKeepTestTimeout: true });
+      await page.click('button', { timeout: 200 });
+    })();
+    const recorderPage = await recorderPageGetter();
+    const source = await recorderPage.textContent('.source-line-paused');
+    expect(source).toContain('page.pause({ __testHookKeepTestTimeout: true });');
+
+    await recorderPage.click('[title="Step over (F10)"]');
+    await recorderPage.waitForSelector('.source-line-paused :has-text("page.click")');
+    await page.waitForTimeout(500);
+
+    await recorderPage.click('[title="Resume (F8)"]');
+    await scriptPromise;
+  });
+
   it('should step with keyboard shortcut', async ({ page, recorderPageGetter }) => {
     await page.setContent('<button>Submit</button>');
     const scriptPromise = (async () => {

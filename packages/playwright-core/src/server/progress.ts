@@ -74,6 +74,8 @@ export class ProgressController {
     if (timeout) {
       const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
       timer = setTimeout(() => {
+        if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)
+          return;
         if (this._state === 'running') {
           (timeoutError as any)[kAbortErrorSymbol] = true;
           this._state = { error: timeoutError };
