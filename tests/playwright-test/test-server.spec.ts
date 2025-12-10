@@ -278,10 +278,18 @@ test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseAtEnd: true, locations: [] });
-  await expect.poll(() => testServerConnection.events.find(e => e[0] === 'testPaused')).toEqual(['testPaused', { errors: [] }]);
-  await testServerConnection.stopTests({});
-  expect(await promise).toEqual({ status: 'interrupted' });
+  const reporter: ReporterV2 = {
+    version: () => 'v2',
+    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
+      expect(result.errors).toEqual([]);
+      await testServerConnection.stopTests();
+      return {};
+    },
+  };
+  const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
+  testServerConnection.onReport(report => receiver.dispatch(report));
+
+  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'interrupted' });
 });
 
 test('pauseOnError', async ({ startTestServer, writeFiles }) => {
@@ -296,24 +304,28 @@ test('pauseOnError', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const promise = testServerConnection.runTests({ pauseOnError: true, locations: [] });
-  await expect.poll(() => testServerConnection.events.some(e => e[0] === 'testPaused')).toBeTruthy();
-  expect(testServerConnection.events.find(e => e[0] === 'testPaused')[1]).toEqual({
-    errors: [
-      expect.objectContaining({
-        message: expect.stringContaining('toBe'),
-        stack: expect.stringContaining('a.test.ts:4:19'),
-        location: {
-          file: expect.stringContaining('a.test.ts'),
-          line: 4,
-          column: 19,
-        },
-      }),
-    ]
-  });
+  const reporter: ReporterV2 = {
+    version: () => 'v2',
+    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
+      expect(result.errors).toEqual([
+        expect.objectContaining({
+          message: expect.stringContaining('toBe'),
+          stack: expect.stringContaining('a.test.ts:4:19'),
+          location: {
+            file: expect.stringContaining('a.test.ts'),
+            line: 4,
+            column: 19,
+          },
+        }),
+      ]);
+      await testServerConnection.stopTests();
+      return {};
+    },
+  };
+  const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
+  testServerConnection.onReport(report => receiver.dispatch(report));
 
-  await testServerConnection.stopTests({});
-  expect(await promise).toEqual({ status: 'interrupted' });
+  expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'interrupted' });
 });
 
 test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
@@ -327,8 +339,19 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
+  let paused = false;
+  const reporter: ReporterV2 = {
+    version: () => 'v2',
+    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
+      paused = true;
+      return {};
+    },
+  };
+  const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
+  testServerConnection.onReport(report => receiver.dispatch(report));
+
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
-  expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
+  expect(paused).toBe(false);
 });
 
 test('onTestPaused', async ({ startTestServer, writeFiles }) => {
