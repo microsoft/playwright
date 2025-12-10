@@ -50,7 +50,7 @@ const runCode = defineTabTool({
           const result = await (async () => {
             ${params.code};
           })();
-          __end__.resolve(result === undefined ? undefined : String(result));
+          __end__.resolve(JSON.stringify(result));
         } catch (e) {
           __end__.reject(e);
         }

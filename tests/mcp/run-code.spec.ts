@@ -84,7 +84,7 @@ test('browser_run_code return value', async ({ client, server }) => {
     arguments: { url: server.PREFIX },
   });
 
-  const code = 'await page.getByRole("button", { name: "Submit" }).click(); return "Hello, world!"; await page.getByRole("banner").click();';
+  const code = 'await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click();';
   expect(await client.callTool({
     name: 'browser_run_code',
     arguments: {
@@ -93,6 +93,6 @@ test('browser_run_code return value', async ({ client, server }) => {
   })).toHaveResponse({
     code,
     consoleMessages: expect.stringContaining('- [LOG] Submit'),
-    result: 'Hello, world!',
+    result: '{"message":"Hello, world!"}',
   });
 });
