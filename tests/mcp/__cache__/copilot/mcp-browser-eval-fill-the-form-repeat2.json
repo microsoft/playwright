@@ -1,42 +1,27 @@
 {
-  "3ead929e37fa1cb83a37e09ee827c20293652543": {
+  "9618bcb461bf695d7a9f9dff483361df53be8815": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "I'll help you navigate to the form, fill it out with the details provided, and report back the price and delivery information."
+          "text": "I'll help you navigate to the form, fill it out with the specified items and details, and report back the results."
         }
       ]
     },
     "usage": {
-      "input": 4471,
-      "output": 115
+      "input": 4498,
+      "output": 118
     }
   },
-  "f2ac9e2c1fb83e54daedc3a1607ee770dd6cd05c": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I'll navigate to the page and complete the form as requested."
-        }
-      ]
-    },
-    "usage": {
-      "input": 4528,
-      "output": 107
-    }
-  },
-  "82c674fde5a1942a704bedf38590a35c19551537": {
+  "651ad41a348d6db6488f4746b0b4905094330b85": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
           "text": "Navigate to the form page",
-          "copilotToolCallId": "toolu_vrtx_01PUGZnaWbXrBgkeYjhWXPui"
+          "copilotToolCallId": "toolu_vrtx_015A4Qxa4UTA1YLM31KPKBk5"
         },
         {
           "type": "tool_call",
@@ -44,23 +29,23 @@
           "arguments": {
             "url": "http://localhost:<PORT>/evals/fill-form.html"
           },
-          "id": "toolu_vrtx_01PUGZnaWbXrBgkeYjhWXPui"
+          "id": "toolu_vrtx_015A4Qxa4UTA1YLM31KPKBk5"
         }
       ]
     },
     "usage": {
-      "input": 4572,
+      "input": 4554,
       "output": 88
     }
   },
-  "d1b4efddf9cbdf8b21ebca18d5a73515bbc1ccd1": {
+  "c03b93553be7a4f582a9481cd7ceef812cc3f1a2": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Select Table as the product type",
-          "copilotToolCallId": "toolu_vrtx_01CjJV9pdnAYmTgMmw2xqCik"
+          "text": "Select Table as the first product",
+          "copilotToolCallId": "toolu_vrtx_01URHnaVsJXwPYiCcwLfLqLP"
         },
         {
           "type": "tool_call",
@@ -72,23 +57,23 @@
               "Table"
             ]
           },
-          "id": "toolu_vrtx_01CjJV9pdnAYmTgMmw2xqCik"
+          "id": "toolu_vrtx_01URHnaVsJXwPYiCcwLfLqLP"
         }
       ]
     },
     "usage": {
-      "input": 5281,
+      "input": 5263,
       "output": 116
     }
   },
-  "1340b24ab7000c3ecfe415e169728e151270b626": {
+  "45c9e0f04d5ec6adea27cb529f321db6b7f3a217": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Select Blue as the color",
-          "copilotToolCallId": "toolu_vrtx_01HdgVvtbHAEew3V3SAhSE8e"
+          "text": "Select Blue as the color for the table",
+          "copilotToolCallId": "toolu_vrtx_01MUvkws5Pqa1NKuidpY27Js"
         },
         {
           "type": "tool_call",
@@ -100,84 +85,179 @@
               "Blue"
             ]
           },
-          "id": "toolu_vrtx_01HdgVvtbHAEew3V3SAhSE8e"
+          "id": "toolu_vrtx_01MUvkws5Pqa1NKuidpY27Js"
         }
       ]
     },
     "usage": {
-      "input": 5544,
-      "output": 114
+      "input": 5526,
+      "output": 117
     }
   },
-  "246c11ed0315d3cf3f8362a31b75f996e0b2c75b": {
+  "f01b96c033547e823a688aaa59e57e45d581244f": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Fill in the customer details for the first order",
-          "copilotToolCallId": "toolu_vrtx_013EpJmdkVhMZ4vVp7rQcuj9"
+          "text": "Fill in the Full Name field",
+          "copilotToolCallId": "toolu_vrtx_01VzYhHy84gaE8mvmUgmPsoa"
         },
         {
           "type": "tool_call",
-          "name": "browser_fill_form",
+          "name": "browser_type",
           "arguments": {
-            "fields": [
-              {
-                "name": "Full Name",
-                "type": "textbox",
-                "ref": "e13",
-                "value": "John Doe"
-              },
-              {
-                "name": "Email Address",
-                "type": "textbox",
-                "ref": "e16",
-                "value": "john@doe.me"
-              },
-              {
-                "name": "Street Address",
-                "type": "textbox",
-                "ref": "e19",
-                "value": "123 Main St"
-              },
-              {
-                "name": "City",
-                "type": "textbox",
-                "ref": "e22",
-                "value": "Anytown"
-              },
-              {
-                "name": "State/Province",
-                "type": "textbox",
-                "ref": "e25",
-                "value": "XYZ state"
-              },
-              {
-                "name": "ZIP/Postal Code",
-                "type": "textbox",
-                "ref": "e28",
-                "value": "12345"
-              }
-            ]
+            "element": "Full Name textbox",
+            "ref": "e13",
+            "text": "John Doe"
           },
-          "id": "toolu_vrtx_013EpJmdkVhMZ4vVp7rQcuj9"
+          "id": "toolu_vrtx_01VzYhHy84gaE8mvmUgmPsoa"
         }
       ]
     },
     "usage": {
-      "input": 5807,
-      "output": 274
+      "input": 5792,
+      "output": 115
     }
   },
-  "90fd25992c1a647531b834bb4c37dd1aa507a875": {
+  "6de46f95cbe9459b6af5f56cbab64e6a140afa14": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Submit the first order for the blue table",
-          "copilotToolCallId": "toolu_vrtx_019fyjP8YWhpbkWqCuWEaEEz"
+          "text": "Fill in the Email Address field",
+          "copilotToolCallId": "toolu_vrtx_019meT2mNudZyQwmT7fnCrsA"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "Email Address textbox",
+            "ref": "e16",
+            "text": "john@doe.me"
+          },
+          "id": "toolu_vrtx_019meT2mNudZyQwmT7fnCrsA"
+        }
+      ]
+    },
+    "usage": {
+      "input": 5953,
+      "output": 117
+    }
+  },
+  "e25f3a5f2011bdddcb17e6797577346ccef2899f": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the Street Address field",
+          "copilotToolCallId": "toolu_vrtx_01LvRRG2trw2FbUE3AZSJk7Z"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "Street Address textbox",
+            "ref": "e19",
+            "text": "123 Main St"
+          },
+          "id": "toolu_vrtx_01LvRRG2trw2FbUE3AZSJk7Z"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6118,
+      "output": 116
+    }
+  },
+  "e939604b2f4bd1eafeb5be883ca4811d8af3c5f6": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the City field",
+          "copilotToolCallId": "toolu_vrtx_01YcSZZtz11FVhUB5ZuCiVHT"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "City textbox",
+            "ref": "e22",
+            "text": "Anytown"
+          },
+          "id": "toolu_vrtx_01YcSZZtz11FVhUB5ZuCiVHT"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6281,
+      "output": 113
+    }
+  },
+  "b7ebb78e78e4c0e4cebfd3802160e994dff80374": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the State/Province field",
+          "copilotToolCallId": "toolu_vrtx_01KR4DM6jFZFX1ze7kMisxa6"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "State/Province textbox",
+            "ref": "e25",
+            "text": "XYZ"
+          },
+          "id": "toolu_vrtx_01KR4DM6jFZFX1ze7kMisxa6"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6439,
+      "output": 117
+    }
+  },
+  "a808e5354acfb3617a6a9723dfe95478e2652e63": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the ZIP/Postal Code field",
+          "copilotToolCallId": "toolu_vrtx_01PtJxTGzWz5ogj7d1nm2aKS"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "ZIP/Postal Code textbox",
+            "ref": "e28",
+            "text": "12345"
+          },
+          "id": "toolu_vrtx_01PtJxTGzWz5ogj7d1nm2aKS"
+        }
+      ]
+    },
+    "usage": {
+      "input": 6603,
+      "output": 120
+    }
+  },
+  "d9b4832077829284be3acbe935349b329c47518c": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Submit the order for the blue table",
+          "copilotToolCallId": "toolu_vrtx_01FDvdEQK9V9deeRt3WJLAok"
         },
         {
           "type": "tool_call",
@@ -186,23 +266,23 @@
             "element": "Order button",
             "ref": "e29"
           },
-          "id": "toolu_vrtx_019fyjP8YWhpbkWqCuWEaEEz"
+          "id": "toolu_vrtx_01FDvdEQK9V9deeRt3WJLAok"
         }
       ]
     },
     "usage": {
-      "input": 6260,
-      "output": 96
+      "input": 6771,
+      "output": 95
     }
   },
-  "95b5282664361cd6416210e38366b8aecce3022f": {
+  "2cc8d0e79ffa0eaca9792d2b1e292688effcca6b": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Accept the confirmation dialog for the blue table order",
-          "copilotToolCallId": "toolu_vrtx_016sk3xCVtw6856vxqGGBdkB"
+          "text": "Accept the order confirmation for blue table",
+          "copilotToolCallId": "toolu_vrtx_014eUSnWVV85a5yhgtkhx7uN"
         },
         {
           "type": "tool_call",
@@ -210,23 +290,23 @@
           "arguments": {
             "accept": true
           },
-          "id": "toolu_vrtx_016sk3xCVtw6856vxqGGBdkB"
+          "id": "toolu_vrtx_014eUSnWVV85a5yhgtkhx7uN"
         }
       ]
     },
     "usage": {
-      "input": 6431,
-      "output": 80
+      "input": 6941,
+      "output": 78
     }
   },
-  "db78696f00789b6fedb3d4f75b7acae7d43514ec": {
+  "92e5599d7913f24dde5c2eedafede877dfc76594": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Click the button to place another order for the green desk",
-          "copilotToolCallId": "toolu_vrtx_01KmgEbnjXQaUcxsqucKXmKF"
+          "text": "Click Place Another Order button to order the green desk",
+          "copilotToolCallId": "toolu_vrtx_01VWmtWDYCiEQ51LqFSqRVyt"
         },
         {
           "type": "tool_call",
@@ -235,23 +315,23 @@
             "element": "Place Another Order button",
             "ref": "e58"
           },
-          "id": "toolu_vrtx_01KmgEbnjXQaUcxsqucKXmKF"
+          "id": "toolu_vrtx_01VWmtWDYCiEQ51LqFSqRVyt"
         }
       ]
     },
     "usage": {
-      "input": 7321,
-      "output": 101
+      "input": 7826,
+      "output": 100
     }
   },
-  "66d11ebd5aa97fcbf9002ac6cf7e25453bcca8f7": {
+  "da4ec3f6c3c748eff025f787e4264ad01fcfb0f5": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Select Desk as the product type for the second order",
-          "copilotToolCallId": "toolu_vrtx_01Qwp1HZ551btMZqVfuhmg7K"
+          "text": "Select Desk as the second product",
+          "copilotToolCallId": "toolu_vrtx_018KwJC7fJJSrPKtknozFFFr"
         },
         {
           "type": "tool_call",
@@ -263,23 +343,23 @@
               "Desk"
             ]
           },
-          "id": "toolu_vrtx_01Qwp1HZ551btMZqVfuhmg7K"
+          "id": "toolu_vrtx_018KwJC7fJJSrPKtknozFFFr"
         }
       ]
     },
     "usage": {
-      "input": 8042,
-      "output": 122
+      "input": 8546,
+      "output": 118
     }
   },
-  "b9ea532ba3932051ca53f8995e4a84673ac15f15": {
+  "6ee97d09a08742750496ab8b193d715eca619172": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
           "text": "Select Green as the color for the desk",
-          "copilotToolCallId": "toolu_vrtx_01UcgZrsRtnDRtamzcXiyhEz"
+          "copilotToolCallId": "toolu_vrtx_01PAWTp8xxLpWDcekkdVD9bF"
         },
         {
           "type": "tool_call",
@@ -291,84 +371,179 @@
               "Green"
             ]
           },
-          "id": "toolu_vrtx_01UcgZrsRtnDRtamzcXiyhEz"
+          "id": "toolu_vrtx_01PAWTp8xxLpWDcekkdVD9bF"
         }
       ]
     },
     "usage": {
-      "input": 8312,
+      "input": 8812,
       "output": 117
     }
   },
-  "f062f1459e30461f856bac9eaf6c9ba4c0c83445": {
+  "b6dfb1610253206d76e22c6cb14b79e1a8868dc5": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Fill in the customer details for the second order",
-          "copilotToolCallId": "toolu_vrtx_01S4ko4cV4txtLXSwhz12t1d"
+          "text": "Fill in the Full Name field for second order",
+          "copilotToolCallId": "toolu_vrtx_018Usc5oevz9wb9ZKpftC4sH"
         },
         {
           "type": "tool_call",
-          "name": "browser_fill_form",
+          "name": "browser_type",
           "arguments": {
-            "fields": [
-              {
-                "name": "Full Name",
-                "ref": "e13",
-                "type": "textbox",
-                "value": "John Doe"
-              },
-              {
-                "name": "Email Address",
-                "ref": "e16",
-                "type": "textbox",
-                "value": "john@doe.me"
-              },
-              {
-                "name": "Street Address",
-                "ref": "e19",
-                "type": "textbox",
-                "value": "123 Main St"
-              },
-              {
-                "name": "City",
-                "ref": "e22",
-                "type": "textbox",
-                "value": "Anytown"
-              },
-              {
-                "name": "State/Province",
-                "ref": "e25",
-                "type": "textbox",
-                "value": "XYZ state"
-              },
-              {
-                "name": "ZIP/Postal Code",
-                "ref": "e28",
-                "type": "textbox",
-                "value": "12345"
-              }
-            ]
+            "element": "Full Name textbox",
+            "ref": "e13",
+            "text": "John Doe"
           },
-          "id": "toolu_vrtx_01S4ko4cV4txtLXSwhz12t1d"
+          "id": "toolu_vrtx_018Usc5oevz9wb9ZKpftC4sH"
         }
       ]
     },
     "usage": {
-      "input": 8578,
-      "output": 266
+      "input": 9078,
+      "output": 118
     }
   },
-  "fdcd0330d001ae7fd2401858d3ece675b149b65d": {
+  "bb68d65b11d6f1744be333a30b4b2a2910559d8b": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Submit the second order for the green desk",
-          "copilotToolCallId": "toolu_vrtx_015dGJ2kCyGMmwB7P6e3vRcE"
+          "text": "Fill in the Email Address field for second order",
+          "copilotToolCallId": "toolu_vrtx_0157WoyBbU9kXomtZMpLvnBd"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "Email Address textbox",
+            "ref": "e16",
+            "text": "john@doe.me"
+          },
+          "id": "toolu_vrtx_0157WoyBbU9kXomtZMpLvnBd"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9242,
+      "output": 120
+    }
+  },
+  "a38c3850dcde9ef2dafcc13e03d17212dbd2de9d": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the Street Address field for second order",
+          "copilotToolCallId": "toolu_vrtx_01F9YjYR5DXdVYf8bebw1fdG"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "Street Address textbox",
+            "ref": "e19",
+            "text": "123 Main St"
+          },
+          "id": "toolu_vrtx_01F9YjYR5DXdVYf8bebw1fdG"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9410,
+      "output": 119
+    }
+  },
+  "59648493dce87d10e25e5d50abebac4e2392ecc1": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the City field for second order",
+          "copilotToolCallId": "toolu_vrtx_01BETdPBJWrtPMurfg49Vjoj"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "City textbox",
+            "ref": "e22",
+            "text": "Anytown"
+          },
+          "id": "toolu_vrtx_01BETdPBJWrtPMurfg49Vjoj"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9576,
+      "output": 116
+    }
+  },
+  "a87a7f06ffdf0d79613739ac83936a87142c6d7f": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the State/Province field for second order",
+          "copilotToolCallId": "toolu_vrtx_01KXjCLqC74fLfD56Yb2rb3T"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "State/Province textbox",
+            "ref": "e25",
+            "text": "XYZ"
+          },
+          "id": "toolu_vrtx_01KXjCLqC74fLfD56Yb2rb3T"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9737,
+      "output": 120
+    }
+  },
+  "0edb63f376b23ae85e2319c8dcfd8167be315357": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Fill in the ZIP/Postal Code field for second order",
+          "copilotToolCallId": "toolu_vrtx_01QdpV2UD1ynJBEz3t2vEBZY"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_type",
+          "arguments": {
+            "element": "ZIP/Postal Code textbox",
+            "ref": "e28",
+            "text": "12345"
+          },
+          "id": "toolu_vrtx_01QdpV2UD1ynJBEz3t2vEBZY"
+        }
+      ]
+    },
+    "usage": {
+      "input": 9904,
+      "output": 123
+    }
+  },
+  "4a49bf78bda39f22b05bb0dabdb778eab42f5d0e": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "Submit the order for the green desk",
+          "copilotToolCallId": "toolu_vrtx_018WKajMd3gK6LsoHkMSqqF4"
         },
         {
           "type": "tool_call",
@@ -377,23 +552,23 @@
             "element": "Order button",
             "ref": "e29"
           },
-          "id": "toolu_vrtx_015dGJ2kCyGMmwB7P6e3vRcE"
+          "id": "toolu_vrtx_018WKajMd3gK6LsoHkMSqqF4"
         }
       ]
     },
     "usage": {
-      "input": 9031,
-      "output": 96
+      "input": 10075,
+      "output": 95
     }
   },
-  "09e90872eebfad23b65c6b8baf6a21f4d3e3be13": {
+  "9a1806f90b31427e91b08c182a1f530b01687395": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Accept the confirmation dialog for the green desk order",
-          "copilotToolCallId": "toolu_vrtx_017Aese7AEKa1XYZoZjeTw6z"
+          "text": "Accept the order confirmation for green desk",
+          "copilotToolCallId": "toolu_vrtx_01958UH1ER5ox2DiKfqF6gSp"
         },
         {
           "type": "tool_call",
@@ -401,23 +576,23 @@
           "arguments": {
             "accept": true
           },
-          "id": "toolu_vrtx_017Aese7AEKa1XYZoZjeTw6z"
+          "id": "toolu_vrtx_01958UH1ER5ox2DiKfqF6gSp"
         }
       ]
     },
     "usage": {
-      "input": 9202,
-      "output": 80
+      "input": 10245,
+      "output": 78
     }
   },
-  "28d9510654099e5564df19869f8609adff0bfaae": {
+  "70d0aca5ce593777cf52a420da7aece1173004a1": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "Report the total price and maximum delivery time for both orders. Blue table: $353.98, 3 days. Green desk: $299.98, 3 days. Total: $653.96, Max delivery: 3 days.",
-          "copilotToolCallId": "toolu_vrtx_01Umx8ecJT1VFHfNNJx6vcX5"
+          "text": "Report the total price for both items ($353.98 + $299.98 = $653.96) and maximum estimated delivery (3 days for both)",
+          "copilotToolCallId": "toolu_vrtx_01R97Mi28WVqRvEH25ky3aqa"
         },
         {
           "type": "tool_call",
@@ -426,13 +601,13 @@
             "price": 653.96,
             "deliveryDays": 3
           },
-          "id": "toolu_vrtx_01Umx8ecJT1VFHfNNJx6vcX5"
+          "id": "toolu_vrtx_01R97Mi28WVqRvEH25ky3aqa"
         }
       ]
     },
     "usage": {
-      "input": 10093,
-      "output": 143
+      "input": 11131,
+      "output": 125
     }
   }
 }

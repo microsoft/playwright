@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool, defineTool } from './tool';
 import * as javascript from '../codegen';
@@ -24,13 +26,21 @@ const snapshot = defineTool({
     name: 'browser_snapshot',
     title: 'Page snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
-    inputSchema: z.object({}),
+    inputSchema: z.object({
+      filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
+    }),
     type: 'readOnly',
   },
 
   handle: async (context, params, response) => {
     await context.ensureTab();
     response.setIncludeFullSnapshot();
+    if (params.filename) {
+      const renderedResponse = response.render();
+      const fileName = await response.addFile(params.filename, { origin: 'llm', reason: 'Saved snapshot' });
+      await fs.promises.writeFile(fileName, renderedResponse.asText());
+      response.setIncludeMetaOnly();
+    }
   },
 });
 
