@@ -83,7 +83,12 @@ it('should work with cross-process that fails before committing', async ({ page,
 it('should work with Cross-Origin-Opener-Policy', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end();
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   const requests = new Set();
   const events = [];

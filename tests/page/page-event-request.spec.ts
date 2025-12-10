@@ -182,13 +182,18 @@ it('should report navigation requests and responses handled by service worker wi
 it('should return response body when Cross-Origin-Opener-Policy is set', async ({ page, server, browserName }) => {
   server.setRoute('/empty.html', (req, res) => {
     res.setHeader('Cross-Origin-Opener-Policy', 'same-origin');
-    res.end('Hello there!');
+    // Note: without 'onload', Firefox sometimes does not fire the load event
+    // over the protocol. The reason is unclear.
+    res.end(`
+      <div>Hello there!</div>
+      <script>window.onload = () => console.log('onload')</script>
+    `);
   });
   const response = await page.goto(server.EMPTY_PAGE);
   expect(page.url()).toBe(server.EMPTY_PAGE);
   await response.finished();
   expect(response.request().failure()).toBeNull();
-  expect(await response.text()).toBe('Hello there!');
+  expect(await response.text()).toContain('Hello there!');
 });
 
 it('should fire requestfailed when intercepting race', async ({ page, server, browserName }) => {

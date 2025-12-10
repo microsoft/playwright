@@ -241,18 +241,19 @@ it('window.GestureEvent in WebKit', async ({ page, server, browserName }) => {
   expect(type).toBe(browserName === 'webkit' ? 'function' : 'undefined');
 });
 
-it('requestFullscreen', async ({ page, server }) => {
+it('requestFullscreen', async ({ page, server, browserName, headless }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22832' });
+  it.fixme(browserName === 'firefox' && !headless, 'Error: Request for fullscreen was denied because requesting element is not in the currently focused tab');
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
-    void document.documentElement.requestFullscreen();
+    void document.documentElement.requestFullscreen().then(() => console.log('success')).catch(e => console.log(e));
     return result;
   });
   expect(await page.evaluate(() => document.fullscreenElement === document.documentElement)).toBeTruthy();
   await page.evaluate(() => {
     const result = new Promise(resolve => document.addEventListener('fullscreenchange', resolve));
-    void document.exitFullscreen();
+    void document.exitFullscreen().then(() => console.log('success')).catch(e => console.log(e));
     return result;
   });
   expect(await page.evaluate(() => !!document.fullscreenElement)).toBeFalsy();
