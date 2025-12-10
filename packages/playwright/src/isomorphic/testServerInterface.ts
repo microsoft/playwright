@@ -15,7 +15,7 @@
  */
 
 import type { Event } from './events';
-import type { JsonEvent, JsonResponse } from './teleReceiver';
+import type { JsonEvent } from './teleReceiver';
 import type * as reporterTypes from '../../types/testReporter';
 
 // -- Reuse boundary -- Everything below this line is reused in the vscode extension.
@@ -118,7 +118,7 @@ export interface TestServerInterface {
 
   closeGracefully(params: {}): Promise<void>;
 
-  sendToReporter(params: { message: JsonResponse }): void;
+  sendToReporter(params: { message: JsonEvent }): void;
 }
 
 export interface TestServerInterfaceEvents {

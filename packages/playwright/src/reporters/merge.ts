@@ -106,7 +106,7 @@ function parseCommonEvents(reportJsonl: Buffer): JsonEvent[] {
       .map(line => line.toString('utf8'))
       .filter(line => commonEventRegex.test(line)) // quick filter
       .map(line => JSON.parse(line) as JsonEvent)
-      .filter(event => commonEvents.has(event.method));
+      .filter(event => commonEvents.has(event.method!));
 }
 
 function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
@@ -114,7 +114,7 @@ function parseTestEvents(reportJsonl: Buffer): JsonEvent[] {
       .map(line => line.toString('utf8'))
       .filter(line => line.length)
       .map(line => JSON.parse(line) as JsonEvent)
-      .filter(event => !commonEvents.has(event.method));
+      .filter(event => !commonEvents.has(event.method!));
 }
 
 function splitBufferLines(buffer: Buffer) {
