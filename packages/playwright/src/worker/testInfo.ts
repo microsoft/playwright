@@ -598,11 +598,6 @@ export class TestInfoImpl implements TestInfo {
         relativeOutputPath = addSuffixToFilePath(relativeOutputPath, `-${index - 1}`);
     }
 
-    const absoluteSnapshotPath = this._applyPathTemplate(kind, subPath, ext);
-    return { absoluteSnapshotPath, relativeOutputPath };
-  }
-
-  private _applyPathTemplate(kind: 'snapshot' | 'screenshot' | 'aria', relativePath: string, ext: string) {
     const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';
     let template: string;
     if (kind === 'screenshot') {
@@ -614,8 +609,12 @@ export class TestInfoImpl implements TestInfo {
       template = this._projectInternal.snapshotPathTemplate || legacyTemplate;
     }
 
-    const dir = path.dirname(relativePath);
-    const name = path.basename(relativePath, ext);
+    const nameArgument = path.join(path.dirname(subPath), path.basename(subPath, ext));
+    const absoluteSnapshotPath = this._applyPathTemplate(template, nameArgument, ext);
+    return { absoluteSnapshotPath, relativeOutputPath };
+  }
+
+  _applyPathTemplate(template: string, nameArgument: string, ext: string) {
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
     const projectNamePathSegment = sanitizeForFilePath(this.project.name);
@@ -630,7 +629,7 @@ export class TestInfoImpl implements TestInfo {
         .replace(/\{(.)?testName\}/g, '$1' + this._fsSanitizedTestName())
         .replace(/\{(.)?testFileName\}/g, '$1' + parsedRelativeTestFilePath.base)
         .replace(/\{(.)?testFilePath\}/g, '$1' + relativeTestFilePath)
-        .replace(/\{(.)?arg\}/g, '$1' + path.join(dir, name))
+        .replace(/\{(.)?arg\}/g, '$1' + nameArgument)
         .replace(/\{(.)?ext\}/g, ext ? '$1' + ext : '');
 
     return path.normalize(path.resolve(this._configInternal.configDir, snapshotPath));
@@ -660,7 +659,8 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  async _cloneStorage(storageFile: string): Promise<string | undefined> {
+  async _cloneStorage(cacheFileTemplate: string): Promise<string | undefined> {
+    const storageFile = this._applyPathTemplate(cacheFileTemplate, 'cache', '.json');
     return await this._callbacks.onCloneStorage?.({ storageFile });
   }
 
