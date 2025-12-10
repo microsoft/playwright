@@ -48,7 +48,7 @@ export type FetchOptions = {
   maxRetries?: number,
 };
 
-type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
+export type NewContextOptions = Omit<channels.PlaywrightNewRequestOptions, 'extraHTTPHeaders' | 'clientCertificates' | 'storageState' | 'tracesDir'> & {
   extraHTTPHeaders?: Headers,
   storageState?: string | SetStorageState,
   clientCertificates?: ClientCertificate[];
@@ -65,10 +65,8 @@ export class APIRequest implements api.APIRequest {
   }
 
   async newContext(options: NewContextOptions & TimeoutOptions = {}): Promise<APIRequestContext> {
-    options = {
-      ...this._playwright._defaultContextOptions,
-      ...options,
-    };
+    options = { ...options };
+    await this._playwright._instrumentation.runBeforeCreateRequestContext(options);
     const storageState = typeof options.storageState === 'string' ?
       JSON.parse(await this._playwright._platform.fs().promises.readFile(options.storageState, 'utf8')) :
       options.storageState;
