@@ -59,6 +59,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     const promise = this._callbacks.get(message.id);
     if (!promise)
       return;
+    this._callbacks.delete(message.id);
     if (message.result)
       promise.resolve(message.result);
     else
