@@ -35,12 +35,16 @@ function defineTool<Input extends zod.Schema>(tool: ToolDefinition<Input>): Tool
   return tool;
 }
 
+const baseSchema = z.object({
+  thatShouldBeIt: z.boolean().describe('Indicates that this tool call is sufficient to complete the task. If false, the task will continue with the next tool call'),
+});
+
 const snapshot = defineTool({
   schema: {
     name: 'browser_snapshot',
     title: 'Page snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
-    inputSchema: z.object({}),
+    inputSchema: baseSchema,
   },
 
   handle: async (context, params) => {
@@ -48,7 +52,7 @@ const snapshot = defineTool({
   },
 });
 
-const elementSchema = z.object({
+const elementSchema = baseSchema.extend({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
@@ -86,7 +90,7 @@ const drag = defineTool({
     name: 'browser_drag',
     title: 'Drag mouse',
     description: 'Perform drag and drop between two elements',
-    inputSchema: z.object({
+    inputSchema: baseSchema.extend({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
       startRef: z.string().describe('Exact source element reference from the page snapshot'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
@@ -211,7 +215,7 @@ const fillForm = defineTool({
     name: 'browser_fill_form',
     title: 'Fill form',
     description: 'Fill multiple form fields',
-    inputSchema: z.object({
+    inputSchema: baseSchema.extend({
       fields: z.array(z.object({
         name: z.string().describe('Human-readable field name'),
         type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),

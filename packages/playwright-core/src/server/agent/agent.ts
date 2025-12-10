@@ -18,7 +18,7 @@ import fs from 'fs';
 
 import { toolsForLoop } from './backend';
 import { debug } from '../../utilsBundle';
-import { Loop, z, zodToJsonSchema } from '../../mcpBundle';
+import { Loop } from '../../mcpBundle';
 import { runAction } from './actionRunner';
 import { Context } from './context';
 
@@ -34,9 +34,7 @@ export async function pagePerform(progress: Progress, page: Page, options: chann
   if (await cachedPerform(context, options))
     return;
 
-  await perform(context, options.task, zodToJsonSchema(z.object({
-    error: z.string().optional().describe('An error message if the task could not be completed successfully'),
-  })) as loopTypes.Schema, options);
+  await perform(context, options.task, undefined, options);
   await updateCache(context, options);
 }
 
@@ -51,7 +49,7 @@ ${options.query}`;
   return await perform(context, task, options.schema, options);
 }
 
-async function perform(context: Context, userTask: string, resultSchema: loopTypes.Schema, options: { maxTurns?: number } = {}): Promise<any> {
+async function perform(context: Context, userTask: string, resultSchema: loopTypes.Schema | undefined, options: { maxTurns?: number } = {}): Promise<any> {
   const { progress, page } = context;
   const browserContext = page.browserContext;
   if (!browserContext._options.agent)
@@ -66,6 +64,13 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
     debug,
     callTool,
     tools,
+    beforeTurn: params => {
+      const lastReply = params.conversation.messages.findLast(m => m.role === 'assistant');
+      const toolCall = lastReply?.content.find(c => c.type === 'tool_call');
+      if (!resultSchema && toolCall && toolCall.arguments.thatShouldBeIt)
+        return 'break';
+      return 'continue';
+    },
     ...options
   });
 
@@ -75,9 +80,8 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
 ${full}
 `;
 
-  return await loop.run(task, {
-    resultSchema
-  });
+  const { result } = await loop.run(task, { resultSchema });
+  return result;
 }
 
 type CachedActions = Record<string, {
@@ -121,8 +125,7 @@ async function updateCache(context: Context, options: channels.PagePerformParams
 async function cachedActions(cacheFile: string): Promise<CachedActions> {
   let cache = allCaches.get(cacheFile);
   if (!cache) {
-    const text = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
-    cache = JSON.parse(text) as CachedActions;
+    cache = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({})) as CachedActions;
     allCaches.set(cacheFile, cache);
   }
   return cache;
