@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { assert, createGuid, eventsHelper, mkdirIfNeededSync, RegisteredListener } from '../utils';
+import { assert, createGuid, eventsHelper, RegisteredListener } from '../utils';
 import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
@@ -25,7 +25,7 @@ import type * as types from './types';
 
 export class Screencast {
   private _page: Page;
-  private _videoRecorderPromise: Promise<VideoRecorder|Error> | null = null;
+  private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
   private _screencastClients = new Set<unknown>();
 
@@ -68,12 +68,11 @@ export class Screencast {
       ...recordVideo.size!,
       outputFile,
     };
-    mkdirIfNeededSync(path.join(recordVideo.dir, 'dummy'));
     // Note: it is important to start video recorder before sending Screencast.startScreencast,
     // and it is equally important to send Screencast.startScreencast before sending Target.resume.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
-    this._videoRecorderPromise = VideoRecorder.launch(ffmpegPath, videoOptions).catch(e => e);
-    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: types.ScreencastFrame) => this._onScreencastFrame(frame));
+    this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
+    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
     this._page.waitForInitializedOrError().then(p => {
       if (p instanceof Error)
         this.stopVideoRecording().catch(() => {});
@@ -81,18 +80,12 @@ export class Screencast {
     return videoOptions;
   }
 
-  async waitForVideoRecorderInitialized(): Promise<void> {
-    const result = await this._videoRecorderPromise;
-    if (result instanceof Error)
-      throw result;
-  }
-
   async startVideoRecording(options: types.VideoOptions) {
     const videoId = this._videoId;
     assert(videoId);
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
     const gotFirstFrame = new Promise(f => this._page.once(Page.Events.ScreencastFrame, f));
-    await this._startScreencast(this._videoRecorderPromise, {
+    await this._startScreencast(this._videoRecorder, {
       quality: 90,
       width: options.width,
       height: options.height,
@@ -111,12 +104,10 @@ export class Screencast {
     this._frameListener = null;
     const videoId = this._videoId;
     this._videoId = null;
-    const recorderPromise = this._videoRecorderPromise!;
-    this._videoRecorderPromise = null;
-    await this._stopScreencast(recorderPromise);
-    const recorder = await recorderPromise;
-    if (recorder instanceof VideoRecorder)
-      await recorder.stop().catch(() => {});
+    const videoRecorder = this._videoRecorder!;
+    this._videoRecorder = null;
+    await this._stopScreencast(videoRecorder);
+    await videoRecorder.stop();
     // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._page.browserContext._browser._takeVideo(videoId);
@@ -145,12 +136,6 @@ export class Screencast {
     this._screencastClients.delete(client);
     if (!this._screencastClients.size)
       await this._page.delegate.stopScreencast();
-  }
-
-  private async _onScreencastFrame(frame: types.ScreencastFrame) {
-    const recorder = await this._videoRecorderPromise;
-    if (recorder instanceof VideoRecorder)
-      recorder.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000);
   }
 }
 

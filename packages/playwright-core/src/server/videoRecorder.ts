@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { assert, debugLogger, monotonicTime } from '../utils';
-import { Page } from './page';
+import { assert, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
 import { launchProcess } from './utils/processLauncher';
 
 import type * as types from './types';
@@ -33,21 +32,17 @@ export class VideoRecorder {
   private _frameQueue: Buffer[] = [];
   private _isStopped = false;
   private _ffmpegPath: string;
+  private _launchPromise: Promise<Error | null>;
 
-  static async launch(ffmpegPath: string, options: types.VideoOptions): Promise<VideoRecorder> {
+  constructor(ffmpegPath: string, options: types.VideoOptions) {
+    this._ffmpegPath = ffmpegPath;
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
-
-    const recorder = new VideoRecorder(ffmpegPath);
-    await recorder._launch(options);
-    return recorder;
-  }
-
-  private constructor(ffmpegPath: string) {
-    this._ffmpegPath = ffmpegPath;
+    this._launchPromise = this._launch(options).catch(e => e);
   }
 
   private async _launch(options: types.VideoOptions) {
+    await mkdirIfNeeded(options.outputFile);
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
     //   https://www.webmproject.org/docs/encoder-parameters/
@@ -117,6 +112,14 @@ export class VideoRecorder {
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
+    this._launchPromise.then(error => {
+      if (error)
+        return;
+      this._writeFrame(frame, timestamp);
+    });
+  }
+
+  private _writeFrame(frame: Buffer, timestamp: number) {
     assert(this._process);
     if (this._isStopped)
       return;
@@ -150,14 +153,22 @@ export class VideoRecorder {
   }
 
   async stop() {
+    // Only report the error on stop. This allows to make the constructor synchronous.
+    const error = await this._launchPromise;
+    if (error)
+      throw error;
     if (this._isStopped || !this._lastFrame)
       return;
     // Pad with at least 1s of the last frame in the end for convenience.
     // This also ensures non-empty videos with 1 frame.
     const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    this.writeFrame(Buffer.from([]), this._lastFrame.timestamp + addTime);
+    this._writeFrame(Buffer.from([]), this._lastFrame.timestamp + addTime);
     this._isStopped = true;
-    await this._lastWritePromise;
-    await this._gracefullyClose!();
+    try {
+      await this._lastWritePromise;
+      await this._gracefullyClose!();
+    } catch (e) {
+      debugLogger.log('error', `ffmpeg failed to stop: ${String(e)}`);
+    }
   }
 }

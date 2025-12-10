@@ -29,14 +29,6 @@ export async function mkdirIfNeeded(filePath: string) {
   await fs.promises.mkdir(path.dirname(filePath), { recursive: true }).catch(() => {});
 }
 
-export function mkdirIfNeededSync(filePath: string) {
-  try {
-    // This will harmlessly throw on windows if the dirname is the root directory.
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  } catch (e) {
-  }
-}
-
 export async function removeFolders(dirs: string[]): Promise<(Error| undefined)[]> {
   return await Promise.all(dirs.map((dir: string) =>
     fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)

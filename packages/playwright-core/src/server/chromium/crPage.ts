@@ -438,12 +438,8 @@ class FrameSession {
     }
 
     let videoOptions: types.VideoOptions | undefined;
-    if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow) {
-      const screencast = this._crPage._page.screencast;
-      videoOptions = screencast.launchVideoRecorder();
-      if (videoOptions)
-        await screencast.waitForVideoRecorderInitialized();
-    }
+    if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow)
+      videoOptions = this._crPage._page.screencast.launchVideoRecorder();
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
