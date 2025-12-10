@@ -25,13 +25,14 @@ test('browser_run_code', async ({ client, server }) => {
     arguments: { url: server.PREFIX },
   });
 
+  const code = 'async (page) => await page.getByRole("button", { name: "Submit" }).click()';
   expect(await client.callTool({
     name: 'browser_run_code',
     arguments: {
-      code: 'await page.getByRole("button", { name: "Submit" }).click()',
+      code,
     },
   })).toHaveResponse({
-    code: `await page.getByRole(\"button\", { name: \"Submit\" }).click()`,
+    code: `await (${code})(page);`,
     consoleMessages: expect.stringContaining('- [LOG] Submit'),
   });
 });
@@ -48,7 +49,7 @@ test('browser_run_code block', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_run_code',
     arguments: {
-      code: 'await page.getByRole("button", { name: "Submit" }).click(); await page.getByRole("button", { name: "Submit" }).click();',
+      code: 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); await page.getByRole("button", { name: "Submit" }).click(); }',
     },
   })).toHaveResponse({
     code: expect.stringContaining(`await page.getByRole(\"button\", { name: \"Submit\" }).click()`),
@@ -68,7 +69,7 @@ test('browser_run_code no-require', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_run_code',
     arguments: {
-      code: `require('fs');`,
+      code: `(page) => { require('fs'); }`,
     },
   })).toHaveResponse({
     result: expect.stringContaining(`ReferenceError: require is not defined`),
@@ -84,14 +85,14 @@ test('browser_run_code return value', async ({ client, server }) => {
     arguments: { url: server.PREFIX },
   });
 
-  const code = 'await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click();';
+  const code = 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click(); }';
   expect(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code,
     },
   })).toHaveResponse({
-    code,
+    code: `await (${code})(page);`,
     consoleMessages: expect.stringContaining('- [LOG] Submit'),
     result: '{"message":"Hello, world!"}',
   });
