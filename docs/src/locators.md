@@ -1313,7 +1313,7 @@ Consider a page with two buttons, the first invisible and the second [visible](.
   await page.locator('button').filter({ visible: true }).click();
   ```
   ```java
-  page.locator("button").filter(new Locator.FilterOptions.setVisible(true)).click();
+  page.locator("button").filter(new Locator.FilterOptions().setVisible(true)).click();
   ```
   ```python async
   await page.locator("button").filter(visible=True).click()
