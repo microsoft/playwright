@@ -36,10 +36,6 @@ import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { RegisteredListener } from 'playwright-core/lib/utils';
 
-export interface TestStepImpl extends TestStep {
-  _sendMessage?(params: { request: any }): Promise<{ response: any, error?: TestError }>;
-}
-
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
 export class Dispatcher {
@@ -299,7 +295,7 @@ class JobDispatcher {
   private _failedTests = new Set<TestCase>();
   private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();
-  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStepImpl> }>();
+  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
   private _parallelIndex = 0;
   private _workerIndex = 0;
   private _currentlyRunning: { test: TestCase, result: TestResult } | undefined;
@@ -376,7 +372,7 @@ class JobDispatcher {
     }
     const { result, steps, test } = data;
     const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
-    const step: TestStepImpl = {
+    const step: TestStep = {
       title: params.title,
       titlePath: () => {
         const parentPath = parentStep?.titlePath() || [];
@@ -595,7 +591,7 @@ class JobDispatcher {
     ];
   }
 
-  private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+  private async _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
@@ -605,7 +601,7 @@ class JobDispatcher {
     if (!step)
       return;
 
-    step._sendMessage = async (message: { request: any }) => {
+    this._failureTracker.sendMessageToWorker.set(this._workerIndex, async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
@@ -618,7 +614,7 @@ class JobDispatcher {
         addLocationAndSnippetToError(this._config.config, error);
         return { response: undefined, error };
       }
-    };
+    });
 
     result.errors = params.errors;
     result.error = result.errors[0];

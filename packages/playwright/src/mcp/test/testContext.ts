@@ -37,7 +37,6 @@ import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
 import type { ClientInfo } from '../sdk/exports';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
-import type { TestStepImpl } from '../../runner/dispatcher';
 
 export type SeedFile = {
   file: string;
@@ -226,10 +225,9 @@ export class TestContext {
         new ListReporter({ configDir, screen, includeTestId: true }),
         {
           version: () => 'v2',
-          onTestPaused: async (test, result, _step) => {
-            const step = _step as TestStepImpl;
-            testRunnerAndScreen.sendMessageToPausedTest = step._sendMessage;
-            const response = await step._sendMessage!({ request: { initialize: { clientInfo: this._clientInfo } } });
+          onTestPaused: async (test, result, step) => {
+            testRunnerAndScreen.sendMessageToPausedTest = params => testRunnerAndScreen.testRunner.sendMessageToWorker(result.workerIndex, params)!;
+            const response = await testRunnerAndScreen.sendMessageToPausedTest({ request: { initialize: { clientInfo: this._clientInfo } } });
             if (response.error)
               paused.reject(new Error(response.error.message));
             paused.resolve(response.response);

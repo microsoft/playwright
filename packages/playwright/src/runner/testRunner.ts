@@ -90,7 +90,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _ignoredProjectOutputs = new Set<string>();
   private _watchedTestDependencies = new Set<string>();
 
-  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void>, testRun: TestRun } | undefined;
   private _queue = Promise.resolve();
   private _globalSetup: { cleanup: () => Promise<any> } | undefined;
   private _devServer: { cleanup: () => Promise<any> } | undefined;
@@ -360,7 +360,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       this._testRun = undefined;
       return status;
     });
-    this._testRun = { run, stop };
+    this._testRun = { run, stop, testRun };
     return { status: await run };
   }
 
@@ -395,6 +395,10 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
   async closeGracefully() {
     gracefullyProcessExitDoNotHang(0);
+  }
+
+  sendMessageToWorker(workerIndex: number, params: { request: any }) {
+    return this._testRun?.testRun.failureTracker.sendMessageToWorker.get(workerIndex)?.(params);
   }
 
   async stop() {
