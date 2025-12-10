@@ -267,7 +267,7 @@ test('PLAYWRIGHT_TEST environment variable', async ({ startTestServer, writeFile
   expect(await testServerConnection.runTests({ locations: [] })).toEqual({ status: 'passed' });
 });
 
-test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
+test('pauseAtEnd', async ({ startTestServer, writeFiles }, testInfo) => {
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({});
   await writeFiles({
@@ -278,18 +278,40 @@ test('pauseAtEnd', async ({ startTestServer, writeFiles }) => {
       `,
   });
 
-  const reporter: ReporterV2 = {
-    version: () => 'v2',
-    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
-      expect(result.errors).toEqual([]);
-      await testServerConnection.stopTests();
-      return {};
-    },
-  };
+  const reporter: ReporterV2 = { version: () => 'v2' };
   const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
   testServerConnection.onReport(report => receiver.dispatch(report));
 
-  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'interrupted' });
+  await test.step('stopTests', async () => {
+    reporter.onTestPaused = async (test, result, step) => {
+      expect.soft(result.errors).toEqual([]);
+      expect.soft(step?.location).toEqual({
+        file: testInfo.outputPath('a.test.ts'),
+        line: 4,
+        column: 7
+      });
+      await testServerConnection.stopTests();
+      return {};
+    };
+    expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'interrupted' });
+  });
+
+  await test.step('continue', async () => {
+    reporter.onTestPaused = async (test, result, step) => {
+      return { action: 'continue' };
+    };
+    expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
+  });
+
+  await test.step('abort', async () => {
+    reporter.onTestPaused = async (test, result, step) => {
+      return { action: 'abort' };
+    };
+    reporter.onTestEnd = (test, result) => {
+      expect.soft(result.status).toBe('interrupted');
+    };
+    expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
+  });
 });
 
 test('pauseOnError', async ({ startTestServer, writeFiles }) => {
@@ -353,48 +375,6 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(paused).toBe(false);
 });
-
-test('onTestPaused', async ({ startTestServer, writeFiles }) => {
-  const testServerConnection = await startTestServer();
-  await testServerConnection.initialize({});
-  await writeFiles({
-    'a.test.ts': `
-      import { test, expect } from '@playwright/test';
-      test('foo', () => {
-      });
-    `,
-  });
-
-  let action: 'continue' | 'abort' = 'continue';
-  const log: string[] = [];
-  const reporter: ReporterV2 = {
-    version: () => 'v2',
-    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
-      log.push(`onTestPaused@${step?.location.line}:${step?.location.column}`);
-      return { action };
-    },
-    onTestEnd(test, result) {
-      log.push(`onTestEnd(status=${result.status})`);
-    },
-  };
-  const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
-  testServerConnection.onReport(report => receiver.dispatch(report));
-
-  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
-  expect(log).toEqual([
-    'onTestPaused@4:7',
-    'onTestEnd(status=passed)'
-  ]);
-
-  action = 'abort';
-  log.length = 0;
-  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
-  expect(log).toEqual([
-    'onTestPaused@4:7',
-    'onTestEnd(status=interrupted)'
-  ]);
-});
-
 
 test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
   await writeFiles({

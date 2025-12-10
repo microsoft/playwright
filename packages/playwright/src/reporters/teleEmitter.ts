@@ -56,7 +56,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   dispatch(message: teleReceiver.JsonEvent) {
-    if (!message.id)
+    if (message.id === undefined)
       return;
 
     const promise = this._callbacks.get(message.id);

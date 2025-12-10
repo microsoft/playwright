@@ -20,7 +20,6 @@ import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTrace
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import { debug, open } from 'playwright-core/lib/utilsBundle';
 
-import { JsonResponse } from '@testIsomorphic/teleReceiver';
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
 import ListReporter from '../reporters/list';
 import { createReporterForTestServer } from './reporters';
@@ -28,6 +27,7 @@ import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
 
 import { TeleReporterEmitter } from '../reporters/teleEmitter';
+import type { JsonEvent } from '../isomorphic/teleReceiver';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
 import type * as reporterTypes from '../../types/testReporter';
@@ -236,7 +236,7 @@ export class TestServerDispatcher implements TestServerInterface {
     await this._testRunner.closeGracefully();
   }
 
-  sendToReporter(params: { message: JsonResponse }) {
+  async sendToReporter(params: { message: JsonEvent }) {
     if (!this._currentTestRun || !('dispatch' in this._currentTestRun.reporter))
       return;
     this._currentTestRun.reporter.dispatch(params.message);
