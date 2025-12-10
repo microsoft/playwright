@@ -78,7 +78,7 @@ export class WKBrowser extends Browser {
       wkPage.didClose();
     this._wkPages.clear();
     for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(new TargetClosedError());
+      video.artifact.reportFinished(new TargetClosedError(this.closeReason()));
     this._idToVideo.clear();
     this._didClose();
   }

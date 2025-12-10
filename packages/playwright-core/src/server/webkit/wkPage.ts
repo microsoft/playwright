@@ -259,7 +259,7 @@ export class WKPage implements PageDelegate {
       this._provisionalPage.dispose();
       this._provisionalPage = null;
     }
-    this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
+    this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     this._page._didClose();
   }
 
@@ -494,7 +494,7 @@ export class WKPage implements PageDelegate {
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
     if (this._pageProxySession.isDisposed())
-      throw new TargetClosedError();
+      throw new TargetClosedError(this._page.closeReason());
     const pageProxyId = this._pageProxySession.sessionId;
     const result = await this._pageProxySession.connection.browserSession.send('Playwright.navigate', { url, pageProxyId, frameId: frame._id, referrer });
     return { newDocumentId: result.loaderId };

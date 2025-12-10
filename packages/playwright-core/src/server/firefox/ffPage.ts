@@ -316,7 +316,7 @@ export class FFPage implements PageDelegate {
   }
 
   didClose() {
-    this._markAsError(new TargetClosedError());
+    this._markAsError(new TargetClosedError(this._page.closeReason()));
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();

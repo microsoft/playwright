@@ -163,7 +163,7 @@ export class FFBrowser extends Browser {
 
   _onDisconnect() {
     for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(new TargetClosedError());
+      video.artifact.reportFinished(new TargetClosedError(this.closeReason()));
     this._idToVideo.clear();
     for (const ffPage of this._ffPages.values())
       ffPage.didClose();
