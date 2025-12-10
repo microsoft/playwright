@@ -228,20 +228,16 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
 
-    const workerFile = agent?.cacheFile && agent.cacheMode !== 'ignore' ? await (testInfo as TestInfoImpl)._cloneStorage(agent.cacheFile) : undefined;
-    if (agent && workerFile) {
-      options.agent = {
-        ...agent,
-        cacheFile: workerFile,
-      };
-    }
+    const workerFile = await agentCacheWorkerFile(agent, testInfo as TestInfoImpl);
+    if (agent && workerFile)
+      options.agent = { ...agent, cacheFile: workerFile };
 
     await use({
       ...contextOptions,
       ...options,
     });
 
-    if (workerFile)
+    if (testInfo.status === 'passed' && workerFile)
       await (testInfo as TestInfoImpl)._upstreamStorage(workerFile);
   }, { box: true }],
 
@@ -794,6 +790,16 @@ function renderTitle(type: string, method: string, params: Record<string, string
 
 function tracing() {
   return (test.info() as TestInfoImpl)._tracing;
+}
+
+async function agentCacheWorkerFile(agent: PlaywrightTestOptions['agent'], testInfo: TestInfoImpl): Promise<string | undefined> {
+  if (!agent || agent.cacheMode === 'ignore')
+    return undefined;
+  if (!agent.cacheFile && !agent.cachePathTemplate)
+    return undefined;
+
+  const cacheFile = agent.cacheFile ?? testInfo._applyPathTemplate(agent.cachePathTemplate!, 'cache', '.json');
+  return await testInfo._cloneStorage(cacheFile);
 }
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);
