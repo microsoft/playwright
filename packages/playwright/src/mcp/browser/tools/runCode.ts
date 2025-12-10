@@ -22,7 +22,7 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
-  code: z.string().describe(`Playwright code snippet to run. The snippet should access the \`page\` object to interact with the page. Can make multiple statements. For example: \`await page.getByRole('button', { name: 'Submit' }).click();\``),
+  code: z.string().describe(`Playwright code snippet to run. The snippet should access the \`page\` object to interact with the page. Can make multiple statements. \`return\` is allowed. For example: \`await page.getByRole('button', { name: 'Submit' }).click(); return await page.title();\``),
 });
 
 const runCode = defineTabTool({
@@ -47,14 +47,18 @@ const runCode = defineTabTool({
     await tab.waitForCompletion(async () => {
       const snippet = `(async () => {
         try {
-          ${params.code};
-          __end__.resolve();
+          const result = await (async () => {
+            ${params.code};
+          })();
+          __end__.resolve(result === undefined ? undefined : String(result));
         } catch (e) {
           __end__.reject(e);
         }
       })()`;
-      vm.runInContext(snippet, context);
-      await __end__;
+      await vm.runInContext(snippet, context);
+      const result = await __end__;
+      if (typeof result === 'string')
+        response.addResult(result);
     });
   },
 });

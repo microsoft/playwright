@@ -74,3 +74,25 @@ test('browser_run_code no-require', async ({ client, server }) => {
     result: expect.stringContaining(`ReferenceError: require is not defined`),
   });
 });
+
+test('browser_run_code return value', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Submit')">Submit</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = 'await page.getByRole("button", { name: "Submit" }).click(); return "Hello, world!"; await page.getByRole("banner").click();';
+  expect(await client.callTool({
+    name: 'browser_run_code',
+    arguments: {
+      code,
+    },
+  })).toHaveResponse({
+    code,
+    consoleMessages: expect.stringContaining('- [LOG] Submit'),
+    result: 'Hello, world!',
+  });
+});
