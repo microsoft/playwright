@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { JsonResponse, TeleReporterReceiver, TeleSuite } from './teleReceiver';
+import { JsonEvent, TeleReporterReceiver, TeleSuite } from './teleReceiver';
 import { statusEx } from './testTree';
 
 import type * as reporterTypes from '../../types/testReporter';
@@ -56,9 +56,9 @@ export class TeleSuiteUpdater {
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
   private _testResultsSnapshot: Map<string, reporterTypes.TestResult[]> | undefined;
-  private _messageSink: (msg: JsonResponse) => void;
+  private _messageSink: (msg: JsonEvent) => void;
 
-  constructor(messageSink: (msg: JsonResponse) => void, options: TeleSuiteUpdaterOptions) {
+  constructor(messageSink: (msg: JsonEvent) => void, options: TeleSuiteUpdaterOptions) {
     this._messageSink = messageSink;
     this._receiver = new TeleReporterReceiver(this._createReporter(), this._messageSink, {
       mergeProjects: true,

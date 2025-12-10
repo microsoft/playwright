@@ -31,7 +31,7 @@ export type TeleReporterEmitterOptions = {
 };
 
 export class TeleReporterEmitter implements ReporterV2 {
-  private _messageSink: (message: teleReceiver.JsonEvent | teleReceiver.JsonRequest) => void;
+  private _messageSink: (message: teleReceiver.JsonEvent) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
   private _resultKnownAttachmentCounts = new Map<string, number>();
@@ -42,28 +42,31 @@ export class TeleReporterEmitter implements ReporterV2 {
   private _lastId = 0;
   private _callbacks = new Map<number, ManualPromise<any>>();
 
-  constructor(messageSink: (message: teleReceiver.JsonEvent | teleReceiver.JsonRequest) => void, options: TeleReporterEmitterOptions = {}) {
+  constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
     this._emitterOptions = options;
   }
 
-  private async _send<T extends teleReceiver.JsonResponse>(message: Omit<teleReceiver.JsonRequest, 'id'>): Promise<NonNullable<T['result']>> {
+  private async _send<T extends teleReceiver.JsonEvent>(message: Omit<teleReceiver.JsonEvent, 'id'>): Promise<NonNullable<T['params']>> {
     const id = this._lastId++;
     const result = new ManualPromise<any>();
     this._callbacks.set(id, result);
-    this._messageSink({ id, ...message });
+    this._messageSink({ id, ...message } as teleReceiver.JsonEvent);
     return result;
   }
 
-  dispatch(message: teleReceiver.JsonResponse) {
+  dispatch(message: teleReceiver.JsonEvent) {
+    if (!message.id)
+      return;
+
     const promise = this._callbacks.get(message.id);
     if (!promise)
       return;
     this._callbacks.delete(message.id);
-    if (message.result)
-      promise.resolve(message.result);
+    if (message.params)
+      promise.resolve(message.params);
     else
-      promise.reject(new Error(message.error));
+      promise.reject(new Error('' + message.error));
   }
 
   version(): 'v2' {

@@ -131,8 +131,23 @@ export type JsonFullResult = {
   duration: number;
 };
 
-export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
-  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
+export type JsonEvent = (
+  | JsonOnConfigureEvent
+  | JsonOnBlobReportMetadataEvent
+  | JsonOnEndEvent
+  | JsonOnExitEvent
+  | JsonOnProjectEvent
+  | JsonOnBeginEvent
+  | JsonOnTestBeginEvent
+  | JsonOnTestEndEvent
+  | JsonOnStepBeginEvent
+  | JsonOnStepEndEvent
+  | JsonOnAttachEvent
+  | JsonOnErrorEvent
+  | JsonOnStdIOEvent
+  | JsonOnTestPausedEvent
+  | JsonOnTestPausedResponse
+) & { id?: number; error?: string };
 
 export type JsonOnConfigureEvent = {
   method: 'onConfigure';
@@ -228,12 +243,8 @@ export type JsonOnExitEvent = {
   params: undefined;
 };
 
-export type JsonRequest = JsonOnTestPausedRequest;
-export type JsonResponse = JsonOnTestPausedResponse;
-
-export type JsonOnTestPausedRequest = {
+export type JsonOnTestPausedEvent = {
   method: 'onTestPaused';
-  id: number;
   params: {
     testId: string;
     resultId: string;
@@ -243,11 +254,10 @@ export type JsonOnTestPausedRequest = {
 };
 
 export type JsonOnTestPausedResponse = {
-  id: number;
-  result?: {
+  method?: undefined;
+  params?: {
     action?: 'continue' | 'abort';
   };
-  error?: string;
 };
 
 export type BlobReportMetadata = {
@@ -274,9 +284,9 @@ export class TeleReporterReceiver {
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
-  private _messageSink: (response: JsonResponse) => void;
+  private _messageSink: (response: JsonEvent) => void;
 
-  constructor(reporter: ReporterV2, messageSink: (response: JsonResponse) => void, options: TeleReporterReceiverOptions = {}) {
+  constructor(reporter: ReporterV2, messageSink: (response: JsonEvent) => void, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
@@ -288,21 +298,8 @@ export class TeleReporterReceiver {
     this._tests.clear();
   }
 
-  async dispatch(message: JsonEvent | JsonRequest) {
-    if ('id' in message) {
-      const { id, method, params } = message;
-      try {
-        if (method === 'onTestPaused') {
-          const result = await this._onTestPaused(params.testId, params.resultId, params.stepId, params.errors);
-          this._messageSink({ id, result });
-        }
-      } catch (error) {
-        this._messageSink({ id: message.id, error: '' + error });
-      }
-      return;
-    }
-
-    const { method, params } = message;
+  async dispatch(message: JsonEvent) {
+    const { id, method, params } = message;
     if (method === 'onConfigure') {
       this._onConfigure(params.config);
       return;
@@ -347,6 +344,16 @@ export class TeleReporterReceiver {
       return this._onEnd(params.result);
     if (method === 'onExit')
       return this._onExit();
+
+    try {
+      if (method === 'onTestPaused') {
+        const result = await this._onTestPaused(params.testId, params.resultId, params.stepId, params.errors);
+        this._messageSink({ id, params: result });
+        return;
+      }
+    } catch (error) {
+      this._messageSink({ id, error: '' + error });
+    }
   }
 
   private _onConfigure(config: JsonConfig) {
