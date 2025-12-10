@@ -59,7 +59,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   // If explicit config is provided, use platform path separator, otherwise use the one from the report (if any).
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
   const pathPackage = pathSeparator === '/' ? path.posix : path.win32;
-  const receiver = new TeleReporterReceiver(multiplexer, {
+  const receiver = new TeleReporterReceiver(multiplexer, () => {}, {
     mergeProjects: false,
     mergeTestCases: false,
     // When merging on a different OS, an absolute path like `C:\foo\bar` from win may look like

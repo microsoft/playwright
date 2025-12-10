@@ -41,7 +41,7 @@ export class BlobReporter extends TeleReporterEmitter {
   private _config!: FullConfig;
 
   constructor(options: BlobReporterOptions & CommonReporterOptions) {
-    super(message => this._messages.push(message));
+    super(message => this._messages.push(message as JsonEvent));
     this._options = options;
     if (this._options.fileName && !this._options.fileName.endsWith('.zip'))
       throw new Error(`Blob report file name must end with .zip extension: ${this._options.fileName}`);
