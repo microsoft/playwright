@@ -73,7 +73,8 @@ export class BrowserServerBackend implements ServerBackend {
       context.setRunningTool(undefined);
     }
     response.logEnd();
-    return response.serialize();
+    const _meta = rawArguments?._meta as object | undefined;
+    return response.serialize({ _meta });
   }
 
   serverClosed() {

@@ -16,7 +16,7 @@
 
 import { ErrorMessage } from '@web/components/errorMessage';
 import * as React from 'react';
-import type * as modelUtil from './modelUtil';
+import type { TraceModel, ErrorDescription } from '@isomorphic/trace/traceModel';
 import { PlaceholderPanel } from './placeholderPanel';
 import { renderAction } from './actionList';
 import type { Language } from '@isomorphic/locatorGenerators';
@@ -41,21 +41,21 @@ const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
 };
 
 type ErrorsTabModel = {
-  errors: Map<string, modelUtil.ErrorDescription>;
+  errors: Map<string, ErrorDescription>;
 };
 
-export function useErrorsTabModel(model: modelUtil.MultiTraceModel | undefined): ErrorsTabModel {
+export function useErrorsTabModel(model: TraceModel | undefined): ErrorsTabModel {
   return React.useMemo(() => {
     if (!model)
       return { errors: new Map() };
-    const errors = new Map<string, modelUtil.ErrorDescription>();
+    const errors = new Map<string, ErrorDescription>();
     for (const error of model.errorDescriptors)
       errors.set(error.message, error);
     return { errors };
   }, [model]);
 }
 
-function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: string, error: modelUtil.ErrorDescription, sdkLanguage: Language, revealInSource: (error: modelUtil.ErrorDescription) => void }) {
+function ErrorView({ message, error, sdkLanguage, revealInSource }: { message: string, error: ErrorDescription, sdkLanguage: Language, revealInSource: (error: ErrorDescription) => void }) {
   let location: string | undefined;
   let longLocation: string | undefined;
   const stackFrame = error.stack?.[0];
@@ -88,7 +88,7 @@ export const ErrorsTab: React.FunctionComponent<{
   errorsModel: ErrorsTabModel,
   wallTime: number,
   sdkLanguage: Language,
-  revealInSource: (error: modelUtil.ErrorDescription) => void,
+  revealInSource: (error: ErrorDescription) => void,
   testRunMetadata: MetadataWithCommitInfo | undefined,
 }> = ({ errorsModel, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
   const model = useTraceModel();
@@ -99,7 +99,7 @@ export const ErrorsTab: React.FunctionComponent<{
     return await fetch(attachmentURL(model, attachment)).then(r => r.text());
   }, [model], undefined);
 
-  const buildCodeFrame = React.useCallback(async (error: modelUtil.ErrorDescription) => {
+  const buildCodeFrame = React.useCallback(async (error: ErrorDescription) => {
     const location = error.stack?.[0];
     if (!location)
       return;

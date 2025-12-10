@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../sdk/bundle';
+import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool, defineTabTool } from './tool';
 
 const navigate = defineTool({

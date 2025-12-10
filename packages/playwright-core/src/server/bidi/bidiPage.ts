@@ -196,7 +196,8 @@ export class BidiPage implements PageDelegate {
 
   private _onNavigationCommitted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
-    this._page.frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, '', params.navigation!, /* initial */ false);
+    const frame = this._page.frameManager.frame(frameId)!;
+    this._page.frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, frame._name, params.navigation!, /* initial */ false);
   }
 
   private _onDomContentLoaded(params: bidi.BrowsingContext.NavigationInfo) {
@@ -314,7 +315,7 @@ export class BidiPage implements PageDelegate {
       this._page.extraHTTPHeaders(),
     ]);
     await this._session.send('network.setExtraHeaders', {
-      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string' as 'string', value } })),
       contexts: [this._session.sessionId],
     });
   }
@@ -336,6 +337,7 @@ export class BidiPage implements PageDelegate {
     const emulatedSize = this._page.emulatedSize();
     if (!emulatedSize)
       return;
+    const screenSize = emulatedSize.screen;
     const viewportSize = emulatedSize.viewport;
     await Promise.all([
       this._session.send('browsingContext.setViewport', {
@@ -348,7 +350,14 @@ export class BidiPage implements PageDelegate {
       }),
       this._session.send('emulation.setScreenOrientationOverride', {
         contexts: [this._session.sessionId],
-        screenOrientation: getScreenOrientation(!!options.isMobile, viewportSize)
+        screenOrientation: getScreenOrientation(!!options.isMobile, screenSize)
+      }),
+      this._session.send('emulation.setScreenSettingsOverride', {
+        contexts: [this._session.sessionId],
+        screenArea: {
+          width: screenSize.width,
+          height: screenSize.height,
+        }
       })
     ]);
   }
@@ -534,7 +543,10 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
+  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
+  }
+
+  async stopScreencast(): Promise<void> {
   }
 
   rafCountForStablePosition(): number {
@@ -598,24 +610,24 @@ export class BidiPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const parentContext = await parent._mainContext();
-    const list = await parentContext.evaluateHandle(() => { return [...document.querySelectorAll('iframe,frame')]; });
-    const length = await list.evaluate(list => list.length);
-    let foundElement = null;
-    for (let i = 0; i < length; i++) {
-      const element = await list.evaluateHandle((list, i) => list[i], i);
-      const candidate = await element.contentFrame();
-      if (frame === candidate) {
-        foundElement = element;
-        break;
-      } else {
-        element.dispose();
-      }
-    }
-    list.dispose();
-    if (!foundElement)
+    const node = await this._getFrameNode(frame);
+    if (!node?.sharedId)
       throw new Error('Frame has been detached.');
-    return foundElement;
+    const parentFrameExecutionContext = await parent._mainContext();
+    return await toBidiExecutionContext(parentFrameExecutionContext).remoteObjectForNodeId(parentFrameExecutionContext, { sharedId: node.sharedId });
+  }
+
+  async _getFrameNode(frame: frames.Frame): Promise<bidi.Script.NodeRemoteValue | undefined> {
+    const parent = frame.parentFrame();
+    if (!parent)
+      return undefined;
+
+    const result = await this._session.send('browsingContext.locateNodes', {
+      context: parent._id,
+      locator: { type: 'context', value: { context: frame._id } },
+    });
+    const node = result.nodes[0];
+    return node;
   }
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {

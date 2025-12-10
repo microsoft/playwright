@@ -16,11 +16,11 @@
 
 import { msToString } from '@web/uiUtils';
 import * as React from 'react';
-import type { MultiTraceModel } from './modelUtil';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import './callTab.css';
 
 export const MetadataView: React.FunctionComponent<{
-  model?: MultiTraceModel,
+  model?: TraceModel,
 }> = ({ model }) => {
   if (!model)
     return <></>;

@@ -171,6 +171,32 @@ it('should report correct buttons property', async ({ page }) => {
   ]);
 });
 
+it('should report correct pointerType property', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38376' },
+}, async ({ page }) => {
+  await page.mouse.move(50, 60);
+  await page.evaluate(() => {
+    (window as any).__EVENTS = [];
+    const handler = event => {
+      (window as any).__EVENTS.push({
+        type: event.type,
+        pointerType: event.pointerType,
+      });
+    };
+    window.addEventListener('pointerdown', handler, false);
+    window.addEventListener('pointermove', handler, false);
+    window.addEventListener('pointerup', handler, false);
+  });
+  await page.mouse.move(60, 50);
+  await page.mouse.down();
+  await page.mouse.up();
+  expect(await page.evaluate(() => (window as any).__EVENTS)).toEqual([
+    { type: 'pointermove', pointerType: 'mouse' },
+    { type: 'pointerdown', pointerType: 'mouse' },
+    { type: 'pointerup', pointerType: 'mouse' },
+  ]);
+});
+
 it('should select the text with mouse', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/input/textarea.html');
   await page.focus('textarea');

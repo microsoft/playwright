@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { Loop } from '../mcp/sdk/bundle';
+import { Loop } from 'playwright-core/lib/mcpBundle';
 
 import type z from 'zod';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { Tool } from '@modelcontextprotocol/sdk/types.js';
-import type * as tinyLoop from 'tiny-loop';
+import type * as lowireLoop from '@lowire/loop';
 
 type Logger = (category: string, text: string, details?: string) => void;
 
@@ -34,13 +34,13 @@ export type AgentSpec = {
 };
 
 export class Agent<T extends z.ZodSchema<any>> {
-  readonly loop: tinyLoop.Loop;
+  readonly loop: lowireLoop.Loop;
   readonly spec: AgentSpec;
   readonly clients: Map<string, Client>;
   readonly resultSchema: Tool['inputSchema'];
 
-  constructor(loopName: 'copilot' | 'claude' | 'openai', spec: AgentSpec, clients: Map<string, Client>, resultSchema: Tool['inputSchema']) {
-    this.loop = new Loop(loopName);
+  constructor(loopName: 'github' | 'anthropic' | 'openai' | 'google', spec: AgentSpec, clients: Map<string, Client>, resultSchema: Tool['inputSchema']) {
+    this.loop = new Loop(loopName, { model: spec.model });
     this.spec = spec;
     this.clients = clients;
     this.resultSchema = resultSchema;
@@ -52,9 +52,8 @@ export class Agent<T extends z.ZodSchema<any>> {
     try {
       return await this.loop.run<z.output<T>>(`${prompt}\n\nTask:\n${task}\n\nParams:\n${JSON.stringify(params, null, 2)}`, {
         ...options,
-        // TODO: fix types in tiny-loop
-        tools: tools as any,
-        callTool: callTool as any,
+        tools,
+        callTool,
         resultSchema: this.resultSchema
       });
     } finally {
@@ -81,12 +80,12 @@ export class Agent<T extends z.ZodSchema<any>> {
     if (agentToolNames.size > 0)
       throw new Error(`Required tools not found: ${Array.from(agentToolNames).join(', ')}`);
 
-    const callTool: (params: { name: string, arguments: any}) => Promise<tinyLoop.ToolResult> = async params => {
+    const callTool: (params: { name: string, arguments: any}) => Promise<lowireLoop.ToolResult> = async params => {
       const [serverName, toolName] = params.name.split('__');
       const client = clients[serverName];
       if (!client)
         throw new Error(`Unknown server: ${serverName}`);
-      return await client.callTool({ name: toolName, arguments: params.arguments }) as tinyLoop.ToolResult;
+      return await client.callTool({ name: toolName, arguments: params.arguments }) as lowireLoop.ToolResult;
     };
     return { clients, tools, callTool };
   }

@@ -17,7 +17,7 @@
 import type * as channels from '@protocol/channels';
 import * as React from 'react';
 import './consoleTab.css';
-import type * as modelUtil from './modelUtil';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { ListView } from '@web/components/listView';
 import type { Boundaries } from './geometry';
 import { clsx, msToString } from '@web/uiUtils';
@@ -47,7 +47,7 @@ type ConsoleTabModel = {
 const ConsoleListView = ListView<ConsoleEntry>;
 
 
-export function useConsoleTabModel(model: modelUtil.MultiTraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
+export function useConsoleTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): ConsoleTabModel {
   const { entries } = React.useMemo(() => {
     if (!model)
       return { entries: [] };

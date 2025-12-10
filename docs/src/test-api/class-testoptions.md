@@ -46,6 +46,10 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.agent = %%-js-context-option-agent-%%
+* since: v1.58
+
+
 ## property: TestOptions.baseURL = %%-context-option-baseURL-%%
 * since: v1.10
 

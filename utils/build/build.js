@@ -257,16 +257,6 @@ bundles.push({
 });
 
 bundles.push({
-  modulePath: 'packages/playwright/bundles/mcp',
-  outdir: 'packages/playwright/lib',
-  entryPoints: ['src/mcpBundleImpl.ts'],
-  external: ['express', '@anthropic-ai/sdk'],
-  alias: {
-    'raw-body': 'raw-body.ts',
-  },
-});
-
-bundles.push({
   modulePath: 'packages/playwright/bundles/utils',
   outdir: 'packages/playwright/lib',
   entryPoints: ['src/utilsBundleImpl.ts'],
@@ -285,6 +275,15 @@ bundles.push({
   entryPoints: ['src/zipBundleImpl.ts'],
 });
 
+bundles.push({
+  modulePath: 'packages/playwright-core/bundles/mcp',
+  outfile: 'packages/playwright-core/lib/mcpBundleImpl/index.js',
+  entryPoints: ['src/mcpBundleImpl.ts'],
+  external: ['express', '@anthropic-ai/sdk'],
+  alias: {
+    'raw-body': 'raw-body.ts',
+  },
+});
 
 // @playwright/client
 bundles.push({

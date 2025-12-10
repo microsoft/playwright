@@ -40,8 +40,9 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions> = {
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
     // Needed since tests/electron/package.json exists which would otherwise be picked up as tests/electron/ (outputDir)
-    ['blob', { fileName: path.join(__dirname, '../../blob-report/', `${process.env.PWTEST_BOT_NAME}.zip`) }],
+    ['blob', { outputDir: path.resolve(__dirname, '../../blob-report') }],
   ] : 'line',
+  tag: process.env.PW_TAG,
   projects: [],
   globalSetup: './globalSetup.ts'
 };

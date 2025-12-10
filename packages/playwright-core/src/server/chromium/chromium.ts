@@ -141,13 +141,8 @@ export class Chromium extends BrowserType {
   }
 
   override async connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<CRBrowser> {
-    let devtools = this._devtools;
-    if ((options as any).__testHookForDevTools) {
-      devtools = this._createDevTools();
-      await (options as any).__testHookForDevTools(devtools);
-    }
     try {
-      return await CRBrowser.connect(this.attribution.playwright, transport, options, devtools);
+      return await CRBrowser.connect(this.attribution.playwright, transport, options, this._devtools);
     } catch (e) {
       if (browserLogsCollector.recentLogs().some(log => log.includes('Failed to create a ProcessSingleton for your profile directory.'))) {
         throw new Error(
@@ -321,13 +316,9 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
 
-    if (os.platform() === 'darwin') {
-      // See https://issues.chromium.org/issues/40277080
-      chromeArguments.push('--enable-unsafe-swiftshader');
-    }
+    // See https://issues.chromium.org/issues/40277080
+    chromeArguments.push('--enable-unsafe-swiftshader');
 
-    if (options.devtools)
-      chromeArguments.push('--auto-open-devtools-for-tabs');
     if (options.headless) {
       chromeArguments.push('--headless');
 

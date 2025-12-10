@@ -26,7 +26,7 @@ jobs:
           echo "Version is not a two digit semver version"
           exit 1
         fi
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
       with:
         ref: release-${{ github.event.inputs.version }}
         fetch-depth: 0

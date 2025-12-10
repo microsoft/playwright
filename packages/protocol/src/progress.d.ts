@@ -36,7 +36,7 @@ import type { CallMetadata } from './callMetadata';
 //     For the trickiest cases, look at `raceUncancellableOperationWithCleanup()` helper method.
 export interface Progress {
   log(message: string): void;
-  race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
+  race<T>(promise: Promise<T> | Promise<T>[], options?: { timeout?: number }): Promise<T>;
   wait(timeout: number): Promise<void>;
   metadata: CallMetadata;
 }

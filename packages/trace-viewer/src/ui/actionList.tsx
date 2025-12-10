@@ -18,11 +18,11 @@ import type { ActionTraceEvent } from '@trace/trace';
 import { clsx, msToString } from '@web/uiUtils';
 import * as React from 'react';
 import './actionList.css';
-import * as modelUtil from './modelUtil';
+import { stats, buildActionTree } from '@isomorphic/trace/traceModel';
 import { asLocatorDescription, type Language } from '@isomorphic/locatorGenerators';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
-import type { ActionTraceEventInContext, ActionTreeItem } from './modelUtil';
+import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trace/traceModel';
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
@@ -60,7 +60,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   revealActionAttachment,
   isLive,
 }) => {
-  const { rootItem, itemMap } = React.useMemo(() => modelUtil.buildActionTree(actions), [actions]);
+  const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
   const { selectedItem } = React.useMemo(() => {
     const selectedItem = selectedAction ? itemMap.get(selectedAction.callId) : undefined;
@@ -122,7 +122,7 @@ export const renderAction = (
     showAttachments?: boolean,
   }) => {
   const { sdkLanguage, revealConsole, revealActionAttachment, isLive, showDuration, showBadges, showAttachments } = options;
-  const { errors, warnings } = modelUtil.stats(action);
+  const { errors, warnings } = stats(action);
 
   const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
 

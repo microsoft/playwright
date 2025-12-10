@@ -144,7 +144,9 @@ for (const [name, url] of Object.entries(reacts)) {
         // @ts-ignore
         mountNestedApp();
       });
-      await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+      await expect(async () => {
+        await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+      }).toPass();
     });
 
     it('should work with react memo', async ({ page }) => {
@@ -162,7 +164,9 @@ for (const [name, url] of Object.entries(reacts)) {
           // @ts-ignore
           window.mountApp(anotherRoot);
         });
-        await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+        await expect(async () => {
+          await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+        }).toPass();
       });
 
       await it.step('add a new book to second root', async () => {
@@ -182,7 +186,9 @@ for (const [name, url] of Object.entries(reacts)) {
         // @ts-ignore
         window.mountApp(shadowRoot);
       });
-      await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+      await expect(async () => {
+        await expect(page.locator(`_react=BookItem`)).toHaveCountError(6);
+      }).toPass();
     });
 
     it('should work with multiroot react after unmount', async ({ page }) => {

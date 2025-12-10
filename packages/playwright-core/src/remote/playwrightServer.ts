@@ -375,7 +375,6 @@ const defaultLaunchOptions: Partial<LaunchOptionsWithTimeout> = {
   handleSIGTERM: false,
   handleSIGHUP: false,
   headless: true,
-  devtools: false,
 };
 
 const optionsThatAllowBrowserReuse: (keyof LaunchOptionsWithTimeout)[] = [

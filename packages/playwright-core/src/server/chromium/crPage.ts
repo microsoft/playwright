@@ -15,10 +15,7 @@
  * limitations under the License.
  */
 
-import path from 'path';
-
 import { assert } from '../../utils/isomorphic/assert';
-import { createGuid } from '../utils/crypto';
 import { eventsHelper } from '../utils/eventsHelper';
 import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
 import * as dialog from '../dialog';
@@ -27,7 +24,6 @@ import * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
-import { registry } from '../registry';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
@@ -37,7 +33,6 @@ import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
 import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
-import { VideoRecorder } from './videoRecorder';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
 
@@ -289,17 +284,17 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async setScreencastOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
-    if (options) {
-      await this._mainFrameSession._startScreencast(this, {
-        format: 'jpeg',
-        quality: options.quality,
-        maxWidth: options.width,
-        maxHeight: options.height
-      });
-    } else {
-      await this._mainFrameSession._stopScreencast(this);
-    }
+  async startScreencast(options: { width: number; height: number; quality: number; }): Promise<void> {
+    await this._mainFrameSession._client.send('Page.startScreencast', {
+      format: 'jpeg',
+      quality: options.quality,
+      maxWidth: options.width,
+      maxHeight: options.height,
+    });
+  }
+
+  async stopScreencast() {
+    await this._mainFrameSession._client._sendMayFail('Page.stopScreencast');
   }
 
   rafCountForStablePosition(): number {
@@ -379,9 +374,6 @@ class FrameSession {
   // Marks the oopif session that remote -> local transition has happened in the parent.
   // See Target.detachedFromTarget handler for details.
   private _swappedIn = false;
-  private _videoRecorder: VideoRecorder | null = null;
-  private _screencastId: string | null = null;
-  private _screencastClients = new Set<any>();
   private _metricsOverride: Protocol.Emulation.setDeviceMetricsOverrideParameters | undefined;
   private _workerSessions = new Map<string, CRSession>();
   private _initScriptIds = new Map<InitScript, string>();
@@ -446,23 +438,8 @@ class FrameSession {
     }
 
     let screencastOptions: types.PageScreencastOptions | undefined;
-    if (!this._page.isStorageStatePage && this._isMainFrame() && this._crPage._browserContext._options.recordVideo && hasUIWindow) {
-      const screencastId = createGuid();
-      const outputFile = path.join(this._crPage._browserContext._options.recordVideo.dir, screencastId + '.webm');
-      screencastOptions = {
-        // validateBrowserContextOptions ensures correct video size.
-        ...this._crPage._browserContext._options.recordVideo.size!,
-        outputFile,
-      };
-      await this._crPage._browserContext._ensureVideosPath();
-      // Note: it is important to start video recorder before sending Page.startScreencast,
-      // and it is equally important to send Page.startScreencast before sending Runtime.runIfWaitingForDebugger.
-      await this._createVideoRecorder(screencastId, screencastOptions);
-      this._crPage._page.waitForInitializedOrError().then(p => {
-        if (p instanceof Error)
-          this._stopVideoRecording().catch(() => {});
-      });
-    }
+    if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow)
+      screencastOptions = await this._crPage._page.screencast.initializeVideoRecorder();
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
@@ -552,7 +529,7 @@ class FrameSession {
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
       if (screencastOptions)
-        promises.push(this._startVideoRecording(screencastOptions));
+        promises.push(this._crPage._page.screencast.startVideoRecording(screencastOptions));
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
@@ -899,7 +876,7 @@ class FrameSession {
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
-    this._page.throttleScreencastFrameAck(() => {
+    this._page.screencast.throttleFrameAck(() => {
       this._client.send('Page.screencastFrameAck', { sessionId: payload.sessionId }).catch(() => {});
     });
     const buffer = Buffer.from(payload.data, 'base64');
@@ -909,57 +886,6 @@ class FrameSession {
       width: payload.metadata.deviceWidth,
       height: payload.metadata.deviceHeight,
     });
-  }
-
-  async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
-    assert(!this._screencastId);
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
-    this._videoRecorder = await VideoRecorder.launch(this._crPage._page, ffmpegPath, options);
-    this._screencastId = screencastId;
-  }
-
-  async _startVideoRecording(options: types.PageScreencastOptions) {
-    const screencastId = this._screencastId;
-    assert(screencastId);
-    this._page.once(Page.Events.Close, () => this._stopVideoRecording().catch(() => {}));
-    const gotFirstFrame = new Promise(f => this._client.once('Page.screencastFrame', f));
-    await this._startScreencast(this._videoRecorder, {
-      format: 'jpeg',
-      quality: 90,
-      maxWidth: options.width,
-      maxHeight: options.height,
-    });
-    // Wait for the first frame before reporting video to the client.
-    gotFirstFrame.then(() => {
-      this._crPage._browserContext._browser._videoStarted(this._crPage._browserContext, screencastId, options.outputFile, this._crPage._page.waitForInitializedOrError());
-    });
-  }
-
-  async _stopVideoRecording(): Promise<void> {
-    if (!this._screencastId)
-      return;
-    const screencastId = this._screencastId;
-    this._screencastId = null;
-    const recorder = this._videoRecorder!;
-    this._videoRecorder = null;
-    await this._stopScreencast(recorder);
-    await recorder.stop().catch(() => {});
-    // Keep the video artifact in the map until encoding is fully finished, if the context
-    // starts closing before the video is fully written to disk it will wait for it.
-    const video = this._crPage._browserContext._browser._takeVideo(screencastId);
-    video?.reportFinished();
-  }
-
-  async _startScreencast(client: any, options: Protocol.Page.startScreencastParameters = {}) {
-    this._screencastClients.add(client);
-    if (this._screencastClients.size === 1)
-      await this._client.send('Page.startScreencast', options);
-  }
-
-  async _stopScreencast(client: any) {
-    this._screencastClients.delete(client);
-    if (!this._screencastClients.size)
-      await this._client._sendMayFail('Page.stopScreencast');
   }
 
   async _updateGeolocation(initial: boolean): Promise<void> {

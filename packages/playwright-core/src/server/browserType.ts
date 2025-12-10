@@ -293,15 +293,14 @@ export abstract class BrowserType extends SdkObject {
   }
 
   private _validateLaunchOptions(options: types.LaunchOptions): types.LaunchOptions {
-    const { devtools = false } = options;
-    let { headless = !devtools, downloadsPath, proxy } = options;
+    let { headless = true, downloadsPath, proxy } = options;
     if (debugMode() === 'inspector')
       headless = false;
     if (downloadsPath && !path.isAbsolute(downloadsPath))
       downloadsPath = path.join(process.cwd(), downloadsPath);
     if (options.socksProxyPort)
       proxy = { server: `socks5://127.0.0.1:${options.socksProxyPort}` };
-    return { ...options, devtools, headless, downloadsPath, proxy };
+    return { ...options, headless, downloadsPath, proxy };
   }
 
   protected _createUserDataDirArgMisuseError(userDataDirArg: string): Error {

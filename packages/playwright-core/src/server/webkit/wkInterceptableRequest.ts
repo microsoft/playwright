@@ -51,7 +51,7 @@ export class WKInterceptableRequest {
   constructor(session: WKSession, frame: frames.Frame, event: Protocol.Network.requestWillBeSentPayload, redirectedFrom: WKInterceptableRequest | null, documentId: string | undefined) {
     this._session = session;
     this._requestId = event.requestId;
-    const resourceType = event.type ? event.type.toLowerCase() : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
+    const resourceType = event.type ? toResourceType(event.type) : (redirectedFrom ? redirectedFrom.request.resourceType() : 'other');
     let postDataBuffer = null;
     this._timestamp = event.timestamp;
     this._wallTime = event.walltime * 1000;
@@ -168,4 +168,21 @@ function wkMillisToRoundishMillis(value: number): number {
   }
 
   return ((value * 1000) | 0) / 1000;
+}
+
+function toResourceType(type: Protocol.Page.ResourceType): network.ResourceType {
+  switch (type) {
+    case 'Document': return 'document';
+    case 'StyleSheet': return 'stylesheet';
+    case 'Image': return 'image';
+    case 'Font': return 'font';
+    case 'Script': return 'script';
+    case 'XHR': return 'xhr';
+    case 'Fetch': return 'fetch';
+    case 'Ping': return 'ping';
+    case 'Beacon': return 'beacon';
+    case 'WebSocket': return 'websocket';
+    case 'EventSource': return 'eventsource';
+    default: return 'other';
+  }
 }

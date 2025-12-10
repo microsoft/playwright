@@ -99,6 +99,65 @@ test('recent console messages', async ({ client, server }) => {
   });
 });
 
+test('recent console messages filter', async ({ startClient, server }) => {
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <script>
+        console.log("console.log");
+        console.error("console.error");
+      </script>
+    </html>
+  `, 'text/html');
+
+  const { client } = await startClient({
+    args: ['--console-level', 'error'],
+  });
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  }));
+
+  expect(response.consoleMessages).toContain('console.error');
+  expect(response.consoleMessages).not.toContain('console.log');
+});
+
+test('browser_console_messages default level', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.HELLO_WORLD,
+    },
+  });
+
+  await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `async () => {
+        console.debug("console.debug");
+        console.log("console.log");
+        console.warn("console.warn");
+        console.error("console.error");
+        setTimeout(() => { throw new Error("unhandled"); }, 0);
+        await fetch('/missing');
+      }`,
+    },
+  });
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_console_messages',
+  }));
+  expect.soft(response.result).toContain('console.log');
+  expect.soft(response.result).toContain('console.warn');
+  expect.soft(response.result).toContain('console.error');
+  expect.soft(response.result).toContain('Error: unhandled');
+  expect.soft(response.result).toContain('404');
+  expect.soft(response.result).not.toContain('console.debug');
+});
+
 test('browser_console_messages errors only', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_navigate',
@@ -111,6 +170,7 @@ test('browser_console_messages errors only', async ({ client, server }) => {
     name: 'browser_evaluate',
     arguments: {
       function: `async () => {
+        console.debug("console.debug");
         console.log("console.log");
         console.warn("console.warn");
         console.error("console.error");
@@ -123,7 +183,7 @@ test('browser_console_messages errors only', async ({ client, server }) => {
   const response = parseResponse(await client.callTool({
     name: 'browser_console_messages',
     arguments: {
-      onlyErrors: true,
+      level: 'error',
     },
   }));
   expect.soft(response.result).toContain('console.error');

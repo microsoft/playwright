@@ -20,6 +20,7 @@ import { renderModalStates } from './tab';
 import type { Tab, TabSnapshot } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context } from './context';
+import type { ModalState } from './tools/tool';
 
 export const requestDebug = debug('pw:mcp:request');
 
@@ -27,9 +28,12 @@ export class Response {
   private _result: string[] = [];
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
+  private _files: { fileName: string, title: string }[] = [];
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeTabs = false;
+  private _includeModalStates: ModalState[] | undefined;
+  private _includeMetaOnly: boolean = false;
   private _tabSnapshot: TabSnapshot | undefined;
 
   readonly toolName: string;
@@ -75,12 +79,30 @@ export class Response {
     return this._images;
   }
 
-  setIncludeSnapshot(full?: 'full') {
-    this._includeSnapshot = full ?? 'incremental';
+  async addFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }) {
+    const resolvedFile = await this._context.outputFile(fileName, options);
+    this._files.push({ fileName: resolvedFile, title: options.reason });
+    return resolvedFile;
+  }
+
+  setIncludeSnapshot() {
+    this._includeSnapshot = this._context.config.snapshot.mode;
+  }
+
+  setIncludeFullSnapshot() {
+    this._includeSnapshot = 'full';
   }
 
   setIncludeTabs() {
     this._includeTabs = true;
+  }
+
+  setIncludeModalStates(modalStates: ModalState[]) {
+    this._includeModalStates = modalStates;
+  }
+
+  setIncludeMetaOnly() {
+    this._includeMetaOnly = true;
   }
 
   async finish() {
@@ -103,97 +125,101 @@ export class Response {
 
   logEnd() {
     if (requestDebug.enabled)
-      requestDebug(this.serialize({ omitSnapshot: true, omitBlobs: true }));
+      requestDebug(this.serialize());
   }
 
-  serialize(options: { omitSnapshot?: boolean, omitBlobs?: boolean } = {}): { content: (TextContent | ImageContent)[], isError?: boolean } {
-    const response: string[] = [];
+  render(): RenderedResponse{
+    const renderedResponse = new RenderedResponse();
 
-    // Start with command result.
-    if (this._result.length) {
-      response.push('### Result');
-      response.push(this._result.join('\n'));
-      response.push('');
-    }
+    if (this._result.length)
+      renderedResponse.results.push(...this._result);
 
     // Add code if it exists.
-    if (this._code.length) {
-      response.push(`### Ran Playwright code
-\`\`\`js
-${this._code.join('\n')}
-\`\`\``);
-      response.push('');
-    }
+    if (this._code.length)
+      renderedResponse.code.push(...this._code);
 
     // List browser tabs.
-    if (this._includeSnapshot !== 'none' || this._includeTabs)
-      response.push(...renderTabsMarkdown(this._context.tabs(), this._includeTabs));
+    if (this._includeSnapshot !== 'none' || this._includeTabs) {
+      const tabsMarkdown = renderTabsMarkdown(this._context.tabs(), this._includeTabs);
+      if (tabsMarkdown.length)
+        renderedResponse.states.tabs = tabsMarkdown.join('\n');
+    }
 
     // Add snapshot if provided.
     if (this._tabSnapshot?.modalStates.length) {
-      response.push(...renderModalStates(this._context, this._tabSnapshot.modalStates));
-      response.push('');
+      const modalStatesMarkdown = renderModalStates(this._tabSnapshot.modalStates);
+      renderedResponse.states.modal = modalStatesMarkdown.join('\n');
     } else if (this._tabSnapshot) {
-      const includeSnapshot = options.omitSnapshot ? 'none' : this._includeSnapshot;
-      response.push(renderTabSnapshot(this._tabSnapshot, includeSnapshot));
-      response.push('');
+      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, renderedResponse);
+    } else if (this._includeModalStates) {
+      const modalStatesMarkdown = renderModalStates(this._includeModalStates);
+      renderedResponse.states.modal = modalStatesMarkdown.join('\n');
     }
 
-    // Main response part
+    if (this._files.length) {
+      const lines: string[] = [];
+      for (const file of this._files)
+        lines.push(`- [${file.title}](${file.fileName})`);
+      renderedResponse.updates.push({ category: 'files', content: lines.join('\n') });
+    }
+
+    return this._context.config.secrets ? renderedResponse.redact(this._context.config.secrets) : renderedResponse;
+  }
+
+  serialize(options: { _meta?: Record<string, any> } = {}): { content: (TextContent | ImageContent)[], isError?: boolean, _meta?: Record<string, any> } {
+    const renderedResponse = this.render();
+    const includeMeta = options._meta && 'dev.lowire/history' in options._meta && 'dev.lowire/state' in options._meta;
+    const _meta: any = includeMeta ? renderedResponse.asMeta() : undefined;
+
     const content: (TextContent | ImageContent)[] = [
-      { type: 'text', text: response.join('\n') },
+      {
+        type: 'text',
+        text: renderedResponse.asText(this._includeMetaOnly ? { categories: ['files'] } : undefined)
+      },
     ];
+
+    if (this._includeMetaOnly)
+      return { _meta, content, isError: this._isError };
 
     // Image attachments.
     if (this._context.config.imageResponses !== 'omit') {
       for (const image of this._images)
-        content.push({ type: 'image', data: options.omitBlobs ? '<blob>' : image.data.toString('base64'), mimeType: image.contentType });
+        content.push({ type: 'image', data: image.data.toString('base64'), mimeType: image.contentType });
     }
 
-    this._redactSecrets(content);
-    return { content, isError: this._isError };
-  }
-
-  private _redactSecrets(content: (TextContent | ImageContent)[]) {
-    if (!this._context.config.secrets)
-      return;
-
-    for (const item of content) {
-      if (item.type !== 'text')
-        continue;
-      for (const [secretName, secretValue] of Object.entries(this._context.config.secrets))
-        item.text = item.text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
-    }
+    return {
+      _meta,
+      content,
+      isError: this._isError
+    };
   }
 }
 
-function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | 'full' | 'incremental'): string {
-  const lines: string[] = [];
-
+function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | 'full' | 'incremental', response: RenderedResponse) {
   if (tabSnapshot.consoleMessages.length) {
-    lines.push(`### New console messages`);
+    const lines: string[] = [];
     for (const message of tabSnapshot.consoleMessages)
       lines.push(`- ${trim(message.toString(), 100)}`);
-    lines.push('');
+    response.updates.push({ category: 'console', content: lines.join('\n') });
   }
 
   if (tabSnapshot.downloads.length) {
-    lines.push(`### Downloads`);
+    const lines: string[] = [];
     for (const entry of tabSnapshot.downloads) {
       if (entry.finished)
         lines.push(`- Downloaded file ${entry.download.suggestedFilename()} to ${entry.outputFile}`);
       else
         lines.push(`- Downloading file ${entry.download.suggestedFilename()} ...`);
     }
-    lines.push('');
+    response.updates.push({ category: 'downloads', content: lines.join('\n') });
   }
 
   if (includeSnapshot === 'incremental' && tabSnapshot.ariaSnapshotDiff === '') {
     // When incremental snapshot is present, but empty, do not render page state altogether.
-    return lines.join('\n');
+    return;
   }
 
-  lines.push(`### Page state`);
+  const lines: string[] = [];
   lines.push(`- Page URL: ${tabSnapshot.url}`);
   lines.push(`- Page Title: ${tabSnapshot.title}`);
 
@@ -206,29 +232,22 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | '
       lines.push(tabSnapshot.ariaSnapshot);
     lines.push('```');
   }
-
-  return lines.join('\n');
+  response.states.page = lines.join('\n');
 }
 
 function renderTabsMarkdown(tabs: Tab[], force: boolean = false): string[] {
   if (tabs.length === 1 && !force)
     return [];
 
-  if (!tabs.length) {
-    return [
-      '### Open tabs',
-      'No open tabs. Use the "browser_navigate" tool to navigate to a page first.',
-      '',
-    ];
-  }
+  if (!tabs.length)
+    return ['No open tabs. Use the "browser_navigate" tool to navigate to a page first.'];
 
-  const lines: string[] = ['### Open tabs'];
+  const lines: string[] = [];
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
     const current = tab.isCurrentTab() ? ' (current)' : '';
     lines.push(`- ${i}:${current} [${tab.lastTitle()}] (${tab.page.url()})`);
   }
-  lines.push('');
   return lines;
 }
 
@@ -236,6 +255,93 @@ function trim(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
   return text.slice(0, maxLength) + '...';
+}
+
+export class RenderedResponse {
+  readonly states: Partial<Record<'page' | 'tabs' | 'modal', string>> = {};
+  readonly updates: { category: 'console' | 'downloads' | 'files', content: string }[] = [];
+  readonly results: string[] = [];
+  readonly code: string[] = [];
+
+  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads' | 'files', content: string }[], results: string[], code: string[] }) {
+    if (copy) {
+      this.states = copy.states;
+      this.updates = copy.updates;
+      this.results = copy.results;
+      this.code = copy.code;
+    }
+  }
+
+  asText(filter?: { categories: string[] }): string {
+    const text: string[] = [];
+    if (this.results.length)
+      text.push(`### Result\n${this.results.join('\n')}\n`);
+    if (this.code.length)
+      text.push(`### Ran Playwright code\n${this.code.join('\n')}\n`);
+
+    for (const { category, content } of this.updates) {
+      if (filter && !filter.categories.includes(category))
+        continue;
+      if (!content.trim())
+        continue;
+
+      switch (category) {
+        case 'console':
+          text.push(`### New console messages\n${content}\n`);
+          break;
+        case 'downloads':
+          text.push(`### Downloads\n${content}\n`);
+          break;
+        case 'files':
+          text.push(`### Files\n${content}\n`);
+          break;
+      }
+    }
+
+    for (const [category, value] of Object.entries(this.states)) {
+      if (filter && !filter.categories.includes(category))
+        continue;
+      if (!value.trim())
+        continue;
+
+      switch (category) {
+        case 'page':
+          text.push(`### Page state\n${value}\n`);
+          break;
+        case 'tabs':
+          text.push(`### Open tabs\n${value}\n`);
+          break;
+        case 'modal':
+          text.push(`### Modal state\n${value}\n`);
+          break;
+      }
+    }
+    return text.join('\n');
+  }
+
+  asMeta() {
+    const codeUpdate = this.code.length ? { category: 'code', content: this.code.join('\n') } : undefined;
+    const resultUpdate = this.results.length ? { category: 'result', content: this.results.join('\n') } : undefined;
+    const updates = [resultUpdate, codeUpdate, ...this.updates].filter(Boolean);
+    return {
+      'dev.lowire/history': updates,
+      'dev.lowire/state': { ...this.states },
+    };
+  }
+
+  redact(secrets: Record<string, string>): RenderedResponse {
+    const redactText = (text: string) => {
+      for (const [secretName, secretValue] of Object.entries(secrets))
+        text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+      return text;
+    };
+
+    const updates = this.updates.map(update => ({ ...update, content: redactText(update.content) }));
+    const results = this.results.map(result => redactText(result));
+    const code = this.code.map(code => redactText(code));
+    const states = Object.fromEntries(Object.entries(this.states).map(([key, value]) => [key, redactText(value)]));
+    return new RenderedResponse({ states, updates, results, code });
+  }
 }
 
 function parseSections(text: string): Map<string, string> {
@@ -268,6 +374,7 @@ export function parseResponse(response: CallToolResult) {
   const consoleMessages = sections.get('New console messages');
   const modalState = sections.get('Modal state');
   const downloads = sections.get('Downloads');
+  const files = sections.get('Files');
   const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
   const isError = response.isError;
   const attachments = response.content.slice(1);
@@ -280,7 +387,9 @@ export function parseResponse(response: CallToolResult) {
     consoleMessages,
     modalState,
     downloads,
+    files,
     isError,
     attachments,
+    _meta: response._meta,
   };
 }

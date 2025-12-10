@@ -990,7 +990,8 @@ await page.GetByText("Click me").ClickAsync(new()
       const { x, y, width, height } = await page.locator('input').boundingBox();
       await page.mouse.move(x + width / 2, y + height / 2);
       await page.mouse.down();
-      await page.mouse.move(x + width, y + height / 2);
+      // Dragging to the exact edge is not registered as slider change, so drag close to the end.
+      await page.mouse.move(x + width - 3, y + height / 2);
       await page.mouse.up();
     };
 

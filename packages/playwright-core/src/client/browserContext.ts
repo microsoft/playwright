@@ -558,6 +558,7 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     network.validateHeaders(options.extraHTTPHeaders);
   const contextParams: channels.BrowserNewContextParams = {
     ...options,
+    agent: toAgentProtocol(options.agent),
     viewport: options.viewport === null ? undefined : options.viewport,
     noDefaultViewport: options.viewport === null,
     extraHTTPHeaders: options.extraHTTPHeaders ? headersObjectToArray(options.extraHTTPHeaders) : undefined,
@@ -579,6 +580,13 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
     contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
   return contextParams;
+}
+
+function toAgentProtocol(agent?: BrowserContextOptions['agent']): channels.BrowserNewContextParams['agent'] {
+  if (!agent)
+    return undefined;
+  const secrets = agent.secrets ? Object.entries(agent.secrets).map(([name, value]) => ({ name, value })) : undefined;
+  return { ...agent, secrets };
 }
 
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {

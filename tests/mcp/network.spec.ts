@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse } from './fixtures';
 
 test('browser_network_requests', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/json')">Click me</button>
+    <img src="/image.png" />
   `, 'text/html');
 
   server.setContent('/json', JSON.stringify({ name: 'John Doe' }), 'application/json');
@@ -38,10 +39,24 @@ test('browser_network_requests', async ({ client, server }) => {
     },
   });
 
-  await expect.poll(() => client.callTool({
-    name: 'browser_network_requests',
-  })).toHaveResponse({
-    result: expect.stringContaining(`[GET] ${`${server.PREFIX}/`} => [200] OK
-[GET] ${`${server.PREFIX}/json`} => [200] OK`),
-  });
+  {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+    }));
+    expect(response.result).not.toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
+    expect(response.result).toContain(`[GET] ${`${server.PREFIX}/json`} => [200] OK`);
+    expect(response.result).toContain(`[GET] ${`${server.PREFIX}/image.png`} => [404]`);
+  }
+
+  {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+      arguments: {
+        includeStatic: true,
+      },
+    }));
+    expect(response.result).toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
+    expect(response.result).toContain(`[GET] ${`${server.PREFIX}/json`} => [200] OK`);
+    expect(response.result).toContain(`[GET] ${`${server.PREFIX}/image.png`} => [404]`);
+  }
 });

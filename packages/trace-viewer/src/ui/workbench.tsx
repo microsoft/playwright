@@ -21,7 +21,7 @@ import { CallTab } from './callTab';
 import { LogTab } from './logTab';
 import { ErrorsTab, useErrorsTabModel } from './errorsTab';
 import { ConsoleTab, useConsoleTabModel } from './consoleTab';
-import type * as modelUtil from './modelUtil';
+import type { TraceModel, SourceLocation, ActionTraceEventInContext, SourceModel } from '@isomorphic/trace/traceModel';
 import { NetworkTab, useNetworkTabModel } from './networkTab';
 import { SnapshotTabsView } from './snapshotTab';
 import { SourceTab } from './sourceTab';
@@ -48,16 +48,16 @@ import { TraceModelContext } from './traceModelContext';
 import type { TreeState } from '@web/components/treeView';
 
 export type WorkbenchProps = {
-  model: modelUtil.MultiTraceModel | undefined;
+  model: TraceModel | undefined;
   showSourcesFirst?: boolean;
   rootDir?: string;
-  fallbackLocation?: modelUtil.SourceLocation;
+  fallbackLocation?: SourceLocation;
   isLive?: boolean;
   hideTimeline?: boolean;
   status?: UITestStatus;
   annotations?: TestAnnotation[];
   inert?: boolean;
-  onOpenExternally?: (location: modelUtil.SourceLocation) => void;
+  onOpenExternally?: (location: SourceLocation) => void;
   revealSource?: boolean;
   testRunMetadata?: MetadataWithCommitInfo;
 };
@@ -95,7 +95,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [highlightedElement, setHighlightedElement] = React.useState<HighlightedElement>({ lastEdited: 'none' });
   const [isInspecting, setIsInspectingState] = React.useState(false);
 
-  const setSelectedAction = React.useCallback((action: modelUtil.ActionTraceEventInContext | undefined) => {
+  const setSelectedAction = React.useCallback((action: ActionTraceEventInContext | undefined) => {
     setSelectedCallId(action?.callId);
     setRevealedErrorKey(undefined);
   }, [setSelectedCallId, setRevealedErrorKey]);
@@ -107,11 +107,11 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     return actions?.find(a => a.callId === highlightedCallId);
   }, [actions, highlightedCallId]);
 
-  const setHighlightedAction = React.useCallback((highlightedAction: modelUtil.ActionTraceEventInContext | undefined) => {
+  const setHighlightedAction = React.useCallback((highlightedAction: ActionTraceEventInContext | undefined) => {
     setHighlightedCallId(highlightedAction?.callId);
   }, [setHighlightedCallId]);
 
-  const sources = React.useMemo(() => model?.sources || new Map<string, modelUtil.SourceModel>(), [model]);
+  const sources = React.useMemo(() => model?.sources || new Map<string, SourceModel>(), [model]);
 
   React.useEffect(() => {
     setSelectedTime(undefined);
@@ -146,7 +146,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     return highlightedAction || selectedAction;
   }, [selectedAction, highlightedAction]);
 
-  const onActionSelected = React.useCallback((action: modelUtil.ActionTraceEventInContext) => {
+  const onActionSelected = React.useCallback((action: ActionTraceEventInContext) => {
     setSelectedAction(action);
     setHighlightedAction(undefined);
   }, [setSelectedAction, setHighlightedAction]);

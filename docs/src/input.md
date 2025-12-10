@@ -33,7 +33,7 @@ page.getByRole(AriaRole.TEXTBOX).fill("Peter");
 page.getByLabel("Birth date").fill("2020-02-02");
 
 // Time input
-page.getByLabel("Appointment time").fill("13-15");
+page.getByLabel("Appointment time").fill("13:15");
 
 // Local datetime input
 page.getByLabel("Local time").fill("2020-03-02T05:15");
@@ -101,7 +101,7 @@ await page.getByLabel('XL').check();
 page.getByLabel("I agree to the terms above").check();
 
 // Assert the checked state
-assertTrue(page.getByLabel("Subscribe to newsletter")).isChecked();
+assertThat(page.getByLabel("Subscribe to newsletter")).isChecked();
 
 // Select the radio button
 page.getByLabel("XL").check();

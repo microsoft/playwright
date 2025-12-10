@@ -157,8 +157,8 @@ export class TestServerDispatcher implements TestServerInterface {
   async runGlobalSetup(params: Parameters<TestServerInterface['runGlobalSetup']>[0]): ReturnType<TestServerInterface['runGlobalSetup']> {
     const { reporter, report } = await this._collectingReporter();
     this._globalSetupReport = report;
-    const { status } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
-    return { report, status };
+    const { status, env } = await this._testRunner.runGlobalSetup([reporter, new ListReporter()]);
+    return { report, status, env };
   }
 
   async runGlobalTeardown() {

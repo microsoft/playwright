@@ -819,7 +819,7 @@ await page
 page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasText("Product 2"))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart"))
+               new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
@@ -858,7 +858,7 @@ page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions()
         .setHasText(Pattern.compile("Product 2")))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart"))
+               new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
@@ -910,7 +910,7 @@ expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have
 
 ```csharp
 // 5 in-stock items
-await Expect(Page.getByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
+await Expect(Page.GetByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
     .ToHaveCountAsync(5);
 ```
 
@@ -942,10 +942,10 @@ await page
 ```java
 page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions()
-        .setHas(page.GetByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
+        .setHas(page.getByRole(AriaRole.HEADING, new Page.GetByRoleOptions()
         .setName("Product 2"))))
     .getByRole(AriaRole.BUTTON,
-               new Page.GetByRoleOptions().setName("Add to cart"))
+               new Locator.GetByRoleOptions().setName("Add to cart"))
     .click();
 ```
 
@@ -986,7 +986,7 @@ await expect(page
 assertThat(page
     .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions()
-        .setHas(page.GetByRole(AriaRole.HEADING,
+        .setHas(page.getByRole(AriaRole.HEADING,
                                new Page.GetByRoleOptions().setName("Product 2")))))
     .hasCount(1);
 ```
@@ -1611,7 +1611,7 @@ rowLocator
         .setHas(page.getByRole(
             AriaRole.BUTTON,
             new Page.GetByRoleOptions().setName("Say goodbye"))))
-    .screenshot(new Page.ScreenshotOptions().setPath("screenshot.png"));
+    .screenshot(new Locator.ScreenshotOptions().setPath(Paths.get("screenshot.png")));
 ```
 
 ```csharp

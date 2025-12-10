@@ -46,7 +46,7 @@ const reporters = () => {
   const result: ReporterDescription[] = process.env.CI ? [
     ['dot'],
     ['json', { outputFile: path.join(outputDir, 'report.json') }],
-    ['blob', { fileName: `${process.env.PWTEST_BOT_NAME}.zip` }],
+    ['blob'],
   ] : [
     ['html', { open: 'on-failure', title: 'Playwright Library Tests' }]
   ];
@@ -100,6 +100,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
   reporter: reporters(),
+  tag: process.env.PW_TAG,
   projects: [],
   use: {
     connectOptions,
@@ -112,7 +113,6 @@ for (const browserName of browserNames) {
   const executablePath = getExecutablePath(browserName);
   if (executablePath && !process.env.TEST_WORKER_INDEX)
     console.error(`Using executable at ${executablePath}`);
-  const devtools = process.env.DEVTOOLS === '1';
   const testIgnore: RegExp[] = browserNames.filter(b => b !== browserName).map(b => new RegExp(b));
 
   const projectTemplate: typeof config.projects[0] = {
@@ -126,7 +126,6 @@ for (const browserName of browserNames) {
       video: video ? 'on' : undefined,
       launchOptions: {
         executablePath,
-        devtools
       },
       trace: trace ? 'on' : undefined,
     },
@@ -143,17 +142,20 @@ for (const browserName of browserNames) {
     }
   };
 
-  config.projects.push({
+  const libraryProject = {
     name: `${browserName}-library`,
     testDir: path.join(testDir, 'library'),
     ...projectTemplate,
-  });
+  };
+  config.projects.push(libraryProject);
 
-  config.projects.push({
+  const pageProject = {
     name: `${browserName}-page`,
     testDir: path.join(testDir, 'page'),
     ...projectTemplate,
-  });
+  };
+
+  config.projects.push(pageProject);
 }
 
 export default config;

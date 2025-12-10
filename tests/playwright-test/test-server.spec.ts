@@ -64,11 +64,11 @@ class TestServerConnectionUnderTest extends TestServerConnection {
   }
 }
 
-const test = baseTest.extend<{ startTestServer: () => Promise<TestServerConnectionUnderTest> }>({
+const test = baseTest.extend<{ startTestServer: (options?: { env?: NodeJS.ProcessEnv }) => Promise<TestServerConnectionUnderTest> }>({
   startTestServer: async ({ startCLICommand }, use, testInfo) => {
     let testServerProcess: TestChildProcess | undefined;
-    await use(async () => {
-      testServerProcess = await startCLICommand({}, 'test-server');
+    await use(async options => {
+      testServerProcess = await startCLICommand({}, 'test-server', [], {}, options?.env);
       await testServerProcess.waitForOutput('Listening on');
       const line = testServerProcess.output.split('\n').find(l => l.includes('Listening on'));
       const wsEndpoint = line!.split(' ')[2];
@@ -327,4 +327,38 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
 
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
+});
+
+test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'playwright.config.ts': `
+      export default { globalSetup: './global-setup.ts' };
+    `,
+    'global-setup.ts': `
+      export default async function() {
+        delete process.env.MAGIC_BEFORE;
+        process.env.MAGIC_AFTER = '43';
+      }
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {});
+    `,
+  });
+
+  const testServerConnection = await startTestServer({ env: { 'MAGIC_BEFORE': '42' } });
+  await testServerConnection.initialize({});
+
+  const result1 = await testServerConnection.runGlobalSetup({});
+  expect(result1.status).toBe('passed');
+  expect(result1.env).toContainEqual(['MAGIC_BEFORE', null]);
+  expect(result1.env).toContainEqual(['MAGIC_AFTER', '43']);
+
+  await testServerConnection.runGlobalTeardown({});
+
+  // Second time in the same process still works.
+  const result2 = await testServerConnection.runGlobalSetup({});
+  expect(result2.status).toBe('passed');
+  expect(result2.env).toContainEqual(['MAGIC_BEFORE', null]);
+  expect(result2.env).toContainEqual(['MAGIC_AFTER', '43']);
 });

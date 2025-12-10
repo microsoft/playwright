@@ -21,7 +21,7 @@ import { assert, timeOrigin } from 'playwright-core/lib/utils';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
-import type { ProtocolResponse } from '../common/process';
+import type { ProtocolRequest, ProtocolResponse } from '../common/process';
 
 export type ProcessExitData = {
   unexpectedly: boolean;
@@ -40,6 +40,7 @@ export class ProcessHost extends EventEmitter {
   private _processName: string;
   private _producedEnv: Record<string, string | undefined> = {};
   private _extraEnv: Record<string, string | undefined>;
+  private _requestHandlers = new Map<string, (params: any) => Promise<any>>();
 
   constructor(runnerScript: string, processName: string, env: Record<string, string | undefined>) {
     super();
@@ -94,6 +95,18 @@ export class ProcessHost extends EventEmitter {
         } else {
           this.emit(method!, params);
         }
+      } else if (message.method === '__request__') {
+        const { id, method, params } = message.params as ProtocolRequest;
+        const handler = this._requestHandlers.get(method);
+        if (!handler) {
+          this.send({ method: '__response__', params: { id, error: { message: 'Unknown method' } } });
+        } else {
+          handler(params).then(result => {
+            this.send({ method: '__response__', params: { id, result } });
+          }).catch(error => {
+            this.send({ method: '__response__', params: { id, error: { message: error.message } } });
+          });
+        }
       } else {
         this.emit(message.method!, message.params);
       }
@@ -142,6 +155,10 @@ export class ProcessHost extends EventEmitter {
   }
 
   protected async onExit() {
+  }
+
+  onRequest(method: string, handler: (params?: any) => Promise<any>) {
+    this._requestHandlers.set(method, handler);
   }
 
   async stop() {

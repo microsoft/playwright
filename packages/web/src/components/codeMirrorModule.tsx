@@ -28,6 +28,11 @@ import 'codemirror/addon/display/placeholder';
 import 'codemirror/addon/mode/simple';
 import 'codemirror/addon/edit/matchbrackets';
 import 'codemirror/addon/edit/closebrackets';
+import 'codemirror/addon/search/search';
+import 'codemirror/addon/search/searchcursor';
+import 'codemirror/addon/search/jump-to-line';
+import 'codemirror/addon/dialog/dialog';
+import 'codemirror/addon/dialog/dialog.css';
 
 export type CodeMirror = typeof codemirrorType;
 export default codemirror;

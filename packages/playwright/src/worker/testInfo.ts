@@ -24,12 +24,13 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
+import { findTestEndLocation } from '../transform/babelHighlightUtils';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
 import type { FullConfig, Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
-import type { AttachmentPayload, StepBeginPayload, StepEndPayload, TestInfoErrorImpl, TestPausedPayload, WorkerInitParams } from '../common/ipc';
+import type * as ipc from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
 
@@ -57,7 +58,7 @@ export interface TestStepInternal extends TestStepData {
   boxedStack?: StackFrame[];
   steps: TestStepInternal[];
   endWallTime?: number;
-  error?: TestInfoErrorImpl;
+  error?: ipc.TestInfoErrorImpl;
 }
 
 type SnapshotNames = {
@@ -65,11 +66,17 @@ type SnapshotNames = {
   lastNamedSnapshotIndex: { [key: string]: number };
 };
 
+type TestInfoCallbacks = {
+  onStepBegin?: (payload: ipc.StepBeginPayload) => void;
+  onStepEnd?: (payload: ipc.StepEndPayload) => void;
+  onAttach?: (payload: ipc.AttachmentPayload) => void;
+  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
+  onCloneStorage?: (payload: ipc.CloneStoragePayload) => Promise<string>;
+  onUpstreamStorage?: (payload: ipc.UpstreamStoragePayload) => Promise<void>;
+};
+
 export class TestInfoImpl implements TestInfo {
-  private _onStepBegin: (payload: StepBeginPayload) => void;
-  private _onStepEnd: (payload: StepEndPayload) => void;
-  private _onAttach: (payload: AttachmentPayload) => void;
-  private _onTestPaused: (payload: TestPausedPayload) => void;
+  private _callbacks: TestInfoCallbacks;
   private _snapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   private _ariaSnapshotNames: SnapshotNames = { lastAnonymousSnapshotIndex: 0, lastNamedSnapshotIndex: {} };
   readonly _timeoutManager: TimeoutManager;
@@ -120,15 +127,15 @@ export class TestInfoImpl implements TestInfo {
   snapshotSuffix: string = '';
   readonly outputDir: string;
   readonly snapshotDir: string;
-  errors: TestInfoErrorImpl[] = [];
+  errors: ipc.TestInfoErrorImpl[] = [];
   readonly _attachmentsPush: (...items: TestInfo['attachments']) => number;
-  private _workerParams: WorkerInitParams;
+  private _workerParams: ipc.WorkerInitParams;
 
-  get error(): TestInfoErrorImpl | undefined {
+  get error(): ipc.TestInfoErrorImpl | undefined {
     return this.errors[0];
   }
 
-  set error(e: TestInfoErrorImpl | undefined) {
+  set error(e: ipc.TestInfoErrorImpl | undefined) {
     if (e === undefined)
       throw new Error('Cannot assign testInfo.error undefined value!');
     this.errors[0] = e;
@@ -158,19 +165,13 @@ export class TestInfoImpl implements TestInfo {
   constructor(
     configInternal: FullConfigInternal,
     projectInternal: FullProjectInternal,
-    workerParams: WorkerInitParams,
+    workerParams: ipc.WorkerInitParams,
     test: TestCase | undefined,
     retry: number,
-    onStepBegin: (payload: StepBeginPayload) => void,
-    onStepEnd: (payload: StepEndPayload) => void,
-    onAttach: (payload: AttachmentPayload) => void,
-    onTestPaused: (payload: TestPausedPayload) => void,
+    callbacks: TestInfoCallbacks
   ) {
     this.testId = test?.id ?? '';
-    this._onStepBegin = onStepBegin;
-    this._onStepEnd = onStepEnd;
-    this._onAttach = onAttach;
-    this._onTestPaused = onTestPaused;
+    this._callbacks = callbacks;
     this._startTime = monotonicTime();
     this._startWallTime = Date.now();
     this._requireFile = test?._requireFile ?? '';
@@ -338,7 +339,7 @@ export class TestInfoImpl implements TestInfo {
         }
 
         if (!step.group) {
-          const payload: StepEndPayload = {
+          const payload: ipc.StepEndPayload = {
             testId: this.testId,
             stepId,
             wallTime: step.endWallTime,
@@ -346,7 +347,7 @@ export class TestInfoImpl implements TestInfo {
             suggestedRebaseline: result.suggestedRebaseline,
             annotations: step.info.annotations,
           };
-          this._onStepEnd(payload);
+          this._callbacks.onStepEnd?.(payload);
         }
         if (step.group !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
@@ -360,7 +361,7 @@ export class TestInfoImpl implements TestInfo {
     this._stepMap.set(stepId, step);
 
     if (!step.group) {
-      const payload: StepBeginPayload = {
+      const payload: ipc.StepBeginPayload = {
         testId: this.testId,
         stepId,
         parentStepId: parentStep ? parentStep.stepId : undefined,
@@ -369,7 +370,7 @@ export class TestInfoImpl implements TestInfo {
         wallTime: Date.now(),
         location: step.location,
       };
-      this._onStepBegin(payload);
+      this._callbacks.onStepBegin?.(payload);
     }
     if (step.group !== 'internal') {
       this._tracing.appendBeforeActionForStep({
@@ -464,10 +465,33 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
-      this._onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] });
-      await this._interruptedPromise;
+      const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
+      const step = this._addStep({ category: 'hook', title: 'Paused', location });
+      const result = await Promise.race([
+        this._callbacks.onTestPaused!({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
+        this._interruptedPromise.then(() => 'interrupted' as const),
+      ]);
+      step.complete({});
+      if (result !== 'interrupted') {
+        if (result.action === 'abort')
+          this._interrupt();
+        if (result.action === undefined)
+          await this._interruptedPromise;
+      }
     }
     await this._onDidFinishTestFunctionCallback?.();
+  }
+
+  private _errorLocation(): Location | undefined {
+    if (this.error?.stack)
+      return filteredStackTrace(this.error.stack.split('\n'))[0];
+  }
+
+  private async _testEndLocation(): Promise<Location | undefined> {
+    try {
+      const source = await fs.promises.readFile(this.file, 'utf-8');
+      return findTestEndLocation(source, { file: this.file, line: this.line, column: this.column });
+    } catch {}
   }
 
   // ------------ TestInfo methods ------------
@@ -499,7 +523,7 @@ export class TestInfoImpl implements TestInfo {
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
-    this._onAttach({
+    this._callbacks.onAttach?.({
       testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
@@ -634,6 +658,14 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
+  }
+
+  async _cloneStorage(storageFile: string): Promise<string | undefined> {
+    return await this._callbacks.onCloneStorage?.({ storageFile });
+  }
+
+  async _upstreamStorage(workerFile: string) {
+    await this._callbacks.onUpstreamStorage?.({ workerFile });
   }
 }
 

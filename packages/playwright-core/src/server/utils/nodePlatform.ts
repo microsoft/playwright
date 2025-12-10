@@ -25,6 +25,7 @@ import { colors } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
+import { zodToJsonSchema } from '../../mcpBundle';
 
 import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';
@@ -122,6 +123,8 @@ export const nodePlatform: Platform = {
   streamWritable: (channel: channels.WritableStreamChannel) => {
     return new WritableStreamImpl(channel);
   },
+
+  zodToJsonSchema,
 
   zones: {
     current: () => new NodeZone(currentZone()),

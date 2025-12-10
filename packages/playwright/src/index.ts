@@ -23,7 +23,6 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler } from './mcp/test/browserBackend';
-import { performTask } from './agents/performTask';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -58,7 +57,6 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _combinedContextOptions: BrowserContextOptions,
   _setupContextOptions: void;
   _setupArtifacts: void;
-  _perform: (task: string) => Promise<void>;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
 };
 
@@ -127,6 +125,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true, box: true }],
+  agent: [({ contextOptions }, use) => use(contextOptions.agent), { option: true, box: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true, box: true }],
   colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true, box: true }],
   deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true, box: true }],
@@ -157,6 +156,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
   _combinedContextOptions: [async ({
     acceptDownloads,
+    agent,
     bypassCSP,
     clientCertificates,
     colorScheme,
@@ -179,10 +179,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     baseURL,
     contextOptions,
     serviceWorkers,
-  }, use) => {
+  }, use, testInfo) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
+    if (agent !== undefined)
+      options.agent = agent;
     if (bypassCSP !== undefined)
       options.bypassCSP = bypassCSP;
     if (colorScheme !== undefined)
@@ -225,10 +227,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
+
+    const workerFile = agent?.cacheFile && agent.cacheMode !== 'ignore' ? await (testInfo as TestInfoImpl)._cloneStorage(agent.cacheFile) : undefined;
+    if (agent && workerFile) {
+      options.agent = {
+        ...agent,
+        cacheFile: workerFile,
+      };
+    }
+
     await use({
       ...contextOptions,
       ...options,
     });
+
+    if (workerFile)
+      await (testInfo as TestInfoImpl)._upstreamStorage(workerFile);
   }, { box: true }],
 
   _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
@@ -459,12 +473,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     } else {
       await request.dispose();
     }
-  },
-
-  _perform: async ({ context }, use) => {
-    await use(async (task: string) => {
-      await performTask(context, task);
-    });
   },
 });
 

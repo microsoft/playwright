@@ -23,7 +23,7 @@ import { CopyToClipboard } from './copyToClipboard';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { PlaceholderPanel } from './placeholderPanel';
-import type { ActionTraceEventInContext } from './modelUtil';
+import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
 import { renderTitleForCall } from './actionList';
 
 export const CallTab: React.FunctionComponent<{

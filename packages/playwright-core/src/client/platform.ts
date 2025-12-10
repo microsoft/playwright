@@ -59,6 +59,7 @@ export type Platform = {
   streamFile: (path: string, writable: Writable) => Promise<void>,
   streamReadable: (channel: channels.StreamChannel) => Readable,
   streamWritable: (channel: channels.WritableStreamChannel) => Writable,
+  zodToJsonSchema: (schema: any) => any,
   zones: { empty: Zone, current: () => Zone; };
 };
 
@@ -117,6 +118,10 @@ export const emptyPlatform: Platform = {
 
   streamWritable: (channel: channels.WritableStreamChannel) => {
     throw new Error('Streams are not available');
+  },
+
+  zodToJsonSchema: (schema: any) => {
+    throw new Error('Zod is not available');
   },
 
   zones: { empty: noopZone, current: () => noopZone },

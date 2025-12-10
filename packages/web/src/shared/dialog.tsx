@@ -48,7 +48,7 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   const [_, setRecalculateDimensionsCount] = React.useState(0);
   const [dialogMeasure] = useMeasureForRef(dialogRef);
   const [anchorMeasure, recalculateAnchorMeasure] = useMeasureForRef(anchor);
-  const position = dialogPosition(dialogMeasure, anchorMeasure, verticalOffset);
+  const position = anchor ? dialogPosition(dialogMeasure, anchorMeasure, verticalOffset) : undefined;
 
   React.useEffect(() => {
     const onClick = (event: MouseEvent) => {
@@ -106,10 +106,10 @@ export const Dialog: React.FC<React.PropsWithChildren<DialogProps>> = ({
   return (
     <dialog ref={dialogRef} style={{
       position: 'fixed',
-      margin: 0,
+      margin: position ? 0 : undefined,
       zIndex: 110,  // on top of split view resizer
-      top: position.top,
-      left: position.left,
+      top: position?.top,
+      left: position?.left,
       minWidth: minWidth || 0,
       ...externalStyle,
     }} className={className} data-testid={dataTestId}>

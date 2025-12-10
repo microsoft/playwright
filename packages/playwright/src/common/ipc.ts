@@ -88,7 +88,20 @@ export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
+  stepId: string;
   errors: TestInfoErrorImpl[];
+};
+
+export type ResumePayload = {
+  action?: 'continue' | 'abort';
+};
+
+export type CloneStoragePayload = {
+  storageFile: string;
+};
+
+export type UpstreamStoragePayload = {
+  workerFile: string;
 };
 
 export type CustomMessageRequestPayload = {

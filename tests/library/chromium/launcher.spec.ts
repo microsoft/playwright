@@ -34,24 +34,6 @@ it('should not throw with remote-debugging-port argument', async ({ browserType,
   await browser.close();
 });
 
-it('should open devtools when "devtools: true" option is given', async ({ browserType, mode, platform, channel }) => {
-  it.skip(mode !== 'default' || platform === 'win32' || !!channel);
-
-  let devtoolsCallback;
-  const devtoolsPromise = new Promise(f => devtoolsCallback = f);
-  const __testHookForDevTools = devtools => devtools.__testHookOnBinding = parsed => {
-    if (parsed.method === 'getPreferences')
-      devtoolsCallback();
-  };
-  const browser = await browserType.launch({ headless: false, devtools: true, __testHookForDevTools } as any);
-  const context = await browser.newContext();
-  await Promise.all([
-    devtoolsPromise,
-    context.newPage()
-  ]);
-  await browser.close();
-});
-
 it('should not create pages automatically', async ({ browserType }) => {
   const browser = await browserType.launch();
   const browserSession = await browser.newBrowserCDPSession();

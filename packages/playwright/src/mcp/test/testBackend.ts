@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+import { z as zod } from 'playwright-core/lib/mcpBundle';
+
 import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
 import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
 import { browserTools } from '../browser/tools';
-import { z as zod } from  '../sdk/bundle';
 
 import type { TestTool } from './testTool';
 import type { Tool as BrowserTool } from '../browser/tools/tool';

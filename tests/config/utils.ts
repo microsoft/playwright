@@ -16,12 +16,12 @@
 
 import type { Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/server/utils/zipFile';
-import type { TraceModelBackend } from '../../packages/trace-viewer/src/sw/traceModel';
+import type { TraceLoaderBackend } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
 import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
-import { TraceModel } from '../../packages/trace-viewer/src/sw/traceModel';
-import type { ActionTreeItem } from '../../packages/trace-viewer/src/ui/modelUtil';
-import { buildActionTree, MultiTraceModel } from '../../packages/trace-viewer/src/ui/modelUtil';
+import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
+import type { ActionTreeItem } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
+import { buildActionTree, TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
 
@@ -159,11 +159,11 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   };
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], titles: string[], traceModel: TraceModel, model: MultiTraceModel, actionTree: string[], errors: string[] }> {
+export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], titles: string[], loader: TraceLoader, model: TraceModel, actionTree: string[], errors: string[] }> {
   const backend = new TraceBackend(file);
-  const traceModel = new TraceModel();
-  await traceModel.load(backend, () => {});
-  const model = new MultiTraceModel(file, traceModel.contextEntries);
+  const loader = new TraceLoader();
+  await loader.load(backend, () => {});
+  const model = new TraceModel(file, loader.contextEntries);
   const actions = model.filteredActions([]);
   const { rootItem } = buildActionTree(actions);
   const actionTree: string[] = [];
@@ -181,7 +181,7 @@ export async function parseTrace(file: string): Promise<{ resources: Map<string,
     events: model.events,
     errors: model.errors.map(e => e.message),
     model,
-    traceModel,
+    loader,
     actionTree,
   };
 }
@@ -211,7 +211,7 @@ const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(
 export function stripAnsi(str: string): string {
   return str.replace(ansiRegex, '');
 }
-class TraceBackend implements TraceModelBackend {
+class TraceBackend implements TraceLoaderBackend {
   private _fileName: string;
   private _entriesPromise: Promise<Map<string, Buffer>>;
   readonly entries = new Map<string, Buffer>();

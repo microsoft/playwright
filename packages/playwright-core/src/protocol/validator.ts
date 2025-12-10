@@ -506,7 +506,6 @@ scheme.BrowserTypeLaunchParams = tObject({
   timeout: tFloat,
   env: tOptional(tArray(tType('NameValue'))),
   headless: tOptional(tBoolean),
-  devtools: tOptional(tBoolean),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -536,7 +535,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   timeout: tFloat,
   env: tOptional(tArray(tType('NameValue'))),
   headless: tOptional(tBoolean),
-  devtools: tOptional(tBoolean),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -604,6 +602,13 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheFile: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
+  })),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
 });
@@ -696,6 +701,13 @@ scheme.BrowserNewContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheFile: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
+  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -767,6 +779,13 @@ scheme.BrowserNewContextForReuseParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheFile: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
+  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -883,6 +902,13 @@ scheme.BrowserContextInitializer = tObject({
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
     selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
     testIdAttributeName: tOptional(tString),
+    agent: tOptional(tObject({
+      provider: tString,
+      model: tString,
+      cacheFile: tOptional(tString),
+      cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+      secrets: tOptional(tArray(tType('NameValue'))),
+    })),
   }),
 });
 scheme.BrowserContextBindingCallEvent = tObject({
@@ -1484,6 +1510,20 @@ scheme.PageUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
+scheme.PagePerformParams = tObject({
+  task: tString,
+  key: tOptional(tString),
+  maxTurns: tOptional(tInt),
+});
+scheme.PagePerformResult = tOptional(tObject({}));
+scheme.PageExtractParams = tObject({
+  query: tString,
+  schema: tAny,
+  maxTurns: tOptional(tInt),
+});
+scheme.PageExtractResult = tObject({
+  result: tAny,
+});
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,
@@ -2772,6 +2812,13 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
+  agent: tOptional(tObject({
+    provider: tString,
+    model: tString,
+    cacheFile: tOptional(tString),
+    cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
+    secrets: tOptional(tArray(tType('NameValue'))),
+  })),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({

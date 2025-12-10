@@ -4,6 +4,37 @@ title: "Release notes"
 toc_max_heading_level: 2
 ---
 
+## Version 1.57
+
+### Chrome for Testing
+
+Starting with this release, Playwright switches from Chromium, to using [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/) builds. Both headed and headless browsers are subject to this. Your tests should still be passing after upgrading to Playwright 1.57.
+
+We're expecting no functional changes to come from this switch. The biggest change is the new icon and title in your toolbar.
+
+![new and old logo](./images/cft-logo-change.png)
+
+If you still see an unexpected behaviour change, please [file an issue](https://github.com/microsoft/playwright/issues/new).
+
+On Arm64 Linux, Playwright continues to use Chromium.
+
+### Breaking Change
+
+After 3 years of being deprecated, we removed `page.accessibility()` from our API. Please use other libraries such as [Axe](https://www.deque.com/axe/) if you need to test page accessibility. See our Node.js [guide](https://playwright.dev/docs/accessibility-testing) for integration with Axe.
+
+### New APIs
+
+- [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForConsoleMessage`] can be used to wait for it.
+- [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`].
+- New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the target element.
+
+### Browser Versions
+
+- Chromium 143.0.7499.4
+- Mozilla Firefox 144.0.2
+- WebKit 26.0
+
+
 ## Version 1.56
 
 ### New APIs

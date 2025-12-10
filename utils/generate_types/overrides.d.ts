@@ -26,6 +26,11 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
   state?: 'visible'|'attached';
 };
 
+// @ts-ignore this will be any if zod is not installed
+type ZodTypeAny = import('zod').ZodTypeAny;
+// @ts-ignore this will be any if zod is not installed
+type ZodInfer<T extends ZodTypeAny> = import('zod').infer<T>;
+
 export interface Page {
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
   evaluate<R>(pageFunction: PageFunction<void, R>, arg?: any): Promise<R>;
@@ -72,6 +77,8 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
 }
 
 export interface Frame {

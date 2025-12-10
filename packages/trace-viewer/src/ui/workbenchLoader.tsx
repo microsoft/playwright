@@ -15,7 +15,7 @@
 */
 
 import * as React from 'react';
-import { MultiTraceModel } from './modelUtil';
+import { TraceModel } from '@isomorphic/trace/traceModel';
 import './workbenchLoader.css';
 import { Workbench } from './workbench';
 import { TestServerConnection, WebSocketTestServerTransport } from '@testIsomorphic/testServerConnection';
@@ -28,7 +28,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
   const [isServer, setIsServer] = React.useState<boolean>(false);
   const [traceURL, setTraceURL] = React.useState<string>();
   const [uploadedTraceName, setUploadedTraceName] = React.useState<string>();
-  const [model, setModel] = React.useState<MultiTraceModel>(emptyModel);
+  const [model, setModel] = React.useState<TraceModel>(emptyModel);
   const [progress, setProgress] = React.useState<{ done: number, total: number }>({ done: 0, total: 0 });
   const [dragOver, setDragOver] = React.useState<boolean>(false);
   const [processingErrorMessage, setProcessingErrorMessage] = React.useState<string | null>(null);
@@ -134,7 +134,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
       return error;
     }
     const contextEntries = await response.json();
-    const model = new MultiTraceModel(traceURL, contextEntries);
+    const model = new TraceModel(traceURL, contextEntries);
     setProgress({ done: 0, total: 0 });
     setProcessingErrorMessage(null);
     setModel(model);
@@ -186,7 +186,11 @@ export const WorkbenchLoader: React.FunctionComponent<{
 
   const showFileUploadDropArea = !!(!isServer && !dragOver && !fileForLocalModeError && (!traceURL || processingErrorMessage));
 
-  return <div className='vbox workbench-loader' onDragOver={event => { event.preventDefault(); setDragOver(true); }}>
+  return <div className='vbox workbench-loader' onDragOver={event => {
+    event.preventDefault();
+    if (event.dataTransfer.types.includes('Files'))
+      setDragOver(true);
+  }}>
     <div className='hbox header' {...(showFileUploadDropArea ? { inert: true } : {})}>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
@@ -240,4 +244,4 @@ export const WorkbenchLoader: React.FunctionComponent<{
   </div>;
 };
 
-export const emptyModel = new MultiTraceModel('', []);
+export const emptyModel = new TraceModel('', []);

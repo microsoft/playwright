@@ -207,5 +207,21 @@ for (const useIntermediateMergeReport of [false, true] as const) {
         expect(text).toContain(`Error Context: ${path.join('test-results', 'a-one', 'error-context.md')}`);
       expect(result.exitCode).toBe(1);
     });
+
+    test('should not include global tag in the title', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          export default { tag: '@global' };
+        `,
+        'a.test.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {
+          });
+        `,
+      }, { reporter: 'line' });
+      expect(result.output).toContain('[1/1] a.test.ts:3:15 › passes\n');
+      expect(result.output).not.toContain('@global');
+      expect(result.exitCode).toBe(0);
+    });
   });
 }

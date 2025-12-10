@@ -94,7 +94,10 @@ it('page.close should work with window.close', async function({ page }) {
   await closedPromise;
 });
 
-it('page.frame should respect name', async function({ page }) {
+it('page.frame should respect name', async function({ page, browserName, channel }) {
+  it.skip(browserName === 'firefox' && channel?.startsWith('moz-firefox'), 'page.frame({ name }) is racy with BiDi');
+  it.skip(channel?.startsWith('bidi-chrom'), 'page.frame({ name }) is racy with BiDi');
+
   await page.setContent(`<iframe name=target></iframe>`);
   expect(page.frame({ name: 'bogus' })).toBe(null);
   const frame = page.frame({ name: 'target' });

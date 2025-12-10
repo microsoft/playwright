@@ -23,7 +23,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
 import type { Config } from '../../packages/playwright/src/mcp/config';
-import { ListRootsRequestSchema } from 'packages/playwright/lib/mcp/sdk/bundle';
+import { ListRootsRequestSchema } from 'playwright-core/lib/mcpBundle';
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({
   serverEndpoint: async ({ mcpHeadless }, use, testInfo) => {

@@ -190,6 +190,24 @@ This makes `hostmachine` point to the host's localhost. Your tests should use `h
 When running tests remotely, ensure the Playwright version in your tests matches the version running in the Docker container.
 :::
 
+### Connecting using noVNC and GitHub Codespaces
+
+For Docker and GitHub Codespaces environments, you can view and generate tests using the `noVNC` viewer built into the Docker image. In order for the VNC webviewer to be accessible outside of the container, you can enable the `desktop-lite` feature and specify the `webPort` in your `.devcontainer/devcontainer.json` file: 
+
+```json
+{
+  "image": "mcr.microsoft.com/playwright:v1.57.0",
+  "forwardPorts": [6080],
+  "features": {
+    "desktop-lite": {
+      "webPort": "6080"
+    }
+  }
+}
+```
+
+Once this is enabled you can open the port specified in a new browser tab and you will have access to the `noVNC` web viewer. This will enable you to record tests, pick selectors, and use codegen directly on your container.
+
 ## Image tags
 
 See [all available image tags].

@@ -361,7 +361,7 @@ function toBidiSameSite(sameSite?: 'Strict' | 'Lax' | 'None'): bidi.Network.Same
   return bidi.Network.SameSite.None;
 }
 
-function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: string | null, eventInitiatorType: string | undefined): string {
+function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: string | null, eventInitiatorType: string | undefined): network.ResourceType {
   switch (requestDestination) {
     case 'audio': return 'media';
     case 'audioworklet': return 'script';
@@ -370,7 +370,7 @@ function resourceTypeFromBidi(requestDestination: string, requestInitiatorType: 
     case 'frame': return 'document';
     case 'iframe': return 'document';
     case 'image': return 'image';
-    case 'object': return 'object';
+    case 'object': return 'other';
     case 'paintworklet': return 'script';
     case 'script': return 'script';
     case 'serviceworker': return 'script';

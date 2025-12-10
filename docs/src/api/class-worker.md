@@ -130,6 +130,25 @@ Performs action and waits for the Worker to close.
 ### param: Worker.waitForClose.callback = %%-java-wait-for-event-callback-%%
 * since: v1.9
 
+## async method: Worker.waitForConsoleMessage
+* since: v1.57
+* langs: java
+- returns: <[ConsoleMessage]>
+
+Performs action and waits for a console message.
+
+### option: Worker.waitForConsoleMessage.predicate
+* since: v1.57
+- `predicate` <[function]\([ConsoleMessage]\):[boolean]>
+
+Receives the [ConsoleMessage] object and resolves to true when the waiting should resolve.
+
+### option: Worker.waitForConsoleMessage.timeout = %%-wait-for-event-timeout-%%
+* since: v1.57
+
+### param: Worker.waitForConsoleMessage.callback = %%-java-wait-for-event-callback-%%
+* since: v1.57
+
 ## async method: Worker.waitForEvent
 * since: v1.57
 * langs: js, python

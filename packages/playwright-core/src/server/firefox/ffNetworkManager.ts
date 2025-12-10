@@ -165,7 +165,7 @@ export class FFNetworkManager {
   }
 }
 
-const causeToResourceType: {[key: string]: string} = {
+const causeToResourceType: {[key: string]: network.ResourceType} = {
   TYPE_INVALID: 'other',
   TYPE_OTHER: 'other',
   TYPE_SCRIPT: 'script',
@@ -183,15 +183,15 @@ const causeToResourceType: {[key: string]: string} = {
   TYPE_FONT: 'font',
   TYPE_MEDIA: 'media',
   TYPE_WEBSOCKET: 'websocket',
-  TYPE_CSP_REPORT: 'other',
+  TYPE_CSP_REPORT: 'cspreport',
   TYPE_XSLT: 'other',
-  TYPE_BEACON: 'other',
+  TYPE_BEACON: 'beacon',
   TYPE_FETCH: 'fetch',
   TYPE_IMAGESET: 'image',
   TYPE_WEB_MANIFEST: 'manifest',
 };
 
-const internalCauseToResourceType: {[key: string]: string} = {
+const internalCauseToResourceType: {[key: string]: network.ResourceType} = {
   TYPE_INTERNAL_EVENTSOURCE: 'eventsource',
 };
 

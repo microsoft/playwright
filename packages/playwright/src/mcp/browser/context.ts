@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { selectors } from 'playwright-core';
@@ -172,7 +171,6 @@ export class Context {
       await close(async () => {
         for (const video of videos) {
           const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });
-          await fs.promises.mkdir(path.dirname(name), { recursive: true });
           const p = await video.path();
           // video.saveAs() does not work for persistent contexts.
           if (fs.existsSync(p)) {

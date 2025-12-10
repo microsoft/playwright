@@ -20,7 +20,7 @@ import * as React from 'react';
 import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
-import type { ActionTraceEventInContext, MultiTraceModel } from './modelUtil';
+import type { ActionTraceEventInContext, TraceModel } from '@isomorphic/trace/traceModel';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { Entry } from '@trace/har';
@@ -40,7 +40,7 @@ type TimelineBar = {
 };
 
 export const Timeline: React.FunctionComponent<{
-  model: MultiTraceModel | undefined,
+  model: TraceModel | undefined,
   consoleEntries: ConsoleEntry[] | undefined,
   networkResources: Entry[] | undefined,
   boundaries: Boundaries,

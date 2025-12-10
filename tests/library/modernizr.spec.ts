@@ -126,7 +126,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.mediastream = false;
     if (headless)
       expected.todataurlwebp = true;
-    expected.hairline = false;
 
     // GHA
     delete actual.variablefonts;
@@ -141,7 +140,6 @@ it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsSe
     expected.todataurlwebp = true;
     expected.webaudio = false;
     expected.gamepads = false;
-    expected.hairline = false;
 
     delete expected.datalistelem;
 

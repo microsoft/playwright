@@ -281,7 +281,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!(this._context instanceof BrowserContext))
       return;
     for (const page of this._context.pages())
-      page.setScreencastOptions(null);
+      page.screencast.setOptions(null);
   }
 
   private _allocateNewTraceFile(state: RecordingState) {
@@ -440,7 +440,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createBeforeActionTraceEvent(metadata, this._currentGroupId());
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
     event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
@@ -454,7 +454,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
-    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
     event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
@@ -479,7 +479,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
       return;
-    sdkObject.attribution.page?.temporarilyDisableTracingScreencastThrottling();
+    sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
     event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
@@ -590,7 +590,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _startScreencastInPage(page: Page) {
-    page.setScreencastOptions(kScreencastOptions);
+    page.screencast.setOptions(kScreencastOptions);
     const prefix = page.guid;
     this._screencastListeners.push(
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {

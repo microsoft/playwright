@@ -34,7 +34,7 @@ jobs:
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
@@ -59,7 +59,7 @@ jobs:
             browser: webkit
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
@@ -78,7 +78,7 @@ jobs:
         browser: [chromium, firefox, webkit]
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
@@ -104,7 +104,7 @@ jobs:
           node_version: 24
     timeout-minutes: 30
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - run: npm install -g yarn@1
     - run: npm install -g pnpm@8
     - name: Setup Ubuntu Binary Installation # TODO: Remove when https://github.com/electron/electron/issues/42510 is fixed
@@ -137,7 +137,7 @@ jobs:
             os: ubuntu-22.04
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
@@ -156,7 +156,7 @@ jobs:
         mode: [driver, service]
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium
@@ -187,7 +187,7 @@ jobs:
             channel: chromium-tip-of-tree
     runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium ${{ matrix.channel }}
@@ -210,7 +210,7 @@ jobs:
         channel: [chrome, chrome-beta, msedge, msedge-beta, msedge-dev]
         runs-on: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.channel }}
@@ -236,7 +236,7 @@ jobs:
           - os: ubuntu-22.04
             headed: ''
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium-tip-of-tree
@@ -257,7 +257,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: chromium-tip-of-tree-headless-shell
@@ -278,7 +278,7 @@ jobs:
       matrix:
         os: [ubuntu-22.04, windows-latest, macos-latest]
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: firefox-beta chromium
@@ -294,7 +294,7 @@ jobs:
     name: "build-playwright-driver"
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: actions/setup-node@v6
       with:
         node-version: 20
@@ -311,7 +311,7 @@ jobs:
         runs-on: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.runs-on }}
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
         # TODO: this should pass --no-shell.

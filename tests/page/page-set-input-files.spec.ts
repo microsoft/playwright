@@ -143,9 +143,8 @@ test('should upload a file after popup', async ({ page, server, asset }) => {
   expect(await page.evaluate(e => e.files[0].name, input)).toBe('file-to-upload.txt');
 });
 
-test('should upload large file', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
+test('should upload large file', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(isWebView2);
   test.skip(mode.startsWith('service'));
   test.slow();
 
@@ -201,9 +200,8 @@ test('should throw an error if the file does not exist', async ({ page, server, 
   expect(error.message).toContain('i actually do not exist.txt');
 });
 
-test('should upload large file with relative path', async ({ page, server, isAndroid, isWebView2, mode }, testInfo) => {
+test('should upload large file with relative path', async ({ page, server, isAndroid, mode }, testInfo) => {
   test.skip(isAndroid);
-  test.skip(isWebView2);
   test.skip(mode.startsWith('service'));
   test.slow();
 

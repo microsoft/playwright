@@ -287,7 +287,7 @@ Returns the matching [Response] object, or `null` if the response was not receiv
 
 ## method: Request.serviceWorker
 * since: v1.24
-* langs: js
+* langs: js, python
 - returns: <[null]|[Worker]>
 
 The Service [Worker] that is performing the request.

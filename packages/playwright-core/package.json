@@ -24,6 +24,7 @@
     "./package.json": "./package.json",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/cli/program": "./lib/cli/program.js",
+    "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",
     "./lib/server/utils/image_tools/stats": "./lib/server/utils/image_tools/stats.js",

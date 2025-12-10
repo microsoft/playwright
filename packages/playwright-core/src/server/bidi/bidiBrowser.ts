@@ -138,10 +138,13 @@ export class BidiBrowser extends Browser {
       const page = this._findPageForFrame(parentFrameId);
       if (page) {
         page._session.addFrameBrowsingContext(event.context);
-        page._page.frameManager.frameAttached(event.context, parentFrameId);
-        const frame = page._page.frameManager.frame(event.context);
-        if (frame)
-          frame._url = event.url;
+        const frame = page._page.frameManager.frameAttached(event.context, parentFrameId);
+        frame._url = event.url;
+        page._getFrameNode(frame).then(node => {
+          const attributes = node?.value?.attributes;
+          frame._name = attributes?.name ?? attributes?.id ?? '';
+        });
+        return;
       }
       return;
     }
@@ -334,7 +337,7 @@ export class BidiBrowserContext extends BrowserContext {
   async doUpdateExtraHTTPHeaders(): Promise<void> {
     const allHeaders = this._options.extraHTTPHeaders || [];
     await this._browser._browserSession.send('network.setExtraHeaders', {
-      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string', value } })),
+      headers: allHeaders.map(({ name, value }) => ({ name, value: { type: 'string' as 'string', value } })),
       userContexts: [this._userContextId()],
     });
   }
@@ -392,19 +395,29 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   override async doUpdateDefaultViewport() {
-    if (!this._options.viewport)
+    if (!this._options.viewport && !this._options.screen)
       return;
+
+    const screenSize = (this._options.screen || this._options.viewport)!;
+    const viewportSize = (this._options.viewport || this._options.screen)!;
     await Promise.all([
       this._browser._browserSession.send('browsingContext.setViewport', {
         viewport: {
-          width: this._options.viewport.width,
-          height: this._options.viewport.height
+          width: viewportSize.width,
+          height: viewportSize.height
         },
         devicePixelRatio: this._options.deviceScaleFactor || 1,
         userContexts: [this._userContextId()],
       }),
       this._browser._browserSession.send('emulation.setScreenOrientationOverride', {
-        screenOrientation: getScreenOrientation(!!this._options.isMobile, this._options.viewport),
+        screenOrientation: getScreenOrientation(!!this._options.isMobile, screenSize),
+        userContexts: [this._userContextId()],
+      }),
+      this._browser._browserSession.send('emulation.setScreenSettingsOverride', {
+        screenArea: {
+          width: screenSize.width,
+          height: screenSize.height,
+        },
         userContexts: [this._userContextId()],
       })
     ]);

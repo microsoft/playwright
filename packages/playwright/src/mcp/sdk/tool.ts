@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from  '../sdk/bundle';
+import { zodToJsonSchema } from 'playwright-core/lib/mcpBundle';
 
 import type { z } from 'zod';
 import type * as mcpServer from './server';

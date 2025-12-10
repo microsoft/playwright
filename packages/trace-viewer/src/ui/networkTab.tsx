@@ -21,10 +21,11 @@ import './networkTab.css';
 import { NetworkResourceDetails } from './networkResourceDetails';
 import { bytesToString, msToString } from '@web/uiUtils';
 import { PlaceholderPanel } from './placeholderPanel';
-import { context, type MultiTraceModel } from './modelUtil';
+import { context } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import { GridView, type RenderedGridCell } from '@web/components/gridView';
 import { SplitView } from '@web/components/splitView';
-import type { ContextEntry } from '../types/entries';
+import type { ContextEntry } from '@isomorphic/trace/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 import type { Language } from '@isomorphic/locatorGenerators';
 
@@ -50,7 +51,7 @@ type ColumnName = keyof RenderedEntry;
 type Sorting = { by: ColumnName, negate: boolean};
 const NetworkGridView = GridView<RenderedEntry>;
 
-export function useNetworkTabModel(model: MultiTraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
+export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
   const resources = React.useMemo(() => {
     const resources = model?.resources || [];
     const filtered = resources.filter(resource => {
@@ -218,7 +219,7 @@ class ContextIdMap {
   private _lastPageId = 0;
   private _lastApiRequestContextId = 0;
 
-  constructor(model: MultiTraceModel | undefined) {}
+  constructor(model: TraceModel | undefined) {}
 
   contextId(resource: Entry): string {
     if (resource.pageref)

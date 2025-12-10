@@ -1,0 +1,6 @@
+[*]
+../browserContext.ts
+../page.ts
+../progress.ts
+../../mcpBundle.ts
+../../utilsBundle.ts

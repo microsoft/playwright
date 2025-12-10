@@ -18,8 +18,6 @@
 // No dependencies as it is used from the Electron loader.
 
 const disabledFeatures = (assistantMode?: boolean) => [
-  // See https://github.com/microsoft/playwright/pull/10380
-  'AcceptCHFrame',
   // See https://github.com/microsoft/playwright/issues/14047
   'AvoidUnnecessaryBeforeUnloadCheckSync',
   'DestroyProfileOnBrowserClose',

@@ -95,7 +95,7 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
     );
     // Only print console errors when pausing on error, not when everything works as expected.
     let console = testInfo.errors.length ? await Tab.collectConsoleMessages(page) : [];
-    console = console.filter(msg => !msg.type || msg.type === 'error');
+    console = console.filter(msg => msg.type === 'error');
     if (console.length) {
       lines.push('- Console Messages:');
       for (const message of console)

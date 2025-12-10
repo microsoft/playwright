@@ -2024,6 +2024,38 @@ Name of the function on the window object
 
 Callback function which will be called in Playwright's context.
 
+## async method: Page.extract
+* since: v1.58
+* langs: js
+- returns: <[any]>
+
+Extract information from the page using the agentic loop, return it in a given Zod format.
+
+**Usage**
+
+```js
+await page.extract('List of items in the cart', z.object({
+  title: z.string().describe('Item title to extract'),
+  price: z.string().describe('Item price to extract'),
+}).array());
+```
+
+### param: Page.extract.query
+* since: v1.58
+- `query` <[string]>
+
+Task to perform using agentic loop.
+
+### param: Page.extract.schema
+* since: v1.58
+- `schema` <[z.ZodSchema]>
+
+### option: Page.extract.maxTurns
+* since: v1.58
+- `maxTurns` <[int]>
+
+Maximum number of agentic steps to take while extracting the information.
+
 ## async method: Page.fill
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.fill`] instead. Read more about [locators](../locators.md).
@@ -2996,6 +3028,38 @@ Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
 - `outline` <[boolean]>
 
 Whether or not to embed the document outline into the PDF. Defaults to `false`.
+
+## async method: Page.perform
+* since: v1.58
+* langs: js
+
+Perform action using agentic loop.
+
+**Usage**
+
+```js
+await page.perform('Click submit button');
+```
+
+### param: Page.perform.task
+* since: v1.58
+- `task` <[string]>
+
+Task to perform using agentic loop.
+
+### option: Page.perform.key
+* since: v1.58
+- `key` <[string]>
+
+All the agentic actions are converted to the Playwright calls and are cached.
+By default, they are cached globally with the `task` as a key. This option allows controlling the cache key explicitly.
+
+### option: Page.perform.maxTurns
+* since: v1.58
+- `maxTurns` <[int]>
+
+Maximum number of agentic steps to take while performing this action.
+
 
 ## async method: Page.press
 * since: v1.8

@@ -141,11 +141,11 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
     };
   }
 
-  async remoteObjectForNodeId(context: dom.FrameExecutionContext, nodeId: bidi.Script.SharedReference): Promise<js.JSHandle> {
+  async remoteObjectForNodeId(context: dom.FrameExecutionContext, nodeId: bidi.Script.SharedReference): Promise<dom.ElementHandle> {
     const result = await this._remoteValueForReference(nodeId, true);
     if (!('handle' in result))
       throw new Error('Can\'t get remote object for nodeId');
-    return createHandle(context, result);
+    return createHandle(context, result) as dom.ElementHandle;
   }
 
   async contentFrameIdForFrame(handle: dom.ElementHandle) {
