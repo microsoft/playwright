@@ -91,13 +91,14 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   async launchPersistentContext(userDataDir: string, options: LaunchPersistentContextOptions = {}): Promise<BrowserContext> {
-    const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     assert(!(options as any).port, 'Cannot specify a port without launching as a server.');
     options = this._playwright.selectors._withSelectorOptions({
       ...this._playwright._defaultLaunchOptions,
-      ...this._playwright._defaultContextOptions,
       ...options,
     });
+    await this._instrumentation.runBeforeCreateBrowserContext(options);
+
+    const logger = options.logger || this._playwright._defaultLaunchOptions?.logger;
     const contextParams = await prepareBrowserContextParams(this._platform, options);
     const persistentParams: channels.BrowserTypeLaunchPersistentContextParams = {
       ...contextParams,

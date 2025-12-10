@@ -31,7 +31,7 @@ import type { ClientInstrumentationListener } from '../../playwright-core/src/cl
 import type { Playwright as PlaywrightImpl } from '../../playwright-core/src/client/playwright';
 import type { Browser as BrowserImpl } from '../../playwright-core/src/client/browser';
 import type { BrowserContext as BrowserContextImpl } from '../../playwright-core/src/client/browserContext';
-import type { APIRequestContext as APIRequestContextImpl } from '../../playwright-core/src/client/fetch';
+import type { APIRequestContext as APIRequestContextImpl, NewContextOptions as APIRequestContextOptions } from '../../playwright-core/src/client/fetch';
 import type { ChannelOwner } from '../../playwright-core/src/client/channelOwner';
 import type { Page as PageImpl } from '../../playwright-core/src/client/page';
 import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracing } from 'playwright-core';
@@ -228,42 +228,33 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
 
-    const workerFile = await agentCacheWorkerFile(agent, testInfo as TestInfoImpl);
-    if (agent && workerFile)
-      options.agent = { ...agent, cacheFile: workerFile };
-
     await use({
       ...contextOptions,
       ...options,
     });
-
-    if (testInfo.status === 'passed' && workerFile)
-      await (testInfo as TestInfoImpl)._upstreamStorage(workerFile);
   }, { box: true }],
 
-  _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     if (debugMode() === 'inspector')
       (testInfo as TestInfoImpl)._setDebugMode();
 
-    playwright._defaultContextOptions = _combinedContextOptions;
     playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
     await use();
-    playwright._defaultContextOptions = undefined;
     playwright._defaultContextTimeout = undefined;
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions, agent }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, agent);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -317,20 +308,33 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (!keepTestTimeout)
           currentTestInfo()?._setDebugMode();
       },
+      runBeforeCreateBrowserContext: async (options: BrowserContextOptions) => {
+        for (const [key, value] of Object.entries(_combinedContextOptions)) {
+          if (!(key in options))
+            options[key as keyof BrowserContextOptions] = value;
+        }
+        await artifactsRecorder.willCreateBrowserContext(options);
+      },
+      runBeforeCreateRequestContext: async (options: APIRequestContextOptions) => {
+        for (const [key, value] of Object.entries(_combinedContextOptions)) {
+          if (!(key in options))
+            options[key as keyof APIRequestContextOptions] = value;
+        }
+      },
       runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
-        await artifactsRecorder?.didCreateBrowserContext(context);
+        await artifactsRecorder.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
         if (testInfo)
           attachConnectedHeaderIfNeeded(testInfo, context.browser());
       },
       runAfterCreateRequestContext: async (context: APIRequestContextImpl) => {
-        await artifactsRecorder?.didCreateRequestContext(context);
+        await artifactsRecorder.didCreateRequestContext(context);
       },
       runBeforeCloseBrowserContext: async (context: BrowserContextImpl) => {
-        await artifactsRecorder?.willCloseBrowserContext(context);
+        await artifactsRecorder.willCloseBrowserContext(context);
       },
       runBeforeCloseRequestContext: async (context: APIRequestContextImpl) => {
-        await artifactsRecorder?.willCloseRequestContext(context);
+        await artifactsRecorder.willCloseRequestContext(context);
       },
     };
 
@@ -643,10 +647,12 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
+  private _agent: PlaywrightTestOptions['agent'];
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, agent: PlaywrightTestOptions['agent']) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
+    this._agent = agent;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -673,10 +679,15 @@ class ArtifactsRecorder {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
   }
 
+  async willCreateBrowserContext(options: BrowserContextOptions) {
+    await this._cloneAgentCache(options);
+  }
+
   async willCloseBrowserContext(context: BrowserContextImpl) {
     await this._stopTracing(context, context.tracing);
     await this._screenshotRecorder.captureTemporary(context);
     await this._takePageSnapshot(context);
+    await this._upstreamAgentCache(context);
   }
 
   private async _takePageSnapshot(context: BrowserContextImpl) {
@@ -696,6 +707,24 @@ class ArtifactsRecorder {
         this._pageSnapshot = (await page._snapshotForAI({ timeout: 5000 })).full;
       }, { internal: true });
     } catch {}
+  }
+
+  private async _cloneAgentCache(options: BrowserContextOptions) {
+    if (!this._agent || this._agent.cacheMode === 'ignore')
+      return;
+    if (!this._agent.cacheFile && !this._agent.cachePathTemplate)
+      return;
+
+    const cacheFile = this._agent.cacheFile ?? this._testInfo._applyPathTemplate(this._agent.cachePathTemplate!, 'cache', '.json');
+    const workerFile = await this._testInfo._cloneStorage(cacheFile);
+    if (this._agent && workerFile)
+      options.agent = { ...this._agent, cacheFile: workerFile };
+  }
+
+  private async _upstreamAgentCache(context: BrowserContextImpl) {
+    const agent = context._options.agent;
+    if (this._testInfo.status === 'passed' && agent?.cacheFile)
+      await this._testInfo._upstreamStorage(agent.cacheFile);
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {
@@ -790,16 +819,6 @@ function renderTitle(type: string, method: string, params: Record<string, string
 
 function tracing() {
   return (test.info() as TestInfoImpl)._tracing;
-}
-
-async function agentCacheWorkerFile(agent: PlaywrightTestOptions['agent'], testInfo: TestInfoImpl): Promise<string | undefined> {
-  if (!agent || agent.cacheMode === 'ignore')
-    return undefined;
-  if (!agent.cacheFile && !agent.cachePathTemplate)
-    return undefined;
-
-  const cacheFile = agent.cacheFile ?? testInfo._applyPathTemplate(agent.cachePathTemplate!, 'cache', '.json');
-  return await testInfo._cloneStorage(cacheFile);
 }
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);

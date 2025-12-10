@@ -24,7 +24,7 @@ import { APIRequest } from './fetch';
 import { Selectors } from './selectors';
 
 import type * as channels from '@protocol/channels';
-import type { BrowserContextOptions, LaunchOptions } from 'playwright-core';
+import type { LaunchOptions } from 'playwright-core';
 
 export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
   readonly _android: Android;
@@ -39,7 +39,6 @@ export class Playwright extends ChannelOwner<channels.PlaywrightChannel> {
 
   // Instrumentation.
   _defaultLaunchOptions?: LaunchOptions;
-  _defaultContextOptions?: BrowserContextOptions;
   _defaultContextTimeout?: number;
   _defaultContextNavigationTimeout?: number;
 

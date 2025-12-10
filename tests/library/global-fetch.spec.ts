@@ -255,7 +255,9 @@ it('should set playwright as user-agent', async ({ playwright, server, isWindows
 });
 
 it('should be able to construct with context options', async ({ playwright, browserType, server }) => {
-  const request = await playwright.request.newContext((browserType as any)._playwright._defaultContextOptions);
+  const defaultContextOptions = {};
+  await (playwright as any)._instrumentation.runBeforeCreateRequestContext(defaultContextOptions);
+  const request = await playwright.request.newContext(defaultContextOptions);
   const response = await request.get(server.EMPTY_PAGE);
   expect(response.ok()).toBeTruthy();
   await request.dispose();

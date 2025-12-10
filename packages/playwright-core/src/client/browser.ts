@@ -74,11 +74,9 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     await this._channel.disconnectFromReusedContext({ reason });
   }
 
-  async _innerNewContext(options: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
-    options = this._browserType._playwright.selectors._withSelectorOptions({
-      ...this._browserType._playwright._defaultContextOptions,
-      ...options,
-    });
+  async _innerNewContext(userOptions: BrowserContextOptions = {}, forReuse: boolean): Promise<BrowserContext> {
+    const options = this._browserType._playwright.selectors._withSelectorOptions(userOptions);
+    await this._instrumentation.runBeforeCreateBrowserContext(options);
     const contextOptions = await prepareBrowserContextParams(this._platform, options);
     const response = forReuse ? await this._channel.newContextForReuse(contextOptions) : await this._channel.newContext(contextOptions);
     const context = BrowserContext.from(response.context);
