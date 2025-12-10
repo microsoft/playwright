@@ -40,7 +40,7 @@ export class ProcessHost extends EventEmitter {
   private _processName: string;
   private _producedEnv: Record<string, string | undefined> = {};
   private _extraEnv: Record<string, string | undefined>;
-  private _requestHandlers = new Map<string, (params?: any) => Promise<any>>();
+  private _requestHandlers = new Map<string, (params: any) => Promise<any>>();
 
   constructor(runnerScript: string, processName: string, env: Record<string, string | undefined>) {
     super();

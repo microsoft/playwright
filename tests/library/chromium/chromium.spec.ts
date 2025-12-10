@@ -625,9 +625,10 @@ test('setExtraHTTPHeaders', async ({ context, page, server }) => {
   expect(req.headers['x-custom-header']).toBe('custom!');
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, platform, isHeadlessShell }) => {
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-port)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
   test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
+  test.skip(!!channel?.startsWith('msedge'), 'Edge does not print the ProcessSingleton line');
   const userDataDir = await createUserDataDir();
   const browser = await browserType.launchPersistentContext(userDataDir, {
     cdpPort: 9222,
@@ -642,9 +643,10 @@ test('should throw when connecting twice to an already running persistent contex
   }
 });
 
-test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, platform, isHeadlessShell }) => {
+test('should throw when connecting twice to an already running persistent context (--remote-debugging-pipe)', async ({ browserType, createUserDataDir, platform, isHeadlessShell, channel }) => {
   test.skip(isHeadlessShell, 'Headless shell does not create a ProcessSingleton');
   test.fixme(platform === 'win32', 'Windows does not print something to the console when the profile is already in use by another instance of Chromium.');
+  test.skip(!!channel?.startsWith('msedge'), 'Edge does not print the ProcessSingleton line');
   const userDataDir = await createUserDataDir();
   const browser = await browserType.launchPersistentContext(userDataDir);
   try {

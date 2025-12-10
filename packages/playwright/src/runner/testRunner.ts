@@ -479,7 +479,9 @@ export async function runAllTestsWithConfig(config: FullConfigInternal): Promise
     createLoadTask('in-process', { filterOnly: true, failOnLoadErrors: true }),
     ...createRunTestsTasks(config),
   ];
-  const status = await runTasks(new TestRun(config, reporter), tasks, config.config.globalTimeout);
+
+  const testRun = new TestRun(config, reporter, { pauseAtEnd: config.configCLIOverrides.debug, pauseOnError: config.configCLIOverrides.debug });
+  const status = await runTasks(testRun, tasks, config.config.globalTimeout);
 
   // Calling process.exit() might truncate large stdout/stderr output.
   // See https://github.com/nodejs/node/issues/6456.

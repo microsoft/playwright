@@ -28,10 +28,12 @@ export class Response {
   private _result: string[] = [];
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
+  private _files: { fileName: string, title: string }[] = [];
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeTabs = false;
   private _includeModalStates: ModalState[] | undefined;
+  private _includeMetaOnly: boolean = false;
   private _tabSnapshot: TabSnapshot | undefined;
 
   readonly toolName: string;
@@ -77,6 +79,12 @@ export class Response {
     return this._images;
   }
 
+  async addFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }) {
+    const resolvedFile = await this._context.outputFile(fileName, options);
+    this._files.push({ fileName: resolvedFile, title: options.reason });
+    return resolvedFile;
+  }
+
   setIncludeSnapshot() {
     this._includeSnapshot = this._context.config.snapshot.mode;
   }
@@ -91,6 +99,10 @@ export class Response {
 
   setIncludeModalStates(modalStates: ModalState[]) {
     this._includeModalStates = modalStates;
+  }
+
+  setIncludeMetaOnly() {
+    this._includeMetaOnly = true;
   }
 
   async finish() {
@@ -113,10 +125,10 @@ export class Response {
 
   logEnd() {
     if (requestDebug.enabled)
-      requestDebug(this.serialize({ omitSnapshot: true, omitBlobs: true }));
+      requestDebug(this.serialize());
   }
 
-  serialize(options: { omitSnapshot?: boolean, omitBlobs?: boolean, _meta?: Record<string, any> } = {}): { content: (TextContent | ImageContent)[], isError?: boolean, _meta?: Record<string, any> } {
+  render(): RenderedResponse{
     const renderedResponse = new RenderedResponse();
 
     if (this._result.length)
@@ -138,28 +150,41 @@ export class Response {
       const modalStatesMarkdown = renderModalStates(this._tabSnapshot.modalStates);
       renderedResponse.states.modal = modalStatesMarkdown.join('\n');
     } else if (this._tabSnapshot) {
-      const includeSnapshot = options.omitSnapshot ? 'none' : this._includeSnapshot;
-      renderTabSnapshot(this._tabSnapshot, includeSnapshot, renderedResponse);
+      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, renderedResponse);
     } else if (this._includeModalStates) {
       const modalStatesMarkdown = renderModalStates(this._includeModalStates);
       renderedResponse.states.modal = modalStatesMarkdown.join('\n');
     }
 
-    const redactedResponse = this._context.config.secrets ? renderedResponse.redact(this._context.config.secrets) : renderedResponse;
+    if (this._files.length) {
+      const lines: string[] = [];
+      for (const file of this._files)
+        lines.push(`- [${file.title}](${file.fileName})`);
+      renderedResponse.updates.push({ category: 'files', content: lines.join('\n') });
+    }
 
-    // Structured response.
+    return this._context.config.secrets ? renderedResponse.redact(this._context.config.secrets) : renderedResponse;
+  }
+
+  serialize(options: { _meta?: Record<string, any> } = {}): { content: (TextContent | ImageContent)[], isError?: boolean, _meta?: Record<string, any> } {
+    const renderedResponse = this.render();
     const includeMeta = options._meta && 'dev.lowire/history' in options._meta && 'dev.lowire/state' in options._meta;
-    const _meta: any = includeMeta ? redactedResponse.asMeta() : undefined;
+    const _meta: any = includeMeta ? renderedResponse.asMeta() : undefined;
 
-    // Main response part
     const content: (TextContent | ImageContent)[] = [
-      { type: 'text', text: redactedResponse.asText() },
+      {
+        type: 'text',
+        text: renderedResponse.asText(this._includeMetaOnly ? { categories: ['files'] } : undefined)
+      },
     ];
+
+    if (this._includeMetaOnly)
+      return { _meta, content, isError: this._isError };
 
     // Image attachments.
     if (this._context.config.imageResponses !== 'omit') {
       for (const image of this._images)
-        content.push({ type: 'image', data: options.omitBlobs ? '<blob>' : image.data.toString('base64'), mimeType: image.contentType });
+        content.push({ type: 'image', data: image.data.toString('base64'), mimeType: image.contentType });
     }
 
     return {
@@ -234,11 +259,11 @@ function trim(text: string, maxLength: number) {
 
 export class RenderedResponse {
   readonly states: Partial<Record<'page' | 'tabs' | 'modal', string>> = {};
-  readonly updates: { category: 'console' | 'downloads', content: string }[] = [];
+  readonly updates: { category: 'console' | 'downloads' | 'files', content: string }[] = [];
   readonly results: string[] = [];
   readonly code: string[] = [];
 
-  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads', content: string }[], results: string[], code: string[] }) {
+  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads' | 'files', content: string }[], results: string[], code: string[] }) {
     if (copy) {
       this.states = copy.states;
       this.updates = copy.updates;
@@ -247,7 +272,7 @@ export class RenderedResponse {
     }
   }
 
-  asText(): string {
+  asText(filter?: { categories: string[] }): string {
     const text: string[] = [];
     if (this.results.length)
       text.push(`### Result\n${this.results.join('\n')}\n`);
@@ -255,6 +280,8 @@ export class RenderedResponse {
       text.push(`### Ran Playwright code\n${this.code.join('\n')}\n`);
 
     for (const { category, content } of this.updates) {
+      if (filter && !filter.categories.includes(category))
+        continue;
       if (!content.trim())
         continue;
 
@@ -265,10 +292,15 @@ export class RenderedResponse {
         case 'downloads':
           text.push(`### Downloads\n${content}\n`);
           break;
+        case 'files':
+          text.push(`### Files\n${content}\n`);
+          break;
       }
     }
 
     for (const [category, value] of Object.entries(this.states)) {
+      if (filter && !filter.categories.includes(category))
+        continue;
       if (!value.trim())
         continue;
 
@@ -342,6 +374,7 @@ export function parseResponse(response: CallToolResult) {
   const consoleMessages = sections.get('New console messages');
   const modalState = sections.get('Modal state');
   const downloads = sections.get('Downloads');
+  const files = sections.get('Files');
   const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
   const isError = response.isError;
   const attachments = response.content.slice(1);
@@ -354,6 +387,7 @@ export function parseResponse(response: CallToolResult) {
     consoleMessages,
     modalState,
     downloads,
+    files,
     isError,
     attachments,
     _meta: response._meta,

@@ -20,18 +20,15 @@ import z from 'zod';
 import { browserTest as test, expect } from '../config/browserTest';
 
 test.use({
-  contextOptions: async ({ contextOptions }, use, testInfo) => {
+  agent: async ({}, use, testInfo) => {
     await use({
-      ...contextOptions,
-      agent: {
-        provider: 'github',
-        model: 'claude-sonnet-4.5',
-        cacheFile: path.join(testInfo.project.testDir, 'agent-cache.json'),
-        cacheMode: process.env.CI ? 'force' : 'auto',
-        secrets: {
-          'x-secret-email': 'secret-email@at-microsoft.com',
-        }
-      },
+      provider: 'github',
+      model: 'claude-sonnet-4.5',
+      cacheFile: path.join(testInfo.project.testDir, 'agent-cache.json'),
+      cacheMode: process.env.CI ? 'force' : 'auto',
+      secrets: {
+        'x-secret-email': 'secret-email@at-microsoft.com',
+      }
     });
   }
 });

@@ -22,11 +22,13 @@ import { WorkerHost } from './workerHost';
 import { serializeConfig } from '../common/ipc';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
+import { Storage } from './storage';
 
 import type { FailureTracker } from './failureTracker';
 import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
 import type { TestError, TestResult, TestStep } from '../../types/testReporter';
+import type * as ipc from '../common/ipc';
 import type { FullConfigInternal } from '../common/config';
 import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, StepBeginPayload, StepEndPayload, TeardownErrorsPayload, TestBeginPayload, TestEndPayload, TestOutputPayload, TestPausedPayload } from '../common/ipc';
 import type { Suite } from '../common/test';
@@ -260,11 +262,11 @@ export class Dispatcher {
       const producedEnv = this._producedEnvByProjectId.get(testGroup.projectId) || {};
       this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
     });
-    worker.onRequest('setStorageValue', async (params: { fileName: string, key: string, value: string }) => {
-      this._setStorageValue(params.fileName, params.key, params.value);
+    worker.onRequest('cloneStorage', async (params: ipc.CloneStoragePayload) => {
+      return await Storage.clone(params.storageFile, worker.artifactsDir());
     });
-    worker.onRequest('getStorageValue', async (params: { fileName: string, key: string }) => {
-      return this._getStorageValue(params.fileName, params.key);
+    worker.onRequest('upstreamStorage', async (params: ipc.UpstreamStoragePayload) => {
+      await Storage.upstream(params.workerFile);
     });
     return worker;
   }
@@ -279,13 +281,6 @@ export class Dispatcher {
     this._isStopped = true;
     await Promise.all(this._workerSlots.map(({ worker }) => worker?.stop()));
     this._checkFinished();
-  }
-
-  private _setStorageValue(fileName: string, key: string, value: string) {
-  }
-
-  private _getStorageValue(fileName: string, key: string) {
-    return {};
   }
 }
 
@@ -598,11 +593,20 @@ class JobDispatcher {
   }
 
   private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+    const data = this._dataByTestId.get(params.testId);
+    if (!data)
+      return;
+
+    const { result, test, steps } = data;
+    const step = steps.get(params.stepId);
+    if (!step)
+      return;
+
     const sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
-        const response = await worker.sendCustomMessage({ testId: params.testId, request: message.request });
+        const response = await worker.sendCustomMessage({ testId: test.id, request: message.request });
         if (response.error)
           addLocationAndSnippetToError(this._config.config, response.error);
         return response;
@@ -613,8 +617,12 @@ class JobDispatcher {
       }
     };
 
-    for (const error of params.errors)
-      addLocationAndSnippetToError(this._config.config, error);
+    result.errors = params.errors;
+    result.error = result.errors[0];
+
+    void this._reporter.onTestPaused?.(test, result, step).then(params => {
+      worker.sendResume(params);
+    });
     this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }
 

@@ -51,7 +51,7 @@ test('save as pdf', async ({ startClient, mcpBrowser, server }, testInfo) => {
     name: 'browser_pdf_save',
   })).toHaveResponse({
     code: expect.stringContaining(`await page.pdf(`),
-    result: expect.stringMatching(/Saved page as.*page-[^:]+.pdf/),
+    files: expect.stringMatching(/\[Page saved as PDF\]\(.*page-[^:]+.pdf\)/),
   });
 });
 
@@ -75,7 +75,7 @@ test('save as pdf (filename: output.pdf)', async ({ startClient, mcpBrowser, ser
       filename: 'output.pdf',
     },
   })).toHaveResponse({
-    result: expect.stringContaining(`output.pdf`),
+    files: expect.stringContaining(`output.pdf`),
     code: expect.stringContaining(`await page.pdf(`),
   });
 

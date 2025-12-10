@@ -179,7 +179,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     baseURL,
     contextOptions,
     serviceWorkers,
-  }, use) => {
+  }, use, testInfo) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
@@ -227,10 +227,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
+
+    const workerFile = agent?.cacheFile && agent.cacheMode !== 'ignore' ? await (testInfo as TestInfoImpl)._cloneStorage(agent.cacheFile) : undefined;
+    if (agent && workerFile) {
+      options.agent = {
+        ...agent,
+        cacheFile: workerFile,
+      };
+    }
+
     await use({
       ...contextOptions,
       ...options,
     });
+
+    if (workerFile)
+      await (testInfo as TestInfoImpl)._upstreamStorage(workerFile);
   }, { box: true }],
 
   _setupContextOptions: [async ({ playwright, _combinedContextOptions, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {

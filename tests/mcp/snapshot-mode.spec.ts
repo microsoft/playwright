@@ -99,3 +99,29 @@ test('should respect --snapshot-mode=none', async ({ startClient, server }) => {
     pageState: undefined
   });
 });
+
+test('should respect snapshot[filename]', async ({ startClient, server }, testInfo) => {
+  server.setContent('/', `<button>Button 1</button>`, 'text/html');
+
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {
+      filename: 'snapshot1.md',
+    },
+  })).toHaveResponse({
+    pageState: undefined,
+    files: expect.stringMatching(/\[Saved snapshot\]\(.*md\)/)
+  });
+});
