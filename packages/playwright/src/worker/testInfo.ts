@@ -71,8 +71,8 @@ type TestInfoCallbacks = {
   onStepEnd?: (payload: ipc.StepEndPayload) => void;
   onAttach?: (payload: ipc.AttachmentPayload) => void;
   onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
-  onGetStorageValue?: (payload: ipc.GetStorageValuePayload) => Promise<any>;
-  onSetStorageValue?: (payload: ipc.SetStorageValuePayload) => void;
+  onCloneStorage?: (payload: ipc.CloneStoragePayload) => Promise<string>;
+  onUpstreamStorage?: (payload: ipc.UpstreamStoragePayload) => Promise<void>;
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -660,12 +660,12 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  async _getStorageValue(fileName: string, key: string): Promise<any> {
-    return await this._callbacks.onGetStorageValue?.({ fileName, key }) ?? Promise.resolve(undefined);
+  async _cloneStorage(storageFile: string): Promise<string | undefined> {
+    return await this._callbacks.onCloneStorage?.({ storageFile });
   }
 
-  _setStorageValue(fileName: string, key: string, value: string) {
-    this._callbacks.onSetStorageValue?.({ fileName, key, value });
+  async _upstreamStorage(workerFile: string) {
+    await this._callbacks.onUpstreamStorage?.({ workerFile });
   }
 }
 

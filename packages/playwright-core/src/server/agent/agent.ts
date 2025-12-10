@@ -80,7 +80,10 @@ ${full}
   });
 }
 
-type CachedActions = Record<string, actions.Action[]>;
+type CachedActions = Record<string, {
+  timestamp: number,
+  actions: actions.Action[],
+}>;
 
 const allCaches = new Map<string, CachedActions>();
 
@@ -90,14 +93,14 @@ async function cachedPerform(context: Context, options: channels.PagePerformPara
 
   const cache = await cachedActions(context.options.cacheFile);
   const cacheKey = options.key ?? options.task;
-  const actions = cache[cacheKey];
-  if (!actions) {
+  const entry = cache[cacheKey];
+  if (!entry) {
     if (context.options.cacheMode === 'force')
       throw new Error(`No cached actions for key "${cacheKey}", but cache mode is set to "force"`);
     return false;
   }
 
-  for (const action of actions)
+  for (const action of entry.actions)
     await runAction(context.progress, context.page, action, context.options.secrets ?? []);
   return true;
 }
@@ -108,7 +111,10 @@ async function updateCache(context: Context, options: channels.PagePerformParams
     return;
   const cache = await cachedActions(cacheFile);
   const cacheKey = options.key ?? options.task;
-  cache[cacheKey] = context.actions;
+  cache[cacheKey] = {
+    timestamp: Date.now(),
+    actions: context.actions,
+  };
   await fs.promises.writeFile(cacheFile, JSON.stringify(cache, undefined, 2));
 }
 

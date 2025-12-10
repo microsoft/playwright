@@ -1,41 +1,47 @@
 {
-  "Fill out the form with the following details:\nName: John Smith\nAddress: 1045 La Avenida St, Mountain View, CA 94043\nEmail: john.smith@at-microsoft.com": [
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Full Name *\"i]",
-      "text": "John Smith"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Email Address *\"i]",
-      "text": "john.smith@at-microsoft.com"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Street Address *\"i]",
-      "text": "1045 La Avenida St"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"City *\"i]",
-      "text": "Mountain View"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"State/Province *\"i]",
-      "text": "CA"
-    },
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
-      "text": "94043"
-    }
-  ],
-  "Enter x-secret-email into the email field": [
-    {
-      "method": "fill",
-      "selector": "internal:role=textbox[name=\"Email Address\"i]",
-      "text": "x-secret-email"
-    }
-  ]
+  "Enter x-secret-email into the email field": {
+    "timestamp": 1765318973255,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Email Address\"i]",
+        "text": "x-secret-email"
+      }
+    ]
+  },
+  "Fill out the form with the following details:\nName: John Smith\nAddress: 1045 La Avenida St, Mountain View, CA 94043\nEmail: john.smith@at-microsoft.com": {
+    "timestamp": 1765318976120,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Full Name *\"i]",
+        "text": "John Smith"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Email Address *\"i]",
+        "text": "john.smith@at-microsoft.com"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Street Address *\"i]",
+        "text": "1045 La Avenida St"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"City *\"i]",
+        "text": "Mountain View"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"State/Province *\"i]",
+        "text": "CA"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
+        "text": "94043"
+      }
+    ]
+  }
 }
