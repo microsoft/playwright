@@ -91,7 +91,9 @@ await page.GetByRole(AriaRole.Button, new() { Name = "Submit" }).DblClickAsync()
     ]);
   });
 
-  test('should click twice', async ({ openRecorder }) => {
+  test('should click twice', async ({ openRecorder, headless }) => {
+    test.skip(!headless, 'real mouse moves sneak between two clicks, moving away from the button');
+
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<button onclick="console.log('click')">Submit</button>`);

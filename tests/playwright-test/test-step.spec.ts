@@ -657,9 +657,9 @@ test('should show final toPass error', async ({ runInlineTest }) => {
     'a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('fail', async () => {
-        await expect(() => {
+        await expect(async () => {
           expect(true).toBe(false);
-        }).toPass({ timeout: 1 });
+        }).toPass({ timeout: 2000, intervals: [10000] });
       });
     `
   }, { reporter: '' });
