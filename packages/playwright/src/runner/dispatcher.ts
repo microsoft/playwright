@@ -36,6 +36,9 @@ import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { RegisteredListener } from 'playwright-core/lib/utils';
 
+export interface TestStepImpl extends TestStep {
+  _sendMessage?(params: { request: any }): Promise<{ response: any, error?: TestError }>;
+}
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -296,7 +299,7 @@ class JobDispatcher {
   private _failedTests = new Set<TestCase>();
   private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();
-  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStep> }>();
+  private _dataByTestId = new Map<string, { test: TestCase, result: TestResult, steps: Map<string, TestStepImpl> }>();
   private _parallelIndex = 0;
   private _workerIndex = 0;
   private _currentlyRunning: { test: TestCase, result: TestResult } | undefined;
@@ -373,7 +376,7 @@ class JobDispatcher {
     }
     const { result, steps, test } = data;
     const parentStep = params.parentStepId ? steps.get(params.parentStepId) : undefined;
-    const step: TestStep = {
+    const step: TestStepImpl = {
       title: params.title,
       titlePath: () => {
         const parentPath = parentStep?.titlePath() || [];
@@ -602,7 +605,7 @@ class JobDispatcher {
     if (!step)
       return;
 
-    const sendMessage = async (message: { request: any }) => {
+    step._sendMessage = async (message: { request: any }) => {
       try {
         if (this.jobResult.isDone())
           throw new Error('Test has already stopped');
@@ -623,7 +626,6 @@ class JobDispatcher {
     void this._reporter.onTestPaused?.(test, result, step).then(params => {
       worker.sendResume(params);
     });
-    this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }
 
   skipWholeJob(): boolean {

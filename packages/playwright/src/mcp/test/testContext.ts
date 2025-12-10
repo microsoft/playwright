@@ -18,13 +18,14 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-core/lib/utils';
+import { noColors, escapeRegExp, toPosixPath, ManualPromise } from 'playwright-core/lib/utils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
+import { Multiplexer } from '../../reporters/multiplexer';
 import { StringWriteStream } from './streams';
 import { fileExistsAsync } from '../../util';
-import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
+import { TestRunner } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 import { firstRootPath } from '../sdk/exports';
 import { resolveConfigLocation } from '../../common/configLoader';
@@ -36,6 +37,7 @@ import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
 import type { ClientInfo } from '../sdk/exports';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
+import type { TestStepImpl } from '../../runner/dispatcher';
 
 export type SeedFile = {
   file: string;
@@ -84,7 +86,6 @@ type TestRunnerAndScreen = {
   claimStdio: () => void;
   releaseStdio: () => void;
   output: string[];
-  waitForTestPaused: () => Promise<void>;
   sendMessageToPausedTest?: (params: { request: BrowserMCPRequest }) => Promise<{ response: BrowserMCPResponse, error?: any }>;
 };
 
@@ -131,18 +132,11 @@ export class TestContext {
 
     const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
-    const testPaused = new ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
       testRunner,
-      waitForTestPaused: () => testPaused,
     };
     this._testRunnerAndScreen = testRunnerAndScreen;
-
-    testRunner.on(TestRunnerEvent.TestPaused, params => {
-      testRunnerAndScreen.sendMessageToPausedTest = params.sendMessage;
-      testPaused.resolve();
-    });
     return testRunnerAndScreen;
   }
 
@@ -227,17 +221,29 @@ export class TestContext {
     };
 
     try {
-      const reporter = new ListReporter({ configDir, screen, includeTestId: true });
-      status = await Promise.race([
-        testRunner.runTests(reporter, params).then(result => result.status),
-        testRunnerAndScreen.waitForTestPaused().then(() => 'paused' as const),
+      const paused = new ManualPromise<any>();
+      const reporter = new Multiplexer([
+        new ListReporter({ configDir, screen, includeTestId: true }),
+        {
+          version: () => 'v2',
+          onTestPaused: async (test, result, _step) => {
+            const step = _step as TestStepImpl;
+            testRunnerAndScreen.sendMessageToPausedTest = step._sendMessage;
+            const response = await step._sendMessage!({ request: { initialize: { clientInfo: this._clientInfo } } });
+            if (response.error)
+              paused.reject(new Error(response.error.message));
+            paused.resolve(response.response);
+            return {};
+          },
+        }
       ]);
-
-      if (status === 'paused') {
-        const response = await testRunnerAndScreen.sendMessageToPausedTest!({ request: { initialize: { clientInfo: this._clientInfo } } });
-        if (response.error)
-          throw new Error(response.error.message);
-        testRunnerAndScreen.output.push(response.response.initialize!.pausedMessage);
+      await Promise.race([
+        testRunner.runTests(reporter, params),
+        paused,
+      ]);
+      if (paused.isDone()) {
+        const response = await paused;
+        testRunnerAndScreen.output.push(response.initialize.pausedMessage);
         return { output: testRunnerAndScreen.output.join('\n'), status };
       }
     } catch (e) {
