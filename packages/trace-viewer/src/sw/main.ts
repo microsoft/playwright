@@ -100,6 +100,7 @@ function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progre
     return loadedTrace;
   const promise = innerLoadTrace(traceUrl, progress);
   loadedTraces.set(traceUrl, promise);
+  promise.catch(() => loadedTraces.delete(traceUrl));
   return promise;
 }
 
@@ -119,7 +120,14 @@ async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<Loa
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (error instanceof TraceVersionError)
       throw new Error(`Could not load trace from ${traceUrl}. ${error.message}`);
-    throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+
+    let message = `Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`;
+
+    const lnaPermission = await navigator.permissions.query({ name: 'local-network-access' as PermissionName }).catch(() => { });
+    if (lnaPermission && lnaPermission.state !== 'granted')
+      message += `\n\nIf your trace is in a local or private network, please grant permission for Local Network Access.`; // workbenchLoader.tsx opens the prompt when it sees this message.
+
+    throw new Error(message);
   }
   const snapshotServer = new SnapshotServer(traceLoader.storage(), sha1 => traceLoader.resourceForSha1(sha1));
   return { traceLoader, snapshotServer };
@@ -131,12 +139,6 @@ async function doFetch(event: FetchEvent): Promise<Response> {
   // In order to make Accessibility Insights for Web work.
   if (request.url.startsWith('chrome-extension://'))
     return fetch(request);
-
-  if (request.headers.get('x-pw-serviceworker') === 'forward') {
-    const request = new Request(event.request);
-    request.headers.delete('x-pw-serviceworker');
-    return fetch(request);
-  }
 
   const url = new URL(request.url);
   let relativePath: string | undefined;
@@ -282,5 +284,8 @@ function isLiveTrace(traceUrl: string): boolean {
 }
 
 self.addEventListener('fetch', function(event: FetchEvent) {
+  if (event.request.headers.get('x-pw-serviceworker') === 'skip')
+    return false;
+
   event.respondWith(doFetch(event));
 });

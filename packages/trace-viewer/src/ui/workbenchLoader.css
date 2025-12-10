@@ -55,6 +55,7 @@ body .drop-target {
   font-weight: bold;
   text-align: center;
   margin: 30px;
+  white-space: pre-line;
 }
 
 .drop-target input {
