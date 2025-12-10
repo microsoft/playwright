@@ -78,7 +78,6 @@ export class FFBrowser extends Browser {
     this.session.on('Browser.detachedFromTarget', this._onDetachedFromTarget.bind(this));
     this.session.on('Browser.downloadCreated', this._onDownloadCreated.bind(this));
     this.session.on('Browser.downloadFinished', this._onDownloadFinished.bind(this));
-    this.session.on('Browser.videoRecordingFinished', this._onVideoRecordingFinished.bind(this));
   }
 
   async _initVersion() {
@@ -157,10 +156,6 @@ export class FFBrowser extends Browser {
     this._downloadFinished(payload.uuid, error);
   }
 
-  _onVideoRecordingFinished(payload: Protocol.Browser.videoRecordingFinishedPayload) {
-    this._takeVideo(payload.screencastId)?.reportFinished();
-  }
-
   _onDisconnect() {
     for (const video of this._idToVideo.values())
       video.artifact.reportFinished(new TargetClosedError(this.closeReason()));
@@ -220,16 +215,14 @@ export class FFBrowserContext extends BrowserContext {
       promises.push(this.doUpdateOffline());
     promises.push(this.doUpdateDefaultEmulatedMedia());
     if (this._options.recordVideo) {
-      promises.push(this._ensureVideosPath().then(() => {
-        return this._browser.session.send('Browser.setVideoRecordingOptions', {
+      promises.push(this._browser.session.send('Browser.setScreencastOptions', {
           // validateBrowserContextOptions ensures correct video size.
           options: {
             ...this._options.recordVideo!.size!,
-            dir: this._options.recordVideo!.dir,
+            quality: 90,
           },
           browserContextId: this._browserContextId
-        });
-      }));
+        }));
     }
     const proxy = this._options.proxyOverride || this._options.proxy;
     if (proxy) {
@@ -424,12 +417,8 @@ export class FFBrowserContext extends BrowserContext {
 
   async doClose(reason: string | undefined) {
     if (!this._browserContextId) {
-      if (this._options.recordVideo) {
-        await this._browser.session.send('Browser.setVideoRecordingOptions', {
-          options: undefined,
-          browserContextId: this._browserContextId
-        });
-      }
+      if (this._options.recordVideo)
+        await Promise.all(this._ffPages().map(ffPage => ffPage._page.screencast.stopVideoRecording()));
       // Closing persistent context should close the browser.
       await this._browser.close({ reason });
     } else {

@@ -70,9 +70,6 @@ export namespace Protocol {
       canceled?: boolean;
       error?: string;
     }
-    export type videoRecordingFinishedPayload = {
-      screencastId: string;
-    }
     export type enableParameters = {
       attachToDefaultContext: boolean;
       userPrefs?: {
@@ -306,15 +303,15 @@ export namespace Protocol {
       contrast: ("less"|"more"|"custom"|"no-preference")|null;
     };
     export type setContrastReturnValue = void;
-    export type setVideoRecordingOptionsParameters = {
+    export type setScreencastOptionsParameters = {
       browserContextId?: string;
       options?: {
-        dir: string;
         width: number;
         height: number;
+        quality: number;
       };
     };
-    export type setVideoRecordingOptionsReturnValue = void;
+    export type setScreencastOptionsReturnValue = void;
     export type cancelDownloadParameters = {
       uuid?: string;
     };
@@ -463,10 +460,6 @@ export namespace Protocol {
       workerId: string;
       message: string;
     }
-    export type videoRecordingStartedPayload = {
-      screencastId: string;
-      file: string;
-    }
     export type webSocketCreatedPayload = {
       frameId: string;
       wsid: string;
@@ -589,8 +582,7 @@ export namespace Protocol {
     export type goForwardReturnValue = {
       success: boolean;
     };
-    export type reloadParameters = {
-    };
+    export type reloadParameters = void;
     export type reloadReturnValue = void;
     export type adoptNodeParameters = {
       frameId: string;
@@ -698,8 +690,7 @@ export namespace Protocol {
       text: string;
     };
     export type insertTextReturnValue = void;
-    export type crashParameters = {
-    };
+    export type crashParameters = void;
     export type crashReturnValue = void;
     export type handleDialogParameters = {
       dialogId: string;
@@ -722,12 +713,8 @@ export namespace Protocol {
       height: number;
       quality: number;
     };
-    export type startScreencastReturnValue = {
-      screencastId: string;
-    };
-    export type screencastFrameAckParameters = {
-      screencastId: string;
-    };
+    export type startScreencastReturnValue = void;
+    export type screencastFrameAckParameters = void;
     export type screencastFrameAckReturnValue = void;
     export type stopScreencastParameters = void;
     export type stopScreencastReturnValue = void;
@@ -1070,7 +1057,7 @@ export namespace Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionParameters;
     "Browser.setForcedColors": Browser.setForcedColorsParameters;
     "Browser.setContrast": Browser.setContrastParameters;
-    "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsParameters;
+    "Browser.setScreencastOptions": Browser.setScreencastOptionsParameters;
     "Browser.cancelDownload": Browser.cancelDownloadParameters;
     "Heap.collectGarbage": Heap.collectGarbageParameters;
     "Page.close": Page.closeParameters;
@@ -1152,7 +1139,7 @@ export namespace Protocol {
     "Browser.setReducedMotion": Browser.setReducedMotionReturnValue;
     "Browser.setForcedColors": Browser.setForcedColorsReturnValue;
     "Browser.setContrast": Browser.setContrastReturnValue;
-    "Browser.setVideoRecordingOptions": Browser.setVideoRecordingOptionsReturnValue;
+    "Browser.setScreencastOptions": Browser.setScreencastOptionsReturnValue;
     "Browser.cancelDownload": Browser.cancelDownloadReturnValue;
     "Heap.collectGarbage": Heap.collectGarbageReturnValue;
     "Page.close": Page.closeReturnValue;
