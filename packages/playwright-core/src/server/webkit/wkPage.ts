@@ -822,7 +822,7 @@ export class WKPage implements PageDelegate {
 
   private async _initializeVideoRecording() {
     const screencast = this._page.screencast;
-    const videoOptions = await screencast.launchVideoRecorder();
+    const videoOptions = screencast.launchVideoRecorder();
     if (!videoOptions)
       return;
     await screencast.waitForVideoRecorderInitialized();

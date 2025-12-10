@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { assert, createGuid, eventsHelper, mkdirIfNeeded, RegisteredListener } from '../utils';
+import { assert, createGuid, eventsHelper, mkdirIfNeededSync, RegisteredListener } from '../utils';
 import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
@@ -56,7 +56,7 @@ export class Screencast {
     this._frameThrottler.recharge();
   }
 
-  async launchVideoRecorder(): Promise<types.VideoOptions | undefined> {
+  launchVideoRecorder(): types.VideoOptions | undefined {
     const recordVideo = this._page.browserContext._options.recordVideo;
     if (!recordVideo)
       return undefined;
@@ -68,11 +68,12 @@ export class Screencast {
       ...recordVideo.size!,
       outputFile,
     };
-    await mkdirIfNeeded(path.join(recordVideo.dir, 'dummy'));
+    mkdirIfNeededSync(path.join(recordVideo.dir, 'dummy'));
     // Note: it is important to start video recorder before sending Screencast.startScreencast,
     // and it is equally important to send Screencast.startScreencast before sending Target.resume.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
     this._videoRecorderPromise = VideoRecorder.launch(ffmpegPath, videoOptions).catch(e => e);
+    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: types.ScreencastFrame) => this._onScreencastFrame(frame));
     this._page.waitForInitializedOrError().then(p => {
       if (p instanceof Error)
         this.stopVideoRecording().catch(() => {});
@@ -89,7 +90,6 @@ export class Screencast {
   async startVideoRecording(options: types.VideoOptions) {
     const videoId = this._videoId;
     assert(videoId);
-    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: types.ScreencastFrame) => this._onScreencastFrame(frame));
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
     const gotFirstFrame = new Promise(f => this._page.once(Page.Events.ScreencastFrame, f));
     await this._startScreencast(this._videoRecorderPromise, {
