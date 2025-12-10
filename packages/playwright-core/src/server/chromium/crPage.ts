@@ -537,7 +537,7 @@ class FrameSession {
   }
 
   dispose() {
-    this._firstNonInitialNavigationCommittedReject(new TargetClosedError());
+    this._firstNonInitialNavigationCommittedReject(new TargetClosedError(this._page.closeReason()));
     for (const childSession of this._childSessions)
       childSession.dispose();
     if (this._parentSession)

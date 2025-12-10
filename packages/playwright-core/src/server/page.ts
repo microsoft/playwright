@@ -168,7 +168,7 @@ export class Page extends SdkObject {
   private _networkRequests: network.Request[] = [];
 
   readonly screencast: Screencast;
-  closeReason: string | undefined;
+  _closeReason: string | undefined;
 
   constructor(delegate: PageDelegate, browserContext: BrowserContext) {
     super(browserContext, 'page');
@@ -263,7 +263,7 @@ export class Page extends SdkObject {
     this.emit(Page.Events.Close);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
-    this.openScope.close(new TargetClosedError());
+    this.openScope.close(new TargetClosedError(this.closeReason()));
   }
 
   _didCrash() {
@@ -750,7 +750,7 @@ export class Page extends SdkObject {
     if (this._closedState === 'closed')
       return;
     if (options.reason)
-      this.closeReason = options.reason;
+      this._closeReason = options.reason;
     const runBeforeUnload = !!options.runBeforeUnload;
     if (this._closedState !== 'closing') {
       // If runBeforeUnload is true, we don't know if we will close, so don't modify the state

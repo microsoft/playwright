@@ -104,7 +104,7 @@ export class Artifact extends SdkObject {
     this._deleted = true;
     if (!this._unaccessibleErrorMessage)
       await fs.promises.unlink(this._localPath).catch(e => {});
-    await this.reportFinished(new TargetClosedError());
+    await this.reportFinished(new TargetClosedError(this.closeReason()));
   }
 
   async reportFinished(error?: Error) {

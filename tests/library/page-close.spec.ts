@@ -51,7 +51,7 @@ test('addLocatorHandler should throw when page closes', async ({ page, server })
   await page.goto(server.PREFIX + '/input/handle-locator.html');
 
   await page.addLocatorHandler(page.getByText('This interstitial covers the button'), async () => {
-    await page.close();
+    await page.close({ reason: 'custom reason' });
   });
 
   await page.locator('#aside').hover();
@@ -60,7 +60,7 @@ test('addLocatorHandler should throw when page closes', async ({ page, server })
     (window as any).setupAnnoyingInterstitial('mouseover', 1);
   });
   const error = await page.locator('#target').click().catch(e => e);
-  expect(error.message).toContain(kTargetClosedErrorMessage);
+  expect(error.message).toContain('custom reason');
 });
 
 test('should reject all promises when page is closed', async ({ page }) => {

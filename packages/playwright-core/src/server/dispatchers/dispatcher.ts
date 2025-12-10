@@ -125,7 +125,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   }
 
   _dispose(reason?: 'gc') {
-    this._disposeRecursively(new TargetClosedError());
+    this._disposeRecursively(new TargetClosedError(this._object.closeReason()));
     this.connection.sendDispose(this, reason);
   }
 
@@ -304,7 +304,7 @@ export class DispatcherConnection {
     const { id, guid, method, params, metadata } = message as any;
     const dispatcher = this._dispatcherByGuid.get(guid);
     if (!dispatcher) {
-      this.onmessage({ id, error: serializeError(new TargetClosedError()) });
+      this.onmessage({ id, error: serializeError(new TargetClosedError(undefined)) });
       return;
     }
 
@@ -379,19 +379,19 @@ export class DispatcherConnection {
     try {
       // If the dispatcher has been disposed while running the instrumentation call, error out.
       if (this._dispatcherByGuid.get(guid) !== dispatcher)
-        throw new TargetClosedError(closeReason(sdkObject));
+        throw new TargetClosedError(sdkObject.closeReason());
       const result = await dispatcher._runCommand(callMetadata, method, validParams);
       const validator = findValidator(dispatcher._type, method, 'Result');
       response.result = validator(result, '', this._validatorToWireContext());
       callMetadata.result = result;
     } catch (e) {
       if (isTargetClosedError(e)) {
-        const reason = closeReason(sdkObject);
+        const reason = sdkObject.closeReason();
         if (reason)
           rewriteErrorMessage(e, reason);
       } else if (isProtocolError(e)) {
         if (e.type === 'closed')
-          e = new TargetClosedError(closeReason(sdkObject), e.browserLogMessage());
+          e = new TargetClosedError(sdkObject.closeReason(), e.browserLogMessage());
         else if (e.type === 'crashed')
           rewriteErrorMessage(e, 'Target crashed ' + e.browserLogMessage());
       }
@@ -415,10 +415,4 @@ export class DispatcherConnection {
     if (slowMo)
       await new Promise(f => setTimeout(f, slowMo));
   }
-}
-
-function closeReason(sdkObject: SdkObject): string | undefined {
-  return sdkObject.attribution.page?.closeReason ||
-    sdkObject.attribution.context?._closeReason ||
-    sdkObject.attribution.browser?._closeReason;
 }

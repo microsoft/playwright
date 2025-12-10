@@ -53,6 +53,12 @@ export class SdkObject extends EventEmitter {
     this.attribution = { ...parent.attribution };
     this.instrumentation = parent.instrumentation;
   }
+
+  closeReason(): string | undefined {
+    return this.attribution.page?._closeReason ||
+      this.attribution.context?._closeReason ||
+      this.attribution.browser?._closeReason;
+  }
 }
 
 export function createRootSdkObject() {
