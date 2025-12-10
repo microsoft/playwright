@@ -16,7 +16,7 @@
 
 import path from 'path';
 
-import { createGuid } from 'playwright-core/lib/utils';
+import { createGuid, ManualPromise } from 'playwright-core/lib/utils';
 
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
@@ -31,7 +31,7 @@ export type TeleReporterEmitterOptions = {
 };
 
 export class TeleReporterEmitter implements ReporterV2 {
-  private _messageSink: (message: teleReceiver.JsonEvent) => void;
+  private _messageSink: (message: teleReceiver.JsonEvent | teleReceiver.JsonRequest) => void;
   private _rootDir!: string;
   private _emitterOptions: TeleReporterEmitterOptions;
   private _resultKnownAttachmentCounts = new Map<string, number>();
@@ -39,10 +39,30 @@ export class TeleReporterEmitter implements ReporterV2 {
   // In case there is blob reporter and UI mode, make sure one doesn't override
   // the id assigned by the other.
   private readonly _idSymbol = Symbol('id');
+  private _lastId = 0;
+  private _callbacks = new Map<number, ManualPromise<any>>();
 
-  constructor(messageSink: (message: teleReceiver.JsonEvent) => void, options: TeleReporterEmitterOptions = {}) {
+  constructor(messageSink: (message: teleReceiver.JsonEvent | teleReceiver.JsonRequest) => void, options: TeleReporterEmitterOptions = {}) {
     this._messageSink = messageSink;
     this._emitterOptions = options;
+  }
+
+  private async _send<T extends teleReceiver.JsonResponse>(message: Omit<teleReceiver.JsonRequest, 'id'>): Promise<NonNullable<T['result']>> {
+    const id = this._lastId++;
+    const result = new ManualPromise<any>();
+    this._callbacks.set(id, result);
+    this._messageSink({ id, ...message });
+    return result;
+  }
+
+  dispatch(message: teleReceiver.JsonResponse) {
+    const promise = this._callbacks.get(message.id);
+    if (!promise)
+      return;
+    if (message.result)
+      promise.resolve(message.result);
+    else
+      promise.reject(new Error(message.error));
   }
 
   version(): 'v2' {
@@ -76,7 +96,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     const resultId = (result as any)[this._idSymbol];
     const stepId = (step as any)[this._idSymbol];
     this._resultKnownErrorCounts.set(resultId, result.errors.length);
-    this._messageSink({
+    return await this._send<teleReceiver.JsonOnTestPausedResponse>({
       method: 'onTestPaused',
       params: {
         testId: test.id,
@@ -85,7 +105,6 @@ export class TeleReporterEmitter implements ReporterV2 {
         errors: result.errors,
       }
     });
-    return { action: undefined };
   }
 
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {

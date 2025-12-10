@@ -132,7 +132,7 @@ export type JsonFullResult = {
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
-  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnTestPausedEvent | JsonOnStdIOEvent;
+  | JsonOnTestEndEvent | JsonOnStepBeginEvent | JsonOnStepEndEvent | JsonOnAttachEvent | JsonOnErrorEvent | JsonOnStdIOEvent;
 
 export type JsonOnConfigureEvent = {
   method: 'onConfigure';
@@ -163,16 +163,6 @@ export type JsonOnTestBeginEvent = {
   params: {
     testId: string;
     result: JsonTestResultStart;
-  };
-};
-
-export type JsonOnTestPausedEvent = {
-  method: 'onTestPaused';
-  params: {
-    testId: string;
-    resultId: string;
-    stepId: string;
-    errors: reporterTypes.TestError[];
   };
 };
 
@@ -238,6 +228,28 @@ export type JsonOnExitEvent = {
   params: undefined;
 };
 
+export type JsonRequest = JsonOnTestPausedRequest;
+export type JsonResponse = JsonOnTestPausedResponse;
+
+export type JsonOnTestPausedRequest = {
+  method: 'onTestPaused';
+  id: number;
+  params: {
+    testId: string;
+    resultId: string;
+    stepId: string;
+    errors: reporterTypes.TestError[];
+  };
+};
+
+export type JsonOnTestPausedResponse = {
+  id: number;
+  result?: {
+    action?: 'continue' | 'abort';
+  };
+  error?: string;
+};
+
 export type BlobReportMetadata = {
   version: number;
   userAgent: string;
@@ -262,11 +274,13 @@ export class TeleReporterReceiver {
   private _tests = new Map<string, TeleTestCase>();
   private _rootDir!: string;
   private _config!: reporterTypes.FullConfig;
+  private _messageSink: (response: JsonResponse) => void;
 
-  constructor(reporter: ReporterV2, options: TeleReporterReceiverOptions = {}) {
+  constructor(reporter: ReporterV2, messageSink: (response: JsonResponse) => void, options: TeleReporterReceiverOptions = {}) {
     this._rootSuite = new TeleSuite('', 'root');
     this._options = options;
     this._reporter = reporter;
+    this._messageSink = messageSink;
   }
 
   reset() {
@@ -274,7 +288,20 @@ export class TeleReporterReceiver {
     this._tests.clear();
   }
 
-  dispatch(message: JsonEvent): Promise<void> | void {
+  async dispatch(message: JsonEvent | JsonRequest) {
+    if ('id' in message) {
+      const { id, method, params } = message;
+      try {
+        if (method === 'onTestPaused') {
+          const result = await this._onTestPaused(params.testId, params.resultId, params.stepId, params.errors);
+          this._messageSink({ id, result });
+        }
+      } catch (error) {
+        this._messageSink({ id: message.id, error: '' + error });
+      }
+      return;
+    }
+
     const { method, params } = message;
     if (method === 'onConfigure') {
       this._onConfigure(params.config);
@@ -290,10 +317,6 @@ export class TeleReporterReceiver {
     }
     if (method === 'onTestBegin') {
       this._onTestBegin(params.testId, params.result);
-      return;
-    }
-    if (method === 'onTestPaused') {
-      this._onTestPaused(params.testId, params.resultId, params.stepId, params.errors);
       return;
     }
     if (method === 'onTestEnd') {
@@ -360,14 +383,14 @@ export class TeleReporterReceiver {
     this._reporter.onTestBegin?.(test, testResult);
   }
 
-  private _onTestPaused(testId: string, resultId: string, stepId: string, errors: reporterTypes.TestError[]) {
+  private async _onTestPaused(testId: string, resultId: string, stepId: string, errors: reporterTypes.TestError[]) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
     const step = result._stepMap.get(stepId)!;
 
     result.errors.push(...errors);
     result.error = result.errors[0];
-    void this._reporter.onTestPaused?.(test, result, step);
+    return await this._reporter.onTestPaused?.(test, result, step) ?? { action: undefined };
   }
 
   private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {

@@ -95,7 +95,10 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
   const testServerConnection = new TestServerConnection(transport);
   transport.emit('open');
 
-  const teleSuiteUpdater = new TeleSuiteUpdater({ pathSeparator: path.sep, onUpdate() { } });
+  const teleSuiteUpdater = new TeleSuiteUpdater(
+      message => testServerDispatcher.sendToReporter({ message }),
+      { pathSeparator: path.sep, onUpdate() { } }
+  );
 
   const dirtyTestFiles = new Set<string>();
   const dirtyTestIds = new Set<string>();

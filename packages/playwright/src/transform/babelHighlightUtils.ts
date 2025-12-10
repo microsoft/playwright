@@ -37,7 +37,7 @@ export function findTestEndLocation(text: string, testStartLocation: Location): 
         const callNode = path.node;
         const funcNode = callNode.arguments[callNode.arguments.length - 1];
         if (callNode.arguments.length >= 2 && t.isFunction(funcNode) && funcNode.body.loc)
-          result = { file: testStartLocation.file, ...funcNode.body.loc.end };
+          result = { file: testStartLocation.file, line: funcNode.body.loc.end.line, column: funcNode.body.loc.end.column };
       }
     }
   });

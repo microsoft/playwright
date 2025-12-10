@@ -256,6 +256,10 @@ export class TestServerConnection implements TestServerInterface, TestServerInte
     await this._sendMessage('closeGracefully', params);
   }
 
+  sendToReporter(params: Parameters<TestServerInterface['sendToReporter']>[0]): ReturnType<TestServerInterface['sendToReporter']> {
+    this._sendMessageNoReply('sendToReporter', params);
+  }
+
   close() {
     try {
       this._transport.close();

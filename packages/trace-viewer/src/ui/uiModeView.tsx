@@ -162,24 +162,27 @@ export const UIModeView: React.FC<{}> = ({
       return;
 
     let throttleTimer: NodeJS.Timeout | undefined;
-    const teleSuiteUpdater = new TeleSuiteUpdater({
-      onUpdate: immediate => {
-        clearTimeout(throttleTimer);
-        throttleTimer = undefined;
-        if (immediate) {
-          setTestModel(teleSuiteUpdater.asModel());
-        } else if (!throttleTimer) {
-          throttleTimer = setTimeout(() => {
-            setTestModel(teleSuiteUpdater.asModel());
-          }, 250);
+    const teleSuiteUpdater = new TeleSuiteUpdater(
+        message => testServerConnection.sendToReporter({ message }),
+        {
+          onUpdate: immediate => {
+            clearTimeout(throttleTimer);
+            throttleTimer = undefined;
+            if (immediate) {
+              setTestModel(teleSuiteUpdater.asModel());
+            } else if (!throttleTimer) {
+              throttleTimer = setTimeout(() => {
+                setTestModel(teleSuiteUpdater.asModel());
+              }, 250);
+            }
+          },
+          onError: error => {
+            xtermDataSource.write((error.stack || error.value || '') + '\n');
+            setOutputContainsError(true);
+          },
+          pathSeparator: queryParams.pathSeparator,
         }
-      },
-      onError: error => {
-        xtermDataSource.write((error.stack || error.value || '') + '\n');
-        setOutputContainsError(true);
-      },
-      pathSeparator: queryParams.pathSeparator,
-    });
+    );
 
     setTeleSuiteUpdater(teleSuiteUpdater);
 

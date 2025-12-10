@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TeleReporterReceiver, TeleSuite } from './teleReceiver';
+import { JsonResponse, TeleReporterReceiver, TeleSuite } from './teleReceiver';
 import { statusEx } from './testTree';
 
 import type * as reporterTypes from '../../types/testReporter';
@@ -56,9 +56,11 @@ export class TeleSuiteUpdater {
   private _lastRunTestCount = 0;
   private _options: TeleSuiteUpdaterOptions;
   private _testResultsSnapshot: Map<string, reporterTypes.TestResult[]> | undefined;
+  private _messageSink: (msg: JsonResponse) => void;
 
-  constructor(options: TeleSuiteUpdaterOptions) {
-    this._receiver = new TeleReporterReceiver(this._createReporter(), {
+  constructor(messageSink: (msg: JsonResponse) => void, options: TeleSuiteUpdaterOptions) {
+    this._messageSink = messageSink;
+    this._receiver = new TeleReporterReceiver(this._createReporter(), this._messageSink, {
       mergeProjects: true,
       mergeTestCases: true,
       resolvePath: createPathResolve(options.pathSeparator),
@@ -83,7 +85,7 @@ export class TeleSuiteUpdater {
             this._lastRunTestCount = suite.allTests().length;
             this._lastRunReceiver = undefined;
           }
-        }, {
+        }, this._messageSink, {
           mergeProjects: true,
           mergeTestCases: false,
           resolvePath: createPathResolve(this._options.pathSeparator),
@@ -141,7 +143,7 @@ export class TeleSuiteUpdater {
         this.config = c;
       },
       onError: (error: reporterTypes.TestError) => this._handleOnError(error)
-    });
+    }, this._messageSink);
     for (const message of report)
       void receiver.dispatch(message);
   }

@@ -20,12 +20,14 @@ import { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTrace
 import { ManualPromise, gracefullyProcessExitDoNotHang, isUnderTest } from 'playwright-core/lib/utils';
 import { debug, open } from 'playwright-core/lib/utilsBundle';
 
+import { JsonResponse } from '@testIsomorphic/teleReceiver';
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
 import ListReporter from '../reporters/list';
 import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
 
+import { TeleReporterEmitter } from '../reporters/teleEmitter';
 import type { TraceViewerRedirectOptions, TraceViewerServerOptions } from 'playwright-core/lib/server/trace/viewer/traceViewer';
 import type { HttpServer, Transport } from 'playwright-core/lib/utils';
 import type * as reporterTypes from '../../types/testReporter';
@@ -94,6 +96,9 @@ export class TestServerDispatcher implements TestServerInterface {
   private _globalSetupReport: ReportEntry[] | undefined;
   private _devServerReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
+  private _currentTestRun?: {
+    reporter: ReporterV2 | TeleReporterEmitter
+  };
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
     this._testRunner = new TestRunner(configLocation, configCLIOverrides);
@@ -201,6 +206,7 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async runTests(params: Parameters<TestServerInterface['runTests']>[0]): ReturnType<TestServerInterface['runTests']> {
     const wireReporter = await this._wireReporter(e => this._dispatchEvent('report', e));
+    this._currentTestRun = { reporter: wireReporter };
     const { status } = await this._testRunner.runTests(wireReporter, {
       ...params,
       doNotRunDepsOutsideProjectFilter: true,
@@ -229,6 +235,12 @@ export class TestServerDispatcher implements TestServerInterface {
 
   async closeGracefully() {
     await this._testRunner.closeGracefully();
+  }
+
+  sendToReporter(params: { message: JsonResponse }) {
+    if (!this._currentTestRun || !('dispatch' in this._currentTestRun.reporter))
+      return;
+    this._currentTestRun.reporter.dispatch(params.message);
   }
 
   private _setInterceptStdio(interceptStdio: boolean) {

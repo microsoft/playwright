@@ -16,9 +16,12 @@
 
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
+import { TeleReporterReceiver } from '../../packages/playwright/lib/isomorphic/teleReceiver';
 import { playwrightCtConfigText } from './playwright-test-fixtures';
 import ws from 'ws';
 import type { TestChildProcess } from '../config/commonFixtures';
+import type { ReporterV2 } from '../../packages/playwright/src/reporters/reporterV2';
+import type { TestCase, TestResult, TestStep } from '../../packages/playwright-test/reporter';
 
 class WSTransport {
   private _ws: ws.WebSocket;
@@ -328,6 +331,48 @@ test('pauseOnError no errors', async ({ startTestServer, writeFiles }) => {
   expect(await testServerConnection.runTests({ pauseOnError: true, locations: [] })).toEqual({ status: 'passed' });
   expect(testServerConnection.events.filter(e => e[0] === 'testPaused')).toEqual([]);
 });
+
+test('onTestPaused', async ({ startTestServer, writeFiles }) => {
+  const testServerConnection = await startTestServer();
+  await testServerConnection.initialize({});
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('foo', () => {
+      });
+    `,
+  });
+
+  let action: 'continue' | 'abort' = 'continue';
+  const log: string[] = [];
+  const reporter: ReporterV2 = {
+    version: () => 'v2',
+    async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
+      log.push(`onTestPaused@${step?.location.line}:${step?.location.column}`);
+      return { action };
+    },
+    onTestEnd(test, result) {
+      log.push(`onTestEnd(status=${result.status})`);
+    },
+  };
+  const receiver = new TeleReporterReceiver(reporter, message => testServerConnection.sendToReporter({ message }));
+  testServerConnection.onReport(report => receiver.dispatch(report));
+
+  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
+  expect(log).toEqual([
+    'onTestPaused@4:7',
+    'onTestEnd(status=passed)'
+  ]);
+
+  action = 'abort';
+  log.length = 0;
+  expect(await testServerConnection.runTests({ pauseAtEnd: true, locations: [] })).toEqual({ status: 'passed' });
+  expect(log).toEqual([
+    'onTestPaused@4:7',
+    'onTestEnd(status=interrupted)'
+  ]);
+});
+
 
 test('runGlobalSetup returns env', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
