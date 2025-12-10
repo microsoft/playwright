@@ -437,9 +437,9 @@ class FrameSession {
       this._windowId = windowId;
     }
 
-    let screencastOptions: types.PageScreencastOptions | undefined;
+    let videoOptions: types.VideoOptions | undefined;
     if (!this._page.isStorageStatePage && this._isMainFrame() && hasUIWindow)
-      screencastOptions = await this._crPage._page.screencast.initializeVideoRecorder();
+      videoOptions = this._crPage._page.screencast.launchVideoRecorder();
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
@@ -528,8 +528,8 @@ class FrameSession {
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
-      if (screencastOptions)
-        promises.push(this._crPage._page.screencast.startVideoRecording(screencastOptions));
+      if (videoOptions)
+        promises.push(this._crPage._page.screencast.startVideoRecording(videoOptions));
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);

@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { assert, createGuid, mkdirIfNeeded } from '../utils';
+import { assert, createGuid, eventsHelper, RegisteredListener } from '../utils';
 import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
@@ -26,12 +26,13 @@ import type * as types from './types';
 export class Screencast {
   private _page: Page;
   private _videoRecorder: VideoRecorder | null = null;
-  private _screencastId: string | null = null;
+  private _videoId: string | null = null;
   private _screencastClients = new Set<unknown>();
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
+  private _frameListener: RegisteredListener | null = null;
 
   constructor(page: Page) {
     this._page = page;
@@ -55,31 +56,33 @@ export class Screencast {
     this._frameThrottler.recharge();
   }
 
-  async initializeVideoRecorder(): Promise<types.PageScreencastOptions | undefined> {
+  launchVideoRecorder(): types.VideoOptions | undefined {
     const recordVideo = this._page.browserContext._options.recordVideo;
     if (!recordVideo)
       return undefined;
-    const screencastId = createGuid();
-    const outputFile = path.join(recordVideo.dir, screencastId + '.webm');
-    const screencastOptions = {
+    assert(!this._videoId);
+    this._videoId = createGuid();
+    const outputFile = path.join(recordVideo.dir, this._videoId + '.webm');
+    const videoOptions = {
       // validateBrowserContextOptions ensures correct video size.
       ...recordVideo.size!,
       outputFile,
     };
-    await mkdirIfNeeded(path.join(recordVideo.dir, 'dummy'));
     // Note: it is important to start video recorder before sending Screencast.startScreencast,
     // and it is equally important to send Screencast.startScreencast before sending Target.resume.
-    await this._createVideoRecorder(screencastId, screencastOptions);
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
+    this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
+    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
     this._page.waitForInitializedOrError().then(p => {
       if (p instanceof Error)
         this.stopVideoRecording().catch(() => {});
     });
-    return screencastOptions;
+    return videoOptions;
   }
 
-  async startVideoRecording(options: types.PageScreencastOptions) {
-    const screencastId = this._screencastId;
-    assert(screencastId);
+  async startVideoRecording(options: types.VideoOptions) {
+    const videoId = this._videoId;
+    assert(videoId);
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
     const gotFirstFrame = new Promise(f => this._page.once(Page.Events.ScreencastFrame, f));
     await this._startScreencast(this._videoRecorder, {
@@ -89,22 +92,25 @@ export class Screencast {
     });
     // Wait for the first frame before reporting video to the client.
     gotFirstFrame.then(() => {
-      this._page.browserContext._browser._videoStarted(this._page.browserContext, screencastId, options.outputFile, this._page.waitForInitializedOrError());
+      this._page.browserContext._browser._videoStarted(this._page.browserContext, videoId, options.outputFile, this._page.waitForInitializedOrError());
     });
   }
 
   async stopVideoRecording(): Promise<void> {
-    if (!this._screencastId)
+    if (!this._videoId)
       return;
-    const screencastId = this._screencastId;
-    this._screencastId = null;
-    const recorder = this._videoRecorder!;
+    if (this._frameListener)
+      eventsHelper.removeEventListeners([this._frameListener]);
+    this._frameListener = null;
+    const videoId = this._videoId;
+    this._videoId = null;
+    const videoRecorder = this._videoRecorder!;
     this._videoRecorder = null;
-    await this._stopScreencast(recorder);
-    await recorder.stop().catch(() => {});
+    await this._stopScreencast(videoRecorder);
+    await videoRecorder.stop();
     // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
-    const video = this._page.browserContext._browser._takeVideo(screencastId);
+    const video = this._page.browserContext._browser._takeVideo(videoId);
     video?.reportFinished();
   }
 
@@ -130,13 +136,6 @@ export class Screencast {
     this._screencastClients.delete(client);
     if (!this._screencastClients.size)
       await this._page.delegate.stopScreencast();
-  }
-
-  private async _createVideoRecorder(screencastId: string, options: types.PageScreencastOptions): Promise<void> {
-    assert(!this._screencastId);
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
-    this._videoRecorder = await VideoRecorder.launch(this._page, ffmpegPath, options);
-    this._screencastId = screencastId;
   }
 }
 
