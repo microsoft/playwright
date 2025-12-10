@@ -85,7 +85,7 @@ export class TeleSuiteUpdater {
             this._lastRunTestCount = suite.allTests().length;
             this._lastRunReceiver = undefined;
           }
-        }, this._messageSink, {
+        }, () => {}, {
           mergeProjects: true,
           mergeTestCases: false,
           resolvePath: createPathResolve(this._options.pathSeparator),
