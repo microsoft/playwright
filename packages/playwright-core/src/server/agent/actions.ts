@@ -65,4 +65,16 @@ export type SetChecked = {
   checked: boolean;
 };
 
-export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction | SetChecked;
+export type ExpectVisible = {
+  method: 'expectVisible';
+  selector: string;
+};
+
+export type ExpectValue = {
+  method: 'expectValue';
+  selector: string;
+  type: 'textbox' | 'checkbox' | 'radio' | 'combobox' | 'slider';
+  value: string;
+};
+
+export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction | SetChecked | ExpectVisible | ExpectValue;

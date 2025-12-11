@@ -2,5 +2,8 @@
 ../browserContext.ts
 ../page.ts
 ../progress.ts
+../utils/expectUtils.ts
 ../../mcpBundle.ts
+../../protocol/
 ../../utilsBundle.ts
+../../utils/isomorphic/
