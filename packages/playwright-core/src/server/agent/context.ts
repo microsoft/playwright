@@ -25,6 +25,7 @@ import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { BrowserContextOptions } from '../types';
 import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
+import type { ToolDefinition } from './tools';
 
 type AgentOptions = BrowserContextOptions['agent'];
 
@@ -34,12 +35,22 @@ export class Context {
   readonly page: Page;
   readonly actions: actions.ActionWithCode[] = [];
   readonly sdkLanguage: Language;
+  private _callIntent: string | undefined;
 
   constructor(progress: Progress, page: Page) {
     this.progress = progress;
     this.page = page;
     this.options = page.browserContext._options.agent;
     this.sdkLanguage = page.browserContext._browser.sdkLanguage();
+  }
+
+  async callTool(tool: ToolDefinition, params: any, options: { intent?: string }) {
+    this._callIntent = options.intent;
+    try {
+      return await tool.handle(this, params);
+    } finally {
+      this._callIntent = undefined;
+    }
   }
 
   async runActionAndWait(action: actions.Action) {
@@ -52,7 +63,7 @@ export class Context {
         for (const a of action) {
           await runAction(this.progress, this.page, a, this.options?.secrets ?? []);
           const code = await generateCode(this.sdkLanguage, a);
-          this.actions.push({ ...a, code });
+          this.actions.push({ ...a, code, intent: this._callIntent });
         }
       });
       return await this.snapshotResult();

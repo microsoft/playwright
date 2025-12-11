@@ -15,7 +15,6 @@
  */
 
 import toolDefinitions from './tools';
-import { ProgressController } from '../progress';
 import { zodToJsonSchema } from '../../mcpBundle';
 
 import type * as loopTypes from '@lowire/loop';
@@ -32,6 +31,7 @@ export function toolsForLoop(context: Context): { tools: loopTypes.Tool[], callT
   });
 
   const callTool: loopTypes.ToolCallback = async params => {
+    const intent = params.arguments._meta?.['dev.lowire/intent'];
     const tool = toolDefinitions.find(t => t.schema.name === params.name);
     if (!tool) {
       return {
@@ -42,11 +42,8 @@ export function toolsForLoop(context: Context): { tools: loopTypes.Tool[], callT
       };
     }
 
-    const progressController = new ProgressController();
     try {
-      return await progressController.run(async progress => {
-        return await tool.handle(context, params.arguments);
-      });
+      return await context.callTool(tool, params.arguments, { intent });
     } catch (error) {
       return {
         content: [{ type: 'text', text: error.message }],

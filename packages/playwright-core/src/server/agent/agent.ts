@@ -96,7 +96,7 @@ async function cachedPerform(context: Context, options: channels.PagePerformPara
     return false;
 
   const cache = await cachedActions(context.options.cacheFile);
-  const cacheKey = options.key ?? options.task;
+  const cacheKey = (options.key ?? options.task).trim();
   const entry = cache[cacheKey];
   if (!entry) {
     if (context.options.cacheMode === 'force')
@@ -114,7 +114,7 @@ async function updateCache(context: Context, options: channels.PagePerformParams
   if (!cacheFile)
     return;
   const cache = await cachedActions(cacheFile);
-  const cacheKey = options.key ?? options.task;
+  const cacheKey = (options.key ?? options.task).trim();
   cache[cacheKey] = {
     timestamp: Date.now(),
     actions: context.actions,
