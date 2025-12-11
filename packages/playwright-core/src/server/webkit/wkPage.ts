@@ -923,7 +923,12 @@ export class WKPage implements PageDelegate {
     const buffer = Buffer.from(event.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
-      frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
+      frameSwapWallTime: event.timestamp
+        // timestamp is in seconds, we need to convert to milliseconds.
+        ? event.timestamp * 1000
+        // Fallback for Debian 11 where WebKit is frozen on an older version that did not send timestamp.
+        // TODO: remove this fallback when Debian 11 is EOL.
+        : Date.now(),
       width: event.deviceWidth,
       height: event.deviceHeight,
     });
