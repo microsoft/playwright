@@ -27,7 +27,7 @@ type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSchema'> 
   inputSchema: Input;
 };
 
-type ToolDefinition<Input extends zod.Schema = zod.Schema> = {
+export type ToolDefinition<Input extends zod.Schema = zod.Schema> = {
   schema: ToolSchema<Input>;
   handle: (context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
 };
@@ -327,4 +327,4 @@ export default [
   expectVisible,
   expectVisibleText,
   expectValue,
-];
+] as ToolDefinition<any>[];
