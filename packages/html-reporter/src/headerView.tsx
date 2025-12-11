@@ -78,7 +78,7 @@ export const GlobalFilterView: React.FC<{
       }>
         {icons.search()}
         {/* Use navigationId to reset defaultValue */}
-        <input name='q' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' value={filterText} onChange={e => {
+        <input name='q' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' aria-label='Search tests' placeholder='Search tests' value={filterText} onChange={e => {
           setFilterText(e.target.value);
         }}></input>
       </form>
