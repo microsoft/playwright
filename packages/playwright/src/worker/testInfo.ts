@@ -471,13 +471,13 @@ export class TestInfoImpl implements TestInfo {
         this._callbacks.onTestPaused!({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
         this._interruptedPromise.then(() => 'interrupted' as const),
       ]);
-      step.complete({});
       if (result !== 'interrupted') {
         if (result.action === 'abort')
           this._interrupt();
         if (result.action === undefined)
           await this._interruptedPromise;
       }
+      step.complete({});
     }
     await this._onDidFinishTestFunctionCallback?.();
   }
