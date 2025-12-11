@@ -17,12 +17,12 @@
 import fs from 'fs';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile  } from './config';
-import * as codegen from './codegen';
 import { dateAsFileName } from './tools/utils';
 
 import type * as playwright from '../../../types/test';
@@ -256,7 +256,7 @@ export class Context {
 
   lookupSecret(secretName: string): { value: string, code: string } {
     if (!this.config.secrets?.[secretName])
-      return { value: secretName, code: codegen.quote(secretName) };
+      return { value: secretName, code: escapeWithQuotes(secretName, '\'') };
     return {
       value: this.config.secrets[secretName]!,
       code: `process.env['${secretName}']`,

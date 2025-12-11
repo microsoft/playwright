@@ -17,8 +17,9 @@
 import fs from 'fs';
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { formatObject } from 'playwright-core/lib/utils';
+
 import { defineTabTool, defineTool } from './tool';
-import * as javascript from '../codegen';
 
 const snapshot = defineTool({
   capability: 'core',
@@ -73,7 +74,7 @@ const click = defineTabTool({
       button: params.button,
       modifiers: params.modifiers,
     };
-    const formatted = javascript.formatObject(options, ' ', 'oneline');
+    const formatted = formatObject(options, ' ', 'oneline');
     const optionsAttr = formatted !== '{}' ? formatted : '';
 
     if (params.doubleClick)
@@ -161,7 +162,7 @@ const selectOption = defineTabTool({
     response.setIncludeSnapshot();
 
     const { locator, resolved } = await tab.refLocator(params);
-    response.addCode(`await page.${resolved}.selectOption(${javascript.formatObject(params.values)});`);
+    response.addCode(`await page.${resolved}.selectOption(${formatObject(params.values)});`);
 
     await tab.waitForCompletion(async () => {
       await locator.selectOption(params.values);

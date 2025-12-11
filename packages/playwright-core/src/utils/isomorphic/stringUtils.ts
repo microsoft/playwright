@@ -47,6 +47,30 @@ export function toSnakeCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/([A-Z])([A-Z][a-z])/g, '$1_$2').toLowerCase();
 }
 
+export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'oneline' = 'multiline'): string {
+  if (typeof value === 'string')
+    return escapeWithQuotes(value, '\'');
+  if (Array.isArray(value))
+    return `[${value.map(o => formatObject(o)).join(', ')}]`;
+  if (typeof value === 'object') {
+    const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
+    if (!keys.length)
+      return '{}';
+    const tokens: string[] = [];
+    for (const key of keys)
+      tokens.push(`${key}: ${formatObject(value[key])}`);
+    if (mode === 'multiline')
+      return `{\n${tokens.join(`,\n${indent}`)}\n}`;
+    return `{ ${tokens.join(', ')} }`;
+  }
+  return String(value);
+}
+
+export function formatObjectOrVoid(value: any, indent = '  '): string {
+  const result = formatObject(value, indent);
+  return result === '{}' ? '' : result;
+}
+
 export function quoteCSSAttributeValue(text: string): string {
   return `"${text.replace(/["\\]/g, char => '\\' + char)}"`;
 }

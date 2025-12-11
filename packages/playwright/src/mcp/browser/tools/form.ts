@@ -15,8 +15,9 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { escapeWithQuotes } from 'playwright-core/lib/utils';
+
 import { defineTabTool } from './tool';
-import * as codegen from '../codegen';
 
 const fillForm = defineTabTool({
   capability: 'core',
@@ -49,7 +50,7 @@ const fillForm = defineTabTool({
         response.addCode(`${locatorSource}.setChecked(${field.value});`);
       } else if (field.type === 'combobox') {
         await locator.selectOption({ label: field.value });
-        response.addCode(`${locatorSource}.selectOption(${codegen.quote(field.value)});`);
+        response.addCode(`${locatorSource}.selectOption(${escapeWithQuotes(field.value)});`);
       }
     }
   },

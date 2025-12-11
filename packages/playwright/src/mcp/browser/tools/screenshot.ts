@@ -18,10 +18,10 @@ import fs from 'fs';
 
 import { mkdirIfNeeded, scaleImageToSize } from 'playwright-core/lib/utils';
 import { jpegjs, PNG } from 'playwright-core/lib/utilsBundle';
+import { formatObject } from 'playwright-core/lib/utils';
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
-import * as javascript from '../codegen';
 import { dateAsFileName } from './utils';
 
 import type * as playwright from 'playwright-core';
@@ -67,9 +67,9 @@ const screenshot = defineTabTool({
     const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
 
     if (ref)
-      response.addCode(`await page.${ref.resolved}.screenshot(${javascript.formatObject(options)});`);
+      response.addCode(`await page.${ref.resolved}.screenshot(${formatObject(options)});`);
     else
-      response.addCode(`await page.screenshot(${javascript.formatObject(options)});`);
+      response.addCode(`await page.screenshot(${formatObject(options)});`);
 
     const buffer = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
 

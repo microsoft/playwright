@@ -1,66 +1,76 @@
 {
-  "Enter x-secret-email into the email field": {
-    "timestamp": 1765340032886,
-    "actions": [
-      {
-        "method": "fill",
-        "selector": "internal:role=textbox[name=\"Email Address\"i]",
-        "text": "x-secret-email"
-      }
-    ]
-  },
   "Fill out the form with the following details:\nName: John Smith\nAddress: 1045 La Avenida St, Mountain View, CA 94043\nEmail: john.smith@at-microsoft.com": {
-    "timestamp": 1765340035431,
+    "timestamp": 1765479733829,
     "actions": [
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Full Name *\"i]",
-        "text": "John Smith"
+        "text": "John Smith",
+        "code": "await page.getByRole('textbox', { name: 'Full Name *' }).fill('John Smith');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Email Address *\"i]",
-        "text": "john.smith@at-microsoft.com"
+        "text": "john.smith@at-microsoft.com",
+        "code": "await page.getByRole('textbox', { name: 'Email Address *' }).fill('john.smith@at-microsoft.com');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Street Address *\"i]",
-        "text": "1045 La Avenida St"
+        "text": "1045 La Avenida St",
+        "code": "await page.getByRole('textbox', { name: 'Street Address *' }).fill('1045 La Avenida St');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"City *\"i]",
-        "text": "Mountain View"
+        "text": "Mountain View",
+        "code": "await page.getByRole('textbox', { name: 'City *' }).fill('Mountain View');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"State/Province *\"i]",
-        "text": "CA"
+        "text": "CA",
+        "code": "await page.getByRole('textbox', { name: 'State/Province *' }).fill('CA');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
-        "text": "94043"
+        "text": "94043",
+        "code": "await page.getByRole('textbox', { name: 'ZIP/Postal Code *' }).fill('94043');"
       }
     ]
   },
-  "\n    - Enter \"bogus\" into the email field\n    - Check that the value is in fact \"bogus\"\n    - Check that the error message is displayed\n  ": {
-    "timestamp": 1765416520724,
+  "Enter x-secret-email into the email field": {
+    "timestamp": 1765479741895,
     "actions": [
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Email Address\"i]",
-        "text": "bogus"
+        "text": "x-secret-email",
+        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('x-secret-email');"
+      }
+    ]
+  },
+  "\n    - Enter \"bogus\" into the email field\n    - Check that the value is in fact \"bogus\"\n    - Check that the error message is displayed\n  ": {
+    "timestamp": 1765479938668,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Email Address\"i]",
+        "text": "bogus",
+        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('bogus');"
       },
       {
         "method": "expectValue",
         "selector": "internal:role=textbox[name=\"Email Address\"i]",
         "type": "textbox",
-        "value": "bogus"
+        "value": "bogus",
+        "code": "await expect(page.getByRole('textbox', { name: 'Email Address' })).toHaveValue('bogus');"
       },
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"Error: Invalid email address\"i"
+        "selector": "internal:text=\"Error: Invalid email address\"i",
+        "code": "await expect(page.getByText('Error: Invalid email address')).toBeVisible();"
       }
     ]
   }

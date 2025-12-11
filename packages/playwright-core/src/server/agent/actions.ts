@@ -78,3 +78,6 @@ export type ExpectValue = {
 };
 
 export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction | SetChecked | ExpectVisible | ExpectValue;
+export type ActionWithCode = Action & {
+  code: string;
+};
