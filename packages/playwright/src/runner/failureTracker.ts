@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestResult, TestError } from '../../types/testReporter';
+import type { TestResult } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { Suite, TestCase } from '../common/test';
 
@@ -26,7 +26,6 @@ export class FailureTracker {
   private _topLevelProjects: FullProjectInternal[] = [];
   private _pauseOnError: boolean;
   private _pauseAtEnd: boolean;
-  sendMessageToWorker = new Map<number, (params: { request: any }) => Promise<{ response: any, error?: TestError }>>();
 
   constructor(config: FullConfigInternal, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
     this._config = config;

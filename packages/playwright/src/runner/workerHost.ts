@@ -23,8 +23,11 @@ import { ProcessHost } from './processHost';
 import { stdioChunkToParams } from '../common/ipc';
 import { artifactsFolderName } from '../isomorphic/folders';
 
+import { addLocationAndSnippetToError } from '../reporters/internalReporter';
+import { serializeError } from '../util';
 import type { TestGroup } from './testGroups';
 import type { CustomMessageRequestPayload, CustomMessageResponsePayload, RunPayload, SerializedConfig, ResumePayload, WorkerInitParams } from '../common/ipc';
+import type { TestRun } from './tasks';
 
 
 let lastWorkerIndex = 0;
@@ -44,8 +47,9 @@ export class WorkerHost extends ProcessHost {
   private _hash: string;
   private _params: WorkerInitParams;
   private _didFail = false;
+  private _testRun: TestRun;
 
-  constructor(testGroup: TestGroup, options: WorkerHostOptions) {
+  constructor(testRun: TestRun, testGroup: TestGroup, options: WorkerHostOptions) {
     const workerIndex = lastWorkerIndex++;
     super(require.resolve('../worker/workerMain.js'), `worker-${workerIndex}`, {
       ...options.extraEnv,
@@ -55,6 +59,7 @@ export class WorkerHost extends ProcessHost {
     this.workerIndex = workerIndex;
     this.parallelIndex = options.parallelIndex;
     this._hash = testGroup.workerHash;
+    this._testRun = testRun;
 
     this._params = {
       workerIndex: this.workerIndex,
@@ -74,6 +79,7 @@ export class WorkerHost extends ProcessHost {
 
   async start() {
     await fs.promises.mkdir(this._params.artifactsDir, { recursive: true });
+    this._testRun.onDidStartWorker(this);
     return await this.startRunner(this._params, {
       onStdOut: chunk => this.emit('stdOut', stdioChunkToParams(chunk)),
       onStdErr: chunk => this.emit('stdErr', stdioChunkToParams(chunk)),
@@ -88,6 +94,7 @@ export class WorkerHost extends ProcessHost {
     if (didFail)
       this._didFail = true;
     await super.stop();
+    this._testRun.onDidStopWorker(this);
   }
 
   runTestGroup(runPayload: RunPayload) {
@@ -95,7 +102,16 @@ export class WorkerHost extends ProcessHost {
   }
 
   async sendCustomMessage(payload: CustomMessageRequestPayload) {
-    return await this.sendMessage({ method: 'customMessage', params: payload }) as CustomMessageResponsePayload;
+    try {
+      const response = await this.sendMessage({ method: 'customMessage', params: payload }) as CustomMessageResponsePayload;
+      if (response.error)
+        addLocationAndSnippetToError(this._testRun.config.config, response.error);
+      return response;
+    } catch (e) {
+      const error = serializeError(e);
+      addLocationAndSnippetToError(this._testRun.config.config, error);
+      return { response: undefined, error };
+    }
   }
 
   sendResume(payload: ResumePayload) {

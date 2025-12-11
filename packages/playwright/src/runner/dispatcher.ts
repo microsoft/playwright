@@ -20,8 +20,6 @@ import { colors } from 'playwright-core/lib/utils';
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
 import { serializeConfig } from '../common/ipc';
-import { addLocationAndSnippetToError } from '../reporters/internalReporter';
-import { serializeError } from '../util';
 import { Storage } from './storage';
 
 import type { FailureTracker } from './failureTracker';
@@ -35,6 +33,7 @@ import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 import type { RegisteredListener } from 'playwright-core/lib/utils';
+import type { TestRun } from './tasks';
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
@@ -46,6 +45,7 @@ export class Dispatcher {
   private _finished = new ManualPromise<void>();
   private _isStopped = true;
 
+  private _testRun: TestRun;
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
@@ -53,11 +53,12 @@ export class Dispatcher {
   private _extraEnvByProjectId: EnvByProjectId = new Map();
   private _producedEnvByProjectId: EnvByProjectId = new Map();
 
-  constructor(config: FullConfigInternal, reporter: ReporterV2, failureTracker: FailureTracker) {
-    this._config = config;
-    this._reporter = reporter;
-    this._failureTracker = failureTracker;
-    for (const project of config.projects) {
+  constructor(testRun: TestRun) {
+    this._testRun = testRun;
+    this._config = testRun.config;
+    this._reporter = testRun.reporter;
+    this._failureTracker = testRun.failureTracker;
+    for (const project of this._config.projects) {
       if (project.workers)
         this._workerLimitPerProjectId.set(project.id, project.workers);
     }
@@ -221,7 +222,7 @@ export class Dispatcher {
   _createWorker(testGroup: TestGroup, parallelIndex: number, loaderData: SerializedConfig) {
     const projectConfig = this._config.projects.find(p => p.id === testGroup.projectId)!;
     const outputDir = projectConfig.project.outputDir;
-    const worker = new WorkerHost(testGroup, {
+    const worker = new WorkerHost(this._testRun, testGroup, {
       parallelIndex,
       config: loaderData,
       extraEnv: this._extraEnvByProjectId.get(testGroup.projectId) || {},
@@ -591,7 +592,7 @@ class JobDispatcher {
     ];
   }
 
-  private async _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
+  private _onTestPaused(worker: WorkerHost, params: TestPausedPayload) {
     const data = this._dataByTestId.get(params.testId);
     if (!data)
       return;
@@ -600,21 +601,6 @@ class JobDispatcher {
     const step = steps.get(params.stepId);
     if (!step)
       return;
-
-    this._failureTracker.sendMessageToWorker.set(this._workerIndex, async (message: { request: any }) => {
-      try {
-        if (this.jobResult.isDone())
-          throw new Error('Test has already stopped');
-        const response = await worker.sendCustomMessage({ testId: test.id, request: message.request });
-        if (response.error)
-          addLocationAndSnippetToError(this._config.config, response.error);
-        return response;
-      } catch (e) {
-        const error = serializeError(e);
-        addLocationAndSnippetToError(this._config.config, error);
-        return { response: undefined, error };
-      }
-    });
 
     result.errors = params.errors;
     result.error = result.errors[0];

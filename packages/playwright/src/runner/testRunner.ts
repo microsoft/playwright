@@ -36,7 +36,7 @@ import { LastRunReporter } from './lastRun';
 
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation, FullConfigInternal } from '../common/config';
-import type { ConfigCLIOverrides } from '../common/ipc';
+import type { ConfigCLIOverrides, CustomMessageRequestPayload } from '../common/ipc';
 import type { TestRunnerPluginRegistration } from '../plugins';
 import type { AnyReporter } from '../reporters/reporterV2';
 
@@ -397,8 +397,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     gracefullyProcessExitDoNotHang(0);
   }
 
-  sendMessageToWorker(workerIndex: number, params: { request: any }) {
-    return this._testRun?.testRun.failureTracker.sendMessageToWorker.get(workerIndex)?.(params);
+  sendMessageToWorker(workerIndex: number, payload: CustomMessageRequestPayload) {
+    return this._testRun?.testRun.sendCustomMessageToWorker(workerIndex, payload);
   }
 
   async stop() {

@@ -33,6 +33,8 @@ import { createTestGroups } from '../runner/testGroups';
 import { cacheDir } from '../transform/compilationCache';
 import { removeDirAndLogToConsole } from '../util';
 
+import { WorkerHost } from './workerHost';
+import { CustomMessageRequestPayload } from '../common/ipc';
 import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
 import type { TestRunnerPluginRegistration } from '../plugins';
@@ -64,11 +66,24 @@ export class TestRun {
   projectFiles: Map<FullProjectInternal, string[]> = new Map();
   projectSuites: Map<FullProjectInternal, Suite[]> = new Map();
   topLevelProjects: FullProjectInternal[] = [];
+  private _workers = new Map<number, WorkerHost>();
 
   constructor(config: FullConfigInternal, reporter: InternalReporter, options?: { pauseOnError?: boolean, pauseAtEnd?: boolean }) {
     this.config = config;
     this.reporter = reporter;
     this.failureTracker = new FailureTracker(config, options);
+  }
+
+  onDidStartWorker(worker: WorkerHost) {
+    this._workers.set(worker.workerIndex, worker);
+  }
+
+  onDidStopWorker(worker: WorkerHost) {
+    this._workers.delete(worker.workerIndex);
+  }
+
+  sendCustomMessageToWorker(workerIndex: number, payload: CustomMessageRequestPayload) {
+    return this._workers.get(workerIndex)?.sendCustomMessage(payload);
   }
 }
 
@@ -348,7 +363,7 @@ function createPhasesTask(): Task<TestRun> {
           processed.add(project);
         if (phaseProjects.length) {
           let testGroupsInPhase = 0;
-          const phase: Phase = { dispatcher: new Dispatcher(testRun.config, testRun.reporter, testRun.failureTracker), projects: [] };
+          const phase: Phase = { dispatcher: new Dispatcher(testRun), projects: [] };
           testRun.phases.push(phase);
           for (const project of phaseProjects) {
             const projectSuite = projectToSuite.get(project)!;

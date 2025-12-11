@@ -226,7 +226,7 @@ export class TestContext {
         {
           version: () => 'v2',
           onTestPaused: async (test, result, step) => {
-            testRunnerAndScreen.sendMessageToPausedTest = params => testRunnerAndScreen.testRunner.sendMessageToWorker(result.workerIndex, params)!;
+            testRunnerAndScreen.sendMessageToPausedTest = ({ request }) => testRunnerAndScreen.testRunner.sendMessageToWorker(result.workerIndex, { testId: test.id, request })!;
             const response = await testRunnerAndScreen.sendMessageToPausedTest({ request: { initialize: { clientInfo: this._clientInfo } } });
             if (response.error)
               paused.reject(new Error(response.error.message));
