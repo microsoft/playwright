@@ -146,6 +146,13 @@ export class Context {
     }));
   }
 
+  limits(options: { maxTurns?: number, maxTokens?: number } = {}): { maxTurns: number | undefined, maxTokens: number | undefined } {
+    return {
+      maxTurns: options.maxTurns ?? this.options?.maxTurns ?? 10,
+      maxTokens: options.maxTokens ?? this.options?.maxTokens ?? undefined,
+    };
+  }
+
   private _redactText(text: string): string {
     const secrets = this.options?.secrets;
     if (!secrets)

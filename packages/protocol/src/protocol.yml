@@ -604,6 +604,8 @@ ContextOptions:
         secrets:
           type: array?
           items: NameValue
+        maxTurns: int?
+        maxTokens: int?
 
 LocalUtils:
   type: interface
@@ -2030,6 +2032,11 @@ Page:
         task: string
         key: string?
         maxTurns: int?
+        maxTokens: int?
+      returns:
+        turns: int
+        inputTokens: int
+        outputTokens: int
 
     extract:
       internal: true
@@ -2039,6 +2046,9 @@ Page:
         maxTurns: int?
       returns:
         result: json
+        turns: int
+        inputTokens: int
+        outputTokens: int
 
   events:
 

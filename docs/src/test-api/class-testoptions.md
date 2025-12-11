@@ -46,7 +46,7 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.agent = %%-js-context-option-agent-%%
+## property: TestOptions.agent = %%-context-option-agent-%%
 * since: v1.58
 
 

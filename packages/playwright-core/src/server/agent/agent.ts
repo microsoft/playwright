@@ -28,17 +28,27 @@ import type { Page } from '../page';
 import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 
-export async function pagePerform(progress: Progress, page: Page, options: channels.PagePerformParams): Promise<void> {
+type Usage = {
+  turns: number,
+  inputTokens: number,
+  outputTokens: number,
+};
+
+export async function pagePerform(progress: Progress, page: Page, options: channels.PagePerformParams): Promise<Usage> {
   const context = new Context(progress, page);
 
   if (await cachedPerform(context, options))
-    return;
+    return { turns: 0, inputTokens: 0, outputTokens: 0 };
 
-  await perform(context, options.task, undefined, options);
+  const { usage } = await perform(context, options.task, undefined, options);
   await updateCache(context, options);
+  return usage;
 }
 
-export async function pageExtract(progress: Progress, page: Page, options: channels.PageExtractParams) {
+export async function pageExtract(progress: Progress, page: Page, options: channels.PageExtractParams): Promise<{
+  result: any,
+  usage: Usage
+}> {
   const context = new Context(progress, page);
   const task = `
 ### Instructions
@@ -46,10 +56,14 @@ Extract the following information from the page. Do not perform any actions, jus
 
 ### Query
 ${options.query}`;
-  return await perform(context, task, options.schema, options);
+  const { result, usage } = await perform(context, task, options.schema, options);
+  return { result, usage };
 }
 
-async function perform(context: Context, userTask: string, resultSchema: loopTypes.Schema | undefined, options: { maxTurns?: number } = {}): Promise<any> {
+async function perform(context: Context, userTask: string, resultSchema: loopTypes.Schema | undefined, options: { maxTurns?: number, maxTokens?: number } = {}): Promise<{
+  result: any,
+  usage: Usage
+}> {
   const { progress, page } = context;
   const browserContext = page.browserContext;
   if (!browserContext._options.agent)
@@ -58,13 +72,17 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
   const { full } = await page.snapshotForAI(progress);
   const { tools, callTool } = toolsForLoop(context);
 
+  const limits = context.limits(options);
+  let turns = 0;
   const loop = new Loop(browserContext._options.agent.provider as any, {
     model: browserContext._options.agent.model,
     summarize: true,
     debug,
     callTool,
     tools,
+    ...limits,
     beforeTurn: params => {
+      ++turns;
       const lastReply = params.conversation.messages.findLast(m => m.role === 'assistant');
       const toolCall = lastReply?.content.find(c => c.type === 'tool_call');
       if (!resultSchema && toolCall && toolCall.arguments.thatShouldBeIt)
@@ -80,8 +98,15 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
 ${full}
 `;
 
-  const { result } = await loop.run(task, { resultSchema });
-  return result;
+  const { result, usage } = await loop.run(task, { resultSchema });
+  return {
+    result,
+    usage: {
+      turns,
+      inputTokens: usage.input,
+      outputTokens: usage.output,
+    }
+  };
 }
 
 type CachedActions = Record<string, {

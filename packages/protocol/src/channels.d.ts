@@ -1014,6 +1014,8 @@ export type BrowserTypeLaunchPersistentContextParams = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   userDataDir: string,
   slowMo?: number,
@@ -1103,6 +1105,8 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   slowMo?: number,
 };
@@ -1231,6 +1235,8 @@ export type BrowserNewContextParams = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   proxy?: {
     server: string,
@@ -1306,6 +1312,8 @@ export type BrowserNewContextOptions = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   proxy?: {
     server: string,
@@ -1384,6 +1392,8 @@ export type BrowserNewContextForReuseParams = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   proxy?: {
     server: string,
@@ -1459,6 +1469,8 @@ export type BrowserNewContextForReuseOptions = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   proxy?: {
     server: string,
@@ -1601,6 +1613,8 @@ export type BrowserContextInitializer = {
       cacheFile?: string,
       cacheMode?: 'ignore' | 'force' | 'auto',
       secrets?: NameValue[],
+      maxTurns?: number,
+      maxTokens?: number,
     },
   },
 };
@@ -2627,12 +2641,18 @@ export type PagePerformParams = {
   task: string,
   key?: string,
   maxTurns?: number,
+  maxTokens?: number,
 };
 export type PagePerformOptions = {
   key?: string,
   maxTurns?: number,
+  maxTokens?: number,
 };
-export type PagePerformResult = void;
+export type PagePerformResult = {
+  turns: number,
+  inputTokens: number,
+  outputTokens: number,
+};
 export type PageExtractParams = {
   query: string,
   schema: any,
@@ -2643,6 +2663,9 @@ export type PageExtractOptions = {
 };
 export type PageExtractResult = {
   result: any,
+  turns: number,
+  inputTokens: number,
+  outputTokens: number,
 };
 
 export interface PageEvents {
@@ -4914,6 +4937,8 @@ export type AndroidDeviceLaunchBrowserParams = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   pkg?: string,
   args?: string[],
@@ -4987,6 +5012,8 @@ export type AndroidDeviceLaunchBrowserOptions = {
     cacheFile?: string,
     cacheMode?: 'ignore' | 'force' | 'auto',
     secrets?: NameValue[],
+    maxTurns?: number,
+    maxTokens?: number,
   },
   pkg?: string,
   args?: string[],

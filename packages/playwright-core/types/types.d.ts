@@ -3839,10 +3839,24 @@ export interface Page {
     key?: string;
 
     /**
-     * Maximum number of agentic steps to take while performing this action.
+     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+     * Defaults to context-wide value specified in `agent` property.
+     */
+    maxTokens?: number;
+
+    /**
+     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
      */
     maxTurns?: number;
-  }): Promise<void>;
+  }): Promise<{
+    usage: {
+      turns: number;
+
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }>;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -22110,6 +22124,17 @@ export interface BrowserContextOptions {
      * Secrets to hide from the LLM.
      */
     secrets?: { [key: string]: string; };
+
+    /**
+     * Maximum number of agentic turns to take per call. Defaults to 10.
+     */
+    maxTurns?: number;
+
+    /**
+     * Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this
+     * value. Defaults on unlimited.
+     */
+    maxTokens?: number;
   };
 
   /**

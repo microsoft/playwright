@@ -846,13 +846,14 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async perform(task: string, options: { key?: string, maxTurns?: number } = {}): Promise<void> {
-    await this._channel.perform({ task, ...options });
+  async perform(task: string, options: { key?: string, maxTokens?: number, maxTurns?: number } = {}) {
+    const result = await this._channel.perform({ task, ...options });
+    return { usage: { ...result } };
   }
 
-  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: { maxTurns?: number } = {}): Promise<z.infer<Schema>> {
-    const { result } = await this._channel.extract({ query, schema: this._platform.zodToJsonSchema(schema), ...options });
-    return result;
+  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: { maxTokens?: number, maxTurns?: number } = {}): Promise<z.infer<Schema>> {
+    const { result, ...usage } = await this._channel.extract({ query, schema: this._platform.zodToJsonSchema(schema), ...options });
+    return { result, usage };
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
