@@ -33,6 +33,11 @@ import { AttachmentsTab } from './attachmentsTab';
 import { AnnotationsTab } from './annotationsTab';
 import type { Boundaries } from './geometry';
 import { InspectorTab } from './inspectorTab';
+import { ReasoningTab } from './reasoningTab';
+import { ChatTab } from './chatTab';
+import { AXTreeTab } from './axtreeTab';
+import { AttemptsSelector } from './attemptsSelector';
+import { LLMStepsList } from './llmStepsList';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { useSetting, msToString, clsx, usePartitionedState, togglePartition } from '@web/uiUtils';
 import './workbench.css';
@@ -74,8 +79,8 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
 
   // UI settings, shared for all models.
   const [selectedNavigatorTab, setSelectedNavigatorTab] = useSetting<string>('navigatorTab',  'actions');
-  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
-  const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
+  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'reasoning');
+  const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'right');
   const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
   // Per-model settings, should be primitive non-retaining types.
@@ -267,7 +272,27 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     render: () => <AttachmentsTab revealedAttachmentCallId={revealedAttachmentCallId} />
   };
 
+  // LLM-specific tabs for silverstream integration
+  const reasoningTab: TabbedPaneTabModel = {
+    id: 'reasoning',
+    title: 'Reasoning',
+    render: () => <ReasoningTab />
+  };
+  const chatTab: TabbedPaneTabModel = {
+    id: 'chat',
+    title: 'Chat',
+    render: () => <ChatTab />
+  };
+  const axtreeTab: TabbedPaneTabModel = {
+    id: 'axtree',
+    title: 'AXTree',
+    render: () => <AXTreeTab />
+  };
+
   const tabs: TabbedPaneTabModel[] = [
+    reasoningTab,
+    chatTab,
+    axtreeTab,
     inspectorTab,
     callTab,
     logTab,
@@ -346,19 +371,6 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const actionsFilterWithCount = selectedNavigatorTab === 'actions' && <ActionsFilterButton counters={model?.actionCounters} hiddenActionsCount={hiddenActionsCount} />;
 
   return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
-    {!hideTimeline && <Timeline
-      model={model}
-      consoleEntries={consoleModel.entries}
-      networkResources={networkModel.resources}
-      boundaries={boundaries}
-      highlightedAction={highlightedAction}
-      highlightedResourceOrdinal={highlightedResourceOrdinal}
-      highlightedConsoleEntryOrdinal={highlightedConsoleMessageOrdinal}
-      onSelected={onActionSelected}
-      sdkLanguage={sdkLanguage}
-      selectedTime={selectedTime}
-      setSelectedTime={setSelectedTime}
-    />}
     <SplitView
       sidebarSize={250}
       orientation={sidebarLocation === 'bottom' ? 'vertical' : 'horizontal'} settingName='propertiesSidebar'
@@ -367,23 +379,32 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         orientation='horizontal'
         sidebarIsFirst
         settingName='actionListSidebar'
-        main={<SnapshotTabsView
-          action={activeAction}
-          model={model}
-          sdkLanguage={sdkLanguage}
-          testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
-          isInspecting={isInspecting}
-          setIsInspecting={setIsInspecting}
-          highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked} />}
-        sidebar={
-          <TabbedPane
-            tabs={[actionsTab, metadataTab]}
-            rightToolbar={[actionsFilterWithCount]}
-            selectedTab={selectedNavigatorTab}
-            setSelectedTab={setSelectedNavigatorTab}
-          />
-        }
+        main={<div className='vbox' style={{ flex: 1 }}>
+          <AttemptsSelector />
+          <SnapshotTabsView
+            action={activeAction}
+            model={model}
+            sdkLanguage={sdkLanguage}
+            testIdAttributeName={model?.testIdAttributeName || 'data-testid'}
+            isInspecting={isInspecting}
+            setIsInspecting={setIsInspecting}
+            highlightedElement={highlightedElement}
+            setHighlightedElement={elementPicked} />
+          {!hideTimeline && <Timeline
+            model={model}
+            consoleEntries={consoleModel.entries}
+            networkResources={networkModel.resources}
+            boundaries={boundaries}
+            highlightedAction={highlightedAction}
+            highlightedResourceOrdinal={highlightedResourceOrdinal}
+            highlightedConsoleEntryOrdinal={highlightedConsoleMessageOrdinal}
+            onSelected={onActionSelected}
+            sdkLanguage={sdkLanguage}
+            selectedTime={selectedTime}
+            setSelectedTime={setSelectedTime}
+          />}
+        </div>}
+        sidebar={<LLMStepsList />}
       />}
       sidebar={<TabbedPane
         tabs={tabs}
@@ -398,7 +419,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
               setSidebarLocation('bottom');
             }} />
         ]}
-        mode={sidebarLocation === 'bottom' ? 'default' : 'select'}
+        mode='default'
       />}
     />
   </div>;

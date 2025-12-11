@@ -32,6 +32,20 @@
   flex-direction: column;
 }
 
+.tabbed-pane-tab-list {
+  flex: auto;
+  display: flex;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tabbed-pane-tab-list::-webkit-scrollbar {
+  display: none;
+}
+
 .tabbed-pane-tab {
   padding: 2px 6px 0 6px;
   cursor: pointer;
@@ -42,6 +56,7 @@
   border-bottom: 2px solid transparent;
   outline: none;
   height: 100%;
+  flex-shrink: 0;
 }
 
 .tabbed-pane-tab-label {

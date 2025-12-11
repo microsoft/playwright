@@ -1,0 +1,92 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.reasoning-tab {
+  flex: auto;
+  overflow: auto;
+  padding: 12px;
+  user-select: text;
+  line-height: 1.5;
+}
+
+.reasoning-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 16px;
+  background: var(--vscode-textBlockQuote-background);
+  border-left: 3px solid var(--vscode-textLink-foreground);
+  border-radius: 0 4px 4px 0;
+}
+
+.reasoning-action-label {
+  font-weight: 600;
+  color: var(--vscode-sideBarTitle-foreground);
+  text-transform: uppercase;
+  font-size: 11px;
+}
+
+.reasoning-action-value {
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 13px;
+  color: var(--vscode-charts-orange);
+  background: var(--vscode-editor-background);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.reasoning-content {
+  color: var(--vscode-foreground);
+}
+
+.reasoning-heading {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  padding-bottom: 4px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  color: var(--vscode-textLink-foreground);
+}
+
+.reasoning-heading:first-child {
+  margin-top: 0;
+}
+
+.reasoning-subheading {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 12px 0 6px 0;
+  color: var(--vscode-foreground);
+}
+
+.reasoning-paragraph {
+  margin: 4px 0;
+  line-height: 1.6;
+}
+
+.reasoning-list-item {
+  margin: 4px 0 4px 20px;
+  list-style-type: disc;
+}
+
+.reasoning-list-item.numbered {
+  list-style-type: decimal;
+}
+
+.reasoning-spacer {
+  height: 8px;
+}

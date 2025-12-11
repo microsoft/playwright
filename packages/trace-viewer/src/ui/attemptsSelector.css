@@ -1,0 +1,84 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.attempts-selector {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: var(--vscode-editor-background);
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.attempts-selector__label {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--vscode-foreground);
+}
+
+.attempts-selector__buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.attempts-selector__button {
+  padding: 8px 16px;
+  border-radius: 6px;
+  border: 2px solid transparent;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--vscode-button-secondaryBackground);
+  color: var(--vscode-button-secondaryForeground);
+}
+
+.attempts-selector__button:hover {
+  background: var(--vscode-button-secondaryHoverBackground);
+}
+
+.attempts-selector__button--selected {
+  border-color: var(--vscode-focusBorder);
+}
+
+.attempts-selector__button--success {
+  background: rgba(40, 167, 69, 0.15);
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.attempts-selector__button--success:hover {
+  background: rgba(40, 167, 69, 0.25);
+}
+
+.attempts-selector__button--fail {
+  background: rgba(220, 53, 69, 0.15);
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.attempts-selector__button--fail:hover {
+  background: rgba(220, 53, 69, 0.25);
+}
+
+.attempts-selector__button--selected.attempts-selector__button--fail {
+  background: rgba(220, 53, 69, 0.3);
+}
+
+.attempts-selector__button--selected.attempts-selector__button--success {
+  background: rgba(40, 167, 69, 0.3);
+}

@@ -1,0 +1,146 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.llm-steps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px;
+  overflow-y: auto;
+  height: 100%;
+}
+
+.llm-step {
+  display: flex;
+  flex-direction: column;
+}
+
+.llm-step__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px;
+  background: var(--vscode-editor-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.llm-step__header:hover {
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-hoverBackground);
+}
+
+.llm-step__header--selected {
+  border-color: var(--vscode-focusBorder);
+  background: var(--vscode-list-activeSelectionBackground);
+}
+
+.llm-step__header--failure {
+  border-left: 3px solid #dc3545;
+}
+
+.llm-step__header--success {
+  border-left: 3px solid #28a745;
+}
+
+.llm-step__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.llm-step__number {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--vscode-foreground);
+}
+
+.llm-step__icon {
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.llm-step__icon--success {
+  background: rgba(40, 167, 69, 0.2);
+  color: #28a745;
+}
+
+.llm-step__icon--failure {
+  background: rgba(220, 53, 69, 0.2);
+  color: #dc3545;
+}
+
+.llm-step__description {
+  font-size: 12px;
+  color: var(--vscode-descriptionForeground);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Substeps (Playwright actions) */
+.llm-step__substeps {
+  margin-left: 16px;
+  margin-top: 4px;
+  padding-left: 12px;
+  border-left: 2px solid var(--vscode-panel-border);
+}
+
+.llm-substep {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  font-size: 11px;
+  color: var(--vscode-descriptionForeground);
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.llm-substep:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.llm-substep__title {
+  color: var(--vscode-foreground);
+  font-weight: 500;
+}
+
+.llm-substep__duration {
+  color: var(--vscode-charts-orange);
+  font-size: 10px;
+}
+
+.llm-substep__selector {
+  color: var(--vscode-charts-blue);
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 10px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}

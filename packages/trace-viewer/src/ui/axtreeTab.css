@@ -1,0 +1,95 @@
+/*
+  Copyright (c) Microsoft Corporation.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+*/
+
+.axtree-tab {
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: text;
+}
+
+.axtree-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+  background: var(--vscode-editor-background);
+  flex-shrink: 0;
+}
+
+.axtree-label {
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  color: var(--vscode-sideBarTitle-foreground);
+}
+
+.axtree-url {
+  flex: 1;
+  font-size: 12px;
+  color: var(--vscode-textLink-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.axtree-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.axtree-content {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+  background: var(--vscode-editor-background);
+}
+
+.axtree-pre {
+  margin: 0;
+  font-family: var(--vscode-editor-font-family, monospace);
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.axtree-line {
+  min-height: 18px;
+}
+
+.axtree-line:hover {
+  background: var(--vscode-list-hoverBackground);
+}
+
+.axtree-role {
+  color: var(--vscode-charts-blue);
+  font-weight: 500;
+}
+
+.axtree-string {
+  color: var(--vscode-charts-orange);
+}
+
+.axtree-attr {
+  color: var(--vscode-charts-purple);
+}
+
+.axtree-value {
+  color: var(--vscode-charts-green);
+}

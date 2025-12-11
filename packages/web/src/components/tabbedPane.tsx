@@ -38,17 +38,36 @@ export const TabbedPane: React.FunctionComponent<{
   mode?: 'default' | 'select',
 }> = ({ tabs, selectedTab, setSelectedTab, leftToolbar, rightToolbar, dataTestId, mode }) => {
   const id = React.useId();
+  const tabListRef = React.useRef<HTMLDivElement>(null);
   if (!selectedTab)
     selectedTab = tabs[0].id;
   if (!mode)
     mode = 'default';
+
+  React.useEffect(() => {
+    const element = tabListRef.current;
+    if (!element) return;
+    const handleWheel = (e: WheelEvent) => {
+      if (element.scrollWidth > element.clientWidth) {
+        e.preventDefault();
+        element.scrollLeft += e.deltaY;
+      }
+    };
+    element.addEventListener('wheel', handleWheel, { passive: false });
+    return () => element.removeEventListener('wheel', handleWheel);
+  }, []);
+
   return <div className='tabbed-pane' data-testid={dataTestId}>
     <div className='vbox'>
       <Toolbar>
         { leftToolbar && <div style={{ flex: 'none', display: 'flex', margin: '0 4px', alignItems: 'center' }}>
           {...leftToolbar}
         </div>}
-        {mode === 'default' && <div style={{ flex: 'auto', display: 'flex', height: '100%', overflow: 'hidden' }} role='tablist'>
+        {mode === 'default' && <div
+          ref={tabListRef}
+          className='tabbed-pane-tab-list'
+          role='tablist'
+        >
           {[...tabs.map(tab => (
             <TabbedPaneTab
               key={tab.id}
