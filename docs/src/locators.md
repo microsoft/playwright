@@ -887,31 +887,31 @@ await page
 Alternatively, filter by **not having** text:
 
 ```js
-// 5 in-stock items
-await expect(page.getByRole('listitem').filter({ hasNotText: 'Out of stock' })).toHaveCount(5);
+// 2 in-stock items
+await expect(page.getByRole('listitem').filter({ hasNotText: 'Out of stock' })).toHaveCount(2);
 ```
 
 ```java
-// 5 in-stock items
+// 2 in-stock items
 assertThat(page.getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions().setHasNotText("Out of stock")))
-    .hasCount(5);
+    .hasCount(2);
 ```
 
 ```python async
-# 5 in-stock items
-await expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+# 2 in-stock items
+await expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(2)
 ```
 
 ```python sync
-# 5 in-stock items
-expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(5)
+# 2 in-stock items
+expect(page.get_by_role("listitem").filter(has_not_text="Out of stock")).to_have_count(2)
 ```
 
 ```csharp
-// 5 in-stock items
+// 2 in-stock items
 await Expect(Page.GetByRole(AriaRole.Listitem).Filter(new() { HasNotText = "Out of stock" }))
-    .ToHaveCountAsync(5);
+    .ToHaveCountAsync(2);
 ```
 
 ### Filter by child/descendant
