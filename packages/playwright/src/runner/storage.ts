@@ -87,7 +87,7 @@ export class Storage {
   }
 
   private _writeFile(entries: Record<string, any>) {
-    this._writeChain = this._writeChain.then(() => fs.promises.writeFile(this._fileName, JSON.stringify(entries, null, 2))).catch(() => {});
+    this._writeChain = this._writeChain.then(() => fs.promises.writeFile(this._fileName, JSON.stringify(entries, null, 2)));
     return this._writeChain;
   }
 

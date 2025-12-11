@@ -202,6 +202,7 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         messages: cache,
         secrets: { PORT: String(server.PORT) },
       },
+      maxTokens: 1_000_000,
       debug,
     });
     await use(loop);

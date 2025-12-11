@@ -600,6 +600,7 @@ ContextOptions:
           literals:
           - ignore
           - force
+          - update
           - auto
         secrets:
           type: array?
@@ -2051,6 +2052,16 @@ Page:
         outputTokens: int
 
   events:
+
+    agentTurn:
+      parameters:
+        role: string
+        message: string
+        usage:
+          type: object?
+          properties:
+            inputTokens: int
+            outputTokens: int
 
     bindingCall:
       parameters:

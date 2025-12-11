@@ -94,6 +94,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('route', { route: new RouteDispatcher(RequestDispatcher.from(this.parentScope(), request), route) });
     };
 
+    this.addObjectListener(Page.Events.AgentTurn, params => this._dispatchEvent('agentTurn', params));
     this.addObjectListener(Page.Events.Close, () => {
       this._dispatchEvent('close');
       this._dispose();

@@ -134,6 +134,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
 
+    this._channel.on('agentTurn', params => this.emit(Events.Page.AgentTurn, params));
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('crash', () => this._onCrash());

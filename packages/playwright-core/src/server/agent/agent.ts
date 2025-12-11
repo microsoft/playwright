@@ -21,10 +21,10 @@ import { debug } from '../../utilsBundle';
 import { Loop } from '../../mcpBundle';
 import { runAction } from './actionRunner';
 import { Context } from './context';
+import { Page } from '../page';
 
 import type { Progress } from '../progress';
 import type * as channels from '@protocol/channels';
-import type { Page } from '../page';
 import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 
@@ -72,6 +72,8 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
   const { full } = await page.snapshotForAI(progress);
   const { tools, callTool } = toolsForLoop(context);
 
+  page.emit(Page.Events.AgentTurn, { role: 'user', message: userTask });
+
   const limits = context.limits(options);
   let turns = 0;
   const loop = new Loop(browserContext._options.agent.provider as any, {
@@ -81,11 +83,23 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
     callTool,
     tools,
     ...limits,
-    beforeTurn: params => {
+    onAfterTurn: ({ assistantMessage, totalUsage }) => {
       ++turns;
-      const lastReply = params.conversation.messages.findLast(m => m.role === 'assistant');
-      const toolCall = lastReply?.content.find(c => c.type === 'tool_call');
-      if (!resultSchema && toolCall && toolCall.arguments.thatShouldBeIt)
+      const usage = { inputTokens: totalUsage.input, outputTokens: totalUsage.output };
+      const intent = assistantMessage.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
+      page.emit(Page.Events.AgentTurn, { role: 'assistant', message: intent, usage });
+      if (!assistantMessage.content.filter(c => c.type === 'tool_call').length)
+        page.emit(Page.Events.AgentTurn, { role: 'assistant', message: `no tool calls`, usage });
+      return 'continue';
+    },
+    onBeforeToolCall: ({ toolCall }) => {
+      page.emit(Page.Events.AgentTurn, { role: 'assistant', message: `call tool "${toolCall.name}"` });
+      return 'continue';
+    },
+    onAfterToolCall: ({ toolCall }) => {
+      const suffix = toolCall.result?.isError ? 'failed' : 'succeeded';
+      page.emit(Page.Events.AgentTurn, { role: 'user', message: `tool "${toolCall.name}" ${suffix}` });
+      if (toolCall.arguments.thatShouldBeIt)
         return 'break';
       return 'continue';
     },
@@ -117,7 +131,7 @@ type CachedActions = Record<string, {
 const allCaches = new Map<string, CachedActions>();
 
 async function cachedPerform(context: Context, options: channels.PagePerformParams): Promise<boolean> {
-  if (!context.options?.cacheFile || context.options.cacheMode === 'ignore')
+  if (!context.options?.cacheFile || context.options.cacheMode === 'ignore' || context.options.cacheMode === 'update')
     return false;
 
   const cache = await cachedActions(context.options.cacheFile);

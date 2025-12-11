@@ -120,6 +120,7 @@ type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
 };
 
 const PageEvent = {
+  AgentTurn: 'agentturn',
   Close: 'close',
   Crash: 'crash',
   Download: 'download',
@@ -136,6 +137,7 @@ const PageEvent = {
 } as const;
 
 export type PageEventMap = {
+  [PageEvent.AgentTurn]: [agentTurn: { role: string, message: string, usage?: { inputTokens: number, outputTokens: number } }];
   [PageEvent.Close]: [];
   [PageEvent.Crash]: [];
   [PageEvent.Download]: [download: Download];

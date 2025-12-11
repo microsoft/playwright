@@ -1037,6 +1037,21 @@ export interface Page {
    */
   extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
   /**
+   * Emitted when the agent makes a turn.
+   */
+  on(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
    * Emitted when the page closes.
    */
   on(event: 'close', listener: (page: Page) => any): this;
@@ -1246,6 +1261,21 @@ export interface Page {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
+  once(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
   once(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1337,6 +1367,21 @@ export interface Page {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'worker', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  addListener(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
 
   /**
    * Emitted when the page closes.
@@ -1548,6 +1593,21 @@ export interface Page {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  removeListener(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   removeListener(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1643,6 +1703,21 @@ export interface Page {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
+  off(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
   off(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1734,6 +1809,21 @@ export interface Page {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'worker', listener: (worker: Worker) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  prependListener(event: 'agentturn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
 
   /**
    * Emitted when the page closes.
@@ -4789,6 +4879,41 @@ export interface Page {
      */
     height: number;
   };
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  waitForEvent(event: 'agentturn', optionsOrPredicate?: { predicate?: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => boolean | Promise<boolean>)): Promise<{
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }>;
 
   /**
    * Emitted when the page closes.
@@ -22118,7 +22243,7 @@ export interface BrowserContextOptions {
     /**
      * Cache control, defaults to 'auto'.
      */
-    cacheMode?: 'force'|'ignore'|'auto';
+    cacheMode?: "force"|"ignore"|"update"|"auto";
 
     /**
      * Secrets to hide from the LLM.
