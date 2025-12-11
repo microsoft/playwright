@@ -608,6 +608,8 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
     secrets: tOptional(tArray(tType('NameValue'))),
+    maxTurns: tOptional(tInt),
+    maxTokens: tOptional(tInt),
   })),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
@@ -707,6 +709,8 @@ scheme.BrowserNewContextParams = tObject({
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
     secrets: tOptional(tArray(tType('NameValue'))),
+    maxTurns: tOptional(tInt),
+    maxTokens: tOptional(tInt),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -785,6 +789,8 @@ scheme.BrowserNewContextForReuseParams = tObject({
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
     secrets: tOptional(tArray(tType('NameValue'))),
+    maxTurns: tOptional(tInt),
+    maxTokens: tOptional(tInt),
   })),
   proxy: tOptional(tObject({
     server: tString,
@@ -908,6 +914,8 @@ scheme.BrowserContextInitializer = tObject({
       cacheFile: tOptional(tString),
       cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
       secrets: tOptional(tArray(tType('NameValue'))),
+      maxTurns: tOptional(tInt),
+      maxTokens: tOptional(tInt),
     })),
   }),
 });
@@ -1514,8 +1522,13 @@ scheme.PagePerformParams = tObject({
   task: tString,
   key: tOptional(tString),
   maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
 });
-scheme.PagePerformResult = tOptional(tObject({}));
+scheme.PagePerformResult = tObject({
+  turns: tInt,
+  inputTokens: tInt,
+  outputTokens: tInt,
+});
 scheme.PageExtractParams = tObject({
   query: tString,
   schema: tAny,
@@ -1523,6 +1536,9 @@ scheme.PageExtractParams = tObject({
 });
 scheme.PageExtractResult = tObject({
   result: tAny,
+  turns: tInt,
+  inputTokens: tInt,
+  outputTokens: tInt,
 });
 scheme.FrameInitializer = tObject({
   url: tString,
@@ -2818,6 +2834,8 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     cacheFile: tOptional(tString),
     cacheMode: tOptional(tEnum(['ignore', 'force', 'auto'])),
     secrets: tOptional(tArray(tType('NameValue'))),
+    maxTurns: tOptional(tInt),
+    maxTokens: tOptional(tInt),
   })),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),

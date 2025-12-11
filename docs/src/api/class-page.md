@@ -2026,8 +2026,12 @@ Callback function which will be called in Playwright's context.
 
 ## async method: Page.extract
 * since: v1.58
-* langs: js
-- returns: <[any]>
+- returns: <[Object]>
+  - `result` <[any]>
+  - `usage` <[Object]>
+    - `turns` <[int]>
+    - `inputTokens` <[int]>
+    - `outputTokens` <[int]>
 
 Extract information from the page using the agentic loop, return it in a given Zod format.
 
@@ -2050,11 +2054,18 @@ Task to perform using agentic loop.
 * since: v1.58
 - `schema` <[z.ZodSchema]>
 
+### option: Page.extract.maxTokens
+* since: v1.58
+- `maxTokens` <[int]>
+
+Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+Defaults to context-wide value specified in `agent` property.
+
 ### option: Page.extract.maxTurns
 * since: v1.58
 - `maxTurns` <[int]>
 
-Maximum number of agentic steps to take while extracting the information.
+Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
 
 ## async method: Page.fill
 * since: v1.8
@@ -3031,7 +3042,11 @@ Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
 ## async method: Page.perform
 * since: v1.58
-* langs: js
+- returns: <[Object]>
+  - `usage` <[Object]>
+    - `turns` <[int]>
+    - `inputTokens` <[int]>
+    - `outputTokens` <[int]>
 
 Perform action using agentic loop.
 
@@ -3054,11 +3069,18 @@ Task to perform using agentic loop.
 All the agentic actions are converted to the Playwright calls and are cached.
 By default, they are cached globally with the `task` as a key. This option allows controlling the cache key explicitly.
 
+### option: Page.perform.maxTokens
+* since: v1.58
+- `maxTokens` <[int]>
+
+Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+Defaults to context-wide value specified in `agent` property.
+
 ### option: Page.perform.maxTurns
 * since: v1.58
 - `maxTurns` <[int]>
 
-Maximum number of agentic steps to take while performing this action.
+Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
 
 
 ## async method: Page.press

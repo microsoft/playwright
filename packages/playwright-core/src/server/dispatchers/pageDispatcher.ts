@@ -322,11 +322,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async perform(params: channels.PagePerformParams, progress: Progress): Promise<channels.PagePerformResult> {
-    await pagePerform(progress, this._page, params);
+    return await pagePerform(progress, this._page, params);
   }
 
   async extract(params: channels.PageExtractParams, progress: Progress): Promise<channels.PageExtractResult> {
-    return { result: await pageExtract(progress, this._page, params) };
+    const { result, usage } = await pageExtract(progress, this._page, params);
+    return { result, ...usage };
   }
 
   async requests(params: channels.PageRequestsParams, progress: Progress): Promise<channels.PageRequestsResult> {
