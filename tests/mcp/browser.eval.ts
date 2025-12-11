@@ -24,7 +24,7 @@ import type * as lowireLoop from '@lowire/loop';
 test.use({ mcpHeadless: async ({ headless }, use) => use(headless) });
 
 test('fill the form', async ({ loop, client, server }) => {
-  expect(await loop.run<{ price: number, deliveryDays: number }>(`
+  const { result } = await loop.run<{ price: number, deliveryDays: number }>(`
     Navigate to ${server.PREFIX + '/evals/fill-form.html'} via Playwright MCP.
     Order a blue table and a green desk.
     Use the following details for the order form:
@@ -41,5 +41,6 @@ test('fill the form', async ({ loop, client, server }) => {
       price: z.number().describe('Total price in USD.'),
       deliveryDays: z.number().describe('Maximum estimated delivery time in days.'),
     })) as lowireLoop.Schema,
-  })).toEqual({ price: 653.96, deliveryDays: 3 });
+  });
+  expect(result).toEqual({ price: 653.96, deliveryDays: 3 });
 });

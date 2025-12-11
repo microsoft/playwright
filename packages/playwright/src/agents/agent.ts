@@ -50,12 +50,13 @@ export class Agent<T extends z.ZodSchema<any>> {
     const { clients, tools, callTool } = await this._initClients();
     const prompt = this.spec.description;
     try {
-      return await this.loop.run<z.output<T>>(`${prompt}\n\nTask:\n${task}\n\nParams:\n${JSON.stringify(params, null, 2)}`, {
+      const { result } = await this.loop.run<z.output<T>>(`${prompt}\n\nTask:\n${task}\n\nParams:\n${JSON.stringify(params, null, 2)}`, {
         ...options,
         tools,
         callTool,
         resultSchema: this.resultSchema
       });
+      return result;
     } finally {
       await this._disconnectFromServers(clients);
     }
