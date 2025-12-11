@@ -1759,7 +1759,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
 
         await expect(page.locator('.test-file-test .label')).toHaveCount(6);
         await expect(page.locator('.test-file-test', { has: page.getByText('chromium', { exact: true }) }).locator('.label')).toHaveText(['chromium', 'flaky']);
@@ -1839,7 +1839,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByPlaceholder('Search tests');
         const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('Error Pages › @smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
 
         await expect(smokeLabelButton).toBeVisible();
@@ -1916,7 +1916,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
         const tags = ['smoke-p1', 'issue[123]', 'issue#123', '$$$', 'tl/dr'];
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
 
         for (const tag of tags) {
           const tagButton = page.locator('.label').getByText(tag, { exact: true });
@@ -1959,7 +1959,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
         const tags = ['smoke-p1 with other text', 'issue[123] issue[456]', 'issue#123 issue#456', '$$$ ???', 'tl/dr didn\'t read'];
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByPlaceholder('Search tests');
 
         for (const tag of tags) {
           const tagButton = page.locator('.label').getByText(tag, { exact: true });
@@ -2003,7 +2003,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
 
         const smokeLabelButton = page.locator('.test-file-test', { has: page.getByText('@smoke fails', { exact: true }) }).locator('.label', { hasText: 'smoke' });
         await smokeLabelButton.click();
@@ -2070,7 +2070,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           return total;
         }
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByPlaceholder('Search tests');
         await expect(page.getByTestId('filtered-tests-count')).not.toBeVisible();
         await expect(page.getByTestId('overall-duration')).toHaveText(`Total time: ${msToString(result.report.stats.duration)}`);
 
@@ -2132,7 +2132,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
         const passedNavMenu = page.locator('.subnav-item:has-text("Passed")');
         const failedNavMenu = page.locator('.subnav-item:has-text("Failed")');
         const allNavMenu = page.locator('.subnav-item:has-text("All")');
@@ -2198,7 +2198,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByPlaceholder('Search tests');
 
         await searchInput.fill('@smoke');
         await searchInput.press('Enter');
@@ -2267,7 +2267,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information fails' })).toHaveCount(1);
         await expect(page.locator('.test-file-test .test-file-title', { hasText: '@company_information_widget fails' })).toHaveCount(1);
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
         const companyLabelButton = page.locator('.test-file-test', { has: page.getByText('@company passes') }).locator('.label', { hasText: 'company' });
         const companyInformationLabelButton = page.locator('.test-file-test', { has: page.getByText('@company_information fails') }).locator('.label', { hasText: 'company_information' });
         const companyInformationWidgetLabelButton = page.locator('.test-file-test', { has: page.getByText('@company_information_widget fails') }).locator('.label', { hasText: 'company_information_widget' });
@@ -2337,7 +2337,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const smokeButton = page.locator('.label', { hasText: 'smoke' }).first();
         const regressionButton = page.locator('.label', { hasText: 'regression' }).first();
         const flakyButton = page.locator('.label', { hasText: 'flaky' }).first();
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByPlaceholder('Search tests');
 
         await expect(page.locator('.chip')).toHaveCount(3);
         await expect(page.locator('.chip', { hasText: 'a.test.js' })).toHaveCount(1);
@@ -2480,7 +2480,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.locator('.test-file-test .label').getByText('Monitoring', { exact: true })).toHaveCount(3);
         await expect(page.locator('.test-file-test .label').getByText('Notifications', { exact: true })).toHaveCount(3);
 
-        const searchInput = page.locator('.subnav-search-input');
+        const searchInput = page.getByLabel('Search tests');
 
         const monitoringLabelButton = page.locator('.label').getByText('Monitoring', { exact: true });
         await monitoringLabelButton.first().click();
@@ -2619,7 +2619,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
 
-      const searchInput = page.locator('.subnav-search-input');
+      const searchInput = page.getByPlaceholder('Search tests');
 
       await searchInput.fill('file-a');
       await expect(page.getByText('file-a.test.js', { exact: true })).toBeVisible();
@@ -2669,7 +2669,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
 
-      const searchInput = page.locator('.subnav-search-input');
+      const searchInput = page.getByLabel('Search tests');
 
       await searchInput.fill('s:failed');
       await expect(page.getByText('a.test.js', { exact: true })).toBeVisible();
@@ -2698,7 +2698,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
 
-      const searchInput = page.locator('.subnav-search-input');
+      const searchInput = page.getByPlaceholder('Search tests');
 
       await test.step('filter by type and value', async () => {
         await searchInput.fill('annot:key=value');
@@ -2749,7 +2749,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
       await showReport();
 
-      const searchInput = page.locator('.subnav-search-input');
+      const searchInput = page.getByLabel('Search tests');
 
       await searchInput.fill('a.test.js:3:11');
       await expect(page.getByText('a.test.js:3', { exact: true })).toBeVisible();
