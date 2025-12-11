@@ -1012,7 +1012,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1103,7 +1103,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1233,7 +1233,7 @@ export type BrowserNewContextParams = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1310,7 +1310,7 @@ export type BrowserNewContextOptions = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1390,7 +1390,7 @@ export type BrowserNewContextForReuseParams = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1467,7 +1467,7 @@ export type BrowserNewContextForReuseOptions = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -1611,7 +1611,7 @@ export type BrowserContextInitializer = {
       provider: string,
       model: string,
       cacheFile?: string,
-      cacheMode?: 'ignore' | 'force' | 'auto',
+      cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
       secrets?: NameValue[],
       maxTurns?: number,
       maxTokens?: number,
@@ -2076,6 +2076,7 @@ export type PageInitializer = {
   opener?: PageChannel,
 };
 export interface PageEventTarget {
+  on(event: 'agentTurn', callback: (params: PageAgentTurnEvent) => void): this;
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
   on(event: 'close', callback: (params: PageCloseEvent) => void): this;
   on(event: 'crash', callback: (params: PageCrashEvent) => void): this;
@@ -2135,6 +2136,14 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   perform(params: PagePerformParams, progress?: Progress): Promise<PagePerformResult>;
   extract(params: PageExtractParams, progress?: Progress): Promise<PageExtractResult>;
 }
+export type PageAgentTurnEvent = {
+  role: string,
+  message: string,
+  usage?: {
+    inputTokens: number,
+    outputTokens: number,
+  },
+};
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
 };
@@ -2669,6 +2678,7 @@ export type PageExtractResult = {
 };
 
 export interface PageEvents {
+  'agentTurn': PageAgentTurnEvent;
   'bindingCall': PageBindingCallEvent;
   'close': PageCloseEvent;
   'crash': PageCrashEvent;
@@ -4935,7 +4945,7 @@ export type AndroidDeviceLaunchBrowserParams = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
@@ -5010,7 +5020,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
     provider: string,
     model: string,
     cacheFile?: string,
-    cacheMode?: 'ignore' | 'force' | 'auto',
+    cacheMode?: 'ignore' | 'force' | 'update' | 'auto',
     secrets?: NameValue[],
     maxTurns?: number,
     maxTokens?: number,
