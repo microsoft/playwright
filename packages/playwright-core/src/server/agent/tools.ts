@@ -15,6 +15,7 @@
  */
 
 import { z } from '../../mcpBundle';
+import { getByRoleSelector, getByTextSelector } from '../../utils/isomorphic/locatorUtils';
 
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
@@ -253,6 +254,67 @@ const fillForm = defineTool({
   },
 });
 
+const expectVisible = defineTool({
+  schema: {
+    name: 'browser_expect_visible',
+    title: 'Expect element visible',
+    description: 'Expect element is visible on the page',
+    inputSchema: baseSchema.extend({
+      role: z.string().describe('ROLE of the element. Can be found in the snapshot like this: \`- {ROLE} "Accessible Name":\`'),
+      accessibleName: z.string().describe('ACCESSIBLE_NAME of the element. Can be found in the snapshot like this: \`- role "{ACCESSIBLE_NAME}"\`'),
+    }),
+  },
+
+  handle: async (context, params) => {
+    return await context.runActionAndWait({
+      method: 'expectVisible',
+      selector: getByRoleSelector(params.role, { name: params.accessibleName }),
+    });
+  },
+});
+
+const expectVisibleText = defineTool({
+  schema: {
+    name: 'browser_expect_visible_text',
+    title: 'Expect text visible',
+    description: `Expect text is visible on the page. Prefer ${expectVisible.schema.name} if possible.`,
+    inputSchema: baseSchema.extend({
+      text: z.string().describe('TEXT to expect. Can be found in the snapshot like this: \`- role "Accessible Name": {TEXT}\` or like this: \`- text: {TEXT}\`'),
+    }),
+  },
+
+  handle: async (context, params) => {
+    return await context.runActionAndWait({
+      method: 'expectVisible',
+      selector: getByTextSelector(params.text),
+    });
+  },
+});
+
+const expectValue = defineTool({
+  schema: {
+    name: 'browser_expect_value',
+    title: 'Expect value',
+    description: 'Expect element value',
+    inputSchema: baseSchema.extend({
+      type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the element'),
+      element: z.string().describe('Human-readable element description'),
+      ref: z.string().describe('Exact target element reference from the page snapshot'),
+      value: z.string().describe('Value to expect. For checkbox, use "true" or "false".'),
+    }),
+  },
+
+  handle: async (context, params) => {
+    const [selector] = await context.refSelectors([{ ref: params.ref, element: params.element }]);
+    return await context.runActionAndWait({
+      method: 'expectValue',
+      selector,
+      type: params.type,
+      value: params.value,
+    });
+  },
+});
+
 export default [
   snapshot,
   click,
@@ -262,4 +324,7 @@ export default [
   pressKey,
   type,
   fillForm,
+  expectVisible,
+  expectVisibleText,
+  expectValue,
 ];

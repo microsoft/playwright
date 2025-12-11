@@ -43,13 +43,17 @@ export class Context {
   }
 
   async runActionsAndWait(action: actions.Action[]) {
-    await this.waitForCompletion(async () => {
-      for (const a of action) {
-        await runAction(this.progress, this.page, a, this.options?.secrets ?? []);
-        this.actions.push(a);
-      }
-    });
-    return await this.snapshotResult();
+    try {
+      await this.waitForCompletion(async () => {
+        for (const a of action) {
+          await runAction(this.progress, this.page, a, this.options?.secrets ?? []);
+          this.actions.push(a);
+        }
+      });
+      return await this.snapshotResult();
+    } catch (e) {
+      return await this.snapshotResult(e);
+    }
   }
 
   async waitForCompletion<R>(callback: () => Promise<R>): Promise<R> {
@@ -88,18 +92,29 @@ export class Context {
     return result;
   }
 
-  async snapshotResult(): Promise<loopTypes.ToolResult> {
+  async snapshotResult(error?: Error): Promise<loopTypes.ToolResult> {
     let { full } = await this.page.snapshotForAI(this.progress);
     full = this._redactText(full);
 
-    const text = [`# Page snapshot\n${full}`];
+    const text: string[] = [];
+    if (error)
+      text.push(`# Error\n${error.message}`);
+    else
+      text.push(`# Success`);
+
+    text.push(`# Page snapshot\n${full}`);
 
     return {
       _meta: {
         'dev.lowire/state': {
           'Page snapshot': full
         },
+        'dev.lowire/history': error ? [{
+          category: 'error',
+          content: error.message,
+        }] : [],
       },
+      isError: !!error,
       content: [{ type: 'text', text: text.join('\n\n') }],
     };
   }

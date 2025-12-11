@@ -90,7 +90,7 @@ export class NavigationAbortedError extends Error {
   }
 }
 
-type ExpectResult = { matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string };
+export type ExpectResult = { matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string };
 
 const kDummyFrameId = '<dummy>';
 

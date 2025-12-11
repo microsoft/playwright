@@ -64,3 +64,23 @@ test.skip('extract task', async ({ page }) => {
     }).array()
   })));
 });
+
+test('page.perform expect value', async ({ page, server }) => {
+  await page.setContent(`
+    <script>
+    function onInput(event) {
+      if (!event.target.value.match(/^[^@]+@[^@]+$/))
+        document.getElementById('error').style.display = 'block';
+      else
+        document.getElementById('error').style.display = 'none';
+    }
+    </script>
+    <input type="email" name="email" placeholder="Email Address" oninput="onInput(event);"/>
+    <div id="error" style="color: red; display: none;">Error: Invalid email address</div>
+  `);
+  await page.perform(`
+    - Enter "bogus" into the email field
+    - Check that the value is in fact "bogus"
+    - Check that the error message is displayed
+  `);
+});

@@ -94,6 +94,10 @@ export function serializeValue(value: any, handleSerializer: (value: any) => Han
   return innerSerializeValue(value, handleSerializer, { lastId: 0, visited: new Map() }, []);
 }
 
+export function serializePlainValue(arg: any): SerializedValue {
+  return serializeValue(arg, value => ({ fallThrough: value }));
+}
+
 function innerSerializeValue(value: any, handleSerializer: (value: any) => HandleOrValue, visitorInfo: VisitorInfo, accessChain: Array<string | number>): SerializedValue {
   const handle = handleSerializer(value);
   if ('fallThrough' in handle)

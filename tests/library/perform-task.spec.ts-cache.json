@@ -43,5 +43,25 @@
         "text": "94043"
       }
     ]
+  },
+  "\n    - Enter \"bogus\" into the email field\n    - Check that the value is in fact \"bogus\"\n    - Check that the error message is displayed\n  ": {
+    "timestamp": 1765416520724,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Email Address\"i]",
+        "text": "bogus"
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"Email Address\"i]",
+        "type": "textbox",
+        "value": "bogus"
+      },
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Error: Invalid email address\"i"
+      }
+    ]
   }
 }
