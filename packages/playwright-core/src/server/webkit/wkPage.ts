@@ -926,8 +926,9 @@ export class WKPage implements PageDelegate {
       frameSwapWallTime: event.timestamp
         // timestamp is in seconds, we need to convert to milliseconds.
         ? event.timestamp * 1000
-        // Fallback for Debian 11 where WebKit is frozen on an older version that did not send timestamp.
-        // TODO: remove this fallback when Debian 11 is EOL.
+        // Fallback for Debian 11 and Ubuntu 20.04 where WebKit is frozen on an older
+        // version that did not send timestamp.
+        // TODO: remove this fallback when Debian 11 and Ubuntu 20.04 are EOL.
         : Date.now(),
       width: event.deviceWidth,
       height: event.deviceHeight,
