@@ -16,6 +16,7 @@
 
 import { BrowserContext } from '../browserContext';
 import { runAction } from './actionRunner';
+import { generateCode } from './codegen';
 
 import type { Request } from '../network';
 import type * as loopTypes from '@lowire/loop';
@@ -23,6 +24,7 @@ import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { BrowserContextOptions } from '../types';
+import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
 
 type AgentOptions = BrowserContextOptions['agent'];
 
@@ -30,12 +32,14 @@ export class Context {
   readonly options: AgentOptions;
   readonly progress: Progress;
   readonly page: Page;
-  readonly actions: actions.Action[] = [];
+  readonly actions: actions.ActionWithCode[] = [];
+  readonly sdkLanguage: Language;
 
   constructor(progress: Progress, page: Page) {
     this.progress = progress;
     this.page = page;
     this.options = page.browserContext._options.agent;
+    this.sdkLanguage = page.browserContext._browser.sdkLanguage();
   }
 
   async runActionAndWait(action: actions.Action) {
@@ -47,7 +51,8 @@ export class Context {
       await this.waitForCompletion(async () => {
         for (const a of action) {
           await runAction(this.progress, this.page, a, this.options?.secrets ?? []);
-          this.actions.push(a);
+          const code = await generateCode(this.sdkLanguage, a);
+          this.actions.push({ ...a, code });
         }
       });
       return await this.snapshotResult();

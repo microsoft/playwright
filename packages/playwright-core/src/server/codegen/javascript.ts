@@ -15,7 +15,7 @@
  */
 
 import { sanitizeDeviceOptions, toClickOptionsForSourceCode, toKeyboardModifiers, toSignalMap } from './language';
-import { asLocator, escapeWithQuotes } from '../../utils';
+import { asLocator, escapeWithQuotes, formatObject, formatObjectOrVoid } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
@@ -188,28 +188,6 @@ function formatOptions(value: any, hasArguments: boolean): string {
   if (!keys.length)
     return '';
   return (hasArguments ? ', ' : '') + formatObject(value);
-}
-
-function formatObject(value: any, indent = '  '): string {
-  if (typeof value === 'string')
-    return quote(value);
-  if (Array.isArray(value))
-    return `[${value.map(o => formatObject(o)).join(', ')}]`;
-  if (typeof value === 'object') {
-    const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
-    if (!keys.length)
-      return '{}';
-    const tokens: string[] = [];
-    for (const key of keys)
-      tokens.push(`${key}: ${formatObject(value[key])}`);
-    return `{\n${indent}${tokens.join(`,\n${indent}`)}\n}`;
-  }
-  return String(value);
-}
-
-function formatObjectOrVoid(value: any, indent = '  '): string {
-  const result = formatObject(value, indent);
-  return result === '{}' ? '' : result;
 }
 
 function formatContextOptions(options: BrowserContextOptions, deviceName: string | undefined, isTest: boolean): string {

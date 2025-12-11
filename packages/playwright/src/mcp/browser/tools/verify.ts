@@ -15,8 +15,9 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { escapeWithQuotes } from 'playwright-core/lib/utils';
+
 import { defineTabTool } from './tool';
-import * as javascript from '../codegen';
 
 const verifyElement = defineTabTool({
   capability: 'testing',
@@ -38,7 +39,7 @@ const verifyElement = defineTabTool({
       return;
     }
 
-    response.addCode(`await expect(page.getByRole(${javascript.escapeWithQuotes(params.role)}, { name: ${javascript.escapeWithQuotes(params.accessibleName)} })).toBeVisible();`);
+    response.addCode(`await expect(page.getByRole(${escapeWithQuotes(params.role)}, { name: ${escapeWithQuotes(params.accessibleName)} })).toBeVisible();`);
     response.addResult('Done');
   },
 });
@@ -62,7 +63,7 @@ const verifyText = defineTabTool({
       return;
     }
 
-    response.addCode(`await expect(page.getByText(${javascript.escapeWithQuotes(params.text)})).toBeVisible();`);
+    response.addCode(`await expect(page.getByText(${escapeWithQuotes(params.text)})).toBeVisible();`);
     response.addResult('Done');
   },
 });
@@ -94,7 +95,7 @@ const verifyList = defineTabTool({
     }
     const ariaSnapshot = `\`
 - list:
-${itemTexts.map(t => `  - listitem: ${javascript.escapeWithQuotes(t, '"')}`).join('\n')}
+${itemTexts.map(t => `  - listitem: ${escapeWithQuotes(t, '"')}`).join('\n')}
 \``;
     response.addCode(`await expect(page.locator('body')).toMatchAriaSnapshot(${ariaSnapshot});`);
     response.addResult('Done');
@@ -125,7 +126,7 @@ const verifyValue = defineTabTool({
         response.addError(`Expected value "${params.value}", but got "${value}"`);
         return;
       }
-      response.addCode(`await expect(${locatorSource}).toHaveValue(${javascript.quote(params.value)});`);
+      response.addCode(`await expect(${locatorSource}).toHaveValue(${escapeWithQuotes(params.value)});`);
     } else if (params.type === 'checkbox' || params.type === 'radio') {
       const value = await locator.isChecked();
       if (value !== (params.value === 'true')) {

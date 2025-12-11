@@ -15,8 +15,9 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { formatObject } from 'playwright-core/lib/utils';
+
 import { defineTabTool } from './tool';
-import * as javascript from '../codegen';
 import { dateAsFileName } from './utils';
 
 const pdfSchema = z.object({
@@ -36,7 +37,7 @@ const pdf = defineTabTool({
 
   handle: async (tab, params, response) => {
     const fileName = await response.addFile(params.filename ?? dateAsFileName('pdf'), { origin: 'llm', reason: 'Page saved as PDF' });
-    response.addCode(`await page.pdf(${javascript.formatObject({ path: fileName })});`);
+    response.addCode(`await page.pdf(${formatObject({ path: fileName })});`);
     await tab.page.pdf({ path: fileName });
   },
 });

@@ -15,8 +15,9 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { escapeWithQuotes } from 'playwright-core/lib/utils';
+
 import { defineTabTool } from './tool';
-import * as javascript from '../codegen';
 
 import type { Tab } from '../tab';
 
@@ -42,9 +43,9 @@ const evaluate = defineTabTool({
     let locator: Awaited<ReturnType<Tab['refLocator']>> | undefined;
     if (params.ref && params.element) {
       locator = await tab.refLocator({ ref: params.ref, element: params.element });
-      response.addCode(`await page.${locator.resolved}.evaluate(${javascript.quote(params.function)});`);
+      response.addCode(`await page.${locator.resolved}.evaluate(${escapeWithQuotes(params.function)});`);
     } else {
-      response.addCode(`await page.evaluate(${javascript.quote(params.function)});`);
+      response.addCode(`await page.evaluate(${escapeWithQuotes(params.function)});`);
     }
 
     await tab.waitForCompletion(async () => {
