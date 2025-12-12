@@ -28,7 +28,7 @@ import { mkdirIfNeeded } from './utils/fileUtils';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
-import { SdkObject } from './instrumentation';
+import { EventMap, SdkObject } from './instrumentation';
 import * as network from './network';
 import { InitScript } from './page';
 import { Page, PageBinding } from './page';
@@ -39,6 +39,7 @@ import * as rawStorageSource from '../generated/storageScriptSource';
 
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
+import type { ConsoleMessage } from './console';
 import type { Download } from './download';
 import type * as frames from './frames';
 import type { Progress } from './progress';
@@ -47,25 +48,44 @@ import type { SerializedStorage } from '@injected/storageScript';
 import type * as types from './types';
 import type * as channels from '@protocol/channels';
 
-export abstract class BrowserContext extends SdkObject {
-  static Events = {
-    Console: 'console',
-    Close: 'close',
-    Page: 'page',
-    // Can't use just 'error' due to node.js special treatment of error events.
-    // @see https://nodejs.org/api/events.html#events_error_events
-    PageError: 'pageerror',
-    Request: 'request',
-    Response: 'response',
-    RequestFailed: 'requestfailed',
-    RequestFinished: 'requestfinished',
-    RequestAborted: 'requestaborted',
-    RequestFulfilled: 'requestfulfilled',
-    RequestContinued: 'requestcontinued',
-    BeforeClose: 'beforeclose',
-    VideoStarted: 'videostarted',
-    RecorderEvent: 'recorderevent',
-  };
+const BrowserContextEvent = {
+  Console: 'console',
+  Close: 'close',
+  Page: 'page',
+  // Can't use just 'error' due to node.js special treatment of error events.
+  // @see https://nodejs.org/api/events.html#events_error_events
+  PageError: 'pageerror',
+  Request: 'request',
+  Response: 'response',
+  RequestFailed: 'requestfailed',
+  RequestFinished: 'requestfinished',
+  RequestAborted: 'requestaborted',
+  RequestFulfilled: 'requestfulfilled',
+  RequestContinued: 'requestcontinued',
+  BeforeClose: 'beforeclose',
+  VideoStarted: 'videostarted',
+  RecorderEvent: 'recorderevent',
+} as const;
+
+export type BrowserContextEventMap = {
+  [BrowserContextEvent.Console]: [message: ConsoleMessage];
+  [BrowserContextEvent.Close]: [];
+  [BrowserContextEvent.Page]: [page: Page];
+  [BrowserContextEvent.PageError]: [error: Error, page: Page];
+  [BrowserContextEvent.Request]: [request: network.Request];
+  [BrowserContextEvent.Response]: [response: network.Response];
+  [BrowserContextEvent.RequestFailed]: [request: network.Request];
+  [BrowserContextEvent.RequestFinished]: [requestAndResponse: { request: network.Request, response: network.Response | null }];
+  [BrowserContextEvent.RequestAborted]: [request: network.Request];
+  [BrowserContextEvent.RequestFulfilled]: [request: network.Request];
+  [BrowserContextEvent.RequestContinued]: [request: network.Request];
+  [BrowserContextEvent.BeforeClose]: [];
+  [BrowserContextEvent.VideoStarted]: [artifact: Artifact];
+  [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
+};
+
+export abstract class BrowserContext<EM extends EventMap = EventMap> extends SdkObject<BrowserContextEventMap | EM> {
+  static Events = BrowserContextEvent;
 
   readonly _pageBindings = new Map<string, PageBinding>();
   readonly _options: types.BrowserContextOptions;
