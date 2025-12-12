@@ -56,7 +56,7 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
       const sha1 = await calculateSha1(file);
       try {
         let response = model ? await fetch(model.createRelativeUrl(`sha1/src@${sha1}.txt`)) : undefined;
-        if (!response || response.status === 404)
+        if (!response || response.status >= 400)
           response = await fetch(`file?path=${encodeURIComponent(file)}`);
         if (response.status >= 400)
           source.content = `<Unable to read "${file}">`;
