@@ -1031,9 +1031,9 @@ await expect(page
 assertThat(page
     .getByRole(AriaRole.LISTITEM)
     .filter(new Locator.FilterOptions()
-        .setHas(page.GetByRole(AriaRole.LIST)
-                    .GetByRole(AriaRole.HEADING,
-                               new Page.GetByRoleOptions().setName("Product 2")))))
+        .setHas(page.getByRole(AriaRole.LIST)
+                    .getByRole(AriaRole.HEADING,
+                               new Locator.GetByRoleOptions().setName("Product 2")))))
     .hasCount(1);
 ```
 
