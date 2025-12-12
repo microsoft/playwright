@@ -33,7 +33,6 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './wkInput';
 import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
-import { debugLogger } from '../utils/debugLogger';
 import { translatePathToWSL } from './webkit';
 
 import type { Protocol } from './protocol';
