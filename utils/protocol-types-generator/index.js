@@ -84,8 +84,11 @@ export module Protocol {${json.domains.map(domain => `${domain.description ? `
     }`).join('')}
   }
   `).join('')}
-  export interface Events {${json.domains.map(domain => (domain.events || []).map(event => `
+  export type Events = {${json.domains.map(domain => (domain.events || []).map(event => `
     "${domain.domain}.${event.name}": ${domain.domain}.${event.name}Payload;`).join('')).join('')}
+  }
+  export type EventMap = {${json.domains.map(domain => (domain.events || []).map(event => `
+    ["${domain.domain}.${event.name}"]: [${domain.domain}.${event.name}Payload];`).join('')).join('')}
   }
   export interface CommandParameters {${json.domains.map(domain => (domain.commands || []).filter(conditionFilter).map(command => `
     "${domain.domain}.${command.name}": ${domain.domain}.${command.name}Parameters;`).join('')).join('')}
@@ -185,8 +188,8 @@ ${domains.map(([domainName, domain]) => `
     export type ${commandName}Parameters = ${firefoxTypeToString(command.params)};
     export type ${commandName}ReturnValue = ${firefoxTypeToString(command.returns)};`).join('')}
   }`).join('')}
-  export interface Events {${domains.map(([domainName, domain]) => Object.keys(domain.events).map(eventName => `
-    "${domainName}.${eventName}": ${domainName}.${eventName}Payload;`).join('')).join('')}
+  export type EventMap = {${domains.map(([domainName, domain]) => Object.keys(domain.events).map(eventName => `
+    ["${domainName}.${eventName}"]: [${domainName}.${eventName}Payload];`).join('')).join('')}
   }
   export interface CommandParameters {${domains.map(([domainName, domain]) => Object.keys(domain.methods).map(commandName => `
     "${domainName}.${commandName}": ${domainName}.${commandName}Parameters;`).join('')).join('')}

@@ -327,10 +327,16 @@ export class CRBrowser extends Browser {
   }
 }
 
-export class CRBrowserContext extends BrowserContext {
-  static CREvents = {
-    ServiceWorker: 'serviceworker',
-  };
+const CREvents = {
+  ServiceWorker: 'serviceworker',
+} as const;
+
+export type CREventsMap = {
+  [CREvents.ServiceWorker]: [serviceWorker: CRServiceWorker];
+};
+
+export class CRBrowserContext extends BrowserContext<CREventsMap> {
+  static CREvents = CREvents;
 
   declare readonly _browser: CRBrowser;
 

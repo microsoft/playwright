@@ -100,7 +100,7 @@ export class WKConnection {
   }
 }
 
-export class WKSession extends EventEmitter {
+export class WKSession extends EventEmitter<Protocol.EventMap & { [kPageProxyMessageReceived]: [any] }> {
   connection: WKConnection;
   readonly sessionId: string;
 
@@ -109,24 +109,12 @@ export class WKSession extends EventEmitter {
   private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
   private _crashed: boolean = false;
 
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-
   constructor(connection: WKConnection, sessionId: string, rawSend: (message: any) => void) {
     super();
     this.setMaxListeners(0);
     this.connection = connection;
     this.sessionId = sessionId;
     this._rawSend = rawSend;
-
-    this.on = super.on;
-    this.off = super.removeListener;
-    this.addListener = super.addListener;
-    this.removeListener = super.removeListener;
-    this.once = super.once;
   }
 
   async send<T extends keyof Protocol.CommandParameters>(

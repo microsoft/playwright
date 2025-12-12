@@ -37,6 +37,8 @@ import * as rawBindingsControllerSource from '../generated/bindingsControllerSou
 import { Screencast } from './screencast';
 
 import type { Artifact } from './artifact';
+import type { BrowserContextEventMap } from './browserContext';
+import type { Download } from './download';
 import type * as dom from './dom';
 import type * as network from './network';
 import type { Progress } from './progress';
@@ -117,22 +119,40 @@ type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
   },
 };
 
-export class Page extends SdkObject {
-  static Events = {
-    Close: 'close',
-    Crash: 'crash',
-    Download: 'download',
-    EmulatedSizeChanged: 'emulatedsizechanged',
-    FileChooser: 'filechooser',
-    FrameAttached: 'frameattached',
-    FrameDetached: 'framedetached',
-    InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
-    LocatorHandlerTriggered: 'locatorhandlertriggered',
-    ScreencastFrame: 'screencastframe',
-    Video: 'video',
-    WebSocket: 'websocket',
-    Worker: 'worker',
-  };
+const PageEvent = {
+  Close: 'close',
+  Crash: 'crash',
+  Download: 'download',
+  EmulatedSizeChanged: 'emulatedsizechanged',
+  FileChooser: 'filechooser',
+  FrameAttached: 'frameattached',
+  FrameDetached: 'framedetached',
+  InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
+  LocatorHandlerTriggered: 'locatorhandlertriggered',
+  ScreencastFrame: 'screencastframe',
+  Video: 'video',
+  WebSocket: 'websocket',
+  Worker: 'worker',
+} as const;
+
+export type PageEventMap = {
+  [PageEvent.Close]: [];
+  [PageEvent.Crash]: [];
+  [PageEvent.Download]: [download: Download];
+  [PageEvent.EmulatedSizeChanged]: [];
+  [PageEvent.FileChooser]: [fileChooser: FileChooser];
+  [PageEvent.FrameAttached]: [frame: frames.Frame];
+  [PageEvent.FrameDetached]: [frame: frames.Frame];
+  [PageEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
+  [PageEvent.LocatorHandlerTriggered]: [uid: number];
+  [PageEvent.ScreencastFrame]: [frame: types.ScreencastFrame];
+  [PageEvent.Video]: [artifact: Artifact];
+  [PageEvent.WebSocket]: [webSocket: network.WebSocket];
+  [PageEvent.Worker]: [worker: Worker];
+};
+
+export class Page extends SdkObject<PageEventMap> {
+  static Events = PageEvent;
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
   private _closedPromise = new ManualPromise<void>();
@@ -233,10 +253,10 @@ export class Page extends SdkObject {
     return this._initializedPromise;
   }
 
-  emitOnContext(event: string | symbol, ...args: any[]) {
+  emitOnContext<K extends keyof BrowserContextEventMap>(event: K, ...args: BrowserContextEventMap[K]) {
     if (this.isStorageStatePage)
       return;
-    this.browserContext.emit(event, ...args);
+    this.browserContext.emit(event, ...args as any);
   }
 
   async resetForReuse(progress: Progress) {
@@ -849,10 +869,16 @@ export class Page extends SdkObject {
   }
 }
 
-export class Worker extends SdkObject {
-  static Events = {
-    Close: 'close',
-  };
+export const WorkerEvent = {
+  Close: 'close',
+} as const;
+
+export type WorkerEventMap = {
+  [WorkerEvent.Close]: [worker: Worker];
+};
+
+export class Worker extends SdkObject<WorkerEventMap> {
+  static Events = WorkerEvent;
 
   readonly url: string;
   private _executionContextPromise = new ManualPromise<js.ExecutionContext>();

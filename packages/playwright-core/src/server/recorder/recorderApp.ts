@@ -411,6 +411,8 @@ export class ProgrammaticRecorderApp {
     });
     recorder.on(RecorderEvent.SignalAdded, signal => {
       const page = findPageByGuid(inspectedContext, signal.frame.pageGuid);
+      if (!page)
+        return;
       inspectedContext.emit(BrowserContext.Events.RecorderEvent, { event: 'signalAdded', data: signal, page, code: '' });
     });
   }

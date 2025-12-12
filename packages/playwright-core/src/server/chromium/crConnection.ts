@@ -32,6 +32,10 @@ export const ConnectionEvents = {
   Disconnected: Symbol('ConnectionEvents.Disconnected')
 };
 
+export type ConnectionEventMap = {
+  [ConnectionEvents.Disconnected]: [];
+};
+
 // CRPlaywright uses this special id to issue Browser.close command which we
 // should ignore.
 export const kBrowserCloseMessageId = -9999;
@@ -100,7 +104,7 @@ export class CRConnection extends SdkObject {
 
 type SessionEventListener = (method: string, params?: Object) => void;
 
-export class CRSession extends SdkObject {
+export class CRSession extends SdkObject<Protocol.EventMap & ConnectionEventMap> {
   private readonly _connection: CRConnection;
   private _eventListener?: SessionEventListener;
   private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: ProtocolError) => void, error: ProtocolError }>();
@@ -108,11 +112,6 @@ export class CRSession extends SdkObject {
   private readonly _parentSession: CRSession | null;
   private _crashed: boolean = false;
   private _closed = false;
-  override on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  override once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
 
   constructor(connection: CRConnection, parentSession: CRSession | null, sessionId: string, eventListener?: SessionEventListener) {
     super(connection, 'cr-session');
@@ -121,12 +120,6 @@ export class CRSession extends SdkObject {
     this._parentSession = parentSession;
     this._sessionId = sessionId;
     this._eventListener = eventListener;
-
-    this.on = super.on;
-    this.addListener = super.addListener;
-    this.off = super.removeListener;
-    this.removeListener = super.removeListener;
-    this.once = super.once;
   }
 
   _markAsCrashed() {
@@ -172,7 +165,7 @@ export class CRSession extends SdkObject {
       Promise.resolve().then(() => {
         if (this._eventListener)
           this._eventListener(object.method!, object.params);
-        this.emit(object.method!, object.params);
+        (this.emit as any)(object.method as any, object.params);
       });
     }
   }
