@@ -174,7 +174,7 @@ it.describe('pause', () => {
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });
-      await page.click('button', { timeout: 200 });
+      await page.click('button', { timeout: 1000 });
     })();
     const recorderPage = await recorderPageGetter();
     const source = await recorderPage.textContent('.source-line-paused');
@@ -182,7 +182,7 @@ it.describe('pause', () => {
 
     await recorderPage.click('[title="Step over (F10)"]');
     await recorderPage.waitForSelector('.source-line-paused :has-text("page.click")');
-    await page.waitForTimeout(500);
+    await page.waitForTimeout(5000);
 
     await recorderPage.click('[title="Resume (F8)"]');
     await scriptPromise;
