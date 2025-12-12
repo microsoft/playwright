@@ -7,7 +7,7 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: false
-    default: '18'
+    default: '20'
   browsers-to-install:
     description: 'Browser to install. Default is all browsers.'
     required: false
