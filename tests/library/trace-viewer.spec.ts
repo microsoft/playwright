@@ -478,8 +478,8 @@ test('should show font preview', async ({ page, runAndTrace, server }) => {
   await traceViewer.page.getByText('Font', { exact: true }).click();
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await traceViewer.networkRequests.getByText('font.woff2').click();
-  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
-  await expect(traceViewer.page.locator('.network-request-details-tab')).toContainText('ABCDEF');
+  await traceViewer.networkTab.getByRole('tab', { name: 'Response' }).click();
+  await expect(traceViewer.networkTab.getByRole('tabpanel', { name: 'Response' })).toContainText('ABCDEF');
 });
 
 test('should syntax highlight body', async ({ page, runAndTrace, server }) => {
@@ -493,8 +493,8 @@ test('should syntax highlight body', async ({ page, runAndTrace, server }) => {
   await traceViewer.page.getByText('HTML', { exact: true }).click();
   await expect(traceViewer.networkRequests).toHaveCount(1);
   await traceViewer.networkRequests.getByText('network.html').click();
-  await traceViewer.page.getByTestId('network-request-details').getByTitle('Body').click();
-  const keyword = traceViewer.page.locator('.network-request-details-tab').getByText('const').first();
+  await traceViewer.networkTab.getByRole('tab', { name: 'Response' }).click();
+  const keyword = traceViewer.networkTab.getByRole('tabpanel', { name: 'Response' }).getByText('const').first();
   await expect(keyword).toHaveClass('cm-keyword');
 });
 
