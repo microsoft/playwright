@@ -544,6 +544,17 @@ sequence of events is `request`, `response` and `requestfinished`.
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
+## event: Page.agentTurn
+* since: v1.58
+- argument: <[Object]>
+  - `role` <[string]>
+  - `message` <[string]>
+  - `usage` ?<[Object]>
+    - `inputTokens` <[int]>
+    - `outputTokens` <[int]>
+
+Emitted when the agent makes a turn.
+
 ## event: Page.webSocket
 * since: v1.9
 - argument: <[WebSocket]>

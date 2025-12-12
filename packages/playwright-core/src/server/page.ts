@@ -119,6 +119,7 @@ type ExpectScreenshotOptions = ImageComparatorOptions & ScreenshotOptions & {
 
 export class Page extends SdkObject {
   static Events = {
+    AgentTurn: 'agentturn',
     Close: 'close',
     Crash: 'crash',
     Download: 'download',
