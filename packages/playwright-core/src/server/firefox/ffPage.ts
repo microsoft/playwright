@@ -26,6 +26,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { TargetClosedError } from '../errors';
+import { debugLogger } from '../utils/debugLogger';
 
 import type { Progress } from '../progress';
 import type { FFBrowserContext } from './ffBrowser';
@@ -100,7 +101,7 @@ export class FFPage implements PageDelegate {
     const screencast = this._page.screencast;
     const videoOptions = screencast.launchVideoRecorder();
     if (videoOptions)
-      screencast.startVideoRecording(videoOptions).catch(() => {});
+      screencast.startVideoRecording(videoOptions).catch(e => debugLogger.log('error', e));
 
     this._session.once('Page.ready', () => {
       if (this._reportedAsNew)

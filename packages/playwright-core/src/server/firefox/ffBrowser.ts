@@ -216,13 +216,13 @@ export class FFBrowserContext extends BrowserContext {
     promises.push(this.doUpdateDefaultEmulatedMedia());
     if (this._options.recordVideo) {
       promises.push(this._browser.session.send('Browser.setScreencastOptions', {
-          // validateBrowserContextOptions ensures correct video size.
-          options: {
-            ...this._options.recordVideo!.size!,
-            quality: 90,
-          },
-          browserContextId: this._browserContextId
-        }));
+        // validateBrowserContextOptions ensures correct video size.
+        options: {
+          ...this._options.recordVideo!.size!,
+          quality: 90,
+        },
+        browserContextId: this._browserContextId
+      }));
     }
     const proxy = this._options.proxyOverride || this._options.proxy;
     if (proxy) {
