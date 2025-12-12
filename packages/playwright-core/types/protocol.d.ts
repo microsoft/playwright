@@ -441,9 +441,9 @@ Does not exist for animations with ScrollTimeline
        */
       iterationStart: number;
       /**
-       * `AnimationEffect`'s iterations.
+       * `AnimationEffect`'s iterations. Omitted if the value is infinite.
        */
-      iterations: number;
+      iterations?: number;
       /**
        * `AnimationEffect`'s iteration duration.
 Milliseconds for time based animations and
@@ -906,7 +906,7 @@ instead of "limited-quirks".
       error: UnencodedDigestError;
       request: AffectedRequest;
     }
-    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingId"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInput"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB";
+    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -1067,12 +1067,48 @@ re-identify users.
        */
       sourceCodeLocation?: SourceCodeLocation;
     }
+    export type PermissionElementIssueType = "InvalidType"|"FencedFrameDisallowed"|"CspFrameAncestorsMissing"|"PermissionsPolicyBlocked"|"PaddingRightUnsupported"|"PaddingBottomUnsupported"|"InsetBoxShadowUnsupported"|"RequestInProgress"|"UntrustedEvent"|"RegistrationFailed"|"TypeNotSupported"|"InvalidTypeActivation"|"SecurityChecksFailed"|"ActivationDisabled"|"GeolocationDeprecated"|"InvalidDisplayStyle"|"NonOpaqueColor"|"LowContrast"|"FontSizeTooSmall"|"FontSizeTooLarge"|"InvalidSizeValue";
+    /**
+     * This issue warns about improper usage of the <permission> element.
+     */
+    export interface PermissionElementIssueDetails {
+      issueType: PermissionElementIssueType;
+      /**
+       * The value of the type attribute.
+       */
+      type?: string;
+      /**
+       * The node ID of the <permission> element.
+       */
+      nodeId?: DOM.BackendNodeId;
+      /**
+       * True if the issue is a warning, false if it is an error.
+       */
+      isWarning?: boolean;
+      /**
+       * Fields for message construction:
+Used for messages that reference a specific permission name
+       */
+      permissionName?: string;
+      /**
+       * Used for messages about occlusion
+       */
+      occluderNodeInfo?: string;
+      /**
+       * Used for messages about occluder's parent
+       */
+      occluderParentNodeInfo?: string;
+      /**
+       * Used for messages about activation disabled reason
+       */
+      disableReason?: string;
+    }
     /**
      * A unique identifier for the type of issue. Each type may use one of the
 optional fields in InspectorIssueDetails to convey more specific
 information about the kind of issue.
      */
-    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"UserReidentificationIssue";
+    export type InspectorIssueCode = "CookieIssue"|"MixedContentIssue"|"BlockedByResponseIssue"|"HeavyAdIssue"|"ContentSecurityPolicyIssue"|"SharedArrayBufferIssue"|"LowTextContrastIssue"|"CorsIssue"|"AttributionReportingIssue"|"QuirksModeIssue"|"PartitioningBlobURLIssue"|"NavigatorUserAgentIssue"|"GenericIssue"|"DeprecationIssue"|"ClientHintIssue"|"FederatedAuthRequestIssue"|"BounceTrackingIssue"|"CookieDeprecationMetadataIssue"|"StylesheetLoadingIssue"|"FederatedAuthUserInfoRequestIssue"|"PropertyRuleIssue"|"SharedDictionaryIssue"|"ElementAccessibilityIssue"|"SRIMessageSignatureIssue"|"UnencodedDigestIssue"|"UserReidentificationIssue"|"PermissionElementIssue";
     /**
      * This struct holds a list of optional fields with additional information
 specific to the kind of issue. When adding a new issue code, please also
@@ -1105,6 +1141,7 @@ add a new optional field to this type.
       sriMessageSignatureIssueDetails?: SRIMessageSignatureIssueDetails;
       unencodedDigestIssueDetails?: UnencodedDigestIssueDetails;
       userReidentificationIssueDetails?: UserReidentificationIssueDetails;
+      permissionElementIssueDetails?: PermissionElementIssueDetails;
     }
     /**
      * A unique id for a DevTools inspector issue. Allows other entities (e.g.
@@ -2248,7 +2285,6 @@ can also keep track of stylesheets via the `styleSheetAdded`/`styleSheetRemoved`
 subsequently load the required stylesheet contents using the `getStyleSheet[Text]()` methods.
    */
   export module CSS {
-    export type StyleSheetId = string;
     /**
      * Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
 stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
@@ -2389,7 +2425,7 @@ pseudo-classes.
       /**
        * The stylesheet identifier.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       /**
        * Owner frame identifier.
        */
@@ -2474,7 +2510,7 @@ CSS module script.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Rule selector data.
        */
@@ -2543,7 +2579,7 @@ This list only contains rule types that are collected during the ancestor rule c
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       /**
        * Offset of the start of the rule (including selector) from the beginning of the stylesheet.
        */
@@ -2618,7 +2654,7 @@ or it is in the subtree of an element being rendered with base appearance.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * CSS properties in the style.
        */
@@ -2705,7 +2741,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Array of media queries.
        */
@@ -2765,7 +2801,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Optional name for the container.
        */
@@ -2807,7 +2843,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
     }
     /**
      * CSS Scope at-rule descriptor.
@@ -2825,7 +2861,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
     }
     /**
      * CSS Layer at-rule descriptor.
@@ -2843,7 +2879,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
     }
     /**
      * CSS Starting Style at-rule descriptor.
@@ -2857,7 +2893,7 @@ available).
       /**
        * Identifier of the stylesheet containing this object (if exists).
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
     }
     /**
      * CSS Layer data.
@@ -2977,7 +3013,7 @@ and additional information such as platformFontFamily and fontVariationAxes.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
@@ -2999,7 +3035,7 @@ stylesheet rules) this rule came from.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
@@ -3033,22 +3069,31 @@ stylesheet rules) this rule came from.
       syntax: string;
     }
     /**
-     * CSS font-palette-values rule representation.
+     * CSS generic @rule representation.
      */
-    export interface CSSFontPaletteValuesRule {
+    export interface CSSAtRule {
+      /**
+       * Type of at-rule.
+       */
+      type: "font-face"|"font-feature-values"|"font-palette-values";
+      /**
+       * Subsection of font-feature-values, if this is a subsection.
+       */
+      subsection?: "swash"|"annotation"|"ornaments"|"stylistic"|"styleset"|"character-variant";
+      /**
+       * LINT.ThenChange(//third_party/blink/renderer/core/inspector/inspector_style_sheet.cc:FontVariantAlternatesFeatureType,//third_party/blink/renderer/core/inspector/inspector_css_agent.cc:FontVariantAlternatesFeatureType)
+Associated name, if applicable.
+       */
+      name?: Value;
       /**
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
       origin: StyleSheetOrigin;
-      /**
-       * Associated font palette name.
-       */
-      fontPaletteName: Value;
       /**
        * Associated style declaration.
        */
@@ -3062,7 +3107,7 @@ stylesheet rules) this rule came from.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
@@ -3139,7 +3184,7 @@ stylesheet rules) this rule came from.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
@@ -3161,7 +3206,7 @@ stylesheet rules) this rule came from.
        * The css style sheet identifier (absent for user agent stylesheet and user-specified
 stylesheet rules) this rule came from.
        */
-      styleSheetId?: StyleSheetId;
+      styleSheetId?: DOM.StyleSheetId;
       /**
        * Parent stylesheet's origin.
        */
@@ -3182,7 +3227,7 @@ stylesheet rules) this rule came from.
       /**
        * The css style sheet identifier.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       /**
        * The range of the style text in the enclosing stylesheet.
        */
@@ -3221,7 +3266,7 @@ resized.) The current implementation considers only viewport-dependent media fea
      * Fired whenever a stylesheet is changed as a result of the client operation.
      */
     export type styleSheetChangedPayload = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
     }
     /**
      * Fired whenever an active document stylesheet is removed.
@@ -3230,7 +3275,7 @@ resized.) The current implementation considers only viewport-dependent media fea
       /**
        * Identifier of the removed stylesheet.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
     }
     export type computedStyleUpdatedPayload = {
       /**
@@ -3247,7 +3292,7 @@ position specified by `location`.
       /**
        * The css style sheet identifier where a new rule should be inserted.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       /**
        * The text of a new rule.
        */
@@ -3273,7 +3318,7 @@ incorrect results if the declaration contains a var() for example.
      * Returns all class names from specified stylesheet.
      */
     export type collectClassNamesParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
     }
     export type collectClassNamesReturnValue = {
       /**
@@ -3301,7 +3346,7 @@ for the frame's document if it exists or creates a new stylesheet
       /**
        * Identifier of the created "via-inspector" stylesheet.
        */
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
     }
     /**
      * Disables the CSS agent for the given page.
@@ -3527,9 +3572,9 @@ will not be set if there is no active position-try fallback.
        */
       cssPropertyRegistrations?: CSSPropertyRegistration[];
       /**
-       * A font-palette-values rule matching this node.
+       * A list of simple @rules matching this node or its pseudo-elements.
        */
-      cssFontPaletteValuesRule?: CSSFontPaletteValuesRule;
+      cssAtRules?: CSSAtRule[];
       /**
        * Id of the first parent element that does not have display: contents.
        */
@@ -3572,7 +3617,7 @@ node.
      * Returns the current textual content for a stylesheet.
      */
     export type getStyleSheetTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
     }
     export type getStyleSheetTextReturnValue = {
       /**
@@ -3597,7 +3642,7 @@ the full layer tree for the tree scope and their ordering.
 returns an array of locations of the CSS selector in the style sheet.
      */
     export type getLocationForSelectorParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       selectorText: string;
     }
     export type getLocationForSelectorReturnValue = {
@@ -3658,7 +3703,7 @@ property
      * Modifies the property rule property name.
      */
     export type setPropertyRulePropertyNameParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       propertyName: string;
     }
@@ -3672,7 +3717,7 @@ property
      * Modifies the keyframe rule key text.
      */
     export type setKeyframeKeyParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       keyText: string;
     }
@@ -3686,7 +3731,7 @@ property
      * Modifies the rule selector.
      */
     export type setMediaTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       text: string;
     }
@@ -3700,7 +3745,7 @@ property
      * Modifies the expression of a container query.
      */
     export type setContainerQueryTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       text: string;
     }
@@ -3714,7 +3759,7 @@ property
      * Modifies the expression of a supports at-rule.
      */
     export type setSupportsTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       text: string;
     }
@@ -3728,7 +3773,7 @@ property
      * Modifies the expression of a scope at-rule.
      */
     export type setScopeTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       text: string;
     }
@@ -3742,7 +3787,7 @@ property
      * Modifies the rule selector.
      */
     export type setRuleSelectorParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       range: SourceRange;
       selector: string;
     }
@@ -3756,7 +3801,7 @@ property
      * Sets the new stylesheet text.
      */
     export type setStyleSheetTextParameters = {
-      styleSheetId: StyleSheetId;
+      styleSheetId: DOM.StyleSheetId;
       text: string;
     }
     export type setStyleSheetTextReturnValue = {
@@ -4122,6 +4167,10 @@ front-end.
      */
     export type BackendNodeId = number;
     /**
+     * Unique identifier for a CSS stylesheet.
+     */
+    export type StyleSheetId = string;
+    /**
      * Backend node with a friendly name.
      */
     export interface BackendNode {
@@ -4138,7 +4187,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent"|"overscroll-client-area";
     /**
      * Shadow root type.
      */
@@ -4289,6 +4338,7 @@ The property is always undefined now.
       assignedSlot?: BackendNode;
       isScrollable?: boolean;
       affectedByStartingStyles?: boolean;
+      adoptedStyleSheets?: StyleSheetId[];
     }
     /**
      * A structure to hold the top-level node of a detached tree and an array of its retained descendants.
@@ -4420,6 +4470,19 @@ The property is always undefined now.
        * Attribute value.
        */
       value: string;
+    }
+    /**
+     * Fired when `Element`'s adoptedStyleSheets are modified.
+     */
+    export type adoptedStyleSheetsModifiedPayload = {
+      /**
+       * Id of the node that has changed.
+       */
+      nodeId: NodeId;
+      /**
+       * New adoptedStyleSheets array.
+       */
+      adoptedStyleSheets: StyleSheetId[];
     }
     /**
      * Fired when `Element`'s attribute is removed.
@@ -10205,11 +10268,6 @@ applicable or not known.
      */
     export type BlockedReason = "other"|"csp"|"mixed-content"|"origin"|"inspector"|"integrity"|"subresource-filter"|"content-type"|"coep-frame-resource-needs-coep-header"|"coop-sandboxed-iframe-cannot-navigate-to-coop-page"|"corp-not-same-origin"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep"|"corp-not-same-origin-after-defaulted-to-same-origin-by-dip"|"corp-not-same-origin-after-defaulted-to-same-origin-by-coep-and-dip"|"corp-not-same-site"|"sri-message-signature-mismatch";
     /**
-     * Sets Controls for IP Proxy of requests.
-Page reload is required before the new behavior will be observed.
-     */
-    export type IpProxyStatus = "Available"|"FeatureNotEnabled"|"MaskedDomainListNotEnabled"|"MaskedDomainListNotPopulated"|"AuthTokensUnavailable"|"Unavailable"|"BypassedByDevTools";
-    /**
      * The reason why request was blocked.
      */
     export type CorsError = "DisallowedByMode"|"InvalidResponse"|"WildcardOriginNotAllowed"|"MissingAllowOriginHeader"|"MultipleAllowOriginValues"|"InvalidAllowOriginValue"|"AllowOriginMismatch"|"InvalidAllowCredentials"|"CorsDisabledScheme"|"PreflightInvalidStatus"|"PreflightDisallowedRedirect"|"PreflightWildcardOriginNotAllowed"|"PreflightMissingAllowOriginHeader"|"PreflightMultipleAllowOriginValues"|"PreflightInvalidAllowOriginValue"|"PreflightAllowOriginMismatch"|"PreflightInvalidAllowCredentials"|"PreflightMissingAllowExternal"|"PreflightInvalidAllowExternal"|"PreflightMissingAllowPrivateNetwork"|"PreflightInvalidAllowPrivateNetwork"|"InvalidAllowMethodsPreflightResponse"|"InvalidAllowHeadersPreflightResponse"|"MethodDisallowedByPreflightResponse"|"HeaderDisallowedByPreflightResponse"|"RedirectContainsCredentials"|"InsecurePrivateNetwork"|"InvalidPrivateNetworkAccess"|"UnexpectedPrivateNetworkAccess"|"NoCorsRedirectModeNotFollow"|"PreflightMissingPrivateNetworkAccessId"|"PreflightMissingPrivateNetworkAccessName"|"PrivateNetworkAccessPermissionUnavailable"|"PrivateNetworkAccessPermissionDenied"|"LocalNetworkAccessPermissionDenied";
@@ -10379,11 +10437,6 @@ Otherwise, the API is not used.
        * Security details for the request.
        */
       securityDetails?: SecurityDetails;
-      /**
-       * Indicates whether the request was sent through IP Protection proxies. If
-set to true, the request used the IP Protection privacy feature.
-       */
-      isIpProtectionUsed?: boolean;
     }
     /**
      * WebSocket request data.
@@ -10989,6 +11042,12 @@ matched (including p2p connections).
        * Expected to be unsigned integer.
        */
       receiveBufferSize?: number;
+      multicastLoopback?: boolean;
+      /**
+       * Unsigned int 8.
+       */
+      multicastTimeToLive?: number;
+      multicastAllowAddressSharing?: boolean;
     }
     export interface DirectUDPMessage {
       data: binary;
@@ -11002,7 +11061,7 @@ Expected to be unsigned integer.
        */
       remotePort?: number;
     }
-    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate"|"PreflightBlock"|"PreflightWarn"|"PermissionBlock"|"PermissionWarn";
+    export type PrivateNetworkRequestPolicy = "Allow"|"BlockFromInsecureToMorePrivate"|"WarnFromInsecureToMorePrivate"|"PermissionBlock"|"PermissionWarn";
     export type IPAddressSpace = "Loopback"|"Local"|"Public"|"Unknown";
     export interface ConnectTiming {
       /**
@@ -11634,6 +11693,14 @@ or were emitted for this request.
       data: binary;
       timestamp: MonotonicTime;
     }
+    export type directUDPSocketJoinedMulticastGroupPayload = {
+      identifier: RequestId;
+      IPAddress: string;
+    }
+    export type directUDPSocketLeftMulticastGroupPayload = {
+      identifier: RequestId;
+      IPAddress: string;
+    }
     /**
      * Fired upon direct_socket.UDPSocket creation.
      */
@@ -11852,29 +11919,6 @@ And after 'enableReportingApi' for all existing reports.
       endpoints: ReportingApiEndpoint[];
     }
     
-    /**
-     * Returns enum representing if IP Proxy of requests is available
-or reason it is not active.
-     */
-    export type getIPProtectionProxyStatusParameters = {
-    }
-    export type getIPProtectionProxyStatusReturnValue = {
-      /**
-       * Whether IP proxy is available
-       */
-      status: IpProxyStatus;
-    }
-    /**
-     * Sets bypass IP Protection Proxy boolean.
-     */
-    export type setIPProtectionProxyBypassEnabledParameters = {
-      /**
-       * Whether IP Proxy is being bypassed by devtools; false by default.
-       */
-      enabled: boolean;
-    }
-    export type setIPProtectionProxyBypassEnabledReturnValue = {
-    }
     /**
      * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
      */
@@ -13616,7 +13660,7 @@ available.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network-access"|"magnetometer"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"popins"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-autofill"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network-access"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -15650,6 +15694,24 @@ TODO(https://crbug.com/1440085): Remove this once Puppeteer supports tab targets
     }
     export type setPrerenderingAllowedReturnValue = {
     }
+    /**
+     * Get the annotated page content for the main frame.
+This is an experimental command that is subject to change.
+     */
+    export type getAnnotatedPageContentParameters = {
+      /**
+       * Whether to include actionable information. Defaults to true.
+       */
+      includeActionableInformation?: boolean;
+    }
+    export type getAnnotatedPageContentReturnValue = {
+      /**
+       * The annotated page content as a base64 encoded protobuf.
+The format is defined by the `AnnotatedPageContent` message in
+components/optimization_guide/proto/features/common_quality_data.proto
+       */
+      content: binary;
+    }
   }
   
   export module Performance {
@@ -17641,28 +17703,6 @@ resolution and maximum framerate.
      */
     export type ImageType = "jpeg"|"webp"|"unknown";
     /**
-     * Describes a supported image decoding profile with its associated minimum and
-maximum resolutions and subsampling.
-     */
-    export interface ImageDecodeAcceleratorCapability {
-      /**
-       * Image coded, e.g. Jpeg.
-       */
-      imageType: ImageType;
-      /**
-       * Maximum supported dimensions of the image in pixels.
-       */
-      maxDimensions: Size;
-      /**
-       * Minimum supported dimensions of the image in pixels.
-       */
-      minDimensions: Size;
-      /**
-       * Optional array of supported subsampling formats, e.g. 4:2:0, if known.
-       */
-      subsamplings: SubsamplingFormat[];
-    }
-    /**
      * Provides information about the GPU(s) on the system.
      */
     export interface GPUInfo {
@@ -17690,10 +17730,6 @@ maximum resolutions and subsampling.
        * Supported accelerated video encoding capabilities.
        */
       videoEncoding: VideoEncodeAcceleratorCapability[];
-      /**
-       * Supported accelerated image decoding capabilities.
-       */
-      imageDecoding: ImageDecodeAcceleratorCapability[];
     }
     /**
      * Represents process info.
@@ -18240,6 +18276,22 @@ to run paused targets.
     export type setRemoteLocationsReturnValue = {
     }
     /**
+     * Gets the targetId of the DevTools page target opened for the given target
+(if any).
+     */
+    export type getDevToolsTargetParameters = {
+      /**
+       * Page or tab target ID.
+       */
+      targetId: TargetID;
+    }
+    export type getDevToolsTargetReturnValue = {
+      /**
+       * The targetId of DevTools page target if exists.
+       */
+      targetId?: TargetID;
+    }
+    /**
      * Opens a DevTools window for the target.
      */
     export type openDevToolsParameters = {
@@ -18247,6 +18299,12 @@ to run paused targets.
        * This can be the page or tab target ID.
        */
       targetId: TargetID;
+      /**
+       * The id of the panel we want DevTools to open initially. Currently
+supported panels are elements, console, network, sources, resources
+and performance.
+       */
+      panelId?: string;
     }
     export type openDevToolsReturnValue = {
       /**
@@ -21759,6 +21817,7 @@ Error was thrown.
     "Cast.sinksUpdated": Cast.sinksUpdatedPayload;
     "Cast.issueUpdated": Cast.issueUpdatedPayload;
     "DOM.attributeModified": DOM.attributeModifiedPayload;
+    "DOM.adoptedStyleSheetsModified": DOM.adoptedStyleSheetsModifiedPayload;
     "DOM.attributeRemoved": DOM.attributeRemovedPayload;
     "DOM.characterDataModified": DOM.characterDataModifiedPayload;
     "DOM.childNodeCountUpdated": DOM.childNodeCountUpdatedPayload;
@@ -21824,6 +21883,8 @@ Error was thrown.
     "Network.directTCPSocketClosed": Network.directTCPSocketClosedPayload;
     "Network.directTCPSocketChunkSent": Network.directTCPSocketChunkSentPayload;
     "Network.directTCPSocketChunkReceived": Network.directTCPSocketChunkReceivedPayload;
+    "Network.directUDPSocketJoinedMulticastGroup": Network.directUDPSocketJoinedMulticastGroupPayload;
+    "Network.directUDPSocketLeftMulticastGroup": Network.directUDPSocketLeftMulticastGroupPayload;
     "Network.directUDPSocketCreated": Network.directUDPSocketCreatedPayload;
     "Network.directUDPSocketOpened": Network.directUDPSocketOpenedPayload;
     "Network.directUDPSocketAborted": Network.directUDPSocketAbortedPayload;
@@ -22273,8 +22334,6 @@ Error was thrown.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileParameters;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileParameters;
     "Memory.getSamplingProfile": Memory.getSamplingProfileParameters;
-    "Network.getIPProtectionProxyStatus": Network.getIPProtectionProxyStatusParameters;
-    "Network.setIPProtectionProxyBypassEnabled": Network.setIPProtectionProxyBypassEnabledParameters;
     "Network.setAcceptedEncodings": Network.setAcceptedEncodingsParameters;
     "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideParameters;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheParameters;
@@ -22408,6 +22467,7 @@ Error was thrown.
     "Page.waitForDebugger": Page.waitForDebuggerParameters;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogParameters;
     "Page.setPrerenderingAllowed": Page.setPrerenderingAllowedParameters;
+    "Page.getAnnotatedPageContent": Page.getAnnotatedPageContentParameters;
     "Performance.disable": Performance.disableParameters;
     "Performance.enable": Performance.enableParameters;
     "Performance.setTimeDomain": Performance.setTimeDomainParameters;
@@ -22490,6 +22550,7 @@ Error was thrown.
     "Target.autoAttachRelated": Target.autoAttachRelatedParameters;
     "Target.setDiscoverTargets": Target.setDiscoverTargetsParameters;
     "Target.setRemoteLocations": Target.setRemoteLocationsParameters;
+    "Target.getDevToolsTarget": Target.getDevToolsTargetParameters;
     "Target.openDevTools": Target.openDevToolsParameters;
     "Tethering.bind": Tethering.bindParameters;
     "Tethering.unbind": Tethering.unbindParameters;
@@ -22919,8 +22980,6 @@ Error was thrown.
     "Memory.getAllTimeSamplingProfile": Memory.getAllTimeSamplingProfileReturnValue;
     "Memory.getBrowserSamplingProfile": Memory.getBrowserSamplingProfileReturnValue;
     "Memory.getSamplingProfile": Memory.getSamplingProfileReturnValue;
-    "Network.getIPProtectionProxyStatus": Network.getIPProtectionProxyStatusReturnValue;
-    "Network.setIPProtectionProxyBypassEnabled": Network.setIPProtectionProxyBypassEnabledReturnValue;
     "Network.setAcceptedEncodings": Network.setAcceptedEncodingsReturnValue;
     "Network.clearAcceptedEncodingsOverride": Network.clearAcceptedEncodingsOverrideReturnValue;
     "Network.canClearBrowserCache": Network.canClearBrowserCacheReturnValue;
@@ -23054,6 +23113,7 @@ Error was thrown.
     "Page.waitForDebugger": Page.waitForDebuggerReturnValue;
     "Page.setInterceptFileChooserDialog": Page.setInterceptFileChooserDialogReturnValue;
     "Page.setPrerenderingAllowed": Page.setPrerenderingAllowedReturnValue;
+    "Page.getAnnotatedPageContent": Page.getAnnotatedPageContentReturnValue;
     "Performance.disable": Performance.disableReturnValue;
     "Performance.enable": Performance.enableReturnValue;
     "Performance.setTimeDomain": Performance.setTimeDomainReturnValue;
@@ -23136,6 +23196,7 @@ Error was thrown.
     "Target.autoAttachRelated": Target.autoAttachRelatedReturnValue;
     "Target.setDiscoverTargets": Target.setDiscoverTargetsReturnValue;
     "Target.setRemoteLocations": Target.setRemoteLocationsReturnValue;
+    "Target.getDevToolsTarget": Target.getDevToolsTargetReturnValue;
     "Target.openDevTools": Target.openDevToolsReturnValue;
     "Tethering.bind": Tethering.bindReturnValue;
     "Tethering.unbind": Tethering.unbindReturnValue;
