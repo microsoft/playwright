@@ -23,6 +23,10 @@
   flex: none;
 }
 
+.network-request-no-payload {
+  margin-left: 14px;
+}
+
 .network-request-details-tab .expandable-title {
   padding-left: 3px;
   background-color: var(--vscode-sideBar-background);

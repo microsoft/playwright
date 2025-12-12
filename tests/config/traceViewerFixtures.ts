@@ -47,6 +47,7 @@ class TraceViewerPage {
   metadataTab: Locator;
   snapshotContainer: Locator;
   sourceCodeTab: Locator;
+  networkTab: Locator;
 
   settingsDialog: Locator;
   themeSetting: Locator;
@@ -65,6 +66,7 @@ class TraceViewerPage {
     this.snapshotContainer = page.locator('.snapshot-container iframe.snapshot-visible[name=snapshot]');
     this.metadataTab = page.getByRole('tabpanel', { name: 'Metadata' });
     this.sourceCodeTab = page.getByRole('tabpanel', { name: 'Source' });
+    this.networkTab = page.getByRole('tabpanel', { name: 'Network' });
 
     this.settingsDialog = page.getByTestId('settings-toolbar-dialog');
     this.themeSetting = this.settingsDialog.getByRole('combobox', { name: 'Theme' });
