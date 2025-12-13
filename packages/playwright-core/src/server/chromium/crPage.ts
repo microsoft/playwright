@@ -882,7 +882,7 @@ class FrameSession {
     const buffer = Buffer.from(payload.data, 'base64');
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
-      frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : undefined,
+      frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : Date.now(),
       width: payload.metadata.deviceWidth,
       height: payload.metadata.deviceHeight,
     });

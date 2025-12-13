@@ -40,7 +40,10 @@ export type Attribution = {
   frame?: Frame;
 };
 
-export class SdkObject extends EventEmitter {
+
+export type EventMap = Record<string | symbol, any[]>;
+
+export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> {
   guid: string;
   attribution: Attribution;
   instrumentation: Instrumentation;

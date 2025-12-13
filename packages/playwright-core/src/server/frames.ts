@@ -441,12 +441,20 @@ export class FrameManager {
   }
 }
 
-export class Frame extends SdkObject {
-  static Events = {
-    InternalNavigation: 'internalnavigation',
-    AddLifecycle: 'addlifecycle',
-    RemoveLifecycle: 'removelifecycle',
-  };
+const FrameEvent = {
+  InternalNavigation: 'internalnavigation',
+  AddLifecycle: 'addlifecycle',
+  RemoveLifecycle: 'removelifecycle',
+} as const;
+
+export type FrameEventMap = {
+  [FrameEvent.InternalNavigation]: [event: NavigationEvent];
+  [FrameEvent.AddLifecycle]: [event: types.LifecycleEvent];
+  [FrameEvent.RemoveLifecycle]: [event: types.LifecycleEvent];
+};
+
+export class Frame extends SdkObject<FrameEventMap> {
+  static Events = FrameEvent;
 
   _id: string;
   readonly seq: number;
