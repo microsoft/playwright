@@ -16,7 +16,7 @@
 
 import { zod } from 'playwright-core/lib/utilsBundle';
 
-import type { TestAnnotation, TestDetailsAnnotation } from 'packages/playwright/types/test';
+import type { TestAnnotation, TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';
 import type { ZodError } from 'zod';
 
