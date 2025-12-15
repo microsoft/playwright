@@ -63,9 +63,13 @@ export function expectedSSLError(browserName: string, platform: string, channel:
     else
       return /Unacceptable TLS certificate|Operation was cancelled/;
   }
-  if (channel?.startsWith('moz-firefox'))
+  if (browserName === 'firefox' && isBidiChannel(channel))
     return /MOZILLA_PKIX_ERROR_SELF_SIGNED_CERT/;
   return /SSL_ERROR_UNKNOWN/;
+}
+
+export function isBidiChannel(channel: string | undefined): boolean {
+  return channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox') || false;
 }
 
 export function chromiumVersionLessThan(a: string, b: string) {

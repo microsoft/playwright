@@ -172,8 +172,8 @@ it.describe('should proxy local network requests', () => {
 });
 
 
-it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName, channel }) => {
-  it.fail(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'page.goto: NS_ERROR_UNKNOWN_HOST');
+it('should use ipv6 proxy', async ({ contextFactory, server, proxyServer, browserName, channel, isBidi }) => {
+  it.fail(browserName === 'firefox' && !isBidi, 'page.goto: NS_ERROR_UNKNOWN_HOST');
   it.fail(channel === 'webkit-wsl', 'WebKit on WSL does not support IPv6: https://github.com/microsoft/WSL/issues/10803');
   proxyServer.forwardTo(server.PORT);
   const context = await contextFactory({

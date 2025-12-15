@@ -17,7 +17,7 @@
 
 import { test as it, expect } from './pageTest';
 
-it('should fire', async ({ page, server, browserName, channel }) => {
+it('should fire', async ({ page, server, browserName, isBidi }) => {
   const url = server.PREFIX + '/error.html';
   const [error] = await Promise.all([
     page.waitForEvent('pageerror'),
@@ -25,7 +25,7 @@ it('should fire', async ({ page, server, browserName, channel }) => {
   ]);
   expect(error.name).toBe('Error');
   expect(error.message).toBe('Fancy error!');
-  if (browserName === 'chromium' || channel?.startsWith('moz-firefox')) {
+  if (browserName === 'chromium' || (browserName === 'firefox' && isBidi)) {
     expect(error.stack).toBe(`Error: Fancy error!
     at c (myscript.js:14:11)
     at b (myscript.js:10:5)
@@ -46,7 +46,7 @@ it('should fire', async ({ page, server, browserName, channel }) => {
   }
 });
 
-it('should not receive console message for pageError', async ({ page, server, browserName }) => {
+it('should not receive console message for pageError', async ({ page, server }) => {
   const messages = [];
   page.on('console', e => messages.push(e));
   await Promise.all([

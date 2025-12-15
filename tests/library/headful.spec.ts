@@ -288,9 +288,9 @@ it('should click bottom row w/ infobar in OOPIF', async ({ browserName, launchPe
   expect(await page.frames()[1].evaluate('window._clicked')).toBe(true);
 });
 
-it('headless and headful should use same default fonts', async ({ page, browserName, browserType, channel }) => {
+it('headless and headful should use same default fonts', async ({ page, browserName, browserType, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/11177' });
-  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Text is misaligned in headed vs headless');
+  it.skip(browserName === 'firefox' && !isBidi, 'Text is misaligned in headed vs headless');
 
   const genericFontFamilies = [
     'standard',

@@ -128,8 +128,8 @@ browserTest('should support touch with null viewport', async ({ browser, server 
   await context.close();
 });
 
-it('should set both screen and viewport options', async ({ contextFactory, browserName, channel }) => {
-  it.fail(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Screen size is reset to viewport');
+it('should set both screen and viewport options', async ({ contextFactory, browserName, isBidi }) => {
+  it.fail(browserName === 'firefox' && !isBidi, 'Screen size is reset to viewport');
   const context = await contextFactory({
     screen: { 'width': 1280, 'height': 720 },
     viewport: { 'width': 1000, 'height': 600 },
@@ -186,9 +186,9 @@ browserTest('should be able to get correct orientation angle on non-mobile devic
   await context.close();
 });
 
-it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server, channel }) => {
+it('should set window.screen.orientation.type for mobile devices', async ({ contextFactory, browserName, server, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/31151' });
-  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Firefox does not support mobile emulation');
+  it.skip(browserName === 'firefox' && !isBidi, 'Firefox does not support mobile emulation');
   const context = await contextFactory(devices['iPhone 14']);
   const page = await context.newPage();
   await page.goto(server.PREFIX + '/index.html');
