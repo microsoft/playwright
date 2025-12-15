@@ -18,14 +18,14 @@
 import { test as it, expect } from './pageTest';
 import util from 'util';
 
-it('should work @smoke', async ({ page, browserName }) => {
+it('should work @smoke', async ({ page, browserName, channel }) => {
   let message = null;
   page.once('console', m => message = m);
   await Promise.all([
     page.evaluate(() => console.log('hello', 5, { foo: 'bar' })),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
     expect(message.text()).toEqual('hello 5 {foo: bar}');
   else
     expect(message.text()).toEqual('hello 5 JSHandle@object');
@@ -114,14 +114,14 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
   expect(messages[1].text()).toMatch(/foo time: \d+.\d+ ?ms/);
 });
 
-it('should not fail for window object', async ({ page, browserName }) => {
+it('should not fail for window object', async ({ page, browserName, channel }) => {
   let message = null;
   page.once('console', msg => message = msg);
   await Promise.all([
     page.evaluate(() => console.error(window)),
     page.waitForEvent('console')
   ]);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
     expect(message.text()).toEqual('Window');
   else
     expect(message.text()).toEqual('JSHandle@object');
@@ -178,14 +178,14 @@ it('should not throw when there are console messages in detached iframes', async
   expect(await popup.evaluate('1 + 1')).toBe(2);
 });
 
-it('should use object previews for arrays and objects', async ({ page, browserName }) => {
+it('should use object previews for arrays and objects', async ({ page, browserName, channel }) => {
   let text: string;
   page.on('console', message => {
     text = message.text();
   });
   await page.evaluate(() => console.log([1, 2, 3], { a: 1 }, window));
 
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
     expect(text).toEqual('[1, 2, 3] {a: 1} Window');
   else
     expect(text).toEqual('Array JSHandle@object JSHandle@object');
@@ -197,14 +197,12 @@ it('should use object previews for errors', async ({ page, browserName, channel 
     text = message.text();
   });
   await page.evaluate(() => console.log(new Error('Exception')));
-  if (channel?.startsWith('bidi-chrom'))
-    expect(text).toEqual('error');
+  if (channel?.startsWith('bidi-chrom') || browserName === 'firefox')
+    expect(text).toEqual('Error');
   else if (browserName === 'chromium')
     expect(text).toContain('.evaluate');
-  else if (browserName === 'webkit' || channel?.startsWith('moz-firefox'))
+  else if (browserName === 'webkit')
     expect(text).toEqual('Error: Exception');
-  else if (browserName === 'firefox')
-    expect(text).toEqual('Error');
 });
 
 it('do not update console count on unhandled rejections', async ({ page }) => {

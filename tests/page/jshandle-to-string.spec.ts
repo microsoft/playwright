@@ -24,9 +24,9 @@ it('should work for primitives', async ({ page }) => {
   expect(stringHandle.toString()).toBe('a');
 });
 
-it('should work for complicated objects', async ({ page, browserName }) => {
+it('should work for complicated objects', async ({ page, browserName, channel }) => {
   const aHandle = await page.evaluateHandle(() => window);
-  if (browserName !== 'firefox')
+  if (browserName !== 'firefox' || channel?.startsWith('moz-firefox'))
     expect(aHandle.toString()).toBe('Window');
   else
     expect(aHandle.toString()).toBe('JSHandle@object');
@@ -56,8 +56,12 @@ it('should work for promises', async ({ page }) => {
   expect(bHandle.toString()).toBe('Promise');
 });
 
-it('should work with different subtypes @smoke', async ({ page, browserName }) => {
-  expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
+it('should work with different subtypes @smoke', async ({ page, browserName, channel }) => {
+  const isBiDi = channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox');
+  if (!isBiDi)
+    expect((await page.evaluateHandle('(function(){})')).toString()).toContain('function');
+  else
+    expect((await page.evaluateHandle('(function(){})')).toString()).toBe('Function');
   expect((await page.evaluateHandle('12')).toString()).toBe('12');
   expect((await page.evaluateHandle('true')).toString()).toBe('true');
   expect((await page.evaluateHandle('undefined')).toString()).toBe('undefined');
@@ -72,12 +76,16 @@ it('should work with different subtypes @smoke', async ({ page, browserName }) =
   expect((await page.evaluateHandle('new WeakMap()')).toString()).toBe('WeakMap');
   expect((await page.evaluateHandle('new WeakSet()')).toString()).toBe('WeakSet');
   expect((await page.evaluateHandle('new Error()')).toString()).toContain('Error');
-  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe((browserName === 'chromium') ? 'Proxy(Object)' : 'Proxy');
+  expect((await page.evaluateHandle('new Proxy({}, {})')).toString()).toBe((browserName === 'chromium' && !isBiDi) ? 'Proxy(Object)' : 'Proxy');
 });
 
-it('should work with previewable subtypes', async ({ page, browserName }) => {
-  it.skip(browserName === 'firefox');
+it('should work with previewable subtypes', async ({ page, browserName, channel }) => {
+  const isBiDi = channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox');
+  it.skip(browserName === 'firefox' && !isBiDi);
   expect((await page.evaluateHandle('/foo/')).toString()).toBe('/foo/');
   expect((await page.evaluateHandle('new Date(0)')).toString()).toContain('GMT');
-  expect((await page.evaluateHandle('new Int32Array()')).toString()).toContain('Int32Array');
+  if (!isBiDi)
+    expect((await page.evaluateHandle('new Int32Array()')).toString()).toContain('Int32Array');
+  else
+    expect((await page.evaluateHandle('new Int32Array()')).toString()).toBe('TypedArray');
 });
