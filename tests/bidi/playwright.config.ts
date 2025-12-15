@@ -30,6 +30,7 @@ function firefoxUserPrefs() {
   const defaultPrefs = {
     'network.proxy.allow_hijacking_localhost': true,
     'network.proxy.testing_localhost_is_secure_when_hijacked': true,
+    'remote.bidi.dismiss_file_pickers.enabled': true,
   };
   const prefsString = process.env.PWTEST_FIREFOX_USER_PREFS;
   if (!prefsString)
