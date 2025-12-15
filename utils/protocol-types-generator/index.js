@@ -40,11 +40,11 @@ const conditionFilter = command => command.condition !== 'defined(WTF_PLATFORM_I
 function jsonToTS(json) {
   return `// This is generated from /utils/protocol-types-generator/index.js
 type binary = string;
-export module Protocol {${json.domains.map(domain => `${domain.description ? `
+export namespace Protocol {${json.domains.map(domain => `${domain.description ? `
   /**
    * ${domain.description}
    */` : ''}
-  export module ${domain.domain} {${(domain.types || []).map(type => `${type.description ? `
+  export namespace ${domain.domain} {${(domain.types || []).map(type => `${type.description ? `
     /**
      * ${type.description}
      */` : ''}${type.properties ? `
@@ -180,9 +180,9 @@ async function generateFirefoxProtocol(executablePath) {
 function firefoxJSONToTS(json) {
   const domains = Object.entries(json.domains);
   return `// This is generated from /utils/protocol-types-generator/index.js
-export module Protocol {
+export namespace Protocol {
 ${domains.map(([domainName, domain]) => `
-  export module ${domainName} {${Object.entries(domain.types).map(([typeName, type]) => `
+  export namespace ${domainName} {${Object.entries(domain.types).map(([typeName, type]) => `
     export type ${typeName} = ${firefoxTypeToString(type, '    ')};`).join('')}${(Object.entries(domain.events)).map(([eventName, event]) => `
     export type ${eventName}Payload = ${firefoxTypeToString(event)}`).join('')}${(Object.entries(domain.methods)).map(([commandName, command]) => `
     export type ${commandName}Parameters = ${firefoxTypeToString(command.params)};
