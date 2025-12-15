@@ -187,14 +187,65 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 }
 
-function renderPreview(remoteObject: bidi.Script.RemoteValue): string | undefined {
-  if (remoteObject.type === 'undefined')
-    return 'undefined';
-  if (remoteObject.type === 'null')
-    return 'null';
-  if ('value' in remoteObject)
-    return String(remoteObject.value);
-  return `<${remoteObject.type}>`;
+function renderPreview(remoteObject: bidi.Script.RemoteValue, nested = false): string {
+  switch (remoteObject.type) {
+    case 'undefined':
+    case 'null':
+      return remoteObject.type;
+    case 'number':
+    case 'boolean':
+    case 'string':
+      return String(remoteObject.value);
+    case 'bigint':
+      return `${remoteObject.value}n`;
+    case 'date':
+      return String(new Date(remoteObject.value));
+    case 'regexp':
+      return String(new RegExp(remoteObject.value.pattern, remoteObject.value.flags));
+    case 'node':
+      return remoteObject.value?.localName || 'Node';
+    case 'object':
+      if (nested)
+        return 'Object';
+      const tokens = [];
+      for (const [name, value] of remoteObject.value || []) {
+        if (typeof name === 'string')
+          tokens.push(`${name}: ${renderPreview(value, true)}`);
+      }
+      return `{${tokens.join(', ')}}`;
+    case 'array':
+    case 'htmlcollection':
+    case 'nodelist':
+      if (nested || !remoteObject.value)
+        return remoteObject.value ? `Array(${remoteObject.value.length})` : 'Array';
+      return `[${remoteObject.value.map(v => renderPreview(v, true)).join(', ')}]`;
+    case 'map':
+      return remoteObject.value ? `Map(${remoteObject.value.length})` : 'Map';
+    case 'set':
+      return remoteObject.value ? `Set(${remoteObject.value.length})` : 'Set';
+    case 'arraybuffer':
+      return 'ArrayBuffer';
+    case 'error':
+      return 'Error';
+    case 'function':
+      return 'Function';
+    case 'generator':
+      return 'Generator';
+    case 'promise':
+      return 'Promise';
+    case 'proxy':
+      return 'Proxy';
+    case 'symbol':
+      return 'Symbol()';
+    case 'typedarray':
+      return 'TypedArray';
+    case 'weakmap':
+      return 'WeakMap';
+    case 'weakset':
+      return 'WeakSet';
+    case 'window':
+      return 'Window';
+  }
 }
 
 function remoteObjectValue(remoteObject: bidi.Script.RemoteValue): any {
@@ -215,5 +266,8 @@ export function createHandle(context: js.ExecutionContext, remoteObject: bidi.Sc
     return new dom.ElementHandle(context, remoteObject.handle!);
   }
   const objectId = 'handle' in remoteObject ? remoteObject.handle : undefined;
-  return new js.JSHandle(context, remoteObject.type, renderPreview(remoteObject), objectId, remoteObjectValue(remoteObject));
+  const preview = renderPreview(remoteObject);
+  const handle = new js.JSHandle(context, remoteObject.type, preview, objectId, remoteObjectValue(remoteObject));
+  handle._setPreview(preview);
+  return handle;
 }
