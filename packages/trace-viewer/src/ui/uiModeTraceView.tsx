@@ -54,7 +54,7 @@ export const TraceView: React.FC<{
     // Test finished.
     const attachment = result && result.duration >= 0 && result.attachments.find(a => a.name === 'trace');
     if (attachment && attachment.path) {
-      loadSingleTraceFile(attachment.path).then(model => setModel({ model, isLive: false }));
+      loadSingleTraceFile(attachment.path, result.startTime.getTime()).then(model => setModel({ model, isLive: false }));
       return;
     }
 
@@ -65,14 +65,14 @@ export const TraceView: React.FC<{
 
     const traceLocation = [
       outputDir,
-      artifactsFolderName(result!.workerIndex),
+      artifactsFolderName(result.workerIndex),
       'traces',
       `${item.testCase?.id}.json`
     ].join(pathSeparator);
     // Start polling running test.
     pollTimer.current = setTimeout(async () => {
       try {
-        const model = await loadSingleTraceFile(traceLocation);
+        const model = await loadSingleTraceFile(traceLocation, Date.now());
         setModel({ model, isLive: true });
       } catch {
         const model = new TraceModel('', []);
@@ -110,10 +110,11 @@ const outputDirForTestCase = (testCase: reporterTypes.TestCase): string | undefi
   return undefined;
 };
 
-async function loadSingleTraceFile(url: string): Promise<TraceModel> {
+async function loadSingleTraceFile(absolutePath: string, timestamp: number): Promise<TraceModel> {
+  const traceUri = `file?path=${encodeURIComponent(absolutePath)}&timestamp=${timestamp}`;
   const params = new URLSearchParams();
-  params.set('trace', url);
+  params.set('trace', traceUri);
   const response = await fetch(`contexts?${params.toString()}`);
   const contextEntries = await response.json() as ContextEntry[];
-  return new TraceModel(url, contextEntries);
+  return new TraceModel(traceUri, contextEntries);
 }

@@ -84,6 +84,7 @@ test('should show console messages for test', async ({ runUITest }, testInfo) =>
       test('print', async ({ page }) => {
         await page.evaluate(() => console.log('page message'));
         console.log('node message');
+        await page.waitForTimeout(500);
         await page.evaluate(() => console.error('page error'));
         console.error('node error');
         console.log('Colors: \x1b[31mRED\x1b[0m \x1b[32mGREEN\x1b[0m');

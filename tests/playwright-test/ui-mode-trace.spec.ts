@@ -792,3 +792,38 @@ test('should partition action tree state by test', async ({ runUITest }) => {
         - treeitem /Fixture \"context\"/
   `);
 });
+
+test('should update state on subsequent run', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', async ({ page }) => {
+        await page.evaluate('1+1');
+      });
+    `,
+  });
+  const actionsTree = page.getByTestId('actions-tree');
+
+  await page.getByTestId('test-tree').getByText('test1').click();
+  await page.keyboard.press('Enter');
+
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /Evaluate/ [selected]
+  `);
+
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test1', async ({ page }) => {
+        expect(1).toBe(2);
+        await page.evaluate('1+1');
+      });
+    `,
+  });
+
+  await page.keyboard.press('Enter');
+
+  await expect(actionsTree).toMatchAriaSnapshot(`
+    - treeitem /Expect \"toBe\"/
+  `);
+});

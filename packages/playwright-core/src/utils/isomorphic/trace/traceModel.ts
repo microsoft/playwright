@@ -86,14 +86,14 @@ export class TraceModel {
   readonly sources: Map<string, SourceModel>;
   resources: ResourceSnapshot[];
   readonly actionCounters: Map<string, number>;
-  readonly traceUrl: string;
+  readonly traceUri: string;
 
 
-  constructor(traceUrl: string, contexts: ContextEntry[]) {
+  constructor(traceUri: string, contexts: ContextEntry[]) {
     contexts.forEach(contextEntry => indexModel(contextEntry));
     const libraryContext = contexts.find(context => context.origin === 'library');
 
-    this.traceUrl = traceUrl;
+    this.traceUri = traceUri;
     this.browserName = libraryContext?.browserName || '';
     this.sdkLanguage = libraryContext?.sdkLanguage;
     this.channel = libraryContext?.channel;
@@ -114,7 +114,7 @@ export class TraceModel {
     this.hasSource = contexts.some(c => c.hasSource);
     this.hasStepData = contexts.some(context => context.origin === 'testRunner');
     this.resources = [...contexts.map(c => c.resources)].flat();
-    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUrl })) ?? []);
+    this.attachments = this.actions.flatMap(action => action.attachments?.map(attachment => ({ ...attachment, callId: action.callId, traceUri })) ?? []);
     this.visibleAttachments = this.attachments.filter(attachment => !attachment.name.startsWith('_'));
 
     this.events.sort((a1, a2) => a1.time - a2.time);
@@ -132,7 +132,7 @@ export class TraceModel {
 
   createRelativeUrl(path: string) {
     const url = new URL('http://localhost/' + path);
-    url.searchParams.set('trace', this.traceUrl);
+    url.searchParams.set('trace', this.traceUri);
     return url.toString().substring('http://localhost/'.length);
   }
 
