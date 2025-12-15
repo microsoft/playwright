@@ -54,9 +54,8 @@ Here is an example `tsconfig.json` that works with Playwright:
 ```json title="tsconfig.json"
 {
   "compilerOptions": {
-    "baseUrl": ".",
     "paths": {
-      "@myhelper/*": ["packages/myhelper/*"] // This mapping is relative to "baseUrl".
+      "@myhelper/*": ["packages/myhelper/*"] // This mapping is relative to the tsconfig.
     }
   }
 }

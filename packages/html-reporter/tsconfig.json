@@ -14,7 +14,6 @@
     "isolatedModules": true,
     "noEmit": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
     "useUnknownInCatchVariables": false,
     "paths": {
       "@protocol/*": ["../protocol/src/*"],
