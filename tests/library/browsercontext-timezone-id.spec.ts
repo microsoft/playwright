@@ -45,13 +45,13 @@ it('should work @smoke', async ({ browser, browserName }) => {
   }
 });
 
-it('should throw for invalid timezone IDs when creating pages', async ({ browser, channel }) => {
+it('should throw for invalid timezone IDs when creating pages', async ({ browser, channel, browserName, isBidi }) => {
   for (const timezoneId of ['Foo/Bar', 'Baz/Qux']) {
-    if (channel?.startsWith('bidi-chrom') || channel?.startsWith('moz-firefox')) {
+    if (isBidi) {
       const error = await browser.newContext({ timezoneId }).catch(e => e);
-      if (channel?.startsWith('bidi-chrom'))
+      if (browserName === 'chromium')
         expect(error.message).toContain(`Invalid timezone "${timezoneId}"`);
-      else if (channel?.startsWith('moz-firefox'))
+      else if (browserName === 'firefox')
         expect(error.message).toContain(`Expected "timezone" to be a valid timezone ID (e.g., "Europe/Berlin") or a valid timezone offset (e.g., "+01:00"), got ${timezoneId}`);
     } else {
       let error = null;

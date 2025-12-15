@@ -94,9 +94,8 @@ it('page.close should work with window.close', async function({ page }) {
   await closedPromise;
 });
 
-it('page.frame should respect name', async function({ page, browserName, channel }) {
-  it.skip(browserName === 'firefox' && channel?.startsWith('moz-firefox'), 'page.frame({ name }) is racy with BiDi');
-  it.skip(channel?.startsWith('bidi-chrom'), 'page.frame({ name }) is racy with BiDi');
+it('page.frame should respect name', async function({ page, isBidi }) {
+  it.skip(isBidi, 'page.frame({ name }) is racy with BiDi');
 
   await page.setContent(`<iframe name=target></iframe>`);
   expect(page.frame({ name: 'bogus' })).toBe(null);
@@ -111,7 +110,7 @@ it('page.frame should respect url', async function({ page, server }) {
   expect(page.frame({ url: /empty/ }).url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should have sane user agent', async ({ page, browserName, isElectron, isAndroid, channel }) => {
+it('should have sane user agent', async ({ page, browserName, isElectron, isAndroid }) => {
   it.skip(isAndroid);
   it.skip(isElectron);
 

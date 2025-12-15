@@ -150,8 +150,8 @@ it('should have default URL when launching browser', async ({ launchPersistent }
   expect(urls).toEqual(['about:blank']);
 });
 
-it('should throw if page argument is passed', async ({ browserType, server, createUserDataDir, browserName, channel }) => {
-  it.skip(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
+it('should throw if page argument is passed', async ({ browserType, server, createUserDataDir, browserName, isBidi }) => {
+  it.skip(browserName === 'firefox' && !isBidi);
 
   const options = { args: [server.EMPTY_PAGE] };
   const error = await browserType.launchPersistentContext(await createUserDataDir(), options).catch(e => e);

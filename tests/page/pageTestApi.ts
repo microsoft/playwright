@@ -33,6 +33,7 @@ export type PageWorkerFixtures = {
   browserVersion: string;
   browserMajorVersion: number;
   electronMajorVersion: number;
+  isBidi: boolean;
   isAndroid: boolean;
   isElectron: boolean;
   isHeadlessShell: boolean;

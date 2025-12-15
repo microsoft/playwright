@@ -255,8 +255,8 @@ it('should be able to navigate after disabling javascript', async ({ browser, se
   await context.close();
 });
 
-it('should not hang on promises after disabling javascript', async ({ browserName, contextFactory, channel }) => {
-  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'));
+it('should not hang on promises after disabling javascript', async ({ browserName, contextFactory, isBidi }) => {
+  it.fixme(browserName === 'firefox' && !isBidi);
   const context = await contextFactory({ javaScriptEnabled: false });
   const page = await context.newPage();
   expect(await page.evaluate(() => 1)).toBe(1);

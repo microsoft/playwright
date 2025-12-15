@@ -344,14 +344,14 @@ it('should send referer', async ({ page, server }) => {
   expect(request.headers['referer']).toBe('http://google.com/');
 });
 
-it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac, macVersion, channel }) => {
+it('should fail navigation when aborting main resource', async ({ page, server, browserName, isMac, macVersion, isBidi }) => {
   await page.route('**/*', route => route.abort());
   let error = null;
   await page.goto(server.EMPTY_PAGE).catch(e => error = e);
   expect(error).toBeTruthy();
   if (browserName === 'webkit')
     expect(error.message).toContain(isMac && macVersion < 11 ? 'Request intercepted' : 'Blocked by Web Inspector');
-  else if (channel?.startsWith('moz-firefox'))
+  else if (browserName === 'firefox' && isBidi)
     expect(error.message).toContain('NS_ERROR_ABORT');
   else if (browserName === 'firefox')
     expect(error.message).toContain('NS_ERROR_FAILURE');

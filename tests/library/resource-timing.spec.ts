@@ -100,9 +100,9 @@ it('should work for redirect', async ({ contextFactory, browserName, server }) =
   await context.close();
 });
 
-it('should work when serving from memory cache', async ({ contextFactory, server, browserName, channel }) => {
+it('should work when serving from memory cache', async ({ contextFactory, server, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright-java/issues/1080' });
-  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'Response event is not fired in Firefox');
+  it.fixme(browserName === 'firefox' && !isBidi, 'Response event is not fired in Firefox');
   server.setRoute('/one-style.css', (req, res) => {
     res.writeHead(200, {
       'Content-Type': 'text/css',

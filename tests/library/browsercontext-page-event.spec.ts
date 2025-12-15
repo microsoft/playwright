@@ -170,7 +170,7 @@ it('should work with Shift-clicking', async ({ browser, server, browserName }) =
   await context.close();
 });
 
-it('should work with Ctrl-clicking', async ({ browser, server, browserName, channel }) => {
+it('should work with Ctrl-clicking', async ({ browser, server, browserName, isBidi }) => {
   const context = await browser.newContext();
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
@@ -179,6 +179,6 @@ it('should work with Ctrl-clicking', async ({ browser, server, browserName, chan
     context.waitForEvent('page'),
     page.click('a', { modifiers: ['ControlOrMeta'] }),
   ]);
-  expect(await popup.opener()).toBe(browserName === 'firefox' && !channel?.startsWith('moz-firefox') ? page : null);
+  expect(await popup.opener()).toBe(browserName === 'firefox' && !isBidi ? page : null);
   await context.close();
 });

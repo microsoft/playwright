@@ -43,9 +43,9 @@ it('should reject when frame detaches', async ({ page, server, browserName }) =>
     expect(error.message.toLowerCase()).toContain('frame was detached');
 });
 
-it('should continue after client redirect', async ({ page, server, isAndroid, browserName, channel }) => {
+it('should continue after client redirect', async ({ page, server, isAndroid, browserName, isBidi }) => {
   it.fixme(isAndroid);
-  it.fixme(browserName === 'firefox' && !channel?.startsWith('moz-firefox'), 'script.js is requested before navigationCommitted arrives');
+  it.fixme(browserName === 'firefox' && !isBidi, 'script.js is requested before navigationCommitted arrives');
 
   server.setRoute('/frames/script.js', () => {});
   const url = server.PREFIX + '/frames/child-redirect.html';
