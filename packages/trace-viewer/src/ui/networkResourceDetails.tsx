@@ -154,9 +154,9 @@ const HeadersTab: React.FunctionComponent<{
   [resource, startTimeOffset]);
 
   return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='General' data={generalData}/>
+    <ExpandableSection title='General' data={generalData} />
+    <ExpandableSection title='Request Headers' showCount data={resource.request.headers} />
     <ExpandableSection title='Response Headers' showCount data={resource.response.headers} />
-    <ExpandableSection title='Request Headers' showCount data={resource.request.headers}/>
   </div>;
 };
 
