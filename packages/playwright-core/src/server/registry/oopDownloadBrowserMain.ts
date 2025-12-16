@@ -53,6 +53,7 @@ function downloadFile(options: DownloadParams): Promise<void> {
     url: options.url,
     headers: {
       'User-Agent': options.userAgent,
+      'X-PW-Test-Redirect': '1',
     },
     socketTimeout: options.socketTimeout,
   }, response => {
