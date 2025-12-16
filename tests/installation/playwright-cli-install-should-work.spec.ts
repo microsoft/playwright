@@ -86,7 +86,7 @@ test('install command should work with mirror that uses chunked encoding', async
   const server = http.createServer(async (req, res) => {
     try {
       const upstream = await fetch(
-          req.url.startsWith('builds/')
+          req.url.startsWith('/builds/')
             ? 'https://cdn.playwright.dev/dbazure/download/playwright' + req.url
             : 'https://cdn.playwright.dev/chrome-for-testing-public' + req.url
       );
