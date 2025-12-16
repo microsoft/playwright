@@ -63,7 +63,7 @@ export type WorkbenchProps = {
 };
 
 export const Workbench: React.FunctionComponent<WorkbenchProps> = props => {
-  const partition = props.model?.traceUrl ?? 'default';
+  const partition = traceUriToPartition(props.model?.traceUri);
   return <TraceModelContext.Provider value={props.model}>
     <PartitionedWorkbench partition={partition} {...props} />
   </TraceModelContext.Provider>;
@@ -441,3 +441,11 @@ const ActionsFilterButton: React.FC<{ counters?: Map<string, number>; hiddenActi
     />
   </DialogToolbarButton>;
 };
+
+function traceUriToPartition(traceUri: string | undefined): string {
+  if (!traceUri)
+    return 'default';
+  const url = new URL(traceUri, 'http://localhost');
+  url.searchParams.delete('timestamp');
+  return url.toString();
+}

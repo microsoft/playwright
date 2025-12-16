@@ -17,7 +17,7 @@
 import { Progress, splitProgress } from './progress';
 import { SnapshotServer } from './snapshotServer';
 import { TraceModel } from './traceModel';
-import { FetchTraceModelBackend, traceFileURL, ZipTraceModelBackend } from './traceModelBackends';
+import { FetchTraceModelBackend, ZipTraceModelBackend } from './traceModelBackends';
 import { TraceVersionError } from './traceModernizer';
 
 type Client = {
@@ -73,9 +73,9 @@ function simulateRestart() {
   clientIdToTraceUrls.clear();
 }
 
-async function loadTraceOrError(clientId: string, url: URL, isContextRequest: boolean, progress: Progress): Promise<{ loadedTrace?: LoadedTrace, errorResponse?: Response }> {
+async function loadTraceOrError(clientId: string, url: URL, progress: Progress): Promise<{ loadedTrace?: LoadedTrace, errorResponse?: Response }> {
   try {
-    const loadedTrace = await loadTrace(clientId, url, isContextRequest, progress);
+    const loadedTrace = await loadTrace(clientId, url, progress);
     return { loadedTrace };
   } catch (error) {
     return {
@@ -87,29 +87,28 @@ async function loadTraceOrError(clientId: string, url: URL, isContextRequest: bo
   }
 }
 
-function loadTrace(clientId: string, url: URL, isContextRequest: boolean, progress: Progress): Promise<LoadedTrace> {
-  const traceUrl = url.searchParams.get('trace')!;
-  if (!traceUrl)
+function loadTrace(clientId: string, url: URL, progress: Progress): Promise<LoadedTrace> {
+  const traceUri = url.searchParams.get('trace')!;
+  if (!traceUri)
     throw new Error('trace parameter is missing');
 
-  clientIdToTraceUrls.set(clientId, traceUrl);
-  const omitCache = isContextRequest && isLiveTrace(traceUrl);
-  const loadedTrace = omitCache ? undefined : loadedTraces.get(traceUrl);
+  clientIdToTraceUrls.set(clientId, traceUri);
+  const loadedTrace = loadedTraces.get(traceUri);
   if (loadedTrace)
     return loadedTrace;
-  const promise = innerLoadTrace(traceUrl, progress);
-  loadedTraces.set(traceUrl, promise);
+  const promise = innerLoadTrace(traceUri, progress);
+  loadedTraces.set(traceUri, promise);
   return promise;
 }
 
-async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<LoadedTrace> {
+async function innerLoadTrace(traceUri: string, progress: Progress): Promise<LoadedTrace> {
   await gc();
 
   const traceModel = new TraceModel();
   try {
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
-    const backend = isLiveTrace(traceUrl) || traceUrl.endsWith('traces.dir') ? new FetchTraceModelBackend(traceUrl) : new ZipTraceModelBackend(traceUrl, fetchProgress);
+    const backend = isLiveTrace(traceUri) || traceUri.endsWith('traces.dir') ? new FetchTraceModelBackend(traceUri) : new ZipTraceModelBackend(traceUri, fetchProgress);
     await traceModel.load(backend, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
@@ -117,8 +116,8 @@ async function innerLoadTrace(traceUrl: string, progress: Progress): Promise<Loa
     if (error?.message?.includes('Cannot find .trace file') && await traceModel.hasEntry('index.html'))
       throw new Error('Could not load trace. Did you upload a Playwright HTML report instead? Make sure to extract the archive first and then double-click the index.html file or put it on a web server.');
     if (error instanceof TraceVersionError)
-      throw new Error(`Could not load trace from ${traceUrl}. ${error.message}`);
-    throw new Error(`Could not load trace from ${traceUrl}. Make sure a valid Playwright Trace is accessible over this url.`);
+      throw new Error(`Could not load trace from ${traceUri}. ${error.message}`);
+    throw new Error(`Could not load trace from ${traceUri}. Make sure a valid Playwright Trace is accessible over this url.`);
   }
   const snapshotServer = new SnapshotServer(traceModel.storage(), sha1 => traceModel.resourceForSha1(sha1));
   return { traceModel, snapshotServer };
@@ -159,7 +158,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     // Snapshot iframe navigation request.
     if (relativePath?.startsWith('/snapshot/')) {
       // It is Ok to pass noop progress as the trace is likely already loaded.
-      const { errorResponse, loadedTrace } = await loadTraceOrError(event.resultingClientId!, url, false, noopProgress);
+      const { errorResponse, loadedTrace } = await loadTraceOrError(event.resultingClientId!, url, noopProgress);
       if (errorResponse)
         return errorResponse;
       const pageOrFrameId = relativePath.substring('/snapshot/'.length);
@@ -178,7 +177,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (!client)
       return new Response('Sub-resource without a client', { status: 500 });
 
-    const { snapshotServer } = await loadTrace(client.id, new URL(client.url), false, clientProgress(client));
+    const { snapshotServer } = await loadTrace(client.id, new URL(client.url), clientProgress(client));
     if (!snapshotServer)
       return new Response(null, { status: 404 });
 
@@ -198,8 +197,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     if (!client)
       return new Response('Sub-resource without a client', { status: 500 });
 
-    const isContextRequest = relativePath === '/contexts';
-    const { errorResponse, loadedTrace } = await loadTraceOrError(client.id, url, isContextRequest, clientProgress(client));
+    const { errorResponse, loadedTrace } = await loadTraceOrError(client.id, url, clientProgress(client));
     if (errorResponse)
       return errorResponse;
 
@@ -228,13 +226,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
     }
   }
 
-  // Pass through to the server for file requests.
-  if (relativePath?.startsWith('/file/')) {
-    const path = url.searchParams.get('path')!;
-    return await fetch(traceFileURL(path));
-  }
-
-  // Static content for sub-resource.
+  // Pass through to the server for file requests and static content.
   return fetch(event.request);
 }
 
@@ -276,8 +268,10 @@ function clientProgress(client: Client): Progress {
 
 function noopProgress(done: number, total: number): undefined { }
 
-function isLiveTrace(traceUrl: string): boolean {
-  return traceUrl.endsWith('.json');
+function isLiveTrace(traceUri: string): boolean {
+  const url = new URL(traceUri, 'http://localhost');
+  const path = url.searchParams.get('path');
+  return !!path?.endsWith('.json');
 }
 
 self.addEventListener('fetch', function(event: FetchEvent) {
