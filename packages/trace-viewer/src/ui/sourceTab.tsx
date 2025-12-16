@@ -59,7 +59,7 @@ function useSources(stack: StackFrame[] | undefined, selectedFrame: number, sour
         if (!response || response.status === 404)
           response = await fetch(`file?path=${encodeURIComponent(file)}`);
         if (response.status >= 400)
-          source.content = `<Unable to read "${file}">`;
+          source.content = ``;
         else
           source.content = await response.text();
       } catch {

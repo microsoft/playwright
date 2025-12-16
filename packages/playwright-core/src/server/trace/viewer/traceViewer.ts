@@ -55,25 +55,26 @@ export type TraceViewerAppOptions = {
 
 const tracesDirMarker = 'traces.dir';
 
-function validateTraceUrl(traceUrl: string | undefined): string | undefined {
-  if (!traceUrl)
-    return traceUrl;
+function validateTraceUrl(traceFileOrUrl: string | undefined): string | undefined {
+  if (!traceFileOrUrl)
+    return traceFileOrUrl;
 
-  if (traceUrl.startsWith('http://') || traceUrl.startsWith('https://'))
-    return traceUrl;
+  if (traceFileOrUrl.startsWith('http://') || traceFileOrUrl.startsWith('https://'))
+    return traceFileOrUrl;
 
+  let traceFile = traceFileOrUrl;
   // If .json is requested, we'll synthesize it.
-  if (traceUrl.endsWith('.json'))
-    return traceUrl;
+  if (traceFile.endsWith('.json'))
+    return toFilePathUrl(traceFile);
 
   try {
-    const stat = fs.statSync(traceUrl);
+    const stat = fs.statSync(traceFile);
     // If the path is a directory, add 'trace.dir' which has a special handler.
     if (stat.isDirectory())
-      return path.join(traceUrl, tracesDirMarker);
-    return traceUrl;
+      traceFile = path.join(traceFile, tracesDirMarker);
+    return toFilePathUrl(traceFile);
   } catch {
-    throw new Error(`Trace file ${traceUrl} does not exist!`);
+    throw new Error(`Trace file ${traceFileOrUrl} does not exist!`);
   }
 }
 
@@ -270,13 +271,18 @@ function traceDescriptor(traceDir: string, tracePrefix: string | undefined) {
 
   for (const name of fs.readdirSync(traceDir)) {
     if (!tracePrefix || name.startsWith(tracePrefix))
-      result.entries.push({ name, path: path.join(traceDir, name) });
+      result.entries.push({ name, path: toFilePathUrl(path.join(traceDir, name)) });
   }
 
   const resourcesDir = path.join(traceDir, 'resources');
   if (fs.existsSync(resourcesDir)) {
     for (const name of fs.readdirSync(resourcesDir))
-      result.entries.push({ name: 'resources/' + name, path: path.join(resourcesDir, name) });
+      result.entries.push({ name: 'resources/' + name, path: toFilePathUrl(path.join(resourcesDir, name)) });
   }
   return result;
+}
+
+
+function toFilePathUrl(filePath: string): string {
+  return `file?path=${encodeURIComponent(filePath)}`;
 }

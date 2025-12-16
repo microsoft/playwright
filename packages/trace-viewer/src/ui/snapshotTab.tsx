@@ -58,7 +58,7 @@ export const SnapshotTabsView: React.FunctionComponent<{
   }, [action]);
   const { snapshotInfoUrl, snapshotUrl, popoutUrl } = React.useMemo(() => {
     const snapshot = snapshots[snapshotTab];
-    return model && snapshot ? extendSnapshot(model.traceUrl, snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
+    return model && snapshot ? extendSnapshot(model.traceUri, snapshot, shouldPopulateCanvasFromScreenshot) : { snapshotInfoUrl: undefined, snapshotUrl: undefined, popoutUrl: undefined };
   }, [snapshots, snapshotTab, shouldPopulateCanvasFromScreenshot, model]);
 
   const snapshotUrls = React.useMemo((): SnapshotUrls | undefined => snapshotInfoUrl !== undefined ? { snapshotInfoUrl, snapshotUrl, popoutUrl } : undefined, [snapshotInfoUrl, snapshotUrl, popoutUrl]);
@@ -416,9 +416,9 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
 
 const isUnderTest = new URLSearchParams(window.location.search).has('isUnderTest');
 
-export function extendSnapshot(traceUrl: string, snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
+export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopulateCanvasFromScreenshot: boolean): SnapshotUrls {
   const params = new URLSearchParams();
-  params.set('trace', traceUrl);
+  params.set('trace', traceUri);
   params.set('name', snapshot.snapshotName);
   if (isUnderTest)
     params.set('isUnderTest', 'true');
@@ -436,7 +436,7 @@ export function extendSnapshot(traceUrl: string, snapshot: Snapshot, shouldPopul
 
   const popoutParams = new URLSearchParams();
   popoutParams.set('r', snapshotUrl);
-  popoutParams.set('trace', traceUrl);
+  popoutParams.set('trace', traceUri);
   const popoutUrl = new URL(`snapshot.html?${popoutParams.toString()}`, window.location.href).toString();
   return { snapshotInfoUrl, snapshotUrl, popoutUrl };
 }

@@ -27,7 +27,6 @@ export interface TraceLoaderBackend {
   readText(entryName: string): Promise<string | undefined>;
   readBlob(entryName: string): Promise<Blob | undefined>;
   isLive(): boolean;
-  traceURL(): string;
 }
 
 export class TraceLoader {
