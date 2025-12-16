@@ -114,7 +114,10 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       }
       return names;
     });
-    const values = await Promise.all(names.map(name => handle.evaluateHandle((object, name) => object[name], name)));
+    const values = await Promise.all(names.map(async name => {
+      const value = await this._rawCallFunction('(object, name) => object[name]', [{ handle: handle._objectId! }, { type: 'string', value: name }], true, false);
+      return createHandle(handle._context, value);
+    }));
     const map = new Map<string, js.JSHandle>();
     for (let i = 0; i < names.length; i++)
       map.set(names[i], values[i]);
@@ -149,7 +152,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   async contentFrameIdForFrame(handle: dom.ElementHandle) {
-    const contentWindow = await this._rawCallFunction('e => e.contentWindow', { handle: handle._objectId });
+    const contentWindow = await this._rawCallFunction('e => e.contentWindow', [{ handle: handle._objectId }]);
     if (contentWindow?.type === 'window')
       return contentWindow.value.context;
     return null;
@@ -165,18 +168,18 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
   }
 
   private async _remoteValueForReference(reference: bidi.Script.RemoteReference, createHandle?: boolean) {
-    return await this._rawCallFunction('e => e', reference, createHandle);
+    return await this._rawCallFunction('e => e', [reference], createHandle);
   }
 
-  private async _rawCallFunction(functionDeclaration: string, arg: bidi.Script.LocalValue, createHandle?: boolean): Promise<bidi.Script.RemoteValue> {
+  private async _rawCallFunction(functionDeclaration: string, args: bidi.Script.LocalValue[], createHandle?: boolean, awaitPromise = true): Promise<bidi.Script.RemoteValue> {
     const response = await this._session.send('script.callFunction', {
       functionDeclaration,
       target: this._target,
-      arguments: [arg],
+      arguments: args,
       // "Root" is necessary for the handle to be returned.
       resultOwnership: createHandle ? bidi.Script.ResultOwnership.Root : bidi.Script.ResultOwnership.None,
       serializationOptions: { maxObjectDepth: 0, maxDomDepth: 0 },
-      awaitPromise: true,
+      awaitPromise,
       userActivation: true,
     });
     if (response.type === 'exception')
