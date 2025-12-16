@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries } from './ui-mode-fixtures';
+import { test, expect, retries, findFreePort } from './ui-mode-fixtures';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -260,7 +260,7 @@ test('should print beforeAll console messages once', async ({ runUITest }, testI
 });
 
 test('should print web server output', async ({ runUITest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+  const port = await findFreePort();
   const serverPath = path.join(__dirname, 'assets', 'simple-server.js');
   const { page } = await runUITest({
     'test.spec.ts': `

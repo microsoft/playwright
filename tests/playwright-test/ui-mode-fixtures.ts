@@ -24,6 +24,8 @@ import type { Browser, Page, TestInfo } from './stable-test-runner';
 import { chromium } from './stable-test-runner';
 import { createGuid } from '../../packages/playwright-core/src/server/utils/crypto';
 
+export { findFreePort } from './playwright-test-fixtures';
+
 type Latch = {
   blockingCode: string;
   open: () => void;

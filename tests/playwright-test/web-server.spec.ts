@@ -16,14 +16,14 @@
 
 import type http from 'http';
 import path from 'path';
-import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures';
+import { test, expect, parseTestRunnerOutput, findFreePort } from './playwright-test-fixtures';
 import type { RunResult } from './playwright-test-fixtures';
 import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
 
 const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
 
-test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should create a server', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -88,8 +88,8 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
   expect(actualLogMessages).toStrictEqual(expectedLogMessages);
 });
 
-test('should create a server with environment variables', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should create a server with environment variables', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   process.env['FOOEXTERNAL'] = 'EXTERNAL-BAR';
   const result = await runInlineTest({
     'test.spec.ts': `
@@ -125,8 +125,8 @@ test('should create a server with environment variables', async ({ runInlineTest
 
 test('should run web server with PLAYWRIGHT_TEST=1 environment variable', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
-}, async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+}, async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -154,8 +154,8 @@ test('should run web server with PLAYWRIGHT_TEST=1 environment variable', {
 
 test('should allow to unset PLAYWRIGHT_TEST environment variable', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37377' }
-}, async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+}, async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -185,7 +185,7 @@ test('should allow to unset PLAYWRIGHT_TEST environment variable', {
 });
 
 test('should default cwd to config directory', async ({ runInlineTest }, testInfo) => {
-  const port = testInfo.workerIndex * 2 + 10500;
+  const port = await findFreePort();
   const configDir = testInfo.outputPath('foo');
   const relativeSimpleServerPath = path.relative(configDir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
@@ -213,7 +213,7 @@ test('should default cwd to config directory', async ({ runInlineTest }, testInf
 });
 
 test('should resolve cwd wrt config directory', async ({ runInlineTest }, testInfo) => {
-  const port = testInfo.workerIndex * 2 + 10500;
+  const port = await findFreePort();
   const testdir = testInfo.outputPath();
   const relativeSimpleServerPath = path.relative(testdir, SIMPLE_SERVER_PATH);
   const result = await runInlineTest({
@@ -242,8 +242,8 @@ test('should resolve cwd wrt config directory', async ({ runInlineTest }, testIn
 });
 
 
-test('should create a server with url', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should create a server with url', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -267,8 +267,8 @@ test('should create a server with url', async ({ runInlineTest }, { workerIndex 
   expect(result.report.suites[0].specs[0].tests[0].results[0].status).toContain('passed');
 });
 
-test('should time out waiting for a server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should time out waiting for a server', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -292,8 +292,8 @@ test('should time out waiting for a server', async ({ runInlineTest }, { workerI
   expect(result.output).toContain(`Timed out waiting 100ms from config.webServer.`);
 });
 
-test('should time out waiting for a server with url', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should time out waiting for a server with url', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -317,8 +317,8 @@ test('should time out waiting for a server with url', async ({ runInlineTest }, 
   expect(result.output).toContain(`Timed out waiting 300ms from config.webServer.`);
 });
 
-test('should be able to specify the baseURL without the server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should be able to specify the baseURL without the server', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -346,9 +346,9 @@ test('should be able to specify the baseURL without the server', async ({ runInl
   await new Promise(resolve => server.close(resolve));
 });
 
-test('should be able to specify a custom baseURL with the server', async ({ runInlineTest }, { workerIndex }) => {
-  const customWebServerPort = workerIndex * 2 + 10500;
-  const webServerPort = customWebServerPort + 1;
+test('should be able to specify a custom baseURL with the server', async ({ runInlineTest }) => {
+  const customWebServerPort = await findFreePort();
+  const webServerPort = await findFreePort();
   const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -380,8 +380,8 @@ test('should be able to specify a custom baseURL with the server', async ({ runI
   await new Promise(resolve => server.close(resolve));
 });
 
-test('should be able to use an existing server when reuseExistingServer:true', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should be able to use an existing server when reuseExistingServer:true', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -413,8 +413,8 @@ test('should be able to use an existing server when reuseExistingServer:true', a
   await new Promise(resolve => server.close(resolve));
 });
 
-test('should throw when a server is already running on the given port and strict is true', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should throw when a server is already running on the given port and strict is true', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
     res.end('<html><body>hello</body></html>');
   });
@@ -445,8 +445,8 @@ test('should throw when a server is already running on the given port and strict
 });
 
 for (const host of ['localhost', '127.0.0.1', '0.0.0.0']) {
-  test(`should detect the server if a web-server is already running on ${host}`, async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex * 2 + 10500;
+  test(`should detect the server if a web-server is already running on ${host}`, async ({ runInlineTest }) => {
+    const port = await findFreePort();
     const server = createHttpServer((req: http.IncomingMessage, res: http.ServerResponse) => {
       res.end('<html><body>hello</body></html>');
     });
@@ -552,30 +552,31 @@ test('should follow redirects', async ({ runInlineTest, server }) => {
   expect(result.exitCode).toBe(0);
 });
 
-test('should create multiple servers', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should create multiple servers', async ({ runInlineTest }) => {
+  const port1 = await findFreePort();
+  const port2 = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
         import { test, expect } from '@playwright/test';
 
         test('connect to the server', async ({page}) => {
-          await page.goto('http://localhost:${port}/port');
-          await page.locator('text=${port}');
+          await page.goto('http://localhost:${port1}/port');
+          await page.locator('text=${port1}');
 
-          await page.goto('http://localhost:${port + 1}/port');
-          await page.locator('text=${port + 1}');
+          await page.goto('http://localhost:${port2}/port');
+          await page.locator('text=${port2}');
         });
       `,
     'playwright.config.ts': `
         module.exports = {
           webServer: [
             {
-              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-              url: 'http://localhost:${port}/port',
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port1}',
+              url: 'http://localhost:${port1}/port',
             },
             {
-              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-              url: 'http://localhost:${port + 1}/port',
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port2}',
+              url: 'http://localhost:${port2}/port',
             }
           ],
           globalSetup: 'globalSetup.ts',
@@ -588,13 +589,13 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
           expect(config.webServer, "The public API defines this type as singleton or null, so if using array style we fallback to null to avoid having the type lie to the user.").toBe(null);
           const http = require("http");
           const response = await new Promise(resolve => {
-            const request = http.request("http://localhost:${port}/hello", resolve);
+            const request = http.request("http://localhost:${port1}/hello", resolve);
             request.end();
           })
           console.log('globalSetup-status-'+response.statusCode)
           return async () => {
             const response = await new Promise(resolve => {
-              const request = http.request("http://localhost:${port}/hello", resolve);
+              const request = http.request("http://localhost:${port1}/hello", resolve);
               request.end();
             })
             console.log('globalSetup-teardown-status-'+response.statusCode)
@@ -605,7 +606,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         module.exports = async () => {
           const http = require("http");
           const response = await new Promise(resolve => {
-            const request = http.request("http://localhost:${port}/hello", resolve);
+            const request = http.request("http://localhost:${port1}/hello", resolve);
             request.end();
           })
           console.log('globalTeardown-status-'+response.statusCode)
@@ -627,8 +628,8 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
 });
 
 test.describe('baseURL with plugins', () => {
-  test('plugins do not set it', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex * 2 + 10500;
+  test('plugins do not set it', async ({ runInlineTest }) => {
+    const port = await findFreePort();
     const result = await runInlineTest({
       'test.spec.ts': `
         import { test, expect } from '@playwright/test';
@@ -652,26 +653,27 @@ test.describe('baseURL with plugins', () => {
     expect(result.passed).toBe(1);
   });
 
-  test('legacy config sets it alongside plugin', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex * 2 + 10500;
+  test('legacy config sets it alongside plugin', async ({ runInlineTest }) => {
+    const port1 = await findFreePort();
+    const port2 = await findFreePort();
     const result = await runInlineTest({
       'test.spec.ts': `
         import { test, expect } from '@playwright/test';
         test('connect to the server', async ({baseURL, page}) => {
-          expect(baseURL).toBe('http://localhost:${port}');
+          expect(baseURL).toBe('http://localhost:${port1}');
         });
       `,
       'playwright.config.ts': `
         import { webServer } from 'playwright/lib/plugins';
         module.exports = {
           webServer: {
-            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-            port: ${port},
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port1}',
+            port: ${port1},
           },
           _plugins: [
             webServer({
-              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-              url: 'http://localhost:${port + 1}/port'
+              command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port2}',
+              url: 'http://localhost:${port2}/port'
             })
           ]
         };
@@ -682,8 +684,8 @@ test.describe('baseURL with plugins', () => {
   });
 });
 
-test('should treat 3XX as available server', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should treat 3XX as available server', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -704,9 +706,9 @@ test('should treat 3XX as available server', async ({ runInlineTest }, { workerI
   expect(result.output).toContain('[WebServer] error from server');
 });
 
-test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async ({ runInlineTest }, { workerIndex }) => {
+test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async ({ runInlineTest }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20784' });
-  const port = workerIndex * 2 + 10500;
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -728,8 +730,8 @@ test('should check ipv4 and ipv6 with happy eyeballs when URL is passed', async 
   expect(result.output).toContain('WebServer available');
 });
 
-test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should forward stdout when set to "pipe"', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -751,8 +753,8 @@ test('should forward stdout when set to "pipe"', async ({ runInlineTest }, { wor
   expect(result.output).toContain('[WebServer] error from server'); // stderr is piped by default
 });
 
-test('should be able to ignore "stderr"', async ({ runInlineTest }, { workerIndex }) => {
-  const port = workerIndex * 2 + 10500;
+test('should be able to ignore "stderr"', async ({ runInlineTest }) => {
+  const port = await findFreePort();
   const result = await runInlineTest({
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
@@ -871,8 +873,9 @@ test.describe('gracefulShutdown option', () => {
 });
 
 test.describe('name option', () => {
-  test('should use custom prefix', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex * 2 + 10500;
+  test('should use custom prefix', async ({ runInlineTest }) => {
+    const port1 = await findFreePort();
+    const port2 = await findFreePort();
     const name1 = 'CustomName1';
     const name2 = 'CustomName2';
     const defaultPrefix = 'WebServer';
@@ -885,13 +888,13 @@ test.describe('name option', () => {
       module.exports = {
         webServer: [
           {
-            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port}',
-            port: ${port},
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port1}',
+            port: ${port1},
             name: '${name1}',
           },
           {
-            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port + 1}',
-            port: ${port + 1},
+            command: 'node ${JSON.stringify(SIMPLE_SERVER_PATH)} ${port2}',
+            port: ${port2},
             name: '${name2}',
           }
         ],
@@ -904,8 +907,8 @@ test.describe('name option', () => {
     expect(result.output).not.toContain(`[${defaultPrefix}]`);
   });
 
-  test('should use default prefix when name option is not set', async ({ runInlineTest }, { workerIndex }) => {
-    const port = workerIndex * 2 + 10500;
+  test('should use default prefix when name option is not set', async ({ runInlineTest }) => {
+    const port = await findFreePort();
     const defaultPrefix = 'WebServer';
     const result = await runInlineTest({
       'test.spec.ts': `

@@ -16,6 +16,7 @@
 
 import type { JSONReport, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult } from '@playwright/test/reporter';
 import * as fs from 'fs';
+import net from 'net';
 import * as os from 'os';
 import * as path from 'path';
 import { PNG } from 'playwright-core/lib/utilsBundle';
@@ -488,4 +489,15 @@ export async function removeFolders(dirs: string[]): Promise<Error[]> {
   return await Promise.all(dirs.map((dir: string) =>
     fs.promises.rm(dir, { recursive: true, force: true, maxRetries: 10 }).catch(e => e)
   ));
+}
+
+export async function findFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.listen(0, () => {
+      const { port } = server.address() as net.AddressInfo;
+      server.close(() => resolve(port));
+    });
+    server.on('error', reject);
+  });
 }

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect, retries, dumpTestTree } from './ui-mode-fixtures';
+import { test, expect, retries, dumpTestTree, findFreePort } from './ui-mode-fixtures';
 import path from 'path';
 
 test.describe.configure({ mode: 'parallel', retries });
@@ -347,7 +347,7 @@ for (const useWeb of [true, false]) {
 
 test('should restart webserver on reload', async ({ runUITest }) => {
   const SIMPLE_SERVER_PATH = path.join(__dirname, 'assets', 'simple-server.js');
-  const port = test.info().workerIndex * 2 + 10500;
+  const port = await findFreePort();
 
   const { page } = await runUITest({
     'playwright.config.ts': `
