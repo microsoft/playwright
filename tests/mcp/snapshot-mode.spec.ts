@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { test, expect } from './fixtures';
 
 test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
@@ -124,4 +126,8 @@ test('should respect snapshot[filename]', async ({ startClient, server }, testIn
     pageState: undefined,
     files: expect.stringMatching(/\[Saved snapshot\]\(.*md\)/)
   });
+
+  expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.md'), 'utf8')).toContain(`
+- button "Button 1" [ref=e2]
+`);
 });
