@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@lowire/loop": "^0.0.11",
-    "@modelcontextprotocol/sdk": "^1.24.0",
+    "@modelcontextprotocol/sdk": "^1.25.1",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   }
