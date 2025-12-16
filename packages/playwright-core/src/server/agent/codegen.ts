@@ -69,6 +69,8 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
     }
     case 'expectValue': {
       const locator = asLocator(sdkLanguage, action.selector);
+      if (action.type === 'checkbox' || action.type === 'radio')
+        return `await expect(page.${locator}).toBeChecked({ checked: ${action.value === 'true'} });`;
       return `await expect(page.${locator}).toHaveValue(${escapeWithQuotes(action.value)});`;
     }
   }

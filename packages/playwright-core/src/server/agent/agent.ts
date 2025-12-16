@@ -37,10 +37,10 @@ type Usage = {
 export async function pagePerform(progress: Progress, page: Page, options: channels.PagePerformParams): Promise<Usage> {
   const context = new Context(progress, page);
 
-  if (await cachedPerform(context, options))
+  if (await cachedPerform(progress, context, options))
     return { turns: 0, inputTokens: 0, outputTokens: 0 };
 
-  const { usage } = await perform(context, options.task, undefined, options);
+  const { usage } = await perform(progress, context, options.task, undefined, options);
   await updateCache(context, options);
   return usage;
 }
@@ -56,15 +56,15 @@ Extract the following information from the page. Do not perform any actions, jus
 
 ### Query
 ${options.query}`;
-  const { result, usage } = await perform(context, task, options.schema, options);
+  const { result, usage } = await perform(progress, context, task, options.schema, options);
   return { result, usage };
 }
 
-async function perform(context: Context, userTask: string, resultSchema: loopTypes.Schema | undefined, options: { maxTurns?: number, maxTokens?: number } = {}): Promise<{
+async function perform(progress: Progress, context: Context, userTask: string, resultSchema: loopTypes.Schema | undefined, options: { maxTurns?: number, maxTokens?: number } = {}): Promise<{
   result: any,
   usage: Usage
 }> {
-  const { progress, page } = context;
+  const { page } = context;
   const browserContext = page.browserContext;
   if (!browserContext._options.agent)
     throw new Error(`page.perform() and page.extract() require the agent to be set on the browser context`);
@@ -83,6 +83,11 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
     callTool,
     tools,
     ...limits,
+    onBeforeTurn: ({ conversation }) => {
+      const userMessage = conversation.messages.find(m => m.role === 'user');
+      page.emit(Page.Events.AgentTurn, { role: 'user', message: userMessage?.content ?? '' });
+      return 'continue';
+    },
     onAfterTurn: ({ assistantMessage, totalUsage }) => {
       ++turns;
       const usage = { inputTokens: totalUsage.input, outputTokens: totalUsage.output };
@@ -101,6 +106,10 @@ async function perform(context: Context, userTask: string, resultSchema: loopTyp
       page.emit(Page.Events.AgentTurn, { role: 'user', message: `tool "${toolCall.name}" ${suffix}` });
       if (toolCall.arguments.thatShouldBeIt)
         return 'break';
+      return 'continue';
+    },
+    onToolCallError: ({ toolCall, error }) => {
+      page.emit(Page.Events.AgentTurn, { role: 'user', message: `tool "${toolCall.name}" failed: ${error.message}` });
       return 'continue';
     },
     ...options
@@ -130,7 +139,7 @@ type CachedActions = Record<string, {
 
 const allCaches = new Map<string, CachedActions>();
 
-async function cachedPerform(context: Context, options: channels.PagePerformParams): Promise<boolean> {
+async function cachedPerform(progress: Progress, context: Context, options: channels.PagePerformParams): Promise<boolean> {
   if (!context.options?.cacheFile || context.options.cacheMode === 'ignore' || context.options.cacheMode === 'update')
     return false;
 
@@ -144,7 +153,7 @@ async function cachedPerform(context: Context, options: channels.PagePerformPara
   }
 
   for (const action of entry.actions)
-    await runAction(context.progress, context.page, action, context.options.secrets ?? []);
+    await runAction(progress, 'run', context.page, action, context.options.secrets ?? []);
   return true;
 }
 
@@ -158,7 +167,9 @@ async function updateCache(context: Context, options: channels.PagePerformParams
     timestamp: Date.now(),
     actions: context.actions,
   };
-  await fs.promises.writeFile(cacheFile, JSON.stringify(cache, undefined, 2));
+  const entries = Object.entries(cache);
+  entries.sort((e1, e2) => e1[0].localeCompare(e2[0]));
+  await fs.promises.writeFile(cacheFile, JSON.stringify(Object.fromEntries(entries), undefined, 2));
 }
 
 async function cachedActions(cacheFile: string): Promise<CachedActions> {
