@@ -215,7 +215,7 @@ const fillForm = defineTool({
   schema: {
     name: 'browser_fill_form',
     title: 'Fill form',
-    description: 'Fill multiple form fields',
+    description: 'Fill multiple form fields. Always use this tool when you can fill more than one field at a time.',
     inputSchema: baseSchema.extend({
       fields: z.array(z.object({
         name: z.string().describe('Human-readable field name'),

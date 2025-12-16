@@ -21,9 +21,9 @@ import { browserTest as test, expect } from '../config/browserTest';
 test.use({
   agent: {
     provider: 'github',
-    model: 'claude-sonnet-4.5',
-    cachePathTemplate: '{testFilePath}-cache.json',
-    cacheMode: process.env.CI ? 'force' : 'auto',
+    model: 'gpt-4.1',
+    cachePathTemplate: '{testDir}/{testFilePath}-cache.json',
+    cacheMode: process.env.UPDATE_CACHE ? 'update' : process.env.CI ? 'force' : 'auto',
     secrets: {
       'x-secret-email': 'secret-email@at-microsoft.com',
     }
@@ -32,6 +32,9 @@ test.use({
 
 test('page.perform', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/evals/fill-form.html');
+  page.on('agentturn', turn => {
+    console.log('agentturn', turn);
+  });
   await page.perform('Fill out the form with the following details:\n' +
     'Name: John Smith\n' +
     'Address: 1045 La Avenida St, Mountain View, CA 94043\n' +

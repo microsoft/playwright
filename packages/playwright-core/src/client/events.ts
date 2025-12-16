@@ -55,6 +55,7 @@ export const Events = {
   },
 
   Page: {
+    AgentTurn: 'agentturn',
     Close: 'close',
     Crash: 'crash',
     Console: 'console',
