@@ -260,16 +260,20 @@ function calculateHash(content: string, filePath: string, isModule: boolean, plu
 export async function requireOrImport(file: string) {
   installTransformIfNeeded();
   const isModule = fileIsModule(file);
-  const esmImport = () => eval(`import(${JSON.stringify(url.pathToFileURL(file))})`);
   if (isModule) {
-    return await esmImport().finally(async () => {
-      // Compilation cache, which includes source maps, is populated in a post task.
-      // When importing a module results in an error, the very next access to `error.stack`
-      // will need source maps. To make sure source maps have arrived, we insert a task
-      // that will be processed after compilation cache and guarantee that
-      // source maps are available, before `error.stack` is accessed.
-      await new Promise(resolve => setTimeout(resolve, 0));
-    });
+    const fileName = url.pathToFileURL(file);
+    const esmImport = () => eval(`import(${JSON.stringify(fileName)})`);
+
+    // For ESM imports, issue a preflight to populate the compilation cache with the
+    // source maps. This allows inline test() calls to resolve wrapFunctionWithLocation.
+    await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`).finally(nextTask);
+
+    // Compilation cache, which includes source maps, is populated in a post task.
+    // When importing a module results in an error, the very next access to `error.stack`
+    // will need source maps. To make sure source maps have arrived, we insert a task
+    // that will be processed after compilation cache and guarantee that
+    // source maps are available, before `error.stack` is accessed.
+    return await esmImport().finally(nextTask);
   }
   const result = require(file);
   const depsCollector = currentFileDepsCollector();
@@ -343,4 +347,8 @@ export function wrapFunctionWithLocation<A extends any[], R>(func: (location: Lo
 
 function isRelativeSpecifier(specifier: string) {
   return specifier === '.' || specifier === '..' || specifier.startsWith('./') || specifier.startsWith('../');
+}
+
+async function nextTask() {
+  return new Promise(resolve => setTimeout(resolve, 0));
 }
