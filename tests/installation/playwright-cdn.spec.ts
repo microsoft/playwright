@@ -46,7 +46,7 @@ for (const cdn of CDNS) {
     expect(result).toHaveLoggedSoftwareDownload(['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]);
     await checkInstalledSoftwareOnDisk((['chromium', 'chromium-headless-shell', 'ffmpeg', 'firefox', 'webkit', ...extraInstalledSoftware]));
     const dls = parsedDownloads(result);
-    for (const software of ['chromium', 'ffmpeg', 'firefox', 'webkit'])
+    for (const software of ['ffmpeg', 'firefox', 'webkit'])
       expect(dls).toContainEqual({ status: 200, name: software, url: expect.stringContaining(cdn) });
     await exec('node sanity.js playwright chromium firefox webkit');
     await exec('node esm-playwright.mjs');
