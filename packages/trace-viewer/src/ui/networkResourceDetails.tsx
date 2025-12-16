@@ -24,6 +24,7 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
+import { isJsonMimeType } from '@isomorphic/mimeType';
 import { msToString, useAsyncMemo, useSetting } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
@@ -272,7 +273,7 @@ function formatBody(body: string | null, contentType: string): string {
   if (bodyStr === '')
     return '<Empty>';
 
-  if (contentType.includes('application/json')) {
+  if (isJsonMimeType(contentType)) {
     try {
       return JSON.stringify(JSON.parse(bodyStr), null, 2);
     } catch (err) {
