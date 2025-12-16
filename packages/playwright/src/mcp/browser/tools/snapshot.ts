@@ -37,6 +37,7 @@ const snapshot = defineTool({
     await context.ensureTab();
     response.setIncludeFullSnapshot();
     if (params.filename) {
+      await response.finish();
       const renderedResponse = response.render();
       const fileName = await response.addFile(params.filename, { origin: 'llm', reason: 'Saved snapshot' });
       await fs.promises.writeFile(fileName, renderedResponse.asText());

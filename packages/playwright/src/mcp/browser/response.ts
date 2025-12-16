@@ -106,6 +106,9 @@ export class Response {
   }
 
   async finish() {
+    if (this._tabSnapshot)
+      return;
+
     // All the async snapshotting post-action is happening here.
     // Everything below should race against modal states.
     if (this._includeSnapshot !== 'none' && this._context.currentTab())
