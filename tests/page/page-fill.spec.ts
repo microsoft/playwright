@@ -73,6 +73,12 @@ it('should fill color input', async ({ page }) => {
   expect(await page.$eval('input', input => input.value)).toBe('#aaaaaa');
 });
 
+it('should fill color input case insensitive', async ({ page }) => {
+  await page.setContent('<input type=color value="#e66465">');
+  await page.fill('input', '#AbCd00');
+  expect(await page.$eval('input', input => input.value)).toBe('#abcd00');
+});
+
 it('should throw on incorrect color value', async ({ page, browserName, isWindows }) => {
   it.skip(browserName === 'webkit' && isWindows, 'WebKit win does not support color inputs');
   await page.setContent('<input type=color value="#e66465">');
