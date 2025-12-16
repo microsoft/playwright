@@ -47,11 +47,6 @@ const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev', // Hit the Storage Bucket directly
 ];
 
-const CHROME_FOR_TESTING_CDN_MIRRORS = [
-  'https://cdn.playwright.dev/chrome-for-testing-public',
-  'https://storage.googleapis.com/chrome-for-testing-public',
-];
-
 if (process.env.PW_TEST_CDN_THAT_SHOULD_WORK) {
   for (let i = 0; i < PLAYWRIGHT_CDN_MIRRORS.length; i++) {
     const cdn = PLAYWRIGHT_CDN_MIRRORS[i];
@@ -136,7 +131,10 @@ function cftUrl(suffix: string): DownloadPathFunction {
   return ({ browserVersion }) => {
     return {
       path: `${browserVersion}/${suffix}`,
-      mirrors: CHROME_FOR_TESTING_CDN_MIRRORS,
+      mirrors: [
+        'https://cdn.playwright.dev/chrome-for-testing-public',
+        'https://storage.googleapis.com/chrome-for-testing-public',
+      ],
     };
   };
 }
@@ -1236,13 +1234,14 @@ export class Registry {
     if (!downloadPathTemplate)
       return [];
     let downloadPath: string;
-    let mirrors = PLAYWRIGHT_CDN_MIRRORS;
+    let mirrors: string[];
     if (typeof downloadPathTemplate === 'function') {
       const result = downloadPathTemplate(descriptor);
       downloadPath = result.path;
-      mirrors = result.mirrors || mirrors;
+      mirrors = result.mirrors;
     } else {
       downloadPath = util.format(downloadPathTemplate, descriptor.revision);
+      mirrors = PLAYWRIGHT_CDN_MIRRORS;
     }
 
     let downloadHostEnv;
