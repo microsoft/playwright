@@ -47,7 +47,7 @@ playwright.config.ts
 
 ### tsconfig path mapping
 
-Playwright supports [path mapping](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping) declared in the `tsconfig.json`. Make sure that `baseUrl` is also set.
+Playwright supports [path mapping](https://www.typescriptlang.org/docs/handbook/module-resolution.html#path-mapping) declared in the `tsconfig.json`.
 
 Here is an example `tsconfig.json` that works with Playwright:
 
