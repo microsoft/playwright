@@ -48,29 +48,22 @@ test('should create a server', async ({ runInlineTest }, { workerIndex }) => {
       import { expect } from '@playwright/test';
       module.exports = async (config) => {
         expect(config.webServer.port, "For backwards compatibility reasons, we ensure this shows up.").toBe(${port});
-        const http = require("http");
-        const response = await new Promise(resolve => {
-          const request = http.request("http://localhost:${port}/hello", resolve);
-          request.end();
-        })
-        console.log('globalSetup-status-'+response.statusCode)
+
+        const response = await fetch("http://localhost:${port}/hello");
+        console.log('globalSetup-status-' + response.status);
+        await response.text();
         return async () => {
-          const response = await new Promise(resolve => {
-            const request = http.request("http://localhost:${port}/hello", resolve);
-            request.end();
-          })
-          console.log('globalSetup-teardown-status-'+response.statusCode)
+          const response = await fetch("http://localhost:${port}/hello");
+          console.log('globalSetup-teardown-status-' + response.status)
+          await response.text();
         };
       };
     `,
     'globalTeardown.ts': `
       module.exports = async () => {
-        const http = require("http");
-        const response = await new Promise(resolve => {
-          const request = http.request("http://localhost:${port}/hello", resolve);
-          request.end();
-        })
-        console.log('globalTeardown-status-'+response.statusCode)
+        const response = await fetch("http://localhost:${port}/hello");
+        console.log('globalTeardown-status-' + response.status)
+        await response.text();
       };
     `,
   });
@@ -586,31 +579,23 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
         import { expect } from '@playwright/test';
         module.exports = async (config) => {
           expect(config.webServer, "The public API defines this type as singleton or null, so if using array style we fallback to null to avoid having the type lie to the user.").toBe(null);
-          const http = require("http");
-          const response = await new Promise(resolve => {
-            const request = http.request("http://localhost:${port}/hello", resolve);
-            request.end();
-          })
-          console.log('globalSetup-status-'+response.statusCode)
+          const response = await fetch("http://localhost:${port}/hello");
+          console.log('globalSetup-status-' + response.status);
+          await response.text();
           return async () => {
-            const response = await new Promise(resolve => {
-              const request = http.request("http://localhost:${port}/hello", resolve);
-              request.end();
-            })
-            console.log('globalSetup-teardown-status-'+response.statusCode)
+            const response = await fetch("http://localhost:${port}/hello");
+            console.log('globalSetup-teardown-status-' + response.status);
+            await response.text();
           };
         };
         `,
     'globalTeardown.ts': `
         module.exports = async () => {
-          const http = require("http");
-          const response = await new Promise(resolve => {
-            const request = http.request("http://localhost:${port}/hello", resolve);
-            request.end();
-          })
-          console.log('globalTeardown-status-'+response.statusCode)
+          const response = await fetch("http://localhost:${port}/hello");
+          console.log('globalTeardown-status-' + response.status);
+          await response.text();
         };
-        `,
+    `,
   }, undefined, { DEBUG: 'pw:webserver' });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
