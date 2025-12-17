@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test } from '../playwright-test/stable-test-runner';
+import { test } from '@playwright/test';
 import { ssim, FastStats } from 'playwright-core/lib/server/utils/image_tools/stats';
 import { ImageChannel } from 'playwright-core/lib/server/utils/image_tools/imageChannel';
 import { srgb2xyz, xyz2lab, colorDeltaE94 } from 'playwright-core/lib/server/utils/image_tools/colorUtils';

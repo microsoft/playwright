@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from '../playwright-test/stable-test-runner';
+import { test, expect } from '@playwright/test';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { compare } from 'playwright-core/lib/server/utils/image_tools/compare';
 import fs from 'fs';

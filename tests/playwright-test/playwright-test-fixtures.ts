@@ -23,9 +23,9 @@ import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../
 import { commonFixtures } from '../config/commonFixtures';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { serverFixtures } from '../config/serverFixtures';
-import type { TestInfo } from './stable-test-runner';
-import { expect } from './stable-test-runner';
-import { test as base } from './stable-test-runner';
+import type { TestInfo } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test as base } from '@playwright/test';
 export { countTimes } from '../config/commonFixtures';
 
 type CliRunResult = {
@@ -385,7 +385,7 @@ const TSCONFIG = {
   ]
 };
 
-export { expect } from './stable-test-runner';
+export { expect } from '@playwright/test';
 
 const asciiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAnsi(str: string): string {

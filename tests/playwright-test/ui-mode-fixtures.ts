@@ -20,8 +20,8 @@ import * as path from 'path';
 import type { TestChildProcess } from '../config/commonFixtures';
 import { cleanEnv, cliEntrypoint, test as base, writeFiles, removeFolders } from './playwright-test-fixtures';
 import type { Files, RunOptions } from './playwright-test-fixtures';
-import type { Browser, Page, TestInfo } from './stable-test-runner';
-import { chromium } from './stable-test-runner';
+import type { Browser, Page, TestInfo } from '@playwright/test';
+import { chromium } from '@playwright/test';
 import { createGuid } from '../../packages/playwright-core/src/server/utils/crypto';
 
 type Latch = {
@@ -140,7 +140,7 @@ export const test = base
       },
     });
 
-import { expect as baseExpect } from './stable-test-runner';
+import { expect as baseExpect } from '@playwright/test';
 
 // Slow tests are 90s.
 export const expect = baseExpect.configure({ timeout: process.env.CI ? 75000 : 25000 });
