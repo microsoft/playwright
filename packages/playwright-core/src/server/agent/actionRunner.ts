@@ -15,16 +15,27 @@
  */
 
 import { serializeExpectedTextValues } from '../utils/expectUtils';
-import { serializePlainValue } from '../../protocol/serializers';
+import { monotonicTime } from '../../utils/isomorphic/time';
+import { ProgressController } from '../progress';
 
 import type * as actions from './actions';
-import type * as channels from '@protocol/channels';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { NameValue } from '@protocol/channels';
 import type { ExpectResult } from '../frames';
 
-export async function runAction(progress: Progress, page: Page, action: actions.Action, secrets: NameValue[]) {
+export async function runAction(parentProgress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
+  const timeout = mode === 'generate' ? generateActionTimeout(action) : performActionTimeout(action);
+  const mt = monotonicTime();
+  const deadline = mt + timeout;
+  const minDeadline = parentProgress.deadline ? Math.min(parentProgress.deadline, deadline) : deadline;
+  const pc = new ProgressController();
+  return await pc.run(async progress => {
+    return await innerRunAction(progress, page, action, secrets);
+  }, minDeadline - mt);
+}
+
+async function innerRunAction(progress: Progress, page: Page, action: actions.Action, secrets: NameValue[]) {
   const frame = page.mainFrame();
   switch (action.method) {
     case 'click':
@@ -63,7 +74,7 @@ export async function runAction(progress: Progress, page: Page, action: actions.
         await frame.uncheck(progress, action.selector, { ...strictTrue });
       break;
     case 'expectVisible': {
-      const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: false }, 5000);
+      const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: false });
       if (result.errorMessage)
         throw new Error(result.errorMessage);
       break;
@@ -72,25 +83,52 @@ export async function runAction(progress: Progress, page: Page, action: actions.
       let result: ExpectResult;
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
         const expectedText = serializeExpectedTextValues([action.value]);
-        result = await frame.expect(progress, action.selector, { expression: 'to.have.value', expectedText, isNot: false }, 5000);
+        result = await frame.expect(progress, action.selector, { expression: 'to.have.value', expectedText, isNot: false });
       } else if (action.type === 'checkbox' || action.type === 'radio') {
-        const expectedValue = serializeArgument({ checked: true });
-        result = await frame.expect(progress, action.selector, { expression: 'to.be.checked', expectedValue, isNot: false }, 5000);
+        const expectedValue = { checked: action.value === 'true' };
+        result = await frame.expect(progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: false });
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
-      if (result.errorMessage)
+      if (!result.matches)
         throw new Error(result.errorMessage);
       break;
     }
   }
 }
 
-export function serializeArgument(arg: any): channels.SerializedArgument {
-  return {
-    value: serializePlainValue(arg),
-    handles: []
-  };
+export function generateActionTimeout(action: actions.Action): number {
+  switch (action.method) {
+    case 'click':
+    case 'drag':
+    case 'hover':
+    case 'selectOption':
+    case 'pressKey':
+    case 'pressSequentially':
+    case 'fill':
+    case 'setChecked':
+      return 5000;
+    case 'expectVisible':
+    case 'expectValue':
+      return 1;  // one shot
+  }
+}
+
+export function performActionTimeout(action: actions.Action): number {
+  switch (action.method) {
+    case 'click':
+    case 'drag':
+    case 'hover':
+    case 'selectOption':
+    case 'pressKey':
+    case 'pressSequentially':
+    case 'fill':
+    case 'setChecked':
+      return 0;  // no timeout
+    case 'expectVisible':
+    case 'expectValue':
+      return 5000;  // default expect timeout.
+  }
 }
 
 const strictTrue =  { strict: true };
