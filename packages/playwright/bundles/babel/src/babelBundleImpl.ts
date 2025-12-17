@@ -40,9 +40,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (isTypeScript) {
     plugins.push(
-        // This is redundant with the preset, but we need this plugin
-        // to run before others.
-        [require('@babel/plugin-transform-typescript'), typescriptTransformOptions],
+        [require('@babel/plugin-transform-typescript'), typescriptTransformOptions], // This is redundant with the preset, but we need this plugin to run before others.
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
         [require('@babel/plugin-transform-explicit-resource-management')],
         [require('@babel/plugin-transform-class-properties')],
