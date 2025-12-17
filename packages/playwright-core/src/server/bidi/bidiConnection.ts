@@ -224,6 +224,7 @@ export class BidiSession extends EventEmitter {
     this._browsingContexts.clear();
     for (const callback of this._callbacks.values()) {
       callback.error.type = this._crashed ? 'crashed' : 'closed';
+      callback.error.setMessage(`Internal server error, session ${callback.error.type}.`);
       callback.error.logs = this.connection._browserDisconnectedLogs;
       callback.reject(callback.error);
     }

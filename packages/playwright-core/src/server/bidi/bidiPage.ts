@@ -297,8 +297,10 @@ export class BidiPage implements PageDelegate {
     if (!frame)
       return;
     const executionContext = await frame._mainContext();
-    const handle = await toBidiExecutionContext(executionContext).remoteObjectForNodeId(executionContext, { sharedId: params.element.sharedId });
-    await this._page._onFileChooserOpened(handle as dom.ElementHandle);
+    try {
+      const handle = await toBidiExecutionContext(executionContext).remoteObjectForNodeId(executionContext, { sharedId: params.element.sharedId });
+      await this._page._onFileChooserOpened(handle as dom.ElementHandle);
+    } catch {}
   }
 
   async navigateFrame(frame: frames.Frame, url: string, referrer: string | undefined): Promise<frames.GotoResult> {
