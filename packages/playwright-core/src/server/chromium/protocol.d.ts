@@ -1,7 +1,7 @@
 // This is generated from /utils/protocol-types-generator/index.js
 type binary = string;
-export module Protocol {
-  export module Accessibility {
+export namespace Protocol {
+  export namespace Accessibility {
     /**
      * Unique accessibility node identifier.
      */
@@ -341,7 +341,7 @@ including nodes that are ignored for accessibility.
     }
   }
   
-  export module Animation {
+  export namespace Animation {
     /**
      * Animation instance.
      */
@@ -667,7 +667,7 @@ percentage [0 - 100] for scroll driven animations
   /**
    * Audits domain allows investigation of page violations and possible improvements.
    */
-  export module Audits {
+  export namespace Audits {
     /**
      * Information about a cookie that is affected by an inspector issue.
      */
@@ -1242,7 +1242,7 @@ using Audits.issueAdded event.
   /**
    * Defines commands and events for Autofill.
    */
-  export module Autofill {
+  export namespace Autofill {
     export interface CreditCard {
       /**
        * 16-digit credit card number.
@@ -1409,7 +1409,7 @@ If the field and related form cannot be autofilled, returns an error.
   /**
    * Defines events for background web platform features.
    */
-  export module BackgroundService {
+  export namespace BackgroundService {
     /**
      * The Background Service that will be associated with the commands/events.
 Every Background Service operates independently, but they share the same
@@ -1512,7 +1512,7 @@ events afterwards if enabled and recording.
    * This domain allows configuring virtual Bluetooth devices to test
 the web-bluetooth API.
    */
-  export module BluetoothEmulation {
+  export namespace BluetoothEmulation {
     /**
      * Indicates the various states of Central.
      */
@@ -1797,7 +1797,7 @@ by |characteristicId|.
   /**
    * The Browser domain defines methods and events for browser managing.
    */
-  export module Browser {
+  export namespace Browser {
     export type BrowserContextID = string;
     export type WindowID = number;
     /**
@@ -2284,7 +2284,7 @@ CSS objects can be loaded using the `get*ForNode()` calls (which accept a DOM no
 can also keep track of stylesheets via the `styleSheetAdded`/`styleSheetRemoved` events and
 subsequently load the required stylesheet contents using the `getStyleSheet[Text]()` methods.
    */
-  export module CSS {
+  export namespace CSS {
     /**
      * Stylesheet type: "injected" for stylesheets injected via extension, "user-agent" for user-agent
 stylesheets, "inspector" for stylesheets created by the inspector (i.e. those holding the "via
@@ -3870,7 +3870,7 @@ instrumentation).
     }
   }
   
-  export module CacheStorage {
+  export namespace CacheStorage {
     /**
      * Unique identifier of the Cache object.
      */
@@ -4067,7 +4067,7 @@ is the count of all entries from this storage.
    * A domain for interacting with Cast, Presentation API, and Remote Playback API
 functionalities.
    */
-  export module Cast {
+  export namespace Cast {
     export interface Sink {
       name: string;
       id: string;
@@ -4156,7 +4156,7 @@ and never sends the same node twice. It is client's responsibility to collect in
 the nodes that were sent to the client. Note that `iframe` owner elements will return
 corresponding document elements as their child nodes.
    */
-  export module DOM {
+  export namespace DOM {
     /**
      * Unique DOM node identifier.
      */
@@ -5619,7 +5619,7 @@ popover if it was previously force-opened.
    * DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript
 execution will stop on these operations as if there was a regular breakpoint set.
    */
-  export module DOMDebugger {
+  export namespace DOMDebugger {
     /**
      * DOM breakpoint type.
      */
@@ -5821,7 +5821,7 @@ EventTarget.
   /**
    * This domain facilitates obtaining document snapshots with DOM, layout, and style information.
    */
-  export module DOMSnapshot {
+  export namespace DOMSnapshot {
     /**
      * A Node in the DOM tree.
      */
@@ -6359,7 +6359,7 @@ The final text color opacity is computed based on the opacity of all overlapping
   /**
    * Query and modify DOM storage.
    */
-  export module DOMStorage {
+  export namespace DOMStorage {
     export type SerializedStorageKey = string;
     /**
      * DOM Storage identifier.
@@ -6442,7 +6442,7 @@ The final text color opacity is computed based on the opacity of all overlapping
     }
   }
   
-  export module DeviceAccess {
+  export namespace DeviceAccess {
     /**
      * Device request id.
      */
@@ -6504,7 +6504,7 @@ selectPrompt or cancelPrompt command.
     }
   }
   
-  export module DeviceOrientation {
+  export namespace DeviceOrientation {
     
     
     /**
@@ -6538,7 +6538,7 @@ selectPrompt or cancelPrompt command.
   /**
    * This domain emulates different environments for the page.
    */
-  export module Emulation {
+  export namespace Emulation {
     export interface SafeAreaInsets {
       /**
        * Overrides safe-area-inset-top.
@@ -7435,7 +7435,7 @@ of size 100lvh.
 occurring in native code invoked from JavaScript. Once breakpoint is hit, it is
 reported through Debugger domain, similarly to regular breakpoints being hit.
    */
-  export module EventBreakpoints {
+  export namespace EventBreakpoints {
     
     
     /**
@@ -7472,7 +7472,7 @@ reported through Debugger domain, similarly to regular breakpoints being hit.
   /**
    * Defines commands and events for browser extensions.
    */
-  export module Extensions {
+  export namespace Extensions {
     /**
      * Storage areas.
      */
@@ -7591,7 +7591,7 @@ will be merged with existing values in the storage area.
   /**
    * This domain allows interacting with the FedCM dialog.
    */
-  export module FedCm {
+  export namespace FedCm {
     /**
      * Whether this is a sign-up or sign-in action for this account, i.e.
 whether this account has ever been used to sign in to this RP before.
@@ -7699,7 +7699,7 @@ a dialog even if one was recently dismissed by the user.
   /**
    * A domain for letting clients substitute browser's network layer with client code.
    */
-  export module Fetch {
+  export namespace Fetch {
     /**
      * Unique request identifier.
 Note that this does not identify individual HTTP requests that are part of
@@ -8070,7 +8070,7 @@ domain before body is received results in an undefined behavior.
     }
   }
   
-  export module FileSystem {
+  export namespace FileSystem {
     export interface File {
       name: string;
       /**
@@ -8121,7 +8121,7 @@ domain before body is received results in an undefined behavior.
   /**
    * This domain provides experimental commands only supported in headless mode.
    */
-  export module HeadlessExperimental {
+  export namespace HeadlessExperimental {
     /**
      * Encoding options for a screenshot.
      */
@@ -8201,7 +8201,7 @@ display. Reported for diagnostic uses, may be removed in the future.
   /**
    * Input/Output operations for streams produced by DevTools.
    */
-  export module IO {
+  export namespace IO {
     /**
      * This is either obtained from another method or specified as `blob:<uuid>` where
 `<uuid>` is an UUID of a Blob.
@@ -8269,7 +8269,7 @@ following the last read). Some types of streams may only support sequential read
     }
   }
   
-  export module IndexedDB {
+  export namespace IndexedDB {
     /**
      * Database with an array of object stores.
      */
@@ -8648,7 +8648,7 @@ Security origin.
     }
   }
   
-  export module Input {
+  export namespace Input {
     export interface TouchPoint {
       /**
        * X coordinate of the event relative to the main frame's viewport in CSS pixels.
@@ -9171,7 +9171,7 @@ for the preferred input type).
     }
   }
   
-  export module Inspector {
+  export namespace Inspector {
     
     /**
      * Fired when remote debugging connection is about to be terminated. Contains detach reason.
@@ -9211,7 +9211,7 @@ for the preferred input type).
     }
   }
   
-  export module LayerTree {
+  export namespace LayerTree {
     /**
      * Unique Layer identifier.
      */
@@ -9508,7 +9508,7 @@ transform/scrolling purposes only.
   /**
    * Provides access to log entries.
    */
-  export module Log {
+  export namespace Log {
     /**
      * Log entry.
      */
@@ -9624,7 +9624,7 @@ transform/scrolling purposes only.
   /**
    * This domain allows detailed inspection of media elements.
    */
-  export module Media {
+  export namespace Media {
     /**
      * Players will get an ID that is unique within the agent context.
      */
@@ -9755,7 +9755,7 @@ event for each active player.
     }
   }
   
-  export module Memory {
+  export namespace Memory {
     /**
      * Memory pressure level.
      */
@@ -9935,7 +9935,7 @@ collected since browser process startup.
    * Network domain allows tracking network activities of the page. It exposes information about http,
 file, data and other requests and responses, their headers, bodies, timing, etc.
    */
-  export module Network {
+  export namespace Network {
     /**
      * Resource type as it was perceived by the rendering engine.
      */
@@ -12597,7 +12597,7 @@ Page reload is required before the new cookie behavior will be observed
   /**
    * This domain provides various functionality related to drawing atop the inspected page.
    */
-  export module Overlay {
+  export namespace Overlay {
     /**
      * Configuration data for drawing the source order of an elements children.
      */
@@ -13423,7 +13423,7 @@ Backend then generates 'inspectNodeRequested' event upon element selection.
   /**
    * This domain allows interacting with the browser to control PWAs.
    */
-  export module PWA {
+  export namespace PWA {
     /**
      * The following types are the replica of
 https://crsrc.org/c/chrome/browser/web_applications/proto/web_app_os_integration_state.proto;drc=9910d3be894c8f142c977ba1023f30a656bc13fc;l=67
@@ -13594,7 +13594,7 @@ supported yet.
   /**
    * Actions and events related to the inspected page belong to the page domain.
    */
-  export module Page {
+  export namespace Page {
     /**
      * Unique frame identifier.
      */
@@ -15714,7 +15714,7 @@ components/optimization_guide/proto/features/common_quality_data.proto
     }
   }
   
-  export module Performance {
+  export namespace Performance {
     /**
      * Run-time execution metric.
      */
@@ -15791,7 +15791,7 @@ this method while metrics collection is enabled returns an error.
    * Reporting of performance timeline events, as specified in
 https://w3c.github.io/performance-timeline/#dom-performanceobserver.
    */
-  export module PerformanceTimeline {
+  export namespace PerformanceTimeline {
     /**
      * See https://github.com/WICG/LargestContentfulPaint and largest_contentful_paint.idl
      */
@@ -15880,7 +15880,7 @@ Note that not all types exposed to the web platform are currently supported.
     }
   }
   
-  export module Preload {
+  export namespace Preload {
     /**
      * Unique id
      */
@@ -16072,7 +16072,7 @@ that is incompatible with prerender and has caused the cancellation of the attem
     }
   }
   
-  export module Security {
+  export namespace Security {
     /**
      * An internal certificate ID value.
      */
@@ -16377,7 +16377,7 @@ be handled by the DevTools client and should be answered with `handleCertificate
     }
   }
   
-  export module ServiceWorker {
+  export namespace ServiceWorker {
     export type RegistrationID = string;
     /**
      * ServiceWorker registration.
@@ -16499,7 +16499,7 @@ For cached script it is the last time the cache entry was validated.
     }
   }
   
-  export module Storage {
+  export namespace Storage {
     export type SerializedStorageKey = string;
     /**
      * Enum of possible storage types.
@@ -17604,7 +17604,7 @@ party URL, only the first-party URL is returned in the array.
   /**
    * The SystemInfo domain defines methods and events for querying low-level system information.
    */
-  export module SystemInfo {
+  export namespace SystemInfo {
     /**
      * Describes a single graphics processor (GPU).
      */
@@ -17802,7 +17802,7 @@ supported.
   /**
    * Supports additional targets discovery and allows to attach to them.
    */
-  export module Target {
+  export namespace Target {
     export type TargetID = string;
     /**
      * Unique identifier of attached debugging session.
@@ -18317,7 +18317,7 @@ and performance.
   /**
    * The Tethering domain defines methods and events for browser port binding.
    */
-  export module Tethering {
+  export namespace Tethering {
     
     /**
      * Informs that port was successfully bound and got a specified connection id.
@@ -18357,7 +18357,7 @@ and performance.
     }
   }
   
-  export module Tracing {
+  export namespace Tracing {
     /**
      * Configuration for memory dump. Used only when "memory-infra" category is enabled.
      */
@@ -18575,7 +18575,7 @@ are ignored.
    * This domain allows inspection of Web Audio API.
 https://webaudio.github.io/web-audio-api/
    */
-  export module WebAudio {
+  export namespace WebAudio {
     /**
      * An unique ID for a graph object (AudioContext, AudioNode, AudioParam) in Web Audio API
      */
@@ -18812,7 +18812,7 @@ capacity and glitch may occur.
    * This domain allows configuring virtual authenticators to test the WebAuthn
 API.
    */
-  export module WebAuthn {
+  export namespace WebAuthn {
     export type AuthenticatorId = string;
     export type AuthenticatorProtocol = "u2f"|"ctap2";
     export type Ctap2Version = "ctap2_0"|"ctap2_1";
@@ -19109,7 +19109,7 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
   /**
    * This domain is deprecated - use Runtime or Log instead.
    */
-  export module Console {
+  export namespace Console {
     /**
      * Console message.
      */
@@ -19178,7 +19178,7 @@ https://w3c.github.io/webauthn/#sctn-automation-set-credential-properties
    * Debugger domain exposes JavaScript debugging capabilities. It allows setting and removing
 breakpoints, stepping through execution, exploring stack traces, etc.
    */
-  export module Debugger {
+  export namespace Debugger {
     /**
      * Breakpoint identifier.
      */
@@ -20205,7 +20205,7 @@ before next pause.
     }
   }
   
-  export module HeapProfiler {
+  export namespace HeapProfiler {
     /**
      * Heap snapshot object id.
      */
@@ -20434,7 +20434,7 @@ Deprecated in favor of `exposeInternals`.
     }
   }
   
-  export module Profiler {
+  export namespace Profiler {
     /**
      * Profile node. Holds callsite information, execution statistics and child nodes.
      */
@@ -20704,7 +20704,7 @@ and unique identifier that can be used for further object reference. Original ob
 maintained in memory unless they are either explicitly released or are released along with the
 other objects in their object group.
    */
-  export module Runtime {
+  export namespace Runtime {
     /**
      * Unique script identifier.
      */
@@ -21763,7 +21763,7 @@ Error was thrown.
   /**
    * This domain is deprecated.
    */
-  export module Schema {
+  export namespace Schema {
     /**
      * Description of the protocol domain.
      */

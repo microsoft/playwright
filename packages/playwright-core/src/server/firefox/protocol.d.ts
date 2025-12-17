@@ -1,7 +1,7 @@
 // This is generated from /utils/protocol-types-generator/index.js
-export module Protocol {
+export namespace Protocol {
 
-  export module Browser {
+  export namespace Browser {
     export type TargetInfo = {
       type: ("page");
       targetId: string;
@@ -320,12 +320,12 @@ export module Protocol {
     };
     export type cancelDownloadReturnValue = void;
   }
-  export module Heap {
+  export namespace Heap {
     export type collectGarbageParameters = {
     };
     export type collectGarbageReturnValue = void;
   }
-  export module Page {
+  export namespace Page {
     export type DOMPoint = {
       x: number;
       y: number;
@@ -732,7 +732,7 @@ export module Protocol {
     export type stopScreencastParameters = void;
     export type stopScreencastReturnValue = void;
   }
-  export module Runtime {
+  export namespace Runtime {
     export type RemoteObject = {
       type?: ("object"|"function"|"undefined"|"string"|"number"|"boolean"|"symbol"|"bigint");
       subtype?: ("array"|"null"|"node"|"regexp"|"date"|"map"|"set"|"weakmap"|"weakset"|"error"|"proxy"|"promise"|"typedarray");
@@ -862,7 +862,7 @@ export module Protocol {
       }[];
     };
   }
-  export module Network {
+  export namespace Network {
     export type HTTPHeader = {
       name: string;
       value: string;

@@ -3,7 +3,6 @@
     "target": "ES2019",
     "module": "commonjs",
     "lib": ["esnext", "dom", "DOM.Iterable"],
-    "baseUrl": ".",
     "paths": {
       /*
         The following two serve different purposes:

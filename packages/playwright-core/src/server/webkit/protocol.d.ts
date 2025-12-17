@@ -1,10 +1,10 @@
 // This is generated from /utils/protocol-types-generator/index.js
 type binary = string;
-export module Protocol {
+export namespace Protocol {
   /**
    * Domain for tracking/modifying Web Animations, as well as CSS (declarative) animations and transitions.
    */
-  export module Animation {
+  export namespace Animation {
     /**
      * Unique Web Animation identifier.
      */
@@ -200,7 +200,7 @@ export module Protocol {
     }
   }
   
-  export module Audit {
+  export namespace Audit {
     
     
     /**
@@ -249,7 +249,7 @@ export module Protocol {
   /**
    * The Browser domain contains commands and events related to getting information about the browser 
    */
-  export module Browser {
+  export namespace Browser {
     /**
      * Unique extension identifier.
      */
@@ -300,7 +300,7 @@ export module Protocol {
   /**
    * CPUProfiler domain exposes cpu usage tracking.
    */
-  export module CPUProfiler {
+  export namespace CPUProfiler {
     /**
      * CPU usage for an individual thread.
      */
@@ -372,7 +372,7 @@ export module Protocol {
   /**
    * This domain exposes CSS read/write operations. All CSS objects, like stylesheets, rules, and styles, have an associated <code>id</code> used in subsequent operations on the related object. Each object type has a specific <code>id</code> structure, and those are not interchangeable between objects of different kinds. CSS objects can be loaded using the <code>get*ForNode()</code> calls (which accept a DOM node id). Alternatively, a client can discover all the existing stylesheets with the <code>getAllStyleSheets()</code> method and subsequently load the required stylesheet contents using the <code>getStyleSheet[Text]()</code> methods.
    */
-  export module CSS {
+  export namespace CSS {
     export type StyleSheetId = string;
     /**
      * This object identifies a CSS style in a unique way.
@@ -1095,7 +1095,7 @@ export module Protocol {
   /**
    * Canvas domain allows tracking of canvases that have an associated graphics context. Tracks canvases in the DOM and CSS canvases created with -webkit-canvas.
    */
-  export module Canvas {
+  export namespace Canvas {
     /**
      * Unique canvas identifier.
      */
@@ -1432,7 +1432,7 @@ export module Protocol {
   /**
    * Console domain defines methods and events for interaction with the JavaScript console. Console collects messages created by means of the <a href='http://getfirebug.com/wiki/index.php/Console_API'>JavaScript Console API</a>. One needs to enable this domain using <code>enable</code> command in order to start receiving the console messages. Browser collects messages issued while console domain is not enabled as well and reports them using <code>messageAdded</code> notification upon enabling.
    */
-  export module Console {
+  export namespace Console {
     /**
      * Channels for different types of log messages.
      */
@@ -1652,7 +1652,7 @@ export module Protocol {
   /**
    * This domain exposes DOM read/write operations. Each DOM Node is represented with its mirror object that has an <code>id</code>. This <code>id</code> can be used to get additional information on the Node, resolve it into the JavaScript object wrapper, etc. It is important that client receives DOM events only for the nodes that are known to the client. Backend keeps track of the nodes that were sent to the client and never sends the same node twice. It is client's responsibility to collect information about the nodes that were sent to the client.<p>Note that <code>iframe</code> owner elements will return corresponding document elements as their child nodes.</p>
    */
-  export module DOM {
+  export namespace DOM {
     /**
      * Unique DOM node identifier.
      */
@@ -3351,7 +3351,7 @@ might return multiple quads for inline nodes.
   /**
    * DOM debugging allows setting breakpoints on particular DOM operations and events. JavaScript execution will stop on these operations as if there was a regular breakpoint set.
    */
-  export module DOMDebugger {
+  export namespace DOMDebugger {
     /**
      * DOM breakpoint type.
      */
@@ -3479,7 +3479,7 @@ might return multiple quads for inline nodes.
   /**
    * Query and modify DOM storage.
    */
-  export module DOMStorage {
+  export namespace DOMStorage {
     /**
      * DOM Storage identifier.
      */
@@ -3560,7 +3560,7 @@ might return multiple quads for inline nodes.
   /**
    * Debugger domain exposes JavaScript debugging capabilities. It allows setting and removing breakpoints, stepping through execution, exploring stack traces, etc.
    */
-  export module Debugger {
+  export namespace Debugger {
     /**
      * Breakpoint identifier.
      */
@@ -4323,7 +4323,7 @@ might return multiple quads for inline nodes.
   /**
    * Actions and events related to alert boxes.
    */
-  export module Dialog {
+  export namespace Dialog {
     
     /**
      * Fired when a JavaScript initiated dialog (alert, confirm, prompt, or onbeforeunload) is about to open.
@@ -4374,7 +4374,7 @@ might return multiple quads for inline nodes.
     }
   }
   
-  export module Emulation {
+  export namespace Emulation {
     
     
     /**
@@ -4443,7 +4443,7 @@ might return multiple quads for inline nodes.
   /**
    * Exposes generic types to be used by any domain.
    */
-  export module GenericTypes {
+  export namespace GenericTypes {
     /**
      * Search match in a resource.
      */
@@ -4464,7 +4464,7 @@ might return multiple quads for inline nodes.
   /**
    * Heap domain exposes JavaScript heap attributes and capabilities.
    */
-  export module Heap {
+  export namespace Heap {
     /**
      * Information about a garbage collection.
      */
@@ -4596,7 +4596,7 @@ might return multiple quads for inline nodes.
     }
   }
   
-  export module IndexedDB {
+  export namespace IndexedDB {
     /**
      * Database with an array of object stores.
      */
@@ -4850,7 +4850,7 @@ might return multiple quads for inline nodes.
     }
   }
   
-  export module Input {
+  export namespace Input {
     /**
      * UTC time in seconds, counted from January 1, 1970.
      */
@@ -5050,7 +5050,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module Inspector {
+  export namespace Inspector {
     
     export type evaluateForTestInFrontendPayload = {
       script: string;
@@ -5083,7 +5083,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module LayerTree {
+  export namespace LayerTree {
     /**
      * Unique RenderLayer identifier.
      */
@@ -5339,7 +5339,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Memory domain exposes page memory tracking.
    */
-  export module Memory {
+  export namespace Memory {
     export interface Event {
       timestamp: number;
       /**
@@ -5420,7 +5420,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Network domain allows tracking network activities of the page. It exposes information about http, file, data and other requests and responses, their headers, bodies, timing, etc.
    */
-  export module Network {
+  export namespace Network {
     /**
      * Unique loader identifier.
      */
@@ -6344,7 +6344,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Actions and events related to the inspected page belong to the page domain.
    */
-  export module Page {
+  export namespace Page {
     /**
      * List of settings able to be overridden by WebInspector.
      */
@@ -7076,7 +7076,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module Playwright {
+  export namespace Playwright {
     /**
      * Id of Browser context.
      */
@@ -7557,7 +7557,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * General types used for recordings of actions performed in the inspected page.
    */
-  export module Recording {
+  export namespace Recording {
     /**
      * The type of the recording.
      */
@@ -7624,7 +7624,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Runtime domain exposes JavaScript runtime by means of remote evaluation and mirror objects. Evaluation results are returned as mirror object that expose object type, string representation and unique identifier that can be used for further object reference. Original objects are maintained in memory unless they are either explicitly released or are released along with the other objects in their object group.
    */
-  export module Runtime {
+  export namespace Runtime {
     /**
      * Unique object identifier.
      */
@@ -8430,7 +8430,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module Screencast {
+  export namespace Screencast {
     /**
      * Unique identifier of the screencast.
      */
@@ -8506,7 +8506,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Profiler domain exposes JavaScript evaluation timing and profiling.
    */
-  export module ScriptProfiler {
+  export namespace ScriptProfiler {
     export type EventType = "API"|"Microtask"|"Other";
     export interface Event {
       startTime: number;
@@ -8600,7 +8600,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Security domain allows the frontend to query for information relating to the security of the page (e.g. HTTPS info, TLS info, user activity, etc.).
    */
-  export module Security {
+  export namespace Security {
     /**
      * Information about a SSL connection to display in the frontend.
      */
@@ -8638,7 +8638,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Actions and events related to the inspected service worker.
    */
-  export module ServiceWorker {
+  export namespace ServiceWorker {
     /**
      * ServiceWorker metadata and initial state.
      */
@@ -8666,7 +8666,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module Target {
+  export namespace Target {
     /**
      * Description of a target.
      */
@@ -8767,7 +8767,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
   /**
    * Timeline provides its clients with instrumentation records that are generated during the page runtime. Timeline instrumentation can be started and stopped using corresponding commands. While timeline is started, it is generating timeline event records.
    */
-  export module Timeline {
+  export namespace Timeline {
     /**
      * Timeline record type.
      */
@@ -8882,7 +8882,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
   }
   
-  export module Worker {
+  export namespace Worker {
     
     export type workerCreatedPayload = {
       workerId: string;
