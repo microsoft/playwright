@@ -56,6 +56,7 @@ export type StartClient = (options?: {
   roots?: { name: string, uri: string }[],
   rootsResponseDelay?: number,
   env?: NodeJS.ProcessEnv,
+  noTimeoutForTest?: boolean,
 }) => Promise<{ client: Client, stderr: () => string }>;
 
 
@@ -107,6 +108,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
           await fs.promises.writeFile(configFile, JSON.stringify(options.config, null, 2));
           args.push(`--config=${path.relative(configDir, configFile)}`);
         }
+        if (!options?.noTimeoutForTest)
+          args.push('--timeout-action=10000');
       }
 
       if (options?.args)
