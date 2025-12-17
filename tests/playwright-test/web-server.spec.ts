@@ -608,7 +608,7 @@ test('should create multiple servers', async ({ runInlineTest }, { workerIndex }
     log,
     index: result.output.indexOf(log),
   })).sort((a, b) => a.index - b.index).filter(l => l.index !== -1).map(l => l.log);
-  expect.soft(actualLogMessages).toStrictEqual(expectedLogMessages);
+  expect(actualLogMessages).toStrictEqual(expectedLogMessages);
 });
 
 test.describe('baseURL with plugins', () => {
