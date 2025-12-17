@@ -984,7 +984,6 @@ await page.GetByText("Click me").ClickAsync(new()
   });
 
   test('should record slider', async ({ openRecorder, browserName, headless }) => {
-    test.skip(headless && browserName === 'chromium', 'https://github.com/microsoft/playwright/issues/38568');
     const { page, recorder } = await openRecorder();
 
     await recorder.setContentAndWait(`<input type="range" min="0" max="10" value="5">`);
