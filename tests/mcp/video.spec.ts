@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import { test, expect } from './fixtures';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 for (const mode of ['isolated', 'persistent']) {
   test(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
@@ -29,32 +30,12 @@ for (const mode of ['isolated', 'persistent']) {
       ],
     });
 
-    expect(await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: server.HELLO_WORLD },
-    })).toHaveResponse({
-      code: expect.stringContaining(`page.goto('http://localhost`),
-    });
-
-    await client.callTool({
-      name: 'browser_evaluate',
-      arguments: {
-        function: `async () => {
-          document.body.style.backgroundColor = "red";
-          await new Promise(resolve => setTimeout(resolve, 100));
-          document.body.style.backgroundColor = "green";
-          await new Promise(resolve => setTimeout(resolve, 100));
-          document.body.style.backgroundColor = "blue";
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }`,
-      },
-    });
-
-    expect(await client.callTool({
-      name: 'browser_close',
-    })).toHaveResponse({
-      code: expect.stringContaining(`page.close()`),
-    });
+    await navigateToTestPage(client, server);
+    await expect(async () => {
+      await produceFrames(client);
+      await checkIntermediateVideoFileExists();
+    }).toPass();
+    await closeBrowser(client);
 
     const [file] = await fs.promises.readdir(outputDir);
     expect(file).toMatch(/page-.*\.webm/);
@@ -79,34 +60,52 @@ for (const mode of ['isolated', 'persistent']) {
       ],
     });
 
-    expect(await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: server.HELLO_WORLD },
-    })).toHaveResponse({
-      code: expect.stringContaining(`page.goto('http://localhost`),
-    });
-
-    await client.callTool({
-      name: 'browser_evaluate',
-      arguments: {
-        function: `async () => {
-          document.body.style.backgroundColor = "red";
-          await new Promise(resolve => setTimeout(resolve, 100));
-          document.body.style.backgroundColor = "green";
-          await new Promise(resolve => setTimeout(resolve, 100));
-          document.body.style.backgroundColor = "blue";
-          await new Promise(resolve => setTimeout(resolve, 100));
-        }`,
-      },
-    });
-
-    expect(await client.callTool({
-      name: 'browser_close',
-    })).toHaveResponse({
-      code: expect.stringContaining(`page.close()`),
-    });
-
-    const [file] = await fs.promises.readdir(videosDir);
-    expect(file).toMatch(/.*.\webm/);
+    await navigateToTestPage(client, server);
+    await expect(async () => {
+      await produceFrames(client);
+      await checkIntermediateVideoFileExists(videosDir);
+    }).toPass();
+    await closeBrowser(client);
   });
+}
+
+async function navigateToTestPage(client: Client, server: any) {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+}
+
+async function closeBrowser(client: Client) {
+  expect(await client.callTool({
+    name: 'browser_close',
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.close()`),
+  });
+}
+
+async function produceFrames(client: Client) {
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: `async () => {
+        document.body.style.backgroundColor = "red";
+        await new Promise(resolve => setTimeout(resolve, 100));
+        document.body.style.backgroundColor = "green";
+        await new Promise(resolve => setTimeout(resolve, 100));
+        document.body.style.backgroundColor = "blue";
+        await new Promise(resolve => setTimeout(resolve, 100));
+        return 'ok';
+      }`,
+    },
+  })).toHaveResponse({
+    result: '"ok"',
+  });
+}
+
+async function checkIntermediateVideoFileExists(videosDir?: string) {
+  const files = await fs.promises.readdir(videosDir ?? test.info().outputPath('tmp', 'playwright-mcp-output'));
+  expect(files[0]).toMatch(/\.webm/);
 }

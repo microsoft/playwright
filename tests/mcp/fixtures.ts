@@ -124,7 +124,11 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
           };
         });
       }
-      const env = { ...process.env, ...options?.env };
+      const env = {
+        ...process.env,
+        PW_TMPDIR_FOR_TEST: testInfo.outputPath('tmp'),
+        ...options?.env
+      };
       const { transport, stderr } = await createTransport(mcpServerType, { args, env, cwd: options?.cwd || test.info().outputPath() });
       let stderrBuffer = '';
       stderr?.on('data', data => {
