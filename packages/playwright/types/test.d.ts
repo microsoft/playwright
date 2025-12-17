@@ -1612,6 +1612,12 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
+   * Run agents to generate the code for
+   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and similar.
+   */
+  runAgents?: boolean;
+
+  /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
@@ -2066,6 +2072,12 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
    * Base directory for all relative paths used in the reporters.
    */
   rootDir: string;
+
+  /**
+   * Run agents to generate the code for
+   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and similar.
+   */
+  runAgents: boolean;
 
   /**
    * See [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard).
@@ -6644,7 +6656,6 @@ export type Fixtures<T extends {} = {}, W extends {} = {}, PT extends {} = {}, P
   [K in Exclude<keyof T, keyof PW | keyof PT>]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self' }];
 };
 
-type Agent = Exclude<BrowserContextOptions['agent'], undefined> & { cachePathTemplate?: string } | undefined;
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
@@ -6935,6 +6946,15 @@ export interface PlaywrightWorkerOptions {
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type Agent = {
+  provider: string;
+  model: string;
+  cachePathTemplate?: string;
+  maxTurns?: number;
+  maxTokens?: number;
+  runAgents?: boolean;
+  secrets?: { [key: string]: string };
+};
 
 /**
  * Playwright Test provides many options to configure test environment,
@@ -6975,11 +6995,7 @@ export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
  *
  */
 export interface PlaywrightTestOptions {
-  /**
-   * Agent settings for [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and
-   * [page.extract(query, schema[, options])](https://playwright.dev/docs/api/class-page#page-extract).
-   */
-  agent: Agent;
+  agent: Agent | undefined;
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    *

@@ -4,8 +4,6 @@ test.use({
   agent: {
     provider: 'github',
     model: 'gpt-4.1',
-    cachePathTemplate: '{testDir}/{testFilePath}-cache.json',
-    cacheMode: process.env.UPDATE_CACHE ? 'update' : process.env.CI ? 'force' : 'auto',
   }
 });
 

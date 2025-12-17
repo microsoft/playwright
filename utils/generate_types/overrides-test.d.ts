@@ -209,7 +209,6 @@ export type Fixtures<T extends {} = {}, W extends {} = {}, PT extends {} = {}, P
   [K in Exclude<keyof T, keyof PW | keyof PT>]?: TestFixtureValue<T[K], T & W & PT & PW> | [TestFixtureValue<T[K], T & W & PT & PW>, { scope?: 'test', auto?: boolean, option?: boolean, timeout?: number | undefined, title?: string, box?: boolean | 'self' }];
 };
 
-type Agent = Exclude<BrowserContextOptions['agent'], undefined> & { cachePathTemplate?: string } | undefined;
 type BrowserName = 'chromium' | 'firefox' | 'webkit';
 type BrowserChannel = Exclude<LaunchOptions['channel'], undefined>;
 type ColorScheme = Exclude<BrowserContextOptions['colorScheme'], undefined>;
@@ -266,9 +265,18 @@ export interface PlaywrightWorkerOptions {
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
+export type Agent = {
+  provider: string;
+  model: string;
+  cachePathTemplate?: string;
+  maxTurns?: number;
+  maxTokens?: number;
+  runAgents?: boolean;
+  secrets?: { [key: string]: string };
+};
 
 export interface PlaywrightTestOptions {
-  agent: Agent;
+  agent: Agent | undefined;
   acceptDownloads: boolean;
   bypassCSP: boolean;
   colorScheme: ColorScheme;

@@ -42,6 +42,7 @@ export type ConfigCLIOverrides = {
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
+  runAgents?: boolean;
   workers?: number | string;
   projects?: { name: string, use?: any }[],
   use?: any;

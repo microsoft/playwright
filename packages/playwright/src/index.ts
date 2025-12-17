@@ -125,7 +125,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { scope: 'worker', timeout: 0 }],
 
   acceptDownloads: [({ contextOptions }, use) => use(contextOptions.acceptDownloads ?? true), { option: true, box: true }],
-  agent: [({ contextOptions }, use) => use(contextOptions.agent), { option: true, box: true }],
   bypassCSP: [({ contextOptions }, use) => use(contextOptions.bypassCSP ?? false), { option: true, box: true }],
   colorScheme: [({ contextOptions }, use) => use(contextOptions.colorScheme === undefined ? 'light' : contextOptions.colorScheme), { option: true, box: true }],
   deviceScaleFactor: [({ contextOptions }, use) => use(contextOptions.deviceScaleFactor), { option: true, box: true }],
@@ -153,10 +152,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { option: true, box: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
   contextOptions: [{}, { option: true, box: true }],
+  agent: [({}, use) => use(undefined), { option: true, box: true }],
 
   _combinedContextOptions: [async ({
     acceptDownloads,
-    agent,
     bypassCSP,
     clientCertificates,
     colorScheme,
@@ -183,8 +182,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
       options.acceptDownloads = acceptDownloads;
-    if (agent !== undefined)
-      options.agent = agent;
     if (bypassCSP !== undefined)
       options.bypassCSP = bypassCSP;
     if (colorScheme !== undefined)
@@ -710,15 +707,17 @@ class ArtifactsRecorder {
   }
 
   private async _cloneAgentCache(options: BrowserContextOptions) {
-    if (!this._agent || this._agent.cacheMode === 'ignore')
-      return;
-    if (!this._agent.cacheFile && !this._agent.cachePathTemplate)
+    if (!this._agent)
       return;
 
-    const cacheFile = this._agent.cacheFile ?? this._testInfo._applyPathTemplate(this._agent.cachePathTemplate!, 'cache', '.json');
+    const cachePathTemplate = this._agent.cachePathTemplate ?? '{testDir}/{testFilePath}-cache.json';
+    const cacheFile = this._testInfo._applyPathTemplate(cachePathTemplate, '', '.json');
     const workerFile = await this._testInfo._cloneStorage(cacheFile);
-    if (this._agent && workerFile)
-      options.agent = { ...this._agent, cacheFile: workerFile };
+    options.agent = {
+      ...this._agent,
+      cacheFile: workerFile,
+      cacheMode: this._testInfo.config.runAgents ? 'update' : 'force',
+    };
   }
 
   private async _upstreamAgentCache(context: BrowserContextImpl) {

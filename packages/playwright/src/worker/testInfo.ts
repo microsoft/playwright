@@ -67,12 +67,21 @@ type SnapshotNames = {
 };
 
 type TestInfoCallbacks = {
-  onStepBegin?: (payload: ipc.StepBeginPayload) => void;
-  onStepEnd?: (payload: ipc.StepEndPayload) => void;
-  onAttach?: (payload: ipc.AttachmentPayload) => void;
-  onTestPaused?: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
-  onCloneStorage?: (payload: ipc.CloneStoragePayload) => Promise<string>;
-  onUpstreamStorage?: (payload: ipc.UpstreamStoragePayload) => Promise<void>;
+  onStepBegin: (payload: ipc.StepBeginPayload) => void;
+  onStepEnd: (payload: ipc.StepEndPayload) => void;
+  onAttach: (payload: ipc.AttachmentPayload) => void;
+  onTestPaused: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
+  onCloneStorage: (payload: ipc.CloneStoragePayload) => Promise<string>;
+  onUpstreamStorage: (payload: ipc.UpstreamStoragePayload) => Promise<void>;
+};
+
+export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
+  onStepBegin: () => {},
+  onStepEnd: () => {},
+  onAttach: () => {},
+  onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
+  onCloneStorage: () => Promise.reject(new Error('TestInfoImpl not initialized')),
+  onUpstreamStorage: () => Promise.resolve(),
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -347,7 +356,7 @@ export class TestInfoImpl implements TestInfo {
             suggestedRebaseline: result.suggestedRebaseline,
             annotations: step.info.annotations,
           };
-          this._callbacks.onStepEnd?.(payload);
+          this._callbacks.onStepEnd(payload);
         }
         if (step.group !== 'internal') {
           const errorForTrace = step.error ? { name: '', message: step.error.message || '', stack: step.error.stack } : undefined;
@@ -370,7 +379,7 @@ export class TestInfoImpl implements TestInfo {
         wallTime: Date.now(),
         location: step.location,
       };
-      this._callbacks.onStepBegin?.(payload);
+      this._callbacks.onStepBegin(payload);
     }
     if (step.group !== 'internal') {
       this._tracing.appendBeforeActionForStep({
@@ -468,7 +477,7 @@ export class TestInfoImpl implements TestInfo {
       const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
       const step = this._addStep({ category: 'hook', title: 'Paused', location });
       const result = await Promise.race([
-        this._callbacks.onTestPaused!({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
+        this._callbacks.onTestPaused({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
         this._interruptedPromise.then(() => 'interrupted' as const),
       ]);
       if (result !== 'interrupted') {
@@ -523,7 +532,7 @@ export class TestInfoImpl implements TestInfo {
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
-    this._callbacks.onAttach?.({
+    this._callbacks.onAttach({
       testId: this.testId,
       name: attachment.name,
       contentType: attachment.contentType,
@@ -659,9 +668,9 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  async _cloneStorage(cacheFileTemplate: string): Promise<string | undefined> {
+  async _cloneStorage(cacheFileTemplate: string): Promise<string> {
     const storageFile = this._applyPathTemplate(cacheFileTemplate, 'cache', '.json');
-    return await this._callbacks.onCloneStorage?.({ storageFile });
+    return await this._callbacks.onCloneStorage!({ storageFile });
   }
 
   async _upstreamStorage(workerFile: string) {
