@@ -156,6 +156,24 @@ test('should not transform external', async ({ runInlineTest }) => {
   expect(result.output).toMatch(/(SyntaxError: Unexpected token ':')|(SyntaxError: TypeScript enum is not supported)/);
 });
 
+test('should support declare field', async ({ runInlineTest }) => {
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38586' });
+  const result = await runInlineTest({
+    'example.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      class Example {
+        declare field: number;
+      }
+      test('works', () => {
+        new Example();
+      })
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
+
+
 for (const type of ['module', undefined]) {
   test(`should support import assertions with type=${type} in the package.json`, {
     annotation: {

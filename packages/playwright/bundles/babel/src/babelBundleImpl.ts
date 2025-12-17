@@ -28,6 +28,11 @@ export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
 export const traverse = traverseFunction;
 
+const typescriptTransformOptions = {
+  onlyRemoveTypeImports: false,
+  allowDeclareFields: true,
+};
+
 function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
   const plugins = [
     [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
@@ -35,6 +40,9 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
 
   if (isTypeScript) {
     plugins.push(
+        // This is redundant with the preset, but we need this plugin
+        // to run before others.
+        [require('@babel/plugin-transform-typescript'), typescriptTransformOptions],
         [require('@babel/plugin-proposal-decorators'), { version: '2023-05' }],
         [require('@babel/plugin-transform-explicit-resource-management')],
         [require('@babel/plugin-transform-class-properties')],
@@ -102,7 +110,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       setPublicClassFields: true,
     },
     presets: isTypeScript ? [
-      [require('@babel/preset-typescript'), { onlyRemoveTypeImports: false }],
+      [require('@babel/preset-typescript'), typescriptTransformOptions],
     ] : [],
     plugins: [
       ...pluginsPrologue.map(([name, options]) => [require(name), options]),
