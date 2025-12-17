@@ -18,9 +18,9 @@ import { assert } from '../../utils';
 import { parseEvaluationResultValue } from '../../utils/isomorphic/utilityScriptSerializers';
 import * as js from '../javascript';
 import * as dom from '../dom';
-import { BidiDeserializer } from './third_party/bidiDeserializer';
 import * as bidi from './third_party/bidiProtocol';
 import { BidiSerializer } from './third_party/bidiSerializer';
+import { deserializeBidiValue } from './bidiDeserializer';
 
 import type { BidiSession } from './bidiConnection';
 
@@ -55,7 +55,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       userActivation: true,
     });
     if (response.type === 'success')
-      return BidiDeserializer.deserialize(response.result);
+      return deserializeBidiValue(response.result);
     if (response.type === 'exception')
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
@@ -98,7 +98,7 @@ export class BidiExecutionContext implements js.ExecutionContextDelegate {
       throw new js.JavaScriptErrorInEvaluate(response.exceptionDetails.text);
     if (response.type === 'success') {
       if (returnByValue)
-        return parseEvaluationResultValue(BidiDeserializer.deserialize(response.result));
+        return parseEvaluationResultValue(deserializeBidiValue(response.result));
       return createHandle(utilityScript._context, response.result);
     }
     throw new js.JavaScriptErrorInEvaluate('Unexpected response type: ' + JSON.stringify(response));
@@ -251,18 +251,6 @@ function renderPreview(remoteObject: bidi.Script.RemoteValue, nested = false): s
   }
 }
 
-function remoteObjectValue(remoteObject: bidi.Script.RemoteValue): any {
-  if (remoteObject.type === 'undefined')
-    return undefined;
-  if (remoteObject.type === 'null')
-    return null;
-  if (remoteObject.type === 'number' && typeof remoteObject.value === 'string')
-    return js.parseUnserializableValue(remoteObject.value);
-  if ('value' in remoteObject)
-    return remoteObject.value;
-  return undefined;
-}
-
 export function createHandle(context: js.ExecutionContext, remoteObject: bidi.Script.RemoteValue): js.JSHandle {
   if (remoteObject.type === 'node') {
     assert(context instanceof dom.FrameExecutionContext);
@@ -270,7 +258,7 @@ export function createHandle(context: js.ExecutionContext, remoteObject: bidi.Sc
   }
   const objectId = 'handle' in remoteObject ? remoteObject.handle : undefined;
   const preview = renderPreview(remoteObject);
-  const handle = new js.JSHandle(context, remoteObject.type, preview, objectId, remoteObjectValue(remoteObject));
+  const handle = new js.JSHandle(context, remoteObject.type, preview, objectId, deserializeBidiValue(remoteObject));
   handle._setPreview(preview);
   return handle;
 }
