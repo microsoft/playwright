@@ -330,3 +330,47 @@ test('should shard tests with beforeAll based on shards total instead of workers
     expect(result.outputLines).toEqual(['beforeAll', 'test7']);
   }
 });
+
+test('should balance shards more evenly with durations file', async ({ runInlineTest, writeFiles }) => {
+  await writeFiles({
+    'durations.json': JSON.stringify({
+      '479195fc753889991fa5-5813cc103c54d7741584': 10, // a1.spec.ts > test1
+      '479195fc753889991fa5-9fc80721f6be35c12708': 10, // a1.spec.ts > test2
+      '479195fc753889991fa5-edf96c89d82c3bba716e': 10, // a1.spec.ts > test3
+      '479195fc753889991fa5-5d262514ede0791df9af': 10, // a1.spec.ts > test4
+      '849e62166c098efb00be-9dfd3bf7693a6ef90503': 5,  // a2.spec.ts > test1
+      '849e62166c098efb00be-29652a6c5c890f4ac524': 5,  // a2.spec.ts > test2
+      '9d5849c1ce6ce86c54ac-d1d1fc129ec68ce96b3c': 1,  // a3.spec.ts > test1
+      '9d5849c1ce6ce86c54ac-943f7c2b686bb5c44d92': 1,  // a3.spec.ts > test2
+      'a98e42b62cec32949233-8e5cad63ca1c4a4ec75d': 1,  // a4.spec.ts > test1
+      'a98e42b62cec32949233-9e2fc217c36d40f8765c': 1,  // a4.spec.ts > test2
+    }),
+  });
+  const shard1 = await runInlineTest(tests, {
+    shard: '1/2',
+    workers: 1,
+    durations: 'durations.json',
+  });
+  expect(shard1.exitCode).toBe(0);
+  expect(shard1.outputLines).toEqual([
+    'a1-test1-done',
+    'a1-test2-done',
+    'a1-test3-done',
+    'a1-test4-done',
+  ]);
+
+  const shard2 = await runInlineTest(tests, {
+    shard: '2/2',
+    workers: 1,
+    durations: 'durations.json',
+  });
+  expect(shard2.exitCode).toBe(0);
+  expect(shard2.outputLines).toEqual([
+    'a2-test1-done',
+    'a2-test2-done',
+    'a3-test1-done',
+    'a3-test2-done',
+    'a4-test1-done',
+    'a4-test2-done',
+  ]);
+});

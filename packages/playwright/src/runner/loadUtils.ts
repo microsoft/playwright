@@ -21,7 +21,7 @@ import { toPosixPath } from 'playwright-core/lib/utils';
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
 import { createFileFiltersFromArguments, createFileMatcherFromArguments, createTitleMatcher, errorWithFile, forceRegExp, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
-import {  createTestGroups, filterForShard } from './testGroups';
+import { createTestGroups, filterForBalancedShard, filterForShard } from './testGroups';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { Suite } from '../common/test';
 import { dependenciesForTestFile } from '../transform/compilationCache';
@@ -189,7 +189,14 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     }
 
     // Shard test groups.
-    const testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
+    let testGroupsInThisShard: Iterable<TestGroup>;
+    if (config.cliDurations) {
+      const durationsContent = await fs.promises.readFile(config.cliDurations, 'utf-8');
+      const durations = new Map<string, number>(Object.entries(JSON.parse(durationsContent)));
+      testGroupsInThisShard = filterForBalancedShard(config.config.shard, testGroups, durations);
+    } else {
+      testGroupsInThisShard = filterForShard(config.config.shard, testGroups);
+    }
     const testsInThisShard = new Set<TestCase>();
     for (const group of testGroupsInThisShard) {
       for (const test of group.tests)

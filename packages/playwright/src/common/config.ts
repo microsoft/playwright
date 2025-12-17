@@ -59,6 +59,7 @@ export class FullConfigInternal {
   cliLastFailed?: boolean;
   cliTestList?: string;
   cliTestListInvert?: string;
+  cliDurations?: string;
   preOnlyTestFilters: TestCaseFilter[] = [];
   postShardTestFilters: TestCaseFilter[] = [];
   defineConfigWasUsed = false;

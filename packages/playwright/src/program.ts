@@ -212,6 +212,7 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliLastFailed = !!opts.lastFailed;
   config.cliTestList = opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined;
   config.cliTestListInvert = opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined;
+  config.cliDurations = opts.durations ? path.resolve(process.cwd(), opts.durations) : undefined;
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
@@ -388,6 +389,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
   ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
+  ['--durations <file>', { description: `Path to a JSON file with test durations to optimize sharding` }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],

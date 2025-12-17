@@ -31,6 +31,7 @@ class ListModeReporter implements ReporterV2 {
   constructor(options: { screen?: TerminalScreen, includeTestId?: boolean } = {}) {
     this._options = options;
     this.screen = options?.screen ?? terminalScreen;
+    this._options.includeTestId = true;
   }
 
   version(): 'v2' {

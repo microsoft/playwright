@@ -162,3 +162,55 @@ export function filterForShard(shard: { total: number, current: number }, testGr
   }
   return result;
 }
+
+export function filterForBalancedShard(shard: { total: number, current: number }, testGroups: TestGroup[], durations: Map<string, number>): Iterable<TestGroup> {
+  const shards: { weight: number, groups: TestGroup[] }[] = [];
+  for (let i = 0; i < shard.total; i++)
+    shards.push({ weight: 0, groups: [] });
+
+  const averageAcrossAllTests = averageValue(durations);
+
+  const groupsWithWeights: { weight: number, group: TestGroup }[] = [];
+  for (const group of testGroups) {
+    let weight = 0;
+    let missing = 0;
+    for (const test of group.tests) {
+      if (durations.has(test.id))
+        weight += durations.get(test.id)!;
+      else
+        missing++;
+    }
+    if (missing === group.tests.length) {
+      weight = averageAcrossAllTests * group.tests.length;
+    } else if (missing > 0) {
+      const averageAcrossGroup = weight / (group.tests.length - missing);
+      weight += averageAcrossGroup * missing;
+    }
+
+    groupsWithWeights.push({ weight, group });
+  }
+
+  groupsWithWeights.sort((a, b) => b.weight - a.weight);
+
+  // Greedy bin packing: assign each group to the least-loaded shard
+  for (const { group, weight } of groupsWithWeights) {
+    let minShard = shards[0];
+    for (let i = 1; i < shards.length; i++) {
+      if (shards[i].weight < minShard.weight)
+        minShard = shards[i];
+    }
+    minShard.groups.push(group);
+    minShard.weight += weight;
+  }
+
+  return shards[shard.current - 1].groups.flat(1);
+}
+
+function averageValue(map: Map<string, number>): number {
+  if (!map.size)
+    return 1;
+  let sum = 0;
+  for (const duration of map.values())
+    sum += duration;
+  return sum / map.size;
+}
