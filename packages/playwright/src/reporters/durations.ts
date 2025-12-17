@@ -15,7 +15,7 @@
  */
 import fs from 'fs';
 
-import { Reporter, TestCase, TestResult } from '../../types/testReporter';
+import type { Reporter, TestCase, TestResult } from '../../types/testReporter';
 
 export default class DurationsReporter implements Reporter {
   private _durations = new Map<string, number[]>();
