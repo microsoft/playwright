@@ -1706,6 +1706,14 @@ Ensures the [Locator] resolves to an element with the given computed CSS style.
 ```js
 const locator = page.getByRole('button');
 await expect(locator).toHaveCSS('display', 'flex');
+
+await expect(locator).toHaveCSS({
+  display: 'flex',
+  backgroundColor: 'rgb(255, 0, 0)',
+  fontSize: '16px'
+});
+
+await expect(locator).toHaveCSS({ '--custom-color': 'blue' } as React.CSSProperties);
 ```
 
 ```java
@@ -1742,6 +1750,12 @@ CSS property name.
 - `value` <[string]|[RegExp]>
 
 CSS property value.
+
+### param: LocatorAssertions.toHaveCSS.styles
+* since: v1.58
+- `styles` <[React.CSSProperties]>
+
+CSS properties object.
 
 ### option: LocatorAssertions.toHaveCSS.timeout = %%-js-assertions-timeout-%%
 * since: v1.18

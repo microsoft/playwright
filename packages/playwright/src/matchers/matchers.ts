@@ -32,6 +32,7 @@ import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
+import type { CSSProperties } from 'react';
 
 export type ExpectMatcherStateInternal = ExpectMatcherState & { _stepInfo?: TestStepInfoImpl };
 
@@ -308,17 +309,39 @@ export function toHaveCount(
   }, expected, options);
 }
 
+export function toHaveCSS(this: ExpectMatcherState, locator: LocatorEx, name: string, expected: string | RegExp, options?: { timeout?: number }): Promise<MatcherResult<any, any>>;
+export function toHaveCSS(this: ExpectMatcherState, locator: LocatorEx, styles: CSSProperties, options?: { timeout?: number }): Promise<MatcherResult<any, any>>;
 export function toHaveCSS(
   this: ExpectMatcherState,
   locator: LocatorEx,
-  name: string,
-  expected: string | RegExp,
+  nameOrStyles: string | CSSProperties,
+  expectedOrOptions?: (string | RegExp) | { timeout?: number },
   options?: { timeout?: number },
 ) {
-  return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
-    const expectedText = serializeExpectedTextValues([expected]);
-    return await locator._expect('to.have.css', { expressionArg: name, expectedText, isNot, timeout });
-  }, expected, options);
+  if (typeof nameOrStyles === 'string') {
+    if (expectedOrOptions === undefined)
+      throw new Error(`toHaveCSS expected value must be provided`);
+    const expected = expectedOrOptions as string | RegExp;
+    return toMatchText.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+      const expectedText = serializeExpectedTextValues([expected]);
+      return await locator._expect('to.have.css', { expressionArg: nameOrStyles, expectedText, isNot, timeout });
+    }, expected, options);
+  } else {
+    const styles = nameOrStyles as CSSProperties;
+    const options = expectedOrOptions as { timeout?: number };
+    return toEqual.call(this, 'toHaveCSS', locator, 'Locator', async (isNot, timeout) => {
+      const results: any[] = [];
+      for (const [property, value] of Object.entries(styles)) {
+        const cssProperty = reactCSSPropertyToCSSName(property);
+        const expectedText = serializeExpectedTextValues([value as string]);
+        const result = await locator._expect('to.have.css', { expressionArg: cssProperty, expectedText, isNot, timeout });
+        results.push(result);
+        if (!result.matches)
+          return result;
+      }
+      return { matches: true };
+    }, styles, options);
+  }
 }
 
 export function toHaveId(
@@ -505,4 +528,19 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
     }
   }
   return {};
+}
+
+function reactCSSPropertyToCSSName(name: keyof CSSProperties | string): string {
+  const isCustomProperty = name.startsWith('--');
+  if (isCustomProperty)
+    return name;
+
+  const vendorMatch = name.match(/^(Webkit|Moz|Ms|O)([A-Z].*)/);
+  if (vendorMatch) {
+    const prefix = vendorMatch[1].toLowerCase();
+    const property = vendorMatch[2];
+    return `-${prefix}-${toKebabCase(property)}`;
+  }
+
+  return toKebabCase(name);
 }

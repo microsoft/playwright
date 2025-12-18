@@ -16,6 +16,7 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { CSSProperties } from 'react';
 export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
@@ -8471,6 +8472,20 @@ export type Expect<ExtendedMatchers = {}> = {
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
+      /**
+       * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with given CSS values.
+       *
+       * **Usage**
+       *
+       * ```js
+       * const locator = page.getByRole('button');
+       * await expect(locator).toHaveCSS({ backgroundColor: 'red', color: 'white' });
+       * ```
+       *
+       * @param styles CSS property names and values as an object.
+       * @param options
+       */
+      toHaveCSS(styles: CSSProperties, options?: { timeout?: number }): Promise<void>;
     }
   }
 }
