@@ -16,7 +16,8 @@
 
 import { test, expect } from './fixtures';
 
-test('action timeout (default)', async ({ client, server }) => {
+test('action timeout (default)', async ({ server, startClient }) => {
+  const { client } = await startClient({ noTimeoutForTest: true });
   server.setContent('/', `
     <!DOCTYPE html>
     <html>

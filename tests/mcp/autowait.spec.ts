@@ -16,7 +16,7 @@
 
 import { test, expect } from './fixtures';
 
-test('racy navigation destroys context', async ({ client, server, mcpBrowser }) => {
+test('racy navigation destroys context', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick='setTimeout(() => window.location = "about:blank", 100)'>Submit</button>
   `, 'text/html');

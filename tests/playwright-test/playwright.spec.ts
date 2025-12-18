@@ -890,7 +890,7 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
         console.log('success!');
       });
     `,
-  }, { headed: true });
+  }, { headed: true });  // This needs to be headed otherwise entire worker is gone.
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   expect(result.output).toContain('success!');
