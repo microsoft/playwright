@@ -984,7 +984,6 @@ export namespace Protocol {
     ["Browser.detachedFromTarget"]: [Browser.detachedFromTargetPayload];
     ["Browser.downloadCreated"]: [Browser.downloadCreatedPayload];
     ["Browser.downloadFinished"]: [Browser.downloadFinishedPayload];
-    ["Browser.videoRecordingFinished"]: [Browser.videoRecordingFinishedPayload];
     ["Page.ready"]: [Page.readyPayload];
     ["Page.crashed"]: [Page.crashedPayload];
     ["Page.eventFired"]: [Page.eventFiredPayload];
@@ -1004,7 +1003,6 @@ export namespace Protocol {
     ["Page.workerCreated"]: [Page.workerCreatedPayload];
     ["Page.workerDestroyed"]: [Page.workerDestroyedPayload];
     ["Page.dispatchMessageFromWorker"]: [Page.dispatchMessageFromWorkerPayload];
-    ["Page.videoRecordingStarted"]: [Page.videoRecordingStartedPayload];
     ["Page.webSocketCreated"]: [Page.webSocketCreatedPayload];
     ["Page.webSocketOpened"]: [Page.webSocketOpenedPayload];
     ["Page.webSocketClosed"]: [Page.webSocketClosedPayload];
