@@ -133,7 +133,6 @@ function cftUrl(suffix: string): DownloadPathFunction {
       path: `${browserVersion}/${suffix}`,
       mirrors: [
         'https://cdn.playwright.dev/chrome-for-testing-public',
-        'https://storage.googleapis.com/chrome-for-testing-public',
       ],
     };
   };
