@@ -46,9 +46,15 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.agent = %%-context-option-agent-%%
+## property: TestOptions.agent
 * since: v1.58
-
+- type: <[Object]>
+  - `cachePathTemplate` ?<[string]> Cache file template to use/generate code for performed actions into.
+  - `maxTurns` ?<[int]> Maximum number of agentic turns to take per call. Defaults to 10.
+  - `maxTokens` ?<[int]> Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this value. Defaults on unlimited.
+  - `model` <[string]> Model identifier within provider.
+  - `provider` <[string]> LLM provider to use.
+  - `secrets` ?<[Object]<[string], [string]>> Secrets to hide from the LLM.
 
 ## property: TestOptions.baseURL = %%-context-option-baseURL-%%
 * since: v1.10

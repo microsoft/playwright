@@ -104,6 +104,12 @@ See [`property: TestConfig.reportSlowTests`].
 
 Base directory for all relative paths used in the reporters.
 
+## property: FullConfig.runAgents
+* since: v1.58
+- type: <boolean>
+
+Run agents to generate the code for [`method: Page.perform`] and similar.
+
 ## property: FullConfig.shard
 * since: v1.10
 - type: <[null]|[Object]>

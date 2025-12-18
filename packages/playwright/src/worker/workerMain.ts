@@ -22,7 +22,7 @@ import { setCurrentTestInfo, setIsWorkerProcess } from '../common/globals';
 import { stdioChunkToParams } from '../common/ipc';
 import { debugTest, relativeFilePath } from '../util';
 import { FixtureRunner } from './fixtureRunner';
-import { TestSkipError, TestInfoImpl } from './testInfo';
+import { TestSkipError, TestInfoImpl, emtpyTestInfoCallbacks } from './testInfo';
 import { testInfoError } from './util';
 import { inheritFixtureNames } from '../common/fixtures';
 import { PoolBuilder } from '../common/poolBuilder';
@@ -119,7 +119,7 @@ export class WorkerMain extends ProcessRunner {
         return;
       }
       // Ignore top-level errors, they are already inside TestInfo.errors.
-      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, {});
+      const fakeTestInfo = new TestInfoImpl(this._config, this._project, this._params, undefined, 0, emtpyTestInfoCallbacks);
       const runnable = { type: 'teardown' } as const;
       // We have to load the project to get the right deadline below.
       await fakeTestInfo._runWithTimeout(runnable, () => this._loadIfNeeded()).catch(() => {});

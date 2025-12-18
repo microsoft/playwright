@@ -22,8 +22,6 @@ test.use({
   agent: {
     provider: 'github',
     model: 'gpt-4.1',
-    cachePathTemplate: '{testDir}/{testFilePath}-cache.json',
-    cacheMode: process.env.UPDATE_CACHE ? 'update' : process.env.CI ? 'force' : 'auto',
     secrets: {
       'x-secret-email': 'secret-email@at-microsoft.com',
     }
@@ -33,6 +31,7 @@ test.use({
 test('page.perform', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/evals/fill-form.html');
   page.on('agentturn', turn => {
+    // For debugging purposes it is on for now.
     console.log('agentturn', turn);
   });
   await page.perform('Fill out the form with the following details:\n' +
