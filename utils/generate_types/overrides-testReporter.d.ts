@@ -110,6 +110,7 @@ export interface JSONReportError {
 export interface JSONReportTestResult {
   workerIndex: number;
   parallelIndex: number;
+  shardIndex: number;
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
