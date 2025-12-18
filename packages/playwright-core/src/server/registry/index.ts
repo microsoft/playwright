@@ -125,69 +125,82 @@ const EXECUTABLE_PATHS = {
   },
 };
 
-type DownloadPaths = Record<HostPlatform, string | undefined>;
+type DownloadPathFunction = (params: BrowsersJSONDescriptor) => { path: string, mirrors: string[] };
+
+function cftUrl(suffix: string): DownloadPathFunction {
+  return ({ browserVersion }) => {
+    return {
+      path: `${browserVersion}/${suffix}`,
+      mirrors: [
+        'https://cdn.playwright.dev/chrome-for-testing-public',
+      ],
+    };
+  };
+}
+
+type DownloadPaths = Record<HostPlatform, string | DownloadPathFunction | undefined>;
 const DOWNLOAD_PATHS: Record<BrowserName | InternalTool, DownloadPaths> = {
   'chromium': {
     '<unknown>': undefined,
     'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': 'builds/chromium/%s/chromium-linux.zip',
-    'ubuntu22.04-x64': 'builds/chromium/%s/chromium-linux.zip',
-    'ubuntu24.04-x64': 'builds/chromium/%s/chromium-linux.zip',
+    'ubuntu20.04-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'ubuntu22.04-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'ubuntu24.04-x64': cftUrl('linux64/chrome-linux64.zip'),
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'ubuntu24.04-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
-    'debian11-x64': 'builds/chromium/%s/chromium-linux.zip',
+    'debian11-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian11-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
-    'debian12-x64': 'builds/chromium/%s/chromium-linux.zip',
+    'debian12-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian12-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
-    'debian13-x64': 'builds/chromium/%s/chromium-linux.zip',
+    'debian13-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian13-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
-    'mac10.13': 'builds/chromium/%s/chromium-mac.zip',
-    'mac10.14': 'builds/chromium/%s/chromium-mac.zip',
-    'mac10.15': 'builds/chromium/%s/chromium-mac.zip',
-    'mac11': 'builds/chromium/%s/chromium-mac.zip',
-    'mac11-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
-    'mac12': 'builds/chromium/%s/chromium-mac.zip',
-    'mac12-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
-    'mac13': 'builds/chromium/%s/chromium-mac.zip',
-    'mac13-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
-    'mac14': 'builds/chromium/%s/chromium-mac.zip',
-    'mac14-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
-    'mac15': 'builds/chromium/%s/chromium-mac.zip',
-    'mac15-arm64': 'builds/chromium/%s/chromium-mac-arm64.zip',
-    'win64': 'builds/chromium/%s/chromium-win64.zip',
+    'mac10.13': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac10.14': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac10.15': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac11': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac11-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac12': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac12-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac13': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac13-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac14': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-headless-shell': {
     '<unknown>': undefined,
     'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
-    'ubuntu22.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
-    'ubuntu24.04-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'ubuntu20.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'ubuntu22.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'ubuntu24.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
     'ubuntu24.04-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
-    'debian11-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'debian11-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian11-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
-    'debian12-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'debian12-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian12-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
-    'debian13-x64': 'builds/chromium/%s/chromium-headless-shell-linux.zip',
+    'debian13-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian13-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
-    'mac11': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
-    'mac11-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
-    'mac12': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
-    'mac12-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
-    'mac13': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
-    'mac13-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
-    'mac14': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
-    'mac14-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
-    'mac15': 'builds/chromium/%s/chromium-headless-shell-mac.zip',
-    'mac15-arm64': 'builds/chromium/%s/chromium-headless-shell-mac-arm64.zip',
-    'win64': 'builds/chromium/%s/chromium-headless-shell-win64.zip',
+    'mac11': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac11-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac12': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac12-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac13': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac13-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac14': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
@@ -1216,12 +1229,20 @@ export class Registry {
 
   private _downloadURLs(descriptor: BrowsersJSONDescriptor): string[] {
     const paths = (DOWNLOAD_PATHS as any)[descriptor.name];
-    const downloadPathTemplate: string|undefined = paths[hostPlatform] || paths['<unknown>'];
+    const downloadPathTemplate: string|DownloadPathFunction|undefined = paths[hostPlatform] || paths['<unknown>'];
     if (!downloadPathTemplate)
       return [];
-    const downloadPath = util.format(downloadPathTemplate, descriptor.revision);
+    let downloadPath: string;
+    let mirrors: string[];
+    if (typeof downloadPathTemplate === 'function') {
+      const result = downloadPathTemplate(descriptor);
+      downloadPath = result.path;
+      mirrors = result.mirrors;
+    } else {
+      downloadPath = util.format(downloadPathTemplate, descriptor.revision);
+      mirrors = PLAYWRIGHT_CDN_MIRRORS;
+    }
 
-    let downloadURLs = PLAYWRIGHT_CDN_MIRRORS.map(mirror => `${mirror}/${downloadPath}`) ;
     let downloadHostEnv;
     if (descriptor.name.startsWith('chromium'))
       downloadHostEnv = 'PLAYWRIGHT_CHROMIUM_DOWNLOAD_HOST';
@@ -1232,8 +1253,9 @@ export class Registry {
 
     const customHostOverride = (downloadHostEnv && getFromENV(downloadHostEnv)) || getFromENV('PLAYWRIGHT_DOWNLOAD_HOST');
     if (customHostOverride)
-      downloadURLs = [`${customHostOverride}/${downloadPath}`];
-    return downloadURLs;
+      mirrors = [customHostOverride];
+
+    return mirrors.map(mirror => `${mirror}/${downloadPath}`);
   }
 
   private async _downloadExecutable(descriptor: BrowsersJSONDescriptor, executablePath?: string) {
