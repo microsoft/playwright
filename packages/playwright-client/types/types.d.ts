@@ -22047,6 +22047,12 @@ export interface ConnectOverCDPOptions {
   headers?: { [key: string]: string; };
 
   /**
+   * Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely
+   * upon the file system being the same between Playwright and the Browser.
+   */
+  isLocal?: boolean;
+
+  /**
    * Logger sink for Playwright logging. Optional.
    * @deprecated The logs received by the logger are incomplete. Please use tracing instead.
    */
