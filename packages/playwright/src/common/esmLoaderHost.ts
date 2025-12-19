@@ -29,7 +29,7 @@ export function registerESMLoader() {
 
   // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
   // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
-  if ("Bun" in globalThis)
+  if ('Bun' in globalThis)
     return true;
 
   if (loaderChannel)
