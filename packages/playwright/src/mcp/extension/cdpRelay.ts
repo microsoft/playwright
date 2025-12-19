@@ -27,7 +27,7 @@ import http from 'http';
 
 import { debug, ws, wsServer } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server/registry/index';
-import { assert, ManualPromise } from 'playwright-core/lib/utils';
+import { ManualPromise } from 'playwright-core/lib/utils';
 
 import { httpAddressToString } from '../sdk/http';
 import { logUnhandledError } from '../log';
