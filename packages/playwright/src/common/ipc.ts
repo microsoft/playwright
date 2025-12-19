@@ -102,7 +102,8 @@ export type CloneStoragePayload = {
 };
 
 export type UpstreamStoragePayload = {
-  workerFile: string;
+  storageFile: string;
+  storageOutFile: string;
 };
 
 export type CustomMessageRequestPayload = {

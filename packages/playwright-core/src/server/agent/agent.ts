@@ -66,8 +66,8 @@ async function perform(progress: Progress, context: Context, userTask: string, r
 }> {
   const { page } = context;
   const browserContext = page.browserContext;
-  if (!browserContext._options.agent)
-    throw new Error(`page.perform() and page.extract() require the agent to be set on the browser context`);
+  if (!browserContext._options.agent?.provider || !browserContext._options.agent?.model)
+    throw new Error(`This action requires the agent provider and model to be set on the browser context`);
 
   const { full } = await page.snapshotForAI(progress);
   const { tools, callTool } = toolsForLoop(context);
@@ -137,20 +137,15 @@ type CachedActions = Record<string, {
   actions: actions.Action[],
 }>;
 
-const allCaches = new Map<string, CachedActions>();
-
 async function cachedPerform(progress: Progress, context: Context, options: channels.PagePerformParams): Promise<boolean> {
-  if (!context.options?.cacheFile || context.options.cacheMode === 'ignore' || context.options.cacheMode === 'update')
+  if (!context.options?.cacheFile)
     return false;
 
-  const cache = await cachedActions(context.options.cacheFile);
+  const cache = await cachedActions(context, context.options?.cacheFile);
   const cacheKey = (options.key ?? options.task).trim();
-  const entry = cache[cacheKey];
-  if (!entry) {
-    if (context.options.cacheMode === 'force')
-      throw new Error(`No cached actions for key "${cacheKey}", but cache mode is set to "force"`);
+  const entry = cache.actions[cacheKey];
+  if (!entry)
     return false;
-  }
 
   for (const action of entry.actions)
     await runAction(progress, 'run', context.page, action, context.options.secrets ?? []);
@@ -159,24 +154,41 @@ async function cachedPerform(progress: Progress, context: Context, options: chan
 
 async function updateCache(context: Context, options: channels.PagePerformParams) {
   const cacheFile = context.options?.cacheFile;
-  if (!cacheFile)
-    return;
-  const cache = await cachedActions(cacheFile);
+  const cacheOutFile = context.options?.cacheOutFile;
+
+  const cache = cacheFile ? await cachedActions(context, cacheFile) : { actions: {}, newActions: {} };
   const cacheKey = (options.key ?? options.task).trim();
-  cache[cacheKey] = {
+  const newEntry = {
     timestamp: Date.now(),
     actions: context.actions,
   };
-  const entries = Object.entries(cache);
-  entries.sort((e1, e2) => e1[0].localeCompare(e2[0]));
-  await fs.promises.writeFile(cacheFile, JSON.stringify(Object.fromEntries(entries), undefined, 2));
+  cache.actions[cacheKey] = newEntry;
+  cache.newActions[cacheKey] = newEntry;
+
+  if (cacheOutFile) {
+    const entries = Object.entries(cache.newActions);
+    entries.sort((e1, e2) => e1[0].localeCompare(e2[0]));
+    await fs.promises.writeFile(cacheOutFile, JSON.stringify(Object.fromEntries(entries), undefined, 2));
+  } else if (cacheFile) {
+    const entries = Object.entries(cache.actions);
+    entries.sort((e1, e2) => e1[0].localeCompare(e2[0]));
+    await fs.promises.writeFile(cacheFile, JSON.stringify(Object.fromEntries(entries), undefined, 2));
+  }
 }
 
-async function cachedActions(cacheFile: string): Promise<CachedActions> {
-  let cache = allCaches.get(cacheFile);
+type Cache = {
+  actions: CachedActions;
+  newActions: CachedActions;
+};
+
+async function cachedActions(context: Context, cacheFile: string): Promise<Cache> {
+  let cache = (context as any)[agentCacheSymbol] as Cache | undefined;
   if (!cache) {
-    cache = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({})) as CachedActions;
-    allCaches.set(cacheFile, cache);
+    const actions = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({})) as CachedActions;
+    cache = { actions, newActions: {} };
+    (context as any)[agentCacheSymbol] = cache;
   }
   return cache;
 }
+
+const agentCacheSymbol = Symbol('agentCache');

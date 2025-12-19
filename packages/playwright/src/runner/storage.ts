@@ -23,75 +23,58 @@ type StorageEnties = Record<string, { timestamp: number, value: any }>;
 
 export class Storage {
   private static _storages = new Map<string, Storage>();
-  private static _workerFiles = new Map<string, {
-    storageFile: string;
-    lastModified: number;
-  }>();
+  private static _serializeQueue: Promise<any> = Promise.resolve();
 
   private _fileName: string;
+  private _lastSnapshotFileName: string | undefined;
   private _entriesPromise: Promise<StorageEnties> | undefined;
-  private _writeChain: Promise<void> = Promise.resolve();
 
-  static async clone(storageFile: string, artifactsDir: string): Promise<string> {
-    const workerFile = await this._storage(storageFile)._clone(artifactsDir);
-    const stat = await fs.promises.stat(workerFile);
-    const lastModified = stat.mtime.getTime();
-    Storage._workerFiles.set(workerFile, { storageFile, lastModified });
-    return workerFile;
+  static clone(storageFile: string, outputDir: string): Promise<string> {
+    return Storage._withStorage(storageFile, storage => storage._clone(outputDir));
   }
 
-  static async upstream(workerFile: string) {
-    const entry = Storage._workerFiles.get(workerFile);
-    if (!entry)
-      return;
-    const { storageFile, lastModified } = entry;
-    const stat = await fs.promises.stat(workerFile);
-    const newLastModified = stat.mtime.getTime();
-    if (lastModified !== newLastModified)
-      await this._storage(storageFile)._upstream(workerFile);
-    Storage._workerFiles.delete(workerFile);
+  static upstream(storageFile: string, storageOutFile: string) {
+    return Storage._withStorage(storageFile, storage => storage._upstream(storageOutFile));
   }
 
-  private static _storage(fileName: string) {
-    if (!Storage._storages.has(fileName))
-      Storage._storages.set(fileName, new Storage(fileName));
-    return Storage._storages.get(fileName)!;
+  private static _withStorage<T>(fileName: string, runnable: (storage: Storage) => Promise<T>) {
+    this._serializeQueue = this._serializeQueue.then(() => {
+      let storage = Storage._storages.get(fileName);
+      if (!storage) {
+        storage = new Storage(fileName);
+        Storage._storages.set(fileName, storage);
+      }
+      return runnable(storage);
+    });
+    return this._serializeQueue;
   }
 
   private constructor(fileName: string) {
     this._fileName = fileName;
   }
 
-  async _clone(artifactsDir: string): Promise<string> {
+  async _clone(outputDir: string): Promise<string> {
     const entries = await this._load();
-    const workerFile = path.join(artifactsDir, `pw-storage-${createGuid()}.json`);
-    await fs.promises.writeFile(workerFile, JSON.stringify(entries, null, 2)).catch(() => {});
-    return workerFile;
+    if (this._lastSnapshotFileName)
+      return this._lastSnapshotFileName;
+    const snapshotFile = path.join(outputDir, `pw-storage-${createGuid()}.json`);
+    await fs.promises.writeFile(snapshotFile, JSON.stringify(entries, null, 2)).catch(() => {});
+    this._lastSnapshotFileName = snapshotFile;
+    return snapshotFile;
   }
 
-  async _upstream(workerFile: string) {
+  async _upstream(storageOutFile: string) {
     const entries = await this._load();
-    const newEntries = await fs.promises.readFile(workerFile, 'utf8').then(JSON.parse).catch(() => ({})) as StorageEnties;
-    for (const [key, newValue] of Object.entries(newEntries)) {
-      const existing = entries[key];
-      if (!existing || existing.timestamp < newValue.timestamp)
-        entries[key] = newValue;
-    }
-    await this._writeFile(entries);
+    const newEntries = await fs.promises.readFile(storageOutFile, 'utf8').then(JSON.parse).catch(() => ({})) as StorageEnties;
+    for (const [key, newValue] of Object.entries(newEntries))
+      entries[key] = newValue;
+    this._lastSnapshotFileName = undefined;
+    await fs.promises.writeFile(this._fileName, JSON.stringify(entries, null, 2));
   }
 
   private async _load(): Promise<StorageEnties> {
     if (!this._entriesPromise)
       this._entriesPromise = fs.promises.readFile(this._fileName, 'utf8').then(JSON.parse).catch(() => ({}));
     return this._entriesPromise;
-  }
-
-  private _writeFile(entries: Record<string, any>) {
-    this._writeChain = this._writeChain.then(() => fs.promises.writeFile(this._fileName, JSON.stringify(entries, null, 2)));
-    return this._writeChain;
-  }
-
-  async flush() {
-    await this._writeChain;
   }
 }

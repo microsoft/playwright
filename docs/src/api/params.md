@@ -372,10 +372,10 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 ## context-option-agent
 - `agent` <[Object]>
-  - `provider` <[string]> LLM provider to use.
-  - `model` <[string]> Model identifier within provider.
+  - `provider` ?<[string]> LLM provider to use. Required in non-cache mode.
+  - `model` ?<[string]> Model identifier within the provider. Required in non-cache mode.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
-  - `cacheMode` ?<[CacheMode]<"force"|"ignore"|"update"|"auto">> Cache control, defaults to 'auto'.
+  - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
   - `secrets` ?<[Object]<[string], [string]>> Secrets to hide from the LLM.
   - `maxTurns` ?<[int]> Maximum number of agentic turns to take per call. Defaults to 10.
   - `maxTokens` ?<[int]> Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this value. Defaults on unlimited.
