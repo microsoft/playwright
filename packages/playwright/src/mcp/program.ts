@@ -25,12 +25,10 @@ import * as mcpServer from './sdk/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
-import { ProxyBackend } from './sdk/proxyBackend';
 import { BrowserServerBackend } from './browser/browserServerBackend';
 import { ExtensionContextFactory } from './extension/extensionContextFactory';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
-import type { MCPProvider } from './sdk/proxyBackend';
 
 export function decorateCommand(command: Command, version: string) {
   command
@@ -73,7 +71,6 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
-      .addOption(new ProgramOption('--connect-tool', 'Allow to switch between different browser connection methods.').hideHelp())
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .action(async options => {
         setupExitWatchdog();
@@ -105,29 +102,6 @@ export function decorateCommand(command: Command, version: string) {
             create: () => new BrowserServerBackend(config, extensionContextFactory)
           };
           await mcpServer.start(serverBackendFactory, config.server);
-          return;
-        }
-
-        if (options.connectTool) {
-          const providers: MCPProvider[] = [
-            {
-              name: 'default',
-              description: 'Starts standalone browser',
-              connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, browserContextFactory)),
-            },
-            {
-              name: 'extension',
-              description: 'Connect to a browser using the Playwright MCP extension',
-              connect: () => mcpServer.wrapInProcess(new BrowserServerBackend(config, extensionContextFactory)),
-            },
-          ];
-          const factory: mcpServer.ServerBackendFactory = {
-            name: 'Playwright w/ switch',
-            nameInConfig: 'playwright-switch',
-            version,
-            create: () => new ProxyBackend(providers),
-          };
-          await mcpServer.start(factory, config.server);
           return;
         }
 

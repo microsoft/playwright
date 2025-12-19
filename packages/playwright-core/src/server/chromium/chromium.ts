@@ -76,11 +76,11 @@ export class Chromium extends BrowserType {
     return super.launchPersistentContext(progress, userDataDir, options);
   }
 
-  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray }) {
+  override async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, headers?: types.HeadersArray, isLocal?: boolean }) {
     return await this._connectOverCDPInternal(progress, endpointURL, options);
   }
 
-  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray }, onClose?: () => Promise<void>) {
+  async _connectOverCDPInternal(progress: Progress, endpointURL: string, options: types.LaunchOptions & { headers?: types.HeadersArray, isLocal?: boolean }, onClose?: () => Promise<void>) {
     let headersMap: { [key: string]: string; } | undefined;
     if (options.headers)
       headersMap = headersArrayToObject(options.headers, false);
@@ -125,7 +125,8 @@ export class Chromium extends BrowserType {
       };
       validateBrowserContextOptions(persistent, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
-      browser._isCollocatedWithServer = false;
+      if (!options.isLocal)
+        browser._isCollocatedWithServer = false;
       browser.on(Browser.Events.Disconnected, doCleanup);
       return browser;
     } catch (error) {

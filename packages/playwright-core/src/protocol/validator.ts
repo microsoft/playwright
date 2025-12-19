@@ -623,6 +623,7 @@ scheme.BrowserTypeConnectOverCDPParams = tObject({
   headers: tOptional(tArray(tType('NameValue'))),
   slowMo: tOptional(tFloat),
   timeout: tFloat,
+  isLocal: tOptional(tBoolean),
 });
 scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),

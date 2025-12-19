@@ -1007,6 +1007,7 @@ BrowserType:
           items: NameValue
         slowMo: float?
         timeout: float
+        isLocal: boolean?
       returns:
         browser: Browser
         defaultContext: BrowserContext?

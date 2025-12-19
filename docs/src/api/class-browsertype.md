@@ -211,12 +211,12 @@ A CDP websocket endpoint or http url to connect to. For example `http://localhos
 
 Additional HTTP headers to be sent with connect request. Optional.
 
-### option: BrowserType.connectOverCDP.slowMo
-* since: v1.11
-- `slowMo` <[float]>
+### option: BrowserType.connectOverCDP.isLocal
+* since: v1.58
+- `isLocal` <[boolean]>
 
-Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
-can see what is going on. Defaults to 0.
+Tells Playwright that it runs on the same host as the CDP server. It will enable certain optimizations that rely upon
+the file system being the same between Playwright and the Browser.
 
 ### option: BrowserType.connectOverCDP.logger
 * since: v1.14
@@ -225,6 +225,13 @@ can see what is going on. Defaults to 0.
 - `logger` <[Logger]>
 
 Logger sink for Playwright logging. Optional.
+
+### option: BrowserType.connectOverCDP.slowMo
+* since: v1.11
+- `slowMo` <[float]>
+
+Slows down Playwright operations by the specified amount of milliseconds. Useful so that you
+can see what is going on. Defaults to 0.
 
 ### option: BrowserType.connectOverCDP.timeout
 * since: v1.11

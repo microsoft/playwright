@@ -15,7 +15,6 @@
  */
 
 export * from './inProcessTransport';
-export * from './proxyBackend';
 export * from './server';
 export * from './tool';
 export * from './http';

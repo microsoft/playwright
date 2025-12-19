@@ -553,6 +553,22 @@ test('setInputFiles should preserve lastModified timestamp', async ({ browserTyp
   }
 });
 
+test('setInputFiles should use local path when isLocal is set', async ({ browserType, toImpl }) => {
+  const port = 9339 + test.info().workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  try {
+    const cdpBrowser1 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`);
+    expect(toImpl(cdpBrowser1)._isCollocatedWithServer).toBe(false);
+
+    const cdpBrowser2 = await browserType.connectOverCDP(`http://127.0.0.1:${port}/`, { isLocal: true });
+    expect(toImpl(cdpBrowser2)._isCollocatedWithServer).toBe(true);
+  } finally {
+    await browserServer.close();
+  }
+});
+
 test('should print custom ws close error', async ({ browserType, server }) => {
   server.onceWebSocketConnection((ws, request) => {
     ws.on('message', message => {
