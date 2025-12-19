@@ -142,7 +142,7 @@ export class HttpServer {
     }
   }
 
-  _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
+  private _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
     const content = fs.readFileSync(absoluteFilePath);
     response.statusCode = 200;
     const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
@@ -151,7 +151,7 @@ export class HttpServer {
     response.end(content);
   }
 
-  _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
+  private _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
     const range = request.headers.range;
     if (!range || !range.startsWith('bytes=') || range.includes(', ') || [...range].filter(char => char === '-').length !== 1) {
       response.statusCode = 400;
