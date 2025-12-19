@@ -258,6 +258,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       retry: result.retry,
       workerIndex: result.workerIndex,
       parallelIndex: result.parallelIndex,
+      shardIndex: result.shardIndex,
       startTime: +result.startTime,
     };
   }

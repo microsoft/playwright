@@ -297,6 +297,7 @@ export interface JSONReportError {
 export interface JSONReportTestResult {
   workerIndex: number;
   parallelIndex: number;
+  shardIndex: number;
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
@@ -679,6 +680,11 @@ export interface TestResult {
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retry: number;
+
+  /**
+   * The index of the shard between `0` and `shards - 1`.
+   */
+  shardIndex: number;
 
   /**
    * Start time of this particular test run.
