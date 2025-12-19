@@ -39,6 +39,13 @@ export interface FullResult {
    * Test duration in milliseconds.
    */
   duration: number;
+
+  shards: {
+    shardIndex: number;
+    botName?: string;
+    startTime: Date;
+    duration: number;
+  }[];
 }
 
 export interface Reporter {

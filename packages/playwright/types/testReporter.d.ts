@@ -40,6 +40,13 @@ export interface FullResult {
    * Test duration in milliseconds.
    */
   duration: number;
+
+  shards: {
+    shardIndex: number;
+    botName?: string;
+    startTime: Date;
+    duration: number;
+  }[];
 }
 
 /**
@@ -682,7 +689,7 @@ export interface TestResult {
   retry: number;
 
   /**
-   * The index of the shard between `0` and `shards - 1`.
+   * The index of the shard between `1` and `shards`.
    */
   shardIndex: number;
 

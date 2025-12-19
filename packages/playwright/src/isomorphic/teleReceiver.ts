@@ -130,6 +130,12 @@ export type JsonFullResult = {
   status: reporterTypes.FullResult['status'];
   startTime: number;
   duration: number;
+  shards?: {
+    shardIndex: number;
+    botName?: string;
+    startTime: number;
+    duration: number;
+  }[];
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
@@ -452,6 +458,12 @@ export class TeleReporterReceiver {
       status: result.status,
       startTime: new Date(result.startTime),
       duration: result.duration,
+      shards: result.shards?.map(s => ({
+        shardIndex: s.shardIndex,
+        botName: s.botName,
+        startTime: new Date(s.startTime),
+        duration: s.duration,
+      })) ?? [],
     });
   }
 
