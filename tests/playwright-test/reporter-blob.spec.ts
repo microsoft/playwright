@@ -24,7 +24,7 @@ import extractZip from '../../packages/playwright-core/bundles/zip/src/third_par
 import * as yazl from '../../packages/playwright-core/bundles/zip/node_modules/yazl';
 import { getUserAgent } from '../../packages/playwright-core/lib/server/utils/userAgent';
 import { Readable } from 'stream';
-import type { JSONReportTestResult } from '../../packages/playwright-test/reporter';
+import type { FullResult, JSONReportTestResult } from '../../packages/playwright-test/reporter';
 
 const DOES_NOT_SUPPORT_UTF8_IN_TERMINAL = process.platform === 'win32' && process.env.TERM_PROGRAM !== 'vscode' && !process.env.WT_SESSION;
 const POSITIVE_STATUS_MARK = DOES_NOT_SUPPORT_UTF8_IN_TERMINAL ? 'ok' : '✓ ';
@@ -2196,4 +2196,44 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const reportFiles = await fs.promises.readdir(reportDir);
     expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
   }
+});
+
+test('should report duration across all shards', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  const config: PlaywrightTestConfig = {
+    reporter: [['blob', { outputDir: `${reportDir.replace(/\\/g, '/')}` }]],
+  };
+  class CustomReporter {
+    onEnd(result) {
+      console.log('%%' + JSON.stringify(result));
+    }
+  }
+  const files = {
+    'playwright.config.ts': `
+      module.exports = ${JSON.stringify(config, null, 2)};
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 1', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('math 2', async ({}) => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+    'reporter.js': `module.exports = ${CustomReporter.toString()};`,
+  };
+
+  await runInlineTest(files, { shard: `1/2`, workers: 1 });
+  await new Promise(f => setTimeout(f, 1500)); // Ensure different start times.
+  await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const { exitCode, outputLines } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('reporter.js'), '-c', test.info().outputPath('playwright.config.ts')] });
+  expect(exitCode).toBe(0);
+
+  const { duration } = JSON.parse(outputLines[0]) as FullResult;
+  expect(duration).toBeGreaterThanOrEqual(1500);
 });
