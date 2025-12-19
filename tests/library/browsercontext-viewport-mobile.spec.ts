@@ -94,6 +94,16 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
+  it('should preserve window.orientation override after navigation', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: { width: 400, height: 300 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.orientation)).toBe(90);
+    await context.close();
+  });
+
   it('should fire orientationchange event', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
