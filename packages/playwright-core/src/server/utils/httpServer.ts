@@ -21,7 +21,7 @@ import { mime, wsServer } from '../../utilsBundle';
 import { createGuid } from './crypto';
 import { assert } from '../../utils/isomorphic/assert';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { createHttpServer } from './network';
+import { createHttpServer, tryStartHttpServer } from './network';
 
 import type http from 'http';
 
@@ -110,17 +110,17 @@ export class HttpServer {
     assert(!this._started, 'server already started');
     this._started = true;
 
-    const host = options.host || 'localhost';
+    const host = options.host;
     if (options.preferredPort) {
       try {
-        await this._tryStart(options.preferredPort, host);
+        await tryStartHttpServer(this._server, { port: options.preferredPort, host });
       } catch (e) {
         if (!e || !e.message || !e.message.includes('EADDRINUSE'))
           throw e;
-        await this._tryStart(undefined, host);
+        await tryStartHttpServer(this._server, { host });
       }
     } else {
-      await this._tryStart(options.port, host);
+      await tryStartHttpServer(this._server, { port: options.port, host });
     }
 
     const address = this._server.address();

@@ -193,6 +193,24 @@ export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
   return server;
 }
 
+export async function tryStartHttpServer(server: http.Server, options: { host?: string, port?: number }) {
+  const { host = 'localhost', port = 0 } = options;
+
+  const errorPromise = new ManualPromise();
+  const errorListener = (error: Error) => errorPromise.reject(error);
+  server.on('error', errorListener);
+
+  try {
+    server.listen(port, host);
+    await Promise.race([
+      new Promise(cb => server.once('listening', cb)),
+      errorPromise,
+    ]);
+  } finally {
+    server.removeListener('error', errorListener);
+  }
+}
+
 export async function isURLAvailable(url: URL, ignoreHTTPSErrors: boolean, onLog?: (data: string) => void, onStdErr?: (data: string) => void) {
   let statusCode = await httpStatusCode(url, ignoreHTTPSErrors, onLog, onStdErr);
   if (statusCode === 404 && url.pathname === '/') {
