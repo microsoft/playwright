@@ -41,6 +41,28 @@ for (const mode of ['isolated', 'persistent']) {
     expect(file).toMatch(/page-.*\.webm/);
   });
 
+  test(`should work with  { saveVideo } (${mode})`, async ({ startClient, server }, testInfo) => {
+    const outputDir = testInfo.outputPath('output');
+
+    const { client } = await startClient({
+      config: {
+        browser: { isolated: mode === 'isolated' },
+        saveVideo: { width: 800, height: 600 },
+        outputDir,
+      }
+    });
+
+    await navigateToTestPage(client, server);
+    await expect(async () => {
+      await produceFrames(client);
+      await checkIntermediateVideoFileExists();
+    }).toPass();
+    await closeBrowser(client);
+
+    const [file] = await fs.promises.readdir(outputDir);
+    expect(file).toMatch(/page-.*\.webm/);
+  });
+
   test(`should work with recordVideo (${mode})`, async ({ startClient, server }, testInfo) => {
     const videosDir = testInfo.outputPath('videos');
 

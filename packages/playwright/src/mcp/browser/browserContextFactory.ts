@@ -23,7 +23,7 @@ import * as playwright from 'playwright-core';
 import { registryDirectory } from 'playwright-core/lib/server/registry/index';
 import { startTraceViewerServer } from 'playwright-core/lib/server';
 import { logUnhandledError, testDebug } from '../log';
-import { outputFile } from './config';
+import { outputFile, tmpDir } from './config';
 import { firstRootPath } from '../sdk/server';
 
 import type { FullConfig } from './config';
@@ -143,7 +143,7 @@ class IsolatedContextFactory extends BaseContextFactory {
   }
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    return browser.newContext(this.config.browser.contextOptions);
+    return browser.newContext(browserContextOptionsFromConfig(this.config));
   }
 }
 
@@ -206,7 +206,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       const launchOptions: LaunchOptions & BrowserContextOptions = {
         tracesDir,
         ...this.config.browser.launchOptions,
-        ...this.config.browser.contextOptions,
+        ...browserContextOptionsFromConfig(this.config),
         handleSIGINT: false,
         handleSIGTERM: false,
         ignoreDefaultArgs: [
@@ -344,4 +344,15 @@ async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Pro
   if (!config.saveTrace && !config.capabilities?.includes('tracing'))
     return;
   return await outputFile(config, clientInfo, `traces`, { origin: 'code', reason: 'Collecting trace' });
+}
+
+function browserContextOptionsFromConfig(config: FullConfig): playwright.BrowserContextOptions {
+  const result = { ...config.browser.contextOptions };
+  if (config.saveVideo) {
+    result.recordVideo = {
+      dir: tmpDir(),
+      size: config.saveVideo,
+    };
+  }
+  return result;
 }
