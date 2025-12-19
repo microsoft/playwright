@@ -21,7 +21,7 @@ import crypto from 'crypto';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import * as mcpBundle from 'playwright-core/lib/mcpBundle';
-import { createHttpServer, tryStartHttpServer } from 'playwright-core/lib/utils';
+import { createHttpServer, startHttpServer } from 'playwright-core/lib/utils';
 
 import * as mcpServer from './server';
 
@@ -31,29 +31,31 @@ import type { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/se
 
 const testDebug = debug('pw:mcp:test');
 
-export async function startHttpServer(
+export async function startMcpHttpServer(
   config: { host?: string, port?: number },
   serverBackendFactory: ServerBackendFactory,
   allowedHosts?: string[]
 ): Promise<string> {
   const httpServer = createHttpServer();
-  await tryStartHttpServer(httpServer, config);
+  await startHttpServer(httpServer, config);
   return await installHttpTransport(httpServer, serverBackendFactory, allowedHosts);
 }
 
-export function httpAddressToString(address: string | net.AddressInfo | null): string {
+export function addressToString(address: string | net.AddressInfo | null, options: {
+  protocol: 'http' | 'ws';
+  normalizeLoopback?: boolean;
+}): string {
   assert(address, 'Could not bind server socket');
   if (typeof address === 'string')
     throw new Error('Unexpected address type: ' + address);
-  const resolvedPort = address.port;
-  let resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
-  if (resolvedHost === '0.0.0.0' || resolvedHost === '[::]' || resolvedHost === '[::1]' || resolvedHost === '127.0.0.1')
-    resolvedHost = 'localhost';
-  return `http://${resolvedHost}:${resolvedPort}`;
+  let host = address.family === 'IPv4' ? address.address : `[${address.address}]`;
+  if (options.normalizeLoopback && (host === '0.0.0.0' || host === '[::]' || host === '[::1]' || host === '127.0.0.1'))
+    host = 'localhost';
+  return `${options.protocol}://${host}:${address.port}`;
 }
 
 async function installHttpTransport(httpServer: http.Server, serverBackendFactory: ServerBackendFactory, allowedHosts?: string[]) {
-  const url = httpAddressToString(httpServer.address());
+  const url = addressToString(httpServer.address(), { protocol: 'http', normalizeLoopback: true });
   const host = new URL(url).host;
   allowedHosts = (allowedHosts || [host]).map(h => h.toLowerCase());
   const allowAnyHost = allowedHosts.includes('*');

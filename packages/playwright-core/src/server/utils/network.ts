@@ -193,13 +193,11 @@ export function createHttp2Server(...args: any[]): http2.Http2SecureServer {
   return server;
 }
 
-export async function tryStartHttpServer(server: http.Server, options: { host?: string, port?: number }) {
+export async function startHttpServer(server: http.Server, options: { host?: string, port?: number }) {
   const { host = 'localhost', port = 0 } = options;
-
   const errorPromise = new ManualPromise();
   const errorListener = (error: Error) => errorPromise.reject(error);
   server.on('error', errorListener);
-
   try {
     server.listen(port, host);
     await Promise.race([

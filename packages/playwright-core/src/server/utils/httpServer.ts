@@ -20,8 +20,7 @@ import path from 'path';
 import { mime, wsServer } from '../../utilsBundle';
 import { createGuid } from './crypto';
 import { assert } from '../../utils/isomorphic/assert';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { createHttpServer, tryStartHttpServer } from './network';
+import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';
 
@@ -97,14 +96,14 @@ export class HttpServer {
     const host = options.host;
     if (options.preferredPort) {
       try {
-        await tryStartHttpServer(this._server, { port: options.preferredPort, host });
+        await startHttpServer(this._server, { port: options.preferredPort, host });
       } catch (e) {
         if (!e || !e.message || !e.message.includes('EADDRINUSE'))
           throw e;
-        await tryStartHttpServer(this._server, { host });
+        await startHttpServer(this._server, { host });
       }
     } else {
-      await tryStartHttpServer(this._server, { port: options.port, host });
+      await startHttpServer(this._server, { port: options.port, host });
     }
 
     const address = this._server.address();
