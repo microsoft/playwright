@@ -645,6 +645,8 @@ class ArtifactsRecorder {
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
   private _agent: PlaywrightTestOptions['agent'];
+  private _agentCacheFile: string | undefined;
+  private _agentCacheOutFile: string | undefined;
 
   constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, agent: PlaywrightTestOptions['agent']) {
     this._playwright = playwright;
@@ -711,19 +713,23 @@ class ArtifactsRecorder {
       return;
 
     const cachePathTemplate = this._agent.cachePathTemplate ?? '{testDir}/{testFilePath}-cache.json';
-    const cacheFile = this._testInfo._applyPathTemplate(cachePathTemplate, '', '.json');
-    const workerFile = await this._testInfo._cloneStorage(cacheFile);
+    this._agentCacheFile = this._testInfo._applyPathTemplate(cachePathTemplate, '', '.json');
+    this._agentCacheOutFile = path.join(this._testInfo.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
+
+    const cacheFile = this._testInfo.config.runAgents ? undefined : await this._testInfo._cloneStorage(this._agentCacheFile);
     options.agent = {
       ...this._agent,
-      cacheFile: workerFile,
-      cacheMode: this._testInfo.config.runAgents ? 'update' : 'force',
+      cacheFile,
+      cacheOutFile: this._agentCacheOutFile,
     };
   }
 
   private async _upstreamAgentCache(context: BrowserContextImpl) {
-    const agent = context._options.agent;
-    if (this._testInfo.status === 'passed' && agent?.cacheFile)
-      await this._testInfo._upstreamStorage(agent.cacheFile);
+    if (!this._agentCacheFile || !this._agentCacheOutFile)
+      return;
+    if (this._testInfo.status !== 'passed')
+      return;
+    await this._testInfo._upstreamStorage(this._agentCacheFile, this._agentCacheOutFile);
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {

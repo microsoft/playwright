@@ -668,13 +668,16 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setTimeout(timeout);
   }
 
-  async _cloneStorage(cacheFileTemplate: string): Promise<string> {
-    const storageFile = this._applyPathTemplate(cacheFileTemplate, 'cache', '.json');
+  async _cloneStorage(storageFile: string): Promise<string> {
     return await this._callbacks.onCloneStorage!({ storageFile });
   }
 
-  async _upstreamStorage(workerFile: string) {
-    await this._callbacks.onUpstreamStorage?.({ workerFile });
+  async _upstreamStorage(storageFile: string, storageOutFile: string) {
+    await this._callbacks.onUpstreamStorage!({ storageFile, storageOutFile });
+  }
+
+  artifactsDir(): string {
+    return this._workerParams.artifactsDir;
   }
 }
 

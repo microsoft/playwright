@@ -263,10 +263,10 @@ export class Dispatcher {
       this._producedEnvByProjectId.set(testGroup.projectId, { ...producedEnv, ...worker.producedEnv() });
     });
     worker.onRequest('cloneStorage', async (params: ipc.CloneStoragePayload) => {
-      return await Storage.clone(params.storageFile, worker.artifactsDir());
+      return await Storage.clone(params.storageFile, outputDir);
     });
     worker.onRequest('upstreamStorage', async (params: ipc.UpstreamStoragePayload) => {
-      await Storage.upstream(params.workerFile);
+      await Storage.upstream(params.storageFile, params.storageOutFile);
     });
     return worker;
   }

@@ -22232,14 +22232,14 @@ export interface BrowserContextOptions {
    */
   agent?: {
     /**
-     * LLM provider to use.
+     * LLM provider to use. Required in non-cache mode.
      */
-    provider: string;
+    provider?: string;
 
     /**
-     * Model identifier within provider.
+     * Model identifier within the provider. Required in non-cache mode.
      */
-    model: string;
+    model?: string;
 
     /**
      * Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
@@ -22247,9 +22247,9 @@ export interface BrowserContextOptions {
     cacheFile?: string;
 
     /**
-     * Cache control, defaults to 'auto'.
+     * When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
      */
-    cacheMode?: "force"|"ignore"|"update"|"auto";
+    cacheOutFile?: string;
 
     /**
      * Secrets to hide from the LLM.

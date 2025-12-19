@@ -592,16 +592,10 @@ ContextOptions:
     agent:
       type: object?
       properties:
-        provider: string
-        model: string
+        provider: string?
+        model: string?
         cacheFile: string?
-        cacheMode:
-          type: enum?
-          literals:
-          - ignore
-          - force
-          - update
-          - auto
+        cacheOutFile: string?
         secrets:
           type: array?
           items: NameValue
