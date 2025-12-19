@@ -222,14 +222,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.grantPermissions)
     contextOptions.permissions = cliOptions.grantPermissions;
 
-  if (cliOptions.saveVideo) {
-    contextOptions.recordVideo = {
-      // Videos are moved to output directory on saveAs.
-      dir: tmpDir(),
-      size: cliOptions.saveVideo,
-    };
-  }
-
   const result: Config = {
     browser: {
       browserName,
@@ -330,7 +322,7 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-function tmpDir(): string {
+export function tmpDir(): string {
   return path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output');
 }
 
