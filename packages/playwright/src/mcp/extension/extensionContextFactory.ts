@@ -54,7 +54,12 @@ export class ExtensionContextFactory implements BrowserContextFactory {
   }
 
   private async _startRelay(abortSignal: AbortSignal) {
-    const httpServer = await startHttpServer({});
+    // Listen to the loopback interface only. The extension will disallow
+    // connections to other hosts anyway.
+    const httpServer = await startHttpServer({
+      host: '127.0.0.1',
+      port: 0,
+    });
     if (abortSignal.aborted) {
       httpServer.close();
       throw new Error(abortSignal.reason);

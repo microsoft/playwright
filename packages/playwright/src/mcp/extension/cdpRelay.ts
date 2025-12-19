@@ -27,7 +27,7 @@ import http from 'http';
 
 import { debug, ws, wsServer } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server/registry/index';
-import { ManualPromise } from 'playwright-core/lib/utils';
+import { assert, ManualPromise } from 'playwright-core/lib/utils';
 
 import { httpAddressToString } from '../sdk/http';
 import { logUnhandledError } from '../log';
@@ -77,6 +77,7 @@ export class CDPRelayServer {
 
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
     this._wsHost = httpAddressToString(server.address()).replace(/^http/, 'ws');
+    assert(this._wsHost.startsWith('ws://127.0.0.1'), 'CDPRelayServer only supports loopback connections');
     this._browserChannel = browserChannel;
     this._userDataDir = userDataDir;
     this._executablePath = executablePath;
