@@ -63,3 +63,27 @@ export function dateAsFileName(extension: string): string {
   const date = new Date();
   return `page-${date.toISOString().replace(/[:.]/g, '-')}.${extension}`;
 }
+
+export function eventWaiter<T>(page: playwright.Page, event: string, timeout: number): { promise: Promise<T | undefined>, abort: () => void } {
+  const disposables: (() => void)[] = [];
+
+  const eventPromise = new Promise<T | undefined>((resolve, reject) => {
+    page.on(event as any, resolve as any);
+    disposables.push(() => page.off(event as any, resolve as any));
+  });
+
+  let abort: () => void;
+  const abortPromise = new Promise<T | undefined>((resolve, reject) => {
+    abort = () => resolve(undefined);
+  });
+
+  const timeoutPromise = new Promise<T | undefined>(f => {
+    const timeoutId = setTimeout(() => f(undefined), timeout);
+    disposables.push(() => clearTimeout(timeoutId));
+  });
+
+  return {
+    promise: Promise.race([eventPromise, abortPromise, timeoutPromise]).finally(() => disposables.forEach(dispose => dispose())),
+    abort: abort!
+  };
+}

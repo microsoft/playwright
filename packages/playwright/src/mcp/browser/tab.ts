@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 import * as playwright from 'playwright-core';
 import { asLocator, ManualPromise } from 'playwright-core/lib/utils';
 
-import { callOnPageNoTrace, waitForCompletion } from './tools/utils';
+import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './tools/utils';
 import { logUnhandledError } from '../log';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
@@ -191,9 +191,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     this._clearCollectedArtifacts();
 
-    const downloadEvent = callOnPageNoTrace(this.page, page => page.waitForEvent('download').catch(logUnhandledError));
+    const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
     try {
       await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+      abortDownloadEvent();
     } catch (_e: unknown) {
       const e = _e as Error;
       const mightBeDownload =
@@ -202,10 +203,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       if (!mightBeDownload)
         throw e;
       // on chromium, the download event is fired *after* page.goto rejects, so we wait a lil bit
-      const download = await Promise.race([
-        downloadEvent,
-        new Promise(resolve => setTimeout(resolve, 3000)),
-      ]);
+      const download = await downloadEvent;
       if (!download)
         throw e;
       // Make sure other "download" listeners are notified first.
