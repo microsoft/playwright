@@ -36,7 +36,7 @@ export type ConfigCLIOverrides = {
   retries?: number;
   reporter?: ReporterDescription[];
   additionalReporters?: ReporterDescription[];
-  shard?: { current: number, total: number };
+  shard?: { current: number, total: number, weights?: number[] };
   timeout?: number;
   tsconfig?: string;
   ignoreSnapshots?: boolean;

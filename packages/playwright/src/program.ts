@@ -348,16 +348,22 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   if (!shard)
     return undefined;
 
-  const shardPair = shard.split('/');
+  const shardPair = shard.split(',');
+  if (shardPair.length > 2) {
+    throw new Error(
+        `--shard "${shard}", expected format is "current/all,weight1/.../weightN", 1-based, for example "3/5,18/19/20/21/22".`,
+    );
+  }
 
-  if (shardPair.length !== 2) {
+  const indexPair = shardPair[0].split('/');
+  if (indexPair.length !== 2) {
     throw new Error(
         `--shard "${shard}", expected format is "current/all", 1-based, for example "3/5".`,
     );
   }
 
-  const current = parseInt(shardPair[0], 10);
-  const total = parseInt(shardPair[1], 10);
+  const current = parseInt(indexPair[0], 10);
+  const total = parseInt(indexPair[1], 10);
 
   if (isNaN(total) || total < 1)
     throw new Error(`--shard "${shard}" total must be a positive number`);
@@ -369,7 +375,23 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
     );
   }
 
-  return { current, total };
+  if (!shardPair[1])
+    return { current, total };
+
+
+  const weights = shardPair[1].split('/').map(w => parseInt(w, 10));
+  if (weights.length !== total) {
+    throw new Error(
+        `--shard "${shard}" weights count must match the shard total of ${total}`,
+    );
+  }
+  if (weights.some(w => isNaN(w) || w < 0)) {
+    throw new Error(
+        `--shard "${shard}" weights must be non-negative numbers`,
+    );
+  }
+
+  return { current, total, weights };
 }
 
 function resolveReporter(id: string) {

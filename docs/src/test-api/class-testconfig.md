@@ -525,6 +525,7 @@ Run agents to generate the code for [`method: Page.perform`] and similar.
 - type: ?<[null]|[Object]>
   - `current` <[int]> The index of the shard to execute, one-based.
   - `total` <[int]> The total number of shards.
+  - `weights` ?<[Array]<[int]>> The shard weights.
 
 Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
 
