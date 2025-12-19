@@ -64,22 +64,6 @@ export class HttpServer {
     return this._port;
   }
 
-  private async _tryStart(port: number | undefined, host: string) {
-    const errorPromise = new ManualPromise();
-    const errorListener = (error: Error) => errorPromise.reject(error);
-    this._server.on('error', errorListener);
-
-    try {
-      this._server.listen(port, host);
-      await Promise.race([
-        new Promise(cb => this._server!.once('listening', cb)),
-        errorPromise,
-      ]);
-    } finally {
-      this._server.removeListener('error', errorListener);
-    }
-  }
-
   createWebSocket(transport: Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
