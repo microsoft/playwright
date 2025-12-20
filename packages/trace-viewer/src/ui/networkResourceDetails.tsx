@@ -39,7 +39,7 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   startTimeOffset: number;
   onClose: () => void;
 }> = ({ resource, sdkLanguage, startTimeOffset, onClose }) => {
-  const [selectedTab, setSelectedTab] = React.useState('request');
+  const [selectedTab, setSelectedTab] = React.useState('headers');
   const model = useTraceModel();
 
   const requestBody = useAsyncMemo<RequestBody>(async () => {
@@ -58,24 +58,23 @@ export const NetworkResourceDetails: React.FunctionComponent<{
   }, [resource], null);
 
   return <TabbedPane
-    dataTestId='network-request-details'
     leftToolbar={[<ToolbarButton key='close' icon='close' title='Close' onClick={onClose} />]}
     rightToolbar={[<CopyDropdown key='dropdown' requestBody={requestBody} resource={resource} sdkLanguage={sdkLanguage} />]}
     tabs={[
       {
-        id: 'request',
-        title: 'Request',
-        render: () => <RequestTab resource={resource} startTimeOffset={startTimeOffset} requestBody={requestBody} />,
+        id: 'headers',
+        title: 'Headers',
+        render: () => <HeadersTab resource={resource} startTimeOffset={startTimeOffset} />,
+      },
+      {
+        id: 'payload',
+        title: 'Payload',
+        render: () => <PayloadTab resource={resource} requestBody={requestBody} />,
       },
       {
         id: 'response',
         title: 'Response',
-        render: () => <ResponseTab resource={resource}/>,
-      },
-      {
-        id: 'body',
-        title: 'Body',
-        render: () => <BodyTab resource={resource}/>,
+        render: () => <ResponseTab resource={resource} />,
       },
     ]}
     selectedTab={selectedTab}
@@ -141,31 +140,34 @@ const ExpandableSection: React.FC<{
   </Expandable>;
 };
 
-const RequestTab: React.FunctionComponent<{
+const HeadersTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
   startTimeOffset: number;
-  requestBody: RequestBody,
-}> = ({ resource, startTimeOffset, requestBody }) => {
+}> = ({ resource, startTimeOffset }) => {
   const generalData = React.useMemo(() =>
     Object.entries({
       'URL': resource.request.url,
       'Method': resource.request.method,
       'Status Code': resource.response.status !== -1 && <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText}</span>,
-    }).map(([name, value]) => ({ name, value })),
-  [resource]);
-
-  const timeData = React.useMemo(() =>
-    Object.entries({
       'Start': msToString(startTimeOffset),
       'Duration': msToString(resource.time),
     }).map(([name, value]) => ({ name, value })),
-  [startTimeOffset, resource]);
+  [resource, startTimeOffset]);
 
   return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='General' data={generalData}/>
+    <ExpandableSection title='General' data={generalData} />
+    <ExpandableSection title='Request Headers' showCount data={resource.request.headers} />
+    <ExpandableSection title='Response Headers' showCount data={resource.response.headers} />
+  </div>;
+};
+
+const PayloadTab: React.FunctionComponent<{
+  resource: ResourceSnapshot;
+  requestBody: RequestBody,
+}> = ({ resource, requestBody }) => {
+  return <div className='vbox network-request-details-tab'>
+    {resource.request.queryString.length === 0 && !requestBody && <em className='network-request-no-payload'>No payload for this request.</em>}
     {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
-    <ExpandableSection title='Request Headers' showCount data={resource.request.headers}/>
-    <ExpandableSection title='Time' data={timeData}/>
     {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body'>
       <CodeMirrorWrapper text={requestBody.text} mimeType={requestBody.mimeType} readOnly lineNumbers={true}/>
     </ExpandableSection>}
@@ -173,14 +175,6 @@ const RequestTab: React.FunctionComponent<{
 };
 
 const ResponseTab: React.FunctionComponent<{
-  resource: ResourceSnapshot;
-}> = ({ resource }) => {
-  return <div className='vbox network-request-details-tab'>
-    <ExpandableSection title='Response Headers' showCount data={resource.response.headers} />
-  </div>;
-};
-
-const BodyTab: React.FunctionComponent<{
   resource: ResourceSnapshot;
 }> = ({ resource }) => {
   const model = useTraceModel();
