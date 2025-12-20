@@ -91,6 +91,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
   readonly _tracing: Tracing;
   private _closeReason: string | undefined;
   _timeoutSettings: TimeoutSettings;
+  _checkUrlAllowed?: (url: string) => void;
 
   static from(channel: channels.APIRequestContextChannel): APIRequestContext {
     return (channel as any)._object;
@@ -177,6 +178,7 @@ export class APIRequestContext extends ChannelOwner<channels.APIRequestContextCh
       assert(options.maxRedirects === undefined || options.maxRedirects >= 0, `'maxRedirects' must be greater than or equal to '0'`);
       assert(options.maxRetries === undefined || options.maxRetries >= 0, `'maxRetries' must be greater than or equal to '0'`);
       const url = options.url !== undefined ? options.url : options.request!.url();
+      this._checkUrlAllowed?.(url);
       const method = options.method || options.request?.method();
       let encodedParams = undefined;
       if (typeof options.params === 'string')
