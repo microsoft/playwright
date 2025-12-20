@@ -16,6 +16,7 @@
 
 import fs from 'fs';
 import net from 'net';
+import dns from 'dns';
 
 import { ChildProcess, spawn } from 'child_process';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
@@ -61,6 +62,19 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
     cp?.kill('SIGTERM');
   },
 });
+
+async function resolveToIp(address: string) {
+  const resolvedIp = await new Promise<{ address: string, family: number }>((resolve, reject) => {
+    dns.lookup('localhost', (err, address, family) => {
+      if (err)
+        return reject(err);
+      resolve({ address, family }); // ::1 6  OR  127.0.0.1 4
+    });
+  });
+  if (resolvedIp.family === 6)
+    return `[${resolvedIp.address}]`;
+  return resolvedIp.address;
+}
 
 test('http transport', async ({ serverEndpoint }) => {
   const { url } = await serverEndpoint();
@@ -351,10 +365,12 @@ test('client should receive list roots request', async ({ serverEndpoint, server
 });
 
 test('should not allow rebinding to localhost', async ({ serverEndpoint }) => {
-  const { url } = await serverEndpoint();
-  const response = await fetch(url.href.replace('localhost', '127.0.0.1'));
-  expect(response.status).toBe(403);
-  expect(await response.text()).toContain('Access is only allowed at localhost');
+  const { url, stderr } = await serverEndpoint();
+  const ip = await resolveToIp('localhost');
+  const response = await fetch(url.href.replace('localhost', ip));
+  console.log('logs:', stderr());
+  expect.soft(response.status).toBe(403);
+  expect.soft(await response.text()).toContain('Access is only allowed at localhost');
 });
 
 test('should respect allowed hosts (negative)', async ({ serverEndpoint }) => {

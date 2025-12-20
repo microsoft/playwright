@@ -29,7 +29,7 @@ import { debug, ws, wsServer } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server/registry/index';
 import { ManualPromise } from 'playwright-core/lib/utils';
 
-import { httpAddressToString } from '../sdk/http';
+import { addressToString } from '../sdk/http';
 import { logUnhandledError } from '../log';
 import * as protocol from './protocol';
 
@@ -76,7 +76,7 @@ export class CDPRelayServer {
   private _extensionConnectionPromise!: ManualPromise<void>;
 
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
-    this._wsHost = httpAddressToString(server.address()).replace(/^http/, 'ws');
+    this._wsHost = addressToString(server.address(), { protocol: 'ws' });
     this._browserChannel = browserChannel;
     this._userDataDir = userDataDir;
     this._executablePath = executablePath;

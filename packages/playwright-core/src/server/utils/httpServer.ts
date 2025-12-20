@@ -20,8 +20,7 @@ import path from 'path';
 import { mime, wsServer } from '../../utilsBundle';
 import { createGuid } from './crypto';
 import { assert } from '../../utils/isomorphic/assert';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { createHttpServer } from './network';
+import { createHttpServer, startHttpServer } from './network';
 
 import type http from 'http';
 
@@ -64,22 +63,6 @@ export class HttpServer {
     return this._port;
   }
 
-  private async _tryStart(port: number | undefined, host: string) {
-    const errorPromise = new ManualPromise();
-    const errorListener = (error: Error) => errorPromise.reject(error);
-    this._server.on('error', errorListener);
-
-    try {
-      this._server.listen(port, host);
-      await Promise.race([
-        new Promise(cb => this._server!.once('listening', cb)),
-        errorPromise,
-      ]);
-    } finally {
-      this._server.removeListener('error', errorListener);
-    }
-  }
-
   createWebSocket(transport: Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
@@ -110,17 +93,17 @@ export class HttpServer {
     assert(!this._started, 'server already started');
     this._started = true;
 
-    const host = options.host || 'localhost';
+    const host = options.host;
     if (options.preferredPort) {
       try {
-        await this._tryStart(options.preferredPort, host);
+        await startHttpServer(this._server, { port: options.preferredPort, host });
       } catch (e) {
         if (!e || !e.message || !e.message.includes('EADDRINUSE'))
           throw e;
-        await this._tryStart(undefined, host);
+        await startHttpServer(this._server, { host });
       }
     } else {
-      await this._tryStart(options.port, host);
+      await startHttpServer(this._server, { port: options.port, host });
     }
 
     const address = this._server.address();
@@ -158,7 +141,7 @@ export class HttpServer {
     }
   }
 
-  _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
+  private _serveFile(response: http.ServerResponse, absoluteFilePath: string) {
     const content = fs.readFileSync(absoluteFilePath);
     response.statusCode = 200;
     const contentType = mime.getType(path.extname(absoluteFilePath)) || 'application/octet-stream';
@@ -167,7 +150,7 @@ export class HttpServer {
     response.end(content);
   }
 
-  _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
+  private _serveRangeFile(request: http.IncomingMessage, response: http.ServerResponse, absoluteFilePath: string) {
     const range = request.headers.range;
     if (!range || !range.startsWith('bytes=') || range.includes(', ') || [...range].filter(char => char === '-').length !== 1) {
       response.statusCode = 400;

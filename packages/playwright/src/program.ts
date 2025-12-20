@@ -260,8 +260,8 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
 }
 
 async function runTestServer(opts: { [key: string]: any }) {
-  const host = opts.host || 'localhost';
-  const port = opts.port ? +opts.port : 0;
+  const host = opts.host;
+  const port = opts.port ? +opts.port : undefined;
   const status = await testServer.runTestServer(opts.config, { }, { host, port });
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);

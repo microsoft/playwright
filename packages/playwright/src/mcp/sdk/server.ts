@@ -19,7 +19,7 @@ import { fileURLToPath } from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import * as mcpBundle from 'playwright-core/lib/mcpBundle';
 
-import { installHttpTransport, startHttpServer } from './http';
+import { startMcpHttpServer } from './http';
 import { InProcessTransport } from './inProcessTransport';
 
 import type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
@@ -178,8 +178,7 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
     return;
   }
 
-  const httpServer = await startHttpServer(options);
-  const url = await installHttpTransport(httpServer, serverBackendFactory, false, options.allowedHosts);
+  const url = await startMcpHttpServer(options, serverBackendFactory, options.allowedHosts);
 
   const mcpConfig: any = { mcpServers: { } };
   mcpConfig.mcpServers[serverBackendFactory.nameInConfig] = {
