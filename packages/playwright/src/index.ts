@@ -716,9 +716,11 @@ class ArtifactsRecorder {
     this._agentCacheFile = this._testInfo._applyPathTemplate(cachePathTemplate, '', '.json');
     this._agentCacheOutFile = path.join(this._testInfo.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
 
-    const cacheFile = this._testInfo.config.runAgents ? undefined : await this._testInfo._cloneStorage(this._agentCacheFile);
+    const cacheFile = this._testInfo.config.runAgents === 'all' ? undefined : await this._testInfo._cloneStorage(this._agentCacheFile);
     options.agent = {
       ...this._agent,
+      provider: this._testInfo.config.runAgents !== 'none' ? this._agent.provider : undefined,
+      model: this._testInfo.config.runAgents !== 'none' ? this._agent.model : undefined,
       cacheFile,
       cacheOutFile: this._agentCacheOutFile,
     };
