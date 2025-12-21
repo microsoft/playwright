@@ -56,9 +56,8 @@ export const WorkbenchLoader: React.FunctionComponent<{
     const listener = async (e: ClipboardEvent) => {
       if (!e.clipboardData?.files.length)
         return;
-      const zipMimeTypes = ['application/zip', 'application/x-zip-compressed'];
       for (const file of e.clipboardData.files) {
-        if (!zipMimeTypes.includes(file.type))
+        if (file.type !== 'application/zip')
           return;
       }
       e.preventDefault();
