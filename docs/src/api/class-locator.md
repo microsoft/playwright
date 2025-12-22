@@ -630,7 +630,7 @@ Locator description.
 * since: v1.57
 - returns: <[null]|[string]>
 
-Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the description when available.
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer [`method: Locator.toString`] for a human-readable representation, as it uses the description when available.
 
 **Usage**
 
@@ -2533,6 +2533,13 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 
 ### option: Locator.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.14
+
+## method: Locator.toString
+* since: v1.57
+* langs: js
+- returns: <[String]>
+
+Returns a human-readable representation of the locator, using the [`method: Locator.description`] if one exists; otherwise, it generates a string based on the locator's selector.
 
 ## async method: Locator.type
 * since: v1.14

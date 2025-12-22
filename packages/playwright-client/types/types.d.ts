@@ -12645,6 +12645,12 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * Returns a human-readable representation of the locator, using the
+   * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
+   * otherwise, it generates a string based on the locator's selector.
+   */
+  toString(): string;
+  /**
    * When the locator points to a list of elements, this returns an array of locators, pointing to their respective
    * elements.
    *
@@ -13198,8 +13204,9 @@ export interface Locator {
   /**
    * Returns locator description previously set with
    * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
-   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
-   * description when available.
+   * no custom description has been set. Prefer
+   * [locator.toString()](https://playwright.dev/docs/api/class-locator#locator-to-string) for a human-readable
+   * representation, as it uses the description when available.
    *
    * **Usage**
    *
