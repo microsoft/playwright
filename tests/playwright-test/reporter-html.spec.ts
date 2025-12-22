@@ -3325,7 +3325,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       // TODO: refactor so that there's an actual HTTP server that checks auth
       await page.route('**/*', async (route, request) => {
         const url = new URL(request.url());
-        if (url.searchParams.get('sas') === 'foo')
+        if (url.searchParams.get('token') === 'foo')
           await route.continue();
         else
           await route.fulfill({ status: 403, body: 'Forbidden' });
@@ -3334,7 +3334,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const server = startHtmlReportServer(test.info().outputPath('playwright-report')) as HttpServer;
       await server.start();
       const url = new URL(server.urlPrefix('precise'));
-      url.searchParams.set('sasToken', 'foo');
+      url.searchParams.set('token', 'foo');
 
       await page.goto(url.toString());
 
