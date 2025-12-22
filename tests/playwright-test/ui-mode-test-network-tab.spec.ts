@@ -293,6 +293,13 @@ test('should copy network request', async ({ runUITest, server }) => {
     `,
   });
 
+  await page.evaluate(() => {
+    (window as any).__clipboardCall = '';
+    navigator.clipboard.writeText = async (text: string) => {
+      (window as any).__clipboardCall = text;
+    };
+  });
+
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
   await page.getByRole('tab', { name: 'Network' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
@@ -302,7 +309,7 @@ test('should copy network request', async ({ runUITest, server }) => {
 
   await page.getByRole('button', { name: 'Copy as cURL' }).click();
   await expect(async () => {
-    const curlRequest = await page.evaluate(() => navigator.clipboard.readText());
+    const curlRequest = await page.evaluate(() => (window as any).__clipboardCall);
     if (process.platform === 'win32') {
       expect(curlRequest).toContain(`curl ^"${server.PREFIX}/post-data-1^"`);
       expect(curlRequest).toContain(`-H ^"content-type: application/json^"`);
@@ -316,7 +323,7 @@ test('should copy network request', async ({ runUITest, server }) => {
 
   await page.getByRole('button', { name: 'Copy as Fetch' }).click();
   await expect(async () => {
-    const fetchRequest = await page.evaluate(() => navigator.clipboard.readText());
+    const fetchRequest = await page.evaluate(() => (window as any).__clipboardCall);
     expect(fetchRequest).toContain(`fetch("${server.PREFIX}/post-data-1", {`);
     expect(fetchRequest).toContain(`"content-type": "application/json"`);
     expect(fetchRequest).toContain(`"body": "{\\"data\\":{\\"key\\":\\"value\\",\\"array\\":[\\"value-1\\",\\"value-2\\"]}}"`);
@@ -325,7 +332,7 @@ test('should copy network request', async ({ runUITest, server }) => {
 
   await page.getByRole('button', { name: 'Copy as Playwright' }).click();
   await expect(async () => {
-    const playwrightRequest = await page.evaluate(() => navigator.clipboard.readText());
+    const playwrightRequest = await page.evaluate(() => (window as any).__clipboardCall);
     expect(playwrightRequest).toContain(`await page.request.post('${server.PREFIX}/post-data-1', {`);
     expect(playwrightRequest.replaceAll('\r\n', '\n')).toContain(`  data: \`{
   "data": {

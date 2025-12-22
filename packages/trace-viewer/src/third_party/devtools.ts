@@ -57,7 +57,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-import { TraceModel } from '@isomorphic/trace/traceModel';
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import type { Entry } from '@trace/har';
 
 // The following function is derived from Chromium's source code
