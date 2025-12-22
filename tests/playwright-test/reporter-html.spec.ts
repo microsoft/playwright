@@ -3306,6 +3306,43 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByRole('link', { name: 'previous' })).not.toBeVisible();
       });
     });
+
+    test('sas token is inherited', async ({ runInlineTest, page }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          module.exports = { use: { trace: 'on' } };
+        `,
+        'a.test.js': `
+          import { test, expect, request } from '@playwright/test';
+          test('pass', async ({ page }) => {
+            await page.setContent('<div>hello</div>');
+          });
+        `,
+      }, { reporter: 'html,dot' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      // TODO: refactor so that there's an actual HTTP server that checks auth
+      await page.route('**/*', async (route, request) => {
+        const url = new URL(request.url());
+        if (url.searchParams.get('sas') === 'foo')
+          await route.continue();
+        else
+          await route.fulfill({ status: 403, body: 'Forbidden' });
+      });
+
+      const server = startHtmlReportServer(test.info().outputPath('playwright-report')) as HttpServer;
+      await server.start();
+      const url = new URL(server.urlPrefix('precise'));
+      url.searchParams.set('sasToken', 'foo');
+
+      await page.goto(url.toString());
+
+      await page.getByRole('link', { name: 'View Trace' }).click();
+      await expect(page.getByTestId('actions-tree')).toContainText('Set content');
+
+      await server.stop();
+    });
   });
 }
 
