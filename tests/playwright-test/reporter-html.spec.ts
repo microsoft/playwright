@@ -3341,6 +3341,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'View Trace' }).click();
       await expect(page.getByTestId('actions-tree')).toContainText('Set content');
 
+      await page.getByText('Source').click();
+      await expect(page.getByText('await page.setContent(\'<div>hello</div>\');')).toBeVisible();
+
       await server.stop();
     });
   });
