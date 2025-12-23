@@ -48,7 +48,7 @@ Without the fullyParallel setting, Playwright Test defaults to file-level granul
 ## Rebalancing Shards
 
 ```
-npx playwright test --shard=1/4,26/24/25/25
+npx playwright test --shard=1/4 --shard-weights=26:24:25:25
 ```
 
 ## Merging reports from multiple shards

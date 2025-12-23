@@ -300,6 +300,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
+    shardWeights: resolveShardWeightsOption(options.shardWeights),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -348,22 +349,16 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   if (!shard)
     return undefined;
 
-  const shardPair = shard.split(',');
-  if (shardPair.length > 2) {
-    throw new Error(
-        `--shard "${shard}", expected format is "current/all,weight1/.../weightN", 1-based, for example "3/5,18/19/20/21/22".`,
-    );
-  }
+  const shardPair = shard.split('/');
 
-  const indexPair = shardPair[0].split('/');
-  if (indexPair.length !== 2) {
+  if (shardPair.length !== 2) {
     throw new Error(
         `--shard "${shard}", expected format is "current/all", 1-based, for example "3/5".`,
     );
   }
 
-  const current = parseInt(indexPair[0], 10);
-  const total = parseInt(indexPair[1], 10);
+  const current = parseInt(shardPair[0], 10);
+  const total = parseInt(shardPair[1], 10);
 
   if (isNaN(total) || total < 1)
     throw new Error(`--shard "${shard}" total must be a positive number`);
@@ -375,23 +370,19 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
     );
   }
 
-  if (!shardPair[1])
-    return { current, total };
+  return { current, total };
+}
 
+function resolveShardWeightsOption(shardWeights?: string): ConfigCLIOverrides['shardWeights'] {
+  if (!shardWeights)
+    return undefined;
 
-  const weights = shardPair[1].split('/').map(w => parseInt(w, 10));
-  if (weights.length !== total) {
-    throw new Error(
-        `--shard "${shard}" weights count must match the shard total of ${total}`,
-    );
-  }
-  if (weights.some(w => isNaN(w) || w < 0)) {
-    throw new Error(
-        `--shard "${shard}" weights must be non-negative numbers`,
-    );
-  }
-
-  return { current, total, weights };
+  return shardWeights.split(':').map(w => {
+    const weight = parseInt(w, 10);
+    if (isNaN(weight) || weight < 0)
+      throw new Error(`--shard-weights "${shardWeights}" weights must be non-negative numbers`);
+    return weight;
+  });
 }
 
 function resolveReporter(id: string) {
@@ -433,6 +424,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--run-agents', { description: `Run agents to generate the code for page.perform` }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
+  ['--shard-weights <weights>', { description: `Weights for each shard, colon-separated, for example "2:1:1" for 3 shards where the first shard should be allocated half of the work` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],

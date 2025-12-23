@@ -1644,11 +1644,6 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
      * The total number of shards.
      */
     total: number;
-
-    /**
-     * The shard weights.
-     */
-    weights?: Array<number>;
   };
 
   /**
@@ -2097,11 +2092,6 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
      * The index of the shard to execute, one-based.
      */
     current: number;
-
-    /**
-     * The shard weights.
-     */
-    weights?: Array<number>;
   };
 
   /**

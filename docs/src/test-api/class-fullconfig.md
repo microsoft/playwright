@@ -115,7 +115,6 @@ Run agents to generate the code for [`method: Page.perform`] and similar.
 - type: <[null]|[Object]>
   - `total` <[int]> The total number of shards.
   - `current` <[int]> The index of the shard to execute, one-based.
-  - `weights` ?<[Array]<[int]>> The shard weights.
 
 See [`property: TestConfig.shard`].
 

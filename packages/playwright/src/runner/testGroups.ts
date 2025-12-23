@@ -130,8 +130,11 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number, weights?: number[] }, testGroups: TestGroup[]): Set<TestGroup> {
-  const weights = shard.weights ?? Array.from({ length: shard.total }, () => 1);
+export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
+  weights ??= Array.from({ length: shard.total }, () => 1);
+  if (weights.length !== shard.total)
+    throw new Error(`--shard-weights number of weights must match the shard total of ${shard.total}`);
+
   const totalWeight = weights.reduce((a, b) => a + b, 0);
   // Note that sharding works based on test groups.
   // This means parallel files will be sharded by single tests,
