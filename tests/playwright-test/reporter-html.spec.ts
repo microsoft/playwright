@@ -3345,6 +3345,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByText('Source').click();
       await expect(page.getByText('await page.setContent(\'<div>hello</div>\');')).toBeVisible();
 
+      await page.pause();
+
       httpServer.close();
     });
   });

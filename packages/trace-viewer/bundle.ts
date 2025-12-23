@@ -36,6 +36,7 @@ function transformAssetLinks(html: string, ctx: IndexHtmlTransformContext): stri
   const dynamicAssets = [
     ...ctx.chunk?.dynamicImports ?? [],
     ...ctx.chunk?.imports ?? [],
+    ...Object.keys(ctx.bundle)
   ].map(f => `./${f}`);
 
   function assetScript(assets: [tag: string, attrs: Record<string, string | boolean>][], dynamicAssets: string[]) {
