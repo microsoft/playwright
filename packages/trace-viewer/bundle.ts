@@ -14,7 +14,65 @@
  * limitations under the License.
  */
 
-import type { Plugin } from 'vite';
+import type { IndexHtmlTransformContext, Plugin } from 'vite';
+
+function transformAssetLinks(html: string, ctx: IndexHtmlTransformContext): string {
+  const assets: [tag: string, attrs: Record<string, string | boolean>][] = [];
+  const parseAttrs = (attrString: string) => {
+    const matches = attrString.matchAll(/(\w+)(?:\s*=\s*["']([^"']+)["'])?/g);
+    return Object.fromEntries(Array.from(matches, ([, key, value]) => [key, value !== undefined ? value : true]));
+  };
+
+  html = html.replace(/<script\s+([^>]*?\bsrc\s*=\s*["'][^"']+["'][^>]*)><\/script>/gi, (match, attrs) => {
+    assets.push(['script', parseAttrs(attrs)]);
+    return '';
+  });
+
+  html = html.replace(/<link\s+([^>]*?\bhref\s*=\s*["'][^"']+["'][^>]*)>/gi, (match, attrs) => {
+    assets.push(['link', parseAttrs(attrs)]);
+    return '';
+  });
+
+  const dynamicAssets = [
+    ...ctx.chunk.dynamicImports,
+    ...ctx.chunk.imports,
+  ].map(f => `./${f}`);
+
+  function assetScript(assets: [tag: string, attrs: Record<string, string | boolean>][], dynamicAssets: string[]) {
+    const search = window.location.search;
+    if (!search)
+      return;
+
+    const importMap: Record<string, string> = {};
+    for (const asset of dynamicAssets)
+      importMap[asset] = asset + search;
+
+    for (const [tag, attrs] of assets) {
+      const el = document.createElement(tag);
+      for (const key in attrs) {
+        let value = attrs[key];
+        if ((key === 'src' || key === 'href')) {
+          value += search;
+          importMap[key] = '' + value;
+        }
+        if (value === true)
+          el.setAttribute(key, '');
+        else
+          el.setAttribute(key, '' + value);
+
+      }
+      document.head.appendChild(el);
+    }
+
+    const script = document.createElement('script');
+    script.type = 'importmap';
+    script.textContent = JSON.stringify({ imports: importMap });
+    document.head.appendChild(script);
+  }
+  html = html.replace('</head>', `<script>(${assetScript})(${JSON.stringify(assets)}, ${JSON.stringify(dynamicAssets)})</script>\n  </head>`);
+
+  return html;
+}
 
 export function bundle(): Plugin {
   return {
@@ -24,83 +82,8 @@ export function bundle(): Plugin {
         if (!ctx || !ctx.bundle)
           return html;
 
-        // Extract all link and script tags with href/src attributes
-        const assets: Array<{ tag: string; attrs: Record<string, string | boolean> }> = [];
-
-        const parseAttrs = (attrString: string) => {
-          const attrMap: Record<string, string | boolean> = {};
-          // Match both key="value" and boolean attributes
-          attrString.replace(/(\w+)(?:\s*=\s*["']([^"']+)["'])?/g, (_: string, key: string, value: string | undefined) => {
-            if (key)
-              attrMap[key] = value !== undefined ? value : true;
-
-            return '';
-          });
-          return attrMap;
-        };
-
-        // Match script tags with src
-        html = html.replace(/<script\s+([^>]*?\bsrc\s*=\s*["'][^"']+["'][^>]*)><\/script>/gi, (match, attrs) => {
-          assets.push({ tag: 'script', attrs: parseAttrs(attrs) });
-          return ''; // Remove the tag
-        });
-
-        // Match link tags with href
-        html = html.replace(/<link\s+([^>]*?\bhref\s*=\s*["'][^"']+["'][^>]*)>/gi, (match, attrs) => {
-          assets.push({ tag: 'link', attrs: parseAttrs(attrs) });
-          return ''; // Remove the tag
-        });
-
-        // Collect all module imports to create import map
-        const imports: Record<string, string> = {};
-        assets.forEach(asset => {
-          if (asset.tag === 'link' && asset.attrs.rel === 'modulepreload' && typeof asset.attrs.href === 'string') {
-            const href = asset.attrs.href;
-            imports[href] = href; // Will append search params in the runtime script
-          }
-        });
-
-        // Generate script to dynamically create these assets with query params
-        const assetScript = `<script>
-      (function() {
-        const search = window.location.search;
-        const assets = ${JSON.stringify(assets)};
-        const imports = ${JSON.stringify(imports)};
-        
-        // Create import map with search params appended
-        if (search && Object.keys(imports).length > 0) {
-          const importMap = { imports: {} };
-          for (const key in imports) {
-            importMap.imports[key] = key + search;
-          }
-          const script = document.createElement('script');
-          script.type = 'importmap';
-          script.textContent = JSON.stringify(importMap);
-          document.head.appendChild(script);
-        }
-        
-        assets.forEach(function(asset) {
-          const el = document.createElement(asset.tag);
-          for (const key in asset.attrs) {
-            let value = asset.attrs[key];
-            // Add search params to src/href if present
-            if ((key === 'src' || key === 'href') && search) {
-              value += search;
-            }
-            // Set boolean attributes without value, others with value
-            if (value === true) {
-              el.setAttribute(key, '');
-            } else {
-              el.setAttribute(key, value);
-            }
-          }
-          document.head.appendChild(el);
-        });
-      })();
-    </script>`;
-
-        // Insert the script at the end of <head>
-        html = html.replace('</head>', `${assetScript}\n  </head>`);
+        if (ctx.filename.endsWith('index.html') || ctx.filename.endsWith('snapshot.html'))
+          html = transformAssetLinks(html, ctx);
 
         // Workaround vite issue that we cannot exclude some scripts from preprocessing.
         return html.replace(/(?=<!--)([\s\S]*?)-->/, '').replace('<!-- <script src="stall.js"></script> -->', '<script src="stall.js"></script>');
