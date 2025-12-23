@@ -15,37 +15,17 @@
  */
 
 import { z } from '../../mcpBundle';
-import { getByRoleSelector, getByTextSelector } from '../../utils/isomorphic/locatorUtils';
+import { defineTool } from './tool';
 
-import type zod from 'zod';
-import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
-import type { Context } from './context';
-
-type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSchema'> & {
-  title: string;
-  inputSchema: Input;
-};
-
-export type ToolDefinition<Input extends zod.Schema = zod.Schema> = {
-  schema: ToolSchema<Input>;
-  handle: (context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
-};
-
-function defineTool<Input extends zod.Schema>(tool: ToolDefinition<Input>): ToolDefinition<Input> {
-  return tool;
-}
-
-const baseSchema = z.object({
-  thatShouldBeIt: z.boolean().describe('Indicates that this tool call is sufficient to complete the task. If false, the task will continue with the next tool call'),
-});
+import type { ToolDefinition } from './tool';
 
 const snapshot = defineTool({
   schema: {
     name: 'browser_snapshot',
     title: 'Page snapshot',
     description: 'Capture accessibility snapshot of the current page, this is better than screenshot',
-    inputSchema: baseSchema,
+    inputSchema: z.object({}),
   },
 
   handle: async (context, params) => {
@@ -53,7 +33,7 @@ const snapshot = defineTool({
   },
 });
 
-const elementSchema = baseSchema.extend({
+const elementSchema = z.object({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
@@ -91,7 +71,7 @@ const drag = defineTool({
     name: 'browser_drag',
     title: 'Drag mouse',
     description: 'Perform drag and drop between two elements',
-    inputSchema: baseSchema.extend({
+    inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
       startRef: z.string().describe('Exact source element reference from the page snapshot'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
@@ -216,7 +196,7 @@ const fillForm = defineTool({
     name: 'browser_fill_form',
     title: 'Fill form',
     description: 'Fill multiple form fields. Always use this tool when you can fill more than one field at a time.',
-    inputSchema: baseSchema.extend({
+    inputSchema: z.object({
       fields: z.array(z.object({
         name: z.string().describe('Human-readable field name'),
         type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),
@@ -254,67 +234,6 @@ const fillForm = defineTool({
   },
 });
 
-const expectVisible = defineTool({
-  schema: {
-    name: 'browser_expect_visible',
-    title: 'Expect element visible',
-    description: 'Expect element is visible on the page',
-    inputSchema: baseSchema.extend({
-      role: z.string().describe('ROLE of the element. Can be found in the snapshot like this: \`- {ROLE} "Accessible Name":\`'),
-      accessibleName: z.string().describe('ACCESSIBLE_NAME of the element. Can be found in the snapshot like this: \`- role "{ACCESSIBLE_NAME}"\`'),
-    }),
-  },
-
-  handle: async (context, params) => {
-    return await context.runActionAndWait({
-      method: 'expectVisible',
-      selector: getByRoleSelector(params.role, { name: params.accessibleName }),
-    });
-  },
-});
-
-const expectVisibleText = defineTool({
-  schema: {
-    name: 'browser_expect_visible_text',
-    title: 'Expect text visible',
-    description: `Expect text is visible on the page. Prefer ${expectVisible.schema.name} if possible.`,
-    inputSchema: baseSchema.extend({
-      text: z.string().describe('TEXT to expect. Can be found in the snapshot like this: \`- role "Accessible Name": {TEXT}\` or like this: \`- text: {TEXT}\`'),
-    }),
-  },
-
-  handle: async (context, params) => {
-    return await context.runActionAndWait({
-      method: 'expectVisible',
-      selector: getByTextSelector(params.text),
-    });
-  },
-});
-
-const expectValue = defineTool({
-  schema: {
-    name: 'browser_expect_value',
-    title: 'Expect value',
-    description: 'Expect element value',
-    inputSchema: baseSchema.extend({
-      type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the element'),
-      element: z.string().describe('Human-readable element description'),
-      ref: z.string().describe('Exact target element reference from the page snapshot'),
-      value: z.string().describe('Value to expect. For checkbox, use "true" or "false".'),
-    }),
-  },
-
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([{ ref: params.ref, element: params.element }]);
-    return await context.runActionAndWait({
-      method: 'expectValue',
-      selector,
-      type: params.type,
-      value: params.value,
-    });
-  },
-});
-
 export default [
   snapshot,
   click,
@@ -324,7 +243,4 @@ export default [
   pressKey,
   type,
   fillForm,
-  expectVisible,
-  expectVisibleText,
-  expectValue,
 ] as ToolDefinition<any>[];

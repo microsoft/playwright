@@ -16,7 +16,9 @@
 
 import { serializeExpectedTextValues } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
+import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
 import { ProgressController } from '../progress';
+import { yaml } from '../../utilsBundle';
 
 import type * as actions from './actions';
 import type { Page } from '../page';
@@ -75,7 +77,7 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       break;
     case 'expectVisible': {
       const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: false });
-      if (result.errorMessage)
+      if (!result.matches)
         throw new Error(result.errorMessage);
       break;
     }
@@ -90,6 +92,13 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
+      if (!result.matches)
+        throw new Error(result.errorMessage);
+      break;
+    }
+    case 'expectAria': {
+      const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
+      const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: false });
       if (!result.matches)
         throw new Error(result.errorMessage);
       break;
@@ -110,6 +119,7 @@ export function generateActionTimeout(action: actions.Action): number {
       return 5000;
     case 'expectVisible':
     case 'expectValue':
+    case 'expectAria':
       return 1;  // one shot
   }
 }
@@ -127,6 +137,7 @@ export function performActionTimeout(action: actions.Action): number {
       return 0;  // no timeout
     case 'expectVisible':
     case 'expectValue':
+    case 'expectAria':
       return 5000;  // default expect timeout.
   }
 }

@@ -1612,8 +1612,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
-   * Whether to run LLM agent for
-   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform):
+   * Whether to run LLM agent for [page.agent](https://playwright.dev/docs/api/class-page#page-agent):
    * - "all" disregards existing cache and performs all actions via LLM
    * - "missing" only performs actions that don't have generated cache actions
    * - "none" does not talk to LLM at all, relies on the cached actions (default)
@@ -2077,8 +2076,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   rootDir: string;
 
   /**
-   * Whether to run LLM agent for
-   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform):
+   * Whether to run LLM agent for [page.agent](https://playwright.dev/docs/api/class-page#page-agent):
    * - "all" disregards existing cache and performs all actions via LLM
    * - "missing" only performs actions that don't have generated cache actions
    * - "none" does not talk to LLM at all, relies on the cached actions (default)
