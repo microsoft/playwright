@@ -17,6 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 import url from 'url';
+import http from 'http';
+import type { AddressInfo } from 'net';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
@@ -3307,7 +3309,21 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       });
     });
 
-    test('sas token is inherited', async ({ runInlineTest, page }) => {
+    test('auth tokens are inherited', async ({ runInlineTest, page, server }) => {
+      const httpServer = http.createServer((req, res) => {
+        const url = new URL(req.url!, `http://${req.headers.host}`);
+        if (url.searchParams.get('token') !== 'foo') {
+          res.writeHead(403);
+          res.end('Forbidden');
+          return;
+        }
+        server.serveFile(req, res, test.info().outputPath('playwright-report', url.pathname));
+      });
+      const port = await new Promise<number>(resolve => {
+        httpServer.listen(0, () => {
+          resolve((httpServer.address() as AddressInfo).port);
+        });
+      });
       const result = await runInlineTest({
         'playwright.config.js': `
           module.exports = { use: { trace: 'on' } };
@@ -3321,22 +3337,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       }, { reporter: 'html,dot' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
       expect(result.exitCode).toBe(0);
       expect(result.passed).toBe(1);
-
-      // TODO: refactor so that there's an actual HTTP server that checks auth
-      await page.route('**/*', async (route, request) => {
-        const url = new URL(request.url());
-        if (url.searchParams.get('token') === 'foo')
-          await route.continue();
-        else
-          await route.fulfill({ status: 403, body: 'Forbidden' });
-      });
-
-      const server = startHtmlReportServer(test.info().outputPath('playwright-report')) as HttpServer;
-      await server.start();
-      const url = new URL(server.urlPrefix('precise'));
-      url.searchParams.set('token', 'foo');
-
-      await page.goto(url.toString());
+      await page.goto(`http://localhost:${port}/index.html?token=foo`);
 
       await page.getByRole('link', { name: 'View Trace' }).click();
       await expect(page.getByTestId('actions-tree')).toContainText('Set content');
@@ -3344,7 +3345,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByText('Source').click();
       await expect(page.getByText('await page.setContent(\'<div>hello</div>\');')).toBeVisible();
 
-      await server.stop();
+      httpServer.close();
     });
   });
 }
