@@ -300,6 +300,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
+    shardWeights: resolveShardWeightsOption(options.shardWeights),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -372,6 +373,18 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   return { current, total };
 }
 
+function resolveShardWeightsOption(shardWeights?: string): ConfigCLIOverrides['shardWeights'] {
+  if (!shardWeights)
+    return undefined;
+
+  return shardWeights.split(':').map(w => {
+    const weight = parseInt(w, 10);
+    if (isNaN(weight) || weight < 0)
+      throw new Error(`--shard-weights "${shardWeights}" weights must be non-negative numbers`);
+    return weight;
+  });
+}
+
 function resolveReporter(id: string) {
   if (builtInReporters.includes(id as any))
     return id;
@@ -411,6 +424,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--run-agents', { description: `Run agents to generate the code for page.perform` }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
+  ['--shard-weights <weights>', { description: `Weights for each shard, colon-separated, for example "2:1:1" for 3 shards where the first shard should be allocated half of the work` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],
