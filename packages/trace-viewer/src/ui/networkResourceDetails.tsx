@@ -87,6 +87,7 @@ const CopyDropdown: React.FC<{
   sdkLanguage: Language,
   requestBody: RequestBody,
 }> = ({ resource, sdkLanguage, requestBody }) => {
+  const model = useTraceModel();
   const copiedDescription = <><span className='codicon codicon-check' style={{ marginRight: '5px' }} /> Copied </>;
   const copyAsPlaywright = async () => getAPIRequestCodeGen(sdkLanguage).generatePlaywrightRequestCall(resource.request, requestBody?.text);
   return (
@@ -98,8 +99,8 @@ const CopyDropdown: React.FC<{
       </ToolbarButton>
 
       <div className='copy-request-dropdown-menu'>
-        <CopyToClipboardTextButton description='Copy as cURL' copiedDescription={copiedDescription} value={() => generateCurlCommand(resource)}/>
-        <CopyToClipboardTextButton description='Copy as Fetch' copiedDescription={copiedDescription} value={() => generateFetchCall(resource)}/>
+        <CopyToClipboardTextButton description='Copy as cURL' copiedDescription={copiedDescription} value={() => generateCurlCommand(model, resource)}/>
+        <CopyToClipboardTextButton description='Copy as Fetch' copiedDescription={copiedDescription} value={() => generateFetchCall(model, resource)}/>
         <CopyToClipboardTextButton description='Copy as Playwright' copiedDescription={copiedDescription} value={copyAsPlaywright}/>
       </div>
     </div>
