@@ -39,20 +39,21 @@ function transformAssetLinks(html: string, ctx: IndexHtmlTransformContext): stri
   ].map(f => `./${f}`);
 
   function assetScript(assets: [tag: string, attrs: Record<string, string | boolean>][], dynamicAssets: string[]) {
-    const search = window.location.search;
-    if (!search)
+    const search = new URLSearchParams(window.location.search);
+    search.delete('trace');
+    if (search.size === 0)
       return;
 
     const importMap: Record<string, string> = {};
     for (const asset of dynamicAssets)
-      importMap[asset] = asset + search;
+      importMap[asset] = asset + '?' + search.toString();
 
     for (const [tag, attrs] of assets) {
       const el = document.createElement(tag);
       for (const key in attrs) {
         let value = attrs[key];
         if ((key === 'src' || key === 'href')) {
-          value += search;
+          value += '?' + search.toString();
           importMap[key] = '' + value;
         }
         if (value === true)
