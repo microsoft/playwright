@@ -47,7 +47,7 @@ Without the fullyParallel setting, Playwright Test defaults to file-level granul
 
 ## Rebalancing Shards
 
-```
+```js
 npx playwright test --shard=1/4 --shard-weights=26:24:25:25
 ```
 
