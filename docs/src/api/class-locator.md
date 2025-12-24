@@ -2547,7 +2547,7 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 ## method: Locator.toString
 * since: v1.57
 * langs: js
-- returns: <[String]>
+- returns: <[string]>
 
 Returns a human-readable representation of the locator, using the [`method: Locator.description`] if one exists; otherwise, it generates a string based on the locator's selector.
 
