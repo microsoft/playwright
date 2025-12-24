@@ -1612,10 +1612,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
-   * Run agents to generate the code for
-   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and similar.
+   * Whether to run LLM agent for
+   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform):
+   * - "all" disregards existing cache and performs all actions via LLM
+   * - "missing" only performs actions that don't have generated cache actions
+   * - "none" does not talk to LLM at all, relies on the cached actions (default)
    */
-  runAgents?: boolean;
+  runAgents?: "all"|"missing"|"none";
 
   /**
    * Shard tests and execute only the selected shard. Specify in the one-based form like `{ total: 5, current: 2 }`.
@@ -2074,10 +2077,13 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   rootDir: string;
 
   /**
-   * Run agents to generate the code for
-   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and similar.
+   * Whether to run LLM agent for
+   * [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform):
+   * - "all" disregards existing cache and performs all actions via LLM
+   * - "missing" only performs actions that don't have generated cache actions
+   * - "none" does not talk to LLM at all, relies on the cached actions (default)
    */
-  runAgents: boolean;
+  runAgents: "all"|"missing"|"none";
 
   /**
    * See [testConfig.shard](https://playwright.dev/docs/api/class-testconfig#test-config-shard).
@@ -6952,7 +6958,7 @@ export type Agent = {
   cachePathTemplate?: string;
   maxTurns?: number;
   maxTokens?: number;
-  runAgents?: boolean;
+  runAgents?: 'all' | 'missing' | 'none';
   secrets?: { [key: string]: string };
 };
 

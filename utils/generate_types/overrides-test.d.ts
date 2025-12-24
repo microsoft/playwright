@@ -271,7 +271,7 @@ export type Agent = {
   cachePathTemplate?: string;
   maxTurns?: number;
   maxTokens?: number;
-  runAgents?: boolean;
+  runAgents?: 'all' | 'missing' | 'none';
   secrets?: { [key: string]: string };
 };
 
