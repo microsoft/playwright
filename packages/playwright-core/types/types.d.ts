@@ -12647,7 +12647,7 @@ export interface Locator {
   /**
    * Returns a human-readable representation of the locator, using the
    * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
-   * otherwise, it generates a string based on the locator’s selector.
+   * otherwise, it generates a string based on the locator's selector.
    */
   toString(): string;
   /**
