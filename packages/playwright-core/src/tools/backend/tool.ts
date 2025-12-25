@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { z } from 'zod';
+import { z } from '../../mcpBundle';
 import type { Context } from './context';
 import type * as playwright from '../../..';
 import type { Tab } from './tab';
@@ -67,11 +67,24 @@ export type TabTool<Input extends z.Schema = z.Schema> = {
   handle: (tab: Tab, params: z.output<Input>, response: Response) => Promise<void>;
 };
 
-export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Tool<Input> {
+const tabIdSchema = z.string().optional().describe('Tab ID to target a specific tab, obtained from browser_tabs({ action: "new" }).');
+
+export function defineTabTool<Input extends z.ZodObject<z.ZodRawShape>>(tool: TabTool<Input>): Tool<Input> {
+  const inputSchema = tool.schema.inputSchema.extend({ tabId: tabIdSchema }) as unknown as Input;
   return {
     ...tool,
+    schema: { ...tool.schema, inputSchema },
     handle: async (context, params, response) => {
-      const tab = await context.ensureTab();
+      const tabId = (params as { tabId?: string }).tabId;
+      let tab: Tab;
+      if (tabId) {
+        const found = context.tabById(tabId);
+        if (!found)
+          throw new Error(`Tab "${tabId}" not found`);
+        tab = found;
+      } else {
+        tab = await context.ensureTab();
+      }
       const modalStates = tab.modalStates().map(state => state.type);
       if (tool.clearsModalState && !modalStates.includes(tool.clearsModalState))
         response.addError(`Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.`);

@@ -90,6 +90,7 @@ type TabSnapshot = {
 };
 
 export class Tab extends EventEmitter<TabEventsInterface> {
+  readonly tabId: string;
   readonly context: Context;
   readonly page: playwright.Page;
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
@@ -108,6 +109,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
+    this.tabId = Math.random().toString(36).slice(2, 8);
     this.context = context;
     this.page = page;
     this._onPageClose = onPageClose;

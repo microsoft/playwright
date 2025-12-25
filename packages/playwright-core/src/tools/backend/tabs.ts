@@ -39,7 +39,8 @@ const browserTabs = defineTool({
         break;
       }
       case 'new': {
-        await context.newTab();
+        const tab = await context.newTab();
+        response.addTextResult(`tabId: ${tab.tabId}`);
         break;
       }
       case 'close': {

@@ -127,6 +127,66 @@ test('close tab', async ({ client }) => {
   });
 });
 
+test('new tab action returns tabId', async ({ client }) => {
+  const result = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new' },
+  });
+  const text = result.content[0].text;
+  expect(text).toMatch(/tabId: [a-z0-9]+/);
+});
+
+test('route tool call to specific tab using tabId', async ({ client }) => {
+  // Open tab A, navigate to page A
+  const tabAResult = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new' },
+  });
+  const tabAId = tabAResult.content[0].text.match(/tabId: ([a-z0-9]+)/)?.[1]!;
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<title>Tab A</title>' },
+  });
+
+  // Open tab B, navigate to page B (tab B is now current)
+  const tabBResult = await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new' },
+  });
+  const tabBId = tabBResult.content[0].text.match(/tabId: ([a-z0-9]+)/)?.[1]!;
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<title>Tab B</title>' },
+  });
+
+  // Evaluate on tab A using its tabId — current tab is still tab B
+  const evalResult = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { expression: 'document.title', tabId: tabAId },
+  });
+  expect(evalResult.content[0].text).toContain('Tab A');
+
+  // Evaluate on tab B using its tabId
+  const evalResultB = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { expression: 'document.title', tabId: tabBId },
+  });
+  expect(evalResultB.content[0].text).toContain('Tab B');
+});
+
+test('error on unknown tabId', async ({ client }) => {
+  await client.callTool({
+    name: 'browser_tabs',
+    arguments: { action: 'new' },
+  });
+  const result = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { expression: 'document.title', tabId: 'notexist' },
+  });
+  expect(result.isError).toBe(true);
+  expect(result.content[0].text).toContain('Tab "notexist" not found');
+});
+
 test('reuse first tab when navigating', async ({ startClient, cdpServer, server }) => {
   const browserContext = await cdpServer.start();
   const pages = browserContext.pages();
