@@ -200,6 +200,7 @@ export interface Locator {
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  toString(): string;
 }
 
 export interface BrowserType<Unused = {}> {
