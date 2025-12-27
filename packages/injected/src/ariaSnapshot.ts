@@ -16,10 +16,10 @@
 
 import * as aria from '@isomorphic/ariaSnapshot';
 import { escapeRegExp, longestCommonSubstring, normalizeWhiteSpace } from '@isomorphic/stringUtils';
+import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from '@isomorphic/yaml';
 
 import { computeBox, getElementComputedStyle, isElementVisible } from './domUtils';
 import * as roleUtils from './roleUtils';
-import { yamlEscapeKeyIfNeeded, yamlEscapeValueIfNeeded } from './yaml';
 
 export type AriaSnapshot = {
   root: aria.AriaNode;

@@ -1,0 +1,429 @@
+{
+  "\"Clear completed\" button appears": {
+    "timestamp": 1766802099161,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "Assert that the 'Clear completed' button appears on the page as expected."
+      }
+    ]
+  },
+  "Add \"Buy groceries\" todo item": {
+    "timestamp": 1766802061537,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');",
+        "intent": "Add 'Buy groceries' as a new todo item in the textbox for todo entry."
+      }
+    ]
+  },
+  "Checkbox becomes checked": {
+    "timestamp": 1766802076871,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: true });",
+        "intent": "Verify that the checkbox is checked to confirm expectation."
+      }
+    ]
+  },
+  "Click the checkbox next to \"Buy groceries\"": {
+    "timestamp": 1766802068960,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();",
+        "intent": "Click the checkbox to mark 'Buy groceries' as complete."
+      }
+    ]
+  },
+  "Counter shows \"0 items left\"": {
+    "timestamp": 1766802091992,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "code": "await expect(page.getByText('0 items left')).toBeVisible();",
+        "intent": "Verify that the counter displays '0 items left' as expected for the TodoMVC demo."
+      }
+    ]
+  },
+  "Delete button becomes visible on hover": {
+    "timestamp": 1766802106350,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Delete\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();",
+        "intent": "Verify that the Delete button becomes visible when hovering over a todo."
+      }
+    ]
+  },
+  "Todo text may show visual indication of completion (strikethrough or style change)": {
+    "timestamp": 1766802084276,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Buy groceries\"i",
+        "code": "await expect(page.getByText('Buy groceries')).toBeVisible();",
+        "intent": "Assert that the todo text visually indicates completion, such as strikethrough or style change. Look for the text of the completed todo."
+      }
+    ]
+  },
+  "\"Clear completed\" button disappears": {
+    "timestamp": 1766802165237,
+    "actions": []
+  },
+  "Checkbox becomes unchecked": {
+    "timestamp": 1766802148793,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: false });",
+        "intent": "Verify that the 'Toggle Todo' checkbox becomes unchecked as expected."
+      }
+    ]
+  },
+  "Click the checkbox again to uncomplete it": {
+    "timestamp": 1766802141514,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();",
+        "intent": "Click the checked checkbox to uncomplete the todo item."
+      }
+    ]
+  },
+  "Click the checkbox to complete it": {
+    "timestamp": 1766802134409,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();",
+        "intent": "Click the checkbox to complete the todo item as requested."
+      }
+    ]
+  },
+  "Counter shows \"1 item left\"": {
+    "timestamp": 1766802163512,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "Verify that the counter displays '1 item left' as expected."
+      }
+    ]
+  },
+  "Todo returns to active state": {
+    "timestamp": 1766802156218,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"item left\"i",
+        "code": "await expect(page.getByText('item left')).toBeVisible();",
+        "intent": "Verify that a todo has returned to the active state by checking for the presence of the text 'item left' indicating active items."
+      }
+    ]
+  },
+  "\"Mark all as complete\" checkbox is checked": {
+    "timestamp": 1766802233553,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('checkbox', { name: '❯Mark all as complete' })).toBeChecked({ checked: true });",
+        "intent": "Verify that the 'Mark all as complete' checkbox is checked to meet the expected condition."
+      }
+    ]
+  },
+  "Add \"Read a book\" todo item": {
+    "timestamp": 1766802181553,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Read a book",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Read a book');\nawait page.keyboard.press('Enter');",
+        "intent": "Add a new todo item named 'Read a book' by typing in the input box."
+      }
+    ]
+  },
+  "Add \"Walk the dog\" todo item": {
+    "timestamp": 1766802173245,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Walk the dog",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Walk the dog');\nawait page.keyboard.press('Enter');",
+        "intent": "Add a todo item by typing 'Walk the dog' into the new todo textbox and submitting."
+      }
+    ]
+  },
+  "All individual checkboxes are checked": {
+    "timestamp": 1766802226355,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that the first individual checkbox is checked.\nVerify that the second individual checkbox is checked.\nVerify that the third individual checkbox is checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Walk the dog\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Walk the dog' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that the first individual checkbox is checked.\nVerify that the second individual checkbox is checked.\nVerify that the third individual checkbox is checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that the first individual checkbox is checked.\nVerify that the second individual checkbox is checked.\nVerify that the third individual checkbox is checked."
+      }
+    ]
+  },
+  "All todos show as completed": {
+    "timestamp": 1766802207563,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Walk the dog\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Walk the dog' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked.\nVerify that all todos show as completed by checking their checkboxes are checked."
+      }
+    ]
+  },
+  "Click the \"Mark all as complete\" checkbox (chevron icon)": {
+    "timestamp": 1766802188654,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();",
+        "intent": "Click the 'Mark all as complete' checkbox (chevron icon) as requested."
+      }
+    ]
+  },
+  "\"Mark all as complete\" checkbox is unchecked": {
+    "timestamp": 1766802294988,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('checkbox', { name: '❯Mark all as complete' })).toBeChecked({ checked: false });",
+        "intent": "Assert that the 'Mark all as complete' checkbox is unchecked to meet the user's expectation."
+      }
+    ]
+  },
+  "All individual checkboxes are unchecked": {
+    "timestamp": 1766802287373,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Check that the checkbox for 'Buy groceries' is unchecked.\nCheck that the checkbox for 'Walk the dog' is unchecked.\nCheck that the checkbox for 'Read a book' is unchecked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Walk the dog\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Walk the dog' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Check that the checkbox for 'Buy groceries' is unchecked.\nCheck that the checkbox for 'Walk the dog' is unchecked.\nCheck that the checkbox for 'Read a book' is unchecked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Check that the checkbox for 'Buy groceries' is unchecked.\nCheck that the checkbox for 'Walk the dog' is unchecked.\nCheck that the checkbox for 'Read a book' is unchecked."
+      }
+    ]
+  },
+  "All todos return to active state": {
+    "timestamp": 1766802268369,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Assert that 'Buy groceries' todo is active, so its checkbox should be unchecked.\nAssert that 'Walk the dog' todo is active, so its checkbox should be unchecked.\nAssert that 'Read a book' todo is active, so its checkbox should be unchecked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Walk the dog\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Walk the dog' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Assert that 'Buy groceries' todo is active, so its checkbox should be unchecked.\nAssert that 'Walk the dog' todo is active, so its checkbox should be unchecked.\nAssert that 'Read a book' todo is active, so its checkbox should be unchecked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });",
+        "intent": "Assert that 'Buy groceries' todo is active, so its checkbox should be unchecked.\nAssert that 'Walk the dog' todo is active, so its checkbox should be unchecked.\nAssert that 'Read a book' todo is active, so its checkbox should be unchecked."
+      }
+    ]
+  },
+  "Click the \"Mark all as complete\" checkbox again": {
+    "timestamp": 1766802249252,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();",
+        "intent": "Click the 'Mark all as complete' checkbox again to toggle its state."
+      }
+    ]
+  },
+  "Click the \"Mark all as complete\" checkbox to complete all": {
+    "timestamp": 1766802241875,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();",
+        "intent": "Click the 'Mark all as complete' checkbox to complete all todos."
+      }
+    ]
+  },
+  "Counter shows \"3 items left\"": {
+    "timestamp": 1766802302683,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"3 items left\"i",
+        "code": "await expect(page.getByText('3 items left')).toBeVisible();",
+        "intent": "Verify the counter displays '3 items left' as expected for remaining todos."
+      }
+    ]
+  },
+  "Both selected todos show as completed": {
+    "timestamp": 1766802736844,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify 'Buy groceries' todo is shown as completed.\nVerify 'Read a book' todo is shown as completed."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Verify 'Buy groceries' todo is shown as completed.\nVerify 'Read a book' todo is shown as completed."
+      }
+    ]
+  },
+  "click buy groceries with multiple todos": {
+    "timestamp": 1766802714652,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();",
+        "intent": "Check the checkbox next to the 'Buy groceries' task."
+      }
+    ]
+  },
+  "Click the checkbox next to \"Read a book\"": {
+    "timestamp": 1766802722604,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo').click();",
+        "intent": "Click the checkbox next to 'Read a book' to mark it as complete."
+      }
+    ]
+  },
+  "Counter shows \"1 item left\" (only \"Walk the dog\" remaining)": {
+    "timestamp": 1766802744277,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "Verify that the counter shows '1 item left' to confirm the correct number of todos remaining."
+      }
+    ]
+  },
+  "One todo remains active": {
+    "timestamp": 1766802751886,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "Check that only one todo is left active by confirming the text '1 item left' is visible on the page."
+      }
+    ]
+  }
+}

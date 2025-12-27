@@ -77,7 +77,24 @@ export type ExpectValue = {
   value: string;
 };
 
-export type Action = ClickAction | DragAction | HoverAction | SelectOptionAction | PressAction | PressSequentiallyAction | FillAction | SetChecked | ExpectVisible | ExpectValue;
+export type ExpectAria = {
+  method: 'expectAria';
+  template: string;
+};
+
+export type Action =
+  | ClickAction
+  | DragAction
+  | HoverAction
+  | SelectOptionAction
+  | PressAction
+  | PressSequentiallyAction
+  | FillAction
+  | SetChecked
+  | ExpectVisible
+  | ExpectValue
+  | ExpectAria;
+
 export type ActionWithCode = Action & {
   code: string;
   intent?: string;

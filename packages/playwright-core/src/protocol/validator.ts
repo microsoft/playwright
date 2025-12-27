@@ -1527,23 +1527,32 @@ scheme.PageUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
-scheme.PagePerformParams = tObject({
+scheme.PageAgentPerformParams = tObject({
   task: tString,
   key: tOptional(tString),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
 });
-scheme.PagePerformResult = tObject({
+scheme.PageAgentPerformResult = tObject({
   turns: tInt,
   inputTokens: tInt,
   outputTokens: tInt,
 });
-scheme.PageExtractParams = tObject({
+scheme.PageAgentExpectParams = tObject({
+  expectation: tString,
+  key: tOptional(tString),
+  maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
+});
+scheme.PageAgentExpectResult = tOptional(tObject({}));
+scheme.PageAgentExtractParams = tObject({
   query: tString,
   schema: tAny,
+  key: tOptional(tString),
   maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
 });
-scheme.PageExtractResult = tObject({
+scheme.PageAgentExtractResult = tObject({
   result: tAny,
   turns: tInt,
   inputTokens: tInt,
