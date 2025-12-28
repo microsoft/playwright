@@ -33,6 +33,8 @@ const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js'
 const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = bundle.PingRequestSchema;
 const Loop: typeof import('@lowire/loop').Loop = bundle.Loop;
 const z: typeof import('zod') = bundle.z;
+const markdownify: typeof import('@wqyjh/markdownify').markdownify = bundle.markdownify;
+const MarkdownConverter: typeof import('@wqyjh/markdownify').MarkdownConverter = bundle.MarkdownConverter;
 
 export {
   zodToJsonSchema,
@@ -51,4 +53,6 @@ export {
   ProgressNotificationSchema,
   Loop,
   z,
+  markdownify,
+  MarkdownConverter,
 };

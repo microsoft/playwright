@@ -27,6 +27,7 @@ export const requestDebug = debug('pw:mcp:request');
 export class Response {
   private _result: string[] = [];
   private _code: string[] = [];
+  private _markdown: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
   private _files: { fileName: string, title: string }[] = [];
   private _context: Context;
@@ -69,6 +70,14 @@ export class Response {
 
   code() {
     return this._code.join('\n');
+  }
+
+  addMarkdown(markdown: string) {
+    this._markdown.push(markdown);
+  }
+
+  markdown() {
+    return this._markdown.join('\n');
   }
 
   addImage(image: { contentType: string, data: Buffer }) {
@@ -140,6 +149,10 @@ export class Response {
     // Add code if it exists.
     if (this._code.length)
       renderedResponse.code.push(...this._code);
+
+    // Add markdown if it exists.
+    if (this._markdown.length)
+      renderedResponse.markdown.push(...this._markdown);
 
     // List browser tabs.
     if (this._includeSnapshot !== 'none' || this._includeTabs) {
@@ -265,13 +278,15 @@ export class RenderedResponse {
   readonly updates: { category: 'console' | 'downloads' | 'files', content: string }[] = [];
   readonly results: string[] = [];
   readonly code: string[] = [];
+  readonly markdown: string[] = [];
 
-  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads' | 'files', content: string }[], results: string[], code: string[] }) {
+  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads' | 'files', content: string }[], results: string[], code: string[], markdown: string[] }) {
     if (copy) {
       this.states = copy.states;
       this.updates = copy.updates;
       this.results = copy.results;
       this.code = copy.code;
+      this.markdown = copy.markdown;
     }
   }
 
@@ -281,6 +296,8 @@ export class RenderedResponse {
       text.push(`### Result\n${this.results.join('\n')}\n`);
     if (this.code.length)
       text.push(`### Ran Playwright code\n${this.code.join('\n')}\n`);
+    if (this.markdown.length)
+      text.push(`### Page Markdown\n${this.markdown.join('\n')}\n`);
 
     for (const { category, content } of this.updates) {
       if (filter && !filter.categories.includes(category))
@@ -325,7 +342,8 @@ export class RenderedResponse {
   asMeta() {
     const codeUpdate = this.code.length ? { category: 'code', content: this.code.join('\n') } : undefined;
     const resultUpdate = this.results.length ? { category: 'result', content: this.results.join('\n') } : undefined;
-    const updates = [resultUpdate, codeUpdate, ...this.updates].filter(Boolean);
+    const markdownUpdate = this.markdown.length ? { category: 'markdown', content: this.markdown.join('\n') } : undefined;
+    const updates = [resultUpdate, codeUpdate, markdownUpdate, ...this.updates].filter(Boolean);
     return {
       'dev.lowire/history': updates,
       'dev.lowire/state': { ...this.states },
@@ -342,8 +360,9 @@ export class RenderedResponse {
     const updates = this.updates.map(update => ({ ...update, content: redactText(update.content) }));
     const results = this.results.map(result => redactText(result));
     const code = this.code.map(code => redactText(code));
+    const markdown = this.markdown.map(md => redactText(md));
     const states = Object.fromEntries(Object.entries(this.states).map(([key, value]) => [key, redactText(value)]));
-    return new RenderedResponse({ states, updates, results, code });
+    return new RenderedResponse({ states, updates, results, code, markdown });
   }
 }
 
@@ -372,6 +391,7 @@ export function parseResponse(response: CallToolResult) {
   const sections = parseSections(text);
   const result = sections.get('Result');
   const code = sections.get('Ran Playwright code');
+  const markdown = sections.get('Page Markdown');
   const tabs = sections.get('Open tabs');
   const pageState = sections.get('Page state');
   const consoleMessages = sections.get('New console messages');
@@ -385,6 +405,7 @@ export function parseResponse(response: CallToolResult) {
   return {
     result,
     code: codeNoFrame,
+    markdown,
     tabs,
     pageState,
     consoleMessages,

@@ -20,6 +20,7 @@ import dialogs from './tools/dialogs';
 import evaluate from './tools/evaluate';
 import files from './tools/files';
 import form from './tools/form';
+import fullPage from './tools/fullPage';
 import install from './tools/install';
 import keyboard from './tools/keyboard';
 import mouse from './tools/mouse';
@@ -44,8 +45,10 @@ export const browserTools: Tool<any>[] = [
   ...evaluate,
   ...files,
   ...form,
+  ...fullPage,
   ...install,
   ...keyboard,
+  ...mouse,
   ...navigate,
   ...network,
   ...mouse,

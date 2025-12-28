@@ -5,6 +5,7 @@
   "dependencies": {
     "@lowire/loop": "^0.0.12",
     "@modelcontextprotocol/sdk": "^1.24.0",
+    "@wqyjh/markdownify": "^1.2.0",
     "zod": "^3.25.76",
     "zod-to-json-schema": "^3.24.6"
   }
