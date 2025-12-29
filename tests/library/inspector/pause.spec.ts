@@ -16,9 +16,8 @@
 
 import type { Page } from 'playwright-core';
 import { test as it, expect, Recorder } from './inspectorTest';
-import { waitForTestLog } from '../../config/utils';
-import { roundBox } from '../../page/pageTest';
-import type { BoundingBox } from '../../page/pageTest';
+import { roundBox, waitForTestLog } from '../../config/utils';
+import type { BoundingBox } from '../../config/utils';
 import { pauseHelper } from './pause-helper';
 
 it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
