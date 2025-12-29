@@ -7275,12 +7275,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       uuid: string;
       error: string;
     }
-    export type screencastFinishedPayload = {
-      /**
-       * Unique identifier of the screencast.
-       */
-      screencastId: Screencast.ScreencastId;
-    }
     
     export type enableParameters = {
     }
@@ -8447,31 +8441,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     }
     
     /**
-     * Starts recoring video to speified file.
-     */
-    export type startVideoParameters = {
-      /**
-       * Output file location.
-       */
-      file: string;
-      width: number;
-      height: number;
-      toolbarHeight: number;
-    }
-    export type startVideoReturnValue = {
-      /**
-       * Unique identifier of the screencast.
-       */
-      screencastId: ScreencastId;
-    }
-    /**
-     * Stops recoding video. Returns after the file has been closed.
-     */
-    export type stopVideoParameters = {
-    }
-    export type stopVideoReturnValue = {
-    }
-    /**
      * Starts screencast.
      */
     export type startScreencastParameters = {
@@ -9045,7 +9014,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Playwright.downloadCreated": Playwright.downloadCreatedPayload;
     "Playwright.downloadFilenameSuggested": Playwright.downloadFilenameSuggestedPayload;
     "Playwright.downloadFinished": Playwright.downloadFinishedPayload;
-    "Playwright.screencastFinished": Playwright.screencastFinishedPayload;
     "Runtime.executionContextCreated": Runtime.executionContextCreatedPayload;
     "Runtime.bindingCalled": Runtime.bindingCalledPayload;
     "Screencast.screencastFrame": Screencast.screencastFramePayload;
@@ -9173,7 +9141,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     ["Playwright.downloadCreated"]: [Playwright.downloadCreatedPayload];
     ["Playwright.downloadFilenameSuggested"]: [Playwright.downloadFilenameSuggestedPayload];
     ["Playwright.downloadFinished"]: [Playwright.downloadFinishedPayload];
-    ["Playwright.screencastFinished"]: [Playwright.screencastFinishedPayload];
     ["Runtime.executionContextCreated"]: [Runtime.executionContextCreatedPayload];
     ["Runtime.bindingCalled"]: [Runtime.bindingCalledPayload];
     ["Screencast.screencastFrame"]: [Screencast.screencastFramePayload];
@@ -9473,8 +9440,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerParameters;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerParameters;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksParameters;
-    "Screencast.startVideo": Screencast.startVideoParameters;
-    "Screencast.stopVideo": Screencast.stopVideoParameters;
     "Screencast.startScreencast": Screencast.startScreencastParameters;
     "Screencast.stopScreencast": Screencast.stopScreencastParameters;
     "Screencast.screencastFrameAck": Screencast.screencastFrameAckParameters;
@@ -9778,8 +9743,6 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Runtime.enableControlFlowProfiler": Runtime.enableControlFlowProfilerReturnValue;
     "Runtime.disableControlFlowProfiler": Runtime.disableControlFlowProfilerReturnValue;
     "Runtime.getBasicBlocks": Runtime.getBasicBlocksReturnValue;
-    "Screencast.startVideo": Screencast.startVideoReturnValue;
-    "Screencast.stopVideo": Screencast.stopVideoReturnValue;
     "Screencast.startScreencast": Screencast.startScreencastReturnValue;
     "Screencast.stopScreencast": Screencast.stopScreencastReturnValue;
     "Screencast.screencastFrameAck": Screencast.screencastFrameAckReturnValue;
