@@ -21,6 +21,7 @@ import { ManualPromise, SerializedFS, calculateSha1, createGuid, getPlaywrightVe
 import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
 import { filteredStackTrace } from '../util';
+import { getSourceContentFromSourceMaps } from '../transform/compilationCache';
 
 import type { TestStepCategory, TestInfoImpl } from './testInfo';
 import type { PlaywrightWorkerOptions, TestInfo, TraceMode } from '../../types/test';
@@ -194,9 +195,18 @@ export class TestTracing {
         }
       }
       for (const sourceFile of sourceFiles) {
-        await fs.promises.readFile(sourceFile, 'utf8').then(source => {
-          zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
-        }).catch(() => {});
+        // First try to get content from sourcemap's sourcesContent
+        let source = getSourceContentFromSourceMaps(sourceFile);
+        // Fall back to reading from disk
+        if (source === undefined) {
+          try {
+            source = await fs.promises.readFile(sourceFile, 'utf8');
+          } catch {
+            // File not readable, skip it
+            continue;
+          }
+        }
+        zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
       }
     }
 

@@ -20,7 +20,8 @@ import path from 'path';
 
 import { calculateSha1 } from 'playwright-core/lib/utils';
 import { isWorkerProcess } from '../common/globals';
-import { sourceMapSupport } from '../utilsBundle';
+import { RawSourceMap,
+sourceMapSupport } from '../utilsBundle';
 
 export type MemoryCache = {
   codePath: string;
@@ -60,6 +61,7 @@ export const cacheDir = process.env.PWTEST_CACHE_DIR || (() => {
 })();
 
 const sourceMaps: Map<string, string> = new Map();
+const fileContentCache = new Map<string, string>();
 const memoryCache = new Map<string, MemoryCache>();
 // Dependencies resolved by the loader.
 const fileDependencies = new Map<string, Set<string>>();
@@ -77,8 +79,15 @@ export function installSourceMapSupport() {
         return null;
       const sourceMapPath = sourceMaps.get(source)!;
       try {
+        const map: RawSourceMap = JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8'));
+        map.sources.forEach((s: string, ind: number) => {
+          s = path.resolve(path.dirname(source), s);
+          if (map.sourcesContent?.[ind]) {
+            fileContentCache.set(s, map.sourcesContent[ind]);
+          }
+        })
         return {
-          map: JSON.parse(fs.readFileSync(sourceMapPath, 'utf-8')),
+          map,
           url: source,
         };
       } catch {
@@ -86,6 +95,9 @@ export function installSourceMapSupport() {
       }
     }
   });
+}
+export function getSourceContentFromSourceMaps(source: string) {
+  return fileContentCache.get(source);
 }
 
 function _innerAddToCompilationCacheAndSerialize(filename: string, entry: MemoryCache) {
