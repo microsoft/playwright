@@ -160,6 +160,11 @@ test('should run on double click', async ({ runUITest }) => {
             - button "Watch"
           - treeitem "[icon-circle-outline] fails"
   `);
+
+  const allMessages = await page.consoleMessages();
+  const messages = allMessages.filter(m => !m.location().url.includes('trace/sha1/src'));
+  expect(messages).toHaveLength(0);
+  expect(await page.pageErrors()).toHaveLength(0);
 });
 
 test('should run on Enter', async ({ runUITest }) => {
