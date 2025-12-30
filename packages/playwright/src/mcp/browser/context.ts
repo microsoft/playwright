@@ -240,7 +240,7 @@ export class Context {
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
     if (!this.config.allowUnrestrictedFileAccess) {
-      (browserContext as any)._setAllowedProtocols(['http:', 'https:']);
+      (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
       (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
     }
     await this._setupRequestInterception(browserContext);

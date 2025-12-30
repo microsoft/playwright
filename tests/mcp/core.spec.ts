@@ -43,6 +43,34 @@ test('browser_navigate blocks file:// URLs by default', async ({ client }) => {
   });
 });
 
+test('browser_navigate allows about:, data: and javascript: protocols', async ({ client, server }) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'about:blank' },
+  })).toHaveResponse({
+    code: `await page.goto('about:blank');`,
+    pageState: `- Page URL: about:blank
+- Page Title: 
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\``,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<h1>Hello</h1>' },
+  })).toHaveResponse({
+    code: `await page.goto('data:text/html,<h1>Hello</h1>');`,
+    pageState: `- Page URL: data:text/html,<h1>Hello</h1>
+- Page Title: 
+- Page Snapshot:
+\`\`\`yaml
+- heading \"Hello\" [level=1] [ref=e2]
+\`\`\``,
+  });
+});
+
 test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess is true', async ({ startClient }, testInfo) => {
   const rootDir = testInfo.outputPath();
   const fileOutsideRoot = testInfo.outputPath('test.txt');
