@@ -28,6 +28,7 @@ import { dateAsFileName } from './tools/utils';
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
 import type { BrowserContextFactory, BrowserContextFactoryResult } from './browserContextFactory';
+import type { ElectronContextFactory } from './electronContextFactory';
 import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../../../playwright-core/src/client/tracing';
@@ -65,6 +66,16 @@ export class Context {
     this._clientInfo = options.clientInfo;
     testDebug('create context');
     Context._allContexts.add(this);
+  }
+
+  /**
+   * Get the ElectronContextFactory if the browser is Electron.
+   * Returns undefined for non-Electron browsers.
+   */
+  electronContextFactory(): ElectronContextFactory | undefined {
+    if (this.config.browser.browserName !== 'electron')
+      return undefined;
+    return this._browserContextFactory as ElectronContextFactory;
   }
 
   static async disposeAll() {

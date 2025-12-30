@@ -71,6 +71,10 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
+      .option('--electron-app <path>', 'path to the Electron app main script or directory (implies --browser=electron)')
+      .option('--electron-cwd <path>', 'working directory for the Electron application')
+      .option('--electron-executable <path>', 'path to the Electron executable')
+      .option('--electron-timeout <timeout>', 'timeout in milliseconds for launching the Electron app', numberParser)
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .action(async options => {
         setupExitWatchdog();

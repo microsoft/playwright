@@ -68,6 +68,11 @@ export type CLIOptions = {
   userAgent?: string;
   userDataDir?: string;
   viewportSize?: ViewportSize;
+  // Electron-specific options
+  electronApp?: string;
+  electronCwd?: string;
+  electronExecutable?: string;
+  electronTimeout?: number;
 };
 
 export const defaultConfig: FullConfig = {
@@ -104,7 +109,7 @@ type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
   browser: Omit<BrowserUserConfig, 'browserName'> & {
-    browserName: 'chromium' | 'firefox' | 'webkit';
+    browserName: 'chromium' | 'firefox' | 'webkit' | 'electron';
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
   },
@@ -157,7 +162,7 @@ async function validateConfig(config: FullConfig): Promise<void> {
 }
 
 export function configFromCLIOptions(cliOptions: CLIOptions): Config {
-  let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
+  let browserName: 'chromium' | 'firefox' | 'webkit' | 'electron' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
     case 'chrome':
@@ -178,7 +183,14 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     case 'webkit':
       browserName = 'webkit';
       break;
+    case 'electron':
+      browserName = 'electron';
+      break;
   }
+
+  // If electron app path is provided, assume electron browser
+  if (cliOptions.electronApp && !browserName)
+    browserName = 'electron';
 
   // Launch options
   const launchOptions: playwright.LaunchOptions = {
@@ -222,6 +234,14 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.grantPermissions)
     contextOptions.permissions = cliOptions.grantPermissions;
 
+  // Build electron config if applicable
+  const electronConfig = (browserName === 'electron' || cliOptions.electronApp) ? {
+    args: cliOptions.electronApp ? [cliOptions.electronApp] : undefined,
+    cwd: cliOptions.electronCwd,
+    executablePath: cliOptions.electronExecutable,
+    timeout: cliOptions.electronTimeout,
+  } : undefined;
+
   const result: Config = {
     browser: {
       browserName,
@@ -233,6 +253,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       cdpHeaders: cliOptions.cdpHeader,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
+      electron: electronConfig,
     },
     server: {
       port: cliOptions.port,

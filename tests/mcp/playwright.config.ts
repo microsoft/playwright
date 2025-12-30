@@ -25,6 +25,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env'), quiet: true });
 
 const rootTestDir = path.join(__dirname, '..');
 const testDir = path.join(rootTestDir, 'mcp');
+const electronAppPath = path.join(testDir, 'electron-app');
 const outputDir = path.join(__dirname, '..', '..', 'test-results');
 
 const reporters = () => {
@@ -57,6 +58,7 @@ export default defineConfig<TestOptions>({
     { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
     { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
     { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
+    { name: 'electron', use: { mcpBrowser: 'electron', mcpArgs: [`--electron-app=${electronAppPath}`, '--caps=electron'] }, metadata: { ...metadata, browserName: 'electron' }, testDir, testMatch: 'electron.spec.ts' },
     ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
   ],
 });

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<!--
+  Copyright (c) Microsoft Corporation.
+  Licensed under the Apache License, Version 2.0 (the "License").
+-->
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'">
+  <title>Test Electron App</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 { color: #333; }
+    button {
+      padding: 10px 20px;
+      margin: 5px;
+      cursor: pointer;
+      background: #4a90d9;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+    button:hover { background: #357abd; }
+    #output {
+      margin-top: 20px;
+      padding: 10px;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      min-height: 50px;
+    }
+    input {
+      padding: 8px;
+      margin: 5px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hello Electron</h1>
+  <p>This is a test Electron application for MCP testing.</p>
+
+  <div>
+    <button id="testButton">Test Button</button>
+    <button id="getAppName">Get App Name</button>
+    <input type="text" id="textInput" placeholder="Type something...">
+  </div>
+
+  <div id="output">Output will appear here</div>
+
+  <script>
+    const output = document.getElementById('output');
+
+    document.getElementById('testButton').addEventListener('click', () => {
+      output.textContent = 'Button clicked at ' + new Date().toISOString();
+    });
+
+    document.getElementById('getAppName').addEventListener('click', async () => {
+      if (window.electronAPI) {
+        const name = await window.electronAPI.getAppName();
+        output.textContent = 'App name: ' + name;
+      } else {
+        output.textContent = 'electronAPI not available';
+      }
+    });
+
+    document.getElementById('textInput').addEventListener('input', (e) => {
+      output.textContent = 'Input: ' + e.target.value;
+    });
+  </script>
+</body>
+</html>

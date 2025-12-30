@@ -16,7 +16,7 @@
 
 import type * as playwright from 'playwright-core';
 
-export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing';
+export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing' | 'electron';
 
 export type Config = {
   /**
@@ -25,8 +25,9 @@ export type Config = {
   browser?: {
     /**
      * The type of browser to use.
+     * Use 'electron' to automate Electron desktop applications.
      */
-    browserName?: 'chromium' | 'firefox' | 'webkit';
+    browserName?: 'chromium' | 'firefox' | 'webkit' | 'electron';
 
     /**
      * Keep the browser profile in memory, do not save it to disk.
@@ -79,6 +80,40 @@ export type Config = {
      * The scripts will be evaluated in every page before any of the page's scripts.
      */
     initScript?: string[];
+
+    /**
+     * Electron-specific configuration options.
+     * Only used when browserName is 'electron'.
+     */
+    electron?: {
+      /**
+       * Path to the Electron executable.
+       * If not specified, uses the electron package from node_modules.
+       */
+      executablePath?: string;
+
+      /**
+       * Arguments to pass to the Electron application.
+       * Typically includes the path to the main script (e.g., ['.'] or ['main.js']).
+       */
+      args?: string[];
+
+      /**
+       * Working directory for the Electron application.
+       */
+      cwd?: string;
+
+      /**
+       * Environment variables to set for the Electron process.
+       */
+      env?: Record<string, string>;
+
+      /**
+       * Timeout in milliseconds for launching the Electron app.
+       * Default is 30000 (30 seconds).
+       */
+      timeout?: number;
+    };
   },
 
   server?: {

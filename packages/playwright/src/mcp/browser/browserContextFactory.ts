@@ -25,12 +25,21 @@ import { startTraceViewerServer } from 'playwright-core/lib/server';
 import { logUnhandledError, testDebug } from '../log';
 import { outputFile, tmpDir } from './config';
 import { firstRootPath } from '../sdk/server';
+import { ElectronContextFactory } from './electronContextFactory';
 
 import type { FullConfig } from './config';
 import type { LaunchOptions, BrowserContextOptions } from '../../../../playwright-core/src/client/types';
 import type { ClientInfo } from '../sdk/server';
 
+type StandardBrowserName = 'chromium' | 'firefox' | 'webkit';
+
+function getBrowserType(browserName: StandardBrowserName): playwright.BrowserType {
+  return playwright[browserName];
+}
+
 export function contextFactory(config: FullConfig): BrowserContextFactory {
+  if (config.browser.browserName === 'electron')
+    return new ElectronContextFactory(config);
   if (config.sharedBrowserContext)
     return SharedContextFactory.create(config);
   if (config.browser.remoteEndpoint)
@@ -126,7 +135,7 @@ class IsolatedContextFactory extends BaseContextFactory {
 
   protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
-    const browserType = playwright[this.config.browser.browserName];
+    const browserType = getBrowserType(this.config.browser.browserName as StandardBrowserName);
     const tracesDir = await computeTracesDir(this.config, clientInfo);
     if (tracesDir && this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
@@ -135,7 +144,7 @@ class IsolatedContextFactory extends BaseContextFactory {
       ...this.config.browser.launchOptions,
       handleSIGINT: false,
       handleSIGTERM: false,
-    }).catch(error => {
+    }).catch((error: Error) => {
       if (error.message.includes('Executable doesn\'t exist'))
         throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
       throw error;
@@ -171,7 +180,7 @@ class RemoteContextFactory extends BaseContextFactory {
     url.searchParams.set('browser', this.config.browser.browserName);
     if (this.config.browser.launchOptions)
       url.searchParams.set('launch-options', JSON.stringify(this.config.browser.launchOptions));
-    return playwright[this.config.browser.browserName].connect(String(url));
+    return getBrowserType(this.config.browser.browserName as StandardBrowserName).connect(String(url));
   }
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
@@ -201,7 +210,7 @@ class PersistentContextFactory implements BrowserContextFactory {
     this._userDataDirs.add(userDataDir);
     testDebug('lock user data dir', userDataDir);
 
-    const browserType = playwright[this.config.browser.browserName];
+    const browserType = getBrowserType(this.config.browser.browserName as StandardBrowserName);
     for (let i = 0; i < 5; i++) {
       const launchOptions: LaunchOptions & BrowserContextOptions = {
         tracesDir,

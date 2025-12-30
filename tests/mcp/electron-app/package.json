@@ -1,0 +1,9 @@
+{
+  "name": "test-electron-app",
+  "version": "1.0.0",
+  "description": "Test Electron app for MCP testing",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron ."
+  }
+}
