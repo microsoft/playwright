@@ -22,7 +22,7 @@ import * as path from 'path';
 import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/server/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
-import { parseTrace, suppressCertificateWarning, rafraf } from '../config/utils';
+import { parseTraceRaw, suppressCertificateWarning, rafraf } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
@@ -658,7 +658,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await context.close();
       await browser.close();
 
-      const { resources } = await parseTrace(testInfo.outputPath('trace1.zip'));
+      const { resources } = await parseTraceRaw(testInfo.outputPath('trace1.zip'));
       const sourceNames = Array.from(resources.keys()).filter(k => k.endsWith('.txt'));
       expect(sourceNames.length).toBe(1);
       const sourceFile = resources.get(sourceNames[0]);

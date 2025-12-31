@@ -213,18 +213,18 @@ test('should record trace', async ({ runInlineTest }) => {
   expect(fs.existsSync(test.info().outputPath('test-results', 'a-pass', 'trace.zip'))).toBe(false);
 
   const trace = await parseTrace(test.info().outputPath('test-results', 'a-fail', 'trace.zip'));
-  expect(trace.titles).toEqual([
+  expect(trace.model.renderActionTree()).toEqual([
     'Before Hooks',
-    'Fixture "context"',
-    'Create context',
-    'Fixture "page"',
-    'Create page',
+    '  Fixture "context"',
+    '    Create context',
+    '  Fixture "page"',
+    '    Create page',
     'Expect "toBe"',
     'After Hooks',
-    'Fixture "page"',
-    'Fixture "context"',
-    'Close context',
+    '  Fixture "page"',
+    '  Fixture "context"',
+    '    Close context',
     'Worker Cleanup',
-    'Fixture "browser"',
+    '  Fixture "browser"',
   ]);
 });

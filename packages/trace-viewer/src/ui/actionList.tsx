@@ -68,24 +68,24 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [itemMap, selectedAction]);
 
   const isError = React.useCallback((item: ActionTreeItem) => {
-    return !!item.action?.error?.message;
+    return !!item.action.error?.message;
   }, []);
 
   const onAccepted = React.useCallback((item: ActionTreeItem) => {
-    return setSelectedTime({ minimum: item.action!.startTime, maximum: item.action!.endTime });
+    return setSelectedTime({ minimum: item.action.startTime, maximum: item.action.endTime });
   }, [setSelectedTime]);
 
   const render = React.useCallback((item: ActionTreeItem) => {
-    const showAttachments = !!revealActionAttachment && !!item.action?.attachments?.length;
-    return renderAction(item.action!, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action!.callId), isLive, showDuration: true, showBadges: true, showAttachments });
+    const showAttachments = !!revealActionAttachment && !!item.action.attachments?.length;
+    return renderAction(item.action, { sdkLanguage, revealConsole, revealActionAttachment: () => revealActionAttachment?.(item.action.callId), isLive, showDuration: true, showBadges: true, showAttachments });
   }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
-    return !selectedTime || !item.action || (item.action!.startTime <= selectedTime.maximum && item.action!.endTime >= selectedTime.minimum);
+    return !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
   }, [selectedTime]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
-    onSelected?.(item.action!);
+    onSelected?.(item.action);
   }, [onSelected]);
 
   const onHighlightedAction = React.useCallback((item: ActionTreeItem | undefined) => {
