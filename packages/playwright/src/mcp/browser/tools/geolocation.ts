@@ -18,7 +18,7 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 
 const setGeolocation = defineTool({
-    capability: 'core',
+    capability: 'geolocation',
 
     schema: {
         name: 'browser_set_geolocation',
@@ -51,7 +51,7 @@ const setGeolocation = defineTool({
 });
 
 const clearGeolocation = defineTool({
-    capability: 'core',
+    capability: 'geolocation',
 
     schema: {
         name: 'browser_clear_geolocation',
