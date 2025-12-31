@@ -20,7 +20,7 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
 import { fileURLToPath } from 'url';
-import path from 'path';
+import os from 'os';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
@@ -274,11 +274,20 @@ function allRootPaths(clientInfo: ClientInfo): string[] {
   const paths: string[] = [];
   for (const root of clientInfo.roots) {
     const url = new URL(root.uri);
-    const rootPath = fileURLToPath(url);
+    let rootPath;
+    try {
+      rootPath = fileURLToPath(url);
+    } catch (e) {
+      // Support WSL paths on Windows.
+      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && os.platform() === 'win32')
+        rootPath = decodeURIComponent(url.pathname);
+    }
     if (!rootPath)
       continue;
-    paths.push(path.resolve(rootPath));
+    paths.push(rootPath);
   }
+  if (paths.length === 0)
+    paths.push(process.cwd());
   return paths;
 }
 

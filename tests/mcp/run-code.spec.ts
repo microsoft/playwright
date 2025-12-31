@@ -89,7 +89,7 @@ test('browser_run_code blocks fetch of file:// URLs by default', async ({ client
       code: `async (page) => { await page.request.get('file:///etc/passwd'); }`,
     },
   })).toHaveResponse({
-    result: expect.stringContaining('Error: apiRequestContext.get: Access to "file:" URL is blocked. Allowed protocols: http:, https:. Attempted URL: file:///etc/passwd'),
+    result: expect.stringContaining('Error: apiRequestContext.get: Access to "file:" URL is blocked. Allowed protocols: http:, https:, about:, data:. Attempted URL: file:///etc/passwd'),
     isError: true,
   });
 });

@@ -218,7 +218,14 @@ test('file upload restricted to roots by default', async ({ startClient, server 
   });
 });
 
-test('file upload is blocked if no roots are configured', async ({ client, server }, testInfo) => {
+test('file upload is restricted to cwd if no roots are configured', async ({ startClient, server }, testInfo) => {
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+
+  const { client } = await startClient({
+    cwd: rootDir,
+  });
+
   server.setContent('/', `<input type="file" />`, 'text/html');
 
   await client.callTool({
@@ -227,6 +234,29 @@ test('file upload is blocked if no roots are configured', async ({ client, serve
   });
 
   // Click on file input to trigger file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  // Create a file inside the root
+  const fileInsideRoot = testInfo.outputPath('workspace', 'inside.txt');
+  await fs.writeFile(fileInsideRoot, 'Inside root');
+
+  // Should succeed - file is inside root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileInsideRoot],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`await fileChooser.setFiles(`),
+  });
+
+  // Click again to open file chooser
   await client.callTool({
     name: 'browser_click',
     arguments: {
@@ -245,7 +275,7 @@ test('file upload is blocked if no roots are configured', async ({ client, serve
     },
   })).toHaveResponse({
     isError: true,
-    result: expect.stringMatching('File access denied: .* is outside allowed roots. Allowed roots: none'),
+    result: expect.stringMatching('File access denied: .* is outside allowed roots. Allowed roots: ' + rootDir.replace(/\\/g, '\\\\')),
   });
 });
 
