@@ -149,3 +149,179 @@ test('navigating to download link emits download', async ({ startClient, server,
     downloads: expect.stringMatching(`- Downloaded file test\.txt to|- Downloading file test\.txt`),
   });
 });
+
+test('file upload restricted to roots by default', async ({ startClient, server }, testInfo) => {
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+
+  const { client } = await startClient({
+    roots: [
+      {
+        name: 'workspace',
+        uri: `file://${rootDir}`,
+      }
+    ],
+  });
+
+  server.setContent('/', `<input type="file" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  // Click on file input to trigger file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  // Create a file inside the root
+  const fileInsideRoot = testInfo.outputPath('workspace', 'inside.txt');
+  await fs.writeFile(fileInsideRoot, 'Inside root');
+
+  // Should succeed - file is inside root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileInsideRoot],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`await fileChooser.setFiles(`),
+  });
+
+  // Click again to open file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  // Create a file outside the root
+  const fileOutsideRoot = testInfo.outputPath('outside.txt');
+  await fs.writeFile(fileOutsideRoot, 'Outside root');
+
+  // Should fail - file is outside root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileOutsideRoot],
+    },
+  })).toHaveResponse({
+    isError: true,
+    result: expect.stringMatching('File access denied: .* is outside allowed roots'),
+  });
+});
+
+test('file upload is restricted to cwd if no roots are configured', async ({ startClient, server }, testInfo) => {
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+
+  const { client } = await startClient({
+    cwd: rootDir,
+  });
+
+  server.setContent('/', `<input type="file" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  // Click on file input to trigger file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  // Create a file inside the root
+  const fileInsideRoot = testInfo.outputPath('workspace', 'inside.txt');
+  await fs.writeFile(fileInsideRoot, 'Inside root');
+
+  // Should succeed - file is inside root
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileInsideRoot],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`await fileChooser.setFiles(`),
+  });
+
+  // Click again to open file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  const fileOutsideRoot = testInfo.outputPath('outside.txt');
+  await fs.writeFile(fileOutsideRoot, 'Outside root');
+
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileOutsideRoot],
+    },
+  })).toHaveResponse({
+    isError: true,
+    result: expect.stringMatching('File access denied: .* is outside allowed roots. Allowed roots: ' + rootDir.replace(/\\/g, '\\\\')),
+  });
+});
+
+test('file upload unrestricted when flag is set', async ({ startClient, server }, testInfo) => {
+  const rootDir = testInfo.outputPath('workspace');
+  await fs.mkdir(rootDir, { recursive: true });
+
+  const { client } = await startClient({
+    config: {
+      allowUnrestrictedFileAccess: true,
+    },
+    roots: [
+      {
+        name: 'workspace',
+        uri: `file://${rootDir}`,
+      }
+    ],
+  });
+
+  server.setContent('/', `<input type="file" />`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  // Click on file input to trigger file chooser
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Textbox',
+      ref: 'e2',
+    },
+  });
+
+  // Create a file outside the root
+  const fileOutsideRoot = testInfo.outputPath('outside.txt');
+  await fs.writeFile(fileOutsideRoot, 'Outside root');
+
+  // Should succeed - unrestricted uploads are allowed
+  expect(await client.callTool({
+    name: 'browser_file_upload',
+    arguments: {
+      paths: [fileOutsideRoot],
+    },
+  })).toHaveResponse({
+    code: expect.stringContaining(`await fileChooser.setFiles(`),
+  });
+});

@@ -32,6 +32,7 @@ type ViewportSize = { width: number; height: number };
 export type CLIOptions = {
   allowedHosts?: string[];
   allowedOrigins?: string[];
+  allowUnrestrictedFileAccess?: boolean;
   blockedOrigins?: string[];
   blockServiceWorkers?: boolean;
   browser?: string;
@@ -247,6 +248,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       allowedOrigins: cliOptions.allowedOrigins,
       blockedOrigins: cliOptions.blockedOrigins,
     },
+    allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     saveVideo: cliOptions.saveVideo,
@@ -269,6 +271,7 @@ function configFromEnv(): Config {
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.allowUnrestrictedFileAccess = envToBoolean(process.env.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
   options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
   options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
