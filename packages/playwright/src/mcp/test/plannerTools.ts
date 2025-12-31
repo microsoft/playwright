@@ -113,7 +113,7 @@ export const saveTestPlan = defineTestTool({
         for (let k = 0; k < test.steps.length; k++) {
           lines.push(`  ${k + 1}. ${test.steps[k].perform}`);
           if (test.steps[k].expect?.trim())
-            lines.push(`  ${'  '.repeat(String(k + 1).length)} Expect: ${test.steps[k].expect}`);
+            lines.push(`  ${' '.repeat(String(k + 1).length)}  Expect: ${test.steps[k].expect}`);
         }
         if (test.postConditions.length) {
           lines.push(``);
