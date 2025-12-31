@@ -503,7 +503,7 @@ test('should run teardown after failure', async ({ runInlineTest }) => {
   expect(result.outputLines).toEqual(['A', 'D']);
 });
 
-test('should complain about teardown being a dependency', async ({ runInlineTest }) => {
+test('should allow dependency on a teardown project', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       module.exports = {
@@ -515,11 +515,59 @@ test('should complain about teardown being a dependency', async ({ runInlineTest
       };`,
     'test.spec.ts': `
       import { test, expect } from '@playwright/test';
-      test('test', () => {});
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
     `,
-  });
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.outputLines).toEqual(['A', 'B', 'C']);
+});
+
+test('should allow dependency on a multipleteardown project', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'A_teardown' },
+          { name: 'B', dependencies: ['A'], teardown: 'B_teardown' },
+          { name: 'A_teardown' },
+          { name: 'B_teardown' },
+          { name: 'C', dependencies: ['A_teardown', 'B_teardown'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(5);
+  expect(result.outputLines).toEqual(['A', 'B', 'B_teardown', 'A_teardown', 'C']);
+});
+
+test('should complain about dependency on a project and its teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = {
+        projects: [
+          { name: 'A', teardown: 'B' },
+          { name: 'B' },
+          { name: 'C', dependencies: [ 'A', 'B'] },
+        ],
+      };`,
+    'test.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({}, testInfo) => {
+        console.log('\\n%%' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 1 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`Project C must not depend on a teardown project B`);
+  expect(result.output).toContain(`Error: Project "C" depends on "A" and on teardown project "B" which creates a circular dependency. Remove one of the dependencies to fix the problem.`);
 });
 
 test('should complain about teardown having a dependency', async ({ runInlineTest }) => {

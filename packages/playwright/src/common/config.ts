@@ -253,7 +253,7 @@ function resolveWorkers(workers: string | number): number {
 }
 
 function resolveProjectDependencies(projects: FullProjectInternal[]) {
-  const teardownSet = new Set<FullProjectInternal>();
+  const teardownToSetups = new Map<FullProjectInternal, FullProjectInternal[]>();
   for (const project of projects) {
     for (const dependencyName of project.project.dependencies) {
       const dependencies = projects.filter(p => p.project.name === dependencyName);
@@ -271,17 +271,27 @@ function resolveProjectDependencies(projects: FullProjectInternal[]) {
         throw new Error(`Project teardowns should have unique names, reading ${project.project.teardown}`);
       const teardown = teardowns[0];
       project.teardown = teardown;
-      teardownSet.add(teardown);
+      const setups = teardownToSetups.get(teardown) || [];
+      setups.push(project);
+      teardownToSetups.set(teardown, setups);
     }
   }
-  for (const teardown of teardownSet) {
+  for (const [teardown] of teardownToSetups) {
     if (teardown.deps.length)
       throw new Error(`Teardown project ${teardown.project.name} must not have dependencies`);
   }
+
   for (const project of projects) {
     for (const dep of project.deps) {
-      if (teardownSet.has(dep))
-        throw new Error(`Project ${project.project.name} must not depend on a teardown project ${dep.project.name}`);
+      if (!teardownToSetups.has(dep))
+        continue;
+      const closure = buildDependentProjects([...teardownToSetups.get(dep)!], projects);
+      for (const otherDep of project.deps) {
+        if (teardownToSetups.has(otherDep))
+          continue;
+        if (closure.has(otherDep))
+          throw new Error(`Project "${project.project.name}" depends on "${otherDep.project.name}" and on teardown project "${dep.project.name}" which creates a circular dependency. Remove one of the dependencies to fix the problem.`);
+      }
     }
   }
 }
@@ -315,4 +325,29 @@ const configInternalSymbol = Symbol('configInternalSymbol');
 
 export function getProjectId(project: FullProject): string {
   return (project as any).__projectId!;
+}
+
+export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
+  const reverseDeps = new Map<FullProjectInternal, Set<FullProjectInternal>>(projects.map(p => ([p, new Set()])));
+  for (const project of projects) {
+    for (const dep of project.deps)
+      reverseDeps.get(dep)!.add(project);
+  }
+  const result = new Set<FullProjectInternal>();
+  const visit = (depth: number, project: FullProjectInternal) => {
+    if (depth > 100) {
+      const error = new Error('Circular dependency detected between projects.');
+      error.stack = '';
+      throw error;
+    }
+    result.add(project);
+    for (const reverseDep of reverseDeps.get(project)!)
+      visit(depth + 1, reverseDep);
+    // Teadrdown project may have reverse dependencies, we ignore them here.
+    if (project.teardown)
+      result.add(project.teardown);
+  };
+  for (const forProject of forProjects)
+    visit(0, forProject);
+  return result;
 }

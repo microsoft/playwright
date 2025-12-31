@@ -24,7 +24,8 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { Dispatcher  } from './dispatcher';
 import { FailureTracker } from './failureTracker';
 import { collectProjectsAndTestFiles, createRootSuite, loadFileSuites, loadGlobalHook, loadTestList } from './loadUtils';
-import { buildDependentProjects, buildTeardownToSetupsMap, filterProjects } from './projectUtils';
+import { buildTeardownToSetupsMap, filterProjects } from './projectUtils';
+import { buildDependentProjects } from '../common/config';
 import { applySuggestedRebaselines, clearSuggestedRebaselines } from './rebase';
 import { TaskRunner } from './taskRunner';
 import { detectChangedTestFiles } from './vcs';
@@ -360,6 +361,9 @@ function createPhasesTask(): Task<TestRun> {
           maxConcurrentTestGroups = Math.max(maxConcurrentTestGroups, testGroupsInPhase);
         }
       }
+
+      if (processed.size !== projectToSuite.size)
+        throw new Error(`Circular dependency detected between projects: ${[...projectToSuite.keys()].filter(p => !processed.has(p)).map(p => p.project.name).join(', ')}`);
 
       testRun.config.config.metadata.actualWorkers = Math.min(testRun.config.config.workers, maxConcurrentTestGroups);
     },

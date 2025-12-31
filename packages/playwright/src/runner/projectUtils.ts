@@ -120,30 +120,6 @@ export function findTopLevelProjects(config: FullConfigInternal): FullProjectInt
   return [...closure].filter(entry => entry[1] === 'top-level').map(entry => entry[0]);
 }
 
-export function buildDependentProjects(forProjects: FullProjectInternal[], projects: FullProjectInternal[]): Set<FullProjectInternal> {
-  const reverseDeps = new Map<FullProjectInternal, FullProjectInternal[]>(projects.map(p => ([p, []])));
-  for (const project of projects) {
-    for (const dep of project.deps)
-      reverseDeps.get(dep)!.push(project);
-  }
-  const result = new Set<FullProjectInternal>();
-  const visit = (depth: number, project: FullProjectInternal) => {
-    if (depth > 100) {
-      const error = new Error('Circular dependency detected between projects.');
-      error.stack = '';
-      throw error;
-    }
-    result.add(project);
-    for (const reverseDep of reverseDeps.get(project)!)
-      visit(depth + 1, reverseDep);
-    if (project.teardown)
-      visit(depth + 1, project.teardown);
-  };
-  for (const forProject of forProjects)
-    visit(0, forProject);
-  return result;
-}
-
 export async function collectFilesForProject(project: FullProjectInternal, fsCache = new Map<string, string[]>()): Promise<string[]> {
   const extensions = new Set(['.js', '.ts', '.mjs', '.mts', '.cjs', '.cts', '.jsx', '.tsx', '.mjsx', '.mtsx', '.cjsx', '.ctsx']);
   const testFileExtension = (file: string) => extensions.has(path.extname(file));
