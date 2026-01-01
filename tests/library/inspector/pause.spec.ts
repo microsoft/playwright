@@ -474,30 +474,23 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should highlight on explore (csharp)', async ({ page, recorderPageGetter }) => {
+  it('should highlight on explore (csharp)', async ({ openRecorder }) => {
     process.env.TEST_INSPECTOR_LANGUAGE = 'csharp';
     try {
+      const { page, recorder } = await openRecorder();
       await page.setContent('<button>Submit</button>');
-      const scriptPromise = (async () => {
-        // @ts-ignore
-        await page.pause({ __testHookKeepTestTimeout: true });
-      })();
-      const recorderPage = await recorderPageGetter();
 
-      await recorderPage.getByRole('combobox', { name: 'Source chooser' }).selectOption('csharp');
       const box1Promise = waitForTestLog<BoundingBox>(page, 'Highlight box for test: ');
-      await recorderPage.getByText('Locator', { exact: true }).click();
-      await recorderPage.locator('.tabbed-pane .CodeMirror').click();
-      await recorderPage.keyboard.press('ControlOrMeta+A');
-      await recorderPage.keyboard.press('Backspace');
-      await recorderPage.keyboard.type('GetByText("Submit")');
+      await recorder.recorderPage.getByText('Locator', { exact: true }).click();
+      await recorder.recorderPage.locator('.tabbed-pane .CodeMirror').click();
+      await recorder.recorderPage.keyboard.press('ControlOrMeta+A');
+      await recorder.recorderPage.keyboard.press('Backspace');
+      await recorder.recorderPage.keyboard.type('GetByText("Submit")');
       const box1 = await box1Promise;
 
       const button = await page.$('text=Submit');
       const box2 = await button.boundingBox();
       expect(roundBox(box1)).toEqual(roundBox(box2));
-      await recorderPage.click('[title="Resume (F8)"]');
-      await scriptPromise;
     } finally {
       delete process.env.TEST_INSPECTOR_LANGUAGE;
     }
