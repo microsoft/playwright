@@ -16,7 +16,7 @@
 
 import type * as playwright from 'playwright-core';
 
-export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'testing' | 'tracing';
+export type ToolCapability = 'core' | 'core-tabs' | 'core-install' | 'vision' | 'pdf' | 'geolocation' | 'testing' | 'tracing';
 
 export type Config = {
   /**
@@ -104,6 +104,7 @@ export type Config = {
    *   - 'core': Core browser automation features.
    *   - 'pdf': PDF generation and manipulation.
    *   - 'vision': Coordinate-based interactions.
+   *   - 'geolocation': Browser geolocation mocking.
    */
   capabilities?: ToolCapability[];
 

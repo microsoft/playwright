@@ -45,8 +45,8 @@ const setGeolocation = defineTool({
             accuracy: params.accuracy ?? 0,
         });
 
-        response.addCode(`await context.grantPermissions(['geolocation']);`);
-        response.addCode(`await context.setGeolocation({ latitude: ${params.latitude}, longitude: ${params.longitude}, accuracy: ${params.accuracy ?? 0} });`);
+        response.addCode(`await page.context().grantPermissions(['geolocation']);`);
+        response.addCode(`await page.context().setGeolocation({ latitude: ${params.latitude}, longitude: ${params.longitude}, accuracy: ${params.accuracy ?? 0} });`);
     },
 });
 
@@ -64,10 +64,10 @@ const clearGeolocation = defineTool({
     handle: async (context, params, response) => {
         const browserContext = await context.ensureBrowserContext();
 
-        // Clear permissions revokes geolocation access
-        await browserContext.clearPermissions();
+        // Clear the mocked geolocation while keeping the permission
+        await browserContext.setGeolocation(null);
 
-        response.addCode(`await context.clearPermissions();`);
+        response.addCode(`await page.context().setGeolocation(null);`);
     },
 });
 

@@ -56,7 +56,7 @@ test('browser_set_geolocation', async ({ startClient, server }) => {
             accuracy: 100,
         },
     })).toHaveResponse({
-        code: expect.stringContaining(`await context.setGeolocation`),
+        code: expect.stringContaining(`await page.context().setGeolocation`),
     });
 
     // Navigate to page - geolocation will be fetched automatically
@@ -90,6 +90,6 @@ test('browser_clear_geolocation', async ({ startClient }) => {
         name: 'browser_clear_geolocation',
         arguments: {},
     })).toHaveResponse({
-        code: expect.stringContaining(`await context.clearPermissions()`),
+        code: expect.stringContaining(`await page.context().setGeolocation(null)`),
     });
 });
