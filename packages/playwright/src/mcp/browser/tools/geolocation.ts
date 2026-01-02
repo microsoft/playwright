@@ -18,60 +18,60 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 
 const setGeolocation = defineTool({
-    capability: 'geolocation',
+  capability: 'geolocation',
 
-    schema: {
-        name: 'browser_set_geolocation',
-        title: 'Set geolocation',
-        description: 'Set the browser geolocation to mock location-based features. This affects all pages in the browser context.',
-        inputSchema: z.object({
-            latitude: z.number().min(-90).max(90).describe('Latitude between -90 and 90'),
-            longitude: z.number().min(-180).max(180).describe('Longitude between -180 and 180'),
-            accuracy: z.number().optional().describe('Optional accuracy in meters, defaults to 0'),
-        }),
-        type: 'action',
-    },
+  schema: {
+    name: 'browser_set_geolocation',
+    title: 'Set geolocation',
+    description: 'Set the browser geolocation to mock location-based features. This affects all pages in the browser context.',
+    inputSchema: z.object({
+      latitude: z.number().min(-90).max(90).describe('Latitude between -90 and 90'),
+      longitude: z.number().min(-180).max(180).describe('Longitude between -180 and 180'),
+      accuracy: z.number().optional().describe('Optional accuracy in meters, defaults to 0'),
+    }),
+    type: 'action',
+  },
 
-    handle: async (context, params, response) => {
-        const browserContext = await context.ensureBrowserContext();
+  handle: async (context, params, response) => {
+    const browserContext = await context.ensureBrowserContext();
 
-        // Grant geolocation permission first
-        await browserContext.grantPermissions(['geolocation']);
+    // Grant geolocation permission first
+    await browserContext.grantPermissions(['geolocation']);
 
-        // Set the geolocation
-        await browserContext.setGeolocation({
-            latitude: params.latitude,
-            longitude: params.longitude,
-            accuracy: params.accuracy ?? 0,
-        });
+    // Set the geolocation
+    await browserContext.setGeolocation({
+      latitude: params.latitude,
+      longitude: params.longitude,
+      accuracy: params.accuracy ?? 0,
+    });
 
-        response.addCode(`await page.context().grantPermissions(['geolocation']);`);
-        response.addCode(`await page.context().setGeolocation({ latitude: ${params.latitude}, longitude: ${params.longitude}, accuracy: ${params.accuracy ?? 0} });`);
-    },
+    response.addCode(`await page.context().grantPermissions(['geolocation']);`);
+    response.addCode(`await page.context().setGeolocation({ latitude: ${params.latitude}, longitude: ${params.longitude}, accuracy: ${params.accuracy ?? 0} });`);
+  },
 });
 
 const clearGeolocation = defineTool({
-    capability: 'geolocation',
+  capability: 'geolocation',
 
-    schema: {
-        name: 'browser_clear_geolocation',
-        title: 'Clear geolocation',
-        description: 'Clear the mocked geolocation and restore default behavior',
-        inputSchema: z.object({}),
-        type: 'action',
-    },
+  schema: {
+    name: 'browser_clear_geolocation',
+    title: 'Clear geolocation',
+    description: 'Clear the mocked geolocation and restore default behavior',
+    inputSchema: z.object({}),
+    type: 'action',
+  },
 
-    handle: async (context, params, response) => {
-        const browserContext = await context.ensureBrowserContext();
+  handle: async (context, params, response) => {
+    const browserContext = await context.ensureBrowserContext();
 
-        // Clear the mocked geolocation while keeping the permission
-        await browserContext.setGeolocation(null);
+    // Clear the mocked geolocation while keeping the permission
+    await browserContext.setGeolocation(null);
 
-        response.addCode(`await page.context().setGeolocation(null);`);
-    },
+    response.addCode(`await page.context().setGeolocation(null);`);
+  },
 });
 
 export default [
-    setGeolocation,
-    clearGeolocation,
+  setGeolocation,
+  clearGeolocation,
 ];
