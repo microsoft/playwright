@@ -23,7 +23,7 @@ import * as playwright from 'playwright-core';
 import { registryDirectory } from 'playwright-core/lib/server/registry/index';
 import { startTraceViewerServer } from 'playwright-core/lib/server';
 import { logUnhandledError, testDebug } from '../log';
-import { outputFile, tmpDir } from './config';
+import { outputFile } from './config';
 import { firstRootPath } from '../sdk/server';
 
 import type { FullConfig } from './config';
@@ -44,7 +44,7 @@ export function contextFactory(config: FullConfig): BrowserContextFactory {
 
 export type BrowserContextFactoryResult = {
   browserContext: playwright.BrowserContext;
-  close: (afterClose: () => Promise<void>) => Promise<void>;
+  close: () => Promise<void>;
 };
 
 export interface BrowserContextFactory {
@@ -94,24 +94,23 @@ class BaseContextFactory implements BrowserContextFactory {
   async createContext(clientInfo: ClientInfo): Promise<BrowserContextFactoryResult> {
     testDebug(`create browser context (${this._logName})`);
     const browser = await this._obtainBrowser(clientInfo);
-    const browserContext = await this._doCreateContext(browser);
+    const browserContext = await this._doCreateContext(browser, clientInfo);
     await addInitScript(browserContext, this.config.browser.initScript);
     return {
       browserContext,
-      close: (afterClose: () => Promise<void>) => this._closeBrowserContext(browserContext, browser, afterClose)
+      close: () => this._closeBrowserContext(browserContext, browser)
     };
   }
 
-  protected async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
+  protected async _doCreateContext(browser: playwright.Browser, clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
     throw new Error('Not implemented');
   }
 
-  private async _closeBrowserContext(browserContext: playwright.BrowserContext, browser: playwright.Browser, afterClose: () => Promise<void>) {
+  private async _closeBrowserContext(browserContext: playwright.BrowserContext, browser: playwright.Browser) {
     testDebug(`close browser context (${this._logName})`);
     if (browser.contexts().length === 1)
       this._browserPromise = undefined;
     await browserContext.close().catch(logUnhandledError);
-    await afterClose();
     if (browser.contexts().length === 0) {
       testDebug(`close browser (${this._logName})`);
       await browser.close().catch(logUnhandledError);
@@ -142,8 +141,8 @@ class IsolatedContextFactory extends BaseContextFactory {
     });
   }
 
-  protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    return browser.newContext(browserContextOptionsFromConfig(this.config));
+  protected override async _doCreateContext(browser: playwright.Browser, clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
+    return browser.newContext(await browserContextOptionsFromConfig(this.config, clientInfo));
   }
 }
 
@@ -206,7 +205,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       const launchOptions: LaunchOptions & BrowserContextOptions = {
         tracesDir,
         ...this.config.browser.launchOptions,
-        ...browserContextOptionsFromConfig(this.config),
+        ...await browserContextOptionsFromConfig(this.config, clientInfo),
         handleSIGINT: false,
         handleSIGTERM: false,
         ignoreDefaultArgs: [
@@ -217,7 +216,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         await addInitScript(browserContext, this.config.browser.initScript);
-        const close = (afterClose: () => Promise<void>) => this._closeBrowserContext(browserContext, userDataDir, afterClose);
+        const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
@@ -233,11 +232,10 @@ class PersistentContextFactory implements BrowserContextFactory {
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
   }
 
-  private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string, afterClose: () => Promise<void>) {
+  private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
     testDebug('close browser context (persistent)');
     testDebug('release user data dir', userDataDir);
     await browserContext.close().catch(() => {});
-    await afterClose();
     this._userDataDirs.delete(userDataDir);
     if (process.env.PWMCP_PROFILES_DIR_FOR_TEST && userDataDir.startsWith(process.env.PWMCP_PROFILES_DIR_FOR_TEST))
       await fs.promises.rm(userDataDir, { recursive: true }).catch(logUnhandledError);
@@ -336,7 +334,7 @@ export class SharedContextFactory implements BrowserContextFactory {
     if (!contextPromise)
       return;
     const { close } = await contextPromise;
-    await close(async () => {});
+    await close();
   }
 }
 
@@ -346,11 +344,12 @@ async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Pro
   return await outputFile(config, clientInfo, `traces`, { origin: 'code', reason: 'Collecting trace' });
 }
 
-function browserContextOptionsFromConfig(config: FullConfig): playwright.BrowserContextOptions {
+async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
   const result = { ...config.browser.contextOptions };
   if (config.saveVideo) {
+    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code', reason: 'Saving video' });
     result.recordVideo = {
-      dir: tmpDir(),
+      dir,
       size: config.saveVideo,
     };
   }
