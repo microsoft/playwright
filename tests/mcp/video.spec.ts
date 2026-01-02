@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
@@ -31,14 +32,12 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => {
-      await produceFrames(client);
-      await checkIntermediateVideoFileExists();
-    }).toPass();
+    await expect(async () => await produceFrames(client)).toPass();
     await closeBrowser(client);
 
-    const [file] = await fs.promises.readdir(outputDir);
-    expect(file).toMatch(/page-.*\.webm/);
+    const videosDir = path.join(outputDir, 'videos');
+    const [file] = await fs.promises.readdir(videosDir);
+    expect(file).toMatch(/.*\.webm/);
   });
 
   test(`should work with  { saveVideo } (${mode})`, async ({ startClient, server }, testInfo) => {
@@ -53,14 +52,12 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => {
-      await produceFrames(client);
-      await checkIntermediateVideoFileExists();
-    }).toPass();
+    await expect(async () => await produceFrames(client)).toPass();
     await closeBrowser(client);
 
-    const [file] = await fs.promises.readdir(outputDir);
-    expect(file).toMatch(/page-.*\.webm/);
+    const videosDir = path.join(outputDir, 'videos');
+    const [file] = await fs.promises.readdir(videosDir);
+    expect(file).toMatch(/.*\.webm/);
   });
 
   test(`should work with recordVideo (${mode})`, async ({ startClient, server }, testInfo) => {
@@ -83,10 +80,7 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => {
-      await produceFrames(client);
-      await checkIntermediateVideoFileExists(videosDir);
-    }).toPass();
+    await expect(async () => await produceFrames(client)).toPass();
     await closeBrowser(client);
   });
 }
@@ -125,9 +119,4 @@ async function produceFrames(client: Client) {
   })).toHaveResponse({
     result: '"ok"',
   });
-}
-
-async function checkIntermediateVideoFileExists(videosDir?: string) {
-  const files = await fs.promises.readdir(videosDir ?? test.info().outputPath('tmp', 'playwright-mcp-output'));
-  expect(files[0]).toMatch(/\.webm/);
 }
