@@ -15,8 +15,12 @@
  */
 
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
-import type { CSSProperties } from 'react';
 export * from 'playwright-core';
+
+// @ts-ignore this will be any if react is not installed
+type ReactCSSProperties = import('react').CSSProperties;
+type FallbackCSSProperties = { [name: string]: string | number | undefined };
+export type CSSProperties = keyof ReactCSSProperties extends string ? ReactCSSProperties : FallbackCSSProperties;
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type ListReporterOptions = { printSteps?: boolean };
@@ -493,12 +497,6 @@ export type Expect<ExtendedMatchers = {}> = {
 declare global {
   export namespace PlaywrightTest {
     export interface Matchers<R, T = unknown> {
-      /**
-       * Ensures the Locator resolves to an element with given CSS values.
-       * 
-       * @param styles CSS property names and values as an object.
-       */
-      toHaveCSS(styles: CSSProperties, options?: { timeout?: number }): Promise<void>;
     }
   }
 }
