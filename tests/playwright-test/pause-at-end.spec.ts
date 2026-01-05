@@ -145,6 +145,7 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
 });
 
 test('SIGINT after pause at end should still run teardown', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'no SIGINT on windows');
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
@@ -168,6 +169,7 @@ test('SIGINT after pause at end should still run teardown', async ({ runInlineTe
 });
 
 test('SIGINT after pause on error should still run teardown', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'no SIGINT on windows');
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
