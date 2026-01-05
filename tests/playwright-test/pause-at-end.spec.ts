@@ -18,6 +18,8 @@ import { TestCase, TestResult, TestStep } from 'packages/playwright-test/reporte
 import { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
+test.describe.configure({ mode: 'parallel' });
+
 class LocationReporter implements ReporterV2 {
   private _foundErrors = 0;
   version() {
@@ -29,10 +31,17 @@ class LocationReporter implements ReporterV2 {
       this._printErrors(result);
     }
   }
-  async onTestPaused(test: TestCase, result: TestResult, step?: TestStep) {
-    console.log(`%%onTestPaused`);
+  async onTestPaused(test: TestCase, result: TestResult) {
+    if (result.error)
+      console.log(`%%onTestPaused on error at :${result.error.location?.line}:${result.error.location?.column}`);
+    else
+      console.log(`%%onTestPaused at end`);
     this._printErrors(result);
-    return { action: process.env.ACTION as 'continue' | 'abort' };
+    if (process.env.SIGINT_AFTER_PAUSE) {
+      console.log('%%SIGINT');
+      process.kill(process.pid, 'SIGINT');
+      await new Promise(() => {});
+    }
   }
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
@@ -70,11 +79,9 @@ test('--debug should pause at end', async ({ runInlineTest }) => {
         console.log('%%teardown');
       });
     `
-  }, { debug: true }, { ACTION: 'continue' });
+  }, { debug: true });
   expect(result.outputLines).toEqual([
-    'onStepBegin: After Hooks > Paused at :4:7',
-    'onTestPaused',
-    'onStepEnd: After Hooks > Paused',
+    'onTestPaused at end',
     'teardown',
     'onTestEnd',
   ]);
@@ -103,15 +110,15 @@ test('--debug should pause at end with setup project', async ({ runInlineTest })
         console.log('main test started');
       });
     `
-  }, { debug: true }, { ACTION: 'continue' });
-  expect(result.outputLines).toContain('onStepBegin: After Hooks > Paused at :5:7');
+  }, { debug: true });
+  expect(result.outputLines).toContain('onTestPaused at end');
 });
 
 test('--debug should pause on error', async ({ runInlineTest, mergeReports }) => {
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
-      module.exports = { reporter: [['blob'], ['./location-reporter.js']] };
+      module.exports = { reporter: [['./location-reporter.js'], ['blob']] };
     `,
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -121,22 +128,69 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
         console.log('%%after error');
       });
     `
-  }, { debug: true }, { ACTION: 'abort' });
+  }, { debug: true });
   expect(result.outputLines).toEqual([
-    'onStepBegin: After Hooks > Paused at :4:24',
-    'onTestPaused',
+    'onTestPaused on error at :4:24',
     'result.errors[0] at :4:24',
     'result.errors[1] at :5:19',
-    'onStepEnd: After Hooks > Paused',
     'onTestEnd',
   ]);
 
   const merged = await mergeReports('blob-report', undefined, { additionalArgs: ['--reporter', 'location-reporter.js'] });
   expect(merged.outputLines, 'merge reporter doesnt get onTestPaused').toEqual([
-    'onStepBegin: After Hooks > Paused at :4:24',
-    'onStepEnd: After Hooks > Paused',
     'onTestEnd',
     'result.errors[0] at :4:24',
     'result.errors[1] at :5:19',
+  ]);
+});
+
+test('SIGINT after pause at end should still run teardown', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'no SIGINT on windows');
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+      });
+      test.afterEach(() => {
+        console.log('%%teardown');
+      });
+    `
+  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused at end',
+    'SIGINT',
+    'teardown',
+    'onTestEnd',
+  ]);
+});
+
+test('SIGINT after pause on error should still run teardown', async ({ runInlineTest }) => {
+  test.skip(process.platform === 'win32', 'no SIGINT on windows');
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect(2).toBe(3);
+        console.log('%%after error');
+      });
+      test.afterEach(() => {
+        console.log('%%teardown');
+      });
+    `
+  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused on error at :4:19',
+    'result.errors[0] at :4:19',
+    'SIGINT',
+    'teardown',
+    'onTestEnd',
   ]);
 });

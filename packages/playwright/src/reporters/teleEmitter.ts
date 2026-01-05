@@ -72,20 +72,19 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
-  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step?: reporterTypes.TestStep) {
+  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult) {
     const resultId = (result as any)[this._idSymbol];
-    const stepId = (step as any)[this._idSymbol];
     this._resultKnownErrorCounts.set(resultId, result.errors.length);
     this._messageSink({
       method: 'onTestPaused',
       params: {
         testId: test.id,
         resultId,
-        stepId,
         errors: result.errors,
       }
     });
-    return { action: undefined };
+    // keep the test paused until externally resumed
+    await new Promise<void>(() => {});
   }
 
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
