@@ -134,7 +134,7 @@ Reporter is allowed to override the status and hence affect the exit code of the
   - `duration` <[int]> Test run duration in milliseconds.
   - `shards` <[Array]<[Object]>> Only present on merged reports
     - `shardIndex` <[int]> The index of the shard, one-based.
-    - `tag` ?<[string]> Bot tag that differentiates [CI environments](./test-sharding.md#merging-reports-from-multiple-environments)
+    - `tag` ?<[string]> Bot tag that differentiates CI environments
     - `startTime` <[Date]> start wall time of shard.
     - `duration` <[int]> Shard run duration in milliseconds.
 
