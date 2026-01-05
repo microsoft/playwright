@@ -69,6 +69,7 @@ export class BlobReporter extends TeleReporterEmitter {
   override async onTestPaused(test: TestCase, result: TestResult) {
     // onTestPaused is only relevant for interactive use, not for blob replays.
     // merge-reports still gets onStepBegin/onStepEnd for pausing, but not the interactive part, so this is a no-op.
+    await new Promise<void>(() => {});
   }
 
   override async onEnd(result: FullResult): Promise<void> {
