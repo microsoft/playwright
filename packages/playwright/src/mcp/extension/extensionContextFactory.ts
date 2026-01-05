@@ -16,8 +16,8 @@
 
 import * as playwright from 'playwright-core';
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { createHttpServer, startHttpServer } from 'playwright-core/lib/utils';
 
-import { startHttpServer } from '../sdk/http';
 import { CDPRelayServer } from './cdpRelay';
 
 import type { BrowserContextFactory } from '../browser/browserContextFactory';
@@ -54,7 +54,10 @@ export class ExtensionContextFactory implements BrowserContextFactory {
   }
 
   private async _startRelay(abortSignal: AbortSignal) {
-    const httpServer = await startHttpServer({});
+    const httpServer = createHttpServer();
+    // Listen to the loopback interface only. The extension will disallow
+    // connections to other hosts anyway.
+    await startHttpServer(httpServer, {});
     if (abortSignal.aborted) {
       httpServer.close();
       throw new Error(abortSignal.reason);

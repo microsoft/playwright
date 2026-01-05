@@ -72,6 +72,10 @@ export class RecorderApp {
     this._throttledOutputFile = params.outputFile ? new ThrottledFile(params.outputFile) : null;
     this._primaryGeneratorId = process.env.TEST_INSPECTOR_LANGUAGE || params.language || determinePrimaryGeneratorId(params.sdkLanguage);
     this._selectedGeneratorId = this._primaryGeneratorId;
+    for (const languageGenerator of languageSet()) {
+      if (languageGenerator.id === this._primaryGeneratorId)
+        this._recorder.setLanguage(languageGenerator.highlighter);
+    }
   }
 
   private async _init(inspectedContext: BrowserContext) {

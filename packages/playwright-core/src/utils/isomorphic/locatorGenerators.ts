@@ -37,7 +37,7 @@ export interface LocatorFactory {
   chainLocators(locators: string[]): string;
 }
 
-export function asLocatorDescription(lang: Language, selector: string): string | undefined {
+export function asLocatorDescription(lang: Language, selector: string): string {
   try {
     const parsed = parseSelector(selector);
     const customDescription = parseCustomDescription(parsed);

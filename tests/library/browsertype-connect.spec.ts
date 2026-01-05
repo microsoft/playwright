@@ -22,7 +22,7 @@ import * as path from 'path';
 import { getUserAgent, getPlaywrightVersion } from '../../packages/playwright-core/lib/server/utils/userAgent';
 import WebSocket from 'ws';
 import { expect, playwrightTest } from '../config/browserTest';
-import { parseTrace, suppressCertificateWarning } from '../config/utils';
+import { parseTrace, suppressCertificateWarning, rafraf } from '../config/utils';
 import formidable from 'formidable';
 import type { Browser, ConnectOptions } from 'playwright-core';
 import { createHttpServer } from '../../packages/playwright-core/lib/server/utils/network';
@@ -497,7 +497,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       });
       const page = await context.newPage();
       await page.evaluate(() => document.body.style.backgroundColor = 'red');
-      await new Promise(r => setTimeout(r, 1000));
+      await rafraf(page, 100);
       await context.close();
 
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36685' });

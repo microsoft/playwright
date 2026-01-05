@@ -77,7 +77,9 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+}
 
+export interface PageAgent {
   extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
 }
 
@@ -200,6 +202,7 @@ export interface Locator {
   elementHandle(options?: {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
+  toString(): string;
 }
 
 export interface BrowserType<Unused = {}> {

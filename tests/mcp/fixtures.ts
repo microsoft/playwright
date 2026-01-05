@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
 import { Loop } from '@lowire/loop';
-import debug from 'debug';
 
 import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -194,31 +193,6 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpBrowser: ['chrome', { option: true }],
 
   mcpServerType: ['mcp', { option: true }],
-
-  loop: async ({ server }, use) => {
-    const cacheFile = path.join(__dirname, '__cache__', 'copilot', sanitizeFileName(test.info().titlePath.join(' ') + '-repeat' + test.info().repeatEachIndex) + '.json');
-    const dataBefore = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
-    let cache = {};
-    try {
-      cache = JSON.parse(dataBefore);
-    } catch {
-    }
-    const loop = new Loop('github', {
-      model: 'claude-sonnet-4.5',
-      cache: {
-        messages: cache,
-        secrets: { PORT: String(server.PORT) },
-      },
-      maxTokens: 1_000_000,
-      debug,
-    });
-    await use(loop);
-    const dataAfter = JSON.stringify(loop.cache(), null, 2);
-    if (test.info().status === 'passed' && dataBefore !== dataAfter) {
-      await fs.promises.mkdir(path.dirname(cacheFile), { recursive: true });
-      await fs.promises.writeFile(cacheFile, dataAfter);
-    }
-  },
 });
 
 async function createTransport(mcpServerType: TestOptions['mcpServerType'], options: { args: string[], env: NodeJS.ProcessEnv, cwd: string }): Promise<{
@@ -346,10 +320,6 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
   });
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };
-}
-
-function sanitizeFileName(name: string): string {
-  return name.replace('.ts', '').replace(/[^a-zA-Z0-9_]+/g, '-');
 }
 
 export const lowireMeta = {

@@ -69,7 +69,6 @@ export class WKBrowser extends Browser {
     this._browserSession.on('Playwright.downloadCreated', this._onDownloadCreated.bind(this));
     this._browserSession.on('Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this));
     this._browserSession.on('Playwright.downloadFinished', this._onDownloadFinished.bind(this));
-    this._browserSession.on('Playwright.screencastFinished', this._onScreencastFinished.bind(this));
     this._browserSession.on(kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this));
   }
 
@@ -150,10 +149,6 @@ export class WKBrowser extends Browser {
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
     this._downloadFinished(payload.uuid, payload.error);
-  }
-
-  _onScreencastFinished(payload: Protocol.Playwright.screencastFinishedPayload) {
-    this._takeVideo(payload.screencastId)?.reportFinished();
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {

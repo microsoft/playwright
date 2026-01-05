@@ -20,7 +20,7 @@ import { createGuid } from '../../packages/playwright-core/lib/server/utils/cryp
 import { Backend } from '../config/debugControllerBackend';
 import type { Browser, BrowserContext } from '@playwright/test';
 import type * as channels from '@protocol/channels';
-import { roundBox } from '../page/pageTest';
+import { roundBox } from '../config/utils';
 
 type BrowserWithReuse = Browser & { newContextForReuse: () => Promise<BrowserContext> };
 type Fixtures = {

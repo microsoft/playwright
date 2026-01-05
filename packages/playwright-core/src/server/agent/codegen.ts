@@ -15,7 +15,7 @@
  */
 
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { escapeWithQuotes, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
+import { escapeTemplateString, escapeWithQuotes, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
 
 import type * as actions from './actions';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -72,6 +72,9 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
       if (action.type === 'checkbox' || action.type === 'radio')
         return `await expect(page.${locator}).toBeChecked({ checked: ${action.value === 'true'} });`;
       return `await expect(page.${locator}).toHaveValue(${escapeWithQuotes(action.value)});`;
+    }
+    case 'expectAria': {
+      return `await expect(page.locator('body')).toMatchAria(\`\n${escapeTemplateString(action.template)}\n\`);`;
     }
   }
   // @ts-expect-error

@@ -27,6 +27,11 @@ export function registerESMLoader() {
   if (process.env.PW_DISABLE_TS_ESM)
     return true;
 
+  // Transpilation in `bun` is not necessary, and trying to register a hook would cause issues.
+  // https://github.com/oven-sh/bun/issues/8222#issuecomment-3665364677
+  if ('Bun' in globalThis)
+    return true;
+
   if (loaderChannel)
     return true;
 

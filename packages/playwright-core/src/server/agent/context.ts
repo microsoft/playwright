@@ -25,7 +25,7 @@ import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { BrowserContextOptions } from '../types';
 import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
-import type { ToolDefinition } from './tools';
+import type { ToolDefinition } from './tool';
 
 type AgentOptions = BrowserContextOptions['agent'];
 

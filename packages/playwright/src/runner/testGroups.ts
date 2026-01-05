@@ -130,7 +130,12 @@ export function createTestGroups(projectSuite: Suite, expectedParallelism: numbe
   return result;
 }
 
-export function filterForShard(shard: { total: number, current: number }, testGroups: TestGroup[]): Set<TestGroup> {
+export function filterForShard(shard: { total: number, current: number }, weights: number[] | undefined, testGroups: TestGroup[]): Set<TestGroup> {
+  weights ??= Array.from({ length: shard.total }, () => 1);
+  if (weights.length !== shard.total)
+    throw new Error(`--shard-weights number of weights must match the shard total of ${shard.total}`);
+
+  const totalWeight = weights.reduce((a, b) => a + b, 0);
   // Note that sharding works based on test groups.
   // This means parallel files will be sharded by single tests,
   // while non-parallel files will be sharded by the whole file.
@@ -143,13 +148,17 @@ export function filterForShard(shard: { total: number, current: number }, testGr
     shardableTotal += group.tests.length;
 
   // Each shard gets some tests.
-  const shardSize = Math.floor(shardableTotal / shard.total);
-  // First few shards get one more test each.
-  const extraOne = shardableTotal - shardSize * shard.total;
+  const shardSizes = weights.map(w => Math.floor(w * shardableTotal / totalWeight));
+  const remainder = shardableTotal - shardSizes.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < remainder; i++) {
+    // First few shards get one more test each.
+    shardSizes[i % shardSizes.length]++;
+  }
 
-  const currentShard = shard.current - 1; // Make it zero-based for calculations.
-  const from = shardSize * currentShard + Math.min(extraOne, currentShard);
-  const to = from + shardSize + (currentShard < extraOne ? 1 : 0);
+  let from = 0;
+  for (let i = 0; i < shard.current - 1; i++)
+    from += shardSizes[i];
+  const to = from + shardSizes[shard.current - 1];
 
   let current = 0;
   const result = new Set<TestGroup>();

@@ -15,7 +15,8 @@
  */
 
 import type { Locator } from '@playwright/test';
-import { test as it, expect, unshift } from './pageTest';
+import { test as it, expect } from './pageTest';
+import { unshift } from '../config/utils';
 
 async function checkAndMatchSnapshot(locator: Locator, snapshot: string) {
   expect.soft(await locator.ariaSnapshot()).toBe(unshift(snapshot));

@@ -33,6 +33,11 @@ jobs:
       fail-fast: false
       matrix:
         channel: [bidi-chromium, moz-firefox-nightly]
+        isPullRequest:
+        - ${{ github.event_name == 'pull_request' }}
+        exclude:
+        - isPullRequest: true
+          channel: bidi-chromium
     steps:
     - uses: actions/checkout@v6
       if: github.event_name != 'workflow_dispatch'
@@ -53,9 +58,9 @@ jobs:
       run: |
         echo "BIDI_FFPATH=$(npx -y @puppeteer/browsers install firefox@nightly | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"
     - name: Run tests
-      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --project=${{ matrix.channel }}*
+      run: xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" -- npm run biditest -- --retries=${{ matrix.isPullRequest && 2 || 0 }} --project=${{ matrix.channel }}*
       env:
-        PWTEST_USE_BIDI_EXPECTATIONS: '1'
+        PWTEST_USE_BIDI_EXPECTATIONS: ${{ matrix.isPullRequest && '1' || '' }}
     - name: Upload csv report to GitHub
       if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v6

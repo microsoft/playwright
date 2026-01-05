@@ -2135,8 +2135,9 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
-  perform(params: PagePerformParams, progress?: Progress): Promise<PagePerformResult>;
-  extract(params: PageExtractParams, progress?: Progress): Promise<PageExtractResult>;
+  agentPerform(params: PageAgentPerformParams, progress?: Progress): Promise<PageAgentPerformResult>;
+  agentExpect(params: PageAgentExpectParams, progress?: Progress): Promise<PageAgentExpectResult>;
+  agentExtract(params: PageAgentExtractParams, progress?: Progress): Promise<PageAgentExtractResult>;
 }
 export type PageAgentTurnEvent = {
   role: string,
@@ -2648,31 +2649,47 @@ export type PageUpdateSubscriptionOptions = {
 
 };
 export type PageUpdateSubscriptionResult = void;
-export type PagePerformParams = {
+export type PageAgentPerformParams = {
   task: string,
   key?: string,
   maxTurns?: number,
   maxTokens?: number,
 };
-export type PagePerformOptions = {
+export type PageAgentPerformOptions = {
   key?: string,
   maxTurns?: number,
   maxTokens?: number,
 };
-export type PagePerformResult = {
+export type PageAgentPerformResult = {
   turns: number,
   inputTokens: number,
   outputTokens: number,
 };
-export type PageExtractParams = {
+export type PageAgentExpectParams = {
+  expectation: string,
+  key?: string,
+  maxTurns?: number,
+  maxTokens?: number,
+};
+export type PageAgentExpectOptions = {
+  key?: string,
+  maxTurns?: number,
+  maxTokens?: number,
+};
+export type PageAgentExpectResult = void;
+export type PageAgentExtractParams = {
   query: string,
   schema: any,
+  key?: string,
   maxTurns?: number,
+  maxTokens?: number,
 };
-export type PageExtractOptions = {
+export type PageAgentExtractOptions = {
+  key?: string,
   maxTurns?: number,
+  maxTokens?: number,
 };
-export type PageExtractResult = {
+export type PageAgentExtractResult = {
   result: any,
   turns: number,
   inputTokens: number,

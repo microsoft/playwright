@@ -17,11 +17,10 @@
 import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import type { Page } from 'playwright-core';
 import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { expect, browserTest as it } from '../config/browserTest';
-import { parseTraceRaw } from '../config/utils';
+import { parseTraceRaw, rafraf } from '../config/utils';
 
 export class VideoPlayer {
   fileName: string;
@@ -171,7 +170,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -196,7 +195,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -226,7 +225,7 @@ it.describe('screencast', () => {
       document.body.textContent = ''; // remove link
       document.body.style.backgroundColor = 'red';
     });
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -294,7 +293,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
     const deletePromise = page.video().delete();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoPath = await page.video().path();
@@ -385,9 +384,9 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.goto(server.PREFIX + '/background-color.html#rgb(0,0,0)');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await page.goto(server.CROSS_PROCESS_PREFIX + '/background-color.html#rgb(100,100,100)');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -423,7 +422,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.goto(server.PREFIX + '/rotate-z.html');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -457,8 +456,8 @@ it.describe('screencast', () => {
     ]);
     await popup.evaluate(() => document.body.style.backgroundColor = 'red');
     await Promise.all([
-      waitForRafs(page, 100),
-      waitForRafs(popup, 100),
+      rafraf(page, 100),
+      rafraf(popup, 100),
     ]);
     await context.close();
 
@@ -490,11 +489,11 @@ it.describe('screencast', () => {
     await page.$eval('.container', container => {
       container.firstElementChild.classList.remove('red');
     });
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await page.$eval('.container', container => {
       container.firstElementChild.classList.add('red');
     });
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -530,7 +529,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -547,7 +546,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -567,7 +566,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -588,7 +587,7 @@ it.describe('screencast', () => {
     });
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -617,7 +616,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.close();
 
     const videoFile = await page.video().path();
@@ -638,7 +637,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await browser.close();
 
     const file = testInfo.outputPath('saved-video-');
@@ -659,7 +658,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await (browser as any)._channel.killForTests();
 
     const file = testInfo.outputPath('saved-video-');
@@ -681,7 +680,7 @@ it.describe('screencast', () => {
     });
 
     const page = await context.newPage();
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await page.close();
     await context.close();
     await browser.close();
@@ -709,7 +708,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await page.goto(server.EMPTY_PAGE);
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
 
     const cookies = await context.cookies();
     expect(cookies.length).toBe(1);
@@ -738,7 +737,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await page.setContent(`<div style='margin: 0; background: red; position: fixed; right:0; bottom:0; width: 30; height: 30;'></div>`);
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await page.close();
     await context.close();
     await browser.close();
@@ -775,7 +774,7 @@ it.describe('screencast', () => {
 
     const page = await context.newPage();
     await page.setContent(`<div style='margin: 0; background: red; position: fixed; right:0; bottom:0; width: 30; height: 30;'></div>`);
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await page.close();
     await context.close();
     await browser.close();
@@ -811,7 +810,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await waitForRafs(page, 100);
+    await rafraf(page, 100);
     await context.tracing.stop({ path: traceFile });
     await context.close();
 
@@ -849,23 +848,10 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   });
   const page = await context.newPage();
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
-  await waitForRafs(page, 100);
+  await rafraf(page, 100);
   await context.close();
 
   const saveAsPath = testInfo.outputPath('my-video.webm');
   await page.video().saveAs(saveAsPath);
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
-
-async function waitForRafs(page: Page, count: number): Promise<void> {
-  await page.evaluate(count => new Promise<void>(resolve => {
-    const onRaf = () => {
-      --count;
-      if (!count)
-        resolve();
-      else
-        window.builtins.requestAnimationFrame(onRaf);
-    };
-    window.builtins.requestAnimationFrame(onRaf);
-  }), count);
-}

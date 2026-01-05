@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from './inspectorTest';
-import { roundBox } from '../../page/pageTest';
+import { roundBox } from '../../config/utils';
 
 test.describe(() => {
   test.skip(({ mode }) => mode !== 'default');

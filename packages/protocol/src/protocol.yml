@@ -2022,7 +2022,7 @@ Page:
           - requestFailed
         enabled: boolean
 
-    perform:
+    agentPerform:
       internal: true
       parameters:
         task: string
@@ -2034,12 +2034,22 @@ Page:
         inputTokens: int
         outputTokens: int
 
-    extract:
+    agentExpect:
+      internal: true
+      parameters:
+        expectation: string
+        key: string?
+        maxTurns: int?
+        maxTokens: int?
+
+    agentExtract:
       internal: true
       parameters:
         query: string
         schema: json
+        key: string?
         maxTurns: int?
+        maxTokens: int?
       returns:
         result: json
         turns: int
