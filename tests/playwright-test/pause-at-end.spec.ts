@@ -35,6 +35,11 @@ class LocationReporter implements ReporterV2 {
     else
       console.log(`%%onTestPaused at end`);
     this._printErrors(result);
+    if (process.env.SIGINT_AFTER_PAUSE) {
+      console.log('%%SIGINT');
+      process.kill(process.pid, 'SIGINT');
+      await new Promise(() => {});
+    }
   }
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
@@ -134,5 +139,54 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
     'onTestEnd',
     'result.errors[0] at :4:24',
     'result.errors[1] at :5:19',
+  ]);
+});
+
+test('SIGINT after pause at end should still run teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+      });
+      test.afterEach(() => {
+        console.log('%%teardown');
+      });
+    `
+  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused at end',
+    'SIGINT',
+    'teardown',
+    'onTestEnd',
+  ]);
+});
+
+test('SIGINT after pause on error should still run teardown', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js' };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect(2).toBe(3);
+        console.log('%%after error');
+      });
+      test.afterEach(() => {
+        console.log('%%teardown');
+      });
+    `
+  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused on error at :4:19',
+    'result.errors[0] at :4:19',
+    'SIGINT',
+    'teardown',
+    'onTestEnd',
   ]);
 });
