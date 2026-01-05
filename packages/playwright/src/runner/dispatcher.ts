@@ -598,10 +598,7 @@ class JobDispatcher {
     if (!data)
       return;
 
-    const { result, test, steps } = data;
-    const step = steps.get(params.stepId);
-    if (!step)
-      return;
+    const { result, test } = data;
 
     const sendMessage = async (message: { request: any }) => {
       try {
@@ -621,8 +618,8 @@ class JobDispatcher {
     result.errors = params.errors;
     result.error = result.errors[0];
 
-    void this._reporter.onTestPaused?.(test, result, step).then(params => {
-      worker.sendResume(params);
+    void this._reporter.onTestPaused?.(test, result).then(() => {
+      worker.sendResume({});
     });
     this._failureTracker.onTestPaused?.({ ...params, sendMessage });
   }

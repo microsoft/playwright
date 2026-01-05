@@ -24,7 +24,6 @@ import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAnd
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
-import { findTestEndLocation } from '../transform/babelHighlightUtils';
 
 import type { RunnableDescription } from './timeoutManager';
 import type { FullProject, TestInfo, TestStatus, TestStepInfo, TestAnnotation } from '../../types/test';
@@ -474,33 +473,12 @@ export class TestInfoImpl implements TestInfo {
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
     if (shouldPause) {
-      const location = (this._isFailure() ? this._errorLocation() : await this._testEndLocation()) ?? { file: this.file, line: this.line, column: this.column };
-      const step = this._addStep({ category: 'hook', title: 'Paused', location });
-      const result = await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, stepId: step.stepId, errors: this._isFailure() ? this.errors : [] }),
-        this._interruptedPromise.then(() => 'interrupted' as const),
+      await Promise.race([
+        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [] }),
+        this._interruptedPromise,
       ]);
-      if (result !== 'interrupted') {
-        if (result.action === 'abort')
-          this._interrupt();
-        if (result.action === undefined)
-          await this._interruptedPromise;
-      }
-      step.complete({});
     }
     await this._onDidFinishTestFunctionCallback?.();
-  }
-
-  private _errorLocation(): Location | undefined {
-    if (this.error?.stack)
-      return filteredStackTrace(this.error.stack.split('\n'))[0];
-  }
-
-  private async _testEndLocation(): Promise<Location | undefined> {
-    try {
-      const source = await fs.promises.readFile(this.file, 'utf-8');
-      return findTestEndLocation(source, { file: this.file, line: this.line, column: this.column });
-    } catch {}
   }
 
   // ------------ TestInfo methods ------------

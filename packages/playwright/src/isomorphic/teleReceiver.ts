@@ -172,7 +172,6 @@ export type JsonOnTestPausedEvent = {
   params: {
     testId: string;
     resultId: string;
-    stepId: string;
     errors: reporterTypes.TestError[];
   };
 };
@@ -294,7 +293,7 @@ export class TeleReporterReceiver {
       return;
     }
     if (method === 'onTestPaused') {
-      this._onTestPaused(params.testId, params.resultId, params.stepId, params.errors);
+      this._onTestPaused(params.testId, params.resultId, params.errors);
       return;
     }
     if (method === 'onTestEnd') {
@@ -362,14 +361,13 @@ export class TeleReporterReceiver {
     this._reporter.onTestBegin?.(test, testResult);
   }
 
-  private _onTestPaused(testId: string, resultId: string, stepId: string, errors: reporterTypes.TestError[]) {
+  private _onTestPaused(testId: string, resultId: string, errors: reporterTypes.TestError[]) {
     const test = this._tests.get(testId)!;
     const result = test.results.find(r => r._id === resultId)!;
-    const step = result._stepMap.get(stepId)!;
 
     result.errors.push(...errors);
     result.error = result.errors[0];
-    void this._reporter.onTestPaused?.(test, result, step);
+    void this._reporter.onTestPaused?.(test, result);
   }
 
   private _onTestEnd(testEndPayload: JsonTestEnd, payload: JsonTestResultEnd) {

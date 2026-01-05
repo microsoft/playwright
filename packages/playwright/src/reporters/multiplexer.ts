@@ -54,14 +54,10 @@ export class Multiplexer implements ReporterV2 {
       wrap(() => reporter.onStdErr?.(chunk, test, result));
   }
 
-  async onTestPaused(test: TestCase, result: TestResult, step: TestStep) {
-    // only one reporter can handle the pause. first reporter that cares wins.
-    for (const reporter of this._reporters) {
-      const disposition = await wrapAsync(() => reporter.onTestPaused?.(test, result, step));
-      if (disposition?.action)
-        return disposition;
-    }
-    return { action: undefined };
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // only one reporter can handle the pause. first reporter that implements wins.
+    const reporter = this._reporters.find(r => r.onTestPaused);
+    await wrapAsync(() => reporter?.onTestPaused?.(test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {
