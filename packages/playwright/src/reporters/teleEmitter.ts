@@ -28,6 +28,7 @@ import type * as teleReceiver from '../isomorphic/teleReceiver';
 export type TeleReporterEmitterOptions = {
   omitOutput?: boolean;
   omitBuffers?: boolean;
+  pause?: boolean;
 };
 
 export class TeleReporterEmitter implements ReporterV2 {
@@ -83,6 +84,8 @@ export class TeleReporterEmitter implements ReporterV2 {
         errors: result.errors,
       }
     });
+    if (this._emitterOptions.pause)
+      await new Promise<void>(() => {});
   }
 
   onTestEnd(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {

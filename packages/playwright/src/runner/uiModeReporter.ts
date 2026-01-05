@@ -18,7 +18,7 @@ import { TeleReporterEmitter } from '../reporters/teleEmitter';
 
 class UIModeReporter extends TeleReporterEmitter {
   constructor(options: any) {
-    super(options._send, { omitBuffers: true });
+    super(options._send, { omitBuffers: true, pause: true });
   }
 }
 
