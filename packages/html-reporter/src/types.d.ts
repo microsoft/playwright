@@ -50,8 +50,8 @@ export type HTMLReport = {
   startTime: number;
   duration: number;
   shards: {
-    shardIndex: number;
-    botName?: string;
+    shardIndex?: number;
+    tag: string[];
     startTime: number;
     duration: number;
   }[];

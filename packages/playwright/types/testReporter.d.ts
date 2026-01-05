@@ -41,10 +41,28 @@ export interface FullResult {
    */
   duration: number;
 
-  shards: {
-    shardIndex: number;
-    botName?: string;
+  /**
+   * Only present on merged reports.
+   */
+  shards?: {
+    /**
+     * The index of the shard, one-based.
+     */
+    shardIndex?: number;
+
+    /**
+     * Bot tag that differentiates CI environments.
+     */
+    tag: string[];
+
+    /**
+     * Start wall time of shard.
+     */
     startTime: Date;
+
+    /**
+     * Shard run duration in milliseconds.
+     */
     duration: number;
   }[];
 }
@@ -304,7 +322,7 @@ export interface JSONReportError {
 export interface JSONReportTestResult {
   workerIndex: number;
   parallelIndex: number;
-  shardIndex: number;
+  shardIndex?: number;
   status: TestStatus | undefined;
   duration: number;
   error: TestError | undefined;
@@ -691,7 +709,7 @@ export interface TestResult {
   /**
    * The index of the shard between `1` and `shards`.
    */
-  shardIndex: number;
+  shardIndex?: number;
 
   /**
    * Start time of this particular test run.

@@ -87,7 +87,7 @@ export type JsonTestResultStart = {
   retry: number;
   workerIndex: number;
   parallelIndex: number;
-  shardIndex: number;
+  shardIndex?: number;
   startTime: number;
 };
 
@@ -131,8 +131,8 @@ export type JsonFullResult = {
   startTime: number;
   duration: number;
   shards?: {
-    shardIndex: number;
-    botName?: string;
+    shardIndex?: number;
+    tag: string[];
     startTime: number;
     duration: number;
   }[];
@@ -460,7 +460,7 @@ export class TeleReporterReceiver {
       duration: result.duration,
       shards: result.shards?.map(s => ({
         shardIndex: s.shardIndex,
-        botName: s.botName,
+        tag: s.tag,
         startTime: new Date(s.startTime),
         duration: s.duration,
       })) ?? [],

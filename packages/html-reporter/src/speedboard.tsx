@@ -58,11 +58,13 @@ export function Shards({ report }: { report: LoadedReport }) {
   let clash = false;
   const bots: Record<string, number[]> = {};
   for (const shard of shards) {
-    let botName = shard.botName || '';
-    if (botName.startsWith('@'))
-      botName = botName.slice(1);
+    const botName = shard.tag.map(t => {
+      if (t.startsWith('@'))
+        return t.slice(1);
+      return t;
+    }).join(' ');
     bots[botName] ??= [];
-    const shardIndex = Math.max(shard.shardIndex - 1, 0);
+    const shardIndex = Math.max((shard.shardIndex ?? 1) - 1, 0);
     if (bots[botName][shardIndex] !== undefined)
       clash = true;
     bots[botName][shardIndex] = shard.duration;
@@ -78,7 +80,7 @@ export function Shards({ report }: { report: LoadedReport }) {
     />
     {clash && <div style={{ marginTop: 8 }}>
       <icons.warning />
-      Some shards could not be differentiated because of missing bot names.
+      Some shards could not be differentiated because of missing global tags.
       Please refer to <a href='https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-environments' target='_blank' rel='noopener noreferrer'>
         the docs
       </a> on how to fix this.
