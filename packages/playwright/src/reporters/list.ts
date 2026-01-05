@@ -130,6 +130,12 @@ class ListReporter extends TerminalReporter {
     this._updateOrAppendLine(this._stepRows, step, text, prefix);
   }
 
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // follow-up with proper terminal interaction. this is placeholder to ensure pausing works in MCP.
+    this._appendLine('Test paused', '  ');
+    await new Promise<void>(() => {});
+  }
+
   private _maybeWriteNewLine() {
     if (this._needNewLine) {
       this._needNewLine = false;
