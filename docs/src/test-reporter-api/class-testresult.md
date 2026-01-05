@@ -105,4 +105,4 @@ The index of the worker between `0` and `workers - 1`. It is guaranteed that wor
 * since: v1.58
 - type: ?<[int]>
 
-The index of the shard between `1` and `shards`.
+The index of the shard between `1` and [`shards`](../test-sharding.md).
