@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import type { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should run fixture teardown on timeout', async ({ runInlineTest }) => {
@@ -144,25 +143,8 @@ test('should respect test.slow', async ({ runInlineTest }) => {
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
 });
 
-// terminal reporters dont yet implement onTestPaused, so we default to continuing for these tests
-class TestPauseSkipReporter implements ReporterV2 {
-  version() {
-    return 'v2' as const;
-  }
-
-  async onTestPaused() {
-    return { action: 'continue' as const };
-  }
-}
-
 test('should ignore test.setTimeout when debugging', async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'skip-pause.js': `export default ${TestPauseSkipReporter}`,
-    'playwright.config.ts': `
-      export default {
-        reporter: [['list'], ['./skip-pause.js']]
-      };
-    `,
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
@@ -186,11 +168,9 @@ test('should ignore globalTimeout when debugging', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/34911' },
 }, async ({ runInlineTest }) => {
   const result = await runInlineTest({
-    'skip-pause.js': `export default ${TestPauseSkipReporter}`,
     'playwright.config.ts': `
       export default {
         globalTimeout: 100,
-        reporter: [['list'], ['./skip-pause.js']]
       };
     `,
     'a.spec.ts': `
