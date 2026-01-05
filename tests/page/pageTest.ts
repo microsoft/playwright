@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Frame, Page, TestType, Locator } from '@playwright/test';
+import type { TestType } from '@playwright/test';
 import type { PlatformWorkerFixtures } from '../config/platformFixtures';
 import type { TestModeTestFixtures, TestModeWorkerFixtures, TestModeWorkerOptions } from '../config/testModeFixtures';
 import { androidTest } from '../android/androidTest';
@@ -23,9 +23,9 @@ import { electronTest } from '../electron/electronTest';
 import type { PageTestFixtures, PageWorkerFixtures } from './pageTestApi';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 import { expect as baseExpect } from '@playwright/test';
+export { rafraf } from '../config/utils';
 
 let impl: TestType<PageTestFixtures & ServerFixtures & TestModeTestFixtures, PageWorkerFixtures & PlatformWorkerFixtures & TestModeWorkerFixtures & TestModeWorkerOptions & ServerWorkerOptions> = browserTest;
-export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
 
 if (process.env.PWPAGE_IMPL === 'android')
   impl = androidTest;
@@ -33,36 +33,6 @@ if (process.env.PWPAGE_IMPL === 'electron')
   impl = electronTest;
 
 export const test = impl;
-
-export async function rafraf(target: Page | Frame, count = 1) {
-  for (let i = 0; i < count; i++) {
-    await target.evaluate(async () => {
-      await new Promise(f => window.builtins.requestAnimationFrame(() => window.builtins.requestAnimationFrame(f)));
-    });
-  }
-}
-
-export function roundBox(box: BoundingBox): BoundingBox {
-  return {
-    x: Math.round(box.x),
-    y: Math.round(box.y),
-    width: Math.round(box.width),
-    height: Math.round(box.height),
-  };
-}
-
-export function unshift(snapshot: string): string {
-  const lines = snapshot.split('\n');
-  let whitespacePrefixLength = 100;
-  for (const line of lines) {
-    if (!line.trim())
-      continue;
-    const match = line.match(/^(\s*)/);
-    if (match && match[1].length < whitespacePrefixLength)
-      whitespacePrefixLength = match[1].length;
-  }
-  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
-}
 
 export const expect = baseExpect.extend({
   toContainYaml(received: string, expected: string) {

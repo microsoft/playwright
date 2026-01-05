@@ -14,16 +14,18 @@
  * limitations under the License.
  */
 
+// This is the only dependency this file is allowed to have, because we are fine with a dupe.
+// See DEPS.list for more details.
 import clipPaths from './clipPaths';
 
 import type { Point } from '@isomorphic/types';
+import type { AriaSnapshot } from '../ariaSnapshot';
 import type { Highlight, HighlightEntry } from '../highlight';
 import type { InjectedScript } from '../injectedScript';
 import type { ElementText } from '../selectorUtils';
 import type * as actions from '@recorder/actions';
 import type { ElementInfo, Mode, OverlayState, UIState } from '@recorder/recorderTypes';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { AriaNode, AriaSnapshot } from '@injected/ariaSnapshot';
 
 const HighlightColors = {
   multiple: '#f6b26b7f',
@@ -1704,7 +1706,7 @@ export class Recorder {
     const previousSnapshot = this._lastActionAutoexpectSnapshot;
     this._lastActionAutoexpectSnapshot = this._captureAutoExpectSnapshot();
     if (!isAssertAction(action) && this._lastActionAutoexpectSnapshot) {
-      const element = findNewElement(previousSnapshot, this._lastActionAutoexpectSnapshot);
+      const element = this.injectedScript.utils.findNewElement(previousSnapshot?.root, this._lastActionAutoexpectSnapshot?.root);
       action.preconditionSelector = element ? this.injectedScript.generateSelector(element, { testIdAttributeName: this.state.testIdAttributeName }).selector : undefined;
       if (action.preconditionSelector === action.selector)
         action.preconditionSelector = undefined;
@@ -1937,53 +1939,4 @@ function createSvgElement(doc: Document, { tagName, attrs, children }: SvgJson):
 
 function isAssertAction(action: actions.Action): action is actions.AssertAction {
   return action.name.startsWith('assert');
-}
-
-function findNewElement(from: AriaSnapshot | undefined, to: AriaSnapshot): Element | undefined {
-  type ByRoleAndName = Map<string, Map<string, { node: AriaNode, sizeAndPosition: number }>>;
-
-  function fillMap(root: AriaNode, map: ByRoleAndName, position: number) {
-    let size = 1;
-    let childPosition = position + size;
-    for (const child of root.children || []) {
-      if (typeof child === 'string') {
-        size++;
-        childPosition++;
-      } else {
-        size += fillMap(child, map, childPosition);
-        childPosition += size;
-      }
-    }
-    if (!['none', 'presentation', 'fragment', 'iframe', 'generic'].includes(root.role) && root.name) {
-      let byRole = map.get(root.role);
-      if (!byRole) {
-        byRole = new Map();
-        map.set(root.role, byRole);
-      }
-      const existing = byRole.get(root.name);
-      // This heuristic prioritizes elements at the top of the page, even if somewhat smaller.
-      const sizeAndPosition = size * 100 - position;
-      if (!existing || existing.sizeAndPosition < sizeAndPosition)
-        byRole.set(root.name, { node: root, sizeAndPosition });
-    }
-    return size;
-  }
-
-  const fromMap: ByRoleAndName = new Map();
-  if (from)
-    fillMap(from.root, fromMap, 0);
-
-  const toMap: ByRoleAndName = new Map();
-  fillMap(to.root, toMap, 0);
-
-  const result: { node: AriaNode, sizeAndPosition: number }[] = [];
-  for (const [role, byRole] of toMap) {
-    for (const [name, byName] of byRole) {
-      const inFrom = fromMap.get(role)?.get(name);
-      if (!inFrom)
-        result.push(byName);
-    }
-  }
-  result.sort((a, b) => b.sizeAndPosition - a.sizeAndPosition);
-  return result[0]?.node.element;
 }

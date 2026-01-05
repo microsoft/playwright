@@ -112,7 +112,7 @@ export class FullConfigInternal {
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
-      runAgents: takeFirst(configCLIOverrides.runAgents, userConfig.runAgents, false),
+      runAgents: takeFirst(configCLIOverrides.runAgents, userConfig.runAgents, 'none'),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
       tags: globalTags,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),

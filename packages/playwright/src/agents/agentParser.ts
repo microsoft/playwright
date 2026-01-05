@@ -17,14 +17,22 @@
 import fs from 'fs';
 import { yaml } from 'playwright-core/lib/utilsBundle';
 
-import type { AgentSpec } from './agent';
-
 type AgentSpecHeader = {
   name: string;
   description: string;
   model: string;
   color: string;
   tools: string[];
+};
+
+export type AgentSpec = {
+  name: string;
+  description: string;
+  model: string;
+  color: string;
+  tools: string[];
+  instructions: string;
+  examples: string[];
 };
 
 export async function parseAgentSpec(filePath: string): Promise<AgentSpec> {

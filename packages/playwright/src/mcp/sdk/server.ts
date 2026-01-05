@@ -207,6 +207,21 @@ export function firstRootPath(clientInfo: ClientInfo): string | undefined {
   }
 }
 
+export function allRootPaths(clientInfo: ClientInfo): string[] {
+  const paths: string[] = [];
+  for (const root of clientInfo.roots) {
+    try {
+      const url = new URL(root.uri);
+      const path = fileURLToPath(url);
+      if (path)
+        paths.push(path);
+    } catch (error) {
+      serverDebug(error);
+    }
+  }
+  return paths;
+}
+
 function mergeTextParts(result: CallToolResult): CallToolResult {
   const content: CallToolResult['content'] = [];
   const testParts: string[] = [];

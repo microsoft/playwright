@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { test as it, expect, roundBox } from './pageTest';
+import { test as it, expect } from './pageTest';
+import { roundBox } from '../config/utils';
 
 it.skip(({ mode }) => mode !== 'default', 'Highlight element has a closed shadow-root on != default');
 

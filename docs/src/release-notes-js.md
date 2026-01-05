@@ -69,7 +69,7 @@ After 3 years of being deprecated, we removed `page.accessibility` from our API.
 
 - New property [`property: TestConfig.tag`] adds a tag to all tests in this run. This is useful when using [merge-reports](./test-sharding.md#merging-reports-from-multiple-shards).
 - [`event: Worker.console`] event is emitted when JavaScript within the worker calls one of console API methods, e.g. console.log or console.dir. [`method: Worker.waitForEvent`] can be used to wait for it.
-- [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and `Locator.toString()` now uses the description when available.
+- [`method: Locator.description`] returns locator description previously set with [`method: Locator.describe`], and [`method: Locator.toString`] now uses the description when available.
 - New option [`option: Locator.click.steps`] in [`method: Locator.click`] and [`method: Locator.dragTo`] that configures the number of `mousemove` events emitted while moving the mouse pointer to the target element.
 - Network requests issued by [Service Workers](./service-workers.md#network-events-and-routing) are now reported and can be routed through the [BrowserContext](./api/class-browsercontext.md), only in Chromium. You can opt out using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK` environment variable.
 - Console messages from Service Workers are dispatched through [`event: Worker.console`]. You can opt out of this using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE` environment variable.

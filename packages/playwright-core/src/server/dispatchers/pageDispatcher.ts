@@ -27,7 +27,7 @@ import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
-import { pagePerform, pageExtract } from '../agent/agent';
+import { pageAgentPerform, pageAgentExpect, pageAgentExtract } from '../agent/pageAgent';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -322,12 +322,16 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { pdf: buffer };
   }
 
-  async perform(params: channels.PagePerformParams, progress: Progress): Promise<channels.PagePerformResult> {
-    return await pagePerform(progress, this._page, params);
+  async agentPerform(params: channels.PageAgentPerformParams, progress: Progress): Promise<channels.PageAgentPerformResult> {
+    return await pageAgentPerform(progress, this._page, params);
   }
 
-  async extract(params: channels.PageExtractParams, progress: Progress): Promise<channels.PageExtractResult> {
-    const { result, usage } = await pageExtract(progress, this._page, params);
+  async agentExpect(params: channels.PageAgentExpectParams, progress: Progress): Promise<channels.PageAgentExpectResult> {
+    await pageAgentExpect(progress, this._page, params);
+  }
+
+  async agentExtract(params: channels.PageAgentExtractParams, progress: Progress): Promise<channels.PageAgentExtractResult> {
+    const { result, usage } = await pageAgentExtract(progress, this._page, params);
     return { result, ...usage };
   }
 

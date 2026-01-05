@@ -118,7 +118,9 @@ function listMethods(rootNames, apiFileName) {
    * @param {string} methodName
    */
   function shouldSkipMethodByName(className, methodName) {
-    if (methodName.startsWith('_') || methodName === 'T' || methodName === 'toString')
+    if (methodName.startsWith('_') || methodName === 'T')
+      return true;
+    if (methodName === 'toString' && className !== 'Locator')
       return true;
     if (EventEmitter.prototype.hasOwnProperty(methodName))
       return true;

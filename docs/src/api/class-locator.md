@@ -628,19 +628,12 @@ Locator description.
 
 ## method: Locator.description
 * since: v1.57
+* langs: python, java, csharp
 - returns: <[null]|[string]>
 
-Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the description when available.
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set.
 
 **Usage**
-
-```js
-const button = page.getByRole('button').describe('Subscribe button');
-console.log(button.description()); // "Subscribe button"
-
-const input = page.getByRole('textbox');
-console.log(input.description()); // null
-```
 
 ```python async
 button = page.get_by_role("button").describe("Subscribe button")
@@ -672,6 +665,23 @@ Console.WriteLine(button.Description()); // "Subscribe button"
 
 var input = Page.GetByRole(AriaRole.Textbox);
 Console.WriteLine(input.Description()); // null
+```
+
+## method: Locator.description
+* since: v1.57
+* langs: js
+- returns: <[null]|[string]>
+
+Returns locator description previously set with [`method: Locator.describe`]. Returns `null` if no custom description has been set. Prefer [`method: Locator.toString`] for a human-readable representation, as it uses the description when available.
+
+**Usage**
+
+```js
+const button = page.getByRole('button').describe('Subscribe button');
+console.log(button.description()); // "Subscribe button"
+
+const input = page.getByRole('textbox');
+console.log(input.description()); // null
 ```
 
 ## async method: Locator.dispatchEvent
@@ -2533,6 +2543,13 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 
 ### option: Locator.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.14
+
+## method: Locator.toString
+* since: v1.57
+* langs: js
+- returns: <[string]>
+
+Returns a human-readable representation of the locator, using the [`method: Locator.description`] if one exists; otherwise, it generates a string based on the locator's selector.
 
 ## async method: Locator.type
 * since: v1.14

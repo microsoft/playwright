@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs/promises';
+import { pathToFileURL } from 'url';
 import { test, expect } from './fixtures';
 
 test('browser_navigate', async ({ client, server }) => {
@@ -27,6 +29,74 @@ test('browser_navigate', async ({ client, server }) => {
 - Page Snapshot:
 \`\`\`yaml
 - generic [active] [ref=e1]: Hello, world!
+\`\`\``,
+  });
+});
+
+test('browser_navigate blocks file:// URLs by default', async ({ client }) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'file:///etc/passwd' },
+  })).toHaveResponse({
+    result: expect.stringContaining('Error: Access to "file:" URL is blocked. Allowed protocols: http:, https:, about:, data:. Attempted URL: file:///etc/passwd'),
+    isError: true,
+  });
+});
+
+test('browser_navigate allows about:, data: and javascript: protocols', async ({ client, server }) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'about:blank' },
+  })).toHaveResponse({
+    code: `await page.goto('about:blank');`,
+    pageState: `- Page URL: about:blank
+- Page Title: 
+- Page Snapshot:
+\`\`\`yaml
+
+\`\`\``,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'data:text/html,<h1>Hello</h1>' },
+  })).toHaveResponse({
+    code: `await page.goto('data:text/html,<h1>Hello</h1>');`,
+    pageState: `- Page URL: data:text/html,<h1>Hello</h1>
+- Page Title: 
+- Page Snapshot:
+\`\`\`yaml
+- heading \"Hello\" [level=1] [ref=e2]
+\`\`\``,
+  });
+});
+
+test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess is true', async ({ startClient }, testInfo) => {
+  const rootDir = testInfo.outputPath();
+  const fileOutsideRoot = testInfo.outputPath('test.txt');
+  await fs.writeFile(fileOutsideRoot, 'Test file content');
+  const { client } = await startClient({
+    config: {
+      allowUnrestrictedFileAccess: true,
+    },
+    roots: [
+      {
+        name: 'workspace',
+        uri: pathToFileURL(rootDir).href,
+      }
+    ],
+  });
+
+  const url = pathToFileURL(fileOutsideRoot).href;
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url },
+  })).toHaveResponse({
+    pageState: `- Page URL: ${url}
+- Page Title: 
+- Page Snapshot:
+\`\`\`yaml
+- generic [ref=e2]: Test file content
 \`\`\``,
   });
 });
@@ -53,7 +123,6 @@ test('browser_select_option', async ({ client, server }) => {
       values: ['bar'],
     },
   })).toHaveResponse({
-    code: `await page.getByRole('combobox').selectOption(['bar']);`,
     pageState: `- Page URL: ${server.PREFIX}/
 - Page Title: Title
 - Page Snapshot:

@@ -34,7 +34,7 @@ test('page.perform', async ({ page, server }) => {
     // For debugging purposes it is on for now.
     console.log('agentturn', turn);
   });
-  await page.perform('Fill out the form with the following details:\n' +
+  await page.agent.perform('Fill out the form with the following details:\n' +
     'Name: John Smith\n' +
     'Address: 1045 La Avenida St, Mountain View, CA 94043\n' +
     'Email: john.smith@at-microsoft.com');
@@ -50,7 +50,7 @@ test('page.perform', async ({ page, server }) => {
 
 test('page.perform secret', async ({ page, server }) => {
   await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
-  await page.perform('Enter x-secret-email into the email field');
+  await page.agent.perform('Enter x-secret-email into the email field');
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - textbox "Email Address": secret-email@at-microsoft.com
   `);
@@ -58,8 +58,8 @@ test('page.perform secret', async ({ page, server }) => {
 
 test.skip('extract task', async ({ page }) => {
   await page.goto('https://demo.playwright.dev/todomvc');
-  await page.perform('Add "Buy groceries" todo');
-  console.log(await page.extract('List todos with their statuses', z.object({
+  await page.agent.perform('Add "Buy groceries" todo');
+  console.log(await page.agent.extract('List todos with their statuses', z.object({
     items: z.object({
       title: z.string(),
       completed: z.boolean()
@@ -80,7 +80,7 @@ test('page.perform expect value', async ({ page, server }) => {
     <input type="email" name="email" placeholder="Email Address" oninput="onInput(event);"/>
     <div id="error" style="color: red; display: none;">Error: Invalid email address</div>
   `);
-  await page.perform(`
+  await page.agent.perform(`
     - Enter "bogus" into the email field
     - Check that the value is in fact "bogus"
     - Check that the error message is displayed

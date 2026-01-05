@@ -47,8 +47,11 @@ const planSchema = z.object({
     tests: z.array(z.object({
       name: z.string().describe('The name of the test'),
       file: z.string().describe('The file the test should be saved to, for example: "tests/<suite-name>/<test-name>.spec.ts".'),
-      steps: z.array(z.string().describe(`The steps to be executed to perform the test. For example: 'Click on the "Submit" button'`)),
-      expectedResults: z.array(z.string().describe('The expected results of the steps for test to verify.')),
+      steps: z.array(z.object({
+        perform: z.string().describe(`Action to perform. For example: 'Click on the "Submit" button'.`),
+        expect: z.string().optional().describe(`Expected result of the action where appropriate. For example: 'The page should show the "Thank you for your submission" message'`),
+      })),
+      postConditions: z.array(z.string().describe(`Post conditions to verify that are not covered by the steps. Can be empty`)),
     })),
   })),
 });
@@ -107,12 +110,17 @@ export const saveTestPlan = defineTestTool({
         lines.push(`**File:** \`${test.file}\``);
         lines.push(``);
         lines.push(`**Steps:**`);
-        for (let k = 0; k < test.steps.length; k++)
-          lines.push(`  ${k + 1}. ${test.steps[k]}`);
-        lines.push(``);
-        lines.push(`**Expected Results:**`);
-        for (const result of test.expectedResults)
-          lines.push(`  - ${result}`);
+        for (let k = 0; k < test.steps.length; k++) {
+          lines.push(`  ${k + 1}. ${test.steps[k].perform}`);
+          if (test.steps[k].expect?.trim())
+            lines.push(`  ${' '.repeat(String(k + 1).length)}  Expect: ${test.steps[k].expect}`);
+        }
+        if (test.postConditions.length) {
+          lines.push(``);
+          lines.push(`**Post Conditions:**`);
+          for (const postCondition of test.postConditions)
+            lines.push(`  - ${postCondition}`);
+        }
       }
     }
     lines.push(``);

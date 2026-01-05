@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { Frame, Page } from 'playwright-core';
+import type { Locator, Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/server/utils/zipFile';
 import type { TraceLoaderBackend } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
 import type { StackFrame } from '../../packages/protocol/src/channels';
@@ -24,6 +24,8 @@ import type { ActionTreeItem } from '../../packages/playwright-core/src/utils/is
 import { buildActionTree, TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
+
+export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
 
 export async function attachFrame(page: Page, frameId: string, url: string): Promise<Frame> {
   const handle = await page.evaluateHandle(async ({ frameId, url }) => {
@@ -209,6 +211,36 @@ export function waitForTestLog<T>(page: Page, prefix: string): Promise<T> {
       }
     });
   });
+}
+
+export async function rafraf(target: Page | Frame, count = 1) {
+  for (let i = 0; i < count; i++) {
+    await target.evaluate(async () => {
+      await new Promise(f => window.builtins.requestAnimationFrame(() => window.builtins.requestAnimationFrame(f)));
+    });
+  }
+}
+
+export function roundBox(box: BoundingBox): BoundingBox {
+  return {
+    x: Math.round(box.x),
+    y: Math.round(box.y),
+    width: Math.round(box.width),
+    height: Math.round(box.height),
+  };
+}
+
+export function unshift(snapshot: string): string {
+  const lines = snapshot.split('\n');
+  let whitespacePrefixLength = 100;
+  for (const line of lines) {
+    if (!line.trim())
+      continue;
+    const match = line.match(/^(\s*)/);
+    if (match && match[1].length < whitespacePrefixLength)
+      whitespacePrefixLength = match[1].length;
+  }
+  return lines.filter(t => t.trim()).map(line => line.substring(whitespacePrefixLength)).join('\n');
 }
 
 const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');

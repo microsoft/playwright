@@ -57,11 +57,12 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+import type { TraceModel } from '@isomorphic/trace/traceModel';
 import type { Entry } from '@trace/har';
 
 // The following function is derived from Chromium's source code
 // https://github.com/ChromeDevTools/devtools-frontend/blob/83cbe41b4107e188a1f66fdf6ea3a9cca42587c6/front_end/panels/network/NetworkLogView.ts#L2363
-export async function generateCurlCommand(resource: Entry): Promise<string> {
+export async function generateCurlCommand(model: TraceModel | undefined, resource: Entry): Promise<string> {
   const platform = navigator.platform.includes('Win') ? 'win' : 'unix';
   let command: string[] = [];
   // Most of these headers are derived from the URL and are automatically added by cURL.
@@ -141,7 +142,7 @@ export async function generateCurlCommand(resource: Entry): Promise<string> {
 
   let inferredMethod = 'GET';
   const data = [];
-  const formData = await fetchRequestPostData(resource);
+  const formData = await fetchRequestPostData(model, resource);
   if (formData) {
     // Note that formData is not necessarily urlencoded because it might for example
     // come from a fetch request made with an explicitly unencoded body.
@@ -180,7 +181,7 @@ const enum FetchStyle {
   NODE_JS = 1,
 }
 
-export async function generateFetchCall(resource: Entry, style: FetchStyle = FetchStyle.BROWSER): Promise<string> {
+export async function generateFetchCall(model: TraceModel | undefined, resource: Entry, style: FetchStyle = FetchStyle.BROWSER): Promise<string> {
   const ignoredHeaders = new Set<string>([
     // Internal headers
     'method',
@@ -243,7 +244,7 @@ export async function generateFetchCall(resource: Entry, style: FetchStyle = Fet
 
   const referrer = referrerHeader ? referrerHeader.value : void 0;
 
-  const requestBody = await fetchRequestPostData(resource);
+  const requestBody = await fetchRequestPostData(model, resource);
 
   const fetchOptions: RequestInit = {
     headers: Object.keys(headers).length ? headers : void 0,
@@ -280,6 +281,8 @@ export async function generateFetchCall(resource: Entry, style: FetchStyle = Fet
   return `fetch(${url}, ${options});`;
 }
 
-async function fetchRequestPostData(resource: Entry) {
-  return resource.request.postData?._sha1 ? await fetch(`sha1/${resource.request.postData._sha1}`).then(r => r.text()) : resource.request.postData?.text;
+async function fetchRequestPostData(model: TraceModel | undefined, resource: Entry) {
+  return (model && resource.request.postData?._sha1) ?
+    await fetch(model.createRelativeUrl(`sha1/${resource.request.postData._sha1}`)).then(r => r.text())
+    : resource.request.postData?.text;
 }

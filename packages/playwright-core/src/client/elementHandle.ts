@@ -284,6 +284,10 @@ export async function convertInputFiles(platform: Platform, files: string | File
 
     const [localPaths, localDirectory] = await resolvePathsAndDirectoryForInputFiles(platform, items);
 
+    localPaths?.forEach(path => context._checkFileAccess(path));
+    if (localDirectory)
+      context._checkFileAccess(localDirectory);
+
     if (context._connection.isRemote()) {
       const files = localDirectory ? (await platform.fs().promises.readdir(localDirectory, { withFileTypes: true, recursive: true })).filter(f => f.isFile()).map(f => platform.path().join(f.path, f.name)) : localPaths!;
       const { writableStreams, rootDir } = await context._wrapApiCall(async () => context._channel.createTempFiles({

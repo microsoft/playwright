@@ -189,4 +189,10 @@ export type Config = {
      */
     mode?: 'incremental' | 'full' | 'none';
   }
+
+  /**
+   * Whether to allow file uploads from anywhere on the file system.
+   * By default (false), file uploads are restricted to paths within the MCP roots only.
+   */
+  allowUnrestrictedFileAccess?: boolean;
 };

@@ -19,6 +19,8 @@ import fs from 'fs';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
+import { fileURLToPath } from 'url';
+import os from 'os';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
@@ -237,6 +239,10 @@ export class Context {
       selectors.setTestIdAttribute(this.config.testIdAttribute);
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
+    if (!this.config.allowUnrestrictedFileAccess) {
+      (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
+      (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
+    }
     await this._setupRequestInterception(browserContext);
     if (this.sessionLog)
       await InputRecorder.create(this, browserContext);
@@ -263,6 +269,28 @@ export class Context {
     };
   }
 }
+
+function allRootPaths(clientInfo: ClientInfo): string[] {
+  const paths: string[] = [];
+  for (const root of clientInfo.roots) {
+    const url = new URL(root.uri);
+    let rootPath;
+    try {
+      rootPath = fileURLToPath(url);
+    } catch (e) {
+      // Support WSL paths on Windows.
+      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && os.platform() === 'win32')
+        rootPath = decodeURIComponent(url.pathname);
+    }
+    if (!rootPath)
+      continue;
+    paths.push(rootPath);
+  }
+  if (paths.length === 0)
+    paths.push(process.cwd());
+  return paths;
+}
+
 
 function originOrHostGlob(originOrHost: string) {
   try {
