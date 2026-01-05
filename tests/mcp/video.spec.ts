@@ -23,7 +23,7 @@ for (const mode of ['isolated', 'persistent']) {
   test(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
     const outputDir = testInfo.outputPath('output');
 
-    const { client } = await startClient({
+    const { client, stderr } = await startClient({
       args: [
         '--save-video=800x600',
         ...(mode === 'isolated' ? ['--isolated'] : []),
@@ -34,6 +34,8 @@ for (const mode of ['isolated', 'persistent']) {
     await navigateToTestPage(client, server);
     await expect(async () => await produceFrames(client)).toPass();
     await closeBrowser(client);
+
+    console.error('Client stderr:', stderr());
 
     const videosDir = path.join(outputDir, 'videos');
     const [file] = await fs.promises.readdir(videosDir);
@@ -95,9 +97,11 @@ async function navigateToTestPage(client: Client, server: any) {
 }
 
 async function closeBrowser(client: Client) {
-  expect(await client.callTool({
+  const response = await client.callTool({
     name: 'browser_close',
-  })).toHaveResponse({
+  });
+  console.log('browser_close response', response);
+  expect(response).toHaveResponse({
     code: expect.stringContaining(`page.close()`),
   });
 }

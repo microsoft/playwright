@@ -166,7 +166,9 @@ export class Context {
     await promise.then(async ({ browserContext, close }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
+      console.error('will close');
       await close();
+      console.error('did close');
     });
   }
 

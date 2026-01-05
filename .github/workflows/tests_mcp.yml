@@ -34,7 +34,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-15, windows-latest]
+        os: [macos-15]
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -44,7 +44,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         node-version: "20"
-        command: npm run test-mcp
+        command: DEBUG=pw:protocol MAX_LOG_LENGTH=1000  npm run ctest-mcp -- video
         bot-name: "mcp-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}

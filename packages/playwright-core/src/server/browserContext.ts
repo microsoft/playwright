@@ -533,6 +533,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       // Cleanup.
       const promises: Promise<void>[] = [];
       for (const { context, artifact } of this._browser._idToVideo.values()) {
+        console.error('Waiting for video to finish before closing context', context === this, artifact.localPath());
         // Wait for the videos to finish.
         if (context === this)
           promises.push(artifact.finishedPromise());

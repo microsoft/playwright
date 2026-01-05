@@ -110,7 +110,9 @@ class BaseContextFactory implements BrowserContextFactory {
     testDebug(`close browser context (${this._logName})`);
     if (browser.contexts().length === 1)
       this._browserPromise = undefined;
-    await browserContext.close().catch(logUnhandledError);
+    console.error('closing browser context');
+    await browserContext.close().catch(e => console.error('Error closing browser context', e));
+    console.error('browser context closed');
     if (browser.contexts().length === 0) {
       testDebug(`close browser (${this._logName})`);
       await browser.close().catch(logUnhandledError);
@@ -235,7 +237,11 @@ class PersistentContextFactory implements BrowserContextFactory {
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
     testDebug('close browser context (persistent)');
     testDebug('release user data dir', userDataDir);
-    await browserContext.close().catch(() => {});
+    console.error('Closing browser context with user data dir:', userDataDir);
+    await browserContext.close().catch((e) => {
+      console.error('Error closing browser context', e);
+    });
+    console.error('Browser context closed for user data dir:', userDataDir);
     this._userDataDirs.delete(userDataDir);
     if (process.env.PWMCP_PROFILES_DIR_FOR_TEST && userDataDir.startsWith(process.env.PWMCP_PROFILES_DIR_FOR_TEST))
       await fs.promises.rm(userDataDir, { recursive: true }).catch(logUnhandledError);
