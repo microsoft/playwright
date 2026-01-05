@@ -112,6 +112,7 @@ export class VideoRecorder {
   }
 
   writeFrame(frame: Buffer, timestamp: number) {
+    console.error('Writing frame at timestamp', timestamp);
     this._launchPromise.then(error => {
       if (error)
         return;
@@ -121,6 +122,7 @@ export class VideoRecorder {
 
   private _writeFrame(frame: Buffer, timestamp: number) {
     assert(this._process);
+    console.error('VideoRecorder: _writeFrame', this._isStopped, { timestamp });
     if (this._isStopped)
       return;
 
@@ -155,6 +157,7 @@ export class VideoRecorder {
   async stop() {
     // Only report the error on stop. This allows to make the constructor synchronous.
     const error = await this._launchPromise;
+    console.error('Stopping video recorder, error:', error);
     if (error)
       throw error;
     if (this._isStopped || !this._lastFrame)
@@ -165,9 +168,12 @@ export class VideoRecorder {
     this._writeFrame(Buffer.from([]), this._lastFrame.timestamp + addTime);
     this._isStopped = true;
     try {
+      console.error('will wait _lastWritePromise');
       await this._lastWritePromise;
       await this._gracefullyClose!();
+      console.error('did stop video recorder');
     } catch (e) {
+      console.error('Error while stopping ffmpeg', e);
       debugLogger.log('error', `ffmpeg failed to stop: ${String(e)}`);
     }
   }
