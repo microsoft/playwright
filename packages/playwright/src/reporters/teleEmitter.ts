@@ -83,6 +83,7 @@ export class TeleReporterEmitter implements ReporterV2 {
         errors: result.errors,
       }
     });
+    // keep the test paused until externally resumed
     await new Promise<void>(() => {});
   }
 

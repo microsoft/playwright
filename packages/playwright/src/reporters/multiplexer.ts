@@ -55,13 +55,8 @@ export class Multiplexer implements ReporterV2 {
   }
 
   async onTestPaused(test: TestCase, result: TestResult) {
-    const promises: Promise<void>[] = [];
-    for (const reporter of this._reporters) {
-      if (reporter.onTestPaused)
-        promises.push(wrapAsync(() => reporter.onTestPaused!(test, result)));
-    }
-    // first reporter that resolves continues the execution.
-    await Promise.race(promises);
+    for (const reporter of this._reporters)
+      await wrapAsync(() => reporter.onTestPaused?.(test, result));
   }
 
   onTestEnd(test: TestCase, result: TestResult) {

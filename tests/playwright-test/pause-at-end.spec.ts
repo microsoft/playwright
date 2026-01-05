@@ -18,6 +18,8 @@ import { TestCase, TestResult, TestStep } from 'packages/playwright-test/reporte
 import { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
+test.describe.configure({ mode: 'parallel' });
+
 class LocationReporter implements ReporterV2 {
   private _foundErrors = 0;
   version() {
