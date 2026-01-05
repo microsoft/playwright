@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import type { CallLog, ElementInfo, Mode, Source } from './recorderTypes';
+import type { CallLog, Mode, Source } from './recorderTypes';
 import { CodeMirrorWrapper } from '@web/components/codeMirrorWrapper';
 import type { SourceHighlight } from '@web/components/codeMirrorWrapper';
 import { SplitView } from '@web/components/splitView';
@@ -32,19 +32,13 @@ import yaml from 'yaml';
 import { parseAriaSnapshot } from '@isomorphic/ariaSnapshot';
 import { Dialog } from '@web/shared/dialog';
 
-export interface RecorderProps {
-  sources: Source[],
-  paused: boolean,
-  log: Map<string, CallLog>,
-  mode: Mode,
-}
+import type { RecorderBackend, RecorderFrontend } from './recorderTypes';
 
-export const Recorder: React.FC<RecorderProps> = ({
-  sources,
-  paused,
-  log,
-  mode,
-}) => {
+export const Recorder: React.FC = ({}) => {
+  const [sources, setSources] = React.useState<Source[]>([]);
+  const [paused, setPaused] = React.useState(false);
+  const [log, setLog] = React.useState(new Map<string, CallLog>());
+  const [mode, setMode] = React.useState<Mode>('none');
   const [selectedFileId, setSelectedFileId] = React.useState<string | undefined>();
   const [selectedTab, setSelectedTab] = useSetting<string>('recorderPropertiesTab', 'log');
   const [ariaSnapshot, setAriaSnapshot] = React.useState<string | undefined>();
@@ -53,38 +47,66 @@ export const Recorder: React.FC<RecorderProps> = ({
   const [theme, setTheme] = useThemeSetting();
   const [autoExpect, setAutoExpect] = useSetting<boolean>('autoExpect', false);
   const settingsButtonRef = React.useRef<HTMLButtonElement>(null);
-  window.playwrightSelectSource = selectedSourceId => setSelectedFileId(selectedSourceId);
-
-  React.useEffect(() => {
-    window.dispatch({ event: 'setAutoExpect', params: { autoExpect } });
-  }, [autoExpect]);
+  const backend = React.useMemo(createRecorderBackend, []);
+  const [locator, setLocator] = React.useState('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
 
   const source = React.useMemo(() => {
     const source = sources.find(s => s.id === selectedFileId);
     return source ?? emptySource();
   }, [sources, selectedFileId]);
 
-  const [locator, setLocator] = React.useState('');
-  window.playwrightElementPicked = (elementInfo: ElementInfo, userGesture?: boolean) => {
-    const language = source.language;
-    setLocator(asLocator(language, elementInfo.selector));
-    setAriaSnapshot(elementInfo.ariaSnapshot);
-    setAriaSnapshotErrors([]);
-    if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
-      setSelectedTab('locator');
+  React.useLayoutEffect(() => {
+    const dispatcher: RecorderFrontend = {
+      modeChanged: ({ mode }) => setMode(mode),
+      sourcesUpdated: ({ sources }) => {
+        setSources(sources);
+        window.playwrightSourcesEchoForTest = sources;
+      },
+      pageNavigated: ({ url }) => {
+        document.title = url
+          ? `Playwright Inspector - ${url}`
+          : `Playwright Inspector`;
+      },
+      pauseStateChanged: ({ paused }) => setPaused(paused),
+      callLogsUpdated: ({ callLogs }) => {
+        setLog(log => {
+          const newLog = new Map<string, CallLog>(log);
+          for (const callLog of callLogs) {
+            callLog.reveal = !log.has(callLog.id);
+            newLog.set(callLog.id, callLog);
+          }
+          return newLog;
+        });
+      },
+      sourceRevealRequested: ({ sourceId }) => setSelectedFileId(sourceId),
+      elementPicked: ({ elementInfo, userGesture }) => {
+        const language = source.language;
+        setLocator(asLocator(language, elementInfo.selector));
+        setAriaSnapshot(elementInfo.ariaSnapshot);
+        setAriaSnapshotErrors([]);
+        if (userGesture && selectedTab !== 'locator' && selectedTab !== 'aria')
+          setSelectedTab('locator');
 
-    if (mode === 'inspecting' && selectedTab === 'aria') {
-      // Keep exploring aria.
-    } else {
-      window.dispatch({ event: 'setMode', params: { mode: mode === 'inspecting' ? 'standby' : 'recording' } }).catch(() => { });
-    }
-  };
+        if (mode === 'inspecting' && selectedTab === 'aria') {
+          // Keep exploring aria.
+        } else {
+          backend.setMode({ mode: mode === 'inspecting' ? 'standby' : 'recording' }).catch(() => { });
+        }
+      },
+    };
+    window.dispatch = (data: { method: string; params?: any }) => {
+      (dispatcher as any)[data.method].call(dispatcher, data.params);
+    };
+  }, [backend, mode, selectedTab, setSelectedTab, source]);
 
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    backend.setAutoExpect({ autoExpect });
+  }, [autoExpect, backend]);
+
   React.useLayoutEffect(() => {
     messagesEndRef.current?.scrollIntoView({ block: 'center', inline: 'nearest' });
   }, [messagesEndRef]);
-
 
   React.useLayoutEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -92,31 +114,31 @@ export const Recorder: React.FC<RecorderProps> = ({
         case 'F8':
           event.preventDefault();
           if (paused)
-            window.dispatch({ event: 'resume' });
+            backend.resume();
           else
-            window.dispatch({ event: 'pause' });
+            backend.pause();
           break;
         case 'F10':
           event.preventDefault();
           if (paused)
-            window.dispatch({ event: 'step' });
+            backend.step();
           break;
       }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [paused]);
+  }, [paused, backend]);
 
   const onEditorChange = React.useCallback((selector: string) => {
     if (mode === 'none' || mode === 'inspecting')
-      window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
+      backend.setMode({ mode: 'standby' });
     setLocator(selector);
-    window.dispatch({ event: 'highlightRequested', params: { selector } });
-  }, [mode]);
+    backend.highlightRequested({ selector });
+  }, [mode, backend]);
 
   const onAriaEditorChange = React.useCallback((ariaSnapshot: string) => {
     if (mode === 'none' || mode === 'inspecting')
-      window.dispatch({ event: 'setMode', params: { mode: 'standby' } });
+      backend.setMode({ mode: 'standby' });
     const { fragment, errors } = parseAriaSnapshot(yaml, ariaSnapshot, { prettyErrors: false });
     const highlights = errors.map(error => {
       const highlight: SourceHighlight = {
@@ -130,19 +152,19 @@ export const Recorder: React.FC<RecorderProps> = ({
     setAriaSnapshotErrors(highlights);
     setAriaSnapshot(ariaSnapshot);
     if (!errors.length)
-      window.dispatch({ event: 'highlightRequested', params: { ariaTemplate: fragment } });
-  }, [mode]);
+      backend.highlightRequested({ ariaTemplate: fragment });
+  }, [mode, backend]);
 
   const isRecording = mode === 'recording' || mode === 'recording-inspecting' || mode === 'assertingText' || mode === 'assertingVisibility';
 
   return <div className='recorder'>
     <Toolbar>
       <ToolbarButton icon={isRecording ? 'stop-circle' : 'circle-large-filled'} title={isRecording ? 'Stop Recording' : 'Start Recording'} toggled={isRecording} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' } });
+        backend.setMode({ mode: mode === 'none' || mode === 'standby' || mode === 'inspecting' ? 'recording' : 'standby' });
       }}>Record</ToolbarButton>
       <ToolbarSeparator />
       <ToolbarButton icon='inspect' title='Pick locator' toggled={mode === 'inspecting' || mode === 'recording-inspecting'} onClick={() => {
-        const newMode = {
+        const newMode: Mode = {
           'inspecting': 'standby',
           'none': 'inspecting',
           'standby': 'inspecting',
@@ -152,42 +174,42 @@ export const Recorder: React.FC<RecorderProps> = ({
           'assertingVisibility': 'recording-inspecting',
           'assertingValue': 'recording-inspecting',
           'assertingSnapshot': 'recording-inspecting',
-        }[mode];
-        window.dispatch({ event: 'setMode', params: { mode: newMode } }).catch(() => { });
+        }[mode] as Mode;
+        backend.setMode({ mode: newMode }).catch(() => { });
       }}></ToolbarButton>
       <ToolbarButton icon='eye' title='Assert visibility' toggled={mode === 'assertingVisibility'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility' } });
+        backend.setMode({ mode: mode === 'assertingVisibility' ? 'recording' : 'assertingVisibility' });
       }}></ToolbarButton>
       <ToolbarButton icon='whole-word' title='Assert text' toggled={mode === 'assertingText'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingText' ? 'recording' : 'assertingText' } });
+        backend.setMode({ mode: mode === 'assertingText' ? 'recording' : 'assertingText' });
       }}></ToolbarButton>
       <ToolbarButton icon='symbol-constant' title='Assert value' toggled={mode === 'assertingValue'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingValue' ? 'recording' : 'assertingValue' } });
+        backend.setMode({ mode: mode === 'assertingValue' ? 'recording' : 'assertingValue' });
       }}></ToolbarButton>
       <ToolbarButton icon='gist' title='Assert snapshot' toggled={mode === 'assertingSnapshot'} disabled={mode === 'none' || mode === 'standby' || mode === 'inspecting'} onClick={() => {
-        window.dispatch({ event: 'setMode', params: { mode: mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot' } });
+        backend.setMode({ mode: mode === 'assertingSnapshot' ? 'recording' : 'assertingSnapshot' });
       }}></ToolbarButton>
       <ToolbarSeparator />
       <ToolbarButton icon='files' title='Copy' disabled={!source || !source.text} onClick={() => {
         copy(source.text);
       }}></ToolbarButton>
       <ToolbarButton icon='debug-continue' title='Resume (F8)' ariaLabel='Resume' disabled={!paused} onClick={() => {
-        window.dispatch({ event: 'resume' });
+        backend.resume();
       }}></ToolbarButton>
       <ToolbarButton icon='debug-pause' title='Pause (F8)' ariaLabel='Pause' disabled={paused} onClick={() => {
-        window.dispatch({ event: 'pause' });
+        backend.pause();
       }}></ToolbarButton>
       <ToolbarButton icon='debug-step-over' title='Step over (F10)' ariaLabel='Step over' disabled={!paused} onClick={() => {
-        window.dispatch({ event: 'step' });
+        backend.step();
       }}></ToolbarButton>
       <div style={{ flex: 'auto' }}></div>
       <div>Target:</div>
       <SourceChooser fileId={source.id} sources={sources} setFileId={fileId => {
         setSelectedFileId(fileId);
-        window.dispatch({ event: 'fileChanged', params: { fileId } });
+        backend.fileChanged({ fileId });
       }} />
       <ToolbarButton icon='clear-all' title='Clear' disabled={!source || !source.text} onClick={() => {
-        window.dispatch({ event: 'clear' });
+        backend.clear();
       }}></ToolbarButton>
       <ToolbarButton
         ref={settingsButtonRef}
@@ -213,7 +235,7 @@ export const Recorder: React.FC<RecorderProps> = ({
         </div>
         <div key='auto-expect-setting' className='setting' title='Automatically generate assertions while recording'>
           <input type='checkbox' id='auto-expect-setting' checked={autoExpect} onChange={() => {
-            window.dispatch({ event: 'setAutoExpect', params: { autoExpect: !autoExpect } });
+            backend.setAutoExpect({ autoExpect: !autoExpect });
             setAutoExpect(!autoExpect);
           }} />
           <label htmlFor='auto-expect-setting'>Generate assertions</label>
@@ -248,3 +270,15 @@ export const Recorder: React.FC<RecorderProps> = ({
     />
   </div>;
 };
+
+function createRecorderBackend(): RecorderBackend {
+  return new Proxy({} as RecorderBackend, {
+    get: (_target, prop: string | symbol) => {
+      if (typeof prop !== 'string')
+        return undefined;
+      return (params?: any) => {
+        return window.sendCommand({ method: prop, params });
+      };
+    },
+  });
+}

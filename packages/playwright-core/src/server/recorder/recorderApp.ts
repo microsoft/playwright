@@ -31,9 +31,11 @@ import { BrowserContext } from '../browserContext';
 
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
-import type { CallLog, ElementInfo, Mode, Source } from '@recorder/recorderTypes';
+import type { CallLog, ElementInfo, Mode, RecorderBackend, RecorderFrontend, Source } from '@recorder/recorderTypes';
 import type { Language, LanguageGeneratorOptions } from '../codegen/types';
 import type * as channels from '@protocol/channels';
+import type { Progress } from '../progress';
+import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 
 export type RecorderAppParams = channels.BrowserContextEnableRecorderParams & {
   browserName: string;
@@ -54,10 +56,12 @@ export class RecorderApp {
   private _recorderSources: Source[] = [];
   private _primaryGeneratorId: string;
   private _selectedGeneratorId: string;
+  private _frontend: RecorderFrontend;
 
   private constructor(recorder: Recorder, params: RecorderAppParams, page: Page, wsEndpointForTest: string | undefined) {
     this._page = page;
     this._recorder = recorder;
+    this._frontend = createRecorderFrontend(page);
     this.wsEndpointForTest = wsEndpointForTest;
 
     // Make a copy of options to modify them later.
@@ -103,7 +107,7 @@ export class RecorderApp {
         });
       });
 
-      await this._page.exposeBinding(progress, 'dispatch', false, (_, data: any) => this._handleUIEvent(data));
+      await this._createDispatcher(progress);
 
       this._page.once('close', () => {
         this._recorder.close();
@@ -116,61 +120,59 @@ export class RecorderApp {
 
     const url = this._recorder.url();
     if (url)
-      this._onPageNavigated(url);
-    this._onModeChanged(this._recorder.mode());
-    this._onPausedStateChanged(this._recorder.paused());
+      this._frontend.pageNavigated({ url });
+    this._frontend.modeChanged({ mode: this._recorder.mode() });
+    this._frontend.pauseStateChanged({ paused: this._recorder.paused() });
     this._updateActions('reveal');
     // Update paused sources *after* generated ones, to reveal the currently paused source if any.
     this._onUserSourcesChanged(this._recorder.userSources(), this._recorder.pausedSourceId());
-    this._onCallLogsUpdated(this._recorder.callLog());
+    this._frontend.callLogsUpdated({ callLogs: this._recorder.callLog() });
     this._wireListeners(this._recorder);
   }
 
-  private _handleUIEvent(data: any) {
-    if (data.event === 'clear') {
-      this._actions = [];
-      this._updateActions('reveal');
-      this._recorder.clear();
-      return;
-    }
-    if (data.event === 'fileChanged') {
-      const source = [...this._recorderSources, ...this._userSources].find(s => s.id === data.params.fileId);
-      if (source) {
-        if (source.isRecorded)
-          this._selectedGeneratorId = source.id;
-        this._recorder.setLanguage(source.language);
-      }
-      return;
-    }
-    if (data.event === 'setAutoExpect') {
-      this._languageGeneratorOptions.generateAutoExpect = data.params.autoExpect;
-      this._updateActions();
-      return;
-    }
-    if (data.event === 'setMode') {
-      this._recorder.setMode(data.params.mode);
-      return;
-    }
-    if (data.event === 'resume') {
-      this._recorder.resume();
-      return;
-    }
-    if (data.event === 'pause') {
-      this._recorder.pause();
-      return;
-    }
-    if (data.event === 'step') {
-      this._recorder.step();
-      return;
-    }
-    if (data.event === 'highlightRequested') {
-      if (data.params.selector)
-        this._recorder.setHighlightedSelector(data.params.selector);
-      if (data.params.ariaTemplate)
-        this._recorder.setHighlightedAriaTemplate(data.params.ariaTemplate);
-      return;
-    }
-    throw new Error(`Unknown event: ${data.event}`);
+  private async _createDispatcher(progress: Progress) {
+    const dispatcher: RecorderBackend = {
+      clear: async () => {
+        this._actions = [];
+        this._updateActions('reveal');
+        this._recorder.clear();
+      },
+      fileChanged: async (params: { fileId: string }) => {
+        const source = [...this._recorderSources, ...this._userSources].find(s => s.id === params.fileId);
+        if (source) {
+          if (source.isRecorded)
+            this._selectedGeneratorId = source.id;
+          this._recorder.setLanguage(source.language);
+        }
+      },
+      setAutoExpect: async (params: { autoExpect: boolean }) => {
+        this._languageGeneratorOptions.generateAutoExpect = params.autoExpect;
+        this._updateActions();
+      },
+      setMode: async (params: { mode: Mode }) => {
+        this._recorder.setMode(params.mode);
+      },
+      resume: async () => {
+        this._recorder.resume();
+      },
+      pause: async () => {
+        this._recorder.pause();
+      },
+      step: async () => {
+        this._recorder.step();
+      },
+      highlightRequested: async (params: { selector?: string; ariaTemplate?: AriaTemplateNode }) => {
+        if (params.selector)
+          this._recorder.setHighlightedSelector(params.selector);
+        if (params.ariaTemplate)
+          this._recorder.setHighlightedAriaTemplate(params.ariaTemplate);
+      },
+    };
+
+    await this._page.exposeBinding(progress, 'sendCommand', false, async (_, data: any) => {
+      const { method, params } = data as { method: string; params: any };
+      return await (dispatcher as any)[method].call(dispatcher, params);
+    });
   }
 
   static async show(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
@@ -246,19 +248,20 @@ export class RecorderApp {
     });
 
     recorder.on(RecorderEvent.PageNavigated, (url: string) => {
-      this._onPageNavigated(url);
+      this._frontend.pageNavigated({ url });
     });
 
     recorder.on(RecorderEvent.ContextClosed, () => {
-      this._onContextClosed();
+      this._throttledOutputFile?.flush();
+      this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
     });
 
     recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
-      this._onModeChanged(mode);
+      this._frontend.modeChanged({ mode });
     });
 
     recorder.on(RecorderEvent.PausedStateChanged, (paused: boolean) => {
-      this._onPausedStateChanged(paused);
+      this._frontend.pauseStateChanged({ paused });
     });
 
     recorder.on(RecorderEvent.UserSourcesChanged, (sources: Source[], pausedSourceId?: string) => {
@@ -266,11 +269,13 @@ export class RecorderApp {
     });
 
     recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo, userGesture?: boolean) => {
-      this._onElementPicked(elementInfo, userGesture);
+      if (userGesture)
+        this._page.bringToFront();
+      this._frontend.elementPicked({ elementInfo, userGesture });
     });
 
     recorder.on(RecorderEvent.CallLogsUpdated, (callLogs: CallLog[]) => {
-      this._onCallLogsUpdated(callLogs);
+      this._frontend.callLogsUpdated({ callLogs });
     });
   }
 
@@ -286,29 +291,6 @@ export class RecorderApp {
     this._updateActions();
   }
 
-  private _onPageNavigated(url: string) {
-    this._page.mainFrame().evaluateExpression((({ url }: { url: string }) => {
-      window.playwrightSetPageURL(url);
-    }).toString(), { isFunction: true }, { url }).catch(() => {});
-  }
-
-  private _onContextClosed() {
-    this._throttledOutputFile?.flush();
-    this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
-  }
-
-  private _onModeChanged(mode: Mode) {
-    this._page.mainFrame().evaluateExpression(((mode: Mode) => {
-      window.playwrightSetMode(mode);
-    }).toString(), { isFunction: true }, mode).catch(() => {});
-  }
-
-  private _onPausedStateChanged(paused: boolean) {
-    this._page.mainFrame().evaluateExpression(((paused: boolean) => {
-      window.playwrightSetPaused(paused);
-    }).toString(), { isFunction: true }, paused).catch(() => {});
-  }
-
   private _onUserSourcesChanged(sources: Source[], pausedSourceId: string | undefined) {
     if (!sources.length && !this._userSources.length)
       return;
@@ -317,33 +299,15 @@ export class RecorderApp {
     this._revealSource(pausedSourceId);
   }
 
-  private _onElementPicked(elementInfo: ElementInfo, userGesture?: boolean) {
-    if (userGesture)
-      this._page.bringToFront();
-    this._page.mainFrame().evaluateExpression(((param: { elementInfo: ElementInfo, userGesture?: boolean }) => {
-      window.playwrightElementPicked(param.elementInfo, param.userGesture);
-    }).toString(), { isFunction: true }, { elementInfo, userGesture }).catch(() => {});
-  }
-
-  private _onCallLogsUpdated(callLogs: CallLog[]) {
-    this._page.mainFrame().evaluateExpression(((callLogs: CallLog[]) => {
-      window.playwrightUpdateLogs(callLogs);
-    }).toString(), { isFunction: true }, callLogs).catch(() => {});
-  }
-
   private _pushAllSources() {
     const sources = [...this._userSources, ...this._recorderSources];
-    this._page.mainFrame().evaluateExpression((({ sources }: { sources: Source[] }) => {
-      window.playwrightSetSources(sources);
-    }).toString(), { isFunction: true }, { sources }).catch(() => {});
+    this._frontend.sourcesUpdated({ sources });
   }
 
   private _revealSource(sourceId: string | undefined) {
     if (!sourceId)
       return;
-    this._page.mainFrame().evaluateExpression((({ sourceId }: { sourceId: string }) => {
-      window.playwrightSelectSource(sourceId);
-    }).toString(), { isFunction: true }, { sourceId }).catch(() => {});
+    this._frontend.sourceRevealRequested({ sourceId });
   }
 
   private _updateActions(reveal?: 'reveal') {
@@ -424,6 +388,20 @@ export class ProgrammaticRecorderApp {
 
 function findPageByGuid(context: BrowserContext, guid: string) {
   return context.pages().find(p => p.guid === guid);
+}
+
+function createRecorderFrontend(page: Page): RecorderFrontend {
+  return new Proxy({} as RecorderFrontend, {
+    get: (_target, prop: string | symbol) => {
+      if (typeof prop !== 'string')
+        return undefined;
+      return (params: any) => {
+        page.mainFrame().evaluateExpression(((event: { method: string, params?: any }) => {
+          window.dispatch(event);
+        }).toString(), { isFunction: true }, { method: prop, params }).catch(() => {});
+      };
+    },
+  });
 }
 
 const recorderAppSymbol = Symbol('recorderApp');

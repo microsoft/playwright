@@ -18,9 +18,9 @@ import '@web/common.css';
 import { applyTheme } from '@web/theme';
 import '@web/third_party/vscode/codicon.css';
 import * as ReactDOM from 'react-dom/client';
-import { Main } from './main';
+import { Recorder } from './recorder';
 
 (async () => {
   applyTheme();
-  ReactDOM.createRoot(document.querySelector('#root')!).render(<Main/>);
+  ReactDOM.createRoot(document.querySelector('#root')!).render(<Recorder/>);
 })();

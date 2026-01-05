@@ -99,15 +99,29 @@ export type Source = {
 
 declare global {
   interface Window {
-    playwrightSetMode: (mode: Mode) => void;
-    playwrightSetPaused: (paused: boolean) => void;
-    playwrightSetSources: (sources: Source[]) => void;
-    playwrightSelectSource: (sourceId: string) => void;
-    playwrightSetPageURL: (url: string | undefined) => void;
-    playwrightSetOverlayVisible: (visible: boolean) => void;
-    playwrightUpdateLogs: (callLogs: CallLog[]) => void;
-    playwrightElementPicked: (elementInfo: ElementInfo, userGesture?: boolean) => void;
     playwrightSourcesEchoForTest: Source[];
-    dispatch(data: any): Promise<void>;
+    sendCommand(data: { method: string; params?: any }): Promise<void>;
+    dispatch(data: { method: string; params?: any }): void;
   }
+}
+
+export interface RecorderBackend {
+  setMode(params: { mode: Mode }): Promise<void>;
+  setAutoExpect(params: { autoExpect: boolean }): Promise<void>;
+  resume(): Promise<void>;
+  pause(): Promise<void>;
+  step(): Promise<void>;
+  highlightRequested(params: { selector?: string; ariaTemplate?: AriaTemplateNode }): Promise<void>;
+  fileChanged(params: { fileId: string }): Promise<void>;
+  clear(): Promise<void>;
+}
+
+export interface RecorderFrontend {
+  modeChanged: (params: { mode: Mode }) => void;
+  pauseStateChanged: (params: { paused: boolean }) => void;
+  sourcesUpdated: (params: { sources: Source[] }) => void;
+  sourceRevealRequested: (params: { sourceId: string }) => void;
+  pageNavigated: (params: { url: string | undefined }) => void;
+  callLogsUpdated: (params: { callLogs: CallLog[] }) => void;
+  elementPicked: (params: { elementInfo: ElementInfo, userGesture?: boolean }) => void;
 }
