@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getActionGroup } from '@isomorphic/protocolFormatter';
+import { getActionGroup, renderTitleForCall } from '@isomorphic/protocolFormatter';
 
 import type { Language } from '@isomorphic/locatorGenerators';
 import type { ResourceSnapshot } from '@trace/snapshot';
@@ -50,7 +50,7 @@ export type ActionTreeItem = {
   id: string;
   children: ActionTreeItem[];
   parent: ActionTreeItem | undefined;
-  action?: ActionTraceEventInContext;
+  action: ActionTraceEventInContext;
 };
 
 export type ErrorDescription = {
@@ -144,6 +144,20 @@ export class TraceModel {
   filteredActions(actionsFilter: ActionGroup[]) {
     const filter = new Set<string>(actionsFilter);
     return this.actions.filter(action => !action.group || filter.has(action.group));
+  }
+
+  renderActionTree(filter?: ActionGroup[]) {
+    const actions = this.filteredActions(filter ?? []);
+    const { rootItem } = buildActionTree(actions);
+    const actionTree: string[] = [];
+    const visit = (actionItem: ActionTreeItem, indent: string) => {
+      const title = renderTitleForCall({ ...actionItem.action, type: actionItem.action.class });
+      actionTree.push(`${indent}${title || actionItem.id}`);
+      for (const child of actionItem.children)
+        visit(child, indent + '  ');
+    };
+    rootItem.children.forEach(a => visit(a, ''));
+    return actionTree;
   }
 
   private _errorDescriptorsFromActions(): ErrorDescription[] {
@@ -333,9 +347,11 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
     });
   }
 
-  const rootItem: ActionTreeItem = { id: '', parent: undefined, children: [] };
+  const rootItem: ActionTreeItem = { action: { ...kFakeRootAction }, id: '', parent: undefined, children: [] };
   for (const item of itemMap.values()) {
-    const parent = item.action!.parentId ? itemMap.get(item.action!.parentId) || rootItem : rootItem;
+    rootItem.action.startTime = Math.min(rootItem.action.startTime, item.action.startTime);
+    rootItem.action.endTime = Math.max(rootItem.action.endTime, item.action.endTime);
+    const parent = item.action.parentId ? itemMap.get(item.action.parentId) || rootItem : rootItem;
     parent.children.push(item);
     item.parent = parent;
   }
@@ -411,3 +427,30 @@ function collectSources(actions: trace.ActionTraceEvent[], errorDescriptors: Err
   }
   return result;
 }
+
+const kFakeRootAction: ActionTraceEventInContext = {
+  type: 'action',
+  callId: '',
+  startTime: 0,
+  endTime: 0,
+  class: '',
+  method: '',
+  params: {},
+  log: [],
+  context: {
+    origin: 'library',
+    startTime: 0,
+    endTime: 0,
+    browserName: '',
+    wallTime: 0,
+    options: {},
+    pages: [],
+    resources: [],
+    actions: [],
+    events: [],
+    stdio: [],
+    errors: [],
+    hasSource: false,
+    contextId: '',
+  },
+};

@@ -16,14 +16,14 @@
 
 import type { Locator, Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/server/utils/zipFile';
-import type { TraceLoaderBackend } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
 import type { StackFrame } from '../../packages/protocol/src/channels';
 import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
 import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
-import type { ActionTreeItem } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
-import { buildActionTree, TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
-import type { ActionTraceEvent, ConsoleMessageTraceEvent, EventTraceEvent, TraceEvent } from '@trace/trace';
+import { TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
+import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
+import { ZipTraceLoaderBackend } from '../../packages/playwright-core/lib/server/trace/viewer/traceParser';
+import type { SnapshotStorage } from '../../packages/playwright-core/src/utils/isomorphic/trace/snapshotStorage';
 
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
 
@@ -165,31 +165,11 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
   };
 }
 
-export async function parseTrace(file: string): Promise<{ resources: Map<string, Buffer>, events: (EventTraceEvent | ConsoleMessageTraceEvent)[], actions: ActionTraceEvent[], titles: string[], loader: TraceLoader, model: TraceModel, actionTree: string[], errors: string[] }> {
-  const backend = new TraceBackend(file);
+export async function parseTrace(file: string): Promise<{ snapshots: SnapshotStorage, model: TraceModel }> {
+  const backend = new ZipTraceLoaderBackend(file);
   const loader = new TraceLoader();
   await loader.load(backend, () => {});
-  const model = new TraceModel(file, loader.contextEntries);
-  const actions = model.filteredActions([]);
-  const { rootItem } = buildActionTree(actions);
-  const actionTree: string[] = [];
-  const visit = (actionItem: ActionTreeItem, indent: string) => {
-    const title = renderTitleForCall({ ...actionItem.action, type: actionItem.action.class });
-    actionTree.push(`${indent}${title || actionItem.id}`);
-    for (const child of actionItem.children)
-      visit(child, indent + '  ');
-  };
-  rootItem.children.forEach(a => visit(a, ''));
-  return {
-    titles: actions.map(a => renderTitleForCall({ ...a, type: a.class })),
-    resources: backend.entries,
-    actions,
-    events: model.events,
-    errors: model.errors.map(e => e.message),
-    model,
-    loader,
-    actionTree,
-  };
+  return { model: new TraceModel(file, loader.contextEntries), snapshots: loader.storage() };
 }
 
 export async function parseHar(file: string): Promise<Map<string, Buffer>> {
@@ -246,54 +226,4 @@ export function unshift(snapshot: string): string {
 const ansiRegex = new RegExp('[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:[a-zA-Z\\d]*(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)|(?:(?:\\d{1,4}(?:;\\d{0,4})*)?[\\dA-PR-TZcf-ntqry=><~]))', 'g');
 export function stripAnsi(str: string): string {
   return str.replace(ansiRegex, '');
-}
-class TraceBackend implements TraceLoaderBackend {
-  private _fileName: string;
-  private _entriesPromise: Promise<Map<string, Buffer>>;
-  readonly entries = new Map<string, Buffer>();
-
-  constructor(fileName: string) {
-    this._fileName = fileName;
-    this._entriesPromise = this._readEntries();
-  }
-
-  private async _readEntries(): Promise<Map<string, Buffer>> {
-    const zipFS = new ZipFile(this._fileName);
-    for (const entry of await zipFS.entries())
-      this.entries.set(entry, await zipFS.read(entry));
-    zipFS.close();
-    return this.entries;
-  }
-
-  isLive() {
-    return false;
-  }
-
-  traceURL() {
-    return 'file://' + this._fileName;
-  }
-
-  async entryNames(): Promise<string[]> {
-    const entries = await this._entriesPromise;
-    return [...entries.keys()];
-  }
-
-  async hasEntry(entryName: string): Promise<boolean> {
-    const entries = await this._entriesPromise;
-    return entries.has(entryName);
-  }
-
-  async readText(entryName: string): Promise<string | undefined> {
-    const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
-    if (!entry)
-      return;
-    return entry.toString();
-  }
-
-  async readBlob(entryName: string) {
-    const entries = await this._entriesPromise;
-    const entry = entries.get(entryName);
-    return entry as any;
-  }
 }

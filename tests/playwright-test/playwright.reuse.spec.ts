@@ -125,7 +125,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
   expect(result.output).toContain('fromAfterAll');
 
   const trace1 = await parseTrace(testInfo.outputPath('test-results', 'reuse-one', 'trace.zip'));
-  expect(trace1.actionTree).toEqual([
+  expect(trace1.model.renderActionTree()).toEqual([
     'Before Hooks',
     '  beforeAll hook',
     '  Fixture "browser"',
@@ -139,11 +139,11 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "page"',
     '  Fixture "context"',
   ]);
-  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
   expect(fs.existsSync(testInfo.outputPath('test-results', 'reuse-one', 'trace-1.zip'))).toBe(false);
 
   const trace2 = await parseTrace(testInfo.outputPath('test-results', 'reuse-two', 'trace.zip'));
-  expect(trace2.actionTree).toEqual([
+  expect(trace2.model.renderActionTree()).toEqual([
     'Before Hooks',
     '  Fixture "context"',
     '  Fixture "page"',
@@ -156,7 +156,7 @@ test('should reuse context with trace if mode=when-possible', async ({ runInline
     '  Fixture "context"',
     '  afterAll hook',
   ]);
-  expect(trace2.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace2.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should work with manually closed pages', async ({ runInlineTest }) => {
@@ -478,19 +478,19 @@ test('should reset tracing', async ({ runInlineTest }, testInfo) => {
   expect(result.passed).toBe(2);
 
   const trace1 = await parseTrace(traceFile1);
-  expect(trace1.titles).toEqual([
+  expect(trace1.model.renderActionTree()).toEqual([
     'Set content',
     'Click',
   ]);
-  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
 
   const trace2 = await parseTrace(traceFile2);
-  expect(trace2.titles).toEqual([
+  expect(trace2.model.renderActionTree()).toEqual([
     'Set content',
     'Fill "value"',
     'Click',
   ]);
-  expect(trace1.loader.storage().snapshotsForTest().length).toBeGreaterThan(0);
+  expect(trace1.snapshots.snapshotsForTest().length).toBeGreaterThan(0);
 });
 
 test('should not delete others contexts', async ({ runInlineTest }) => {
