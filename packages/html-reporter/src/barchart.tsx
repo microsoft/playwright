@@ -144,7 +144,7 @@ export const GroupedBarChart = ({
             const y = groupY + barIndex * (barHeight + barSpacing);
             barIndex++;
 
-            const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)'];
+            const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)', 'var(--color-scale-blue-3)', 'var(--color-scale-green-3)'];
             const color = colors[seriesIndex % colors.length];
 
             return (
