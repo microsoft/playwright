@@ -18,10 +18,9 @@
 import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
-// @ts-ignore this will be any if react is not installed
+// @ts-ignore ReactCSSProperties will be any if react is not installed
 type ReactCSSProperties = import('react').CSSProperties;
-type FallbackCSSProperties = { [name: string]: string | number | undefined };
-export type CSSProperties = keyof ReactCSSProperties extends string ? ReactCSSProperties : FallbackCSSProperties;
+export type CSSProperties = keyof ReactCSSProperties extends string ? ReactCSSProperties : never;
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type ListReporterOptions = { printSteps?: boolean };
