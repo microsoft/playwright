@@ -49,6 +49,12 @@ export type HTMLReport = {
   projectNames: string[];
   startTime: number;
   duration: number;
+  shards: {
+    shardIndex?: number;
+    tag: string[];
+    startTime: number;
+    duration: number;
+  }[];
   errors: string[];  // Top-level errors that are not attributed to any test.
   options: HTMLReportOptions;
 };

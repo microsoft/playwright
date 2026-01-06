@@ -87,7 +87,7 @@ export type JsonTestResultStart = {
   retry: number;
   workerIndex: number;
   parallelIndex: number;
-  shardIndex: number;
+  shardIndex?: number;
   startTime: number;
 };
 
@@ -130,6 +130,12 @@ export type JsonFullResult = {
   status: reporterTypes.FullResult['status'];
   startTime: number;
   duration: number;
+  shards?: {
+    shardIndex?: number;
+    tag: string[];
+    startTime: number;
+    duration: number;
+  }[];
 };
 
 export type JsonEvent = JsonOnConfigureEvent | JsonOnBlobReportMetadataEvent | JsonOnEndEvent | JsonOnExitEvent | JsonOnProjectEvent | JsonOnBeginEvent | JsonOnTestBeginEvent
@@ -450,6 +456,12 @@ export class TeleReporterReceiver {
       status: result.status,
       startTime: new Date(result.startTime),
       duration: result.duration,
+      shards: result.shards?.map(s => ({
+        shardIndex: s.shardIndex,
+        tag: s.tag,
+        startTime: new Date(s.startTime),
+        duration: s.duration,
+      })) ?? [],
     });
   }
 
@@ -723,7 +735,7 @@ export class TeleTestResult implements reporterTypes.TestResult {
   retry: reporterTypes.TestResult['retry'];
   parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
   workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
-  shardIndex: reporterTypes.TestResult['shardIndex'] = -1;
+  shardIndex: reporterTypes.TestResult['shardIndex'];
   duration: reporterTypes.TestResult['duration'] = -1;
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];

@@ -103,6 +103,6 @@ The index of the worker between `0` and `workers - 1`. It is guaranteed that wor
 
 ## property: TestResult.shardIndex
 * since: v1.58
-- type: <[int]>
+- type: ?<[int]>
 
-The index of the shard between `0` and `shards - 1`.
+The index of the shard between `1` and [`shards`](../test-sharding.md).

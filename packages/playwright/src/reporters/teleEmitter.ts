@@ -166,6 +166,12 @@ export class TeleReporterEmitter implements ReporterV2 {
       status: result.status,
       startTime: result.startTime.getTime(),
       duration: result.duration,
+      shards: result.shards?.map(s => ({
+        shardIndex: s.shardIndex,
+        tag: s.tag,
+        startTime: +s.startTime,
+        duration: s.duration,
+      })),
     };
     this._messageSink({
       method: 'onEnd',

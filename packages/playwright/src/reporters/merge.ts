@@ -188,7 +188,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
 
   const configureEvents: JsonOnConfigureEvent[] = [];
   const projectEvents: JsonOnProjectEvent[] = [];
-  const endEvents: JsonOnEndEvent[] = [];
+  const endEvents: { event: JsonOnEndEvent, metadata: BlobReportMetadata, tags: string[] }[] = [];
 
   const blobs = await extractAndParseReports(dir, shardReportFiles, internalizer, printStatus);
   // Sort by (report name; shard; file name), so that salt generation below is deterministic when:
@@ -235,7 +235,7 @@ async function mergeEvents(dir: string, shardReportFiles: string[], stringPool: 
       } else if (event.method === 'onProject') {
         projectEvents.push(event);
       } else if (event.method === 'onEnd') {
-        endEvents.push(event);
+        endEvents.push({ event, metadata, tags });
       }
     }
 
@@ -323,12 +323,13 @@ function mergeConfigs(to: JsonConfig, from: JsonConfig): JsonConfig {
   };
 }
 
-function mergeEndEvents(endEvents: JsonOnEndEvent[]): JsonEvent {
+function mergeEndEvents(endEvents: { event: JsonOnEndEvent, metadata: BlobReportMetadata, tags: string[] }[]): JsonEvent {
   let startTime = endEvents.length ? 10000000000000 : Date.now();
   let status: JsonFullResult['status'] = 'passed';
   let endTime: number = 0;
+  const shards: JsonFullResult['shards'] = [];
 
-  for (const event of endEvents) {
+  for (const { event, metadata, tags } of endEvents) {
     const shardResult = event.params.result;
     if (shardResult.status === 'failed')
       status = 'failed';
@@ -338,11 +339,19 @@ function mergeEndEvents(endEvents: JsonOnEndEvent[]): JsonEvent {
       status = 'interrupted';
     startTime = Math.min(startTime, shardResult.startTime);
     endTime = Math.max(endTime, shardResult.startTime + shardResult.duration);
+
+    shards.push({
+      shardIndex: metadata.shard?.current,
+      tag: tags,
+      startTime: shardResult.startTime,
+      duration: shardResult.duration,
+    });
   }
   const result: JsonFullResult = {
     status,
     startTime,
     duration: endTime - startTime,
+    shards,
   };
   return {
     method: 'onEnd',

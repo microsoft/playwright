@@ -3306,6 +3306,56 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         await expect(page.getByRole('link', { name: 'previous' })).not.toBeVisible();
       });
     });
+
+
+    test('shard chart', async ({ runInlineTest, writeFiles, showReport, page }) => {
+      test.skip(!useIntermediateMergeReport);
+
+      await writeFiles({
+        'playwright.config.ts': `
+          module.exports = {
+            fullyParallel: true,
+            tag: process.env.BOT_TAG,
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          import timers from 'timers/promises';
+          test('one', async () => {
+            await timers.setTimeout(100);
+          });
+          test('two', async () => {
+            await timers.setTimeout(200);
+          });
+          test('three', async () => {
+            await timers.setTimeout(300);
+          });
+        `,
+      });
+
+      await runInlineTest({}, { reporter: 'dot,html', shard: '1/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '2/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '3/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+
+      await runInlineTest({}, { reporter: 'dot,html', shard: '1/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '2/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
+
+      await showReport();
+      await page.getByRole('link', { name: 'Speedboard' }).click();
+
+      await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+        - button "Shard Duration"
+        - region:
+          - img:
+            - list "@linux":
+              - listitem /Shard 1/
+              - listitem /Shard 2/
+              - listitem /Shard 3/
+            - list "@mac":
+              - listitem /Shard 1/
+              - listitem /Shard 2/
+      `);
+    });
   });
 }
 

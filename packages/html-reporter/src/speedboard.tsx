@@ -19,9 +19,12 @@ import { LoadedReport } from './loadedReport';
 import { TestFileView } from './testFileView';
 import * as icons from './icons';
 import { TestCaseSummary } from './types';
+import { AutoChip } from './chip';
+import { GroupedBarChart } from './barchart';
 
 export function Speedboard({ report, tests }: { report: LoadedReport, tests: TestCaseSummary[] }) {
   return <>
+    <Shards report={report} />
     <SlowestTests report={report} tests={tests} />
   </>;
 }
@@ -45,4 +48,38 @@ export function SlowestTests({ report, tests }: { report: LoadedReport, tests: T
         : undefined
     }
   />;
+}
+
+export function Shards({ report }: { report: LoadedReport }) {
+  const shards = report.json().shards;
+  if (shards.length === 0)
+    return null;
+
+  let clash = false;
+  const bots: Record<string, number[]> = {};
+  for (const shard of shards) {
+    const botName = shard.tag.join(' ');
+    bots[botName] ??= [];
+    const shardIndex = Math.max((shard.shardIndex ?? 1) - 1, 0);
+    if (bots[botName][shardIndex] !== undefined)
+      clash = true;
+    bots[botName][shardIndex] = shard.duration;
+  }
+
+  const maxSeries = Math.max(...Object.values(bots).map(shardDurations => shardDurations.length));
+
+  return <AutoChip header='Shard Duration'>
+    <GroupedBarChart
+      data={Object.values(bots)}
+      groups={Object.keys(bots)}
+      series={Array.from({ length: maxSeries }).map((_, i) => `Shard ${i + 1}`)}
+    />
+    {clash && <div style={{ marginTop: 8 }}>
+      <icons.warning />
+      Some shards could not be differentiated because of missing global tags.
+      Please refer to <a href='https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-environments' target='_blank' rel='noopener noreferrer'>
+        the docs
+      </a> on how to fix this.
+    </div>}
+  </AutoChip>;
 }

@@ -298,6 +298,12 @@ class HtmlBuilder {
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
       errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
       options: this._options,
+      shards: result.shards?.map(s => ({
+        shardIndex: s.shardIndex,
+        tag: s.tag,
+        startTime: s.startTime.getTime(),
+        duration: s.duration,
+      })) ?? []
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
