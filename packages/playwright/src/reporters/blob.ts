@@ -27,7 +27,7 @@ import { resolveOutputFile, CommonReporterOptions } from './base';
 import { TeleReporterEmitter } from './teleEmitter';
 
 import type { BlobReporterOptions } from '../../types/test';
-import type { FullConfig, FullResult, TestCase, TestResult, TestStep } from '../../types/testReporter';
+import type { FullConfig, FullResult, TestCase, TestResult } from '../../types/testReporter';
 import type { BlobReportMetadata, JsonAttachment, JsonEvent } from '../isomorphic/teleReceiver';
 import type { EventEmitter } from 'events';
 
@@ -66,10 +66,9 @@ export class BlobReporter extends TeleReporterEmitter {
     super.onConfigure(config);
   }
 
-  override async onTestPaused(test: TestCase, result: TestResult, step: TestStep) {
+  override async onTestPaused(test: TestCase, result: TestResult) {
     // onTestPaused is only relevant for interactive use, not for blob replays.
     // merge-reports still gets onStepBegin/onStepEnd for pausing, but not the interactive part, so this is a no-op.
-    return { action: undefined };
   }
 
   override async onEnd(result: FullResult): Promise<void> {

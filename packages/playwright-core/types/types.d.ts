@@ -1018,24 +1018,6 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
-
-  /**
-   * Extract information from the page using the agentic loop, return it in a given Zod format.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.extract('List of items in the cart', z.object({
-   *   title: z.string().describe('Item title to extract'),
-   *   price: z.string().describe('Item price to extract'),
-   * }).array());
-   * ```
-   *
-   * @param query Task to perform using agentic loop.
-   * @param schema
-   * @param options
-   */
-  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
   /**
    * Emitted when the agent makes a turn.
    */
@@ -3910,45 +3892,6 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
-   * Perform action using agentic loop.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.perform('Click submit button');
-   * ```
-   *
-   * @param task Task to perform using agentic loop.
-   * @param options
-   */
-  perform(task: string, options?: {
-    /**
-     * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
-     * with the `task` as a key. This option allows controlling the cache key explicitly.
-     */
-    key?: string;
-
-    /**
-     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
-     * Defaults to context-wide value specified in `agent` property.
-     */
-    maxTokens?: number;
-
-    /**
-     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
-     */
-    maxTurns?: number;
-  }): Promise<{
-    usage: {
-      turns: number;
-
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }>;
-
-  /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -5360,6 +5303,8 @@ export interface Page {
    */
   workers(): Array<Worker>;
 
+  agent: PageAgent;
+
   /**
    * Playwright has ability to mock clock and passage of time.
    */
@@ -5389,6 +5334,98 @@ export interface Page {
   touchscreen: Touchscreen;
 
   [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ *
+ */
+export interface PageAgent {
+  /**
+   * Extract information from the page using the agentic loop, return it in a given Zod format.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.agent.extract('List of items in the cart', z.object({
+   *   title: z.string().describe('Item title to extract'),
+   *   price: z.string().describe('Item price to extract'),
+   * }).array());
+   * ```
+   *
+   * @param query Task to perform using agentic loop.
+   * @param schema
+   * @param options
+   */
+  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
+  /**
+   * Expect certain condition to be met.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.agent.expect('"0 items" to be reported');
+   * ```
+   *
+   * @param expectation Expectation to assert.
+   * @param options
+   */
+  expect(expectation: string, options?: {
+    /**
+     * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
+     * with the `task` as a key. This option allows controlling the cache key explicitly.
+     */
+    key?: string;
+
+    /**
+     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+     * Defaults to context-wide value specified in `agent` property.
+     */
+    maxTokens?: number;
+
+    /**
+     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
+     */
+    maxTurns?: number;
+  }): Promise<void>;
+
+  /**
+   * Perform action using agentic loop.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.agent.perform('Click submit button');
+   * ```
+   *
+   * @param task Task to perform using agentic loop.
+   * @param options
+   */
+  perform(task: string, options?: {
+    /**
+     * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
+     * with the `task` as a key. This option allows controlling the cache key explicitly.
+     */
+    key?: string;
+
+    /**
+     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+     * Defaults to context-wide value specified in `agent` property.
+     */
+    maxTokens?: number;
+
+    /**
+     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
+     */
+    maxTurns?: number;
+  }): Promise<{
+    usage: {
+      turns: number;
+
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }>;
 }
 
 /**
@@ -12645,6 +12682,12 @@ export interface Locator {
     timeout?: number;
   }): Promise<null|ElementHandle<SVGElement | HTMLElement>>;
   /**
+   * Returns a human-readable representation of the locator, using the
+   * [locator.description()](https://playwright.dev/docs/api/class-locator#locator-description) if one exists;
+   * otherwise, it generates a string based on the locator's selector.
+   */
+  toString(): string;
+  /**
    * When the locator points to a list of elements, this returns an array of locators, pointing to their respective
    * elements.
    *
@@ -13198,8 +13241,9 @@ export interface Locator {
   /**
    * Returns locator description previously set with
    * [locator.describe(description)](https://playwright.dev/docs/api/class-locator#locator-describe). Returns `null` if
-   * no custom description has been set. Prefer `Locator.toString()` for a human-readable representation, as it uses the
-   * description when available.
+   * no custom description has been set. Prefer
+   * [locator.toString()](https://playwright.dev/docs/api/class-locator#locator-to-string) for a human-readable
+   * representation, as it uses the description when available.
    *
    * **Usage**
    *
@@ -22227,8 +22271,7 @@ export interface BrowserContextOptions {
   acceptDownloads?: boolean;
 
   /**
-   * Agent settings for [page.perform(task[, options])](https://playwright.dev/docs/api/class-page#page-perform) and
-   * [page.extract(query, schema[, options])](https://playwright.dev/docs/api/class-page#page-extract).
+   * Agent settings for [page.agent](https://playwright.dev/docs/api/class-page#page-agent).
    */
   agent?: {
     /**

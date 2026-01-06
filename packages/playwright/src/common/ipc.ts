@@ -43,7 +43,7 @@ export type ConfigCLIOverrides = {
   ignoreSnapshots?: boolean;
   updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
-  runAgents?: boolean;
+  runAgents?: 'all' | 'missing' | 'none';
   workers?: number | string;
   projects?: { name: string, use?: any }[],
   use?: any;
@@ -90,13 +90,10 @@ export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
-  stepId: string;
   errors: TestInfoErrorImpl[];
 };
 
-export type ResumePayload = {
-  action?: 'continue' | 'abort';
-};
+export type ResumePayload = {};
 
 export type CloneStoragePayload = {
   storageFile: string;

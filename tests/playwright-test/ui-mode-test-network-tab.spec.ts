@@ -283,3 +283,68 @@ test('should toggle sections inside network details', async ({ runUITest, server
   await expect(headersPanel.getByRole('region', { name: 'Request Headers × 16' })).toBeHidden();
   await expect(headersPanel.getByRole('region', { name: 'General' })).toContainText(/Start.+Duration\d+ms/);
 });
+
+test('should copy network request', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.evaluate(() => {
+    (window as any).__clipboardCall = '';
+    navigator.clipboard.writeText = async (text: string) => {
+      (window as any).__clipboardCall = text;
+    };
+  });
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await page.getByRole('tab', { name: 'Network' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
+  await page.getByRole('button', { name: 'Copy request' }).hover();
+
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+
+  await page.getByRole('button', { name: 'Copy as cURL' }).click();
+  await expect(async () => {
+    const curlRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    if (process.platform === 'win32') {
+      expect(curlRequest).toContain(`curl ^"${server.PREFIX}/post-data-1^"`);
+      expect(curlRequest).toContain(`-H ^"content-type: application/json^"`);
+      expect(curlRequest).toContain(`--data-raw ^"^{^\\^"data^\\^":^{^\\^"key^\\^":^\\^"value^\\^",^\\^"array^\\^":^[^\\^"value-1^\\^",^\\^"value-2^\\^"^]^}^}^"`);
+    } else {
+      expect(curlRequest).toContain(`curl '${server.PREFIX}/post-data-1'`);
+      expect(curlRequest).toContain(`-H 'content-type: application/json'`);
+      expect(curlRequest).toContain(`--data-raw '{"data":{"key":"value","array":["value-1","value-2"]}}'`);
+    }
+  }).toPass();
+
+  await page.getByRole('button', { name: 'Copy as Fetch' }).click();
+  await expect(async () => {
+    const fetchRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    expect(fetchRequest).toContain(`fetch("${server.PREFIX}/post-data-1", {`);
+    expect(fetchRequest).toContain(`"content-type": "application/json"`);
+    expect(fetchRequest).toContain(`"body": "{\\"data\\":{\\"key\\":\\"value\\",\\"array\\":[\\"value-1\\",\\"value-2\\"]}}"`);
+    expect(fetchRequest).toContain(`"method": "POST"`);
+  }).toPass();
+
+  await page.getByRole('button', { name: 'Copy as Playwright' }).click();
+  await expect(async () => {
+    const playwrightRequest = await page.evaluate(() => (window as any).__clipboardCall);
+    expect(playwrightRequest).toContain(`await page.request.post('${server.PREFIX}/post-data-1', {`);
+    expect(playwrightRequest.replaceAll('\r\n', '\n')).toContain(`  data: \`{
+  "data": {
+    "key": "value",
+    "array": [
+      "value-1",
+      "value-2"
+    ]
+  }
+}\``);
+    expect(playwrightRequest).toContain(`'content-type': 'application/json'`);
+  }).toPass();
+});

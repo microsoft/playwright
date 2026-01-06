@@ -24,7 +24,7 @@ import { FullConfigInternal } from '../common/config';
 import { defaultSeedFile, findSeedFile, seedFileContent, seedProject } from '../mcp/test/seed';
 import { parseAgentSpec } from './agentParser';
 
-import type { AgentSpec } from './agent';
+import type { AgentSpec } from './agentParser';
 
 /* eslint-disable no-console */
 

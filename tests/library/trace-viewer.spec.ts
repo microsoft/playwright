@@ -26,8 +26,7 @@ import type http from 'http';
 import { pathToFileURL } from 'url';
 import { expect, playwrightTest } from '../config/browserTest';
 import type { FrameLocator } from '@playwright/test';
-import { rafraf, roundBox } from '../page/pageTest';
-import { parseTrace } from '../config/utils';
+import { parseTrace, rafraf, roundBox } from '../config/utils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
@@ -734,10 +733,9 @@ test('empty adopted style sheets should not prevent node refs', async ({ page })
   await page.context().tracing.stop({ path: traceFile });
 
   const trace = await parseTrace(traceFile);
-  const snapshots = trace.loader.storage();
-  const secondEvaluate = trace.actions.findLast(a => a.method === 'evaluateExpression');
+  const secondEvaluate = trace.model.actions.findLast(a => a.method === 'evaluateExpression');
   expect(secondEvaluate.beforeSnapshot).toBeTruthy();
-  const snapshot = snapshots.snapshotByName(snapshots.snapshotsForTest()[0], secondEvaluate.beforeSnapshot);
+  const snapshot = trace.snapshots.snapshotByName(trace.snapshots.snapshotsForTest()[0], secondEvaluate.beforeSnapshot);
   // Second snapshot should be just a copy of the first one.
   expect(snapshot.snapshot().html).toEqual([[1, 9]]);
 });

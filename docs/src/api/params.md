@@ -380,7 +380,32 @@ Emulates consistent window screen size available inside web page via `window.scr
   - `maxTurns` ?<[int]> Maximum number of agentic turns to take per call. Defaults to 10.
   - `maxTokens` ?<[int]> Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this value. Defaults on unlimited.
 
-Agent settings for [`method: Page.perform`] and [`method: Page.extract`].
+Agent settings for [`property: Page.agent`].
+
+## page-agent-key
+* since: v1.58
+- `key` <[string]>
+
+All the agentic actions are converted to the Playwright calls and are cached.
+By default, they are cached globally with the `task` as a key. This option allows controlling the cache key explicitly.
+
+## page-agent-max-tokens
+* since: v1.58
+- `maxTokens` <[int]>
+
+Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+Defaults to context-wide value specified in `agent` property.
+
+## page-agent-max-turns
+* since: v1.58
+- `maxTurns` <[int]>
+
+Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
+
+## page-agent-call-options-v1.58
+- %%-page-agent-key-%%
+- %%-page-agent-max-tokens-%%
+- %%-page-agent-max-turns-%%
 
 ## fetch-param-url
 - `url` <[string]>

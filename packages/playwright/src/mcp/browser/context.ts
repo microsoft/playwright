@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
+import { fileURLToPath } from 'url';
+import os from 'os';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile  } from './config';
-import { dateAsFileName } from './tools/utils';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
@@ -167,29 +166,7 @@ export class Context {
     await promise.then(async ({ browserContext, close }) => {
       if (this.config.saveTrace)
         await browserContext.tracing.stop();
-      const videos = this.config.saveVideo ? browserContext.pages().map(page => page.video()).filter(video => !!video) : [];
-      await close(async () => {
-        for (const video of videos) {
-          const name = await this.outputFile(dateAsFileName('webm'), { origin: 'code', reason: 'Saving video' });
-          const p = await video.path();
-          // video.saveAs() does not work for persistent contexts.
-          if (fs.existsSync(p)) {
-            try {
-              await fs.promises.rename(p, name);
-            } catch (e) {
-              if (e.code !== 'EXDEV')
-                logUnhandledError(e);
-              // Retry operation (possibly cross-fs) with copy and unlink
-              try {
-                await fs.promises.copyFile(p, name);
-                await fs.promises.unlink(p);
-              } catch (e) {
-                logUnhandledError(e);
-              }
-            }
-          }
-        }
-      });
+      await close();
     });
   }
 
@@ -237,6 +214,10 @@ export class Context {
       selectors.setTestIdAttribute(this.config.testIdAttribute);
     const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, this._runningToolName);
     const { browserContext } = result;
+    if (!this.config.allowUnrestrictedFileAccess) {
+      (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
+      (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
+    }
     await this._setupRequestInterception(browserContext);
     if (this.sessionLog)
       await InputRecorder.create(this, browserContext);
@@ -263,6 +244,28 @@ export class Context {
     };
   }
 }
+
+function allRootPaths(clientInfo: ClientInfo): string[] {
+  const paths: string[] = [];
+  for (const root of clientInfo.roots) {
+    const url = new URL(root.uri);
+    let rootPath;
+    try {
+      rootPath = fileURLToPath(url);
+    } catch (e) {
+      // Support WSL paths on Windows.
+      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && os.platform() === 'win32')
+        rootPath = decodeURIComponent(url.pathname);
+    }
+    if (!rootPath)
+      continue;
+    paths.push(rootPath);
+  }
+  if (paths.length === 0)
+    paths.push(process.cwd());
+  return paths;
+}
+
 
 function originOrHostGlob(originOrHost: string) {
   try {

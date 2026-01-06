@@ -58,14 +58,5 @@ export default defineConfig<TestOptions>({
     { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
     { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
     ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
-    {
-      name: 'eval',
-      testDir,
-      testMatch: /.*\.eval\.ts/,
-      repeatEach: 3, // Generate three different trajectories per test.
-      timeout: process.env.CI ? 30_000 : 180_000,  // CI should be cache-only, but local use of LLM is slow.
-      use: { mcpBrowser: 'chromium' },
-      metadata: { ...metadata, browserName: 'chromium' },
-    }
   ],
 });

@@ -106,9 +106,12 @@ Base directory for all relative paths used in the reporters.
 
 ## property: FullConfig.runAgents
 * since: v1.58
-- type: <boolean>
+- type: <['RunAgentsMode]<"all"|"missing"|"none">>
 
-Run agents to generate the code for [`method: Page.perform`] and similar.
+Whether to run LLM agent for [`property: Page.agent`]:
+* "all" disregards existing cache and performs all actions via LLM
+* "missing" only performs actions that don't have generated cache actions
+* "none" does not talk to LLM at all, relies on the cached actions (default)
 
 ## property: FullConfig.shard
 * since: v1.10
