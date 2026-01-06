@@ -1009,7 +1009,10 @@ export type BrowserTypeLaunchPersistentContextParams = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1100,7 +1103,10 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1232,7 +1238,10 @@ export type BrowserNewContextParams = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1309,7 +1318,10 @@ export type BrowserNewContextOptions = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1389,7 +1401,10 @@ export type BrowserNewContextForReuseParams = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1466,7 +1481,10 @@ export type BrowserNewContextForReuseOptions = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -1610,7 +1628,10 @@ export type BrowserContextInitializer = {
     selectorEngines?: SelectorEngine[],
     testIdAttributeName?: string,
     agent?: {
-      provider?: string,
+      api?: string,
+      apiKey?: string,
+      apiEndpoint?: string,
+      apiVersion?: string,
       model?: string,
       cacheFile?: string,
       cacheOutFile?: string,
@@ -2651,49 +2672,71 @@ export type PageUpdateSubscriptionOptions = {
 export type PageUpdateSubscriptionResult = void;
 export type PageAgentPerformParams = {
   task: string,
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
 export type PageAgentPerformOptions = {
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
 export type PageAgentPerformResult = {
-  turns: number,
-  inputTokens: number,
-  outputTokens: number,
+  usage: AgentUsage,
 };
 export type PageAgentExpectParams = {
   expectation: string,
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
 export type PageAgentExpectOptions = {
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
-export type PageAgentExpectResult = void;
+export type PageAgentExpectResult = {
+  usage: AgentUsage,
+};
 export type PageAgentExtractParams = {
   query: string,
   schema: any,
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
 export type PageAgentExtractOptions = {
-  key?: string,
+  api?: string,
+  apiEndpoint?: string,
+  apiKey?: string,
+  apiVersion?: string,
   maxTurns?: number,
   maxTokens?: number,
+  cacheKey?: string,
 };
 export type PageAgentExtractResult = {
   result: any,
-  turns: number,
-  inputTokens: number,
-  outputTokens: number,
+  usage: AgentUsage,
 };
 
 export interface PageEvents {
@@ -4961,7 +5004,10 @@ export type AndroidDeviceLaunchBrowserParams = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -5036,7 +5082,10 @@ export type AndroidDeviceLaunchBrowserOptions = {
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
   agent?: {
-    provider?: string,
+    api?: string,
+    apiKey?: string,
+    apiEndpoint?: string,
+    apiVersion?: string,
     model?: string,
     cacheFile?: string,
     cacheOutFile?: string,
@@ -5192,4 +5241,10 @@ export interface JsonPipeEvents {
   'message': JsonPipeMessageEvent;
   'closed': JsonPipeClosedEvent;
 }
+
+export type AgentUsage = {
+  turns: number,
+  inputTokens: number,
+  outputTokens: number,
+};
 

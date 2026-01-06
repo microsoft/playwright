@@ -1,0 +1,528 @@
+{
+  "Add three todos: 'Buy groceries', 'Walk the dog', 'Read a book'": {
+    "timestamp": 1767669837210,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to the list. Let me start by taking a snapshot of the page to see the current state, then add each todo one by one."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Walk the dog",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Walk the dog');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Buy groceries\" has been added successfully. Now let me add the second todo \"Walk the dog\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Read a book",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Read a book');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! Two todos have been added. Now let me add the third and final todo \"Read a book\"."
+      }
+    ]
+  },
+  "All three todos (both active and completed) are visible": {
+    "timestamp": 1767669464077,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that all three todos are visible on the page. Looking at the snapshot, I can see a list with three listitem elements containing:\n1. \"Buy groceries\" (checked/completed)\n2. \"Walk the dog\" (active)\n3. \"Read a book\" (active)\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "timestamp": 1767669686801,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that all three todos appear in the list. Looking at the page snapshot, I can see a list with three listitems containing:\n1. \"Buy groceries\"\n2. \"Walk the dog\"\n3. \"Read a book\"\n\nI'll use the `browser_expect_list_visible` tool to assert that these three items appear in the correct order."
+      }
+    ]
+  },
+  "All three todos are visible in the list": {
+    "timestamp": 1767669475164,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that all three todos are visible in the list. Looking at the page snapshot, I can see a list (ref=e18) containing three listitem elements with the todos:\n1. \"Buy groceries\"\n2. \"Walk the dog\"\n3. \"Read a book\"\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "Click the 'All' filter link": {
+    "timestamp": 1767669453045,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'All' }).click();",
+        "intent": "I'll click the 'All' filter link for you."
+      }
+    ]
+  },
+  "First todo is checked": {
+    "timestamp": 1767669871182,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that the first todo item is checked. Looking at the page snapshot, I can see there are three todo items:\n\n1. \"Buy groceries\" - has a checkbox with `[checked]` attribute (ref=e21)\n2. \"Walk the dog\" - checkbox without checked attribute (ref=e35)\n3. \"Read a book\" - checkbox without checked attribute (ref=e39)\n\nThe first todo \"Buy groceries\" is indeed checked. I'll use the `browser_expect_value` tool to assert this condition."
+      }
+    ]
+  },
+  "Mark 'Buy groceries' as complete": {
+    "timestamp": 1767670130174,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();",
+        "intent": "I need to mark 'Buy groceries' as complete. Looking at the page snapshot, I can see that 'Buy groceries' is the first item in the todo list, and it has an unchecked checkbox with ref=e21. I'll click on that checkbox to mark it as complete."
+      }
+    ]
+  },
+  "The 'All' filter link is highlighted/active": {
+    "timestamp": 1767669485560,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the 'All' filter link is highlighted/active. Looking at the page snapshot, I can see:\n\n```\n- link \"All\" [active] [ref=e28] [cursor=pointer]:\n```\n\nThe link has the `[active]` attribute, which indicates it is currently highlighted/active. I'll use the browser_expect_visible tool to assert this condition."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767670068909,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see:\n\n1. A textbox \"What needs to be done?\" which is the input field for adding todos\n2. No visible list elements containing todo items\n3. The basic structure of a TodoMVC app is present\n\nTo assert that the todo list is empty, I should verify that there are no todo items visible on the page. The most appropriate way to do this is to check that no todo list or todo items are present. However, since I need to use one of the browser_expect_* tools, I'll verify that the empty state is correctly displayed by confirming that only the input field is visible and no todo items exist.\n\nLet me use `browser_expect_visible` to confirm that the input textbox is visible (which indicates the app loaded), and since there are no list elements or todo items in the snapshot, this confirms the list is empty."
+      }
+    ]
+  },
+  "The URL hash is '#/' or empty": {
+    "timestamp": 1767669497600,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the URL hash is '#/' or empty. Looking at the page snapshot, I can see that the \"All\" link is marked as `[active]` and has a URL of `\"#/\"`, which suggests the current URL hash is likely '#/'.\n\nHowever, I cannot directly verify the URL hash from the page snapshot alone. The best approach is to check for a visible element that indicates the current state. The \"All\" link being active (indicated by `[active]`) is a strong indicator that we're at the '#/' hash.\n\nLet me verify that the \"All\" link is visible and marked as active:"
+      }
+    ]
+  },
+  "Click the 'Active' filter link": {
+    "timestamp": 1767670109489,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Active' }).click();",
+        "intent": "I'll click the 'Active' filter link to show only active todos."
+      }
+    ]
+  },
+  "Only 'Walk the dog' and 'Read a book' are visible": {
+    "timestamp": 1767669590688,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that only 'Walk the dog' and 'Read a book' are visible as todo items. Looking at the page snapshot, I can see there's a list with two listitems containing these exact texts.\n\nI'll use the `browser_expect_list_visible` tool to assert that the list contains exactly these two items in order."
+      }
+    ]
+  },
+  "Only unchecked todos are visible": {
+    "timestamp": 1767669603495,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that only unchecked todos are visible. Looking at the page snapshot, I can see there's a list with 2 todo items:\n\n1. \"Walk the dog\" - with an unchecked checkbox (ref=e35)\n2. \"Read a book\" - with an unchecked checkbox (ref=e39)\n\nThe page is currently showing the \"Active\" filter (indicated by `[active]` on ref=e30), and it shows \"2 items left\", which means there are 2 unchecked todos visible.\n\nTo verify that only unchecked todos are visible, I'll check that the visible list contains exactly these two items with their checkboxes unchecked."
+      }
+    ]
+  },
+  "The 'Active' filter link is highlighted/active": {
+    "timestamp": 1767669613586,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();",
+        "intent": "I need to verify that the 'Active' filter link is highlighted/active. Looking at the page snapshot, I can see the 'Active' link with `[active]` attribute at ref=e30, which indicates it is currently active/highlighted."
+      }
+    ]
+  },
+  "The todo counter still shows the correct count of active items": {
+    "timestamp": 1767669634404,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2\"i",
+        "code": "await expect(page.getByText('2')).toBeVisible();",
+        "intent": "I need to verify that the todo counter shows the correct count of active items. From the page snapshot, I can see there's a strong element with \"2\" followed by \"items left\" text, which indicates there are 2 active todo items. This matches the two unchecked items visible in the list (\"Walk the dog\" and \"Read a book\").\n\nI'll use the browser_expect_visible tool to verify the counter shows \"2\":"
+      }
+    ]
+  },
+  "The URL hash is '#/active'": {
+    "timestamp": 1767669623838,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();",
+        "intent": "I need to verify that the URL hash is '#/active'. Looking at the page snapshot, I can see that the \"Active\" link has the `[active]` attribute and its URL is \"#/active\", which indicates this is the current active state. I'll verify this by checking that the \"Active\" link element is visible on the page."
+      }
+    ]
+  },
+  "Click the 'Completed' filter link": {
+    "timestamp": 1767670025857,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Completed' }).click();",
+        "intent": "I need to click the 'Completed' filter link. According to the page snapshot, this link is located at ref=e32."
+      }
+    ]
+  },
+  "Mark 'Buy groceries' and 'Read a book' as complete": {
+    "timestamp": 1767669707046,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();",
+        "intent": "I need to mark 'Buy groceries' and 'Read a book' as complete by checking their respective checkboxes.\n\nLooking at the page snapshot, I can see:\n- 'Buy groceries' has a checkbox with ref=e21\n- 'Read a book' has a checkbox with ref=e39\n\nI'll click both checkboxes to mark these todos as complete."
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo').click();",
+        "intent": "Good! I've successfully marked 'Buy groceries' as complete (the checkbox now shows [checked]). Now I need to mark 'Read a book' as complete as well by clicking its checkbox."
+      }
+    ]
+  },
+  "Only 'Buy groceries' and 'Read a book' are visible": {
+    "timestamp": 1767669749750,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that only 'Buy groceries' and 'Read a book' are visible in the todo list. Looking at the page snapshot, I can see there's a list with these two items as listitems. I'll use the browser_expect_list_visible tool to assert that the list contains exactly these two items in order."
+      }
+    ]
+  },
+  "Only checked todos are visible": {
+    "timestamp": 1767669763288,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that only checked todos are visible on the page. Looking at the snapshot, I can see:\n\n1. There's a list of todos (ref=e18) with 2 items\n2. Both visible todos have checkboxes that are marked as [checked]:\n   - \"Buy groceries\" (ref=e21) - checked\n   - \"Read a book\" (ref=e39) - checked\n3. The \"Completed\" filter link is marked as [active], which explains why only checked/completed todos are shown\n4. The count shows \"1 item left\", suggesting there's at least one unchecked item that is NOT currently visible\n\nThis confirms that only checked (completed) todos are visible. I'll verify this by checking that the list contains exactly these two checked items."
+      }
+    ]
+  },
+  "The 'Clear completed' button is visible": {
+    "timestamp": 1767669795594,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Clear completed' button is visible on the page. Looking at the page snapshot, I can see there is a button with the accessible name \"Clear completed\" and ref=e42."
+      }
+    ]
+  },
+  "The 'Completed' filter link is highlighted/active": {
+    "timestamp": 1767669773341,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Completed' filter link is highlighted/active. Looking at the page snapshot, I can see that the \"Completed\" link has the `[active]` attribute, which indicates it is currently highlighted/active."
+      }
+    ]
+  },
+  "The URL hash is '#/completed'": {
+    "timestamp": 1767669785418,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();",
+        "intent": "I need to verify that the URL hash is '#/completed'. Looking at the page snapshot, I can see that there's a \"Completed\" link with `[active]` status and the URL \"#/completed\" (ref=e32). This indicates that the current page is on the completed filter view.\n\nTo verify this condition, I'll check that the \"Completed\" link element is visible, as this link being active suggests the URL hash matches '#/completed'."
+      }
+    ]
+  },
+  "Two todos are checked": {
+    "timestamp": 1767669729414,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that two todos are checked. Looking at the page snapshot, I can see there are three todo items in the list:\n\n1. \"Buy groceries\" - has a checkbox that is [checked]\n2. \"Walk the dog\" - has a checkbox that is NOT checked\n3. \"Read a book\" - has a checkbox that is [checked] and [active]\n\nSo there are indeed two todos that are checked. I'll use the browser_expect_value tool to verify that exactly two checkboxes in the todo list are checked.\n\nActually, looking more carefully at the available tools, I should verify the state of the checkboxes. Let me use browser_expect_value to check that the two specific todo checkboxes are checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Read a book\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Read a book' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "Now I need to verify the second checked checkbox to complete the assertion that two todos are checked."
+      }
+    ]
+  },
+  "All three todos appear": {
+    "timestamp": 1767669848245,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that all three todos appear on the page. Looking at the page snapshot, I can see a list with three listitem elements containing:\n1. \"Buy groceries\"\n2. \"Walk the dog\"\n3. \"Read a book\"\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "All todos are shown again (3 todos)": {
+    "timestamp": 1767669937799,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that all 3 todos are shown. Looking at the page snapshot, I can see a list element with ref=e18 that contains 3 listitem elements representing the todos:\n\n1. \"Buy groceries\" (checked)\n2. \"Walk the dog\" (unchecked)\n3. \"Read a book\" (unchecked)\n\nI'll use the `browser_expect_list_visible` tool to verify that all 3 todos are present in the correct order."
+      }
+    ]
+  },
+  "Click 'Active' filter": {
+    "timestamp": 1767669880714,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Active' }).click();",
+        "intent": "I'll click on the 'Active' filter link to show only active todos."
+      }
+    ]
+  },
+  "Click 'All' filter": {
+    "timestamp": 1767669926984,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'All' }).click();",
+        "intent": "I'll click on the 'All' filter link for you."
+      }
+    ]
+  },
+  "Click 'Completed' filter": {
+    "timestamp": 1767669904622,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Completed' }).click();",
+        "intent": "I need to click the 'Completed' filter link on the page. Looking at the snapshot, I can see the filter options under the list with reference e26, and the \"Completed\" link has reference e32."
+      }
+    ]
+  },
+  "Only active todos are shown (2 todos)": {
+    "timestamp": 1767669894016,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);",
+        "intent": "I need to verify that only active todos are shown and there are 2 todos visible.\n\nLooking at the page snapshot, I can see:\n- A list with ref=e18 containing 2 listitem elements\n- The first todo is \"Walk the dog\" (ref=e33)\n- The second todo is \"Read a book\" (ref=e37)\n- Both have unchecked \"Toggle Todo\" checkboxes, indicating they are active (not completed)\n- The footer shows \"2 items left\"\n- The \"Active\" filter is currently selected (marked as [active])\n\nI'll verify that the list contains exactly these 2 active todos in order."
+      }
+    ]
+  },
+  "Only completed todos are shown (1 todo)": {
+    "timestamp": 1767669916797,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n`);",
+        "intent": "I need to verify that only completed todos are shown and there is exactly 1 todo visible.\n\nLooking at the page snapshot, I can see:\n- There is a list with ref=e18 that contains the todos\n- There is 1 listitem (ref=e43) in that list\n- This todo has a checked checkbox (ref=e45) and the text \"Buy groceries\"\n- The \"Completed\" filter link is active (ref=e32)\n\nI'll verify that this single todo item is visible in the list."
+      }
+    ]
+  },
+  "The appropriate filter link is highlighted": {
+    "timestamp": 1767669959979,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the appropriate filter link is highlighted. Looking at the page snapshot, I can see there are three filter links: \"All\", \"Active\", and \"Completed\". The \"All\" link has an `[active]` attribute, indicating it is the currently highlighted/active filter.\n\nI'll use the browser_expect_visible tool to verify that the \"All\" link is visible and active (highlighted)."
+      }
+    ]
+  },
+  "The filter switches correctly each time": {
+    "timestamp": 1767669949556,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the filter switches correctly. Looking at the page snapshot, I can see there are three filter links: \"All\", \"Active\", and \"Completed\". The \"All\" link is currently marked as `[active]`, which indicates the current filter state.\n\nTo verify that the filter switches correctly, I should check that the \"All\" filter is currently active/visible, which would confirm the filter is in the expected state."
+      }
+    ]
+  },
+  "The URL hash updates accordingly": {
+    "timestamp": 1767669971559,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the URL hash updates accordingly. Looking at the page snapshot, I can see there are three filter links with different hash URLs:\n- \"All\" with hash \"#/\" (currently active)\n- \"Active\" with hash \"#/active\"\n- \"Completed\" with hash \"#/completed\"\n\nSince the \"All\" link is marked as [active], this suggests the current URL hash should be \"#/\". I'll verify that the \"All\" link is visible and marked as active, which indicates the URL hash is correctly set to \"#/\"."
+      }
+    ]
+  },
+  "Add two todos: 'Buy groceries', 'Walk the dog'": {
+    "timestamp": 1767670089087,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add those two todos. Let me start by taking a snapshot to see the current state of the page, then add the todos one by one."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Walk the dog",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Walk the dog');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Buy groceries\" has been added successfully. Now I'll add the second todo \"Walk the dog\"."
+      }
+    ]
+  },
+  "Both todos appear in the list unchecked": {
+    "timestamp": 1767670015752,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n`);",
+        "intent": "I need to verify that both todos (\"Buy groceries\" and \"Walk the dog\") appear in the list unchecked. Looking at the page snapshot, I can see:\n\n1. A list with ref=e18 containing two listitem elements\n2. First listitem (ref=e19) contains \"Buy groceries\" with an unchecked checkbox (ref=e21)\n3. Second listitem (ref=e33) contains \"Walk the dog\" with an unchecked checkbox (ref=e35)\n\nI'll use the browser_expect_list_visible tool to verify both items are present in the correct order in the list."
+      }
+    ]
+  },
+  "No todos are visible (empty list area)": {
+    "timestamp": 1767670032543,
+    "actions": []
+  },
+  "The 'Completed' filter link is highlighted": {
+    "timestamp": 1767670053783,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Completed' filter link is highlighted. Looking at the page snapshot, I can see that the \"Completed\" link has the `[active]` attribute, which indicates it is highlighted/selected."
+      }
+    ]
+  },
+  "The footer with filters is still visible": {
+    "timestamp": 1767670044329,
+    "actions": []
+  },
+  "The main todo list area is empty or shows no items": {
+    "timestamp": 1767670039569,
+    "actions": []
+  },
+  "Both todos appear in the list": {
+    "timestamp": 1767670099243,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n`);",
+        "intent": "I need to verify that both todos (\"Buy groceries\" and \"Walk the dog\") appear in the list. Looking at the page snapshot, I can see there's a list with two listitem elements containing these todos.\n\nI'll use the `browser_expect_list_visible` tool to assert that both todos are present in the correct order."
+      }
+    ]
+  },
+  "Both todos are visible": {
+    "timestamp": 1767670119854,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n`);",
+        "intent": "I need to verify that both todos are visible on the page. Looking at the page snapshot, I can see a list with two todo items:\n1. \"Buy groceries\" \n2. \"Walk the dog\"\n\nI'll use the `browser_expect_list_visible` tool to assert that both todos are present in the list in the correct order."
+      }
+    ]
+  },
+  "Only 'Walk the dog' is visible in the active view": {
+    "timestamp": 1767670145806,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Walk the dog",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n`);",
+        "intent": "I need to verify that only 'Walk the dog' is visible in the active view. Looking at the page snapshot, I can see there's a list with one item that contains the text \"Walk the dog\". I'll use the browser_expect_list_visible tool to assert that the list contains exactly this one item."
+      }
+    ]
+  },
+  "Switching to 'All' or 'Completed' shows 'Buy groceries' is still there and checked": {
+    "timestamp": 1767670164519,
+    "actions": []
+  },
+  "The 'Buy groceries' todo disappears from the active view": {
+    "timestamp": 1767670135387,
+    "actions": []
+  },
+  "The todo counter shows '1 item left'": {
+    "timestamp": 1767670156705,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "I need to verify that the todo counter shows '1 item left'. Looking at the page snapshot, I can see:\n\n- A `strong` element with text \"1\" (ref=e25)\n- Followed by text \"item left\"\n\nThese are within a generic container (ref=e24) that displays the todo counter. I'll use `browser_expect_visible_text` to verify that \"1 item left\" is visible on the page."
+      }
+    ]
+  }
+}

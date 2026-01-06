@@ -592,7 +592,10 @@ ContextOptions:
     agent:
       type: object?
       properties:
-        provider: string?
+        api: string?
+        apiKey: string?
+        apiEndpoint: string?
+        apiVersion: string?
         model: string?
         cacheFile: string?
         cacheOutFile: string?
@@ -2026,35 +2029,30 @@ Page:
       internal: true
       parameters:
         task: string
-        key: string?
-        maxTurns: int?
-        maxTokens: int?
+        $mixin: PageAgentOptions
+
       returns:
-        turns: int
-        inputTokens: int
-        outputTokens: int
+        usage: AgentUsage
 
     agentExpect:
       internal: true
       parameters:
         expectation: string
-        key: string?
-        maxTurns: int?
-        maxTokens: int?
+        $mixin: PageAgentOptions
+
+      returns:
+        usage: AgentUsage
 
     agentExtract:
       internal: true
       parameters:
         query: string
         schema: json
-        key: string?
-        maxTurns: int?
-        maxTokens: int?
+        $mixin: PageAgentOptions
+
       returns:
         result: json
-        turns: int
-        inputTokens: int
-        outputTokens: int
+        usage: AgentUsage
 
   events:
 
@@ -4344,3 +4342,21 @@ JsonPipe:
     closed:
       parameters:
         reason: string?
+
+PageAgentOptions:
+  type: mixin
+  properties:
+    api: string?
+    apiEndpoint: string?
+    apiKey: string?
+    apiVersion: string?
+    maxTurns: int?
+    maxTokens: int?
+    cacheKey: string?
+
+AgentUsage:
+  type: object
+  properties:
+    turns: int
+    inputTokens: int
+    outputTokens: int

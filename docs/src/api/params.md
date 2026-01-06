@@ -372,7 +372,10 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 ## context-option-agent
 - `agent` <[Object]>
-  - `provider` ?<[string]> LLM provider to use. Required in non-cache mode.
+  - `api` ?<[string]> API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
+  - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
+  - `apiKey` ?<[string]> API key for the LLM provider.
+  - `apiVersion` ?<[string]> API version if relevant.
   - `model` ?<[string]> Model identifier within the provider. Required in non-cache mode.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
   - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
@@ -382,9 +385,33 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 Agent settings for [`property: Page.agent`].
 
-## page-agent-key
+## page-agent-api
 * since: v1.58
-- `key` <[string]>
+- `api` <[string]>
+
+API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
+
+## page-agent-api-endpoint
+* since: v1.58
+- `apiEndpoint` <[string]>
+
+Endpoint to use if different from default.
+
+## page-agent-api-key
+* since: v1.58
+- `apiKey` <[string]>
+
+API key for the LLM provider.
+
+## page-agent-api-version
+* since: v1.58
+- `apiVersion` <[string]>
+
+API version if relevant.
+
+## page-agent-cache-key
+* since: v1.58
+- `cacheKey` <[string]>
 
 All the agentic actions are converted to the Playwright calls and are cached.
 By default, they are cached globally with the `task` as a key. This option allows controlling the cache key explicitly.
@@ -403,7 +430,11 @@ Defaults to context-wide value specified in `agent` property.
 Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
 
 ## page-agent-call-options-v1.58
-- %%-page-agent-key-%%
+- %%-page-agent-api-%%
+- %%-page-agent-api-key-%%
+- %%-page-agent-api-endpoint-%%
+- %%-page-agent-api-version-%%
+- %%-page-agent-cache-key-%%
 - %%-page-agent-max-tokens-%%
 - %%-page-agent-max-turns-%%
 
