@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import './barchart.css';
+
 const formatDuration = (ms: number): string => {
   const totalSeconds = Math.round(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
@@ -157,29 +159,14 @@ export const GroupedBarChart = ({
                     aria-label={`${seriesName}: ${formatDuration(value)}`}
                   >
                     <rect
+                      className='barchart-bar'
                       x={x}
                       y={y}
                       width={barWidth}
                       height={barHeight}
                       fill={color}
                       rx='2'
-                      style={{
-                        transition: 'opacity 0.2s',
-                        cursor: 'pointer',
-                        outline: 'none'
-                      }}
-                      onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
                       tabIndex={0}
-                      onFocus={e => {
-                        e.currentTarget.style.opacity = '0.8';
-                        e.currentTarget.style.stroke = 'var(--color-fg-default)';
-                        e.currentTarget.style.strokeWidth = '2';
-                      }}
-                      onBlur={e => {
-                        e.currentTarget.style.opacity = '1';
-                        e.currentTarget.style.stroke = 'none';
-                      }}
                     >
                       <title>{`${seriesName}: ${formatDuration(value)}`}</title>
                     </rect>
