@@ -721,9 +721,13 @@ class ArtifactsRecorder {
       api: this._agent.api,
       apiEndpoint: this._agent.apiEndpoint,
       apiKey: this._agent.apiKey,
-      apiVersion: this._agent.apiVersion,
       model: this._agent.model,
-    } : undefined;
+    } : {
+      api: undefined,
+      apiEndpoint: undefined,
+      apiKey: undefined,
+      model: undefined,
+    };
     options.agent = {
       ...this._agent,
       ...apiProps,

@@ -6954,7 +6954,6 @@ export type Agent = {
   api: string;
   apiKey: string;
   apiEndpoint?: string;
-  apiVersion?: string;
   model: string;
   cachePathTemplate?: string;
   maxTurns?: number;

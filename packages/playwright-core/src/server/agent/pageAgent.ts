@@ -133,7 +133,6 @@ async function runLoop(context: Context, toolDefinitions: ToolDefinition[], user
   api?: string,
   apiEndpoint?: string,
   apiKey?: string,
-  apiVersion?: string,
   model?: string,
   maxTurns?: number;
   maxTokens?: number;
@@ -146,7 +145,6 @@ async function runLoop(context: Context, toolDefinitions: ToolDefinition[], user
   const api = options.api ?? browserContext._options.agent?.api;
   const apiEndpoint = options.apiEndpoint ?? browserContext._options.agent?.apiEndpoint;
   const apiKey = options.apiKey ?? browserContext._options.agent?.apiKey;
-  const apiVersion = options.apiVersion ?? browserContext._options.agent?.apiVersion;
   const model = options.model ?? browserContext._options.agent?.model;
 
   if (!api || !apiKey || !model)
@@ -160,7 +158,6 @@ async function runLoop(context: Context, toolDefinitions: ToolDefinition[], user
     api: api as any,
     apiEndpoint,
     apiKey,
-    apiVersion,
     model,
     summarize: true,
     debug,

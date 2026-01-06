@@ -5382,13 +5382,10 @@ export interface PageAgent {
 
     /**
      * API key for the LLM provider.
-     */
-    apiKey?: string;
-
-    /**
+     *
      * API version if relevant.
      */
-    apiVersion?: string;
+    apiKey?: string;
 
     /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
@@ -5433,13 +5430,10 @@ export interface PageAgent {
 
     /**
      * API key for the LLM provider.
-     */
-    apiKey?: string;
-
-    /**
+     *
      * API version if relevant.
      */
-    apiVersion?: string;
+    apiKey?: string;
 
     /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
@@ -22328,11 +22322,6 @@ export interface BrowserContextOptions {
      * API key for the LLM provider.
      */
     apiKey?: string;
-
-    /**
-     * API version if relevant.
-     */
-    apiVersion?: string;
 
     /**
      * Model identifier within the provider. Required in non-cache mode.

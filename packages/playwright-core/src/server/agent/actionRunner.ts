@@ -77,7 +77,7 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       break;
     case 'expectVisible': {
       const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot });
-      if (!result.matches)
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
@@ -92,14 +92,14 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
-      if (!result.matches)
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
     case 'expectAria': {
       const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
       const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot });
-      if (!result.matches)
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }

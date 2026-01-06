@@ -4,7 +4,7 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
--	@lowire/loop@0.0.14 (https://github.com/pavelfeldman/lowire)
+-	@lowire/loop@0.0.15 (https://github.com/pavelfeldman/lowire)
 -	@modelcontextprotocol/sdk@1.24.2 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
@@ -135,7 +135,7 @@ This project incorporates components from the projects listed below. The origina
 -	zod-to-json-schema@3.25.0 (https://github.com/StefanTerdell/zod-to-json-schema)
 -	zod@3.25.76 (https://github.com/colinhacks/zod)
 
-%% @lowire/loop@0.0.14 NOTICES AND INFORMATION BEGIN HERE
+%% @lowire/loop@0.0.15 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Apache License
                            Version 2.0, January 2004
@@ -339,7 +339,7 @@ Apache License
    See the License for the specific language governing permissions and
    limitations under the License.
 =========================================
-END OF @lowire/loop@0.0.14 AND INFORMATION
+END OF @lowire/loop@0.0.15 AND INFORMATION
 
 %% @modelcontextprotocol/sdk@1.24.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================

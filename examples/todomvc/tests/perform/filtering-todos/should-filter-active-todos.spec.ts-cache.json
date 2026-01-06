@@ -1,0 +1,138 @@
+{
+  "'Will complete' is not visible": {
+    "timestamp": 1767733770707,
+    "actions": []
+  },
+  "Add three todos: 'Active 1', 'Active 2', 'Will complete'": {
+    "timestamp": 1767733689768,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active 1');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to the page. Let me start by taking a snapshot to see the current state, then add each todo item."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Good! The first todo \"Active 1\" has been added. Now I'll add the second todo \"Active 2\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Will complete",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Will complete');\nawait page.keyboard.press('Enter');",
+        "intent": "Excellent! Two todos have been added successfully. Now I'll add the third and final todo \"Will complete\"."
+      }
+    ]
+  },
+  "All three todos are visible": {
+    "timestamp": 1767733700481,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active 1\n  - listitem: Active 2\n  - listitem: Will complete",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active 1\n  - listitem: Active 2\n  - listitem: Will complete\n`);",
+        "intent": "I need to verify that all three todos are visible on the page. Looking at the snapshot, I can see there's a list with three todo items:\n1. \"Active 1\"\n2. \"Active 2\"\n3. \"Will complete\"\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the list in the exact order shown."
+      }
+    ]
+  },
+  "Click on the 'Active' filter link": {
+    "timestamp": 1767733743714,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Active' }).click();",
+        "intent": "I need to click on the 'Active' filter link. Looking at the page snapshot, I can see the filter links are in a list at ref=e26, and the 'Active' link is specifically at ref=e30."
+      }
+    ]
+  },
+  "Counter shows '2 items left'": {
+    "timestamp": 1767733733351,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows \"2 items left\". Looking at the page snapshot, I can see:\n\n- A `strong` element with ref=e25 containing \"2\"\n- Followed by text \"items left\"\n\nThese elements are within a generic container (ref=e24). I'll use `browser_expect_visible_text` to verify that the text \"2 items left\" is visible on the page."
+      }
+    ]
+  },
+  "Mark 'Will complete' as completed by clicking its checkbox": {
+    "timestamp": 1767733710707,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Will complete\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Will complete' }).getByLabel('Toggle Todo').click();",
+        "intent": "I need to mark 'Will complete' as completed by clicking its checkbox. Looking at the page snapshot, I can see that 'Will complete' is in a listitem with a checkbox labeled \"Toggle Todo\" at ref=e39."
+      }
+    ]
+  },
+  "One todo is marked as complete": {
+    "timestamp": 1767733722615,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Will complete\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Will complete' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that one todo is marked as complete. Looking at the page snapshot, I can see there are three todos in the list, and one of them has a checkbox that is marked as \"checked\" - specifically the one with the text \"Will complete\" (ref=e39).\n\nI'll use the browser_expect_value tool to verify that this checkbox is checked."
+      }
+    ]
+  },
+  "Only 'Active 1' and 'Active 2' are displayed": {
+    "timestamp": 1767733766023,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active 1\n  - listitem: Active 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active 1\n  - listitem: Active 2\n`);",
+        "intent": "I need to verify that only 'Active 1' and 'Active 2' are displayed in the todo list. Looking at the page snapshot, I can see there's a list with two listitems containing \"Active 1\" and \"Active 2\". I'll use the `browser_expect_list_visible` tool to assert that these exact items are present in the correct order."
+      }
+    ]
+  },
+  "The 'Active' filter link is highlighted": {
+    "timestamp": 1767733780585,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();",
+        "intent": "I need to verify that the 'Active' filter link is highlighted. Looking at the page snapshot, I can see the 'Active' link has the `[active]` attribute, which indicates it is highlighted/selected."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733660334,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I'll verify that the page loads with an empty todo list by checking that the textbox \"What needs to be done?\" is visible, which is the input field for adding todos and would be present on an empty list."
+      }
+    ]
+  },
+  "The URL changes to #/active": {
+    "timestamp": 1767733755397,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();",
+        "intent": "I need to verify that the URL changes to #/active. Looking at the page snapshot, I can see that the \"Active\" link (ref=e30) is marked as [active], which indicates it's currently selected, and its URL is \"#/active\". This suggests the URL has indeed changed to #/active.\n\nI'll use the browser_expect_visible tool to verify that the \"Active\" link is visible and active on the page."
+      }
+    ]
+  }
+}

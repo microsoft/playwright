@@ -375,7 +375,6 @@ Emulates consistent window screen size available inside web page via `window.scr
   - `api` ?<[string]> API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
   - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
   - `apiKey` ?<[string]> API key for the LLM provider.
-  - `apiVersion` ?<[string]> API version if relevant.
   - `model` ?<[string]> Model identifier within the provider. Required in non-cache mode.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
   - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
@@ -403,10 +402,6 @@ Endpoint to use if different from default.
 
 API key for the LLM provider.
 
-## page-agent-api-version
-* since: v1.58
-- `apiVersion` <[string]>
-
 API version if relevant.
 
 ## page-agent-cache-key
@@ -433,7 +428,6 @@ Maximum number of agentic turns during this call, defaults to context-wide value
 - %%-page-agent-api-%%
 - %%-page-agent-api-key-%%
 - %%-page-agent-api-endpoint-%%
-- %%-page-agent-api-version-%%
 - %%-page-agent-cache-key-%%
 - %%-page-agent-max-tokens-%%
 - %%-page-agent-max-turns-%%
