@@ -32,7 +32,7 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => await produceFrames(client)).toPass();
+    await produceFrames(client);
     await closeBrowser(client);
 
     const videosDir = path.join(outputDir, 'videos');
@@ -52,7 +52,7 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => await produceFrames(client)).toPass();
+    await produceFrames(client);
     await closeBrowser(client);
 
     const videosDir = path.join(outputDir, 'videos');
@@ -80,7 +80,7 @@ for (const mode of ['isolated', 'persistent']) {
     });
 
     await navigateToTestPage(client, server);
-    await expect(async () => await produceFrames(client)).toPass();
+    await produceFrames(client);
     await closeBrowser(client);
   });
 }
@@ -107,12 +107,16 @@ async function produceFrames(client: Client) {
     name: 'browser_evaluate',
     arguments: {
       function: `async () => {
+        async function rafraf(count) {
+          for (let i = 0; i < count; i++)
+            await new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
+        }
         document.body.style.backgroundColor = "red";
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await rafraf(30);
         document.body.style.backgroundColor = "green";
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await rafraf(30);
         document.body.style.backgroundColor = "blue";
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await rafraf(30);
         return 'ok';
       }`,
     },
