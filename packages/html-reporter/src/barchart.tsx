@@ -38,7 +38,7 @@ export const GroupedBarChart = ({
   // Rough estimate: 7 pixels per character at fontSize 12
   const maxGroupNameLength = Math.max(...groups.map(g => g.length));
   const estimatedTextWidth = maxGroupNameLength * 7;
-  const leftMargin = Math.min(width * 0.5, Math.max(100, estimatedTextWidth));
+  const leftMargin = Math.min(width * 0.5, Math.max(50, estimatedTextWidth));
 
   const margin = { top: 20, right: 20, bottom: 40, left: leftMargin };
   const chartWidth = width - margin.left - margin.right;
@@ -136,6 +136,8 @@ export const GroupedBarChart = ({
 
           return series.map((seriesName, seriesIndex) => {
             const value = data[groupIndex][seriesIndex];
+            if (value === undefined || Number.isNaN(value))
+              return null;
 
             const barWidth = value * xScale;
             const x = 0;
@@ -146,23 +148,33 @@ export const GroupedBarChart = ({
             const color = colors[seriesIndex % colors.length];
 
             return (
-              <rect
-                key={`${groupIndex}-${seriesIndex}`}
-                x={x}
-                y={y}
-                width={barWidth}
-                height={barHeight}
-                fill={color}
-                rx='2'
-                style={{
-                  transition: 'opacity 0.2s',
-                  cursor: 'pointer'
-                }}
-                onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-              >
-                <title>{`${seriesName}: ${formatDuration(value)}`}</title>
-              </rect>
+              <g key={`${groupIndex}-${seriesIndex}`}>
+                <rect
+                  x={x}
+                  y={y}
+                  width={barWidth}
+                  height={barHeight}
+                  fill={color}
+                  rx='2'
+                  style={{
+                    transition: 'opacity 0.2s',
+                    cursor: 'pointer'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                >
+                  <title>{`${seriesName}: ${formatDuration(value)}`}</title>
+                </rect>
+                <text
+                  x={barWidth + 6}
+                  y={y + barHeight / 2}
+                  dominantBaseline='middle'
+                  fontSize='12'
+                  fill='var(--color-fg-muted)'
+                >
+                  {formatDuration(value)}
+                </text>
+              </g>
             );
           });
         })}

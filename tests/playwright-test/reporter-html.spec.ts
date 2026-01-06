@@ -3333,8 +3333,9 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         `,
       });
 
-      await runInlineTest({}, { reporter: 'dot,html', shard: '1/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
-      await runInlineTest({}, { reporter: 'dot,html', shard: '2/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '1/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '2/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '3/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
 
       await runInlineTest({}, { reporter: 'dot,html', shard: '1/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
       await runInlineTest({}, { reporter: 'dot,html', shard: '2/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
