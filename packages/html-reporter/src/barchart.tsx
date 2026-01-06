@@ -38,7 +38,7 @@ export const GroupedBarChart = ({
   // Rough estimate: 7 pixels per character at fontSize 12
   const maxGroupNameLength = Math.max(...groups.map(g => g.length));
   const estimatedTextWidth = maxGroupNameLength * 7;
-  const leftMargin = Math.min(300, Math.max(100, estimatedTextWidth));
+  const leftMargin = Math.min(width * 0.5, Math.max(100, estimatedTextWidth));
 
   const margin = { top: 20, right: 20, bottom: 40, left: leftMargin };
   const chartWidth = width - margin.left - margin.right;
