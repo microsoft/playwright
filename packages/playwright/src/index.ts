@@ -717,10 +717,16 @@ class ArtifactsRecorder {
     this._agentCacheOutFile = path.join(this._testInfo.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
 
     const cacheFile = this._testInfo.config.runAgents === 'all' ? undefined : await this._testInfo._cloneStorage(this._agentCacheFile);
+    const apiProps = this._testInfo.config.runAgents !== 'none' ? {
+      api: this._agent.api,
+      apiEndpoint: this._agent.apiEndpoint,
+      apiKey: this._agent.apiKey,
+      apiVersion: this._agent.apiVersion,
+      model: this._agent.model,
+    } : undefined;
     options.agent = {
       ...this._agent,
-      provider: this._testInfo.config.runAgents !== 'none' ? this._agent.provider : undefined,
-      model: this._testInfo.config.runAgents !== 'none' ? this._agent.model : undefined,
+      ...apiProps,
       cacheFile,
       cacheOutFile: this._agentCacheOutFile,
     };

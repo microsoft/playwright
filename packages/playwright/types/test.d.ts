@@ -6951,7 +6951,10 @@ export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failur
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type Agent = {
-  provider: string;
+  api: string;
+  apiKey: string;
+  apiEndpoint?: string;
+  apiVersion?: string;
   model: string;
   cachePathTemplate?: string;
   maxTurns?: number;

@@ -27,7 +27,7 @@ import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
 import { urlMatches } from '../../utils/isomorphic/urlMatch';
-import { pageAgentPerform, pageAgentExpect, pageAgentExtract } from '../agent/pageAgent';
+import { pageAgentPerformWithEvents, pageAgentExpectWithEvents, pageAgentExtractWithEvents } from '../agent/pageAgent';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -323,16 +323,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async agentPerform(params: channels.PageAgentPerformParams, progress: Progress): Promise<channels.PageAgentPerformResult> {
-    return await pageAgentPerform(progress, this._page, params);
+    return await pageAgentPerformWithEvents(progress, this._page, params);
   }
 
   async agentExpect(params: channels.PageAgentExpectParams, progress: Progress): Promise<channels.PageAgentExpectResult> {
-    await pageAgentExpect(progress, this._page, params);
+    return await pageAgentExpectWithEvents(progress, this._page, params);
   }
 
   async agentExtract(params: channels.PageAgentExtractParams, progress: Progress): Promise<channels.PageAgentExtractResult> {
-    const { result, usage } = await pageAgentExtract(progress, this._page, params);
-    return { result, ...usage };
+    return await pageAgentExtractWithEvents(progress, this._page, params);
   }
 
   async requests(params: channels.PageRequestsParams, progress: Progress): Promise<channels.PageRequestsResult> {

@@ -65,16 +65,19 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
     }
     case 'expectVisible': {
       const locator = asLocator(sdkLanguage, action.selector);
-      return `await expect(page.${locator}).toBeVisible();`;
+      const notInfix = action.isNot ? 'not.' : '';
+      return `await expect(page.${locator}).${notInfix}toBeVisible();`;
     }
     case 'expectValue': {
+      const notInfix = action.isNot ? 'not.' : '';
       const locator = asLocator(sdkLanguage, action.selector);
       if (action.type === 'checkbox' || action.type === 'radio')
-        return `await expect(page.${locator}).toBeChecked({ checked: ${action.value === 'true'} });`;
-      return `await expect(page.${locator}).toHaveValue(${escapeWithQuotes(action.value)});`;
+        return `await expect(page.${locator}).${notInfix}toBeChecked({ checked: ${action.value === 'true'} });`;
+      return `await expect(page.${locator}).${notInfix}toHaveValue(${escapeWithQuotes(action.value)});`;
     }
     case 'expectAria': {
-      return `await expect(page.locator('body')).toMatchAria(\`\n${escapeTemplateString(action.template)}\n\`);`;
+      const notInfix = action.isNot ? 'not.' : '';
+      return `await expect(page.locator('body')).${notInfix}toMatchAria(\`\n${escapeTemplateString(action.template)}\n\`);`;
     }
   }
   // @ts-expect-error

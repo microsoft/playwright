@@ -5371,10 +5371,30 @@ export interface PageAgent {
    */
   expect(expectation: string, options?: {
     /**
+     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
+     */
+    api?: string;
+
+    /**
+     * Endpoint to use if different from default.
+     */
+    apiEndpoint?: string;
+
+    /**
+     * API key for the LLM provider.
+     */
+    apiKey?: string;
+
+    /**
+     * API version if relevant.
+     */
+    apiVersion?: string;
+
+    /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
      * with the `task` as a key. This option allows controlling the cache key explicitly.
      */
-    key?: string;
+    cacheKey?: string;
 
     /**
      * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
@@ -5402,10 +5422,30 @@ export interface PageAgent {
    */
   perform(task: string, options?: {
     /**
+     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
+     */
+    api?: string;
+
+    /**
+     * Endpoint to use if different from default.
+     */
+    apiEndpoint?: string;
+
+    /**
+     * API key for the LLM provider.
+     */
+    apiKey?: string;
+
+    /**
+     * API version if relevant.
+     */
+    apiVersion?: string;
+
+    /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
      * with the `task` as a key. This option allows controlling the cache key explicitly.
      */
-    key?: string;
+    cacheKey?: string;
 
     /**
      * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
@@ -22275,9 +22315,24 @@ export interface BrowserContextOptions {
    */
   agent?: {
     /**
-     * LLM provider to use. Required in non-cache mode.
+     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
      */
-    provider?: string;
+    api?: string;
+
+    /**
+     * Endpoint to use if different from default.
+     */
+    apiEndpoint?: string;
+
+    /**
+     * API key for the LLM provider.
+     */
+    apiKey?: string;
+
+    /**
+     * API version if relevant.
+     */
+    apiVersion?: string;
 
     /**
      * Model identifier within the provider. Required in non-cache mode.
