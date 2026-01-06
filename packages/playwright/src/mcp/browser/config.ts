@@ -325,7 +325,7 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-export function tmpDir(): string {
+function tmpDir(): string {
   return path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output');
 }
 
