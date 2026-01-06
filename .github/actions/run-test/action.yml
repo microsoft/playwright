@@ -15,6 +15,10 @@ inputs:
   bot-name:
     description: 'Bot name'
     required: true
+  shard-index:
+    description: 'Shard index (optional)'
+    required: false
+    default: '0'
   shell:
     description: 'Shell to use'
     required: false
@@ -87,4 +91,4 @@ runs:
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
-        job_name: ${{ inputs.bot-name }}
+        job_name: ${{ inputs.bot-name }}-${{ inputs.shard-index }}

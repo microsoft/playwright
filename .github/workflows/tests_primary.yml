@@ -120,7 +120,8 @@ jobs:
       with:
         node-version: ${{matrix.node-version}}
         command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --shard-weights=58:42
-        bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}-${{ matrix.shardIndex }}"
+        bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
+        shard-index: ${{ matrix.shardIndex }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
