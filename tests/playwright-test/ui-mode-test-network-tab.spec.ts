@@ -348,3 +348,28 @@ test('should copy network request', async ({ runUITest, server }) => {
     expect(playwrightRequest).toContain(`'content-type': 'application/json'`);
   }).toPass();
 });
+
+
+test('should not preserve selection across test runs', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await page.getByRole('tab', { name: 'Network' }).click();
+  const networkItem = page.getByRole('listitem').filter({ hasText: 'network.html' });
+  await networkItem.click();
+  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+  await expect(headersPanel).toBeVisible();
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await networkItem.waitFor({ state: 'hidden' });
+  await networkItem.waitFor();
+  await expect(headersPanel).toBeHidden();
+});

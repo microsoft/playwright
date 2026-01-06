@@ -75,6 +75,11 @@ export const NetworkTab: React.FunctionComponent<{
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
+  React.useEffect(() => {
+    if (selectedEntry && !networkModel.resources.some(entry => entry === selectedEntry.resource))
+      setSelectedEntry(undefined);
+  }, [networkModel.resources, selectedEntry]);
+
   const { renderedEntries } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
     if (sorting)
