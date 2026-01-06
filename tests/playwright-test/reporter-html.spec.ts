@@ -3343,11 +3343,17 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await showReport();
       await page.getByRole('link', { name: 'Speedboard' }).click();
 
-      // TODO: improve aria
       await expect(page.getByRole('main')).toMatchAriaSnapshot(`
         - button "Shard Duration"
         - region:
-          - img: 0s 10s linux mac
+          - img:
+            - list "linux":
+              - listitem /Shard 1/
+              - listitem /Shard 2/
+              - listitem /Shard 3/
+            - list "mac":
+              - listitem /Shard 1/
+              - listitem /Shard 2/
       `);
     });
   });

@@ -105,10 +105,11 @@ export const GroupedBarChart = ({
       viewBox={`0 0 ${width} ${height}`}
       preserveAspectRatio='xMidYMid meet'
       style={{ width: '100%', height: 'auto' }}
+      role='img'
     >
-      <g transform={`translate(${margin.left}, ${margin.top})`}>
+      <g transform={`translate(${margin.left}, ${margin.top})`} role='presentation'>
         {xTicks.map(({ x, label }, i) => (
-          <g key={i}>
+          <g key={i} aria-hidden='true'>
             <line
               x1={x}
               y1={0}
@@ -134,49 +135,69 @@ export const GroupedBarChart = ({
           const groupY = groupYPositions[groupIndex];
           let barIndex = 0;
 
-          return series.map((seriesName, seriesIndex) => {
-            const value = data[groupIndex][seriesIndex];
-            if (value === undefined || Number.isNaN(value))
-              return null;
+          return (
+            <g key={groupIndex} role='list' aria-label={group}>
+              {series.map((seriesName, seriesIndex) => {
+                const value = data[groupIndex][seriesIndex];
+                if (value === undefined || Number.isNaN(value))
+                  return null;
 
-            const barWidth = value * xScale;
-            const x = 0;
-            const y = groupY + barIndex * (barHeight + barSpacing);
-            barIndex++;
+                const barWidth = value * xScale;
+                const x = 0;
+                const y = groupY + barIndex * (barHeight + barSpacing);
+                barIndex++;
 
-            const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)', 'var(--color-scale-blue-3)', 'var(--color-scale-green-3)'];
-            const color = colors[seriesIndex % colors.length];
+                const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)', 'var(--color-scale-blue-3)', 'var(--color-scale-green-3)'];
+                const color = colors[seriesIndex % colors.length];
 
-            return (
-              <g key={`${groupIndex}-${seriesIndex}`}>
-                <rect
-                  x={x}
-                  y={y}
-                  width={barWidth}
-                  height={barHeight}
-                  fill={color}
-                  rx='2'
-                  style={{
-                    transition: 'opacity 0.2s',
-                    cursor: 'pointer'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
-                  onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-                >
-                  <title>{`${seriesName}: ${formatDuration(value)}`}</title>
-                </rect>
-                <text
-                  x={barWidth + 6}
-                  y={y + barHeight / 2}
-                  dominantBaseline='middle'
-                  fontSize='12'
-                  fill='var(--color-fg-muted)'
-                >
-                  {formatDuration(value)}
-                </text>
-              </g>
-            );
-          });
+                return (
+                  <g
+                    key={`${groupIndex}-${seriesIndex}`}
+                    role='listitem'
+                    aria-label={`${seriesName}: ${formatDuration(value)}`}
+                  >
+                    <rect
+                      x={x}
+                      y={y}
+                      width={barWidth}
+                      height={barHeight}
+                      fill={color}
+                      rx='2'
+                      style={{
+                        transition: 'opacity 0.2s',
+                        cursor: 'pointer',
+                        outline: 'none'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.opacity = '0.8'}
+                      onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+                      tabIndex={0}
+                      onFocus={e => {
+                        e.currentTarget.style.opacity = '0.8';
+                        e.currentTarget.style.stroke = 'var(--color-fg-default)';
+                        e.currentTarget.style.strokeWidth = '2';
+                      }}
+                      onBlur={e => {
+                        e.currentTarget.style.opacity = '1';
+                        e.currentTarget.style.stroke = 'none';
+                      }}
+                    >
+                      <title>{`${seriesName}: ${formatDuration(value)}`}</title>
+                    </rect>
+                    <text
+                      x={barWidth + 6}
+                      y={y + barHeight / 2}
+                      dominantBaseline='middle'
+                      fontSize='12'
+                      fill='var(--color-fg-muted)'
+                      aria-hidden='true'
+                    >
+                      {formatDuration(value)}
+                    </text>
+                  </g>
+                );
+              })}
+            </g>
+          );
         })}
 
         {groups.map((group, groupIndex) => {
@@ -194,6 +215,7 @@ export const GroupedBarChart = ({
               dominantBaseline='middle'
               fontSize='12'
               fill='var(--color-fg-muted)'
+              aria-hidden='true'
             >
               {group}
             </text>
@@ -207,6 +229,7 @@ export const GroupedBarChart = ({
           y2={contentHeight}
           stroke='var(--color-fg-muted)'
           strokeWidth='1'
+          aria-hidden='true'
         />
 
         <line
@@ -216,6 +239,7 @@ export const GroupedBarChart = ({
           y2={contentHeight}
           stroke='var(--color-fg-muted)'
           strokeWidth='1'
+          aria-hidden='true'
         />
       </g>
     </svg>
