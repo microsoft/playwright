@@ -79,12 +79,33 @@ export const GlobalFilterView: React.FC<{
         {icons.search()}
         {/* Use navigationId to reset defaultValue */}
         <input name='q' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' aria-label='Search tests' placeholder='Search tests' value={filterText} onChange={e => {
-          setFilterText(e.target.value);
+          const newValue = e.target.value;
+          setFilterText(newValue);
+          // Update URL in real-time
+          const url = new URL(window.location.href);
+          const currentParams = new URLSearchParams(url.hash.slice(1));
+          const params = new URLSearchParams();
+          if (newValue.trim())
+            params.set('q', newValue.trim());
+          if (currentParams.has('speedboard'))
+            params.set('speedboard', '');
+          url.hash = params.toString() ? '?' + params.toString() : '';
+          navigate(url);
         }}></input>
       </form>
     </div>
   </>);
 };
+
+function getAllUrl(searchParams: URLSearchParams): string {
+  const query = searchParams.get('q') ?? '';
+  const tokens = query.split(/\s+/).filter(t => t && !t.startsWith('s:') && !t.startsWith('p:') && !t.startsWith('@') && !t.startsWith('annot:'));
+  if (tokens.length === 0)
+    return '#?';
+  const result = new URLSearchParams();
+  result.set('q', tokens.join(' '));
+  return '#?' + result.toString();
+}
 
 const StatsNavView: React.FC<{
   stats: Stats
@@ -92,7 +113,7 @@ const StatsNavView: React.FC<{
   const searchParams = useSearchParams();
 
   return <nav>
-    <Link className='subnav-item' href='#?'>
+    <Link className='subnav-item' href={getAllUrl(searchParams)}>
       <span className='subnav-item-label'>All</span>
       <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
@@ -116,13 +137,15 @@ const NavLink: React.FC<{
   searchParams.delete('testId');
 
   const queryToken = `s:${token}`;
+  const query = searchParams.get('q') ?? '';
+  const isActive = query.includes(queryToken);
 
   const clickUrl = filterWithQuery(searchParams, queryToken, false);
   const ctrlClickUrl = filterWithQuery(searchParams, queryToken, true);
 
   const label = token.charAt(0).toUpperCase() + token.slice(1);
 
-  return <Link className='subnav-item' href={clickUrl} click={clickUrl} ctrlClick={ctrlClickUrl}>
+  return <Link className='subnav-item' href={clickUrl} click={clickUrl} ctrlClick={ctrlClickUrl} role='button' aria-pressed={isActive}>
     {count > 0 && statusIcon(token as any)}
     <span className='subnav-item-label'>{label}</span>
     <span className='d-inline counter'>{count}</span>

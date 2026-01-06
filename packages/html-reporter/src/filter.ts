@@ -225,17 +225,26 @@ export function filterWithQuery(searchParams: URLSearchParams, token: string, ap
     return '#?' + result;
   }
 
-  // if metaKey or ctrlKey is not pressed, replace existing token with new token
-  let prefix: 's:' | 'p:' | '@';
+  // if metaKey or ctrlKey is not pressed, toggle or replace existing token with new token
+  let prefix: 's:' | 'p:' | '@' | undefined;
   if (token.startsWith('s:'))
     prefix = 's:';
-  if (token.startsWith('p:'))
+  else if (token.startsWith('p:'))
     prefix = 'p:';
-  if (token.startsWith('@'))
+  else if (token.startsWith('@'))
     prefix = '@';
 
-  const newTokens = tokens.filter(t => !t.startsWith(prefix));
-  newTokens.push(token);
+  // Toggle behavior: if token already exists, remove it; otherwise add it
+  const hasToken = tokens.includes(token);
+  let newTokens: string[];
+  if (hasToken) {
+    // Remove the token (toggle off)
+    newTokens = tokens.filter(t => t !== token);
+  } else {
+    // Add the token, removing other tokens with same prefix
+    newTokens = tokens.filter(t => !prefix || !t.startsWith(prefix));
+    newTokens.push(token);
+  }
 
   result.set('q', joinTokens(newTokens));
   return '#?' + result;

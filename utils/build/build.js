@@ -121,8 +121,10 @@ class ProgramStep extends Step {
   /** @override */
   async run() {
     const step = this._options;
-    console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
-    const child = child_process.spawn(step.command, step.args, {
+    // Quote arguments that contain spaces when using shell
+    const args = step.shell ? step.args.map(arg => arg.includes(' ') ? `"${arg}"` : arg) : step.args;
+    console.log(`==== Running ${step.command} ${args.join(' ')} in ${step.cwd || process.cwd()}`);
+    const child = child_process.spawn(step.command, args, {
       stdio: 'inherit',
       shell: step.shell,
       env: {
