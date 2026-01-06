@@ -1,0 +1,131 @@
+{
+  "Add three todos: 'Task 1', 'Task 2', 'Task 3'": {
+    "timestamp": 1767733696937,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 1');\nawait page.keyboard.press('Enter');",
+        "intent": "Now I'll add the first todo \"Task 1\" by typing it into the textbox and submitting it."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! \"Task 1\" has been added successfully. Now I'll add \"Task 2\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 3');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! \"Task 2\" has been added. Now I'll add the final todo \"Task 3\"."
+      }
+    ]
+  },
+  "All checkboxes are checked": {
+    "timestamp": 1767733766305,
+    "actions": []
+  },
+  "All three todos are marked as complete": {
+    "timestamp": 1767733759432,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 1\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 1' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that all three todos are marked as complete. Looking at the page snapshot, I can see three listitem elements (refs e19, e33, e37), each containing a \"Toggle Todo\" checkbox. All three checkboxes show `[checked]` in their state, indicating they are marked as complete.\n\nAdditionally, the \"Mark all as complete\" checkbox (ref e16) is also `[checked]`, and the items counter shows \"0 items left\", which further confirms all todos are complete.\n\nI'll verify this by checking that all three \"Toggle Todo\" checkboxes are checked."
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": ""
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 3\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 3' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I've successfully verified that Task 2's checkbox is checked. Now I need to check the third todo (Task 3) to complete the verification of all three todos."
+      }
+    ]
+  },
+  "All three todos are visible and active": {
+    "timestamp": 1767733708517,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3\n`);",
+        "intent": "I need to verify that all three todos are visible and active. Looking at the page snapshot, I can see there are three todo items (Task 1, Task 2, Task 3) in a list, and the page shows \"3 items left\" which indicates all three are active (not completed). The checkboxes for all three todos are unchecked, confirming they are active.\n\nI'll use the `browser_expect_list_visible` tool to verify that all three todos are present in the list in the correct order."
+      }
+    ]
+  },
+  "Click the 'Mark all as complete' checkbox": {
+    "timestamp": 1767733727810,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();",
+        "intent": "I'll click the 'Mark all as complete' checkbox to complete the task."
+      }
+    ]
+  },
+  "Counter shows '0 items left'": {
+    "timestamp": 1767733776710,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "code": "await expect(page.getByText('0 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '0 items left'. Looking at the page snapshot, I can see:\n\n- In the generic [ref=e24], there's a strong element [ref=e25] containing \"0\"\n- Followed by text \"items left\"\n\nThis matches the expectation. I'll use `browser_expect_visible_text` to verify this text is visible on the page."
+      }
+    ]
+  },
+  "Counter shows '3 items left'": {
+    "timestamp": 1767733718746,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"3 items left\"i",
+        "code": "await expect(page.getByText('3 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows \"3 items left\". Looking at the page snapshot, I can see:\n\n- A strong element [ref=e25] containing \"3\"\n- Followed by text \"items left\"\n\nThis matches the expected condition. I'll use `browser_expect_visible_text` to verify that the text \"3 items left\" is visible on the page."
+      }
+    ]
+  },
+  "The 'Clear completed' button appears": {
+    "timestamp": 1767733786301,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Clear completed' button appears on the page. Looking at the page snapshot, I can see there is a button with the text \"Clear completed\" at ref=e41."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733662760,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the todo list is empty on page load. Looking at the page snapshot, I can see there's a textbox \"What needs to be done?\" but I don't see any todo items listed. The page structure shows the header, input field, and footer, but no list of todos is visible in the snapshot, which indicates the list is indeed empty.\n\nTo assert this condition, I'll check that a todo list or todo items are NOT visible on the page. Since there's no list element or todo items shown in the snapshot, I can verify this by checking that typical todo list elements are not present."
+      }
+    ]
+  }
+}

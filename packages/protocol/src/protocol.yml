@@ -595,7 +595,6 @@ ContextOptions:
         api: string?
         apiKey: string?
         apiEndpoint: string?
-        apiVersion: string?
         model: string?
         cacheFile: string?
         cacheOutFile: string?
@@ -4349,7 +4348,6 @@ PageAgentOptions:
     api: string?
     apiEndpoint: string?
     apiKey: string?
-    apiVersion: string?
     maxTurns: int?
     maxTokens: int?
     cacheKey: string?

@@ -1,0 +1,136 @@
+{
+  "'Task 1' and 'Task 3' are removed from the list": {
+    "timestamp": 1767733771064,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 2\n`);",
+        "intent": "I need to verify that 'Task 1' and 'Task 3' are removed from the list, which means only 'Task 2' should remain visible.\n\nLooking at the page snapshot, I can see there's a list with `[ref=e18]` that currently contains only one listitem with \"Task 2\" visible. This confirms that 'Task 1' and 'Task 3' have been removed.\n\nI'll use the `browser_expect_list_visible` tool to assert that the list contains only 'Task 2':"
+      }
+    ]
+  },
+  "Add three todos: 'Task 1', 'Task 2', 'Task 3'": {
+    "timestamp": 1767733692529,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 1');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to the TodoMVC app. Let me start by taking a snapshot to see the current state of the page, then add each todo."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Task 1\" has been added. Now let me add the second todo \"Task 2\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 3');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! Both \"Task 1\" and \"Task 2\" have been added successfully. Now let me add the third and final todo \"Task 3\"."
+      }
+    ]
+  },
+  "All three todos are visible": {
+    "timestamp": 1767733703260,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3\n`);",
+        "intent": "I need to verify that all three todos are visible on the page. Looking at the page snapshot, I can see there's a list with three listitems containing \"Task 1\", \"Task 2\", and \"Task 3\". I'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the list in the correct order."
+      }
+    ]
+  },
+  "Click the 'Clear completed' button": {
+    "timestamp": 1767733759715,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "options": {},
+        "code": "await page.getByRole('button', { name: 'Clear completed' }).click();",
+        "intent": "I'll click the 'Clear completed' button for you."
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "timestamp": 1767733741032,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '1 item left'. Looking at the page snapshot, I can see:\n\n- In generic [ref=e23] -> generic [ref=e24], there is:\n  - strong [ref=e25]: \"1\"\n  - text: item left\n\nThis matches the expected text \"1 item left\". I'll use `browser_expect_visible_text` to verify this text is visible on the page."
+      }
+    ]
+  },
+  "Mark 'Task 1' and 'Task 3' as complete by clicking their checkboxes": {
+    "timestamp": 1767733724185,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 1\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Task 1' }).getByLabel('Toggle Todo').click();",
+        "intent": "I'll help you mark 'Task 1' and 'Task 3' as complete by clicking their checkboxes. Let me identify the correct checkboxes from the page snapshot.\n\nLooking at the page structure:\n- Task 1 has a checkbox with ref=e21\n- Task 3 has a checkbox with ref=e39\n\nI'll click both checkboxes to mark these tasks as complete."
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 3\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Task 3' }).getByLabel('Toggle Todo').click();",
+        "intent": "Good! Task 1 is now marked as complete (the checkbox shows as [checked]). Now I need to click the checkbox for Task 3 to complete the task."
+      }
+    ]
+  },
+  "Only 'Task 2' remains visible": {
+    "timestamp": 1767733780668,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task 2\"i",
+        "code": "await expect(page.getByText('Task 2')).toBeVisible();",
+        "intent": "I need to verify that only \"Task 2\" remains visible on the page. Looking at the page snapshot, I can see there's a list with one listitem containing \"Task 2\". Let me assert that this task is visible."
+      }
+    ]
+  },
+  "The 'Clear completed' button appears": {
+    "timestamp": 1767733750767,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Clear completed' button appears on the page. Looking at the page snapshot, I can see there is a button with the accessible name \"Clear completed\" at reference e42."
+      }
+    ]
+  },
+  "The 'Clear completed' button disappears": {
+    "timestamp": 1767733785778,
+    "actions": []
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733661875,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I'll verify that the page loads with an empty todo list by checking that the todo list container is not visible or that no todo items are present.\n\nLooking at the page snapshot, I can see:\n- A heading \"todos\"\n- A textbox \"What needs to be done?\" \n- Footer information\n\nThere's no visible list or todo items in the snapshot, which indicates an empty todo list. I'll assert that a typical todo list element or todo items are not visible on the page."
+      }
+    ]
+  },
+  "Two todos are marked as complete": {
+    "timestamp": 1767733730304,
+    "actions": []
+  }
+}

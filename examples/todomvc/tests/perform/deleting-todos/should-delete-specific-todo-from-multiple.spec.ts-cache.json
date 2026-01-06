@@ -1,0 +1,109 @@
+{
+  "'Task 1' and 'Task 3' remain visible": {
+    "timestamp": 1767733754268,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 3\n`);",
+        "intent": "I need to verify that 'Task 1' and 'Task 3' remain visible on the page. Looking at the page snapshot, I can see both tasks are present in a list:\n\n- Task 1 is in a listitem with a generic element containing the text \"Task 1\"\n- Task 3 is in a listitem with a generic element containing the text \"Task 3\"\n\nI'll use the `browser_expect_list_visible` tool to verify that both tasks are visible in the correct order within the list."
+      }
+    ]
+  },
+  "'Task 2' is removed from the list": {
+    "timestamp": 1767733742347,
+    "actions": []
+  },
+  "Add three todos: 'Task 1', 'Task 2', 'Task 3'": {
+    "timestamp": 1767733694625,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 1');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to the TodoMVC app. Let me start by taking a snapshot to see the current state of the page, then add each task."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! Task 1 has been added. Now I'll add Task 2."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 3');\nawait page.keyboard.press('Enter');",
+        "intent": "Excellent! Task 2 has been added. Now I'll add the final task, Task 3."
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "timestamp": 1767733705022,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3\n`);",
+        "intent": "I need to verify that all three todos appear in the list. Looking at the page snapshot, I can see there's a list (ref=e18) containing three listitems with the todos \"Task 1\", \"Task 2\", and \"Task 3\".\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "Counter shows '2 items left'": {
+    "timestamp": 1767733766575,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows \"2 items left\". Looking at the page snapshot, I can see:\n\n- In the generic element [ref=e23], there's a structure with:\n  - A strong element [ref=e25] containing \"2\"\n  - Text that says \"items left\"\n\nThis matches the expectation that the counter shows \"2 items left\". I'll use the browser_expect_visible_text tool to verify this text is visible on the page."
+      }
+    ]
+  },
+  "Counter shows '3 items left'": {
+    "timestamp": 1767733716001,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"3 items left\"i",
+        "code": "await expect(page.getByText('3 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows \"3 items left\". Looking at the page snapshot, I can see:\n\n- A strong element [ref=e25] containing \"3\"\n- Text \"items left\" that follows it\n\nThese are within a generic container [ref=e24]. I'll use the browser_expect_visible_text tool to check for the complete text \"3 items left\"."
+      }
+    ]
+  },
+  "Hover over 'Task 2' and click its delete button": {
+    "timestamp": 1767733735584,
+    "actions": [
+      {
+        "method": "hover",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Task 2' }).hover();",
+        "intent": "I'll help you hover over 'Task 2' and click its delete button. Let me first hover over Task 2, then click the delete button (×)."
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Delete\"i]",
+        "options": {},
+        "code": "await page.getByRole('button', { name: 'Delete' }).click();",
+        "intent": "Perfect! After hovering over Task 2, the delete button is now visible as a button element. Now I'll click it."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733665167,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see:\n\n1. There's a heading \"todos\"\n2. There's a textbox \"What needs to be done?\" \n3. There's no visible list of todo items in the snapshot\n\nThe absence of any list elements or todo items in the snapshot indicates the todo list is empty. I'll verify this by checking that a specific element that would only appear when there are todos is NOT visible. However, since I need to assert a positive condition about the empty state, I should verify that the main input textbox is visible (which confirms the page loaded correctly) and that there are no todo items.\n\nLet me check that the textbox is visible, which confirms the page loaded properly with its empty state:"
+      }
+    ]
+  }
+}

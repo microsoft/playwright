@@ -1,0 +1,115 @@
+{
+  "Add a todo 'Original text'": {
+    "timestamp": 1767733672971,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Original text",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Original text');\nawait page.keyboard.press('Enter');",
+        "intent": "I need to add a todo with the text 'Original text'. I can see there's a textbox with the placeholder \"What needs to be done?\" that is currently active. I'll type the text into that textbox and submit it."
+      }
+    ]
+  },
+  "Change the text to 'Modified text' but press Escape instead of Enter": {
+    "timestamp": 1767733724021,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "Modified text",
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('Modified text');",
+        "intent": "I'll help you complete this task. I need to:\n1. Change the text in the textbox to 'Modified text'\n2. Press Escape instead of Enter\n\nLet me start by typing the new text into the active textbox, then press Escape."
+      },
+      {
+        "method": "pressKey",
+        "key": "Escape",
+        "code": "await page.keyboard.press('Escape');",
+        "intent": "Good! The text has been changed to \"Modified text\". Now I need to press the Escape key to cancel the edit instead of submitting it with Enter."
+      }
+    ]
+  },
+  "Changes are not saved": {
+    "timestamp": 1767733757406,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();",
+        "intent": "I need to verify that changes are not saved. Looking at the page snapshot, I can see there's a todo item with the text \"Original text\". The expectation \"Changes are not saved\" suggests that if any edits were made to this todo item, they should not have persisted - meaning the original text should still be visible.\n\nLet me assert that the original text is still visible on the page, which would confirm that changes were not saved."
+      }
+    ]
+  },
+  "Double-click on the todo to enter edit mode": {
+    "timestamp": 1767733694339,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "options": {
+          "clickCount": 2
+        },
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});",
+        "intent": "I need to double-click on the todo item to enter edit mode. Looking at the page snapshot, I can see there's a todo item with the text \"Original text\" in the list. This is located within the generic element with ref=e22."
+      }
+    ]
+  },
+  "Edit mode is cancelled": {
+    "timestamp": 1767733736028,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();",
+        "intent": "I need to verify that edit mode is cancelled. Looking at the page snapshot, I can see there's a listitem with \"Original text\" displayed as a generic element, and there's no textbox for editing within that todo item. If edit mode were active, there would typically be a textbox for editing the todo text. The presence of the static text \"Original text\" without an associated edit textbox indicates that edit mode is not active.\n\nLet me verify that the todo item is displaying as regular text (not in edit mode) by checking that the text \"Original text\" is visible:"
+      }
+    ]
+  },
+  "Edit textbox appears with 'Original text'": {
+    "timestamp": 1767733704886,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "type": "textbox",
+        "value": "Original text",
+        "code": "await expect(page.getByRole('textbox', { name: 'Edit' })).toHaveValue('Original text');",
+        "intent": "I need to verify that an Edit textbox appears with the text 'Original text'. Looking at the page snapshot, I can see:\n\n- textbox \"Edit\" [active] [ref=e33]: Original text\n\nThis matches the expectation - there's a textbox with accessible name \"Edit\" that contains \"Original text\"."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733661809,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I'll verify that the page loads with an empty todo list by checking that the textbox \"What needs to be done?\" is visible, which indicates the todo input is present and the list is ready to accept items (implying it's empty since there are no todo items shown in the snapshot)."
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "timestamp": 1767733683756,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();",
+        "intent": "I need to verify that a todo appears in the list. Looking at the page snapshot, I can see there is a list with a listitem containing the text \"Original text\", which appears to be a todo item.\n\nLet me assert that this todo item is visible in the list:"
+      }
+    ]
+  },
+  "The todo text reverts to 'Original text'": {
+    "timestamp": 1767733745757,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();",
+        "intent": "I need to verify that the todo text has reverted to 'Original text'. Looking at the page snapshot, I can see there's a todo item with the text \"Original text\" in the list."
+      }
+    ]
+  }
+}

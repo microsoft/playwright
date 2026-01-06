@@ -23,7 +23,6 @@ type PageAgentOptions = {
   api?: string;
   apiEndpoint?: string;
   apiKey?: string;
-  apiVersion?: string;
   model?: string;
   maxTokens?: number;
   maxTurns?: number;
