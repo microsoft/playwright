@@ -3347,11 +3347,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - button "Shard Duration"
         - region:
           - img:
-            - list "linux":
+            - list "@linux":
               - listitem /Shard 1/
               - listitem /Shard 2/
               - listitem /Shard 3/
-            - list "mac":
+            - list "@mac":
               - listitem /Shard 1/
               - listitem /Shard 2/
       `);

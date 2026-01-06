@@ -134,7 +134,7 @@ Reporter is allowed to override the status and hence affect the exit code of the
   - `duration` <[int]> Test run duration in milliseconds.
   - `shards` <[Array]<[Object]>> Only present on merged reports
     - `shardIndex` ?<[int]> The index of the shard, one-based.
-    - `tag` ?<[Array]<[string]>> Bot [`property: TestConfig.tag`] that differentiates CI environments
+    - `tag` ?<[Array]<[string]>> Global [`property: TestConfig.tag`] that differentiates CI environments
     - `startTime` <[Date]> Start wall time of shard.
     - `duration` <[int]> Shard run duration in milliseconds.
 

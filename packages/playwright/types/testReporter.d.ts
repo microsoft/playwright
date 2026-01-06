@@ -51,7 +51,7 @@ export interface FullResult {
     shardIndex?: number;
 
     /**
-     * Bot tag that differentiates CI environments.
+     * Global tag that differentiates CI environments.
      */
     tag: string[];
 

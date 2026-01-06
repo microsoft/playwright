@@ -58,11 +58,7 @@ export function Shards({ report }: { report: LoadedReport }) {
   let clash = false;
   const bots: Record<string, number[]> = {};
   for (const shard of shards) {
-    const botName = shard.tag.map(t => {
-      if (t.startsWith('@'))
-        return t.slice(1);
-      return t;
-    }).join(' ');
+    const botName = shard.tag.join(' ');
     bots[botName] ??= [];
     const shardIndex = Math.max((shard.shardIndex ?? 1) - 1, 0);
     if (bots[botName][shardIndex] !== undefined)
