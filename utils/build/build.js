@@ -121,8 +121,10 @@ class ProgramStep extends Step {
   /** @override */
   async run() {
     const step = this._options;
-    console.log(`==== Running ${step.command} ${step.args.join(' ')} in ${step.cwd || process.cwd()}`);
-    const child = child_process.spawn(step.command, step.args, {
+    // Quote arguments that contain spaces when using shell
+    const args = step.shell ? step.args.map(arg => arg.includes(' ') ? `"${arg}"` : arg) : step.args;
+    console.log(`==== Running ${step.command} ${args.join(' ')} in ${step.cwd || process.cwd()}`);
+    const child = child_process.spawn(step.command, args, {
       stdio: 'inherit',
       shell: step.shell,
       env: {
@@ -138,7 +140,7 @@ class ProgramStep extends Step {
     return new Promise((resolve, reject) => {
       child.on('close', (code, signal) => {
         if (code || signal)
-          reject(new Error(`'${step.command} ${step.args.join(' ')}' exited with code ${code}, signal ${signal}`));
+          reject(new Error(`'${step.command} ${args.join(' ')}' exited with code ${code}, signal ${signal}`));
         else
           resolve({ });
       });
@@ -351,14 +353,14 @@ steps.push(new ProgramStep({
 // Build injected icons.
 steps.push(new ProgramStep({
   command: 'node',
-  args: ['utils/generate_clip_paths.js'],
+  args: [path.resolve(__dirname, '../generate_clip_paths.js')],
   shell: true,
 }));
 
 // Build injected scripts.
 steps.push(new ProgramStep({
   command: 'node',
-  args: ['utils/generate_injected.js'],
+  args: [path.resolve(__dirname, '../generate_injected.js')],
   shell: true,
 }));
 

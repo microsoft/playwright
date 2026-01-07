@@ -28,13 +28,103 @@ import type { AgentSpec } from './agentParser';
 
 /* eslint-disable no-console */
 
+const noMcpInstructions = `# MCP-Free Mode Usage Instructions
+
+This repository has been initialized in **MCP-free mode** to support enterprise environments 
+where the Model Context Protocol (MCP) server cannot be installed due to security restrictions.
+
+## What's Different?
+
+In MCP-free mode, the Playwright Test agents (planner, generator, healer) operate **without** 
+the \`playwright-test\` MCP server. This means:
+
+- ✅ **Available**: Basic file operations (search, read, edit, write)
+- ❌ **Not Available**: Browser automation tools via MCP (\`browser_*\` tools)
+- ❌ **Not Available**: Test execution tools (\`run_tests\`, \`debug_test\`, etc.)
+
+## How to Use the Agents
+
+### 1. Test Planner Agent
+Use the planner to **design test scenarios** by:
+- Analyzing your application manually or via screenshots
+- Creating detailed test plans in markdown format
+- Saving plans to the \`specs/\` directory
+
+**Manual workflow:**
+\`\`\`bash
+# 1. The agent will help you create test plans
+# 2. Manually execute commands to explore your app
+npx playwright open https://yourapp.com
+
+# 3. Save the test plan to specs/ directory
+\`\`\`
+
+### 2. Test Generator Agent
+Use the generator to **write test code** from plans:
+- Read existing test plans from \`specs/\`
+- Generate Playwright test files
+- Save to appropriate test directories
+
+**Manual workflow:**
+\`\`\`bash
+# 1. The agent reads your test plan
+# 2. Generates test code using built-in editor tools
+# 3. You manually verify by running:
+npx playwright test
+\`\`\`
+
+### 3. Test Healer Agent  
+Use the healer to **fix failing tests**:
+- Analyze test failures from logs
+- Update test code to fix issues
+- Suggest selector improvements
+
+**Manual workflow:**
+\`\`\`bash
+# 1. Run tests to get failure output
+npx playwright test --reporter=line
+
+# 2. Share the failure log with the healer agent
+# 3. Agent will suggest fixes using edit tools
+# 4. Verify the fixes by re-running tests
+\`\`\`
+
+## Alternative: Enable MCP Mode
+
+If your environment allows MCP server installation, you can regenerate agents 
+**without** the \`--no-mcp\` flag:
+
+\`\`\`bash
+# For GitHub Copilot
+npx playwright init-agents --loop copilot
+
+# For Claude Desktop
+npx playwright init-agents --loop claude
+
+# For VS Code Copilot
+npx playwright init-agents --loop vscode
+
+# For Opencode
+npx playwright init-agents --loop opencode
+\`\`\`
+
+This will enable full browser automation capabilities through the MCP server.
+
+## Need Help?
+
+- **Playwright Docs**: https://playwright.dev
+- **Issue Tracker**: https://github.com/microsoft/playwright/issues
+- **Community**: https://discord.gg/playwright-807756831384403968
+`;
+
+
 async function loadAgentSpecs(): Promise<AgentSpec[]> {
   const files = await fs.promises.readdir(__dirname);
   return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => parseAgentSpec(path.join(__dirname, file))));
 }
 
 export class ClaudeGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean, noMcp: boolean = false) {
     await initRepo(config, projectName, {
       promptsFolder: prompts ? '.claude/prompts' : undefined,
     });
@@ -43,21 +133,25 @@ export class ClaudeGenerator {
 
     await fs.promises.mkdir('.claude/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent, noMcp), '🤖', 'agent definition');
 
-    await writeFile('.mcp.json', JSON.stringify({
-      mcpServers: {
-        'playwright-test': {
-          command: 'npx',
-          args: ['playwright', 'run-test-mcp-server'],
+    if (!noMcp) {
+      await writeFile('.mcp.json', JSON.stringify({
+        mcpServers: {
+          'playwright-test': {
+            command: 'npx',
+            args: ['playwright', 'run-test-mcp-server'],
+          }
         }
-      }
-    }, null, 2), '🔧', 'mcp configuration');
+      }, null, 2), '🔧', 'mcp configuration');
+    } else {
+      await writeFile('.claude/NO_MCP_MODE.md', noMcpInstructions, '📝', 'MCP-free mode instructions');
+    }
 
     initRepoDone();
   }
 
-  static agentSpec(agent: AgentSpec): string {
+  static agentSpec(agent: AgentSpec, noMcp: boolean = false): string {
     const claudeToolMap = new Map<string, string[]>([
       ['search', ['Glob', 'Grep', 'Read', 'LS']],
       ['edit', ['Edit', 'MultiEdit', 'Write']],
@@ -72,23 +166,34 @@ export class ClaudeGenerator {
 
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
+    
+    // Filter out MCP tools in no-mcp mode
+    const tools = noMcp 
+      ? agent.tools.filter(tool => !tool.includes('/')) 
+      : agent.tools;
+    
     const header = {
       name: agent.name,
       description: agent.description + examples,
-      tools: agent.tools.map(tool => asClaudeTool(tool)).join(', '),
+      tools: tools.map(tool => asClaudeTool(tool)).join(', '),
       model: agent.model,
       color: agent.color,
     };
     lines.push(`---`);
     lines.push(yaml.stringify(header, { lineWidth: 100000 }) + `---`);
     lines.push('');
+    if (noMcp) {
+      lines.push('**NOTE: Running in MCP-free mode. MCP server tools are not available.**');
+      lines.push('You can manually execute Playwright commands or use the built-in editor/search tools.');
+      lines.push('');
+    }
     lines.push(agent.instructions);
     return lines.join('\n');
   }
 }
 
 export class OpencodeGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean, noMcp: boolean = false) {
     await initRepo(config, projectName, {
       defaultAgentName: 'Build',
       promptsFolder: prompts ? '.opencode/prompts' : undefined
@@ -98,17 +203,26 @@ export class OpencodeGenerator {
 
     for (const agent of agents) {
       const prompt = [agent.instructions];
+      if (noMcp) {
+        prompt.push('');
+        prompt.push('**NOTE: Running in MCP-free mode. MCP server tools are not available.**');
+        prompt.push('You can manually execute Playwright commands or use the built-in editor/search tools.');
+      }
       prompt.push('');
       prompt.push(...agent.examples.map(example => `<example>${example}</example>`));
       await writeFile(`.opencode/prompts/${agent.name}.md`, prompt.join('\n'), '🤖', 'agent definition');
     }
 
-    await writeFile('opencode.json', OpencodeGenerator.configuration(agents), '🔧', 'opencode configuration');
+    await writeFile('opencode.json', OpencodeGenerator.configuration(agents, noMcp), '🔧', 'opencode configuration');
+    
+    if (noMcp) {
+      await writeFile('.opencode/NO_MCP_MODE.md', noMcpInstructions, '📝', 'MCP-free mode instructions');
+    }
 
     initRepoDone();
   }
 
-  static configuration(agents: AgentSpec[]): string {
+  static configuration(agents: AgentSpec[], noMcp: boolean = false): string {
     const opencodeToolMap = new Map<string, string[]>([
       ['search', ['ls', 'glob', 'grep', 'read']],
       ['edit', ['edit', 'write']],
@@ -139,21 +253,25 @@ export class OpencodeGenerator {
         prompt: `{file:.opencode/prompts/${agent.name}.md}`,
         tools,
       };
-      for (const tool of agent.tools)
+      // Filter out MCP tools in no-mcp mode
+      const agentTools = noMcp ? agent.tools.filter(tool => !tool.includes('/')) : agent.tools;
+      for (const tool of agentTools)
         asOpencodeTool(tools, tool);
     }
 
-    result['mcp']['playwright-test'] = {
-      type: 'local',
-      command: ['npx', 'playwright', 'run-test-mcp-server'],
-      enabled: true,
-    };
+    if (!noMcp) {
+      result['mcp']['playwright-test'] = {
+        type: 'local',
+        command: ['npx', 'playwright', 'run-test-mcp-server'],
+        enabled: true,
+      };
+    }
 
     return JSON.stringify(result, null, 2);
   }
 }
 export class CopilotGenerator {
-  static async init(config: FullConfigInternal, projectName: string, prompts: boolean) {
+  static async init(config: FullConfigInternal, projectName: string, prompts: boolean, noMcp: boolean = false) {
 
     await initRepo(config, projectName, {
       defaultAgentName: 'agent',
@@ -165,7 +283,7 @@ export class CopilotGenerator {
 
     await fs.promises.mkdir('.github/agents', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.github/agents/${agent.name}.agent.md`, CopilotGenerator.agentSpec(agent), '🤖', 'agent definition');
+      await writeFile(`.github/agents/${agent.name}.agent.md`, CopilotGenerator.agentSpec(agent, noMcp), '🤖', 'agent definition');
 
     await deleteFile(`.github/chatmodes/ 🎭 planner.chatmode.md`, 'legacy planner chatmode');
     await deleteFile(`.github/chatmodes/🎭 generator.chatmode.md`, 'legacy generator chatmode');
@@ -174,38 +292,60 @@ export class CopilotGenerator {
     await deleteFile(`.github/agents/🎭 generator.agent.md`, 'legacy generator agent');
     await deleteFile(`.github/agents/🎭 healer.agent.md`, 'legacy healer agent');
 
-    await VSCodeGenerator.appendToMCPJson();
+    if (!noMcp) {
+      await VSCodeGenerator.appendToMCPJson();
 
-    const mcpConfig = { mcpServers: CopilotGenerator.mcpServers };
+      const mcpConfig = { mcpServers: CopilotGenerator.mcpServers };
 
-    if (!fs.existsSync('.github/copilot-setup-steps.yml')) {
-      const yaml = fs.readFileSync(path.join(__dirname, 'copilot-setup-steps.yml'), 'utf-8');
-      await writeFile('.github/workflows/copilot-setup-steps.yml', yaml, '🔧', 'GitHub Copilot setup steps');
+      if (!fs.existsSync('.github/copilot-setup-steps.yml')) {
+        const yaml = fs.readFileSync(path.join(__dirname, 'copilot-setup-steps.yml'), 'utf-8');
+        await writeFile('.github/workflows/copilot-setup-steps.yml', yaml, '🔧', 'GitHub Copilot setup steps');
+      }
+
+      console.log('');
+      console.log('');
+      console.log(' 🔧 TODO: GitHub > Settings > Copilot > Coding agent > MCP configuration');
+      console.log('------------------------------------------------------------------');
+      console.log(JSON.stringify(mcpConfig, null, 2));
+      console.log('------------------------------------------------------------------');
+    } else {
+      await writeFile('.github/NO_MCP_MODE.md', noMcpInstructions, '📝', 'MCP-free mode instructions');
+      console.log('');
+      console.log(' ℹ️  Running in MCP-free mode. MCP server configuration skipped.');
+      console.log(' See .github/NO_MCP_MODE.md for usage instructions.');
     }
-
-    console.log('');
-    console.log('');
-    console.log(' 🔧 TODO: GitHub > Settings > Copilot > Coding agent > MCP configuration');
-    console.log('------------------------------------------------------------------');
-    console.log(JSON.stringify(mcpConfig, null, 2));
-    console.log('------------------------------------------------------------------');
 
     initRepoDone();
   }
 
-  static agentSpec(agent: AgentSpec): string {
+  static agentSpec(agent: AgentSpec, noMcp: boolean = false): string {
     const examples = agent.examples.length ? ` Examples: ${agent.examples.map(example => `<example>${example}</example>`).join('')}` : '';
     const lines: string[] = [];
-    const header = {
+    
+    // Filter out MCP tools in no-mcp mode
+    const tools = noMcp 
+      ? agent.tools.filter(tool => !tool.includes('/')) 
+      : agent.tools;
+    
+    const header: Record<string, any> = {
       'name': agent.name,
       'description': agent.description + examples,
-      'tools': agent.tools,
+      'tools': tools,
       'model': 'Claude Sonnet 4',
-      'mcp-servers': CopilotGenerator.mcpServers,
     };
+    
+    if (!noMcp) {
+      header['mcp-servers'] = CopilotGenerator.mcpServers;
+    }
+    
     lines.push(`---`);
     lines.push(yaml.stringify(header) + `---`);
     lines.push('');
+    if (noMcp) {
+      lines.push('**NOTE: Running in MCP-free mode. MCP server tools are not available.**');
+      lines.push('You can manually execute Playwright commands or use the built-in editor/search tools.');
+      lines.push('');
+    }
     lines.push(agent.instructions);
     lines.push('');
     return lines.join('\n');
@@ -225,7 +365,7 @@ export class CopilotGenerator {
 }
 
 export class VSCodeGenerator {
-  static async init(config: FullConfigInternal, projectName: string) {
+  static async init(config: FullConfigInternal, projectName: string, noMcp: boolean = false) {
     await initRepo(config, projectName, {
       promptsFolder: undefined
     });
@@ -239,9 +379,13 @@ export class VSCodeGenerator {
 
     await fs.promises.mkdir('.github/chatmodes', { recursive: true });
     for (const agent of agents)
-      await writeFile(`.github/chatmodes/${nameMap.get(agent.name)}.chatmode.md`, VSCodeGenerator.agentSpec(agent), '🤖', 'chatmode definition');
+      await writeFile(`.github/chatmodes/${nameMap.get(agent.name)}.chatmode.md`, VSCodeGenerator.agentSpec(agent, noMcp), '🤖', 'chatmode definition');
 
-    await VSCodeGenerator.appendToMCPJson();
+    if (!noMcp) {
+      await VSCodeGenerator.appendToMCPJson();
+    } else {
+      await writeFile('.github/NO_MCP_MODE.md', noMcpInstructions, '📝', 'MCP-free mode instructions');
+    }
 
     initRepoDone();
   }
@@ -270,7 +414,7 @@ export class VSCodeGenerator {
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
   }
 
-  static agentSpec(agent: AgentSpec): string {
+  static agentSpec(agent: AgentSpec, noMcp: boolean = false): string {
     const vscodeToolMap = new Map<string, string[]>([
       ['search', ['search/listDirectory', 'search/fileSearch', 'search/textSearch']],
       ['read', ['search/readFile']],
@@ -286,7 +430,11 @@ export class VSCodeGenerator {
         return `${vscodeMcpName}/${second}`;
       return vscodeToolMap.get(first) || first;
     }
-    const tools = agent.tools.map(asVscodeTool).flat().sort((a, b) => {
+    
+    // Filter out MCP tools in no-mcp mode
+    const agentTools = noMcp ? agent.tools.filter(tool => !tool.includes('/')) : agent.tools;
+    
+    const tools = agentTools.map(asVscodeTool).flat().sort((a, b) => {
       // VSCode insists on the specific tools order when editing agent config.
       const indexA = vscodeToolsOrder.indexOf(a);
       const indexB = vscodeToolsOrder.indexOf(b);
@@ -305,6 +453,11 @@ export class VSCodeGenerator {
     lines.push(`tools: [${tools}]`);
     lines.push(`---`);
     lines.push('');
+    if (noMcp) {
+      lines.push('**NOTE: Running in MCP-free mode. MCP server tools are not available.**');
+      lines.push('You can manually execute Playwright commands or use the built-in editor/search tools.');
+      lines.push('');
+    }
     lines.push(agent.instructions);
     for (const example of agent.examples)
       lines.push(`<example>${example}</example>`);

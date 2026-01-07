@@ -182,16 +182,18 @@ function addInitAgentsCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file to find a project to use for seed test`);
   command.option('--project <project>', 'Project to use for seed test');
   command.option('--prompts', 'Whether to include prompts in the agent initialization');
+  command.option('--no-mcp', 'Generate agents without MCP server dependency (for enterprise environments)');
   command.action(async opts => {
     const config = await loadConfigFromFile(opts.config);
+    const noMcp = opts.mcp === false;
     if (opts.loop === 'opencode') {
-      await OpencodeGenerator.init(config, opts.project, opts.prompts);
+      await OpencodeGenerator.init(config, opts.project, opts.prompts, noMcp);
     } else if (opts.loop === 'vscode-legacy') {
-      await VSCodeGenerator.init(config, opts.project);
+      await VSCodeGenerator.init(config, opts.project, noMcp);
     } else if (opts.loop === 'claude') {
-      await ClaudeGenerator.init(config, opts.project, opts.prompts);
+      await ClaudeGenerator.init(config, opts.project, opts.prompts, noMcp);
     } else {
-      await CopilotGenerator.init(config, opts.project, opts.prompts);
+      await CopilotGenerator.init(config, opts.project, opts.prompts, noMcp);
       return;
     }
   });
