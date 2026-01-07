@@ -565,6 +565,7 @@ export interface Executable {
   executablePath(sdkLanguage: string): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
   wslExecutablePath?: string
+  revision?: string;
 }
 
 interface ExecutableImpl extends Executable {
@@ -852,6 +853,7 @@ export class Registry {
       _validateHostRequirements: (sdkLanguage: string) => this._validateHostRequirements(sdkLanguage, webkit.dir, webkitLinuxLddDirectories, ['libGLESv2.so.2', 'libx264.so'], ['']),
       downloadURLs: this._downloadURLs(webkit),
       browserVersion: webkit.browserVersion,
+      revision: webkit.revision,
       _install: () => this._downloadExecutable(webkit, webkitExecutable),
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
