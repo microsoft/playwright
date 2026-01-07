@@ -470,6 +470,7 @@ export type LocalUtilsZipOptions = {
 export type LocalUtilsZipResult = void;
 export type LocalUtilsHarOpenParams = {
   file: string,
+  urlMatcher: 'strict' | 'glob' | 'regex',
 };
 export type LocalUtilsHarOpenOptions = {
 

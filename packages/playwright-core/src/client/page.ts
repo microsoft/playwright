@@ -525,7 +525,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._updateInterceptionPatterns({ title: 'Route requests' });
   }
 
-  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
+  async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full', urlMatcher?: 'strict' | 'glob' | 'regex'} = {}): Promise<void> {
     const localUtils = this._connection.localUtils();
     if (!localUtils)
       throw new Error('Route from har is not supported in thin clients');
@@ -533,7 +533,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await this._browserContext._recordIntoHAR(har, this, options);
       return;
     }
-    const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url });
+    const harRouter = await HarRouter.create(localUtils, har, options.notFound || 'abort', { urlMatch: options.url, urlMatcher: options.urlMatcher || 'strict' });
     this._harRouters.push(harRouter);
     await harRouter.addPageRoute(this);
   }

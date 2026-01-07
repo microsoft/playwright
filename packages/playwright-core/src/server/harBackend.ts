@@ -25,17 +25,21 @@ import type * as har from '@trace/har';
 
 const redirectStatus = [301, 302, 303, 307, 308];
 
+export type HarUrlMatcher = 'strict' | 'glob' | 'regex';
+
 export class HarBackend {
   readonly id: string;
   private _harFile: har.HARFile;
   private _zipFile: ZipFile | null;
   private _baseDir: string | null;
+  private _urlMatcher: HarUrlMatcher;
 
-  constructor(harFile: har.HARFile, baseDir: string | null, zipFile: ZipFile | null) {
+  constructor(harFile: har.HARFile, baseDir: string | null, zipFile: ZipFile | null, urlMatcher: HarUrlMatcher = 'strict') {
     this.id = createGuid();
     this._harFile = harFile;
     this._baseDir = baseDir;
     this._zipFile = zipFile;
+    this._urlMatcher = urlMatcher;
   }
 
   async lookup(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined, isNavigationRequest: boolean): Promise<{
@@ -57,7 +61,8 @@ export class HarBackend {
       return { action: 'noentry' };
 
     // If navigation is being redirected, restart it with the final url to ensure the document's url changes.
-    if (entry.request.url !== url && isNavigationRequest)
+    // Skip this check for glob/regex matching as the HAR URL will be a pattern, not an exact match.
+    if (this._urlMatcher === 'strict' && entry.request.url !== url && isNavigationRequest)
       return { action: 'redirect', redirectURL: entry.request.url };
 
     const response = entry.response;
@@ -94,7 +99,7 @@ export class HarBackend {
     while (true) {
       const entries: har.Entry[] = [];
       for (const candidate of harLog.entries) {
-        if (candidate.request.url !== url || candidate.request.method !== method)
+        if (!this._matchUrl(candidate.request.url, url) || candidate.request.method !== method)
           continue;
         if (method === 'POST' && postData && candidate.request.postData) {
           const buffer = await this._loadContent(candidate.request.postData);
@@ -149,6 +154,37 @@ export class HarBackend {
 
       return entry;
     }
+  }
+
+  private _matchUrl(harUrl: string, requestUrl: string): boolean {
+    if (this._urlMatcher === 'strict')
+      return harUrl === requestUrl;
+
+    if (this._urlMatcher === 'regex') {
+      try {
+        const regex = new RegExp(harUrl);
+        return regex.test(requestUrl);
+      } catch {
+        // If invalid regex, fall back to strict match
+        return harUrl === requestUrl;
+      }
+    }
+
+    if (this._urlMatcher === 'glob') {
+      // Convert glob pattern to regex
+      const regexPattern = harUrl
+        .replace(/[.+^${}()|[\]\\]/g, '\\$&') // Escape special regex chars
+        .replace(/\*/g, '.*')                   // * matches any characters
+        .replace(/\?/g, '.');                   // ? matches single character
+      try {
+        const regex = new RegExp(`^${regexPattern}$`);
+        return regex.test(requestUrl);
+      } catch {
+        return harUrl === requestUrl;
+      }
+    }
+
+    return false;
   }
 
   dispose() {

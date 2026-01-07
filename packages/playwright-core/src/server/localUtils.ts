@@ -145,14 +145,14 @@ export async function harOpen(progress: Progress, harBackends: Map<string, HarBa
         return { error: 'Specified archive does not have a .har file' };
       const har = await progress.race(zipFile.read(harEntryName));
       const harFile = JSON.parse(har.toString()) as har.HARFile;
-      harBackend = new HarBackend(harFile, null, zipFile);
+      harBackend = new HarBackend(harFile, null, zipFile, params.urlMatcher);
     } catch (error) {
       zipFile.close();
       throw error;
     }
   } else {
     const harFile = JSON.parse(await progress.race(fs.promises.readFile(params.file, 'utf-8'))) as har.HARFile;
-    harBackend = new HarBackend(harFile, path.dirname(params.file), null);
+    harBackend = new HarBackend(harFile, path.dirname(params.file), null, params.urlMatcher);
   }
   harBackends.set(harBackend.id, harBackend);
   return { harId: harBackend.id };

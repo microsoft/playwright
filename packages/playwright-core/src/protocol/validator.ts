@@ -272,6 +272,7 @@ scheme.LocalUtilsZipParams = tObject({
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({
   file: tString,
+  urlMatcher: tEnum(['strict', 'glob', 'regex']),
 });
 scheme.LocalUtilsHarOpenResult = tObject({
   harId: tOptional(tString),

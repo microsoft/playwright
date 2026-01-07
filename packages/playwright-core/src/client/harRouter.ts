@@ -28,8 +28,8 @@ export class HarRouter {
   private _notFoundAction: HarNotFoundAction;
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
-  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
-    const { harId, error } = await localUtils.harOpen({ file });
+  static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch; urlMatcher?: 'strict' | 'glob' | 'regex' }): Promise<HarRouter> {
+    const { harId, error } = await localUtils.harOpen({ file, urlMatcher: options.urlMatcher });
     if (error)
       throw new Error(error);
     return new HarRouter(localUtils, harId!, notFoundAction, options);

@@ -557,3 +557,100 @@ it('should ignore aborted requests', async ({ contextFactory, server }) => {
     expect(result).toBe('timeout');
   }
 });
+
+it('should support urlMatcher: strict (default) for exact URL matching', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  await context.routeFromHAR(harPath, { urlMatcher: 'strict' });
+  const page = await context.newPage();
+  
+  // Exact match should work
+  const response1 = await page.goto('http://example.com/api/data?id=123&token=abc');
+  expect(response1!.status()).toBe(200);
+  const json1 = await response1!.json();
+  expect(json1.result).toBe('matched-123');
+  
+  // Different query params should not match in strict mode and will be aborted
+  let didAbort = false;
+  try {
+    await page.goto('http://example.com/api/data?id=999&token=abc');
+  } catch (e) {
+    didAbort = true;
+  }
+  expect(didAbort).toBe(true);
+});
+
+it('should support urlMatcher: glob for wildcard pattern matching', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  await context.routeFromHAR(harPath, { urlMatcher: 'glob' });
+  const page = await context.newPage();
+  
+  // Glob pattern with * should match any query parameters
+  const response1 = await page.goto('http://example.com/api/data?id=999&token=xyz');
+  expect(response1!.status()).toBe(200);
+  const json1 = await response1!.json();
+  expect(json1.result).toBe('glob-match');
+  
+  // Glob pattern should match any user path
+  const response2 = await page.goto('http://example.com/users/bob');
+  expect(response2!.status()).toBe(200);
+  const json2 = await response2!.json();
+  expect(json2.name).toBe('matched');
+});
+
+it('should support urlMatcher: regex for regular expression matching', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  await context.routeFromHAR(harPath, { urlMatcher: 'regex' });
+  const page = await context.newPage();
+  
+  // Regex should match patterns flexibly
+  const response1 = await page.goto('http://example.com/api/data?id=777&token=any');
+  expect(response1!.status()).toBe(200);
+  const json1 = await response1!.json();
+  expect(json1.result).toBe('regex-match');
+  
+  // Should also match exact URLs when in HAR (first matching entry)
+  const response2 = await page.goto('http://example.com/api/data?id=123&token=abc');
+  expect(response2!.status()).toBe(200);
+  const json2 = await response2!.json();
+  expect(json2.result).toBe('regex-match'); // Regex entry matches first
+});
+
+it('should support urlMatcher with page.routeFromHAR', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  const page = await context.newPage();
+  await page.routeFromHAR(harPath, { urlMatcher: 'glob' });
+  
+  const response = await page.goto('http://example.com/api/data?id=888&token=test');
+  expect(response!.status()).toBe(200);
+  const json = await response!.json();
+  expect(json.result).toBe('glob-match');
+});
+
+it('should handle invalid regex gracefully', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  await context.routeFromHAR(harPath, { urlMatcher: 'regex' });
+  const page = await context.newPage();
+  
+  // Should not crash on requests, and exact matches should still work
+  const response = await page.goto('http://example.com/api/data?id=123&token=abc');
+  expect(response!.status()).toBe(200);
+});
+
+it('should default to strict mode when urlMatcher is not specified', async ({ context, asset }) => {
+  const harPath = asset('har-url-matcher.har');
+  await context.routeFromHAR(harPath); // No urlMatcher specified
+  const page = await context.newPage();
+  
+  // Exact match should work
+  const response1 = await page.goto('http://example.com/api/data?id=123&token=abc');
+  expect(response1!.status()).toBe(200);
+  
+  // Different query params should not match (strict mode) and will be aborted
+  let didAbort = false;
+  try {
+    await page.goto('http://example.com/api/data?id=999&token=abc');
+  } catch (e) {
+    didAbort = true;
+  }
+  expect(didAbort).toBe(true);
+});
