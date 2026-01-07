@@ -34,16 +34,16 @@ jobs:
       fail-fast: false
       matrix:
         browser: [chromium, firefox, webkit]
-        os: [ubuntu-22.04]
+        os: [DevDivPlaywrightUbuntu2204]
         node-version: [20]
         include:
-          - os: ubuntu-22.04
+          - os: DevDivPlaywrightUbuntu2204
             node-version: 22
             browser: chromium
-          - os: ubuntu-22.04
+          - os: DevDivPlaywrightUbuntu2204
             node-version: 24
             browser: chromium
-    runs-on: ${{ matrix.os }}
+    runs-on: [ self-hosted, "1ES.Pool=${{ matrix.os }}", "JobId=playwright-${{ matrix.browser }}-${{ matrix.node-version }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}" ]
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
