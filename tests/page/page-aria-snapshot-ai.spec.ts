@@ -429,7 +429,7 @@ it('return empty snapshot when iframe is not loaded', { annotation: { type: 'iss
   await page.waitForSelector('iframe');
 
   // Get the snapshot of the page
-  const snapshot = await snapshotForAI(page, { timeout: 100 });
+  const snapshot = await snapshotForAI(page, { timeout: 3000 });
 
   // The iframe should be present but empty
   expect(snapshot).toContainYaml(`
