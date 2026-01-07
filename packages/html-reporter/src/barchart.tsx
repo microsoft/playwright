@@ -77,7 +77,7 @@ export const GroupedBarChart = ({
   // Allocate space proportionally based on number of bars
   const barHeight = 20; // Fixed bar height
   const barSpacing = 4;
-  const groupPadding = 12;
+  const groupPadding = 20;
 
   // Calculate Y positions for each group based on their bar count
   const groupYPositions: number[] = [];
@@ -148,7 +148,7 @@ export const GroupedBarChart = ({
                 const y = groupY + barIndex * (barHeight + barSpacing);
                 barIndex++;
 
-                const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)', 'var(--color-scale-blue-3)', 'var(--color-scale-green-3)'];
+                const colors = ['var(--color-scale-blue-2)', 'var(--color-scale-blue-3)', 'var(--color-scale-blue-4)'];
                 const color = colors[seriesIndex % colors.length];
 
                 return (
