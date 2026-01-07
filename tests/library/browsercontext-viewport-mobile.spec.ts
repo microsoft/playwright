@@ -16,6 +16,7 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
+import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 
 it.describe('mobile viewport', () => {
   it.skip(({ browserName, isBidi }) => browserName === 'firefox' && !isBidi);
@@ -94,7 +95,10 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should preserve window.orientation override after navigation', async ({ browser, server }) => {
+  it('should preserve window.orientation override after navigation', async ({ browser, server, browserName }) => {
+    it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
+    it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
+
     const context = await browser.newContext({ viewport: { width: 400, height: 300 }, isMobile: true });
     const page = await context.newPage();
     await page.goto(server.PREFIX + '/mobile.html');
