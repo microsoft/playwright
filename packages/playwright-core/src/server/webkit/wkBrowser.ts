@@ -23,7 +23,6 @@ import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnecti
 import { WKPage } from './wkPage';
 import { TargetClosedError } from '../errors';
 import { translatePathToWSL } from './webkit';
-import { registry } from '../registry';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -42,7 +41,6 @@ export class WKBrowser extends Browser {
   readonly _browserSession: WKSession;
   readonly _contexts = new Map<string, WKBrowserContext>();
   readonly _wkPages = new Map<string, WKPage>();
-  readonly browserRevision: number;
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<WKBrowser> {
     const browser = new WKBrowser(parent, transport, options);
@@ -72,8 +70,6 @@ export class WKBrowser extends Browser {
     this._browserSession.on('Playwright.downloadFilenameSuggested', this._onDownloadFilenameSuggested.bind(this));
     this._browserSession.on('Playwright.downloadFinished', this._onDownloadFinished.bind(this));
     this._browserSession.on(kPageProxyMessageReceived, this._onPageProxyMessageReceived.bind(this));
-
-    this.browserRevision = parseInt(registry.findExecutable('webkit')?.revision ?? '0', 10) || 0;
   }
 
   _onDisconnect() {

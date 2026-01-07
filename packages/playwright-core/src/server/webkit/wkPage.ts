@@ -46,6 +46,8 @@ import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
+const enableFrameSessions = !!process.env.WK_ENABLE_FRAME_SESSIONS;
+
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
   readonly rawKeyboard: RawKeyboardImpl;
@@ -166,7 +168,7 @@ export class WKPage implements PageDelegate {
       session.send('Network.enable'),
       this._workers.initializeSession(session)
     ];
-    if (this._browserContext._browser.browserRevision > 2243)
+    if (enableFrameSessions)
       this._initializeFrameSessions(frameTree.frameTree, promises);
     else
       promises.push(session.send('Console.enable'));
@@ -308,7 +310,7 @@ export class WKPage implements PageDelegate {
       });
     });
     if (targetInfo.type === 'frame') {
-      if (this._browserContext._browser.browserRevision > 2243) {
+      if (enableFrameSessions) {
         const wkFrame = new WKFrame(this, session);
         this._targetIdToFrameSession.set(targetInfo.targetId, wkFrame);
         // TODO: this is racy, we should pause the child frames until their frame agents are initialized.
