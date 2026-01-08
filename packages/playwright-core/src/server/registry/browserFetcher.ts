@@ -30,11 +30,14 @@ import { browserDirectoryToMarkerFilePath } from '.';
 
 import type { DownloadParams } from './oopDownloadBrowserMain';
 
-export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadSocketTimeout: number): Promise<boolean> {
+export async function downloadBrowserWithProgressBar(title: string, browserDirectory: string, executablePath: string | undefined, downloadURLs: string[], downloadFileName: string, downloadSocketTimeout: number, force: boolean) {
   if (await existsAsync(browserDirectoryToMarkerFilePath(browserDirectory))) {
     // Already downloaded.
     debugLogger.log('install', `${title} is already downloaded.`);
-    return false;
+    if (force)
+      debugLogger.log('install', `force-downloading ${title}.`);
+    else
+      return;
   }
 
   // Create a unique temporary directory for this download to prevent concurrent downloads from clobbering each other
@@ -55,7 +58,7 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
       if (await existsAsync(zipPath))
         await fs.promises.unlink(zipPath);
       if (await existsAsync(browserDirectory))
-        await fs.promises.rmdir(browserDirectory, { recursive: true });
+        await removeFolders([browserDirectory]);
       const errorMessage = error?.message || '';
       debugLogger.log('install', `attempt #${attempt} - ERROR: ${errorMessage}`);
       if (attempt >= retryCount)
@@ -70,7 +73,6 @@ export async function downloadBrowserWithProgressBar(title: string, browserDirec
     await removeFolders([uniqueTempDir]);
   }
   logPolitely(`${title} downloaded to ${browserDirectory}`);
-  return true;
 }
 
 /**

@@ -20,6 +20,7 @@ import path from 'path';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { httpRequest } from '../utils/network';
 import { extract } from '../../zipBundle';
+import { removeFolders } from '../utils/fileUtils';
 
 export type DownloadParams = {
   title: string;
@@ -113,6 +114,8 @@ function downloadFile(options: DownloadParams): Promise<void> {
 async function main(options: DownloadParams) {
   await downloadFile(options);
   log(`SUCCESS downloading ${options.title}`);
+  log(`removing existing browser directory if any`);
+  await removeFolders([options.browserDirectory]);
   log(`extracting archive`);
   await extract(options.zipPath, { dir: options.browserDirectory });
   if (options.executablePath) {
