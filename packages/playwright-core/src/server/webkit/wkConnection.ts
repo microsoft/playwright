@@ -165,7 +165,7 @@ export class WKSession extends EventEmitter<Protocol.EventMap & { [kPageProxyMes
       }
     } else if (object.id && !object.error) {
       // Response might come after session has been disposed and rejected all callbacks.
-      assert(this.isDisposed());
+      assert(this.isDisposed(), JSON.stringify(object));
     } else {
       Promise.resolve().then(() => this.emit(object.method, object.params));
     }
