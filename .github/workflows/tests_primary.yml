@@ -173,7 +173,7 @@ jobs:
       run: npm ci && npm run build
       working-directory: ./playwright-vscode
     - name: Run extension tests
-      run: npm run test -- --workers=1
+      run: npm run test
       working-directory: ./playwright-vscode
       env:
         PW_TAG: "@vscode-extension"
