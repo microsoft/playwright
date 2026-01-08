@@ -1353,6 +1353,9 @@ BrowserContext:
     disableRecorder:
       internal: true
 
+    exposeConsoleApi:
+      internal: true
+
     newCDPSession:
       title: Create CDP session
       group: configuration

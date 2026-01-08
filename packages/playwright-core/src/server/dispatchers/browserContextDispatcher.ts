@@ -349,6 +349,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       recorder.setMode('none');
   }
 
+  async exposeConsoleApi(params: channels.BrowserContextExposeConsoleApiParams, progress: Progress): Promise<void> {
+    await this._context.exposeConsoleApi();
+  }
+
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
     // Debugger will take care of this.
   }

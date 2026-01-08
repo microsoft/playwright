@@ -552,6 +552,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
+  await context._exposeConsoleApi();
   await openPage(context, url);
 }
 

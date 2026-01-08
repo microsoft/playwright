@@ -1674,6 +1674,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, progress?: Progress): Promise<BrowserContextEnableRecorderResult>;
   disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
+  exposeConsoleApi(params?: BrowserContextExposeConsoleApiParams, progress?: Progress): Promise<BrowserContextExposeConsoleApiResult>;
   newCDPSession(params: BrowserContextNewCDPSessionParams, progress?: Progress): Promise<BrowserContextNewCDPSessionResult>;
   harStart(params: BrowserContextHarStartParams, progress?: Progress): Promise<BrowserContextHarStartResult>;
   harExport(params: BrowserContextHarExportParams, progress?: Progress): Promise<BrowserContextHarExportResult>;
@@ -1953,6 +1954,9 @@ export type BrowserContextEnableRecorderResult = void;
 export type BrowserContextDisableRecorderParams = {};
 export type BrowserContextDisableRecorderOptions = {};
 export type BrowserContextDisableRecorderResult = void;
+export type BrowserContextExposeConsoleApiParams = {};
+export type BrowserContextExposeConsoleApiOptions = {};
+export type BrowserContextExposeConsoleApiResult = void;
 export type BrowserContextNewCDPSessionParams = {
   page?: PageChannel,
   frame?: FrameChannel,
