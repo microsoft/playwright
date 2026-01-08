@@ -95,7 +95,7 @@ const config: Config<PlaywrightWorkerOptions & PlaywrightTestOptions & TestModeW
   maxFailures: 200,
   timeout: video ? 60000 : 30000,
   globalTimeout: 5400000,
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 4 : undefined,
   fullyParallel: !process.env.CI,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 3 : 0,
