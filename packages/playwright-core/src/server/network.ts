@@ -124,7 +124,6 @@ export class Request extends SdkObject {
   private _method: string;
   private _postData: Buffer | null;
   readonly _headers: HeadersArray;
-  private _headersMap = new Map<string, string>();
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
@@ -155,7 +154,6 @@ export class Request extends SdkObject {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
-    this._updateHeadersMap();
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
@@ -166,13 +164,7 @@ export class Request extends SdkObject {
 
   _applyOverrides(overrides: types.NormalizedContinueOverrides) {
     this._overrides = { ...this._overrides, ...overrides };
-    this._updateHeadersMap();
     return this._overrides;
-  }
-
-  private _updateHeadersMap() {
-    for (const { name, value } of this.headers())
-      this._headersMap.set(name.toLowerCase(), value);
   }
 
   overrides() {
@@ -200,7 +192,8 @@ export class Request extends SdkObject {
   }
 
   headerValue(name: string): string | undefined {
-    return this._headersMap.get(name);
+    const lowerCaseName = name.toLowerCase();
+    return this.headers().find(h => h.name.toLowerCase() === lowerCaseName)?.value;
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
