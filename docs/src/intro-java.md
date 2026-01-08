@@ -82,7 +82,7 @@ public class App {
 </TabItem>
 </Tabs>
 
-With the Example.java and pom.xml above, compile and execute your new program as follows:
+With the App.java and pom.xml above, compile and execute your new program as follows:
 
 ```bash
 mvn compile exec:java -D exec.mainClass="org.example.App"
