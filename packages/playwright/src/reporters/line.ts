@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TerminalReporter } from './base';
+import { formatResultFailure, TerminalReporter } from './base';
 
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
@@ -23,6 +23,7 @@ class LineReporter extends TerminalReporter {
   private _failures = 0;
   private _lastTest: TestCase | undefined;
   private _didBegin = false;
+  private _printedErrorCounts = new Map<TestResult, number>();
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
@@ -78,8 +79,58 @@ class LineReporter extends TerminalReporter {
       this._updateLine(test, result, step.parent);
   }
 
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // without TTY, user cannot interrupt the pause. let's skip it.
+    if (!process.stdin.isTTY)
+      return;
+
+    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+
+    this._printedErrorCounts.set(result, result.errors.length);
+
+    if (result.errors.length > 0) {
+      const errorHeader = this.formatTestHeader(test, { indent: '  ', index: ++this._failures });
+      this.screen.stdout.write(this.screen.colors.red(errorHeader) + '\n');
+      const errorDetails = formatResultFailure(this.screen, test, result, '    ');
+      for (const error of errorDetails)
+        this.screen.stdout.write('\n' + error.message + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused. Press Ctrl+C to resume.') + '\n');
+    } else {
+      const header = this.formatTestHeader(test, { indent: '  ' });
+      this.screen.stdout.write(this.screen.colors.yellow(header) + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('    Paused. Press Ctrl+C to resume.') + '\n');
+    }
+
+    this.writeLine();
+    this.writeLine();
+
+    this._updateLine(test, result, undefined);
+
+    await new Promise<void>(() => {});
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
+
+    const printedCount = this._printedErrorCounts.get(result);
+    this._printedErrorCounts.delete(result);
+    if (printedCount !== undefined) {
+      const newErrors = result.errors.slice(printedCount);
+      if (newErrors.length > 0) {
+        if (!process.env.PW_TEST_DEBUG_REPORTERS) {
+          this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+          this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+        }
+        this.writeLine();
+        for (const error of formatResultFailure(this.screen, test, { ...result, errors: newErrors }, '    '))
+          this.writeLine(error.message + '\n');
+        this.writeLine();
+        this.writeLine();
+      }
+      return;
+    }
+
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted')) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
         this.screen.stdout.write(`\u001B[1A\u001B[2K`);
