@@ -99,17 +99,17 @@ jobs:
             node-version: 20
             shardIndex: 1
             shardTotal: 3
-            shardWeights: '42:30:28'
+            shardWeights: '44:33:23'
           - os: windows-latest
             node-version: 20
             shardIndex: 2
             shardTotal: 3
-            shardWeights: '42:30:28'
+            shardWeights: '44:33:23'
           - os: windows-latest
             node-version: 20
             shardIndex: 3
             shardTotal: 3
-            shardWeights: '42:30:28'
+            shardWeights: '44:33:23'
           - os: ubuntu-latest
             node-version: 22
             shardIndex: 1
