@@ -50,7 +50,7 @@ Without the fullyParallel setting, Playwright Test defaults to file-level granul
 If tests in one of your shards take longer, you can manually assign less work to it using the `--shard-weights` option:
 
 ```bash
-npx playwright test --shard=x/4 --shard-weights=30:20:25:25
+npx playwright test --shard=x/4 --shard-weights=3:2:3:3
 ```
 
 Make sure you pass the same `--shard-weights` value to all shards.
