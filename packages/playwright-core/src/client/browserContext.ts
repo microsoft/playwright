@@ -542,6 +542,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.disableRecorder();
   }
 
+  async _exposeConsoleApi() {
+    await this._channel.exposeConsoleApi();
+  }
+
   _setAllowedProtocols(protocols: string[]) {
     this._allowedProtocols = protocols;
   }

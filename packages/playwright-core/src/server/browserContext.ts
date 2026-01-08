@@ -115,6 +115,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   _clientCertificatesProxy: ClientCertificatesProxy | undefined;
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
+  private _consoleApiExposed = false;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -159,12 +160,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         RecorderApp.showInspectorNoReply(this);
     });
 
-    if (debugMode() === 'console') {
-      await this.extendInjectedScript(`
-        function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
-        module.exports = { default: () => installConsoleApi };
-      `);
-    }
+    if (debugMode() === 'console')
+      await this.exposeConsoleApi();
+
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
@@ -174,6 +172,16 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   debugger(): Debugger {
     return this._debugger;
+  }
+
+  async exposeConsoleApi() {
+    if (this._consoleApiExposed)
+      return;
+    this._consoleApiExposed = true;
+    await this.extendInjectedScript(`
+      function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
+      module.exports = { default: () => installConsoleApi };
+    `);
   }
 
   async _ensureVideosPath() {

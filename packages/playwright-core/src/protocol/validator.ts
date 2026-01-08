@@ -1112,6 +1112,8 @@ scheme.BrowserContextEnableRecorderParams = tObject({
 scheme.BrowserContextEnableRecorderResult = tOptional(tObject({}));
 scheme.BrowserContextDisableRecorderParams = tOptional(tObject({}));
 scheme.BrowserContextDisableRecorderResult = tOptional(tObject({}));
+scheme.BrowserContextExposeConsoleApiParams = tOptional(tObject({}));
+scheme.BrowserContextExposeConsoleApiResult = tOptional(tObject({}));
 scheme.BrowserContextNewCDPSessionParams = tObject({
   page: tOptional(tChannel(['Page'])),
   frame: tOptional(tChannel(['Frame'])),

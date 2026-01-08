@@ -87,6 +87,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.pause', { title: 'Pause', }],
   ['BrowserContext.enableRecorder', { internal: true, }],
   ['BrowserContext.disableRecorder', { internal: true, }],
+  ['BrowserContext.exposeConsoleApi', { internal: true, }],
   ['BrowserContext.newCDPSession', { title: 'Create CDP session', group: 'configuration', }],
   ['BrowserContext.harStart', { internal: true, }],
   ['BrowserContext.harExport', { internal: true, }],
