@@ -177,8 +177,7 @@ program
           throw new Error(`Only one of --dry-run and --list can be specified`);
         if (options.dryRun) {
           for (const executable of executables) {
-            const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
-            console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
+            console.log(registry.calculateDownloadTitle(executable));
             console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
             if (executable.downloadURLs?.length) {
               const [url, ...fallbacks] = executable.downloadURLs;

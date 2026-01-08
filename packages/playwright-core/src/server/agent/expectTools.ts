@@ -29,6 +29,7 @@ const expectVisible = defineTool({
     inputSchema: z.object({
       role: z.string().describe('ROLE of the element. Can be found in the snapshot like this: \`- {ROLE} "Accessible Name":\`'),
       accessibleName: z.string().describe('ACCESSIBLE_NAME of the element. Can be found in the snapshot like this: \`- role "{ACCESSIBLE_NAME}"\`'),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
     }),
   },
 
@@ -36,6 +37,7 @@ const expectVisible = defineTool({
     return await context.runActionAndWait({
       method: 'expectVisible',
       selector: getByRoleSelector(params.role, { name: params.accessibleName }),
+      isNot: params.isNot,
     });
   },
 });
@@ -47,6 +49,7 @@ const expectVisibleText = defineTool({
     description: `Expect text is visible on the page. Prefer ${expectVisible.schema.name} if possible.`,
     inputSchema: z.object({
       text: z.string().describe('TEXT to expect. Can be found in the snapshot like this: \`- role "Accessible Name": {TEXT}\` or like this: \`- text: {TEXT}\`'),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
     }),
   },
 
@@ -54,6 +57,7 @@ const expectVisibleText = defineTool({
     return await context.runActionAndWait({
       method: 'expectVisible',
       selector: getByTextSelector(params.text),
+      isNot: params.isNot,
     });
   },
 });
@@ -68,6 +72,7 @@ const expectValue = defineTool({
       element: z.string().describe('Human-readable element description'),
       ref: z.string().describe('Exact target element reference from the page snapshot'),
       value: z.string().describe('Value to expect. For checkbox, use "true" or "false".'),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
     }),
   },
 
@@ -78,6 +83,7 @@ const expectValue = defineTool({
       selector,
       type: params.type,
       value: params.value,
+      isNot: params.isNot,
     });
   },
 });
@@ -92,6 +98,7 @@ const expectList = defineTool({
       listAccessibleName: z.string().optional().describe('Accessible name of the list element as in the snapshot'),
       itemRole: z.string().describe('Aria role of the list items as in the snapshot, should all be the same'),
       items: z.array(z.string().describe('Text to look for in the list item, can be either from accessible name of self / nested text content')),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
     }),
   },
 

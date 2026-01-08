@@ -1,0 +1,83 @@
+{
+  "Add a todo 'Original task'": {
+    "timestamp": 1767733670530,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Original task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Original task');\nawait page.keyboard.press('Enter');",
+        "intent": "I need to add a todo with the text 'Original task'. I can see there's a textbox with the placeholder \"What needs to be done?\" that I should type into."
+      }
+    ]
+  },
+  "Double-click to edit and change text to '   Edited task   ' (with leading and trailing spaces)": {
+    "timestamp": 1767733705280,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "options": {
+          "clickCount": 2
+        },
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});",
+        "intent": "I'll help you edit the task. First, let me take a snapshot to see the current state, then I'll double-click on the task to edit it and change the text."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "   Edited task   ",
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('   Edited task   ');",
+        "intent": "Perfect! The double-click opened the edit mode and now I can see an active textbox with \"Original task\". Now I'll clear the current text and type the new text with leading and trailing spaces."
+      },
+      {
+        "method": "pressKey",
+        "key": "Enter",
+        "code": "await page.keyboard.press('Enter');",
+        "intent": "I can see the textbox is now showing \"Edited task\" (though the snapshot may not show the exact spacing). Now I need to press Enter to submit the change and complete the edit."
+      }
+    ]
+  },
+  "Edit textbox shows the text with spaces": {
+    "timestamp": 1767733715850,
+    "actions": []
+  },
+  "Press Enter to save": {
+    "timestamp": 1767733726530,
+    "actions": [
+      {
+        "method": "pressKey",
+        "key": "Enter",
+        "code": "await page.keyboard.press('Enter');",
+        "intent": "I need to press Enter to save. Looking at the page snapshot, this appears to be a TodoMVC application. The context suggests that something needs to be saved by pressing Enter, which typically happens after editing or creating a todo item.\n\nThe most likely scenario is that there's a text input field that needs Enter to be pressed. I can see a textbox \"What needs to be done?\" in the snapshot. Let me press the Enter key to save."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733660201,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I'll verify that the page loads with an empty todo list by checking that the textbox \"What needs to be done?\" is visible, which indicates the todo input is present and ready for use in an empty state."
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "timestamp": 1767733675284,
+    "actions": []
+  },
+  "The todo is saved as 'Edited task' without leading or trailing whitespace": {
+    "timestamp": 1767733736150,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Edited task\"i",
+        "code": "await expect(page.getByText('Edited task')).toBeVisible();",
+        "intent": "I need to verify that the todo is saved as 'Edited task' without leading or trailing whitespace. Looking at the page snapshot, I can see a listitem with a generic element containing the text \"Edited task\" at ref=e22.\n\nI'll use the browser_expect_visible_text tool to verify that the exact text \"Edited task\" is visible on the page."
+      }
+    ]
+  }
+}

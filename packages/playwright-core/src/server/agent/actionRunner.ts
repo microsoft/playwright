@@ -76,8 +76,8 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
         await frame.uncheck(progress, action.selector, { ...strictTrue });
       break;
     case 'expectVisible': {
-      const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: false });
-      if (!result.matches)
+      const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot });
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
@@ -85,21 +85,21 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       let result: ExpectResult;
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
         const expectedText = serializeExpectedTextValues([action.value]);
-        result = await frame.expect(progress, action.selector, { expression: 'to.have.value', expectedText, isNot: false });
+        result = await frame.expect(progress, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot });
       } else if (action.type === 'checkbox' || action.type === 'radio') {
         const expectedValue = { checked: action.value === 'true' };
-        result = await frame.expect(progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: false });
+        result = await frame.expect(progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot });
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
-      if (!result.matches)
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
     case 'expectAria': {
       const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
-      const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: false });
-      if (!result.matches)
+      const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot });
+      if (result.matches === !!action.isNot)
         throw new Error(result.errorMessage);
       break;
     }

@@ -452,14 +452,14 @@ test.describe('toBeHidden', () => {
   test('fail', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
-    const error = await expect(locator).toBeHidden({ timeout: 1000 }).catch(e => e);
+    const error = await expect(locator).toBeHidden({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
 
   test('fail with not', async ({ page }) => {
     await page.setContent('<button style="display: none"></button>');
     const locator = page.locator('button');
-    const error = await expect(locator).not.toBeHidden({ timeout: 1000 }).catch(e => e);
+    const error = await expect(locator).not.toBeHidden({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <button></button>`);
   });
 
@@ -663,7 +663,7 @@ test.describe('toBeAttached', () => {
   test('fail with not', async ({ page }) => {
     await page.setContent('<input></input>');
     const locator = page.locator('input');
-    const error = await expect(locator).not.toBeAttached({ timeout: 1000 }).catch(e => e);
+    const error = await expect(locator).not.toBeAttached({ timeout: 3000 }).catch(e => e);
     expect(error.message).toContain(`locator resolved to <input/>`);
   });
 

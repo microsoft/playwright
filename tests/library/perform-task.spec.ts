@@ -20,8 +20,10 @@ import { browserTest as test, expect } from '../config/browserTest';
 
 test.use({
   agent: {
-    provider: 'github',
-    model: 'gpt-4.1',
+    api: 'anthropic',
+    apiKey: process.env.AZURE_SONNET_API_KEY!,
+    apiEndpoint: process.env.AZURE_SONNET_ENDPOINT!,
+    model: 'claude-sonnet-4-5',
     secrets: {
       'x-secret-email': 'secret-email@at-microsoft.com',
     }

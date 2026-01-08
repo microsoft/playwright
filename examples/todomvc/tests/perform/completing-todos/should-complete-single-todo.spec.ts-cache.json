@@ -1,0 +1,97 @@
+{
+  "Add a todo 'Buy groceries'": {
+    "timestamp": 1767733671351,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add a todo 'Buy groceries' to the page. I can see there's a textbox with the placeholder \"What needs to be done?\" which is where I need to type the todo item."
+      }
+    ]
+  },
+  "Click the checkbox next to the todo": {
+    "timestamp": 1767733704421,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "options": {},
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();",
+        "intent": "I'll click the checkbox next to the todo item \"Buy groceries\"."
+      }
+    ]
+  },
+  "Counter shows '0 items left'": {
+    "timestamp": 1767733726894,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "code": "await expect(page.getByText('0 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '0 items left'. Looking at the page snapshot, I can see:\n\n- generic [ref=e24]:\n  - strong [ref=e25]: \"0\"\n  - text: items left\n\nThis shows that there is a strong element containing \"0\" followed by text \"items left\". I should verify that this text is visible on the page."
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "timestamp": 1767733694471,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '1 item left'. Looking at the page snapshot, I can see:\n\n- A `strong` element with ref=e25 containing \"1\"\n- Followed by text \"item left\"\n\nThis matches the expected condition. I'll use `browser_expect_visible_text` to verify this text is visible on the page."
+      }
+    ]
+  },
+  "The 'Clear completed' button appears in the footer": {
+    "timestamp": 1767733737976,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Clear completed' button appears in the footer. Looking at the page snapshot, I can see there's a button with the text \"Clear completed\" with ref=e34 in the generic section with ref=e23, which appears to be the footer area of the todo list."
+      }
+    ]
+  },
+  "The checkbox is checked": {
+    "timestamp": 1767733716505,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: true });",
+        "intent": "I need to verify that a checkbox is checked. Looking at the page snapshot, I can see there are two checkboxes:\n\n1. `checkbox \"❯Mark all as complete\" [checked] [ref=e16]` - This one is checked\n2. `checkbox \"Toggle Todo\" [checked] [active] [ref=e21]` - This one is also checked\n\nSince the task asks to verify \"the checkbox is checked\" without specifying which one, and the \"Toggle Todo\" checkbox appears to be the main interactive element for the todo item, I'll verify that one. However, both are actually checked, so I could verify either one.\n\nLet me verify the \"Toggle Todo\" checkbox is checked:"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733661182,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see there's a textbox \"What needs to be done?\" which is the input field for adding todos, but there are no todo items visible in the list. \n\nTo verify the list is empty, I'll check that the textbox for adding todos is visible (confirming the page loaded) and that there are no todo list items present."
+      }
+    ]
+  },
+  "The todo appears as active": {
+    "timestamp": 1767733683021,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: false });",
+        "intent": "I need to verify that the todo appears as active. Looking at the page snapshot, I can see a todo item \"Buy groceries\" with an unchecked checkbox (ref=e21). An active/incomplete todo in TodoMVC is typically represented by an unchecked checkbox.\n\nLet me assert that the checkbox for \"Toggle Todo\" is not checked, which would indicate the todo is active (not completed):"
+      }
+    ]
+  }
+}

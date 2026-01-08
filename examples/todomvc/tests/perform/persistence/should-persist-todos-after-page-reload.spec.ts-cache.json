@@ -1,0 +1,124 @@
+{
+  "'Persistent 2' is marked as complete": {
+    "timestamp": 1767733726926,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that 'Persistent 2' is marked as complete. Looking at the page snapshot, I can see that the checkbox for \"Persistent 2\" has the `[checked]` attribute, which indicates it is marked as complete.\n\nThe checkbox is at ref=e35 and is described as: `checkbox \"Toggle Todo\" [checked] [active]`\n\nI'll use the browser_expect_value tool to assert that this checkbox is checked."
+      }
+    ]
+  },
+  "'Persistent 2' is still marked as complete": {
+    "timestamp": 1767733757369,
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });",
+        "intent": "I need to verify that 'Persistent 2' is marked as complete. Looking at the page snapshot, I can see that the checkbox for \"Persistent 2\" has the `[checked]` attribute, indicating it is marked as complete.\n\nThe relevant element is:\n- checkbox \"Toggle Todo\" [checked] [active] [ref=e35]\n\nThis checkbox is associated with the \"Persistent 2\" item in the todo list."
+      }
+    ]
+  },
+  "Add three todos: 'Persistent 1', 'Persistent 2', 'Persistent 3'": {
+    "timestamp": 1767733695757,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 1');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to the TodoMVC app. Let me start by taking a snapshot to see the current state of the page, then add each todo."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Persistent 1\" has been added. Now I'll add the second todo \"Persistent 2\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 3');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! Two todos have been added. Now I'll add the third and final todo \"Persistent 3\"."
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "timestamp": 1767733706567,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3\n`);",
+        "intent": "I need to verify that all three todos appear in the list. Looking at the page snapshot, I can see there's a list with ref=e18 that contains three listitems with the text \"Persistent 1\", \"Persistent 2\", and \"Persistent 3\".\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "All three todos are still present after reload": {
+    "timestamp": 1767733746638,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3\n`);",
+        "intent": "I need to verify that all three todos are still present after reload. Looking at the page snapshot, I can see a list with three listitem elements containing:\n1. \"Persistent 1\"\n2. \"Persistent 2\" \n3. \"Persistent 3\"\n\nI'll use the `browser_expect_list_visible` tool to assert that all three todos are present in the correct order."
+      }
+    ]
+  },
+  "Mark 'Persistent 2' as completed by clicking its checkbox": {
+    "timestamp": 1767733715624,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo').click();",
+        "intent": "I'll help you mark 'Persistent 2' as completed by clicking its checkbox."
+      }
+    ]
+  },
+  "Reload the page": {
+    "timestamp": 1767733736331,
+    "actions": [
+      {
+        "method": "pressKey",
+        "key": "F5",
+        "code": "await page.keyboard.press('F5');",
+        "intent": "I need to reload the page. To do this, I'll use the browser_press_key function to press the F5 key, which is the standard keyboard shortcut for reloading a page."
+      }
+    ]
+  },
+  "The counter shows '2 items left'": {
+    "timestamp": 1767733769067,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '2 items left'. Looking at the page snapshot, I can see:\n\n- A strong element [ref=e25] containing \"2\"\n- Followed by text: \"items left\"\n\nThese are within a generic element [ref=e24], which together display \"2 items left\". I'll use `browser_expect_visible_text` to verify this text is visible on the page."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733665328,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see:\n\n1. There's a textbox \"What needs to be done?\" which is the input for adding todos\n2. There's no list element visible containing any todo items\n3. The page structure shows the header with \"todos\" and the input field, but no todo list is present\n\nTo assert that the todo list is empty, I should check that a typical todo list element is NOT visible. In TodoMVC applications, todos are typically displayed in a list structure. Since there's no list of todos visible in the snapshot, I'll verify that the page has loaded correctly by confirming a key element is visible (like the input textbox), which indicates the page loaded but without any todos.\n\nLet me verify that the todo input textbox is visible, which confirms the page loaded, and the absence of any list elements in the snapshot confirms the list is empty:"
+      }
+    ]
+  }
+}

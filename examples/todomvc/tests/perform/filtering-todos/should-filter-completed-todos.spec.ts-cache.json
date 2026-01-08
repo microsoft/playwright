@@ -1,0 +1,132 @@
+{
+  "'Active task' is not visible": {
+    "timestamp": 1767733777768,
+    "actions": []
+  },
+  "Add three todos: 'Active task', 'Completed 1', 'Completed 2'": {
+    "timestamp": 1767733694088,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active task');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos to this TodoMVC application. Let me start by taking a snapshot to see the current state of the page, then add each todo one by one."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Completed 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Completed 1');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Active task\" has been added. Now let me add the second todo \"Completed 1\"."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Completed 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Completed 2');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! Two todos have been added. Now let me add the third and final todo \"Completed 2\"."
+      }
+    ]
+  },
+  "All three todos are visible": {
+    "timestamp": 1767733704813,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active task\n  - listitem: Completed 1\n  - listitem: Completed 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active task\n  - listitem: Completed 1\n  - listitem: Completed 2\n`);",
+        "intent": "I need to verify that all three todos are visible on the page. Looking at the page snapshot, I can see there's a list with three listitem elements containing the todos:\n1. \"Active task\"\n2. \"Completed 1\"\n3. \"Completed 2\"\n\nI'll use the `browser_expect_list_visible` tool to verify that all three todos are present in the list in the correct order."
+      }
+    ]
+  },
+  "Click on the 'Completed' filter link": {
+    "timestamp": 1767733748904,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Completed' }).click();",
+        "intent": "I need to click on the 'Completed' filter link. Based on the page snapshot, I can see that there's a link with text \"Completed\" at ref=e32."
+      }
+    ]
+  },
+  "Mark 'Completed 1' and 'Completed 2' as completed by clicking their checkboxes": {
+    "timestamp": 1767733725603,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Completed 1\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 1' }).getByLabel('Toggle Todo').click();",
+        "intent": "I need to mark 'Completed 1' and 'Completed 2' as completed by clicking their checkboxes. Looking at the page snapshot, I can see:\n\n- 'Completed 1' has a checkbox with ref=e35\n- 'Completed 2' has a checkbox with ref=e39\n\nBoth checkboxes are currently unchecked (they're labeled as \"Toggle Todo\" checkboxes). I'll click both of them to mark these items as completed."
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Completed 2\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 2' }).getByLabel('Toggle Todo').click();",
+        "intent": "Good! I successfully clicked the checkbox for 'Completed 1' and it's now checked. I can see the item count changed from \"3 items left\" to \"2 items left\". Now I need to click the checkbox for 'Completed 2' (ref=e39) to complete the task."
+      }
+    ]
+  },
+  "Only 'Completed 1' and 'Completed 2' are displayed": {
+    "timestamp": 1767733773784,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Completed 1\n  - listitem: Completed 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Completed 1\n  - listitem: Completed 2\n`);",
+        "intent": "I need to verify that only 'Completed 1' and 'Completed 2' are displayed in the todo list. Looking at the page snapshot, I can see there's a list with two listitem elements, and each contains the text \"Completed 1\" and \"Completed 2\" respectively.\n\nI'll use the browser_expect_list_visible tool to assert that the list contains exactly these two items in order."
+      }
+    ]
+  },
+  "The 'Completed' filter link is highlighted": {
+    "timestamp": 1767733787667,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();",
+        "intent": "I need to verify that the 'Completed' filter link is highlighted. Looking at the page snapshot, I can see that the \"Completed\" link has the `[active]` attribute, which indicates it is highlighted/selected."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733661280,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I'll verify that the page loads with an empty todo list by checking that the textbox \"What needs to be done?\" is visible, which is the input field for adding todos. The presence of this empty textbox without any todo items in the snapshot confirms the list is empty."
+      }
+    ]
+  },
+  "The URL changes to #/completed": {
+    "timestamp": 1767733763121,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();",
+        "intent": "I need to verify that the URL has changed to #/completed. Looking at the page snapshot, I can see that the \"Completed\" link is marked as `[active]`, which indicates the current page state corresponds to the completed filter.\n\nTo assert this condition, I'll check that the \"Completed\" link element is visible, as its active state confirms we're on the #/completed URL."
+      }
+    ]
+  },
+  "Two todos are marked as complete": {
+    "timestamp": 1767733739260,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();",
+        "intent": "I need to verify that two todos are marked as complete. Looking at the page snapshot, I can see there are checkboxes for \"Toggle Todo\" and two of them are checked (refs e35 and e39), which correspond to \"Completed 1\" and \"Completed 2\".\n\nLet me assert that there are exactly 2 completed items by checking the \"Clear completed\" button is visible, which appears when there are completed items. However, a more direct approach would be to verify the count of checked \"Toggle Todo\" checkboxes.\n\nLooking at the structure, I can see:\n- One checkbox [ref=e21] - unchecked (Active task)\n- One checkbox [ref=e35] - checked (Completed 1)\n- One checkbox [ref=e39] - checked and active (Completed 2)\n\nI'll verify that the \"Clear completed\" button is visible, which only appears when there are completed todos:"
+      }
+    ]
+  }
+}

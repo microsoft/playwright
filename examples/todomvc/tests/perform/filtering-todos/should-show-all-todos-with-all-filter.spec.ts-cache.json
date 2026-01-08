@@ -1,0 +1,128 @@
+{
+  "Add three todos and mark one as complete": {
+    "timestamp": 1767733703925,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add three todos and mark one as complete. Let me start by taking a snapshot to see the current state of the page, then proceed with the task."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Finish homework",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Finish homework');\nawait page.keyboard.press('Enter');",
+        "intent": "Great! The first todo \"Buy groceries\" has been added. Now let me add the second todo."
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Call the dentist",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Call the dentist');\nawait page.keyboard.press('Enter');",
+        "intent": "Perfect! Two todos have been added. Now let me add the third todo."
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "options": {},
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();",
+        "intent": "Excellent! All three todos have been added successfully. Now I need to mark one of them as complete by clicking one of the \"Toggle Todo\" checkboxes."
+      }
+    ]
+  },
+  "All todos (both completed and active) are displayed": {
+    "timestamp": 1767733770499,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Finish homework\n  - listitem: Call the dentist",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Finish homework\n  - listitem: Call the dentist\n`);",
+        "intent": "I need to verify that all todos (both completed and active) are displayed. From the page snapshot, I can see there's a list containing 3 todo items:\n\n1. \"Buy groceries\" (checked/completed)\n2. \"Finish homework\" (unchecked/active)\n3. \"Call the dentist\" (unchecked/active)\n\nThe \"All\" filter is currently active (shown as `link \"All\" [active]`), which should display all todos regardless of their completion status. I can verify this by checking that the list contains all three items in order."
+      }
+    ]
+  },
+  "Click on the 'All' filter link": {
+    "timestamp": 1767733748069,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'All' }).click();",
+        "intent": "I need to click on the 'All' filter link. Based on the page snapshot, I can see the 'All' link is located in a list of filters with ref=e28."
+      }
+    ]
+  },
+  "Navigate to the 'Active' filter by clicking on it": {
+    "timestamp": 1767733725838,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "options": {},
+        "code": "await page.getByRole('link', { name: 'Active' }).click();",
+        "intent": "I need to click on the \"Active\" filter link to navigate to it."
+      }
+    ]
+  },
+  "Only active todos are visible": {
+    "timestamp": 1767733737809,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Finish homework\n  - listitem: Call the dentist",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Finish homework\n  - listitem: Call the dentist\n`);",
+        "intent": "I need to verify that only active todos are visible on the page. Looking at the snapshot, I can see:\n\n1. The \"Active\" filter link is marked as [active], indicating we're viewing active todos\n2. There's a list with 2 list items showing:\n   - \"Finish homework\" (unchecked)\n   - \"Call the dentist\" (unchecked)\n3. The counter shows \"2 items left\"\n\nSince both todos are unchecked (not completed), they are active todos. I should verify that these specific items are visible in the list in the correct order."
+      }
+    ]
+  },
+  "The 'All' filter link is highlighted": {
+    "timestamp": 1767733786993,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the 'All' filter link is highlighted. Looking at the page snapshot, I can see that the 'All' link has the `[active]` attribute, which indicates it is highlighted/selected."
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733664525,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see:\n\n1. There's a heading \"todos\"\n2. There's a textbox \"What needs to be done?\" \n3. There's no list of todo items visible in the snapshot\n\nThe absence of any todo list structure (like a list with items) indicates the todo list is empty. I'll verify that a todo list structure is NOT visible on the page, or alternatively, I can check that the key elements of an empty state are present (the input box for adding todos exists but no todo items are shown).\n\nLet me assert that there's no visible list of todos by checking that the main interactive element (the input textbox) is visible, which confirms the app loaded correctly with an empty state."
+      }
+    ]
+  },
+  "The URL changes to #/": {
+    "timestamp": 1767733759187,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();",
+        "intent": "I need to verify that the URL changes to \"#/\". Looking at the page snapshot, I can see there's a link with the accessible name \"All\" that is marked as [active] and has the URL \"#/\". This suggests the current URL is already \"#/\".\n\nTo verify this expectation, I should check that the \"All\" link is visible and active, which would confirm the URL is at \"#/\"."
+      }
+    ]
+  },
+  "Three todos exist, one completed and two active": {
+    "timestamp": 1767733715973,
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Finish homework\n  - listitem: Call the dentist",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Finish homework\n  - listitem: Call the dentist\n`);",
+        "intent": "I need to verify that there are three todos total, with one completed and two active. Looking at the page snapshot, I can see:\n\n1. A list with 3 list items (refs e19, e33, e37)\n2. The first item \"Buy groceries\" has a checked checkbox (ref e21)\n3. The second item \"Finish homework\" has an unchecked checkbox (ref e35)\n4. The third item \"Call the dentist\" has an unchecked checkbox (ref e39)\n5. The footer shows \"2 items left\" which confirms 2 active todos\n\nI'll verify this by checking that the list contains exactly these three items in order."
+      }
+    ]
+  }
+}

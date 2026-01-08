@@ -1,0 +1,91 @@
+{
+  "Add a todo 'Temporary task'": {
+    "timestamp": 1767733672099,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Temporary task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Temporary task');\nawait page.keyboard.press('Enter');",
+        "intent": "I'll help you add a todo item with the text 'Temporary task'. I can see there's a textbox with the placeholder \"What needs to be done?\" that I can use to add the todo."
+      }
+    ]
+  },
+  "Clear all the text and press Enter": {
+    "timestamp": 1767733716578,
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('');\nawait page.keyboard.press('Enter');",
+        "intent": "I need to clear the text in the active textbox (which currently contains \"Temporary task\") and press Enter."
+      }
+    ]
+  },
+  "Counter shows '0 items left' or the footer is hidden": {
+    "timestamp": 1767733735536,
+    "actions": []
+  },
+  "Counter shows '1 item left'": {
+    "timestamp": 1767733686343,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();",
+        "intent": "I need to verify that the counter shows '1 item left'. Looking at the page snapshot, I can see:\n\n- A `strong` element [ref=e25] containing \"1\"\n- Followed by text \"item left\"\n\nThis matches the expected condition. I'll use `browser_expect_visible_text` to assert that the text \"1 item left\" is visible on the page."
+      }
+    ]
+  },
+  "Double-click on the todo to enter edit mode": {
+    "timestamp": 1767733695914,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "options": {
+          "clickCount": 2
+        },
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});",
+        "intent": "I need to double-click on the todo item to enter edit mode. Looking at the page snapshot, I can see there is a todo item with the text \"Temporary task\" in the list."
+      }
+    ]
+  },
+  "Edit textbox appears": {
+    "timestamp": 1767733705752,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'Edit' })).toBeVisible();",
+        "intent": "I need to verify that an \"Edit\" textbox appears on the page. Looking at the page snapshot, I can see there is a textbox with the accessible name \"Edit\" that is currently active and contains \"Temporary task\"."
+      }
+    ]
+  },
+  "The list is empty": {
+    "timestamp": 1767733729714,
+    "actions": []
+  },
+  "The page loads with an empty todo list": {
+    "timestamp": 1767733662208,
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();",
+        "intent": "I need to verify that the page loads with an empty todo list. Looking at the page snapshot, I can see there's a textbox \"What needs to be done?\" but no visible todo items or list structure containing any todos. The presence of just the input field and heading \"todos\" without any list of items indicates an empty todo list.\n\nLet me assert that the textbox for adding todos is visible, which confirms the page has loaded properly with an empty state:"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "timestamp": 1767733676386,
+    "actions": []
+  },
+  "The todo is deleted from the list": {
+    "timestamp": 1767733723016,
+    "actions": []
+  }
+}

@@ -68,6 +68,7 @@ export type SetChecked = {
 export type ExpectVisible = {
   method: 'expectVisible';
   selector: string;
+  isNot?: boolean;
 };
 
 export type ExpectValue = {
@@ -75,11 +76,13 @@ export type ExpectValue = {
   selector: string;
   type: 'textbox' | 'checkbox' | 'radio' | 'combobox' | 'slider';
   value: string;
+  isNot?: boolean;
 };
 
 export type ExpectAria = {
   method: 'expectAria';
   template: string;
+  isNot?: boolean;
 };
 
 export type Action =

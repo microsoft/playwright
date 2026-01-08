@@ -603,7 +603,9 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
   agent: tOptional(tObject({
-    provider: tOptional(tString),
+    api: tOptional(tString),
+    apiKey: tOptional(tString),
+    apiEndpoint: tOptional(tString),
     model: tOptional(tString),
     cacheFile: tOptional(tString),
     cacheOutFile: tOptional(tString),
@@ -705,7 +707,9 @@ scheme.BrowserNewContextParams = tObject({
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
   agent: tOptional(tObject({
-    provider: tOptional(tString),
+    api: tOptional(tString),
+    apiKey: tOptional(tString),
+    apiEndpoint: tOptional(tString),
     model: tOptional(tString),
     cacheFile: tOptional(tString),
     cacheOutFile: tOptional(tString),
@@ -785,7 +789,9 @@ scheme.BrowserNewContextForReuseParams = tObject({
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
   agent: tOptional(tObject({
-    provider: tOptional(tString),
+    api: tOptional(tString),
+    apiKey: tOptional(tString),
+    apiEndpoint: tOptional(tString),
     model: tOptional(tString),
     cacheFile: tOptional(tString),
     cacheOutFile: tOptional(tString),
@@ -910,7 +916,9 @@ scheme.BrowserContextInitializer = tObject({
     selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
     testIdAttributeName: tOptional(tString),
     agent: tOptional(tObject({
-      provider: tOptional(tString),
+      api: tOptional(tString),
+      apiKey: tOptional(tString),
+      apiEndpoint: tOptional(tString),
       model: tOptional(tString),
       cacheFile: tOptional(tString),
       cacheOutFile: tOptional(tString),
@@ -1529,34 +1537,41 @@ scheme.PageUpdateSubscriptionParams = tObject({
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
 scheme.PageAgentPerformParams = tObject({
   task: tString,
-  key: tOptional(tString),
+  api: tOptional(tString),
+  apiEndpoint: tOptional(tString),
+  apiKey: tOptional(tString),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
 });
 scheme.PageAgentPerformResult = tObject({
-  turns: tInt,
-  inputTokens: tInt,
-  outputTokens: tInt,
+  usage: tType('AgentUsage'),
 });
 scheme.PageAgentExpectParams = tObject({
   expectation: tString,
-  key: tOptional(tString),
+  api: tOptional(tString),
+  apiEndpoint: tOptional(tString),
+  apiKey: tOptional(tString),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
 });
-scheme.PageAgentExpectResult = tOptional(tObject({}));
+scheme.PageAgentExpectResult = tObject({
+  usage: tType('AgentUsage'),
+});
 scheme.PageAgentExtractParams = tObject({
   query: tString,
   schema: tAny,
-  key: tOptional(tString),
+  api: tOptional(tString),
+  apiEndpoint: tOptional(tString),
+  apiKey: tOptional(tString),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
 });
 scheme.PageAgentExtractResult = tObject({
   result: tAny,
-  turns: tInt,
-  inputTokens: tInt,
-  outputTokens: tInt,
+  usage: tType('AgentUsage'),
 });
 scheme.FrameInitializer = tObject({
   url: tString,
@@ -2847,7 +2862,9 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
   agent: tOptional(tObject({
-    provider: tOptional(tString),
+    api: tOptional(tString),
+    apiKey: tOptional(tString),
+    apiEndpoint: tOptional(tString),
     model: tOptional(tString),
     cacheFile: tOptional(tString),
     cacheOutFile: tOptional(tString),
@@ -2958,3 +2975,8 @@ scheme.JsonPipeSendParams = tObject({
 scheme.JsonPipeSendResult = tOptional(tObject({}));
 scheme.JsonPipeCloseParams = tOptional(tObject({}));
 scheme.JsonPipeCloseResult = tOptional(tObject({}));
+scheme.AgentUsage = tObject({
+  turns: tInt,
+  inputTokens: tInt,
+  outputTokens: tInt,
+});
