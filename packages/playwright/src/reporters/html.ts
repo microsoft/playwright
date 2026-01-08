@@ -298,12 +298,7 @@ class HtmlBuilder {
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
       errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
       options: this._options,
-      shards: result.shards?.map(s => ({
-        shardIndex: s.shardIndex,
-        tag: s.tag,
-        startTime: s.startTime.getTime(),
-        duration: s.duration,
-      })) ?? []
+      shards: this._buildShardsInfo(result, projectSuites),
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
@@ -345,6 +340,99 @@ class HtmlBuilder {
 
 
     return { ok, singleTestId };
+  }
+
+  private _buildShardsInfo(result: api.FullResult, projectSuites: api.Suite[]): HTMLReport['shards'] {
+    if (!result.shards)
+      return [];
+
+    const shardsInfo: HTMLReport['shards'] = result.shards.map(s => ({
+      duration: s.duration,
+      startTime: s.startTime.getTime(),
+      tag: s.tag,
+      shardIndex: s.shardIndex,
+      suggestedWeight: 100,
+    }));
+
+    const bots: Record<string, api.TestCase[]> = {};
+
+    for (const projectSuite of projectSuites) {
+      for (const test of projectSuite.allTests()) {
+        let longestPrefix: string[] = [];
+        for (const { tag } of shardsInfo) {
+          if (longestPrefix.length < tag.length && tag.every((v, i) => test.tags[i] === v))
+            longestPrefix = tag;
+        }
+        const botName = longestPrefix.join(';');
+        bots[botName] ??= [];
+        bots[botName].push(test);
+      }
+    }
+
+    for (const [botName, tests] of Object.entries(bots)) {
+      const botShards = shardsInfo.filter(shard => shard.tag.join(';') === botName);
+      const totalShard = Math.max(...botShards.map(s => s.shardIndex ?? -1));
+      if (totalShard < 2)
+        continue;
+      let suggestedWeights = this._calculateShardWeights(tests, totalShard);
+      suggestedWeights = this._normaliseWeights(suggestedWeights);
+      for (const [index, weight] of suggestedWeights.entries()) {
+        const shard = botShards.find(s => s.shardIndex === index + 1);
+        if (shard)
+          shard.suggestedWeight = weight;
+      }
+    }
+
+    return shardsInfo;
+  }
+
+  private _calculateShardWeights(tests: api.TestCase[], shardTotal: number): number[] {
+    if (tests.length === 0)
+      return [];
+
+    // recreates the sorting that filterForShard gets as input
+    tests.sort((a, b) => {
+      const shardIndexA = a.results[0]!.shardIndex ?? -1;
+      const shardIndexB = b.results[0]!.shardIndex ?? -1;
+      if (shardIndexA !== shardIndexB)
+        return shardIndexA - shardIndexB;
+
+      const startTimeA = a.results[0]!.startTime.getTime();
+      const startTimeB = b.results[0]!.startTime.getTime();
+      return startTimeA - startTimeB;
+    });
+
+    const totalDuration = tests.map(test => test.results[0]!.duration).reduce((a, b) => a + b, 0);
+    const optimalDuration = totalDuration / shardTotal;
+
+    const weights: number[] = [];
+    let currentDuration = 0;
+    let currentTestCount = 0;
+
+    for (const test of tests) {
+      const duration = test.results[0]!.duration;
+      currentDuration += duration;
+      currentTestCount++;
+
+      // When we've reached the optimal shard duration, record this shard's weight
+      if (currentDuration >= optimalDuration && weights.length < shardTotal - 1) {
+        weights.push(currentTestCount);
+        currentDuration = 0;
+        currentTestCount = 0;
+      }
+    }
+    weights.push(currentTestCount);
+
+    return weights;
+  }
+
+  private _normaliseWeights(weights: number[]): number[] {
+    const total = weights.reduce((a, b) => a + b, 0);
+    weights = weights.map(w => Math.floor((w / total) * 100));
+    const remaining = 100 - weights.reduce((a, b) => a + b, 0);
+    for (let i = 0; i < remaining; i++)
+      weights[i % weights.length]++;
+    return weights;
   }
 
   private async _writeReportData(filePath: string) {

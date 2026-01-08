@@ -37,9 +37,8 @@ export const GroupedBarChart = ({
   const width = 800;
 
   // Calculate left margin based on longest group name
-  // Rough estimate: 7 pixels per character at fontSize 12
   const maxGroupNameLength = Math.max(...groups.map(g => g.length));
-  const estimatedTextWidth = maxGroupNameLength * 7;
+  const estimatedTextWidth = maxGroupNameLength * 10;
   const leftMargin = Math.min(width * 0.5, Math.max(50, estimatedTextWidth));
 
   const margin = { top: 20, right: 20, bottom: 40, left: leftMargin };
@@ -78,7 +77,7 @@ export const GroupedBarChart = ({
   // Allocate space proportionally based on number of bars
   const barHeight = 20; // Fixed bar height
   const barSpacing = 4;
-  const groupPadding = 12;
+  const groupPadding = 20;
 
   // Calculate Y positions for each group based on their bar count
   const groupYPositions: number[] = [];
@@ -149,7 +148,7 @@ export const GroupedBarChart = ({
                 const y = groupY + barIndex * (barHeight + barSpacing);
                 barIndex++;
 
-                const colors = ['var(--color-scale-yellow-3)', 'var(--color-scale-orange-4)', 'var(--color-scale-blue-3)', 'var(--color-scale-green-3)'];
+                const colors = ['var(--color-scale-blue-2)', 'var(--color-scale-blue-3)', 'var(--color-scale-blue-4)'];
                 const color = colors[seriesIndex % colors.length];
 
                 return (
