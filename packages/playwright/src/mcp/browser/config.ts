@@ -331,9 +331,12 @@ function tmpDir(): string {
 
 export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
   const rootPath = firstRootPath(clientInfo);
-  return config.outputDir
+  const baseDir = config.outputDir
     ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
     ?? path.join(tmpDir(), String(clientInfo.timestamp));
+  if (clientInfo.sessionId)
+    return path.join(baseDir, clientInfo.sessionId);
+  return baseDir;
 }
 
 export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {

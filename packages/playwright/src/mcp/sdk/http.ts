@@ -114,7 +114,7 @@ async function handleSSE(serverBackendFactory: ServerBackendFactory, req: http.I
     const transport = new mcpBundle.SSEServerTransport('/sse', res);
     sessions.set(transport.sessionId, transport);
     testDebug(`create SSE session: ${transport.sessionId}`);
-    await mcpServer.connect(serverBackendFactory, transport, false);
+    await mcpServer.connect(serverBackendFactory, transport, false, transport.sessionId);
     res.on('close', () => {
       testDebug(`delete SSE session: ${transport.sessionId}`);
       sessions.delete(transport.sessionId);
@@ -142,8 +142,8 @@ async function handleStreamable(serverBackendFactory: ServerBackendFactory, req:
     const transport = new mcpBundle.StreamableHTTPServerTransport({
       sessionIdGenerator: () => crypto.randomUUID(),
       onsessioninitialized: async sessionId => {
-        testDebug(`create http session: ${transport.sessionId}`);
-        await mcpServer.connect(serverBackendFactory, transport, true);
+        testDebug(`create http session: ${sessionId}`);
+        await mcpServer.connect(serverBackendFactory, transport, true, sessionId);
         sessions.set(sessionId, transport);
       }
     });

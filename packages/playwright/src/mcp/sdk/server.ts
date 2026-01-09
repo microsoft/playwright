@@ -37,6 +37,7 @@ export type ClientInfo = {
   version: string;
   roots: Root[];
   timestamp: number;
+  sessionId?: string;
 };
 
 export type ProgressParams = { message?: string, progress?: number, total?: number };
@@ -56,18 +57,18 @@ export type ServerBackendFactory = {
   create: () => ServerBackend;
 };
 
-export async function connect(factory: ServerBackendFactory, transport: Transport, runHeartbeat: boolean) {
-  const server = createServer(factory.name, factory.version, factory.create(), runHeartbeat);
+export async function connect(factory: ServerBackendFactory, transport: Transport, runHeartbeat: boolean, sessionId?: string) {
+  const server = createServer(factory.name, factory.version, factory.create(), runHeartbeat, sessionId);
   await server.connect(transport);
 }
 
 export function wrapInProcess(backend: ServerBackend): Transport {
-  const server = createServer('Internal', '0.0.0', backend, false);
+  const server = createServer('Internal', '0.0.0', backend, false, undefined);
   return new InProcessTransport(server);
 }
 
 export async function wrapInClient(backend: ServerBackend, options: { name: string, version: string }): Promise<Client> {
-  const server = createServer('Internal', '0.0.0', backend, false);
+  const server = createServer('Internal', '0.0.0', backend, false, undefined);
   const transport = new InProcessTransport(server);
   const client = new mcpBundle.Client({ name: options.name, version: options.version });
   await client.connect(transport);
@@ -75,7 +76,7 @@ export async function wrapInClient(backend: ServerBackend, options: { name: stri
   return client;
 }
 
-export function createServer(name: string, version: string, backend: ServerBackend, runHeartbeat: boolean): Server {
+export function createServer(name: string, version: string, backend: ServerBackend, runHeartbeat: boolean, sessionId?: string): Server {
   const server = new mcpBundle.Server({ name, version }, {
     capabilities: {
       tools: {},
@@ -109,7 +110,7 @@ export function createServer(name: string, version: string, backend: ServerBacke
 
     try {
       if (!initializePromise)
-        initializePromise = initializeServer(server, backend, runHeartbeat);
+        initializePromise = initializeServer(server, backend, runHeartbeat, sessionId);
       await initializePromise;
       const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress);
       const mergedResult = mergeTextParts(toolResult);
@@ -126,8 +127,9 @@ export function createServer(name: string, version: string, backend: ServerBacke
   return server;
 }
 
-const initializeServer = async (server: Server, backend: ServerBackend, runHeartbeat: boolean) => {
+const initializeServer = async (server: Server, backend: ServerBackend, runHeartbeat: boolean, sessionId?: string) => {
   const capabilities = server.getClientCapabilities();
+  serverDebug('initializeServer sessionId=', sessionId);
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
     const { roots } = await server.listRoots().catch(e => {
@@ -142,6 +144,7 @@ const initializeServer = async (server: Server, backend: ServerBackend, runHeart
     version: server.getClientVersion()?.version ?? 'unknown',
     roots: clientRoots,
     timestamp: Date.now(),
+    sessionId,
   };
 
   await backend.initialize?.(clientInfo);
@@ -174,7 +177,8 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
 
 export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[] }) {
   if (options.port === undefined) {
-    await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
+    const sessionId = crypto.randomUUID();
+    await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false, sessionId);
     return;
   }
 
