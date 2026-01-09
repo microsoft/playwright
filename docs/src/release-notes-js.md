@@ -41,7 +41,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run start',
     wait: {
-      stdout: '/Listening on port (?<my_server_port>\\d+)/'
+      stdout: /Listening on port (?<my_server_port>\d+)/
     },
   },
 });
