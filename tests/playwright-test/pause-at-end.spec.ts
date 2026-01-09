@@ -79,7 +79,7 @@ test('--debug should pause at end', async ({ runInlineTest }) => {
         console.log('%%teardown');
       });
     `
-  }, { debug: true });
+  }, { pause: true });
   expect(result.outputLines).toEqual([
     'onTestPaused at end',
     'teardown',
@@ -110,7 +110,7 @@ test('--debug should pause at end with setup project', async ({ runInlineTest })
         console.log('main test started');
       });
     `
-  }, { debug: true });
+  }, { pause: true });
   expect(result.outputLines).toContain('onTestPaused at end');
 });
 
@@ -128,7 +128,7 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
         console.log('%%after error');
       });
     `
-  }, { debug: true });
+  }, { pause: true });
   expect(result.outputLines).toEqual([
     'onTestPaused on error at :4:24',
     'result.errors[0] at :4:24',
@@ -159,7 +159,7 @@ test('SIGINT after pause at end should still run teardown', async ({ runInlineTe
         console.log('%%teardown');
       });
     `
-  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  }, { pause: true }, { SIGINT_AFTER_PAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused at end',
     'SIGINT',
@@ -185,7 +185,7 @@ test('SIGINT after pause on error should still run teardown', async ({ runInline
         console.log('%%teardown');
       });
     `
-  }, { debug: true }, { SIGINT_AFTER_PAUSE: '1' });
+  }, { pause: true }, { SIGINT_AFTER_PAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused on error at :4:19',
     'result.errors[0] at :4:19',

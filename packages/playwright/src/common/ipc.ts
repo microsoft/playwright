@@ -31,6 +31,7 @@ export type ConfigCLIOverrides = {
   maxFailures?: number;
   outputDir?: string;
   preserveOutputDir?: boolean;
+  pause?: boolean;
   quiet?: boolean;
   repeatEach?: number;
   retries?: number;

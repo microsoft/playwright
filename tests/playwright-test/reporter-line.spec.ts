@@ -240,7 +240,7 @@ test.describe('onTestPaused', () => {
           console.log('Running teardown');
         });
       `,
-    }, { debug: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+    }, { pause: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
 
     await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
     const { exitCode } = await runner.kill('SIGINT');
@@ -274,7 +274,7 @@ Running teardown
           throw new Error('teardown error');
         });
       `,
-    }, { debug: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+    }, { pause: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
 
     await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
     const { exitCode } = await runner.kill('SIGINT');
