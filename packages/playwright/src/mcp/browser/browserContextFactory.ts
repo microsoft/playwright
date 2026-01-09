@@ -44,7 +44,7 @@ export function contextFactory(config: FullConfig): BrowserContextFactory {
 
 export type BrowserContextFactoryResult = {
   browserContext: playwright.BrowserContext;
-  close: (afterClose: () => Promise<void>) => Promise<void>;
+  close: (afterClose?: () => Promise<void>) => Promise<void>;
 };
 
 export interface BrowserContextFactory {
@@ -56,7 +56,7 @@ export function identityBrowserContextFactory(browserContext: playwright.Browser
     createContext: async (_clientInfo: ClientInfo, _abortSignal: AbortSignal, _toolName: string | undefined) => {
       return {
         browserContext,
-        close: async (_afterClose: () => Promise<void>) => {}
+        close: async (_afterClose?: () => Promise<void>) => {}
       };
     }
   };
@@ -104,7 +104,7 @@ class BaseContextFactory implements BrowserContextFactory {
       await addInitScript(browserContext, this.config.browser.initScript);
       return {
         browserContext,
-        close: (afterClose: () => Promise<void>) => this._closeBrowserContext(browserContext, browser, afterClose)
+        close: (afterClose?: () => Promise<void>) => this._closeBrowserContext(browserContext, browser, afterClose)
       };
     } finally {
       this._clientInfo = undefined;
@@ -115,12 +115,13 @@ class BaseContextFactory implements BrowserContextFactory {
     throw new Error('Not implemented');
   }
 
-  private async _closeBrowserContext(browserContext: playwright.BrowserContext, browser: playwright.Browser, afterClose: () => Promise<void>) {
+  private async _closeBrowserContext(browserContext: playwright.BrowserContext, browser: playwright.Browser, afterClose?: () => Promise<void>) {
     testDebug(`close browser context (${this._logName})`);
     if (browser.contexts().length === 1)
       this._browserPromise = undefined;
     await browserContext.close().catch(logUnhandledError);
-    await afterClose();
+    if (afterClose)
+      await afterClose();
     if (browser.contexts().length === 0) {
       testDebug(`close browser (${this._logName})`);
       await browser.close().catch(logUnhandledError);
@@ -226,7 +227,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         await addInitScript(browserContext, this.config.browser.initScript);
-        const close = () => this._closeBrowserContext(browserContext, userDataDir);
+        const close = async (_afterClose?: () => Promise<void>) => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
