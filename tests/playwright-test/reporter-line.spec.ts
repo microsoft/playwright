@@ -233,7 +233,7 @@ test.describe('onTestPaused', () => {
     const runner = await interactWithTestRunner({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
-        test('passes', async ({}) => {
+        test('foo', async ({}) => {
         });
 
         test.afterEach(() => {
@@ -249,17 +249,63 @@ test.describe('onTestPaused', () => {
     expect(stripAnsi(runner.output)).toEqual(`
 Running 1 test using 1 worker
 
-[1/1] a.test.ts:3:13 › passes
-  a.test.ts:3:13 › passes ──────────────────────────────────────────────────────────────────────────
+[1/1] a.test.ts:3:13 › foo
+  a.test.ts:3:13 › foo ─────────────────────────────────────────────────────────────────────────────
     Paused at test end. Press Ctrl+C to end.
 
 
-[1/1] a.test.ts:3:13 › passes
-a.test.ts:3:13 › passes
+[1/1] a.test.ts:3:13 › foo
+a.test.ts:3:13 › foo
 Running teardown
 
   1 interrupted
-    a.test.ts:3:13 › passes ────────────────────────────────────────────────────────────────────────
+    a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
+`);
+  });
+
+  test('pause at end - error in teardown', async ({ interactWithTestRunner }) => {
+    const runner = await interactWithTestRunner({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('foo', async ({}) => {
+        });
+
+        test.afterEach(() => {
+          throw new Error('teardown error');
+        });
+      `,
+    }, { debug: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+
+    await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
+    const { exitCode } = await runner.kill('SIGINT');
+    expect(exitCode).toBe(130);
+
+    expect(stripAnsi(runner.output)).toEqual(`
+Running 1 test using 1 worker
+
+[1/1] a.test.ts:3:13 › foo
+  a.test.ts:3:13 › foo ─────────────────────────────────────────────────────────────────────────────
+    Paused at test end. Press Ctrl+C to end.
+
+
+[1/1] a.test.ts:3:13 › foo
+
+    Test was interrupted.
+
+    Error: teardown error
+
+      5 |
+      6 |         test.afterEach(() => {
+    > 7 |           throw new Error('teardown error');
+        |                 ^
+      8 |         });
+      9 |       
+        at ${test.info().outputPath('a.test.ts')}:7:17
+
+
+
+  1 interrupted
+    a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
 `);
   });
 });
