@@ -2076,6 +2076,10 @@ export namespace Protocol {
        * Show labels for grid area names. If not specified, the default value is false.
        */
       showAreaNames?: boolean;
+      /**
+       * Show labels for grid item order. If not specified, the default value is false.
+       */
+      showOrderNumbers?: boolean;
     }
     /**
      * Configuration data for flex overlays.
@@ -2175,8 +2179,7 @@ export namespace Protocol {
        * The native width of the video track in CSS pixels
        */
       width: number;
-      spatialVideoMetadata?: SpatialVideoMetadata;
-      videoProjectionMetadata?: VideoProjectionMetadata;
+      immersiveVideoMetadata?: ImmersiveVideoMetadata;
       /**
        * Whether the track contains protected contents
        */
@@ -2223,35 +2226,30 @@ export namespace Protocol {
     /**
      * A structure containing metadata describing spatial video properties.
      */
-    export interface SpatialVideoMetadata {
+    export interface ImmersiveVideoMetadata {
+      /**
+       * The kind of immersive video.
+       */
+      kind: VideoProjectionMetadataKind;
       width: number;
       height: number;
       /**
        * The horizontal field-of-view measurement, in degrees
        */
-      horizontalFOVDegrees: number;
+      horizontalFieldOfView?: number;
       /**
        * The distance between the centers of the lenses in a camera system, in micrometers
        */
-      baseline: number;
+      stereoCameraBaseline?: number;
       /**
-       * The relative shift of the left and right eye images, as a percentage.
+       * The relative shift of the left and right eye images, as a percentage
        */
-      disparityAdjustment: number;
+      horizontalDisparityAdjustment?: number;
     }
     /**
      * Video Projection Metadata Kind.
      */
-    export type VideoProjectionMetadataKind = "unknown"|"equirectangular"|"half-equirectangular"|"equi-angular-cubemap"|"parametric"|"pyramid"|"apple-immersive-video";
-    /**
-     * A structure containing metadata describing video projections.
-     */
-    export interface VideoProjectionMetadata {
-      /**
-       * The kind of video projection.
-       */
-      kind: VideoProjectionMetadataKind;
-    }
+    export type VideoProjectionMetadataKind = "unknown"|"rectilinear"|"equirectangular"|"half-equirectangular"|"equi-angular-cubemap"|"parametric"|"pyramid"|"apple-immersive-video";
     export interface ViewportSize {
       width: number;
       height: number;
@@ -5333,6 +5331,21 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
        * An object containing the reasons why the layer was composited as properties.
        */
       compositingReasons: CompositingReasons;
+    }
+    /**
+     * Captures a snapshot of the layer's rendered content as a PNG data URL.
+     */
+    export type requestContentParameters = {
+      /**
+       * The id of the layer to snapshot.
+       */
+      layerId: LayerId;
+    }
+    export type requestContentReturnValue = {
+      /**
+       * Base64-encoded PNG data URL of the layer's rendered content.
+       */
+      content: string;
     }
   }
   
@@ -9343,6 +9356,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "LayerTree.disable": LayerTree.disableParameters;
     "LayerTree.layersForNode": LayerTree.layersForNodeParameters;
     "LayerTree.reasonsForCompositingLayer": LayerTree.reasonsForCompositingLayerParameters;
+    "LayerTree.requestContent": LayerTree.requestContentParameters;
     "Memory.enable": Memory.enableParameters;
     "Memory.disable": Memory.disableParameters;
     "Memory.startTracking": Memory.startTrackingParameters;
@@ -9646,6 +9660,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "LayerTree.disable": LayerTree.disableReturnValue;
     "LayerTree.layersForNode": LayerTree.layersForNodeReturnValue;
     "LayerTree.reasonsForCompositingLayer": LayerTree.reasonsForCompositingLayerReturnValue;
+    "LayerTree.requestContent": LayerTree.requestContentReturnValue;
     "Memory.enable": Memory.enableReturnValue;
     "Memory.disable": Memory.disableReturnValue;
     "Memory.startTracking": Memory.startTrackingReturnValue;
