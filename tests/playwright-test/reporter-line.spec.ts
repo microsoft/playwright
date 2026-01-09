@@ -308,4 +308,61 @@ Running 1 test using 1 worker
     a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
 `);
   });
+
+  test('pause on error', async ({ interactWithTestRunner }) => {
+    const runner = await interactWithTestRunner({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('fails', async ({}) => {
+          expect.soft(2).toBe(3);
+          expect(3).toBe(4);
+        });
+      `,
+    }, { pause: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+
+    await runner.waitForOutput('Paused on error. Press Ctrl+C to end.');
+    const { exitCode } = await runner.kill('SIGINT');
+    expect(exitCode).toBe(130);
+
+    expect(stripAnsi(runner.output)).toEqual(`
+Running 1 test using 1 worker
+
+[1/1] a.test.ts:3:13 › fails
+  1) a.test.ts:3:13 › fails ────────────────────────────────────────────────────────────────────────
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 3
+    Received: 2
+
+      2 |         import { test, expect } from '@playwright/test';
+      3 |         test('fails', async ({}) => {
+    > 4 |           expect.soft(2).toBe(3);
+        |                          ^
+      5 |           expect(3).toBe(4);
+      6 |         });
+      7 |       
+        at /Users/skn0tt/dev/microsoft/playwright/test-results/reporter-line-onTestPaused-pause-on-error-playwright-test/a.test.ts:4:26
+
+    Error: expect(received).toBe(expected) // Object.is equality
+
+    Expected: 4
+    Received: 3
+
+      3 |         test('fails', async ({}) => {
+      4 |           expect.soft(2).toBe(3);
+    > 5 |           expect(3).toBe(4);
+        |                     ^
+      6 |         });
+      7 |       
+        at /Users/skn0tt/dev/microsoft/playwright/test-results/reporter-line-onTestPaused-pause-on-error-playwright-test/a.test.ts:5:21
+
+    Paused on error. Press Ctrl+C to end.
+
+
+[1/1] a.test.ts:3:13 › fails
+  1 failed
+    a.test.ts:3:13 › fails ─────────────────────────────────────────────────────────────────────────
+`);
+  });
 });
