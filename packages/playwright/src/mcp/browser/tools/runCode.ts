@@ -53,7 +53,9 @@ const runCode = defineTabTool({
           __end__.reject(e);
         }
       })()`;
-      await vm.runInContext(snippet, context);
+      await vm.runInContext(snippet, context, {
+        importModuleDynamically: vm.constants.USE_MAIN_CONTEXT_DEFAULT_LOADER,
+      });
       const result = await __end__;
       if (typeof result === 'string')
         response.addResult(result);
