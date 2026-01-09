@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { test, expect } from './playwright-test-fixtures';
+import { test, expect, stripAnsi } from './playwright-test-fixtures';
 
 for (const useIntermediateMergeReport of [false, true] as const) {
   test.describe(`${useIntermediateMergeReport ? 'merged' : 'created'}`, () => {
@@ -225,3 +225,41 @@ for (const useIntermediateMergeReport of [false, true] as const) {
     });
   });
 }
+
+test.describe('onTestPaused', () => {
+  test.skip(process.platform === 'win32', 'No SIGINT on windows');
+
+  test('pause at end', async ({ interactWithTestRunner }) => {
+    const runner = await interactWithTestRunner({
+      'a.test.ts': `
+        import { test, expect } from '@playwright/test';
+        test('passes', async ({}) => {
+        });
+
+        test.afterEach(() => {
+          console.log('Running teardown');
+        });
+      `,
+    }, { debug: true, reporter: 'line' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+
+    await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
+    const { exitCode } = await runner.kill('SIGINT');
+    expect(exitCode).toBe(130);
+
+    expect(stripAnsi(runner.output)).toEqual(`
+Running 1 test using 1 worker
+
+[1/1] a.test.ts:3:13 › passes
+  a.test.ts:3:13 › passes ──────────────────────────────────────────────────────────────────────────
+    Paused at test end. Press Ctrl+C to end.
+
+
+[1/1] a.test.ts:3:13 › passes
+a.test.ts:3:13 › passes
+Running teardown
+
+  1 interrupted
+    a.test.ts:3:13 › passes ────────────────────────────────────────────────────────────────────────
+`);
+  });
+});

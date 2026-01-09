@@ -81,7 +81,7 @@ class LineReporter extends TerminalReporter {
 
   async onTestPaused(test: TestCase, result: TestResult) {
     // without TTY, user cannot interrupt the pause. let's skip it.
-    if (!process.stdin.isTTY)
+    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
 
     if (!process.env.PW_TEST_DEBUG_REPORTERS)
@@ -95,11 +95,11 @@ class LineReporter extends TerminalReporter {
       const errorDetails = formatResultFailure(this.screen, test, result, '    ');
       for (const error of errorDetails)
         this.screen.stdout.write('\n' + error.message + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused at test end. Press Ctrl+C to end.') + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused on error. Press Ctrl+C to end.') + '\n');
     } else {
       const header = this.formatTestHeader(test, { indent: '  ' });
       this.screen.stdout.write(this.screen.colors.yellow(header) + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('    Paused on error. Press Ctrl+C to end.') + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('    Paused at test end. Press Ctrl+C to end.') + '\n');
     }
 
     this.writeLine();
