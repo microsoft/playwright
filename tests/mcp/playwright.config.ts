@@ -49,7 +49,7 @@ export default defineConfig<TestOptions>({
   testDir: rootTestDir,
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
-  workers: process.env.CI ? 4 : undefined,
+  workers: process.env.CI ? 3 : undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
   projects: [
