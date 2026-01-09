@@ -342,7 +342,7 @@ Running 1 test using 1 worker
       5 |           expect(3).toBe(4);
       6 |         });
       7 |       
-        at /Users/skn0tt/dev/microsoft/playwright/test-results/reporter-line-onTestPaused-pause-on-error-playwright-test/a.test.ts:4:26
+        at ${test.info().outputPath('a.test.ts')}:4:26
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -355,7 +355,7 @@ Running 1 test using 1 worker
         |                     ^
       6 |         });
       7 |       
-        at /Users/skn0tt/dev/microsoft/playwright/test-results/reporter-line-onTestPaused-pause-on-error-playwright-test/a.test.ts:5:21
+        at ${test.info().outputPath('a.test.ts')}:5:21
 
     Paused on error. Press Ctrl+C to end.
 
