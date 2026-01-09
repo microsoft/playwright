@@ -49,7 +49,6 @@ test('browser_wait_for(text)', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_wait_for',
     arguments: { text: 'Text to appear' },
-    code: `await page.getByText("Text to appear").first().waitFor({ state: 'visible' });`,
   });
 
   expect(await client.callTool({
@@ -92,7 +91,6 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
   await client.callTool({
     name: 'browser_wait_for',
     arguments: { textGone: 'Text to disappear' },
-    code: `await page.getByText("Text to disappear").first().waitFor({ state: 'hidden' });`,
   });
 
   expect(await client.callTool({
