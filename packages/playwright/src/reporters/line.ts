@@ -95,11 +95,11 @@ class LineReporter extends TerminalReporter {
       const errorDetails = formatResultFailure(this.screen, test, result, '    ');
       for (const error of errorDetails)
         this.screen.stdout.write('\n' + error.message + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused. Press Ctrl+C to resume.') + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused at test end. Press Ctrl+C to end.') + '\n');
     } else {
       const header = this.formatTestHeader(test, { indent: '  ' });
       this.screen.stdout.write(this.screen.colors.yellow(header) + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('    Paused. Press Ctrl+C to resume.') + '\n');
+      this.screen.stdout.write(this.screen.colors.yellow('    Paused on error. Press Ctrl+C to end.') + '\n');
     }
 
     this.writeLine();
