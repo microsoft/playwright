@@ -168,6 +168,7 @@ test('browser_run_code return value', async ({ client, server }) => {
 });
 
 test('browser_run_code dynamic import', async ({ client, server }) => {
+  test.skip(process.platform === 'win32', 'windows only works with file:// imports');
   server.setContent('/', `
     <button onclick="console.log('Submit')">Submit</button>
   `, 'text/html');
@@ -185,6 +186,37 @@ export async function clickSubmit(page) {
 
   const code = `async (page) => {
   const { clickSubmit } = await import(${JSON.stringify(scriptPath)});
+  await clickSubmit(page);
+}`;
+  expect(await client.callTool({
+    name: 'browser_run_code',
+    arguments: {
+      code,
+    },
+  })).toHaveResponse({
+    code: `await (${code})(page);`,
+    consoleMessages: expect.stringContaining('- [LOG] Submit'),
+  });
+});
+
+test('browser_run_code dynamic import (file: proto)', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Submit')">Submit</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const scriptPath = test.info().outputPath('helper.mjs');
+  await fs.writeFile(scriptPath, `
+export async function clickSubmit(page) {
+  await page.getByRole("button", { name: "Submit" }).click();
+}
+`);
+
+  const code = `async (page) => {
+  const { clickSubmit } = await import(${JSON.stringify('file://' + scriptPath)});
   await clickSubmit(page);
 }`;
   expect(await client.callTool({
