@@ -324,7 +324,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     });
   }
 
-  if (options.headed || options.debug)
+  if (options.headed || options.debug || overrides.pause)
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
     overrides.debug = true;
