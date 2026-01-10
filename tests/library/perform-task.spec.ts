@@ -88,3 +88,17 @@ test('page.perform expect value', async ({ page, agent }) => {
     - Check that the error message is displayed
   `);
 });
+
+test('page.perform history', async ({ page, agent }) => {
+  test.skip(true, 'Skipping because it needs LLM');
+  await page.setContent(`
+    <button>Wolf</button>
+    <button>Fox</button>
+    <button>Rabbit</button>
+  `);
+  await agent.perform('click the Fox button');
+  const { result } = await agent.extract('return the name of the button you pressed', z.object({
+    name: z.string(),
+  }));
+  expect(result.name).toBe('Fox');
+});

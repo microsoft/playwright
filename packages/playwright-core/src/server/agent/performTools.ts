@@ -28,8 +28,8 @@ const snapshot = defineTool({
     inputSchema: z.object({}),
   },
 
-  handle: async (context, params) => {
-    return await context.snapshotResult();
+  handle: async (progress, context, params) => {
+    return await context.snapshotResult(progress);
   },
 });
 
@@ -52,9 +52,9 @@ const click = defineTool({
     inputSchema: clickSchema,
   },
 
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([params]);
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [params]);
+    return await context.runActionAndWait(progress, {
       method: 'click',
       selector,
       options: {
@@ -79,13 +79,13 @@ const drag = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
-    const [sourceSelector, targetSelector] = await context.refSelectors([
+  handle: async (progress, context, params) => {
+    const [sourceSelector, targetSelector] = await context.refSelectors(progress, [
       { ref: params.startRef, element: params.startElement },
       { ref: params.endRef, element: params.endElement },
     ]);
 
-    return await context.runActionAndWait({
+    return await context.runActionAndWait(progress, {
       method: 'drag',
       sourceSelector,
       targetSelector
@@ -105,9 +105,9 @@ const hover = defineTool({
     inputSchema: hoverSchema,
   },
 
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([params]);
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [params]);
+    return await context.runActionAndWait(progress, {
       method: 'hover',
       selector,
       options: {
@@ -129,9 +129,9 @@ const selectOption = defineTool({
     inputSchema: selectOptionSchema,
   },
 
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([params]);
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [params]);
+    return await context.runActionAndWait(progress, {
       method: 'selectOption',
       selector,
       labels: params.values
@@ -149,8 +149,8 @@ const pressKey = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    return await context.runActionAndWait(progress, {
       method: 'pressKey',
       key: params.key
     });
@@ -171,17 +171,17 @@ const type = defineTool({
     inputSchema: typeSchema,
   },
 
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([params]);
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [params]);
     if (params.slowly) {
-      return await context.runActionAndWait({
+      return await context.runActionAndWait(progress, {
         method: 'pressSequentially',
         selector,
         text: params.text,
         submit: params.submit,
       });
     } else {
-      return await context.runActionAndWait({
+      return await context.runActionAndWait(progress, {
         method: 'fill',
         selector,
         text: params.text,
@@ -206,10 +206,10 @@ const fillForm = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
+  handle: async (progress, context, params) => {
     const actions: actions.Action[] = [];
     for (const field of params.fields) {
-      const [selector] = await context.refSelectors([{ ref: field.ref, element: field.name }]);
+      const [selector] = await context.refSelectors(progress, [{ ref: field.ref, element: field.name }]);
       if (field.type === 'textbox' || field.type === 'slider') {
         actions.push({
           method: 'fill',
@@ -230,7 +230,7 @@ const fillForm = defineTool({
         });
       }
     }
-    return await context.runActionsAndWait(actions);
+    return await context.runActionsAndWait(progress, actions);
   },
 });
 

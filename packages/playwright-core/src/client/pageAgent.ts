@@ -51,7 +51,7 @@ export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implement
     return { usage };
   }
 
-  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<z.infer<Schema>> {
+  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<{ result: z.infer<Schema>, usage: channels.AgentUsage }> {
     const { result, usage } = await this._channel.extract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options });
     return { result, usage };
   }

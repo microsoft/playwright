@@ -15,7 +15,7 @@
  */
 
 import { Dispatcher } from './dispatcher';
-import { pageAgentExpect, pageAgentPerform, runLoop } from '../agent/pageAgent';
+import { pageAgentExpect, pageAgentExtract, pageAgentPerform } from '../agent/pageAgent';
 import { SdkObject } from '../instrumentation';
 import { Context } from '../agent/context';
 
@@ -30,53 +30,27 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
   _type_PageAgent = true;
   _type_EventTarget = true;
   private _page: Page;
-  private _agentParams: channels.PageAgentParams;
   private _usage: Usage = { turns: 0, inputTokens: 0, outputTokens: 0 };
+  private _context: Context;
 
   constructor(scope: PageDispatcher, options: channels.PageAgentParams) {
     super(scope, new SdkObject(scope._object, 'pageAgent'), 'PageAgent', { page: scope });
     this._page = scope._object;
-    this._agentParams = options;
+    this._context = new Context(this._page, options, this._eventSupport());
   }
 
   async perform(params: channels.PageAgentPerformParams, progress: Progress): Promise<channels.PageAgentPerformResult> {
-    const resolvedParams = resolveCallOptions(this._agentParams, params);
-    const context = new Context(progress, this._page, resolvedParams);
-
-    await pageAgentPerform(context, {
-      ...this._eventSupport(),
-      ...resolvedParams,
-      task: params.task,
-    });
+    await pageAgentPerform(progress, this._context, params.task, params);
     return { usage: this._usage };
   }
 
   async expect(params: channels.PageAgentExpectParams, progress: Progress): Promise<channels.PageAgentExpectResult> {
-    const resolvedParams = resolveCallOptions(this._agentParams, params);
-    const context = new Context(progress, this._page, resolvedParams);
-
-    await pageAgentExpect(context, {
-      ...this._eventSupport(),
-      ...resolvedParams,
-      expectation: params.expectation,
-    });
+    await pageAgentExpect(progress, this._context, params.expectation, params);
     return { usage: this._usage };
   }
 
   async extract(params: channels.PageAgentExtractParams, progress: Progress): Promise<channels.PageAgentExtractResult> {
-    const resolvedParams = resolveCallOptions(this._agentParams, params);
-    const context = new Context(progress, this._page, resolvedParams);
-
-    const task = `
-  ### Instructions
-  Extract the following information from the page. Do not perform any actions, just extract the information.
-
-  ### Query
-  ${params.query}`;
-    const { result } = await runLoop(context, [], task, params.schema, {
-      ...this._eventSupport(),
-      ...resolvedParams,
-    });
+    const result = await pageAgentExtract(progress, this._context, params.query, params.schema, params);
     return { result, usage: this._usage };
   }
 
@@ -119,13 +93,6 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
       }
     };
   }
-}
-
-function resolveCallOptions(agentParams: channels.PageAgentParams, callParams: channels.PageAgentPerformParams | channels.PageAgentExpectParams | channels.PageAgentExtractParams): channels.PageAgentParams {
-  return {
-    ...agentParams,
-    ...callParams,
-  };
 }
 
 type Usage = {
