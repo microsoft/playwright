@@ -41,6 +41,7 @@ import { Worker } from './worker';
 import { WritableStream } from './writableStream';
 import { ValidationError, findValidator  } from '../protocol/validator';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
+import { PageAgent } from './pageAgent';
 
 import type { ClientInstrumentation } from './clientInstrumentation';
 import type { HeadersArray } from './types';
@@ -294,6 +295,9 @@ export class Connection extends EventEmitter {
         break;
       case 'Page':
         result = new Page(parent, type, guid, initializer);
+        break;
+      case 'PageAgent':
+        result = new PageAgent(parent, type, guid, initializer);
         break;
       case 'Playwright':
         result = new Playwright(parent, type, guid, initializer);

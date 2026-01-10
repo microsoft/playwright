@@ -152,7 +152,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { option: true, box: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
   contextOptions: [{}, { option: true, box: true }],
-  agent: [({}, use) => use(undefined), { option: true, box: true }],
+  agentOptions: [({}, use) => use(undefined), { option: true, box: true }],
 
   _combinedContextOptions: [async ({
     acceptDownloads,
@@ -245,13 +245,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultContextNavigationTimeout = undefined;
   }, { auto: 'all-hooks-included',  title: 'context configuration', box: true } as any],
 
-  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions, agent }, use, testInfo) => {
+  _setupArtifacts: [async ({ playwright, screenshot, _combinedContextOptions }, use, testInfo) => {
     // This fixture has a separate zero-timeout slot to ensure that artifact collection
     // happens even after some fixtures or hooks time out.
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot, agent);
+    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
@@ -310,7 +310,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           if (!(key in options))
             options[key as keyof BrowserContextOptions] = value;
         }
-        await artifactsRecorder.willCreateBrowserContext(options);
       },
       runBeforeCreateRequestContext: async (options: APIRequestContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
@@ -454,6 +453,43 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     if (!page)
       page = await context.newPage();
     await use(page);
+  },
+
+  agent: async ({ page, agentOptions }, use, testInfo) => {
+    const testInfoImpl = testInfo as TestInfoImpl;
+    const cachePathTemplate = agentOptions?.cachePathTemplate ?? '{testDir}/{testFilePath}-cache.json';
+    const resolvedCacheFile = testInfoImpl._applyPathTemplate(cachePathTemplate, '', '.json');
+    const cacheFile = testInfoImpl.config.runAgents === 'all' ? undefined : await testInfoImpl._cloneStorage(resolvedCacheFile);
+    const cacheOutFile = path.join(testInfoImpl.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
+
+    const provider = agentOptions?.api && testInfo.config.runAgents !== 'none' ? {
+      api: agentOptions.api as any,
+      apiEndpoint: agentOptions.apiEndpoint,
+      apiKey: agentOptions.apiKey,
+      model: agentOptions.model,
+    } : undefined;
+
+    const cache = {
+      cacheFile,
+      cacheOutFile,
+    };
+
+    const agent = await page.agent({
+      provider,
+      cache,
+      maxTokens: agentOptions?.maxTokens,
+      maxTurns: agentOptions?.maxTurns,
+      secrets: agentOptions?.secrets,
+    });
+
+    await use(agent);
+
+    if (!resolvedCacheFile || !cacheOutFile)
+      return;
+    if (testInfo.status !== 'passed')
+      return;
+
+    await testInfoImpl._upstreamStorage(resolvedCacheFile, cacheOutFile);
   },
 
   request: async ({ playwright }, use) => {
@@ -644,14 +680,10 @@ class ArtifactsRecorder {
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
-  private _agent: PlaywrightTestOptions['agent'];
-  private _agentCacheFile: string | undefined;
-  private _agentCacheOutFile: string | undefined;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption, agent: PlaywrightTestOptions['agent']) {
+  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
     this._playwright = playwright;
     this._artifactsDir = artifactsDir;
-    this._agent = agent;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -678,15 +710,10 @@ class ArtifactsRecorder {
     await this._startTraceChunkOnContextCreation(context, context.tracing);
   }
 
-  async willCreateBrowserContext(options: BrowserContextOptions) {
-    await this._cloneAgentCache(options);
-  }
-
   async willCloseBrowserContext(context: BrowserContextImpl) {
     await this._stopTracing(context, context.tracing);
     await this._screenshotRecorder.captureTemporary(context);
     await this._takePageSnapshot(context);
-    await this._upstreamAgentCache(context);
   }
 
   private async _takePageSnapshot(context: BrowserContextImpl) {
@@ -706,42 +733,6 @@ class ArtifactsRecorder {
         this._pageSnapshot = (await page._snapshotForAI({ timeout: 5000 })).full;
       }, { internal: true });
     } catch {}
-  }
-
-  private async _cloneAgentCache(options: BrowserContextOptions) {
-    if (!this._agent)
-      return;
-
-    const cachePathTemplate = this._agent.cachePathTemplate ?? '{testDir}/{testFilePath}-cache.json';
-    this._agentCacheFile = this._testInfo._applyPathTemplate(cachePathTemplate, '', '.json');
-    this._agentCacheOutFile = path.join(this._testInfo.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
-
-    const cacheFile = this._testInfo.config.runAgents === 'all' ? undefined : await this._testInfo._cloneStorage(this._agentCacheFile);
-    const apiProps = this._testInfo.config.runAgents !== 'none' ? {
-      api: this._agent.api,
-      apiEndpoint: this._agent.apiEndpoint,
-      apiKey: this._agent.apiKey,
-      model: this._agent.model,
-    } : {
-      api: undefined,
-      apiEndpoint: undefined,
-      apiKey: undefined,
-      model: undefined,
-    };
-    options.agent = {
-      ...this._agent,
-      ...apiProps,
-      cacheFile,
-      cacheOutFile: this._agentCacheOutFile,
-    };
-  }
-
-  private async _upstreamAgentCache(context: BrowserContextImpl) {
-    if (!this._agentCacheFile || !this._agentCacheOutFile)
-      return;
-    if (this._testInfo.status !== 'passed')
-      return;
-    await this._testInfo._upstreamStorage(this._agentCacheFile, this._agentCacheOutFile);
   }
 
   async didCreateRequestContext(context: APIRequestContextImpl) {

@@ -21,38 +21,13 @@ import { debug } from '../../utilsBundle';
 import { Loop } from '../../mcpBundle';
 import { runAction } from './actionRunner';
 import { Context } from './context';
-import { Page } from '../page';
 import performTools from './performTools';
 import expectTools from './expectTools';
 
-import type { Progress } from '../progress';
 import type * as channels from '@protocol/channels';
-import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 import type { ToolDefinition } from './tool';
-
-type Usage = {
-  turns: number,
-  inputTokens: number,
-  outputTokens: number,
-};
-
-const emptyUsage: Usage = { turns: 0, inputTokens: 0, outputTokens: 0 };
-
-export async function pageAgentPerformWithEvents(progress: Progress, page: Page, options: channels.PageAgentPerformParams): Promise<{ usage: Usage, actions: actions.ActionWithCode[] }> {
-  const context = new Context(progress, page);
-  const usageContainer = { value: emptyUsage };
-  const eventSupport = eventSupportHooks(page, usageContainer);
-
-  await pageAgentPerform(context, {
-    ...eventSupport,
-    ...options,
-  });
-  return {
-    usage: usageContainer.value,
-    actions: context.actions,
-  };
-}
+import type * as loopTypes from '@lowire/loop';
 
 export async function pageAgentPerform(context: Context, options: loopTypes.LoopEvents & channels.PageAgentPerformParams) {
   const cacheKey = (options.cacheKey ?? options.task).trim();
@@ -70,33 +45,12 @@ ${options.task}
 
   await runLoop(context, performTools, task, undefined, options);
   await updateCache(context, cacheKey);
-  return { actions: context.actions };
-}
-
-export async function pageAgentExpectWithEvents(progress: Progress, page: Page, options: channels.PageAgentExpectParams): Promise<{ usage: Usage, actions: actions.ActionWithCode[] }> {
-  const context = new Context(progress, page);
-  const usageContainer = { value: emptyUsage };
-  const eventSupport = eventSupportHooks(page, usageContainer);
-
-  await pageAgentExpect(context, {
-    ...eventSupport,
-    ...options,
-  });
-  return {
-    usage: usageContainer.value,
-    actions: context.actions,
-  };
 }
 
 export async function pageAgentExpect(context: Context, options: loopTypes.LoopEvents & channels.PageAgentExpectParams) {
   const cacheKey = (options.cacheKey ?? options.expectation).trim();
-  const cachedActions = await cachedPerform(context, cacheKey);
-  if (cachedActions) {
-    return {
-      usage: emptyUsage,
-      actions: cachedActions,
-    };
-  }
+  if (await cachedPerform(context, cacheKey))
+    return;
 
   const task = `
 ### Instructions
@@ -111,25 +65,7 @@ ${options.expectation}
   await updateCache(context, cacheKey);
 }
 
-export async function pageAgentExtractWithEvents(progress: Progress, page: Page, options: channels.PageAgentExtractParams): Promise<{
-  result: any
-  usage: Usage,
-}> {
-  const context = new Context(progress, page);
-  const usageContainer = { value: emptyUsage };
-  const eventSupport = eventSupportHooks(page, usageContainer);
-
-  const task = `
-### Instructions
-Extract the following information from the page. Do not perform any actions, just extract the information.
-
-### Query
-${options.query}`;
-  const { result } = await runLoop(context, [], task, options.schema, { ...eventSupport, ...options });
-  return { result, usage: usageContainer.value };
-}
-
-async function runLoop(context: Context, toolDefinitions: ToolDefinition[], userTask: string, resultSchema: loopTypes.Schema | undefined, options: loopTypes.LoopEvents & {
+export async function runLoop(context: Context, toolDefinitions: ToolDefinition[], userTask: string, resultSchema: loopTypes.Schema | undefined, options: loopTypes.LoopEvents & {
   api?: string,
   apiEndpoint?: string,
   apiKey?: string,
@@ -140,31 +76,24 @@ async function runLoop(context: Context, toolDefinitions: ToolDefinition[], user
   result: any
 }> {
   const { page } = context;
-  const browserContext = page.browserContext;
 
-  const api = options.api ?? browserContext._options.agent?.api;
-  const apiEndpoint = options.apiEndpoint ?? browserContext._options.agent?.apiEndpoint;
-  const apiKey = options.apiKey ?? browserContext._options.agent?.apiKey;
-  const model = options.model ?? browserContext._options.agent?.model;
-
-  if (!api || !apiKey || !model)
+  if (!context.options?.api || !context.options?.apiKey || !context.options?.model)
     throw new Error(`This action requires the API and API key to be set on the browser context`);
 
   const { full } = await page.snapshotForAI(context.progress);
   const { tools, callTool } = toolsForLoop(context, toolDefinitions, { resultSchema });
 
-  const limits = context.limits(options);
   const loop = new Loop({
-    api: api as any,
-    apiEndpoint,
-    apiKey,
-    model,
+    api: context.options.api as any,
+    apiEndpoint: context.options.apiEndpoint,
+    apiKey: context.options.apiKey,
+    model: context.options.model,
+    maxTurns: context.options.maxTurns,
+    maxTokens: context.options.maxTokens,
     summarize: true,
     debug,
     callTool,
     tools,
-    ...limits,
-    ...options
   });
 
   const task = `${userTask}
@@ -235,40 +164,4 @@ async function cachedActions(cacheFile: string): Promise<Cache> {
     allCaches.set(cacheFile, cache);
   }
   return cache;
-}
-
-export function eventSupportHooks(page: Page, usageContainer: { value: Usage }): loopTypes.LoopEvents {
-  return {
-    onBeforeTurn(params: { conversation: loopTypes.Conversation }) {
-      const userMessage = params.conversation.messages.find(m => m.role === 'user');
-      page.emit(Page.Events.AgentTurn, { role: 'user', message: userMessage?.content ?? '' });
-      return 'continue' as const;
-    },
-
-    onAfterTurn(params: { assistantMessage: loopTypes.AssistantMessage, totalUsage: loopTypes.Usage }) {
-      const usage = { inputTokens: params.totalUsage.input, outputTokens: params.totalUsage.output };
-      const intent = params.assistantMessage.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
-      page.emit(Page.Events.AgentTurn, { role: 'assistant', message: intent, usage });
-      if (!params.assistantMessage.content.filter(c => c.type === 'tool_call').length)
-        page.emit(Page.Events.AgentTurn, { role: 'assistant', message: `no tool calls`, usage });
-      usageContainer.value = { turns: usageContainer.value.turns + 1, inputTokens: usageContainer.value.inputTokens + usage.inputTokens, outputTokens: usageContainer.value.outputTokens + usage.outputTokens };
-      return 'continue' as const;
-    },
-
-    onBeforeToolCall(params: { toolCall: loopTypes.ToolCallContentPart }) {
-      page.emit(Page.Events.AgentTurn, { role: 'assistant', message: `call tool "${params.toolCall.name}"` });
-      return 'continue' as const;
-    },
-
-    onAfterToolCall(params: { toolCall: loopTypes.ToolCallContentPart, result: loopTypes.ToolResult }) {
-      const suffix = params.toolCall.result?.isError ? 'failed' : 'succeeded';
-      page.emit(Page.Events.AgentTurn, { role: 'user', message: `tool "${params.toolCall.name}" ${suffix}` });
-      return 'continue' as const;
-    },
-
-    onToolCallError(params: { toolCall: loopTypes.ToolCallContentPart, error: Error }) {
-      page.emit(Page.Events.AgentTurn, { role: 'user', message: `tool "${params.toolCall.name}" failed: ${params.error.message}` });
-      return 'continue' as const;
-    }
-  };
 }

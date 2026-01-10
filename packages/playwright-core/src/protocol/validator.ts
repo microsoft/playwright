@@ -602,17 +602,6 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
-  agent: tOptional(tObject({
-    api: tOptional(tString),
-    apiKey: tOptional(tString),
-    apiEndpoint: tOptional(tString),
-    model: tOptional(tString),
-    cacheFile: tOptional(tString),
-    cacheOutFile: tOptional(tString),
-    secrets: tOptional(tArray(tType('NameValue'))),
-    maxTurns: tOptional(tInt),
-    maxTokens: tOptional(tInt),
-  })),
   userDataDir: tString,
   slowMo: tOptional(tFloat),
 });
@@ -706,17 +695,6 @@ scheme.BrowserNewContextParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
-  agent: tOptional(tObject({
-    api: tOptional(tString),
-    apiKey: tOptional(tString),
-    apiEndpoint: tOptional(tString),
-    model: tOptional(tString),
-    cacheFile: tOptional(tString),
-    cacheOutFile: tOptional(tString),
-    secrets: tOptional(tArray(tType('NameValue'))),
-    maxTurns: tOptional(tInt),
-    maxTokens: tOptional(tInt),
-  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -788,17 +766,6 @@ scheme.BrowserNewContextForReuseParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
-  agent: tOptional(tObject({
-    api: tOptional(tString),
-    apiKey: tOptional(tString),
-    apiEndpoint: tOptional(tString),
-    model: tOptional(tString),
-    cacheFile: tOptional(tString),
-    cacheOutFile: tOptional(tString),
-    secrets: tOptional(tArray(tType('NameValue'))),
-    maxTurns: tOptional(tInt),
-    maxTokens: tOptional(tInt),
-  })),
   proxy: tOptional(tObject({
     server: tString,
     bypass: tOptional(tString),
@@ -847,6 +814,7 @@ scheme.WorkerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams')
 scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.PageAgentWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
 scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
@@ -854,6 +822,7 @@ scheme.WorkerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult')
 scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.PageAgentWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
   isChromium: tBoolean,
   requestContext: tChannel(['APIRequestContext']),
@@ -915,17 +884,6 @@ scheme.BrowserContextInitializer = tObject({
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
     selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
     testIdAttributeName: tOptional(tString),
-    agent: tOptional(tObject({
-      api: tOptional(tString),
-      apiKey: tOptional(tString),
-      apiEndpoint: tOptional(tString),
-      model: tOptional(tString),
-      cacheFile: tOptional(tString),
-      cacheOutFile: tOptional(tString),
-      secrets: tOptional(tArray(tType('NameValue'))),
-      maxTurns: tOptional(tInt),
-      maxTokens: tOptional(tInt),
-    })),
   }),
 });
 scheme.BrowserContextBindingCallEvent = tObject({
@@ -1190,14 +1148,6 @@ scheme.PageInitializer = tObject({
   })),
   isClosed: tBoolean,
   opener: tOptional(tChannel(['Page'])),
-});
-scheme.PageAgentTurnEvent = tObject({
-  role: tString,
-  message: tString,
-  usage: tOptional(tObject({
-    inputTokens: tInt,
-    outputTokens: tInt,
-  })),
 });
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
@@ -1537,43 +1487,19 @@ scheme.PageUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.PageUpdateSubscriptionResult = tOptional(tObject({}));
-scheme.PageAgentPerformParams = tObject({
-  task: tString,
+scheme.PageAgentParams = tObject({
   api: tOptional(tString),
-  apiEndpoint: tOptional(tString),
   apiKey: tOptional(tString),
+  apiEndpoint: tOptional(tString),
+  model: tOptional(tString),
+  cacheFile: tOptional(tString),
+  cacheOutFile: tOptional(tString),
+  secrets: tOptional(tArray(tType('NameValue'))),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
-  cacheKey: tOptional(tString),
 });
-scheme.PageAgentPerformResult = tObject({
-  usage: tType('AgentUsage'),
-});
-scheme.PageAgentExpectParams = tObject({
-  expectation: tString,
-  api: tOptional(tString),
-  apiEndpoint: tOptional(tString),
-  apiKey: tOptional(tString),
-  maxTurns: tOptional(tInt),
-  maxTokens: tOptional(tInt),
-  cacheKey: tOptional(tString),
-});
-scheme.PageAgentExpectResult = tObject({
-  usage: tType('AgentUsage'),
-});
-scheme.PageAgentExtractParams = tObject({
-  query: tString,
-  schema: tAny,
-  api: tOptional(tString),
-  apiEndpoint: tOptional(tString),
-  apiKey: tOptional(tString),
-  maxTurns: tOptional(tInt),
-  maxTokens: tOptional(tInt),
-  cacheKey: tOptional(tString),
-});
-scheme.PageAgentExtractResult = tObject({
-  result: tAny,
-  usage: tType('AgentUsage'),
+scheme.PageAgentResult = tObject({
+  agent: tChannel(['PageAgent']),
 });
 scheme.FrameInitializer = tObject({
   url: tString,
@@ -2863,17 +2789,6 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
-  agent: tOptional(tObject({
-    api: tOptional(tString),
-    apiKey: tOptional(tString),
-    apiEndpoint: tOptional(tString),
-    model: tOptional(tString),
-    cacheFile: tOptional(tString),
-    cacheOutFile: tOptional(tString),
-    secrets: tOptional(tArray(tType('NameValue'))),
-    maxTurns: tOptional(tInt),
-    maxTokens: tOptional(tInt),
-  })),
   pkg: tOptional(tString),
   args: tOptional(tArray(tString)),
   proxy: tOptional(tObject({
@@ -2977,6 +2892,48 @@ scheme.JsonPipeSendParams = tObject({
 scheme.JsonPipeSendResult = tOptional(tObject({}));
 scheme.JsonPipeCloseParams = tOptional(tObject({}));
 scheme.JsonPipeCloseResult = tOptional(tObject({}));
+scheme.PageAgentInitializer = tObject({
+  page: tChannel(['Page']),
+});
+scheme.PageAgentTurnEvent = tObject({
+  role: tString,
+  message: tString,
+  usage: tOptional(tObject({
+    inputTokens: tInt,
+    outputTokens: tInt,
+  })),
+});
+scheme.PageAgentPerformParams = tObject({
+  task: tString,
+  maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
+});
+scheme.PageAgentPerformResult = tObject({
+  usage: tType('AgentUsage'),
+});
+scheme.PageAgentExpectParams = tObject({
+  expectation: tString,
+  maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
+});
+scheme.PageAgentExpectResult = tObject({
+  usage: tType('AgentUsage'),
+});
+scheme.PageAgentExtractParams = tObject({
+  query: tString,
+  schema: tAny,
+  maxTurns: tOptional(tInt),
+  maxTokens: tOptional(tInt),
+  cacheKey: tOptional(tString),
+});
+scheme.PageAgentExtractResult = tObject({
+  result: tAny,
+  usage: tType('AgentUsage'),
+});
+scheme.PageAgentDisposeParams = tOptional(tObject({}));
+scheme.PageAgentDisposeResult = tOptional(tObject({}));
 scheme.AgentUsage = tObject({
   turns: tInt,
   inputTokens: tInt,

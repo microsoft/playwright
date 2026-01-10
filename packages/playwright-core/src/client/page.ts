@@ -89,7 +89,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   _routes: RouteHandler[] = [];
   _webSocketRoutes: WebSocketRouteHandler[] = [];
 
-  readonly agent: PageAgent;
   readonly coverage: Coverage;
   readonly keyboard: Keyboard;
   readonly mouse: Mouse;
@@ -122,7 +121,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._browserContext = parent as unknown as BrowserContext;
     this._timeoutSettings = new TimeoutSettings(this._platform, this._browserContext._timeoutSettings);
 
-    this.agent = new PageAgent(this);
     this.keyboard = new Keyboard(this);
     this.mouse = new Mouse(this);
     this.request = this._browserContext.request;
@@ -136,7 +134,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
 
-    this._channel.on('agentTurn', params => this.emit(Events.Page.AgentTurn, params));
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
     this._channel.on('crash', () => this._onCrash());
@@ -847,6 +844,22 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await platform.fs().promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
+  }
+
+  async agent(options: Parameters<api.Page['agent']>[0] = {}) {
+    const params: channels.PageAgentParams = {
+      api: options.provider?.api,
+      apiEndpoint: options.provider?.apiEndpoint,
+      apiKey: options.provider?.apiKey,
+      model: options.provider?.model,
+      cacheFile: options.cache?.cacheFile,
+      cacheOutFile: options.cache?.cacheOutFile,
+      maxTokens: options.maxTokens,
+      maxTurns: options.maxTurns,
+      secrets: options.secrets ? Object.entries(options.secrets).map(([name, value]) => ({ name, value })) : undefined,
+    };
+    const { agent } = await this._channel.agent(params);
+    return PageAgent.from(agent);
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {

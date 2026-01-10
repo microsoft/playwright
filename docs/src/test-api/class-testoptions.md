@@ -46,10 +46,12 @@ export default defineConfig({
 });
 ```
 
-## property: TestOptions.agent
+## property: TestOptions.agentOptions
 * since: v1.58
 - type: <[Object]>
-  - `provider` ?<[string]> LLM provider to use. Required in non-cache mode.
+  - `api` ?<[string]> LLM provider to use. Required in non-cache mode.
+  - `apiKey` ?<[string]> Key for the LLM provider.
+  - `apiEndpoint` ?<[string]> LLM provider endpoint.
   - `model` ?<[string]> Model identifier within the provider. Required in non-cache mode.
   - `cachePathTemplate` ?<[string]> Cache file template to use/generate code for performed actions into.
   - `maxTurns` ?<[int]> Maximum number of agentic turns to take per call. Defaults to 10.

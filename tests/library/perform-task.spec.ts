@@ -19,7 +19,7 @@ import z from 'zod';
 import { browserTest as test, expect } from '../config/browserTest';
 
 test.use({
-  agent: {
+  agentOptions: {
     api: 'anthropic',
     apiKey: process.env.AZURE_SONNET_API_KEY!,
     apiEndpoint: process.env.AZURE_SONNET_ENDPOINT!,
@@ -30,13 +30,13 @@ test.use({
   }
 });
 
-test('page.perform', async ({ page, server }) => {
+test('page.perform', async ({ page, agent, server }) => {
   await page.goto(server.PREFIX + '/evals/fill-form.html');
-  page.on('agentturn', turn => {
+  agent.on('turn', turn => {
     // For debugging purposes it is on for now.
     console.log('agentturn', turn);
   });
-  await page.agent.perform('Fill out the form with the following details:\n' +
+  await agent.perform('Fill out the form with the following details:\n' +
     'Name: John Smith\n' +
     'Address: 1045 La Avenida St, Mountain View, CA 94043\n' +
     'Email: john.smith@at-microsoft.com');
@@ -50,18 +50,18 @@ test('page.perform', async ({ page, server }) => {
   `);
 });
 
-test('page.perform secret', async ({ page, server }) => {
+test('page.perform secret', async ({ page, agent }) => {
   await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
-  await page.agent.perform('Enter x-secret-email into the email field');
+  await agent.perform('Enter x-secret-email into the email field');
   await expect(page.locator('body')).toMatchAriaSnapshot(`
     - textbox "Email Address": secret-email@at-microsoft.com
   `);
 });
 
-test.skip('extract task', async ({ page }) => {
+test.skip('extract task', async ({ page, agent }) => {
   await page.goto('https://demo.playwright.dev/todomvc');
-  await page.agent.perform('Add "Buy groceries" todo');
-  console.log(await page.agent.extract('List todos with their statuses', z.object({
+  await agent.perform('Add "Buy groceries" todo');
+  console.log(await agent.extract('List todos with their statuses', z.object({
     items: z.object({
       title: z.string(),
       completed: z.boolean()
@@ -69,7 +69,7 @@ test.skip('extract task', async ({ page }) => {
   })));
 });
 
-test('page.perform expect value', async ({ page, server }) => {
+test('page.perform expect value', async ({ page, agent }) => {
   await page.setContent(`
     <script>
     function onInput(event) {
@@ -82,7 +82,7 @@ test('page.perform expect value', async ({ page, server }) => {
     <input type="email" name="email" placeholder="Email Address" oninput="onInput(event);"/>
     <div id="error" style="color: red; display: none;">Error: Invalid email address</div>
   `);
-  await page.agent.perform(`
+  await agent.perform(`
     - Enter "bogus" into the email field
     - Check that the value is in fact "bogus"
     - Check that the error message is displayed

@@ -544,17 +544,6 @@ sequence of events is `request`, `response` and `requestfinished`.
 Emitted when [response] status and headers are received for a request. For a successful response, the sequence of events
 is `request`, `response` and `requestfinished`.
 
-## event: Page.agentTurn
-* since: v1.58
-- argument: <[Object]>
-  - `role` <[string]>
-  - `message` <[string]>
-  - `usage` ?<[Object]>
-    - `inputTokens` <[int]>
-    - `outputTokens` <[int]>
-
-Emitted when the agent makes a turn.
-
 ## event: Page.webSocket
 * since: v1.9
 - argument: <[WebSocket]>
@@ -720,9 +709,42 @@ current working directory.
 
 Raw CSS content to be injected into frame.
 
-## property: Page.agent
+## async method: Page.agent
 * since: v1.58
-- type: <[PageAgent]>
+- returns: <[PageAgent]>
+
+Initialize page agent with the llm provider and cache.
+
+### option: Page.agent.cache
+* since: v1.58
+- `cache` <[Object]>
+  - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
+  - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
+
+### option: Page.agent.maxTurns
+* since: v1.58
+- `maxTurns` <[int]>
+
+Maximum number of agentic turns to take per call. Defaults to 10.
+
+### option: Page.agent.maxTokens
+* since: v1.58
+- `maxTokens` ?<[int]>
+
+### option: Page.agent.provider
+* since: v1.58
+- `provider` <[Object]>
+  - `api` <[PageAgentAPI]<"openai"|"openai-compatible"|"anthropic"|"google">> API to use.
+  - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
+  - `apiKey` <[string]> API key for the LLM provider.
+  - `model` <[string]> Model identifier within the provider. Required in non-cache mode.
+
+### option: Page.agent.secrets
+* since: v1.58
+- `secrets` ?<[Object]<[string], [string]>>
+
+Secrets to hide from the LLM.
+
 
 ## async method: Page.bringToFront
 * since: v1.8

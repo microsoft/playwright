@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, PageAgent, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
@@ -265,7 +265,7 @@ export interface PlaywrightWorkerOptions {
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
-export type Agent = {
+export type AgentOptions = {
   api: string;
   apiKey: string;
   apiEndpoint?: string;
@@ -278,7 +278,7 @@ export type Agent = {
 };
 
 export interface PlaywrightTestOptions {
-  agent: Agent | undefined;
+  agentOptions: AgentOptions | undefined;
   acceptDownloads: boolean;
   bypassCSP: boolean;
   colorScheme: ColorScheme;
@@ -317,6 +317,7 @@ export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
   request: APIRequestContext;
+  agent: PageAgent;
 }
 
 type ExcludeProps<A, B> = {

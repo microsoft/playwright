@@ -77,7 +77,6 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async newContextForReuse(params: channels.BrowserNewContextForReuseParams, progress: Progress): Promise<channels.BrowserNewContextForReuseResult> {
-    delete params.agent;
     const context = await this._object.newContextForReuse(progress, params);
     const contextDispatcher = BrowserContextDispatcher.from(this, context);
     this._dispatchEvent('context', { context: contextDispatcher });

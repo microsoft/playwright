@@ -1019,21 +1019,6 @@ export interface Page {
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
   /**
-   * Emitted when the agent makes a turn.
-   */
-  on(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
-
-  /**
    * Emitted when the page closes.
    */
   on(event: 'close', listener: (page: Page) => any): this;
@@ -1243,21 +1228,6 @@ export interface Page {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
   once(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1349,21 +1319,6 @@ export interface Page {
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
   once(event: 'worker', listener: (worker: Worker) => any): this;
-
-  /**
-   * Emitted when the agent makes a turn.
-   */
-  addListener(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
 
   /**
    * Emitted when the page closes.
@@ -1575,21 +1530,6 @@ export interface Page {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   removeListener(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1685,21 +1625,6 @@ export interface Page {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
   off(event: 'close', listener: (page: Page) => any): this;
 
   /**
@@ -1791,21 +1716,6 @@ export interface Page {
    * Removes an event listener added by `on` or `addListener`.
    */
   off(event: 'worker', listener: (worker: Worker) => any): this;
-
-  /**
-   * Emitted when the agent makes a turn.
-   */
-  prependListener(event: 'agentturn', listener: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => any): this;
 
   /**
    * Emitted when the page closes.
@@ -2182,6 +2092,58 @@ export interface Page {
      */
     url?: string;
   }): Promise<ElementHandle>;
+
+  /**
+   * Initialize page agent with the llm provider and cache.
+   * @param options
+   */
+  agent(options?: {
+    cache?: {
+      /**
+       * Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
+       */
+      cacheFile?: string;
+
+      /**
+       * When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
+       */
+      cacheOutFile?: string;
+    };
+
+    maxTokens?: number;
+
+    /**
+     * Maximum number of agentic turns to take per call. Defaults to 10.
+     */
+    maxTurns?: number;
+
+    provider?: {
+      /**
+       * API to use.
+       */
+      api: "openai"|"openai-compatible"|"anthropic"|"google";
+
+      /**
+       * Endpoint to use if different from default.
+       */
+      apiEndpoint?: string;
+
+      /**
+       * API key for the LLM provider.
+       */
+      apiKey: string;
+
+      /**
+       * Model identifier within the provider. Required in non-cache mode.
+       */
+      model: string;
+    };
+
+    /**
+     * Secrets to hide from the LLM.
+     */
+    secrets?: { [key: string]: string; };
+  }): Promise<PageAgent>;
 
   /**
    * Brings page to front (activates tab).
@@ -4824,41 +4786,6 @@ export interface Page {
   };
 
   /**
-   * Emitted when the agent makes a turn.
-   */
-  waitForEvent(event: 'agentturn', optionsOrPredicate?: { predicate?: (data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => boolean | Promise<boolean>, timeout?: number } | ((data: {
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }) => boolean | Promise<boolean>)): Promise<{
-    role: string;
-
-    message: string;
-
-    usage?: {
-      inputTokens: number;
-
-      outputTokens: number;
-    };
-  }>;
-
-  /**
    * Emitted when the page closes.
    */
   waitForEvent(event: 'close', optionsOrPredicate?: { predicate?: (page: Page) => boolean | Promise<boolean>, timeout?: number } | ((page: Page) => boolean | Promise<boolean>)): Promise<Page>;
@@ -5303,8 +5230,6 @@ export interface Page {
    */
   workers(): Array<Worker>;
 
-  agent: PageAgent;
-
   /**
    * Playwright has ability to mock clock and passage of time.
    */
@@ -5346,7 +5271,7 @@ export interface PageAgent {
    * **Usage**
    *
    * ```js
-   * await page.agent.extract('List of items in the cart', z.object({
+   * await agent.extract('List of items in the cart', z.object({
    *   title: z.string().describe('Item title to extract'),
    *   price: z.string().describe('Item price to extract'),
    * }).array());
@@ -5358,35 +5283,113 @@ export interface PageAgent {
    */
   extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
   /**
+   * Emitted when the agent makes a turn.
+   */
+  on(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  addListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  prependListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Dispose this agent.
+   */
+  dispose(): Promise<void>;
+
+  /**
    * Expect certain condition to be met.
    *
    * **Usage**
    *
    * ```js
-   * await page.agent.expect('"0 items" to be reported');
+   * await agent.expect('"0 items" to be reported');
    * ```
    *
    * @param expectation Expectation to assert.
    * @param options
    */
   expect(expectation: string, options?: {
-    /**
-     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
-     */
-    api?: string;
-
-    /**
-     * Endpoint to use if different from default.
-     */
-    apiEndpoint?: string;
-
-    /**
-     * API key for the LLM provider.
-     *
-     * API version if relevant.
-     */
-    apiKey?: string;
-
     /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
      * with the `task` as a key. This option allows controlling the cache key explicitly.
@@ -5411,30 +5414,13 @@ export interface PageAgent {
    * **Usage**
    *
    * ```js
-   * await page.agent.perform('Click submit button');
+   * await agent.perform('Click submit button');
    * ```
    *
    * @param task Task to perform using agentic loop.
    * @param options
    */
   perform(task: string, options?: {
-    /**
-     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
-     */
-    api?: string;
-
-    /**
-     * Endpoint to use if different from default.
-     */
-    apiEndpoint?: string;
-
-    /**
-     * API key for the LLM provider.
-     *
-     * API version if relevant.
-     */
-    apiKey?: string;
-
     /**
      * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
      * with the `task` as a key. This option allows controlling the cache key explicitly.
@@ -5460,6 +5446,8 @@ export interface PageAgent {
       outputTokens: number;
     };
   }>;
+
+  [Symbol.asyncDispose](): Promise<void>;
 }
 
 /**
@@ -22303,57 +22291,6 @@ export interface BrowserContextOptions {
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    */
   acceptDownloads?: boolean;
-
-  /**
-   * Agent settings for [page.agent](https://playwright.dev/docs/api/class-page#page-agent).
-   */
-  agent?: {
-    /**
-     * API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
-     */
-    api?: string;
-
-    /**
-     * Endpoint to use if different from default.
-     */
-    apiEndpoint?: string;
-
-    /**
-     * API key for the LLM provider.
-     */
-    apiKey?: string;
-
-    /**
-     * Model identifier within the provider. Required in non-cache mode.
-     */
-    model?: string;
-
-    /**
-     * Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
-     */
-    cacheFile?: string;
-
-    /**
-     * When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
-     */
-    cacheOutFile?: string;
-
-    /**
-     * Secrets to hide from the LLM.
-     */
-    secrets?: { [key: string]: string; };
-
-    /**
-     * Maximum number of agentic turns to take per call. Defaults to 10.
-     */
-    maxTurns?: number;
-
-    /**
-     * Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this
-     * value. Defaults on unlimited.
-     */
-    maxTokens?: number;
-  };
 
   /**
    * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),

@@ -589,20 +589,6 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
-    agent:
-      type: object?
-      properties:
-        api: string?
-        apiKey: string?
-        apiEndpoint: string?
-        model: string?
-        cacheFile: string?
-        cacheOutFile: string?
-        secrets:
-          type: array?
-          items: NameValue
-        maxTurns: int?
-        maxTokens: int?
 
 LocalUtils:
   type: interface
@@ -2027,46 +2013,24 @@ Page:
           - requestFailed
         enabled: boolean
 
-    agentPerform:
+    agent:
       internal: true
       parameters:
-        task: string
-        $mixin: PageAgentOptions
-
+        api: string?
+        apiKey: string?
+        apiEndpoint: string?
+        model: string?
+        cacheFile: string?
+        cacheOutFile: string?
+        secrets:
+          type: array?
+          items: NameValue
+        maxTurns: int?
+        maxTokens: int?
       returns:
-        usage: AgentUsage
-
-    agentExpect:
-      internal: true
-      parameters:
-        expectation: string
-        $mixin: PageAgentOptions
-
-      returns:
-        usage: AgentUsage
-
-    agentExtract:
-      internal: true
-      parameters:
-        query: string
-        schema: json
-        $mixin: PageAgentOptions
-
-      returns:
-        result: json
-        usage: AgentUsage
+        agent: PageAgent
 
   events:
-
-    agentTurn:
-      parameters:
-        role: string
-        message: string
-        usage:
-          type: object?
-          properties:
-            inputTokens: int
-            outputTokens: int
 
     bindingCall:
       parameters:
@@ -4345,12 +4309,63 @@ JsonPipe:
       parameters:
         reason: string?
 
+
+PageAgent:
+  type: interface
+  extends: EventTarget
+
+  initializer:
+    page: Page
+
+  commands:
+    perform:
+      internal: true
+      parameters:
+        task: string
+        $mixin: PageAgentOptions
+
+      returns:
+        usage: AgentUsage
+
+    expect:
+      internal: true
+      parameters:
+        expectation: string
+        $mixin: PageAgentOptions
+
+      returns:
+        usage: AgentUsage
+
+    extract:
+      internal: true
+      parameters:
+        query: string
+        schema: json
+        $mixin: PageAgentOptions
+
+      returns:
+        result: json
+        usage: AgentUsage
+
+    dispose:
+      internal: true
+
+  events:
+
+    turn:
+      parameters:
+        role: string
+        message: string
+        usage:
+          type: object?
+          properties:
+            inputTokens: int
+            outputTokens: int
+
+
 PageAgentOptions:
   type: mixin
   properties:
-    api: string?
-    apiEndpoint: string?
-    apiKey: string?
     maxTurns: int?
     maxTokens: int?
     cacheKey: string?
