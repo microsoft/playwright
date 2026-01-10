@@ -23,24 +23,22 @@ import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
-import type { BrowserContextOptions } from '../types';
 import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
 import type { ToolDefinition } from './tool';
-
-type AgentOptions = BrowserContextOptions['agent'];
+import type * as channels from '@protocol/channels';
 
 export class Context {
-  readonly options: AgentOptions;
   readonly page: Page;
   readonly actions: actions.ActionWithCode[] = [];
   readonly sdkLanguage: Language;
   readonly progress: Progress;
+  readonly options: channels.PageAgentParams;
   private _callIntent: string | undefined;
 
-  constructor(apiCallProgress: Progress, page: Page) {
+  constructor(apiCallProgress: Progress, page: Page, options: channels.PageAgentParams) {
     this.progress = apiCallProgress;
     this.page = page;
-    this.options = page.browserContext._options.agent;
+    this.options = options;
     this.sdkLanguage = page.browserContext._browser.sdkLanguage();
   }
 
@@ -141,13 +139,6 @@ export class Context {
         throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
       }
     }));
-  }
-
-  limits(options: { maxTurns?: number, maxTokens?: number } = {}): { maxTurns: number | undefined, maxTokens: number | undefined } {
-    return {
-      maxTurns: options.maxTurns ?? this.options?.maxTurns ?? 10,
-      maxTokens: options.maxTokens ?? this.options?.maxTokens ?? undefined,
-    };
   }
 
   private _redactText(text: string): string {

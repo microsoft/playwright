@@ -518,7 +518,7 @@ export default defineConfig({
 * since: v1.58
 - type: ?<['RunAgentsMode]<"all"|"missing"|"none">>
 
-Whether to run LLM agent for [`property: Page.agent`]:
+Whether to run LLM agent for [PageAgent]:
 * "all" disregards existing cache and performs all actions via LLM
 * "missing" only performs actions that don't have generated cache actions
 * "none" does not talk to LLM at all, relies on the cached actions (default)

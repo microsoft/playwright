@@ -15,38 +15,52 @@
  * limitations under the License.
  */
 
+import { ChannelOwner } from './channelOwner';
+import { Events } from './events';
+import { Page } from './page';
+
 import type * as api from '../../types/types';
-import type { Page } from './page';
 import type z from 'zod';
+import type * as channels from '@protocol/channels';
 
 type PageAgentOptions = {
-  api?: string;
-  apiEndpoint?: string;
-  apiKey?: string;
-  model?: string;
   maxTokens?: number;
   maxTurns?: number;
   cacheKey?: string;
 };
 
-export class PageAgent implements api.PageAgent {
+export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implements api.PageAgent {
   private _page: Page;
 
-  constructor(page: Page) {
-    this._page = page;
+  static from(channel: channels.PageAgentChannel): PageAgent {
+    return (channel as any)._object;
+  }
+
+  constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageAgentInitializer) {
+    super(parent, type, guid, initializer);
+    this._page = Page.from(initializer.page);
+    this._channel.on('turn', params => this.emit(Events.Page.AgentTurn, params));
   }
 
   async expect(expectation: string, options: PageAgentOptions = {}) {
-    await this._page._channel.agentExpect({ expectation, ...options });
+    await this._channel.expect({ expectation, ...options });
   }
 
   async perform(task: string, options: PageAgentOptions = {}) {
-    const { usage } = await this._page._channel.agentPerform({ task, ...options });
+    const { usage } = await this._channel.perform({ task, ...options });
     return { usage };
   }
 
   async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<z.infer<Schema>> {
-    const { result, usage } = await this._page._channel.agentExtract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options });
+    const { result, usage } = await this._channel.extract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options });
     return { result, usage };
+  }
+
+  async dispose() {
+    await this._channel.dispose();
+  }
+
+  async [Symbol.asyncDispose]() {
+    await this.dispose();
   }
 }

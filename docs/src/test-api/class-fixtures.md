@@ -18,6 +18,10 @@ Given the test above, Playwright Test will set up the `page` fixture before runn
 
 Playwright Test comes with builtin fixtures listed below, and you can add your own fixtures as well. Playwright Test also [provides options][TestOptions] to  configure [`property: Fixtures.browser`], [`property: Fixtures.context`] and [`property: Fixtures.page`].
 
+## property: Fixtures.agent
+* since: v1.58
+- type: <[PageAgent]>
+
 ## property: Fixtures.browser
 * since: v1.10
 - type: <[Browser]>

@@ -370,40 +370,6 @@ It makes the execution of the tests non-deterministic.
 Emulates consistent window screen size available inside web page via `window.screen`. Is only used when the
 [`option: viewport`] is set.
 
-## context-option-agent
-- `agent` <[Object]>
-  - `api` ?<[string]> API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
-  - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
-  - `apiKey` ?<[string]> API key for the LLM provider.
-  - `model` ?<[string]> Model identifier within the provider. Required in non-cache mode.
-  - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
-  - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
-  - `secrets` ?<[Object]<[string], [string]>> Secrets to hide from the LLM.
-  - `maxTurns` ?<[int]> Maximum number of agentic turns to take per call. Defaults to 10.
-  - `maxTokens` ?<[int]> Maximum number of tokens to consume per call. The agentic loop will stop after input + output tokens exceed this value. Defaults on unlimited.
-
-Agent settings for [`property: Page.agent`].
-
-## page-agent-api
-* since: v1.58
-- `api` <[string]>
-
-API to use, `openapi`, `google` or `anthropic`. Required in non-cache mode.
-
-## page-agent-api-endpoint
-* since: v1.58
-- `apiEndpoint` <[string]>
-
-Endpoint to use if different from default.
-
-## page-agent-api-key
-* since: v1.58
-- `apiKey` <[string]>
-
-API key for the LLM provider.
-
-API version if relevant.
-
 ## page-agent-cache-key
 * since: v1.58
 - `cacheKey` <[string]>
@@ -425,9 +391,6 @@ Defaults to context-wide value specified in `agent` property.
 Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
 
 ## page-agent-call-options-v1.58
-- %%-page-agent-api-%%
-- %%-page-agent-api-key-%%
-- %%-page-agent-api-endpoint-%%
 - %%-page-agent-cache-key-%%
 - %%-page-agent-max-tokens-%%
 - %%-page-agent-max-turns-%%
