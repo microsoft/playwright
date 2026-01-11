@@ -1491,12 +1491,13 @@ scheme.PageAgentParams = tObject({
   api: tOptional(tString),
   apiKey: tOptional(tString),
   apiEndpoint: tOptional(tString),
-  model: tOptional(tString),
   cacheFile: tOptional(tString),
   cacheOutFile: tOptional(tString),
-  secrets: tOptional(tArray(tType('NameValue'))),
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
+  model: tOptional(tString),
+  secrets: tOptional(tArray(tType('NameValue'))),
+  systemPrompt: tOptional(tString),
 });
 scheme.PageAgentResult = tObject({
   agent: tChannel(['PageAgent']),

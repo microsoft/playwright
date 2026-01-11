@@ -858,6 +858,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       maxTokens: options.maxTokens,
       maxTurns: options.maxTurns,
       secrets: options.secrets ? Object.entries(options.secrets).map(([name, value]) => ({ name, value })) : undefined,
+      systemPrompt: options.systemPrompt,
     };
     const { agent } = await this._channel.agent(params);
     return PageAgent.from(agent);

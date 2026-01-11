@@ -745,6 +745,11 @@ Maximum number of agentic turns to take per call. Defaults to 10.
 
 Secrets to hide from the LLM.
 
+### option: Page.agent.systemPrompt
+* since: v1.58
+- `systemPrompt` <[string]>
+
+System prompt for the agent's loop.
 
 ## async method: Page.bringToFront
 * since: v1.8

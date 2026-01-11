@@ -2143,6 +2143,11 @@ export interface Page {
      * Secrets to hide from the LLM.
      */
     secrets?: { [key: string]: string; };
+
+    /**
+     * System prompt for the agent's loop.
+     */
+    systemPrompt?: string;
   }): Promise<PageAgent>;
 
   /**
