@@ -419,7 +419,7 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--output <dir>', { description: `Folder for output artifacts (default: "test-results")` }],
   ['--only-changed [ref]', { description: `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.` }],
   ['--pass-with-no-tests', { description: `Makes test run succeed even if no tests were found` }],
-  ['--pause', { description: `Pause at end of test execution` }],
+  ['--pause', { description: `Run tests in headed mode and pause at the end of test execution` }],
   ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
