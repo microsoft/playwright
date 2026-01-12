@@ -27,47 +27,53 @@ import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
 import type { ToolDefinition } from './tool';
 import type * as channels from '@protocol/channels';
 
+
+type HistoryItem = {
+  type: 'expect' | 'perform' | 'extract';
+  description: string;
+};
 export class Context {
   readonly page: Page;
   readonly actions: actions.ActionWithCode[] = [];
   readonly sdkLanguage: Language;
-  readonly progress: Progress;
-  readonly options: channels.PageAgentParams;
-  private _callIntent: string | undefined;
+  readonly agentParams: channels.PageAgentParams;
+  readonly events: loopTypes.LoopEvents;
+  private _currentCallIntent: string | undefined;
+  readonly history: HistoryItem[] = [];
 
-  constructor(apiCallProgress: Progress, page: Page, options: channels.PageAgentParams) {
-    this.progress = apiCallProgress;
+  constructor(page: Page, agentParms: channels.PageAgentParams, events: loopTypes.LoopEvents) {
     this.page = page;
-    this.options = options;
+    this.agentParams = agentParms;
     this.sdkLanguage = page.browserContext._browser.sdkLanguage();
+    this.events = events;
   }
 
-  async callTool(tool: ToolDefinition, params: any, options: { intent?: string }) {
-    this._callIntent = options.intent;
+  async callTool(progress: Progress, tool: ToolDefinition, params: any, options: { intent?: string }) {
+    this._currentCallIntent = options.intent;
     try {
-      return await tool.handle(this, params);
+      return await tool.handle(progress, this, params);
     } finally {
-      this._callIntent = undefined;
+      this._currentCallIntent = undefined;
     }
   }
 
-  async runActionAndWait(action: actions.Action) {
-    return await this.runActionsAndWait([action]);
+  async runActionAndWait(progress: Progress, action: actions.Action) {
+    return await this.runActionsAndWait(progress, [action]);
   }
 
-  async runActionsAndWait(action: actions.Action[]) {
-    const error = await this.waitForCompletion(async () => {
+  async runActionsAndWait(progress: Progress, action: actions.Action[]) {
+    const error = await this.waitForCompletion(progress, async () => {
       for (const a of action) {
-        await runAction(this.progress, 'generate', this.page, a, this.options?.secrets ?? []);
+        await runAction(progress, 'generate', this.page, a, this.agentParams?.secrets ?? []);
         const code = await generateCode(this.sdkLanguage, a);
-        this.actions.push({ ...a, code, intent: this._callIntent });
+        this.actions.push({ ...a, code, intent: this._currentCallIntent });
       }
       return undefined;
     }).catch((error: Error) => error);
-    return await this.snapshotResult(error);
+    return await this.snapshotResult(progress, error);
   }
 
-  async waitForCompletion<R>(callback: () => Promise<R>): Promise<R> {
+  async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>): Promise<R> {
     const requests: Request[] = [];
     const requestListener = (request: Request) => requests.push(request);
     const disposeListeners = () => {
@@ -78,14 +84,14 @@ export class Context {
     let result: R;
     try {
       result = await callback();
-      await this.progress.wait(500);
+      await progress.wait(500);
     } finally {
       disposeListeners();
     }
 
     const requestedNavigation = requests.some(request => request.isNavigationRequest());
     if (requestedNavigation) {
-      await this.page.mainFrame().waitForLoadState(this.progress, 'load');
+      await this.page.mainFrame().waitForLoadState(progress, 'load');
       return result;
     }
 
@@ -96,15 +102,15 @@ export class Context {
       else
         promises.push(request.response());
     }
-    await this.progress.race(promises, { timeout: 5000 });
+    await progress.race(promises, { timeout: 5000 });
     if (requests.length)
-      await this.progress.wait(500);
+      await progress.wait(500);
 
     return result;
   }
 
-  async snapshotResult(error?: Error): Promise<loopTypes.ToolResult> {
-    let { full } = await this.page.snapshotForAI(this.progress);
+  async snapshotResult(progress: Progress, error?: Error): Promise<loopTypes.ToolResult> {
+    let { full } = await this.page.snapshotForAI(progress);
     full = this._redactText(full);
 
     const text: string[] = [];
@@ -130,10 +136,10 @@ export class Context {
     };
   }
 
-  async refSelectors(params: { element: string, ref: string }[]): Promise<string[]> {
+  async refSelectors(progress: Progress, params: { element: string, ref: string }[]): Promise<string[]> {
     return Promise.all(params.map(async param => {
       try {
-        const { resolvedSelector } = await this.page.mainFrame().resolveSelector(this.progress, `aria-ref=${param.ref}`);
+        const { resolvedSelector } = await this.page.mainFrame().resolveSelector(progress, `aria-ref=${param.ref}`);
         return resolvedSelector;
       } catch (e) {
         throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
@@ -142,7 +148,7 @@ export class Context {
   }
 
   private _redactText(text: string): string {
-    const secrets = this.options?.secrets;
+    const secrets = this.agentParams?.secrets;
     if (!secrets)
       return text;
 

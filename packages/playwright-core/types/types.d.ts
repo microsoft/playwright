@@ -5281,7 +5281,7 @@ export interface PageAgent {
    * @param schema
    * @param options
    */
-  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<ZodInfer<Schema>>;
+  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<{ result: ZodInfer<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
   /**
    * Emitted when the agent makes a turn.
    */

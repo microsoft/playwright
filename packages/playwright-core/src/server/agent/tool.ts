@@ -19,6 +19,7 @@ import { zodToJsonSchema } from '../../mcpBundle';
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
 import type { Context } from './context';
+import type { Progress } from '../progress';
 
 export type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSchema'> & {
   title: string;
@@ -27,14 +28,14 @@ export type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSc
 
 export type ToolDefinition<Input extends zod.Schema = zod.Schema> = {
   schema: ToolSchema<Input>;
-  handle: (context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
+  handle: (progress: Progress, context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
 };
 
 export function defineTool<Input extends zod.Schema>(tool: ToolDefinition<Input>): ToolDefinition<Input> {
   return tool;
 }
 
-export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[], options: { resultSchema?: loopTypes.Schema } = {}): { tools: loopTypes.Tool[], callTool: loopTypes.ToolCallback } {
+export function toolsForLoop(progress: Progress, context: Context, toolDefinitions: ToolDefinition[], options: { resultSchema?: loopTypes.Schema } = {}): { tools: loopTypes.Tool[], callTool: loopTypes.ToolCallback, reportedResult: () => any } {
   const tools = toolDefinitions.map(tool => {
     const result: loopTypes.Tool = {
       name: tool.schema.name,
@@ -51,11 +52,14 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
     });
   }
 
+  let reportedResult: any;
+
   const callTool: loopTypes.ToolCallback = async params => {
     const intent = params.arguments._meta?.['dev.lowire/intent'];
     if (params.name === 'report_result') {
+      reportedResult = params.arguments;
       return {
-        content: [{ type: 'text', text: JSON.stringify(params.arguments) }],
+        content: [{ type: 'text', text: 'Done' }],
         isError: false,
       };
     }
@@ -71,7 +75,7 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
     }
 
     try {
-      return await context.callTool(tool, params.arguments, { intent });
+      return await context.callTool(progress, tool, params.arguments, { intent });
     } catch (error) {
       return {
         content: [{ type: 'text', text: error.message }],
@@ -83,5 +87,6 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
   return {
     tools,
     callTool,
+    reportedResult: () => reportedResult,
   };
 }

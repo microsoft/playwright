@@ -69,5 +69,17 @@
         "intent": "I'll help you complete this task. Let me first enter \"bogus\" into the email field."
       }
     ]
+  },
+  "click the Fox button": {
+    "timestamp": 1768072608059,
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Fox\"i]",
+        "options": {},
+        "code": "await page.getByRole('button', { name: 'Fox' }).click();",
+        "intent": "I'll click the Fox button for you."
+      }
+    ]
   }
 }

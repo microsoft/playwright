@@ -33,8 +33,8 @@ const expectVisible = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    return await context.runActionAndWait(progress, {
       method: 'expectVisible',
       selector: getByRoleSelector(params.role, { name: params.accessibleName }),
       isNot: params.isNot,
@@ -53,8 +53,8 @@ const expectVisibleText = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    return await context.runActionAndWait(progress, {
       method: 'expectVisible',
       selector: getByTextSelector(params.text),
       isNot: params.isNot,
@@ -76,9 +76,9 @@ const expectValue = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
-    const [selector] = await context.refSelectors([{ ref: params.ref, element: params.element }]);
-    return await context.runActionAndWait({
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [{ ref: params.ref, element: params.element }]);
+    return await context.runActionAndWait(progress, {
       method: 'expectValue',
       selector,
       type: params.type,
@@ -102,10 +102,10 @@ const expectList = defineTool({
     }),
   },
 
-  handle: async (context, params) => {
+  handle: async (progress, context, params) => {
     const template = `- ${params.listRole}:
-${params.items.map(item => `  - ${params.itemRole}: ${yamlEscapeValueIfNeeded(item)}`).join('\n')}`;
-    return await context.runActionAndWait({
+progress, ${params.items.map(item => `  - ${params.itemRole}: ${yamlEscapeValueIfNeeded(item)}`).join('\n')}`;
+    return await context.runActionAndWait(progress, {
       method: 'expectAria',
       template,
     });
