@@ -1001,7 +1001,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   webServer: {
    *     command: 'npm run start',
    *     wait: {
-   *       stdout: '/Listening on port (?<my_server_port>\\d+)/'
+   *       stdout: /Listening on port (?<my_server_port>\d+)/
    *     },
    *   },
    * });
@@ -10252,14 +10252,14 @@ interface TestConfigWebServer {
   wait?: {
     /**
      * Regular expression to wait for in the `stdout` of the command output. Named capture groups are stored in the
-     * environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in
+     * environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in
      * `process.env['MY_SERVER_PORT']`.
      */
     stdout?: RegExp;
 
     /**
      * Regular expression to wait for in the `stderr` of the command output. Named capture groups are stored in the
-     * environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in
+     * environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in
      * `process.env['MY_SERVER_PORT']`.
      */
     stderr?: RegExp;
