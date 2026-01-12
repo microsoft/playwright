@@ -423,39 +423,39 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return { artifact };
   }
 
-  async _captureSnapshot(snapshotName: string, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!this._snapshotter)
+  private async _captureSnapshot(snapshotName: string | undefined, sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (!snapshotName || !sdkObject.attribution.page)
       return;
-    if (!sdkObject.attribution.page)
-      return;
-    if (!this._snapshotter.started())
-      return;
-    if (!shouldCaptureSnapshot(metadata))
-      return;
-    await this._snapshotter.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
+    await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
+  }
+
+  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata) {
+    return !!this._snapshotter?.started() && shouldCaptureSnapshot(metadata) && !!sdkObject.attribution.page;
   }
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
-    // IMPORTANT: no awaits before this._appendTraceEvent in this method.
+    // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     const event = createBeforeActionTraceEvent(metadata, this._currentGroupId());
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    event.beforeSnapshot = `before@${metadata.id}`;
+    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+      event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.beforeSnapshot, sdkObject, metadata);
   }
 
   onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
+    // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     if (!this._state?.callIds.has(metadata.id))
       return Promise.resolve();
-    // IMPORTANT: no awaits before this._appendTraceEvent in this method.
     const event = createInputActionTraceEvent(metadata);
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    event.inputSnapshot = `input@${metadata.id}`;
+    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+      event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
   }
@@ -472,15 +472,17 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendTraceEvent(event);
   }
 
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
     if (!this._state?.callIds.has(metadata.id))
-      return;
+      return Promise.resolve();
     this._state?.callIds.delete(metadata.id);
     const event = createAfterActionTraceEvent(metadata);
     if (!event)
-      return;
+      return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    event.afterSnapshot = `after@${metadata.id}`;
+    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+      event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
   }
