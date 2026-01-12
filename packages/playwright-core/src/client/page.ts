@@ -631,7 +631,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     this._closeReason = options.reason;
-    this._closeWasCalled = true;
+    if (!options.runBeforeUnload)
+      this._closeWasCalled = true;
     try {
       if (this._ownedContext)
         await this._ownedContext.close();
