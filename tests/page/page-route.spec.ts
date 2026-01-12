@@ -1069,3 +1069,21 @@ it('should be able to intercept every navigation to a page controlled by service
   await page.goto(URL);
   expect(interceptions).toBe(2);
 });
+
+it('does not get stalled by beforeUnload', async ({ page, server }) => {
+  await page.goto(server.EMPTY_PAGE);
+
+  await page.evaluate(() => {
+    window.addEventListener('beforeunload', event => {
+      event.preventDefault();
+    });
+  });
+  page.on('dialog', dialog => dialog.dismiss());
+
+  await page.route('**/api', route => route.fulfill({ status: 200, body: 'ok' }));
+  await page.evaluate(async () => fetch(new URL('/api', window.location.href)));
+
+  await page.close({ runBeforeUnload: true });
+
+  await page.evaluate(async () => fetch(new URL('/api', window.location.href)));
+});
