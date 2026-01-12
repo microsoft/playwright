@@ -201,6 +201,8 @@ class PersistentContextFactory implements BrowserContextFactory {
     testDebug('lock user data dir', userDataDir);
 
     const browserType = playwright[this.config.browser.browserName];
+    const singletonLockPath = path.join(userDataDir, 'SingletonLock');
+    let lastError: Error | undefined;
     for (let i = 0; i < 5; i++) {
       const launchOptions: LaunchOptions & BrowserContextOptions = {
         tracesDir,
@@ -219,9 +221,14 @@ class PersistentContextFactory implements BrowserContextFactory {
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
+        lastError = error;
         if (error.message.includes('Executable doesn\'t exist'))
           throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
-        if (error.message.includes('ProcessSingleton') || error.message.includes('Invalid URL')) {
+        // Only retry if the profile is actually locked by another browser instance.
+        // Check for SingletonLock file to distinguish actual lock contention from crashes
+        // that happen to mention "ProcessSingleton" in the error output.
+        const hasLockFile = fs.existsSync(singletonLockPath);
+        if (hasLockFile && (error.message.includes('ProcessSingleton') || error.message.includes('Invalid URL'))) {
           // User data directory is already in use, try again.
           await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
@@ -229,7 +236,7 @@ class PersistentContextFactory implements BrowserContextFactory {
         throw error;
       }
     }
-    throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
+    throw lastError ?? new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
   }
 
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
