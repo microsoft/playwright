@@ -1070,7 +1070,7 @@ it('should be able to intercept every navigation to a page controlled by service
   expect(interceptions).toBe(2);
 });
 
-it('does not get stalled by beforeUnload', async ({ page, server }) => {
+it('does not get stalled by beforeUnload', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38731' }}, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
 
   await page.evaluate(() => {
