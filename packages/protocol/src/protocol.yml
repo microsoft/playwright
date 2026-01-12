@@ -2019,14 +2019,15 @@ Page:
         api: string?
         apiKey: string?
         apiEndpoint: string?
-        model: string?
         cacheFile: string?
         cacheOutFile: string?
+        maxTurns: int?
+        maxTokens: int?
+        model: string?
         secrets:
           type: array?
           items: NameValue
-        maxTurns: int?
-        maxTokens: int?
+        systemPrompt: string?
       returns:
         agent: PageAgent
 

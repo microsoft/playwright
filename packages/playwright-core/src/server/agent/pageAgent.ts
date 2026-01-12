@@ -110,16 +110,26 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     ...context.events,
   });
 
-  const task = `${userTask}
+  const task: string[] = [];
+  if (context.agentParams.systemPrompt) {
+    task.push('### System');
+    task.push(context.agentParams.systemPrompt);
+    task.push('');
+  }
 
-### Context history
-${context.history.map(h => `- ${h.type}: ${h.description}`).join('\n')}
+  task.push('### Task');
+  task.push(userTask);
 
-### Page snapshot
-${full}
-`;
+  if (context.history.length) {
+    task.push('### Context history');
+    task.push(context.history.map(h => `- ${h.type}: ${h.description}`).join('\n'));
+    task.push('');
+  }
+  task.push('### Page snapshot');
+  task.push(full);
+  task.push('');
+  await loop.run(task.join('\n'));
 
-  await loop.run(task);
   return { result: resultSchema ? reportedResult() : undefined };
 }
 
