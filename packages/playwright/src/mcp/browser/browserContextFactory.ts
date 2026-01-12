@@ -152,7 +152,7 @@ class CdpContextFactory extends BaseContextFactory {
   }
 
   protected override async _doObtainBrowser(): Promise<playwright.Browser> {
-    return playwright.chromium.connectOverCDP(this.config.browser.cdpEndpoint!, { 
+    return playwright.chromium.connectOverCDP(this.config.browser.cdpEndpoint!, {
       headers: this.config.browser.cdpHeaders,
       timeout: this.config.browser.cdpTimeout
     });
