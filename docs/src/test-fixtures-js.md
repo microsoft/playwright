@@ -354,6 +354,8 @@ Playwright Test uses [worker processes](./test-parallel.md) to run test files. S
 
 Below we'll create an `account` fixture that will be shared by all tests in the same worker, and override the `page` fixture to log in to this account for each test. To generate unique accounts, we'll use the [`property: WorkerInfo.workerIndex`] that is available to any test or fixture. Note the tuple-like syntax for the worker fixture - we have to pass `{scope: 'worker'}` so that test runner sets this fixture up once per worker.
 
+In addition to only being run once per worker, worker-scoped fixtures also get a separate timeout equal to the default test timeout. You can change it by passing the `timeout` option. See [fixture timeout](#fixture-timeout) for more details.
+
 ```js title="my-test.ts"
 import { test as base } from '@playwright/test';
 
@@ -434,7 +436,7 @@ export { expect } from '@playwright/test';
 
 ## Fixture timeout
 
-By default, the fixture inherits the timeout value of the test. However, for slow fixtures, especially [worker-scoped](#worker-scoped-fixtures) ones, it is convenient to have a separate timeout. This way you can keep the overall test timeout small, and give the slow fixture more time.
+Fixture is considered to be a part of a test, and so its setup and teardown running time counts towards the test timeout. Therefore, a slow fixture may cause test timeouts. You can set a separate larger timeout for such a fixture, and keep the overall test timeout small.
 
 ```js
 import { test as base, expect } from '@playwright/test';
@@ -451,6 +453,7 @@ test('example test', async ({ slowFixture }) => {
 });
 ```
 
+Unlike regular test-scoped fixtures, each [worker-scoped](#worker-scoped-fixtures) fixture has its own timeout, equal to the test timeout. You can change the timeout for a worker-scoped fixture in the same way.
 
 ## Fixtures-options
 

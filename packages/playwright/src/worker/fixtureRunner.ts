@@ -55,10 +55,13 @@ class Fixture {
       title,
       phase: 'setup',
       location,
-      slot: this.registration.timeout === undefined ? undefined : {
+      slot: this.registration.timeout !== undefined ? {
         timeout: this.registration.timeout,
         elapsed: 0,
-      }
+      } : this.registration.scope === 'worker' ? {
+        timeout: this.runner.workerFixtureTimeout,
+        elapsed: 0,
+      } : undefined,
     };
     this._teardownDescription = { ...this._setupDescription, phase: 'teardown' };
   }
@@ -179,6 +182,7 @@ export class FixtureRunner {
   private testScopeClean = true;
   pool: FixturePool | undefined;
   instanceForId = new Map<string, Fixture>();
+  workerFixtureTimeout = 0;
 
   setPool(pool: FixturePool) {
     if (!this.testScopeClean)
