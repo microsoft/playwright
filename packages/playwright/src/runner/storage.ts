@@ -19,7 +19,7 @@ import path from 'path';
 
 import { createGuid } from 'playwright-core/lib/utils';
 
-type StorageEnties = Record<string, { timestamp: number, value: any }>;
+type StorageEnties = Record<string, unknown>;
 
 export class Storage {
   private static _storages = new Map<string, Storage>();

@@ -55,7 +55,6 @@ export function toolsForLoop(progress: Progress, context: Context, toolDefinitio
   let reportedResult: any;
 
   const callTool: loopTypes.ToolCallback = async params => {
-    const intent = params.arguments._meta?.['dev.lowire/intent'];
     if (params.name === 'report_result') {
       reportedResult = params.arguments;
       return {
@@ -75,7 +74,7 @@ export function toolsForLoop(progress: Progress, context: Context, toolDefinitio
     }
 
     try {
-      return await context.callTool(progress, tool, params.arguments, { intent });
+      return await context.callTool(progress, tool, params.arguments);
     } catch (error) {
       return {
         content: [{ type: 'text', text: error.message }],

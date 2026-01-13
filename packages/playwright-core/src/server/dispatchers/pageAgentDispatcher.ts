@@ -40,12 +40,20 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
   }
 
   async perform(params: channels.PageAgentPerformParams, progress: Progress): Promise<channels.PageAgentPerformResult> {
-    await pageAgentPerform(progress, this._context, params.task, params);
+    try {
+      await pageAgentPerform(progress, this._context, params.task, params);
+    } finally {
+      this._context.pushHistory({ type: 'perform', description: params.task });
+    }
     return { usage: this._usage };
   }
 
   async expect(params: channels.PageAgentExpectParams, progress: Progress): Promise<channels.PageAgentExpectResult> {
-    await pageAgentExpect(progress, this._context, params.expectation, params);
+    try {
+      await pageAgentExpect(progress, this._context, params.expectation, params);
+    } finally {
+      this._context.pushHistory({ type: 'expect', description: params.expectation });
+    }
     return { usage: this._usage };
   }
 
