@@ -340,6 +340,10 @@ export class CRNetworkManager {
       if (redirectedFrom || (!this._userRequestInterceptionEnabled && this._protocolRequestInterceptionEnabled)) {
         // Chromium does not preserve header overrides between redirects, so we have to do it ourselves.
         headersOverride = redirectedFrom?._originalRequestRoute?._alreadyContinuedParams?.headers;
+        if (headersOverride) {
+          const originalHeaders = Object.entries(requestPausedEvent.request.headers).map(([name, value]) => ({ name, value }));
+          headersOverride = network.applyHeadersOverrides(originalHeaders, headersOverride);
+        }
         requestPausedSessionInfo!.session._sendMayFail('Fetch.continueRequest', { requestId: requestPausedEvent.requestId, headers: headersOverride });
       } else {
         route = new RouteImpl(requestPausedSessionInfo!.session, requestPausedEvent.requestId);

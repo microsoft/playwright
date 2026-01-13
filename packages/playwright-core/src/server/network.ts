@@ -55,6 +55,62 @@ export function isLocalHostname(hostname: string): boolean {
   return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
+// Forbidden request headers according to https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
+// These headers cannot be set or modified programmatically.
+const FORBIDDEN_HEADER_NAMES = new Set([
+  'accept-charset',
+  'accept-encoding',
+  'access-control-request-headers',
+  'access-control-request-method',
+  'connection',
+  'content-length',
+  'cookie',
+  'date',
+  'dnt',
+  'expect',
+  'host',
+  'keep-alive',
+  'origin',
+  'referer',
+  'set-cookie',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'via',
+]);
+
+// Forbidden method names for X-HTTP-Method-* headers
+const FORBIDDEN_METHODS = new Set(['CONNECT', 'TRACE', 'TRACK']);
+
+function isForbiddenHeader(name: string, value?: string): boolean {
+  const lowerName = name.toLowerCase();
+
+  if (FORBIDDEN_HEADER_NAMES.has(lowerName))
+    return true;
+
+  if (lowerName.startsWith('proxy-'))
+    return true;
+
+  if (lowerName.startsWith('sec-'))
+    return true;
+
+  if (lowerName === 'x-http-method' ||
+      lowerName === 'x-http-method-override' ||
+      lowerName === 'x-method-override') {
+    if (value && FORBIDDEN_METHODS.has(value.toUpperCase()))
+      return true;
+  }
+
+  return false;
+}
+
+export function applyHeadersOverrides(original: HeadersArray, overrides: HeadersArray): HeadersArray {
+  const forbiddenHeaders = original.filter(header => isForbiddenHeader(header.name, header.value));
+  const allowedHeaders = overrides.filter(header => !isForbiddenHeader(header.name, header.value));
+  return mergeHeaders([allowedHeaders, forbiddenHeaders]);
+}
+
 // Rollover to 5-digit year:
 // 253402300799 == Fri, 31 Dec 9999 23:59:59 +0000 (UTC)
 // 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
@@ -369,10 +425,9 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     if (overrides.headers) {
-      overrides.headers = overrides.headers?.filter(header => {
-        const headerName = header.name.toLowerCase();
-        return headerName !== 'cookie' && headerName !== 'host';
-      });
+      // Filter out forbidden headers from overrides - they cannot be overridden
+      // and will be passed as-is from the original request
+      overrides.headers = applyHeadersOverrides(this._request._headers, overrides.headers);
     }
     overrides = this._request._applyOverrides(overrides);
 

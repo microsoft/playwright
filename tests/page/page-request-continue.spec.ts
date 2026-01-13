@@ -48,24 +48,16 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
   const serverRequestPromise = server.waitForRequest('/empty.html');
   page.goto(server.EMPTY_PAGE).catch(() => {});
   const route = await routePromise;
-  const error = await route.continue({
+  await route.continue({
     headers: {
       ...route.request().headers(),
       host: 'bar',
       trailer: 'baz',
     }
-  }).catch(e => e);
-  if (browserName === 'chromium' || isElectron) {
-    expect(error.message).toContain('Unsafe header');
-    serverRequestPromise.catch(() => {});
-  } else {
-    expect(error).toBeFalsy();
-    // These lines just document current behavior in FF and WK,
-    // we don't necessarily want to maintain this behavior.
-    const serverRequest = await serverRequestPromise;
-    expect(serverRequest.headers['trailer']).toBe('baz');
-    expect(serverRequest.headers['host']).toBe(new URL(server.EMPTY_PAGE).host);
-  }
+  });
+  const serverRequest = await serverRequestPromise;
+  expect(serverRequest.headers['trailer']).toBe(undefined);
+  expect(serverRequest.headers['host']).toBe(new URL(server.EMPTY_PAGE).host);
 });
 
 it('should delete header with undefined value', async ({ page, server, browserName }) => {
@@ -349,20 +341,19 @@ it('should work with Cross-Origin-Opener-Policy', async ({ page, server, browser
   expect(response.request().failure()).toBeNull();
 });
 
-it('should delete the origin header', async ({ page, server, isAndroid, browserName }) => {
+it('should not delete the origin header', async ({ page, server, isAndroid }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/13106' });
   it.skip(isAndroid, 'No cross-process on Android');
-  it.fail(browserName === 'webkit', 'Does not delete origin in webkit');
 
   await page.goto(server.PREFIX + '/empty.html');
   server.setRoute('/something', (request, response) => {
     response.writeHead(200, { 'Access-Control-Allow-Origin': '*' });
     response.end('done');
   });
-  let interceptedRequest;
+  let interceptedOrigin;
   await page.route(server.CROSS_PROCESS_PREFIX + '/something', async (route, request) => {
-    interceptedRequest = request;
     const headers = await request.allHeaders();
+    interceptedOrigin = headers.origin;
     delete headers['origin'];
     void route.continue({ headers });
   });
@@ -375,11 +366,11 @@ it('should delete the origin header', async ({ page, server, isAndroid, browserN
     server.waitForRequest('/something')
   ]);
   expect(text).toBe('done');
-  expect(interceptedRequest.headers()['origin']).toEqual(undefined);
-  expect(serverRequest.headers.origin).toBeFalsy();
+  expect(interceptedOrigin).toEqual(server.PREFIX);
+  expect(serverRequest.headers.origin).toBe(server.PREFIX);
 });
 
-it('should continue preload link requests', async ({ page, server, browserName }) => {
+it('should continue preload link requests', async ({ page, server }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/16745' });
   let intercepted = false;
   await page.route('**/one-style.css', route => {
@@ -404,7 +395,7 @@ it('should continue preload link requests', async ({ page, server, browserName }
 
 it('should respect set-cookie in redirect response', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/35154' }
-}, async ({ page, server, browserName }) => {
+}, async ({ page, server }) => {
   await page.goto(server.EMPTY_PAGE);
   await page.setContent('<a href="/set-cookie-redirect">Set cookie</a>');
   server.setRoute('/set-cookie-redirect', (request, response) => {

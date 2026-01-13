@@ -107,7 +107,10 @@ The [`option: headers`] option applies to both the routed request and any redire
 [`method: Route.continue`] will immediately send the request to the network, other matching handlers won't be invoked. Use [`method: Route.fallback`] If you want next matching handler in the chain to be invoked.
 
 :::warning
-The `Cookie` header cannot be overridden using this method. If a value is provided, it will be ignored, and the cookie will be loaded from the browser's cookie store. To set custom cookies, use [`method: BrowserContext.addCookies`].
+Some request headers are **forbidden** and cannot be overridden (for example, `Cookie`, `Host`, `Content-Length` and others, see [this MDN page](https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header) for full list).
+If an override is provided for a forbidden header, it will be ignored and the original request header will be used.
+
+To set custom cookies, use [`method: BrowserContext.addCookies`].
 :::
 
 ### option: Route.continue.url
