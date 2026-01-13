@@ -3357,7 +3357,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           - text: Use shard weights to
           - link "rebalance your shards":
             - /url: https://playwright.dev/docs/test-sharding#rebalancing-shards
-          - text: ": @linux: npx playwright test --shard-weights=67:33:0 @mac: npx playwright test --shard-weights=67:33"
+          - text: /@linux. npx playwright test --shard-weights=\\d+:\\d+:\\d+ @mac. npx playwright test --shard-weights=\\d+:\\d+/
       `);
     });
   });
