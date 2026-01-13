@@ -46,7 +46,7 @@ import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-const enableFrameSessions = !!process.env.WK_ENABLE_FRAME_SESSIONS;
+const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
