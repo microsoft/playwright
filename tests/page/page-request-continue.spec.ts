@@ -55,8 +55,6 @@ it('should not allow to override unsafe HTTP headers', async ({ page, server, br
       trailer: 'baz',
     }
   });
-  // These lines just document current behavior,
-  // we don't necessarily want to maintain this behavior.
   const serverRequest = await serverRequestPromise;
   expect(serverRequest.headers['trailer']).toBe(undefined);
   expect(serverRequest.headers['host']).toBe(new URL(server.EMPTY_PAGE).host);

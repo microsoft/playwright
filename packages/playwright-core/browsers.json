@@ -31,14 +31,14 @@
     },
     {
       "name": "firefox",
-      "revision": "1507",
+      "revision": "1509",
       "installByDefault": true,
-      "browserVersion": "145.0.2",
+      "browserVersion": "146.0.1",
       "title": "Firefox"
     },
     {
       "name": "firefox-beta",
-      "revision": "1502",
+      "revision": "1504",
       "installByDefault": false,
       "browserVersion": "146.0b8",
       "title": "Firefox Beta"
