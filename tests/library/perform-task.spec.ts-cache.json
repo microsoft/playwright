@@ -58,5 +58,23 @@
         "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('bogus');"
       }
     ]
+  },
+  "click the Fox button": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Fox\"i]",
+        "code": "await page.getByRole('button', { name: 'Fox' }).click();"
+      }
+    ]
+  },
+  "click the Fox button again": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Fox\"i]",
+        "code": "await page.getByRole('button', { name: 'Fox' }).click();"
+      }
+    ]
   }
 }

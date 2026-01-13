@@ -13,17 +13,6 @@
   "Change the text to 'Modified text' but press Escape instead of Enter": {
     "actions": [
       {
-        "method": "click",
-        "selector": "internal:role=textbox[name=\"Edit\"i]",
-        "options": {},
-        "code": "await page.getByRole('textbox', { name: 'Edit' }).click();"
-      },
-      {
-        "method": "pressKey",
-        "key": "Control+a",
-        "code": "await page.keyboard.press('Control+a');"
-      },
-      {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Edit\"i]",
         "text": "Modified text",
@@ -50,9 +39,7 @@
       {
         "method": "click",
         "selector": "internal:testid=[data-testid=\"todo-title\"s]",
-        "options": {
-          "clickCount": 2
-        },
+        "clickCount": 2,
         "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
       }
     ]
@@ -61,8 +48,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"Original text\"i",
-        "code": "await expect(page.getByText('Original text')).toBeVisible();"
+        "selector": "internal:role=generic[name=\"Original text\"i]",
+        "code": "await expect(page.getByRole('generic', { name: 'Original text' })).toBeVisible();"
       }
     ]
   },

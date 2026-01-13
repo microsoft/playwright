@@ -15,9 +15,7 @@
       {
         "method": "click",
         "selector": "internal:testid=[data-testid=\"todo-title\"s]",
-        "options": {
-          "clickCount": 2
-        },
+        "clickCount": 2,
         "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
       },
       {
@@ -30,7 +28,13 @@
     ]
   },
   "Edit textbox shows the text with spaces": {
-    "actions": []
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"   Edited task   \"i",
+        "code": "await expect(page.getByText('   Edited task   ')).toBeVisible();"
+      }
+    ]
   },
   "Press Enter to save": {
     "actions": [
@@ -44,9 +48,11 @@
   "The page loads with an empty todo list": {
     "actions": [
       {
-        "method": "expectVisible",
+        "method": "expectValue",
         "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
-        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+        "type": "textbox",
+        "value": "",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
       }
     ]
   },

@@ -20,6 +20,26 @@ import { defineTool } from './tool';
 import type * as actions from './actions';
 import type { ToolDefinition } from './tool';
 
+const navigateSchema = z.object({
+  url: z.string().describe('URL to navigate to'),
+});
+
+const navigate = defineTool({
+  schema: {
+    name: 'browser_navigate',
+    title: 'Navigate to URL',
+    description: 'Navigate to a URL',
+    inputSchema: navigateSchema,
+  },
+
+  handle: async (progress, context, params) => {
+    return await context.runActionNoWait(progress, {
+      method: 'navigate',
+      url: params.url,
+    });
+  },
+});
+
 const snapshot = defineTool({
   schema: {
     name: 'browser_snapshot',
@@ -57,11 +77,9 @@ const click = defineTool({
     return await context.runActionAndWait(progress, {
       method: 'click',
       selector,
-      options: {
-        button: params.button,
-        modifiers: params.modifiers,
-        clickCount: params.doubleClick ? 2 : undefined,
-      }
+      button: params.button,
+      modifiers: params.modifiers,
+      clickCount: params.doubleClick ? 2 : undefined,
     });
   },
 });
@@ -110,9 +128,7 @@ const hover = defineTool({
     return await context.runActionAndWait(progress, {
       method: 'hover',
       selector,
-      options: {
-        modifiers: params.modifiers,
-      }
+      modifiers: params.modifiers,
     });
   },
 });
@@ -146,13 +162,14 @@ const pressKey = defineTool({
     description: 'Press a key on the keyboard',
     inputSchema: z.object({
       key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
+      modifiers: z.array(z.enum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])).optional().describe('Modifier keys to press'),
     }),
   },
 
   handle: async (progress, context, params) => {
     return await context.runActionAndWait(progress, {
       method: 'pressKey',
-      key: params.key
+      key: params.modifiers ? [...params.modifiers, params.key].join('+') : params.key,
     });
   },
 });
@@ -234,7 +251,30 @@ const fillForm = defineTool({
   },
 });
 
+const setCheckedSchema = elementSchema.extend({
+  checked: z.boolean().describe('Whether to check the checkbox'),
+});
+
+const setChecked = defineTool({
+  schema: {
+    name: 'browser_set_checked',
+    title: 'Set checked',
+    description: 'Set the checked state of a checkbox',
+    inputSchema: setCheckedSchema,
+  },
+
+  handle: async (progress, context, params) => {
+    const [selector] = await context.refSelectors(progress, [params]);
+    return await context.runActionAndWait(progress, {
+      method: 'setChecked',
+      selector,
+      checked: params.checked,
+    });
+  },
+});
+
 export default [
+  navigate,
   snapshot,
   click,
   drag,
@@ -243,4 +283,5 @@ export default [
   pressKey,
   type,
   fillForm,
+  setChecked,
 ] as ToolDefinition<any>[];

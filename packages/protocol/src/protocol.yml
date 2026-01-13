@@ -4320,7 +4320,7 @@ PageAgent:
 
   commands:
     perform:
-      internal: true
+      title: 'Perform "{task}"'
       parameters:
         task: string
         $mixin: PageAgentOptions
@@ -4329,7 +4329,7 @@ PageAgent:
         usage: AgentUsage
 
     expect:
-      internal: true
+      title: 'Expect "{expectation}"'
       parameters:
         expectation: string
         $mixin: PageAgentOptions
@@ -4338,7 +4338,7 @@ PageAgent:
         usage: AgentUsage
 
     extract:
-      internal: true
+      title: 'Extract "{query}"'
       parameters:
         query: string
         schema: json

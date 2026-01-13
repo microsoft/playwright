@@ -15,7 +15,6 @@
       {
         "method": "click",
         "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
-        "options": {},
         "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();"
       }
     ]
@@ -62,9 +61,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:role=list[name=\"Todo List\"i]",
-        "isNot": true,
-        "code": "await expect(page.getByRole('list', { name: 'Todo List' })).not.toBeVisible();"
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
       }
     ]
   },
@@ -72,8 +70,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"Buy groceries\"i",
-        "code": "await expect(page.getByText('Buy groceries')).toBeVisible();"
+        "selector": "internal:role=generic[name=\"Buy groceries\"i]",
+        "code": "await expect(page.getByRole('generic', { name: 'Buy groceries' })).toBeVisible();"
       }
     ]
   }

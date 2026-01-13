@@ -433,9 +433,9 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     return !!this._snapshotter?.started() && shouldCaptureSnapshot(metadata) && !!sdkObject.attribution.page;
   }
 
-  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+  onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string) {
     // IMPORTANT: no awaits in this method, this._appendTraceEvent must be called synchronously.
-    const event = createBeforeActionTraceEvent(metadata, this._currentGroupId());
+    const event = createBeforeActionTraceEvent(metadata, parentId ?? this._currentGroupId());
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();

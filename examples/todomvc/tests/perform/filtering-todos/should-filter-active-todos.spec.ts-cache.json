@@ -48,7 +48,6 @@
       {
         "method": "click",
         "selector": "internal:role=link[name=\"Active\"i]",
-        "options": {},
         "code": "await page.getByRole('link', { name: 'Active' }).click();"
       }
     ]
@@ -67,7 +66,6 @@
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Will complete\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Will complete' }).getByLabel('Toggle Todo').click();"
       }
     ]

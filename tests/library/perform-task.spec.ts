@@ -90,15 +90,14 @@ test('page.perform expect value', async ({ page, agent }) => {
 });
 
 test('page.perform history', async ({ page, agent }) => {
-  test.skip(true, 'Skipping because it needs LLM');
+  let clicked = 0;
+  await page.exposeFunction('clicked', () => clicked++);
   await page.setContent(`
     <button>Wolf</button>
-    <button>Fox</button>
+    <button onclick="clicked()">Fox</button>
     <button>Rabbit</button>
   `);
   await agent.perform('click the Fox button');
-  const { result } = await agent.extract('return the name of the button you pressed', z.object({
-    name: z.string(),
-  }));
-  expect(result.name).toBe('Fox');
+  await agent.perform('click the Fox button again');
+  expect(clicked).toBe(2);
 });

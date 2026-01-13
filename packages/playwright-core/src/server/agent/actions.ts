@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-import type * as channels from '@protocol/channels';
+export type NavigateAction = {
+  method: 'navigate';
+  url: string;
+};
 
 export type ClickAction = {
   method: 'click';
   selector: string;
-  options: Pick<channels.FrameClickParams, 'button' | 'clickCount' | 'modifiers'>;
+  button?: 'left' | 'right' | 'middle';
+  clickCount?: number;
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[];
 };
 
 export type DragAction = {
@@ -31,7 +36,7 @@ export type DragAction = {
 export type HoverAction = {
   method: 'hover';
   selector: string;
-  options: Pick<channels.FrameHoverParams, 'modifiers'>;
+  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[];
 };
 
 export type SelectOptionAction = {
@@ -42,6 +47,7 @@ export type SelectOptionAction = {
 
 export type PressAction = {
   method: 'pressKey';
+  // Includes modifiers
   key: string;
 };
 
@@ -86,6 +92,7 @@ export type ExpectAria = {
 };
 
 export type Action =
+  | NavigateAction
   | ClickAction
   | DragAction
   | HoverAction

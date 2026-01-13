@@ -24,7 +24,6 @@ import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
-import type { ToolDefinition } from './tool';
 import type * as channels from '@protocol/channels';
 
 
@@ -47,15 +46,11 @@ export class Context {
     this.events = events;
   }
 
-  async callTool(progress: Progress, tool: ToolDefinition, params: any) {
-    return await tool.handle(progress, this, params);
-  }
-
   async runActionAndWait(progress: Progress, action: actions.Action) {
     return await this.runActionsAndWait(progress, [action]);
   }
 
-  async runActionsAndWait(progress: Progress, action: actions.Action[]) {
+  async runActionsAndWait(progress: Progress, action: actions.Action[], options?: { noWait?: boolean }) {
     const error = await this.waitForCompletion(progress, async () => {
       for (const a of action) {
         await runAction(progress, 'generate', this.page, a, this.agentParams?.secrets ?? []);
@@ -63,8 +58,12 @@ export class Context {
         this._actions.push({ ...a, code });
       }
       return undefined;
-    }).catch((error: Error) => error);
+    }, options).catch((error: Error) => error);
     return await this.snapshotResult(progress, error);
+  }
+
+  async runActionNoWait(progress: Progress, action: actions.Action) {
+    return await this.runActionsAndWait(progress, [action], { noWait: true });
   }
 
   actions() {
@@ -80,7 +79,10 @@ export class Context {
     this._actions = [];
   }
 
-  async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>): Promise<R> {
+  async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>, options?: { noWait?: boolean }): Promise<R> {
+    if (options?.noWait)
+      return await callback();
+
     const requests: Request[] = [];
     const requestListener = (request: Request) => requests.push(request);
     const disposeListeners = () => {

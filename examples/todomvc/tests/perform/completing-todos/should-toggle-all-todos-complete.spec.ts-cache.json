@@ -58,7 +58,6 @@
       {
         "method": "click",
         "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
-        "options": {},
         "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();"
       }
     ]
@@ -91,6 +90,12 @@
     ]
   },
   "The page loads with an empty todo list": {
-    "actions": []
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
   }
 }

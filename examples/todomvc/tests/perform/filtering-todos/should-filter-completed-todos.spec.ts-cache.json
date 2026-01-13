@@ -48,7 +48,6 @@
       {
         "method": "click",
         "selector": "internal:role=link[name=\"Completed\"i]",
-        "options": {},
         "code": "await page.getByRole('link', { name: 'Completed' }).click();"
       }
     ]
@@ -58,13 +57,11 @@
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Completed 1\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 1' }).getByLabel('Toggle Todo').click();"
       },
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Completed 2\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 2' }).getByLabel('Toggle Todo').click();"
       }
     ]
@@ -108,18 +105,9 @@
   "Two todos are marked as complete": {
     "actions": [
       {
-        "method": "expectValue",
-        "selector": "internal:role=listitem >> internal:has-text=\"Completed 1\"i >> internal:label=\"Toggle Todo\"i",
-        "type": "checkbox",
-        "value": "true",
-        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Completed 1' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
-      },
-      {
-        "method": "expectValue",
-        "selector": "internal:role=listitem >> internal:has-text=\"Completed 2\"i >> internal:label=\"Toggle Todo\"i",
-        "type": "checkbox",
-        "value": "true",
-        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Completed 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+        "method": "expectVisible",
+        "selector": "internal:text=\"1\"i",
+        "code": "await expect(page.getByText('1')).toBeVisible();"
       }
     ]
   }
