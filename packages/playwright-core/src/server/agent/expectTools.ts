@@ -104,7 +104,7 @@ const expectList = defineTool({
 
   handle: async (progress, context, params) => {
     const template = `- ${params.listRole}:
-progress, ${params.items.map(item => `  - ${params.itemRole}: ${yamlEscapeValueIfNeeded(item)}`).join('\n')}`;
+${params.items.map(item => `  - ${params.itemRole}: ${yamlEscapeValueIfNeeded(item)}`).join('\n')}`;
     return await context.runActionAndWait(progress, {
       method: 'expectAria',
       template,

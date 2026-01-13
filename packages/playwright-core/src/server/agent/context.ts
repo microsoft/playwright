@@ -29,17 +29,16 @@ import type * as channels from '@protocol/channels';
 
 
 type HistoryItem = {
-  type: 'expect' | 'perform' | 'extract';
+  type: 'expect' | 'perform';
   description: string;
 };
 export class Context {
   readonly page: Page;
-  readonly actions: actions.ActionWithCode[] = [];
   readonly sdkLanguage: Language;
   readonly agentParams: channels.PageAgentParams;
   readonly events: loopTypes.LoopEvents;
-  private _currentCallIntent: string | undefined;
-  readonly history: HistoryItem[] = [];
+  private _actions: actions.ActionWithCode[] = [];
+  private _history: HistoryItem[] = [];
 
   constructor(page: Page, agentParms: channels.PageAgentParams, events: loopTypes.LoopEvents) {
     this.page = page;
@@ -48,13 +47,8 @@ export class Context {
     this.events = events;
   }
 
-  async callTool(progress: Progress, tool: ToolDefinition, params: any, options: { intent?: string }) {
-    this._currentCallIntent = options.intent;
-    try {
-      return await tool.handle(progress, this, params);
-    } finally {
-      this._currentCallIntent = undefined;
-    }
+  async callTool(progress: Progress, tool: ToolDefinition, params: any) {
+    return await tool.handle(progress, this, params);
   }
 
   async runActionAndWait(progress: Progress, action: actions.Action) {
@@ -66,11 +60,24 @@ export class Context {
       for (const a of action) {
         await runAction(progress, 'generate', this.page, a, this.agentParams?.secrets ?? []);
         const code = await generateCode(this.sdkLanguage, a);
-        this.actions.push({ ...a, code, intent: this._currentCallIntent });
+        this._actions.push({ ...a, code });
       }
       return undefined;
     }).catch((error: Error) => error);
     return await this.snapshotResult(progress, error);
+  }
+
+  actions() {
+    return this._actions.slice();
+  }
+
+  history(): HistoryItem[] {
+    return this._history;
+  }
+
+  pushHistory(item: HistoryItem) {
+    this._history.push(item);
+    this._actions = [];
   }
 
   async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>): Promise<R> {

@@ -50,7 +50,6 @@ ${userTask}
 `;
 
   await runLoop(progress, context, performTools, task, undefined, callParams);
-  context.history.push({ type: 'perform', description: userTask });
   await updateCache(context, cacheKey);
 }
 
@@ -69,7 +68,6 @@ ${expectation}
 `;
 
   await runLoop(progress, context, expectTools, task, undefined, callParams);
-  context.history.push({ type: 'expect', description: expectation });
   await updateCache(context, cacheKey);
 }
 
@@ -82,7 +80,6 @@ Extract the following information from the page. Do not perform any actions, jus
 ### Query
 ${query}`;
   const { result } = await runLoop(progress, context, [], task, schema, callParams);
-  context.history.push({ type: 'extract', description: query });
   return result;
 }
 
@@ -90,8 +87,10 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   result: any
 }> {
   const { page } = context;
-  if (!context.agentParams.api || !context.agentParams.apiKey || !context.agentParams.model)
-    throw new Error(`This action requires the API and API key to be set on the page agent. Are you running with --run-agents=none mode?`);
+  if (!context.agentParams.api || !context.agentParams.model)
+    throw new Error(`This action requires the API and API key to be set on the page agent. Did you mean to --run-agents=all?`);
+  if (!context.agentParams.apiKey)
+    throw new Error(`This action requires API key to be set on the page agent.`);
 
   const { full } = await page.snapshotForAI(progress);
   const { tools, callTool, reportedResult } = toolsForLoop(progress, context, toolDefinitions, { resultSchema });
@@ -120,9 +119,9 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   task.push('### Task');
   task.push(userTask);
 
-  if (context.history.length) {
+  if (context.history().length) {
     task.push('### Context history');
-    task.push(context.history.map(h => `- ${h.type}: ${h.description}`).join('\n'));
+    task.push(context.history().map(h => `- ${h.type}: ${h.description}`).join('\n'));
     task.push('');
   }
   task.push('### Page snapshot');
@@ -134,7 +133,6 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
 }
 
 type CachedActions = Record<string, {
-  timestamp: number,
   actions: actions.ActionWithCode[],
 }>;
 
@@ -158,10 +156,7 @@ async function updateCache(context: Context, cacheKey: string) {
   const cacheFileKey = cacheFile ?? cacheOutFile;
 
   const cache = cacheFileKey ? await cachedActions(cacheFileKey) : { actions: {}, newActions: {} };
-  const newEntry = {
-    timestamp: Date.now(),
-    actions: context.actions,
-  };
+  const newEntry = { actions: context.actions() };
   cache.actions[cacheKey] = newEntry;
   cache.newActions[cacheKey] = newEntry;
 

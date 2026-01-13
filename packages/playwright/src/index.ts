@@ -468,6 +468,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       apiKey: agentOptions.apiKey,
       model: agentOptions.model,
     } : undefined;
+    if (provider)
+      testInfo.setTimeout(0);
 
     const cache = {
       cacheFile,

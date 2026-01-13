@@ -100,5 +100,4 @@ export type Action =
 
 export type ActionWithCode = Action & {
   code: string;
-  intent?: string;
 };
