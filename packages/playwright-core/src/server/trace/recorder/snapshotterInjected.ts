@@ -86,6 +86,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
   class Streamer {
     private _lastSnapshotNumber = 0;
     private _staleStyleSheets = new Set<CSSStyleSheet>();
+    private _modifiedStyleSheets = new Set<CSSStyleSheet>();
     private _readingStyleSheet = false;  // To avoid invalidating due to our own reads.
     private _fakeBase: HTMLBaseElement;
     private _observer: MutationObserver;
@@ -105,6 +106,10 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       this._interceptNativeMethod(window.CSSGroupingRule.prototype, 'insertRule', invalidateCSSGroupingRule);
       this._interceptNativeMethod(window.CSSGroupingRule.prototype, 'deleteRule', invalidateCSSGroupingRule);
       this._interceptNativeGetter(window.CSSGroupingRule.prototype, 'cssRules', invalidateCSSGroupingRule);
+      this._interceptNativeSetter(window.StyleSheet.prototype, 'disabled', (sheet: StyleSheet) => {
+        if (sheet instanceof CSSStyleSheet)
+          this._invalidateStyleSheet(sheet as CSSStyleSheet);
+      });
       this._interceptNativeAsyncMethod(window.CSSStyleSheet.prototype, 'replace', (sheet: CSSStyleSheet) => this._invalidateStyleSheet(sheet));
 
       this._fakeBase = document.createElement('base');
@@ -191,6 +196,18 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       });
     }
 
+    private _interceptNativeSetter(obj: any, prop: string, cb: (thisObj: any, result: any) => void) {
+      const descriptor = Object.getOwnPropertyDescriptor(obj, prop)!;
+      Object.defineProperty(obj, prop, {
+        ...descriptor,
+        set: function(value: any) {
+          const result = descriptor.set!.call(this, value);
+          cb(this, value);
+          return result;
+        },
+      });
+    }
+
     private _handleMutations(list: MutationRecord[]) {
       for (const mutation of list)
         ensureCachedData(mutation.target).attributesCached = undefined;
@@ -200,6 +217,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
       if (this._readingStyleSheet)
         return;
       this._staleStyleSheets.add(sheet);
+      if (sheet.href !== null)
+        this._modifiedStyleSheets.add(sheet);
     }
 
     private _updateStyleElementStyleSheetTextIfNeeded(sheet: CSSStyleSheet, forceText?: boolean): string | undefined {
@@ -309,6 +328,8 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
     private _getSheetText(sheet: CSSStyleSheet): string {
       this._readingStyleSheet = true;
       try {
+        if (sheet.disabled)
+          return '';
         const rules: string[] = [];
         for (const rule of sheet.cssRules)
           rules.push(rule.cssText);
@@ -614,7 +635,7 @@ export function frameSnapshotStreamer(snapshotStreamer: string, removeNoScript: 
         collectionTime: 0,
       };
 
-      for (const sheet of this._staleStyleSheets) {
+      for (const sheet of this._modifiedStyleSheets) {
         if (sheet.href === null)
           continue;
         const content = this._updateLinkStyleSheetTextIfNeeded(sheet, snapshotNumber);

@@ -2178,6 +2178,8 @@ test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
     await page.goto(server.EMPTY_PAGE);
     await page.setContent('<link rel="stylesheet" href="style.css"><button>Hello</button>');
     await page.evaluate(() => { (document.styleSheets[0].cssRules[0] as any).style.color = 'blue'; });
+    await page.evaluate(() => '1 + 1');
+    await page.evaluate(() => { document.styleSheets[0].disabled = true; });
   });
 
   const frame1 = await traceViewer.snapshotFrame('Set content', 0);
@@ -2196,6 +2198,11 @@ test('should respect CSSOM changes', async ({ runAndTrace, page, server }) => {
   await expect(frame6.locator('button')).toHaveCSS('color', 'rgb(255, 0, 0)');
   const frame7 = await traceViewer.snapshotFrame('Evaluate', 4);
   await expect(frame7.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
+  const frame8 = await traceViewer.snapshotFrame('Evaluate', 5);
+  await traceViewer.page.waitForTimeout(1000); // give it time to render wrong color
+  await expect(frame8.locator('button')).toHaveCSS('color', 'rgb(0, 0, 255)');
+  const frame9 = await traceViewer.snapshotFrame('Evaluate', 6);
+  await expect(frame9.locator('button')).toHaveCSS('color', 'rgb(0, 0, 0)');
 });
 
 test('should preserve custom doctype', async ({ runAndTrace, page }) => {
