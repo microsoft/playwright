@@ -9158,6 +9158,8 @@ interface LocatorAssertions {
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
    * CSS properties.
    *
+   * **NOTE** The `CSSProperties` object parameter for toHaveCSS requires `react` to be installed for type checking.
+   *
    * **Usage**
    *
    * ```js
