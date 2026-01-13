@@ -351,7 +351,7 @@ Expected count.
 * since: v1.20
 * langs: python
 
-The opposite of [`method: LocatorAssertions.toHaveCSS`].
+The opposite of [`method: LocatorAssertions.toHaveCSS#1`].
 
 ### param: LocatorAssertions.NotToHaveCSS.name
 * since: v1.18
@@ -1694,7 +1694,7 @@ Expected count.
 ### option: LocatorAssertions.toHaveCount.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
-## async method: LocatorAssertions.toHaveCSS
+## async method: LocatorAssertions.toHaveCSS#1
 * since: v1.20
 * langs:
   - alias-java: hasCSS
@@ -1731,23 +1731,52 @@ var locator = Page.GetByRole(AriaRole.Button);
 await Expect(locator).ToHaveCSSAsync("display", "flex");
 ```
 
-### param: LocatorAssertions.toHaveCSS.name
+### param: LocatorAssertions.toHaveCSS#1.name
 * since: v1.18
 - `name` <[string]>
 
 CSS property name.
 
-### param: LocatorAssertions.toHaveCSS.value
+### param: LocatorAssertions.toHaveCSS#1.value
 * since: v1.18
 - `value` <[string]|[RegExp]>
 
 CSS property value.
 
-### option: LocatorAssertions.toHaveCSS.timeout = %%-js-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCSS#1.timeout = %%-js-assertions-timeout-%%
 * since: v1.18
 
-### option: LocatorAssertions.toHaveCSS.timeout = %%-csharp-java-python-assertions-timeout-%%
+### option: LocatorAssertions.toHaveCSS#1.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
+
+## async method: LocatorAssertions.toHaveCSS#2
+* since: v1.58
+* langs: js
+
+Ensures the [Locator] resolves to an element with the given computed CSS properties.
+
+:::note
+The `CSSProperties` object parameter for toHaveCSS requires `react` to be installed for type checking.
+:::
+
+**Usage**
+
+```js
+const locator = page.getByRole('button');
+await expect(locator).toHaveCSS({
+  display: 'flex',
+  backgroundColor: 'rgb(255, 0, 0)'
+});
+```
+
+### param: LocatorAssertions.toHaveCSS#2.styles
+* since: v1.58
+- `styles` <[CSSProperties]>
+
+CSS properties object.
+
+### option: LocatorAssertions.toHaveCSS#2.timeout = %%-js-assertions-timeout-%%
+* since: v1.58
 
 ## async method: LocatorAssertions.toHaveId
 * since: v1.20
