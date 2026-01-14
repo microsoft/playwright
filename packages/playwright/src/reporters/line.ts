@@ -89,21 +89,8 @@ class LineReporter extends TerminalReporter {
 
     this._printedErrorCounts.set(result, result.errors.length);
 
-    if (result.errors.length > 0) {
-      const errorHeader = this.formatTestHeader(test, { indent: '  ', index: ++this._failures });
-      this.screen.stdout.write(this.screen.colors.red(errorHeader) + '\n');
-      const errorDetails = formatResultFailure(this.screen, test, result, '    ');
-      for (const error of errorDetails)
-        this.screen.stdout.write('\n' + error.message + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('\n    Paused on error. Press Ctrl+C to end.') + '\n');
-    } else {
-      const header = this.formatTestHeader(test, { indent: '  ' });
-      this.screen.stdout.write(this.screen.colors.yellow(header) + '\n');
-      this.screen.stdout.write(this.screen.colors.yellow('    Paused at test end. Press Ctrl+C to end.') + '\n');
-    }
-
-    this.writeLine();
-    this.writeLine();
+    this.writeLine(this.formatSingleResult(test, result, test.outcome() === 'unexpected' ? ++this._failures : undefined));
+    this.writeLine(this.screen.colors.yellow(`    Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`) + '\n\n');
 
     this._updateLine(test, result, undefined);
 

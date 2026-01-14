@@ -359,9 +359,27 @@ export class TerminalReporter implements ReporterV2 {
     return formatError(this.screen, error);
   }
 
+  formatSingleResult(test: TestCase, result: TestResult, index?: number): string {
+    return formatSingleResult(this.screen, this.config, test, result, index);
+  }
+
   writeLine(line?: string) {
     this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
+}
+
+function formatSingleResult(screen: Screen, config: FullConfig, test: TestCase, result: TestResult, index?: number): string {
+  const lines: string[] = [];
+  const header = formatTestHeader(screen, config, test, { indent: '  ', index });
+  lines.push(test.outcome() === 'unexpected' ? screen.colors.red(header) : screen.colors.yellow(header));
+  if (test.outcome() === 'unexpected') {
+    const errorDetails = formatResultFailure(screen, test, result, '    ');
+    if (errorDetails.length > 0)
+      lines.push('');
+    for (const error of errorDetails)
+      lines.push(error.message, '');
+  }
+  return lines.join('\n');
 }
 
 export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number, options?: TerminalReporterOptions): string {

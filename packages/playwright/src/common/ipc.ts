@@ -92,6 +92,7 @@ export type TestInfoErrorImpl = TestInfoError;
 export type TestPausedPayload = {
   testId: string;
   errors: TestInfoErrorImpl[];
+  status: TestStatus;
 };
 
 export type ResumePayload = {};
