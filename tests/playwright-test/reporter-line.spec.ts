@@ -258,6 +258,11 @@ Running 1 test using 1 worker
 a.test.ts:3:13 › foo
 Running teardown
 
+  1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
+
+    Test was interrupted.
+
+
   1 interrupted
     a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
 `);
@@ -289,6 +294,7 @@ Running 1 test using 1 worker
 
 
 [1/1] a.test.ts:3:13 › foo
+  1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
 
     Test was interrupted.
 
@@ -301,7 +307,6 @@ Running 1 test using 1 worker
       8 |         });
       9 |       
         at ${test.info().outputPath('a.test.ts')}:7:17
-
 
 
   1 interrupted
@@ -361,6 +366,8 @@ Running 1 test using 1 worker
 
 
 [1/1] a.test.ts:3:13 › fails
+
+
   1 failed
     a.test.ts:3:13 › fails ─────────────────────────────────────────────────────────────────────────
 `);

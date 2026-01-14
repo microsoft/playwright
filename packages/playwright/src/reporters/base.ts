@@ -384,13 +384,17 @@ function formatSingleResult(screen: Screen, config: FullConfig, test: TestCase, 
 
 export function formatFailure(screen: Screen, config: FullConfig, test: TestCase, index?: number, options?: TerminalReporterOptions): string {
   const lines: string[] = [];
-  const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error', includeTestId: options?.includeTestId });
-  lines.push(screen.colors.red(header));
+  let printedHeader = false;
   for (const result of test.results) {
     const resultLines: string[] = [];
     const errors = formatResultFailure(screen, test, result, '    ');
     if (!errors.length)
       continue;
+    if (!printedHeader) {
+      const header = formatTestHeader(screen, config, test, { indent: '  ', index, mode: 'error', includeTestId: options?.includeTestId });
+      lines.push(screen.colors.red(header));
+      printedHeader = true;
+    }
     if (result.retry) {
       resultLines.push('');
       resultLines.push(screen.colors.gray(separator(screen, `    Retry #${result.retry}`)));
@@ -473,6 +477,8 @@ function quotePathIfNeeded(path: string): string {
   return path;
 }
 
+const kReportedSymbol = Symbol('reported');
+
 export function formatResultFailure(screen: Screen, test: TestCase, result: TestResult, initialIndent: string): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
@@ -487,7 +493,9 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
     });
   }
 
-  for (const error of result.errors) {
+  const reportedIndex = (result as any)[kReportedSymbol] || 0;
+  (result as any)[kReportedSymbol] = result.errors.length;
+  for (const error of result.errors.slice(reportedIndex)) {
     const formattedError = formatError(screen, error);
     errorDetails.push({
       message: indent(formattedError.message, initialIndent),
