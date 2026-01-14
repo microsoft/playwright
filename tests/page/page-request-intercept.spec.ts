@@ -175,9 +175,10 @@ it('should give access to the intercepted response body', async ({ page, server,
   await Promise.all([route.fulfill({ response }), evalPromise]);
 });
 
-it('should intercept multipart/form-data request body', async ({ page, server, asset, browserName }) => {
+it('should intercept multipart/form-data request body', async ({ page, server, asset, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/14624' });
   it.fixme(browserName !== 'firefox');
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const filePath = path.relative(process.cwd(), asset('file-to-upload.txt'));
   await page.locator('input[type=file]').setInputFiles(filePath);
@@ -284,10 +285,11 @@ it('should fulfill popup main request using alias', async ({ page, server, isEle
 
 it('request.postData is not null when fetching FormData with a Blob', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/24077' }
-}, async ({ server, page, browserName, isElectron, electronMajorVersion, isAndroid }) => {
+}, async ({ server, page, browserName, isElectron, electronMajorVersion, isAndroid, isBidi }) => {
   it.skip(isElectron && electronMajorVersion < 31);
   it.fixme(isAndroid, 'postData is null for some reason');
   it.fixme(browserName === 'webkit', 'The body is empty in WebKit when intercepting');
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   await page.setContent(`
 <script>
