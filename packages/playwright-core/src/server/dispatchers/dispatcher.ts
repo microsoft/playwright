@@ -101,11 +101,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   }
 
   async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const controller = new ProgressController(callMetadata, message => {
-      const logName = this._object.logName || 'api';
-      debugLogger.log(logName, message);
-      this._object.instrumentation.onCallLog(this._object, callMetadata, logName, message);
-    });
+    const controller = ProgressController.createForSdkObject(this._object, callMetadata);
     this._activeProgressControllers.add(controller);
     try {
       return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);

@@ -15,11 +15,11 @@
  */
 
 import { TimeoutError } from './errors';
-import { assert, monotonicTime } from '../utils';
+import { assert, monotonicTime, debugLogger } from '../utils';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Progress } from '@protocol/progress';
-import type { CallMetadata } from './instrumentation';
+import type { CallMetadata, SdkObject } from './instrumentation';
 
 export type { Progress } from '@protocol/progress';
 
@@ -30,11 +30,21 @@ export class ProgressController {
   private _onCallLog?: (message: string) => void;
 
   readonly metadata: CallMetadata;
+  private _controller: AbortController;
 
   constructor(metadata?: CallMetadata, onCallLog?: (message: string) => void) {
     this.metadata = metadata || { id: '', startTime: 0, endTime: 0, type: 'Internal', method: '', params: {}, log: [], internal: true };
     this._onCallLog = onCallLog;
     this._forceAbortPromise.catch(e => null);  // Prevent unhandled promise rejection.
+    this._controller = new AbortController();
+  }
+
+  static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata) {
+    const logName = sdkObject.logName || 'api';
+    return new ProgressController(callMetadata, message => {
+      debugLogger.log(logName, message);
+      sdkObject.instrumentation.onCallLog(sdkObject, callMetadata, logName, message); 
+    });
   }
 
   async abort(error: Error) {
@@ -42,6 +52,7 @@ export class ProgressController {
       (error as any)[kAbortErrorSymbol] = true;
       this._state = { error };
       this._forceAbortPromise.reject(error);
+      this._controller.abort();
     }
     await this._donePromise;
   }
@@ -52,6 +63,7 @@ export class ProgressController {
     this._state = 'running';
 
     const progress: Progress = {
+      timeout: timeout ?? 0,
       deadline,
       log: message => {
         if (this._state === 'running')
@@ -73,6 +85,7 @@ export class ProgressController {
         const promise = new Promise<void>(f => timer = setTimeout(f, timeout));
         return progress.race(promise).finally(() => clearTimeout(timer));
       },
+      signal: this._controller.signal,
     };
 
     let timer: NodeJS.Timeout | undefined;
@@ -85,6 +98,7 @@ export class ProgressController {
           (timeoutError as any)[kAbortErrorSymbol] = true;
           this._state = { error: timeoutError };
           this._forceAbortPromise.reject(timeoutError);
+          this._controller.abort(timeoutError);
         }
       }, deadline - monotonicTime());
     }

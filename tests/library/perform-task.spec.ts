@@ -101,3 +101,21 @@ test('page.perform history', async ({ page, agent }) => {
   await agent.perform('click the Fox button again');
   expect(clicked).toBe(2);
 });
+
+test('page.perform error', async ({ page, agent, agentOptions }, testInfo) => {
+  if (testInfo.config.runAgents !== 'none') {
+    await page.setContent(`
+      <button>Wolf</button>
+      <button>Fox</button>
+    `);
+    await agent.perform('click the Fox button');
+  } else {
+    await page.setContent(`
+      <button>Wolf</button>
+      <button>Rabbit</button>
+    `);
+    const error = await agent.perform('click the Fox button', { timeout: 3000 }).catch(e => e);
+    expect(error.message).toContain('Timeout 3000ms exceeded.');
+    expect(error.message).toContain(`waiting for getByRole('button', { name: 'Fox' })`);
+  }
+});
