@@ -18,7 +18,6 @@ import { serializeExpectedTextValues } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
 import { ProgressController } from '../progress';
 import { yaml } from '../../utilsBundle';
 import { serializeError } from '../errors';
@@ -307,9 +306,6 @@ export function traceParamsForAction(action: actions.Action): { title?: string, 
 }
 
 function callMetadataForAction(frame: Frame, action: actions.Action): CallMetadata {
-  const traceParams = traceParamsForAction(action);
-  const title = renderTitleForCall(traceParams);
-
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
     objectId: frame.guid,
@@ -317,11 +313,8 @@ function callMetadataForAction(frame: Frame, action: actions.Action): CallMetada
     frameId: frame.guid,
     startTime: monotonicTime(),
     endTime: 0,
-    type: 'Frame',
-    method: traceParams.method,
-    params: traceParams.params,
-    title,
     log: [],
+    ...traceParamsForAction(action),
   };
   return callMetadata;
 }
