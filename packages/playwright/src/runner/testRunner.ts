@@ -482,7 +482,7 @@ export async function runAllTestsWithConfig(config: FullConfigInternal): Promise
     ...createRunTestsTasks(config),
   ];
 
-  const testRun = new TestRun(config, reporter, { pauseAtEnd: config.configCLIOverrides.debug, pauseOnError: config.configCLIOverrides.debug });
+  const testRun = new TestRun(config, reporter, { pauseAtEnd: config.configCLIOverrides.pause, pauseOnError: config.configCLIOverrides.pause });
   const status = await runTasks(testRun, tasks, config.config.globalTimeout);
 
   // Calling process.exit() might truncate large stdout/stderr output.

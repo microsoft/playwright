@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TerminalReporter } from './base';
+import { markErrorsAsReported, TerminalReporter } from './base';
 
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
@@ -76,6 +76,23 @@ class LineReporter extends TerminalReporter {
   onStepEnd(test: TestCase, result: TestResult, step: TestStep) {
     if (this.screen.isTTY && step.category === 'test.step')
       this._updateLine(test, result, step.parent);
+  }
+
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // without TTY, user cannot interrupt the pause. let's skip it.
+    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
+      return;
+
+    if (!process.env.PW_TEST_DEBUG_REPORTERS)
+      this.screen.stdout.write(`\u001B[1A\u001B[2K`);
+
+    this.writeLine(this.formatSingleResult(test, result, test.outcome() === 'unexpected' ? ++this._failures : undefined));
+    markErrorsAsReported(result);
+    this.writeLine(this.screen.colors.yellow(`    Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`) + '\n\n');
+
+    this._updateLine(test, result, undefined);
+
+    await new Promise<void>(() => {});
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
