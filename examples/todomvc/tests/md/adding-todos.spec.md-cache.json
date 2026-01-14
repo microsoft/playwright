@@ -1,0 +1,160 @@
+{
+  "page title contains \"TodoMVC\"": {
+    "actions": []
+  },
+  "Press Enter to submit the todo": {
+    "actions": [
+      {
+        "method": "pressKey",
+        "key": "Enter",
+        "code": "await page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "The input field 'What needs to be done?' is visible": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The input field is cleared": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "type": "textbox",
+        "value": "",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
+      }
+    ]
+  },
+  "The new todo 'Buy groceries' appears in the todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Buy groceries\"i",
+        "code": "await expect(page.getByText('Buy groceries')).toBeVisible();"
+      }
+    ]
+  },
+  "The text appears in the input field": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "type": "textbox",
+        "value": "Buy groceries",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('Buy groceries');"
+      }
+    ]
+  },
+  "The todo counter shows '1 item left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();"
+      }
+    ]
+  },
+  "Type 'Buy groceries' into the input field": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');"
+      }
+    ]
+  },
+  "Add first todo 'Buy milk'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy milk",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy milk');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Add second todo 'Walk the dog'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Walk the dog",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Walk the dog');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Add third todo 'Finish report'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Finish report",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Finish report');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy milk\n  - listitem: Walk the dog\n  - listitem: Finish report",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy milk\n  - listitem: Walk the dog\n  - listitem: Finish report\n`);"
+      }
+    ]
+  },
+  "Both todos appear in the list": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy milk\n  - listitem: Walk the dog",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy milk\n  - listitem: Walk the dog\n`);"
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();"
+      }
+    ]
+  },
+  "Counter shows '2 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "Counter shows '3 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"3 items left\"i",
+        "code": "await expect(page.getByText('3 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Buy milk\"i",
+        "code": "await expect(page.getByText('Buy milk')).toBeVisible();"
+      }
+    ]
+  }
+}

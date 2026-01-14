@@ -26,6 +26,7 @@ import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } f
 import { sourceMapSupport } from '../utilsBundle';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from '../third_party/pirates';
+import { transformMDToTS } from './md';
 
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
@@ -231,6 +232,9 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
 
+  if (filename.endsWith('.md'))
+    originalCode = transformMDToTS(originalCode, filename);
+
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
@@ -308,7 +312,7 @@ function installTransformIfNeeded() {
   // Hopefully, one day we can migrate to synchronous loader hooks instead, similar to our esmLoader...
   addHook((code, filename) => {
     return transformHook(code, filename).code;
-  }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts']);
+  }, shouldTransform, ['.ts', '.tsx', '.js', '.jsx', '.mjs', '.mts', '.cjs', '.cts', '.md']);
 }
 
 const collectCJSDependencies = (module: Module, dependencies: Set<string>) => {
