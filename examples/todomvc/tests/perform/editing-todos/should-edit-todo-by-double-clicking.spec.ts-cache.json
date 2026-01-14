@@ -37,9 +37,7 @@
       {
         "method": "click",
         "selector": "internal:testid=[data-testid=\"todo-title\"s]",
-        "options": {
-          "clickCount": 2
-        },
+        "clickCount": 2,
         "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
       }
     ]
@@ -48,9 +46,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:role=textbox[name=\"Buy organic milk\"i]",
-        "isNot": true,
-        "code": "await expect(page.getByRole('textbox', { name: 'Buy organic milk' })).not.toBeVisible();"
+        "selector": "internal:text=\"Buy organic milk\"i",
+        "code": "await expect(page.getByText('Buy organic milk')).toBeVisible();"
       }
     ]
   },
@@ -75,9 +72,9 @@
   "The todo appears in the list": {
     "actions": [
       {
-        "method": "expectAria",
-        "template": "- list:\n  - listitem: Buy milk",
-        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy milk\n`);"
+        "method": "expectVisible",
+        "selector": "internal:text=\"Buy milk\"i",
+        "code": "await expect(page.getByText('Buy milk')).toBeVisible();"
       }
     ]
   },

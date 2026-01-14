@@ -1,8 +1,10 @@
 [*]
 ../browserContext.ts
+../errors.ts
 ../page.ts
 ../progress.ts
 ../utils/expectUtils.ts
+../utils/crypto.ts
 ../../mcpBundle.ts
 ../../protocol/
 ../../utilsBundle.ts

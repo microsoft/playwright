@@ -88,7 +88,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
 }> {
   const { page } = context;
   if (!context.agentParams.api || !context.agentParams.model)
-    throw new Error(`This action requires the API and API key to be set on the page agent. Did you mean to --run-agents=all?`);
+    throw new Error(`This action requires the API and API key to be set on the page agent. Did you mean to --run-agents=missing?`);
   if (!context.agentParams.apiKey)
     throw new Error(`This action requires API key to be set on the page agent.`);
 

@@ -45,9 +45,7 @@
       {
         "method": "click",
         "selector": "internal:testid=[data-testid=\"todo-title\"s]",
-        "options": {
-          "clickCount": 2
-        },
+        "clickCount": 2,
         "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
       }
     ]
@@ -64,21 +62,18 @@
   "The list is empty": {
     "actions": [
       {
-        "method": "expectVisible",
-        "selector": "internal:role=listitem[name=\"Temporary task\"i]",
-        "isNot": true,
-        "code": "await expect(page.getByRole('listitem', { name: 'Temporary task' })).not.toBeVisible();"
+        "method": "expectAria",
+        "template": "- list:\n",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n\n`);"
       }
     ]
   },
   "The page loads with an empty todo list": {
     "actions": [
       {
-        "method": "expectValue",
+        "method": "expectVisible",
         "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
-        "type": "textbox",
-        "value": "",
-        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
       }
     ]
   },
@@ -95,9 +90,9 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"Temporary task\"i",
-        "isNot": true,
-        "code": "await expect(page.getByText('Temporary task')).not.toBeVisible();"
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "isNot": false,
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
       }
     ]
   }

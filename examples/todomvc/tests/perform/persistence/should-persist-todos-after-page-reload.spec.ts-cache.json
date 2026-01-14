@@ -69,7 +69,6 @@
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo').click();"
       }
     ]

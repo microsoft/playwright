@@ -21,7 +21,6 @@
       {
         "method": "click",
         "selector": "internal:role=heading[name=\"todos\"i]",
-        "options": {},
         "code": "await page.getByRole('heading', { name: 'todos' }).click();"
       }
     ]
@@ -31,9 +30,7 @@
       {
         "method": "click",
         "selector": "internal:testid=[data-testid=\"todo-title\"s]",
-        "options": {
-          "clickCount": 2
-        },
+        "clickCount": 2,
         "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
       }
     ]
@@ -42,9 +39,9 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:role=textbox[name=\"Schedule dentist appointment\"i]",
-        "isNot": true,
-        "code": "await expect(page.getByRole('textbox', { name: 'Schedule dentist appointment' })).not.toBeVisible();"
+        "selector": "internal:text=\"Schedule dentist appointment\"i",
+        "isNot": false,
+        "code": "await expect(page.getByText('Schedule dentist appointment')).toBeVisible();"
       }
     ]
   },

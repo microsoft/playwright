@@ -75,13 +75,11 @@
       {
         "method": "hover",
         "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Task 2' }).hover();"
       },
       {
         "method": "click",
         "selector": "internal:role=button[name=\"Delete\"i]",
-        "options": {},
         "code": "await page.getByRole('button', { name: 'Delete' }).click();"
       }
     ]
@@ -89,10 +87,11 @@
   "The page loads with an empty todo list": {
     "actions": [
       {
-        "method": "expectVisible",
+        "method": "expectValue",
         "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
-        "isNot": false,
-        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+        "type": "textbox",
+        "value": "",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
       }
     ]
   }

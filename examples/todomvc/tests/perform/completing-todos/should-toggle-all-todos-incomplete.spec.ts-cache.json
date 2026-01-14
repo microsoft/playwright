@@ -23,10 +23,10 @@
         "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 3');\nawait page.keyboard.press('Enter');"
       },
       {
-        "method": "click",
+        "method": "setChecked",
         "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
-        "options": {},
-        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();"
+        "checked": true,
+        "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).check();"
       }
     ]
   },
@@ -38,15 +38,32 @@
         "type": "checkbox",
         "value": "false",
         "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 1' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });"
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });"
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 3\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 3' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });"
       }
     ]
   },
   "All todos are marked as active": {
     "actions": [
       {
-        "method": "expectVisible",
-        "selector": "internal:text=\"3 items left\"i",
-        "code": "await expect(page.getByText('3 items left')).toBeVisible();"
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 1\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "false",
+        "isNot": false,
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 1' }).getByLabel('Toggle Todo')).toBeChecked({ checked: false });"
       }
     ]
   },
@@ -58,6 +75,20 @@
         "type": "checkbox",
         "value": "true",
         "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 1' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+      },
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 3\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Task 3' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
       }
     ]
   },
@@ -66,7 +97,6 @@
       {
         "method": "click",
         "selector": "internal:role=checkbox[name=\"❯Mark all as complete\"i]",
-        "options": {},
         "code": "await page.getByRole('checkbox', { name: '❯Mark all as complete' }).click();"
       }
     ]

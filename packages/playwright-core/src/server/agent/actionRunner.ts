@@ -16,15 +16,19 @@
 
 import { serializeExpectedTextValues } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
+import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
 import { ProgressController } from '../progress';
 import { yaml } from '../../utilsBundle';
+import { serializeError } from '../errors';
 
 import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { NameValue } from '@protocol/channels';
-import type { ExpectResult } from '../frames';
+import type { ExpectResult, Frame } from '../frames';
+import type { CallMetadata } from '../instrumentation';
+import type * as channels from '@protocol/channels';
 
 export async function runAction(parentProgress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
   const timeout = mode === 'generate' ? generateActionTimeout(action) : performActionTimeout(action);
@@ -33,21 +37,44 @@ export async function runAction(parentProgress: Progress, mode: 'generate' | 'ru
   const minDeadline = parentProgress.deadline ? Math.min(parentProgress.deadline, deadline) : deadline;
   const pc = new ProgressController();
   return await pc.run(async progress => {
-    return await innerRunAction(progress, page, action, secrets);
+    const frame = page.mainFrame();
+    const callMetadata = callMetadataForAction(frame, action);
+    await frame.instrumentation.onBeforeCall(frame, callMetadata, parentProgress.metadata.id);
+
+    let error: Error | undefined;
+    const result = await innerRunAction(progress, page, action, secrets).catch(e => error = e);
+    callMetadata.endTime = monotonicTime();
+    callMetadata.error = error ? serializeError(error) : undefined;
+    callMetadata.result = error ? undefined : result;
+    await frame.instrumentation.onAfterCall(frame, callMetadata);
+    if (error)
+      throw error;
+    return result;
   }, minDeadline - mt);
 }
 
 async function innerRunAction(progress: Progress, page: Page, action: actions.Action, secrets: NameValue[]) {
   const frame = page.mainFrame();
   switch (action.method) {
+    case 'navigate':
+      await frame.goto(progress, action.url);
+      break;
     case 'click':
-      await frame.click(progress, action.selector, { ...action.options, ...strictTrue });
+      await frame.click(progress, action.selector, {
+        button: action.button,
+        clickCount: action.clickCount,
+        modifiers: action.modifiers,
+        ...strictTrue
+      });
       break;
     case 'drag':
       await frame.dragAndDrop(progress, action.sourceSelector, action.targetSelector, { ...strictTrue });
       break;
     case 'hover':
-      await frame.hover(progress, action.selector, { ...action.options, ...strictTrue });
+      await frame.hover(progress, action.selector, {
+        modifiers: action.modifiers,
+        ...strictTrue
+      });
       break;
     case 'selectOption':
       await frame.selectOption(progress, action.selector, [], action.labels.map(a => ({ label: a })), { ...strictTrue });
@@ -77,7 +104,7 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       break;
     case 'expectVisible': {
       const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot });
-      if (result.matches === !!action.isNot)
+      if (!result.matches === !action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
@@ -92,14 +119,14 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
-      if (result.matches === !!action.isNot)
+      if (!result.matches === !action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
     case 'expectAria': {
       const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
       const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot });
-      if (result.matches === !!action.isNot)
+      if (!result.matches === !action.isNot)
         throw new Error(result.errorMessage);
       break;
     }
@@ -108,6 +135,8 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
 
 export function generateActionTimeout(action: actions.Action): number {
   switch (action.method) {
+    case 'navigate':
+      return 10000;
     case 'click':
     case 'drag':
     case 'hover':
@@ -126,6 +155,7 @@ export function generateActionTimeout(action: actions.Action): number {
 
 export function performActionTimeout(action: actions.Action): number {
   switch (action.method) {
+    case 'navigate':
     case 'click':
     case 'drag':
     case 'hover':
@@ -142,4 +172,157 @@ export function performActionTimeout(action: actions.Action): number {
   }
 }
 
+export function traceParamsForAction(action: actions.Action): { method: string, title: string, params: any } {
+  const timeout = generateActionTimeout(action);
+  switch (action.method) {
+    case 'navigate': {
+      const params: channels.FrameGotoParams = {
+        url: action.url,
+        timeout,
+      };
+      return { method: 'goto', title: 'Navigate', params };
+    }
+    case 'click': {
+      const params: channels.FrameClickParams = {
+        selector: action.selector,
+        strict: true,
+        modifiers: action.modifiers,
+        button: action.button,
+        clickCount: action.clickCount,
+        timeout,
+      };
+      return { method: 'click', title: 'Click', params };
+    }
+    case 'drag': {
+      const params: channels.FrameDragAndDropParams = {
+        source: action.sourceSelector,
+        target: action.targetSelector,
+        timeout,
+      };
+      return { method: 'dragAndDrop', title: 'Drag and Drop', params };
+    }
+    case 'hover': {
+      const params: channels.FrameHoverParams = {
+        selector: action.selector,
+        modifiers: action.modifiers,
+        timeout,
+      };
+      return { method: 'hover', title: 'Hover', params };
+    }
+    case 'pressKey': {
+      const params: channels.PageKeyboardPressParams = {
+        key: action.key,
+      };
+      return { method: 'press', title: 'Press', params };
+    }
+    case 'pressSequentially': {
+      const params: channels.FrameTypeParams = {
+        selector: action.selector,
+        text: action.text,
+        timeout,
+      };
+      return { method: 'type', title: 'Type', params };
+    }
+    case 'fill': {
+      const params: channels.FrameFillParams = {
+        selector: action.selector,
+        strict: true,
+        value: action.text,
+        timeout,
+      };
+      return { method: 'fill', title: 'Fill', params };
+    }
+    case 'setChecked': {
+      if (action.checked) {
+        const params: channels.FrameCheckParams = {
+          selector: action.selector,
+          strict: true,
+          timeout,
+        };
+        return { method: 'check', title: 'Check', params };
+      } else {
+        const params: channels.FrameUncheckParams = {
+          selector: action.selector,
+          strict: true,
+          timeout,
+        };
+        return { method: 'uncheck', title: 'Uncheck', params };
+      }
+    }
+    case 'selectOption': {
+      const params: channels.FrameSelectOptionParams = {
+        selector: action.selector,
+        strict: true,
+        options: action.labels.map(label => ({ label })),
+        timeout,
+      };
+      return { method: 'selectOption', title: 'Select Option', params };
+    }
+    case 'expectValue': {
+      if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
+        const expectedText = serializeExpectedTextValues([action.value]);
+        const params: channels.FrameExpectParams = {
+          selector: action.selector,
+          expression: 'to.have.value',
+          expectedText,
+          isNot: !!action.isNot,
+          timeout: kDefaultTimeout,
+        };
+        return { method: 'expect', title: 'Expect Value', params };
+      } else if (action.type === 'checkbox' || action.type === 'radio') {
+        // TODO: provide serialized expected value
+        const params: channels.FrameExpectParams = {
+          selector: action.selector,
+          expression: 'to.be.checked',
+          isNot: !!action.isNot,
+          timeout: kDefaultTimeout,
+        };
+        return { method: 'expect', title: 'Expect Checked', params };
+      } else {
+        throw new Error(`Unsupported element type: ${action.type}`);
+      }
+    }
+    case 'expectVisible': {
+      const params: channels.FrameExpectParams = {
+        selector: action.selector,
+        expression: 'to.be.visible',
+        isNot: !!action.isNot,
+        timeout: kDefaultTimeout,
+      };
+      return { method: 'expect', title: 'Expect Visible', params };
+    }
+    case 'expectAria': {
+      // TODO: provide serialized expected value
+      const params: channels.FrameExpectParams = {
+        selector: 'body',
+        expression: 'to.match.snapshot',
+        expectedText: [],
+        isNot: !!action.isNot,
+        timeout: kDefaultTimeout,
+      };
+      return { method: 'expect', title: 'Expect Aria Snapshot', params };
+    }
+  }
+}
+
+function callMetadataForAction(frame: Frame, action: actions.Action): CallMetadata {
+  const { method, title, params } = traceParamsForAction(action);
+
+  const callMetadata: CallMetadata = {
+    id: `call@${createGuid()}`,
+    objectId: frame.guid,
+    pageId: frame._page.guid,
+    frameId: frame.guid,
+    startTime: monotonicTime(),
+    endTime: 0,
+    type: 'Frame',
+    method,
+    params,
+    title,
+    log: [],
+  };
+  return callMetadata;
+}
+
+const kDefaultTimeout = 5000;
 const strictTrue =  { strict: true };

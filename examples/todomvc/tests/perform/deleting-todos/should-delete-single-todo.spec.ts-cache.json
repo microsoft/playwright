@@ -24,7 +24,6 @@
       {
         "method": "click",
         "selector": "internal:role=button[name=\"Delete\"i]",
-        "options": {},
         "code": "await page.getByRole('button', { name: 'Delete' }).click();"
       }
     ]
@@ -33,8 +32,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"1 item left\"i",
-        "code": "await expect(page.getByText('1 item left')).toBeVisible();"
+        "selector": "internal:text=\"item left\"i",
+        "code": "await expect(page.getByText('item left')).toBeVisible();"
       }
     ]
   },
@@ -42,9 +41,8 @@
     "actions": [
       {
         "method": "hover",
-        "selector": "internal:testid=[data-testid=\"todo-item\"s] >> div",
-        "options": {},
-        "code": "await page.getByTestId('todo-item').locator('div').hover();"
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "code": "await page.getByTestId('todo-title').hover();"
       }
     ]
   },
@@ -59,7 +57,14 @@
     ]
   },
   "The list is empty": {
-    "actions": []
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task to delete\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Task to delete')).not.toBeVisible();"
+      }
+    ]
   },
   "The page loads with an empty todo list": {
     "actions": [
@@ -83,8 +88,9 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
-        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+        "selector": "internal:text=\"Task to delete\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Task to delete')).not.toBeVisible();"
       }
     ]
   }

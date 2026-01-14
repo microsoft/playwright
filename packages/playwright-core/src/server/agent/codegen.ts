@@ -22,9 +22,16 @@ import type { Language } from '../../utils/isomorphic/locatorGenerators';
 
 export async function generateCode(sdkLanguage: Language, action: actions.Action) {
   switch (action.method) {
+    case 'navigate': {
+      return `await page.goto(${escapeWithQuotes(action.url)});`;
+    }
     case 'click': {
       const locator = asLocator(sdkLanguage, action.selector);
-      return `await page.${locator}.click(${formatObjectOrVoid(action.options)});`;
+      return `await page.${locator}.click(${formatObjectOrVoid({
+        button: action.button,
+        clickCount: action.clickCount,
+        modifiers: action.modifiers,
+      })});`;
     }
     case 'drag': {
       const sourceLocator = asLocator(sdkLanguage, action.sourceSelector);
@@ -33,7 +40,9 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
     }
     case 'hover': {
       const locator = asLocator(sdkLanguage, action.selector);
-      return `await page.${locator}.hover(${formatObjectOrVoid(action.options)});`;
+      return `await page.${locator}.hover(${formatObjectOrVoid({
+        modifiers: action.modifiers,
+      })});`;
     }
     case 'pressKey': {
       return `await page.keyboard.press(${escapeWithQuotes(action.key, '\'')});`;

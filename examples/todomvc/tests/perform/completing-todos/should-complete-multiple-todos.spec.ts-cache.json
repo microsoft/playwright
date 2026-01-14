@@ -38,7 +38,6 @@
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Buy milk\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Buy milk' }).getByLabel('Toggle Todo').click();"
       }
     ]
@@ -48,7 +47,6 @@
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Finish report\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Finish report' }).getByLabel('Toggle Todo').click();"
       }
     ]
@@ -104,9 +102,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"0 items left\"i",
-        "isNot": true,
-        "code": "await expect(page.getByText('0 items left')).not.toBeVisible();"
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
       }
     ]
   },

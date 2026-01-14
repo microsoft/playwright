@@ -18,14 +18,13 @@
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
-        "text": "Finish homework",
+        "text": "Read a book",
         "submit": true,
-        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Finish homework');\nawait page.keyboard.press('Enter');"
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Read a book');\nawait page.keyboard.press('Enter');"
       },
       {
         "method": "click",
         "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
-        "options": {},
         "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();"
       }
     ]
@@ -34,8 +33,8 @@
     "actions": [
       {
         "method": "expectAria",
-        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Finish homework",
-        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Finish homework\n`);"
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
       }
     ]
   },
@@ -44,7 +43,6 @@
       {
         "method": "click",
         "selector": "internal:role=link[name=\"All\"i]",
-        "options": {},
         "code": "await page.getByRole('link', { name: 'All' }).click();"
       }
     ]
@@ -54,7 +52,6 @@
       {
         "method": "click",
         "selector": "internal:role=link[name=\"Active\"i]",
-        "options": {},
         "code": "await page.getByRole('link', { name: 'Active' }).click();"
       }
     ]
@@ -63,8 +60,8 @@
     "actions": [
       {
         "method": "expectAria",
-        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Finish homework",
-        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Finish homework\n`);"
+        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
       }
     ]
   },
@@ -99,8 +96,8 @@
     "actions": [
       {
         "method": "expectAria",
-        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Finish homework",
-        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Finish homework\n`);"
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
       }
     ]
   }
