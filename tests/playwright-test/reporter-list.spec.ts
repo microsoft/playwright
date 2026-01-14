@@ -436,12 +436,14 @@ test.describe('onTestPaused', () => {
     const { exitCode } = await runner.kill('SIGINT');
     expect(exitCode).toBe(130);
 
-    expect(stripAnsi(runner.output)).toEqual(`
+    const output = stripAnsi(runner.output).replace(/\d+(\.\d+)?m?s/g, 'Xms');
+    expect(output).toEqual(`
 Running 1 test using 1 worker
 
-#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (0ms)
-       Paused at test end. Press Ctrl+C to end.
+#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
+#1 :        Paused at test end. Press Ctrl+C to end.
 Running teardown
+#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 
   1 interrupted
     a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
@@ -465,11 +467,13 @@ Running teardown
     const { exitCode } = await runner.kill('SIGINT');
     expect(exitCode).toBe(130);
 
-    expect(stripAnsi(runner.output)).toEqual(`
+    const output = stripAnsi(runner.output).replace(/\d+(\.\d+)?m?s/g, 'Xms');
+    expect(output).toEqual(`
 Running 1 test using 1 worker
 
-#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (0ms)
-       Paused at test end. Press Ctrl+C to end.
+#0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
+#1 :        Paused at test end. Press Ctrl+C to end.
+#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 
 
   1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
@@ -506,10 +510,11 @@ Running 1 test using 1 worker
     const { exitCode } = await runner.kill('SIGINT');
     expect(exitCode).toBe(130);
 
-    expect(stripAnsi(runner.output)).toEqual(`
+    const output = stripAnsi(runner.output).replace(/\d+(\.\d+)?m?s/g, 'Xms');
+    expect(output).toEqual(`
 Running 1 test using 1 worker
 
-#0 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › fails (0ms)
+#0 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › fails (Xms)
 
     Error: expect(received).toBe(expected) // Object.is equality
 
@@ -538,7 +543,8 @@ Running 1 test using 1 worker
       7 |       
         at ${test.info().outputPath('a.test.ts')}:5:21
 
-       Paused on error. Press Ctrl+C to end.
+#1 :        Paused on error. Press Ctrl+C to end.
+#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › fails (Xms)
 
 
 

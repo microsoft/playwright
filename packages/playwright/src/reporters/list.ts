@@ -38,7 +38,6 @@ class ListReporter extends TerminalReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
-  private _pausedTests = new Set<TestCase>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super(options);
@@ -172,21 +171,21 @@ class ListReporter extends TerminalReporter {
       return;
 
     this._updateTestLine(test, result);
-    this._pausedTests.add(test);
     this._maybeWriteNewLine();
     if (test.outcome() === 'unexpected') {
-      this.writeLine(this.formatResultErrors(test, result));
+      const errors = this.formatResultErrors(test, result);
+      this.writeLine(errors);
+      this._updateLineCountAndNewLineFlagForOutput(errors);
       markErrorsAsReported(result);
     }
-    this.writeLine(this._testPrefix('', '') + this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`));
+    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
 
     await new Promise<void>(() => {});
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const alreadyUpdated = this._pausedTests.delete(test);
-    if (!alreadyUpdated)
+    if (!this._isOffScreen(this._testRows, test))
       this._updateTestLine(test, result);
   }
 
@@ -220,6 +219,13 @@ class ListReporter extends TerminalReporter {
     }
 
     this._updateOrAppendLine(this._testRows, test, text, prefix);
+  }
+
+  private _isOffScreen<T>(entityRowNumbers: Map<T, number>, entity: T): boolean {
+    const row = entityRowNumbers.get(entity);
+    if (row !== undefined && this.screen.isTTY && this._lastRow - row >= this.screen.ttyHeight)
+      return true;
+    return false;
   }
 
   private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
