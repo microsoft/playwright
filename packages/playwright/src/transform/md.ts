@@ -75,17 +75,18 @@ export function transformMDToTS(code: string, filename: string): { code: string,
         annotations.push({ type, description });
       }
     }
-    let props = '';
+
     if (tags.length || annotations.length) {
-      props = '{\n';
+      addLine({ text: `  test(${escapeString(test.title.text)}, {`, source: test.title.source });
       if (tags.length)
-        props += `    tag: [${tags.map(tag => escapeString(tag)).join(', ')}],\n`;
+        addLine({ text: `    tag: [${tags.map(tag => escapeString(tag)).join(', ')}],` });
       if (annotations.length)
-        props += `    annotation: [${annotations.map(a => `{ type: ${escapeString(a.type)}, description: ${escapeString(a.description)} }`).join(', ')}],\n`;
-      props += '  }, ';
+        addLine({ text: `    annotation: [${annotations.map(a => `{ type: ${escapeString(a.type)}, description: ${escapeString(a.description)} }`).join(', ')}],` });
+      addLine({ text: `  }, async ({ page, agent }) => {` });
+    } else {
+      addLine({ text: `  test(${escapeString(test.title.text)}, async ({ page, agent }) => {`, source: test.title.source });
     }
 
-    addLine({ text: `  test(${escapeString(test.title.text)}, ${props}async ({ page, agent }) => {`, source: test.title.source });
     for (const line of test.lines)
       addLine({ text: '    ' + line.text, source: line.source });
     addLine({ text: `  });` });
@@ -146,7 +147,8 @@ function parseSpec(content: string, filename: string): { describe: Line, tests: 
     if (nextIndex === -1)
       nextIndex = children.length;
     const testNodes = children.splice(0, nextIndex);
-    tests.push(parseTest(filename, testNodes));
+    const test = parseTest(filename, testNodes);
+    tests.push(test);
   }
 
   return { describe, tests, props };

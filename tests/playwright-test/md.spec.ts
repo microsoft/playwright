@@ -68,6 +68,9 @@ test('sourcemaps', async ({ runInlineTest }) => {
 
 ### should add single todo
 
+- tag: @regression
+- annotation: issue=123
+
 - group: Add the todo
   - Type 'Buy groceries' into the input field
   - expect: The text appears in the input field
@@ -163,13 +166,13 @@ test('sourcemaps', async ({ runInlineTest }) => {
     `> > Navigate to "/todomvc" ${test.info().outputPath('seed.spec.md')}:8:4`,
     `> Expect "page title contains "TodoMVC"" ${test.info().outputPath('seed.spec.md')}:11:2`,
     `> Expect "The input field 'What needs to be done?' is visible" ${test.info().outputPath('seed.spec.md')}:13:2`,
-    `> Add the todo ${test.info().outputPath('should-add-single-todo.spec.md')}:8:2`,
-    `> > Perform "Type 'Buy groceries' into the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:9:4`,
-    `> > Expect "The text appears in the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:10:4`,
-    `> Perform "Press Enter to submit the todo" ${test.info().outputPath('should-add-single-todo.spec.md')}:11:2`,
-    `> Verify todo is added to the list ${test.info().outputPath('should-add-single-todo.spec.md')}:12:2`,
-    `> > Expect "The new todo 'Buy groceries' appears in the todo list" ${test.info().outputPath('should-add-single-todo.spec.md')}:13:4`,
-    `> > Expect "The input field is cleared" ${test.info().outputPath('should-add-single-todo.spec.md')}:14:4`,
-    `> > Expect "The todo counter shows '1 item left'" ${test.info().outputPath('should-add-single-todo.spec.md')}:15:4`,
+    `> Add the todo ${test.info().outputPath('should-add-single-todo.spec.md')}:11:2`,
+    `> > Perform "Type 'Buy groceries' into the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:12:4`,
+    `> > Expect "The text appears in the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:13:4`,
+    `> Perform "Press Enter to submit the todo" ${test.info().outputPath('should-add-single-todo.spec.md')}:14:2`,
+    `> Verify todo is added to the list ${test.info().outputPath('should-add-single-todo.spec.md')}:15:2`,
+    `> > Expect "The new todo 'Buy groceries' appears in the todo list" ${test.info().outputPath('should-add-single-todo.spec.md')}:16:4`,
+    `> > Expect "The input field is cleared" ${test.info().outputPath('should-add-single-todo.spec.md')}:17:4`,
+    `> > Expect "The todo counter shows '1 item left'" ${test.info().outputPath('should-add-single-todo.spec.md')}:18:4`,
   ]);
 });
