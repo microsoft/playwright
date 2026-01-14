@@ -57,7 +57,13 @@ export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: 
     const filtered = resources.filter(resource => {
       if (!selectedTime)
         return true;
-      return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
+      return !!resource._monotonicTime && (
+        // the resource overlaps with the selection iff
+        // - the start time is before the end of the selection
+        // AND
+        // - the end time is after the start of the selection
+        resource._monotonicTime <= selectedTime.maximum && (resource._monotonicTime + resource.time) >= selectedTime.minimum
+      )
     });
     return filtered;
   }, [model, selectedTime]);
