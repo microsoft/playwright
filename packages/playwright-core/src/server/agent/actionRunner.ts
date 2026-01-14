@@ -18,6 +18,7 @@ import { serializeExpectedTextValues } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
+import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
 import { ProgressController } from '../progress';
 import { yaml } from '../../utilsBundle';
 import { serializeError } from '../errors';
@@ -172,7 +173,7 @@ export function performActionTimeout(action: actions.Action): number {
   }
 }
 
-export function traceParamsForAction(action: actions.Action): { method: string, title: string, params: any } {
+export function traceParamsForAction(action: actions.Action): { title?: string, type: string, method: string, params: any } {
   const timeout = generateActionTimeout(action);
   switch (action.method) {
     case 'navigate': {
@@ -180,7 +181,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         url: action.url,
         timeout,
       };
-      return { method: 'goto', title: 'Navigate', params };
+      return { type: 'Frame', method: 'goto', params };
     }
     case 'click': {
       const params: channels.FrameClickParams = {
@@ -191,7 +192,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         clickCount: action.clickCount,
         timeout,
       };
-      return { method: 'click', title: 'Click', params };
+      return { type: 'Frame', method: 'click', params };
     }
     case 'drag': {
       const params: channels.FrameDragAndDropParams = {
@@ -199,7 +200,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         target: action.targetSelector,
         timeout,
       };
-      return { method: 'dragAndDrop', title: 'Drag and Drop', params };
+      return { type: 'Frame', method: 'dragAndDrop', params };
     }
     case 'hover': {
       const params: channels.FrameHoverParams = {
@@ -207,13 +208,13 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         modifiers: action.modifiers,
         timeout,
       };
-      return { method: 'hover', title: 'Hover', params };
+      return { type: 'Frame', method: 'hover', params };
     }
     case 'pressKey': {
       const params: channels.PageKeyboardPressParams = {
         key: action.key,
       };
-      return { method: 'press', title: 'Press', params };
+      return { type: 'Page', method: 'keyboardPress', params };
     }
     case 'pressSequentially': {
       const params: channels.FrameTypeParams = {
@@ -221,7 +222,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         text: action.text,
         timeout,
       };
-      return { method: 'type', title: 'Type', params };
+      return { type: 'Frame', method: 'type', params };
     }
     case 'fill': {
       const params: channels.FrameFillParams = {
@@ -230,7 +231,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         value: action.text,
         timeout,
       };
-      return { method: 'fill', title: 'Fill', params };
+      return { type: 'Frame', method: 'fill', params };
     }
     case 'setChecked': {
       if (action.checked) {
@@ -239,14 +240,14 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
           strict: true,
           timeout,
         };
-        return { method: 'check', title: 'Check', params };
+        return { type: 'Frame', method: 'check', params };
       } else {
         const params: channels.FrameUncheckParams = {
           selector: action.selector,
           strict: true,
           timeout,
         };
-        return { method: 'uncheck', title: 'Uncheck', params };
+        return { type: 'Frame', method: 'uncheck', params };
       }
     }
     case 'selectOption': {
@@ -256,7 +257,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         options: action.labels.map(label => ({ label })),
         timeout,
       };
-      return { method: 'selectOption', title: 'Select Option', params };
+      return { type: 'Frame', method: 'selectOption', params };
     }
     case 'expectValue': {
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
@@ -268,7 +269,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
           isNot: !!action.isNot,
           timeout: kDefaultTimeout,
         };
-        return { method: 'expect', title: 'Expect Value', params };
+        return { type: 'Frame', method: 'expect', title: 'Expect Value', params };
       } else if (action.type === 'checkbox' || action.type === 'radio') {
         // TODO: provide serialized expected value
         const params: channels.FrameExpectParams = {
@@ -277,7 +278,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
           isNot: !!action.isNot,
           timeout: kDefaultTimeout,
         };
-        return { method: 'expect', title: 'Expect Checked', params };
+        return { type: 'Frame', method: 'expect', title: 'Expect Checked', params };
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
@@ -289,7 +290,7 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         isNot: !!action.isNot,
         timeout: kDefaultTimeout,
       };
-      return { method: 'expect', title: 'Expect Visible', params };
+      return { type: 'Frame', method: 'expect', title: 'Expect Visible', params };
     }
     case 'expectAria': {
       // TODO: provide serialized expected value
@@ -300,13 +301,14 @@ export function traceParamsForAction(action: actions.Action): { method: string, 
         isNot: !!action.isNot,
         timeout: kDefaultTimeout,
       };
-      return { method: 'expect', title: 'Expect Aria Snapshot', params };
+      return { type: 'Frame', method: 'expect', title: 'Expect Aria Snapshot', params };
     }
   }
 }
 
 function callMetadataForAction(frame: Frame, action: actions.Action): CallMetadata {
-  const { method, title, params } = traceParamsForAction(action);
+  const traceParams = traceParamsForAction(action);
+  const title = renderTitleForCall(traceParams);
 
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
@@ -316,8 +318,8 @@ function callMetadataForAction(frame: Frame, action: actions.Action): CallMetada
     startTime: monotonicTime(),
     endTime: 0,
     type: 'Frame',
-    method,
-    params,
+    method: traceParams.method,
+    params: traceParams.params,
     title,
     log: [],
   };

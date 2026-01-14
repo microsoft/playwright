@@ -67,6 +67,7 @@ export async function pageAgentExpect(progress: Progress, context: Context, expe
 ${expectation}
 `;
 
+  callParams.maxTurns = callParams.maxTurns ?? 3;
   await runLoop(progress, context, expectTools, task, undefined, callParams);
   await updateCache(context, cacheKey);
 }
@@ -94,6 +95,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
 
   const { full } = await page.snapshotForAI(progress);
   const { tools, callTool, reportedResult } = toolsForLoop(progress, context, toolDefinitions, { resultSchema });
+  const secrets = Object.fromEntries((context.agentParams.secrets || [])?.map(s => ([s.name, s.value])));
 
   const loop = new Loop({
     api: context.agentParams.api as any,
@@ -106,6 +108,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     debug,
     callTool,
     tools,
+    secrets,
     ...context.events,
   });
 
