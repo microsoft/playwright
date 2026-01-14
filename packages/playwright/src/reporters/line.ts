@@ -99,7 +99,6 @@ class LineReporter extends TerminalReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-
     if (!this.willRetry(test) && (test.outcome() === 'flaky' || test.outcome() === 'unexpected' || result.status === 'interrupted')) {
       if (!process.env.PW_TEST_DEBUG_REPORTERS)
         this.screen.stdout.write(`\u001B[1A\u001B[2K`);
