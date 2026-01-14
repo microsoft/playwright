@@ -2909,6 +2909,7 @@ scheme.PageAgentPerformParams = tObject({
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
+  timeout: tOptional(tInt),
 });
 scheme.PageAgentPerformResult = tObject({
   usage: tType('AgentUsage'),
@@ -2918,6 +2919,7 @@ scheme.PageAgentExpectParams = tObject({
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
+  timeout: tOptional(tInt),
 });
 scheme.PageAgentExpectResult = tObject({
   usage: tType('AgentUsage'),
@@ -2928,6 +2930,7 @@ scheme.PageAgentExtractParams = tObject({
   maxTurns: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
+  timeout: tOptional(tInt),
 });
 scheme.PageAgentExtractResult = tObject({
   result: tAny,

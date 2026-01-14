@@ -5411,6 +5411,11 @@ export interface PageAgent {
      * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
      */
     maxTurns?: number;
+
+    /**
+     * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
+     */
+    timeout?: number;
   }): Promise<void>;
 
   /**
@@ -5442,6 +5447,11 @@ export interface PageAgent {
      * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
      */
     maxTurns?: number;
+
+    /**
+     * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
+     */
+    timeout?: number;
   }): Promise<{
     usage: {
       turns: number;

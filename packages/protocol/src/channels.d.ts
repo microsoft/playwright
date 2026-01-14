@@ -5115,11 +5115,13 @@ export type PageAgentPerformParams = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentPerformOptions = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentPerformResult = {
   usage: AgentUsage,
@@ -5129,11 +5131,13 @@ export type PageAgentExpectParams = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentExpectOptions = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentExpectResult = {
   usage: AgentUsage,
@@ -5144,11 +5148,13 @@ export type PageAgentExtractParams = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentExtractOptions = {
   maxTurns?: number,
   maxTokens?: number,
   cacheKey?: string,
+  timeout?: number,
 };
 export type PageAgentExtractResult = {
   result: any,

@@ -4370,6 +4370,7 @@ PageAgentOptions:
     maxTurns: int?
     maxTokens: int?
     cacheKey: string?
+    timeout: int?
 
 AgentUsage:
   type: object
