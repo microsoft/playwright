@@ -21,13 +21,13 @@ import { parseMarkdown } from '../utilsBundle';
 import { genMapping } from './babelBundle';
 import type * as mdast from 'mdast';
 
-type Props = [string, string][];
+type Props = { key: string; value: string; source?: SourceLocation }[];
 type SourceLocation = { filename: string; line: number; column: number };
 type Line = { text: string; source?: SourceLocation };
 
 export function transformMDToTS(code: string, filename: string): { code: string, map: ReturnType<typeof genMapping.toEncodedMap> } {
   const parsed = parseSpec(code, filename);
-  const seed = parsed.props.find(prop => prop[0] === 'seed')?.[1];
+  const seed = parsed.props.find(prop => prop.key === 'seed')?.value;
   if (seed) {
     const seedFile = path.resolve(path.dirname(filename), seed);
     const seedContents = fs.readFileSync(seedFile, 'utf-8');
@@ -38,12 +38,12 @@ export function transformMDToTS(code: string, filename: string): { code: string,
       throw new Error(`while parsing ${seedFile}: seed test must not have properties`);
     for (const test of parsed.tests)
       test.lines = parsedSeed.tests[0].lines.concat(test.lines);
-    const fixtures = parsedSeed.props.find(prop => prop[0] === 'fixtures');
-    if (fixtures && !parsed.props.find(prop => prop[0] === 'fixtures'))
+    const fixtures = parsedSeed.props.find(prop => prop.key === 'fixtures');
+    if (fixtures && !parsed.props.find(prop => prop.key === 'fixtures'))
       parsed.props.push(fixtures);
   }
 
-  const fixtures = parsed.props.find(prop => prop[0] === 'fixtures')?.[1] ?? '@playwright/test';
+  const fixtures = parsed.props.find(prop => prop.key === 'fixtures')?.value ?? '@playwright/test';
 
   const map = new genMapping.GenMapping({ file: filename });
   const outputLines: string[] = [];
@@ -63,25 +63,33 @@ export function transformMDToTS(code: string, filename: string): { code: string,
   addLine({ text: `test.describe(${escapeString(parsed.describe.text)}, () => {`, source: parsed.describe.source });
 
   for (const test of parsed.tests) {
-    const tags: string[] = [];
-    const annotations: { type: string, description: string }[] = [];
-    for (const [key, value] of test.props) {
+    const tags: { tag: string; source?: SourceLocation }[] = [];
+    const annotations: { type: string; description: string; source?: SourceLocation }[] = [];
+    for (const { key, value, source } of test.props) {
       if (key === 'tag') {
-        tags.push(...value.split(' ').map(s => s.trim()).filter(s => !!s));
+        tags.push(...value.split(' ').map(s => s.trim()).filter(s => !!s).map(tag => ({ tag, source })));
       } else if (key === 'annotation') {
         if (!value.includes('='))
           throw new Error(`while parsing ${filename}: annotation must be in format "type=description", found "${value}"`);
         const [type, description] = value.split('=').map(s => s.trim());
-        annotations.push({ type, description });
+        annotations.push({ type, description, source });
       }
     }
 
     if (tags.length || annotations.length) {
       addLine({ text: `  test(${escapeString(test.title.text)}, {`, source: test.title.source });
-      if (tags.length)
-        addLine({ text: `    tag: [${tags.map(tag => escapeString(tag)).join(', ')}],` });
-      if (annotations.length)
-        addLine({ text: `    annotation: [${annotations.map(a => `{ type: ${escapeString(a.type)}, description: ${escapeString(a.description)} }`).join(', ')}],` });
+      if (tags.length) {
+        addLine({ text: `    tag: [` });
+        for (const t of tags)
+          addLine({ text: `      ${escapeString(t.tag)},`, source: t.source });
+        addLine({ text: `    ],` });
+      }
+      if (annotations.length) {
+        addLine({ text: `    annotation: [` });
+        for (const a of annotations)
+          addLine({ text: `      { type: ${escapeString(a.type)}, description: ${escapeString(a.description)} },`, source: a.source });
+        addLine({ text: `    ],` });
+      }
       addLine({ text: `  }, async ({ page, agent }) => {` });
     } else {
       addLine({ text: `  test(${escapeString(test.title.text)}, async ({ page, agent }) => {`, source: test.title.source });
@@ -159,7 +167,7 @@ function parseProp(filename: string, node: mdast.ListItem, props: Props) {
   const match = propText.match(/^([^:]+):(.*)$/);
   if (!match)
     throw parsingError(filename, node, `property must be in format "key: value"`);
-  props.push([match[1].trim(), match[2].trim()]);
+  props.push({ key: match[1].trim(), value: match[2].trim(), source: getSource(filename, node) });
 }
 
 function parseProps(filename: string, node: mdast.List, props: Props) {
