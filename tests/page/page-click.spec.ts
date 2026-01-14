@@ -1321,3 +1321,30 @@ it('should click with tweened mouse movement', async ({ page, browserName, isAnd
     [200, 300]
   ]);
 });
+
+it('should not wait with noAutoWaiting', async ({ page }) => {
+  await page.setContent(`<button>click me</button>`);
+  const error = await page.locator('#target').click({ __testHookNoAutoWaiting: true } as any).catch(e => e);
+  expect(error.message).toContain('locator.click: Element(s) not found');
+});
+
+it('should not wait with noAutoWaiting 2', async ({ page }) => {
+  await page.setContent(`
+    <style>
+      div:hover button {
+        margin-left: 200px;
+      }
+    </style>
+    <div>
+      <button>click me</button>
+    </div>
+  `);
+  const error = await page.locator('button').click({ __testHookNoAutoWaiting: true } as any).catch(e => e);
+  expect(error.message).toContain('locator.click: <div>…</div> intercepts pointer events');
+});
+
+it('should not wait with noAutoWaiting 3', async ({ page }) => {
+  await page.setContent(`<button disabled>click me</button>`);
+  const error = await page.locator('button').click({ __testHookNoAutoWaiting: true } as any).catch(e => e);
+  expect(error.message).toContain('locator.click: Element is not enabled');
+});
