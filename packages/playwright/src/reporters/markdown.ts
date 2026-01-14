@@ -79,7 +79,7 @@ class MarkdownReporter implements Reporter {
     if (this._options.shardDurationThreshold && result.shards) {
       for (const shard of result.shards) {
         if (shard.duration > this._options.shardDurationThreshold) {
-          const shardLabel = shard.shardIndex ? `Shard ${shard.shardIndex}` : 'Shard';
+          const shardLabel = shard.shardIndex !== undefined ? `Shard ${shard.shardIndex}` : 'Shard';
           const durationMins = Math.round(shard.duration / 60000);
           const thresholdMins = Math.round(this._options.shardDurationThreshold / 60000);
           lines.push(`:warning: **Warning: ${shardLabel} took ${durationMins} minutes, exceeding the ${thresholdMins} minute threshold.**`);
