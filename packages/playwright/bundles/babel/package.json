@@ -25,7 +25,8 @@
     "@babel/plugin-transform-private-methods": "^7.27.1",
     "@babel/plugin-transform-private-property-in-object": "^7.27.1",
     "@babel/plugin-transform-react-jsx": "^7.27.1",
-    "@babel/preset-typescript": "^7.27.1"
+    "@babel/preset-typescript": "^7.27.1",
+    "@jridgewell/gen-mapping": "^0.3.12"
   },
   "devDependencies": {
     "@types/babel__code-frame": "^7.0.6",

@@ -355,6 +355,15 @@ export function buildActionTree(actions: ActionTraceEventInContext[]): { rootIte
     parent.children.push(item);
     item.parent = parent;
   }
+
+  const inheritStack = (item: ActionTreeItem) => {
+    for (const child of item.children) {
+      child.action.stack = child.action.stack ?? item.action.stack;
+      inheritStack(child);
+    }
+  };
+  inheritStack(rootItem);
+
   return { rootItem, itemMap };
 }
 
