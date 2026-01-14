@@ -34,8 +34,8 @@ function getGithubToken() {
 const octokit = getOctokit(getGithubToken());
 
 class GHAMarkdownReporter extends MarkdownReporter {
-  constructor() {
-    super({ shardDurationThreshold: 25 * 60 * 1000 });
+  constructor(options: { configDir: string, outputFile?: string }) {
+    super({ ...options, shardDurationThreshold: 25 * 60 * 1000 });
   }
 
   override async publishReport(report: string) {
