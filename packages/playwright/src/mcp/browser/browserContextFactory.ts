@@ -224,6 +224,10 @@ class PersistentContextFactory implements BrowserContextFactory {
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
           throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+        if (error.message.includes('cannot open shared object file: No such file or directory')) {
+          const browserName = launchOptions.channel ?? this.config.browser.browserName;
+          throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
+        }
         if (error.message.includes('ProcessSingleton') ||
             // On Windows the process exits silently with code 21 when the profile is in use.
             error.message.includes('exitCode=21')) {
