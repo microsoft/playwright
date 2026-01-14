@@ -479,6 +479,10 @@ function quotePathIfNeeded(path: string): string {
 
 const kReportedSymbol = Symbol('reported');
 
+export function markErrorsAsReported(result: TestResult) {
+  (result as any)[kReportedSymbol] = result.errors.length;
+}
+
 export function formatResultFailure(screen: Screen, test: TestCase, result: TestResult, initialIndent: string): ErrorDetails[] {
   const errorDetails: ErrorDetails[] = [];
 
@@ -494,7 +498,6 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
   }
 
   const reportedIndex = (result as any)[kReportedSymbol] || 0;
-  (result as any)[kReportedSymbol] = result.errors.length;
   for (const error of result.errors.slice(reportedIndex)) {
     const formattedError = formatError(screen, error);
     errorDetails.push({

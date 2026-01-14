@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatResultFailure, TerminalReporter } from './base';
+import { markErrorsAsReported, TerminalReporter } from './base';
 
 import type { FullResult, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
@@ -23,7 +23,6 @@ class LineReporter extends TerminalReporter {
   private _failures = 0;
   private _lastTest: TestCase | undefined;
   private _didBegin = false;
-  private _printedErrorCounts = new Map<TestResult, number>();
 
   override onBegin(suite: Suite) {
     super.onBegin(suite);
@@ -87,9 +86,8 @@ class LineReporter extends TerminalReporter {
     if (!process.env.PW_TEST_DEBUG_REPORTERS)
       this.screen.stdout.write(`\u001B[1A\u001B[2K`);
 
-    this._printedErrorCounts.set(result, result.errors.length);
-
     this.writeLine(this.formatSingleResult(test, result, test.outcome() === 'unexpected' ? ++this._failures : undefined));
+    markErrorsAsReported(result);
     this.writeLine(this.screen.colors.yellow(`    Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`) + '\n\n');
 
     this._updateLine(test, result, undefined);
