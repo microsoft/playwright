@@ -34,6 +34,10 @@ function getGithubToken() {
 const octokit = getOctokit(getGithubToken());
 
 class GHAMarkdownReporter extends MarkdownReporter {
+  constructor(options: { configDir: string, outputFile?: string, shardDurationThreshold?: number }) {
+    super({ ...options, shardDurationThreshold: options.shardDurationThreshold ?? 25 * 60 * 1000 });
+  }
+
   override async publishReport(report: string) {
     core.info('Publishing report to PR.');
     const { prNumber, prHref } = this.pullRequestFromMetadata();
