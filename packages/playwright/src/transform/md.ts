@@ -18,11 +18,14 @@ import fs from 'fs';
 import path from 'path';
 
 import { parseMarkdown } from '../utilsBundle';
+import { genMapping } from './babelBundle';
 import type * as mdast from 'mdast';
 
 type Props = [string, string][];
+type SourceLocation = { filename: string; line: number; column: number };
+type Line = { text: string; source?: SourceLocation };
 
-export function transformMDToTS(code: string, filename: string): string {
+export function transformMDToTS(code: string, filename: string): { code: string, map: ReturnType<typeof genMapping.toEncodedMap> } {
   const parsed = parseSpec(code, filename);
   const seed = parsed.props.find(prop => prop[0] === 'seed')?.[1];
   if (seed) {
@@ -41,8 +44,25 @@ export function transformMDToTS(code: string, filename: string): string {
   }
 
   const fixtures = parsed.props.find(prop => prop[0] === 'fixtures')?.[1] ?? '@playwright/test';
-  const importLine = `import { test, expect } from ${escapeString(fixtures)};`;
-  const renderedTests = parsed.tests.map(test => {
+
+  const map = new genMapping.GenMapping({ file: filename });
+  const outputLines: string[] = [];
+
+  const addLine = (line: Line) => {
+    outputLines.push(line.text);
+    if (line.source) {
+      genMapping.addMapping(map, {
+        generated: { line: outputLines.length, column: 0 },
+        source: line.source.filename,
+        original: { line: line.source.line, column: line.source.column },
+      });
+    }
+  };
+
+  addLine({ text: `import { test, expect } from ${escapeString(fixtures)};` });
+  addLine({ text: `test.describe(${escapeString(parsed.describe.text)}, () => {`, source: parsed.describe.source });
+
+  for (const test of parsed.tests) {
     const tags: string[] = [];
     const annotations: { type: string, description: string }[] = [];
     for (const [key, value] of test.props) {
@@ -64,12 +84,17 @@ export function transformMDToTS(code: string, filename: string): string {
         props += `    annotation: [${annotations.map(a => `{ type: ${escapeString(a.type)}, description: ${escapeString(a.description)} }`).join(', ')}],\n`;
       props += '  }, ';
     }
-    return `\n  test(${escapeString(test.title)}, ${props}async ({ page, agent }) => {\n` +
-      test.lines.map(line => '    ' + line).join('\n') + `\n  });\n`;
-  });
 
-  const result = `${importLine}\ntest.describe(${escapeString(parsed.describe)}, () => {${renderedTests.join('')}\n});\n`;
-  return result;
+    addLine({ text: `  test(${escapeString(test.title.text)}, ${props}async ({ page, agent }) => {`, source: test.title.source });
+    for (const line of test.lines)
+      addLine({ text: '    ' + line.text, source: line.source });
+    addLine({ text: `  });` });
+  }
+
+  addLine({ text: `});` });
+
+  const encodedMap = genMapping.toEncodedMap(map);
+  return { code: outputLines.join('\n') + '\n', map: encodedMap };
 }
 
 function escapeString(s: string): string {
@@ -90,7 +115,13 @@ function asText(filename: string, node: mdast.Parent, errorMessage: string, skip
   return children[0].value;
 }
 
-function parseSpec(content: string, filename: string): { describe: string, tests: { title: string, lines: string[], props: Props }[], props: Props } {
+function getSource(filename: string, node: mdast.Node): SourceLocation | undefined {
+  if (!node.position)
+    return undefined;
+  return { filename, line: node.position.start.line, column: node.position.start.column };
+}
+
+function parseSpec(content: string, filename: string): { describe: Line, tests: { title: Line, lines: Line[], props: Props }[], props: Props } {
   const root = parseMarkdown(content);
   const props: Props = [];
 
@@ -99,14 +130,17 @@ function parseSpec(content: string, filename: string): { describe: string, tests
   children.shift();
   if (describeNode?.type !== 'heading' || describeNode.depth !== 2)
     throw parsingError(filename, describeNode, `describe title must be ##`);
-  const describe = asText(filename, describeNode, `describe title must be ##`);
+  const describe: Line = {
+    text: asText(filename, describeNode, `describe title must be ##`),
+    source: getSource(filename, describeNode),
+  };
 
   if (children[0]?.type === 'list') {
     parseProps(filename, children[0], props);
     children.shift();
   }
 
-  const tests: { title: string, lines: string[], props: Props }[] = [];
+  const tests: { title: Line, lines: Line[], props: Props }[] = [];
   while (children.length) {
     let nextIndex = children.findIndex((n, i) => i > 0 && n.type === 'heading' && n.depth === 3);
     if (nextIndex === -1)
@@ -134,17 +168,20 @@ function parseProps(filename: string, node: mdast.List, props: Props) {
   }
 }
 
-function parseTest(filename: string, nodes: mdast.Node[]): { title: string, lines: string[], props: Props } {
+function parseTest(filename: string, nodes: mdast.Node[]): { title: Line, lines: Line[], props: Props } {
   const titleNode = nodes[0] as mdast.Heading;
   nodes.shift();
   if (titleNode.type !== 'heading' || titleNode.depth !== 3)
     throw parsingError(filename, titleNode, `test title must be ###`);
-  const title = asText(filename, titleNode, `test title must be ###`);
+  const title: Line = {
+    text: asText(filename, titleNode, `test title must be ###`),
+    source: getSource(filename, titleNode),
+  };
 
   const props: Props = [];
   let handlingProps = true;
 
-  const lines: string[] = [];
+  const lines: Line[] = [];
   const visit = (node: mdast.Node, indent: string) => {
     if (node.type === 'list') {
       for (const child of (node as mdast.List).children)
@@ -154,12 +191,21 @@ function parseTest(filename: string, nodes: mdast.Node[]): { title: string, line
     if (node.type === 'listItem') {
       const listItem = node as mdast.ListItem;
       const lastChild = listItem.children[listItem.children.length - 1];
+      const source = getSource(filename, listItem);
+
       if (lastChild?.type === 'code') {
         handlingProps = false;
         const text = asText(filename, listItem, `code step must be a list item with a single code block`, lastChild);
-        lines.push(`${indent}await test.step(${escapeString(text)}, async () => {`);
-        lines.push(lastChild.value.split('\n').map(line => indent + '  ' + line).join('\n'));
-        lines.push(`${indent}});`);
+        lines.push({ text: `${indent}await test.step(${escapeString(text)}, async () => {`, source });
+        for (const [i, codeLine] of lastChild.value.split('\n').entries()) {
+          const codeSource = lastChild.position ? {
+            filename,
+            line: lastChild.position.start.line + 1 + i,
+            column: lastChild.position.start.column,
+          } : undefined;
+          lines.push({ text: indent + '  ' + codeLine, source: codeSource });
+        }
+        lines.push({ text: `${indent}});`, source });
       } else {
         const text = asText(filename, listItem, `step must contain a single instruction`, lastChild?.type === 'list' ? lastChild : undefined);
         let isGroup = false;
@@ -167,19 +213,19 @@ function parseTest(filename: string, nodes: mdast.Node[]): { title: string, line
           parseProp(filename, listItem, props);
         } else if (text.startsWith('group:')) {
           isGroup = true;
-          lines.push(`${indent}await test.step(${escapeString(text.substring('group:'.length).trim())}, async () => {`);
+          lines.push({ text: `${indent}await test.step(${escapeString(text.substring('group:'.length).trim())}, async () => {`, source });
         } else if (text.startsWith('expect:')) {
           handlingProps = false;
           const assertion = text.substring('expect:'.length).trim();
-          lines.push(`${indent}await agent.expect(${escapeString(assertion)});`);
+          lines.push({ text: `${indent}await agent.expect(${escapeString(assertion)});`, source });
         } else if (!text.startsWith('//')) {
           handlingProps = false;
-          lines.push(`${indent}await agent.perform(${escapeString(text)});`);
+          lines.push({ text: `${indent}await agent.perform(${escapeString(text)});`, source });
         }
         if (lastChild?.type === 'list')
           visit(lastChild, indent + (isGroup ? '  ' : ''));
         if (isGroup)
-          lines.push(`${indent}});`);
+          lines.push({ text: `${indent}});`, source });
       }
     } else {
       throw parsingError(filename, node, `test step must be a markdown list item`);

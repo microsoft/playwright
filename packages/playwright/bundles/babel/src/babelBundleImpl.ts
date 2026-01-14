@@ -26,9 +26,10 @@ import type { ImportDeclaration, TSExportAssignment } from '@babel/types';
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
+export * as genMapping from '@jridgewell/gen-mapping';
 export const traverse = traverseFunction;
 
-function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
+function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][], inputSourceMap?: any): TransformOptions {
   const plugins = [
     [require('@babel/plugin-syntax-import-attributes'), { deprecatedAssertSyntax: true }],
   ];
@@ -111,6 +112,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
     ],
     compact: false,
     sourceMaps: 'both',
+    inputSourceMap,
   };
 }
 
@@ -120,14 +122,14 @@ function isTypeScript(filename: string) {
   return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
 }
 
-export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult | null {
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][], inputSourceMap?: any): BabelFileResult | null {
   if (isTransforming)
     return null;
 
   // Prevent reentry while requiring plugins lazily.
   isTransforming = true;
   try {
-    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue);
+    const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue, inputSourceMap);
     return babel.transform(code, { filename, ...options });
   } finally {
     isTransforming = false;

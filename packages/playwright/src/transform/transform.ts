@@ -232,8 +232,12 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
 
-  if (filename.endsWith('.md'))
-    originalCode = transformMDToTS(originalCode, filename);
+  let inputSourceMap: any;
+  if (filename.endsWith('.md')) {
+    const mdResult = transformMDToTS(originalCode, filename);
+    originalCode = mdResult.code;
+    inputSourceMap = mdResult.map;
+  }
 
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
@@ -241,7 +245,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue, inputSourceMap);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;
