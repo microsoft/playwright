@@ -51,6 +51,17 @@ class MarkdownReporter implements Reporter {
   async onEnd(result: FullResult) {
     const summary = this._generateSummary();
     const lines: string[] = [];
+    if (this._options.shardDurationThreshold && result.shards) {
+      for (const shard of result.shards) {
+        if (shard.duration > this._options.shardDurationThreshold) {
+          const shardLabel = shard.shardIndex !== undefined ? `Shard ${shard.shardIndex}` : 'Shard';
+          const durationMins = Math.round(shard.duration / 60000);
+          const thresholdMins = Math.round(this._options.shardDurationThreshold / 60000);
+          lines.push(`:warning: **Warning: ${shardLabel} took ${durationMins} minutes, exceeding the ${thresholdMins} minute threshold.**`);
+          lines.push(``);
+        }
+      }
+    }
     if (this._fatalErrors.length)
       lines.push(`**${this._fatalErrors.length} fatal errors, not part of any test**`);
     if (summary.unexpected.length) {
@@ -75,18 +86,6 @@ class MarkdownReporter implements Reporter {
     const didNotRun = summary.didNotRun ? `, ${summary.didNotRun} did not run` : '';
     lines.push(`**${summary.expected} passed${skipped}${didNotRun}**`);
     lines.push(``);
-
-    if (this._options.shardDurationThreshold && result.shards) {
-      for (const shard of result.shards) {
-        if (shard.duration > this._options.shardDurationThreshold) {
-          const shardLabel = shard.shardIndex !== undefined ? `Shard ${shard.shardIndex}` : 'Shard';
-          const durationMins = Math.round(shard.duration / 60000);
-          const thresholdMins = Math.round(this._options.shardDurationThreshold / 60000);
-          lines.push(`:warning: **Warning: ${shardLabel} took ${durationMins} minutes, exceeding the ${thresholdMins} minute threshold.**`);
-          lines.push(``);
-        }
-      }
-    }
 
     await this.publishReport(lines.join('\n'));
   }
