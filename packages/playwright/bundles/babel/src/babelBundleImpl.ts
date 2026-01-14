@@ -22,10 +22,12 @@ import traverseFunction from '@babel/traverse';
 import type { BabelFileResult, NodePath, PluginObj, TransformOptions } from '@babel/core';
 import type { TemplateBuilder } from '@babel/template';
 import type { ImportDeclaration, TSExportAssignment } from '@babel/types';
+import type { EncodedSourceMap } from '@jridgewell/gen-mapping';
 
 export { codeFrameColumns } from '@babel/code-frame';
 export { declare } from '@babel/helper-plugin-utils';
 export { types } from '@babel/core';
+export * as genMapping from '@jridgewell/gen-mapping';
 export const traverse = traverseFunction;
 
 function babelTransformOptions(isTypeScript: boolean, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): TransformOptions {
@@ -120,7 +122,7 @@ function isTypeScript(filename: string) {
   return filename.endsWith('.ts') || filename.endsWith('.tsx') || filename.endsWith('.mts') || filename.endsWith('.cts');
 }
 
-export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][]): BabelFileResult | null {
+export function babelTransform(code: string, filename: string, isModule: boolean, pluginsPrologue: [string, any?][], pluginsEpilogue: [string, any?][], inputSourceMap?: EncodedSourceMap): BabelFileResult | null {
   if (isTransforming)
     return null;
 
@@ -128,6 +130,17 @@ export function babelTransform(code: string, filename: string, isModule: boolean
   isTransforming = true;
   try {
     const options = babelTransformOptions(isTypeScript(filename), isModule, pluginsPrologue, pluginsEpilogue);
+    if (inputSourceMap) {
+      options.inputSourceMap = {
+        ...inputSourceMap,
+        sources: inputSourceMap.sources.map(s => s || ''),
+        names: [...inputSourceMap.names],
+        sourceRoot: inputSourceMap.sourceRoot,
+        sourcesContent: inputSourceMap.sourcesContent?.map(s => s || ''),
+        mappings: inputSourceMap.mappings,
+        file: inputSourceMap.file || '',
+      };
+    }
     return babel.transform(code, { filename, ...options });
   } finally {
     isTransforming = false;

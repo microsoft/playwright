@@ -15,14 +15,17 @@
  */
 
 import type { BabelFileResult, ParseResult } from '../../bundles/babel/node_modules/@types/babel__core';
+import type { EncodedSourceMap } from '../../bundles/babel/node_modules/@jridgewell/gen-mapping';
 export const codeFrameColumns: typeof import('../../bundles/babel/node_modules/@types/babel__code-frame').codeFrameColumns = require('./babelBundleImpl').codeFrameColumns;
 export const declare: typeof import('../../bundles/babel/node_modules/@types/babel__helper-plugin-utils').declare = require('./babelBundleImpl').declare;
 export const types: typeof import('../../bundles/babel/node_modules/@types/babel__core').types = require('./babelBundleImpl').types;
 export const traverse: typeof import('../../bundles/babel/node_modules/@types/babel__traverse').default = require('./babelBundleImpl').traverse;
 export type BabelPlugin = [string, any?];
-export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsPrefix: BabelPlugin[], pluginsSuffix: BabelPlugin[]) => BabelFileResult | null;
+export type BabelTransformFunction = (code: string, filename: string, isModule: boolean, pluginsPrefix: BabelPlugin[], pluginsSuffix: BabelPlugin[], inputSourceMap?: EncodedSourceMap) => BabelFileResult | null;
 export const babelTransform: BabelTransformFunction = require('./babelBundleImpl').babelTransform;
 export type BabelParseFunction = (code: string, filename: string, isModule: boolean) => ParseResult;
 export const babelParse: BabelParseFunction = require('./babelBundleImpl').babelParse;
 export type { NodePath, PluginObj, types as T } from '../../bundles/babel/node_modules/@types/babel__core';
 export type { BabelAPI } from '../../bundles/babel/node_modules/@types/babel__helper-plugin-utils';
+export type { EncodedSourceMap } from '../../bundles/babel/node_modules/@jridgewell/gen-mapping';
+export const genMapping: typeof import('../../bundles/babel/node_modules/@jridgewell/gen-mapping') = require('./babelBundleImpl').genMapping;

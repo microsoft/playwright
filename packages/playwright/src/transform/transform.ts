@@ -28,7 +28,7 @@ import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache
 import { addHook } from '../third_party/pirates';
 import { transformMDToTS } from './md';
 
-import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
+import type { BabelPlugin, BabelTransformFunction, EncodedSourceMap } from './babelBundle';
 import type { Location } from '../../types/testReporter';
 import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
 import type { Matcher } from '../util';
@@ -221,6 +221,15 @@ export function setTransformData(pluginName: string, value: any) {
 }
 
 export function transformHook(originalCode: string, filename: string, moduleUrl?: string): { code: string, serializedCache?: any } {
+  // TODO: ideally, we would not transform before checking the cache. However, the source
+  // currently depends on the seed.md, so "originalCode" is not enough to produce a cache key.
+  let inputSourceMap: EncodedSourceMap | undefined;
+  if (filename.endsWith('.md')) {
+    const transformed = transformMDToTS(originalCode, filename);
+    originalCode = transformed.code;
+    inputSourceMap = transformed.map;
+  }
+
   const hasPreprocessor =
     process.env.PW_TEST_SOURCE_TRANSFORM &&
     process.env.PW_TEST_SOURCE_TRANSFORM_SCOPE &&
@@ -232,16 +241,13 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   if (cachedCode !== undefined)
     return { code: cachedCode, serializedCache };
 
-  if (filename.endsWith('.md'))
-    originalCode = transformMDToTS(originalCode, filename);
-
   // We don't use any browserslist data, but babel checks it anyway.
   // Silence the annoying warning.
   process.env.BROWSERSLIST_IGNORE_OLD_DATA = 'true';
 
   const { babelTransform }: { babelTransform: BabelTransformFunction } = require('./babelBundle');
   transformData = new Map<string, any>();
-  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue);
+  const babelResult = babelTransform(originalCode, filename, !!moduleUrl, pluginsPrologue, pluginsEpilogue, inputSourceMap);
   if (!babelResult?.code)
     return { code: originalCode, serializedCache };
   const { code, map } = babelResult;
