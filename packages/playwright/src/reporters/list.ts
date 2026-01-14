@@ -166,6 +166,23 @@ class ListReporter extends TerminalReporter {
     stream.write(chunk);
   }
 
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // Without TTY, user cannot interrupt the pause. Let's skip it.
+    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
+      return;
+
+    this._updateTestLine(test, result);
+    this._pausedTests.add(test);
+    this._maybeWriteNewLine();
+    if (test.outcome() === 'unexpected') {
+      this.writeLine(this.formatResultErrors(test, result));
+      markErrorsAsReported(result);
+    }
+    this.writeLine(this._testPrefix('', '') + this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`));
+
+    await new Promise<void>(() => {});
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
     const alreadyUpdated = this._pausedTests.delete(test);
@@ -203,24 +220,6 @@ class ListReporter extends TerminalReporter {
     }
 
     this._updateOrAppendLine(this._testRows, test, text, prefix);
-  }
-
-  async onTestPaused(test: TestCase, result: TestResult) {
-    // Without TTY, user cannot interrupt the pause. Let's skip it.
-    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
-      return;
-
-
-    this._updateTestLine(test, result);
-    this._pausedTests.add(test);
-    this._maybeWriteNewLine();
-    if (test.outcome() === 'unexpected') {
-      this.writeLine(this.formatResultErrors(test, result));
-      markErrorsAsReported(result);
-    }
-    this.writeLine(this._testPrefix('', '') + this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`));
-
-    await new Promise<void>(() => {});
   }
 
   private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
