@@ -30,6 +30,7 @@ type Test = { title: Line, lines: Line[], props: Props };
 
 export function transformMDToTS(code: string, filename: string): { code: string, map: EncodedSourceMap } {
   const parsed = parseSpec(code, filename);
+  let fixtures = resolveFixtures(filename, parsed.props.find(prop => prop[0] === 'fixtures')?.[1]);
   const seed = parsed.props.find(prop => prop[0] === 'seed')?.[1];
   if (seed) {
     const seedFile = path.resolve(path.dirname(filename), seed.text);
@@ -41,9 +42,10 @@ export function transformMDToTS(code: string, filename: string): { code: string,
       throw new Error(`while parsing ${seedFile}: seed test must not have properties`);
     for (const test of parsed.tests)
       test.lines = parsedSeed.tests[0].lines.concat(test.lines);
-    const fixtures = parsedSeed.props.find(prop => prop[0] === 'fixtures');
-    if (fixtures && !parsed.props.find(prop => prop[0] === 'fixtures'))
-      parsed.props.push(fixtures);
+    const seedFixtures = resolveFixtures(seedFile, parsedSeed.props.find(prop => prop[0] === 'fixtures')?.[1]);
+    if (seedFixtures && fixtures)
+      throw new Error(`while parsing ${filename}: either seed or test can specify fixtures, but not both`);
+    fixtures ??= seedFixtures;
   }
 
   const map = new genMapping.GenMapping({});
@@ -59,8 +61,10 @@ export function transformMDToTS(code: string, filename: string): { code: string,
     }
   };
 
-  const fixtures = parsed.props.find(prop => prop[0] === 'fixtures')?.[1] ?? { text: '@playwright/test' };
-  addLine({ text: `import { test, expect } from ${escapeString(fixtures.text)};`, source: fixtures.source });
+  if (fixtures)
+    addLine({ text: `import { test, expect } from ${escapeString(path.relative(path.dirname(filename), fixtures.text))};`, source: fixtures.source });
+  else
+    addLine({ text: `import { test, expect } from '@playwright/test';` });
   addLine({ text: `test.describe(${escapeString(parsed.describe.text)}, () => {`, source: parsed.describe.source });
   for (const test of parsed.tests) {
     const tags: string[] = [];
@@ -96,6 +100,12 @@ export function transformMDToTS(code: string, filename: string): { code: string,
   const encodedMap = genMapping.toEncodedMap(map);
   const result = lines.join('\n');
   return { code: result, map: encodedMap };
+}
+
+function resolveFixtures(filename: string, prop: Line | undefined): Line | undefined {
+  if (!prop)
+    return;
+  return { text: path.resolve(path.dirname(filename), prop.text), source: prop.source };
 }
 
 function escapeString(s: string): string {
