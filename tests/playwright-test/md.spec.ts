@@ -47,6 +47,20 @@ test('sourcemaps', async ({ runInlineTest }) => {
 
 - expect: The input field 'What needs to be done?' is visible
     `,
+    'seed.spec.md-cache.json': JSON.stringify({
+      'page title contains "TodoMVC"': {
+        'actions': []
+      },
+      "The input field 'What needs to be done?' is visible": {
+        'actions': [
+          {
+            'method': 'expectVisible',
+            'selector': 'internal:role=textbox[name="What needs to be done?"i]',
+            'code': "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+          }
+        ]
+      }
+    }),
     'should-add-single-todo.spec.md': `
 ## Adding Todos
 
@@ -63,15 +77,99 @@ test('sourcemaps', async ({ runInlineTest }) => {
   - expect: The input field is cleared
   - expect: The todo counter shows '1 item left'
     `,
+    'should-add-single-todo.spec.md-cache.json': JSON.stringify({
+      'page title contains "TodoMVC"': {
+        'actions': []
+      },
+      'Press Enter to submit the todo': {
+        'actions': [
+          {
+            'method': 'pressKey',
+            'key': 'Enter',
+            'code': "await page.keyboard.press('Enter');"
+          }
+        ]
+      },
+      "The input field 'What needs to be done?' is visible": {
+        'actions': [
+          {
+            'method': 'expectVisible',
+            'selector': 'internal:role=textbox[name="What needs to be done?"i]',
+            'code': "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+          }
+        ]
+      },
+      'The input field is cleared': {
+        'actions': [
+          {
+            'method': 'expectValue',
+            'selector': 'internal:role=textbox[name="What needs to be done?"i]',
+            'type': 'textbox',
+            'value': '',
+            'code': "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
+          }
+        ]
+      },
+      "The new todo 'Buy groceries' appears in the todo list": {
+        'actions': [
+          {
+            'method': 'expectVisible',
+            'selector': 'internal:text="Buy groceries"i',
+            'code': "await expect(page.getByText('Buy groceries')).toBeVisible();"
+          }
+        ]
+      },
+      'The text appears in the input field': {
+        'actions': [
+          {
+            'method': 'expectValue',
+            'selector': 'internal:role=textbox[name="What needs to be done?"i]',
+            'type': 'textbox',
+            'value': 'Buy groceries',
+            'code': "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('Buy groceries');"
+          }
+        ]
+      },
+      "The todo counter shows '1 item left'": {
+        'actions': [
+          {
+            'method': 'expectVisible',
+            'selector': 'internal:text="1 item left"i',
+            'code': "await expect(page.getByText('1 item left')).toBeVisible();"
+          }
+        ]
+      },
+      "Type 'Buy groceries' into the input field": {
+        'actions': [
+          {
+            'method': 'fill',
+            'selector': 'internal:role=textbox[name="What needs to be done?"i]',
+            'text': 'Buy groceries',
+            'code': "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');"
+          }
+        ]
+      }
+    }),
   }, { reporter: './location-reporter.js', workers: 1 });
+  expect(result.exitCode).toBe(0);
   expect(result.outputLines).toEqual([
     `seed test ${test.info().outputPath('seed.spec.md')}:4:2`,
     `> Navigate to 'https://demo.playwright.dev/todomvc' ${test.info().outputPath('seed.spec.md')}:6:2`,
     `> > Navigate to "/todomvc" ${test.info().outputPath('seed.spec.md')}:8:4`,
     `> Expect "page title contains "TodoMVC"" ${test.info().outputPath('seed.spec.md')}:11:2`,
+    `> Expect "The input field 'What needs to be done?' is visible" ${test.info().outputPath('seed.spec.md')}:13:2`,
     `should add single todo ${test.info().outputPath('should-add-single-todo.spec.md')}:6:2`,
     `> Navigate to 'https://demo.playwright.dev/todomvc' ${test.info().outputPath('seed.spec.md')}:6:2`,
     `> > Navigate to "/todomvc" ${test.info().outputPath('seed.spec.md')}:8:4`,
     `> Expect "page title contains "TodoMVC"" ${test.info().outputPath('seed.spec.md')}:11:2`,
+    `> Expect "The input field 'What needs to be done?' is visible" ${test.info().outputPath('seed.spec.md')}:13:2`,
+    `> Add the todo ${test.info().outputPath('should-add-single-todo.spec.md')}:8:2`,
+    `> > Perform "Type 'Buy groceries' into the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:9:4`,
+    `> > Expect "The text appears in the input field" ${test.info().outputPath('should-add-single-todo.spec.md')}:10:4`,
+    `> Perform "Press Enter to submit the todo" ${test.info().outputPath('should-add-single-todo.spec.md')}:11:2`,
+    `> Verify todo is added to the list ${test.info().outputPath('should-add-single-todo.spec.md')}:12:2`,
+    `> > Expect "The new todo 'Buy groceries' appears in the todo list" ${test.info().outputPath('should-add-single-todo.spec.md')}:13:4`,
+    `> > Expect "The input field is cleared" ${test.info().outputPath('should-add-single-todo.spec.md')}:14:4`,
+    `> > Expect "The todo counter shows '1 item left'" ${test.info().outputPath('should-add-single-todo.spec.md')}:15:4`,
   ]);
 });
