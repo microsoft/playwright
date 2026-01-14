@@ -264,6 +264,8 @@ export abstract class BrowserType extends SdkObject {
         this.waitForReadyState(options, browserLogsCollector),
         exitPromise.then(() => ({ wsEndpoint: undefined })),
       ]);
+      if (exitPromise.isDone())
+        throw new Error(`Failed to launch the browser process.`);
       if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {

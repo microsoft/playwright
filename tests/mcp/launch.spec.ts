@@ -175,3 +175,37 @@ test('isolated context with storage state', async ({ startClient, server }, test
     pageState: expect.stringContaining(`Storage: session-value`),
   });
 });
+
+test('proper launch error message for broken browser and persistent context', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-mcp/issues/1305' }
+}, async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(process.platform === 'win32', 'Skipping on Windows because we need /bin/sh.');
+  const scriptPath = testInfo.outputPath('launcher.sh');
+  const scriptContent = `#!/bin/sh
+echo "Bogus browser script"
+exit 1
+`;
+  await fs.promises.writeFile(scriptPath, scriptContent, { mode: 0o755 });
+
+  const { client } = await startClient({
+    args: [`--executable-path=${scriptPath}`],
+  });
+  const result = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+  expect.soft(result).toHaveResponse({
+    isError: true,
+    result: expect.stringContaining(`Bogus browser script`),
+  });
+  // Chromium waits for the CDP endpoint, so we know if the process failed to launch
+  // before connecting.
+  if (mcpBrowser === 'chromium') {
+    expect.soft(result).toHaveResponse({
+      result: expect.stringContaining(`Failed to launch the browser process.`),
+    });
+  }
+  expect.soft(result).toHaveResponse({
+    result: expect.not.stringContaining(`Browser is already in use`),
+  });
+});
