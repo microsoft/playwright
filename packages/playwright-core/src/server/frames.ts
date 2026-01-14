@@ -1100,17 +1100,21 @@ export class Frame extends SdkObject<FrameEventMap> {
   private async _retryWithProgressIfNotConnected<R>(
     progress: Progress,
     selector: string,
-    strict: boolean | undefined,
-    performActionPreChecks: boolean,
+    options: { strict?: boolean, noAutoWaiting?: boolean, force?: boolean, performActionPreChecks?: boolean },
     action: (handle: dom.ElementHandle<Element>) => Promise<R | 'error:notconnected'>): Promise<R> {
     progress.log(`waiting for ${this._asLocator(selector)}`);
+    const noAutoWaiting = (options as any).__testHookNoAutoWaiting ?? options.noAutoWaiting;
+    const performActionPreChecks = (options.performActionPreChecks ?? !options.force) && !noAutoWaiting;
     return this.retryWithProgressAndTimeouts(progress, [0, 20, 50, 100, 100, 500], async continuePolling => {
       if (performActionPreChecks)
         await this._page.performActionPreChecks(progress);
 
-      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, { strict }));
-      if (!resolved)
+      const resolved = await progress.race(this.selectors.resolveInjectedForSelector(selector, { strict: options.strict }));
+      if (!resolved) {
+        if (noAutoWaiting)
+          throw new dom.NonRecoverableDOMError('Element(s) not found');
         return continuePolling;
+      }
       const result = await progress.race(resolved.injected.evaluateHandle((injected, { info, callId }) => {
         const elements = injected.querySelectorAll(info.parsed, document);
         if (callId)
@@ -1131,6 +1135,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       if (log)
         progress.log(log);
       if (!success) {
+        if (noAutoWaiting)
+          throw new dom.NonRecoverableDOMError('Element(s) not found');
         result.dispose();
         return continuePolling;
       }
@@ -1139,6 +1145,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       try {
         const result = await action(element);
         if (result === 'error:notconnected') {
+          if (noAutoWaiting)
+            throw new dom.NonRecoverableDOMError('Element is not attached to the DOM');
           progress.log('element was detached from the DOM, retrying');
           return continuePolling;
         }
@@ -1150,22 +1158,22 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async rafrafTimeoutScreenshotElementWithProgress(progress: Progress, selector: string, timeout: number, options: ScreenshotOptions): Promise<Buffer> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, async handle => {
+    return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, async handle => {
       await handle._frame.rafrafTimeout(progress, timeout);
       return await this._page.screenshotter.screenshotElement(progress, handle, options);
     });
   }
 
   async click(progress: Progress, selector: string, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._click(progress, { ...options, waitAfter: !options.noWaitAfter })));
   }
 
   async dblclick(progress: Progress, selector: string, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._dblclick(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._dblclick(progress, options)));
   }
 
   async dragAndDrop(progress: Progress, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options.strict, !options.force /* performActionPreChecks */, async handle => {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options, async handle => {
       return handle._retryPointerAction(progress, 'move and down', false, async point => {
         await this._page.mouse.move(progress, point.x, point.y);
         await this._page.mouse.down(progress);
@@ -1176,7 +1184,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       });
     }));
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, options.strict, false /* performActionPreChecks */, async handle => {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, { ...options, performActionPreChecks: false }, async handle => {
       return handle._retryPointerAction(progress, 'move and up', false, async point => {
         await this._page.mouse.move(progress, point.x, point.y, { steps: options.steps });
         await this._page.mouse.up(progress);
@@ -1191,19 +1199,19 @@ export class Frame extends SdkObject<FrameEventMap> {
   async tap(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
     if (!this._page.browserContext._options.hasTouch)
       throw new Error('The page does not support tap. Use hasTouch context option to enable touch support.');
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._tap(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._tap(progress, options)));
   }
 
-  async fill(progress: Progress, selector: string, value: string, options: types.StrictOptions & { force?: boolean }) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._fill(progress, value, options)));
+  async fill(progress: Progress, selector: string, value: string, options: types.CommonActionOptions) {
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._fill(progress, value, options)));
   }
 
-  async focus(progress: Progress, selector: string, options: types.StrictOptions) {
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._focus(progress)));
+  async focus(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._focus(progress)));
   }
 
-  async blur(progress: Progress, selector: string, options: types.StrictOptions) {
-    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._blur(progress)));
+  async blur(progress: Progress, selector: string, options: types.StrictOptions & { noAutoWaiting?: boolean }) {
+    dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._blur(progress)));
   }
 
   async resolveSelector(progress: Progress, selector: string, options: { mainWorld?: boolean } = {}): Promise<{ resolvedSelector: string }> {
@@ -1336,32 +1344,32 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async hover(progress: Progress, selector: string, options: types.PointerActionOptions & types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._hover(progress, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._hover(progress, options)));
   }
 
   async selectOption(progress: Progress, selector: string, elements: dom.ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._selectOption(progress, elements, values, options));
+    return await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._selectOption(progress, elements, values, options));
   }
 
-  async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'>): Promise<channels.FrameSetInputFilesResult> {
+  async setInputFiles(progress: Progress, selector: string, params: Omit<channels.FrameSetInputFilesParams, 'timeout'> & { noAutoWaiting?: boolean }): Promise<channels.FrameSetInputFilesResult> {
     const inputFileItems = await prepareFilesForUpload(this, params);
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params.strict, true /* performActionPreChecks */, handle => handle._setInputFiles(progress, inputFileItems)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, params, handle => handle._setInputFiles(progress, inputFileItems)));
   }
 
-  async type(progress: Progress, selector: string, text: string, options: { delay?: number } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._type(progress, text, options)));
+  async type(progress: Progress, selector: string, text: string, options: { delay?: number, noAutoWaiting?: boolean } & types.StrictOptions) {
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._type(progress, text, options)));
   }
 
-  async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, true /* performActionPreChecks */, handle => handle._press(progress, key, options)));
+  async press(progress: Progress, selector: string, key: string, options: { delay?: number, noWaitAfter?: boolean, noAutoWaiting?: boolean } & types.StrictOptions) {
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._press(progress, key, options)));
   }
 
   async check(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, true, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._setChecked(progress, true, options)));
   }
 
   async uncheck(progress: Progress, selector: string, options: types.PointerActionWaitOptions) {
-    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options.strict, !options.force /* performActionPreChecks */, handle => handle._setChecked(progress, false, options)));
+    return dom.assertDone(await this._retryWithProgressIfNotConnected(progress, selector, options, handle => handle._setChecked(progress, false, options)));
   }
 
   async waitForTimeout(progress: Progress, timeout: number) {
@@ -1369,7 +1377,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async ariaSnapshot(progress: Progress, selector: string): Promise<string> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, true /* strict */, true /* performActionPreChecks */, handle => progress.race(handle.ariaSnapshot()));
+    return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, handle => progress.race(handle.ariaSnapshot()));
   }
 
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number): Promise<ExpectResult> {

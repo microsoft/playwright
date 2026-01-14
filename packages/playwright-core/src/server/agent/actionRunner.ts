@@ -42,7 +42,7 @@ export async function runAction(parentProgress: Progress, mode: 'generate' | 'ru
     await frame.instrumentation.onBeforeCall(frame, callMetadata, parentProgress.metadata.id);
 
     let error: Error | undefined;
-    const result = await innerRunAction(progress, page, action, secrets).catch(e => error = e);
+    const result = await innerRunAction(progress, mode, page, action, secrets).catch(e => error = e);
     callMetadata.endTime = monotonicTime();
     callMetadata.error = error ? serializeError(error) : undefined;
     callMetadata.result = error ? undefined : result;
@@ -53,8 +53,9 @@ export async function runAction(parentProgress: Progress, mode: 'generate' | 'ru
   }, minDeadline - mt);
 }
 
-async function innerRunAction(progress: Progress, page: Page, action: actions.Action, secrets: NameValue[]) {
+async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
   const frame = page.mainFrame();
+  const commonOptions =  { strict: true, noAutoWaiting: mode === 'generate' };
   switch (action.method) {
     case 'navigate':
       await frame.goto(progress, action.url);
@@ -64,43 +65,43 @@ async function innerRunAction(progress: Progress, page: Page, action: actions.Ac
         button: action.button,
         clickCount: action.clickCount,
         modifiers: action.modifiers,
-        ...strictTrue
+        ...commonOptions
       });
       break;
     case 'drag':
-      await frame.dragAndDrop(progress, action.sourceSelector, action.targetSelector, { ...strictTrue });
+      await frame.dragAndDrop(progress, action.sourceSelector, action.targetSelector, { ...commonOptions });
       break;
     case 'hover':
       await frame.hover(progress, action.selector, {
         modifiers: action.modifiers,
-        ...strictTrue
+        ...commonOptions
       });
       break;
     case 'selectOption':
-      await frame.selectOption(progress, action.selector, [], action.labels.map(a => ({ label: a })), { ...strictTrue });
+      await frame.selectOption(progress, action.selector, [], action.labels.map(a => ({ label: a })), { ...commonOptions });
       break;
     case 'pressKey':
       await page.keyboard.press(progress, action.key);
       break;
     case 'pressSequentially': {
       const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
-      await frame.type(progress, action.selector, secret, { ...strictTrue });
+      await frame.type(progress, action.selector, secret, { ...commonOptions });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
       break;
     }
     case 'fill': {
       const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
-      await frame.fill(progress, action.selector, secret, { ...strictTrue });
+      await frame.fill(progress, action.selector, secret, { ...commonOptions });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
       break;
     }
     case 'setChecked':
       if (action.checked)
-        await frame.check(progress, action.selector, { ...strictTrue });
+        await frame.check(progress, action.selector, { ...commonOptions });
       else
-        await frame.uncheck(progress, action.selector, { ...strictTrue });
+        await frame.uncheck(progress, action.selector, { ...commonOptions });
       break;
     case 'expectVisible': {
       const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot });
@@ -320,4 +321,3 @@ function callMetadataForAction(frame: Frame, action: actions.Action): CallMetada
 }
 
 const kDefaultTimeout = 5000;
-const strictTrue =  { strict: true };
