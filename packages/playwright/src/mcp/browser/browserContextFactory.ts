@@ -224,7 +224,9 @@ class PersistentContextFactory implements BrowserContextFactory {
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
           throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
-        if (error.message.includes('ProcessSingleton') || error.message.includes('Invalid URL')) {
+        if (error.message.includes('ProcessSingleton') ||
+            // On Windows the process exits silently with code 21 when the profile is in use.
+            error.message.includes('exitCode=21')) {
           // User data directory is already in use, try again.
           await new Promise(resolve => setTimeout(resolve, 1000));
           continue;
