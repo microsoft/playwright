@@ -205,64 +205,64 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
   'chromium-tip-of-tree': {
     '<unknown>': undefined,
     'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
-    'ubuntu22.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
-    'ubuntu24.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
+    'ubuntu20.04-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'ubuntu22.04-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'ubuntu24.04-x64': cftUrl('linux64/chrome-linux64.zip'),
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'ubuntu24.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'debian11-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
+    'debian11-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian11-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'debian12-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
+    'debian12-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'debian13-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux.zip',
+    'debian13-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
-    'mac10.13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac10.14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac10.15': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac11': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac11-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
-    'mac12': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
-    'mac13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
-    'mac14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac14-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
-    'mac15': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac.zip',
-    'mac15-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-mac-arm64.zip',
-    'win64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-win64.zip',
+    'mac10.13': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac10.14': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac10.15': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac11': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac11-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac12': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac12-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac13': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac13-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac14': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac14-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'mac15': cftUrl('mac-x64/chrome-mac-x64.zip'),
+    'mac15-arm64': cftUrl('mac-arm64/chrome-mac-arm64.zip'),
+    'win64': cftUrl('win64/chrome-win64.zip'),
   },
   'chromium-tip-of-tree-headless-shell': {
     '<unknown>': undefined,
     'ubuntu18.04-x64': undefined,
-    'ubuntu20.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
-    'ubuntu22.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
-    'ubuntu24.04-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
+    'ubuntu20.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'ubuntu22.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'ubuntu24.04-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'ubuntu18.04-arm64': undefined,
     'ubuntu20.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
     'ubuntu22.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
     'ubuntu24.04-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'debian11-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
+    'debian11-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian11-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'debian12-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
+    'debian12-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
-    'debian13-x64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux.zip',
+    'debian13-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
-    'mac11': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac.zip',
-    'mac11-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac-arm64.zip',
-    'mac12': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac.zip',
-    'mac12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac-arm64.zip',
-    'mac13': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac.zip',
-    'mac13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac-arm64.zip',
-    'mac14': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac.zip',
-    'mac14-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac-arm64.zip',
-    'mac15': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac.zip',
-    'mac15-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-mac-arm64.zip',
-    'win64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-win64.zip',
+    'mac11': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac11-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac12': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac12-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac13': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac13-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac14': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac14-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'mac15': cftUrl('mac-x64/chrome-headless-shell-mac-x64.zip'),
+    'mac15-arm64': cftUrl('mac-arm64/chrome-headless-shell-mac-arm64.zip'),
+    'win64': cftUrl('win64/chrome-headless-shell-win64.zip'),
   },
   'firefox': {
     '<unknown>': undefined,
@@ -1413,9 +1413,9 @@ export class Registry {
   private _defaultBrowsersToInstall(options: { shell?: 'no' | 'only' }): Executable[] {
     let executables = this.defaultExecutables();
     if (options.shell === 'no')
-      executables = executables.filter(e => e.name !== 'chromium-headless-shell');
+      executables = executables.filter(e => e.name !== 'chromium-headless-shell' && e.name !== 'chromium-tip-of-tree-headless-shell');
     if (options.shell === 'only')
-      executables = executables.filter(e => e.name !== 'chromium');
+      executables = executables.filter(e => e.name !== 'chromium' && e.name !== 'chromium-tip-of-tree');
     return executables;
   }
 
@@ -1451,6 +1451,11 @@ export class Registry {
           handleArgument('chromium');
         if (options.shell !== 'no')
           handleArgument('chromium-headless-shell');
+      } else if (alias === 'chromium-tip-of-tree') {
+        if (options.shell !== 'only')
+          handleArgument('chromium-tip-of-tree');
+        if (options.shell !== 'no')
+          handleArgument('chromium-tip-of-tree-headless-shell');
       } else {
         handleArgument(alias);
       }
