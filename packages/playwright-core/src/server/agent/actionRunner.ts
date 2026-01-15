@@ -18,7 +18,6 @@ import { serializeExpectedTextValues } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
-import { ProgressController } from '../progress';
 import { yaml } from '../../utilsBundle';
 import { serializeError } from '../errors';
 
@@ -30,27 +29,23 @@ import type { ExpectResult, Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
 
-export async function runAction(parentProgress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
-  const timeout = mode === 'generate' ? generateActionTimeout(action) : performActionTimeout(action);
-  const mt = monotonicTime();
-  const deadline = mt + timeout;
-  const minDeadline = parentProgress.deadline ? Math.min(parentProgress.deadline, deadline) : deadline;
-  const pc = new ProgressController();
-  return await pc.run(async progress => {
-    const frame = page.mainFrame();
-    const callMetadata = callMetadataForAction(frame, action);
-    await frame.instrumentation.onBeforeCall(frame, callMetadata, parentProgress.metadata.id);
+export async function runAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
+  const parentMetadata = progress.metadata;
+  const frame = page.mainFrame();
+  const callMetadata = callMetadataForAction(progress, frame, action);
+  callMetadata.log = parentMetadata.log;
+  progress.metadata = callMetadata;
 
-    let error: Error | undefined;
-    const result = await innerRunAction(progress, mode, page, action, secrets).catch(e => error = e);
-    callMetadata.endTime = monotonicTime();
-    callMetadata.error = error ? serializeError(error) : undefined;
-    callMetadata.result = error ? undefined : result;
-    await frame.instrumentation.onAfterCall(frame, callMetadata);
-    if (error)
-      throw error;
-    return result;
-  }, minDeadline - mt);
+  await frame.instrumentation.onBeforeCall(frame, callMetadata, parentMetadata.id);
+  let error: Error | undefined;
+  const result = await innerRunAction(progress, mode, page, action, secrets).catch(e => error = e);
+  callMetadata.endTime = monotonicTime();
+  callMetadata.error = error ? serializeError(error) : undefined;
+  callMetadata.result = error ? undefined : result;
+  await frame.instrumentation.onAfterCall(frame, callMetadata);
+  if (error)
+    throw error;
+  return result;
 }
 
 async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
@@ -134,47 +129,8 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
   }
 }
 
-export function generateActionTimeout(action: actions.Action): number {
-  switch (action.method) {
-    case 'navigate':
-      return 10000;
-    case 'click':
-    case 'drag':
-    case 'hover':
-    case 'selectOption':
-    case 'pressKey':
-    case 'pressSequentially':
-    case 'fill':
-    case 'setChecked':
-      return 5000;
-    case 'expectVisible':
-    case 'expectValue':
-    case 'expectAria':
-      return 1;  // one shot
-  }
-}
-
-export function performActionTimeout(action: actions.Action): number {
-  switch (action.method) {
-    case 'navigate':
-    case 'click':
-    case 'drag':
-    case 'hover':
-    case 'selectOption':
-    case 'pressKey':
-    case 'pressSequentially':
-    case 'fill':
-    case 'setChecked':
-      return 0;  // no timeout
-    case 'expectVisible':
-    case 'expectValue':
-    case 'expectAria':
-      return 5000;  // default expect timeout.
-  }
-}
-
-export function traceParamsForAction(action: actions.Action): { title?: string, type: string, method: string, params: any } {
-  const timeout = generateActionTimeout(action);
+export function traceParamsForAction(progress: Progress, action: actions.Action): { title?: string, type: string, method: string, params: any } {
+  const timeout = progress.timeout;
   switch (action.method) {
     case 'navigate': {
       const params: channels.FrameGotoParams = {
@@ -306,7 +262,7 @@ export function traceParamsForAction(action: actions.Action): { title?: string, 
   }
 }
 
-function callMetadataForAction(frame: Frame, action: actions.Action): CallMetadata {
+function callMetadataForAction(progress: Progress, frame: Frame, action: actions.Action): CallMetadata {
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
     objectId: frame.guid,
@@ -315,7 +271,7 @@ function callMetadataForAction(frame: Frame, action: actions.Action): CallMetada
     startTime: monotonicTime(),
     endTime: 0,
     log: [],
-    ...traceParamsForAction(action),
+    ...traceParamsForAction(progress, action),
   };
   return callMetadata;
 }

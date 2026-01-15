@@ -18,7 +18,7 @@ import { EventEmitter } from 'events';
 
 import { eventsHelper } from '../utils/eventsHelper';
 import { ValidationError, createMetadataValidator, findValidator  } from '../../protocol/validator';
-import { assert, monotonicTime, rewriteErrorMessage, debugLogger } from '../../utils';
+import { assert, monotonicTime, rewriteErrorMessage } from '../../utils';
 import { isUnderTest } from '../utils/debug';
 import { TargetClosedError, isTargetClosedError, serializeError } from '../errors';
 import { createRootSdkObject, SdkObject } from '../instrumentation';
@@ -101,11 +101,7 @@ export class Dispatcher<Type extends SdkObject, ChannelType, ParentScopeType ext
   }
 
   async _runCommand(callMetadata: CallMetadata, method: string, validParams: any) {
-    const controller = new ProgressController(callMetadata, message => {
-      const logName = this._object.logName || 'api';
-      debugLogger.log(logName, message);
-      this._object.instrumentation.onCallLog(this._object, callMetadata, logName, message);
-    });
+    const controller = ProgressController.createForSdkObject(this._object, callMetadata);
     this._activeProgressControllers.add(controller);
     try {
       return await controller.run(progress => (this as any)[method](validParams, progress), validParams?.timeout);

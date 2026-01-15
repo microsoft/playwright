@@ -67,7 +67,6 @@ export async function pageAgentExpect(progress: Progress, context: Context, expe
 ${expectation}
 `;
 
-  callParams.maxTurns = callParams.maxTurns ?? 3;
   await runLoop(progress, context, expectTools, task, undefined, callParams);
   await updateCache(context, cacheKey);
 }
@@ -130,7 +129,8 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   task.push('### Page snapshot');
   task.push(full);
   task.push('');
-  await loop.run(task.join('\n'));
+
+  await loop.run(task.join('\n'), { signal: progress.signal });
 
   return { result: resultSchema ? reportedResult() : undefined };
 }
