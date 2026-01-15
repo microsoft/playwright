@@ -5103,6 +5103,7 @@ export interface PageAgentChannel extends PageAgentEventTarget, EventTargetChann
   expect(params: PageAgentExpectParams, progress?: Progress): Promise<PageAgentExpectResult>;
   extract(params: PageAgentExtractParams, progress?: Progress): Promise<PageAgentExtractResult>;
   dispose(params?: PageAgentDisposeParams, progress?: Progress): Promise<PageAgentDisposeResult>;
+  usage(params?: PageAgentUsageParams, progress?: Progress): Promise<PageAgentUsageResult>;
 }
 export type PageAgentTurnEvent = {
   role: string,
@@ -5165,6 +5166,11 @@ export type PageAgentExtractResult = {
 export type PageAgentDisposeParams = {};
 export type PageAgentDisposeOptions = {};
 export type PageAgentDisposeResult = void;
+export type PageAgentUsageParams = {};
+export type PageAgentUsageOptions = {};
+export type PageAgentUsageResult = {
+  usage: AgentUsage,
+};
 
 export interface PageAgentEvents {
   'turn': PageAgentTurnEvent;

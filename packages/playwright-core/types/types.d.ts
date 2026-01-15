@@ -5462,6 +5462,25 @@ export interface PageAgent {
     };
   }>;
 
+  /**
+   * Returns the current token usage for this agent.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const usage = await agent.usage();
+   * console.log(`Tokens used: ${usage.inputTokens} in, ${usage.outputTokens} out`);
+   * ```
+   *
+   */
+  usage(): Promise<{
+    turns: number;
+
+    inputTokens: number;
+
+    outputTokens: number;
+  }>;
+
   [Symbol.asyncDispose](): Promise<void>;
 }
 
