@@ -28,7 +28,7 @@ import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
 import { envArrayToObject, launchProcess } from './utils/processLauncher';
-import {  isProtocolError } from './protocolError';
+import { isProtocolError, ProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
@@ -37,7 +37,6 @@ import { RecentLogsCollector } from './utils/debugLogger';
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';
 import type { Progress } from './progress';
-import type { ProtocolError } from './protocolError';
 import type { BrowserName } from './registry';
 import type { ConnectionTransport } from './transport';
 import type * as types from './types';
@@ -264,8 +263,12 @@ export abstract class BrowserType extends SdkObject {
         this.waitForReadyState(options, browserLogsCollector),
         exitPromise.then(() => ({ wsEndpoint: undefined })),
       ]);
-      if (exitPromise.isDone())
-        throw new Error(`Failed to launch the browser process.`);
+      if (exitPromise.isDone()) {
+        // TODO: make it work without ProtocolError.
+        const error = new ProtocolError('closed', undefined, browserLogsCollector.recentLogs().join(''));
+        error.message = 'Failed to launch the browser process.';
+        throw this.doRewriteStartupLog(error);
+      }
       if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
       } else {
