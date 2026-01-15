@@ -33,7 +33,8 @@ import type { Progress } from '../progress';
 export type CallParams = {
   cacheKey?: string;
   maxTokens?: number;
-  maxTurns?: number;
+  maxActions?: number;
+  maxActionRetries?: number;
 };
 
 export async function pageAgentPerform(progress: Progress, context: Context, userTask: string, callParams: CallParams) {
@@ -105,9 +106,11 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     api: context.agentParams.api as any,
     apiEndpoint: context.agentParams.apiEndpoint,
     apiKey: context.agentParams.apiKey,
+    apiTimeout: context.agentParams.apiTimeout ?? 0,
     model: context.agentParams.model,
-    maxTurns: params.maxTurns ?? context.agentParams.maxTurns,
-    maxTokens: params.maxTokens ?? context.agentParams.maxTokens,
+    maxTokens: params.maxTokens ?? context.maxTokensRemaining(),
+    maxToolCalls: params.maxActions ?? context.agentParams.maxActions ?? 10,
+    maxToolCallRetries: params.maxActionRetries ?? context.agentParams.maxActionRetries ?? 3,
     summarize: true,
     debug,
     callTool,
@@ -136,8 +139,8 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   task.push(full);
   task.push('');
 
-  await loop.run(task.join('\n'), { signal: progress.signal });
-
+  const { error, usage } = await loop.run(task.join('\n'), { signal: progress.signal });
+  context.consumeTokens(usage.input + usage.output);
   if (context.agentParams.apiCacheFile) {
     const apiCacheAfter = { ...apiCacheBefore, ...loop.cache() };
     const sortedCache = Object.fromEntries(Object.entries(apiCacheAfter).sort(([a], [b]) => a.localeCompare(b)));
@@ -147,6 +150,9 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
       await fs.promises.writeFile(context.agentParams.apiCacheFile, apiCacheTextAfter);
     }
   }
+
+  if (error)
+    throw new Error(`Agentic loop failed: ${error}`);
 
   return { result: resultSchema ? reportedResult() : undefined };
 }

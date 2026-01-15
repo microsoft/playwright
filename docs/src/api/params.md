@@ -384,11 +384,17 @@ By default, they are cached globally with the `task` as a key. This option allow
 Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
 Defaults to context-wide value specified in `agent` property.
 
-## page-agent-max-turns
+## page-agent-max-actions
 * since: v1.58
-- `maxTurns` <[int]>
+- `maxActions` <[int]>
 
-Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
+Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
+
+## page-agent-max-action-retries
+* since: v1.58
+- `maxActionRetries` <[int]>
+
+Maximum number of retries when generating each action, defaults to context-wide value specified in `agent` property.
 
 ## page-agent-timeout
 * since: v1.58
@@ -399,7 +405,8 @@ Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable
 ## page-agent-call-options-v1.58
 - %%-page-agent-cache-key-%%
 - %%-page-agent-max-tokens-%%
-- %%-page-agent-max-turns-%%
+- %%-page-agent-max-actions-%%
+- %%-page-agent-max-action-retries-%%
 - %%-page-agent-timeout-%%
 
 ## fetch-param-url

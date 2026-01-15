@@ -1491,10 +1491,12 @@ scheme.PageAgentParams = tObject({
   api: tOptional(tString),
   apiKey: tOptional(tString),
   apiEndpoint: tOptional(tString),
+  apiTimeout: tOptional(tInt),
   apiCacheFile: tOptional(tString),
   cacheFile: tOptional(tString),
   cacheOutFile: tOptional(tString),
-  maxTurns: tOptional(tInt),
+  maxActions: tOptional(tInt),
+  maxActionRetries: tOptional(tInt),
   maxTokens: tOptional(tInt),
   model: tOptional(tString),
   secrets: tOptional(tArray(tType('NameValue'))),
@@ -2907,7 +2909,8 @@ scheme.PageAgentTurnEvent = tObject({
 });
 scheme.PageAgentPerformParams = tObject({
   task: tString,
-  maxTurns: tOptional(tInt),
+  maxActions: tOptional(tInt),
+  maxActionRetries: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
   timeout: tOptional(tInt),
@@ -2917,7 +2920,8 @@ scheme.PageAgentPerformResult = tObject({
 });
 scheme.PageAgentExpectParams = tObject({
   expectation: tString,
-  maxTurns: tOptional(tInt),
+  maxActions: tOptional(tInt),
+  maxActionRetries: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
   timeout: tOptional(tInt),
@@ -2928,7 +2932,8 @@ scheme.PageAgentExpectResult = tObject({
 scheme.PageAgentExtractParams = tObject({
   query: tString,
   schema: tAny,
-  maxTurns: tOptional(tInt),
+  maxActions: tOptional(tInt),
+  maxActionRetries: tOptional(tInt),
   maxTokens: tOptional(tInt),
   cacheKey: tOptional(tString),
   timeout: tOptional(tInt),

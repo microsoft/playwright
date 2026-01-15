@@ -2019,10 +2019,12 @@ Page:
         api: string?
         apiKey: string?
         apiEndpoint: string?
+        apiTimeout: int?
         apiCacheFile: string?
         cacheFile: string?
         cacheOutFile: string?
-        maxTurns: int?
+        maxActions: int?
+        maxActionRetries: int?
         maxTokens: int?
         model: string?
         secrets:
@@ -4374,7 +4376,8 @@ PageAgent:
 PageAgentOptions:
   type: mixin
   properties:
-    maxTurns: int?
+    maxActions: int?
+    maxActionRetries: int?
     maxTokens: int?
     cacheKey: string?
     timeout: int?

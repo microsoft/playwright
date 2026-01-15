@@ -1,5 +1,5 @@
 {
-  "4f9987bc22c6035501274532494c185d1270aba2": {
+  "7416c1b94dbb8a1f7405a276811783738c295295": {
     "result": {
       "role": "assistant",
       "content": [
@@ -15,16 +15,19 @@
             "ref": "e3",
             "_is_done": true
           },
-          "id": "toolu_013sypFp7tiRCLaR3i3oWrei"
+          "id": "toolu_017c7pdkXdqSjQMiaF7UKwa8"
         }
-      ]
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
     },
     "usage": {
       "input": 2946,
       "output": 102
     }
   },
-  "79e2d58996075c4ebe8eb9e557bd0cdb8b04211a": {
+  "96cdcffad5cf3bf3d064acdeb05fbb4968f27c02": {
     "result": {
       "role": "assistant",
       "content": [
@@ -40,9 +43,12 @@
             "ref": "e3",
             "_is_done": true
           },
-          "id": "toolu_01E6xBUYzQEdRrkWoobbUbFq"
+          "id": "toolu_01E1epU97Ub6RDTk4PeFuKke"
         }
-      ]
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
     },
     "usage": {
       "input": 2933,

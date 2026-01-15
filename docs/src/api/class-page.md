@@ -722,15 +722,14 @@ Initialize page agent with the llm provider and cache.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
   - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
 
-### option: Page.agent.maxTurns
+### option: Page.agent.limits
 * since: v1.58
-- `maxTurns` <[int]>
+- `limits` <[Object]>
+  - `maxTokens` ?<[int]> Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value. Defaults to unlimited.
+  - `maxActions` ?<[int]> Maximum number of agentic actions to generate, defaults to 10.
+  - `maxActionRetries` ?<[int]> Maximum number retries per action, defaults to 3.
 
-Maximum number of agentic turns to take per call. Defaults to 10.
-
-### option: Page.agent.maxTokens
-* since: v1.58
-- `maxTokens` ?<[int]>
+Limits to use for the agentic loop.
 
 ### option: Page.agent.provider
 * since: v1.58
@@ -738,6 +737,7 @@ Maximum number of agentic turns to take per call. Defaults to 10.
   - `api` <[PageAgentAPI]<"openai"|"openai-compatible"|"anthropic"|"google">> API to use.
   - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
   - `apiKey` <[string]> API key for the LLM provider.
+  - `apiTimeout` ?<[int]> Amount of time to wait for the provider to respond to each request.
   - `model` <[string]> Model identifier within the provider. Required in non-cache mode.
 
 ### option: Page.agent.secrets
