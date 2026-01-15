@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-import { serializeExpectedTextValues } from '../utils/expectUtils';
+import { formatMatcherMessage, serializeExpectedTextValues, simpleMatcherUtils } from '../utils/expectUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
+import { asLocatorDescription } from '../../utils/isomorphic/locatorGenerators';
 import { yaml } from '../../utilsBundle';
 import { serializeError } from '../errors';
 
@@ -25,9 +26,10 @@ import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
 import type { NameValue } from '@protocol/channels';
-import type { ExpectResult, Frame } from '../frames';
+import type { Frame } from '../frames';
 import type { CallMetadata } from '../instrumentation';
 import type * as channels from '@protocol/channels';
+import type { FrameExpectParams } from '@injected/injectedScript';
 
 export async function runAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
   const parentMetadata = progress.metadata;
@@ -99,33 +101,46 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
         await frame.uncheck(progress, action.selector, { ...commonOptions });
       break;
     case 'expectVisible': {
-      const result = await frame.expect(progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot });
-      if (!result.matches === !action.isNot)
-        throw new Error(result.errorMessage);
+      await runExpect(frame, progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot }, 'visible', 'toBeVisible', '');
       break;
     }
     case 'expectValue': {
-      let result: ExpectResult;
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
         const expectedText = serializeExpectedTextValues([action.value]);
-        result = await frame.expect(progress, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot });
+        await runExpect(frame, progress, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot }, action.value, 'toHaveValue', 'expected');
       } else if (action.type === 'checkbox' || action.type === 'radio') {
         const expectedValue = { checked: action.value === 'true' };
-        result = await frame.expect(progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot });
+        await runExpect(frame, progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot }, action.value ? 'checked' : 'unchecked', 'toBeChecked', '');
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
-      if (!result.matches === !action.isNot)
-        throw new Error(result.errorMessage);
       break;
     }
     case 'expectAria': {
       const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
-      const result = await frame.expect(progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot });
-      if (!result.matches === !action.isNot)
-        throw new Error(result.errorMessage);
+      await runExpect(frame, progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + action.template, 'toMatchAriaSnapshot', 'expected');
       break;
     }
+  }
+}
+
+async function runExpect(frame: Frame, progress: Progress, selector: string | undefined, options: FrameExpectParams, expected: string, matcherName: string, expectation: string) {
+  const result = await frame.expect(progress, selector, options);
+  if (!result.matches === !options.isNot) {
+    const received = matcherName === 'toMatchAriaSnapshot' ? '\n' + result.received.raw : result.received;
+    throw new Error(formatMatcherMessage(simpleMatcherUtils, {
+      isNot: options.isNot,
+      matcherName,
+      expectation,
+      locator: selector ? asLocatorDescription('javascript', selector) : undefined,
+      timedOut: result.timedOut,
+      timeout: progress.timeout,
+      printedExpected: options.isNot ? `Expected: not ${expected}` : `Expected: ${expected}`,
+      printedReceived: result.errorMessage ? '' : `Received: ${received}`,
+      errorMessage: result.errorMessage,
+      // Note: we are not passing call log, because it will be automatically appended on the client side,
+      // as a part of the agent.{perform,expect} call.
+    }));
   }
 }
 

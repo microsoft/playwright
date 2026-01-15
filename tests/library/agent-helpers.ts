@@ -28,6 +28,10 @@ export async function cacheObject() {
   return JSON.parse(await fs.promises.readFile(cacheFile(), 'utf8'));
 }
 
+export async function setCacheObject(object: any) {
+  await fs.promises.writeFile(cacheFile(), JSON.stringify(object, null, 2), 'utf8');
+}
+
 export async function generateAgent(context: BrowserContext, options: { secrets?: Record<string, string> } = {}) {
   const apiCacheFile = path.join(__dirname, '__llm_cache__', sanitizeFileName(test.info().titlePath.join(' ')) + '.json');
 
