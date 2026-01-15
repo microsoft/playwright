@@ -852,6 +852,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       api: options.provider?.api,
       apiEndpoint: options.provider?.apiEndpoint,
       apiKey: options.provider?.apiKey,
+      apiCacheFile: (options.provider as any)?._apiCacheFile,
       model: options.provider?.model,
       cacheFile: options.cache?.cacheFile,
       cacheOutFile: options.cache?.cacheOutFile,

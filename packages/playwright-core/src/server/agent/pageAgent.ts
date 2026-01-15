@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { toolsForLoop } from './tool';
 import { debug } from '../../utilsBundle';
@@ -96,6 +97,10 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   const { tools, callTool, reportedResult } = toolsForLoop(progress, context, toolDefinitions, { resultSchema });
   const secrets = Object.fromEntries((context.agentParams.secrets || [])?.map(s => ([s.name, s.value])));
 
+  const apiCacheTextBefore = context.agentParams.apiCacheFile ?
+    await fs.promises.readFile(context.agentParams.apiCacheFile, 'utf-8').catch(() => '{}') : '{}';
+  const apiCacheBefore = JSON.parse(apiCacheTextBefore);
+
   const loop = new Loop({
     api: context.agentParams.api as any,
     apiEndpoint: context.agentParams.apiEndpoint,
@@ -108,6 +113,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     callTool,
     tools,
     secrets,
+    cache: apiCacheBefore,
     ...context.events,
   });
 
@@ -131,6 +137,16 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   task.push('');
 
   await loop.run(task.join('\n'), { signal: progress.signal });
+
+  if (context.agentParams.apiCacheFile) {
+    const apiCacheAfter = { ...apiCacheBefore, ...loop.cache() };
+    const sortedCache = Object.fromEntries(Object.entries(apiCacheAfter).sort(([a], [b]) => a.localeCompare(b)));
+    const apiCacheTextAfter = JSON.stringify(sortedCache, undefined, 2);
+    if (apiCacheTextAfter !== apiCacheTextBefore) {
+      await fs.promises.mkdir(path.dirname(context.agentParams.apiCacheFile), { recursive: true });
+      await fs.promises.writeFile(context.agentParams.apiCacheFile, apiCacheTextAfter);
+    }
+  }
 
   return { result: resultSchema ? reportedResult() : undefined };
 }

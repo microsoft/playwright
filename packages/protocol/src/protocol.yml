@@ -2019,6 +2019,7 @@ Page:
         api: string?
         apiKey: string?
         apiEndpoint: string?
+        apiCacheFile: string?
         cacheFile: string?
         cacheOutFile: string?
         maxTurns: int?

@@ -1,0 +1,52 @@
+{
+  "4f9987bc22c6035501274532494c185d1270aba2": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the Fox button again as requested."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Fox button",
+            "ref": "e3",
+            "_is_done": true
+          },
+          "id": "toolu_013sypFp7tiRCLaR3i3oWrei"
+        }
+      ]
+    },
+    "usage": {
+      "input": 2946,
+      "output": 102
+    }
+  },
+  "79e2d58996075c4ebe8eb9e557bd0cdb8b04211a": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the Fox button for you."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Fox button",
+            "ref": "e3",
+            "_is_done": true
+          },
+          "id": "toolu_01E6xBUYzQEdRrkWoobbUbFq"
+        }
+      ]
+    },
+    "usage": {
+      "input": 2933,
+      "output": 101
+    }
+  }
+}
