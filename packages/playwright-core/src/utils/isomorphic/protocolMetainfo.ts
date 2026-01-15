@@ -317,5 +317,5 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['PageAgent.expect', { title: 'Expect "{expectation}"', }],
   ['PageAgent.extract', { title: 'Extract "{query}"', }],
   ['PageAgent.dispose', { internal: true, }],
-  ['PageAgent.usage', { title: 'Get agent usage', }]
+  ['PageAgent.usage', { title: 'Get agent usage', group: 'configuration', }]
 ]);
