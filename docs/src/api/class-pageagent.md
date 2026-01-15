@@ -1,5 +1,6 @@
 # class: PageAgent
 * since: v1.58
+* langs: js
 
 ## event: PageAgent.turn
 * since: v1.58
