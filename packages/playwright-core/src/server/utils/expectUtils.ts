@@ -15,6 +15,7 @@
  */
 
 import { isRegExp, isString } from '../../utils/isomorphic/rtti';
+import { colors } from '../../utilsBundle';
 
 import type { ExpectedTextValue } from '@protocol/channels';
 
@@ -143,4 +144,35 @@ export const callLogText = (utils: InternalMatcherUtils, log: string[] | undefin
 Call log:
 ${utils.DIM_COLOR(log.join('\n'))}
 `;
+};
+
+
+function printValue(value: unknown): string {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
+
+function printReceived(value: unknown): string {
+  return colors.red(printValue(value));
+}
+
+function printExpected(value: unknown): string {
+  return colors.green(printValue(value));
+}
+
+export const simpleMatcherUtils: InternalMatcherUtils = {
+  DIM_COLOR: colors.dim,
+  RECEIVED_COLOR: colors.red,
+  EXPECTED_COLOR: colors.green,
+  INVERTED_COLOR: colors.inverse,
+  printReceived,
+  printExpected,
+  printDiffOrStringify: (expected: unknown, received: unknown, expectedLabel: string, receivedLabel: string) => {
+    const maxLength = Math.max(expectedLabel.length, receivedLabel.length) + 2;
+    return `${expectedLabel}: `.padEnd(maxLength) + printExpected(expected) + `\n` +
+           `${receivedLabel}: `.padEnd(maxLength) + printReceived(received);
+  },
 };
