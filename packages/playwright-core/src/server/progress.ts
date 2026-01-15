@@ -74,6 +74,8 @@ export class ProgressController {
       metadata: this.metadata,
       race: <T>(promise: Promise<T> | Promise<T>[], options?: { timeout?: number }) => {
         const promises = Array.isArray(promise) ? promise : [promise];
+        if (!promises.length)
+          return Promise.resolve();
         const mt = monotonicTime();
         const dl = options?.timeout ? mt + options.timeout : 0;
         const timerPromise = dl && (!deadline || dl < deadline) ? new Promise<void>(f => setTimeout(f, dl - mt)) : null;
