@@ -4352,6 +4352,12 @@ PageAgent:
     dispose:
       internal: true
 
+    usage:
+      title: 'Get agent usage'
+      group: configuration
+      returns:
+        usage: AgentUsage
+
   events:
 
     turn:

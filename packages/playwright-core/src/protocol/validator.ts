@@ -2939,6 +2939,10 @@ scheme.PageAgentExtractResult = tObject({
 });
 scheme.PageAgentDisposeParams = tOptional(tObject({}));
 scheme.PageAgentDisposeResult = tOptional(tObject({}));
+scheme.PageAgentUsageParams = tOptional(tObject({}));
+scheme.PageAgentUsageResult = tObject({
+  usage: tType('AgentUsage'),
+});
 scheme.AgentUsage = tObject({
   turns: tInt,
   inputTokens: tInt,

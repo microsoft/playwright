@@ -486,6 +486,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     await use(agent);
 
+    const usage = await agent.usage();
+    if (usage.turns > 0)
+      await testInfoImpl.attach('agent-usage', { contentType: 'application/json', body: Buffer.from(JSON.stringify(usage, null, 2)) });
+
     if (!resolvedCacheFile || !cacheOutFile)
       return;
     if (testInfo.status !== 'passed')

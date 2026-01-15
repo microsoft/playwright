@@ -62,6 +62,10 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
     return { result, usage: this._usage };
   }
 
+  async usage(params: channels.PageAgentUsageParams, progress: Progress): Promise<channels.PageAgentUsageResult> {
+    return { usage: this._usage };
+  }
+
   async dispose(params: channels.PageAgentDisposeParams, progress: Progress): Promise<void> {
   }
 

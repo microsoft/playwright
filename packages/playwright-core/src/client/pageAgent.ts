@@ -56,6 +56,11 @@ export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implement
     return { result, usage };
   }
 
+  async usage() {
+    const { usage } = await this._channel.usage({});
+    return usage;
+  }
+
   async dispose() {
     await this._channel.dispose();
   }
