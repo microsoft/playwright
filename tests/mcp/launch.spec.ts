@@ -172,7 +172,7 @@ test('isolated context with storage state', async ({ startClient, server }, test
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage:\n session-value`),
+    pageState: expect.stringContaining(`Storage: session-value`),
   });
 });
 
