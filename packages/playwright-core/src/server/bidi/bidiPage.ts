@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { debugLogger } from '../utils/debugLogger';
 import { eventsHelper } from '../utils/eventsHelper';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
@@ -197,6 +198,7 @@ export class BidiPage implements PageDelegate {
   private _onNavigationCommitted(params: bidi.BrowsingContext.NavigationInfo) {
     const frameId = params.context;
     const frame = this._page.frameManager.frame(frameId)!;
+    this._browserContext.doGrantGlobalPermissionsForURL(params.url).catch(error => debugLogger.log('error', error));
     this._page.frameManager.frameCommittedNewDocumentNavigation(frameId, params.url, frame._name, params.navigation!, /* initial */ false);
   }
 
