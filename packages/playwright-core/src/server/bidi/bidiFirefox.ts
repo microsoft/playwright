@@ -26,7 +26,6 @@ import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 import type { RecentLogsCollector } from '../utils/debugLogger';
@@ -45,15 +44,12 @@ export class BidiFirefox extends BrowserType {
     return BidiBrowser.connect(this.attribution.playwright, transport, options);
   }
 
-  override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
-      return error;
-    // https://github.com/microsoft/playwright/issues/6500
-    if (error.logs.includes(`as root in a regular user's session is not supported.`))
-      error.logs = '\n' + wrapInASCIIBox(`Firefox is unable to launch if the $HOME folder isn't owned by the current user.\nWorkaround: Set the HOME=/root environment variable${process.env.GITHUB_ACTION ? ' in your GitHub Actions workflow file' : ''} when running Playwright.`, 1);
-    if (error.logs.includes('no DISPLAY environment variable specified'))
-      error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
-    return error;
+  override doRewriteStartupLog(logs: string): string {
+    if (logs.includes(`as root in a regular user's session is not supported.`))
+      logs = '\n' + wrapInASCIIBox(`Firefox is unable to launch if the $HOME folder isn't owned by the current user.\nWorkaround: Set the HOME=/root environment variable${process.env.GITHUB_ACTION ? ' in your GitHub Actions workflow file' : ''} when running Playwright.`, 1);
+    if (logs.includes('no DISPLAY environment variable specified'))
+      logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    return logs;
   }
 
   override amendEnvironment(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {

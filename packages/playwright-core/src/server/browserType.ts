@@ -28,7 +28,7 @@ import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
 import { envArrayToObject, launchProcess } from './utils/processLauncher';
-import { isProtocolError, ProtocolError } from './protocolError';
+import { isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
@@ -264,10 +264,9 @@ export abstract class BrowserType extends SdkObject {
         exitPromise.then(() => ({ wsEndpoint: undefined })),
       ]);
       if (exitPromise.isDone()) {
-        // TODO: make it work without ProtocolError.
-        const error = new ProtocolError('closed', undefined, browserLogsCollector.recentLogs().join(''));
-        error.message = 'Failed to launch the browser process.';
-        throw this.doRewriteStartupLog(error);
+        const log = helper.formatBrowserLogs(browserLogsCollector.recentLogs());
+        const updatedLog = this.doRewriteStartupLog(log);
+        throw new Error(`Failed to launch the browser process.\nBrowser logs:\n${updatedLog}`);
       }
       if (options.cdpPort !== undefined || !this.supportsPipeTransport()) {
         transport = await WebSocketTransport.connect(progress, wsEndpoint!);
@@ -324,7 +323,9 @@ export abstract class BrowserType extends SdkObject {
   private _rewriteStartupLog(error: Error): Error {
     if (!isProtocolError(error))
       return error;
-    return this.doRewriteStartupLog(error);
+    if (error.logs)
+      error.logs = this.doRewriteStartupLog(error.logs);
+    return error;
   }
 
   async waitForReadyState(options: types.LaunchOptions, browserLogsCollector: RecentLogsCollector): Promise<{ wsEndpoint?: string }> {
@@ -345,7 +346,7 @@ export abstract class BrowserType extends SdkObject {
   abstract defaultArgs(options: types.LaunchOptions, isPersistent: boolean, userDataDir: string): Promise<string[]>;
   abstract connectToTransport(transport: ConnectionTransport, options: BrowserOptions, browserLogsCollector: RecentLogsCollector): Promise<Browser>;
   abstract amendEnvironment(env: NodeJS.ProcessEnv, userDataDir: string, isPersistent: boolean, options: types.LaunchOptions): NodeJS.ProcessEnv;
-  abstract doRewriteStartupLog(error: ProtocolError): ProtocolError;
+  abstract doRewriteStartupLog(logs: string): string;
   abstract attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void;
 }
 
