@@ -18,16 +18,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { escapeTemplateString, isString } from 'playwright-core/lib/utils';
+import { formatMatcherMessage, escapeTemplateString, isString, printReceivedStringContainExpectedSubstring } from 'playwright-core/lib/utils';
 
-import { formatMatcherMessage } from './matcherHint';
 import { fileExistsAsync } from '../util';
-import { printReceivedStringContainExpectedSubstring } from './expect';
 import { currentTestInfo } from '../common/globals';
 
 import type { MatcherResult } from './matcherHint';
-import type { LocatorEx } from './matchers';
-import type { ExpectMatcherState } from '../../types/test';
+import type { ExpectMatcherStateInternal, LocatorEx } from './matchers';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
 
 
@@ -38,7 +35,7 @@ type ToMatchAriaSnapshotExpected = {
 } | string;
 
 export async function toMatchAriaSnapshot(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   locator: LocatorEx,
   expectedParam?: ToMatchAriaSnapshotExpected,
   options: { timeout?: number } = {},
@@ -93,16 +90,18 @@ export async function toMatchAriaSnapshot(
     if (errorMessage) {
       printedExpected = `Expected: ${this.isNot ? 'not ' : ''}${this.utils.printExpected(expected)}`;
     } else if (pass) {
-      const receivedString = printReceivedStringContainExpectedSubstring(typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
+      const receivedString = printReceivedStringContainExpectedSubstring(this.utils, typedReceived.raw, typedReceived.raw.indexOf(expected), expected.length);
       printedExpected = `Expected: not ${this.utils.printExpected(expected)}`;
       printedReceived = `Received: ${receivedString}`;
     } else {
       printedDiff = this.utils.printDiffOrStringify(expected, typedReceived.raw, 'Expected', 'Received', false);
     }
-    return formatMatcherMessage(this, {
+    return formatMatcherMessage(this.utils, {
+      isNot: this.isNot,
+      promise: this.promise,
       matcherName,
       expectation: 'expected',
-      locator,
+      locator: locator.toString(),
       timeout,
       timedOut,
       printedExpected,
