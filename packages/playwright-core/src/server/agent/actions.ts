@@ -14,97 +14,123 @@
  * limitations under the License.
  */
 
-export type NavigateAction = {
-  method: 'navigate';
-  url: string;
-};
+import { zod } from '../../utilsBundle';
+import type z from 'zod';
 
-export type ClickAction = {
-  method: 'click';
-  selector: string;
-  button?: 'left' | 'right' | 'middle';
-  clickCount?: number;
-  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[];
-};
+const modifiersSchema = zod.array(
+    zod.enum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])
+);
 
-export type DragAction = {
-  method: 'drag';
-  sourceSelector: string;
-  targetSelector: string;
-};
+const navigateActionSchema = zod.object({
+  method: zod.literal('navigate'),
+  url: zod.string(),
+});
+export type NavigateAction = z.infer<typeof navigateActionSchema>;
 
-export type HoverAction = {
-  method: 'hover';
-  selector: string;
-  modifiers?: ('Alt' | 'Control' | 'ControlOrMeta' | 'Meta' | 'Shift')[];
-};
+const clickActionSchema = zod.object({
+  method: zod.literal('click'),
+  selector: zod.string(),
+  button: zod.enum(['left', 'right', 'middle']).optional(),
+  clickCount: zod.number().optional(),
+  modifiers: modifiersSchema.optional(),
+});
+export type ClickAction = z.infer<typeof clickActionSchema>;
 
-export type SelectOptionAction = {
-  method: 'selectOption';
-  selector: string;
-  labels: string[];
-};
+const dragActionSchema = zod.object({
+  method: zod.literal('drag'),
+  sourceSelector: zod.string(),
+  targetSelector: zod.string(),
+});
+export type DragAction = z.infer<typeof dragActionSchema>;
 
-export type PressAction = {
-  method: 'pressKey';
-  // Includes modifiers
-  key: string;
-};
+const hoverActionSchema = zod.object({
+  method: zod.literal('hover'),
+  selector: zod.string(),
+  modifiers: modifiersSchema.optional(),
+});
+export type HoverAction = z.infer<typeof hoverActionSchema>;
 
-export type PressSequentiallyAction = {
-  method: 'pressSequentially';
-  selector: string;
-  text: string;
-  submit?: boolean;
-};
+const selectOptionActionSchema = zod.object({
+  method: zod.literal('selectOption'),
+  selector: zod.string(),
+  labels: zod.array(zod.string()),
+});
+export type SelectOptionAction = z.infer<typeof selectOptionActionSchema>;
 
-export type FillAction = {
-  method: 'fill';
-  selector: string;
-  text: string;
-  submit?: boolean;
-};
+const pressActionSchema = zod.object({
+  method: zod.literal('pressKey'),
+  key: zod.string(),
+});
+export type PressAction = z.infer<typeof pressActionSchema>;
 
-export type SetChecked = {
-  method: 'setChecked';
-  selector: string;
-  checked: boolean;
-};
+const pressSequentiallyActionSchema = zod.object({
+  method: zod.literal('pressSequentially'),
+  selector: zod.string(),
+  text: zod.string(),
+  submit: zod.boolean().optional(),
+});
+export type PressSequentiallyAction = z.infer<typeof pressSequentiallyActionSchema>;
 
-export type ExpectVisible = {
-  method: 'expectVisible';
-  selector: string;
-  isNot?: boolean;
-};
+const fillActionSchema = zod.object({
+  method: zod.literal('fill'),
+  selector: zod.string(),
+  text: zod.string(),
+  submit: zod.boolean().optional(),
+});
+export type FillAction = z.infer<typeof fillActionSchema>;
 
-export type ExpectValue = {
-  method: 'expectValue';
-  selector: string;
-  type: 'textbox' | 'checkbox' | 'radio' | 'combobox' | 'slider';
-  value: string;
-  isNot?: boolean;
-};
+const setCheckedSchema = zod.object({
+  method: zod.literal('setChecked'),
+  selector: zod.string(),
+  checked: zod.boolean(),
+});
+export type SetChecked = z.infer<typeof setCheckedSchema>;
 
-export type ExpectAria = {
-  method: 'expectAria';
-  template: string;
-  isNot?: boolean;
-};
+const expectVisibleSchema = zod.object({
+  method: zod.literal('expectVisible'),
+  selector: zod.string(),
+  isNot: zod.boolean().optional(),
+});
+export type ExpectVisible = z.infer<typeof expectVisibleSchema>;
 
-export type Action =
-  | NavigateAction
-  | ClickAction
-  | DragAction
-  | HoverAction
-  | SelectOptionAction
-  | PressAction
-  | PressSequentiallyAction
-  | FillAction
-  | SetChecked
-  | ExpectVisible
-  | ExpectValue
-  | ExpectAria;
+const expectValueSchema = zod.object({
+  method: zod.literal('expectValue'),
+  selector: zod.string(),
+  type: zod.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']),
+  value: zod.string(),
+  isNot: zod.boolean().optional(),
+});
+export type ExpectValue = z.infer<typeof expectValueSchema>;
 
-export type ActionWithCode = Action & {
-  code: string;
-};
+const expectAriaSchema = zod.object({
+  method: zod.literal('expectAria'),
+  template: zod.string(),
+  isNot: zod.boolean().optional(),
+});
+export type ExpectAria = z.infer<typeof expectAriaSchema>;
+
+const actionSchema = zod.discriminatedUnion('method', [
+  navigateActionSchema,
+  clickActionSchema,
+  dragActionSchema,
+  hoverActionSchema,
+  selectOptionActionSchema,
+  pressActionSchema,
+  pressSequentiallyActionSchema,
+  fillActionSchema,
+  setCheckedSchema,
+  expectVisibleSchema,
+  expectValueSchema,
+  expectAriaSchema,
+]);
+export type Action = z.infer<typeof actionSchema>;
+
+const actionWithCodeSchema = actionSchema.and(zod.object({
+  code: zod.string(),
+}));
+export type ActionWithCode = z.infer<typeof actionWithCodeSchema>;
+
+export const cachedActionsSchema = zod.record(zod.object({
+  actions: zod.array(actionWithCodeSchema),
+}));
+export type CachedActions = z.infer<typeof cachedActionsSchema>;

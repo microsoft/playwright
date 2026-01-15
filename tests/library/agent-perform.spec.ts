@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { z } from 'zod';
 
 import { browserTest as test, expect } from '../config/browserTest';
-import { run, generateAgent, cacheObject, runAgent } from './agent-helpers';
+import { run, generateAgent, cacheObject, runAgent, cacheFile } from './agent-helpers';
 
 // LOWIRE_NO_CACHE=1 to generate api caches
 // LOWIRE_FORCE_CACHE=1 to force api caches
@@ -153,4 +154,18 @@ test('perform run timeout', async ({ context }) => {
     expect(error.message).toContain('Timeout 3000ms exceeded.');
     expect(error.message).toContain(`waiting for getByRole('button', { name: 'Fox' })`);
   }
+});
+
+test('invalid cache file throws error', async ({ context }) => {
+  await fs.promises.writeFile(cacheFile(), JSON.stringify({
+    'some key': {
+      actions: [{
+        method: 'invalid-method',
+      }],
+    },
+  }));
+  const { agent } = await runAgent(context);
+  await expect(() => agent.perform('click the Test button')).rejects.toThrowError(
+      /.*Failed to parse cache file .*: Invalid discriminator value*/
+  );
 });

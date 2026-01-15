@@ -25,7 +25,7 @@ import { Context } from './context';
 import performTools from './performTools';
 import expectTools from './expectTools';
 
-import type * as actions from './actions';
+import * as actions from './actions';
 import type { ToolDefinition } from './tool';
 import type * as loopTypes from '@lowire/loop';
 import type { Progress } from '../progress';
@@ -151,10 +151,6 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
   return { result: resultSchema ? reportedResult() : undefined };
 }
 
-type CachedActions = Record<string, {
-  actions: actions.ActionWithCode[],
-}>;
-
 async function cachedPerform(progress: Progress, context: Context, cacheKey: string): Promise<actions.ActionWithCode[] | undefined> {
   if (!context.agentParams?.cacheFile)
     return;
@@ -191,8 +187,8 @@ async function updateCache(context: Context, cacheKey: string) {
 }
 
 type Cache = {
-  actions: CachedActions;
-  newActions: CachedActions;
+  actions: actions.CachedActions;
+  newActions: actions.CachedActions;
 };
 
 const allCaches = new Map<string, Cache>();
@@ -200,8 +196,11 @@ const allCaches = new Map<string, Cache>();
 async function cachedActions(cacheFile: string): Promise<Cache> {
   let cache = allCaches.get(cacheFile);
   if (!cache) {
-    const actions = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({})) as CachedActions;
-    cache = { actions, newActions: {} };
+    const text = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
+    const parsed = actions.cachedActionsSchema.safeParse(JSON.parse(text));
+    if (parsed.error)
+      throw new Error(`Failed to parse cache file ${cacheFile}: ${parsed.error.issues.map(issue => issue.message).join(', ')}`);
+    cache = { actions: parsed.data, newActions: {} };
     allCaches.set(cacheFile, cache);
   }
   return cache;

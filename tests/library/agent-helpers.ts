@@ -20,7 +20,7 @@ import path from 'path';
 import { browserTest as test } from '../config/browserTest';
 import type { BrowserContext, Page, PageAgent } from '@playwright/test';
 
-function cacheFile() {
+export function cacheFile() {
   return test.info().outputPath('agent-cache.json');
 }
 
