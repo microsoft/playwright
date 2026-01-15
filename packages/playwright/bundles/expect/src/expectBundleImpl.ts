@@ -16,11 +16,3 @@
 
 import expectLibrary from 'expect';
 export const expect = expectLibrary;
-
-export {
-  EXPECTED_COLOR,
-  INVERTED_COLOR,
-  RECEIVED_COLOR,
-  DIM_COLOR,
-  printReceived,
-} from 'jest-matcher-utils';

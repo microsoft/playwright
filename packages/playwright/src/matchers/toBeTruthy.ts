@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import { formatMatcherMessage } from 'playwright-core/lib/utils';
+
 import { expectTypes } from '../util';
-import { formatMatcherMessage } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
-import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
+import type { ExpectMatcherStateInternal } from './matchers';
 
 export async function toBeTruthy(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   matcherName: string,
   locator: Locator,
   receiverType: string,
@@ -56,10 +57,12 @@ export async function toBeTruthy(
     printedReceived = errorMessage ? '' : `Received: ${received}`;
   }
   const message = () => {
-    return formatMatcherMessage(this, {
+    return formatMatcherMessage(this.utils, {
+      isNot: this.isNot,
+      promise: this.promise,
       matcherName,
       expectation: arg,
-      locator,
+      locator: locator.toString(),
       timeout,
       timedOut,
       printedExpected,

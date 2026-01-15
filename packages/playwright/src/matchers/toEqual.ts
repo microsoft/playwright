@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-import { isRegExp } from 'playwright-core/lib/utils';
+import { formatMatcherMessage, isRegExp } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
-import { formatMatcherMessage } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
-import type { ExpectMatcherState } from '../../types/test';
 import type { Locator } from 'playwright-core';
+import type { ExpectMatcherStateInternal } from './matchers';
 
 // Omit colon and one or more spaces, so can call getLabelPrinter.
 const EXPECTED_LABEL = 'Expected';
 const RECEIVED_LABEL = 'Received';
 
 export async function toEqual<T>(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   matcherName: string,
   locator: Locator,
   receiverType: string,
@@ -84,10 +83,12 @@ export async function toEqual<T>(
     );
   }
   const message = () => {
-    return formatMatcherMessage(this, {
+    return formatMatcherMessage(this.utils, {
+      isNot: this.isNot,
+      promise: this.promise,
       matcherName,
       expectation: 'expected',
-      locator,
+      locator: locator.toString(),
       timeout,
       timedOut,
       printedExpected,

@@ -14,21 +14,16 @@
  * limitations under the License.
  */
 
+import { formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
-import {
-  printReceivedStringContainExpectedResult,
-  printReceivedStringContainExpectedSubstring
-} from './expect';
-import { formatMatcherMessage } from './matcherHint';
-import { EXPECTED_COLOR } from '../common/expectBundle';
 
 import type { MatcherResult } from './matcherHint';
-import type { ExpectMatcherState } from '../../types/test';
 import type { Page, Locator } from 'playwright-core';
+import type { ExpectMatcherStateInternal } from './matchers';
 
 export async function toMatchText(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   matcherName: string,
   receiver: Locator | Page,
   receiverType: 'Locator' | 'Page',
@@ -43,8 +38,8 @@ export async function toMatchText(
     !(typeof expected === 'string') &&
     !(expected && typeof expected.test === 'function')
   ) {
-    const errorMessage = `Error: ${EXPECTED_COLOR('expected')} value must be a string or regular expression\n${this.utils.printWithType('Expected', expected, this.utils.printExpected)}`;
-    throw new Error(formatMatcherMessage(this, { locator, matcherName, expectation: 'expected', errorMessage }));
+    const errorMessage = `Error: ${this.utils.EXPECTED_COLOR('expected')} value must be a string or regular expression\n${this.utils.printWithType('Expected', expected, this.utils.printExpected)}`;
+    throw new Error(formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, locator: locator?.toString(), matcherName, expectation: 'expected', errorMessage }));
   }
 
   const timeout = options.timeout ?? this.timeout;
@@ -70,13 +65,13 @@ export async function toMatchText(
     if (typeof expected === 'string') {
       printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
-        const formattedReceived = printReceivedStringContainExpectedSubstring(receivedString, receivedString.indexOf(expected), expected.length);
+        const formattedReceived = printReceivedStringContainExpectedSubstring(this.utils, receivedString, receivedString.indexOf(expected), expected.length);
         printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     } else {
       printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
-        const formattedReceived = printReceivedStringContainExpectedResult(receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
+        const formattedReceived = printReceivedStringContainExpectedResult(this.utils, receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
         printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     }
@@ -88,10 +83,12 @@ export async function toMatchText(
   }
 
   const message = () => {
-    return formatMatcherMessage(this, {
+    return formatMatcherMessage(this.utils, {
+      promise: this.promise,
+      isNot: this.isNot,
       matcherName,
       expectation: 'expected',
-      locator,
+      locator: locator?.toString(),
       timeout,
       timedOut,
       printedExpected,
