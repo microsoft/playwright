@@ -105,7 +105,9 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
   electronMajorVersion: [0, { scope: 'worker' }],
 
   isHeadlessShell: [async ({ browserName, channel, headless }, use) => {
-    await use(browserName === 'chromium' && (channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell' || (!channel && headless)));
+    const isShell = channel === 'chromium-headless-shell' || (!channel && headless);
+    const isToTShell = channel === 'chromium-tip-of-tree-headless-shell' || (channel === 'chromium-tip-of-tree' && headless);
+    await use(browserName === 'chromium' && (isShell || isToTShell));
   }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {

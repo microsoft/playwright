@@ -363,6 +363,8 @@ export class Chromium extends BrowserType {
   override getExecutableName(options: types.LaunchOptions): string {
     if (options.channel && registry.isChromiumAlias(options.channel))
       return 'chromium';
+    if (options.channel === 'chromium-tip-of-tree')
+      return options.headless ? 'chromium-tip-of-tree-headless-shell' : 'chromium-tip-of-tree';
     if (options.channel)
       return options.channel;
     return options.headless ? 'chromium-headless-shell' : 'chromium';
