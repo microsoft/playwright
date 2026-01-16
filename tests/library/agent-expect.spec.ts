@@ -219,3 +219,69 @@ Call log:
   - waiting for getByRole('textbox')`);
   expect(stripAnsi(error.message)).toContain(`- unexpected value "bye"`);
 });
+
+test('expectURL success', async ({ context, server }) => {
+  await setCacheObject({
+    'page URL is correct': {
+      actions: [{
+        code: '',
+        method: 'expectURL',
+        value: server.PREFIX + '/page.html',
+      }],
+    },
+  });
+  const { page, agent } = await runAgent(context);
+  await page.goto(server.PREFIX + '/page.html');
+  await agent.expect('page URL is correct');
+});
+
+test('expectURL wrong URL error', async ({ context, server }) => {
+  await setCacheObject({
+    'page URL is /other.html': {
+      actions: [{
+        code: '',
+        method: 'expectURL',
+        value: server.PREFIX + '/other.html',
+      }],
+    },
+  });
+  const { page, agent } = await runAgent(context);
+  await page.goto(server.PREFIX + '/page.html');
+  const error = await agent.expect('page URL is /other.html').catch(e => e);
+  expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
+  expect(stripAnsi(error.message)).toContain(`Expected: ${server.PREFIX}/other.html`);
+  expect(stripAnsi(error.message)).toContain(`Received: ${server.PREFIX}/page.html`);
+});
+
+test('expectURL with regex', async ({ context, server }) => {
+  await setCacheObject({
+    'page URL matches pattern': {
+      actions: [{
+        code: '',
+        method: 'expectURL',
+        regex: '/.*\\/page\\.html/',
+      }],
+    },
+  });
+  const { page, agent } = await runAgent(context);
+  await page.goto(server.PREFIX + '/page.html');
+  await agent.expect('page URL matches pattern');
+});
+
+test('expectURL with regex error', async ({ context, server }) => {
+  await setCacheObject({
+    'page URL matches other pattern': {
+      actions: [{
+        code: '',
+        method: 'expectURL',
+        regex: '/.*\\/other\\.html/',
+      }],
+    },
+  });
+  const { page, agent } = await runAgent(context);
+  await page.goto(server.PREFIX + '/page.html');
+  const error = await agent.expect('page URL matches other pattern').catch(e => e);
+  expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
+  expect(stripAnsi(error.message)).toContain(`Expected pattern: /.*\\/other\\.html/`);
+  expect(stripAnsi(error.message)).toContain(`Received: ${server.PREFIX}/page.html`);
+});

@@ -127,6 +127,8 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
     case 'expectURL': {
       if (!action.regex && !action.value)
         throw new Error('Either url or regex must be provided');
+      if (action.regex && action.value)
+        throw new Error('Only one of url or regex can be provided');
       const expected = action.regex ? parseRegex(action.regex) : constructURLBasedOnBaseURL(page.browserContext._options.baseURL, action.value!);
       const expectedText = serializeExpectedTextValues([expected]);
       await runExpect(frame, progress, mode, undefined, { expression: 'to.have.url', expectedText, isNot: !!action.isNot }, expected, 'toHaveURL', 'expected');
