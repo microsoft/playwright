@@ -15,6 +15,8 @@
  */
 
 import { formatMatcherMessage, serializeExpectedTextValues, simpleMatcherUtils } from '../utils/expectUtils';
+import { constructURLBasedOnBaseURL } from '../../utils/isomorphic/urlMatch';
+import { parseRegex } from '../../utils/isomorphic/stringUtils';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { createGuid } from '../utils/crypto';
 import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
@@ -122,10 +124,20 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
       await runExpect(frame, progress, mode, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + action.template, 'toMatchAriaSnapshot', 'expected');
       break;
     }
+    case 'expectURL': {
+      if (!action.regex && !action.value)
+        throw new Error('Either url or regex must be provided');
+      if (action.regex && action.value)
+        throw new Error('Only one of url or regex can be provided');
+      const expected = action.regex ? parseRegex(action.regex) : constructURLBasedOnBaseURL(page.browserContext._options.baseURL, action.value!);
+      const expectedText = serializeExpectedTextValues([expected]);
+      await runExpect(frame, progress, mode, undefined, { expression: 'to.have.url', expectedText, isNot: !!action.isNot }, expected, 'toHaveURL', 'expected');
+      break;
+    }
   }
 }
 
-async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'run', selector: string | undefined, options: FrameExpectParams, expected: string, matcherName: string, expectation: string) {
+async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'run', selector: string | undefined, options: FrameExpectParams, expected: string | RegExp, matcherName: string, expectation: string) {
   // Pass explicit timeout to limit the single expect action inside the overall "agentic expect" multi-step progress.
   const timeout = expectTimeout(mode);
   const result = await frame.expect(progress, selector, {
@@ -137,6 +149,8 @@ async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'r
   });
   if (!result.matches === !options.isNot) {
     const received = matcherName === 'toMatchAriaSnapshot' ? '\n' + result.received.raw : result.received;
+    const expectedSuffix = typeof expected === 'string' ? '' : ' pattern';
+    const expectedDisplay = typeof expected === 'string' ? expected : expected.toString();
     throw new Error(formatMatcherMessage(simpleMatcherUtils, {
       isNot: options.isNot,
       matcherName,
@@ -144,7 +158,7 @@ async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'r
       locator: selector ? asLocatorDescription('javascript', selector) : undefined,
       timedOut: result.timedOut,
       timeout,
-      printedExpected: options.isNot ? `Expected: not ${expected}` : `Expected: ${expected}`,
+      printedExpected: options.isNot ? `Expected${expectedSuffix}: not ${expectedDisplay}` : `Expected${expectedSuffix}: ${expectedDisplay}`,
       printedReceived: result.errorMessage ? '' : `Received: ${received}`,
       errorMessage: result.errorMessage,
       // Note: we are not passing call log, because it will be automatically appended on the client side,
@@ -282,6 +296,18 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         timeout: expectTimeout(mode),
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Aria Snapshot', params };
+    }
+    case 'expectURL': {
+      const expected = action.regex ? parseRegex(action.regex) : action.value!;
+      const expectedText = serializeExpectedTextValues([expected]);
+      const params: channels.FrameExpectParams = {
+        selector: undefined,
+        expression: 'to.have.url',
+        expectedText,
+        isNot: !!action.isNot,
+        timeout: expectTimeout(mode),
+      };
+      return { type: 'Frame', method: 'expect', title: 'Expect URL', params };
     }
   }
 }

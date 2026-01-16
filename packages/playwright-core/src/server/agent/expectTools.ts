@@ -112,9 +112,32 @@ ${params.items.map(item => `  - ${params.itemRole}: ${yamlEscapeValueIfNeeded(it
   },
 });
 
+const expectURL = defineTool({
+  schema: {
+    name: 'browser_expect_url',
+    title: 'Expect URL',
+    description: 'Expect the page URL to match the expected value. Either provide a url string or a regex pattern.',
+    inputSchema: z.object({
+      url: z.string().optional().describe('Expected URL string. Relative URLs are resolved against the baseURL.'),
+      regex: z.string().optional().describe('Regular expression pattern to match the URL against, e.g. /foo.*/i.'),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
+    }),
+  },
+
+  handle: async (progress, context, params) => {
+    return await context.runActionAndWait(progress, {
+      method: 'expectURL',
+      value: params.url,
+      regex: params.regex,
+      isNot: params.isNot,
+    });
+  },
+});
+
 export default [
   expectVisible,
   expectVisibleText,
   expectValue,
   expectList,
+  expectURL,
 ] as ToolDefinition<any>[];
