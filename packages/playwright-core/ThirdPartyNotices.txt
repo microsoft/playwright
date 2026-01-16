@@ -5,7 +5,7 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
 -	@hono/node-server@1.19.8 (https://github.com/honojs/node-server)
--	@lowire/loop@0.0.23 (https://github.com/pavelfeldman/lowire)
+-	@lowire/loop@0.0.24 (https://github.com/pavelfeldman/lowire)
 -	@modelcontextprotocol/sdk@1.25.2 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
@@ -500,7 +500,7 @@ MIT
 =========================================
 END OF @hono/node-server@1.19.8 AND INFORMATION
 
-%% @lowire/loop@0.0.23 NOTICES AND INFORMATION BEGIN HERE
+%% @lowire/loop@0.0.24 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Apache License
                            Version 2.0, January 2004
@@ -704,7 +704,7 @@ Apache License
    See the License for the specific language governing permissions and
    limitations under the License.
 =========================================
-END OF @lowire/loop@0.0.23 AND INFORMATION
+END OF @lowire/loop@0.0.24 AND INFORMATION
 
 %% @modelcontextprotocol/sdk@1.25.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================

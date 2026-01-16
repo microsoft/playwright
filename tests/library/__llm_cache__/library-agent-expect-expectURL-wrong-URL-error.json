@@ -1,11 +1,38 @@
 {
-  "0179ac4e63cc9a0733da8a619e2e8cc2b6d65d1d": {
+  "0e39a03d4c9db9c59b450aa30d50eb88551aca6c": {
     "result": {
       "role": "assistant",
       "content": [
         {
           "type": "text",
-          "text": "I need to verify that the page URL is `/other.html`. I'll use the `browser_expect_url` tool to assert this condition."
+          "text": "I need to adjust my expectation. The actual URL is the full URL including the protocol and host. Let me use a regex pattern to match the URL ending with /other.html."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_018zDqYhtHtaNUQ66sv1Ezea"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2293,
+      "output": 118
+    }
+  },
+  "e50f042f63f65841f33a8d0a608d45f748c66552": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll verify that the page URL is /other.html using the browser_expect_url tool."
         },
         {
           "type": "tool_call",
@@ -14,7 +41,7 @@
             "url": "/other.html",
             "_is_done": true
           },
-          "id": "toolu_01G9ZzdYXENshXQ8jShDmvJy"
+          "id": "toolu_01QffxWJVHBPDgB4WSiKanvu"
         }
       ],
       "stopReason": {
@@ -22,143 +49,8 @@
       }
     },
     "usage": {
-      "input": 1930,
-      "output": 109
-    }
-  },
-  "6aacb908b26146c99406cec686aaf78e2398d3c8": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I see the issue - the actual URL is the full URL `http://localhost:8959/other.html`, not just the relative path. Let me adjust the assertion to match the actual URL pattern using a regex that checks if the URL ends with `/other.html`:"
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "regex": "/\\/other\\.html$/",
-            "_is_done": true
-          },
-          "id": "toolu_011zZt5A2gYEv1VwEAmjNTLm"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 2169,
-      "output": 136
-    }
-  },
-  "bae6a40c194c52f6df380d43bae1648192ad1f8a": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I see the issue - the actual URL is the full URL `http://localhost:8923/other.html`, not just the path. Let me adjust the expectation to use a regex pattern that matches the path portion:"
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "regex": "/\\/other\\.html$/",
-            "_is_done": true
-          },
-          "id": "toolu_01NynnYbKYmAHGQm11tzRFgr"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 2169,
-      "output": 126
-    }
-  },
-  "e50461d297e7440944832db61c5224052f70bc47": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I see the issue - the actual URL is the full URL \"http://localhost:8927/other.html\" but I was checking for just \"/other.html\". Since the expectation is to match \"/other.html\" and relative URLs are resolved against the baseURL, let me use a regex pattern to match the path portion."
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "regex": "/\\/other\\.html$/",
-            "_is_done": true
-          },
-          "id": "toolu_01H5V6RogtF5gd4887vh6cpF"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 2176,
-      "output": 149
-    }
-  },
-  "f3512ecc7b43a5238007d361e22f0c67faf72cbf": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I see the issue - the actual URL is the full URL `http://localhost:8911/other.html` while I was checking for just `/other.html`. Let me use a regex pattern to match URLs ending with `/other.html`:"
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "regex": "/\\/other\\.html$/",
-            "_is_done": true
-          },
-          "id": "toolu_01GULjRje8iHqa5c37r9dtTW"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 2169,
-      "output": 131
-    }
-  },
-  "fec139d134efb094c1b78c714e439f48f10a584b": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I need to verify that the page URL is /other.html. I'll use the browser_expect_url tool to check this."
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "url": "/other.html",
-            "_is_done": true
-          },
-          "id": "toolu_01QSmNsYFUNPwiG7r6Qvmi5y"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 1940,
-      "output": 106
+      "input": 2067,
+      "output": 99
     }
   }
 }
