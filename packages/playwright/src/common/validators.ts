@@ -18,6 +18,7 @@ import { z as zod } from 'playwright-core/lib/mcpBundle';
 
 import type { TestAnnotation, TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';
+import type { ZodError } from 'zod';
 
 const testAnnotationSchema = zod.object({
   type: zod.string(),
@@ -65,5 +66,5 @@ export function validateTestDetails(details: unknown, location: Location): Valid
 }
 
 function throwZodError(error: any): never {
-  throw new Error(zod.prettifyError(error));
+  throw new Error((error as ZodError).issues.map(i => i.message).join('\n'));
 }

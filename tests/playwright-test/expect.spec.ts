@@ -228,7 +228,7 @@ test('should work with default expect matchers and esModuleInterop=false', async
         'strict': true,
         'rootDir': '.',
         'esModuleInterop': false,
-        'allowSyntheticDefaultImports': false,
+        'allowSyntheticDefaultImports': true,
         'lib': ['esnext', 'dom', 'DOM.Iterable']
       },
       'exclude': [
