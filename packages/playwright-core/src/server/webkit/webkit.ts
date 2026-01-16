@@ -25,7 +25,6 @@ import { spawnAsync } from '../utils/spawnAsync';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
-import type { ProtocolError } from '../protocolError';
 import type { ConnectionTransport } from '../transport';
 import type * as types from '../types';
 
@@ -45,12 +44,10 @@ export class WebKit extends BrowserType {
     };
   }
 
-  override doRewriteStartupLog(error: ProtocolError): ProtocolError {
-    if (!error.logs)
-      return error;
-    if (error.logs.includes('Failed to open display') || error.logs.includes('cannot open display'))
-      error.logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
-    return error;
+  override doRewriteStartupLog(logs: string): string {
+    if (logs.includes('Failed to open display') || logs.includes('cannot open display'))
+      logs = '\n' + wrapInASCIIBox(kNoXServerRunningError, 1);
+    return logs;
   }
 
   override attemptToGracefullyCloseBrowser(transport: ConnectionTransport): void {
