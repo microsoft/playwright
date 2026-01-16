@@ -27,11 +27,12 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 // @ts-ignore this will be any if zod is not installed
-type Zod3TypeAny = import('zod').ZodTypeAny;
+import { ZodTypeAny, z, ZodObject, ZodRawShape } from 'zod';
 // @ts-ignore this will be any if zod is not installed
-type Zod4TypeAny = import('zod/v4').ZodTypeAny;
-// @ts-ignore this will be any if zod is not installed
-type ZodInfer<T extends ZodTypeAny> = import('zod').infer<T>;
+import * as z3 from 'zod/v3';
+type PlaywrightZodSchema = ZodTypeAny | z3.ZodTypeAny;
+type PlaywrightZodObject = ZodObject<ZodRawShape> | z3.ZodObject<z3.ZodRawShape>;
+type InferZodSchema<T extends PlaywrightZodSchema> = T extends z3.ZodTypeAny ? z3.infer<T> : T extends ZodTypeAny ? z.infer<T> : never;
 
 export interface Page {
   evaluate<R, Arg>(pageFunction: PageFunction<Arg, R>, arg: Arg): Promise<R>;
@@ -82,7 +83,7 @@ export interface Page {
 }
 
 export interface PageAgent {
-  extract<Schema extends Zod3TypeAny | Zod4TypeAny>(query: string, schema: Schema): Promise<{ result: ZodInfer<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
+  extract<Schema extends PlaywrightZodSchema>(query: string, schema: Schema): Promise<{ result: InferZodSchema<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;  
 }
 
 export interface Frame {
