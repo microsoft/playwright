@@ -14,7 +14,7 @@
             "url": "/other.html",
             "_is_done": true
           },
-          "id": "toolu_01SEru6Vuneyu58u6yQ6faKy"
+          "id": "toolu_01G9ZzdYXENshXQ8jShDmvJy"
         }
       ],
       "stopReason": {
@@ -24,6 +24,33 @@
     "usage": {
       "input": 1930,
       "output": 109
+    }
+  },
+  "6aacb908b26146c99406cec686aaf78e2398d3c8": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the issue - the actual URL is the full URL `http://localhost:8959/other.html`, not just the relative path. Let me adjust the assertion to match the actual URL pattern using a regex that checks if the URL ends with `/other.html`:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_011zZt5A2gYEv1VwEAmjNTLm"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2169,
+      "output": 136
     }
   },
   "bae6a40c194c52f6df380d43bae1648192ad1f8a": {
@@ -51,6 +78,33 @@
     "usage": {
       "input": 2169,
       "output": 126
+    }
+  },
+  "f3512ecc7b43a5238007d361e22f0c67faf72cbf": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the issue - the actual URL is the full URL `http://localhost:8911/other.html` while I was checking for just `/other.html`. Let me use a regex pattern to match URLs ending with `/other.html`:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_01GULjRje8iHqa5c37r9dtTW"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2169,
+      "output": 131
     }
   }
 }
