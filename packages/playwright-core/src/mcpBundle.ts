@@ -32,7 +32,7 @@ const ProgressNotificationSchema: typeof import('@modelcontextprotocol/sdk/types
 const ListToolsRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').ListToolsRequestSchema = bundle.ListToolsRequestSchema;
 const PingRequestSchema: typeof import('@modelcontextprotocol/sdk/types.js').PingRequestSchema = bundle.PingRequestSchema;
 const Loop: typeof import('@lowire/loop').Loop = bundle.Loop;
-const z: typeof import('zod/v4') = bundle.z;
+const z: typeof import('zod') = bundle.z;
 
 export {
   zodToJsonSchema,

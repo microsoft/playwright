@@ -15,7 +15,7 @@
  */
 
 import { z as zod3 } from 'zod/v3';
-import * as zod4 from 'zod/v4';
+import * as zod4 from 'zod';
 
 import { browserTest as test, expect } from '../config/browserTest';
 import { run, generateAgent, cacheObject, runAgent, setCacheObject } from './agent-helpers';

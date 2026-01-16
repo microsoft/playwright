@@ -15,7 +15,7 @@
  */
 
 import { z as zod } from 'playwright-core/lib/mcpBundle';
-import type { z } from 'zod/v4';
+import type { z } from 'zod';
 import type * as mcpServer from './server';
 
 export type ToolSchema<Input extends z.Schema> = {

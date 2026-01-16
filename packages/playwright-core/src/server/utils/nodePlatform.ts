@@ -27,7 +27,7 @@ import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
 import { zodToJsonSchema as zodToJsonSchemaV3, z } from '../../mcpBundle';
 import type zod3 from 'zod/v3';
-import type zod4 from 'zod/v4';
+import type zod4 from 'zod';
 
 import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';

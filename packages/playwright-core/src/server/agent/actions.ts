@@ -15,7 +15,7 @@
  */
 
 import { z as zod } from '../../mcpBundle';
-import type * as z from 'zod/v4';
+import type * as z from 'zod';
 
 const modifiersSchema = zod.array(
     zod.enum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])
