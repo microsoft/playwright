@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from '../../mcpBundle';
-
+import { z } from '../../mcpBundle';
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
 import type { Context } from './context';
@@ -40,7 +39,7 @@ export function toolsForLoop(progress: Progress, context: Context, toolDefinitio
     const result: loopTypes.Tool = {
       name: tool.schema.name,
       description: tool.schema.description,
-      inputSchema: zodToJsonSchema(tool.schema.inputSchema) as loopTypes.Schema,
+      inputSchema: z.toJSONSchema(tool.schema.inputSchema) as loopTypes.Schema,
     };
     return result;
   });

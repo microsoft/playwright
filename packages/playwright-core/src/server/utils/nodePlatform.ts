@@ -127,7 +127,7 @@ export const nodePlatform: Platform = {
   },
 
   zodToJsonSchema: (schema: zod3.Schema | zod4.Schema): any => {
-  // https://zod.dev/library-authors?id=how-to-support-zod-3-and-zod-4-simultaneously
+    // https://zod.dev/library-authors?id=how-to-support-zod-3-and-zod-4-simultaneously
     if ('_zod' in schema)
       return z.toJSONSchema(schema);
     return zodToJsonSchemaV3(schema);
