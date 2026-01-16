@@ -125,5 +125,32 @@
       "input": 2165,
       "output": 114
     }
+  },
+  "ce3f938674ba0ecfceaf13ee135fda66576c596c": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the URL is \"http://localhost:8907/other.html\". Let me adjust the regex pattern to match URLs containing \"other\" more appropriately:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/other/",
+            "_is_done": true
+          },
+          "id": "toolu_01QmJpJPqx7PV9iDBD3FBYcb"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2165,
+      "output": 111
+    }
   }
 }
