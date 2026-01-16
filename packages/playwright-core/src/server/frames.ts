@@ -1380,8 +1380,8 @@ export class Frame extends SdkObject<FrameEventMap> {
     return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, handle => progress.race(handle.ariaSnapshot()));
   }
 
-  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams, timeout?: number): Promise<ExpectResult> {
-    progress.log(`${renderTitleForCall(progress.metadata)}${timeout ? ` with timeout ${timeout}ms` : ''}`);
+  async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {
+    progress.log(`${renderTitleForCall(progress.metadata)}${options.timeoutForLogs ? ` with timeout ${options.timeoutForLogs}ms` : ''}`);
     const lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string } = { isSet: false };
     const fixupMetadataError = (result: ExpectResult) => {
       // Library mode special case for the expect errors which are return values, not exceptions.
@@ -1389,10 +1389,15 @@ export class Frame extends SdkObject<FrameEventMap> {
         progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     };
     try {
+      // When explicit timeout is passed, constrain expect by it, in addition to regular progress abort.
+      const timeoutPromise = options.explicitTimeout !== undefined ? progress.wait(options.explicitTimeout).then(() => { throw new TimeoutError(`Timed out after ${options.explicitTimeout}ms`); }) : undefined;
+      timeoutPromise?.catch(() => { /* Prevent unhandled promise rejection */ });
+
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
         progress.log(`waiting for ${this._asLocator(selector)}`);
-      await this._page.performActionPreChecks(progress);
+      if (!options.noPreChecks)
+        await this._page.performActionPreChecks(progress);
 
       // Step 2: perform one-shot expect check without a timeout.
       // Supports the case of `expect(locator).toBeVisible({ timeout: 1 })`
@@ -1409,8 +1414,9 @@ export class Frame extends SdkObject<FrameEventMap> {
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       const result = await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
-        await this._page.performActionPreChecks(progress);
-        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
+        if (!options.noPreChecks)
+          await this._page.performActionPreChecks(progress);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false, timeoutPromise);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
@@ -1440,9 +1446,9 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string }, noAbort: boolean, timeoutPromise?: Promise<never>) {
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
-    const race = <T>(p: Promise<T>) => noAbort ? p : progress.race(p);
+    const race = <T>(p: Promise<T>) => noAbort ? p : (timeoutPromise ? progress.race([p, timeoutPromise]) : progress.race(p));
     const selectorInFrame = selector ? await race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };

@@ -47,7 +47,12 @@ import type { ElementText, TextMatcher } from './selectorUtils';
 import type { Builtins } from './utilityScript';
 
 
-export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & { expectedValue?: any };
+export type FrameExpectParams = Omit<channels.FrameExpectParams, 'expectedValue' | 'timeout'> & {
+  expectedValue?: any;
+  timeoutForLogs?: number;
+  explicitTimeout?: number;
+  noPreChecks?: boolean;
+};
 
 export type ElementState = 'visible' | 'hidden' | 'enabled' | 'disabled' | 'editable' | 'checked' | 'unchecked' | 'indeterminate' | 'stable';
 export type ElementStateWithoutStable = Exclude<ElementState, 'stable'>;
