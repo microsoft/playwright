@@ -136,7 +136,7 @@ This project incorporates components from the projects listed below. The origina
 -	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
--	zod@3.25.76 (https://github.com/colinhacks/zod)
+-	zod@4.3.5 (https://github.com/colinhacks/zod)
 
 %% @hono/node-server@1.19.8 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -4043,7 +4043,7 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF zod-to-json-schema@3.25.1 AND INFORMATION
 
-%% zod@3.25.76 NOTICES AND INFORMATION BEGIN HERE
+%% zod@4.3.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -4067,7 +4067,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF zod@3.25.76 AND INFORMATION
+END OF zod@4.3.5 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { z } from 'zod';
+import type { z } from 'zod/v4';
 import type { TestContext } from './testContext.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { ToolSchema } from '../sdk/tool.js';

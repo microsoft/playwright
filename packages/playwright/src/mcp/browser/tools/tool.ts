@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { z } from 'zod';
+import type { z } from 'zod/v4';
 import type { Context } from '../context';
 import type * as playwright from 'playwright-core';
 import type { ToolCapability } from '../../config';

@@ -20,7 +20,6 @@ import { Events } from './events';
 import { Page } from './page';
 
 import type * as api from '../../types/types';
-import type z from 'zod';
 import type * as channels from '@protocol/channels';
 
 type PageAgentOptions = {
@@ -51,7 +50,7 @@ export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implement
     return { usage };
   }
 
-  async extract<Schema extends z.ZodTypeAny>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<{ result: z.infer<Schema>, usage: channels.AgentUsage }> {
+  async extract<Schema extends any>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<{ result: any, usage: channels.AgentUsage }> {
     const { result, usage } = await this._channel.extract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options });
     return { result, usage };
   }

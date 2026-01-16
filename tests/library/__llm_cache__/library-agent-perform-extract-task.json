@@ -1,4 +1,40 @@
 {
+  "0f3824f1d302520b3f4ada83ccd086e5420e9771": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll extract the todo items and their statuses from the page snapshot."
+        },
+        {
+          "type": "tool_call",
+          "name": "report_result",
+          "arguments": {
+            "items": [
+              {
+                "title": "Buy groceries",
+                "completed": true
+              },
+              {
+                "title": "Buy milk",
+                "completed": false
+              }
+            ],
+            "_is_done": true
+          },
+          "id": "toolu_019magjjqDFQkoz4iogEAudz"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 890,
+      "output": 114
+    }
+  },
   "d02ae2240fac126bacb74133b970880eaaf3f915": {
     "result": {
       "role": "assistant",

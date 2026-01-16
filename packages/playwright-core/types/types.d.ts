@@ -28,7 +28,9 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 // @ts-ignore this will be any if zod is not installed
-type ZodTypeAny = import('zod').ZodTypeAny;
+type Zod3TypeAny = import('zod').ZodTypeAny;
+// @ts-ignore this will be any if zod is not installed
+type Zod4TypeAny = import('zod/v4').ZodTypeAny;
 // @ts-ignore this will be any if zod is not installed
 type ZodInfer<T extends ZodTypeAny> = import('zod').infer<T>;
 
@@ -5305,7 +5307,7 @@ export interface PageAgent {
    * @param schema
    * @param options
    */
-  extract<Schema extends ZodTypeAny>(query: string, schema: Schema): Promise<{ result: ZodInfer<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
+  extract<Schema extends Zod3TypeAny | Zod4TypeAny>(query: string, schema: Schema): Promise<{ result: ZodInfer<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
   /**
    * Emitted when the agent makes a turn.
    */
