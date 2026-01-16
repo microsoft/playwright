@@ -28,12 +28,11 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
 };
 
 // @ts-ignore this will be any if zod is not installed
-import { ZodTypeAny, z, ZodObject, ZodRawShape } from 'zod';
+import { ZodTypeAny, z } from 'zod';
 // @ts-ignore this will be any if zod is not installed
 import * as z3 from 'zod/v3';
-type PlaywrightZodSchema = ZodTypeAny | z3.ZodTypeAny;
-type PlaywrightZodObject = ZodObject<ZodRawShape> | z3.ZodObject<z3.ZodRawShape>;
-type InferZodSchema<T extends PlaywrightZodSchema> = T extends z3.ZodTypeAny ? z3.infer<T> : T extends ZodTypeAny ? z.infer<T> : never;
+type ZodSchema = ZodTypeAny | z3.ZodTypeAny;
+type InferZodSchema<T extends ZodSchema> = T extends z3.ZodTypeAny ? z3.infer<T> : T extends ZodTypeAny ? z.infer<T> : never;
 
 /**
  * Page provides methods to interact with a single tab in a [Browser](https://playwright.dev/docs/api/class-browser),
@@ -5308,7 +5307,7 @@ export interface PageAgent {
    * @param schema
    * @param options
    */
-  extract<Schema extends PlaywrightZodSchema>(query: string, schema: Schema): Promise<{ result: InferZodSchema<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
+  extract<Schema extends ZodSchema>(query: string, schema: Schema): Promise<{ result: InferZodSchema<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
   /**
    * Emitted when the agent makes a turn.
    */
