@@ -111,9 +111,9 @@
   "The URL changes to #/active": {
     "actions": [
       {
-        "method": "expectVisible",
-        "selector": "internal:role=link[name=\"Active\"i]",
-        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();"
+        "method": "expectURL",
+        "regex": "/.*#/active$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/active$/);"
       }
     ]
   }

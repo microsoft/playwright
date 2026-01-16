@@ -182,3 +182,10 @@ export function longestCommonSubstring(s1: string, s2: string): string {
   // Extract the longest common substring
   return s1.slice(endingIndex - maxLen, endingIndex);
 }
+
+export function parseRegex(regex: string): RegExp {
+  const lastSlash = regex.lastIndexOf('/');
+  const source = regex.slice(1, lastSlash);
+  const flags = regex.slice(lastSlash + 1);
+  return new RegExp(source, flags);
+}

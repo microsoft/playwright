@@ -86,9 +86,9 @@
   "The URL changes to #/": {
     "actions": [
       {
-        "method": "expectVisible",
-        "selector": "internal:role=link[name=\"All\"i]",
-        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();"
+        "method": "expectURL",
+        "regex": "/.*#/$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/$/);"
       }
     ]
   },
