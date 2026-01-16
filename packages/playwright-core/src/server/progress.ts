@@ -72,14 +72,11 @@ export class ProgressController {
         this._onCallLog?.(message);
       },
       metadata: this.metadata,
-      race: <T>(promise: Promise<T> | Promise<T>[], options?: { timeout?: number }) => {
+      race: <T>(promise: Promise<T> | Promise<T>[]) => {
         const promises = Array.isArray(promise) ? promise : [promise];
         if (!promises.length)
           return Promise.resolve();
-        const mt = monotonicTime();
-        const dl = options?.timeout ? mt + options.timeout : 0;
-        const timerPromise = dl && (!deadline || dl < deadline) ? new Promise<void>(f => setTimeout(f, dl - mt)) : null;
-        return Promise.race([...promises, ...(timerPromise ? [timerPromise] : []), this._forceAbortPromise]);
+        return Promise.race([...promises, this._forceAbortPromise]);
       },
       wait: async (timeout: number) => {
         // Timeout = 0 here means nowait. Counter to what it typically is (wait forever).
@@ -97,7 +94,6 @@ export class ProgressController {
         if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)
           return;
         if (this._state === 'running') {
-          (timeoutError as any)[kAbortErrorSymbol] = true;
           this._state = { error: timeoutError };
           this._forceAbortPromise.reject(timeoutError);
           this._controller.abort(timeoutError);
@@ -122,7 +118,7 @@ export class ProgressController {
 const kAbortErrorSymbol = Symbol('kAbortError');
 
 export function isAbortError(error: Error): boolean {
-  return !!(error as any)[kAbortErrorSymbol];
+  return error instanceof TimeoutError || !!(error as any)[kAbortErrorSymbol];
 }
 
 // Use this method to race some external operation that you really want to undo

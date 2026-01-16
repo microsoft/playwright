@@ -124,7 +124,7 @@ export class Context {
         promises.push(request.response());
     }
 
-    await progress.race(promises, { timeout: 5000 });
+    await progress.race([...promises, progress.wait(5000)]);
     if (!promises.length)
       await progress.wait(500);
 

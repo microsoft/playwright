@@ -1,0 +1,30 @@
+{
+  "3b4f08f411f9002019b8fab8f14772f4b4beb15a": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll verify that the submit button is visible on the page."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_visible",
+          "arguments": {
+            "role": "button",
+            "accessibleName": "Submit",
+            "_is_done": true
+          },
+          "id": "toolu_01CyQoKismpKpLjmnSHrnn8M"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 1694,
+      "output": 107
+    }
+  }
+}
