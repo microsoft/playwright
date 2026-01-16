@@ -184,7 +184,11 @@ export function longestCommonSubstring(s1: string, s2: string): string {
 }
 
 export function parseRegex(regex: string): RegExp {
+  if (regex[0] !== '/')
+    throw new Error(`Invalid regex, must start with '/': ${regex}`);
   const lastSlash = regex.lastIndexOf('/');
+  if (lastSlash <= 0)
+    throw new Error(`Invalid regex, must end with '/' followed by optional flags: ${regex}`);
   const source = regex.slice(1, lastSlash);
   const flags = regex.slice(lastSlash + 1);
   return new RegExp(source, flags);
