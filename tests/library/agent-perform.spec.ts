@@ -43,7 +43,7 @@ test('click a button', async ({ context }) => {
   });
 });
 
-// cannot get it to work reliably in CI
+// broken, let's fix later
 test.fail('retrieve a secret', async ({ context }) => {
   await run(context, async (page, agent) => {
     await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
