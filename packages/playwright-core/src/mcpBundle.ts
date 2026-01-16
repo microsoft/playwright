@@ -17,7 +17,7 @@
 // @ts-ignore
 import * as bundle from './mcpBundleImpl';
 
-const zodToJsonSchema: typeof import('zod-to-json-schema').zodToJsonSchema = bundle.zodToJsonSchema;
+const zodToJsonSchema: (schema: any, options?: any) => any = bundle.zodToJsonSchema;
 const Client: typeof import('@modelcontextprotocol/sdk/client/index.js').Client = bundle.Client;
 const Server: typeof import('@modelcontextprotocol/sdk/server/index.js').Server = bundle.Server;
 const SSEClientTransport: typeof import('@modelcontextprotocol/sdk/client/sse.js').SSEClientTransport = bundle.SSEClientTransport;
