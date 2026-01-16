@@ -34,7 +34,7 @@ import type { FrameExpectParams } from '@injected/injectedScript';
 export async function runAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
   const parentMetadata = progress.metadata;
   const frame = page.mainFrame();
-  const callMetadata = callMetadataForAction(progress, frame, action);
+  const callMetadata = callMetadataForAction(progress, frame, action, mode);
   callMetadata.log = parentMetadata.log;
   progress.metadata = callMetadata;
 
@@ -52,6 +52,7 @@ export async function runAction(progress: Progress, mode: 'generate' | 'run', pa
 
 async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page: Page, action: actions.Action, secrets: NameValue[]) {
   const frame = page.mainFrame();
+  // Disable auto-waiting to avoid timeouts, model has seen the snapshot anyway.
   const commonOptions =  { strict: true, noAutoWaiting: mode === 'generate' };
   switch (action.method) {
     case 'navigate':
@@ -101,16 +102,16 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
         await frame.uncheck(progress, action.selector, { ...commonOptions });
       break;
     case 'expectVisible': {
-      await runExpect(frame, progress, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot }, 'visible', 'toBeVisible', '');
+      await runExpect(frame, progress, mode, action.selector, { expression: 'to.be.visible', isNot: !!action.isNot }, 'visible', 'toBeVisible', '');
       break;
     }
     case 'expectValue': {
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
         const expectedText = serializeExpectedTextValues([action.value]);
-        await runExpect(frame, progress, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot }, action.value, 'toHaveValue', 'expected');
+        await runExpect(frame, progress, mode, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot }, action.value, 'toHaveValue', 'expected');
       } else if (action.type === 'checkbox' || action.type === 'radio') {
         const expectedValue = { checked: action.value === 'true' };
-        await runExpect(frame, progress, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot }, action.value ? 'checked' : 'unchecked', 'toBeChecked', '');
+        await runExpect(frame, progress, mode, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot }, action.value ? 'checked' : 'unchecked', 'toBeChecked', '');
       } else {
         throw new Error(`Unsupported element type: ${action.type}`);
       }
@@ -118,14 +119,22 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
     }
     case 'expectAria': {
       const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
-      await runExpect(frame, progress, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + action.template, 'toMatchAriaSnapshot', 'expected');
+      await runExpect(frame, progress, mode, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + action.template, 'toMatchAriaSnapshot', 'expected');
       break;
     }
   }
 }
 
-async function runExpect(frame: Frame, progress: Progress, selector: string | undefined, options: FrameExpectParams, expected: string, matcherName: string, expectation: string) {
-  const result = await frame.expect(progress, selector, options);
+async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'run', selector: string | undefined, options: FrameExpectParams, expected: string, matcherName: string, expectation: string) {
+  // Pass explicit timeout to limit the single expect action inside the overall "agentic expect" multi-step progress.
+  const timeout = expectTimeout(mode);
+  const result = await frame.expect(progress, selector, {
+    ...options,
+    timeoutForLogs: timeout,
+    explicitTimeout: timeout,
+    // Disable pre-checks to avoid them timing out, model has seen the snapshot anyway.
+    noPreChecks: mode === 'generate',
+  });
   if (!result.matches === !options.isNot) {
     const received = matcherName === 'toMatchAriaSnapshot' ? '\n' + result.received.raw : result.received;
     throw new Error(formatMatcherMessage(simpleMatcherUtils, {
@@ -134,7 +143,7 @@ async function runExpect(frame: Frame, progress: Progress, selector: string | un
       expectation,
       locator: selector ? asLocatorDescription('javascript', selector) : undefined,
       timedOut: result.timedOut,
-      timeout: progress.timeout,
+      timeout,
       printedExpected: options.isNot ? `Expected: not ${expected}` : `Expected: ${expected}`,
       printedReceived: result.errorMessage ? '' : `Received: ${received}`,
       errorMessage: result.errorMessage,
@@ -144,7 +153,7 @@ async function runExpect(frame: Frame, progress: Progress, selector: string | un
   }
 }
 
-export function traceParamsForAction(progress: Progress, action: actions.Action): { title?: string, type: string, method: string, params: any } {
+export function traceParamsForAction(progress: Progress, action: actions.Action, mode: 'generate' | 'run'): { title?: string, type: string, method: string, params: any } {
   const timeout = progress.timeout;
   switch (action.method) {
     case 'navigate': {
@@ -238,7 +247,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action)
           expression: 'to.have.value',
           expectedText,
           isNot: !!action.isNot,
-          timeout: kDefaultTimeout,
+          timeout: expectTimeout(mode),
         };
         return { type: 'Frame', method: 'expect', title: 'Expect Value', params };
       } else if (action.type === 'checkbox' || action.type === 'radio') {
@@ -247,7 +256,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action)
           selector: action.selector,
           expression: 'to.be.checked',
           isNot: !!action.isNot,
-          timeout: kDefaultTimeout,
+          timeout: expectTimeout(mode),
         };
         return { type: 'Frame', method: 'expect', title: 'Expect Checked', params };
       } else {
@@ -259,7 +268,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action)
         selector: action.selector,
         expression: 'to.be.visible',
         isNot: !!action.isNot,
-        timeout: kDefaultTimeout,
+        timeout: expectTimeout(mode),
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Visible', params };
     }
@@ -270,14 +279,14 @@ export function traceParamsForAction(progress: Progress, action: actions.Action)
         expression: 'to.match.snapshot',
         expectedText: [],
         isNot: !!action.isNot,
-        timeout: kDefaultTimeout,
+        timeout: expectTimeout(mode),
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Aria Snapshot', params };
     }
   }
 }
 
-function callMetadataForAction(progress: Progress, frame: Frame, action: actions.Action): CallMetadata {
+function callMetadataForAction(progress: Progress, frame: Frame, action: actions.Action, mode: 'generate' | 'run'): CallMetadata {
   const callMetadata: CallMetadata = {
     id: `call@${createGuid()}`,
     objectId: frame.guid,
@@ -286,9 +295,11 @@ function callMetadataForAction(progress: Progress, frame: Frame, action: actions
     startTime: monotonicTime(),
     endTime: 0,
     log: [],
-    ...traceParamsForAction(progress, action),
+    ...traceParamsForAction(progress, action, mode),
   };
   return callMetadata;
 }
 
-const kDefaultTimeout = 5000;
+function expectTimeout(mode: 'generate' | 'run') {
+  return mode === 'generate' ? 0 : 5000;
+}
