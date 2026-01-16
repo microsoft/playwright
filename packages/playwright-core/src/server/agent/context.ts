@@ -38,12 +38,14 @@ export class Context {
   readonly events: loopTypes.LoopEvents;
   private _actions: actions.ActionWithCode[] = [];
   private _history: HistoryItem[] = [];
+  private _budget: { tokens: number | undefined; };
 
-  constructor(page: Page, agentParms: channels.PageAgentParams, events: loopTypes.LoopEvents) {
+  constructor(page: Page, agentParams: channels.PageAgentParams, events: loopTypes.LoopEvents) {
     this.page = page;
-    this.agentParams = agentParms;
+    this.agentParams = agentParams;
     this.sdkLanguage = page.browserContext._browser.sdkLanguage();
     this.events = events;
+    this._budget = { tokens: agentParams.maxTokens };
   }
 
   async runActionAndWait(progress: Progress, action: actions.Action) {
@@ -77,6 +79,16 @@ export class Context {
   pushHistory(item: HistoryItem) {
     this._history.push(item);
     this._actions = [];
+  }
+
+  consumeTokens(tokens: number) {
+    if (this._budget.tokens === undefined)
+      return;
+    this._budget.tokens = Math.max(0, this._budget.tokens - tokens);
+  }
+
+  maxTokensRemaining(): number | undefined {
+    return this._budget.tokens;
   }
 
   async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>, options?: { noWait?: boolean }): Promise<R> {

@@ -1,5 +1,5 @@
 {
-  "b5f1ee58f1051afb059b3b33e8be41576a1324a4": {
+  "d02ae2240fac126bacb74133b970880eaaf3f915": {
     "result": {
       "role": "assistant",
       "content": [
@@ -23,9 +23,12 @@
             ],
             "_is_done": true
           },
-          "id": "toolu_01WvevmDTBxmKg79Ji6vQvpH"
+          "id": "toolu_01JtUAyrJqJSRwBsS7pn9fRY"
         }
-      ]
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
     },
     "usage": {
       "input": 888,

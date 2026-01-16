@@ -2110,12 +2110,26 @@ export interface Page {
       cacheOutFile?: string;
     };
 
-    maxTokens?: number;
-
     /**
-     * Maximum number of agentic turns to take per call. Defaults to 10.
+     * Limits to use for the agentic loop.
      */
-    maxTurns?: number;
+    limits?: {
+      /**
+       * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+       * Defaults to unlimited.
+       */
+      maxTokens?: number;
+
+      /**
+       * Maximum number of agentic actions to generate, defaults to 10.
+       */
+      maxActions?: number;
+
+      /**
+       * Maximum number retries per action, defaults to 3.
+       */
+      maxActionRetries?: number;
+    };
 
     provider?: {
       /**
@@ -2132,6 +2146,11 @@ export interface Page {
        * API key for the LLM provider.
        */
       apiKey: string;
+
+      /**
+       * Amount of time to wait for the provider to respond to each request.
+       */
+      apiTimeout?: number;
 
       /**
        * Model identifier within the provider. Required in non-cache mode.
@@ -5402,15 +5421,21 @@ export interface PageAgent {
     cacheKey?: string;
 
     /**
+     * Maximum number of retries when generating each action, defaults to context-wide value specified in `agent`
+     * property.
+     */
+    maxActionRetries?: number;
+
+    /**
+     * Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
+     */
+    maxActions?: number;
+
+    /**
      * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
      * Defaults to context-wide value specified in `agent` property.
      */
     maxTokens?: number;
-
-    /**
-     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
-     */
-    maxTurns?: number;
 
     /**
      * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
@@ -5438,15 +5463,21 @@ export interface PageAgent {
     cacheKey?: string;
 
     /**
+     * Maximum number of retries when generating each action, defaults to context-wide value specified in `agent`
+     * property.
+     */
+    maxActionRetries?: number;
+
+    /**
+     * Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
+     */
+    maxActions?: number;
+
+    /**
      * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
      * Defaults to context-wide value specified in `agent` property.
      */
     maxTokens?: number;
-
-    /**
-     * Maximum number of agentic turns during this call, defaults to context-wide value specified in `agent` property.
-     */
-    maxTurns?: number;
 
     /**
      * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
