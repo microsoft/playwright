@@ -25,7 +25,9 @@ import { colors } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
-import { zodToJsonSchema } from '../../mcpBundle';
+import { zodToJsonSchema as zodToJsonSchemaV3, z } from '../../mcpBundle';
+import type zod3 from 'zod/v3';
+import type zod4 from 'zod';
 
 import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';
@@ -124,7 +126,12 @@ export const nodePlatform: Platform = {
     return new WritableStreamImpl(channel);
   },
 
-  zodToJsonSchema,
+  zodToJsonSchema: (schema: zod3.Schema | zod4.Schema): any => {
+    // https://zod.dev/library-authors?id=how-to-support-zod-3-and-zod-4-simultaneously
+    if ('_zod' in schema)
+      return z.toJSONSchema(schema);
+    return zodToJsonSchemaV3(schema);
+  },
 
   zones: {
     current: () => new NodeZone(currentZone()),

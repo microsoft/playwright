@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { zod } from '../../utilsBundle';
-import type z from 'zod';
+import { z as zod } from '../../mcpBundle';
+import type * as z from 'zod';
 
 const modifiersSchema = zod.array(
     zod.enum(['Alt', 'Control', 'ControlOrMeta', 'Meta', 'Shift'])
@@ -139,7 +139,7 @@ const actionWithCodeSchema = actionSchema.and(zod.object({
 }));
 export type ActionWithCode = z.infer<typeof actionWithCodeSchema>;
 
-export const cachedActionsSchema = zod.record(zod.object({
+export const cachedActionsSchema = zod.record(zod.string(), zod.object({
   actions: zod.array(actionWithCodeSchema),
 }));
 export type CachedActions = z.infer<typeof cachedActionsSchema>;

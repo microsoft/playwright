@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { zod } from 'playwright-core/lib/utilsBundle';
+import { z as zod } from 'playwright-core/lib/mcpBundle';
 
 import type { TestAnnotation, TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';

@@ -19,7 +19,7 @@ import path from 'path';
 
 import { toolsForLoop } from './tool';
 import { debug } from '../../utilsBundle';
-import { Loop } from '../../mcpBundle';
+import { Loop, z as zod } from '../../mcpBundle';
 import { runAction } from './actionRunner';
 import { Context } from './context';
 import performTools from './performTools';
@@ -205,7 +205,7 @@ async function cachedActions(cacheFile: string): Promise<Cache> {
     const text = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
     const parsed = actions.cachedActionsSchema.safeParse(JSON.parse(text));
     if (parsed.error)
-      throw new Error(`Failed to parse cache file ${cacheFile}: ${parsed.error.issues.map(issue => issue.message).join(', ')}`);
+      throw new Error(`Failed to parse cache file ${cacheFile}:\n${zod.prettifyError(parsed.error)}`);
     cache = { actions: parsed.data, newActions: {} };
     allCaches.set(cacheFile, cache);
   }

@@ -48,6 +48,36 @@
       "output": 169
     }
   },
+  "8607f6ac706485320f56bfd2781e2fb21cd8a16c": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll verify that the input has the value \"hello\" using the browser_expect_value tool."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_value",
+          "arguments": {
+            "type": "textbox",
+            "element": "input",
+            "ref": "e2",
+            "value": "hello",
+            "_is_done": true
+          },
+          "id": "toolu_019V7P8Y8Nv1K5EwdXLr32mX"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 1914,
+      "output": 149
+    }
+  },
   "b4fd4ea81b4c3d84f354169c7a97dd0f708710d2": {
     "result": {
       "role": "assistant",
@@ -103,6 +133,36 @@
     "usage": {
       "input": 1695,
       "output": 140
+    }
+  },
+  "d1b0a255ce65ac9821522445c857072232860b1f": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to verify that an input has the value \"hello\", but according to the page snapshot, the textbox currently has the value \"bye\". Let me assert the expected condition."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_value",
+          "arguments": {
+            "type": "textbox",
+            "element": "input textbox",
+            "ref": "e2",
+            "value": "hello",
+            "_is_done": true
+          },
+          "id": "toolu_01R4pnkKVFv6Crn2Dysx2XZh"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 1703,
+      "output": 167
     }
   },
   "e59b1ef4668b6d7d8d0fbad3fc1a0a3172d6d07b": {
