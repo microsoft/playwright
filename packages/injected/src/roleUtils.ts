@@ -16,7 +16,7 @@
 
 import * as css from '@isomorphic/cssTokenizer';
 
-import { beginDOMCaches, closestCrossShadow, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
+import { beginDOMCaches, closestCrossShadow, elementInternals, elementSafeTagName, enclosingShadowRootOrDocument, endDOMCaches, getElementComputedStyle, isElementStyleVisibilityVisible, isVisibleTextNode, parentElementOrShadowHost } from './domUtils';
 
 import type { AriaRole } from '@isomorphic/ariaSnapshot';
 
@@ -240,6 +240,10 @@ const kPresentationInheritanceParents: { [tagName: string]: string[] } = {
 };
 
 function getImplicitAriaRole(element: Element): AriaRole | null {
+  const internals = element.tagName.includes('-') ? elementInternals(element) : null;
+  if (internals && internals.role)
+    return validateAriaRole(internals.role.split(' ').map(role => role.trim()));
+
   const implicitRole = kImplicitRoleByTagName[elementSafeTagName(element)]?.(element) || '';
   if (!implicitRole)
     return null;
@@ -267,10 +271,14 @@ const validRoles: AriaRole[] = ['alert', 'alertdialog', 'application', 'article'
   'spinbutton', 'status', 'strong', 'subscript', 'superscript', 'switch', 'tab', 'table', 'tablist', 'tabpanel', 'term', 'textbox', 'time', 'timer',
   'toolbar', 'tooltip', 'tree', 'treegrid', 'treeitem'];
 
+function validateAriaRole(roles: string[]): AriaRole | null {
+  return roles.find(role => validRoles.includes(role as any)) as AriaRole || null;
+}
+
 function getExplicitAriaRole(element: Element): AriaRole | null {
   // https://www.w3.org/TR/wai-aria-1.2/#document-handling_author-errors_roles
   const roles = (element.getAttribute('role') || '').split(' ').map(role => role.trim());
-  return roles.find(role => validRoles.includes(role as any)) as AriaRole || null;
+  return validateAriaRole(roles);
 }
 
 function hasPresentationConflictResolution(element: Element, role: string | null) {
@@ -290,8 +298,35 @@ export function getAriaRole(element: Element): AriaRole | null {
   return explicitRole;
 }
 
-function getAriaBoolean(attr: string | null) {
-  return attr === null ? undefined : attr.toLowerCase() === 'true';
+function toCamelCase(s: string): string {
+  return s.replace(/-([a-z])/g, g => g[1].toUpperCase());
+}
+
+type Kebab<T extends string, A extends string = ''> =
+  T extends `${infer F}${infer R}` ?
+    Kebab<R, `${A}${F extends Lowercase<F> ? '' : '-'}${Lowercase<F>}`> :
+    A;
+
+type ARIAAttributes = Exclude<
+  Kebab<keyof ARIAMixin>,
+  'aria-read-only' | 'aria-value-now' | 'aria-value-text' | 'aria-value-min' | 'aria-value-max'
+> | 'aria-readonly' | 'aria-valuenow' | 'aria-valuetext' | 'aria-valuemin' | 'aria-valuemax';
+
+function ariaAttributeToProperty(attr: ARIAAttributes): keyof ARIAMixin {
+  if (attr === 'aria-readonly') {
+    return 'ariaReadOnly';
+  } else if (attr.startsWith('aria-value')) {
+    const name = attr.substring('aria-value'.length);
+    return `ariaValue${name[0].toUpperCase() + name.slice(1)}` as keyof ARIAMixin;
+  }
+
+  return toCamelCase(attr) as keyof ARIAMixin;
+}
+
+function getAriaValue(element: Element, attr: ARIAAttributes): string | null {
+  return element.getAttribute(attr)
+    ?? (elementInternals(element)?.[ariaAttributeToProperty(attr)] as string | null)
+    ?? null;
 }
 
 export function isElementIgnoredForAria(element: Element) {
@@ -339,7 +374,7 @@ function belongsToDisplayNoneOrAriaHiddenOrNonSlotted(element: Element): boolean
     // display:none and aria-hidden=true are considered hidden for aria.
     if (!hidden) {
       const style = getElementComputedStyle(element);
-      hidden = !style || style.display === 'none' || getAriaBoolean(element.getAttribute('aria-hidden')) === true;
+      hidden = !style || style.display === 'none' || getAriaValue(element, 'aria-hidden')?.toLowerCase() === 'true';
     }
 
     // Check recursively.
@@ -544,9 +579,9 @@ export function getElementAccessibleDescription(element: Element, includeHidden:
         visitedElements: new Set(),
         embeddedInDescribedBy: { element: ref, hidden: isElementHiddenForAria(ref) },
       })).join(' '));
-    } else if (element.hasAttribute('aria-description')) {
+    } else if (element.hasAttribute('aria-description') || elementInternals(element)?.ariaDescription) {
       // precedence 2
-      accessibleDescription = asFlatString(element.getAttribute('aria-description') || '');
+      accessibleDescription = asFlatString(getAriaValue(element, 'aria-description') || '');
     } else {
       // TODO: handle precedence 3 - html-aam-specific cases like table>caption.
       // https://www.w3.org/TR/html-aam-1.0/#accdesc-computation
@@ -563,7 +598,7 @@ function getAriaInvalid(element: Element): 'false' | 'true' | 'grammar' | 'spell
   // https://www.w3.org/TR/wai-aria-1.2/#aria-invalid
   // This state is being deprecated as a global state in ARIA 1.2.
   // In future versions it will only be allowed on roles where it is specifically supported.
-  const ariaInvalid = element.getAttribute('aria-invalid');
+  const ariaInvalid = getAriaValue(element, 'aria-invalid');
   if (!ariaInvalid || ariaInvalid.trim() === '' || ariaInvalid.toLocaleLowerCase() === 'false')
     return 'false';
   if (ariaInvalid === 'true' || ariaInvalid === 'grammar' || ariaInvalid === 'spelling')
@@ -705,10 +740,10 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
       }
       if (['progressbar', 'scrollbar', 'slider', 'spinbutton', 'meter'].includes(role)) {
         options.visitedElements.add(element);
-        if (element.hasAttribute('aria-valuetext'))
-          return element.getAttribute('aria-valuetext') || '';
-        if (element.hasAttribute('aria-valuenow'))
-          return element.getAttribute('aria-valuenow') || '';
+        if (element.hasAttribute('aria-valuetext') || elementInternals(element)?.ariaValueText)
+          return getAriaValue(element, 'aria-valuetext') || '';
+        if (element.hasAttribute('aria-valuenow') || elementInternals(element)?.ariaValueNow)
+          return getAriaValue(element, 'aria-valuenow') || '';
         return element.getAttribute('value') || '';
       }
       if (['menu'].includes(role)) {
@@ -720,7 +755,7 @@ function getTextAlternativeInternal(element: Element, options: AccessibleNameOpt
   }
 
   // step 2d.
-  const ariaLabel = element.getAttribute('aria-label') || '';
+  const ariaLabel = getAriaValue(element, 'aria-label') || '';
   if (trimFlatString(ariaLabel)) {
     options.visitedElements.add(element);
     return ariaLabel;
@@ -996,7 +1031,7 @@ export function getAriaSelected(element: Element): boolean {
   if (elementSafeTagName(element) === 'OPTION')
     return (element as HTMLOptionElement).selected;
   if (kAriaSelectedRoles.includes(getAriaRole(element) || ''))
-    return getAriaBoolean(element.getAttribute('aria-selected')) === true;
+    return getAriaValue(element, 'aria-selected')?.toLowerCase() === 'true';
   return false;
 }
 
@@ -1024,7 +1059,7 @@ function getChecked(element: Element, allowMixed: boolean): boolean | 'mixed' | 
   if (tagName === 'INPUT' && ['checkbox', 'radio'].includes((element as HTMLInputElement).type))
     return (element as HTMLInputElement).checked;
   if (kAriaCheckedRoles.includes(getAriaRole(element) || '')) {
-    const checked = element.getAttribute('aria-checked');
+    const checked = getAriaValue(element, 'aria-checked');
     if (checked === 'true')
       return true;
     if (allowMixed && checked === 'mixed')
@@ -1043,7 +1078,7 @@ export function getReadonly(element: Element): boolean | 'error' {
   if (['INPUT', 'TEXTAREA', 'SELECT'].includes(tagName))
     return element.hasAttribute('readonly');
   if (kAriaReadonlyRoles.includes(getAriaRole(element) || ''))
-    return element.getAttribute('aria-readonly') === 'true';
+    return getAriaValue(element, 'aria-readonly') === 'true';
   if ((element as HTMLElement).isContentEditable)
     return false;
   return 'error';
@@ -1053,7 +1088,7 @@ export const kAriaPressedRoles = ['button'];
 export function getAriaPressed(element: Element): boolean | 'mixed' {
   // https://www.w3.org/TR/wai-aria-1.2/#aria-pressed
   if (kAriaPressedRoles.includes(getAriaRole(element) || '')) {
-    const pressed = element.getAttribute('aria-pressed');
+    const pressed = getAriaValue(element, 'aria-pressed');
     if (pressed === 'true')
       return true;
     if (pressed === 'mixed')
@@ -1069,7 +1104,7 @@ export function getAriaExpanded(element: Element): boolean | undefined {
   if (elementSafeTagName(element) === 'DETAILS')
     return (element as HTMLDetailsElement).open;
   if (kAriaExpandedRoles.includes(getAriaRole(element) || '')) {
-    const expanded = element.getAttribute('aria-expanded');
+    const expanded = getAriaValue(element, 'aria-expanded');
     if (expanded === null)
       return undefined;
     if (expanded === 'true')
@@ -1087,7 +1122,7 @@ export function getAriaLevel(element: Element): number {
   if (native)
     return native;
   if (kAriaLevelRoles.includes(getAriaRole(element) || '')) {
-    const attr = element.getAttribute('aria-level');
+    const attr = getAriaValue(element, 'aria-level');
     const value = attr === null ? Number.NaN : Number(attr);
     if (Number.isInteger(value) && value >= 1)
       return value;
@@ -1124,7 +1159,7 @@ function hasExplicitAriaDisabled(element: Element | undefined, isAncestor = fals
   if (!element)
     return false;
   if (isAncestor || kAriaDisabledRoles.includes(getAriaRole(element) || '')) {
-    const attribute = (element.getAttribute('aria-disabled') || '').toLowerCase();
+    const attribute = (getAriaValue(element, 'aria-disabled') || '').toLowerCase();
     if (attribute === 'true')
       return true;
     if (attribute === 'false')

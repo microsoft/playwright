@@ -567,3 +567,81 @@ test('should support search element', async ({ page }) => {
 function toArray(x: any): any[] {
   return Array.isArray(x) ? x : [x];
 }
+
+// ElementInternals
+
+test.describe('ElementInternals', () => {
+  interface ElementWithInternals extends HTMLElement {
+    internals: ElementInternals;
+  }
+
+  test.beforeEach(async ({ page }) => {
+    await page.setContent(`
+      <html>
+        <body>
+          <custom-button>Button Text</custom-button>
+          <script>
+            class CustomButtonElement extends window.HTMLElement {
+              internals = this.attachInternals();
+
+              constructor() {
+                super();
+                this.internals.role = 'button';
+                const shadow = this.attachShadow({ mode: 'open' });
+                shadow.innerHTML = '<slot></slot>';
+              }
+            }
+            customElements.define('custom-button', CustomButtonElement);
+          </script>
+        </body>
+      </html>
+    `);
+  });
+
+  test('get role and text', async ({ page }) => {
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'button', name: 'Button Text' });
+  });
+
+
+  test('role attribute should have precedence over role property in ElementInternals', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.querySelector<ElementWithInternals>('custom-button');
+      button.role = 'checkbox';
+    });
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'checkbox', name: 'Button Text' });
+  });
+
+  test('get role and ariaLabel', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.querySelector<ElementWithInternals>('custom-button');
+      button.internals.ariaLabel = 'Overridden Text';
+    });
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'button', name: 'Overridden Text' });
+  });
+
+  test('aria-label should have precedence over ariaLabel', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.querySelector<ElementWithInternals>('custom-button');
+      button.internals.ariaLabel = 'Overridden Text';
+      button.setAttribute('aria-label', 'Attribute Text');
+    });
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'button', name: 'Attribute Text' });
+  });
+
+  test('invisible with ariaHidden', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.querySelector<ElementWithInternals>('custom-button');
+      button.internals.ariaHidden = 'true';
+    });
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'button', name: '' });
+  });
+
+  test('aria-hidden should have precedence over ariaHidden', async ({ page }) => {
+    await page.evaluate(() => {
+      const button = document.querySelector<ElementWithInternals>('custom-button');
+      button.internals.ariaHidden = 'true';
+      button.setAttribute('aria-hidden', 'false');
+    });
+    expect.soft(await getNameAndRole(page, 'custom-button')).toEqual({ role: 'button', name: 'Button Text' });
+  });
+});

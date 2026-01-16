@@ -173,3 +173,9 @@ export function endDOMCaches() {
     cacheStyleAfter = undefined;
   }
 }
+
+export function elementInternals(element: Element): ElementInternals | null {
+  // eslint-disable-next-line no-restricted-globals
+  return ((globalThis as unknown as { __playwrightElementInternalsMap?: WeakMap<Element, ElementInternals> })
+      .__playwrightElementInternalsMap)?.get(element) ?? null;
+}

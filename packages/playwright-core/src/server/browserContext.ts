@@ -131,6 +131,25 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this.tracing = new Tracing(this, browser.options.tracesDir);
     this.clock = new Clock(this);
     this.dialogManager = new DialogManager(this.instrumentation);
+
+    // There is and will be no way to get the ElementInternals from a custom element,
+    // unless that element specifically exposes it.
+    // Due to this we monkey-patch attachInternals to keep track of ElementInternals instances.
+    this.initScripts.push(new InitScript(`
+      if (globalThis.__playwrightElementInternalsMap === undefined) {
+        const elementInternalsMap = new WeakMap();
+        globalThis.__playwrightElementInternalsMap = elementInternalsMap;
+        
+        const attachInternals = HTMLElement.prototype.attachInternals;
+        if (attachInternals) {
+          HTMLElement.prototype.attachInternals = function() {
+            const internals = attachInternals.call(this);
+            elementInternalsMap.set(this, internals);
+            return internals;
+          };
+        }
+      }
+    `));
   }
 
   isPersistentContext(): boolean {
