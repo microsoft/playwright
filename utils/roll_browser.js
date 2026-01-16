@@ -71,7 +71,11 @@ Example:
   }
 
   const revision = args[1];
+  let browserVersion = args[2];
   console.log(`Rolling ${browserName} to ${revision}`);
+  if (browserVersion) {
+    console.log(`Browser version: ${browserVersion}`);
+  }
 
   // 2. Update browser revisions in browsers.json.
   console.log('\nUpdating revision in browsers.json...');
@@ -88,11 +92,13 @@ Example:
   // 4. Update browser version if rolling WebKit / Firefox / Chromium.
   const browserType = playwright[browserName.split('-')[0]];
   if (browserType) {
-    const browser = await browserType.launch({
-      executablePath: executable.executablePath('javascript'),
-    });
-    const browserVersion = await browser.version();
-    await browser.close();
+    if (!browserVersion) {
+      const browser = await browserType.launch({
+        executablePath: executable.executablePath('javascript'),
+      });
+      browserVersion = await browser.version();
+      await browser.close();
+    }
     console.log('\nUpdating browser version in browsers.json...');
     for (const descriptor of descriptors)
       descriptor.browserVersion = browserVersion;

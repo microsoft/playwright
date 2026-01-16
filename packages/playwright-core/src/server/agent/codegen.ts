@@ -15,7 +15,7 @@
  */
 
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
-import { escapeTemplateString, escapeWithQuotes, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
+import { escapeTemplateString, escapeWithQuotes, formatObjectOrVoid, parseRegex } from '../../utils/isomorphic/stringUtils';
 
 import type * as actions from './actions';
 import type { Language } from '../../utils/isomorphic/locatorGenerators';
@@ -87,6 +87,11 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
     case 'expectAria': {
       const notInfix = action.isNot ? 'not.' : '';
       return `await expect(page.locator('body')).${notInfix}toMatchAria(\`\n${escapeTemplateString(action.template)}\n\`);`;
+    }
+    case 'expectURL': {
+      const arg = action.regex ? parseRegex(action.regex).toString() : escapeWithQuotes(action.value!);
+      const notInfix = action.isNot ? 'not.' : '';
+      return `await expect(page).${notInfix}toHaveURL(${arg});`;
     }
   }
   // @ts-expect-error

@@ -96,9 +96,9 @@
   "The URL changes to #/completed": {
     "actions": [
       {
-        "method": "expectVisible",
-        "selector": "internal:role=link[name=\"Completed\"i]",
-        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();"
+        "method": "expectURL",
+        "regex": "/.*#/completed$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/completed$/);"
       }
     ]
   },
@@ -106,8 +106,8 @@
     "actions": [
       {
         "method": "expectVisible",
-        "selector": "internal:text=\"1\"i",
-        "code": "await expect(page.getByText('1')).toBeVisible();"
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();"
       }
     ]
   }
