@@ -44,7 +44,7 @@ test('click a button', async ({ context }) => {
 });
 
 // broken, let's fix later
-test.fail('retrieve a secret', async ({ context }) => {
+test('retrieve a secret', async ({ context }) => {
   await run(context, async (page, agent) => {
     await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
     await agent.perform('Enter x-secret-email into the email field');
@@ -190,4 +190,14 @@ Failed to parse cache file ${test.info().outputPath('agent-cache.json')}:
 ✖ Invalid input: expected string, received undefined
   → at [\"some key\"].actions[0].code
     `.trim());
+});
+
+test('perform reports error', async ({ context }) => {
+  const { page, agent } = await generateAgent(context);
+  await page.setContent(`
+    <button>Wolf</button>
+    <button>Fox</button>
+  `);
+  const e = await agent.perform('click the Rabbit button').catch(e => e);
+  expect(e.message).toContain('Agent refused to perform action:');
 });

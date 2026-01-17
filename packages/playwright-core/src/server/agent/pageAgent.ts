@@ -95,7 +95,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     throw new Error(`This action requires API key to be set on the page agent.`);
 
   const { full } = await page.snapshotForAI(progress);
-  const { tools, callTool, reportedResult } = toolsForLoop(progress, context, toolDefinitions, { resultSchema });
+  const { tools, callTool, reportedResult, refusedToPerformReason } = toolsForLoop(progress, context, toolDefinitions, { resultSchema, refuseToPerform: 'allow' });
   const secrets = Object.fromEntries((context.agentParams.secrets || [])?.map(s => ([s.name, s.value])));
 
   const apiCacheTextBefore = context.agentParams.apiCacheFile ?
@@ -151,10 +151,13 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     }
   }
 
+  if (refusedToPerformReason())
+    throw new Error(`Agent refused to perform action: ${refusedToPerformReason()}`);
+
   if (error)
     throw new Error(`Agentic loop failed: ${error}`);
 
-  return { result: resultSchema ? reportedResult() : undefined };
+  return { result: reportedResult ? reportedResult() : undefined };
 }
 
 async function cachedPerform(progress: Progress, context: Context, cacheKey: string): Promise<actions.ActionWithCode[] | undefined> {
@@ -202,8 +205,8 @@ const allCaches = new Map<string, Cache>();
 async function cachedActions(cacheFile: string): Promise<Cache> {
   let cache = allCaches.get(cacheFile);
   if (!cache) {
-    const text = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '{}');
-    const parsed = actions.cachedActionsSchema.safeParse(JSON.parse(text));
+    const json = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({}));
+    const parsed = actions.cachedActionsSchema.safeParse(json);
     if (parsed.error)
       throw new Error(`Failed to parse cache file ${cacheFile}:\n${zod.prettifyError(parsed.error)}`);
     cache = { actions: parsed.data, newActions: {} };
