@@ -17,7 +17,7 @@
 import { getAsBooleanFromENV } from 'playwright-core/lib/utils';
 import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
 
-import { TerminalReporter, stepSuffix } from './base';
+import { markErrorsAsReported, TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';
 
 import type { ListReporterOptions } from '../../types/test';
@@ -165,9 +165,31 @@ class ListReporter extends TerminalReporter {
     stream.write(chunk);
   }
 
+  async onTestPaused(test: TestCase, result: TestResult) {
+    // Without TTY, user cannot interrupt the pause. Let's skip it.
+    if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
+      return;
+
+    this._updateTestLine(test, result);
+    this._maybeWriteNewLine();
+    if (test.outcome() === 'unexpected') {
+      const errors = this.formatResultErrors(test, result);
+      this.writeLine(errors);
+      this._updateLineCountAndNewLineFlagForOutput(errors);
+      markErrorsAsReported(result);
+    }
+    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
+
+    await new Promise<void>(() => {});
+  }
+
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
+    if (!this._isOffScreen(this._testRows, test))
+      this._updateTestLine(test, result);
+  }
 
+  private _updateTestLine(test: TestCase, result: TestResult) {
     const title = this.formatTestTitle(test);
     let prefix = '';
     let text = '';
@@ -197,6 +219,13 @@ class ListReporter extends TerminalReporter {
     }
 
     this._updateOrAppendLine(this._testRows, test, text, prefix);
+  }
+
+  private _isOffScreen<T>(entityRowNumbers: Map<T, number>, entity: T): boolean {
+    const row = entityRowNumbers.get(entity);
+    if (row !== undefined && this.screen.isTTY && this._lastRow - row >= this.screen.ttyHeight)
+      return true;
+    return false;
   }
 
   private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {

@@ -322,7 +322,7 @@ const bestPracticesMarkdown = `
 `;
 
 class MCPListReporter extends ListReporter {
-  async onTestPaused() {
+  override async onTestPaused() {
     // ListReporter waits for user input to resume, we don't want that in MCP.
     await new Promise<void>(() => {});
   }
