@@ -29,6 +29,9 @@ test('toHaveAccessibleName', async ({ page }) => {
 
   await page.setContent(`<button>foo&nbsp;bar\nbaz</button>`);
   await expect(page.locator('button')).toHaveAccessibleName('foo bar baz');
+
+  await page.setContent(withCustomElement(`<custom-button>Button Text</custom-button>`));
+  await expect(page.locator('custom-button')).toHaveAccessibleName('Internal Label');
 });
 
 test('toHaveAccessibleDescription', async ({ page }) => {
@@ -47,6 +50,9 @@ test('toHaveAccessibleDescription', async ({ page }) => {
     <span id="desc">foo&nbsp;bar\nbaz</span>
   `);
   await expect(page.locator('div')).toHaveAccessibleDescription('foo bar baz');
+
+  await page.setContent(withCustomElement(`<custom-button>Button Text</custom-button>`));
+  await expect(page.locator('custom-button')).toHaveAccessibleDescription('Internal Description');
 });
 
 test('toHaveAccessibleErrorMessage', async ({ page }) => {
@@ -198,3 +204,28 @@ test('toHaveRole', async ({ page }) => {
     expect(error.message).toBe(`"role" argument in toHaveRole must be a string`);
   }
 });
+
+function withCustomElement(html: string) {
+  return `
+    <html>
+      <body>
+        ${html}
+        <script>
+          class CustomButtonElement extends window.HTMLElement {
+            internals = this.attachInternals();
+
+            constructor() {
+              super();
+              this.internals.role = 'button';
+              this.internals.ariaLabel = 'Internal Label';
+              this.internals.ariaDescription = 'Internal Description';
+              const shadow = this.attachShadow({ mode: 'open' });
+              shadow.innerHTML = '<slot></slot>';
+            }
+          }
+          customElements.define('custom-button', CustomButtonElement);
+        </script>
+      </body>
+    </html>
+  `;
+}
