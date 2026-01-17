@@ -39,6 +39,7 @@ export type CLIOptions = {
   caps?: string[];
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
+  codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
   device?: string;
@@ -249,6 +250,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       blockedOrigins: cliOptions.blockedOrigins,
     },
     allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
+    codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
     saveTrace: cliOptions.saveTrace,
     saveVideo: cliOptions.saveVideo,
