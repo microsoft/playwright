@@ -169,12 +169,16 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   headers(): Headers {
     if (this._fallbackOverrides.headers)
       return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers).headers();
+    if (this._redirectedFrom?._fallbackOverrides.headers)
+      return RawHeaders._fromHeadersObjectLossy(this._redirectedFrom._fallbackOverrides.headers).headers();
     return this._provisionalHeaders.headers();
   }
 
   async _actualHeaders(): Promise<RawHeaders> {
     if (this._fallbackOverrides.headers)
       return RawHeaders._fromHeadersObjectLossy(this._fallbackOverrides.headers);
+    if (this._redirectedFrom?._fallbackOverrides.headers)
+      return RawHeaders._fromHeadersObjectLossy(this._redirectedFrom._fallbackOverrides.headers);
 
     if (!this._actualHeadersPromise) {
       this._actualHeadersPromise = this._wrapApiCall(async () => {
