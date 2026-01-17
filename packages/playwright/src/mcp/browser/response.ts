@@ -111,8 +111,8 @@ export class Response {
 
     // All the async snapshotting post-action is happening here.
     // Everything below should race against modal states.
-    if (this._includeSnapshot !== 'none' && this._context.currentTab())
-      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot();
+    if (this._context.currentTab())
+      this._tabSnapshot = await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshot !== 'none');
     for (const tab of this._context.tabs())
       await tab.updateTitle();
   }
@@ -138,7 +138,7 @@ export class Response {
       renderedResponse.results.push(...this._result);
 
     // Add code if it exists.
-    if (this._code.length)
+    if (this._code.length && this._context.config.codegen !== 'none')
       renderedResponse.code.push(...this._code);
 
     // List browser tabs.
@@ -152,11 +152,11 @@ export class Response {
     if (this._tabSnapshot?.modalStates.length) {
       const modalStatesMarkdown = renderModalStates(this._tabSnapshot.modalStates);
       renderedResponse.states.modal = modalStatesMarkdown.join('\n');
-    } else if (this._tabSnapshot) {
-      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, renderedResponse);
     } else if (this._includeModalStates) {
       const modalStatesMarkdown = renderModalStates(this._includeModalStates);
       renderedResponse.states.modal = modalStatesMarkdown.join('\n');
+    } else if (this._tabSnapshot) {
+      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, renderedResponse);
     }
 
     if (this._files.length) {
@@ -202,7 +202,7 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | '
   if (tabSnapshot.consoleMessages.length) {
     const lines: string[] = [];
     for (const message of tabSnapshot.consoleMessages)
-      lines.push(`- ${trim(message.toString(), 100)}`);
+      lines.push(`- ${trimMiddle(message.toString(), 100)}`);
     response.updates.push({ category: 'console', content: lines.join('\n') });
   }
 
@@ -254,10 +254,10 @@ function renderTabsMarkdown(tabs: Tab[], force: boolean = false): string[] {
   return lines;
 }
 
-function trim(text: string, maxLength: number) {
+function trimMiddle(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
-  return text.slice(0, maxLength) + '...';
+  return text.slice(0, Math.floor(maxLength / 2)) + '...' + text.slice(- 3 - Math.floor(maxLength / 2));
 }
 
 export class RenderedResponse {

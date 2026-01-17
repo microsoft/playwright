@@ -98,7 +98,8 @@ test('should respect --snapshot-mode=none', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: undefined
+    pageState: `- Page URL: ${server.PREFIX}/
+- Page Title:`
   });
 });
 

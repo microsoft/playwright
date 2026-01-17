@@ -55,7 +55,8 @@ addCommand('click <ref>', 'click an element using a ref from a snapshot, e.g. e6
 });
 
 addCommand('snapshot', 'get accessible snapshot of the current page', async () => {
-  await runMcpCommand('browser_snapshot', {});
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  await runMcpCommand('browser_snapshot', { filename: `snapshot-${timestamp}.md` });
 });
 
 addCommand('drag <startRef> <endRef>', 'drag from one element to another', async (startRef, endRef) => {

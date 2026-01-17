@@ -73,6 +73,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
+      .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
       .action(async options => {
@@ -109,6 +110,8 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         if (options.daemon) {
+          config.snapshot.mode = 'none';
+          config.codegen = 'none';
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',
