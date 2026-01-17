@@ -521,9 +521,9 @@ test.describe('toHaveCSS', () => {
   });
 
   test('pass with CSSPProperties object', async ({ page }) => {
-    await page.setContent('<div id=node style="color: rgb(255, 0, 0); border: 1px solid rgb(0, 255, 0);">Text content</div>');
+    await page.setContent('<div id=node style="color: rgb(255, 0, 0); display: flex;">Text content</div>');
     const locator = page.locator('#node');
-    await expect(locator).toHaveCSS({ 'color': 'rgb(255, 0, 0)', 'border': '1px solid rgb(0, 255, 0)' });
+    await expect(locator).toHaveCSS({ 'color': 'rgb(255, 0, 0)', 'display': 'flex' });
   });
 
   test('pass with CSSPProperties object with camelCased properties', async ({ page }) => {
@@ -532,10 +532,13 @@ test.describe('toHaveCSS', () => {
     await expect(locator).toHaveCSS({ 'backgroundColor': 'rgb(255, 0, 0)' });
   });
 
-  test('pass with CSSPProperties object with vendor-prefixed properties', async ({ page }) => {
-    await page.setContent('<div id=node style="-webkit-transform: rotate(45deg);">Text content</div>');
+  test('pass with CSSPProperties object with vendor-prefixed properties', async ({ page, browserName }) => {
+    await page.setContent('<div id=node style="-webkit-transform: rotate(45deg);-moz-transform: rotate(45deg);">Text content</div>');
     const locator = page.locator('#node');
-    await expect(locator).toHaveCSS({ 'WebkitTransform': 'matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)' });
+    if (browserName === 'firefox')
+      await expect(locator).toHaveCSS({ 'MozTransform': 'matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)' });
+    else
+      await expect(locator).toHaveCSS({ 'WebkitTransform': 'matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)' });
   });
 
   test('pass with CSSPProperties object with custom properties', async ({ page }) => {
