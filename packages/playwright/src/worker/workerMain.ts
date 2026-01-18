@@ -212,6 +212,7 @@ export class WorkerMain extends ProcessRunner {
     this._config = config;
     this._project = project;
     this._poolBuilder = PoolBuilder.createForWorker(this._project);
+    this._fixtureRunner.workerFixtureTimeout = this._project.project.timeout;
   }
 
   async runTestGroup(runPayload: ipc.RunPayload) {

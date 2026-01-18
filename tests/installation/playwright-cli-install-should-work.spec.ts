@@ -155,7 +155,7 @@ test('should be able to remove browsers', async ({ exec, checkInstalledSoftwareO
   await exec('npx playwright install chromium');
   await checkInstalledSoftwareOnDisk(['chromium', 'chromium-headless-shell', 'ffmpeg', ...extraInstalledSoftware]);
   await exec('npx playwright uninstall');
-  await checkInstalledSoftwareOnDisk([...extraInstalledSoftware]);
+  await checkInstalledSoftwareOnDisk([]);
 });
 
 test('should print the right install command without browsers', async ({ exec }) => {

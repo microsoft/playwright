@@ -45,11 +45,20 @@ Without the fullyParallel setting, Playwright Test defaults to file-level granul
 - **Without** `fullyParallel`: Tests are split at the file level, so to balance the shards, it's important to keep your test files small and evenly sized.
 - To ensure the most effective use of sharding, especially in CI environments, it is recommended to use `fullyParallel: true` when aiming for balanced distribution across shards. Otherwise, you may need to manually organize your test files to avoid imbalances.
 
-## Rebalancing Shards
+### Rebalancing Shards
+
+If tests in one of your shards take longer, you can manually assign less work to it using the `--shard-weights` option:
 
 ```bash
-npx playwright test --shard=1/4 --shard-weights=26:24:25:25
+npx playwright test --shard=x/4 --shard-weights=3:2:3:3
 ```
+
+Make sure you pass the same `--shard-weights` value to all shards.
+In this example, Shard 2 gets assigned less tests because they take longer, evening out the full duration.
+
+In the Speedboard section of the combined HTML report, you can see a visualisation of your individual shard durations, and a recommendation for how to set your shard weights.
+
+![Speedboard Shard Diagram](./images/speedboard-shards.png)
 
 ## Merging reports from multiple shards
 

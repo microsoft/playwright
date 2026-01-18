@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from '../../mcpBundle';
-
+import { z } from '../../mcpBundle';
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
 import type { Context } from './context';
+import type { Progress } from '../progress';
 
 export type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSchema'> & {
   title: string;
@@ -27,22 +27,30 @@ export type ToolSchema<Input extends zod.Schema> = Omit<loopTypes.Tool, 'inputSc
 
 export type ToolDefinition<Input extends zod.Schema = zod.Schema> = {
   schema: ToolSchema<Input>;
-  handle: (context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
+  handle: (progress: Progress, context: Context, params: zod.output<Input>) => Promise<loopTypes.ToolResult>;
 };
 
 export function defineTool<Input extends zod.Schema>(tool: ToolDefinition<Input>): ToolDefinition<Input> {
   return tool;
 }
 
-export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[], options: { resultSchema?: loopTypes.Schema } = {}): { tools: loopTypes.Tool[], callTool: loopTypes.ToolCallback } {
+type ToolsForLoop = {
+  tools: loopTypes.Tool[];
+  callTool: loopTypes.ToolCallback;
+  reportedResult?: () => any;
+  refusedToPerformReason: () => string | undefined;
+};
+
+export function toolsForLoop(progress: Progress, context: Context, toolDefinitions: ToolDefinition[], options: { resultSchema?: loopTypes.Schema, refuseToPerform?: 'allow' | 'deny' } = {}): ToolsForLoop {
   const tools = toolDefinitions.map(tool => {
     const result: loopTypes.Tool = {
       name: tool.schema.name,
       description: tool.schema.description,
-      inputSchema: zodToJsonSchema(tool.schema.inputSchema) as loopTypes.Schema,
+      inputSchema: z.toJSONSchema(tool.schema.inputSchema) as loopTypes.Schema,
     };
     return result;
   });
+
   if (options.resultSchema) {
     tools.push({
       name: 'report_result',
@@ -51,11 +59,39 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
     });
   }
 
+  if (options.refuseToPerform === 'allow') {
+    tools.push({
+      name: 'refuse_to_perform',
+      description: 'Refuse to perform action.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          reason: {
+            type: 'string',
+            description: `Call this when you believe that you can't perform the action because something is wrong with the page. The reason will be reported to the user.`,
+          },
+        },
+        required: ['reason'],
+      },
+    });
+  }
+
+  let reportedResult: any;
+  let refusedToPerformReason: string | undefined;
+
   const callTool: loopTypes.ToolCallback = async params => {
-    const intent = params.arguments._meta?.['dev.lowire/intent'];
     if (params.name === 'report_result') {
+      reportedResult = params.arguments;
       return {
-        content: [{ type: 'text', text: JSON.stringify(params.arguments) }],
+        content: [{ type: 'text', text: 'Done' }],
+        isError: false,
+      };
+    }
+
+    if (params.name === 'refuse_to_perform') {
+      refusedToPerformReason = params.arguments.reason;
+      return {
+        content: [{ type: 'text', text: 'Done' }],
         isError: false,
       };
     }
@@ -71,7 +107,7 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
     }
 
     try {
-      return await context.callTool(tool, params.arguments, { intent });
+      return await tool.handle(progress, context, params.arguments);
     } catch (error) {
       return {
         content: [{ type: 'text', text: error.message }],
@@ -83,5 +119,7 @@ export function toolsForLoop(context: Context, toolDefinitions: ToolDefinition[]
   return {
     tools,
     callTool,
+    reportedResult: options.resultSchema ? () => reportedResult : undefined,
+    refusedToPerformReason: () => refusedToPerformReason,
   };
 }

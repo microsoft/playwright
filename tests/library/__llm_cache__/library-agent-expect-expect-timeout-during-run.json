@@ -1,0 +1,30 @@
+{
+  "46dd9ff2a304413e15a4579295016e8d2626b5dd": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to verify that the submit button is visible on the page. Based on the page snapshot, I can see there is a button with the text \"Submit\" and reference e2."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_visible",
+          "arguments": {
+            "role": "button",
+            "accessibleName": "Submit",
+            "_is_done": true
+          },
+          "id": "toolu_011XpmmmcGH5bLRG1hznFRw2"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2043,
+      "output": 132
+    }
+  }
+}

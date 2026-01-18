@@ -1,72 +1,79 @@
 {
   "Enter x-secret-email into the email field": {
-    "timestamp": 1767663309639,
     "actions": [
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Email Address\"i]",
         "text": "x-secret-email",
-        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('x-secret-email');",
-        "intent": "I'll enter \"x-secret-email\" into the email field."
+        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('x-secret-email');"
       }
     ]
   },
   "Fill out the form with the following details:\nName: John Smith\nAddress: 1045 La Avenida St, Mountain View, CA 94043\nEmail: john.smith@at-microsoft.com": {
-    "timestamp": 1767663315315,
     "actions": [
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Full Name *\"i]",
         "text": "John Smith",
-        "code": "await page.getByRole('textbox', { name: 'Full Name *' }).fill('John Smith');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'Full Name *' }).fill('John Smith');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Email Address *\"i]",
         "text": "john.smith@at-microsoft.com",
-        "code": "await page.getByRole('textbox', { name: 'Email Address *' }).fill('john.smith@at-microsoft.com');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'Email Address *' }).fill('john.smith@at-microsoft.com');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Street Address *\"i]",
         "text": "1045 La Avenida St",
-        "code": "await page.getByRole('textbox', { name: 'Street Address *' }).fill('1045 La Avenida St');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'Street Address *' }).fill('1045 La Avenida St');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"City *\"i]",
         "text": "Mountain View",
-        "code": "await page.getByRole('textbox', { name: 'City *' }).fill('Mountain View');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'City *' }).fill('Mountain View');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"State/Province *\"i]",
         "text": "CA",
-        "code": "await page.getByRole('textbox', { name: 'State/Province *' }).fill('CA');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'State/Province *' }).fill('CA');"
       },
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"ZIP/Postal Code *\"i]",
         "text": "94043",
-        "code": "await page.getByRole('textbox', { name: 'ZIP/Postal Code *' }).fill('94043');",
-        "intent": "I'll fill out the form with the provided details. Let me fill in the name, email, and address fields."
+        "code": "await page.getByRole('textbox', { name: 'ZIP/Postal Code *' }).fill('94043');"
       }
     ]
   },
   "- Enter \"bogus\" into the email field\n    - Check that the value is in fact \"bogus\"\n    - Check that the error message is displayed": {
-    "timestamp": 1767663315431,
     "actions": [
       {
         "method": "fill",
         "selector": "internal:role=textbox[name=\"Email Address\"i]",
         "text": "bogus",
-        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('bogus');",
-        "intent": "I'll help you complete this task. Let me first enter \"bogus\" into the email field."
+        "code": "await page.getByRole('textbox', { name: 'Email Address' }).fill('bogus');"
+      }
+    ]
+  },
+  "click the Fox button": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Fox\"i]",
+        "code": "await page.getByRole('button', { name: 'Fox' }).click();"
+      }
+    ]
+  },
+  "click the Fox button again": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Fox\"i]",
+        "code": "await page.getByRole('button', { name: 'Fox' }).click();"
       }
     ]
   }

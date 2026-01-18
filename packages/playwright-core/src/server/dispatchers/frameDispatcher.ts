@@ -266,7 +266,7 @@ export class FrameDispatcher extends Dispatcher<Frame, channels.FrameChannel, Br
     let expectedValue = params.expectedValue ? parseArgument(params.expectedValue) : undefined;
     if (params.expression === 'to.match.aria' && expectedValue)
       expectedValue = parseAriaSnapshotUnsafe(yaml, expectedValue);
-    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue }, params.timeout);
+    const result = await this._frame.expect(progress, params.selector, { ...params, expectedValue, timeoutForLogs: params.timeout });
     if (result.received !== undefined)
       result.received = serializeResult(result.received);
     return result;

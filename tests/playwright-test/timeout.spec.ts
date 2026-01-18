@@ -532,7 +532,7 @@ test('should report up to 3 timeout errors', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain('Test timeout of 1000ms exceeded.');
   expect(result.output).toContain('Test timeout of 1000ms exceeded while running "afterEach" hook.');
-  expect(result.output).toContain('Worker teardown timeout of 1000ms exceeded while tearing down "autoWorker".');
+  expect(result.output).toContain('Fixture "autoWorker" timeout of 1000ms exceeded during teardown.');
 });
 
 test('should complain when worker fixture times out during worker cleanup', async ({ runInlineTest }) => {
@@ -667,4 +667,40 @@ test('test.setTimeout should be able to change custom fixture timeout', async ({
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain(`Fixture "foo" timeout of 100ms exceeded during setup`);
+});
+
+test('worker fixtures should each have a separate time slot', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        worker: [async ({}, use) => {
+          console.log('%%before worker');
+          await new Promise(f => setTimeout(f, 3000));
+          await use('hey');
+          console.log('%%after worker');
+        }, { scope: 'worker' }],
+        auto: [async ({}, use) => {
+          console.log('%%before auto');
+          await new Promise(f => setTimeout(f, 3000));
+          await use('hey');
+          console.log('%%after auto');
+        }, { scope: 'worker', auto: true }],
+      });
+      test('passes', async ({ worker }) => {
+        console.log('%%before test');
+        await new Promise(f => setTimeout(f, 3000));
+        console.log('%%after test');
+      });
+    `
+  }, { timeout: 5000 });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    'before auto',
+    'before worker',
+    'before test',
+    'after test',
+    'after worker',
+    'after auto',
+  ]);
 });

@@ -1,0 +1,114 @@
+{
+  "'Active task' is not visible": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Active task\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Active task')).not.toBeVisible();"
+      }
+    ]
+  },
+  "Add three todos: 'Active task', 'Completed 1', 'Completed 2'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active task');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Completed 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Completed 1');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Completed 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Completed 2');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "All three todos are visible": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active task\n  - listitem: Completed 1\n  - listitem: Completed 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active task\n  - listitem: Completed 1\n  - listitem: Completed 2\n`);"
+      }
+    ]
+  },
+  "Click on the 'Completed' filter link": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await page.getByRole('link', { name: 'Completed' }).click();"
+      }
+    ]
+  },
+  "Mark 'Completed 1' and 'Completed 2' as completed by clicking their checkboxes": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Completed 1\"i >> internal:label=\"Toggle Todo\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 1' }).getByLabel('Toggle Todo').click();"
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Completed 2\"i >> internal:label=\"Toggle Todo\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Completed 2' }).getByLabel('Toggle Todo').click();"
+      }
+    ]
+  },
+  "Only 'Completed 1' and 'Completed 2' are displayed": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Completed 1\n  - listitem: Completed 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Completed 1\n  - listitem: Completed 2\n`);"
+      }
+    ]
+  },
+  "The 'Completed' filter link is highlighted": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Completed\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Completed' })).toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The URL changes to #/completed": {
+    "actions": [
+      {
+        "method": "expectURL",
+        "regex": "/.*#/completed$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/completed$/);"
+      }
+    ]
+  },
+  "Two todos are marked as complete": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).toBeVisible();"
+      }
+    ]
+  }
+}

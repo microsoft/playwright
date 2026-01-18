@@ -35,6 +35,7 @@
   white-space: pre;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .action-title-param {

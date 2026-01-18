@@ -1,0 +1,56 @@
+{
+  "0e39a03d4c9db9c59b450aa30d50eb88551aca6c": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to adjust my expectation. The actual URL is the full URL including the protocol and host. Let me use a regex pattern to match the URL ending with /other.html."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_018zDqYhtHtaNUQ66sv1Ezea"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2293,
+      "output": 118
+    }
+  },
+  "e50f042f63f65841f33a8d0a608d45f748c66552": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll verify that the page URL is /other.html using the browser_expect_url tool."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "url": "/other.html",
+            "_is_done": true
+          },
+          "id": "toolu_01QffxWJVHBPDgB4WSiKanvu"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2067,
+      "output": 99
+    }
+  }
+}

@@ -1,0 +1,97 @@
+{
+  "A delete button (x) appears on the right side of the todo": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Delete\"i]",
+        "code": "await expect(page.getByRole('button', { name: 'Delete' })).toBeVisible();"
+      }
+    ]
+  },
+  "Add a todo 'Task to delete'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task to delete",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task to delete');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Click the delete button": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Delete\"i]",
+        "code": "await page.getByRole('button', { name: 'Delete' }).click();"
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"item left\"i",
+        "code": "await expect(page.getByText('item left')).toBeVisible();"
+      }
+    ]
+  },
+  "Hover over the todo item": {
+    "actions": [
+      {
+        "method": "hover",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "code": "await page.getByTestId('todo-title').hover();"
+      }
+    ]
+  },
+  "The footer is hidden or shows '0 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('0 items left')).not.toBeVisible();"
+      }
+    ]
+  },
+  "The list is empty": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task to delete\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Task to delete')).not.toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task to delete\"i",
+        "code": "await expect(page.getByText('Task to delete')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo is removed from the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task to delete\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Task to delete')).not.toBeVisible();"
+      }
+    ]
+  }
+}

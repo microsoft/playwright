@@ -1,0 +1,86 @@
+{
+  "Add a todo 'Buy groceries' and mark it as complete by clicking its checkbox": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();"
+      }
+    ]
+  },
+  "Click the checkbox again to uncomplete it": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "code": "await page.getByRole('checkbox', { name: 'Toggle Todo' }).click();"
+      }
+    ]
+  },
+  "Counter shows '0 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "code": "await expect(page.getByText('0 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();"
+      }
+    ]
+  },
+  "The 'Clear completed' button disappears": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=button[name=\"Clear completed\"i]",
+        "isNot": true,
+        "code": "await expect(page.getByRole('button', { name: 'Clear completed' })).not.toBeVisible();"
+      }
+    ]
+  },
+  "The checkbox is unchecked": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "false",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: false });"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"What needs to be done?\"i",
+        "code": "await expect(page.getByText('What needs to be done?')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo is marked as complete": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=checkbox[name=\"Toggle Todo\"i]",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('checkbox', { name: 'Toggle Todo' })).toBeChecked({ checked: true });"
+      }
+    ]
+  }
+}

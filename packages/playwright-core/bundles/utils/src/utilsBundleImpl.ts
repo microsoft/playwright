@@ -66,6 +66,3 @@ export const wsSender = Sender;
 
 import yamlLibrary from 'yaml';
 export const yaml = yamlLibrary;
-
-import zodLibrary from 'zod';
-export const zod = zodLibrary;

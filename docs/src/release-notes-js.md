@@ -41,7 +41,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run start',
     wait: {
-      stdout: '/Listening on port (?<my_server_port>\\d+)/'
+      stdout: /Listening on port (?<my_server_port>\d+)/
     },
   },
 });
@@ -52,7 +52,7 @@ If you include a named capture group into the expression, then Playwright will p
 ```js
 import { test, expect } from '@playwright/test';
 
-test.use({ baseUrl: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
+test.use({ baseURL: `http://localhost:${process.env.MY_SERVER_PORT ?? 3000}` });
 
 test('homepage', async ({ page }) => {
   await page.goto('/');
@@ -3154,7 +3154,7 @@ List of all new assertions:
 - [`expect(locator).toHaveAttribute(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-attribute)
 - [`expect(locator).toHaveClass(expected)`](./api/class-locatorassertions#locator-assertions-to-have-class)
 - [`expect(locator).toHaveCount(count)`](./api/class-locatorassertions#locator-assertions-to-have-count)
-- [`expect(locator).toHaveCSS(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-css)
+- [`expect(locator).toHaveCSS(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-css-1)
 - [`expect(locator).toHaveId(id)`](./api/class-locatorassertions#locator-assertions-to-have-id)
 - [`expect(locator).toHaveJSProperty(name, value)`](./api/class-locatorassertions#locator-assertions-to-have-js-property)
 - [`expect(locator).toHaveText(expected, options)`](./api/class-locatorassertions#locator-assertions-to-have-text)

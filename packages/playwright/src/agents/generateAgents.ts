@@ -204,7 +204,7 @@ export class CopilotGenerator {
       'mcp-servers': CopilotGenerator.mcpServers,
     };
     lines.push(`---`);
-    lines.push(yaml.stringify(header) + `---`);
+    lines.push(yaml.stringify(header, { lineWidth: 100000 }) + `---`);
     lines.push('');
     lines.push(agent.instructions);
     lines.push('');

@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-import { urlMatches } from 'playwright-core/lib/utils';
-
-import { printReceivedStringContainExpectedResult } from './expect';
-import { formatMatcherMessage } from './matcherHint';
-import { printReceived } from '../common/expectBundle';
+import { formatMatcherMessage, printReceivedStringContainExpectedResult, urlMatches } from 'playwright-core/lib/utils';
 
 import type { MatcherResult } from './matcherHint';
-import type { ExpectMatcherState } from '../../types/test';
 import type { Page } from 'playwright-core';
+import type { ExpectMatcherStateInternal } from './matchers';
 
 export async function toHaveURLWithPredicate(
-  this: ExpectMatcherState,
+  this: ExpectMatcherStateInternal,
   page: Page,
   expected: (url: URL) => boolean,
   options?: { ignoreCase?: boolean; timeout?: number },
@@ -85,7 +81,7 @@ export async function toHaveURLWithPredicate(
 }
 
 function toHaveURLMessage(
-  state: ExpectMatcherState,
+  state: ExpectMatcherStateInternal,
   matcherName: string,
   expected: Function,
   received: string | undefined,
@@ -100,11 +96,11 @@ function toHaveURLMessage(
   let printedDiff: string | undefined;
   if (typeof expected === 'function') {
     printedExpected = `Expected: predicate to ${!state.isNot ? 'succeed' : 'fail'}`;
-    printedReceived = `Received: ${printReceived(receivedString)}`;
+    printedReceived = `Received: ${state.utils.printReceived(receivedString)}`;
   } else {
     if (pass) {
       printedExpected = `Expected pattern: not ${state.utils.printExpected(expected)}`;
-      const formattedReceived = printReceivedStringContainExpectedResult(receivedString, null);
+      const formattedReceived = printReceivedStringContainExpectedResult(state.utils, receivedString, null);
       printedReceived = `Received string: ${formattedReceived}`;
     } else {
       const labelExpected = `Expected ${typeof expected === 'string' ? 'string' : 'pattern'}`;
@@ -112,7 +108,9 @@ function toHaveURLMessage(
     }
   }
 
-  return formatMatcherMessage(state, {
+  return formatMatcherMessage(state.utils, {
+    isNot: state.isNot,
+    promise: state.promise,
     matcherName,
     expectation: 'expected',
     timeout,

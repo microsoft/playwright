@@ -47,6 +47,11 @@ export function toSnakeCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/([A-Z])([A-Z][a-z])/g, '$1_$2').toLowerCase();
 }
 
+export function toKebabCase(name: string): string {
+  // E.g. backgroundColor => background-color.
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase();
+}
+
 export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'oneline' = 'multiline'): string {
   if (typeof value === 'string')
     return escapeWithQuotes(value, '\'');
@@ -176,4 +181,15 @@ export function longestCommonSubstring(s1: string, s2: string): string {
 
   // Extract the longest common substring
   return s1.slice(endingIndex - maxLen, endingIndex);
+}
+
+export function parseRegex(regex: string): RegExp {
+  if (regex[0] !== '/')
+    throw new Error(`Invalid regex, must start with '/': ${regex}`);
+  const lastSlash = regex.lastIndexOf('/');
+  if (lastSlash <= 0)
+    throw new Error(`Invalid regex, must end with '/' followed by optional flags: ${regex}`);
+  const source = regex.slice(1, lastSlash);
+  const flags = regex.slice(lastSlash + 1);
+  return new RegExp(source, flags);
 }

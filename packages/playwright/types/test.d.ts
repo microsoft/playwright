@@ -15,8 +15,12 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, PageAgent, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
+
+// @ts-ignore ReactCSSProperties will be any if react is not installed
+type ReactCSSProperties = import('react').CSSProperties;
+export type CSSProperties = keyof ReactCSSProperties extends string ? ReactCSSProperties : never;
 
 export type BlobReporterOptions = { outputDir?: string, fileName?: string };
 export type ListReporterOptions = { printSteps?: boolean };
@@ -1001,7 +1005,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
    *   webServer: {
    *     command: 'npm run start',
    *     wait: {
-   *       stdout: '/Listening on port (?<my_server_port>\\d+)/'
+   *       stdout: /Listening on port (?<my_server_port>\d+)/
    *     },
    *   },
    * });
@@ -1612,7 +1616,7 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
   retries?: number;
 
   /**
-   * Whether to run LLM agent for [page.agent](https://playwright.dev/docs/api/class-page#page-agent):
+   * Whether to run LLM agent for [PageAgent](https://playwright.dev/docs/api/class-pageagent):
    * - "all" disregards existing cache and performs all actions via LLM
    * - "missing" only performs actions that don't have generated cache actions
    * - "none" does not talk to LLM at all, relies on the cached actions (default)
@@ -2076,7 +2080,7 @@ export interface FullConfig<TestArgs = {}, WorkerArgs = {}> {
   rootDir: string;
 
   /**
-   * Whether to run LLM agent for [page.agent](https://playwright.dev/docs/api/class-page#page-agent):
+   * Whether to run LLM agent for [PageAgent](https://playwright.dev/docs/api/class-pageagent):
    * - "all" disregards existing cache and performs all actions via LLM
    * - "missing" only performs actions that don't have generated cache actions
    * - "none" does not talk to LLM at all, relies on the cached actions (default)
@@ -6950,17 +6954,23 @@ export interface PlaywrightWorkerOptions {
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
-export type Agent = {
-  api: string;
-  apiKey: string;
-  apiEndpoint?: string;
-  apiVersion?: string;
-  model: string;
+export type AgentOptions = {
+  provider?: {
+    api: 'openai' | 'openai-compatible' | 'anthropic' | 'google';
+    apiEndpoint?: string;
+    apiKey: string;
+    apiTimeout?: number;
+    model: string;
+  },
+  limits?: {
+    maxTokens?: number;
+    maxActions?: number;
+    maxActionRetries?: number;
+  };
   cachePathTemplate?: string;
-  maxTurns?: number;
-  maxTokens?: number;
   runAgents?: 'all' | 'missing' | 'none';
   secrets?: { [key: string]: string };
+  systemPrompt?: string;
 };
 
 /**
@@ -7002,7 +7012,7 @@ export type Agent = {
  *
  */
 export interface PlaywrightTestOptions {
-  agent: Agent | undefined;
+  agentOptions: AgentOptions | undefined;
   /**
    * Whether to automatically download all the attachments. Defaults to `true` where all the downloads are accepted.
    *
@@ -7712,6 +7722,7 @@ export interface PlaywrightTestArgs {
    *
    */
   request: APIRequestContext;
+  agent: PageAgent;
 }
 
 type ExcludeProps<A, B> = {
@@ -9174,6 +9185,32 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
+   * CSS properties.
+   *
+   * **NOTE** The `CSSProperties` object parameter for toHaveCSS requires `react` to be installed for type checking.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByRole('button');
+   * await expect(locator).toHaveCSS({
+   *   display: 'flex',
+   *   backgroundColor: 'rgb(255, 0, 0)'
+   * });
+   * ```
+   *
+   * @param styles CSS properties object.
+   * @param options
+   */
+  toHaveCSS(styles: CSSProperties, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with the given DOM Node
    * ID.
    *
@@ -10252,14 +10289,14 @@ interface TestConfigWebServer {
   wait?: {
     /**
      * Regular expression to wait for in the `stdout` of the command output. Named capture groups are stored in the
-     * environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in
+     * environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in
      * `process.env['MY_SERVER_PORT']`.
      */
     stdout?: RegExp;
 
     /**
      * Regular expression to wait for in the `stderr` of the command output. Named capture groups are stored in the
-     * environment, for example `/Listening on port (?<my_server_port>\\d+)/` will store the port number in
+     * environment, for example `/Listening on port (?<my_server_port>\d+)/` will store the port number in
      * `process.env['MY_SERVER_PORT']`.
      */
     stderr?: RegExp;

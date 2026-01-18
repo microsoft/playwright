@@ -1,0 +1,94 @@
+{
+  "Add a todo 'Original text'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Original text",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Original text');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Change the text to 'Modified text' but press Escape instead of Enter": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "Modified text",
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('Modified text');"
+      },
+      {
+        "method": "pressKey",
+        "key": "Escape",
+        "code": "await page.keyboard.press('Escape');"
+      }
+    ]
+  },
+  "Changes are not saved": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();"
+      }
+    ]
+  },
+  "Double-click on the todo to enter edit mode": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "clickCount": 2,
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
+      }
+    ]
+  },
+  "Edit mode is cancelled": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=generic[name=\"Original text\"i]",
+        "code": "await expect(page.getByRole('generic', { name: 'Original text' })).toBeVisible();"
+      }
+    ]
+  },
+  "Edit textbox appears with 'Original text'": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "type": "textbox",
+        "value": "Original text",
+        "code": "await expect(page.getByRole('textbox', { name: 'Edit' })).toHaveValue('Original text');"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo text reverts to 'Original text'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original text\"i",
+        "code": "await expect(page.getByText('Original text')).toBeVisible();"
+      }
+    ]
+  }
+}

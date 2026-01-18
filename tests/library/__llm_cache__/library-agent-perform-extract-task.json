@@ -1,0 +1,74 @@
+{
+  "c2afe4add9f92f02f33fd49f7911ec415d91b3e3": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll extract the todo items and their statuses from the page."
+        },
+        {
+          "type": "tool_call",
+          "name": "report_result",
+          "arguments": {
+            "items": [
+              {
+                "title": "Buy groceries",
+                "completed": true
+              },
+              {
+                "title": "Buy milk",
+                "completed": false
+              }
+            ],
+            "_is_done": true
+          },
+          "id": "toolu_015AdhvHnzVR1K2iPiKtG9wt"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 1018,
+      "output": 113
+    }
+  },
+  "e53dabe92453ecd4602c15601cd50c6ddc88d7bf": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll extract the todo items and their statuses from the page."
+        },
+        {
+          "type": "tool_call",
+          "name": "report_result",
+          "arguments": {
+            "items": [
+              {
+                "title": "Buy groceries",
+                "completed": true
+              },
+              {
+                "title": "Buy milk",
+                "completed": false
+              }
+            ],
+            "_is_done": true
+          },
+          "id": "toolu_01R1npdN7T238o818dP99ZTP"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 1020,
+      "output": 113
+    }
+  }
+}

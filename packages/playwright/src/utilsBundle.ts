@@ -21,3 +21,9 @@ export const enquirer: typeof import('../bundles/utils/node_modules/enquirer') =
 export const chokidar: typeof import('../bundles/utils/node_modules/chokidar') = require('./utilsBundleImpl').chokidar;
 export const getEastAsianWidth: typeof import('../bundles/utils/node_modules/get-east-asian-width') = require('./utilsBundleImpl').getEastAsianWidth;
 export type { RawSourceMap } from '../bundles/utils/node_modules/source-map';
+
+const { unified } = require('./utilsBundleImpl').unified;
+const remarkParse = require('./utilsBundleImpl').remarkParse;
+export function parseMarkdown(content: string): import('mdast').Root {
+  return unified().use(remarkParse).parse(content);
+}

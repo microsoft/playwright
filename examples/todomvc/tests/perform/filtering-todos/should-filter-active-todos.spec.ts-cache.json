@@ -1,0 +1,120 @@
+{
+  "'Will complete' is not visible": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Will complete\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Will complete')).not.toBeVisible();"
+      }
+    ]
+  },
+  "Add three todos: 'Active 1', 'Active 2', 'Will complete'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active 1');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Active 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Active 2');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Will complete",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Will complete');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "All three todos are visible": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active 1\n  - listitem: Active 2\n  - listitem: Will complete",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active 1\n  - listitem: Active 2\n  - listitem: Will complete\n`);"
+      }
+    ]
+  },
+  "Click on the 'Active' filter link": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await page.getByRole('link', { name: 'Active' }).click();"
+      }
+    ]
+  },
+  "Counter shows '2 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "Mark 'Will complete' as completed by clicking its checkbox": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Will complete\"i >> internal:label=\"Toggle Todo\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Will complete' }).getByLabel('Toggle Todo').click();"
+      }
+    ]
+  },
+  "One todo is marked as complete": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Will complete\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Will complete' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+      }
+    ]
+  },
+  "Only 'Active 1' and 'Active 2' are displayed": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Active 1\n  - listitem: Active 2",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Active 1\n  - listitem: Active 2\n`);"
+      }
+    ]
+  },
+  "The 'Active' filter link is highlighted": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'Active' })).toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The URL changes to #/active": {
+    "actions": [
+      {
+        "method": "expectURL",
+        "regex": "/.*#/active$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/active$/);"
+      }
+    ]
+  }
+}

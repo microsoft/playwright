@@ -1,0 +1,103 @@
+{
+  "'Persistent 2' is marked as complete": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+      }
+    ]
+  },
+  "'Persistent 2' is still marked as complete": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "type": "checkbox",
+        "value": "true",
+        "code": "await expect(page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo')).toBeChecked({ checked: true });"
+      }
+    ]
+  },
+  "Add three todos: 'Persistent 1', 'Persistent 2', 'Persistent 3'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 1');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 2');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Persistent 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Persistent 3');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3\n`);"
+      }
+    ]
+  },
+  "All three todos are still present after reload": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Persistent 1\n  - listitem: Persistent 2\n  - listitem: Persistent 3\n`);"
+      }
+    ]
+  },
+  "Mark 'Persistent 2' as completed by clicking its checkbox": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Persistent 2\"i >> internal:label=\"Toggle Todo\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Persistent 2' }).getByLabel('Toggle Todo').click();"
+      }
+    ]
+  },
+  "Reload the page": {
+    "actions": [
+      {
+        "method": "pressKey",
+        "key": "F5",
+        "code": "await page.keyboard.press('F5');"
+      }
+    ]
+  },
+  "The counter shows '2 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  }
+}

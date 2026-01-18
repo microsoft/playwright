@@ -615,6 +615,7 @@ class JobDispatcher {
       }
     };
 
+    result.status = params.status;
     result.errors = params.errors;
     result.error = result.errors[0];
 

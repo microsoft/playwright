@@ -1,0 +1,93 @@
+{
+  "Add a todo 'Call dentist'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Call dentist",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Call dentist');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Change the text to 'Schedule dentist appointment' and click elsewhere to blur the input": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "Schedule dentist appointment",
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('Schedule dentist appointment');"
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=heading[name=\"todos\"i]",
+        "code": "await page.getByRole('heading', { name: 'todos' }).click();"
+      }
+    ]
+  },
+  "Double-click on the todo to enter edit mode": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "clickCount": 2,
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
+      }
+    ]
+  },
+  "Edit mode is exited": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Schedule dentist appointment\"i",
+        "isNot": false,
+        "code": "await expect(page.getByText('Schedule dentist appointment')).toBeVisible();"
+      }
+    ]
+  },
+  "Edit textbox appears": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'Edit' })).toBeVisible();"
+      }
+    ]
+  },
+  "The changes are saved": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Schedule dentist appointment\"i",
+        "code": "await expect(page.getByText('Schedule dentist appointment')).toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Call dentist\"i",
+        "code": "await expect(page.getByText('Call dentist')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo text is updated to 'Schedule dentist appointment'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Schedule dentist appointment\"i",
+        "code": "await expect(page.getByText('Schedule dentist appointment')).toBeVisible();"
+      }
+    ]
+  }
+}

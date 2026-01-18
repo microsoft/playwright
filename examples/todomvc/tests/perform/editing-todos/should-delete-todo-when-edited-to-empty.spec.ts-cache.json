@@ -1,0 +1,99 @@
+{
+  "Add a todo 'Temporary task'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Temporary task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Temporary task');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Clear all the text and press Enter": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Counter shows '0 items left' or the footer is hidden": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"0 items left\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('0 items left')).not.toBeVisible();"
+      }
+    ]
+  },
+  "Counter shows '1 item left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"1 item left\"i",
+        "code": "await expect(page.getByText('1 item left')).toBeVisible();"
+      }
+    ]
+  },
+  "Double-click on the todo to enter edit mode": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "clickCount": 2,
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
+      }
+    ]
+  },
+  "Edit textbox appears": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'Edit' })).toBeVisible();"
+      }
+    ]
+  },
+  "The list is empty": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n\n`);"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Temporary task\"i",
+        "code": "await expect(page.getByText('Temporary task')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo is deleted from the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "isNot": false,
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  }
+}

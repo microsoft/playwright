@@ -66,7 +66,7 @@ Playwright includes auto-retrying assertions that remove flakiness by waiting un
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
 | [`method: LocatorAssertions.toHaveClass`] | Element has a class property |
 | [`method: LocatorAssertions.toHaveCount`] | List has exact number of children |
-| [`method: LocatorAssertions.toHaveCSS`] | Element has CSS property |
+| [`method: LocatorAssertions.toHaveCSS#1`] | Element has CSS property |
 | [`method: LocatorAssertions.toHaveId`] | Element has an ID |
 | [`method: LocatorAssertions.toHaveJSProperty`] | Element has a JavaScript property |
 | [`method: LocatorAssertions.toHaveText`] | Element matches text |

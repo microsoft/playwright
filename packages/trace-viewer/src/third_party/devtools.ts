@@ -61,7 +61,7 @@ import type { TraceModel } from '@isomorphic/trace/traceModel';
 import type { Entry } from '@trace/har';
 
 // The following function is derived from Chromium's source code
-// https://github.com/ChromeDevTools/devtools-frontend/blob/83cbe41b4107e188a1f66fdf6ea3a9cca42587c6/front_end/panels/network/NetworkLogView.ts#L2363
+// https://github.com/ChromeDevTools/devtools-frontend/blob/5d4c12362e84535371d8b966b0c7e421c236b720/front_end/panels/network/NetworkLogView.ts#L2441
 export async function generateCurlCommand(model: TraceModel | undefined, resource: Entry): Promise<string> {
   const platform = navigator.platform.includes('Win') ? 'win' : 'unix';
   let command: string[] = [];
@@ -96,6 +96,10 @@ export async function generateCurlCommand(model: TraceModel | undefined, resourc
    Lastly we replace new lines with ^ and TWO new lines because the first
    new line is there to enact the escape command the second is the character
    to escape (in this case new line).
+
+   All other whitespace characters are replaced with a single space, as there
+   is no way to enter their literal values in a command line, and they do break
+   the command allowing for injection.
   */
     const encapsChars = '^"';
     return encapsChars +
@@ -103,7 +107,8 @@ export async function generateCurlCommand(model: TraceModel | undefined, resourc
           .replace(/"/g, '\\"')
           .replace(/[^a-zA-Z0-9\s_\-:=+~'\/.',?;()*`]/g, '^$&')
           .replace(/%(?=[a-zA-Z0-9_])/g, '%^')
-          .replace(/\r?\n/g, '^\n\n') +
+          .replace(/[^ -~\r\n]/g, ' ')
+          .replace(/\r?\n|\r/g, '^\n\n') +
       encapsChars;
   }
 
@@ -162,13 +167,16 @@ export async function generateCurlCommand(model: TraceModel | undefined, resourc
     if (ignoredHeaders.has(name.toLowerCase()))
       continue;
 
-    if (header.value.trim()) {
-      command.push('-H ' + escapeString(name + ': ' + header.value));
-    } else {
+    const value = header.value;
+    if (!value.trim()) {
       // A header passed with -H with no value or only whitespace as its
       // value tells curl to not set the header at all. To post an empty
       // header, you have to terminate it with a semicolon.
       command.push('-H ' + escapeString(name + ';'));
+    } else if (name.toLowerCase() === 'cookie') {
+      command.push('-b ' + escapeString(value));
+    } else {
+      command.push('-H ' + escapeString(name + ': ' + value));
     }
   }
   command = command.concat(data);

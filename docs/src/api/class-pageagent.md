@@ -1,6 +1,22 @@
 # class: PageAgent
 * since: v1.58
+* langs: js
 
+## event: PageAgent.turn
+* since: v1.58
+- argument: <[Object]>
+  - `role` <[string]>
+  - `message` <[string]>
+  - `usage` ?<[Object]>
+    - `inputTokens` <[int]>
+    - `outputTokens` <[int]>
+
+Emitted when the agent makes a turn.
+
+## async method: PageAgent.dispose
+* since: v1.58
+
+Dispose this agent.
 
 ## async method: PageAgent.expect
 * since: v1.58
@@ -10,7 +26,7 @@ Expect certain condition to be met.
 **Usage**
 
 ```js
-await page.agent.expect('"0 items" to be reported');
+await agent.expect('"0 items" to be reported');
 ```
 
 ### param: PageAgent.expect.expectation
@@ -36,7 +52,7 @@ Extract information from the page using the agentic loop, return it in a given Z
 **Usage**
 
 ```js
-await page.agent.extract('List of items in the cart', z.object({
+await agent.extract('List of items in the cart', z.object({
   title: z.string().describe('Item title to extract'),
   price: z.string().describe('Item price to extract'),
 }).array());
@@ -69,7 +85,7 @@ Perform action using agentic loop.
 **Usage**
 
 ```js
-await page.agent.perform('Click submit button');
+await agent.perform('Click submit button');
 ```
 
 ### param: PageAgent.perform.task
@@ -80,3 +96,19 @@ Task to perform using agentic loop.
 
 ### option: PageAgent.perform.-inline- = %%-page-agent-call-options-v1.58-%%
 * since: v1.58
+
+## async method: PageAgent.usage
+* since: v1.58
+- returns: <[Object]>
+  - `turns` <[int]>
+  - `inputTokens` <[int]>
+  - `outputTokens` <[int]>
+
+Returns the current token usage for this agent.
+
+**Usage**
+
+```js
+const usage = await agent.usage();
+console.log(`Tokens used: ${usage.inputTokens} in, ${usage.outputTokens} out`);
+```

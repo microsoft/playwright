@@ -1,0 +1,56 @@
+{
+  "ca4fa24ca5d10d373f005b3e8a5b543a767e10b5": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll verify that the page URL matches the \"/page\" pattern using a regular expression."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/page",
+            "_is_done": true
+          },
+          "id": "toolu_01A8AJ2KBrNTj6wSJ6bfSiFS"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2066,
+      "output": 94
+    }
+  },
+  "f6b9debe1e2eb0222d96e3fb7ef1685eac351d81": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to provide a properly formatted regex with closing slash. Let me fix that:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/page/",
+            "_is_done": true
+          },
+          "id": "toolu_019yRn6jCMA4QSeBRD6aZsiy"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2234,
+      "output": 94
+    }
+  }
+}

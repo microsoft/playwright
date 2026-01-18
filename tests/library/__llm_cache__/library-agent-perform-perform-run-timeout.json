@@ -1,0 +1,30 @@
+{
+  "273f0802e7fc3fe0d3eb1cfa83366e1a1272f185": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the Fox button for you."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Fox button",
+            "ref": "e3",
+            "_is_done": true
+          },
+          "id": "toolu_01XRNgTAtWw4nWAmToKQUVif"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3069,
+      "output": 101
+    }
+  }
+}

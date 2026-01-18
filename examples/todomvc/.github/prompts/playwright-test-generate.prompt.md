@@ -3,6 +3,6 @@ agent: playwright-test-generator
 description: Generate test plan
 ---
 
-Generate tests for the test plan's bullet 1.1 Add item to card.
+Generate tests for the test plan's bullet 1. Adding Todos. Generate one test at a time, never in parallel.
 
-Test plan: `specs/coverage.plan.md`
+Test plan: `specs/basic-operations.plan.md`

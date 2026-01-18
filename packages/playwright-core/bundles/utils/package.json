@@ -21,8 +21,7 @@
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "8.0.5",
     "ws": "8.17.1",
-    "yaml": "^2.6.0",
-    "zod": "^3.25.76"
+    "yaml": "^2.6.0"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",

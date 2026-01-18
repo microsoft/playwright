@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { zodToJsonSchema } from 'playwright-core/lib/mcpBundle';
-
+import { z as zod } from 'playwright-core/lib/mcpBundle';
 import type { z } from 'zod';
 import type * as mcpServer from './server';
 
@@ -32,7 +31,7 @@ export function toMcpTool(tool: ToolSchema<any>): mcpServer.Tool {
   return {
     name: tool.name,
     description: tool.description,
-    inputSchema: zodToJsonSchema(tool.inputSchema, { strictUnions: true }) as mcpServer.Tool['inputSchema'],
+    inputSchema: zod.toJSONSchema(tool.inputSchema) as mcpServer.Tool['inputSchema'],
     annotations: {
       title: tool.title,
       readOnlyHint: readOnly,

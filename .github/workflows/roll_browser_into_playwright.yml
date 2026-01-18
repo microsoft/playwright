@@ -8,6 +8,7 @@ env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
   BROWSER: ${{ github.event.client_payload.browser }}
   REVISION: ${{ github.event.client_payload.revision }}
+  BROWSER_VERSION: ${{ github.event.client_payload.browserVersion }}
 
 permissions:
   contents: write
@@ -29,7 +30,7 @@ jobs:
       run: npx playwright install-deps
     - name: Roll to new revision
       run: |
-        ./utils/roll_browser.js $BROWSER $REVISION
+        ./utils/roll_browser.js $BROWSER $REVISION $BROWSER_VERSION
         npm run build
     - name: Prepare branch
       id: prepare-branch

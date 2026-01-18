@@ -1,0 +1,14 @@
+{
+  "page title contains \"TodoMVC\"": {
+    "actions": []
+  },
+  "The input field 'What needs to be done?' is visible": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  }
+}

@@ -1,0 +1,102 @@
+{
+  "63c6840169b6554ee4319607e3c5582842511481": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Submit button",
+            "ref": "e2",
+            "_is_done": false
+          },
+          "id": "toolu_01LMKpSXqCaRPAsUfpuLCGq6"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3259,
+      "output": 91
+    }
+  },
+  "7b25e318de64dc9d2494432a6d311631e2c1edc0": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the submit button 5 times as requested. Let me perform these clicks sequentially."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Submit button",
+            "ref": "e2",
+            "_is_done": false
+          },
+          "id": "toolu_01VansE6LrZDU3SibgRvkoGY"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3047,
+      "output": 113
+    }
+  },
+  "82d4661d903f25ce1a7e51c2954072ed0003042e": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Submit button",
+            "ref": "e2",
+            "_is_done": false
+          },
+          "id": "toolu_01VUbrN6D39GVSBuPEaByNKZ"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3321,
+      "output": 91
+    }
+  },
+  "a64b5e20ef2b0c66b2b1373302af78d97e0b451f": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Submit button",
+            "ref": "e2",
+            "_is_done": false
+          },
+          "id": "toolu_01FcvrnBtseq9yQA5A7cRdeZ"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3192,
+      "output": 91
+    }
+  }
+}

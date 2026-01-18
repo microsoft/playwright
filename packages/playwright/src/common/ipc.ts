@@ -31,6 +31,7 @@ export type ConfigCLIOverrides = {
   maxFailures?: number;
   outputDir?: string;
   preserveOutputDir?: boolean;
+  pause?: boolean;
   quiet?: boolean;
   repeatEach?: number;
   retries?: number;
@@ -91,6 +92,7 @@ export type TestInfoErrorImpl = TestInfoError;
 export type TestPausedPayload = {
   testId: string;
   errors: TestInfoErrorImpl[];
+  status: TestStatus;
 };
 
 export type ResumePayload = {};

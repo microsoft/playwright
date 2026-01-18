@@ -1,0 +1,32 @@
+{
+  "428b1de09afa2d1be4a61fdf7eaa2277bc1426ed": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to verify that an input has the value \"hello\", but according to the page snapshot, the textbox with ref=e2 currently has the value \"bye\". This means the expectation is that it should NOT match, or this is testing a failure case.\n\nLet me call the browser_expect_value tool to assert the expected condition:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_value",
+          "arguments": {
+            "type": "textbox",
+            "element": "input",
+            "ref": "e2",
+            "value": "hello",
+            "_is_done": true
+          },
+          "id": "toolu_01B834GHxjywVnc9UGFxpyGc"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2044,
+      "output": 201
+    }
+  }
+}

@@ -46,18 +46,18 @@ test('should handle worker fixture timeout', async ({ runInlineTest }) => {
     'a.spec.ts': `
       import { test as base, expect } from '@playwright/test';
       const test = base.extend({
-        timeout: [async ({}, runTest) => {
+        slowFixture: [async ({}, runTest) => {
           await runTest();
           await new Promise(f => setTimeout(f, 100000));
         }, { scope: 'worker' }]
       });
 
-      test('fails', async ({timeout}) => {
+      test('fails', async ({ slowFixture }) => {
       });
     `
   }, { timeout: 500 });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Worker teardown timeout of 500ms exceeded while tearing down "timeout".');
+  expect(result.output).toContain('Fixture "slowFixture" timeout of 500ms exceeded during teardown.');
 });
 
 test('should handle worker fixture error', async ({ runInlineTest }) => {
@@ -607,7 +607,7 @@ test('should report worker fixture teardown with debug info', async ({ runInline
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(20);
   expect(result.output).toContain([
-    'Worker teardown timeout of 1000ms exceeded while tearing down "fixture".',
+    'Fixture "fixture" timeout of 1000ms exceeded during teardown.',
     '',
     'Failed worker ran 20 tests, last 10 tests were:',
     'a.spec.ts:10:9 › good10',

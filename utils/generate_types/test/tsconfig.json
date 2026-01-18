@@ -4,6 +4,7 @@
     "target": "ESNext",
     "noEmit": true,
     "moduleResolution": "node",
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "test.ts"

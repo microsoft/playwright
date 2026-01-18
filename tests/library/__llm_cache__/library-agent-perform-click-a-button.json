@@ -1,0 +1,30 @@
+{
+  "b17b5a7075f197f7886c6b8c882c2c41edc2deb6": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the Submit button for you."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Submit button",
+            "ref": "e2",
+            "_is_done": true
+          },
+          "id": "toolu_01Cn4RQJc1DfvDMS4Mox9C3V"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3043,
+      "output": 101
+    }
+  }
+}

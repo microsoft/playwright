@@ -142,7 +142,7 @@ program
     .option('--with-deps', 'install system dependencies for browsers')
     .option('--dry-run', 'do not execute installation, only print information')
     .option('--list', 'prints list of browsers from all playwright installations')
-    .option('--force', 'force reinstall of stable browser channels')
+    .option('--force', 'force reinstall of already installed browsers')
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
@@ -177,8 +177,7 @@ program
           throw new Error(`Only one of --dry-run and --list can be specified`);
         if (options.dryRun) {
           for (const executable of executables) {
-            const version = executable.browserVersion ? `version ` + executable.browserVersion : '';
-            console.log(`browser: ${executable.name}${version ? ' ' + version : ''}`);
+            console.log(registry.calculateDownloadTitle(executable));
             console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
             if (executable.downloadURLs?.length) {
               const [url, ...fallbacks] = executable.downloadURLs;
@@ -192,8 +191,7 @@ program
           const browsers = await registry.listInstalledBrowsers();
           printGroupedByPlaywrightVersion(browsers);
         } else {
-          const force = args.length === 0 ? false : !!options.force;
-          await registry.install(executables, { force });
+          await registry.install(executables, { force: options.force });
           await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
             e.name = 'Playwright Host validation warning';
             console.error(e);
@@ -554,6 +552,7 @@ async function openPage(context: BrowserContext, url: string | undefined): Promi
 
 async function open(options: Options, url: string | undefined) {
   const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
+  await context._exposeConsoleApi();
   await openPage(context, url);
 }
 

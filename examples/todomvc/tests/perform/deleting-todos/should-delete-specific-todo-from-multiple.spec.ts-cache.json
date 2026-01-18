@@ -1,0 +1,98 @@
+{
+  "'Task 1' and 'Task 3' remain visible": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 3\n`);"
+      }
+    ]
+  },
+  "'Task 2' is removed from the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Task 2\"i",
+        "isNot": true,
+        "code": "await expect(page.getByText('Task 2')).not.toBeVisible();"
+      }
+    ]
+  },
+  "Add three todos: 'Task 1', 'Task 2', 'Task 3'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 1",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 1');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 2",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 2');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Task 3",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Task 3');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "All three todos appear in the list": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Task 1\n  - listitem: Task 2\n  - listitem: Task 3\n`);"
+      }
+    ]
+  },
+  "Counter shows '2 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"2 items left\"i",
+        "code": "await expect(page.getByText('2 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "Counter shows '3 items left'": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"3 items left\"i",
+        "code": "await expect(page.getByText('3 items left')).toBeVisible();"
+      }
+    ]
+  },
+  "Hover over 'Task 2' and click its delete button": {
+    "actions": [
+      {
+        "method": "hover",
+        "selector": "internal:role=listitem >> internal:has-text=\"Task 2\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Task 2' }).hover();"
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=button[name=\"Delete\"i]",
+        "code": "await page.getByRole('button', { name: 'Delete' }).click();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "type": "textbox",
+        "value": "",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
+      }
+    ]
+  }
+}

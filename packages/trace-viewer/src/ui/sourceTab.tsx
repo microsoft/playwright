@@ -103,6 +103,7 @@ export const SourceTab: React.FunctionComponent<{
 
   const showStackFrames = (stack?.length ?? 0) > 1;
   const shortFileName = getFileName(fileName);
+  const highligter = shortFileName.endsWith('.md') ? 'markdown' : 'javascript';
 
   return <SplitView
     sidebarSize={200}
@@ -116,7 +117,7 @@ export const SourceTab: React.FunctionComponent<{
         <CopyToClipboard description='Copy filename' value={shortFileName}/>
         {location && <ToolbarButton icon='link-external' title='Open in VS Code' onClick={openExternally}></ToolbarButton>}
       </Toolbar> }
-      <CodeMirrorWrapper text={source.content || ''} highlighter='javascript' highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} dataTestId='source-code-mirror'/>
+      <CodeMirrorWrapper text={source.content || ''} highlighter={highligter} highlight={highlight} revealLine={targetLine} readOnly={true} lineNumbers={true} dataTestId='source-code-mirror'/>
     </div>}
     sidebar={<StackTraceView stack={stack} selectedFrame={selectedFrame} setSelectedFrame={setSelectedFrame} />}
   />;

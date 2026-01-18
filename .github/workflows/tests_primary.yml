@@ -89,27 +89,47 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, macos-latest]
         node-version: [20]
         shardIndex: [1, 2]
         shardTotal: [2]
+        shardWeights: ['58:42']
         include:
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 1
+            shardTotal: 3
+            shardWeights: '44:33:23'
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 2
+            shardTotal: 3
+            shardWeights: '44:33:23'
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 3
+            shardTotal: 3
+            shardWeights: '44:33:23'
           - os: ubuntu-latest
             node-version: 22
             shardIndex: 1
             shardTotal: 2
+            shardWeights: '58:42'
           - os: ubuntu-latest
             node-version: 22
             shardIndex: 2
             shardTotal: 2
+            shardWeights: '58:42'
           - os: ubuntu-latest
             node-version: 24
             shardIndex: 1
             shardTotal: 2
+            shardWeights: '58:42'
           - os: ubuntu-latest
             node-version: 24
             shardIndex: 2
             shardTotal: 2
+            shardWeights: '58:42'
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -119,7 +139,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         node-version: ${{matrix.node-version}}
-        command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --shard-weights=58:42
+        command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }} --shard-weights=${{ matrix.shardWeights }}
         bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
         shard-index: ${{ matrix.shardIndex }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
@@ -153,7 +173,7 @@ jobs:
       run: npm ci && npm run build
       working-directory: ./playwright-vscode
     - name: Run extension tests
-      run: npm run test -- --workers=1
+      run: npm run test
       working-directory: ./playwright-vscode
       env:
         PW_TAG: "@vscode-extension"

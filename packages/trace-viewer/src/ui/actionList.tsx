@@ -152,7 +152,8 @@ export const renderAction = (
 };
 
 export function renderTitleForCall(action: ActionTraceEvent): { elements: React.ReactNode[], title: string } {
-  const titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
+  let titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
+  titleFormat = titleFormat.replace(/\n/g, ' ');
 
   const elements: React.ReactNode[] = [];
   const title: string[] = [];

@@ -3,14 +3,14 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1205",
+      "revision": "1207",
       "installByDefault": true,
       "browserVersion": "144.0.7559.20",
       "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1205",
+      "revision": "1207",
       "installByDefault": true,
       "browserVersion": "144.0.7559.20",
       "title": "Chrome Headless Shell"
@@ -31,33 +31,25 @@
     },
     {
       "name": "firefox",
-      "revision": "1507",
+      "revision": "1509",
       "installByDefault": true,
-      "browserVersion": "145.0.2",
+      "browserVersion": "146.0.1",
       "title": "Firefox"
     },
     {
       "name": "firefox-beta",
-      "revision": "1502",
+      "revision": "1504",
       "installByDefault": false,
       "browserVersion": "146.0b8",
       "title": "Firefox Beta"
     },
     {
       "name": "webkit",
-      "revision": "2242",
+      "revision": "2248",
       "installByDefault": true,
       "revisionOverrides": {
         "debian11-x64": "2105",
         "debian11-arm64": "2105",
-        "mac10.14": "1446",
-        "mac10.15": "1616",
-        "mac11": "1816",
-        "mac11-arm64": "1816",
-        "mac12": "2009",
-        "mac12-arm64": "2009",
-        "mac13": "2140",
-        "mac13-arm64": "2140",
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },

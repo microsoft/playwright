@@ -35,9 +35,11 @@ import type { CallMetadata } from './callMetadata';
 //     should be used to cleanup. Whether the cleanup is awaited or not depends on the method details.
 //     For the trickiest cases, look at `raceUncancellableOperationWithCleanup()` helper method.
 export interface Progress {
+  timeout: number;
   deadline: number;
   log(message: string): void;
-  race<T>(promise: Promise<T> | Promise<T>[], options?: { timeout?: number }): Promise<T>;
-  wait(timeout: number): Promise<void>;
+  race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
+  wait(timeout: number): Promise<void>; // timeout = 0 here means "wait 0 ms", not forever.
+  signal: AbortSignal;
   metadata: CallMetadata;
 }

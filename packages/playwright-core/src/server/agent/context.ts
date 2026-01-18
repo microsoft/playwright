@@ -23,53 +23,78 @@ import type * as loopTypes from '@lowire/loop';
 import type * as actions from './actions';
 import type { Page } from '../page';
 import type { Progress } from '../progress';
-import type { BrowserContextOptions } from '../types';
 import type { Language } from '../../utils/isomorphic/locatorGenerators.ts';
-import type { ToolDefinition } from './tool';
+import type * as channels from '@protocol/channels';
 
-type AgentOptions = BrowserContextOptions['agent'];
 
+type HistoryItem = {
+  type: 'expect' | 'perform';
+  description: string;
+};
 export class Context {
-  readonly options: AgentOptions;
   readonly page: Page;
-  readonly actions: actions.ActionWithCode[] = [];
   readonly sdkLanguage: Language;
-  readonly progress: Progress;
-  private _callIntent: string | undefined;
+  readonly agentParams: channels.PageAgentParams;
+  readonly events: loopTypes.LoopEvents;
+  private _actions: actions.ActionWithCode[] = [];
+  private _history: HistoryItem[] = [];
+  private _budget: { tokens: number | undefined; };
 
-  constructor(apiCallProgress: Progress, page: Page) {
-    this.progress = apiCallProgress;
+  constructor(page: Page, agentParams: channels.PageAgentParams, events: loopTypes.LoopEvents) {
     this.page = page;
-    this.options = page.browserContext._options.agent;
+    this.agentParams = agentParams;
     this.sdkLanguage = page.browserContext._browser.sdkLanguage();
+    this.events = events;
+    this._budget = { tokens: agentParams.maxTokens };
   }
 
-  async callTool(tool: ToolDefinition, params: any, options: { intent?: string }) {
-    this._callIntent = options.intent;
-    try {
-      return await tool.handle(this, params);
-    } finally {
-      this._callIntent = undefined;
-    }
+  async runActionAndWait(progress: Progress, action: actions.Action) {
+    return await this.runActionsAndWait(progress, [action]);
   }
 
-  async runActionAndWait(action: actions.Action) {
-    return await this.runActionsAndWait([action]);
-  }
-
-  async runActionsAndWait(action: actions.Action[]) {
-    const error = await this.waitForCompletion(async () => {
+  async runActionsAndWait(progress: Progress, action: actions.Action[], options?: { noWait?: boolean }) {
+    const error = await this.waitForCompletion(progress, async () => {
       for (const a of action) {
-        await runAction(this.progress, 'generate', this.page, a, this.options?.secrets ?? []);
+        await runAction(progress, 'generate', this.page, a, this.agentParams?.secrets ?? []);
         const code = await generateCode(this.sdkLanguage, a);
-        this.actions.push({ ...a, code, intent: this._callIntent });
+        this._actions.push({ ...a, code });
       }
       return undefined;
-    }).catch((error: Error) => error);
-    return await this.snapshotResult(error);
+    }, options).catch((error: Error) => error);
+    return await this.snapshotResult(progress, error);
   }
 
-  async waitForCompletion<R>(callback: () => Promise<R>): Promise<R> {
+  async runActionNoWait(progress: Progress, action: actions.Action) {
+    return await this.runActionsAndWait(progress, [action], { noWait: true });
+  }
+
+  actions() {
+    return this._actions.slice();
+  }
+
+  history(): HistoryItem[] {
+    return this._history;
+  }
+
+  pushHistory(item: HistoryItem) {
+    this._history.push(item);
+    this._actions = [];
+  }
+
+  consumeTokens(tokens: number) {
+    if (this._budget.tokens === undefined)
+      return;
+    this._budget.tokens = Math.max(0, this._budget.tokens - tokens);
+  }
+
+  maxTokensRemaining(): number | undefined {
+    return this._budget.tokens;
+  }
+
+  async waitForCompletion<R>(progress: Progress, callback: () => Promise<R>, options?: { noWait?: boolean }): Promise<R> {
+    if (options?.noWait)
+      return await callback();
+
     const requests: Request[] = [];
     const requestListener = (request: Request) => requests.push(request);
     const disposeListeners = () => {
@@ -80,14 +105,14 @@ export class Context {
     let result: R;
     try {
       result = await callback();
-      await this.progress.wait(500);
+      await progress.wait(500);
     } finally {
       disposeListeners();
     }
 
     const requestedNavigation = requests.some(request => request.isNavigationRequest());
     if (requestedNavigation) {
-      await this.page.mainFrame().waitForLoadState(this.progress, 'load');
+      await this.page.mainFrame().waitForLoadState(progress, 'load');
       return result;
     }
 
@@ -98,15 +123,16 @@ export class Context {
       else
         promises.push(request.response());
     }
-    await this.progress.race(promises, { timeout: 5000 });
-    if (requests.length)
-      await this.progress.wait(500);
+
+    await progress.race([...promises, progress.wait(5000)]);
+    if (!promises.length)
+      await progress.wait(500);
 
     return result;
   }
 
-  async snapshotResult(error?: Error): Promise<loopTypes.ToolResult> {
-    let { full } = await this.page.snapshotForAI(this.progress);
+  async snapshotResult(progress: Progress, error?: Error): Promise<loopTypes.ToolResult> {
+    let { full } = await this.page.snapshotForAI(progress);
     full = this._redactText(full);
 
     const text: string[] = [];
@@ -132,10 +158,10 @@ export class Context {
     };
   }
 
-  async refSelectors(params: { element: string, ref: string }[]): Promise<string[]> {
+  async refSelectors(progress: Progress, params: { element: string, ref: string }[]): Promise<string[]> {
     return Promise.all(params.map(async param => {
       try {
-        const { resolvedSelector } = await this.page.mainFrame().resolveSelector(this.progress, `aria-ref=${param.ref}`);
+        const { resolvedSelector } = await this.page.mainFrame().resolveSelector(progress, `aria-ref=${param.ref}`);
         return resolvedSelector;
       } catch (e) {
         throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
@@ -143,15 +169,8 @@ export class Context {
     }));
   }
 
-  limits(options: { maxTurns?: number, maxTokens?: number } = {}): { maxTurns: number | undefined, maxTokens: number | undefined } {
-    return {
-      maxTurns: options.maxTurns ?? this.options?.maxTurns ?? 10,
-      maxTokens: options.maxTokens ?? this.options?.maxTokens ?? undefined,
-    };
-  }
-
   private _redactText(text: string): string {
-    const secrets = this.options?.secrets;
+    const secrets = this.agentParams?.secrets;
     if (!secrets)
       return text;
 

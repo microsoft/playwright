@@ -1,0 +1,77 @@
+{
+  "Add a todo 'Original task'": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Original task",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Original task');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Double-click to edit and change text to '   Edited task   ' (with leading and trailing spaces)": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:testid=[data-testid=\"todo-title\"s]",
+        "clickCount": 2,
+        "code": "await page.getByTestId('todo-title').click({\nclickCount: 2\n});"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"Edit\"i]",
+        "text": "   Edited task   ",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'Edit' }).fill('   Edited task   ');\nawait page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "Edit textbox shows the text with spaces": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"   Edited task   \"i",
+        "code": "await expect(page.getByText('   Edited task   ')).toBeVisible();"
+      }
+    ]
+  },
+  "Press Enter to save": {
+    "actions": [
+      {
+        "method": "pressKey",
+        "key": "Enter",
+        "code": "await page.keyboard.press('Enter');"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectValue",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "type": "textbox",
+        "value": "",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toHaveValue('');"
+      }
+    ]
+  },
+  "The todo appears in the list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Original task\"i",
+        "code": "await expect(page.getByText('Original task')).toBeVisible();"
+      }
+    ]
+  },
+  "The todo is saved as 'Edited task' without leading or trailing whitespace": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:text=\"Edited task\"i",
+        "code": "await expect(page.getByText('Edited task')).toBeVisible();"
+      }
+    ]
+  }
+}

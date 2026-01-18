@@ -40,8 +40,8 @@ it('should block all events when hit target is wrong', async ({ page, server }) 
     }
   });
 
-  const error = await page.click('button', { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 1000ms exceeded.');
+  const error = await page.click('button', { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
 
   // Give it some time, just in case.
   await page.waitForTimeout(1000);
@@ -107,8 +107,8 @@ it('should block all events when hit target is wrong and element detaches', asyn
     }
   });
 
-  const error = await page.click('button', { timeout: 1000 }).catch(e => e);
-  expect(error.message).toContain('page.click: Timeout 1000ms exceeded.');
+  const error = await page.click('button', { timeout: 3000 }).catch(e => e);
+  expect(error.message).toContain('page.click: Timeout 3000ms exceeded.');
 
   // Give it some time, just in case.
   await page.waitForTimeout(1000);
@@ -359,7 +359,7 @@ it('should detect overlay from another shadow root', async ({ page, server }) =>
     </script>
   `);
 
-  const error = await page.locator('#container1 >> text=click me').click({ timeout: 2000 }).catch(e => e);
+  const error = await page.locator('#container1 >> text=click me').click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain(`<div id="container2"></div> intercepts pointer events`);
 });
 
@@ -391,7 +391,7 @@ it('should detect overlaid element in a transformed iframe', async ({ page }) =>
     "></iframe>
   `);
   const locator = page.frameLocator('iframe').locator('div');
-  const error = await locator.click({ timeout: 2000 }).catch(e => e);
+  const error = await locator.click({ timeout: 3000 }).catch(e => e);
   expect(error.message).toContain('<section>Overlay</section> intercepts pointer events');
 });
 

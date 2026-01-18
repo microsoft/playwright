@@ -55,6 +55,62 @@ export function isLocalHostname(hostname: string): boolean {
   return hostname === 'localhost' || hostname.endsWith('.localhost');
 }
 
+// Forbidden request headers according to https://developer.mozilla.org/en-US/docs/Glossary/Forbidden_request_header
+// These headers cannot be set or modified programmatically.
+const FORBIDDEN_HEADER_NAMES = new Set([
+  'accept-charset',
+  'accept-encoding',
+  'access-control-request-headers',
+  'access-control-request-method',
+  'connection',
+  'content-length',
+  'cookie',
+  'date',
+  'dnt',
+  'expect',
+  'host',
+  'keep-alive',
+  'origin',
+  'referer',
+  'set-cookie',
+  'te',
+  'trailer',
+  'transfer-encoding',
+  'upgrade',
+  'via',
+]);
+
+// Forbidden method names for X-HTTP-Method-* headers
+const FORBIDDEN_METHODS = new Set(['CONNECT', 'TRACE', 'TRACK']);
+
+function isForbiddenHeader(name: string, value?: string): boolean {
+  const lowerName = name.toLowerCase();
+
+  if (FORBIDDEN_HEADER_NAMES.has(lowerName))
+    return true;
+
+  if (lowerName.startsWith('proxy-'))
+    return true;
+
+  if (lowerName.startsWith('sec-'))
+    return true;
+
+  if (lowerName === 'x-http-method' ||
+      lowerName === 'x-http-method-override' ||
+      lowerName === 'x-method-override') {
+    if (value && FORBIDDEN_METHODS.has(value.toUpperCase()))
+      return true;
+  }
+
+  return false;
+}
+
+export function applyHeadersOverrides(original: HeadersArray, overrides: HeadersArray): HeadersArray {
+  const forbiddenHeaders = original.filter(header => isForbiddenHeader(header.name, header.value));
+  const allowedHeaders = overrides.filter(header => !isForbiddenHeader(header.name, header.value));
+  return mergeHeaders([allowedHeaders, forbiddenHeaders]);
+}
+
 // Rollover to 5-digit year:
 // 253402300799 == Fri, 31 Dec 9999 23:59:59 +0000 (UTC)
 // 253402300800 == Sat,  1 Jan 1000 00:00:00 +0000 (UTC)
@@ -124,7 +180,6 @@ export class Request extends SdkObject {
   private _method: string;
   private _postData: Buffer | null;
   readonly _headers: HeadersArray;
-  private _headersMap = new Map<string, string>();
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
   readonly _context: contexts.BrowserContext;
@@ -155,7 +210,6 @@ export class Request extends SdkObject {
     this._method = method;
     this._postData = postData;
     this._headers = headers;
-    this._updateHeadersMap();
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
 
@@ -166,13 +220,7 @@ export class Request extends SdkObject {
 
   _applyOverrides(overrides: types.NormalizedContinueOverrides) {
     this._overrides = { ...this._overrides, ...overrides };
-    this._updateHeadersMap();
     return this._overrides;
-  }
-
-  private _updateHeadersMap() {
-    for (const { name, value } of this.headers())
-      this._headersMap.set(name.toLowerCase(), value);
   }
 
   overrides() {
@@ -200,7 +248,8 @@ export class Request extends SdkObject {
   }
 
   headerValue(name: string): string | undefined {
-    return this._headersMap.get(name);
+    const lowerCaseName = name.toLowerCase();
+    return this.headers().find(h => h.name.toLowerCase() === lowerCaseName)?.value;
   }
 
   // "null" means no raw headers available - we'll use provisional headers as raw headers.
@@ -376,10 +425,9 @@ export class Route extends SdkObject {
         throw new Error('New URL must have same protocol as overridden URL');
     }
     if (overrides.headers) {
-      overrides.headers = overrides.headers?.filter(header => {
-        const headerName = header.name.toLowerCase();
-        return headerName !== 'cookie' && headerName !== 'host';
-      });
+      // Filter out forbidden headers from overrides - they cannot be overridden
+      // and will be passed as-is from the original request
+      overrides.headers = applyHeadersOverrides(this._request._headers, overrides.headers);
     }
     overrides = this._request._applyOverrides(overrides);
 

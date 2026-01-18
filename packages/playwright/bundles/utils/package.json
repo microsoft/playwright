@@ -7,8 +7,10 @@
     "enquirer": "2.3.6",
     "get-east-asian-width": "1.3.0",
     "json5": "2.2.3",
+    "remark-parse": "11.0.0",
     "source-map-support": "0.5.21",
-    "stoppable": "1.1.0"
+    "stoppable": "1.1.0",
+    "unified": "11.0.5"
   },
   "devDependencies": {
     "@types/source-map-support": "^0.5.4",

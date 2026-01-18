@@ -1,0 +1,104 @@
+{
+  "Add three todos and mark one as complete": {
+    "actions": [
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Buy groceries",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Buy groceries');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Walk the dog",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Walk the dog');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "fill",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "text": "Read a book",
+        "submit": true,
+        "code": "await page.getByRole('textbox', { name: 'What needs to be done?' }).fill('Read a book');\nawait page.keyboard.press('Enter');"
+      },
+      {
+        "method": "click",
+        "selector": "internal:role=listitem >> internal:has-text=\"Buy groceries\"i >> internal:label=\"Toggle Todo\"i",
+        "code": "await page.getByRole('listitem').filter({ hasText: 'Buy groceries' }).getByLabel('Toggle Todo').click();"
+      }
+    ]
+  },
+  "All todos (both completed and active) are displayed": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
+      }
+    ]
+  },
+  "Click on the 'All' filter link": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await page.getByRole('link', { name: 'All' }).click();"
+      }
+    ]
+  },
+  "Navigate to the 'Active' filter by clicking on it": {
+    "actions": [
+      {
+        "method": "click",
+        "selector": "internal:role=link[name=\"Active\"i]",
+        "code": "await page.getByRole('link', { name: 'Active' }).click();"
+      }
+    ]
+  },
+  "Only active todos are visible": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
+      }
+    ]
+  },
+  "The 'All' filter link is highlighted": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=link[name=\"All\"i]",
+        "code": "await expect(page.getByRole('link', { name: 'All' })).toBeVisible();"
+      }
+    ]
+  },
+  "The page loads with an empty todo list": {
+    "actions": [
+      {
+        "method": "expectVisible",
+        "selector": "internal:role=textbox[name=\"What needs to be done?\"i]",
+        "code": "await expect(page.getByRole('textbox', { name: 'What needs to be done?' })).toBeVisible();"
+      }
+    ]
+  },
+  "The URL changes to #/": {
+    "actions": [
+      {
+        "method": "expectURL",
+        "regex": "/.*#/$/",
+        "code": "await expect(page).toHaveURL(/.*#\\/$/);"
+      }
+    ]
+  },
+  "Three todos exist, one completed and two active": {
+    "actions": [
+      {
+        "method": "expectAria",
+        "template": "- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book",
+        "code": "await expect(page.locator('body')).toMatchAria(`\n- list:\n  - listitem: Buy groceries\n  - listitem: Walk the dog\n  - listitem: Read a book\n`);"
+      }
+    ]
+  }
+}

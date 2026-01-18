@@ -134,7 +134,7 @@ browserTest.describe('page screenshot', () => {
   }, async ({ browserName, headless, platform, contextFactory, channel }) => {
     browserTest.fixme(browserName === 'chromium' && !headless && platform === 'linux', 'Chromium has gpu problems on linux with large screenshots');
     // TODO: figure this out. https://github.com/microsoft/playwright/issues/38476
-    browserTest.fixme(platform === 'darwin' && channel === 'chromium-tip-of-tree', 'SwiftShader is forced on Mac, and does not render below 8192px');
+    browserTest.fixme(platform === 'darwin' && browserName === 'chromium', 'SwiftShader is forced on Mac, and does not render below 8192px');
     browserTest.slow(true, 'Large screenshot is slow');
 
     const context = await contextFactory();
