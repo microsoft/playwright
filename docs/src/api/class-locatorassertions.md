@@ -1195,6 +1195,7 @@ For example, consider the following list:
   <li>Item Text 1</li>
   <li>Item Text 2</li>
   <li>Item Text 3</li>
+  <li>Item Text 4</li>
 </ul>
 ```
 
