@@ -3414,6 +3414,12 @@ Request:
 
   commands:
 
+    body:
+      title: Get request body
+      group: getter
+      returns:
+        body: binary?
+
     response:
       internal: true
       returns:

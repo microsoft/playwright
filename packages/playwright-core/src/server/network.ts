@@ -179,6 +179,7 @@ export class Request extends SdkObject {
   private _resourceType: ResourceType;
   private _method: string;
   private _postData: Buffer | null;
+  private _getPostData: (() => Promise<Buffer>) | null;
   readonly _headers: HeadersArray;
   readonly _frame: frames.Frame | null = null;
   readonly _serviceWorker: pages.Worker | null = null;
@@ -195,7 +196,7 @@ export class Request extends SdkObject {
   };
 
   constructor(context: contexts.BrowserContext, frame: frames.Frame | null, serviceWorker: pages.Worker | null, redirectedFrom: Request | null, documentId: string | undefined,
-    url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray) {
+    url: string, resourceType: ResourceType, method: string, postData: Buffer | null, headers: HeadersArray, getPostData: (() => Promise<Buffer>) | null = null) {
     super(frame || context, 'request');
     assert(!url.startsWith('data:'), 'Data urls should not fire requests');
     this._context = context;
@@ -209,6 +210,7 @@ export class Request extends SdkObject {
     this._resourceType = resourceType;
     this._method = method;
     this._postData = postData;
+    this._getPostData = getPostData;
     this._headers = headers;
     this._isFavicon = url.endsWith('/favicon.ico') || !!redirectedFrom?._isFavicon;
   }
@@ -241,6 +243,14 @@ export class Request extends SdkObject {
 
   postDataBuffer(): Buffer | null {
     return this._overrides?.postData || this._postData;
+  }
+
+  async body(): Promise<Buffer | null> {
+    if (this._overrides?.postData)
+      return this._overrides.postData;
+    if (this._getPostData)
+      return await this._getPostData();
+    return this._postData;
   }
 
   headers(): HeadersArray {

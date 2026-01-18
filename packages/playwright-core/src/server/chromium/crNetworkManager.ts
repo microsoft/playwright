@@ -598,14 +598,23 @@ class InterceptableRequest {
       headers,
       method,
       url,
+      hasPostData = false,
       postDataEntries = null,
     } = requestPausedEvent ? requestPausedEvent.request : requestWillBeSentEvent.request;
     let postDataBuffer = null;
+    let getPostData: (() => Promise<Buffer>) | null = null;
     const entries = postDataEntries?.filter(entry => entry.bytes);
-    if (entries && entries.length)
+    if (entries && entries.length) {
       postDataBuffer = Buffer.concat(entries.map(entry => Buffer.from(entry.bytes!, 'base64')));
+    } else if (hasPostData) {
+      getPostData = async () => {
+        const requestId = requestPausedEvent ? requestPausedEvent.requestId : requestWillBeSentEvent.requestId;
+        const { postData } = await session.send('Network.getRequestPostData', { requestId });
+        return Buffer.from(postData);
+      };
+    }
 
-    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers));
+    this.request = new network.Request(context, frame, serviceWorker, redirectedFrom?.request || null, documentId, url, toResourceType(requestWillBeSentEvent.type || 'Other'), method, postDataBuffer,  headersOverride || headersObjectToArray(headers), getPostData);
   }
 }
 
