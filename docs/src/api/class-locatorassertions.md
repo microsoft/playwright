@@ -1203,7 +1203,7 @@ Let's see how we can use the assertion:
 
 ```js
 // ✓ Contains the right items in the right order
-await expect(page.locator('ul > li')).toContainText(['Text 1', 'Text 3']);
+await expect(page.locator('ul > li')).toContainText(['Text 1', 'Text 3', 'Text 4']);
 
 // ✖ Wrong order
 await expect(page.locator('ul > li')).toContainText(['Text 3', 'Text 2']);
