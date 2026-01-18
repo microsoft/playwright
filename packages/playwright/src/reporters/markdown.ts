@@ -22,6 +22,7 @@ import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError } fro
 type MarkdownReporterOptions = {
   configDir: string, // TODO: make it public?
   outputFile?: string;
+  shardDurationThreshold?: number;
 };
 
 class MarkdownReporter implements Reporter {
@@ -50,6 +51,17 @@ class MarkdownReporter implements Reporter {
   async onEnd(result: FullResult) {
     const summary = this._generateSummary();
     const lines: string[] = [];
+    if (this._options.shardDurationThreshold && result.shards) {
+      for (const shard of result.shards) {
+        if (shard.duration > this._options.shardDurationThreshold) {
+          const shardLabel = shard.shardIndex !== undefined ? `Shard ${shard.shardIndex}` : 'Shard';
+          const durationMins = Math.round(shard.duration / 60000);
+          const thresholdMins = Math.round(this._options.shardDurationThreshold / 60000);
+          lines.push(`:warning: **Warning: ${shardLabel} took ${durationMins} minutes, exceeding the ${thresholdMins} minute threshold.**`);
+          lines.push(``);
+        }
+      }
+    }
     if (this._fatalErrors.length)
       lines.push(`**${this._fatalErrors.length} fatal errors, not part of any test**`);
     if (summary.unexpected.length) {
