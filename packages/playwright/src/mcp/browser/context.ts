@@ -19,10 +19,12 @@ import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
 import { fileURLToPath } from 'url';
 import os from 'os';
+import path from 'path';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile  } from './config';
+import { firstRootPath } from '../sdk/server';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
@@ -118,6 +120,13 @@ export class Context {
 
   async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
     return outputFile(this.config, this._clientInfo, fileName, options);
+  }
+
+  pathRelativeToRoot(filePath: string): string {
+    const root = firstRootPath(this._clientInfo);
+    if (!root)
+      return filePath;
+    return path.relative(root, filePath);
   }
 
   private _onPageCreated(page: playwright.Page) {

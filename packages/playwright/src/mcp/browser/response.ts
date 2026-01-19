@@ -161,8 +161,10 @@ export class Response {
 
     if (this._files.length) {
       const lines: string[] = [];
-      for (const file of this._files)
-        lines.push(`- [${file.title}](${file.fileName})`);
+      for (const file of this._files) {
+        const filePath = this._context.pathRelativeToRoot(file.fileName);
+        lines.push(`- [${file.title}](${filePath})`);
+      }
       renderedResponse.updates.push({ category: 'files', content: lines.join('\n') });
     }
 
