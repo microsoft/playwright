@@ -75,6 +75,8 @@ export const NetworkTab: React.FunctionComponent<{
   const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
+  const visibleSelectedEntry = React.useMemo(() => (selectedEntry && networkModel.resources.includes(selectedEntry.resource)) ? selectedEntry : undefined, [selectedEntry, networkModel.resources]);
+
   const { renderedEntries } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
     if (sorting)
@@ -98,10 +100,10 @@ export const NetworkTab: React.FunctionComponent<{
     name='network'
     ariaLabel='Network requests'
     items={renderedEntries}
-    selectedItem={selectedEntry}
+    selectedItem={visibleSelectedEntry}
     onSelected={item => setSelectedEntry(item)}
     onHighlighted={item => onResourceHovered?.(item?.ordinal)}
-    columns={visibleColumns(!!selectedEntry, renderedEntries)}
+    columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
     columnWidths={columnWidths}
     setColumnWidths={setColumnWidths}
@@ -113,14 +115,14 @@ export const NetworkTab: React.FunctionComponent<{
   />;
   return <>
     <NetworkFilters filterState={filterState} onFilterStateChange={onFilterStateChange} />
-    {!selectedEntry && grid}
-    {selectedEntry &&
+    {!visibleSelectedEntry && grid}
+    {visibleSelectedEntry &&
       <SplitView
         sidebarSize={columnWidths.get('name')!}
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={selectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={selectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
+        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
         sidebar={grid}
       />}
   </>;
