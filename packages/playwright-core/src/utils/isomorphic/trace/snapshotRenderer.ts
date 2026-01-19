@@ -404,7 +404,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
         element.scrollLeft = +element.getAttribute('__playwright_scroll_left_')!;
         element.removeAttribute('__playwright_scroll_left_');
         if (frameBoundingRectsInfo.frames.has(element))
-          frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollTop;
+          frameBoundingRectsInfo.frames.get(element)!.scrollLeft = element.scrollLeft;
       }
 
       win.document.styleSheets[0].disabled = true;
