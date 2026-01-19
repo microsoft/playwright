@@ -26,6 +26,33 @@
       "output": 135
     }
   },
+  "1ef1cc908e77dd9f650c73ac353e407ffe53d265": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the issue - the actual URL includes a server prefix. Let me use a regex pattern to match the URL ending with `/page.html`:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/page\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_01RLxJbfjyphrJGkdmHw2JmZ"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2425,
+      "output": 110
+    }
+  },
   "25674340b53e0aab05c6156116a112c10c164ae6": {
     "result": {
       "role": "assistant",
