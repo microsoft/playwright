@@ -79,7 +79,18 @@ export const GlobalFilterView: React.FC<{
         {icons.search()}
         {/* Use navigationId to reset defaultValue */}
         <input name='q' spellCheck={false} className='form-control subnav-search-input input-contrast width-full' aria-label='Search tests' placeholder='Search tests' value={filterText} onChange={e => {
-          setFilterText(e.target.value);
+          const newValue = e.target.value;
+          setFilterText(newValue);
+          // Update URL in real-time
+          const url = new URL(window.location.href);
+          const currentParams = new URLSearchParams(url.hash.slice(1));
+          const params = new URLSearchParams();
+          if (newValue.trim())
+            params.set('q', newValue.trim());
+          if (currentParams.has('speedboard'))
+            params.set('speedboard', '');
+          url.hash = params.toString() ? '?' + params.toString() : '';
+          navigate(url);
         }}></input>
       </form>
     </div>
