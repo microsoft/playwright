@@ -694,7 +694,10 @@ export class Registry {
       'linux': 'reinstall_chrome_stable_linux.sh',
       'darwin': 'reinstall_chrome_stable_mac.sh',
       'win32': 'reinstall_chrome_stable_win.ps1',
-    })));
+    }), [
+      path.join(os.homedir(), '.local/share/flatpak/exports/bin/com.google.Chrome'),
+      '/var/lib/flatpak/exports/bin/com.google.Chrome',
+    ]));
 
     this._executables.push(this._createChromiumChannel('chrome-beta', {
       'linux': '/opt/google/chrome-beta/chrome',
@@ -758,7 +761,10 @@ export class Registry {
       'linux': '/snap/bin/firefox',
       'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
       'win32': '\\Mozilla Firefox\\firefox.exe',
-    }));
+    }, undefined, [
+      path.join(os.homedir(), '.local/share/flatpak/exports/bin/org.mozilla.firefox'),
+      '/var/lib/flatpak/exports/bin/org.mozilla.firefox',
+    ]));
     this._executables.push(this._createBidiFirefoxChannel('moz-firefox-beta', {
       'linux': '/opt/firefox-beta/firefox',
       'darwin': '/Applications/Firefox.app/Contents/MacOS/firefox',
@@ -924,7 +930,7 @@ export class Registry {
     });
   }
 
-  private _createChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+  private _createChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>, linuxAlternatives?: string[]): ExecutableImpl {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
@@ -946,6 +952,15 @@ export class Registry {
         if (canAccessFile(executablePath))
           return executablePath;
       }
+
+      // Check Linux alternative paths (e.g. Flatpak)
+      if (process.platform === 'linux' && linuxAlternatives) {
+        for (const altPath of linuxAlternatives) {
+          if (canAccessFile(altPath))
+            return altPath;
+        }
+      }
+
       if (!shouldThrow)
         return undefined;
 
@@ -966,7 +981,7 @@ export class Registry {
     };
   }
 
-  private _createBidiFirefoxChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>): ExecutableImpl {
+  private _createBidiFirefoxChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>, install?: () => Promise<void>, linuxAlternatives?: string[]): ExecutableImpl {
     const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
       const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
       if (!suffix) {
@@ -988,6 +1003,14 @@ export class Registry {
         if (canAccessFile(executablePath))
           return executablePath;
       }
+
+      if (process.platform === 'linux' && linuxAlternatives) {
+        for (const altPath of linuxAlternatives) {
+          if (canAccessFile(altPath))
+            return altPath;
+        }
+      }
+
       if (shouldThrow)
         throw new Error(`Cannot find Firefox installation for channel '${name}' at the standard system paths. ${`Tried paths:\n  ${prefixes.map(p => path.join(p, suffix)).join('\n  ')}`}`);
       return undefined;
