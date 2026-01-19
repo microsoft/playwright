@@ -134,10 +134,31 @@ const expectURL = defineTool({
   },
 });
 
+const expectTitle = defineTool({
+  schema: {
+    name: 'browser_expect_title',
+    title: 'Expect title',
+    description: 'Expect the page title to match the expected value.',
+    inputSchema: z.object({
+      title: z.string().describe('Expected page title.'),
+      isNot: z.boolean().optional().describe('Expect the opposite'),
+    }),
+  },
+
+  handle: async (progress, context, params) => {
+    return await context.runActionAndWait(progress, {
+      method: 'expectTitle',
+      value: params.title,
+      isNot: params.isNot,
+    });
+  },
+});
+
 export default [
   expectVisible,
   expectVisibleText,
   expectValue,
   expectList,
   expectURL,
+  expectTitle,
 ] as ToolDefinition<any>[];

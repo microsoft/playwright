@@ -117,6 +117,13 @@ const expectURLSchema = zod.object({
 });
 export type ExpectURL = z.infer<typeof expectURLSchema>;
 
+const expectTitleSchema = zod.object({
+  method: zod.literal('expectTitle'),
+  value: zod.string(),
+  isNot: zod.boolean().optional(),
+});
+export type ExpectTitle = z.infer<typeof expectTitleSchema>;
+
 const actionSchema = zod.discriminatedUnion('method', [
   navigateActionSchema,
   clickActionSchema,
@@ -131,6 +138,7 @@ const actionSchema = zod.discriminatedUnion('method', [
   expectValueSchema,
   expectAriaSchema,
   expectURLSchema,
+  expectTitleSchema,
 ]);
 export type Action = z.infer<typeof actionSchema>;
 

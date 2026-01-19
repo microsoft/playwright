@@ -93,6 +93,10 @@ export async function generateCode(sdkLanguage: Language, action: actions.Action
       const notInfix = action.isNot ? 'not.' : '';
       return `await expect(page).${notInfix}toHaveURL(${arg});`;
     }
+    case 'expectTitle': {
+      const notInfix = action.isNot ? 'not.' : '';
+      return `await expect(page).${notInfix}toHaveTitle(${escapeWithQuotes(action.value)});`;
+    }
   }
   // @ts-expect-error
   throw new Error('Unknown action ' + action.method);
