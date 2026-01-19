@@ -22,14 +22,9 @@ import { Page } from './page';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
-type PageAgentOptions = {
-  maxTokens?: number;
-  maxTurns?: number;
-  cacheKey?: string;
-};
-
 export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implements api.PageAgent {
   private _page: Page;
+  _expectTimeout?: number;
 
   static from(channel: channels.PageAgentChannel): PageAgent {
     return (channel as any)._object;
@@ -41,17 +36,20 @@ export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implement
     this._channel.on('turn', params => this.emit(Events.Page.AgentTurn, params));
   }
 
-  async expect(expectation: string, options: PageAgentOptions = {}) {
-    await this._channel.expect({ expectation, ...options });
+  async expect(expectation: string, options: channels.PageAgentExpectOptions = {}) {
+    const timeout = options.timeout ?? this._expectTimeout ?? 5000;
+    await this._channel.expect({ expectation, ...options, timeout });
   }
 
-  async perform(task: string, options: PageAgentOptions = {}) {
-    const { usage } = await this._channel.perform({ task, ...options });
+  async perform(task: string, options: channels.PageAgentPerformOptions = {}) {
+    const timeout = this._page._timeoutSettings.timeout(options);
+    const { usage } = await this._channel.perform({ task, ...options, timeout });
     return { usage };
   }
 
-  async extract<Schema extends any>(query: string, schema: Schema, options: PageAgentOptions = {}): Promise<{ result: any, usage: channels.AgentUsage }> {
-    const { result, usage } = await this._channel.extract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options });
+  async extract<Schema extends any>(query: string, schema: Schema, options: channels.PageAgentExtractOptions = {}): Promise<{ result: any, usage: channels.AgentUsage }> {
+    const timeout = this._page._timeoutSettings.timeout(options);
+    const { result, usage } = await this._channel.extract({ query, schema: this._page._platform.zodToJsonSchema(schema), ...options, timeout });
     return { result, usage };
   }
 

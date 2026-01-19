@@ -50,7 +50,7 @@ export async function pageAgentPerform(progress: Progress, context: Context, use
 ### Task
 ${userTask}
 `;
-
+  progress.disableTimeout();
   await runLoop(progress, context, performTools, task, undefined, callParams);
   await updateCache(context, cacheKey);
 }
@@ -68,7 +68,7 @@ export async function pageAgentExpect(progress: Progress, context: Context, expe
 ### Expectation
 ${expectation}
 `;
-
+  progress.disableTimeout();
   await runLoop(progress, context, expectTools, task, undefined, callParams);
   await updateCache(context, cacheKey);
 }
@@ -101,7 +101,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
 
   const apiCacheTextBefore = context.agentParams.apiCacheFile ?
     await fs.promises.readFile(context.agentParams.apiCacheFile, 'utf-8').catch(() => '{}') : '{}';
-  const apiCacheBefore = JSON.parse(apiCacheTextBefore);
+  const apiCacheBefore = JSON.parse(apiCacheTextBefore || '{}');
 
   const loop = new Loop({
     api: context.agentParams.api as any,

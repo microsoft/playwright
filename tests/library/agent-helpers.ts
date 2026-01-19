@@ -55,9 +55,10 @@ export async function generateAgent(context: BrowserContext, options: AgentOptio
   return { page, agent };
 }
 
-export async function runAgent(context: BrowserContext, options: { secrets?: Record<string, string> } = {}) {
+export async function runAgent(context: BrowserContext, options: AgentOptions = {}) {
   const page = await context.newPage();
   const agent = await page.agent({
+    ...options,
     cache: { cacheFile: cacheFile() },
     ...{ _doNotRenderActive: true },
   });

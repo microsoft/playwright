@@ -722,6 +722,11 @@ Initialize page agent with the llm provider and cache.
   - `cacheFile` ?<[string]> Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
   - `cacheOutFile` ?<[string]> When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
 
+### option: Page.agent.expect
+* since: v1.58
+- `expect` <[Object]>
+  - `timeout` ?<[int]> Default timeout for expect calls in milliseconds, defaults to 5000ms.
+
 ### option: Page.agent.limits
 * since: v1.58
 - `limits` <[Object]>

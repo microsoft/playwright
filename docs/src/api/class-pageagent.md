@@ -35,6 +35,12 @@ await agent.expect('"0 items" to be reported');
 
 Expectation to assert.
 
+### option: PageAgent.expect.timeout
+* since: v1.58
+- `timeout` <[float]>
+
+Expect timeout in milliseconds. Defaults to `5000`. The default value can be changed via `expect.timeout` option in the config, or by specifying the `expect` property of the [`option: Page.agent.expect`] option. Pass `0` to disable timeout.
+
 ### option: PageAgent.expect.-inline- = %%-page-agent-call-options-v1.58-%%
 * since: v1.58
 
@@ -68,6 +74,13 @@ Task to perform using agentic loop.
 * since: v1.58
 - `schema` <[z.ZodSchema]>
 
+### option: PageAgent.extract.timeout
+* since: v1.58
+- `timeout` <[float]>
+
+Extract timeout in milliseconds. Defaults to `5000`. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or
+[`method: Page.setDefaultTimeout`] methods. Pass `0` to disable timeout.
+
 ### option: PageAgent.extract.-inline- = %%-page-agent-call-options-v1.58-%%
 * since: v1.58
 
@@ -93,6 +106,13 @@ await agent.perform('Click submit button');
 - `task` <[string]>
 
 Task to perform using agentic loop.
+
+### option: PageAgent.perform.timeout
+* since: v1.58
+- `timeout` <[float]>
+
+Perform timeout in milliseconds. Defaults to `5000`. The default value can be changed via `actionTimeout` option in the config, or by using the [`method: BrowserContext.setDefaultTimeout`] or
+[`method: Page.setDefaultTimeout`] methods. Pass `0` to disable timeout.
 
 ### option: PageAgent.perform.-inline- = %%-page-agent-call-options-v1.58-%%
 * since: v1.58

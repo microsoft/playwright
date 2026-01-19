@@ -1389,14 +1389,10 @@ export class Frame extends SdkObject<FrameEventMap> {
         progress.metadata.error = { error: { name: 'Expect', message: 'Expect failed' } };
     };
     try {
-      // When explicit timeout is passed, constrain expect by it, in addition to regular progress abort.
-      const timeoutPromise = options.explicitTimeout !== undefined ? progress.wait(options.explicitTimeout).then(() => { throw new TimeoutError(`Timed out after ${options.explicitTimeout}ms`); }) : undefined;
-      timeoutPromise?.catch(() => { /* Prevent unhandled promise rejection */ });
-
       // Step 1: perform locator handlers checkpoint with a specified timeout.
       if (selector)
         progress.log(`waiting for ${this._asLocator(selector)}`);
-      if (!options.noPreChecks)
+      if (!options.noAutoWaiting)
         await this._page.performActionPreChecks(progress);
 
       // Step 2: perform one-shot expect check without a timeout.
@@ -1404,19 +1400,19 @@ export class Frame extends SdkObject<FrameEventMap> {
       // that should succeed when the locator is already visible.
       try {
         const resultOneShot = await this._expectInternal(progress, selector, options, lastIntermediateResult, true);
-        if (resultOneShot.matches !== options.isNot)
+        if (options.noAutoWaiting || resultOneShot.matches !== options.isNot)
           return resultOneShot;
       } catch (e) {
-        if (this.isNonRetriableError(e))
+        if (options.noAutoWaiting || this.isNonRetriableError(e))
           throw e;
         // Ignore any other errors from one-shot, we'll handle them during retries.
       }
 
       // Step 3: auto-retry expect with increasing timeouts. Bounded by the total remaining time.
       const result = await this.retryWithProgressAndTimeouts(progress, [100, 250, 500, 1000], async continuePolling => {
-        if (!options.noPreChecks)
+        if (!options.noAutoWaiting)
           await this._page.performActionPreChecks(progress);
-        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false, timeoutPromise);
+        const { matches, received } = await this._expectInternal(progress, selector, options, lastIntermediateResult, false);
         if (matches === options.isNot) {
           // Keep waiting in these cases:
           // expect(locator).conditionThatDoesNotMatch
@@ -1446,9 +1442,9 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string }, noAbort: boolean, timeoutPromise?: Promise<never>) {
+  private async _expectInternal(progress: Progress, selector: string | undefined, options: FrameExpectParams, lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string }, noAbort: boolean) {
     // The first expect check, a.k.a. one-shot, always finishes - even when progress is aborted.
-    const race = <T>(p: Promise<T>) => noAbort ? p : (timeoutPromise ? progress.race([p, timeoutPromise]) : progress.race(p));
+    const race = <T>(p: Promise<T>) => noAbort ? p : progress.race(p);
     const selectorInFrame = selector ? await race(this.selectors.resolveFrameForSelector(selector, { strict: true })) : undefined;
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };
