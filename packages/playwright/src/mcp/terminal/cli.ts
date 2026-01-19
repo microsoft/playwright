@@ -227,9 +227,25 @@ class SocketSession {
 }
 
 function daemonSocketPath(): string {
-  if (os.platform() === 'win32')
-    return path.join('\\\\.\\pipe', 'pw-daemon.sock');
-  return path.join(os.homedir(), '.playwright', 'pw-daemon.sock');
+  const socketPath = path.resolve('.playwright.sock');
+  return normalizeSocketPath(socketPath);
+}
+
+/**
+ * Normalize socket path for the current platform.
+ * On Windows, converts Unix-style paths to named pipe format.
+ * On Unix, returns the path as-is.
+ */
+function normalizeSocketPath(path: string): string {
+  if (os.platform() === 'win32') {
+    // Windows named pipes use \\.\pipe\name format
+    if (path.startsWith('\\\\.\\pipe\\'))
+      return path;
+    // Convert Unix-style path to Windows named pipe
+    const name = path.replace(/[^a-zA-Z0-9]/g, '-');
+    return `\\\\.\\pipe\\${name}`;
+  }
+  return path;
 }
 
 async function connectToDaemon(options: { headless?: boolean }): Promise<SocketSession> {
@@ -251,6 +267,7 @@ async function connectToDaemon(options: { headless?: boolean }): Promise<SocketS
   const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, ...(options.headless ? ['--headless'] : [])], {
     detached: true,
     stdio: 'ignore',
+    cwd: process.cwd(), // Will be used as root.
   });
   child.unref();
 

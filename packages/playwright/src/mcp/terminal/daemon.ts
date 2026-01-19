@@ -18,6 +18,7 @@ import fs from 'fs/promises';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import url from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
@@ -25,23 +26,6 @@ import { SocketConnection } from './socketConnection';
 import type { ServerBackendFactory } from '../sdk/server';
 
 const daemonDebug = debug('pw:daemon');
-
-/**
- * Normalize socket path for the current platform.
- * On Windows, converts Unix-style paths to named pipe format.
- * On Unix, returns the path as-is.
- */
-function normalizeSocketPath(path: string): string {
-  if (os.platform() === 'win32') {
-    // Windows named pipes use \\.\pipe\name format
-    if (path.startsWith('\\\\.\\pipe\\'))
-      return path;
-    // Convert Unix-style path to Windows named pipe
-    const name = path.replace(/[^a-zA-Z0-9]/g, '-');
-    return `\\\\.\\pipe\\${name}`;
-  }
-  return path;
-}
 
 async function socketExists(socketPath: string): Promise<boolean> {
   try {
@@ -52,6 +36,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
   }
   return false;
 }
+
 /**
  * Start a daemon server listening on Unix domain socket (Unix) or named pipe (Windows).
  */
@@ -59,13 +44,11 @@ export async function startMcpDaemonServer(
   socketPath: string,
   serverBackendFactory: ServerBackendFactory
 ): Promise<string> {
-  const normalizedPath = normalizeSocketPath(socketPath);
-
   // Clean up existing socket file on Unix
-  if (os.platform() !== 'win32' && await socketExists(normalizedPath)) {
-    daemonDebug(`Socket already exists, removing: ${normalizedPath}`);
+  if (os.platform() !== 'win32' && await socketExists(socketPath)) {
+    daemonDebug(`Socket already exists, removing: ${socketPath}`);
     try {
-      await fs.unlink(normalizedPath);
+      await fs.unlink(socketPath);
     } catch (error) {
       daemonDebug(`Failed to remove existing socket: ${error}`);
       throw error;
@@ -73,14 +56,18 @@ export async function startMcpDaemonServer(
   }
 
   const backend = serverBackendFactory.create();
+  const cwd = url.pathToFileURL(process.cwd()).href;
   await backend.initialize?.({
-    name: 'mcp-daemon',
+    name: 'playwright-cli',
     version: '1.0.0',
-    roots: [],
+    roots: [{
+      uri: cwd,
+      name: 'cwd'
+    }],
     timestamp: Date.now(),
   });
 
-  await fs.mkdir(path.dirname(normalizedPath), { recursive: true });
+  await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
@@ -110,9 +97,9 @@ export async function startMcpDaemonServer(
       reject(error);
     });
 
-    server.listen(normalizedPath, () => {
-      daemonDebug(`daemon server listening on ${normalizedPath}`);
-      resolve(normalizedPath);
+    server.listen(socketPath, () => {
+      daemonDebug(`daemon server listening on ${socketPath}`);
+      resolve(socketPath);
     });
   });
 }
