@@ -41,9 +41,14 @@ function addCommand(name: string, description: string, action: (...args: any[]) 
       .action(action);
 }
 
-addCommand('navigate <url>', 'open url in the browser', async url => {
-  await runMcpCommand('browser_navigate', { url });
-});
+program
+    .command('navigate <url>')
+    .aliases(['open', 'goto'])
+    .description('open url in the browser')
+    .option('--headed', 'run browser in headed mode')
+    .action(async (url, options) => {
+      await runMcpCommand('browser_navigate', { url }, { headless: !options.headed });
+    });
 
 addCommand('close', 'close the browser', async () => {
   await runMcpCommand('browser_close', {});
@@ -141,8 +146,8 @@ addCommand('tab-select <index>', 'select a browser tab', async index => {
 });
 
 
-async function runMcpCommand(name: string, args: mcp.CallToolRequest['params']['arguments']) {
-  const session = await connectToDaemon();
+async function runMcpCommand(name: string, args: mcp.CallToolRequest['params']['arguments'], options: { headless?: boolean } = {}) {
+  const session = await connectToDaemon(options);
   const result = await session.callTool(name, args);
   printResult(result);
   session.dispose();
@@ -227,7 +232,7 @@ function daemonSocketPath(): string {
   return path.join(os.homedir(), '.playwright', 'pw-daemon.sock');
 }
 
-async function connectToDaemon(): Promise<SocketSession> {
+async function connectToDaemon(options: { headless?: boolean }): Promise<SocketSession> {
   const socketPath = daemonSocketPath();
   debugCli(`Connecting to daemon at ${socketPath}`);
 
@@ -243,7 +248,7 @@ async function connectToDaemon(): Promise<SocketSession> {
 
   const cliPath = path.join(__dirname, '../../../cli.js');
   debugCli(`Will launch daemon process: ${cliPath}`);
-  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`], {
+  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, ...(options.headless ? ['--headless'] : [])], {
     detached: true,
     stdio: 'ignore',
   });
