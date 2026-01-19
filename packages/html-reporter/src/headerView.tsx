@@ -116,13 +116,15 @@ const NavLink: React.FC<{
   searchParams.delete('testId');
 
   const queryToken = `s:${token}`;
+  const query = searchParams.get('q') ?? '';
+  const isActive = query.includes(queryToken);
 
   const clickUrl = filterWithQuery(searchParams, queryToken, false);
   const ctrlClickUrl = filterWithQuery(searchParams, queryToken, true);
 
   const label = token.charAt(0).toUpperCase() + token.slice(1);
 
-  return <Link className='subnav-item' href={clickUrl} click={clickUrl} ctrlClick={ctrlClickUrl}>
+  return <Link className='subnav-item' href={clickUrl} click={clickUrl} ctrlClick={ctrlClickUrl} role='button' aria-pressed={isActive}>
     {count > 0 && statusIcon(token as any)}
     <span className='subnav-item-label'>{label}</span>
     <span className='d-inline counter'>{count}</span>
