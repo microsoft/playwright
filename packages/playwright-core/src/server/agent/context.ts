@@ -17,6 +17,7 @@
 import { BrowserContext } from '../browserContext';
 import { runAction } from './actionRunner';
 import { generateCode } from './codegen';
+import { stripAnsiEscapes } from '../../utils/isomorphic/stringUtils';
 
 import type { Request } from '../network';
 import type * as loopTypes from '@lowire/loop';
@@ -137,7 +138,7 @@ export class Context {
 
     const text: string[] = [];
     if (error)
-      text.push(`# Error\n${error.message}`);
+      text.push(`# Error\n${stripAnsiEscapes(error.message)}`);
     else
       text.push(`# Success`);
 
@@ -150,7 +151,7 @@ export class Context {
         },
         'dev.lowire/history': error ? [{
           category: 'error',
-          content: error.message,
+          content: stripAnsiEscapes(error.message),
         }] : [],
       },
       isError: !!error,

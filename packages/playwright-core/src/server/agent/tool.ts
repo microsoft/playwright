@@ -15,6 +15,7 @@
  */
 
 import { z } from '../../mcpBundle';
+import { stripAnsiEscapes } from '../../utils/isomorphic/stringUtils';
 import type zod from 'zod';
 import type * as loopTypes from '@lowire/loop';
 import type { Context } from './context';
@@ -110,7 +111,7 @@ export function toolsForLoop(progress: Progress, context: Context, toolDefinitio
       return await tool.handle(progress, context, params.arguments);
     } catch (error) {
       return {
-        content: [{ type: 'text', text: error.message }],
+        content: [{ type: 'text', text: stripAnsiEscapes(error.message) }],
         isError: true,
       };
     }

@@ -1,4 +1,31 @@
 {
+  "0804fd14030c0e1f89df22422c4f085d1698f2a0": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the issue - the actual URL is `http://localhost:8907/page.html` but I was expecting just `/page.html`. The relative URL should match when resolved against the base URL. Let me try with the full URL:"
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "url": "http://localhost:8907/page.html",
+            "_is_done": true
+          },
+          "id": "toolu_01HtjZYGZBMxwDphWFCrM56K"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2428,
+      "output": 135
+    }
+  },
   "25674340b53e0aab05c6156116a112c10c164ae6": {
     "result": {
       "role": "assistant",
