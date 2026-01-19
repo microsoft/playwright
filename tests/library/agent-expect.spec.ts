@@ -221,12 +221,11 @@ Call log:
 });
 
 test('expectURL success', async ({ context, server }) => {
+  const secrets = {
+    SERVER: server.PREFIX
+  };
   {
-    const { page, agent } = await generateAgent(context, {
-      secrets: {
-        SERVER: server.PREFIX
-      }
-    });
+    const { page, agent } = await generateAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     await agent.expect('page URL is /page.html');
   }
@@ -236,19 +235,18 @@ test('expectURL success', async ({ context, server }) => {
     },
   });
   {
-    const { page, agent } = await runAgent(context);
+    const { page, agent } = await runAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     await agent.expect('page URL is /page.html');
   }
 });
 
 test('expectURL wrong URL error', async ({ context, server }) => {
+  const secrets = {
+    SERVER: server.PREFIX
+  };
   {
-    const { page, agent } = await generateAgent(context, {
-      secrets: {
-        SERVER: server.PREFIX
-      }
-    });
+    const { page, agent } = await generateAgent(context, { secrets });
     await page.goto(server.PREFIX + '/other.html');
     await agent.expect('page URL is /other.html');
   }
@@ -258,7 +256,7 @@ test('expectURL wrong URL error', async ({ context, server }) => {
     },
   });
   {
-    const { page, agent } = await runAgent(context);
+    const { page, agent } = await runAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     const error = await agent.expect('page URL is /other.html').catch(e => e);
     expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
@@ -267,12 +265,11 @@ test('expectURL wrong URL error', async ({ context, server }) => {
 });
 
 test('expectURL with regex', async ({ context, server }) => {
+  const secrets = {
+    SERVER: server.PREFIX
+  };
   {
-    const { page, agent } = await generateAgent(context, {
-      secrets: {
-        SERVER: server.PREFIX
-      }
-    });
+    const { page, agent } = await generateAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     await agent.expect('page URL matches /page pattern');
   }
@@ -282,19 +279,18 @@ test('expectURL with regex', async ({ context, server }) => {
     },
   });
   {
-    const { page, agent } = await runAgent(context);
+    const { page, agent } = await runAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     await agent.expect('page URL matches /page pattern');
   }
 });
 
 test('expectURL with regex error', async ({ context, server }) => {
+  const secrets = {
+    SERVER: server.PREFIX
+  };
   {
-    const { page, agent } = await generateAgent(context, {
-      secrets: {
-        SERVER: server.PREFIX
-      }
-    });
+    const { page, agent } = await generateAgent(context, { secrets });
     await page.goto(server.PREFIX + '/other.html');
     await agent.expect('page URL matches /other pattern');
   }
@@ -304,7 +300,7 @@ test('expectURL with regex error', async ({ context, server }) => {
     },
   });
   {
-    const { page, agent } = await runAgent(context);
+    const { page, agent } = await runAgent(context, { secrets });
     await page.goto(server.PREFIX + '/page.html');
     const error = await agent.expect('page URL matches /other pattern').catch(e => e);
     expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
