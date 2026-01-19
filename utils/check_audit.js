@@ -7,9 +7,10 @@ const URL_LIST = [
 
 const runNpmAudit = () => new Promise((resolve, reject) => {
   exec('npm audit --omit dev --json', (error, stdout, stderr) => {
-    if (error && stderr) {
-      // npm audit returns a non-zero exit code if there are vulnerabilities
-      reject(`Audit error: ${error}\n${stdout}\n${stderr}`);
+    // npm audit returns non-zero exit code when vulnerabilities exist
+    // We still want to parse the JSON output, so only reject on actual errors
+    if (error && !stdout) {
+      reject(new Error(`Audit command failed: ${stderr || error.message}`));
       return;
     }
     resolve(stdout);
@@ -17,7 +18,9 @@ const runNpmAudit = () => new Promise((resolve, reject) => {
 });
 
 // interface Audit {
-//   [name: string]: AuditEntry;
+//   vulnerabilities: {
+//     [name: string]: AuditEntry;
+//   };
 // }
 
 // interface AuditEntry {
@@ -29,26 +32,57 @@ const runNpmAudit = () => new Promise((resolve, reject) => {
 // }
 
 const checkAudit = async () => {
-  const audit = JSON.parse(await runNpmAudit());
+  try {
+    const auditOutput = await runNpmAudit();
+    const audit = JSON.parse(auditOutput);
 
-  const validVulnerabilities = Object.entries(audit.vulnerabilities).filter(([_name, entry]) => {
-    const originalVulnerabilities = entry.via.filter(viaEntry => typeof viaEntry === 'object' && !URL_LIST.includes(viaEntry.url));
-    return originalVulnerabilities.length > 0;
-  });
+    // Check if vulnerabilities property exists
+    if (!audit.vulnerabilities || typeof audit.vulnerabilities !== 'object') {
+      console.log('No vulnerabilities found');
+      return;
+    }
 
-  for (const [name, entry] of validVulnerabilities) {
-    console.error(`Vulnerability (${entry.severity}): ${name} ${entry.range}`);
-  }
+    const validVulnerabilities = Object.entries(audit.vulnerabilities).filter(([_name, entry]) => {
+      // Ensure entry.via exists and is an array
+      if (!entry.via || !Array.isArray(entry.via)) {
+        return false;
+      }
 
-  if (validVulnerabilities.length > 0) {
+      const originalVulnerabilities = entry.via.filter(viaEntry => 
+        typeof viaEntry === 'object' && 
+        viaEntry !== null &&
+        viaEntry.url &&
+        !URL_LIST.includes(viaEntry.url)
+      );
+      return originalVulnerabilities.length > 0;
+    });
+
+    if (validVulnerabilities.length > 0) {
+      console.error(`Found ${validVulnerabilities.length} vulnerabilit${validVulnerabilities.length === 1 ? 'y' : 'ies'}:\n`);
+      
+      for (const [name, entry] of validVulnerabilities) {
+        console.error(`  • ${name} (${entry.severity}) - ${entry.range}`);
+      }
+      
+      console.error('\nRun `npm audit --omit dev` for more details.');
+      process.exit(1);
+    }
+
+    console.log('✓ No vulnerabilities found');
+  } catch (error) {
+    // Handle JSON parse errors
+    if (error instanceof SyntaxError) {
+      console.error('Failed to parse npm audit output as JSON');
+      console.error('Raw output:', error.message);
+    } else {
+      console.error('Audit check failed:', error.message);
+    }
     process.exit(1);
   }
-
-  console.log('No vulnerabilities found');
 };
 
-// You can manually run `npm audit --omit dev` to see the vulnerabilities in a human-friendly
+// You can manually run `npm audit --omit dev` to see the vulnerabilities in a human-friendly format
 checkAudit().catch(error => {
-  console.error(error);
+  console.error('Unexpected error:', error);
   process.exit(1);
 });

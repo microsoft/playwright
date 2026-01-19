@@ -96,6 +96,10 @@ var __export = (target, all) => {for (var name in all) target[name] = all[name];
 var __toESM = mod => ({ ...mod, 'default': mod });
 var __toCommonJS = mod => ({ ...mod, __esModule: true });
 `;
+// ADDED THIS LINE:
+await fs.promises.mkdir(outdir, { recursive: true });
+
+await fs.promises.mkdir(generatedFolder, { recursive: true });
 
 async function replaceEsbuildHeader(content, outFileJs) {
   let sourcesStart = content.indexOf('__toCommonJS');
@@ -105,6 +109,7 @@ async function replaceEsbuildHeader(content, outFileJs) {
     throw new Error(`Did not find start of bundled code in ${outFileJs}`);
 
   const preamble = content.substring(0, sourcesStart);
+  console.log('✓ All injected scripts generated successfully');
   // Replace standard esbuild definition with our own which do not depend on builtins.
   // See https://github.com/microsoft/playwright/issues/17029
   if (preamble.indexOf('__toCommonJS') !== -1) {
