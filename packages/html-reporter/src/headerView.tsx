@@ -86,13 +86,23 @@ export const GlobalFilterView: React.FC<{
   </>);
 };
 
+function getAllUrl(searchParams: URLSearchParams): string {
+  const query = searchParams.get('q') ?? '';
+  const tokens = query.split(/\s+/).filter(t => t && !t.startsWith('s:') && !t.startsWith('p:') && !t.startsWith('@') && !t.startsWith('annot:'));
+  if (tokens.length === 0)
+    return '#?';
+  const result = new URLSearchParams();
+  result.set('q', tokens.join(' '));
+  return '#?' + result.toString();
+}
+
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
   const searchParams = useSearchParams();
 
   return <nav>
-    <Link className='subnav-item' href='#?'>
+    <Link className='subnav-item' href={getAllUrl(searchParams)}>
       <span className='subnav-item-label'>All</span>
       <span className='d-inline counter'>{stats.total - stats.skipped}</span>
     </Link>
