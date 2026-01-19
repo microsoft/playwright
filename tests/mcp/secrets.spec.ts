@@ -170,7 +170,7 @@ await page.getByRole('textbox').press('Enter');` },
         { category: 'console', content: expect.stringContaining('[LOG] Key pressed: Enter , Text: <secret>X-PASSWORD</secret>') },
       ],
       'dev.lowire/state': {
-        'page': expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
+        page: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
       },
     });
   }
@@ -187,7 +187,9 @@ await page.getByRole('textbox').press('Enter');` },
       'dev.lowire/history': [
         { category: 'result', content: expect.stringContaining('[LOG] Key pressed: Enter , Text: <secret>X-PASSWORD</secret>') },
       ],
-      'dev.lowire/state': {},
+      'dev.lowire/state': {
+        page: expect.any(String),
+      },
     });
   }
 });

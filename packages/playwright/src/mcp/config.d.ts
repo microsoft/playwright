@@ -200,4 +200,9 @@ export type Config = {
    * By default (false), file uploads are restricted to paths within the MCP roots only.
    */
   allowUnrestrictedFileAccess?: boolean;
+
+  /**
+   * Specify the language to use for code generation.
+   */
+  codegen?: 'typescript' | 'none';
 };

@@ -32,7 +32,17 @@ const navigate = defineTool({
 
   handle: async (context, params, response) => {
     const tab = await context.ensureTab();
-    await tab.navigate(params.url);
+    let url = params.url;
+    try {
+      new URL(url);
+    } catch (e) {
+      if (url.startsWith('localhost'))
+        url = 'http://' + url;
+      else
+        url = 'https://' + url;
+    }
+
+    await tab.navigate(url);
 
     response.setIncludeSnapshot();
     response.addCode(`await page.goto('${params.url}');`);
