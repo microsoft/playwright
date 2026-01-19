@@ -1,32 +1,5 @@
 {
-  "0e39a03d4c9db9c59b450aa30d50eb88551aca6c": {
-    "result": {
-      "role": "assistant",
-      "content": [
-        {
-          "type": "text",
-          "text": "I need to adjust my expectation. The actual URL is the full URL including the protocol and host. Let me use a regex pattern to match the URL ending with /other.html."
-        },
-        {
-          "type": "tool_call",
-          "name": "browser_expect_url",
-          "arguments": {
-            "regex": "/\\/other\\.html$/",
-            "_is_done": true
-          },
-          "id": "toolu_018zDqYhtHtaNUQ66sv1Ezea"
-        }
-      ],
-      "stopReason": {
-        "code": "ok"
-      }
-    },
-    "usage": {
-      "input": 2293,
-      "output": 118
-    }
-  },
-  "e50f042f63f65841f33a8d0a608d45f748c66552": {
+  "118e114326db2240e7997e7f2fa044ce856fc8e6": {
     "result": {
       "role": "assistant",
       "content": [
@@ -41,7 +14,7 @@
             "url": "/other.html",
             "_is_done": true
           },
-          "id": "toolu_01QffxWJVHBPDgB4WSiKanvu"
+          "id": "toolu_01Tn7U997Ds6NuXKg1jtgM4N"
         }
       ],
       "stopReason": {
@@ -49,8 +22,35 @@
       }
     },
     "usage": {
-      "input": 2067,
+      "input": 2230,
       "output": 99
+    }
+  },
+  "15b04448ca67e533376e7333fb87419c02007a33": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I see the issue. The actual URL is the full URL `http://localhost:8919/other.html`, not just the path `/other.html`. Let me use a regex pattern to match just the path portion of the URL."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_012xLUJb4md8YUyuBMVpxSUB"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2459,
+      "output": 129
     }
   }
 }

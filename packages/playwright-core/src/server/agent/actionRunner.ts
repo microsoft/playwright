@@ -134,6 +134,11 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
       await runExpect(frame, progress, mode, undefined, { expression: 'to.have.url', expectedText, isNot: !!action.isNot }, expected, 'toHaveURL', 'expected');
       break;
     }
+    case 'expectTitle': {
+      const expectedText = serializeExpectedTextValues([action.value], { normalizeWhiteSpace: true });
+      await runExpect(frame, progress, mode, undefined, { expression: 'to.have.title', expectedText, isNot: !!action.isNot }, action.value, 'toHaveTitle', 'expected');
+      break;
+    }
   }
 }
 
@@ -308,6 +313,17 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         timeout: expectTimeout(mode),
       };
       return { type: 'Frame', method: 'expect', title: 'Expect URL', params };
+    }
+    case 'expectTitle': {
+      const expectedText = serializeExpectedTextValues([action.value], { normalizeWhiteSpace: true });
+      const params: channels.FrameExpectParams = {
+        selector: undefined,
+        expression: 'to.have.title',
+        expectedText,
+        isNot: !!action.isNot,
+        timeout: expectTimeout(mode),
+      };
+      return { type: 'Frame', method: 'expect', title: 'Expect Title', params };
     }
   }
 }

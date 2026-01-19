@@ -295,3 +295,41 @@ test('expectURL with regex error', async ({ context, server }) => {
     expect(stripAnsi(error.message)).toContain(`Received: ${server.PREFIX}/page.html`);
   }
 });
+
+test('expectTitle success', async ({ context }) => {
+  {
+    const { page, agent } = await generateAgent(context);
+    await page.setContent(`<title>My Page Title</title>`);
+    await agent.expect('page title is "My Page Title"');
+  }
+  expect(await cacheObject()).toEqual({
+    'page title is "My Page Title"': {
+      actions: [expect.objectContaining({ method: 'expectTitle' })],
+    },
+  });
+  {
+    const { page, agent } = await runAgent(context);
+    await page.setContent(`<title>My Page Title</title>`);
+    await agent.expect('page title is "My Page Title"');
+  }
+});
+
+test('expectTitle wrong title error', async ({ context }) => {
+  {
+    const { page, agent } = await generateAgent(context);
+    await page.setContent(`<title>Other Title</title>`);
+    await agent.expect('page title is "Other Title"');
+  }
+  expect(await cacheObject()).toEqual({
+    'page title is "Other Title"': {
+      actions: [expect.objectContaining({ method: 'expectTitle' })],
+    },
+  });
+  {
+    const { page, agent } = await runAgent(context);
+    await page.setContent(`<title>My Page Title</title>`);
+    const error = await agent.expect('page title is "Other Title"').catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveTitle(expected) failed`);
+    expect(stripAnsi(error.message)).toContain(`Received: My Page Title`);
+  }
+});
