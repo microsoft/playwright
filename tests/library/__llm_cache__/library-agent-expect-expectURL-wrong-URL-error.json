@@ -52,5 +52,32 @@
       "input": 2459,
       "output": 129
     }
+  },
+  "953a27a565140b193d83d39f4c2db82d656beff2": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I need to use a regex pattern to match the URL path correctly, since the actual URL includes the protocol and host."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_expect_url",
+          "arguments": {
+            "regex": "/\\/other\\.html$/",
+            "_is_done": true
+          },
+          "id": "toolu_015UbdXhw1sTtdCF7rtodPEm"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 2424,
+      "output": 104
+    }
   }
 }
