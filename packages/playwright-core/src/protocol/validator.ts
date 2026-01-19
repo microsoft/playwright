@@ -1495,6 +1495,7 @@ scheme.PageAgentParams = tObject({
   apiCacheFile: tOptional(tString),
   cacheFile: tOptional(tString),
   cacheOutFile: tOptional(tString),
+  doNotRenderActive: tOptional(tBoolean),
   maxActions: tOptional(tInt),
   maxActionRetries: tOptional(tInt),
   maxTokens: tOptional(tInt),

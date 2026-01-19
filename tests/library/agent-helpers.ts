@@ -49,7 +49,8 @@ export async function generateAgent(context: BrowserContext, options: AgentOptio
     ...options,
     cache: {
       cacheFile: cacheFile(),
-    }
+    },
+    ...{ _doNotRenderActive: true },
   });
   return { page, agent };
 }
@@ -57,7 +58,8 @@ export async function generateAgent(context: BrowserContext, options: AgentOptio
 export async function runAgent(context: BrowserContext, options: { secrets?: Record<string, string> } = {}) {
   const page = await context.newPage();
   const agent = await page.agent({
-    cache: { cacheFile: cacheFile() }
+    cache: { cacheFile: cacheFile() },
+    ...{ _doNotRenderActive: true },
   });
   return { page, agent };
 }

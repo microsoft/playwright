@@ -132,9 +132,14 @@ export class Context {
     return result;
   }
 
+  async takeSnapshot(progress: Progress) {
+    const { full } = await this.page.snapshotForAI(progress, { doNotRenderActive: this.agentParams.doNotRenderActive });
+    // TODO: it seems like redactText should be here.
+    return full;
+  }
+
   async snapshotResult(progress: Progress, error?: Error): Promise<loopTypes.ToolResult> {
-    let { full } = await this.page.snapshotForAI(progress);
-    full = this._redactText(full);
+    const snapshot = this._redactText(await this.takeSnapshot(progress));
 
     const text: string[] = [];
     if (error)
@@ -142,12 +147,12 @@ export class Context {
     else
       text.push(`# Success`);
 
-    text.push(`# Page snapshot\n${full}`);
+    text.push(`# Page snapshot\n${snapshot}`);
 
     return {
       _meta: {
         'dev.lowire/state': {
-          'Page snapshot': full
+          'Page snapshot': snapshot
         },
         'dev.lowire/history': error ? [{
           category: 'error',

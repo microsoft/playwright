@@ -39,6 +39,7 @@ let lastRef = 0;
 export type AriaTreeOptions = {
   mode: 'ai' | 'expect' | 'codegen' | 'autoexpect';
   refPrefix?: string;
+  doNotRenderActive?: boolean;
 };
 
 type InternalOptions = {
@@ -59,7 +60,7 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
       refs: 'interactable',
       refPrefix: options.refPrefix,
       includeGenericRole: true,
-      renderActive: true,
+      renderActive: !options.doNotRenderActive,
       renderCursorPointer: true,
     };
   }

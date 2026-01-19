@@ -5,19 +5,19 @@
       "content": [
         {
           "type": "text",
-          "text": "I need to verify that an input has the value \"hello\", but according to the page snapshot, the textbox currently has the value \"bye\". I'll use the browser_expect_value tool to assert the expected value."
+          "text": "I need to verify that an input has the value \"hello\". Looking at the page snapshot, I can see there's a textbox with ref=e2 that currently shows \"bye\". I'll use the browser_expect_value tool to assert that this textbox should have the value \"hello\"."
         },
         {
           "type": "tool_call",
           "name": "browser_expect_value",
           "arguments": {
             "type": "textbox",
-            "element": "input textbox",
+            "element": "textbox",
             "ref": "e2",
             "value": "hello",
             "_is_done": true
           },
-          "id": "toolu_017soKmdATMEEVS4yxjbaLs4"
+          "id": "toolu_011sPLFthuXvN3mxhFhh4yQZ"
         }
       ],
       "stopReason": {
@@ -26,7 +26,7 @@
     },
     "usage": {
       "input": 2204,
-      "output": 176
+      "output": 191
     }
   }
 }
