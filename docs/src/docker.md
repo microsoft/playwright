@@ -233,7 +233,7 @@ Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikip
 
 #### Red Hat UBI
 
-For environments that require Red Hat Universal Base Images, several Dockerfiles are available for building custom images. Browser support varies by UBI version due to system library constraints:
+For environments that require Red Hat Universal Base Images, several Dockerfiles are available for building custom images. These images support both `amd64` and `arm64` architectures. Browser support varies by UBI version due to system library constraints:
 
 | Image | Base | Chromium | Firefox | WebKit | Notes |
 |-------|------|----------|---------|--------|-------|
@@ -253,11 +253,12 @@ To build a UBI-based image locally:
 
 # UBI9 (recommended - supports Chromium + Firefox)
 ./utils/docker/build.sh --amd64 ubi9 playwright:localbuild-ubi9
+./utils/docker/build.sh --arm64 ubi9 playwright:localbuild-ubi9  # For Apple Silicon / ARM
 
 # UBI9-minimal (smaller image with Chromium + Firefox)
 ./utils/docker/build.sh --amd64 ubi9-minimal playwright:localbuild-ubi9-minimal
 
-# UBI8
+# UBI8 (Chromium only)
 ./utils/docker/build.sh --amd64 ubi8 playwright:localbuild-ubi8
 
 # UBI8-minimal (smallest image, Chromium only)

@@ -160,18 +160,22 @@ publish_docker_images_with_arch_suffix noble amd64
 publish_docker_images_with_arch_suffix noble arm64
 publish_docker_manifest noble amd64 arm64
 
-# Red Hat UBI 8 (amd64 only - Chromium only)
+# Red Hat UBI 8 (Chromium only)
 publish_docker_images_with_arch_suffix ubi8 amd64
-publish_docker_manifest ubi8 amd64
+publish_docker_images_with_arch_suffix ubi8 arm64
+publish_docker_manifest ubi8 amd64 arm64
 
-# Red Hat UBI 8 Minimal (amd64 only - Chromium only)
+# Red Hat UBI 8 Minimal (Chromium only)
 publish_docker_images_with_arch_suffix ubi8-minimal amd64
-publish_docker_manifest ubi8-minimal amd64
+publish_docker_images_with_arch_suffix ubi8-minimal arm64
+publish_docker_manifest ubi8-minimal amd64 arm64
 
-# Red Hat UBI 9 (amd64 only - Chromium + Firefox)
+# Red Hat UBI 9 (Chromium + Firefox)
 publish_docker_images_with_arch_suffix ubi9 amd64
-publish_docker_manifest ubi9 amd64
+publish_docker_images_with_arch_suffix ubi9 arm64
+publish_docker_manifest ubi9 amd64 arm64
 
-# Red Hat UBI 9 Minimal (amd64 only - Chromium + Firefox)
+# Red Hat UBI 9 Minimal (Chromium + Firefox)
 publish_docker_images_with_arch_suffix ubi9-minimal amd64
-publish_docker_manifest ubi9-minimal amd64
+publish_docker_images_with_arch_suffix ubi9-minimal arm64
+publish_docker_manifest ubi9-minimal amd64 arm64
