@@ -40,7 +40,7 @@ const verifyElement = defineTabTool({
     }
 
     response.addCode(`await expect(page.getByRole(${escapeWithQuotes(params.role)}, { name: ${escapeWithQuotes(params.accessibleName)} })).toBeVisible();`);
-    response.addResult('Done');
+    response.addTextResult('Done');
   },
 });
 
@@ -64,7 +64,7 @@ const verifyText = defineTabTool({
     }
 
     response.addCode(`await expect(page.getByText(${escapeWithQuotes(params.text)})).toBeVisible();`);
-    response.addResult('Done');
+    response.addTextResult('Done');
   },
 });
 
@@ -98,7 +98,7 @@ const verifyList = defineTabTool({
 ${itemTexts.map(t => `  - listitem: ${escapeWithQuotes(t, '"')}`).join('\n')}
 \``;
     response.addCode(`await expect(page.locator('body')).toMatchAriaSnapshot(${ariaSnapshot});`);
-    response.addResult('Done');
+    response.addTextResult('Done');
   },
 });
 
@@ -136,7 +136,7 @@ const verifyValue = defineTabTool({
       const matcher = value ? 'toBeChecked' : 'not.toBeChecked';
       response.addCode(`await expect(${locatorSource}).${matcher}();`);
     }
-    response.addResult('Done');
+    response.addTextResult('Done');
   },
 });
 

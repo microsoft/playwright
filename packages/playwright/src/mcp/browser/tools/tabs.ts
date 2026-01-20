@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { renderTabsMarkdown } from '../response';
 
 const browserTabs = defineTool({
   capability: 'core-tabs',
@@ -35,27 +36,26 @@ const browserTabs = defineTool({
     switch (params.action) {
       case 'list': {
         await context.ensureTab();
-        response.setIncludeTabs();
-        return;
+        break;
       }
       case 'new': {
         await context.newTab();
-        response.setIncludeTabs();
-        return;
+        break;
       }
       case 'close': {
         await context.closeTab(params.index);
-        response.setIncludeFullSnapshot();
-        return;
+        break;
       }
       case 'select': {
         if (params.index === undefined)
           throw new Error('Tab index is required');
         await context.selectTab(params.index);
-        response.setIncludeFullSnapshot();
-        return;
+        break;
       }
     }
+    const tabHeaders = await Promise.all(context.tabs().map(tab => tab.headerSnapshot()));
+    const result = renderTabsMarkdown(tabHeaders);
+    response.addTextResult(result.join('\n'));
   },
 });
 

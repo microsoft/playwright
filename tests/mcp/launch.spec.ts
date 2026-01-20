@@ -33,14 +33,13 @@ test('test reopen browser', async ({ startClient, server }) => {
     name: 'browser_close',
   })).toHaveResponse({
     code: `await page.close()`,
-    tabs: `No open tabs. Use the "browser_navigate" tool to navigate to a page first.`,
   });
 
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
 
   await client.close();
@@ -72,7 +71,7 @@ test('executable path', async ({ startClient, server }) => {
     arguments: { url: server.HELLO_WORLD },
   });
   expect(response).toHaveResponse({
-    result: expect.stringContaining(`executable doesn't exist`),
+    error: expect.stringContaining(`executable doesn't exist`),
     isError: true,
   });
 });
@@ -94,7 +93,7 @@ test('persistent context', async ({ startClient, server }, testInfo) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage: NO`),
+    snapshot: expect.stringContaining(`Storage: NO`),
   });
 
   await new Promise(resolve => setTimeout(resolve, 3000));
@@ -110,7 +109,7 @@ test('persistent context', async ({ startClient, server }, testInfo) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage: YES`),
+    snapshot: expect.stringContaining(`Storage: YES`),
   });
 });
 
@@ -129,7 +128,7 @@ test('isolated context', async ({ startClient, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage: NO`),
+    snapshot: expect.stringContaining(`Storage: NO`),
   });
 
   await client1.callTool({
@@ -141,7 +140,7 @@ test('isolated context', async ({ startClient, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage: NO`),
+    snapshot: expect.stringContaining(`Storage: NO`),
   });
 });
 
@@ -172,7 +171,7 @@ test('isolated context with storage state', async ({ startClient, server }, test
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Storage: session-value`),
+    snapshot: expect.stringContaining(`Storage: session-value`),
   });
 });
 
@@ -196,16 +195,18 @@ exit 1
   });
   expect.soft(result).toHaveResponse({
     isError: true,
-    result: expect.stringContaining(`Bogus browser script`),
+    error: expect.stringContaining(`Bogus browser script`),
   });
   // Chromium waits for the CDP endpoint, so we know if the process failed to launch
   // before connecting.
   if (mcpBrowser === 'chromium') {
     expect.soft(result).toHaveResponse({
-      result: expect.stringContaining(`Failed to launch the browser process.`),
+      isError: true,
+      error: expect.stringContaining(`Failed to launch the browser process.`),
     });
   }
   expect.soft(result).toHaveResponse({
-    result: expect.not.stringContaining(`Browser is already in use`),
+    isError: true,
+    error: expect.not.stringContaining(`Browser is already in use`),
   });
 });

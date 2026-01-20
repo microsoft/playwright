@@ -62,7 +62,7 @@ test('planner_setup_page', async ({ startClient }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit"`),
+    snapshot: expect.stringContaining(`- button "Submit"`),
   });
 });
 

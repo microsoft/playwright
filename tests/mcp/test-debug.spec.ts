@@ -119,7 +119,7 @@ test('test_debug (browser_snapshot/network/console)', async ({ startClient, serv
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`generic [active] [ref=e1]: Hello, world!`),
+    snapshot: expect.stringContaining(`generic [active] [ref=e1]: Hello, world!`),
   });
 });
 
@@ -201,7 +201,7 @@ Try recovering from the error prior to continuing`);
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -435,6 +435,6 @@ Error: expect(locator).toBeVisible() failed`));
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD, intent: 'Go to hello world' },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title2`),
+    page: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title2`),
   });
 });

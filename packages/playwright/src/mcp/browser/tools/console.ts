@@ -25,12 +25,14 @@ const console = defineTabTool({
     description: 'Returns all console messages',
     inputSchema: z.object({
       level: z.enum(['error', 'warning', 'info', 'debug']).default('info').describe('Level of the console messages to return. Each level includes the messages of more severe levels. Defaults to "info".'),
+      filename: z.string().optional().describe('Filename to save the console messages to. If not provided, messages are returned as text.'),
     }),
     type: 'readOnly',
   },
   handle: async (tab, params, response) => {
     const messages = await tab.consoleMessages(params.level);
-    messages.map(message => response.addResult(message.toString()));
+    const text = messages.map(message => message.toString()).join('\n');
+    await response.addResult({ text, suggestedFilename: params.filename });
   },
 });
 

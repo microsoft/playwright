@@ -40,6 +40,6 @@ test('--device should work', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`393x659`),
+    snapshot: expect.stringContaining(`393x659`),
   });
 });

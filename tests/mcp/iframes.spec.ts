@@ -23,7 +23,7 @@ test('stitched aria frames', async ({ client }) => {
       url: `data:text/html,<h1>Hello</h1><iframe src="data:text/html,<button>World</button><main><iframe src='data:text/html,<p>Nested</p>'></iframe></main>"></iframe><iframe src="data:text/html,<h1>Should be invisible</h1>" style="display: none;"></iframe>`,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [active] [ref=e1]:
+    snapshot: expect.stringContaining(`- generic [active] [ref=e1]:
   - heading "Hello" [level=1] [ref=e2]
   - iframe [ref=e3]:
     - generic [active] [ref=f1e1]:

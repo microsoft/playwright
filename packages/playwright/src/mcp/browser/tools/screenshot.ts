@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
-import { mkdirIfNeeded, scaleImageToSize } from 'playwright-core/lib/utils';
+import { scaleImageToSize } from 'playwright-core/lib/utils';
 import { jpegjs, PNG } from 'playwright-core/lib/utilsBundle';
 import { formatObject } from 'playwright-core/lib/utils';
 
@@ -60,25 +58,22 @@ const screenshot = defineTabTool({
     const isElementScreenshot = params.element && params.ref;
 
     const screenshotTarget = isElementScreenshot ? params.element : (params.fullPage ? 'full page' : 'viewport');
-    const fileName = await response.addFile(params.filename || dateAsFileName(fileType), { origin: 'llm', reason: `Screenshot of ${screenshotTarget}` });
-    response.addCode(`// Screenshot ${screenshotTarget} and save it as ${fileName}`);
-
-    // Only get snapshot when element screenshot is needed
     const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
 
+    const data = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
+    const fileName = params.filename || dateAsFileName(fileType);
+
+    response.addCode(`// Screenshot ${screenshotTarget} and save it as ${fileName}`);
     if (ref)
-      response.addCode(`await page.${ref.resolved}.screenshot(${formatObject(options)});`);
+      response.addCode(`await page.${ref.resolved}.screenshot(${formatObject({ ...options, path: fileName })});`);
     else
-      response.addCode(`await page.screenshot(${formatObject(options)});`);
+      response.addCode(`await page.screenshot(${formatObject({ ...options, path: fileName })});`);
 
-    const buffer = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
-
-    await mkdirIfNeeded(fileName);
-    await fs.promises.writeFile(fileName, buffer);
+    await response.addResult({ data, title: `Screenshot of ${screenshotTarget}`, suggestedFilename: fileName });
 
     response.addImage({
       contentType: fileType === 'png' ? 'image/png' : 'image/jpeg',
-      data: scaleImageToFitMessage(buffer, fileType)
+      data: scaleImageToFitMessage(data, fileType)
     });
   }
 });

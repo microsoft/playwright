@@ -95,7 +95,7 @@ test('recent console messages', async ({ client, server }) => {
   });
 
   expect(response).toHaveResponse({
-    consoleMessages: expect.stringContaining(`- [LOG] Hello, world! @`),
+    events: expect.stringContaining(`- [LOG] Hello, world! @`),
   });
 });
 
@@ -121,8 +121,8 @@ test('recent console messages filter', async ({ startClient, server }) => {
     },
   }));
 
-  expect(response.consoleMessages).toContain('console.error');
-  expect(response.consoleMessages).not.toContain('console.log');
+  expect(response.events).toContain('console.error');
+  expect(response.events).not.toContain('console.log');
 });
 
 test('browser_console_messages default level', async ({ client, server }) => {

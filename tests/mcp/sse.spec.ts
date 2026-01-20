@@ -254,7 +254,7 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
   });
 
   // Should have at least one tab (the one created by client1)
-  expect(tabsResult.content[0]?.text).toContain('tabs');
+  expect(tabsResult.content[0]?.text).toContain('Title');
 
   await client1.close();
 

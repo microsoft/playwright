@@ -34,6 +34,6 @@ test('racy navigation destroys context', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- Page URL: about:blank`),
+    page: expect.stringContaining(`about:blank`),
   });
 });

@@ -29,17 +29,20 @@ const requests = defineTabTool({
     description: 'Returns all network requests since loading the page',
     inputSchema: z.object({
       includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+      filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',
   },
 
   handle: async (tab, params, response) => {
     const requests = await tab.requests();
+    const text: string[] = [];
     for (const request of requests) {
       const rendered = await renderRequest(request, params.includeStatic);
       if (rendered)
-        response.addResult(rendered);
+        text.push(rendered);
     }
+    await response.addResult({ text: text.join('\n'), suggestedFilename: params.filename });
   },
 });
 

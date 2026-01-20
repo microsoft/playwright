@@ -54,6 +54,7 @@ export type CLIOptions = {
   imageResponses?: 'allow' | 'omit';
   sandbox?: boolean;
   outputDir?: string;
+  outputMode?: 'file' | 'stdout';
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
@@ -95,6 +96,7 @@ export const defaultConfig: FullConfig = {
   saveTrace: false,
   snapshot: {
     mode: 'incremental',
+    output: 'stdout',
   },
   timeouts: {
     action: 5000,
@@ -118,6 +120,7 @@ export type FullConfig = Config & {
   server: NonNullable<Config['server']>,
   snapshot: {
     mode: 'incremental' | 'full' | 'none';
+    output: 'stdout' | 'file';
   },
   timeouts: {
     action: number;
@@ -257,6 +260,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
+    outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -338,10 +342,10 @@ export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
     ?? path.join(tmpDir(), String(clientInfo.timestamp));
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
   const file = await resolveFile(config, clientInfo, fileName, options);
   await fs.promises.mkdir(path.dirname(file), { recursive: true });
-  debug('pw:mcp:file')(options.reason, file);
+  debug('pw:mcp:file')(options.title, file);
   return file;
 }
 

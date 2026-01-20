@@ -22,7 +22,7 @@ test('alert dialog', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -54,7 +54,7 @@ test('alert dialog', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    pageState: expect.stringContaining(`Page Title: Title`),
+    page: expect.stringContaining(`- Page Title: Title`),
   });
 });
 
@@ -70,7 +70,7 @@ test('two alert dialogs', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -119,7 +119,7 @@ test('confirm dialog (true)', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -139,7 +139,7 @@ test('confirm dialog (true)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    pageState: expect.stringContaining(`generic [active] [ref=e1]: "true"`),
+    snapshot: expect.stringContaining(`generic [active] [ref=e1]: "true"`),
   });
 });
 
@@ -155,7 +155,7 @@ test('confirm dialog (false)', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -175,7 +175,7 @@ test('confirm dialog (false)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    pageState: expect.stringContaining(`generic [active] [ref=e1]: "false"`),
+    snapshot: expect.stringContaining(`generic [active] [ref=e1]: "false"`),
   });
 });
 
@@ -191,7 +191,7 @@ test('prompt dialog', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -213,7 +213,7 @@ test('prompt dialog', async ({ client, server }) => {
   });
 
   expect(result).toHaveResponse({
-    pageState: expect.stringContaining(`generic [active] [ref=e1]: Answer`),
+    snapshot: expect.stringContaining(`generic [active] [ref=e1]: Answer`),
   });
 });
 
@@ -223,7 +223,7 @@ test('alert dialog w/ race', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- button "Button" [ref=e2]`),
+    snapshot: expect.stringContaining(`- button "Button" [ref=e2]`),
   });
 
   expect(await client.callTool({
@@ -246,8 +246,7 @@ test('alert dialog w/ race', async ({ client, server }) => {
 
   expect(result).toHaveResponse({
     modalState: undefined,
-    pageState: expect.stringContaining(`- Page URL: ${server.PREFIX}/
-- Page Title: Title
-- Page Snapshot:`),
+    page: expect.stringContaining(`- Page URL: ${server.PREFIX}/
+- Page Title: Title`),
   });
 });

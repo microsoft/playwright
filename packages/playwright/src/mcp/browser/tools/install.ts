@@ -19,6 +19,7 @@ import path from 'path';
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { renderTabsMarkdown } from '../response';
 
 const install = defineTool({
   capability: 'core-install',
@@ -47,7 +48,9 @@ const install = defineTool({
           reject(new Error(`Failed to install browser: ${output.join('')}`));
       });
     });
-    response.setIncludeTabs();
+    const tabHeaders = await Promise.all(context.tabs().map(tab => tab.headerSnapshot()));
+    const result = renderTabsMarkdown(tabHeaders);
+    response.addTextResult(result.join('\n'));
   },
 });
 
