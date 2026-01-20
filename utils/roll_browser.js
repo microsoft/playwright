@@ -79,8 +79,11 @@ Example:
 
   // 2. Update browser revisions in browsers.json.
   console.log('\nUpdating revision in browsers.json...');
-  for (const descriptor of descriptors)
+  for (const descriptor of descriptors) {
     descriptor.revision = String(revision);
+    if (browserVersion)
+      descriptor.browserVersion = browserVersion;
+  }
   fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
 
   // 3. Download new browser.
@@ -89,20 +92,27 @@ Example:
   const executable = registry.findExecutable(browserName);
   await registry.install([...registry.defaultExecutables(), executable]);
 
-  // 4. Update browser version if rolling WebKit / Firefox / Chromium.
+  // 4. Update browser version if rolling WebKit / Firefox, validate if rolling Chromium.
   const browserType = playwright[browserName.split('-')[0]];
   if (browserType) {
+    const browser = await browserType.launch({
+      executablePath: executable.executablePath('javascript'),
+    });
+    const downloadedVersion = await browser.version();
+    await browser.close();
+
+    if (browserVersion && downloadedVersion !== browserVersion) {
+      console.error(`\nError: Provided browser version "${browserVersion}" does not match downloaded version "${downloadedVersion}".`);
+      console.error(`Please verify that revision ${revision} corresponds to version ${browserVersion}.`);
+      process.exit(1);
+    } 
+
     if (!browserVersion) {
-      const browser = await browserType.launch({
-        executablePath: executable.executablePath('javascript'),
-      });
-      browserVersion = await browser.version();
-      await browser.close();
+      console.log('\nUpdating browser version in browsers.json...');
+      for (const descriptor of descriptors)
+        descriptor.browserVersion = downloadedVersion;
+      fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
     }
-    console.log('\nUpdating browser version in browsers.json...');
-    for (const descriptor of descriptors)
-      descriptor.browserVersion = browserVersion;
-    fs.writeFileSync(path.join(CORE_PATH, 'browsers.json'), JSON.stringify(browsersJSON, null, 2) + '\n');
   }
 
   if (browserType && descriptors[0].installByDefault) {
