@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import { spawn } from 'child_process';
+import crypto from 'crypto';
 import fs from 'fs';
 import net from 'net';
 import os from 'os';
@@ -226,26 +227,29 @@ class SocketSession {
   }
 }
 
-function daemonSocketPath(): string {
-  const socketPath = path.resolve('.playwright.sock');
-  return normalizeSocketPath(socketPath);
+function playwrightCacheDir(): string {
+  if (process.platform === 'linux')
+    return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+  if (process.platform === 'darwin')
+    return path.join(os.homedir(), 'Library', 'Caches');
+  if (process.platform === 'win32')
+    return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+  throw new Error('Unsupported platform: ' + process.platform);
 }
 
-/**
- * Normalize socket path for the current platform.
- * On Windows, converts Unix-style paths to named pipe format.
- * On Unix, returns the path as-is.
- */
-function normalizeSocketPath(path: string): string {
-  if (os.platform() === 'win32') {
-    // Windows named pipes use \\.\pipe\name format
-    if (path.startsWith('\\\\.\\pipe\\'))
-      return path;
-    // Convert Unix-style path to Windows named pipe
-    const name = path.replace(/[^a-zA-Z0-9]/g, '-');
-    return `\\\\.\\pipe\\${name}`;
-  }
-  return path;
+function calculateSha1(buffer: Buffer | string): string {
+  const hash = crypto.createHash('sha1');
+  hash.update(buffer);
+  return hash.digest('hex');
+}
+
+function daemonSocketPath(): string {
+  const installationDir = path.join(__dirname, '..', '..', '..');
+  const socketDir = calculateSha1(installationDir);
+  const socketName = 'default.sock';
+  if (os.platform() === 'win32')
+    return `\\\\.\\pipe\\${socketDir}-${socketName}`;
+  return path.resolve(playwrightCacheDir(), 'daemon', socketDir, socketName);
 }
 
 async function connectToDaemon(options: { headless?: boolean }): Promise<SocketSession> {
