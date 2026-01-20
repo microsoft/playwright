@@ -432,7 +432,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
-    const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType>([
+    const webPermissionToProtocol = new Map<string, Protocol.Browser.PermissionType | Protocol.Browser.PermissionType[]>([
       ['geolocation', 'geolocation'],
       ['midi', 'midi'],
       ['notifications', 'notifications'],
@@ -450,13 +450,13 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       ['midi-sysex', 'midiSysex'],
       ['storage-access', 'storageAccess'],
       ['local-fonts', 'localFonts'],
-      ['local-network-access', 'localNetworkAccess'],
+      ['local-network-access', ['localNetworkAccess', 'localNetwork', 'loopbackNetwork']],
     ]);
-    const filtered = permissions.map(permission => {
+    const filtered = permissions.flatMap(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
       if (!protocolPermission)
         throw new Error('Unknown permission: ' + permission);
-      return protocolPermission;
+      return typeof protocolPermission === 'string' ? [protocolPermission] : protocolPermission;
     });
     await this._browser._session.send('Browser.grantPermissions', { origin: origin === '*' ? undefined : origin, browserContextId: this._browserContextId, permissions: filtered });
   }
