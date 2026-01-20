@@ -906,7 +906,7 @@ instead of "limited-quirks".
       error: UnencodedDigestError;
       request: AffectedRequest;
     }
-    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable";
+    export type GenericIssueErrorType = "FormLabelForNameError"|"FormDuplicateIdForInputError"|"FormInputWithNoLabelError"|"FormAutocompleteAttributeEmptyError"|"FormEmptyIdAndNameAttributesForInputError"|"FormAriaLabelledByToNonExistingIdError"|"FormInputAssignedAutocompleteValueToIdOrNameAttributeError"|"FormLabelHasNeitherForNorNestedInputError"|"FormLabelForMatchesNonExistingIdError"|"FormInputHasWrongButWellIntendedAutocompleteValueError"|"ResponseWasBlockedByORB"|"NavigationEntryMarkedSkippable"|"AutofillAndManualTextPolicyControlledFeaturesInfo"|"AutofillPolicyControlledFeatureInfo"|"ManualTextPolicyControlledFeatureInfo";
     /**
      * Depending on the concrete errorType, different properties are set.
      */
@@ -1829,7 +1829,7 @@ by |characteristicId|.
        */
       windowState?: WindowState;
     }
-    export type PermissionType = "ar"|"audioCapture"|"automaticFullscreen"|"backgroundFetch"|"backgroundSync"|"cameraPanTiltZoom"|"capturedSurfaceControl"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"displayCapture"|"durableStorage"|"geolocation"|"handTracking"|"idleDetection"|"keyboardLock"|"localFonts"|"localNetworkAccess"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"pointerLock"|"protectedMediaIdentifier"|"sensors"|"smartCard"|"speakerSelection"|"storageAccess"|"topLevelStorageAccess"|"videoCapture"|"vr"|"wakeLockScreen"|"wakeLockSystem"|"webAppInstallation"|"webPrinting"|"windowManagement";
+    export type PermissionType = "ar"|"audioCapture"|"automaticFullscreen"|"backgroundFetch"|"backgroundSync"|"cameraPanTiltZoom"|"capturedSurfaceControl"|"clipboardReadWrite"|"clipboardSanitizedWrite"|"displayCapture"|"durableStorage"|"geolocation"|"handTracking"|"idleDetection"|"keyboardLock"|"localFonts"|"localNetwork"|"localNetworkAccess"|"loopbackNetwork"|"midi"|"midiSysex"|"nfc"|"notifications"|"paymentHandler"|"periodicBackgroundSync"|"pointerLock"|"protectedMediaIdentifier"|"sensors"|"smartCard"|"speakerSelection"|"storageAccess"|"topLevelStorageAccess"|"videoCapture"|"vr"|"wakeLockScreen"|"wakeLockSystem"|"webAppInstallation"|"webPrinting"|"windowManagement";
     export type PermissionSetting = "granted"|"denied"|"prompt";
     /**
      * Definition of PermissionDescriptor defined in the Permissions API:
@@ -4187,7 +4187,7 @@ front-end.
     /**
      * Pseudo element type.
      */
-    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent"|"overscroll-client-area";
+    export type PseudoType = "first-line"|"first-letter"|"checkmark"|"before"|"after"|"picker-icon"|"interest-hint"|"marker"|"backdrop"|"column"|"selection"|"search-text"|"target-text"|"spelling-error"|"grammar-error"|"highlight"|"first-line-inherited"|"scroll-marker"|"scroll-marker-group"|"scroll-button"|"scrollbar"|"scrollbar-thumb"|"scrollbar-button"|"scrollbar-track"|"scrollbar-track-piece"|"scrollbar-corner"|"resizer"|"input-list-button"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-group-children"|"view-transition-old"|"view-transition-new"|"placeholder"|"file-selector-button"|"details-content"|"picker"|"permission-icon"|"overscroll-area-parent";
     /**
      * Shadow root type.
      */
@@ -10085,6 +10085,10 @@ milliseconds relatively to this requestTime.
      */
     export type ResourcePriority = "VeryLow"|"Low"|"Medium"|"High"|"VeryHigh";
     /**
+     * The render blocking behavior of a resource request.
+     */
+    export type RenderBlockingBehavior = "Blocking"|"InBodyParserBlocking"|"NonBlocking"|"NonBlockingDynamic"|"PotentiallyBlocking";
+    /**
      * Post data entry for HTTP request
      */
     export interface PostDataEntry {
@@ -11149,6 +11153,183 @@ the same request (but not for redirected requests).
       groupName: string;
     }
     /**
+     * Unique identifier for a device bound session.
+     */
+    export interface DeviceBoundSessionKey {
+      /**
+       * The site the session is set up for.
+       */
+      site: string;
+      /**
+       * The id of the session.
+       */
+      id: string;
+    }
+    /**
+     * A device bound session's cookie craving.
+     */
+    export interface DeviceBoundSessionCookieCraving {
+      /**
+       * The name of the craving.
+       */
+      name: string;
+      /**
+       * The domain of the craving.
+       */
+      domain: string;
+      /**
+       * The path of the craving.
+       */
+      path: string;
+      /**
+       * The `Secure` attribute of the craving attributes.
+       */
+      secure: boolean;
+      /**
+       * The `HttpOnly` attribute of the craving attributes.
+       */
+      httpOnly: boolean;
+      /**
+       * The `SameSite` attribute of the craving attributes.
+       */
+      sameSite?: CookieSameSite;
+    }
+    /**
+     * A device bound session's inclusion URL rule.
+     */
+    export interface DeviceBoundSessionUrlRule {
+      /**
+       * See comments on `net::device_bound_sessions::SessionInclusionRules::UrlRule::rule_type`.
+       */
+      ruleType: "Exclude"|"Include";
+      /**
+       * See comments on `net::device_bound_sessions::SessionInclusionRules::UrlRule::host_pattern`.
+       */
+      hostPattern: string;
+      /**
+       * See comments on `net::device_bound_sessions::SessionInclusionRules::UrlRule::path_prefix`.
+       */
+      pathPrefix: string;
+    }
+    /**
+     * A device bound session's inclusion rules.
+     */
+    export interface DeviceBoundSessionInclusionRules {
+      /**
+       * See comments on `net::device_bound_sessions::SessionInclusionRules::origin_`.
+       */
+      origin: string;
+      /**
+       * Whether the whole site is included. See comments on
+`net::device_bound_sessions::SessionInclusionRules::include_site_` for more
+details; this boolean is true if that value is populated.
+       */
+      includeSite: boolean;
+      /**
+       * See comments on `net::device_bound_sessions::SessionInclusionRules::url_rules_`.
+       */
+      urlRules: DeviceBoundSessionUrlRule[];
+    }
+    /**
+     * A device bound session.
+     */
+    export interface DeviceBoundSession {
+      /**
+       * The site and session ID of the session.
+       */
+      key: DeviceBoundSessionKey;
+      /**
+       * See comments on `net::device_bound_sessions::Session::refresh_url_`.
+       */
+      refreshUrl: string;
+      /**
+       * See comments on `net::device_bound_sessions::Session::inclusion_rules_`.
+       */
+      inclusionRules: DeviceBoundSessionInclusionRules;
+      /**
+       * See comments on `net::device_bound_sessions::Session::cookie_cravings_`.
+       */
+      cookieCravings: DeviceBoundSessionCookieCraving[];
+      /**
+       * See comments on `net::device_bound_sessions::Session::expiry_date_`.
+       */
+      expiryDate: Network.TimeSinceEpoch;
+      /**
+       * See comments on `net::device_bound_sessions::Session::cached_challenge__`.
+       */
+      cachedChallenge?: string;
+      /**
+       * See comments on `net::device_bound_sessions::Session::allowed_refresh_initiators_`.
+       */
+      allowedRefreshInitiators: string[];
+    }
+    /**
+     * A unique identifier for a device bound session event.
+     */
+    export type DeviceBoundSessionEventId = string;
+    /**
+     * A fetch result for a device bound session creation or refresh.
+     */
+    export type DeviceBoundSessionFetchResult = "Success"|"KeyError"|"SigningError"|"ServerRequestedTermination"|"InvalidSessionId"|"InvalidChallenge"|"TooManyChallenges"|"InvalidFetcherUrl"|"InvalidRefreshUrl"|"TransientHttpError"|"ScopeOriginSameSiteMismatch"|"RefreshUrlSameSiteMismatch"|"MismatchedSessionId"|"MissingScope"|"NoCredentials"|"SubdomainRegistrationWellKnownUnavailable"|"SubdomainRegistrationUnauthorized"|"SubdomainRegistrationWellKnownMalformed"|"SessionProviderWellKnownUnavailable"|"RelyingPartyWellKnownUnavailable"|"FederatedKeyThumbprintMismatch"|"InvalidFederatedSessionUrl"|"InvalidFederatedKey"|"TooManyRelyingOriginLabels"|"BoundCookieSetForbidden"|"NetError"|"ProxyError"|"EmptySessionConfig"|"InvalidCredentialsConfig"|"InvalidCredentialsType"|"InvalidCredentialsEmptyName"|"InvalidCredentialsCookie"|"PersistentHttpError"|"RegistrationAttemptedChallenge"|"InvalidScopeOrigin"|"ScopeOriginContainsPath"|"RefreshInitiatorNotString"|"RefreshInitiatorInvalidHostPattern"|"InvalidScopeSpecification"|"MissingScopeSpecificationType"|"EmptyScopeSpecificationDomain"|"EmptyScopeSpecificationPath"|"InvalidScopeSpecificationType"|"InvalidScopeIncludeSite"|"MissingScopeIncludeSite"|"FederatedNotAuthorizedByProvider"|"FederatedNotAuthorizedByRelyingParty"|"SessionProviderWellKnownMalformed"|"SessionProviderWellKnownHasProviderOrigin"|"RelyingPartyWellKnownMalformed"|"RelyingPartyWellKnownHasRelyingOrigins"|"InvalidFederatedSessionProviderSessionMissing"|"InvalidFederatedSessionWrongProviderOrigin"|"InvalidCredentialsCookieCreationTime"|"InvalidCredentialsCookieName"|"InvalidCredentialsCookieParsing"|"InvalidCredentialsCookieUnpermittedAttribute"|"InvalidCredentialsCookieInvalidDomain"|"InvalidCredentialsCookiePrefix"|"InvalidScopeRulePath"|"InvalidScopeRuleHostPattern"|"ScopeRuleOriginScopedHostPatternMismatch"|"ScopeRuleSiteScopedHostPatternMismatch"|"SigningQuotaExceeded"|"InvalidConfigJson"|"InvalidFederatedSessionProviderFailedToRestoreKey"|"FailedToUnwrapKey"|"SessionDeletedDuringRefresh";
+    /**
+     * Session event details specific to creation.
+     */
+    export interface CreationEventDetails {
+      /**
+       * The result of the fetch attempt.
+       */
+      fetchResult: DeviceBoundSessionFetchResult;
+      /**
+       * The session if there was a newly created session. This is populated for
+all successful creation events.
+       */
+      newSession?: DeviceBoundSession;
+    }
+    /**
+     * Session event details specific to refresh.
+     */
+    export interface RefreshEventDetails {
+      /**
+       * The result of a refresh.
+       */
+      refreshResult: "Refreshed"|"InitializedService"|"Unreachable"|"ServerError"|"RefreshQuotaExceeded"|"FatalError"|"SigningQuotaExceeded";
+      /**
+       * If there was a fetch attempt, the result of that.
+       */
+      fetchResult?: DeviceBoundSessionFetchResult;
+      /**
+       * The session display if there was a newly created session. This is populated
+for any refresh event that modifies the session config.
+       */
+      newSession?: DeviceBoundSession;
+      /**
+       * See comments on `net::device_bound_sessions::RefreshEventResult::was_fully_proactive_refresh`.
+       */
+      wasFullyProactiveRefresh: boolean;
+    }
+    /**
+     * Session event details specific to termination.
+     */
+    export interface TerminationEventDetails {
+      /**
+       * The reason for a session being deleted.
+       */
+      deletionReason: "Expired"|"FailedToRestoreKey"|"FailedToUnwrapKey"|"StoragePartitionCleared"|"ClearBrowsingData"|"ServerRequested"|"InvalidSessionParams"|"RefreshFatalError";
+    }
+    /**
+     * Session event details specific to challenges.
+     */
+    export interface ChallengeEventDetails {
+      /**
+       * The result of a challenge.
+       */
+      challengeResult: "Success"|"NoSessionId"|"NoSessionMatch"|"CantSetBoundCookie";
+      /**
+       * The challenge set.
+       */
+      challenge: string;
+    }
+    /**
      * An object providing the result of a network resource load.
      */
     export interface LoadNetworkResourcePageResult {
@@ -11400,6 +11581,10 @@ for the request which was just redirected.
        * Whether the request is initiated by a user gesture. Defaults to false.
        */
       hasUserGesture?: boolean;
+      /**
+       * The render blocking behavior of the request.
+       */
+      renderBlockingBehavior?: RenderBlockingBehavior;
     }
     /**
      * Fired when resource loading priority is changed
@@ -11918,6 +12103,44 @@ And after 'enableReportingApi' for all existing reports.
       origin: string;
       endpoints: ReportingApiEndpoint[];
     }
+    /**
+     * Triggered when the initial set of device bound sessions is added.
+     */
+    export type deviceBoundSessionsAddedPayload = {
+      /**
+       * The device bound sessions.
+       */
+      sessions: DeviceBoundSession[];
+    }
+    /**
+     * Triggered when a device bound session event occurs.
+     */
+    export type deviceBoundSessionEventOccurredPayload = {
+      /**
+       * A unique identifier for this session event.
+       */
+      eventId: DeviceBoundSessionEventId;
+      /**
+       * The site this session event is associated with.
+       */
+      site: string;
+      /**
+       * Whether this event was considered successful.
+       */
+      succeeded: boolean;
+      /**
+       * The session ID this event is associated with. May not be populated for
+failed events.
+       */
+      sessionId?: string;
+      /**
+       * The below are the different session event type details. Exactly one is populated.
+       */
+      creationEventDetails?: CreationEventDetails;
+      refreshEventDetails?: RefreshEventDetails;
+      terminationEventDetails?: TerminationEventDetails;
+      challengeEventDetails?: ChallengeEventDetails;
+    }
     
     /**
      * Sets a list of content encodings that will be accepted. Empty list means no encoding is accepted.
@@ -12180,11 +12403,30 @@ requests affected by a rule.
       /**
        * Enable storing response bodies outside of renderer, so that these survive
 a cross-process navigation. Requires maxTotalBufferSize to be set.
-Currently defaults to false.
+Currently defaults to false. This field is being deprecated in favor of the dedicated
+configureDurableMessages command, due to the possibility of deadlocks when awaiting
+Network.enable before issuing Runtime.runIfWaitingForDebugger.
        */
       enableDurableMessages?: boolean;
     }
     export type enableReturnValue = {
+    }
+    /**
+     * Configures storing response bodies outside of renderer, so that these survive
+a cross-process navigation.
+If maxTotalBufferSize is not set, durable messages are disabled.
+     */
+    export type configureDurableMessagesParameters = {
+      /**
+       * Buffer size in bytes to use when preserving network payloads (XHRs, etc).
+       */
+      maxTotalBufferSize?: number;
+      /**
+       * Per-resource buffer size in bytes to use when preserving network payloads (XHRs, etc).
+       */
+      maxResourceBufferSize?: number;
+    }
+    export type configureDurableMessagesReturnValue = {
     }
     /**
      * Returns all browser cookies. Depending on the backend support, will return detailed cookie
@@ -12262,6 +12504,10 @@ the URLs of the page and all of its subframes.
        * Request body string, omitting files from multipart requests
        */
       postData: string;
+      /**
+       * True, if content was sent as base64.
+       */
+      base64Encoded: boolean;
     }
     /**
      * Returns content served for the given currently intercepted request.
@@ -12550,6 +12796,32 @@ Enabling triggers 'reportingApiReportAdded' for all existing reports.
       enable: boolean;
     }
     export type enableReportingApiReturnValue = {
+    }
+    /**
+     * Sets up tracking device bound sessions and fetching of initial set of sessions.
+     */
+    export type enableDeviceBoundSessionsParameters = {
+      /**
+       * Whether to enable or disable events.
+       */
+      enable: boolean;
+    }
+    export type enableDeviceBoundSessionsReturnValue = {
+    }
+    /**
+     * Fetches the schemeful site for a specific origin.
+     */
+    export type fetchSchemefulSiteParameters = {
+      /**
+       * The URL origin.
+       */
+      origin: string;
+    }
+    export type fetchSchemefulSiteReturnValue = {
+      /**
+       * The corresponding schemeful site.
+       */
+      schemefulSite: string;
     }
     /**
      * Fetches the resource and returns the content.
@@ -13660,7 +13932,7 @@ available.
 in services/network/public/cpp/permissions_policy/permissions_policy_features.json5.
 LINT.IfChange(PermissionsPolicyFeature)
      */
-    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network-access"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
+    export type PermissionsPolicyFeature = "accelerometer"|"all-screens-capture"|"ambient-light-sensor"|"aria-notify"|"attribution-reporting"|"autofill"|"autoplay"|"bluetooth"|"browsing-topics"|"camera"|"captured-surface-control"|"ch-dpr"|"ch-device-memory"|"ch-downlink"|"ch-ect"|"ch-prefers-color-scheme"|"ch-prefers-reduced-motion"|"ch-prefers-reduced-transparency"|"ch-rtt"|"ch-save-data"|"ch-ua"|"ch-ua-arch"|"ch-ua-bitness"|"ch-ua-high-entropy-values"|"ch-ua-platform"|"ch-ua-model"|"ch-ua-mobile"|"ch-ua-form-factors"|"ch-ua-full-version"|"ch-ua-full-version-list"|"ch-ua-platform-version"|"ch-ua-wow64"|"ch-viewport-height"|"ch-viewport-width"|"ch-width"|"clipboard-read"|"clipboard-write"|"compute-pressure"|"controlled-frame"|"cross-origin-isolated"|"deferred-fetch"|"deferred-fetch-minimal"|"device-attributes"|"digital-credentials-create"|"digital-credentials-get"|"direct-sockets"|"direct-sockets-multicast"|"direct-sockets-private"|"display-capture"|"document-domain"|"encrypted-media"|"execution-while-out-of-viewport"|"execution-while-not-rendered"|"fenced-unpartitioned-storage-read"|"focus-without-user-activation"|"fullscreen"|"frobulate"|"gamepad"|"geolocation"|"gyroscope"|"hid"|"identity-credentials-get"|"idle-detection"|"interest-cohort"|"join-ad-interest-group"|"keyboard-map"|"language-detector"|"language-model"|"local-fonts"|"local-network"|"local-network-access"|"loopback-network"|"magnetometer"|"manual-text"|"media-playback-while-not-visible"|"microphone"|"midi"|"on-device-speech-recognition"|"otp-credentials"|"payment"|"picture-in-picture"|"private-aggregation"|"private-state-token-issuance"|"private-state-token-redemption"|"publickey-credentials-create"|"publickey-credentials-get"|"record-ad-auction-events"|"rewriter"|"run-ad-auction"|"screen-wake-lock"|"serial"|"shared-storage"|"shared-storage-select-url"|"smart-card"|"speaker-selection"|"storage-access"|"sub-apps"|"summarizer"|"sync-xhr"|"translator"|"unload"|"usb"|"usb-unrestricted"|"vertical-scroll"|"web-app-installation"|"web-printing"|"web-share"|"window-management"|"writer"|"xr-spatial-tracking";
     /**
      * Reason for a permissions policy feature to be disabled.
      */
@@ -18059,6 +18331,10 @@ Parts of the URL other than those constituting origin are ignored.
        * An array of browser context ids.
        */
       browserContextIds: Browser.BrowserContextID[];
+      /**
+       * The id of the default browser context if available.
+       */
+      defaultBrowserContextId?: Browser.BrowserContextID;
     }
     /**
      * Creates a new page.
@@ -18489,6 +18765,17 @@ buffer wrapped around.
        * A list of supported tracing categories.
        */
       categories: string[];
+    }
+    /**
+     * Return a descriptor for all available tracing categories.
+     */
+    export type getTrackEventDescriptorParameters = {
+    }
+    export type getTrackEventDescriptorReturnValue = {
+      /**
+       * Base64-encoded serialized perfetto.protos.TrackEventDescriptor protobuf message.
+       */
+      descriptor: binary;
     }
     /**
      * Record a clock sync marker in the trace.
@@ -21899,6 +22186,8 @@ Error was thrown.
     "Network.reportingApiReportAdded": Network.reportingApiReportAddedPayload;
     "Network.reportingApiReportUpdated": Network.reportingApiReportUpdatedPayload;
     "Network.reportingApiEndpointsChangedForOrigin": Network.reportingApiEndpointsChangedForOriginPayload;
+    "Network.deviceBoundSessionsAdded": Network.deviceBoundSessionsAddedPayload;
+    "Network.deviceBoundSessionEventOccurred": Network.deviceBoundSessionEventOccurredPayload;
     "Overlay.inspectNodeRequested": Overlay.inspectNodeRequestedPayload;
     "Overlay.nodeHighlightRequested": Overlay.nodeHighlightRequestedPayload;
     "Overlay.screenshotRequested": Overlay.screenshotRequestedPayload;
@@ -22118,6 +22407,8 @@ Error was thrown.
     ["Network.reportingApiReportAdded"]: [Network.reportingApiReportAddedPayload];
     ["Network.reportingApiReportUpdated"]: [Network.reportingApiReportUpdatedPayload];
     ["Network.reportingApiEndpointsChangedForOrigin"]: [Network.reportingApiEndpointsChangedForOriginPayload];
+    ["Network.deviceBoundSessionsAdded"]: [Network.deviceBoundSessionsAddedPayload];
+    ["Network.deviceBoundSessionEventOccurred"]: [Network.deviceBoundSessionEventOccurredPayload];
     ["Overlay.inspectNodeRequested"]: [Overlay.inspectNodeRequestedPayload];
     ["Overlay.nodeHighlightRequested"]: [Overlay.nodeHighlightRequestedPayload];
     ["Overlay.screenshotRequested"]: [Overlay.screenshotRequestedPayload];
@@ -22567,6 +22858,7 @@ Error was thrown.
     "Network.emulateNetworkConditionsByRule": Network.emulateNetworkConditionsByRuleParameters;
     "Network.overrideNetworkState": Network.overrideNetworkStateParameters;
     "Network.enable": Network.enableParameters;
+    "Network.configureDurableMessages": Network.configureDurableMessagesParameters;
     "Network.getAllCookies": Network.getAllCookiesParameters;
     "Network.getCertificate": Network.getCertificateParameters;
     "Network.getCookies": Network.getCookiesParameters;
@@ -22588,6 +22880,8 @@ Error was thrown.
     "Network.streamResourceContent": Network.streamResourceContentParameters;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusParameters;
     "Network.enableReportingApi": Network.enableReportingApiParameters;
+    "Network.enableDeviceBoundSessions": Network.enableDeviceBoundSessionsParameters;
+    "Network.fetchSchemefulSite": Network.fetchSchemefulSiteParameters;
     "Network.loadNetworkResource": Network.loadNetworkResourceParameters;
     "Network.setCookieControls": Network.setCookieControlsParameters;
     "Overlay.disable": Overlay.disableParameters;
@@ -22775,6 +23069,7 @@ Error was thrown.
     "Tethering.unbind": Tethering.unbindParameters;
     "Tracing.end": Tracing.endParameters;
     "Tracing.getCategories": Tracing.getCategoriesParameters;
+    "Tracing.getTrackEventDescriptor": Tracing.getTrackEventDescriptorParameters;
     "Tracing.recordClockSyncMarker": Tracing.recordClockSyncMarkerParameters;
     "Tracing.requestMemoryDump": Tracing.requestMemoryDumpParameters;
     "Tracing.start": Tracing.startParameters;
@@ -23213,6 +23508,7 @@ Error was thrown.
     "Network.emulateNetworkConditionsByRule": Network.emulateNetworkConditionsByRuleReturnValue;
     "Network.overrideNetworkState": Network.overrideNetworkStateReturnValue;
     "Network.enable": Network.enableReturnValue;
+    "Network.configureDurableMessages": Network.configureDurableMessagesReturnValue;
     "Network.getAllCookies": Network.getAllCookiesReturnValue;
     "Network.getCertificate": Network.getCertificateReturnValue;
     "Network.getCookies": Network.getCookiesReturnValue;
@@ -23234,6 +23530,8 @@ Error was thrown.
     "Network.streamResourceContent": Network.streamResourceContentReturnValue;
     "Network.getSecurityIsolationStatus": Network.getSecurityIsolationStatusReturnValue;
     "Network.enableReportingApi": Network.enableReportingApiReturnValue;
+    "Network.enableDeviceBoundSessions": Network.enableDeviceBoundSessionsReturnValue;
+    "Network.fetchSchemefulSite": Network.fetchSchemefulSiteReturnValue;
     "Network.loadNetworkResource": Network.loadNetworkResourceReturnValue;
     "Network.setCookieControls": Network.setCookieControlsReturnValue;
     "Overlay.disable": Overlay.disableReturnValue;
@@ -23421,6 +23719,7 @@ Error was thrown.
     "Tethering.unbind": Tethering.unbindReturnValue;
     "Tracing.end": Tracing.endReturnValue;
     "Tracing.getCategories": Tracing.getCategoriesReturnValue;
+    "Tracing.getTrackEventDescriptor": Tracing.getTrackEventDescriptorReturnValue;
     "Tracing.recordClockSyncMarker": Tracing.recordClockSyncMarkerReturnValue;
     "Tracing.requestMemoryDump": Tracing.requestMemoryDumpReturnValue;
     "Tracing.start": Tracing.startReturnValue;
