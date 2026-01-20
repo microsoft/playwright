@@ -5,7 +5,7 @@
       "name": "chromium",
       "revision": "1208",
       "installByDefault": true,
-      "browserVersion": "144.0.7559.20",
+      "browserVersion": "145.0.7632.6",
       "title": "Chrome for Testing"
     },
     {
