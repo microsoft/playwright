@@ -396,18 +396,11 @@ Maximum number of agentic actions to generate, defaults to context-wide value sp
 
 Maximum number of retries when generating each action, defaults to context-wide value specified in `agent` property.
 
-## page-agent-timeout
-* since: v1.58
-- `timeout` <[int]>
-
-Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
-
 ## page-agent-call-options-v1.58
 - %%-page-agent-cache-key-%%
 - %%-page-agent-max-tokens-%%
 - %%-page-agent-max-actions-%%
 - %%-page-agent-max-action-retries-%%
-- %%-page-agent-timeout-%%
 
 ## fetch-param-url
 - `url` <[string]>

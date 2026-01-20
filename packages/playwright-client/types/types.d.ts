@@ -2112,6 +2112,13 @@ export interface Page {
       cacheOutFile?: string;
     };
 
+    expect?: {
+      /**
+       * Default timeout for expect calls in milliseconds, defaults to 5000ms.
+       */
+      timeout?: number;
+    };
+
     /**
      * Limits to use for the agentic loop.
      */
@@ -5440,7 +5447,10 @@ export interface PageAgent {
     maxTokens?: number;
 
     /**
-     * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
+     * Expect timeout in milliseconds. Defaults to `5000`. The default value can be changed via `expect.timeout` option in
+     * the config, or by specifying the `expect` property of the
+     * [`expect`](https://playwright.dev/docs/api/class-page#page-agent-option-expect) option. Pass `0` to disable
+     * timeout.
      */
     timeout?: number;
   }): Promise<void>;
@@ -5482,7 +5492,11 @@ export interface PageAgent {
     maxTokens?: number;
 
     /**
-     * Request timeout in milliseconds. Defaults to action timeout. Pass `0` to disable timeout.
+     * Perform timeout in milliseconds. Defaults to `5000`. The default value can be changed via `actionTimeout` option in
+     * the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * Pass `0` to disable timeout.
      */
     timeout?: number;
   }): Promise<{

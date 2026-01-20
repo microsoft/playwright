@@ -865,7 +865,9 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       systemPrompt: options.systemPrompt,
     };
     const { agent } = await this._channel.agent(params);
-    return PageAgent.from(agent);
+    const pageAgent = PageAgent.from(agent);
+    pageAgent._expectTimeout = options?.expect?.timeout;
+    return pageAgent;
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {

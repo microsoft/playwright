@@ -61,10 +61,14 @@ export class ProgressController {
     const deadline = timeout ? monotonicTime() + timeout : 0;
     assert(this._state === 'before');
     this._state = 'running';
+    let timer: NodeJS.Timeout | undefined;
 
     const progress: Progress = {
       timeout: timeout ?? 0,
       deadline,
+      disableTimeout: () => {
+        clearTimeout(timer);
+      },
       log: message => {
         if (this._state === 'running')
           this.metadata.log.push(message);
@@ -87,10 +91,10 @@ export class ProgressController {
       signal: this._controller.signal,
     };
 
-    let timer: NodeJS.Timeout | undefined;
     if (deadline) {
       const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
       timer = setTimeout(() => {
+        // TODO: migrate this to "progress.disableTimeout()".
         if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)
           return;
         if (this._state === 'running') {

@@ -196,16 +196,36 @@ test('expect timeout during run', async ({ context }) => {
   {
     const { page, agent } = await runAgent(context);
     await page.setContent(`<button hidden>Submit</button>`);
-    const error = await agent.expect('submit button is visible', { timeout: 10000 }).catch(e => e);
+    const error = await agent.expect('submit button is visible', { timeout: 3000 }).catch(e => e);
     expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(locator).toBeVisible() failed
 
 Locator: getByRole('button', { name: 'Submit' })
 Expected: visible
-Timeout: 5000ms
+Timeout: 3000ms
 Error: element(s) not found
 
 Call log:
-  - Expect Visible with timeout 5000ms`);
+  - Expect Visible with timeout 3000ms`);
+  }
+});
+
+test('expect timeout during run from agent options', async ({ context }) => {
+  {
+    const { page, agent } = await generateAgent(context);
+    await page.setContent(`<button>Submit</button>`);
+    await agent.expect('submit button is visible');
+  }
+  expect(await cacheObject()).toEqual({
+    'submit button is visible': {
+      actions: [expect.objectContaining({ method: 'expectVisible' })],
+    },
+  });
+  {
+    const { page, agent } = await runAgent(context, { expect: { timeout: 3000 } });
+    await page.setContent(`<button hidden>Submit</button>`);
+    const error = await agent.expect('submit button is visible').catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(locator).toBeVisible() failed`);
+    expect(stripAnsi(error.message)).toContain(`Expect Visible with timeout 3000ms`);
   }
 });
 

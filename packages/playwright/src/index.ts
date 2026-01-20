@@ -477,6 +477,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       limits: agentOptions?.limits,
       secrets: agentOptions?.secrets,
       systemPrompt: agentOptions?.systemPrompt,
+      expect: {
+        timeout: testInfoImpl._projectInternal.expect?.timeout,
+      },
     });
 
     await use(agent);

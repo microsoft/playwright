@@ -174,6 +174,28 @@ test('perform run timeout', async ({ context }) => {
   }
 });
 
+test('perform run timeout inherited from page', async ({ context }) => {
+  {
+    const { page, agent } = await generateAgent(context);
+    await page.setContent(`
+      <button>Wolf</button>
+      <button>Fox</button>
+    `);
+    await agent.perform('click the Fox button');
+  }
+  {
+    const { page, agent } = await runAgent(context);
+    await page.setContent(`
+      <button>Wolf</button>
+      <button>Rabbit</button>
+    `);
+    page.setDefaultTimeout(3000);
+    const error = await agent.perform('click the Fox button').catch(e => e);
+    expect(error.message).toContain('Timeout 3000ms exceeded.');
+    expect(error.message).toContain(`waiting for getByRole('button', { name: 'Fox' })`);
+  }
+});
+
 test('invalid cache file throws error', async ({ context }) => {
   await setCacheObject({
     'some key': {

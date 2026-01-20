@@ -143,14 +143,11 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
 }
 
 async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'run', selector: string | undefined, options: FrameExpectParams, expected: string | RegExp, matcherName: string, expectation: string) {
-  // Pass explicit timeout to limit the single expect action inside the overall "agentic expect" multi-step progress.
-  const timeout = expectTimeout(mode);
   const result = await frame.expect(progress, selector, {
     ...options,
-    timeoutForLogs: timeout,
-    explicitTimeout: timeout,
-    // Disable pre-checks to avoid them timing out, model has seen the snapshot anyway.
-    noPreChecks: mode === 'generate',
+    // When generating, we want the expect to pass or fail immediately and give feedback to the model.
+    noAutoWaiting: mode === 'generate',
+    timeoutForLogs: mode === 'generate' ? undefined : progress.timeout,
   });
   if (!result.matches === !options.isNot) {
     const received = matcherName === 'toMatchAriaSnapshot' ? '\n' + result.received.raw : result.received;
@@ -162,7 +159,7 @@ async function runExpect(frame: Frame, progress: Progress, mode: 'generate' | 'r
       expectation,
       locator: selector ? asLocatorDescription('javascript', selector) : undefined,
       timedOut: result.timedOut,
-      timeout,
+      timeout: mode === 'generate' ? undefined : progress.timeout,
       printedExpected: options.isNot ? `Expected${expectedSuffix}: not ${expectedDisplay}` : `Expected${expectedSuffix}: ${expectedDisplay}`,
       printedReceived: result.errorMessage ? '' : `Received: ${received}`,
       errorMessage: result.errorMessage,
@@ -266,7 +263,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
           expression: 'to.have.value',
           expectedText,
           isNot: !!action.isNot,
-          timeout: expectTimeout(mode),
+          timeout,
         };
         return { type: 'Frame', method: 'expect', title: 'Expect Value', params };
       } else if (action.type === 'checkbox' || action.type === 'radio') {
@@ -275,7 +272,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
           selector: action.selector,
           expression: 'to.be.checked',
           isNot: !!action.isNot,
-          timeout: expectTimeout(mode),
+          timeout,
         };
         return { type: 'Frame', method: 'expect', title: 'Expect Checked', params };
       } else {
@@ -287,7 +284,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         selector: action.selector,
         expression: 'to.be.visible',
         isNot: !!action.isNot,
-        timeout: expectTimeout(mode),
+        timeout,
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Visible', params };
     }
@@ -298,7 +295,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         expression: 'to.match.snapshot',
         expectedText: [],
         isNot: !!action.isNot,
-        timeout: expectTimeout(mode),
+        timeout,
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Aria Snapshot', params };
     }
@@ -310,7 +307,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         expression: 'to.have.url',
         expectedText,
         isNot: !!action.isNot,
-        timeout: expectTimeout(mode),
+        timeout,
       };
       return { type: 'Frame', method: 'expect', title: 'Expect URL', params };
     }
@@ -321,7 +318,7 @@ export function traceParamsForAction(progress: Progress, action: actions.Action,
         expression: 'to.have.title',
         expectedText,
         isNot: !!action.isNot,
-        timeout: expectTimeout(mode),
+        timeout,
       };
       return { type: 'Frame', method: 'expect', title: 'Expect Title', params };
     }
@@ -340,8 +337,4 @@ function callMetadataForAction(progress: Progress, frame: Frame, action: actions
     ...traceParamsForAction(progress, action, mode),
   };
   return callMetadata;
-}
-
-function expectTimeout(mode: 'generate' | 'run') {
-  return mode === 'generate' ? 0 : 5000;
 }

@@ -37,6 +37,7 @@ import type { CallMetadata } from './callMetadata';
 export interface Progress {
   timeout: number;
   deadline: number;
+  disableTimeout(): void;
   log(message: string): void;
   race<T>(promise: Promise<T> | Promise<T>[]): Promise<T>;
   wait(timeout: number): Promise<void>; // timeout = 0 here means "wait 0 ms", not forever.
