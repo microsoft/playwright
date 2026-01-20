@@ -32,6 +32,26 @@ NOBLE_TAGS=(
   "v${PW_VERSION}-noble"
 )
 
+# Red Hat UBI 8 (Chromium only)
+UBI8_TAGS=(
+  "v${PW_VERSION}-ubi8"
+)
+
+# Red Hat UBI 8 Minimal (Chromium only)
+UBI8_MINIMAL_TAGS=(
+  "v${PW_VERSION}-ubi8-minimal"
+)
+
+# Red Hat UBI 9 (Chromium + Firefox)
+UBI9_TAGS=(
+  "v${PW_VERSION}-ubi9"
+)
+
+# Red Hat UBI 9 Minimal (Chromium + Firefox)
+UBI9_MINIMAL_TAGS=(
+  "v${PW_VERSION}-ubi9-minimal"
+)
+
 tag_and_push() {
   local source="$1"
   local target="$2"
@@ -68,8 +88,16 @@ publish_docker_images_with_arch_suffix() {
     TAGS=("${JAMMY_TAGS[@]}")
   elif [[ "$FLAVOR" == "noble" ]]; then
     TAGS=("${NOBLE_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi8" ]]; then
+    TAGS=("${UBI8_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi8-minimal" ]]; then
+    TAGS=("${UBI8_MINIMAL_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi9" ]]; then
+    TAGS=("${UBI9_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi9-minimal" ]]; then
+    TAGS=("${UBI9_MINIMAL_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'jammy', or 'noble'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be one of: jammy, noble, ubi8, ubi8-minimal, ubi9, ubi9-minimal"
     exit 1
   fi
   local ARCH="$2"
@@ -94,8 +122,16 @@ publish_docker_manifest () {
     TAGS=("${JAMMY_TAGS[@]}")
   elif [[ "$FLAVOR" == "noble" ]]; then
     TAGS=("${NOBLE_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi8" ]]; then
+    TAGS=("${UBI8_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi8-minimal" ]]; then
+    TAGS=("${UBI8_MINIMAL_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi9" ]]; then
+    TAGS=("${UBI9_TAGS[@]}")
+  elif [[ "$FLAVOR" == "ubi9-minimal" ]]; then
+    TAGS=("${UBI9_MINIMAL_TAGS[@]}")
   else
-    echo "ERROR: unknown flavor - $FLAVOR. Must be either 'jammy', or 'noble'"
+    echo "ERROR: unknown flavor - $FLAVOR. Must be one of: jammy, noble, ubi8, ubi8-minimal, ubi9, ubi9-minimal"
     exit 1
   fi
 
@@ -123,3 +159,19 @@ publish_docker_manifest jammy amd64 arm64
 publish_docker_images_with_arch_suffix noble amd64
 publish_docker_images_with_arch_suffix noble arm64
 publish_docker_manifest noble amd64 arm64
+
+# Red Hat UBI 8 (amd64 only - Chromium only)
+publish_docker_images_with_arch_suffix ubi8 amd64
+publish_docker_manifest ubi8 amd64
+
+# Red Hat UBI 8 Minimal (amd64 only - Chromium only)
+publish_docker_images_with_arch_suffix ubi8-minimal amd64
+publish_docker_manifest ubi8-minimal amd64
+
+# Red Hat UBI 9 (amd64 only - Chromium + Firefox)
+publish_docker_images_with_arch_suffix ubi9 amd64
+publish_docker_manifest ubi9 amd64
+
+# Red Hat UBI 9 Minimal (amd64 only - Chromium + Firefox)
+publish_docker_images_with_arch_suffix ubi9-minimal amd64
+publish_docker_manifest ubi9-minimal amd64

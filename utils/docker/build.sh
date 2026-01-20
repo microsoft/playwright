@@ -3,7 +3,7 @@ set -e
 set +x
 
 if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
-  echo "usage: $(basename $0) {--arm64,--amd64} {jammy,noble} playwright:localbuild-noble"
+  echo "usage: $(basename $0) {--arm64,--amd64} {jammy,noble,ubi8,ubi8-minimal,ubi9,ubi9-minimal} playwright:localbuild-noble"
   echo
   echo "Build Playwright docker image and tag it as 'playwright:localbuild-noble'."
   echo "Once image is built, you can run it with"
@@ -12,6 +12,14 @@ if [[ ($1 == '--help') || ($1 == '-h') || ($1 == '') || ($2 == '') ]]; then
   echo ""
   echo "NOTE: this requires on Playwright dependencies to be installed with 'npm install'"
   echo "      and Playwright itself being built with 'npm run build'"
+  echo ""
+  echo "Available flavors:"
+  echo "  jammy        - Ubuntu 22.04 LTS (Jammy Jellyfish)"
+  echo "  noble        - Ubuntu 24.04 LTS (Noble Numbat)"
+  echo "  ubi8         - Red Hat Universal Base Image 8 (Chromium only)"
+  echo "  ubi8-minimal - Red Hat Universal Base Image 8 Minimal (Chromium only)"
+  echo "  ubi9         - Red Hat Universal Base Image 9 (Chromium + Firefox)"
+  echo "  ubi9-minimal - Red Hat Universal Base Image 9 Minimal (Chromium + Firefox)"
   echo ""
   exit 0
 fi

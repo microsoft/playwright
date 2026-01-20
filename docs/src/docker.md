@@ -231,6 +231,54 @@ We currently publish images based on the following [Ubuntu](https://hub.docker.c
 
 Browser builds for Firefox and WebKit are built for the [glibc](https://en.wikipedia.org/wiki/Glibc) library. Alpine Linux and other distributions that are based on the [musl](https://en.wikipedia.org/wiki/Musl) standard library are not supported.
 
+#### Red Hat UBI
+
+For environments that require Red Hat Universal Base Images, several Dockerfiles are available for building custom images. Browser support varies by UBI version due to system library constraints:
+
+| Image | Base | Chromium | Firefox | WebKit | Notes |
+|-------|------|----------|---------|--------|-------|
+| [Dockerfile.ubi9] | `redhat/ubi9` | Supported | Supported | Not supported | Recommended for full browser support |
+| [Dockerfile.ubi9-minimal] | `redhat/ubi9-minimal` | Supported | Supported | Not supported | Smaller image with full browser support |
+| [Dockerfile.ubi8] | `redhat/ubi8` | Supported | Not supported | Not supported | Firefox needs `GLIBCXX_3.4.26+` |
+| [Dockerfile.ubi8-minimal] | `redhat/ubi8-minimal` | Supported | Not supported | Not supported | Smallest image size |
+
+:::note
+WebKit is not supported on any RHEL-based distribution.
+:::
+
+To build a UBI-based image locally:
+
+```bash
+# From the playwright repository root (requires npm install && npm run build first)
+
+# UBI9 (recommended - supports Chromium + Firefox)
+./utils/docker/build.sh --amd64 ubi9 playwright:localbuild-ubi9
+
+# UBI9-minimal (smaller image with Chromium + Firefox)
+./utils/docker/build.sh --amd64 ubi9-minimal playwright:localbuild-ubi9-minimal
+
+# UBI8
+./utils/docker/build.sh --amd64 ubi8 playwright:localbuild-ubi8
+
+# UBI8-minimal (smallest image, Chromium only)
+./utils/docker/build.sh --amd64 ubi8-minimal playwright:localbuild-ubi8-minimal
+```
+
+Run a UBI image:
+
+```bash
+# As root (for trusted e2e tests)
+docker run -it --rm --ipc=host playwright:localbuild-ubi9 /bin/bash
+
+# As pwuser with seccomp profile (for untrusted content)
+docker run -it --rm --ipc=host --user pwuser --security-opt seccomp=seccomp_profile.json playwright:localbuild-ubi9 /bin/bash
+```
+
+[Dockerfile.ubi9]: https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.ubi9
+[Dockerfile.ubi9-minimal]: https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.ubi9-minimal
+[Dockerfile.ubi8]: https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.ubi8
+[Dockerfile.ubi8-minimal]: https://github.com/microsoft/playwright/blob/main/utils/docker/Dockerfile.ubi8-minimal
+
 ## Using a different .NET version
 * langs: csharp
 

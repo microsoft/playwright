@@ -1,0 +1,115 @@
+FROM redhat/ubi9
+
+# Metadata
+LABEL maintainer="Microsoft Playwright Team"
+LABEL description="Playwright Docker image based on Red Hat UBI9 with Chromium and Firefox"
+LABEL org.opencontainers.image.source="https://github.com/microsoft/playwright"
+
+# Build arguments
+ARG TZ=America/Los_Angeles
+ARG DOCKER_IMAGE_NAME_TEMPLATE="mcr.microsoft.com/playwright:v%version%-ubi9"
+ARG NODE_VERSION=20
+
+# Environment variables
+ENV LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+
+# === INSTALL Node.js AND BROWSER DEPENDENCIES ===
+# Combined into single layer to reduce image size
+# Using --setopt=install_weak_deps=False to skip unnecessary dependencies
+# Note: UBI9 comes with curl-minimal pre-installed
+
+RUN dnf install -y --setopt=install_weak_deps=False \
+        # Node.js prerequisites
+        wget \
+        ca-certificates \
+        gnupg2 \
+        # Development tools (feature-parity with node.js base images)
+        git \
+        openssh-clients \
+        # Basic X11 libraries
+        libX11 \
+        libXcomposite \
+        libXcursor \
+        libXdamage \
+        libXext \
+        libXfixes \
+        libXi \
+        libXrandr \
+        libXrender \
+        libXtst \
+        libxcb \
+        libxkbcommon \
+        libxshmfence \
+        # GTK and rendering
+        gtk3 \
+        cairo \
+        cairo-gobject \
+        pango \
+        gdk-pixbuf2 \
+        # Audio
+        alsa-lib \
+        # NSS/NSPR (for Chromium)
+        nss \
+        nspr \
+        # DRM/GBM (for Chromium GPU)
+        libdrm \
+        mesa-libgbm \
+        # D-Bus
+        dbus-libs \
+        dbus-glib \
+        # Fonts
+        fontconfig \
+        freetype \
+        liberation-fonts-common \
+        liberation-mono-fonts \
+        dejavu-sans-fonts \
+        # Accessibility (at-spi2-atk provides libatk-bridge-2.0)
+        at-spi2-atk \
+        at-spi2-core \
+        # Other required libraries
+        cups-libs \
+        libwayland-client \
+        libwayland-egl \
+        libwayland-server \
+        libpng \
+        libjpeg-turbo \
+        harfbuzz \
+        # EGL/GL support
+        mesa-libEGL \
+        mesa-libGL \
+        # Utilities
+        which \
+    && \
+    # Install Node.js via NodeSource
+    curl -fsSL https://rpm.nodesource.com/setup_${NODE_VERSION}.x | bash - && \
+    dnf install -y --setopt=install_weak_deps=False nodejs && \
+    npm install -g yarn && \
+    # Cleanup
+    dnf clean all && \
+    rm -rf /var/cache/dnf /var/cache/yum /tmp/* /var/tmp/*
+
+# Create non-root user for sandboxed browser execution
+RUN useradd -m -s /bin/bash pwuser
+
+# Set working directory
+WORKDIR /home/pwuser
+
+# Copy playwright-core package (built beforehand from tip-of-tree Playwright)
+COPY ./playwright-core.tar.gz /tmp/playwright-core.tar.gz
+
+# Bake browsers into image
+# - Chromium and Firefox supported on UBI9 (has GLIBCXX_3.4.29)
+# - WebKit not supported on RHEL-based distributions
+# - Set 777 permissions so any user can access browsers
+RUN mkdir -p /ms-playwright /ms-playwright-agent && \
+    cd /ms-playwright-agent && \
+    npm init -y && \
+    npm i /tmp/playwright-core.tar.gz && \
+    npm exec --no -- playwright-core mark-docker-image "${DOCKER_IMAGE_NAME_TEMPLATE}" && \
+    npm exec --no -- playwright-core install chromium firefox && \
+    # Cleanup
+    rm -f /tmp/playwright-core.tar.gz && \
+    rm -rf /ms-playwright-agent ~/.npm /tmp/* /var/tmp/* && \
+    chmod -R 777 /ms-playwright
