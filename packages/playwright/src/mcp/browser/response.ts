@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+import path from 'path';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates } from './tab';
+import { firstRootPath } from '../sdk/server';
 
 import type { Tab, TabSnapshot } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
@@ -161,12 +164,21 @@ export class Response {
 
     if (this._files.length) {
       const lines: string[] = [];
-      for (const file of this._files)
-        lines.push(`- [${file.title}](${file.fileName})`);
+      for (const file of this._files) {
+        const filePath = this._pathRelativeToRoot(file.fileName);
+        lines.push(`- [${file.title}](${filePath})`);
+      }
       renderedResponse.updates.push({ category: 'files', content: lines.join('\n') });
     }
 
     return this._context.config.secrets ? renderedResponse.redact(this._context.config.secrets) : renderedResponse;
+  }
+
+  private _pathRelativeToRoot(filePath: string): string {
+    const root = firstRootPath(this._context.options.clientInfo);
+    if (!root)
+      return filePath;
+    return path.relative(root, filePath);
   }
 
   serialize(options: { _meta?: Record<string, any> } = {}): { content: (TextContent | ImageContent)[], isError?: boolean, _meta?: Record<string, any> } {

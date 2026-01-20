@@ -126,3 +126,31 @@ test('should tolerate WSL client roots on Windows server', async ({ startClient,
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
 }
+
+test('should return relative paths when root is specified', async ({ startClient, server }, testInfo) => {
+  const rootPath = testInfo.outputPath('workspace');
+  await fs.promises.mkdir(rootPath, { recursive: true });
+
+  const { client } = await startClient({
+    clientName: 'test-client',
+    config: { outputDir: path.join(rootPath, 'output') },
+    roots: [
+      {
+        name: 'workspace',
+        uri: pathToFileURL(rootPath).toString(),
+      },
+    ],
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_screenshot',
+    arguments: { filename: 'screenshot.png' },
+  })).toHaveResponse({
+    files: expect.stringContaining(`- [Screenshot of viewport](output${path.sep}screenshot.png)`),
+  });
+});
