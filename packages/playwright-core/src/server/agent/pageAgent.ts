@@ -88,13 +88,12 @@ ${query}`;
 async function runLoop(progress: Progress, context: Context, toolDefinitions: ToolDefinition[], userTask: string, resultSchema: loopTypes.Schema | undefined, params: CallParams): Promise<{
   result: any
 }> {
-  const { page } = context;
   if (!context.agentParams.api || !context.agentParams.model)
     throw new Error(`This action requires the API and API key to be set on the page agent. Did you mean to --run-agents=missing?`);
   if (!context.agentParams.apiKey)
     throw new Error(`This action requires API key to be set on the page agent.`);
 
-  const { full } = await page.snapshotForAI(progress);
+  const snapshot = await context.takeSnapshot(progress);
   const { tools, callTool, reportedResult, refusedToPerformReason } = toolsForLoop(progress, context, toolDefinitions, { resultSchema, refuseToPerform: 'allow' });
   const secrets = Object.fromEntries((context.agentParams.secrets || [])?.map(s => ([s.name, s.value])));
 
@@ -136,7 +135,7 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     task.push('');
   }
   task.push('### Page snapshot');
-  task.push(full);
+  task.push(snapshot);
   task.push('');
 
   const { error, usage } = await loop.run(task.join('\n'), { signal: progress.signal });

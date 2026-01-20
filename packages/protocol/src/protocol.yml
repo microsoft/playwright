@@ -2023,6 +2023,7 @@ Page:
         apiCacheFile: string?
         cacheFile: string?
         cacheOutFile: string?
+        doNotRenderActive: boolean?
         maxActions: int?
         maxActionRetries: int?
         maxTokens: int?

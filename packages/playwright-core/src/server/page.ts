@@ -863,7 +863,7 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
+  async snapshotForAI(progress: Progress, options: { track?: string, doNotRenderActive?: boolean } = {}): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
     return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
   }
@@ -986,7 +986,7 @@ export class InitScript {
 }
 
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string }): Promise<{ full: string[], incremental?: string[] }> {
+async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, doNotRenderActive?: boolean } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -997,7 +997,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
         if (!node)
           return true;
         return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
-      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', track: options.track }));
+      }, { refPrefix: frame.seq ? 'f' + frame.seq : '', track: options.track, doNotRenderActive: options.doNotRenderActive }));
       if (snapshotOrRetry === true)
         return continuePolling;
       return snapshotOrRetry;
