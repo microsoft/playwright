@@ -259,7 +259,7 @@ it('local network request is allowed from public origin', {
 }, async ({ page, context, server, browserName }) => {
   it.fail(browserName === 'webkit');
   if (browserName === 'chromium')
-    await context.grantPermissions(['local-network-access']);
+    await context.grantPermissions(['loopback-network']);
   const serverRequests = [];
   server.setRoute('/cors', (req, res) => {
     serverRequests.push(`${req.method} ${req.url}`);

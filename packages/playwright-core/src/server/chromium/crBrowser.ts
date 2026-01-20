@@ -451,6 +451,8 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       ['storage-access', 'storageAccess'],
       ['local-fonts', 'localFonts'],
       ['local-network-access', 'localNetworkAccess'],
+      ['local-network', 'localNetwork'],
+      ['loopback-network', 'loopbackNetwork'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
