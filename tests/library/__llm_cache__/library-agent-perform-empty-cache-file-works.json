@@ -1,0 +1,30 @@
+{
+  "29a2028099170f3ab333459d1f9c78de2767e7b3": {
+    "result": {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "I'll click the Test button for you."
+        },
+        {
+          "type": "tool_call",
+          "name": "browser_click",
+          "arguments": {
+            "element": "Test button",
+            "ref": "e2",
+            "_is_done": true
+          },
+          "id": "toolu_013jBJjsaeAjvjyjfWLYNFGb"
+        }
+      ],
+      "stopReason": {
+        "code": "ok"
+      }
+    },
+    "usage": {
+      "input": 3043,
+      "output": 101
+    }
+  }
+}

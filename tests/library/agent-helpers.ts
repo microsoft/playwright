@@ -42,7 +42,7 @@ export async function generateAgent(context: BrowserContext, options: AgentOptio
     provider: {
       api: 'anthropic' as const,
       apiKey: process.env.AZURE_SONNET_API_KEY ?? 'dummy',
-      apiEndpoint: process.env.AZURE_SONNET_ENDPOINT ?? 'dummy',
+      apiEndpoint: process.env.AZURE_SONNET_ENDPOINT,
       model: 'claude-sonnet-4-5',
       ...{ _apiCacheFile: apiCacheFile }
     },

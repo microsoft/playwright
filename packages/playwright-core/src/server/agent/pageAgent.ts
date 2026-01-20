@@ -92,6 +92,8 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     throw new Error(`This action requires the API and API key to be set on the page agent. Did you mean to --run-agents=missing?`);
   if (!context.agentParams.apiKey)
     throw new Error(`This action requires API key to be set on the page agent.`);
+  if (context.agentParams.apiEndpoint && !URL.canParse(context.agentParams.apiEndpoint))
+    throw new Error(`Agent API endpoint "${context.agentParams.apiEndpoint}" is not a valid URL.`);
 
   const snapshot = await context.takeSnapshot(progress);
   const { tools, callTool, reportedResult, refusedToPerformReason } = toolsForLoop(progress, context, toolDefinitions, { resultSchema, refuseToPerform: 'allow' });
@@ -204,7 +206,13 @@ const allCaches = new Map<string, Cache>();
 async function cachedActions(cacheFile: string): Promise<Cache> {
   let cache = allCaches.get(cacheFile);
   if (!cache) {
-    const json = await fs.promises.readFile(cacheFile, 'utf-8').then(text => JSON.parse(text)).catch(() => ({}));
+    const content = await fs.promises.readFile(cacheFile, 'utf-8').catch(() => '');
+    let json: any;
+    try {
+      json = JSON.parse(content.trim() || '{}');
+    } catch (error) {
+      throw new Error(`Failed to parse cache file ${cacheFile}:\n${error.message}`);
+    }
     const parsed = actions.cachedActionsSchema.safeParse(json);
     if (parsed.error)
       throw new Error(`Failed to parse cache file ${cacheFile}:\n${zod.prettifyError(parsed.error)}`);
