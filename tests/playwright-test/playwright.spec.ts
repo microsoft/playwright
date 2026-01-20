@@ -880,11 +880,11 @@ test('page.pause() should disable test timeout', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
 
       test('test', async ({ page }) => {
-        test.setTimeout(2000);
+        test.setTimeout(4000);
 
         await Promise.race([
           page.pause(),
-          new Promise(f => setTimeout(f, 3000)),
+          new Promise(f => setTimeout(f, 5000)),
         ]);
 
         console.log('success!');
