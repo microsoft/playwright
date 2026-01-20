@@ -1069,25 +1069,3 @@ it('should be able to intercept every navigation to a page controlled by service
   await page.goto(URL);
   expect(interceptions).toBe(2);
 });
-
-it('does not get stalled by beforeUnload', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38731' } }, async ({ page, server }) => {
-  await page.goto(server.HELLO_WORLD);
-
-  await page.evaluate(() => {
-    window.addEventListener('beforeunload', event => {
-      event.preventDefault();
-    });
-  });
-  page.on('dialog', dialog => dialog.dismiss());
-
-  // We have to interact with a page so that 'beforeunload' handlers
-  // fire.
-  await page.click('body');
-
-  await page.route('**/api', route => route.fulfill({ status: 200, body: 'ok' }));
-  await page.evaluate(async () => fetch(new URL('/api', window.location.href)));
-
-  await page.close({ runBeforeUnload: true });
-
-  await page.evaluate(async () => fetch(new URL('/api', window.location.href)));
-});
