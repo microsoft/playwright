@@ -949,8 +949,7 @@ Here are some permissions that may be supported by some browsers:
 * `'geolocation'`
 * `'gyroscope'`
 * `'local-fonts'`
-* `'local-network'`
-* `'loopback-network'`
+* `'local-network-access'`
 * `'magnetometer'`
 * `'microphone'`
 * `'midi-sysex'` (system-exclusive midi)

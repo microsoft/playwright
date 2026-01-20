@@ -9324,8 +9324,7 @@ export interface BrowserContext {
    * - `'geolocation'`
    * - `'gyroscope'`
    * - `'local-fonts'`
-   * - `'local-network'`
-   * - `'loopback-network'`
+   * - `'local-network-access'`
    * - `'magnetometer'`
    * - `'microphone'`
    * - `'midi-sysex'` (system-exclusive midi)
