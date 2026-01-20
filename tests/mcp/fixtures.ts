@@ -321,8 +321,3 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };
 }
-
-export const lowireMeta = {
-  'dev.lowire/history': true,
-  'dev.lowire/state': true,
-};

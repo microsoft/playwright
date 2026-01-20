@@ -145,15 +145,6 @@ export class Context {
     text.push(`# Page snapshot\n${full}`);
 
     return {
-      _meta: {
-        'dev.lowire/state': {
-          'Page snapshot': full
-        },
-        'dev.lowire/history': error ? [{
-          category: 'error',
-          content: stripAnsiEscapes(error.message),
-        }] : [],
-      },
       isError: !!error,
       content: [{ type: 'text', text: text.join('\n\n') }],
     };

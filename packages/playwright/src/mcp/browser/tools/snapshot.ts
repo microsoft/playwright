@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
 import { z } from 'playwright-core/lib/mcpBundle';
 import { formatObject } from 'playwright-core/lib/utils';
 
@@ -36,13 +34,8 @@ const snapshot = defineTool({
   handle: async (context, params, response) => {
     await context.ensureTab();
     response.setIncludeFullSnapshot();
-    if (params.filename) {
-      await response.finish();
-      const renderedResponse = response.render();
-      const fileName = await response.addFile(params.filename, { origin: 'llm', reason: 'Saved snapshot' });
-      await fs.promises.writeFile(fileName, renderedResponse.asText());
-      response.setIncludeMetaOnly();
-    }
+    if (params.filename)
+      response.outputConfig.page = { mode: 'file', fileName: await context.outputFile(params.filename, { origin: 'llm', title: 'Saved snapshot' }) };
   },
 });
 

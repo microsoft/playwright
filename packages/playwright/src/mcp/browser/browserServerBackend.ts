@@ -60,8 +60,7 @@ export class BrowserServerBackend implements ServerBackend {
       throw new Error(`Tool "${name}" not found`);
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {}) as any;
     const context = this._context!;
-    const response = new Response(context, name, parsedArguments);
-    response.logBegin();
+    const response = Response.create(context, name, parsedArguments);
     context.setRunningTool(name);
     try {
       await tool.handle(context, parsedArguments, response);
@@ -72,9 +71,7 @@ export class BrowserServerBackend implements ServerBackend {
     } finally {
       context.setRunningTool(undefined);
     }
-    response.logEnd();
-    const _meta = rawArguments?._meta as object | undefined;
-    return response.serialize({ _meta });
+    return await response.serialize();
   }
 
   serverClosed() {

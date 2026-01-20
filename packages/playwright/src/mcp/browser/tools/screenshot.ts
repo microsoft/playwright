@@ -60,7 +60,7 @@ const screenshot = defineTabTool({
     const isElementScreenshot = params.element && params.ref;
 
     const screenshotTarget = isElementScreenshot ? params.element : (params.fullPage ? 'full page' : 'viewport');
-    const fileName = await response.addFile(params.filename || dateAsFileName(fileType), { origin: 'llm', reason: `Screenshot of ${screenshotTarget}` });
+    const fileName = await response.addFile(params.filename || dateAsFileName(fileType), { origin: 'llm', title: `Screenshot of ${screenshotTarget}` });
     response.addCode(`// Screenshot ${screenshotTarget} and save it as ${fileName}`);
 
     // Only get snapshot when element screenshot is needed

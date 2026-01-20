@@ -123,10 +123,7 @@ test('should respect snapshot[filename]', async ({ startClient, server }, testIn
     arguments: {
       filename: 'snapshot1.md',
     },
-  })).toHaveResponse({
-    pageState: undefined,
-    files: expect.stringMatching(/\[Saved snapshot\]\(.*md\)/)
-  });
+  })).toHaveTextResponse(expect.stringContaining('Writing output' + path.sep + 'snapshot1.md'));
 
   expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.md'), 'utf8')).toContain(`
 - button "Button 1" [ref=e2]

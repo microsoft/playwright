@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates } from './tab';
 
@@ -24,26 +27,43 @@ import type { ModalState } from './tools/tool';
 
 export const requestDebug = debug('pw:mcp:request');
 
+type PartCategory = 'result' | 'code' | 'modal' | 'tabs' | 'page' | 'console' | 'downloads' | 'files' | 'network';
+type OutputPart = {
+  category: PartCategory;
+  title?: string;
+  content: string;
+};
+type OutputConfig = Record<PartCategory, { mode: 'file' | 'text', fileName?: string }>;
+
 export class Response {
+  private _ordinal: number;
   private _result: string[] = [];
   private _code: string[] = [];
   private _images: { contentType: string, data: Buffer }[] = [];
-  private _files: { fileName: string, title: string }[] = [];
+  private _savedFiles: { fileName: string, title: string }[] = [];
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeTabs = false;
   private _includeModalStates: ModalState[] | undefined;
-  private _includeMetaOnly: boolean = false;
   private _tabSnapshot: TabSnapshot | undefined;
+  readonly outputConfig: OutputConfig;
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
   private _isError: boolean | undefined;
 
-  constructor(context: Context, toolName: string, toolArgs: Record<string, any>) {
+  private constructor(ordinal: number, context: Context, toolName: string, toolArgs: Record<string, any>) {
+    this._ordinal = ordinal;
     this._context = context;
+    this.outputConfig = Object.fromEntries(allCategories.map(({ category }) => [category, { mode: context.config.outputMode ?? 'stdout' }])) as OutputConfig;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
+  }
+
+  static _ordinal = 0;
+
+  static create(context: Context, toolName: string, toolArgs: Record<string, any>) {
+    return new Response(++Response._ordinal, context, toolName, toolArgs);
   }
 
   addResult(result: string) {
@@ -79,9 +99,9 @@ export class Response {
     return this._images;
   }
 
-  async addFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }) {
+  async addFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }) {
     const resolvedFile = await this._context.outputFile(fileName, options);
-    this._files.push({ fileName: resolvedFile, title: options.reason });
+    this._savedFiles.push({ fileName: resolvedFile, title: options.title });
     return resolvedFile;
   }
 
@@ -101,10 +121,6 @@ export class Response {
     this._includeModalStates = modalStates;
   }
 
-  setIncludeMetaOnly() {
-    this._includeMetaOnly = true;
-  }
-
   async finish() {
     if (this._tabSnapshot)
       return;
@@ -121,68 +137,85 @@ export class Response {
     return this._tabSnapshot;
   }
 
-  logBegin() {
-    if (requestDebug.enabled)
-      requestDebug(this.toolName, this.toolArgs);
-  }
-
-  logEnd() {
-    if (requestDebug.enabled)
-      requestDebug(this.serialize());
-  }
-
-  render(): RenderedResponse{
-    const renderedResponse = new RenderedResponse();
-
+  private _renderParts(): OutputPart[] {
+    const parts: OutputPart[] = [];
     if (this._result.length)
-      renderedResponse.results.push(...this._result);
+      parts.push({ category: 'result', content: this._result.join('\n') });
 
     // Add code if it exists.
     if (this._code.length && this._context.config.codegen !== 'none')
-      renderedResponse.code.push(...this._code);
+      parts.push({ category: 'code', content: this._code.join('\n') });
 
     // List browser tabs.
     if (this._includeSnapshot !== 'none' || this._includeTabs) {
       const tabsMarkdown = renderTabsMarkdown(this._context.tabs(), this._includeTabs);
       if (tabsMarkdown.length)
-        renderedResponse.states.tabs = tabsMarkdown.join('\n');
+        parts.push({ category: 'tabs', content: tabsMarkdown.join('\n') });
     }
 
     // Add snapshot if provided.
     if (this._tabSnapshot?.modalStates.length) {
       const modalStatesMarkdown = renderModalStates(this._tabSnapshot.modalStates);
-      renderedResponse.states.modal = modalStatesMarkdown.join('\n');
+      parts.push({ category: 'modal', content: modalStatesMarkdown.join('\n') });
     } else if (this._includeModalStates) {
       const modalStatesMarkdown = renderModalStates(this._includeModalStates);
-      renderedResponse.states.modal = modalStatesMarkdown.join('\n');
+      parts.push({ category: 'modal', content: modalStatesMarkdown.join('\n') });
     } else if (this._tabSnapshot) {
-      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, renderedResponse);
+      renderTabSnapshot(this._tabSnapshot, this._includeSnapshot, parts);
     }
 
-    if (this._files.length) {
+    // Saved files
+    if (this._savedFiles.length) {
+      const root = this._context.firstRootPath();
       const lines: string[] = [];
-      for (const file of this._files)
-        lines.push(`- [${file.title}](${file.fileName})`);
-      renderedResponse.updates.push({ category: 'files', content: lines.join('\n') });
+      for (const file of this._savedFiles) {
+        lines.push(`- [${file.title}](${root ? path.relative(root, file.fileName) : file.fileName})`);
+      }
+      parts.push({ category: 'files', content: lines.join('\n') });
     }
-
-    return this._context.config.secrets ? renderedResponse.redact(this._context.config.secrets) : renderedResponse;
+    return parts;
   }
 
-  serialize(options: { _meta?: Record<string, any> } = {}): { content: (TextContent | ImageContent)[], isError?: boolean, _meta?: Record<string, any> } {
-    const renderedResponse = this.render();
-    const includeMeta = options._meta && 'dev.lowire/history' in options._meta && 'dev.lowire/state' in options._meta;
-    const _meta: any = includeMeta ? renderedResponse.asMeta() : undefined;
+  private _redactParts(parts: OutputPart[]): OutputPart[] {
+    const redactText = (text: string) => {
+      for (const [secretName, secretValue] of Object.entries(this._context.config.secrets ?? {}))
+        text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+      return text;
+    };
+    return this._context.config.secrets ? parts.map(part => ({ ...part, content: redactText(part.content) })) : parts;
+  }
+
+  async serialize(): Promise<{ content: (TextContent | ImageContent)[], isError?: boolean }> {
+    const parts = this._redactParts(this._renderParts());
+
+    const text: string[] = [];
+    const rootPath = this._context.firstRootPath();
+
+    for (const { category, title, ext } of allCategories) {
+      const part = parts.find(p => p.category === category);
+      if (!part || !part.content.trim())
+        continue;
+
+      if (this.outputConfig[category as PartCategory]?.mode === 'file' && ext) {
+        let fileName = this.outputConfig[category as PartCategory]?.fileName;
+        if (!fileName) {
+          const baseName = `${category}-${this._ordinal}${ext}`;
+          fileName = await this._context.outputFile(baseName, { origin: 'code', title: 'Saving response' });
+        }
+        await fs.promises.writeFile(fileName, part.content);
+        const relativeName = rootPath ? path.relative(rootPath, fileName) : fileName;
+        text.push(`☑️  Saving \`${part.title ?? title}\` as "${relativeName}"`);
+      } else {
+        text.push(`### ${part.title ?? title}\n${part.content}\n`);
+      }
+    }
 
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: renderedResponse.asText(this._includeMetaOnly ? { categories: ['files'] } : undefined)
+        text: text.join('\n')
       },
     ];
-
-    if (this._includeMetaOnly)
-      return { _meta, content, isError: this._isError };
 
     // Image attachments.
     if (this._context.config.imageResponses !== 'omit') {
@@ -191,19 +224,18 @@ export class Response {
     }
 
     return {
-      _meta,
       content,
       isError: this._isError
     };
   }
 }
 
-function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | 'full' | 'incremental', response: RenderedResponse) {
+function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | 'full' | 'incremental', parts: OutputPart[]) {
   if (tabSnapshot.consoleMessages.length) {
     const lines: string[] = [];
     for (const message of tabSnapshot.consoleMessages)
       lines.push(`- ${trimMiddle(message.toString(), 100)}`);
-    response.updates.push({ category: 'console', content: lines.join('\n') });
+    parts.push({ category: 'console', content: lines.join('\n') });
   }
 
   if (tabSnapshot.downloads.length) {
@@ -214,7 +246,7 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | '
       else
         lines.push(`- Downloading file ${entry.download.suggestedFilename()} ...`);
     }
-    response.updates.push({ category: 'downloads', content: lines.join('\n') });
+    parts.push({ category: 'downloads', content: lines.join('\n') });
   }
 
   if (includeSnapshot === 'incremental' && tabSnapshot.ariaSnapshotDiff === '') {
@@ -235,7 +267,7 @@ function renderTabSnapshot(tabSnapshot: TabSnapshot, includeSnapshot: 'none' | '
       lines.push(tabSnapshot.ariaSnapshot);
     lines.push('```');
   }
-  response.states.page = lines.join('\n');
+  parts.push({ category: 'page', content: lines.join('\n') });
 }
 
 function renderTabsMarkdown(tabs: Tab[], force: boolean = false): string[] {
@@ -260,92 +292,18 @@ function trimMiddle(text: string, maxLength: number) {
   return text.slice(0, Math.floor(maxLength / 2)) + '...' + text.slice(- 3 - Math.floor(maxLength / 2));
 }
 
-export class RenderedResponse {
-  readonly states: Partial<Record<'page' | 'tabs' | 'modal', string>> = {};
-  readonly updates: { category: 'console' | 'downloads' | 'files', content: string }[] = [];
-  readonly results: string[] = [];
-  readonly code: string[] = [];
-
-  constructor(copy?: { states: Partial<Record<'page' | 'tabs' | 'modal', string>>, updates: { category: 'console' | 'downloads' | 'files', content: string }[], results: string[], code: string[] }) {
-    if (copy) {
-      this.states = copy.states;
-      this.updates = copy.updates;
-      this.results = copy.results;
-      this.code = copy.code;
-    }
-  }
-
-  asText(filter?: { categories: string[] }): string {
-    const text: string[] = [];
-    if (this.results.length)
-      text.push(`### Result\n${this.results.join('\n')}\n`);
-    if (this.code.length)
-      text.push(`### Ran Playwright code\n${this.code.join('\n')}\n`);
-
-    for (const { category, content } of this.updates) {
-      if (filter && !filter.categories.includes(category))
-        continue;
-      if (!content.trim())
-        continue;
-
-      switch (category) {
-        case 'console':
-          text.push(`### New console messages\n${content}\n`);
-          break;
-        case 'downloads':
-          text.push(`### Downloads\n${content}\n`);
-          break;
-        case 'files':
-          text.push(`### Files\n${content}\n`);
-          break;
-      }
-    }
-
-    for (const [category, value] of Object.entries(this.states)) {
-      if (filter && !filter.categories.includes(category))
-        continue;
-      if (!value.trim())
-        continue;
-
-      switch (category) {
-        case 'page':
-          text.push(`### Page state\n${value}\n`);
-          break;
-        case 'tabs':
-          text.push(`### Open tabs\n${value}\n`);
-          break;
-        case 'modal':
-          text.push(`### Modal state\n${value}\n`);
-          break;
-      }
-    }
-    return text.join('\n');
-  }
-
-  asMeta() {
-    const codeUpdate = this.code.length ? { category: 'code', content: this.code.join('\n') } : undefined;
-    const resultUpdate = this.results.length ? { category: 'result', content: this.results.join('\n') } : undefined;
-    const updates = [resultUpdate, codeUpdate, ...this.updates].filter(Boolean);
-    return {
-      'dev.lowire/history': updates,
-      'dev.lowire/state': { ...this.states },
-    };
-  }
-
-  redact(secrets: Record<string, string>): RenderedResponse {
-    const redactText = (text: string) => {
-      for (const [secretName, secretValue] of Object.entries(secrets))
-        text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
-      return text;
-    };
-
-    const updates = this.updates.map(update => ({ ...update, content: redactText(update.content) }));
-    const results = this.results.map(result => redactText(result));
-    const code = this.code.map(code => redactText(code));
-    const states = Object.fromEntries(Object.entries(this.states).map(([key, value]) => [key, redactText(value)]));
-    return new RenderedResponse({ states, updates, results, code });
-  }
-}
+// Entries with ext are never saved to files.
+const allCategories: { category: PartCategory, title: string, ext?: string }[] = [
+  { category: 'result', title: 'Result' },
+  { category: 'code', title: 'Ran Playwright code' },
+  { category: 'modal', title: 'Modal state' },
+  { category: 'tabs', title: 'Open tabs' },
+  { category: 'page', title: 'Page state', ext: '.md' },
+  { category: 'console', title: 'New console messages', ext: '.log' },
+  { category: 'downloads', title: 'Downloads', ext: '.log' },
+  { category: 'network', title: 'Network', ext: '.log' },
+  { category: 'files', title: 'Files', ext: '' },
+];
 
 function parseSections(text: string): Map<string, string> {
   const sections = new Map<string, string>();
@@ -393,6 +351,5 @@ export function parseResponse(response: CallToolResult) {
     files,
     isError,
     attachments,
-    _meta: response._meta,
   };
 }

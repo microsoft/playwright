@@ -116,7 +116,7 @@ export class Context {
     return url;
   }
 
-  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
+  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
     return outputFile(this.config, this._clientInfo, fileName, options);
   }
 
@@ -242,6 +242,10 @@ export class Context {
       value: this.config.secrets[secretName]!,
       code: `process.env['${secretName}']`,
     };
+  }
+
+  firstRootPath(): string | undefined {
+    return allRootPaths(this._clientInfo)[0];
   }
 }
 

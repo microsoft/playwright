@@ -145,7 +145,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const entry = {
       download,
       finished: false,
-      outputFile: await this.context.outputFile(download.suggestedFilename(), { origin: 'web', reason: 'Saving download' })
+      outputFile: await this.context.outputFile(download.suggestedFilename(), { origin: 'web', title: 'Saving download' })
     };
     this._downloads.push(entry);
     await download.saveAs(entry.outputFile);
