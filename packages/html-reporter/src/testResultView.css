@@ -85,6 +85,7 @@
 }
 
 .step-duration {
+  flex: none;
   white-space: nowrap;
   margin-left: 4px;
 }
