@@ -466,8 +466,8 @@ it('should click the button with px border with offset', async ({ page, server, 
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 20 + 8 : 20);
-  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 10 + 8 : 10);
+  expect(await page.evaluate('offsetX')).toBe(20);
+  expect(await page.evaluate('offsetY')).toBe(10);
 });
 
 it('should click the button with em border with offset', async ({ page, server, browserName }) => {
@@ -477,8 +477,8 @@ it('should click the button with em border with offset', async ({ page, server, 
   await page.click('button', { position: { x: 20, y: 10 } });
   expect(await page.evaluate('result')).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 12 * 2 + 20 : 20);
-  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 12 * 2 + 10 : 10);
+  expect(await page.evaluate('offsetX')).toBe(20);
+  expect(await page.evaluate('offsetY')).toBe(10);
 });
 
 it('should click a very large button with offset', async ({ page, server, browserName, isAndroid }) => {
@@ -489,8 +489,8 @@ it('should click a very large button with offset', async ({ page, server, browse
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(1900);
+  expect(await page.evaluate('offsetY')).toBe(1910);
 });
 
 it('should click a button in scrolling container with offset', async ({ page, server, browserName, isAndroid }) => {
@@ -510,8 +510,8 @@ it('should click a button in scrolling container with offset', async ({ page, se
   await page.click('button', { position: { x: 1900, y: 1910 } });
   expect(await page.evaluate(() => window['result'])).toBe('Clicked');
   // Safari reports border-relative offsetX/offsetY.
-  expect(await page.evaluate('offsetX')).toBe(browserName === 'webkit' ? 1900 + 8 : 1900);
-  expect(await page.evaluate('offsetY')).toBe(browserName === 'webkit' ? 1910 + 8 : 1910);
+  expect(await page.evaluate('offsetX')).toBe(1900);
+  expect(await page.evaluate('offsetY')).toBe(1910);
 });
 
 it('should wait for stable position', async ({ page, server }) => {
