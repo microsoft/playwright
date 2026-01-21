@@ -187,8 +187,10 @@ function main() {
   const args = require('minimist')(argv);
   const command = args._[0];
   if (args.help || args.h || !command) {
-    if (command && command in helpMessage)
-      console.log(helpMessage[command]);
+    // case of '--help navigate'
+    const commandName = command ?? args.help ?? args.h;
+    if (commandName && commandName in helpMessage)
+      console.log(helpMessage[commandName]);
     else
       console.log(globalHelp);
     // eslint-disable-next-line no-restricted-properties
