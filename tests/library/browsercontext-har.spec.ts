@@ -470,13 +470,12 @@ it('should record single set-cookie headers', {
   });
 
   const harPath = testInfo.outputPath('har.zip');
-  console.log('HAR path:', harPath);
   const context1 = await contextFactory();
   await context1.routeFromHAR(harPath, { update: true });
   const page1 = await context1.newPage();
   await page1.goto(server.EMPTY_PAGE);
   const cookie1 = await page1.evaluate(() => document.cookie);
-  expect(cookie1.split('; ').sort().join('; ')).toBe('first=foo');
+  expect(cookie1).toBe('first=foo');
   await context1.close();
 
   const context2 = await contextFactory();
@@ -484,7 +483,7 @@ it('should record single set-cookie headers', {
   const page2 = await context2.newPage();
   await page2.goto(server.EMPTY_PAGE);
   const cookie2 = await page2.evaluate(() => document.cookie);
-  expect(cookie2.split('; ').sort().join('; ')).toBe('first=foo');
+  expect(cookie2).toBe('first=foo');
 });
 
 it('should record multiple set-cookie headers', {
@@ -497,7 +496,6 @@ it('should record multiple set-cookie headers', {
   });
 
   const harPath = testInfo.outputPath('har.zip');
-  console.log('HAR path:', harPath);
   const context1 = await contextFactory();
   await context1.routeFromHAR(harPath, { update: true });
   const page1 = await context1.newPage();
