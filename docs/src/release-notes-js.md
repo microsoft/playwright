@@ -43,7 +43,7 @@ Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements
 
 ### Breaking Changes ⚠️
 
-- **Removed `_react` and `_vue` selectors**: These experimental selectors have been removed. Use standard locators like `getByRole`, `getByText`, or `getByTestId` instead—they're more reliable and work across frameworks.
+- Removed `_react` and `_vue` selectors. See [locators guide](./locators.md) for alternatives.
 
 - **Removed `*:light` selectors**: The `:light` pseudo-class has been removed. Use standard CSS selectors instead.
 
