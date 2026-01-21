@@ -19,7 +19,7 @@ The `shardIndex` is also now available in the reporter API for custom reporting 
 
 ### New `toHaveCSS` Overload
 
-If you have `@types/react` installed, you can now pass a style object to [`method: LocatorAssertions.toHaveCSS`] for type-safe CSS assertions:
+If you have `@types/react` installed, you can now pass a style object to [`method: LocatorAssertions.toHaveCSS#1`] for type-safe CSS assertions:
 
 ```ts
 await expect(locator).toHaveCSS({
