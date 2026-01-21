@@ -57,9 +57,8 @@ export const MetadataView: React.FC<{ metadata: Metadata }> = params => {
 };
 
 const InnerMetadataView: React.FC<{ metadata: Metadata }> = params => {
-  const searchParams = useSearchParams();
   const commitInfo = params.metadata as MetadataWithCommitInfo;
-  const otherEntries = searchParams.has('show-metadata-other') ? Object.entries(params.metadata).filter(([key]) => !ignoreKeys.has(key)) : [];
+  const otherEntries = useSearchParams().has('show-metadata-other') ? Object.entries(params.metadata).filter(([key]) => !ignoreKeys.has(key)) : [];
   const hasMetadata = commitInfo.ci || commitInfo.gitCommit || otherEntries.length > 0;
   if (!hasMetadata)
     return;
