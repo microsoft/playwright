@@ -47,7 +47,7 @@ Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements
 
 - **Removed `*:light` selectors**: The `:light` pseudo-class has been removed. Use standard CSS selectors instead.
 
-- **Removed deprecated `devtools` option**: This option was deprecated in v1.44. Use `args: ['--auto-open-devtools-for-tabs']` in launch options instead.
+- Option `devtools` from [`method: BrowserType.launch`] has been removed. Use `args: ['--auto-open-devtools-for-tabs']` instead.
 
 - Removed macOS 13 support for WebKit. We recommend to upgrade your macOS version, or keep using an older Playwright version.
 
