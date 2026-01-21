@@ -142,7 +142,8 @@ async function connectToDaemon(options: { headless?: boolean }): Promise<SocketS
       return await connectToSocket(socketPath);
     } catch (e) {
       // Connection failed, delete the stale socket file.
-      fs.unlinkSync(socketPath);
+      if (os.platform() !== 'win32')
+        await fs.promises.unlink(socketPath).catch(() => {});
     }
   }
 

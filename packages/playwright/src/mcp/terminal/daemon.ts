@@ -23,6 +23,7 @@ import url from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 import { browserTools } from '../browser/tools';
+import { aliases } from './commands';
 
 import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
@@ -125,23 +126,12 @@ function camelToKebabCase(camel: string): string {
   return camel.replace(/([A-Z])/g, letter => `-${letter.toLowerCase()}`);
 }
 
-export const aliases: Record<string, string[]> = {
-  'navigate': ['goto', 'open'],
-  'take_screenshot': ['screenshot'],
-};
-
 function canonicalName(name: string): string {
-  switch (name) {
-    case 'goto':
-    case 'navigate':
-    case 'open':
-      return 'navigate';
-    case 'screenshot':
-    case 'take_screenshot':
-      return 'take_screenshot';
-    default:
-      return name;
+  for (const [canonicalName, nameAliases] of Object.entries(aliases)) {
+    if (nameAliases.includes(name))
+      return canonicalName;
   }
+  return name;
 }
 
 function parseCliCommand(argv: string[]): { toolName: string, args: mcp.CallToolRequest['params']['arguments'] } {
@@ -152,7 +142,6 @@ function parseCliCommand(argv: string[]): { toolName: string, args: mcp.CallTool
     throw new Error('Command is required');
 
   const toolName = `browser_${canonicalName(commandAlias)}`;
-  // TODO: support aliases
   const tool = browserTools.find(tool => tool.schema.name === toolName);
   if (!tool)
     throw new Error(`Unknown command: ${commandAlias}.`);
