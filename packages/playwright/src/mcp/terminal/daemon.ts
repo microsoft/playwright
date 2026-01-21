@@ -22,8 +22,11 @@ import url from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
+import { browserTools } from '../browser/tools';
 
 import type { ServerBackendFactory } from '../sdk/server';
+import type * as mcp from '../sdk/exports';
+import type { z } from 'zod';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -79,14 +82,17 @@ export async function startMcpDaemonServer(
       const { id, method, params } = message;
       try {
         daemonDebug('received command', method);
-        const response = await backend.callTool(method, params, () => {});
-        daemonDebug('sending response', !!response);
-        if (response)
-          await connection.send({ id, result: response });
+        if (method === 'runCliCommand') {
+          const { toolName, args } = parseCliCommand(params.argv);
+          const adjustedArgs = adjustCommandParameters(toolName, args);
+          const response = await backend.callTool(toolName, adjustedArgs, () => {});
+          await connection.send({ id, result: formatResult(response) });
+        } else {
+          throw new Error(`Unknown method: ${method}`);
+        }
       } catch (e) {
         daemonDebug('command failed', e);
         await connection.send({ id, error: (e as Error).message });
-        daemonDebug('error handling message', e);
       }
     };
   });
@@ -102,4 +108,90 @@ export async function startMcpDaemonServer(
       resolve(socketPath);
     });
   });
+}
+
+function formatResult(result: mcp.CallToolResult) {
+  const lines = [];
+  for (const content of result.content) {
+    if (content.type === 'text')
+      lines.push(content.text);
+    else
+      lines.push(`<${content.type} content>`);
+  }
+  return lines.join('\n');
+}
+
+function camelToKebabCase(camel: string): string {
+  return camel.replace(/([A-Z])/g, letter => `-${letter.toLowerCase()}`);
+}
+
+export const aliases: Record<string, string[]> = {
+  'navigate': ['goto', 'open'],
+  'take_screenshot': ['screenshot'],
+};
+
+function canonicalName(name: string): string {
+  switch (name) {
+    case 'goto':
+    case 'navigate':
+    case 'open':
+      return 'navigate';
+    case 'screenshot':
+    case 'take_screenshot':
+      return 'take_screenshot';
+    default:
+      return name;
+  }
+}
+
+function parseCliCommand(argv: string[]): { toolName: string, args: mcp.CallToolRequest['params']['arguments'] } {
+  const parsed = require('minimist')(argv);
+
+  const commandAlias = parsed._[0];
+  if (!commandAlias)
+    throw new Error('Command is required');
+
+  const toolName = `browser_${canonicalName(commandAlias)}`;
+  // TODO: support aliases
+  const tool = browserTools.find(tool => tool.schema.name === toolName);
+  if (!tool)
+    throw new Error(`Unknown command: ${commandAlias}.`);
+
+  const args: mcp.CallToolRequest['params']['arguments'] = {};
+
+  const inputSchema = tool.schema.inputSchema.toJSONSchema() as z.core.JSONSchema.BaseSchema;
+
+  const requiredProperties = (inputSchema.required || []).filter(p => {
+    const property = inputSchema.properties?.[p];
+    return !(typeof property === 'object' && 'default' in property);
+  });
+
+  const freeArguments = parsed._.slice(1);
+  if (requiredProperties.length && freeArguments.length < requiredProperties.length)
+    throw new Error(`Missing required parameter(s): ${requiredProperties.slice(freeArguments.length).map(r => `${r}`).join(', ')}`);
+
+  let index = 0;
+  for (const requiredProperty of requiredProperties)
+    args[requiredProperty] = freeArguments[index++];
+
+  Object.entries(inputSchema.properties || {}).forEach(([propertyName, schema]) => {
+    const optionName = camelToKebabCase(propertyName);
+    if (optionName in parsed)
+      args[propertyName] = parsed[optionName];
+    else if (typeof schema === 'object' && schema.default !== undefined)
+      args[propertyName] = schema.default;
+  });
+
+  return { toolName, args };
+}
+
+function adjustCommandParameters(toolName: string, args: mcp.CallToolRequest['params']['arguments']): mcp.CallToolRequest['params']['arguments'] {
+  if (toolName === 'browser_snapshot') {
+    args ??= {};
+    if (!('filename' in args)) {
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      args.filename = `snapshot-${timestamp}.md`;
+    }
+  }
+  return args;
 }
