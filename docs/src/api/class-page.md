@@ -711,6 +711,7 @@ Raw CSS content to be injected into frame.
 
 ## async method: Page.agent
 * since: v1.58
+* langs: js
 * hidden
 - returns: <[PageAgent]>
 
