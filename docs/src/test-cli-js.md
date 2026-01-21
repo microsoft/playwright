@@ -129,6 +129,12 @@ path/to/example.spec.ts
 # Run all tests in a file for a specific project:
 [chromium] › path/to/example.spec.ts
 
+# Run all tests in a specific group/suite:
+path/to/example.spec.ts › suite name
+
+# Run all tests in a nested group:
+path/to/example.spec.ts › outer suite › inner suite
+
 # Fully qualified test with a project:
 [chromium] › path/to/example.spec.ts:3:9 › suite › nested suite › example test
 
