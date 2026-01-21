@@ -49,7 +49,7 @@ Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements
 
 - **Removed deprecated `devtools` option**: This option was deprecated in v1.44. Use `args: ['--auto-open-devtools-for-tabs']` in launch options instead.
 
-- **Dropped macOS < 14 support for WebKit**: WebKit now requires macOS 14 (Sonoma) or later, as macOS 13 reached end-of-life.
+- Removed macOS 13 support for WebKit. We recommend to upgrade your macOS version, or keep using an older Playwright version.
 
 ### Browser Versions
 
