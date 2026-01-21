@@ -46,6 +46,24 @@ export default defineConfig({
 });
 ```
 
+## property: TestOptions.agentOptions
+* since: v1.58
+* hidden
+- type: <[Object]>
+  - `provider` <[Object]>
+    - `api` <[PageAgentAPI]<"openai"|"openai-compatible"|"anthropic"|"google">> API to use.
+    - `apiEndpoint` ?<[string]> Endpoint to use if different from default.
+    - `apiKey` <[string]> API key for the LLM provider.
+    - `apiTimeout` ?<[int]> Amount of time to wait for the provider to respond to each request.
+    - `model` <[string]> Model identifier within the provider. Required in non-cache mode.
+  - `cachePathTemplate` ?<[string]> Cache file template to use/generate code for performed actions into.
+  - `limits` <[Object]>
+    - `maxTokens` ?<[int]> Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value. Defaults to unlimited.
+    - `maxActions` ?<[int]> Maximum number of agentic actions to generate, defaults to 10.
+    - `maxActionRetries` ?<[int]> Maximum number retries per action, defaults to 3.
+  - `secrets` ?<[Object]<[string], [string]>> Secrets to hide from the LLM.
+  - `systemPrompt` <[string]> System prompt for the agent's loop.
+
 ## property: TestOptions.baseURL = %%-context-option-baseURL-%%
 * since: v1.10
 
