@@ -25,7 +25,6 @@ import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 import { aliases, globalHelp, helpMessage } from './commands';
-import minimist from 'minimist';
 
 import type * as mcp from '../sdk/exports';
 
@@ -185,18 +184,20 @@ async function connectToSocket(socketPath: string): Promise<SocketSession> {
 
 function main() {
   const argv = process.argv.slice(2);
-  const args = minimist(argv);
+  const args = require('minimist')(argv);
   const command = args._[0];
   if (args.help || args.h || !command) {
-    if (command && command in helpMessage) {
+    if (command && command in helpMessage)
       console.log(helpMessage[command]);
-    } else {
+    else
       console.log(globalHelp);
-    }
+    // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }
+
   if (args.version || args.v) {
     console.log(packageJSON.version);
+    // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }
   const options: any = { };
@@ -204,6 +205,7 @@ function main() {
     options.headless = !args.headed;
   runMcpCommand(argv, options).catch(e => {
     console.error(e.message);
+    // eslint-disable-next-line no-restricted-properties
     process.exit(1);
   });
 }

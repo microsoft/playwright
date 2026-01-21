@@ -19,7 +19,6 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import url from 'url';
-import minimist from 'minimist';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
@@ -123,7 +122,7 @@ function formatResult(result: mcp.CallToolResult) {
 }
 
 function camelToKebabCase(camel: string): string {
-  return camel.replace(/([A-Z])/g, (letter) => `-${letter.toLowerCase()}`);
+  return camel.replace(/([A-Z])/g, letter => `-${letter.toLowerCase()}`);
 }
 
 export const aliases: Record<string, string[]> = {
@@ -139,14 +138,14 @@ function canonicalName(name: string): string {
       return 'navigate';
     case 'screenshot':
     case 'take_screenshot':
-        return 'take_screenshot';
+      return 'take_screenshot';
     default:
       return name;
   }
 }
 
 function parseCliCommand(argv: string[]): { toolName: string, args: mcp.CallToolRequest['params']['arguments'] } {
-  const parsed = minimist(argv);
+  const parsed = require('minimist')(argv);
 
   const commandAlias = parsed._[0];
   if (!commandAlias)
@@ -164,7 +163,7 @@ function parseCliCommand(argv: string[]): { toolName: string, args: mcp.CallTool
 
   const requiredProperties = (inputSchema.required || []).filter(p => {
     const property = inputSchema.properties?.[p];
-    return !(typeof property === 'object' && 'default' in property)
+    return !(typeof property === 'object' && 'default' in property);
   });
 
   const freeArguments = parsed._.slice(1);
