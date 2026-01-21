@@ -68,6 +68,10 @@
   min-width: 0;
 }
 
+.step-multiplier {
+  margin: 0 4px;
+}
+
 .step-spacer {
   flex: auto;
 }

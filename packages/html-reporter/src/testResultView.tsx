@@ -197,7 +197,7 @@ const StepTreeItem: React.FC<{
   return <TreeItem title={<span aria-label={step.title} className='step-title-container'>
     {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
     <span className='step-title-text'>{step.title}</span>
-    {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
+    {step.count > 1 && <><span className='step-multiplier'>✕</span><span className='test-result-counter'>{step.count}</span></>}
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
     <span className='step-spacer'></span>
     {step.attachments.length > 0 && <a
