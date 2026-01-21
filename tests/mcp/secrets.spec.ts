@@ -16,7 +16,7 @@
 
 import fs from 'node:fs';
 
-import { test, expect, lowireMeta, parseResponse } from './fixtures';
+import { test, expect } from './fixtures';
 
 test('browser_type', async ({ startClient, server }) => {
   const secretsFile = test.info().outputPath('secrets.env');
@@ -53,7 +53,7 @@ test('browser_type', async ({ startClient, server }) => {
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').fill(process.env['X-PASSWORD']);
 await page.getByRole('textbox').press('Enter');`,
-      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
+      snapshot: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
     });
   }
 
@@ -123,73 +123,6 @@ await page.getByRole('textbox', { name: 'Password' }).fill(process.env['X-PASSWO
     name: 'browser_snapshot',
     arguments: {},
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- textbox \"Password\" [active] [ref=e6]: <secret>X-PASSWORD</secret>`),
+    snapshot: expect.stringContaining(`- textbox \"Password\" [active] [ref=e6]: <secret>X-PASSWORD</secret>`),
   });
-});
-
-
-test('structured response', async ({ startClient, server }) => {
-  const secretsFile = test.info().outputPath('secrets.env');
-  await fs.promises.writeFile(secretsFile, 'X-PASSWORD=password123');
-
-  const { client } = await startClient({
-    args: ['--secrets', secretsFile],
-  });
-
-  server.setContent('/', `
-    <!DOCTYPE html>
-    <html>
-      <input type='keypress' onkeypress="console.log('Key pressed:', event.key, ', Text:', event.target.value)"></input>
-    </html>
-  `, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: {
-      url: server.PREFIX,
-      _meta: lowireMeta
-    },
-  });
-
-  {
-    const response = await client.callTool({
-      name: 'browser_type',
-      arguments: {
-        element: 'textbox',
-        ref: 'e2',
-        text: 'X-PASSWORD',
-        submit: true,
-        _meta: lowireMeta
-      },
-    });
-    const { _meta } = parseResponse(response);
-    expect(_meta).toEqual({
-      'dev.lowire/history': [
-        { category: 'code', content: `await page.getByRole('textbox').fill(process.env['X-PASSWORD']);
-await page.getByRole('textbox').press('Enter');` },
-        { category: 'console', content: expect.stringContaining('[LOG] Key pressed: Enter , Text: <secret>X-PASSWORD</secret>') },
-      ],
-      'dev.lowire/state': {
-        page: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: <secret>X-PASSWORD<\/secret>/),
-      },
-    });
-  }
-
-  {
-    const response = await client.callTool({
-      name: 'browser_console_messages',
-      arguments: {
-        _meta: lowireMeta
-      },
-    });
-    const { _meta } = parseResponse(response);
-    expect(_meta).toEqual({
-      'dev.lowire/history': [
-        { category: 'result', content: expect.stringContaining('[LOG] Key pressed: Enter , Text: <secret>X-PASSWORD</secret>') },
-      ],
-      'dev.lowire/state': {
-        page: expect.any(String),
-      },
-    });
-  }
 });

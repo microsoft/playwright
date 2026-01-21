@@ -44,7 +44,7 @@ test('browser_type', async ({ client, server }) => {
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').fill('Hi!');
 await page.getByRole('textbox').press('Enter');`,
-      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
+      snapshot: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
     });
   }
 
@@ -79,7 +79,7 @@ test('browser_type (slowly)', async ({ client, server }) => {
 
     expect(response).toHaveResponse({
       code: `await page.getByRole('textbox').pressSequentially('Hi!');`,
-      pageState: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
+      snapshot: expect.stringMatching(/textbox (\[active\] )?\[ref=e2\]: Hi!/),
     });
   }
   const response = await client.callTool({
@@ -109,7 +109,7 @@ test('browser_type (no submit)', async ({ client, server }) => {
       },
     });
     expect(response).toHaveResponse({
-      pageState: expect.stringContaining(`- textbox`),
+      snapshot: expect.stringContaining(`- textbox`),
     });
   }
   {
@@ -124,7 +124,7 @@ test('browser_type (no submit)', async ({ client, server }) => {
     expect(response).toHaveResponse({
       code: expect.stringContaining(`fill('Hi!')`),
       // Should yield no snapshot.
-      pageState: expect.not.stringContaining(`- textbox`),
+      snapshot: expect.not.stringContaining(`- textbox`),
     });
   }
   {

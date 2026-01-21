@@ -32,7 +32,7 @@ test('--init-page', async ({ startClient }) => {
     name: 'browser_snapshot',
     arguments: {},
   })).toHaveResponse({
-    pageState: expect.stringContaining('Hello world'),
+    snapshot: expect.stringContaining('Hello world'),
   });
 });
 
@@ -65,7 +65,7 @@ test('--init-page w/ --init-script', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining('Hello world'),
+    snapshot: expect.stringContaining('Hello world'),
   });
 
   expect(await client.callTool({

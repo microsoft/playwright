@@ -32,7 +32,7 @@ const tracingStart = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    const tracesDir = await context.outputFile(`traces`, { origin: 'code', reason: 'Collecting trace' });
+    const tracesDir = await context.outputFile(`traces`, { origin: 'code', title: 'Collecting trace' });
     const name = 'trace-' + Date.now();
     await (browserContext.tracing as Tracing).start({
       name,
@@ -44,7 +44,7 @@ const tracingStart = defineTool({
 - Network log: ${tracesDir}/${name}.network
 - Resources with content by sha1: ${tracesDir}/resources`;
 
-    response.addResult(`Tracing started, saving to ${tracesDir}.\n${traceLegend}`);
+    response.addTextResult(`Tracing started, saving to ${tracesDir}.\n${traceLegend}`);
     (browserContext.tracing as any)[traceLegendSymbol] = traceLegend;
   },
 });
@@ -64,7 +64,7 @@ const tracingStop = defineTool({
     const browserContext = await context.ensureBrowserContext();
     await browserContext.tracing.stop();
     const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
-    response.addResult(`Tracing stopped.\n${traceLegend}`);
+    response.addTextResult(`Tracing stopped.\n${traceLegend}`);
   },
 });
 

@@ -41,7 +41,8 @@ test('action timeout (default)', async ({ server, startClient }) => {
       submit: true,
     },
   })).toHaveResponse({
-    result: expect.stringContaining(`Timeout 5000ms exceeded.`),
+    error: expect.stringContaining(`Timeout 5000ms exceeded.`),
+    isError: true,
   });
 });
 
@@ -70,7 +71,8 @@ test('action timeout (custom)', async ({ startClient, server }) => {
       submit: true,
     },
   })).toHaveResponse({
-    result: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    error: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    isError: true,
   });
 });
 
@@ -93,6 +95,7 @@ test('navigation timeout', async ({ startClient, server }) => {
       url: server.PREFIX + '/slow',
     },
   })).toHaveResponse({
-    result: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    error: expect.stringContaining(`Timeout 1234ms exceeded.`),
+    isError: true,
   });
 });

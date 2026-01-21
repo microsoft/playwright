@@ -21,7 +21,7 @@ test('browser_evaluate', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- Page Title: Title`),
+    page: expect.stringContaining(`- Page Title: Title`),
   });
 
   expect(await client.callTool({
@@ -62,7 +62,7 @@ test('browser_evaluate object', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- Page Title: Title`),
+    page: expect.stringContaining(`- Page Title: Title`),
   });
 
   expect(await client.callTool({
@@ -81,7 +81,7 @@ test('browser_evaluate (error)', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- Page Title: Title`),
+    page: expect.stringContaining(`- Page Title: Title`),
   });
 
   const result = await client.callTool({

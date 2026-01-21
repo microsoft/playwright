@@ -41,7 +41,7 @@ for (const mcpHeadless of [false, true]) {
       });
 
       expect(response).toHaveResponse({
-        pageState: (mcpHeadless ? expect : expect.not).stringContaining(`HeadlessChrome`),
+        snapshot: (mcpHeadless ? expect : expect.not).stringContaining(`HeadlessChrome`),
       });
     });
   });

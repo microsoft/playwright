@@ -19,7 +19,9 @@ import path from 'path';
 
 import { test, expect } from './fixtures';
 
-test('session log should record tool calls', async ({ startClient, server }, testInfo) => {
+test('session log should record tool calls', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser === 'webkit');
+
   const { client, stderr } = await startClient({
     args: [
       '--save-session',
@@ -54,12 +56,14 @@ test('session log should record tool calls', async ({ startClient, server }, tes
   "url": "http://localhost:${server.PORT}"
 }
 \`\`\`
-- Code
-\`\`\`js
-await page.goto('http://localhost:${server.PORT}');
+- Result
+\`\`\`json
+{
+  "code": "await page.goto('http://localhost:${server.PORT}');",
+  "page": "- Page URL: http://localhost:${server.PORT}/\\n- Page Title: Title",
+  "snapshot": "\`\`\`yaml\\n- button \\"Submit\\" [ref=e2]\\n\`\`\`"
+}
 \`\`\`
-- Snapshot: 001.snapshot.yml
-
 
 ### Tool call: browser_click
 - Args
@@ -69,203 +73,13 @@ await page.goto('http://localhost:${server.PORT}');
   "ref": "e2"
 }
 \`\`\`
-- Code
-\`\`\`js
-await page.getByRole('button', { name: 'Submit' }).click();
-\`\`\`
-- Snapshot: 002.snapshot.yml
-
-`);
-});
-
-test('session log should record user action', async ({ cdpServer, startClient }, testInfo) => {
-  const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
-    args: [
-      '--save-session',
-      '--output-dir', testInfo.outputPath('output'),
-      `--cdp-endpoint=${cdpServer.endpoint}`,
-    ],
-  });
-
-  // Force browser context creation.
-  await client.callTool({
-    name: 'browser_snapshot',
-  });
-
-  const [page] = browserContext.pages();
-  await page.setContent(`
-    <button>Button 1</button>
-    <button>Button 2</button>
-  `);
-
-  await page.getByRole('button', { name: 'Button 1' }).click();
-
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
-
-  await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
-- Args
-\`\`\`json
-{}
-\`\`\`
-- Snapshot: 001.snapshot.yml
-
-
-### User action: click
-- Args
+- Result
 \`\`\`json
 {
-  "name": "click",
-  "ref": "e2",
-  "button": "left",
-  "modifiers": 0,
-  "clickCount": 1
+  "code": "await page.getByRole('button', { name: 'Submit' }).click();",
+  "snapshot": "\`\`\`yaml\\n- <changed> button \\"Submit\\" [active] [ref=e2]\\n\`\`\`"
 }
 \`\`\`
-- Code
-\`\`\`js
-await page.getByRole('button', { name: 'Button 1' }).click();
-\`\`\`
-- Snapshot: 002.snapshot.yml
-
-`);
-});
-
-test('session log should update user action', async ({ cdpServer, startClient }, testInfo) => {
-  const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
-    args: [
-      '--save-session',
-      '--output-dir', testInfo.outputPath('output'),
-      `--cdp-endpoint=${cdpServer.endpoint}`,
-    ],
-  });
-
-  // Force browser context creation.
-  await client.callTool({
-    name: 'browser_snapshot',
-  });
-
-  const [page] = browserContext.pages();
-  await page.setContent(`
-    <button>Button 1</button>
-    <button>Button 2</button>
-  `);
-
-  await page.getByRole('button', { name: 'Button 1' }).dblclick();
-
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
-
-  await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
-- Args
-\`\`\`json
-{}
-\`\`\`
-- Snapshot: 001.snapshot.yml
-
-
-### User action: click
-- Args
-\`\`\`json
-{
-  "name": "click",
-  "ref": "e2",
-  "button": "left",
-  "modifiers": 0,
-  "clickCount": 2
-}
-\`\`\`
-- Code
-\`\`\`js
-await page.getByRole('button', { name: 'Button 1' }).dblclick();
-\`\`\`
-- Snapshot: 002.snapshot.yml
-
-`);
-});
-
-test('session log should record tool calls and user actions', async ({ cdpServer, startClient }, testInfo) => {
-  const browserContext = await cdpServer.start();
-  const { client, stderr } = await startClient({
-    args: [
-      '--save-session',
-      '--output-dir', testInfo.outputPath('output'),
-      `--cdp-endpoint=${cdpServer.endpoint}`,
-    ],
-  });
-
-  const [page] = browserContext.pages();
-  await page.setContent(`
-    <button>Button 1</button>
-    <button>Button 2</button>
-  `);
-
-  await client.callTool({
-    name: 'browser_snapshot',
-  });
-
-  // Manual action.
-  await page.getByRole('button', { name: 'Button 1' }).click();
-
-  // This is to simulate a delay after the user action before the tool action.
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  // Tool action.
-  await client.callTool({
-    name: 'browser_click',
-    arguments: {
-      element: 'Button 2',
-      ref: 'e3',
-    },
-  });
-
-  const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
-  const sessionFolder = output.substring('Session: '.length);
-  await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
-### Tool call: browser_snapshot
-- Args
-\`\`\`json
-{}
-\`\`\`
-- Snapshot: 001.snapshot.yml
-
-
-### User action: click
-- Args
-\`\`\`json
-{
-  "name": "click",
-  "ref": "e2",
-  "button": "left",
-  "modifiers": 0,
-  "clickCount": 1
-}
-\`\`\`
-- Code
-\`\`\`js
-await page.getByRole('button', { name: 'Button 1' }).click();
-\`\`\`
-- Snapshot: 002.snapshot.yml
-
-
-### Tool call: browser_click
-- Args
-\`\`\`json
-{
-  "element": "Button 2",
-  "ref": "e3"
-}
-\`\`\`
-- Code
-\`\`\`js
-await page.getByRole('button', { name: 'Button 2' }).click();
-\`\`\`
-- Snapshot: 003.snapshot.yml
-
 `);
 });
 

@@ -21,6 +21,6 @@ test('browser_install', async ({ client, mcpBrowser }) => {
   expect(await client.callTool({
     name: 'browser_install',
   })).toHaveResponse({
-    tabs: expect.stringContaining(`No open tabs`),
+    result: expect.stringContaining(`No open tabs`),
   });
 });

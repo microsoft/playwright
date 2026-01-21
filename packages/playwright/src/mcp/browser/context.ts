@@ -27,7 +27,6 @@ import { outputFile  } from './config';
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
 import type { BrowserContextFactory, BrowserContextFactoryResult } from './browserContextFactory';
-import type * as actions from './actions';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../../../playwright-core/src/client/tracing';
 import type { ClientInfo } from '../sdk/server';
@@ -116,7 +115,7 @@ export class Context {
     return url;
   }
 
-  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', reason: string }): Promise<string> {
+  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
     return outputFile(this.config, this._clientInfo, fileName, options);
   }
 
@@ -219,8 +218,6 @@ export class Context {
       (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
     }
     await this._setupRequestInterception(browserContext);
-    if (this.sessionLog)
-      await InputRecorder.create(this, browserContext);
     for (const page of browserContext.pages())
       this._onPageCreated(page);
     browserContext.on('page', page => this._onPageCreated(page));
@@ -242,6 +239,10 @@ export class Context {
       value: this.config.secrets[secretName]!,
       code: `process.env['${secretName}']`,
     };
+  }
+
+  firstRootPath(): string | undefined {
+    return allRootPaths(this._clientInfo)[0];
   }
 }
 
@@ -277,57 +278,4 @@ function originOrHostGlob(originOrHost: string) {
   }
   // Support for legacy host-only mode.
   return `*://${originOrHost}/**`;
-}
-
-export class InputRecorder {
-  private _context: Context;
-  private _browserContext: playwright.BrowserContext;
-
-  private constructor(context: Context, browserContext: playwright.BrowserContext) {
-    this._context = context;
-    this._browserContext = browserContext;
-  }
-
-  static async create(context: Context, browserContext: playwright.BrowserContext) {
-    const recorder = new InputRecorder(context, browserContext);
-    await recorder._initialize();
-    return recorder;
-  }
-
-  private async _initialize() {
-    const sessionLog = this._context.sessionLog!;
-    await (this._browserContext as any)._enableRecorder({
-      mode: 'recording',
-      recorderMode: 'api',
-    }, {
-      actionAdded: (page: playwright.Page, data: actions.ActionInContext, code: string) => {
-        if (this._context.isRunningTool())
-          return;
-        const tab = Tab.forPage(page);
-        if (tab)
-          sessionLog.logUserAction(data.action, tab, code, false);
-      },
-      actionUpdated: (page: playwright.Page, data: actions.ActionInContext, code: string) => {
-        if (this._context.isRunningTool())
-          return;
-        const tab = Tab.forPage(page);
-        if (tab)
-          sessionLog.logUserAction(data.action, tab, code, true);
-      },
-      signalAdded: (page: playwright.Page, data: actions.SignalInContext) => {
-        if (this._context.isRunningTool())
-          return;
-        if (data.signal.name !== 'navigation')
-          return;
-        const tab = Tab.forPage(page);
-        const navigateAction: actions.Action = {
-          name: 'navigate',
-          url: data.signal.url,
-          signals: [],
-        };
-        if (tab)
-          sessionLog.logUserAction(navigateAction, tab, `await page.goto('${data.signal.url}');`, false);
-      },
-    });
-  }
 }

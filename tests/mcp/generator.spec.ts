@@ -164,7 +164,7 @@ test('click after generator_log_action', async ({ startClient }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit"`),
+    snapshot: expect.stringContaining(`- button "Submit"`),
   });
 
   expect(await client.callTool({

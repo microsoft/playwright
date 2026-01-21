@@ -39,7 +39,7 @@ test('config user data dir', async ({ startClient, server }, testInfo) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Hello, world!`),
+    snapshot: expect.stringContaining(`Hello, world!`),
   });
 
   const files = await fs.promises.readdir(config.browser!.userDataDir!);
@@ -53,7 +53,7 @@ test('executable path', async ({ startClient, server }, testInfo) => {
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
     isError: true,
-    result: expect.stringMatching(/Failed to launch.*missing-executable/),
+    error: expect.stringMatching(/Failed to launch.*missing-executable/),
   });
 });
 
@@ -73,7 +73,7 @@ test.describe(() => {
       name: 'browser_navigate',
       arguments: { url: 'data:text/html,<script>document.title = navigator.userAgent</script>' },
     })).toHaveResponse({
-      pageState: expect.stringContaining(`Firefox`),
+      page: expect.stringContaining(`Firefox`),
     });
   });
 });

@@ -35,7 +35,7 @@ test('browser_wait_for(text)', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
+    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
   });
 
   await client.callTool({
@@ -54,7 +54,7 @@ test('browser_wait_for(text)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
+    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });
 });
 
@@ -77,7 +77,7 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
+    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to disappear`),
   });
 
   await client.callTool({
@@ -96,7 +96,7 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
+    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });
 });
 

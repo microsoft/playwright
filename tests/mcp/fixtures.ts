@@ -223,16 +223,27 @@ type Response = Awaited<ReturnType<Client['callTool']>>;
 export const expect = baseExpect.extend({
   toHaveResponse(response: Response, object: any) {
     const parsed = parseResponse(response);
+    const text = parsed.text;
     const isNot = this.isNot;
+
+    const keys = Object.keys(object);
+    for (const key of Object.keys(parsed)) {
+      if (!keys.includes(key))
+        delete parsed[key];
+    }
+
     try {
-      if (isNot)
+      if (isNot) {
         expect(parsed).not.toEqual(expect.objectContaining(object));
-      else
+      } else {
         expect(parsed).toEqual(expect.objectContaining(object));
+        if (parsed.isError && !object.isError)
+          throw new Error('Response is an error, but expected is not');
+      }
     } catch (e) {
       return {
         pass: isNot,
-        message: () => e.message,
+        message: () => e.message + '\n\nResponse text:\n' + text,
       };
     }
     return {
@@ -321,8 +332,3 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };
 }
-
-export const lowireMeta = {
-  'dev.lowire/history': true,
-  'dev.lowire/state': true,
-};
