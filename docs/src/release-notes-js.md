@@ -6,6 +6,61 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.58
+
+### Sharding Improvements
+
+The HTML report's Speedboard tab now shows how long each shard took, making it easy to spot imbalanced shards at a glance.
+
+<!-- TODO: Add screenshot of Shard Duration chart from Speedboard tab -->
+
+Once you've identified slow shards, you can use the new custom sharding weights to rebalance them and speed up your overall CI time. The `shardIndex` is also now available in the reporter API for custom reporting and debugging.
+
+### Worker Fixture Timeouts
+
+Worker-scoped fixtures now get their own separate timeout instead of sharing time with `beforeAll` hooks. This means more predictable timeout behavior—if your worker fixture takes 10 seconds and your `beforeAll` takes 5 seconds, they each get their full configured timeout rather than competing for a shared pool.
+
+### New `toHaveCSS` Overload
+
+If you have `@types/react` installed, you can now pass a style object to `toHaveCSS` for type-safe CSS assertions:
+
+```ts
+await expect(locator).toHaveCSS({
+  backgroundColor: 'rgb(255, 0, 0)',
+  fontSize: '16px',
+});
+```
+
+### UI Mode and Trace Viewer Improvements
+
+- New 'system' theme option follows your OS dark/light mode preference
+- Search functionality (Cmd/Ctrl+F) is now available in code editors
+- Network details panel has been reorganized for better usability
+- JSON responses are now automatically formatted for readability
+
+Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements!
+
+### Breaking Changes ⚠️
+
+- **Removed `_react` and `_vue` selectors**: These experimental selectors have been removed. Use standard locators like `getByRole`, `getByText`, or `getByTestId` instead—they're more reliable and work across frameworks.
+
+- **Removed `*:light` selectors**: The `:light` pseudo-class has been removed. Use standard CSS selectors instead.
+
+- **Removed deprecated `devtools` option**: This option was deprecated in v1.44. Use `args: ['--auto-open-devtools-for-tabs']` in launch options instead.
+
+- **Dropped macOS < 14 support for WebKit**: WebKit now requires macOS 14 (Sonoma) or later, as macOS 13 reached end-of-life.
+
+### Browser Versions
+
+- Chromium 145.0.7632.6
+- Mozilla Firefox 146.0.1
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 144
+- Microsoft Edge 144
+
 ## Version 1.57
 
 ### Speedboard
