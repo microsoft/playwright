@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, PageAgent, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
+import type { APIRequestContext, Browser, BrowserContext, BrowserContextOptions, Page, LaunchOptions, ViewportSize, Geolocation, HTTPCredentials, Locator, APIResponse, PageScreenshotOptions } from 'playwright-core';
 export * from 'playwright-core';
 
 // @ts-ignore ReactCSSProperties will be any if react is not installed
@@ -269,27 +269,8 @@ export interface PlaywrightWorkerOptions {
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
 export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
-export type AgentOptions = {
-  provider?: {
-    api: 'openai' | 'openai-compatible' | 'anthropic' | 'google';
-    apiEndpoint?: string;
-    apiKey: string;
-    apiTimeout?: number;
-    model: string;
-  },
-  limits?: {
-    maxTokens?: number;
-    maxActions?: number;
-    maxActionRetries?: number;
-  };
-  cachePathTemplate?: string;
-  runAgents?: 'all' | 'missing' | 'none';
-  secrets?: { [key: string]: string };
-  systemPrompt?: string;
-};
 
 export interface PlaywrightTestOptions {
-  agentOptions: AgentOptions | undefined;
   acceptDownloads: boolean;
   bypassCSP: boolean;
   colorScheme: ColorScheme;
@@ -328,7 +309,6 @@ export interface PlaywrightTestArgs {
   context: BrowserContext;
   page: Page;
   request: APIRequestContext;
-  agent: PageAgent;
 }
 
 type ExcludeProps<A, B> = {

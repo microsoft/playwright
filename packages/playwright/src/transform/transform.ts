@@ -224,7 +224,7 @@ export function transformHook(originalCode: string, filename: string, moduleUrl?
   // TODO: ideally, we would not transform before checking the cache. However, the source
   // currently depends on the seed.md, so "originalCode" is not enough to produce a cache key.
   let inputSourceMap: EncodedSourceMap | undefined;
-  if (filename.endsWith('.md')) {
+  if (filename.endsWith('.md') && false) {
     const transformed = transformMDToTS(originalCode, filename);
     originalCode = transformed.code;
     inputSourceMap = transformed.map;

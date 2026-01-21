@@ -425,7 +425,6 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
   ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
-  ['--run-agents <mode>', { description: `Run agents to generate the code for page.perform`, choices: ['missing', 'all', 'none'], preset: 'none' }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
   ['--shard-weights <weights>', { description: `Weights for each shard, colon-separated, for example "2:1:1" for 3 shards where the first shard should be allocated half of the work` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
