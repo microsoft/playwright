@@ -37,12 +37,44 @@
 .test-result-path {
   padding: 0 0 0 5px;
   color: var(--color-fg-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-right: 8px;
 }
 
 .test-result-counter {
   border-radius: 12px;
   color: var(--color-canvas-default);
   padding: 2px 8px;
+  line-height: normal;
+}
+
+.step-title-container {
+  display: flex;
+  align-items: center;
+  flex: auto;
+  min-width: 0;
+}
+
+.step-title-container > * {
+  flex-shrink: 0;
+}
+
+.step-title-text {
+  flex-shrink: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.step-spacer {
+  flex: auto;
+}
+
+.step-duration {
+  white-space: nowrap;
+  margin-left: 4px;
 }
 
 :root.light-mode {

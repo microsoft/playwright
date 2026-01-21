@@ -15,14 +15,20 @@
 */
 
 .tree-item {
-  text-overflow: ellipsis;
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  white-space: nowrap;
+  min-width: 0;
   line-height: 38px;
 }
 
 .tree-item-title {
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  display: flex;
+  align-items: center;
 }
 
 .tree-item-body {
