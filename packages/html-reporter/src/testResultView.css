@@ -72,6 +72,20 @@
   flex: auto;
 }
 
+.step-attachment-link {
+  display: flex;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.step-attachment-link:hover {
+  background-color: var(--color-neutral-muted);
+}
+
+.step-attachment-link .octicon {
+  margin-right: 0;
+}
+
 .step-duration {
   white-space: nowrap;
   margin-left: 4px;

@@ -201,6 +201,7 @@ const StepTreeItem: React.FC<{
     {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
     <span className='step-spacer'></span>
     {step.attachments.length > 0 && <a
+      className='step-attachment-link'
       title={`reveal attachment`}
       href={formatUrl(testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` }, searchParams))}
       onClick={evt => { evt.stopPropagation(); }}>
