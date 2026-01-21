@@ -90,6 +90,7 @@ export const ReportView: React.FC<{
       if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement || event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)
         return;
 
+      const params = new URLSearchParams(searchParams);
       switch (event.key) {
         case 'a':
           event.preventDefault();
@@ -97,28 +98,28 @@ export const ReportView: React.FC<{
           break;
         case 'p':
           event.preventDefault();
-          searchParams.delete('testId');
-          searchParams.delete('speedboard');
-          navigate(filterWithQuery(searchParams, 's:passed', false));
+          params.delete('testId');
+          params.delete('speedboard');
+          navigate(filterWithQuery(params, 's:passed', false));
           break;
         case 'f':
           event.preventDefault();
-          searchParams.delete('testId');
-          searchParams.delete('speedboard');
-          navigate(filterWithQuery(searchParams, 's:failed', false));
+          params.delete('testId');
+          params.delete('speedboard');
+          navigate(filterWithQuery(params, 's:failed', false));
           break;
         case 'ArrowLeft':
           if (prev) {
             event.preventDefault();
-            searchParams.delete('testId');
-            navigate(testResultHref({ test: prev }, searchParams) + filterParam);
+            params.delete('testId');
+            navigate(testResultHref({ test: prev }, params) + filterParam);
           }
           break;
         case 'ArrowRight':
           if (next) {
             event.preventDefault();
-            searchParams.delete('testId');
-            navigate(testResultHref({ test: next }, searchParams) + filterParam);
+            params.delete('testId');
+            navigate(testResultHref({ test: next }, params) + filterParam);
           }
           break;
       }
@@ -165,9 +166,8 @@ const TestCaseViewLoader: React.FC<{
   prev?: TestCaseSummary,
   testIdToFileIdMap: Map<string, string>,
 }> = ({ report, testIdToFileIdMap, next, prev, testId }) => {
-  const searchParams = useSearchParams();
   const [test, setTest] = React.useState<TestCase | 'loading' | 'not-found'>('loading');
-  const run = +(searchParams.get('run') || '0');
+  const run = +(useSearchParams().get('run') || '0');
 
   React.useEffect(() => {
     (async () => {

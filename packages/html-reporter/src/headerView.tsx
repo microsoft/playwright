@@ -48,8 +48,7 @@ export const GlobalFilterView: React.FC<{
   filterText: string,
   setFilterText: (filterText: string) => void,
 }> = ({ stats, filterText, setFilterText }) => {
-  const searchParams = useSearchParams();
-  const query = searchParams.get('q');
+  const query = useSearchParams().get('q');
   React.useEffect(() => {
     // Add an extra space such that users can easily add to query
     setFilterText(query ? `${query.trim()} ` : '');
@@ -89,7 +88,7 @@ export const GlobalFilterView: React.FC<{
 const StatsNavView: React.FC<{
   stats: Stats
 }> = ({ stats }) => {
-  const searchParams = useSearchParams();
+  const isSpeedboard = useSearchParams().has('speedboard');
 
   return <nav>
     <Link className='subnav-item' href='#?'>
@@ -100,7 +99,7 @@ const StatsNavView: React.FC<{
     <NavLink token='failed' count={stats.unexpected} />
     <NavLink token='flaky' count={stats.flaky} />
     <NavLink token='skipped' count={stats.skipped} />
-    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={searchParams.has('speedboard')}>
+    <Link className='subnav-item' href='#?speedboard' title='Speedboard' aria-selected={isSpeedboard}>
       {icons.clock()}
     </Link>
     <SettingsButton />
@@ -111,7 +110,7 @@ const NavLink: React.FC<{
   token: string,
   count: number,
 }> = ({ token, count }) => {
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(useSearchParams());
   searchParams.delete('speedboard');
   searchParams.delete('testId');
 
