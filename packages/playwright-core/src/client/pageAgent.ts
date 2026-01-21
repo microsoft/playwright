@@ -33,7 +33,7 @@ export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implement
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.PageAgentInitializer) {
     super(parent, type, guid, initializer);
     this._page = Page.from(initializer.page);
-    this._channel.on('turn', params => this.emit(Events.Page.AgentTurn, params));
+    this._channel.on('turn', params => this.emit(Events.PageAgent.Turn, params));
   }
 
   async expect(expectation: string, options: channels.PageAgentExpectOptions = {}) {

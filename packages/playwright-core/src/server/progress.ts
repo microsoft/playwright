@@ -52,7 +52,7 @@ export class ProgressController {
       (error as any)[kAbortErrorSymbol] = true;
       this._state = { error };
       this._forceAbortPromise.reject(error);
-      this._controller.abort();
+      this._controller.abort(error);
     }
     await this._donePromise;
   }
