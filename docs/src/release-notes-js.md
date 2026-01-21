@@ -23,7 +23,7 @@ Worker-scoped fixtures now get their own separate timeout instead of sharing tim
 
 ### New `toHaveCSS` Overload
 
-If you have `@types/react` installed, you can now pass a style object to `toHaveCSS` for type-safe CSS assertions:
+If you have `@types/react` installed, you can now pass a style object to [`method: LocatorAssertions.toHaveCSS`] for type-safe CSS assertions:
 
 ```ts
 await expect(locator).toHaveCSS({
