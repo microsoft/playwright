@@ -374,6 +374,9 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
       const relativeFile = toPosixPath(path.relative(config.config.rootDir, test.location.file));
       if (relativeFile !== d.file)
         return false;
+      // If no title path is specified, match ALL tests in the file
+      if (d.titlePath.length === 0)
+        return true;
       return d.titlePath.length === titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });
   } catch (e) {
