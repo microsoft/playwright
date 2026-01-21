@@ -374,13 +374,7 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
       const relativeFile = toPosixPath(path.relative(config.config.rootDir, test.location.file));
       if (relativeFile !== d.file)
         return false;
-      // If no title path is specified, match ALL tests in the file
-      if (d.titlePath.length === 0)
-        return true;
-      // Match if test's title path starts with the specified title path (supports groups/suites)
-      if (d.titlePath.length > titles.length)
-        return false;
-      return d.titlePath.every((title, index) => titles[index] === title);
+      return d.titlePath.length > titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });
   } catch (e) {
     throw errorWithFile(filePath, 'Cannot read test list file: ' + e.message);
