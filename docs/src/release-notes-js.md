@@ -17,10 +17,6 @@ The HTML report's Speedboard tab now shows how long each shard took, making it e
 Once you've identified slow shards, you can use the new custom sharding weights to rebalance them and speed up your overall CI time.
 The `shardIndex` is also now available in the reporter API for custom reporting and debugging.
 
-### Worker Fixture Timeouts
-
-Worker-scoped fixtures now get their own separate timeout instead of sharing time with `beforeAll` hooks. This means more predictable timeout behavior—if your worker fixture takes 10 seconds and your `beforeAll` takes 5 seconds, they each get their full configured timeout rather than competing for a shared pool.
-
 ### New `toHaveCSS` Overload
 
 If you have `@types/react` installed, you can now pass a style object to [`method: LocatorAssertions.toHaveCSS`] for type-safe CSS assertions:
@@ -45,7 +41,7 @@ Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements
 
 - Removed `_react` and `_vue` selectors. See [locators guide](./locators.md) for alternatives.
 
-- **Removed `*:light` selectors**: The `:light` pseudo-class has been removed. Use standard CSS selectors instead.
+- Removed `:light` selector engine suffix. Use standard CSS selectors instead.
 
 - Option `devtools` from [`method: BrowserType.launch`] has been removed. Use `args: ['--auto-open-devtools-for-tabs']` instead.
 
