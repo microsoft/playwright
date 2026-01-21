@@ -12,9 +12,10 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 The HTML report's Speedboard tab now shows how long each shard took, making it easy to spot imbalanced shards at a glance.
 
-<!-- TODO: Add screenshot of Shard Duration chart from Speedboard tab -->
+![Shard Duration chart in the HTML report](./images/speedboard-shards.png)
 
-Once you've identified slow shards, you can use the new custom sharding weights to rebalance them and speed up your overall CI time. The `shardIndex` is also now available in the reporter API for custom reporting and debugging.
+Once you've identified slow shards, you can use the new custom sharding weights to rebalance them and speed up your overall CI time.
+The `shardIndex` is also now available in the reporter API for custom reporting and debugging.
 
 ### Worker Fixture Timeouts
 
