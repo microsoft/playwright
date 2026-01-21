@@ -37,9 +37,6 @@
 .test-result-path {
   padding: 0 0 0 5px;
   color: var(--color-fg-muted);
-  flex-shrink: 0;
-  white-space: nowrap;
-  margin-right: 8px;
 }
 
 .test-result-counter {
@@ -68,16 +65,13 @@
   min-width: 0;
 }
 
-.step-multiplier {
-  margin: 0 4px;
-}
-
 .step-spacer {
   flex: auto;
 }
 
 .step-attachment-link {
   display: flex;
+  flex: none;
   border-radius: 4px;
   padding: 4px;
 }
