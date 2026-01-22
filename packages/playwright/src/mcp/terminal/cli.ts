@@ -32,8 +32,8 @@ const debugCli = debug('pw:cli');
 
 const packageJSON = require('../../../package.json');
 
-async function runCliCommand(args: any) {
-  const session = await connectToDaemon();
+async function runCliCommand(sessionName: string, args: any) {
+  const session = await connectToDaemon(sessionName);
   const result = await session.runCliCommand(args);
   console.log(result);
   session.dispose();
@@ -59,7 +59,6 @@ class SocketSession {
     this._connection.onmessage = message => this._onMessage(message);
     this._connection.onclose = () => this.dispose();
   }
-
 
   async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
     return this._send(name, args);
@@ -105,7 +104,7 @@ class SocketSession {
   }
 }
 
-function playwrightCacheDir(): string {
+function localCacheDir(): string {
   if (process.platform === 'linux')
     return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
   if (process.platform === 'darwin')
@@ -115,23 +114,33 @@ function playwrightCacheDir(): string {
   throw new Error('Unsupported platform: ' + process.platform);
 }
 
+function playwrightCacheDir(): string {
+  return path.join(localCacheDir(), 'ms-playwright');
+}
+
 function calculateSha1(buffer: Buffer | string): string {
   const hash = crypto.createHash('sha1');
   hash.update(buffer);
   return hash.digest('hex');
 }
 
-function daemonSocketPath(): string {
-  const installationDir = path.join(__dirname, '..', '..', '..');
-  const socketDir = calculateSha1(installationDir);
-  const socketName = 'default.sock';
-  if (os.platform() === 'win32')
-    return `\\\\.\\pipe\\${socketDir}-${socketName}`;
-  return path.resolve(playwrightCacheDir(), 'daemon', socketDir, socketName);
+function socketDirHash(): string {
+  return calculateSha1(__dirname);
 }
 
-async function connectToDaemon(): Promise<SocketSession> {
-  const socketPath = daemonSocketPath();
+function daemonSocketDir(): string {
+  return path.resolve(playwrightCacheDir(), 'daemon', socketDirHash());
+}
+
+function daemonSocketPath(sessionName: string): string {
+  const socketName = `${sessionName}.sock`;
+  if (os.platform() === 'win32')
+    return `\\\\.\\pipe\\${socketDirHash()}-${socketName}`;
+  return path.resolve(daemonSocketDir(), socketName);
+}
+
+async function connectToDaemon(sessionName: string): Promise<SocketSession> {
+  const socketPath = daemonSocketPath(sessionName);
   debugCli(`Connecting to daemon at ${socketPath}`);
 
   if (await socketExists(socketPath)) {
@@ -147,7 +156,9 @@ async function connectToDaemon(): Promise<SocketSession> {
 
   const cliPath = path.join(__dirname, '../../../cli.js');
   debugCli(`Will launch daemon process: ${cliPath}`);
-  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`], {
+
+  const userDataDir = path.resolve(daemonSocketDir(), `${sessionName}-user-data`);
+  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
     detached: true,
     stdio: 'ignore',
     cwd: process.cwd(), // Will be used as root.
@@ -181,11 +192,120 @@ async function connectToSocket(socketPath: string): Promise<SocketSession> {
   return new SocketSession(new SocketConnection(socket));
 }
 
-function main() {
+function currentSessionPath(): string {
+  return path.resolve(daemonSocketDir(), 'current-session');
+}
+
+async function getCurrentSession(): Promise<string> {
+  try {
+    const session = await fs.promises.readFile(currentSessionPath(), 'utf-8');
+    return session.trim() || 'default';
+  } catch {
+    return 'default';
+  }
+}
+
+async function setCurrentSession(sessionName: string): Promise<void> {
+  await fs.promises.mkdir(daemonSocketDir(), { recursive: true });
+  await fs.promises.writeFile(currentSessionPath(), sessionName);
+}
+
+async function canConnectToSocket(socketPath: string): Promise<boolean> {
+  return new Promise<boolean>(resolve => {
+    const socket = net.createConnection(socketPath, () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('error', () => {
+      resolve(false);
+    });
+  });
+}
+
+async function listSessions(): Promise<{ name: string, live: boolean }[]> {
+  const dir = daemonSocketDir();
+  try {
+    const files = await fs.promises.readdir(dir);
+    const sessions: { name: string, live: boolean }[] = [];
+    for (const file of files) {
+      if (file.endsWith('-user-data')) {
+        const sessionName = file.slice(0, -'-user-data'.length);
+        const socketPath = daemonSocketPath(sessionName);
+        const live = await canConnectToSocket(socketPath);
+        sessions.push({ name: sessionName, live });
+      }
+    }
+    return sessions;
+  } catch {
+    return [];
+  }
+}
+
+function resolveSessionName(args: any): string {
+  if (args.session)
+    return args.session;
+  if (process.env.PLAYWRIGHT_CLI_SESSION)
+    return process.env.PLAYWRIGHT_CLI_SESSION;
+  return 'default';
+}
+
+async function handleSessionCommand(args: any): Promise<void> {
+  const subcommand = args._[1];
+
+  if (!subcommand) {
+    // Show current session
+    const current = await getCurrentSession();
+    console.log(current);
+    return;
+  }
+
+  if (subcommand === 'list') {
+    const sessions = await listSessions();
+    const current = await getCurrentSession();
+    console.log('Sessions:');
+    for (const session of sessions) {
+      const marker = session.name === current ? '->' : '  ';
+      const liveMarker = session.live ? ' (live)' : '';
+      console.log(`${marker} ${session.name}${liveMarker}`);
+    }
+    if (sessions.length === 0)
+      console.log('   (no sessions)');
+    return;
+  }
+
+  if (subcommand === 'set') {
+    const sessionName = args._[2];
+    if (!sessionName) {
+      console.error('Usage: playwright-cli session set <session-name>');
+      process.exit(1);
+    }
+    await setCurrentSession(sessionName);
+    console.log(`Current session set to: ${sessionName}`);
+    return;
+  }
+
+  console.error(`Unknown session subcommand: ${subcommand}`);
+  process.exit(1);
+}
+
+async function main() {
   const argv = process.argv.slice(2);
   const args = require('minimist')(argv);
   const help = require('./help.json');
-  const command = help.commands[args._[0]];
+  const commandName = args._[0];
+
+  if (args.version || args.v) {
+    console.log(packageJSON.version);
+    process.exit(0);
+  }
+
+  // Handle 'session' command specially - it doesn't need daemon connection
+  if (commandName === 'session') {
+    await handleSessionCommand(args);
+    return;
+  }
+
+  const command = help.commands[commandName];
   if (args.help || args.h) {
     if (command) {
       console.log(command);
@@ -196,20 +316,23 @@ function main() {
     process.exit(0);
   }
   if (!command) {
-    console.error(`Unknown command: ${args._[0]}\n`);
+    console.error(`Unknown command: ${commandName}\n`);
     console.log(help.global);
     process.exit(1);
   }
 
-  if (args.version || args.v) {
-    console.log(packageJSON.version);
-    process.exit(0);
-  }
+  // Resolve session name: --session flag > PLAYWRIGHT_CLI_SESSION env > current session > 'default'
+  let sessionName = resolveSessionName(args);
+  if (sessionName === 'default' && !args.session && !process.env.PLAYWRIGHT_CLI_SESSION)
+    sessionName = await getCurrentSession();
 
-  runCliCommand(args).catch(e => {
+  runCliCommand(sessionName, args).catch(e => {
     console.error(e.message);
     process.exit(1);
   });
 }
 
-main();
+main().catch(e => {
+  console.error(e.message);
+  process.exit(1);
+});
