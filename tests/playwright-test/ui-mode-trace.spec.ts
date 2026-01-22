@@ -140,6 +140,8 @@ test('should locate sync assertions in source', async ({ runUITest }) => {
   });
 
   await page.getByText('trace test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Expect "toBe"').click();
 
   await expect(
@@ -253,6 +255,8 @@ test('should show image diff', async ({ runUITest }) => {
   });
 
   await page.getByText('vrt test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
+
   await page.getByText(/Attachments/).click();
   await expect(page.getByText('Diff', { exact: true })).toBeVisible();
   await expect(page.getByText('Actual', { exact: true })).toBeVisible();
@@ -369,6 +373,8 @@ test('should show errors with causes in the error tab', async ({ runUITest }) =>
   });
 
   await page.getByText('pass').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
+
   await page.getByText('Errors', { exact: true }).click();
   await expect(page.locator('.tab-errors')).toContainText(`Error: wrapper-message
 [cause]: Error: outer-message
@@ -416,6 +422,8 @@ test('should show request source context id', async ({ runUITest, server }) => {
   });
 
   await page.getByText('pass').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
   await expect(page.locator('span').filter({ hasText: 'Source' })).toBeVisible();
   await expect(page.getByText('page#1')).toBeVisible();
@@ -607,6 +615,8 @@ test('attachments tab shows all but top-level .push attachments', async ({ runUI
   });
 
   await page.getByRole('treeitem', { name: 'attachment test' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'step' }).click();
   await page.keyboard.press('ArrowRight');
@@ -641,6 +651,8 @@ test('skipped steps should have an indicator', async ({ runUITest }) => {
   });
 
   await page.getByRole('treeitem', { name: 'test with steps' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'outer' }).click();
   await page.keyboard.press('ArrowRight');
@@ -668,6 +680,7 @@ test('fails', async ({ page }) => {
   });
 
   await page.getByText('fails').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByText('Errors', { exact: true }).click();
@@ -685,13 +698,14 @@ test('fails', async ({ page }) => {
     `.trim());
 });
 
-test('should indicate current test status', async ({ runUITest }) => {
+test('should indicate current test status', async ({ runUITest, createLatch }) => {
+  const latch = createLatch();
   const { page } = await runUITest({
     'a.spec.ts': `
 import { test, expect } from '@playwright/test';
 test('basic pass', async ({ page }) => {
   await page.setContent('<button>Submit</button>');
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  ${latch.blockingCode}
   expect(1).toBe(1);
 });
 test('basic fail', async ({ page }) => {
@@ -702,11 +716,12 @@ test('basic fail', async ({ page }) => {
   });
 
   await page.getByTestId('test-tree').getByText('basic pass').dblclick();
-  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Running');
-  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Passed');
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Running');
+  latch.open();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await page.getByTestId('test-tree').getByText('basic fail').dblclick();
-  await expect(page.getByRole('tabpanel', { name: 'Actions' })).toContainText('Failed');
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Failed');
 });
 
 test('should be able to create and dispose APIRequestContext inside Promise.all', async ({ runUITest }) => {
@@ -728,6 +743,7 @@ test('should be able to create and dispose APIRequestContext inside Promise.all'
   });
 
   await page.getByText('create api request contexts').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 
@@ -762,6 +778,7 @@ test('should partition action tree state by test', async ({ runUITest }) => {
 
   await page.getByTitle('Run all').click();
   await page.getByTestId('test-tree').getByText('test1').click();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   const actionsTree = page.getByTestId('actions-tree');
   await actionsTree.getByRole('treeitem', { name: 'After Hooks' }).click();
