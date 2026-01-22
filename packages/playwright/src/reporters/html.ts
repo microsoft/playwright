@@ -356,8 +356,11 @@ class HtmlBuilder {
       startTime: s.startTime.getTime(),
       tag: s.tag,
       shardIndex: s.shardIndex,
-      suggestedWeight: 100,
+      suggestedWeight: undefined,
     }));
+
+    if (!process.env.PLAYWRIGHT_HTML_SHARD_WEIGHTS)
+      return machinesInfo;
 
     const bots: Record<string, api.TestCase[]> = {};
 

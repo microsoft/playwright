@@ -52,24 +52,24 @@ export function SlowestTests({ report, tests }: { report: LoadedReport, tests: T
 }
 
 export function Shards({ report }: { report: LoadedReport }) {
-  const shards = report.json().machines;
-  if (shards.length === 0)
+  const machines = report.json().machines;
+  if (machines.length === 0)
     return null;
 
   let clash = false;
   const bots: Record<string, { durations: number[], weights: number[] }> = {};
-  for (const shard of shards) {
-    const botName = shard.tag.join(' ');
+  for (const machine of machines) {
+    const botName = machine.tag.join(' ');
     bots[botName] ??= { durations: [], weights: [] };
-    const shardIndex = Math.max((shard.shardIndex ?? 1) - 1, 0);
+    const shardIndex = Math.max((machine.shardIndex ?? 1) - 1, 0);
     if (bots[botName].durations[shardIndex] !== undefined)
       clash = true;
-    bots[botName].durations[shardIndex] = shard.duration;
-    bots[botName].weights[shardIndex] = shard.suggestedWeight;
+    bots[botName].durations[shardIndex] = machine.duration;
+    bots[botName].weights[shardIndex] = machine.suggestedWeight ?? 100;
   }
 
   const maxSeries = Math.max(...Object.values(bots).map(b => b.durations.length));
-  const weightsSnippet = formatWeightCommands(bots);
+  const weightsSnippet = machines.some(m => m.suggestedWeight !== undefined) ? formatWeightCommands(bots) : undefined;
 
   return <AutoChip header='Shard Duration'>
     <GroupedBarChart

@@ -54,7 +54,7 @@ export type HTMLReport = {
     tag: string[];
     startTime: number;
     duration: number;
-    suggestedWeight: number;
+    suggestedWeight?: number;
   }[];
   errors: string[];  // Top-level errors that are not attributed to any test.
   options: HTMLReportOptions;
