@@ -6,6 +6,48 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.58
+
+### Timeline
+
+If you're using [merged reports](./test-sharding.md#merging-reports-from-multiple-environments), the HTML report Speedboard tab now shows the Timeline:
+
+![Timeline chart in the HTML report](./images/timeline.png)
+
+### UI Mode and Trace Viewer Improvements
+
+- New 'system' theme option follows your OS dark/light mode preference
+- Search functionality (Cmd/Ctrl+F) is now available in code editors
+- Network details panel has been reorganized for better usability
+- JSON responses are now automatically formatted for readability
+
+Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements!
+
+### Miscellaneous
+
+[`method: BrowserType.connectOverCDP`] now accepts an `isLocal` option. When set to `true`, it tells Playwright that it runs on the same host as the CDP server, enabling file system optimizations.
+
+### Breaking Changes ⚠️
+
+- Removed `_react` and `_vue` selectors. See [locators guide](./locators.md) for alternatives.
+
+- Removed `:light` selector engine suffix. Use standard CSS selectors instead.
+
+- Option `devtools` from [`method: BrowserType.launch`] has been removed. Use `args: ['--auto-open-devtools-for-tabs']` instead.
+
+- Removed macOS 13 support for WebKit. We recommend to upgrade your macOS version, or keep using an older Playwright version.
+
+### Browser Versions
+
+- Chromium 145.0.7632.6
+- Mozilla Firefox 146.0.1
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 144
+- Microsoft Edge 144
+
 ## Version 1.57
 
 ### Speedboard
