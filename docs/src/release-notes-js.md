@@ -8,21 +8,11 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ## Version 1.58
 
-### Sharding Improvements
+### Timeline
 
-The HTML report's Speedboard tab now shows how long each shard took, making it easy to spot imbalanced shards at a glance.
+If you're using [merged reports](./test-sharding.md#merging-reports-from-multiple-environments), the HTML report Speedboard tab now shows a Gantt shard of how long each test bot took:
 
-![Shard Duration chart in the HTML report](./images/speedboard-shards.png)
-
-### New `isLocal` Option for CDP Connections
-
-[`method: BrowserType.connectOverCDP`] now accepts an `isLocal` option. When set to `true`, it tells Playwright that it runs on the same host as the CDP server, enabling file system optimizations.
-
-```ts
-const browser = await chromium.connectOverCDP('http://localhost:9222', {
-  isLocal: true,
-});
-```
+![Timeline chart in the HTML report](./images/timeline.png)
 
 ### UI Mode and Trace Viewer Improvements
 
@@ -32,6 +22,16 @@ const browser = await chromium.connectOverCDP('http://localhost:9222', {
 - JSON responses are now automatically formatted for readability
 
 Thanks to [@cpAdm](https://github.com/cpAdm) for contributing these improvements!
+
+### Miscellaneous
+
+[`method: BrowserType.connectOverCDP`] now accepts an `isLocal` option. When set to `true`, it tells Playwright that it runs on the same host as the CDP server, enabling file system optimizations.
+
+```ts
+const browser = await chromium.connectOverCDP('http://localhost:9222', {
+  isLocal: true,
+});
+```
 
 ### Breaking Changes ⚠️
 
