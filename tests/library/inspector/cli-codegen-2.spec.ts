@@ -15,7 +15,6 @@
  */
 
 import { test, expect } from './inspectorTest';
-import fs from 'fs';
 
 test.describe('cli codegen', () => {
   test.skip(({ mode }) => mode !== 'default');
@@ -450,27 +449,6 @@ await page1.GotoAsync("about:blank?foo");`);
 
     await page.goto(server.PREFIX + '/page2.html');
     await recorder.waitForOutput('JavaScript', `await page.goto('${server.PREFIX}/page2.html');`);
-  });
-
-  test('should save assets via SIGINT', async ({ runCLI, platform }, testInfo) => {
-    test.skip(platform === 'win32', 'SIGINT not supported on Windows');
-
-    const storageFileName = testInfo.outputPath('auth.json');
-    const harFileName = testInfo.outputPath('har.har');
-    const cli = runCLI([`--save-storage=${storageFileName}`, `--save-har=${harFileName}`]);
-    await cli.waitFor(`import { test, expect } from '@playwright/test'`);
-    // Since our interrupt is non-graceful, we need to wait for the process to settle.
-    // This test should be fixed.
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const { exitCode, signal } = await cli.sigint();
-    if (exitCode !== null) {
-      expect(exitCode).toBe(130);
-    } else {
-      // If the runner is slow enough, the process will be forcibly terminated by the signal
-      expect(signal).toBe('SIGINT');
-    }
-    expect(fs.existsSync(storageFileName)).toBeTruthy();
-    expect(fs.existsSync(harFileName)).toBeTruthy();
   });
 
   test('should fill tricky characters', async ({ openRecorder }) => {

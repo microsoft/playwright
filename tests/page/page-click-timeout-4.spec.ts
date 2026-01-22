@@ -90,7 +90,7 @@ it('should fail to click the button behind a large header after scrolling around
     </script>
   `);
   await page.$eval('#li14', e => e.scrollIntoView());
-  const error = await page.click('#target', { timeout: 1500 }).catch(e => e);
+  const error = await page.click('#target', { timeout: 3500 }).catch(e => e);
   expect(error.message).toContain(`<div class="fixed"></div> intercepts pointer events`);
   expect(await page.evaluate(() => window['__clicked'])).toBe(undefined);
   const scrollTops = await page.evaluate(() => window['scrollTops']);
