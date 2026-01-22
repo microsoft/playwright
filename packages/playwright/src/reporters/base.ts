@@ -359,8 +359,8 @@ export class TerminalReporter implements ReporterV2 {
     return formatError(this.screen, error);
   }
 
-  formatSingleResult(test: TestCase, result: TestResult, index?: number): string {
-    return formatSingleResult(this.screen, this.config, test, result, index);
+  formatResultErrors(test: TestCase, result: TestResult): string {
+    return formatResultErrors(this.screen, test, result);
   }
 
   writeLine(line?: string) {
@@ -368,10 +368,8 @@ export class TerminalReporter implements ReporterV2 {
   }
 }
 
-function formatSingleResult(screen: Screen, config: FullConfig, test: TestCase, result: TestResult, index?: number): string {
+function formatResultErrors(screen: Screen, test: TestCase, result: TestResult): string {
   const lines: string[] = [];
-  const header = formatTestHeader(screen, config, test, { indent: '  ', index });
-  lines.push(test.outcome() === 'unexpected' ? screen.colors.red(header) : screen.colors.yellow(header));
   if (test.outcome() === 'unexpected') {
     const errorDetails = formatResultFailure(screen, test, result, '    ');
     if (errorDetails.length > 0)
