@@ -47,11 +47,6 @@ export function toSnakeCase(name: string): string {
   return name.replace(/([a-z0-9])([A-Z])/g, '$1_$2').replace(/([A-Z])([A-Z][a-z])/g, '$1_$2').toLowerCase();
 }
 
-export function toKebabCase(name: string): string {
-  // E.g. backgroundColor => background-color.
-  return name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase();
-}
-
 export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'oneline' = 'multiline'): string {
   if (typeof value === 'string')
     return escapeWithQuotes(value, '\'');

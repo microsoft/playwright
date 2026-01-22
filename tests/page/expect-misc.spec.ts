@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import { CSSProperties } from 'packages/playwright-test';
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
@@ -508,43 +507,16 @@ Timeout: 1000ms`);
 });
 
 test.describe('toHaveCSS', () => {
-  test('pass with css property', async ({ page }) => {
+  test('pass', async ({ page }) => {
     await page.setContent('<div id=node style="color: rgb(255, 0, 0)">Text content</div>');
     const locator = page.locator('#node');
     await expect(locator).toHaveCSS('color', 'rgb(255, 0, 0)');
   });
 
-  test('pass with custom css property', async ({ page }) => {
+  test('custom css properties', async ({ page }) => {
     await page.setContent('<div id=node style="--custom-color-property:#FF00FF;">Text content</div>');
     const locator = page.locator('#node');
     await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF');
-  });
-
-  test('pass with CSSPProperties object', async ({ page }) => {
-    await page.setContent('<div id=node style="color: rgb(255, 0, 0); display: flex;">Text content</div>');
-    const locator = page.locator('#node');
-    await expect(locator).toHaveCSS({ 'color': 'rgb(255, 0, 0)', 'display': 'flex' });
-  });
-
-  test('pass with CSSPProperties object with camelCased properties', async ({ page }) => {
-    await page.setContent('<div id=node style="background-color: red">Text content</div>');
-    const locator = page.locator('#node');
-    await expect(locator).toHaveCSS({ 'backgroundColor': 'rgb(255, 0, 0)' });
-  });
-
-  test('pass with CSSPProperties object with vendor-prefixed properties', async ({ page, browserName }) => {
-    await page.setContent('<div id=node style="-webkit-transform: rotate(45deg);-moz-transform: rotate(45deg);">Text content</div>');
-    const locator = page.locator('#node');
-    if (browserName === 'firefox')
-      await expect(locator).toHaveCSS({ 'MozTransform': 'matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)' });
-    else
-      await expect(locator).toHaveCSS({ 'WebkitTransform': 'matrix(0.707107, 0.707107, -0.707107, 0.707107, 0, 0)' });
-  });
-
-  test('pass with CSSPProperties object with custom properties', async ({ page }) => {
-    await page.setContent('<div id=node style="--my-color: blue;">Text content</div>');
-    const locator = page.locator('#node');
-    await expect(locator).toHaveCSS({ '--my-color': 'blue' } as CSSProperties);
   });
 });
 
