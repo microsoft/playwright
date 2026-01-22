@@ -3338,7 +3338,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await runInlineTest({}, { reporter: 'dot,html', shard: '3/3',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
 
       await runInlineTest({}, { reporter: 'dot,html', shard: '1/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
-      await runInlineTest({}, { reporter: 'dot,html', shard: '2/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac', PLAYWRIGHT_HTML_SHARD_WEIGHTS: '1' });
+      await runInlineTest({}, { reporter: 'dot,html', shard: '2/2',  }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
 
       await showReport();
       await page.getByRole('link', { name: 'Speedboard' }).click();
@@ -3354,18 +3354,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
             - list "@mac":
               - listitem /Shard 1/
               - listitem /Shard 2/
-          - text: Use shard weights to
-          - link "rebalance your shards":
-            - /url: https://playwright.dev/docs/test-sharding#rebalancing-shards
-          - text: /@linux. PLAYWRIGHT_SHARD_WEIGHTS=\\d+:\\d+:\\d+ @mac. PLAYWRIGHT_SHARD_WEIGHTS=\\d+:\\d+/
       `);
-
-      await test.step('shard weights are hidden by default', async () => {
-        await runInlineTest({}, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@windows' });
-        await showReport();
-        await page.getByRole('link', { name: 'Speedboard' }).click();
-        await expect(page.getByText('SHARD_WEIGHTS')).not.toBeVisible();
-      });
     });
   });
 }

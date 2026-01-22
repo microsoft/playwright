@@ -345,7 +345,6 @@ export class TestCase extends Base implements reporterTypes.TestCase {
       retry: this.results.length,
       parallelIndex: -1,
       workerIndex: -1,
-      shardIndex: undefined,
       duration: 0,
       startTime: new Date(),
       stdout: [],

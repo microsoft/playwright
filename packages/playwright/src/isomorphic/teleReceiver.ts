@@ -87,7 +87,6 @@ export type JsonTestResultStart = {
   retry: number;
   workerIndex: number;
   parallelIndex: number;
-  shardIndex?: number;
   startTime: number;
 };
 
@@ -356,7 +355,6 @@ export class TeleReporterReceiver {
     testResult.retry = payload.retry;
     testResult.workerIndex = payload.workerIndex;
     testResult.parallelIndex = payload.parallelIndex;
-    testResult.shardIndex = payload.shardIndex;
     testResult.setStartTimeNumber(payload.startTime);
     this._reporter.onTestBegin?.(test, testResult);
   }
@@ -723,7 +721,6 @@ export class TeleTestResult implements reporterTypes.TestResult {
   retry: reporterTypes.TestResult['retry'];
   parallelIndex: reporterTypes.TestResult['parallelIndex'] = -1;
   workerIndex: reporterTypes.TestResult['workerIndex'] = -1;
-  shardIndex: reporterTypes.TestResult['shardIndex'];
   duration: reporterTypes.TestResult['duration'] = -1;
   stdout: reporterTypes.TestResult['stdout'] = [];
   stderr: reporterTypes.TestResult['stderr'] = [];

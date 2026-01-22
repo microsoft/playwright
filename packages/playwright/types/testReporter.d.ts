@@ -682,11 +682,6 @@ export interface TestResult {
   retry: number;
 
   /**
-   * The index of the shard between `1` and [`shards`](https://playwright.dev/docs/test-sharding).
-   */
-  shardIndex?: number;
-
-  /**
    * Start time of this particular test run.
    */
   startTime: Date;
