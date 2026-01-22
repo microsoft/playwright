@@ -32,8 +32,6 @@ export const handleDialog = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
-
     const dialogState = tab.modalStates().find(state => state.type === 'dialog');
     if (!dialogState)
       throw new Error('No dialog visible');

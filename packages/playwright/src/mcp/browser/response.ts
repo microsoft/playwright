@@ -72,12 +72,12 @@ export class Response {
     // What can go into a file goes into a file in outputMode === file.
     if (this._context.config.outputMode === 'file') {
       if (!result.suggestedFilename)
-        result.suggestedFilename = dateAsFileName(result.ext ?? (result.text ? 'txt' : 'bin'));
+        result.suggestedFilename = dateAsFileName(result.ext ?? (result.text !== undefined ? 'txt' : 'bin'));
     }
 
     const entry: Result = { text: result.text, data: result.data, title: result.title };
     if (result.suggestedFilename)
-      entry.filename = await this._context.outputFile(result.suggestedFilename, { origin: 'llm', title: result.title ?? 'Saved result' });
+      entry.filename = await this._context.outputFile(result.suggestedFilename, { origin: 'llm', title: result.title || 'Saved result' });
 
     this._results.push(entry);
     return { fileName: entry.filename };
@@ -124,10 +124,11 @@ export class Response {
       const text = addSection('Result');
       for (const result of this._results) {
         if (result.filename) {
-          text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
+          if (result.text !== undefined || result.data)
+            text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
           if (result.data)
             await fs.promises.writeFile(result.filename, result.data);
-          else if (result.text)
+          else if (result.text !== undefined)
             await fs.promises.writeFile(result.filename, this._redactText(result.text));
         } else if (result.text) {
           text.push(result.text);
@@ -247,7 +248,7 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
 
 export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
   if (!tabs.length)
-    return ['No open tabs. Use the "browser_navigate" tool to navigate to a page first.'];
+    return ['No open tabs. Navigate to a URL to create one.'];
 
   const lines: string[] = [];
   for (let i = 0; i < tabs.length; i++) {

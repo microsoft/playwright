@@ -25,7 +25,7 @@ export type CommandSchema<Args extends zodType.ZodTypeAny, Options extends zodTy
   description: string;
   args?: Args;
   options?: Options;
-  toolName: string | ((args: zodType.infer<Args>, options: zodType.infer<Options>) => string);
+  toolName: string | ((args: zodType.infer<Args> & zodType.infer<Options>) => string);
   toolParams: (args: zodType.infer<Args> & zodType.infer<Options>) => any;
 };
 
@@ -51,7 +51,7 @@ export function parseCommand(command: AnyCommandSchema, args: Record<string, str
     throw new Error(formatZodError(e as zodType.ZodError));
   }
 
-  const toolName = typeof command.toolName === 'function' ? command.toolName(parsedArgsObject, options) : command.toolName;
+  const toolName = typeof command.toolName === 'function' ? command.toolName({ ...parsedArgsObject, ...options }) : command.toolName;
   const toolParams = command.toolParams({ ...parsedArgsObject, ...options });
   return { toolName, toolParams };
 }

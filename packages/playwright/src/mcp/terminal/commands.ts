@@ -227,7 +227,7 @@ const fill = declareCommand({
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
   }),
-  toolName: 'browser_fill',
+  toolName: 'browser_type',
   toolParams: ({ ref, text, submit }) => ({ ref, text, submit }),
 });
 
@@ -242,16 +242,16 @@ const hover = declareCommand({
   toolParams: ({ ref }) => ({ ref }),
 });
 
-const selectOption = declareCommand({
+const select = declareCommand({
   name: 'select',
   description: 'Select an option in a dropdown',
   category: 'core',
   args: z.object({
     ref: z.string().describe('Exact target element reference from the page snapshot'),
-    vals: z.array(z.string()).describe('Array of values to select in the dropdown. This can be a single value or multiple values.'),
+    val: z.string().describe('Value to select in the dropdown'),
   }),
   toolName: 'browser_select_option',
-  toolParams: ({ ref, vals: values }) => ({ ref, values }),
+  toolParams: ({ ref, val: value }) => ({ ref, values: [value] }),
 });
 
 const fileUpload = declareCommand({
@@ -308,7 +308,7 @@ const evaluate = declareCommand({
     ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
   }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func: fn, ref }) => ({ function: fn, ref }),
+  toolParams: ({ func, ref }) => ({ function: func, ref }),
 });
 
 const dialogAccept = declareCommand({
@@ -398,10 +398,10 @@ const screenshot = declareCommand({
   }),
   options: z.object({
     filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
-    fullPage: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
+    ['full-page']: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
   }),
   toolName: 'browser_take_screenshot',
-  toolParams: ({ ref, filename, fullPage }) => ({ filename, ref, fullPage }),
+  toolParams: ({ ref, filename, ['full-page']: fullPage }) => ({ filename, ref, fullPage }),
 });
 
 const pdfSave = declareCommand({
@@ -428,8 +428,8 @@ const consoleList = declareCommand({
   options: z.object({
     clear: z.boolean().optional().describe('Whether to clear the console list'),
   }),
-  toolName: 'browser_console_messages',
-  toolParams: ({ ['min-level']: minLevel }) => ({ minLevel }),
+  toolName: ({ clear }) => clear ? 'browser_console_clear' : 'browser_console_messages',
+  toolParams: ({ ['min-level']: level, clear }) => clear ? ({}) : ({ level }),
 });
 
 const networkRequests = declareCommand({
@@ -441,8 +441,8 @@ const networkRequests = declareCommand({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
-  toolName: 'browser_network_requests',
-  toolParams: ({ static: includeStatic }) => ({ includeStatic }),
+  toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
+  toolParams: ({ static: includeStatic, clear }) => clear ? ({}) : ({ includeStatic }),
 });
 
 const runCode = declareCommand({
@@ -525,7 +525,7 @@ const commandsArray: AnyCommandSchema[] = [
   fill,
   drag,
   hover,
-  selectOption,
+  select,
   fileUpload,
   check,
   uncheck,

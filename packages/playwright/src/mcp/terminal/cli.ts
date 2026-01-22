@@ -18,6 +18,7 @@
 /* eslint-disable no-restricted-properties */
 
 import { spawn } from 'child_process';
+
 import crypto from 'crypto';
 import fs from 'fs';
 import net from 'net';
@@ -25,6 +26,8 @@ import os from 'os';
 import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
+
+import type { SpawnOptions } from 'child_process';
 
 const debugCli = debug('pw:cli');
 const packageJSON = require('../../../package.json');
@@ -158,7 +161,7 @@ class SessionManager {
   }
 
   private async _connect(sessionName: string): Promise<Session> {
-    const socketPath = this._daemonSocketPath(sessionName);
+    const socketPath = process.env.PLAYWRIGHT_DAEMON_SOCKET_PATH || this._daemonSocketPath(sessionName);
     debugCli(`Connecting to daemon at ${socketPath}`);
 
     const socketExists = await fs.promises.stat(socketPath)
@@ -176,11 +179,11 @@ class SessionManager {
       }
     }
 
-    const cliPath = path.join(__dirname, '../../../cli.js');
-    debugCli(`Will launch daemon process: ${cliPath}`);
+    if (process.env.PLAYWRIGHT_DAEMON_SOCKET_PATH)
+      throw new Error(`Socket path ${socketPath} does not exist`);
 
     const userDataDir = path.resolve(daemonSocketDir, `${sessionName}-user-data`);
-    const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
+    const child = spawnDaemon(socketPath, userDataDir, {
       detached: true,
       stdio: 'ignore',
       cwd: process.cwd(), // Will be used as root.
@@ -297,6 +300,12 @@ const daemonSocketDir = (() => {
     throw new Error('Unsupported platform: ' + process.platform);
   return path.join(localCacheDir, 'ms-playwright', 'daemon', 'daemon', socketDirHash);
 })();
+
+function spawnDaemon(socketPath: string, userDataDir: string, options: SpawnOptions) {
+  const cliPath = path.join(__dirname, '../../../cli.js');
+  debugCli(`Will launch daemon process: ${cliPath}`);
+  return spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], options);
+}
 
 async function main() {
   const argv = process.argv.slice(2);

@@ -139,7 +139,6 @@ test('confirm dialog (true)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    snapshot: expect.stringContaining(`generic [active] [ref=e1]: "true"`),
   });
 });
 
@@ -175,7 +174,6 @@ test('confirm dialog (false)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     modalState: undefined,
-    snapshot: expect.stringContaining(`generic [active] [ref=e1]: "false"`),
   });
 });
 
@@ -213,7 +211,7 @@ test('prompt dialog', async ({ client, server }) => {
   });
 
   expect(result).toHaveResponse({
-    snapshot: expect.stringContaining(`generic [active] [ref=e1]: Answer`),
+    modalState: undefined,
   });
 });
 
