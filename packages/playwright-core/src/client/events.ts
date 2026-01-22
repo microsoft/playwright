@@ -55,7 +55,6 @@ export const Events = {
   },
 
   Page: {
-    AgentTurn: 'agentturn',
     Close: 'close',
     Crash: 'crash',
     Console: 'console',
@@ -78,7 +77,6 @@ export const Events = {
     WebSocket: 'websocket',
     Worker: 'worker',
   },
-
 
   PageAgent: {
     Turn: 'turn',

@@ -250,3 +250,48 @@ test('perform reports error', async ({ context }) => {
   const e = await agent.perform('click the Rabbit button').catch(e => e);
   expect(e.message).toContain('Agent refused to perform action:');
 });
+
+test('should dispatch event and respect dispose()', async ({ context, server }) => {
+  let apiResponse;
+  server.setRoute('/api', (req, res) => {
+    apiResponse = res;
+    // stall
+  });
+
+  const apiRequestPromise = server.waitForRequest('/api');
+  const { page, agent } = await generateAgent(context, {
+    provider: {
+      api: 'anthropic',
+      apiKey: 'not a real key',
+      apiEndpoint: server.PREFIX + '/api',
+      model: 'no such model',
+    },
+  });
+  await page.setContent(`<button>Wolf</button>`);
+
+  const promiseCanceledByDispose = agent.perform('click the Wolf button').catch(e => e);
+  let promiseAfterDispose;
+  let eventCounter = 0;
+
+  agent.on('turn', async () => {
+    ++eventCounter;
+    if (eventCounter > 1)
+      return;
+
+    await apiRequestPromise;
+    void agent.dispose();
+    promiseAfterDispose = agent.perform('click the Wolf button again').catch(e => e);
+    apiResponse.end();
+  });
+
+  const errorCanceledByDispose = await promiseCanceledByDispose;
+  expect(errorCanceledByDispose.message).toContain('The agent is disposed');
+  expect(errorCanceledByDispose.message).not.toContain('after being disposed');
+
+  const errorAfterDispose = await promiseAfterDispose;
+  expect(errorAfterDispose.message).toContain('Target page, context or browser has been closed');
+
+  // no more events after dispose
+  await page.waitForTimeout(1000);
+  expect(eventCounter).toBe(1);
+});
