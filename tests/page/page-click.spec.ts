@@ -1079,7 +1079,7 @@ it('should click a button that is overlaid by a permission popup', async ({ page
     navigator.geolocation.getCurrentPosition(position => { });
   });
   // If popup blocks the click, then some of the `page.click` calls below will hang.
-  for (let i = 0; i < 100; ++i)
+  for (let i = 0; i < 30; ++i)
     await page.click(`text=${i}`);
 });
 

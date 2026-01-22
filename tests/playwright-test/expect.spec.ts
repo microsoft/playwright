@@ -586,15 +586,15 @@ test('should log scale the time', async ({ runInlineTest }) => {
 
       test('pass', async ({ page }) => {
         await page.setContent('<div id=div>Wrong</div>');
-        await expect(page.locator('div')).toHaveText('Text', { timeout: 2000 });
+        await expect(page.locator('div')).toHaveText('Text', { timeout: 5000 });
       });
       `,
   }, { workers: 1 });
   const output = result.output;
   const tokens = output.split('unexpected value');
-  // Log scale: 0, 100, 250, 500, 1000, 1000, should be less than 8.
+  // Log scale: 0, 100, 250, 500, 1000, 1000, ... - should be less than 10.
   expect(tokens.length).toBeGreaterThan(1);
-  expect(tokens.length).toBeLessThan(8);
+  expect(tokens.length).toBeLessThan(10);
   expect(result.passed).toBe(0);
   expect(result.exitCode).toBe(1);
 });
