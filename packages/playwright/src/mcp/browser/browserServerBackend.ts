@@ -19,7 +19,7 @@ import { Context } from './context';
 import { logUnhandledError } from '../log';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
-import { filteredTools } from './tools';
+import { browserTools, filteredTools } from './tools';
 import { toMcpTool } from '../sdk/tool';
 
 import type { Tool } from './tools/tool';
@@ -34,10 +34,10 @@ export class BrowserServerBackend implements ServerBackend {
   private _config: FullConfig;
   private _browserContextFactory: BrowserContextFactory;
 
-  constructor(config: FullConfig, factory: BrowserContextFactory) {
+  constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean } = {}) {
     this._config = config;
     this._browserContextFactory = factory;
-    this._tools = filteredTools(config);
+    this._tools = options.allTools ? browserTools : filteredTools(config);
   }
 
   async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {

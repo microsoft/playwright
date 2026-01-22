@@ -46,6 +46,21 @@ const requests = defineTabTool({
   },
 });
 
+const networkClear = defineTabTool({
+  capability: 'core',
+  skillOnly: true,
+  schema: {
+    name: 'browser_network_clear',
+    title: 'Clear network requests',
+    description: 'Clear all network requests',
+    inputSchema: z.object({}),
+    type: 'readOnly',
+  },
+  handle: async (tab, params, response) => {
+    await tab.clearRequests();
+  },
+});
+
 async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
   const response = (request as Request)._hasResponse ? await request.response() : undefined;
   const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
@@ -63,4 +78,5 @@ async function renderRequest(request: playwright.Request, includeStatic: boolean
 
 export default [
   requests,
+  networkClear,
 ];

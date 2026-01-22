@@ -18,8 +18,8 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 import { elementSchema } from './snapshot';
 
-const pressKey = defineTabTool({
-  capability: 'core',
+const press = defineTabTool({
+  capability: 'core-input',
 
   schema: {
     name: 'browser_press_key',
@@ -39,14 +39,15 @@ const pressKey = defineTabTool({
 });
 
 const pressSequentially = defineTabTool({
-  capability: 'internal',
+  capability: 'core-input',
+  skillOnly: true,
 
   schema: {
     name: 'browser_press_sequentially',
-    title: 'Press sequentially',
-    description: 'Press text sequentially on the keyboard',
+    title: 'Type text key by key',
+    description: 'Type text key by key on the keyboard',
     inputSchema: z.object({
-      text: z.string().describe('Text to press sequentially'),
+      text: z.string().describe('Text to type'),
       submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
     }),
     type: 'input',
@@ -73,7 +74,7 @@ const typeSchema = elementSchema.extend({
 });
 
 const type = defineTabTool({
-  capability: 'core',
+  capability: 'core-input',
   schema: {
     name: 'browser_type',
     title: 'Type text',
@@ -105,8 +106,50 @@ const type = defineTabTool({
   },
 });
 
+const keydown = defineTabTool({
+  capability: 'core-input',
+  skillOnly: true,
+
+  schema: {
+    name: 'browser_keydown',
+    title: 'Press a key down',
+    description: 'Press a key down on the keyboard',
+    inputSchema: z.object({
+      key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`await page.keyboard.down('${params.key}');`);
+    await tab.page.keyboard.down(params.key);
+  },
+});
+
+const keyup = defineTabTool({
+  capability: 'core-input',
+  skillOnly: true,
+
+  schema: {
+    name: 'browser_keyup',
+    title: 'Press a key up',
+    description: 'Press a key up on the keyboard',
+    inputSchema: z.object({
+      key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`await page.keyboard.up('${params.key}');`);
+    await tab.page.keyboard.up(params.key);
+  },
+});
+
 export default [
-  pressKey,
+  press,
   type,
   pressSequentially,
+  keydown,
+  keyup,
 ];

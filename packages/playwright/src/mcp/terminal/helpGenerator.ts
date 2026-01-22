@@ -19,20 +19,29 @@ import path from 'path';
 import { commands } from './commands';
 
 import type zodType from 'zod';
-import type { AnyCommandSchema } from './command';
+import type { AnyCommandSchema, Category } from './command';
 
-function generateCommandHelp(command: AnyCommandSchema) {
-  const args: { name: string, description: string }[] = [];
+type CommandArg = { name: string, description: string, optional: boolean };
 
+function commandArgs(command: AnyCommandSchema): CommandArg[] {
+  const args: CommandArg[] = [];
   const shape = command.args ? (command.args as zodType.ZodObject<any>).shape : {};
   for (const [name, schema] of Object.entries(shape)) {
     const zodSchema = schema as zodType.ZodTypeAny;
     const description = zodSchema.description ?? '';
-    args.push({ name, description });
+    args.push({ name, description, optional: zodSchema.safeParse(undefined).success });
   }
+  return args;
+}
 
+function commandArgsText(args: CommandArg[]) {
+  return args.map(a => a.optional ? `[${a.name}]` : `<${a.name}>`).join(' ');
+}
+
+function generateCommandHelp(command: AnyCommandSchema) {
+  const args = commandArgs(command);
   const lines: string[] = [
-    `playwright-cli ${command.name} ${Object.keys(shape).map(k => `<${k}>`).join(' ')}`,
+    `playwright-cli ${command.name} ${commandArgsText(args)}`,
     '',
     command.description,
     '',
@@ -40,7 +49,7 @@ function generateCommandHelp(command: AnyCommandSchema) {
 
   if (args.length) {
     lines.push('Arguments:');
-    lines.push(...args.map(({ name, description }) => `  <${name}>\t${description}`));
+    lines.push(...args.map(a => formatWithGap(`  ${a.optional ? `[${a.name}]` : `<${a.name}>`}`, a.description.toLowerCase())));
   }
 
   if (command.options) {
@@ -49,36 +58,49 @@ function generateCommandHelp(command: AnyCommandSchema) {
     for (const [name, schema] of Object.entries(optionsShape)) {
       const zodSchema = schema as zodType.ZodTypeAny;
       const description = (zodSchema.description ?? '').toLowerCase();
-      lines.push(`  --${name}\t${description}`);
+      lines.push(formatWithGap(`  --${name}`, description));
     }
   }
 
   return lines.join('\n');
 }
 
+const categories: { name: Category, title: string }[] = [
+  { name: 'core', title: 'Core' },
+  { name: 'navigation', title: 'Navigation' },
+  { name: 'keyboard', title: 'Keyboard' },
+  { name: 'mouse', title: 'Mouse' },
+  { name: 'export', title: 'Save as' },
+  { name: 'tabs', title: 'Tabs' },
+  { name: 'storage', title: 'Storage' },
+  { name: 'devtools', title: 'DevTools' },
+] as const;
+
 function generateHelp() {
   const lines: string[] = [];
-  lines.push('Usage: playwright-cli <command> [options]');
-  lines.push('Commands:');
+  lines.push('Usage: playwright-cli <command> [args] [options]');
+  const commandsByCategory = new Map<string, AnyCommandSchema[]>();
+  for (const c of categories)
+    commandsByCategory.set(c.name, []);
   for (const command of Object.values(commands))
-    lines.push('  ' + generateHelpEntry(command));
+    commandsByCategory.get(command.category)!.push(command);
+
+  for (const c of categories) {
+    const cc = commandsByCategory.get(c.name)!;
+    if (!cc.length)
+      continue;
+    lines.push(`\n${c.title}:`);
+    for (const command of cc)
+      lines.push(generateHelpEntry(command));
+  }
   return lines.join('\n');
 }
 
 function generateHelpEntry(command: AnyCommandSchema): string {
-  const args: { name: string, description: string }[] = [];
-
-  const shape = (command.args as zodType.ZodObject<any>).shape;
-  for (const [name, schema] of Object.entries(shape)) {
-    const zodSchema = schema as zodType.ZodTypeAny;
-    const description = zodSchema.description ?? '';
-    args.push({ name, description });
-  }
-
-  const prefix = `${command.name} ${Object.keys(shape).map(k => `<${k}>`).join(' ')}`;
+  const args = commandArgs(command);
+  const prefix = `  ${command.name} ${commandArgsText(args)}`;
   const suffix = command.description.toLowerCase();
-  const padding = ' '.repeat(Math.max(1, 40 - prefix.length));
-  return prefix + padding + suffix;
+  return formatWithGap(prefix, suffix);
 }
 
 async function main() {
@@ -92,6 +114,13 @@ async function main() {
   // eslint-disable-next-line no-console
   console.log('Writing ', path.relative(process.cwd(), fileName));
   await fs.promises.writeFile(fileName, JSON.stringify(help, null, 2));
+  // eslint-disable-next-line no-console
+  console.log(help.global);
+}
+
+function formatWithGap(prefix: string, text: string) {
+  const indent = Math.max(1, 30 - prefix.length);
+  return prefix + ' '.repeat(indent) + text;
 }
 
 void main();

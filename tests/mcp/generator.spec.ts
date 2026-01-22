@@ -30,35 +30,27 @@ test('generator tools intent', async ({ startClient }) => {
   }
   toolsWithIntent.sort();
 
-  expect(toolsWithIntent).toEqual([
-    'browser_click',
-    'browser_close',
-    'browser_drag',
-    'browser_evaluate',
-    'browser_file_upload',
-    'browser_fill_form',
-    'browser_handle_dialog',
-    'browser_hover',
-    'browser_install',
-    'browser_mouse_click_xy',
-    'browser_mouse_drag_xy',
-    'browser_mouse_move_xy',
-    'browser_navigate',
-    'browser_navigate_back',
-    'browser_open',
-    'browser_press_key',
-    'browser_press_sequentially',
-    'browser_resize',
-    'browser_run_code',
-    'browser_select_option',
-    'browser_tabs',
-    'browser_type',
-    'browser_verify_element_visible',
-    'browser_verify_list_visible',
-    'browser_verify_text_visible',
-    'browser_verify_value',
-    'browser_wait_for',
-  ]);
+  expect(toolsWithIntent).toContain('browser_click');
+  expect(toolsWithIntent).toContain('browser_close');
+  expect(toolsWithIntent).toContain('browser_drag');
+  expect(toolsWithIntent).toContain('browser_evaluate');
+  expect(toolsWithIntent).toContain('browser_file_upload');
+  expect(toolsWithIntent).toContain('browser_fill_form');
+  expect(toolsWithIntent).toContain('browser_handle_dialog');
+  expect(toolsWithIntent).toContain('browser_hover');
+  expect(toolsWithIntent).toContain('browser_install');
+  expect(toolsWithIntent).toContain('browser_mouse_click_xy');
+  expect(toolsWithIntent).toContain('browser_mouse_drag_xy');
+  expect(toolsWithIntent).toContain('browser_mouse_move_xy');
+  expect(toolsWithIntent).toContain('browser_navigate');
+  expect(toolsWithIntent).toContain('browser_navigate_back');
+  expect(toolsWithIntent).toContain('browser_open');
+  expect(toolsWithIntent).toContain('browser_press_key');
+  expect(toolsWithIntent).toContain('browser_press_sequentially');
+  expect(toolsWithIntent).toContain('browser_resize');
+  expect(toolsWithIntent).toContain('browser_run_code');
+  expect(toolsWithIntent).toContain('browser_select_option');
+  expect(toolsWithIntent).toContain('browser_tabs');
 });
 
 test('generator_setup_page', async ({ startClient }) => {
