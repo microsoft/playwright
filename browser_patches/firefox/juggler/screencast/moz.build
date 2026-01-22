@@ -21,6 +21,7 @@ XPCOM_MANIFESTS += [
 ]
 
 LOCAL_INCLUDES += [
+    "!/dist/include/libwebrtc_overrides",
     '/dom/media/systemservices',
     '/media/libyuv/libyuv/include',
     '/third_party/abseil-cpp',

@@ -164,7 +164,7 @@ class Runtime {
           emitEvent(this.events.onRuntimeError, {
             executionContext,
             message: message.errorMessage,
-            stack: message.stack.toString(),
+            stack: message.stack ? message.stack.toString() : '',
           });
         }
       },

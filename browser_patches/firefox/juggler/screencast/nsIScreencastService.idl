@@ -9,7 +9,7 @@ interface nsIDocShell;
 [scriptable, uuid(0b5d32c4-aeeb-11eb-8529-0242ac130003)]
 interface nsIScreencastServiceClient : nsISupports
 {
-  void screencastFrame(in AString frame, in uint32_t deviceWidth, in uint32_t deviceHeight);
+  void screencastFrame(in AString frame, in uint32_t deviceWidth, in uint32_t deviceHeight, in double timestamp);
 
   void screencastStopped();
 };

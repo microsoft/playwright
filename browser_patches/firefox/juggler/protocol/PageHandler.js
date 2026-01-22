@@ -294,10 +294,6 @@ export class PageHandler {
     this._pageNetwork.fulfillInterceptedRequest(requestId, status, statusText, headers, base64body);
   }
 
-  async ['Accessibility.getFullAXTree'](params) {
-    return await this._contentPage.send('getFullAXTree', params);
-  }
-
   async ['Page.setFileInputFiles'](options) {
     return await this._contentPage.send('setFileInputFiles', options);
   }
@@ -504,30 +500,30 @@ export class PageHandler {
       if (win.windowUtils.flushApzRepaints())
         await helper.awaitTopic('apz-repaints-flushed');
 
-      const watcher = new EventWatcher(this._pageEventSink, types, this._pendingEventWatchers);
       const promises = [];
       for (const type of types) {
-        // This dispatches to the renderer synchronously.
-        const jugglerEventId = win.windowUtils.jugglerSendMouseEvent(
+        promises.push(new Promise(resolve => win.synthesizeMouseEvent(
           type,
           x + boundingBox.left,
           y + boundingBox.top,
-          button,
-          clickCount,
-          modifiers,
-          false /* aIgnoreRootScrollFrame */,
-          0.0 /* pressure */,
-          0 /* inputSource */,
-          true /* isDOMEventSynthesized */,
-          false /* isWidgetEventSynthesized */,
-          buttons,
-          win.windowUtils.DEFAULT_MOUSE_POINTER_ID /* pointerIdentifier */,
-          false /* disablePointerEvent */
-        );
-        promises.push(watcher.ensureEvent(type, eventObject => eventObject.jugglerEventId === jugglerEventId));
+          {
+            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            button,
+            buttons,
+            clickCount,
+            modifiers,
+            pressure: 0.0,
+            inputSource: MouseEvent.MOZ_SOURCE_MOUSE,
+          },
+          {
+            isDOMEventSynthesized: true,
+            isWidgetEventSynthesized: false,
+            isAsyncEnabled: false,
+          },
+          resolve
+        )));
       }
       await Promise.all(promises);
-      await watcher.dispose();
     };
 
     // We must switch to proper tab in the tabbed browser so that
@@ -545,21 +541,23 @@ export class PageHandler {
         // viewport coordinates, then move the mouse off from the Web Content.
         // This way we can eliminate all the hover effects.
         // NOTE: since this won't go inside the renderer, there's no need to wait for ACK.
-        win.windowUtils.sendMouseEvent(
+        win.synthesizeMouseEvent(
           'mousemove',
           0 /* x */,
           0 /* y */,
-          button,
-          clickCount,
-          modifiers,
-          false /* aIgnoreRootScrollFrame */,
-          0.0 /* pressure */,
-          0 /* inputSource */,
-          true /* isDOMEventSynthesized */,
-          false /* isWidgetEventSynthesized */,
-          buttons,
-          win.windowUtils.DEFAULT_MOUSE_POINTER_ID /* pointerIdentifier */,
-          false /* disablePointerEvent */
+          {
+            identifier: win.windowUtils.DEFAULT_MOUSE_POINTER_ID,
+            button,
+            clickCount,
+            modifiers,
+            pressure: 0.0,
+            inputSource: MouseEvent.MOZ_SOURCE_MOUSE,
+          },
+          {
+            ignoreRootScrollFrame: false,
+            isDOMEventSynthesized: true,
+            isWidgetEventSynthesized: false,
+          },
         );
         return;
       }

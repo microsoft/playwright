@@ -13,7 +13,6 @@ const Cr = Components.results;
 const helper = new Helper();
 
 const IDENTITY_NAME = 'JUGGLER ';
-const HUNDRED_YEARS = 60 * 60 * 24 * 365 * 100;
 
 const ALL_PERMISSIONS = [
   'geo',
@@ -364,10 +363,6 @@ export class TargetRegistry {
       target = this._browserToTarget.get(browser);
     }
     browser.focus();
-    if (browserContext.crossProcessCookie.settings.timezoneId) {
-      if (await target.hasFailedToOverrideTimezone())
-        throw new Error('Failed to override timezone');
-    }
     didCreateFirstPage = true;
     return target.id();
   }
@@ -508,6 +503,7 @@ export class PageTarget {
   updateOverridesForBrowsingContext(browsingContext = undefined) {
     this.updateTouchOverride(browsingContext);
     this.updateUserAgent(browsingContext);
+    this.updateTimezoneOverride(browsingContext);
     this.updatePlatform(browsingContext);
     this.updateDPPXOverride(browsingContext);
     this.updateZoom(browsingContext);
@@ -543,6 +539,10 @@ export class PageTarget {
 
   updateUserAgent(browsingContext = undefined) {
     (browsingContext || this._linkedBrowser.browsingContext).customUserAgent = this._browserContext.defaultUserAgent;
+  }
+
+  updateTimezoneOverride(browsingContext = undefined) {
+    (browsingContext || this._linkedBrowser.browsingContext).timezoneOverride = this._browserContext.timezoneOverride;
   }
 
   updatePlatform(browsingContext = undefined) {
@@ -749,10 +749,6 @@ export class PageTarget {
     await this._channel.connect('').send('applyContextSetting', { name, value }).catch(e => void e);
   }
 
-  async hasFailedToOverrideTimezone() {
-    return await this._channel.connect('').send('hasFailedToOverrideTimezone').catch(e => true);
-  }
-
   async _startVideoRecording({width, height, dir}) {
     // On Mac the window may not yet be visible when TargetCreated and its
     // NSWindow.windowNumber may be -1, so we wait until the window is known
@@ -770,7 +766,7 @@ export class PageTarget {
     const registry = this._registry;
     const screencastClient = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
-      screencastFrame(data, deviceWidth, deviceHeight) {
+      screencastFrame(data, deviceWidth, deviceHeight, timestamp) {
       },
       screencastStopped() {
         registry.emit(TargetRegistry.Events.ScreencastStopped, sessionId);
@@ -810,9 +806,9 @@ export class PageTarget {
     const self = this;
     const screencastClient = {
       QueryInterface: ChromeUtils.generateQI([Ci.nsIScreencastServiceClient]),
-      screencastFrame(data, deviceWidth, deviceHeight) {
+      screencastFrame(data, deviceWidth, deviceHeight, timestamp) {
         if (self._screencastRecordingInfo)
-          self.emit(PageTarget.Events.ScreencastFrame, { data, deviceWidth, deviceHeight });
+          self.emit(PageTarget.Events.ScreencastFrame, { data, deviceWidth, deviceHeight, timestamp });
       },
       screencastStopped() {
       },
@@ -939,6 +935,7 @@ class BrowserContext {
     this.defaultViewportSize = undefined;
     this.deviceScaleFactor = undefined;
     this.defaultUserAgent = null;
+    this.timezoneOverride = undefined;
     this.defaultPlatform = null;
     this.touchOverride = false;
     this.forceOffline = false;
@@ -1033,6 +1030,14 @@ class BrowserContext {
     this.defaultUserAgent = userAgent;
     for (const page of this.pages)
       page.updateUserAgent();
+  }
+
+  setTimezoneOverride(timezoneId) {
+    if (!Intl.supportedValuesOf("timeZone").includes(timezoneId))
+      throw new Error(`Invalid timezone ID: ${timezoneId}`);
+    this.timezoneOverride = timezoneId;
+    for (const page of this.pages)
+      page.updateTimezoneOverride();
   }
 
   setDefaultPlatform(platform) {
@@ -1153,7 +1158,10 @@ class BrowserContext {
         secure,
         cookie.httpOnly || false,
         cookie.expires === undefined || cookie.expires === -1 /* isSession */,
-        cookie.expires === undefined ? Date.now() + HUNDRED_YEARS : cookie.expires * 1000,
+        // The XPCOM interface requires the expiry field even for session cookies.
+        // The expiry value must be passed in milliseconds and is capped at 400
+        // days.
+        cookie.expires === undefined ? Number.MAX_SAFE_INTEGER : Services.cookies.maybeCapExpiry(cookie.expires * 1000),
         { userContextId: this.userContextId || undefined } /* originAttributes */,
         protocolToSameSite[cookie.sameSite],
         Ci.nsICookie.SCHEME_UNSET
