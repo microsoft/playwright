@@ -474,6 +474,47 @@ const tracingStop = declareCommand({
   toolParams: () => ({}),
 });
 
+// Sessions
+
+const sessionList = declareCommand({
+  name: 'session-list',
+  description: 'List all sessions',
+  category: 'session',
+  args: z.object({}),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const sessionStop = declareCommand({
+  name: 'session-stop',
+  description: 'Stop session',
+  category: 'session',
+  args: z.object({
+    name: z.string().optional().describe('Name of the session to stop. If omitted, current session is stopped.'),
+  }),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const sessionStopAll = declareCommand({
+  name: 'session-stop-all',
+  description: 'Stop all sessions',
+  category: 'session',
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const sessionDelete = declareCommand({
+  name: 'session-delete',
+  description: 'Delete session data',
+  category: 'session',
+  args: z.object({
+    name: z.string().optional().describe('Name of the session to delete. If omitted, current session is deleted.'),
+  }),
+  toolName: '',
+  toolParams: ({ name }) => ({ name }),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -526,6 +567,12 @@ const commandsArray: AnyCommandSchema[] = [
   runCode,
   tracingStart,
   tracingStop,
+
+  // session category
+  sessionList,
+  sessionStop,
+  sessionStopAll,
+  sessionDelete,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));

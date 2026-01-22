@@ -1,2 +1,6 @@
 [daemon.ts]
 ../browser/tools
+../cli/socketConnection.ts
+
+[cli.ts]
+./socketConnection.ts
