@@ -20,7 +20,7 @@ import { TestFileView } from './testFileView';
 import * as icons from './icons';
 import { TestCaseSummary } from './types';
 import { AutoChip } from './chip';
-import { GroupedBarChart } from './barchart';
+import { GanttChart, GanttEntry } from './gantt';
 import { CodeSnippet } from './testErrorView';
 
 export function Speedboard({ report, tests }: { report: LoadedReport, tests: TestCaseSummary[] }) {
@@ -57,23 +57,23 @@ export function Shards({ report }: { report: LoadedReport }) {
     return null;
 
   let clash = false;
-  const bots: Record<string, { durations: number[], weights: number[] }> = {};
+  const bots: Record<string, { entries: GanttEntry[], weights: number[] }> = {};
   for (const machine of machines) {
     const botName = machine.tag.join(' ');
-    bots[botName] ??= { durations: [], weights: [] };
+    bots[botName] ??= { entries: [], weights: [] };
     const shardIndex = Math.max((machine.shardIndex ?? 1) - 1, 0);
-    if (bots[botName].durations[shardIndex] !== undefined)
+    if (bots[botName].entries[shardIndex] !== undefined)
       clash = true;
-    bots[botName].durations[shardIndex] = machine.duration;
+    bots[botName].entries[shardIndex] = { startTime: machine.startTime, duration: machine.duration };
     bots[botName].weights[shardIndex] = machine.suggestedWeight ?? 100;
   }
 
-  const maxSeries = Math.max(...Object.values(bots).map(b => b.durations.length));
+  const maxSeries = Math.max(...Object.values(bots).map(b => b.entries.length));
   const weightsSnippet = machines.some(m => m.suggestedWeight !== undefined) ? formatWeightCommands(bots) : undefined;
 
   return <AutoChip header='Timeline'>
-    <GroupedBarChart
-      data={Object.values(bots).map(b => b.durations)}
+    <GanttChart
+      data={Object.values(bots).map(b => b.entries)}
       groups={Object.keys(bots)}
       series={Array.from({ length: maxSeries }).map((_, i) => `Shard ${i + 1}`)}
     />

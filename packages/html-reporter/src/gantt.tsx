@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import './barchart.css';
+import './gantt.css';
 
 const formatDuration = (ms: number): string => {
   const totalSeconds = Math.round(ms / 1000);
@@ -25,12 +25,17 @@ const formatDuration = (ms: number): string => {
   return `${minutes}m ${seconds}s`;
 };
 
-export const GroupedBarChart = ({
+export type GanttEntry = {
+  startTime: number;
+  duration: number;
+};
+
+export const GanttChart = ({
   data,
   groups,
   series,
 }: {
-  data: number[][];
+  data: GanttEntry[][];
   groups: string[];
   series: string[];
 }) => {
@@ -44,7 +49,9 @@ export const GroupedBarChart = ({
   const margin = { top: 20, right: 20, bottom: 40, left: leftMargin };
   const chartWidth = width - margin.left - margin.right;
 
-  const maxValue = Math.max(...data.flat());
+  const allEntries = data.flat();
+  const minStartTime = Math.min(...allEntries.map(e => e.startTime));
+  const maxValue = Math.max(...allEntries.map(e => e.startTime + e.duration)) - minStartTime;
 
   let tickInterval: number;
   let formatTickLabel: (i: number) => string;
@@ -139,26 +146,31 @@ export const GroupedBarChart = ({
           return (
             <g key={groupIndex} role='list' aria-label={group}>
               {series.map((seriesName, seriesIndex) => {
-                const value = data[groupIndex][seriesIndex];
-                if (value === undefined || Number.isNaN(value))
+                const entry = data[groupIndex][seriesIndex];
+                if (entry === undefined)
                   return null;
 
-                const barWidth = value * xScale;
-                const x = 0;
+                const offsetFromStart = entry.startTime - minStartTime;
+                const barWidth = entry.duration * xScale;
+                const x = offsetFromStart * xScale;
                 const y = groupY + barIndex * (barHeight + barSpacing);
                 barIndex++;
 
                 const colors = ['var(--color-scale-blue-2)', 'var(--color-scale-blue-3)', 'var(--color-scale-blue-4)'];
                 const color = colors[seriesIndex % colors.length];
 
+                const tooltipText = offsetFromStart === 0
+                  ? `${seriesName}: ${formatDuration(entry.duration)}`
+                  : `${seriesName}: starts at ${formatDuration(offsetFromStart)}, runs ${formatDuration(entry.duration)}`;
+
                 return (
                   <g
                     key={`${groupIndex}-${seriesIndex}`}
                     role='listitem'
-                    aria-label={`${seriesName}: ${formatDuration(value)}`}
+                    aria-label={tooltipText}
                   >
                     <rect
-                      className='barchart-bar'
+                      className='gantt-bar'
                       x={x}
                       y={y}
                       width={barWidth}
@@ -167,17 +179,17 @@ export const GroupedBarChart = ({
                       rx='2'
                       tabIndex={0}
                     >
-                      <title>{`${seriesName}: ${formatDuration(value)}`}</title>
+                      <title>{tooltipText}</title>
                     </rect>
                     <text
-                      x={barWidth + 6}
+                      x={x + barWidth + 6}
                       y={y + barHeight / 2}
                       dominantBaseline='middle'
                       fontSize='12'
                       fill='var(--color-fg-muted)'
                       aria-hidden='true'
                     >
-                      {formatDuration(value)}
+                      {formatDuration(entry.duration)}
                     </text>
                   </g>
                 );
