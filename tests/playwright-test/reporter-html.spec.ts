@@ -3344,7 +3344,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'Speedboard' }).click();
 
       await expect(page.getByRole('main')).toMatchAriaSnapshot(`
-        - button "Shard Duration"
+        - button "Timeline"
         - region:
           - img:
             - list "@linux":

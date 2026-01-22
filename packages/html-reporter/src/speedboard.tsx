@@ -71,7 +71,7 @@ export function Shards({ report }: { report: LoadedReport }) {
   const maxSeries = Math.max(...Object.values(bots).map(b => b.durations.length));
   const weightsSnippet = machines.some(m => m.suggestedWeight !== undefined) ? formatWeightCommands(bots) : undefined;
 
-  return <AutoChip header='Shard Duration'>
+  return <AutoChip header='Timeline'>
     <GroupedBarChart
       data={Object.values(bots).map(b => b.durations)}
       groups={Object.keys(bots)}
@@ -79,7 +79,7 @@ export function Shards({ report }: { report: LoadedReport }) {
     />
     {clash && <div style={{ marginTop: 8 }}>
       <icons.warning />
-      Some shards could not be differentiated because of missing global tags.
+      Some machines could not be differentiated because of missing global tags.
       Please refer to <a href='https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-environments' target='_blank' rel='noopener noreferrer'>
         the docs
       </a> on how to fix this.
