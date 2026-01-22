@@ -443,7 +443,6 @@ Running 1 test using 1 worker
 #0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 #1 :        Paused at test end. Press Ctrl+C to end.
 Running teardown
-#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 
   1 interrupted
     a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
@@ -473,7 +472,6 @@ Running 1 test using 1 worker
 
 #0 :   ${POSITIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 #1 :        Paused at test end. Press Ctrl+C to end.
-#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › foo (Xms)
 
 
   1) a.test.ts:3:13 › foo ──────────────────────────────────────────────────────────────────────────
@@ -544,7 +542,6 @@ Running 1 test using 1 worker
         at ${test.info().outputPath('a.test.ts')}:5:21
 
 #1 :        Paused on error. Press Ctrl+C to end.
-#2 :   ${NEGATIVE_STATUS_MARK} 1 a.test.ts:3:13 › fails (Xms)
 
 
 

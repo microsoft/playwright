@@ -38,6 +38,7 @@ class ListReporter extends TerminalReporter {
   private _stepIndex = new Map<TestStep, string>();
   private _needNewLine = false;
   private _printSteps: boolean;
+  private _paused = new Set<TestResult>();
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super(options);
@@ -170,6 +171,8 @@ class ListReporter extends TerminalReporter {
     if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
 
+    this._paused.add(result);
+
     this._updateTestLine(test, result);
     this._maybeWriteNewLine();
     if (test.outcome() === 'unexpected') {
@@ -185,7 +188,8 @@ class ListReporter extends TerminalReporter {
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    if (!this._isOffScreen(this._testRows, test))
+    const wasPaused = this._paused.delete(result);
+    if (!wasPaused)
       this._updateTestLine(test, result);
   }
 
@@ -219,13 +223,6 @@ class ListReporter extends TerminalReporter {
     }
 
     this._updateOrAppendLine(this._testRows, test, text, prefix);
-  }
-
-  private _isOffScreen<T>(entityRowNumbers: Map<T, number>, entity: T): boolean {
-    const row = entityRowNumbers.get(entity);
-    if (row !== undefined && this.screen.isTTY && this._lastRow - row >= this.screen.ttyHeight)
-      return true;
-    return false;
   }
 
   private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
