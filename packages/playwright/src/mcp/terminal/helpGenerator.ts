@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -14,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-// @ts-check
 
-const fs = require('fs')
-const path = require('path')
+import fs from 'fs';
+import path from 'path';
+import { commands } from './commands';
 
-const { commands } = require('../packages/playwright/lib/mcp/terminal/commands.js');
+import type zodType from 'zod';
+import type { AnyCommandSchema } from './command';
 
-/**
- * 
- * @param {import('../packages/playwright/src/mcp/terminal/command').AnyCommandSchema} command
- */
 function generateCommandHelp(command: AnyCommandSchema) {
   const args: { name: string, description: string }[] = [];
 
@@ -32,7 +28,7 @@ function generateCommandHelp(command: AnyCommandSchema) {
   for (const [name, schema] of Object.entries(shape)) {
     const zodSchema = schema as zodType.ZodTypeAny;
     const description = zodSchema.description ?? '';
-    args.push({ name, description})
+    args.push({ name, description });
   }
 
   const lines: string[] = [
@@ -44,8 +40,7 @@ function generateCommandHelp(command: AnyCommandSchema) {
 
   if (args.length) {
     lines.push('Arguments:');
-    for (const arg of args)
-      lines.push(...args.map(({ name, description }) => `  <${name}>\t${description}`));
+    lines.push(...args.map(({ name, description }) => `  <${name}>\t${description}`));
   }
 
   if (command.options) {
@@ -58,29 +53,45 @@ function generateCommandHelp(command: AnyCommandSchema) {
     }
   }
 
-  console.log(lines.join('\n'));
+  return lines.join('\n');
 }
 
-export function printHelp(commands: AnyCommandSchema[]) {
-  console.log('Usage: playwright-cli <command> [options]');
-  console.log('Commands:');
-  for (const command of commands)
-    console.log('  ' + commandHelpEntry(command));
+function generateHelp() {
+  const lines: string[] = [];
+  lines.push('Usage: playwright-cli <command> [options]');
+  lines.push('Commands:');
+  for (const command of Object.values(commands))
+    lines.push('  ' + generateHelpEntry(command));
+  return lines.join('\n');
 }
 
-function commandHelpEntry(command: AnyCommandSchema): string {
+function generateHelpEntry(command: AnyCommandSchema): string {
   const args: { name: string, description: string }[] = [];
 
   const shape = (command.args as zodType.ZodObject<any>).shape;
   for (const [name, schema] of Object.entries(shape)) {
     const zodSchema = schema as zodType.ZodTypeAny;
     const description = zodSchema.description ?? '';
-    args.push({ name, description})
+    args.push({ name, description });
   }
 
-  const lines: string[] = [
-    `${command.name} ${Object.keys(shape).map(k => `<${k}>`).join(' ')}`,
-    command.description.toLowerCase(),
-  ];
-  return lines.join('\t');
+  const prefix = `${command.name} ${Object.keys(shape).map(k => `<${k}>`).join(' ')}`;
+  const suffix = command.description.toLowerCase();
+  const padding = ' '.repeat(Math.max(1, 40 - prefix.length));
+  return prefix + padding + suffix;
 }
+
+async function main() {
+  const help = {
+    global: generateHelp(),
+    commands: Object.fromEntries(
+        Object.entries(commands).map(([name, command]) => [name, generateCommandHelp(command)])
+    ),
+  };
+  const fileName = path.resolve(__dirname, 'help.json').replace('lib', 'src');
+  // eslint-disable-next-line no-console
+  console.log('Writing ', path.relative(process.cwd(), fileName));
+  await fs.promises.writeFile(fileName, JSON.stringify(help, null, 2));
+}
+
+void main();

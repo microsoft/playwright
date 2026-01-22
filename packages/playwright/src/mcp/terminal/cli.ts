@@ -15,6 +15,7 @@
  */
 
 /* eslint-disable no-console */
+/* eslint-disable no-restricted-properties */
 
 import { spawn } from 'child_process';
 import crypto from 'crypto';
@@ -24,7 +25,6 @@ import os from 'os';
 import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
-import { aliases, globalHelp, helpMessage } from './commands';
 
 import type * as mcp from '../sdk/exports';
 
@@ -32,9 +32,9 @@ const debugCli = debug('pw:cli');
 
 const packageJSON = require('../../../package.json');
 
-async function runMcpCommand(argv: string[], options: { headless?: boolean } = {}) {
+async function runCliCommand(args: any, options: { headless?: boolean } = {}) {
   const session = await connectToDaemon(options);
-  const result = await session.runCliCommand(argv);
+  const result = await session.runCliCommand(args);
   console.log(result);
   session.dispose();
 }
@@ -65,8 +65,8 @@ class SocketSession {
     return this._send(name, args);
   }
 
-  async runCliCommand(argv: string[]): Promise<string> {
-    return await this._send('runCliCommand', { argv });
+  async runCliCommand(args: any): Promise<string> {
+    return await this._send('runCliCommand', { args });
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -186,29 +186,31 @@ async function connectToSocket(socketPath: string): Promise<SocketSession> {
 function main() {
   const argv = process.argv.slice(2);
   const args = require('minimist')(argv);
-  const command = args._[0];
-  if (args.help || args.h || !command) {
-    // case of '--help navigate'
-    const commandName = command ?? args.help ?? args.h;
-    if (commandName && commandName in helpMessage)
-      console.log(helpMessage[commandName]);
-    else
-      console.log(globalHelp);
-    // eslint-disable-next-line no-restricted-properties
+  const help = require('./help.json');
+  const command = help.commands[args._[0]];
+  if (args.help || args.h) {
+    if (command) {
+      console.log(command);
+    } else {
+      console.log('playwright-cli - run playwright mcp commands from terminal\n');
+      console.log(help.global);
+    }
     process.exit(0);
+  }
+  if (!command) {
+    console.error(`Unknown command: ${args._[0]}\n`);
+    console.log(help.global);
+    process.exit(1);
   }
 
   if (args.version || args.v) {
     console.log(packageJSON.version);
-    // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }
-  const options: any = { };
-  if (command === 'navigate' || aliases['navigate'].includes(command))
-    options.headless = !args.headed;
-  runMcpCommand(argv, options).catch(e => {
-    console.error(e.message);
-    // eslint-disable-next-line no-restricted-properties
+
+  runCliCommand(args).catch(e => {
+    console.error(e);
+
     process.exit(1);
   });
 }
