@@ -3357,14 +3357,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           - text: Use shard weights to
           - link "rebalance your shards":
             - /url: https://playwright.dev/docs/test-sharding#rebalancing-shards
-          - text: /@linux. npx playwright test --shard-weights=\\d+:\\d+:\\d+ @mac. npx playwright test --shard-weights=\\d+:\\d+/
+          - text: /@linux. PLAYWRIGHT_SHARD_WEIGHTS=\\d+:\\d+:\\d+ @mac. PLAYWRIGHT_SHARD_WEIGHTS=\\d+:\\d+/
       `);
 
       await test.step('shard weights are hidden by default', async () => {
         await runInlineTest({}, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@windows' });
         await showReport();
         await page.getByRole('link', { name: 'Speedboard' }).click();
-        await expect(page.getByText('--shard-weights')).not.toBeVisible();
+        await expect(page.getByText('SHARD_WEIGHTS')).not.toBeVisible();
       });
     });
   });
