@@ -109,7 +109,7 @@ it('should traverse only form elements', async function({ page, browserName, pla
 });
 
 it('clicking checkbox should activate it', async ({ page, browserName, headless, platform }) => {
-  it.fixme(browserName !== 'chromium');
+  it.fixme(browserName === 'webkit');
 
   await page.setContent(`<input type=checkbox></input>`);
   await page.click('input');

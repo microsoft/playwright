@@ -69,7 +69,6 @@ it('should respect CSP @smoke', async ({ page, server }) => {
 
 it('should play video @smoke', async ({ page, asset, browserName, isWindows, isLinux, mode }) => {
   it.skip(browserName === 'webkit' && isWindows, 'passes locally but fails on GitHub Action bot, apparently due to a Media Pack issue in the Windows Server');
-  it.fixme(browserName === 'firefox' && isLinux, 'https://github.com/microsoft/playwright/issues/5721');
   it.skip(mode.startsWith('service'));
 
   // Safari only plays mp4 so we test WebKit with an .mp4 clip.

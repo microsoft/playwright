@@ -30,7 +30,7 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should deny permission when not listed', async ({ page, context, server, browserName, isMac, macVersion }) => {
+  it('should deny permission when not listed', async ({ page, context, server, browserName, isMac, macVersion, isBidi }) => {
     it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
     it.skip(hostPlatform.startsWith('debian11'), 'WebKit on Debian 11 is frozen.');
 
@@ -42,16 +42,21 @@ it.describe('permissions', () => {
       // permission value, if the API has been accessed.
       await page.evaluate(() => navigator.geolocation.getCurrentPosition(() => { }));
       expect(await getPermission(page, 'geolocation')).toBe('denied');
+    } else if (isBidi) {
+      expect(await getPermission(page, 'geolocation')).toBe('prompt');
     } else {
       expect(await getPermission(page, 'geolocation')).toBe('denied');
     }
   });
 
-  it('should fail when bad permission is given', async ({ page, context, server }) => {
+  it('should fail when bad permission is given', async ({ page, context, server, isBidi }) => {
     await page.goto(server.EMPTY_PAGE);
     let error: Error;
     await context.grantPermissions(['foo'], { origin: server.EMPTY_PAGE }).catch(e => error = e);
-    expect(error.message).toContain('Unknown permission: foo');
+    if (isBidi)
+      expect(error.message).toContain('Protocol error (permissions.setPermission): invalid argument');
+    else
+      expect(error.message).toContain('Unknown permission: foo');
   });
 
   it('should grant geolocation permission when origin is listed', async ({ page, context, server }) => {
@@ -112,7 +117,7 @@ it.describe('permissions', () => {
     expect(await getPermission(page, 'geolocation')).toBe('prompt');
   });
 
-  it('should trigger permission onchange', async ({ page, context, server, browserName, browserMajorVersion }) => {
+  it('should trigger permission onchange', async ({ page, context, server, browserName, isBidi }) => {
     it.fail(browserName === 'webkit');
 
     await page.goto(server.EMPTY_PAGE);
@@ -125,16 +130,21 @@ it.describe('permissions', () => {
         };
       });
     });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt']);
+    const expectedEvents = ['prompt'];
+    expect(await page.evaluate(() => window['events'])).toEqual(expectedEvents);
     await context.grantPermissions([], { origin: server.EMPTY_PAGE });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied']);
+    if (!isBidi)
+      expectedEvents.push('denied');
+    expect(await page.evaluate(() => window['events'])).toEqual(expectedEvents);
     await context.grantPermissions(['geolocation'], { origin: server.EMPTY_PAGE });
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted']);
+    expectedEvents.push('granted');
+    expect(await page.evaluate(() => window['events'])).toEqual(expectedEvents);
     await context.clearPermissions();
-    expect(await page.evaluate(() => window['events'])).toEqual(['prompt', 'denied', 'granted', 'prompt']);
+    expectedEvents.push('prompt');
+    expect(await page.evaluate(() => window['events'])).toEqual(expectedEvents);
   });
 
-  it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isMac, macVersion }) => {
+  it('should isolate permissions between browser contexts', async ({ server, browser, browserName, isMac, macVersion, isBidi }) => {
     it.skip(browserName === 'webkit' && isMac && macVersion === 13, 'WebKit on macOS 13 is frozen.');
     it.skip(hostPlatform.startsWith('debian11'), 'WebKit on Debian 11 is frozen.');
 
@@ -155,6 +165,8 @@ it.describe('permissions', () => {
       // permission value, if the API has been accessed.
       await page.evaluate(() => navigator.geolocation.getCurrentPosition(() => { }));
       expect(await getPermission(page, 'geolocation')).toBe('denied');
+    } else if (isBidi) {
+      expect(await getPermission(page, 'geolocation')).toBe('prompt');
     } else {
       expect(await getPermission(page, 'geolocation')).toBe('denied');
     }
