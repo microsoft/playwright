@@ -32,13 +32,37 @@ const pressKey = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.setIncludeSnapshot();
     response.addCode(`// Press ${params.key}`);
     response.addCode(`await page.keyboard.press('${params.key}');`);
+    await tab.page.keyboard.press(params.key);
+  },
+});
 
-    await tab.waitForCompletion(async () => {
-      await tab.page.keyboard.press(params.key);
-    });
+const pressSequentially = defineTabTool({
+  capability: 'internal',
+
+  schema: {
+    name: 'browser_press_sequentially',
+    title: 'Press sequentially',
+    description: 'Press text sequentially on the keyboard',
+    inputSchema: z.object({
+      text: z.string().describe('Text to press sequentially'),
+      submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`// Press ${params.text}`);
+    response.addCode(`await page.keyboard.type('${params.text}');`);
+    await tab.page.keyboard.type(params.text);
+    if (params.submit) {
+      response.addCode(`await page.keyboard.press('Enter');`);
+      response.setIncludeSnapshot();
+      await tab.waitForCompletion(async () => {
+        await tab.page.keyboard.press('Enter');
+      });
+    }
   },
 });
 
@@ -84,4 +108,5 @@ const type = defineTabTool({
 export default [
   pressKey,
   type,
+  pressSequentially,
 ];

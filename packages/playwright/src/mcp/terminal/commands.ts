@@ -156,7 +156,7 @@ const networkRequests = declareCommand({
 });
 
 const pressKey = declareCommand({
-  name: 'press-key',
+  name: 'press',
   description: 'Press a key on the keyboard',
   args: z.object({
     key: z.string().describe('Name of the key to press or a character to generate, such as `ArrowLeft` or `a`'),
@@ -226,15 +226,13 @@ const type = declareCommand({
   name: 'type',
   description: 'Type text into editable element',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
     text: z.string().describe('Text to type into the element'),
   }),
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
-    slowly: z.boolean().optional().describe('Whether to type one character at a time. Useful for triggering key handlers in the page.'),
   }),
-  toolName: 'browser_type',
-  toolParams: ({ ref, text }, { submit, slowly }) => ({ ref, text, submit, slowly }),
+  toolName: 'browser_press_sequentially',
+  toolParams: ({ text }, { submit }) => ({ text, submit }),
 });
 
 const waitFor = declareCommand({
