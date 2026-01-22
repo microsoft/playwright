@@ -132,7 +132,7 @@ const open = declareCommand({
   options: z.object({
     headed: z.boolean().default(false).describe('Run browser in headed mode'),
   }),
-  toolName: 'browser_navigate',
+  toolName: 'browser_open',
   toolParams: ({ url }, { headed }) => ({ url, headed }),
 });
 

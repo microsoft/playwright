@@ -36,8 +36,8 @@ export class ExtensionContextFactory implements BrowserContextFactory {
     this._executablePath = executablePath;
   }
 
-  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
-    const browser = await this._obtainBrowser(clientInfo, abortSignal, toolName);
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, options: { toolName?: string }): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+    const browser = await this._obtainBrowser(clientInfo, abortSignal, options?.toolName);
     return {
       browserContext: browser.contexts()[0],
       close: async () => {
