@@ -391,7 +391,7 @@ test('browser_take_screenshot (viewport without snapshot)', async ({ startClient
       action: 'list',
     },
   })).toHaveResponse({
-    result: `- Page URL: about:blank`,
+    result: `- 0: (current) [](about:blank)`,
   });
 
   // This should work without requiring a snapshot since it's a viewport screenshot

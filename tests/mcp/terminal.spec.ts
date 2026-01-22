@@ -28,9 +28,12 @@ test('terminal mode', async ({ startClient, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
-  })).toHaveTextResponse(`- Page URL: ${server.PREFIX}/
+  })).toHaveTextResponse(`### Page
+- Page URL: ${server.PREFIX}/
 
-- [Page snapshot](output${path.sep}snapshot-1.yml)`);
+### Snapshot
+- File: output${path.sep}snapshot-1.yml
+`);
 
   expect(await client.callTool({
     name: 'browser_type',
@@ -66,7 +69,9 @@ test('terminal mode', async ({ startClient, server }) => {
       element: 'Country select',
       values: ['United States'],
     },
-  })).toHaveTextResponse(`- [Page snapshot](output${path.sep}snapshot-5.yml)`);
+  })).toHaveTextResponse(`### Snapshot
+- File: output${path.sep}snapshot-5.yml
+`);
 
   expect(await client.callTool({
     name: 'browser_click',
@@ -74,7 +79,9 @@ test('terminal mode', async ({ startClient, server }) => {
       ref: 'e12',
       element: 'Subscribe checkbox',
     },
-  })).toHaveTextResponse(`- [Page snapshot](output${path.sep}snapshot-6.yml)`);
+  })).toHaveTextResponse(`### Snapshot
+- File: output${path.sep}snapshot-6.yml
+`);
 });
 
 

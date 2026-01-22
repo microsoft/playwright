@@ -40,7 +40,7 @@ test('list initial tabs', async ({ client }) => {
       action: 'list',
     },
   })).toHaveResponse({
-    result: `- Page URL: about:blank`,
+    result: `- 0: (current) [](about:blank)`,
   });
 });
 
