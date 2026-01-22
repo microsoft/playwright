@@ -56,10 +56,10 @@ test('retrieve a secret', async ({ context }) => {
   expect(await cacheObject()).toEqual({
     'Enter x-secret-email into the email field': {
       actions: [{
-        code: `await page.getByRole('textbox', { name: 'Email Address' }).fill('secret-email@at-microsoft.com');`,
+        code: `await page.getByRole('textbox', { name: 'Email Address' }).fill('x-secret-email');`,
         method: 'fill',
         selector: `internal:role=textbox[name=\"Email Address\"i]`,
-        text: 'secret-email@at-microsoft.com',
+        text: 'x-secret-email',
       }],
     },
   });

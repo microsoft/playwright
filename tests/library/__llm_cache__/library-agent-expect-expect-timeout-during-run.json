@@ -5,7 +5,7 @@
       "content": [
         {
           "type": "text",
-          "text": "I need to verify that the submit button is visible on the page. Based on the page snapshot, I can see there's a button with the accessible name \"Submit\" with reference e2."
+          "text": "I need to verify that the submit button is visible on the page. Based on the page snapshot, I can see there is a button with the text \"Submit\" and reference `e2`."
         },
         {
           "type": "tool_call",
@@ -15,7 +15,7 @@
             "accessibleName": "Submit",
             "_is_done": true
           },
-          "id": "toolu_01AaRe6HUqqFdEuNGk3rVBQJ"
+          "id": "toolu_01W7yygCD8L9Ppe5WGGfXGfZ"
         }
       ],
       "stopReason": {
