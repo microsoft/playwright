@@ -65,7 +65,7 @@ class LocationReporter implements ReporterV2 {
   }
 }
 
-test('--debug should pause at end', async ({ runInlineTest }) => {
+test('--pause should pause at end', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
@@ -79,7 +79,7 @@ test('--debug should pause at end', async ({ runInlineTest }) => {
         console.log('%%teardown');
       });
     `
-  }, { pause: true });
+  }, {}, { PWPAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused at end',
     'teardown',
@@ -87,7 +87,7 @@ test('--debug should pause at end', async ({ runInlineTest }) => {
   ]);
 });
 
-test('--debug should pause at end with setup project', async ({ runInlineTest }) => {
+test('--pause should pause at end with setup project', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
@@ -110,11 +110,11 @@ test('--debug should pause at end with setup project', async ({ runInlineTest })
         console.log('main test started');
       });
     `
-  }, { pause: true });
+  }, {}, { PWPAUSE: '1' });
   expect(result.outputLines).toContain('onTestPaused at end');
 });
 
-test('--debug should pause on error', async ({ runInlineTest, mergeReports }) => {
+test('--pause should pause on error', async ({ runInlineTest, mergeReports }) => {
   const result = await runInlineTest({
     'location-reporter.js': `export default ${LocationReporter}`,
     'playwright.config.js': `
@@ -128,7 +128,7 @@ test('--debug should pause on error', async ({ runInlineTest, mergeReports }) =>
         console.log('%%after error');
       });
     `
-  }, { pause: true });
+  }, {}, { PWPAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused on error at :4:24',
     'result.errors[0] at :4:24',
@@ -159,7 +159,7 @@ test('SIGINT after pause at end should still run teardown', async ({ runInlineTe
         console.log('%%teardown');
       });
     `
-  }, { pause: true }, { SIGINT_AFTER_PAUSE: '1' });
+  }, {}, { PWPAUSE: '1', SIGINT_AFTER_PAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused at end',
     'SIGINT',
@@ -185,7 +185,7 @@ test('SIGINT after pause on error should still run teardown', async ({ runInline
         console.log('%%teardown');
       });
     `
-  }, { pause: true }, { SIGINT_AFTER_PAUSE: '1' });
+  }, {}, { PWPAUSE: '1', SIGINT_AFTER_PAUSE: '1' });
   expect(result.outputLines).toEqual([
     'onTestPaused on error at :4:19',
     'result.errors[0] at :4:19',
