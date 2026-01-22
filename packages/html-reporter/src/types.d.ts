@@ -49,7 +49,7 @@ export type HTMLReport = {
   projectNames: string[];
   startTime: number;
   duration: number;
-  shards: {
+  machines: {
     shardIndex?: number;
     tag: string[];
     startTime: number;

@@ -52,7 +52,7 @@ export function SlowestTests({ report, tests }: { report: LoadedReport, tests: T
 }
 
 export function Shards({ report }: { report: LoadedReport }) {
-  const shards = report.json().shards;
+  const shards = report.json().machines;
   if (shards.length === 0)
     return null;
 

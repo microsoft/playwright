@@ -132,11 +132,6 @@ Reporter is allowed to override the status and hence affect the exit code of the
   - `status` <[FullStatus]<"passed"|"failed"|"timedout"|"interrupted">> Test run status.
   - `startTime` <[Date]> Test run start wall time.
   - `duration` <[int]> Test run duration in milliseconds.
-  - `shards` <[Array]<[Object]>> Only present on merged reports
-    - `shardIndex` ?<[int]> The index of the shard, one-based.
-    - `tag` ?<[Array]<[string]>> Global [`property: TestConfig.tag`] that differentiates CI environments
-    - `startTime` <[Date]> Start wall time of shard.
-    - `duration` <[int]> Shard run duration in milliseconds.
 
 Result of the full test run, `status` can be one of:
 * `'passed'` - Everything went as expected.
