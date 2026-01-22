@@ -16,7 +16,7 @@
 
 import './gantt.css';
 
-const formatDuration = (ms: number): string => {
+export const formatDuration = (ms: number): string => {
   const totalSeconds = Math.round(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
@@ -26,32 +26,28 @@ const formatDuration = (ms: number): string => {
 };
 
 export type GanttEntry = {
+  label: string;
+  tooltip: string;
   startTime: number;
   duration: number;
 };
 
 export const GanttChart = ({
-  data,
-  groups,
-  series,
+  entries,
 }: {
-  data: GanttEntry[][];
-  groups: string[];
-  series: string[];
+  entries: GanttEntry[];
 }) => {
   const width = 800;
 
-  // Calculate left margin based on longest group name
-  const maxGroupNameLength = Math.max(...groups.map(g => g.length));
-  const estimatedTextWidth = maxGroupNameLength * 10;
+  const maxLabelLength = Math.max(...entries.map(e => e.label.length));
+  const estimatedTextWidth = maxLabelLength * 10;
   const leftMargin = Math.min(width * 0.5, Math.max(50, estimatedTextWidth));
 
   const margin = { top: 20, right: 20, bottom: 40, left: leftMargin };
   const chartWidth = width - margin.left - margin.right;
 
-  const allEntries = data.flat();
-  const minStartTime = Math.min(...allEntries.map(e => e.startTime));
-  const maxValue = Math.max(...allEntries.map(e => e.startTime + e.duration)) - minStartTime;
+  const minStartTime = Math.min(...entries.map(e => e.startTime));
+  const maxValue = Math.max(...entries.map(e => e.startTime + e.duration)) - minStartTime;
 
   let tickInterval: number;
   let formatTickLabel: (i: number) => string;
@@ -75,27 +71,14 @@ export const GanttChart = ({
     formatTickLabel = i => `${i * 10}m`;
   }
 
-  const maxRounded = Math.ceil(maxValue / tickInterval) * tickInterval;
+  const maxPadded = maxValue * 1.1;
+  const maxRounded = Math.ceil(maxPadded / tickInterval) * tickInterval;
   const xScale = chartWidth / maxRounded;
 
-  // Calculate the number of actual bars per group (non-zero values)
-  const barsPerGroup = data.map(group => group.length);
+  const barHeight = 20;
+  const barSpacing = 8;
 
-  // Allocate space proportionally based on number of bars
-  const barHeight = 20; // Fixed bar height
-  const barSpacing = 4;
-  const groupPadding = 20;
-
-  // Calculate Y positions for each group based on their bar count
-  const groupYPositions: number[] = [];
-  let currentY = 0;
-  for (let i = 0; i < groups.length; i++) {
-    groupYPositions.push(currentY);
-    const groupHeight = barsPerGroup[i] * barHeight + (barsPerGroup[i] - 1) * barSpacing + groupPadding;
-    currentY += groupHeight;
-  }
-
-  const contentHeight = currentY;
+  const contentHeight = entries.length * (barHeight + barSpacing);
 
   const xTicks = [];
   const numberOfTicks = Math.ceil(maxRounded / tickInterval);
@@ -139,84 +122,55 @@ export const GanttChart = ({
           </g>
         ))}
 
-        {groups.map((group, groupIndex) => {
-          const groupY = groupYPositions[groupIndex];
-          let barIndex = 0;
+        {entries.map((entry, index) => {
+          const offsetFromStart = entry.startTime - minStartTime;
+          const barWidth = entry.duration * xScale;
+          const x = offsetFromStart * xScale;
+          const y = index * (barHeight + barSpacing);
+
+          const colors = ['var(--color-scale-blue-2)', 'var(--color-scale-blue-3)', 'var(--color-scale-blue-4)'];
+          const color = colors[index % colors.length];
 
           return (
-            <g key={groupIndex} role='list' aria-label={group}>
-              {series.map((seriesName, seriesIndex) => {
-                const entry = data[groupIndex][seriesIndex];
-                if (entry === undefined)
-                  return null;
-
-                const offsetFromStart = entry.startTime - minStartTime;
-                const barWidth = entry.duration * xScale;
-                const x = offsetFromStart * xScale;
-                const y = groupY + barIndex * (barHeight + barSpacing);
-                barIndex++;
-
-                const colors = ['var(--color-scale-blue-2)', 'var(--color-scale-blue-3)', 'var(--color-scale-blue-4)'];
-                const color = colors[seriesIndex % colors.length];
-
-                const tooltipText = offsetFromStart === 0
-                  ? `${seriesName}: ${formatDuration(entry.duration)}`
-                  : `${seriesName}: starts at ${formatDuration(offsetFromStart)}, runs ${formatDuration(entry.duration)}`;
-
-                return (
-                  <g
-                    key={`${groupIndex}-${seriesIndex}`}
-                    role='listitem'
-                    aria-label={tooltipText}
-                  >
-                    <rect
-                      className='gantt-bar'
-                      x={x}
-                      y={y}
-                      width={barWidth}
-                      height={barHeight}
-                      fill={color}
-                      rx='2'
-                      tabIndex={0}
-                    >
-                      <title>{tooltipText}</title>
-                    </rect>
-                    <text
-                      x={x + barWidth + 6}
-                      y={y + barHeight / 2}
-                      dominantBaseline='middle'
-                      fontSize='12'
-                      fill='var(--color-fg-muted)'
-                      aria-hidden='true'
-                    >
-                      {formatDuration(entry.duration)}
-                    </text>
-                  </g>
-                );
-              })}
-            </g>
-          );
-        })}
-
-        {groups.map((group, groupIndex) => {
-          const groupY = groupYPositions[groupIndex];
-          const actualBars = barsPerGroup[groupIndex];
-          const groupHeight = actualBars * barHeight + (actualBars - 1) * barSpacing;
-          const labelY = groupY + groupHeight / 2;
-
-          return (
-            <text
-              key={groupIndex}
-              x={-10}
-              y={labelY}
-              textAnchor='end'
-              dominantBaseline='middle'
-              fontSize='12'
-              fill='var(--color-fg-muted)'
-              aria-hidden='true'
+            <g
+              key={index}
+              role='listitem'
+              aria-label={entry.tooltip}
             >
-              {group}
-            </text>
+              <rect
+                className='gantt-bar'
+                x={x}
+                y={y}
+                width={barWidth}
+                height={barHeight}
+                fill={color}
+                rx='2'
+                tabIndex={0}
+              >
+                <title>{entry.tooltip}</title>
+              </rect>
+              <text
+                x={x + barWidth + 6}
+                y={y + barHeight / 2}
+                dominantBaseline='middle'
+                fontSize='12'
+                fill='var(--color-fg-muted)'
+                aria-hidden='true'
+              >
+                {formatDuration(entry.duration)}
+              </text>
+              <text
+                x={-10}
+                y={y + barHeight / 2}
+                textAnchor='end'
+                dominantBaseline='middle'
+                fontSize='12'
+                fill='var(--color-fg-muted)'
+                aria-hidden='true'
+              >
+                {entry.label}
+              </text>
+            </g>
           );
         })}
 

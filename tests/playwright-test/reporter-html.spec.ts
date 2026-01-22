@@ -3347,13 +3347,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         - button "Timeline"
         - region:
           - img:
-            - list "@linux":
-              - listitem /Shard 1/
-              - listitem /Shard 2/
-              - listitem /Shard 3/
-            - list "@mac":
-              - listitem /Shard 1/
-              - listitem /Shard 2/
+            - listitem /@linux/
+            - listitem /@linux/
+            - listitem /@linux/
+            - listitem /@mac/
+            - listitem /@mac/
       `);
     });
   });

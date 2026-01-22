@@ -20,7 +20,7 @@ import { TestFileView } from './testFileView';
 import * as icons from './icons';
 import { TestCaseSummary } from './types';
 import { AutoChip } from './chip';
-import { GanttChart, GanttEntry } from './gantt';
+import { formatDuration, GanttChart, GanttEntry } from './gantt';
 
 export function Speedboard({ report, tests }: { report: LoadedReport, tests: TestCaseSummary[] }) {
   return <>
@@ -55,31 +55,24 @@ export function Shards({ report }: { report: LoadedReport }) {
   if (machines.length === 0)
     return null;
 
-  let clash = false;
-  const bots: Record<string, { entries: GanttEntry[] }> = {};
-  for (const machine of machines) {
-    const botName = machine.tag.join(' ');
-    bots[botName] ??= { entries: [] };
-    const shardIndex = Math.max((machine.shardIndex ?? 1) - 1, 0);
-    if (bots[botName].entries[shardIndex] !== undefined)
-      clash = true;
-    bots[botName].entries[shardIndex] = { startTime: machine.startTime, duration: machine.duration };
-  }
-
-  const maxSeries = Math.max(...Object.values(bots).map(b => b.entries.length));
+  const minStartTime = Math.min(...machines.map(m => m.startTime));
+  const entries: GanttEntry[] = machines
+      .map(machine => {
+        const label = machine.tag.join(' ');
+        let tooltip = `${label} starts at ${formatDuration(machine.startTime - minStartTime)}, runs ${formatDuration(machine.duration)}`;
+        if (machine.shardIndex)
+          tooltip += ` (shard ${machine.shardIndex})`;
+        return {
+          label,
+          tooltip,
+          startTime: machine.startTime,
+          duration: machine.duration,
+          shardIndex: machine.shardIndex ?? 1,
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label) || a.shardIndex - b.shardIndex);
 
   return <AutoChip header='Timeline'>
-    <GanttChart
-      data={Object.values(bots).map(b => b.entries)}
-      groups={Object.keys(bots)}
-      series={Array.from({ length: maxSeries }).map((_, i) => `Shard ${i + 1}`)}
-    />
-    {clash && <div style={{ marginTop: 8 }}>
-      <icons.warning />
-      Some machines could not be differentiated because of missing global tags.
-      Please refer to <a href='https://playwright.dev/docs/test-sharding#merging-reports-from-multiple-environments' target='_blank' rel='noopener noreferrer'>
-        the docs
-      </a> on how to fix this.
-    </div>}
+    <GanttChart entries={entries} />
   </AutoChip>;
 }
