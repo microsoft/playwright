@@ -147,7 +147,7 @@ jobs:
         flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
       env:
         PWTEST_CHANNEL: firefox-beta
-        PLAYWRIGHT_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
+        PWTEST_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
 
   test_vscode_extension:
     name: VSCode Extension

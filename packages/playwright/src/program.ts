@@ -376,14 +376,14 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
 }
 
 function resolveShardWeightsOption(): ConfigCLIOverrides['shardWeights'] {
-  const shardWeights = process.env.PLAYWRIGHT_SHARD_WEIGHTS;
+  const shardWeights = process.env.PWTEST_SHARD_WEIGHTS;
   if (!shardWeights)
     return undefined;
 
   return shardWeights.split(':').map(w => {
     const weight = parseInt(w, 10);
     if (isNaN(weight) || weight < 0)
-      throw new Error(`PLAYWRIGHT_SHARD_WEIGHTS="${shardWeights}" weights must be non-negative numbers`);
+      throw new Error(`PWTEST_SHARD_WEIGHTS="${shardWeights}" weights must be non-negative numbers`);
     return weight;
   });
 }
