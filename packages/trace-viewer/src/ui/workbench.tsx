@@ -315,7 +315,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     id: 'actions',
     title: 'Actions',
     component: <div className='vbox'>
-      {status && <div className='workbench-run-status'>
+      {status && <div className='workbench-run-status' data-testid='workbench-run-status'>
         <span className={clsx('codicon', testStatusIcon(status))}></span>
         <div>{testStatusText(status)}</div>
         <div className='spacer'></div>

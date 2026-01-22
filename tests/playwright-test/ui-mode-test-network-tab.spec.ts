@@ -30,6 +30,8 @@ test('should filter network requests by resource type', async ({ runUITest, serv
   });
 
   await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
 
   const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
@@ -73,6 +75,8 @@ test('should filter network requests by multiple resource types', async ({ runUI
   });
 
   await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
 
   const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
@@ -112,6 +116,8 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
   });
 
   await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
 
   const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
@@ -149,6 +155,8 @@ test('should format JSON request body', async ({ runUITest, server }) => {
   });
 
   await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
 
   await page.getByText('post-data-1').click();
@@ -193,6 +201,8 @@ test('should display list of query parameters (only if present)', async ({ runUI
   });
 
   await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
 
   await page.getByText('call-with-query-params').click();
@@ -245,6 +255,8 @@ test('should not duplicate network entries from beforeAll', {
   });
 
   await page.getByText('first test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByText('Network', { exact: true }).click();
   await expect(page.getByRole('list', { name: 'Network requests' }).getByText('empty.html')).toHaveCount(1);
 });
@@ -261,6 +273,8 @@ test('should toggle sections inside network details', async ({ runUITest, server
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByRole('tab', { name: 'Network' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
   const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
@@ -303,6 +317,8 @@ test('should copy network request', async ({ runUITest, server }) => {
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByRole('tab', { name: 'Network' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
   await page.getByRole('button', { name: 'Copy request' }).hover();
@@ -362,6 +378,8 @@ test('should not preserve selection across test runs', async ({ runUITest, serve
   });
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
   await page.getByRole('tab', { name: 'Network' }).click();
   const networkItem = page.getByRole('listitem').filter({ hasText: 'network.html' });
   await networkItem.click();
@@ -369,7 +387,5 @@ test('should not preserve selection across test runs', async ({ runUITest, serve
   await expect(headersPanel).toBeVisible();
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
-  await networkItem.waitFor({ state: 'hidden' });
-  await networkItem.waitFor();
   await expect(headersPanel).toBeHidden();
 });
