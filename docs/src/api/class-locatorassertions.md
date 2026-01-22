@@ -1216,7 +1216,7 @@ await expect(page.locator('ul')).toContainText(['Text 3']);
 
 ```java
 // ✓ Contains the right items in the right order
-assertThat(page.locator("ul > li")).containsText(new String[] {"Text 1", "Text 3", "Text 4"});
+assertThat(page.locator("ul > li")).containsText(new String[] {"Text 1", "Text 3"});
 
 // ✖ Wrong order
 assertThat(page.locator("ul > li")).containsText(new String[] {"Text 3", "Text 2"});
@@ -1232,7 +1232,7 @@ assertThat(page.locator("ul")).containsText(new String[] {"Text 3"});
 from playwright.async_api import expect
 
 # ✓ Contains the right items in the right order
-await expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3", "Text 4"])
+await expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3"])
 
 # ✖ Wrong order
 await expect(page.locator("ul > li")).to_contain_text(["Text 3", "Text 2"])
@@ -1248,7 +1248,7 @@ await expect(page.locator("ul")).to_contain_text(["Text 3"])
 from playwright.sync_api import expect
 
 # ✓ Contains the right items in the right order
-expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3", "Text 4"])
+expect(page.locator("ul > li")).to_contain_text(["Text 1", "Text 3"])
 
 # ✖ Wrong order
 expect(page.locator("ul > li")).to_contain_text(["Text 3", "Text 2"])
@@ -1262,7 +1262,7 @@ expect(page.locator("ul")).to_contain_text(["Text 3"])
 
 ```csharp
 // ✓ Contains the right items in the right order
-await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Text 1", "Text 3", "Text 4"});
+await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Text 1", "Text 3"});
 
 // ✖ Wrong order
 await Expect(Page.Locator("ul > li")).ToContainTextAsync(new string[] {"Text 3", "Text 2"});
