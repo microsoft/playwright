@@ -25,6 +25,7 @@ import keyboard from './tools/keyboard';
 import mouse from './tools/mouse';
 import navigate from './tools/navigate';
 import network from './tools/network';
+import open from './tools/open';
 import pdf from './tools/pdf';
 import runCode from './tools/runCode';
 import snapshot from './tools/snapshot';
@@ -46,9 +47,10 @@ export const browserTools: Tool<any>[] = [
   ...form,
   ...install,
   ...keyboard,
+  ...mouse,
   ...navigate,
   ...network,
-  ...mouse,
+  ...open,
   ...pdf,
   ...runCode,
   ...screenshot,

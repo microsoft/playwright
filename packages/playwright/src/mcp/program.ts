@@ -116,6 +116,7 @@ export function decorateCommand(command: Command, version: string) {
           config.outputMode = 'file';
           config.codegen = 'none';
           config.snapshot.mode = 'full';
+          config.capabilities = ['core', 'internal', 'tracing', 'pdf', 'vision'];
 
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',

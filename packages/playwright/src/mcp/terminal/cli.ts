@@ -32,8 +32,8 @@ const debugCli = debug('pw:cli');
 
 const packageJSON = require('../../../package.json');
 
-async function runCliCommand(args: any, options: { headless?: boolean } = {}) {
-  const session = await connectToDaemon(options);
+async function runCliCommand(args: any) {
+  const session = await connectToDaemon();
   const result = await session.runCliCommand(args);
   console.log(result);
   session.dispose();
@@ -130,7 +130,7 @@ function daemonSocketPath(): string {
   return path.resolve(playwrightCacheDir(), 'daemon', socketDir, socketName);
 }
 
-async function connectToDaemon(options: { headless?: boolean }): Promise<SocketSession> {
+async function connectToDaemon(): Promise<SocketSession> {
   const socketPath = daemonSocketPath();
   debugCli(`Connecting to daemon at ${socketPath}`);
 
@@ -147,7 +147,7 @@ async function connectToDaemon(options: { headless?: boolean }): Promise<SocketS
 
   const cliPath = path.join(__dirname, '../../../cli.js');
   debugCli(`Will launch daemon process: ${cliPath}`);
-  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, ...(options.headless ? ['--headless'] : [])], {
+  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`], {
     detached: true,
     stdio: 'ignore',
     cwd: process.cwd(), // Will be used as root.
