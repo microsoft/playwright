@@ -18,9 +18,9 @@ using namespace webrtc;
 
 namespace mozilla {
 
-rtc::scoped_refptr<webrtc::VideoCaptureModuleEx> HeadlessWindowCapturer::Create(HeadlessWidget* headlessWindow) {
-  return rtc::scoped_refptr<webrtc::VideoCaptureModuleEx>(
-    new rtc::RefCountedObject<HeadlessWindowCapturer>(headlessWindow)
+webrtc::scoped_refptr<webrtc::VideoCaptureModuleEx> HeadlessWindowCapturer::Create(HeadlessWidget* headlessWindow) {
+  return webrtc::scoped_refptr<webrtc::VideoCaptureModuleEx>(
+    new webrtc::RefCountedObject<HeadlessWindowCapturer>(headlessWindow)
   );
 }
 
@@ -32,16 +32,16 @@ HeadlessWindowCapturer::~HeadlessWindowCapturer() {
 }
 
 
-void HeadlessWindowCapturer::RegisterCaptureDataCallback(rtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) {
-  rtc::CritScope lock2(&_callBackCs);
+void HeadlessWindowCapturer::RegisterCaptureDataCallback(webrtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) {
+  webrtc::CritScope lock2(&_callBackCs);
   _dataCallBacks.insert(dataCallback);
 }
 
 void HeadlessWindowCapturer::RegisterCaptureDataCallback(webrtc::RawVideoSinkInterface* dataCallback) {
 }
 
-void HeadlessWindowCapturer::DeRegisterCaptureDataCallback(rtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) {
-  rtc::CritScope lock2(&_callBackCs);
+void HeadlessWindowCapturer::DeRegisterCaptureDataCallback(webrtc::VideoSinkInterface<webrtc::VideoFrame>* dataCallback) {
+  webrtc::CritScope lock2(&_callBackCs);
   auto it = _dataCallBacks.find(dataCallback);
   if (it != _dataCallBacks.end()) {
     _dataCallBacks.erase(it);
@@ -49,12 +49,12 @@ void HeadlessWindowCapturer::DeRegisterCaptureDataCallback(rtc::VideoSinkInterfa
 }
 
 void HeadlessWindowCapturer::RegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) {
-  rtc::CritScope lock2(&_callBackCs);
+  webrtc::CritScope lock2(&_callBackCs);
   _rawFrameCallbacks.insert(rawFrameCallback);
 }
 
 void HeadlessWindowCapturer::DeRegisterRawFrameCallback(webrtc::RawFrameCallback* rawFrameCallback) {
-  rtc::CritScope lock2(&_callBackCs);
+  webrtc::CritScope lock2(&_callBackCs);
   auto it = _rawFrameCallbacks.find(rawFrameCallback);
   if (it != _rawFrameCallbacks.end()) {
     _rawFrameCallbacks.erase(it);
@@ -62,7 +62,7 @@ void HeadlessWindowCapturer::DeRegisterRawFrameCallback(webrtc::RawFrameCallback
 }
 
 void HeadlessWindowCapturer::NotifyFrameCaptured(const webrtc::VideoFrame& frame) {
-  rtc::CritScope lock2(&_callBackCs);
+  webrtc::CritScope lock2(&_callBackCs);
   for (auto dataCallBack : _dataCallBacks)
     dataCallBack->OnFrame(frame);
 }
@@ -97,7 +97,7 @@ int32_t HeadlessWindowCapturer::StartCapture(const webrtc::VideoCaptureCapabilit
 #endif
 
     {
-      rtc::CritScope lock2(&_callBackCs);
+      webrtc::CritScope lock2(&_callBackCs);
       for (auto rawFrameCallback : _rawFrameCallbacks) {
         rawFrameCallback->OnRawFrame(dataSurface->GetData(), dataSurface->Stride(), frameInfo);
       }
@@ -107,7 +107,7 @@ int32_t HeadlessWindowCapturer::StartCapture(const webrtc::VideoCaptureCapabilit
 
     int width = dataSurface->GetSize().width;
     int height = dataSurface->GetSize().height;
-    rtc::scoped_refptr<I420Buffer> buffer = I420Buffer::Create(width, height);
+    webrtc::scoped_refptr<I420Buffer> buffer = I420Buffer::Create(width, height);
 
     gfx::DataSourceSurface::ScopedMap map(dataSurface.get(), gfx::DataSourceSurface::MapType::READ);
     if (!map.IsMapped()) {
@@ -130,7 +130,7 @@ int32_t HeadlessWindowCapturer::StartCapture(const webrtc::VideoCaptureCapabilit
       return;
     }
 
-    VideoFrame captureFrame(buffer, 0, rtc::TimeMillis(), kVideoRotation_0);
+    VideoFrame captureFrame(buffer, 0, webrtc::TimeMillis(), kVideoRotation_0);
     NotifyFrameCaptured(captureFrame);
   });
   return 0;

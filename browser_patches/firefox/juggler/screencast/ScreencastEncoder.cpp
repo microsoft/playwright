@@ -122,7 +122,7 @@ void createImage(unsigned int width, unsigned int height,
 
 class ScreencastEncoder::VPXFrame {
 public:
-    VPXFrame(rtc::scoped_refptr<webrtc::VideoFrameBuffer>&& buffer, const gfx::IntMargin& margin)
+    VPXFrame(webrtc::scoped_refptr<webrtc::VideoFrameBuffer>&& buffer, const gfx::IntMargin& margin)
         : m_frameBuffer(std::move(buffer))
         , m_margin(margin)
     { }
@@ -209,7 +209,7 @@ public:
     }
 
 private:
-    rtc::scoped_refptr<webrtc::VideoFrameBuffer> m_frameBuffer;
+    webrtc::scoped_refptr<webrtc::VideoFrameBuffer> m_frameBuffer;
     gfx::IntMargin m_margin;
     TimeDuration m_duration;
 };

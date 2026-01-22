@@ -36,6 +36,7 @@
     NSMutableSet *_browserContexts;
     bool _headless;
     bool _noStartupWindow;
+    bool _inspectorPipe;
     NSMutableSet *_dialogs;
     NSString* _initialURL;
     NSString* _userDataDir;

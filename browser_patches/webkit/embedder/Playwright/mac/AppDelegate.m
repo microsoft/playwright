@@ -115,6 +115,7 @@ const NSActivityOptions ActivityOptions =
 
     _headless = [arguments containsObject: @"--headless"];
     _noStartupWindow = [arguments containsObject: @"--no-startup-window"];
+    _inspectorPipe = [arguments containsObject: @"--inspector-pipe"];
     _browserContexts = [[NSMutableSet alloc] init];
 
     if (_headless) {
@@ -126,8 +127,6 @@ const NSActivityOptions ActivityOptions =
     } else {
         [NSApp activateIgnoringOtherApps:YES];
     }
-    if ([arguments containsObject: @"--inspector-pipe"])
-        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
     return self;
 }
 
@@ -253,6 +252,9 @@ const NSActivityOptions ActivityOptions =
 {
     if (!_headless)
         [self _updateNewWindowKeyEquivalents];
+
+    if (_inspectorPipe)
+        [_WKBrowserInspector initializeRemoteInspectorPipe:self headless:_headless];
 
     if (_noStartupWindow)
         return;

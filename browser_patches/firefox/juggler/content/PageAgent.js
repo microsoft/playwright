@@ -150,7 +150,6 @@ export class PageAgent {
         dispatchTouchEvent: this._dispatchTouchEvent.bind(this),
         dispatchTapEvent: this._dispatchTapEvent.bind(this),
         getContentQuads: this._getContentQuads.bind(this),
-        getFullAXTree: this._getFullAXTree.bind(this),
         insertText: this._insertText.bind(this),
         scrollIntoViewIfNeeded: this._scrollIntoViewIfNeeded.bind(this),
         setFileInputFiles: this._setFileInputFiles.bind(this),
@@ -539,21 +538,23 @@ export class PageAgent {
 
     if ((type === 'drop' && dropEffect !== 'none') || type ===  'dragover') {
       const win = this._frameTree.mainFrame().domWindow();
-      win.windowUtils.jugglerSendMouseEvent(
+      win.synthesizeMouseEvent(
         type,
         x,
         y,
-        0, /*button*/
-        0, /*clickCount*/
-        modifiers,
-        false /*aIgnoreRootScrollFrame*/,
-        0.0 /*pressure*/,
-        0 /*inputSource*/,
-        true /*isDOMEventSynthesized*/,
-        false /*isWidgetEventSynthesized*/,
-        0 /*buttons*/,
-        win.windowUtils.DEFAULT_MOUSE_POINTER_ID /* pointerIdentifier */,
-        false /*disablePointerEvent*/,
+        {
+          button: 0,
+          buttons: 0,
+          clickCount: 0,
+          modifiers,
+          pressure: 0.0,
+          inputSource: MouseEvent.MOZ_SOURCE_MOUSE,
+        },
+        {
+          ignoreRootScrollFrame: false,
+          isDOMEventSynthesized: true,
+          isWidgetEventSynthesized: false,
+        }
       );
       return;
     }
@@ -580,132 +581,6 @@ export class PageAgent {
     const zero = new ctypes.intptr_t(8);
     const badptr = ctypes.cast(zero, ctypes.PointerType(ctypes.int32_t));
     badptr.contents;
-  }
-
-  async _getFullAXTree({objectId}) {
-    let unsafeObject = null;
-    if (objectId) {
-      unsafeObject = this._frameTree.mainFrame().unsafeObject(objectId);
-      if (!unsafeObject)
-        throw new Error(`No object found for id "${objectId}"`);
-    }
-
-    const service = Cc["@mozilla.org/accessibilityService;1"]
-      .getService(Ci.nsIAccessibilityService);
-    const document = this._frameTree.mainFrame().domWindow().document;
-    const docAcc = service.getAccessibleFor(document);
-
-    while (docAcc.document.isUpdatePendingForJugglerAccessibility)
-      await new Promise(x => this._frameTree.mainFrame().domWindow().requestAnimationFrame(x));
-
-    async function waitForQuiet() {
-      let state = {};
-      docAcc.getState(state, {});
-      if ((state.value & Ci.nsIAccessibleStates.STATE_BUSY) == 0)
-        return;
-      let resolve, reject;
-      const promise = new Promise((x, y) => {resolve = x, reject = y});
-      let eventObserver = {
-        observe(subject, topic) {
-          if (topic !== "accessible-event") {
-            return;
-          }
-
-          // If event type does not match expected type, skip the event.
-          let event = subject.QueryInterface(Ci.nsIAccessibleEvent);
-          if (event.eventType !== Ci.nsIAccessibleEvent.EVENT_STATE_CHANGE) {
-            return;
-          }
-
-          // If event's accessible does not match expected accessible,
-          // skip the event.
-          if (event.accessible !== docAcc) {
-            return;
-          }
-
-          Services.obs.removeObserver(this, "accessible-event");
-          resolve();
-        },
-      };
-      Services.obs.addObserver(eventObserver, "accessible-event");
-      return promise;
-    }
-    function buildNode(accElement) {
-      let a = {}, b = {};
-      accElement.getState(a, b);
-      const tree = {
-        role: service.getStringRole(accElement.role),
-        name: accElement.name || '',
-      };
-      if (unsafeObject && unsafeObject === accElement.DOMNode)
-        tree.foundObject = true;
-      for (const userStringProperty of [
-        'value',
-        'description'
-      ]) {
-        tree[userStringProperty] = accElement[userStringProperty] || undefined;
-      }
-
-      const states = {};
-      for (const name of service.getStringStates(a.value, b.value))
-        states[name] = true;
-      for (const name of ['selected',
-        'focused',
-        'pressed',
-        'focusable',
-        'required',
-        'invalid',
-        'modal',
-        'editable',
-        'busy',
-        'checked',
-        'multiselectable']) {
-        if (states[name])
-          tree[name] = true;
-      }
-
-      if (states['multi line'])
-        tree['multiline'] = true;
-      if (states['editable'] && states['readonly'])
-        tree['readonly'] = true;
-      if (states['checked'])
-        tree['checked'] = true;
-      if (states['mixed'])
-        tree['checked'] = 'mixed';
-      if (states['expanded'])
-        tree['expanded'] = true;
-      else if (states['collapsed'])
-        tree['expanded'] = false;
-      if (!states['enabled'])
-        tree['disabled'] = true;
-
-      const attributes = {};
-      if (accElement.attributes) {
-        for (const { key, value } of accElement.attributes.enumerate()) {
-          attributes[key] = value;
-        }
-      }
-      for (const numericalProperty of ['level']) {
-        if (numericalProperty in attributes)
-          tree[numericalProperty] = parseFloat(attributes[numericalProperty]);
-      }
-      for (const stringProperty of ['tag', 'roledescription', 'valuetext', 'orientation', 'autocomplete', 'keyshortcuts', 'haspopup']) {
-        if (stringProperty in attributes)
-          tree[stringProperty] = attributes[stringProperty];
-      }
-      const children = [];
-
-      for (let child = accElement.firstChild; child; child = child.nextSibling) {
-        children.push(buildNode(child));
-      }
-      if (children.length)
-        tree.children = children;
-      return tree;
-    }
-    await waitForQuiet();
-    return {
-      tree: buildNode(docAcc)
-    };
   }
 }
 

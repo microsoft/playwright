@@ -16,7 +16,7 @@ const {PageAgent} = ChromeUtils.importESModule('chrome://juggler/content/content
 const helper = new Helper();
 
 export function initialize(browsingContext, docShell) {
-  const data = { channel: undefined, pageAgent: undefined, frameTree: undefined, failedToOverrideTimezone: false };
+  const data = { channel: undefined, pageAgent: undefined, frameTree: undefined, };
 
   const applySetting = {
     geolocation: (geolocation) => {
@@ -39,10 +39,6 @@ export function initialize(browsingContext, docShell) {
     },
     bypassCSP: (bypassCSP) => {
       docShell.bypassCSPEnabled = bypassCSP;
-    },
-
-    timezoneId: (timezoneId) => {
-      data.failedToOverrideTimezone = !docShell.overrideTimezone(timezoneId);
     },
 
     locale: (locale) => {
@@ -92,10 +88,6 @@ export function initialize(browsingContext, docShell) {
 
     ensurePermissions() {
       // noop, just a rountrip.
-    },
-
-    hasFailedToOverrideTimezone() {
-      return data.failedToOverrideTimezone;
     },
 
     async awaitViewportDimensions({width, height}) {
