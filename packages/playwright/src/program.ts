@@ -300,7 +300,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
-    shardWeights: resolveShardWeightsOption(options.shardWeights),
+    shardWeights: resolveShardWeightsOption(),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -375,14 +375,15 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   return { current, total };
 }
 
-function resolveShardWeightsOption(shardWeights?: string): ConfigCLIOverrides['shardWeights'] {
+function resolveShardWeightsOption(): ConfigCLIOverrides['shardWeights'] {
+  const shardWeights = process.env.PLAYWRIGHT_SHARD_WEIGHTS;
   if (!shardWeights)
     return undefined;
 
   return shardWeights.split(':').map(w => {
     const weight = parseInt(w, 10);
     if (isNaN(weight) || weight < 0)
-      throw new Error(`--shard-weights "${shardWeights}" weights must be non-negative numbers`);
+      throw new Error(`PLAYWRIGHT_SHARD_WEIGHTS="${shardWeights}" weights must be non-negative numbers`);
     return weight;
   });
 }

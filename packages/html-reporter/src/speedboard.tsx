@@ -103,6 +103,6 @@ function formatWeightCommands(bots: Record<string, { weights: number[] }>): stri
   const maxLen = Math.max(...entries.map(([botName]) => botName.length));
   return entries.map(([botName, { weights }]) => {
     const prefix = botName ? `${botName}:`.padEnd(maxLen + 2) : '';
-    return `${prefix}npx playwright test \x1b[33m--shard-weights=\x1b[35m${weights.join(':')}\x1b[39m`;
+    return `${prefix}PLAYWRIGHT_SHARD_WEIGHTS=${weights.join(':')}`;
   }).join('\n');
 }
