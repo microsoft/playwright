@@ -86,7 +86,6 @@ export class InternalReporter implements ReporterV2 {
       ...result,
       startTime: this._startTime!,
       duration: monotonicTime() - this._monotonicStartTime!,
-      shards: [],
     });
   }
 
