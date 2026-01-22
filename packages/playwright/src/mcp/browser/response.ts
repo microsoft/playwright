@@ -106,17 +106,22 @@ export class Response {
 
   async build(): Promise<{ content: (TextContent | ImageContent)[], isError?: boolean }> {
     const rootPath = this._context.firstRootPath();
-    const text: string[] = [];
+    const sections: { title: string, content: string[] }[] = [];
+    const addSection = (title: string): string[] => {
+      const section = { title, content: [] as string[] };
+      sections.push(section);
+      return section.content;
+    };
 
     if (this._errors.length) {
+      const text = addSection('Error');
       text.push('### Error');
       text.push(this._errors.join('\n'));
-      text.push('');
     }
 
     // Results
     if (this._results.length) {
-      text.push('### Result');
+      const text = addSection('Result');
       for (const result of this._results) {
         if (result.filename) {
           text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
@@ -128,49 +133,31 @@ export class Response {
           text.push(result.text);
         }
       }
-      text.push('');
     }
 
     // Code
     if (this._context.config.codegen !== 'none' && this._code.length) {
-      text.push('### Ran Playwright code');
+      const text = addSection('Ran Playwright code');
       text.push(...this._code);
-      text.push('');
     }
 
     // Render tab titles upon changes or when more than one tab.
     const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot() : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (tabHeaders.some(header => header.changed)) {
-      if (tabHeaders.length !== 1)
-        text.push('### Open tabs');
-      else if (this._context.config.outputMode !== 'file')
-        text.push('### Page');
-      text.push(...renderTabsMarkdown(tabHeaders));
-      text.push('');
+      if (tabHeaders.length !== 1) {
+        const text = addSection('Open tabs');
+        text.push(...renderTabsMarkdown(tabHeaders));
+      }
+
+      const text = addSection('Page');
+      text.push(...renderTabMarkdown(tabHeaders[0]));
     }
 
     // Handle modal states.
     if (tabSnapshot?.modalStates.length) {
-      text.push('### Modal state');
+      const text = addSection('Modal state');
       text.push(...renderModalStates(tabSnapshot.modalStates));
-      text.push('');
-    }
-
-    // Handle tab log
-    if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
-      text.push('### Events');
-      for (const event of tabSnapshot.events) {
-        if (event.type === 'console') {
-          if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
-            text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
-        } else if (event.type === 'download-start') {
-          text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
-        } else if (event.type === 'download-finish') {
-          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${rootPath ? path.relative(rootPath, event.download.outputFile) : event.download.outputFile}"`);
-        }
-      }
-      text.push('');
     }
 
     // Handle tab snapshot
@@ -182,31 +169,53 @@ export class Response {
         fileName = await this._context.outputFile(`snapshot-${this._ordinal}.yml`, { origin: 'code', title: 'Saved snapshot' });
       if (fileName) {
         await fs.promises.writeFile(fileName, tabSnapshot.ariaSnapshot);
-        text.push(`- [Page snapshot](${rootPath ? path.relative(rootPath, fileName) : fileName})`);
+        const text = addSection('Snapshot');
+        text.push(`- File: ${rootPath ? path.relative(rootPath, fileName) : fileName}`);
       } else {
-        text.push(`### Snapshot`);
+        const text = addSection('Snapshot');
         text.push('```yaml');
         text.push(tabSnapshot.ariaSnapshot);
         text.push('```');
-        text.push('');
       }
     }
 
     if (tabSnapshot && this._includeSnapshot === 'incremental') {
-      text.push(`### Snapshot`);
+      const text = addSection('Snapshot');
       text.push('```yaml');
       if (tabSnapshot.ariaSnapshotDiff !== undefined)
         text.push(tabSnapshot.ariaSnapshotDiff);
       else
         text.push(tabSnapshot.ariaSnapshot);
       text.push('```');
-      text.push('');
     }
+
+    // Handle tab log
+    if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
+      const text = addSection('Events');
+      for (const event of tabSnapshot.events) {
+        if (event.type === 'console') {
+          if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
+            text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
+        } else if (event.type === 'download-start') {
+          text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
+        } else if (event.type === 'download-finish') {
+          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${rootPath ? path.relative(rootPath, event.download.outputFile) : event.download.outputFile}"`);
+        }
+      }
+    }
+
+    const allText = sections.flatMap(section => {
+      const content: string[] = [];
+      content.push(`### ${section.title}`);
+      content.push(...section.content);
+      content.push('');
+      return content;
+    }).join('\n');
 
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: this._redactText(text.join('\n'))
+        text: this._redactText(allText)
       },
     ];
 
@@ -229,19 +238,18 @@ export class Response {
   }
 }
 
+export function renderTabMarkdown(tab: TabHeader): string[] {
+  const lines = [`- Page URL: ${tab.url}`];
+  if (tab.title)
+    lines.push(`- Page Title: ${tab.title}`);
+  return lines;
+}
+
 export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
   if (!tabs.length)
     return ['No open tabs. Use the "browser_navigate" tool to navigate to a page first.'];
 
   const lines: string[] = [];
-
-  if (tabs.length === 1) {
-    lines.push(`- Page URL: ${tabs[0].url}`);
-    if (tabs[0].title)
-      lines.push(`- Page Title: ${tabs[0].title}`);
-    return lines;
-  }
-
   for (let i = 0; i < tabs.length; i++) {
     const tab = tabs[i];
     const current = tab.current ? ' (current)' : '';
