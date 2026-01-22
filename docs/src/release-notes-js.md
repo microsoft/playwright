@@ -14,17 +14,13 @@ The HTML report's Speedboard tab now shows how long each shard took, making it e
 
 ![Shard Duration chart in the HTML report](./images/speedboard-shards.png)
 
-Once you've identified slow shards, you can use the new custom sharding weights to rebalance them and speed up your overall CI time.
-The `shardIndex` is also now available in the reporter API for custom reporting and debugging.
+### New `isLocal` Option for CDP Connections
 
-### New `toHaveCSS` Overload
-
-If you have `@types/react` installed, you can now pass a style object to [`method: LocatorAssertions.toHaveCSS#1`] for type-safe CSS assertions:
+[`method: BrowserType.connectOverCDP`] now accepts an `isLocal` option. When set to `true`, it tells Playwright that it runs on the same host as the CDP server, enabling file system optimizations.
 
 ```ts
-await expect(locator).toHaveCSS({
-  backgroundColor: 'rgb(255, 0, 0)',
-  fontSize: '16px',
+const browser = await chromium.connectOverCDP('http://localhost:9222', {
+  isLocal: true,
 });
 ```
 
