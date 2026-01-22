@@ -178,6 +178,41 @@ const pickLocator = defineTabTool({
   },
 });
 
+const check = defineTabTool({
+  capability: 'core-input',
+  skillOnly: true,
+
+  schema: {
+    name: 'browser_check',
+    title: 'Check',
+    description: 'Check a checkbox or radio button',
+    inputSchema: elementSchema,
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    const { resolved } = await tab.refLocator(params);
+    response.addCode(`await page.${resolved}.check();`);
+  },
+});
+
+const uncheck = defineTabTool({
+  capability: 'core-input',
+  skillOnly: true,
+  schema: {
+    name: 'browser_uncheck',
+    title: 'Uncheck',
+    description: 'Uncheck a checkbox or radio button',
+    inputSchema: elementSchema,
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    const { resolved } = await tab.refLocator(params);
+    response.addCode(`await page.${resolved}.uncheck();`);
+  },
+});
+
 export default [
   snapshot,
   click,
@@ -185,4 +220,6 @@ export default [
   hover,
   selectOption,
   pickLocator,
+  check,
+  uncheck,
 ];

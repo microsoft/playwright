@@ -17,17 +17,13 @@
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 
-const elementSchema = z.object({
-  element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
-});
-
 const mouseMove = defineTabTool({
   capability: 'vision',
   schema: {
     name: 'browser_mouse_move_xy',
     title: 'Move mouse',
     description: 'Move mouse to a given position',
-    inputSchema: elementSchema.extend({
+    inputSchema: z.object({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
     }),
@@ -44,13 +40,73 @@ const mouseMove = defineTabTool({
   },
 });
 
+const mouseDown = defineTabTool({
+  capability: 'vision',
+
+  schema: {
+    name: 'browser_mouse_down',
+    title: 'Press mouse down',
+    description: 'Press mouse down',
+    inputSchema: z.object({
+      button: z.enum(['left', 'right', 'middle']).optional().describe('Button to press, defaults to left'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`// Press mouse down`);
+    response.addCode(`await page.mouse.down({ button: '${params.button}' });`);
+    await tab.page.mouse.down({ button: params.button });
+  },
+});
+
+const mouseUp = defineTabTool({
+  capability: 'vision',
+
+  schema: {
+    name: 'browser_mouse_up',
+    title: 'Press mouse up',
+    description: 'Press mouse up',
+    inputSchema: z.object({
+      button: z.enum(['left', 'right', 'middle']).optional().describe('Button to press, defaults to left'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`// Press mouse up`);
+    response.addCode(`await page.mouse.up({ button: '${params.button}' });`);
+    await tab.page.mouse.up({ button: params.button });
+  },
+});
+
+const mouseWheel = defineTabTool({
+  capability: 'vision',
+  schema: {
+    name: 'browser_mouse_wheel',
+    title: 'Scroll mouse wheel',
+    description: 'Scroll mouse wheel',
+    inputSchema: z.object({
+      deltaX: z.number().default(0).describe('X delta'),
+      deltaY: z.number().default(0).describe('Y delta'),
+    }),
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.addCode(`// Scroll mouse wheel`);
+    response.addCode(`await page.mouse.wheel(${params.deltaX}, ${params.deltaY});`);
+    await tab.page.mouse.wheel(params.deltaX, params.deltaY);
+  },
+});
+
 const mouseClick = defineTabTool({
   capability: 'vision',
   schema: {
     name: 'browser_mouse_click_xy',
     title: 'Click',
     description: 'Click left mouse button at a given position',
-    inputSchema: elementSchema.extend({
+    inputSchema: z.object({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
     }),
@@ -79,7 +135,7 @@ const mouseDrag = defineTabTool({
     name: 'browser_mouse_drag_xy',
     title: 'Drag mouse',
     description: 'Drag left mouse button to a given position',
-    inputSchema: elementSchema.extend({
+    inputSchema: z.object({
       startX: z.number().describe('Start X coordinate'),
       startY: z.number().describe('Start Y coordinate'),
       endX: z.number().describe('End X coordinate'),
@@ -110,4 +166,7 @@ export default [
   mouseMove,
   mouseClick,
   mouseDrag,
+  mouseDown,
+  mouseUp,
+  mouseWheel,
 ];

@@ -273,9 +273,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return this._consoleMessages.filter(message => shouldIncludeMessage(level, message.type));
   }
 
+  async clearConsoleMessages() {
+    await this._initializedPromise;
+    this._consoleMessages.length = 0;
+  }
+
   async requests(): Promise<Set<playwright.Request>> {
     await this._initializedPromise;
     return this._requests;
+  }
+
+  async clearRequests() {
+    await this._initializedPromise;
+    this._requests.clear();
   }
 
   async captureSnapshot(): Promise<TabSnapshot> {

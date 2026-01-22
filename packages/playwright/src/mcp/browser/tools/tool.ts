@@ -40,6 +40,7 @@ export type ModalState = FileUploadModalState | DialogModalState;
 
 export type Tool<Input extends z.Schema = z.Schema> = {
   capability: ToolCapability;
+  skillOnly?: boolean;
   schema: ToolSchema<Input>;
   handle: (context: Context, params: z.output<Input>, response: Response) => Promise<void>;
 };
@@ -50,6 +51,7 @@ export function defineTool<Input extends z.Schema>(tool: Tool<Input>): Tool<Inpu
 
 export type TabTool<Input extends z.Schema = z.Schema> = {
   capability: ToolCapability;
+  skillOnly?: boolean;
   schema: ToolSchema<Input>;
   clearsModalState?: ModalState['type'];
   handle: (tab: Tab, params: z.output<Input>, response: Response) => Promise<void>;
