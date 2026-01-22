@@ -55,11 +55,11 @@ export function Shards({ report }: { report: LoadedReport }) {
   if (machines.length === 0)
     return null;
 
-  const minStartTime = Math.min(...machines.map(m => m.startTime));
   const entries: GanttEntry[] = machines
       .map(machine => {
         const label = machine.tag.join(' ');
-        let tooltip = `${label} starts at ${formatDuration(machine.startTime - minStartTime)}, runs ${formatDuration(machine.duration)}`;
+        const startTimeFormatted = new Date(machine.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', timeZoneName: 'short' });
+        let tooltip = `${label} started at ${startTimeFormatted}, runs ${formatDuration(machine.duration)}`;
         if (machine.shardIndex)
           tooltip += ` (shard ${machine.shardIndex})`;
         return {

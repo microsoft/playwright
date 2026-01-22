@@ -47,30 +47,42 @@ export const GanttChart = ({
   const chartWidth = width - margin.left - margin.right;
 
   const minStartTime = Math.min(...entries.map(e => e.startTime));
-  const maxValue = Math.max(...entries.map(e => e.startTime + e.duration)) - minStartTime;
+  const maxEndTime = Math.max(...entries.map(e => e.startTime + e.duration));
 
   let tickInterval: number;
-  let formatTickLabel: (i: number) => string;
-
-  if (maxValue < 60 * 1000) {
+  let showSeconds: boolean;
+  const duration = maxEndTime - minStartTime;
+  if (duration < 60 * 1000) {
     tickInterval = 10 * 1000;
-    formatTickLabel = i => `${i * 10}s`;
-  } else if (maxValue < 5 * 60 * 1000) {
+    showSeconds = true;
+  } else if (duration < 5 * 60 * 1000) {
     tickInterval = 30 * 1000;
-    formatTickLabel = i => {
-      const seconds = i * 30;
-      const mins = Math.floor(seconds / 60);
-      const secs = seconds % 60;
-      return secs === 0 ? `${mins}m` : `${mins}m${secs}s`;
-    };
-  } else if (maxValue < 30 * 60 * 1000) {
+    showSeconds = true;
+  } else if (duration < 30 * 60 * 1000) {
     tickInterval = 5 * 60 * 1000;
-    formatTickLabel = i => `${i * 5}m`;
+    showSeconds = false;
   } else {
     tickInterval = 10 * 60 * 1000;
-    formatTickLabel = i => `${i * 10}m`;
+    showSeconds = false;
   }
 
+  // quantize ticks for clean labels
+  const firstTick = Math.ceil(minStartTime / tickInterval) * tickInterval;
+
+  const formatTickLabel = (absoluteTime: number, isFirst: boolean) => {
+    const label = new Date(absoluteTime).toLocaleTimeString(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: showSeconds ? '2-digit' : undefined
+    });
+    if (isFirst)
+      return label;
+    // there's no good way of omitting AM/PM other than manually stripping it, "dayPeriod" doesn't work
+    if (label.endsWith(' AM') || label.endsWith(' PM'))
+      return label.slice(0, -3);
+  };
+
+  const maxValue = maxEndTime - minStartTime;
   const maxPadded = maxValue * 1.1;
   const maxRounded = Math.ceil(maxPadded / tickInterval) * tickInterval;
   const xScale = chartWidth / maxRounded;
@@ -81,11 +93,11 @@ export const GanttChart = ({
   const contentHeight = entries.length * (barHeight + barSpacing);
 
   const xTicks = [];
-  const numberOfTicks = Math.ceil(maxRounded / tickInterval);
-  for (let i = 0; i <= numberOfTicks; i++) {
+  for (let tickTime = firstTick; tickTime <= minStartTime + maxRounded; tickTime += tickInterval) {
+    const tickOffset = tickTime - minStartTime;
     xTicks.push({
-      x: i * tickInterval * xScale,
-      label: formatTickLabel(i)
+      x: tickOffset * xScale,
+      label: formatTickLabel(tickTime, tickTime === firstTick)
     });
   }
 
