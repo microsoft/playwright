@@ -50,7 +50,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
   - button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]
   - list [ref=e4]:${listitems}`),
@@ -63,7 +63,9 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       ref: 'e3',
     },
   })).toHaveResponse({
-    pageState: expect.not.stringContaining(`Page Snapshot`),
+    snapshot: `\`\`\`yaml
+
+\`\`\``,
   });
 
   expect(await client.callTool({
@@ -73,26 +75,24 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       ref: 'e2',
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Page Snapshot:
-\`\`\`yaml
+    snapshot: `\`\`\`yaml
 - <changed> generic [ref=e1]:
   - button "Button 1" [active] [ref=e2]
   - button "Button 2new text" [ref=e105]
   - ref=e4 [unchanged]
-\`\`\``),
+\`\`\``,
   });
 
   // browser_snapshot forces a full snapshot.
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    pageState: expect.stringContaining(`Page Snapshot:
-\`\`\`yaml
+    snapshot: `\`\`\`yaml
 - generic [ref=e1]:
   - button "Button 1" [active] [ref=e2]
   - button "Button 2new text" [ref=e105]
   - list [ref=e4]:${listitems}
-\`\`\``),
+\`\`\``,
   });
 });
 
@@ -136,7 +136,7 @@ test('should reset aria snapshot diff upon navigation', async ({ client, server 
       url: server.PREFIX + '/before',
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
   - button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]`),
   });
@@ -148,7 +148,7 @@ test('should reset aria snapshot diff upon navigation', async ({ client, server 
       ref: 'e2',
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
   - button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]`),
   });

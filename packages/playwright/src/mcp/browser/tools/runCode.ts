@@ -23,6 +23,7 @@ import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
   code: z.string().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
+  filename: z.string().optional().describe('Filename to save the result to. If not provided, result is returned as JSON string.'),
 });
 
 const runCode = defineTabTool({
@@ -56,7 +57,7 @@ const runCode = defineTabTool({
       await vm.runInContext(snippet, context);
       const result = await __end__;
       if (typeof result === 'string')
-        response.addResult(result);
+        await response.addResult({ text: result, suggestedFilename: params.filename });
     });
   },
 });

@@ -320,7 +320,6 @@ class JobDispatcher {
     this._dataByTestId.set(test.id, { test, result, steps: new Map() });
     result.parallelIndex = this._parallelIndex;
     result.workerIndex = this._workerIndex;
-    result.shardIndex = this._config.config.shard?.current;
     result.startTime = new Date(params.startWallTime);
     this._reporter.onTestBegin?.(test, result);
     this._currentlyRunning = { test, result };

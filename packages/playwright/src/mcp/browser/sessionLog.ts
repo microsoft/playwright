@@ -17,35 +17,16 @@
 import fs from 'fs';
 import path from 'path';
 
-import { Response } from './response';
-import { logUnhandledError } from '../log';
 import { outputFile  } from './config';
+import { parseResponse } from './response';
 
 import type { FullConfig } from './config';
-import type * as actions from './actions';
-import type { Tab, TabSnapshot } from './tab';
 import type * as mcpServer from '../sdk/server';
-
-type LogEntry = {
-  timestamp: number;
-  toolCall?: {
-    toolName: string;
-    toolArgs: Record<string, any>;
-    result: string;
-    isError?: boolean;
-  };
-  userAction?: actions.Action;
-  code: string;
-  tabSnapshot?: TabSnapshot;
-};
 
 export class SessionLog {
   private _folder: string;
   private _file: string;
-  private _ordinal = 0;
-  private _pendingEntries: LogEntry[] = [];
   private _sessionFileQueue = Promise.resolve();
-  private _flushEntriesTimeout: NodeJS.Timeout | undefined;
 
   constructor(sessionFolder: string) {
     this._folder = sessionFolder;
@@ -53,125 +34,34 @@ export class SessionLog {
   }
 
   static async create(config: FullConfig, clientInfo: mcpServer.ClientInfo): Promise<SessionLog> {
-    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code', reason: 'Saving session' });
+    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code', title: 'Saving session' });
     await fs.promises.mkdir(sessionFolder, { recursive: true });
     // eslint-disable-next-line no-console
     console.error(`Session: ${sessionFolder}`);
     return new SessionLog(sessionFolder);
   }
 
-  logResponse(response: Response) {
-    const entry: LogEntry = {
-      timestamp: performance.now(),
-      toolCall: {
-        toolName: response.toolName,
-        toolArgs: response.toolArgs,
-        result: response.result(),
-        isError: response.isError(),
-      },
-      code: response.code(),
-      tabSnapshot: response.tabSnapshot(),
-    };
-    this._appendEntry(entry);
-  }
+  logResponse(toolName: string, toolArgs: Record<string, any>, responseObject: any) {
+    const parsed = parseResponse(responseObject) as any;
+    if (parsed)
+      delete parsed.text;
 
-  logUserAction(action: actions.Action, tab: Tab, code: string, isUpdate: boolean) {
-    code = code.trim();
-    if (isUpdate) {
-      const lastEntry = this._pendingEntries[this._pendingEntries.length - 1];
-      if (lastEntry?.userAction?.name === action.name) {
-        lastEntry.userAction = action;
-        lastEntry.code = code;
-        return;
-      }
-    }
-    if (action.name === 'navigate') {
-      // Already logged at this location.
-      const lastEntry = this._pendingEntries[this._pendingEntries.length - 1];
-      if (lastEntry?.tabSnapshot?.url === action.url)
-        return;
-    }
-    const entry: LogEntry = {
-      timestamp: performance.now(),
-      userAction: action,
-      code,
-      tabSnapshot: {
-        url: tab.page.url(),
-        title: '',
-        ariaSnapshot: action.ariaSnapshot || '',
-        modalStates: [],
-        consoleMessages: [],
-        downloads: [],
-      },
-    };
-    this._appendEntry(entry);
-  }
-
-  private _appendEntry(entry: LogEntry) {
-    this._pendingEntries.push(entry);
-    if (this._flushEntriesTimeout)
-      clearTimeout(this._flushEntriesTimeout);
-    this._flushEntriesTimeout = setTimeout(() => this._flushEntries(), 1000);
-  }
-
-  private async _flushEntries() {
-    clearTimeout(this._flushEntriesTimeout);
-    const entries = this._pendingEntries;
-    this._pendingEntries = [];
     const lines: string[] = [''];
-
-    for (const entry of entries) {
-      const ordinal = (++this._ordinal).toString().padStart(3, '0');
-      if (entry.toolCall) {
-        lines.push(
-            `### Tool call: ${entry.toolCall.toolName}`,
-            `- Args`,
-            '```json',
-            JSON.stringify(entry.toolCall.toolArgs, null, 2),
-            '```',
-        );
-        if (entry.toolCall.result) {
-          lines.push(
-              entry.toolCall.isError ? `- Error` : `- Result`,
-              '```',
-              entry.toolCall.result,
-              '```',
-          );
-        }
-      }
-
-      if (entry.userAction) {
-        const actionData = { ...entry.userAction } as any;
-        delete actionData.ariaSnapshot;
-        delete actionData.selector;
-        delete actionData.signals;
-
-        lines.push(
-            `### User action: ${entry.userAction.name}`,
-            `- Args`,
-            '```json',
-            JSON.stringify(actionData, null, 2),
-            '```',
-        );
-      }
-
-      if (entry.code) {
-        lines.push(
-            `- Code`,
-            '```js',
-            entry.code,
-            '```');
-      }
-
-      if (entry.tabSnapshot) {
-        const fileName = `${ordinal}.snapshot.yml`;
-        fs.promises.writeFile(path.join(this._folder, fileName), entry.tabSnapshot.ariaSnapshot).catch(logUnhandledError);
-        lines.push(`- Snapshot: ${fileName}`);
-      }
-
-      lines.push('', '');
+    lines.push(
+        `### Tool call: ${toolName}`,
+        `- Args`,
+        '```json',
+        JSON.stringify(toolArgs, null, 2),
+        '```',
+    );
+    if (parsed) {
+      lines.push(`- Result`);
+      lines.push('```json');
+      lines.push(JSON.stringify(parsed, null, 2));
+      lines.push('```');
     }
 
+    lines.push('');
     this._sessionFileQueue = this._sessionFileQueue.then(() => fs.promises.appendFile(this._file, lines.join('\n')));
   }
 }

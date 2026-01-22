@@ -100,9 +100,3 @@ Learn more about [parallelism and sharding](../test-parallel.md) with Playwright
 - type: <[int]>
 
 The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have a different `parallelIndex`.
-
-## property: TestResult.shardIndex
-* since: v1.58
-- type: ?<[int]>
-
-The index of the shard between `1` and [`shards`](../test-sharding.md).

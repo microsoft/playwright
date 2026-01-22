@@ -39,31 +39,6 @@ export interface FullResult {
    * Test duration in milliseconds.
    */
   duration: number;
-
-  /**
-   * Only present on merged reports.
-   */
-  shards?: {
-    /**
-     * The index of the shard, one-based.
-     */
-    shardIndex?: number;
-
-    /**
-     * Global tag that differentiates CI environments.
-     */
-    tag: string[];
-
-    /**
-     * Start wall time of shard.
-     */
-    startTime: Date;
-
-    /**
-     * Shard run duration in milliseconds.
-     */
-    duration: number;
-  }[];
 }
 
 export interface Reporter {

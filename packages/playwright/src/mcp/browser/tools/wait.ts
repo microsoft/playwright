@@ -55,7 +55,7 @@ const wait = defineTool({
       await locator.waitFor({ state: 'visible' });
     }
 
-    response.addResult(`Waited for ${params.text || params.textGone || params.time}`);
+    response.addTextResult(`Waited for ${params.text || params.textGone || params.time}`);
     response.setIncludeSnapshot();
   },
 });

@@ -40,31 +40,6 @@ export interface FullResult {
    * Test duration in milliseconds.
    */
   duration: number;
-
-  /**
-   * Only present on merged reports.
-   */
-  shards?: {
-    /**
-     * The index of the shard, one-based.
-     */
-    shardIndex?: number;
-
-    /**
-     * Global tag that differentiates CI environments.
-     */
-    tag: string[];
-
-    /**
-     * Start wall time of shard.
-     */
-    startTime: Date;
-
-    /**
-     * Shard run duration in milliseconds.
-     */
-    duration: number;
-  }[];
 }
 
 /**
@@ -705,11 +680,6 @@ export interface TestResult {
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
    */
   retry: number;
-
-  /**
-   * The index of the shard between `1` and [`shards`](https://playwright.dev/docs/test-sharding).
-   */
-  shardIndex?: number;
 
   /**
    * Start time of this particular test run.

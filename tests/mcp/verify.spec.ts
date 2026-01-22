@@ -84,7 +84,7 @@ test('browser_verify_element_visible (not found)', async ({ client, server }) =>
     },
   })).toHaveResponse({
     isError: true,
-    result: 'Element with role "button" and accessible name "Cancel" not found',
+    error: 'Element with role "button" and accessible name "Cancel" not found',
   });
 });
 
@@ -150,7 +150,7 @@ test('browser_verify_text_visible (not found)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     isError: true,
-    result: 'Text not found',
+    error: 'Text not found',
   });
 });
 
@@ -276,7 +276,7 @@ test('browser_verify_list_visible (item not found)', async ({ client, server }) 
     },
   })).toHaveResponse({
     isError: true,
-    result: 'Item "Cherry" not found',
+    error: 'Item "Cherry" not found',
   });
 });
 
@@ -344,7 +344,7 @@ test('browser_verify_value (textbox wrong value)', async ({ client, server }) =>
     },
   })).toHaveResponse({
     isError: true,
-    result: 'Expected value "Jane Smith", but got "John Doe"',
+    error: 'Expected value "Jane Smith", but got "John Doe"',
   });
 });
 
@@ -428,7 +428,7 @@ test('browser_verify_value (checkbox wrong value)', async ({ client, server }) =
     },
   })).toHaveResponse({
     isError: true,
-    result: 'Expected value "false", but got "true"',
+    error: 'Expected value "false", but got "true"',
   });
 });
 

@@ -3344,20 +3344,14 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await page.getByRole('link', { name: 'Speedboard' }).click();
 
       await expect(page.getByRole('main')).toMatchAriaSnapshot(`
-        - button "Shard Duration"
+        - button "Timeline"
         - region:
           - img:
-            - list "@linux":
-              - listitem /Shard 1/
-              - listitem /Shard 2/
-              - listitem /Shard 3/
-            - list "@mac":
-              - listitem /Shard 1/
-              - listitem /Shard 2/
-          - text: Use shard weights to
-          - link "rebalance your shards":
-            - /url: https://playwright.dev/docs/test-sharding#rebalancing-shards
-          - text: /@linux. npx playwright test --shard-weights=\\d+:\\d+:\\d+ @mac. npx playwright test --shard-weights=\\d+:\\d+/
+            - listitem /@linux/
+            - listitem /@linux/
+            - listitem /@linux/
+            - listitem /@mac/
+            - listitem /@mac/
       `);
     });
   });

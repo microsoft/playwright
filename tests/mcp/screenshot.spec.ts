@@ -50,7 +50,7 @@ test('browser_take_screenshot (element)', async ({ startClient, server }, testIn
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`[ref=e1]`),
+    snapshot: expect.stringContaining(`[ref=e1]`),
   });
 
   expect(await client.callTool({
@@ -363,7 +363,7 @@ test('browser_take_screenshot (fullPage with element should error)', async ({ st
     name: 'browser_navigate',
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`[ref=e1]`),
+    snapshot: expect.stringContaining(`[ref=e1]`),
   });
 
   const result = await client.callTool({
@@ -391,7 +391,7 @@ test('browser_take_screenshot (viewport without snapshot)', async ({ startClient
       action: 'list',
     },
   })).toHaveResponse({
-    tabs: `- 0: (current) [] (about:blank)`,
+    result: `- 0: (current) [](about:blank)`,
   });
 
   // This should work without requiring a snapshot since it's a viewport screenshot

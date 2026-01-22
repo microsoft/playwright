@@ -636,6 +636,12 @@ copyFiles.push({
   to: 'packages/playwright/lib',
 });
 
+copyFiles.push({
+  files: 'packages/playwright/src/mcp/terminal/*.json',
+  from: 'packages/playwright/src',
+  to: 'packages/playwright/lib',
+});
+
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({

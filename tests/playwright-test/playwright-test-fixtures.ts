@@ -237,6 +237,7 @@ export function cleanEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
     PW_TEST_SOURCE_TRANSFORM: undefined,
     PW_TEST_SOURCE_TRANSFORM_SCOPE: undefined,
     PWTEST_BOT_NAME: undefined,
+    PWTEST_SHARD_WEIGHTS: undefined,
     TEST_WORKER_INDEX: undefined,
     TEST_PARALLEL_INDEX: undefined,
     NODE_OPTIONS: undefined,

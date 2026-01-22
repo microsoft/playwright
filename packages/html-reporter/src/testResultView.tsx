@@ -194,20 +194,23 @@ const StepTreeItem: React.FC<{
   depth: number,
 }> = ({ test, step, result, depth }) => {
   const searchParams = useSearchParams();
-  return <TreeItem title={<span aria-label={step.title}>
-    <span style={{ float: 'right' }}>{msToString(step.duration)}</span>
+  return <TreeItem title={<div aria-label={step.title} className='step-title-container'>
+    {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
+    <span className='step-title-text'>
+      <span>{step.title}</span>
+      {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
+      {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
+    </span>
+    <span className='step-spacer'></span>
     {step.attachments.length > 0 && <a
-      style={{ float: 'right' }}
+      className='step-attachment-link'
       title={`reveal attachment`}
       href={formatUrl(testResultHref({ test, result, anchor: `attachment-${step.attachments[0]}` }, searchParams))}
       onClick={evt => { evt.stopPropagation(); }}>
       {icons.attachment()}
     </a>}
-    {statusIcon(step.error || step.duration === -1 ? 'failed' : (step.skipped ? 'skipped' : 'passed'))}
-    <span>{step.title}</span>
-    {step.count > 1 && <> ✕ <span className='test-result-counter'>{step.count}</span></>}
-    {step.location && <span className='test-result-path'>— {step.location.file}:{step.location.line}</span>}
-  </span>} loadChildren={step.steps.length || step.snippet ? () => {
+    <span className='step-duration'>{msToString(step.duration)}</span>
+  </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
     const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
     return snippet.concat(steps);

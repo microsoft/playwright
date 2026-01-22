@@ -68,7 +68,6 @@ test('should not report skipped due to sharding', async ({ runInlineTest }) => {
   expect(result.report.suites[0].specs.length).toBe(2);
   expect(result.report.suites[0].specs[0].tests[0].status).toBe('expected');
   expect(result.report.suites[0].specs[1].tests[0].status).toBe('skipped');
-  expect(result.report.suites[0].specs[1].tests[0].results[0].shardIndex).toBe(1);
 });
 
 test('should report projects and stats', async ({ runInlineTest }, testInfo) => {

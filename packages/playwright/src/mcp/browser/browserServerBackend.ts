@@ -56,25 +56,30 @@ export class BrowserServerBackend implements ServerBackend {
 
   async callTool(name: string, rawArguments: mcpServer.CallToolRequest['params']['arguments']) {
     const tool = this._tools.find(tool => tool.schema.name === name)!;
-    if (!tool)
-      throw new Error(`Tool "${name}" not found`);
+    if (!tool) {
+      return {
+        content: [{ type: 'text' as const, text: `### Error\nTool "${name}" not found` }],
+        isError: true,
+      };
+    }
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {}) as any;
     const context = this._context!;
-    const response = new Response(context, name, parsedArguments);
-    response.logBegin();
+    const response = Response.create(context, name, parsedArguments);
     context.setRunningTool(name);
+    let responseObject: mcpServer.CallToolResult;
     try {
       await tool.handle(context, parsedArguments, response);
-      await response.finish();
-      this._sessionLog?.logResponse(response);
+      responseObject = await response.build();
+      this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
-      response.addError(String(error));
+      return {
+        content: [{ type: 'text' as const, text: `### Error\n${String(error)}` }],
+        isError: true,
+      };
     } finally {
       context.setRunningTool(undefined);
     }
-    response.logEnd();
-    const _meta = rawArguments?._meta as object | undefined;
-    return response.serialize({ _meta });
+    return responseObject;
   }
 
   serverClosed() {

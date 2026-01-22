@@ -28,7 +28,7 @@ import { CommonReporterOptions, formatError, formatResultFailure, internalScreen
 import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
-import type { ReporterV2 } from './reporterV2';
+import type { MachineEndResult, ReporterV2 } from './reporterV2';
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
@@ -58,6 +58,7 @@ class HtmlReporter implements ReporterV2 {
   private _host: string | undefined;
   private _buildResult: { ok: boolean, singleTestId: string | undefined } | undefined;
   private _topLevelErrors: api.TestError[] = [];
+  private _machines: MachineEndResult[] = [];
 
   constructor(options: HtmlReporterConfigOptions & CommonReporterOptions) {
     this._options = options;
@@ -121,6 +122,10 @@ class HtmlReporter implements ReporterV2 {
     this._topLevelErrors.push(error);
   }
 
+  onMachineEnd(result: MachineEndResult): void {
+    this._machines.push(result);
+  }
+
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
@@ -143,7 +148,7 @@ class HtmlReporter implements ReporterV2 {
       noSnippets,
       noCopyPrompt,
     });
-    this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors);
+    this._buildResult = await builder.build(this.config.metadata, projectSuites, result, this._topLevelErrors, this._machines);
   }
 
   async onExit() {
@@ -250,7 +255,7 @@ class HtmlBuilder {
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
-  async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
+  async build(metadata: Metadata, projectSuites: api.Suite[], result: api.FullResult, topLevelErrors: api.TestError[], machines: MachineEndResult[]): Promise<{ ok: boolean, singleTestId: string | undefined }> {
     const data: DataMap = new Map();
     for (const projectSuite of projectSuites) {
       const projectName = projectSuite.project()!.name;
@@ -298,7 +303,12 @@ class HtmlBuilder {
       stats: { ...[...data.values()].reduce((a, e) => addStats(a, e.testFileSummary.stats), emptyStats()) },
       errors: topLevelErrors.map(error => formatError(internalScreen, error).message),
       options: this._options,
-      shards: this._buildShardsInfo(result, projectSuites),
+      machines: machines.map(s => ({
+        duration: s.duration,
+        startTime: s.startTime.getTime(),
+        tag: s.tag,
+        shardIndex: s.shardIndex,
+      })),
     };
     htmlReport.files.sort((f1, f2) => {
       const w1 = f1.stats.unexpected * 1000 + f1.stats.flaky;
@@ -340,99 +350,6 @@ class HtmlBuilder {
 
 
     return { ok, singleTestId };
-  }
-
-  private _buildShardsInfo(result: api.FullResult, projectSuites: api.Suite[]): HTMLReport['shards'] {
-    if (!result.shards)
-      return [];
-
-    const shardsInfo: HTMLReport['shards'] = result.shards.map(s => ({
-      duration: s.duration,
-      startTime: s.startTime.getTime(),
-      tag: s.tag,
-      shardIndex: s.shardIndex,
-      suggestedWeight: 100,
-    }));
-
-    const bots: Record<string, api.TestCase[]> = {};
-
-    for (const projectSuite of projectSuites) {
-      for (const test of projectSuite.allTests()) {
-        let longestPrefix: string[] = [];
-        for (const { tag } of shardsInfo) {
-          if (longestPrefix.length < tag.length && tag.every((v, i) => test.tags[i] === v))
-            longestPrefix = tag;
-        }
-        const botName = longestPrefix.join(';');
-        bots[botName] ??= [];
-        bots[botName].push(test);
-      }
-    }
-
-    for (const [botName, tests] of Object.entries(bots)) {
-      const botShards = shardsInfo.filter(shard => shard.tag.join(';') === botName);
-      const totalShard = Math.max(...botShards.map(s => s.shardIndex ?? -1));
-      if (totalShard < 2)
-        continue;
-      let suggestedWeights = this._calculateShardWeights(tests, totalShard);
-      suggestedWeights = this._normaliseWeights(suggestedWeights);
-      for (const [index, weight] of suggestedWeights.entries()) {
-        const shard = botShards.find(s => s.shardIndex === index + 1);
-        if (shard)
-          shard.suggestedWeight = weight;
-      }
-    }
-
-    return shardsInfo;
-  }
-
-  private _calculateShardWeights(tests: api.TestCase[], shardTotal: number): number[] {
-    if (tests.length === 0)
-      return [];
-
-    // recreates the sorting that filterForShard gets as input
-    tests.sort((a, b) => {
-      const shardIndexA = a.results[0]!.shardIndex ?? -1;
-      const shardIndexB = b.results[0]!.shardIndex ?? -1;
-      if (shardIndexA !== shardIndexB)
-        return shardIndexA - shardIndexB;
-
-      const startTimeA = a.results[0]!.startTime.getTime();
-      const startTimeB = b.results[0]!.startTime.getTime();
-      return startTimeA - startTimeB;
-    });
-
-    const totalDuration = tests.map(test => test.results[0]!.duration).reduce((a, b) => a + b, 0);
-    const optimalDuration = totalDuration / shardTotal;
-
-    const weights: number[] = [];
-    let currentDuration = 0;
-    let currentTestCount = 0;
-
-    for (const test of tests) {
-      const duration = test.results[0]!.duration;
-      currentDuration += duration;
-      currentTestCount++;
-
-      // When we've reached the optimal shard duration, record this shard's weight
-      if (currentDuration >= optimalDuration && weights.length < shardTotal - 1) {
-        weights.push(currentTestCount);
-        currentDuration = 0;
-        currentTestCount = 0;
-      }
-    }
-    weights.push(currentTestCount);
-
-    return weights;
-  }
-
-  private _normaliseWeights(weights: number[]): number[] {
-    const total = weights.reduce((a, b) => a + b, 0);
-    weights = weights.map(w => Math.floor((w / total) * 100));
-    const remaining = 100 - weights.reduce((a, b) => a + b, 0);
-    for (let i = 0; i < remaining; i++)
-      weights[i % weights.length]++;
-    return weights;
   }
 
   private async _writeReportData(filePath: string) {

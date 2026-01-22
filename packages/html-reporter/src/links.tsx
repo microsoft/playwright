@@ -37,8 +37,7 @@ export const Route: React.FunctionComponent<{
   predicate: (params: URLSearchParams) => boolean,
   children: any
 }> = ({ predicate, children }) => {
-  const searchParams = useSearchParams();
-  return predicate(searchParams) ? children : null;
+  return predicate(useSearchParams()) ? children : null;
 };
 
 type LinkProps = React.PropsWithChildren<{
@@ -64,7 +63,7 @@ export const ProjectLink: React.FunctionComponent<{
   projectNames: string[],
   projectName: string,
 }> = ({  projectNames, projectName }) => {
-  const searchParams = useSearchParams();
+  const searchParams = new URLSearchParams(useSearchParams());
   if (searchParams.has('testId'))
     searchParams.delete('speedboard');
   searchParams.delete('testId');
@@ -111,7 +110,7 @@ export const AttachmentLink: React.FunctionComponent<{
     return (
       <div
         style={{ lineHeight: '32px', whiteSpace: 'nowrap', paddingLeft: 4 }}
-        className={clsx(flash && 'flash')}
+        className={clsx(flash && 'attachment-flash')}
       >
         <span style={{ visibility: 'hidden' }}>{icons.rightArrow()}</span>
         {summaryContent}
@@ -122,7 +121,7 @@ export const AttachmentLink: React.FunctionComponent<{
   return (
     <Expandable
       style={{ lineHeight: '32px' }}
-      className={clsx(flash && 'flash')}
+      className={clsx(flash && 'attachment-flash')}
       summary={summaryContent}
     >
       <div className='attachment-body'>
@@ -155,8 +154,9 @@ export const TraceLink: React.FC<{ test: TestCaseSummary, trailingSeparator?: bo
 
 const SearchParamsContext = React.createContext<URLSearchParams>(new URLSearchParams(window.location.hash.slice(1)));
 
-export function useSearchParams() {
-  return new URLSearchParams(React.useContext(SearchParamsContext));
+// Note: make sure you are not mutating the returned URLSearchParams object.
+export function useSearchParams(): URLSearchParams {
+  return React.useContext(SearchParamsContext);
 }
 
 export const SearchParamsProvider: React.FunctionComponent<React.PropsWithChildren> = ({ children }) => {
@@ -198,8 +198,7 @@ export function useAnchor(id: AnchorID, onReveal: React.EffectCallback) {
 }
 
 export function useIsAnchored(id: AnchorID) {
-  const searchParams = useSearchParams();
-  const anchor = searchParams.get('anchor');
+  const anchor = useSearchParams().get('anchor');
   if (anchor === null)
     return false;
   if (typeof id === 'undefined')

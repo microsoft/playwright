@@ -25,6 +25,7 @@ const evaluateSchema = z.object({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
+  filename: z.string().optional().describe('Filename to save the result to. If not provided, result is returned as JSON string.'),
 });
 
 const evaluate = defineTabTool({
@@ -51,7 +52,8 @@ const evaluate = defineTabTool({
     await tab.waitForCompletion(async () => {
       const receiver = locator?.locator ?? tab.page;
       const result = await receiver._evaluateFunction(params.function);
-      response.addResult(JSON.stringify(result, null, 2) || 'undefined');
+      const text = JSON.stringify(result, null, 2) || 'undefined';
+      await response.addResult({ text, suggestedFilename: params.filename });
     });
   },
 });

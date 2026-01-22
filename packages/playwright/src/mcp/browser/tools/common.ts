@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool, defineTool } from './tool';
+import { renderTabsMarkdown } from '../response';
 
 const close = defineTool({
   capability: 'core',
@@ -30,7 +31,8 @@ const close = defineTool({
 
   handle: async (context, params, response) => {
     await context.closeBrowserContext();
-    response.setIncludeTabs();
+    const result = renderTabsMarkdown([]);
+    response.addTextResult(result.join('\n'));
     response.addCode(`await page.close()`);
   },
 });

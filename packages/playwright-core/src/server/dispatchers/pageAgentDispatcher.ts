@@ -67,6 +67,9 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
   }
 
   async dispose(params: channels.PageAgentDisposeParams, progress: Progress): Promise<void> {
+    progress.metadata.potentiallyClosesScope = true;
+    void this.stopPendingOperations(new Error('The agent is disposed'));
+    this._dispose();
   }
 
   private _eventSupport(): loopTypes.LoopEvents {

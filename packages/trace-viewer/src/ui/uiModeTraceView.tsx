@@ -46,7 +46,7 @@ export const TraceView: React.FC<{
       clearTimeout(pollTimer.current);
 
     const result = item.testCase?.results[0];
-    if (!result) {
+    if (!result || item.treeItem?.status === 'scheduled') {
       setModel(undefined);
       return;
     }

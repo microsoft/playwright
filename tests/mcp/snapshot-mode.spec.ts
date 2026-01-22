@@ -31,7 +31,7 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
 - button "Button 1" [ref=e2]`),
   });
 
@@ -45,7 +45,7 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
       }`,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
   - button "Button 1" [ref=e2]
   - button "Button 2" [ref=e3]`),
   });
@@ -64,7 +64,7 @@ test('should respect --snapshot-mode=incremental', async ({ startClient, server 
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
 - button "Button 1" [ref=e2]`),
   });
 
@@ -78,7 +78,7 @@ test('should respect --snapshot-mode=incremental', async ({ startClient, server 
       }`,
     },
   })).toHaveResponse({
-    pageState: expect.stringContaining(`
+    snapshot: expect.stringContaining(`
 - <changed> generic [active] [ref=e1]:
   - ref=e2 [unchanged]
   - button \"Button 2\" [ref=e3]`),
@@ -98,8 +98,7 @@ test('should respect --snapshot-mode=none', async ({ startClient, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    pageState: `- Page URL: ${server.PREFIX}/
-- Page Title:`
+    page: `- Page URL: ${server.PREFIX}/`,
   });
 });
 
@@ -121,14 +120,9 @@ test('should respect snapshot[filename]', async ({ startClient, server }, testIn
   expect(await client.callTool({
     name: 'browser_snapshot',
     arguments: {
-      filename: 'snapshot1.md',
+      filename: 'snapshot1.yml',
     },
-  })).toHaveResponse({
-    pageState: undefined,
-    files: expect.stringMatching(/\[Saved snapshot\]\(.*md\)/)
-  });
+  })).toHaveTextResponse(expect.stringContaining('- File: output' + path.sep + 'snapshot1.yml'));
 
-  expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.md'), 'utf8')).toContain(`
-- button "Button 1" [ref=e2]
-`);
+  expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
 });

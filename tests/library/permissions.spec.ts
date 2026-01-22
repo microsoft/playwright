@@ -256,8 +256,11 @@ it.describe(() => {
 
 it('local network request is allowed from public origin', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37861' }
-}, async ({ page, context, server, browserName }) => {
-  it.fail(browserName === 'webkit');
+}, async ({ page, context, server, browserName, channel, browserMajorVersion }) => {
+  it.skip(browserName === 'webkit');
+  it.skip(channel?.startsWith('msedge'));
+  it.skip(browserName === 'chromium' && browserMajorVersion < 145, 'local-network-access permission support has changed between versions');
+
   if (browserName === 'chromium')
     await context.grantPermissions(['local-network-access']);
   const serverRequests = [];

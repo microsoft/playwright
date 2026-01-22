@@ -32,6 +32,27 @@ const varietyWorkspace = {
     # more comments
           dir3/c.spec.ts > test2
   `,
+  'dir/fileonly.list': `
+      # Run all tests in this file
+      dir1/a.test.ts
+  `,
+  'dir/projectfile.list': `
+      [p1] › dir1/a.test.ts
+  `,
+  'dir/mixed.list': `
+      # All tests in this file
+      dir1/a.test.ts
+      # Specific test only
+      dir3/c.spec.ts › test2
+  `,
+  'dir/suite.list': `
+      # Run all tests in the outer group
+      dir4/d.spec.ts › outer
+  `,
+  'dir/nested-suite.list': `
+      # Run all tests in the nested group
+      dir4/d.spec.ts › outer › inner
+  `,
   'empty.list': `
       # nothing to see here
   `,
@@ -57,6 +78,15 @@ const varietyWorkspace = {
     test('test1', async () => { console.log('\\n%%c-test1-' + test.info().project.name); });
     test('test2', async () => { console.log('\\n%%c-test2-' + test.info().project.name); });
   `,
+  'tests/dir4/d.spec.ts': `
+    import { test, expect } from '@playwright/test';
+    test.describe('outer', () => {
+      test('test1', async () => { console.log('\\n%%d-test1-' + test.info().project.name); });
+      test.describe('inner', () => {
+        test('test2', async () => { console.log('\\n%%d-test2-' + test.info().project.name); });
+      });
+    });
+  `,
 };
 
 test('--test-list should work', async ({ runInlineTest }) => {
@@ -74,16 +104,20 @@ test('--test-list should work', async ({ runInlineTest }) => {
 test('--test-list-invert should work', async ({ runInlineTest }) => {
   const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list-invert': 'dir/test.list' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(8);
+  expect(result.passed).toBe(12);
   expect(result.outputLines).toEqual([
     'a-test2-p1',
     'b-test1-p1',
     'b-test2-p1',
     'c-test1-p1',
+    'd-test1-p1',
+    'd-test2-p1',
     'a-test1-p2',
     'a-test2-p2',
     'b-test1-p2',
     'c-test1-p2',
+    'd-test1-p2',
+    'd-test2-p2',
   ]);
 });
 
@@ -114,7 +148,7 @@ test('--list output should work for --test-list', async ({ runInlineTest }) => {
 
   const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'generated.list' });
   expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(12);
+  expect(result.passed).toBe(16);
   expect(result.outputLines).toEqual([
     'a-test1-p1',
     'a-test2-p1',
@@ -122,11 +156,73 @@ test('--list output should work for --test-list', async ({ runInlineTest }) => {
     'b-test2-p1',
     'c-test1-p1',
     'c-test2-p1',
+    'd-test1-p1',
+    'd-test2-p1',
     'a-test1-p2',
     'a-test2-p2',
     'b-test1-p2',
     'b-test2-p2',
     'c-test1-p2',
     'c-test2-p2',
+    'd-test1-p2',
+    'd-test2-p2',
+  ]);
+});
+
+test('--test-list with file-only entries should run all tests in file', async ({ runInlineTest }) => {
+  const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'dir/fileonly.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4); // 2 tests × 2 projects
+  expect(result.outputLines).toEqual([
+    'a-test1-p1',
+    'a-test2-p1',
+    'a-test1-p2',
+    'a-test2-p2',
+  ]);
+});
+
+test('--test-list with project-scoped file-only entry', async ({ runInlineTest }) => {
+  const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'dir/projectfile.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2); // 2 tests × 1 project
+  expect(result.outputLines).toEqual([
+    'a-test1-p1',
+    'a-test2-p1',
+  ]);
+});
+
+test('--test-list with mixed file-only and full test paths', async ({ runInlineTest }) => {
+  const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'dir/mixed.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(6); // 4 from a.test.ts + 2 from c.spec.ts test2
+  expect(result.outputLines).toEqual([
+    'a-test1-p1',
+    'a-test2-p1',
+    'c-test2-p1',
+    'a-test1-p2',
+    'a-test2-p2',
+    'c-test2-p2',
+  ]);
+});
+
+test('--test-list with group/suite entry should run all tests in that group', async ({ runInlineTest }) => {
+  const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'dir/suite.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(4); // 2 tests in outer × 2 projects
+  expect(result.outputLines).toEqual([
+    'd-test1-p1',
+    'd-test2-p1',
+    'd-test1-p2',
+    'd-test2-p2',
+  ]);
+});
+
+test('--test-list with nested group entry should run only tests in that nested group', async ({ runInlineTest }) => {
+  const result = await runInlineTest(varietyWorkspace, { 'workers': 1, 'test-list': 'dir/nested-suite.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(2); // 1 test in inner × 2 projects
+  expect(result.outputLines).toEqual([
+    'd-test2-p1',
+    'd-test2-p2',
   ]);
 });

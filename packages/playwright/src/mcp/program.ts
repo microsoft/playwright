@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
+import path from 'path';
 
 import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
@@ -57,6 +58,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit']))
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
       .option('--output-dir <path>', 'path to the directory for output files.')
+      .option('--output-mode <mode>', 'whether to save snapshots, console messages, network logs to a file or to the standard output. Can be "file" or "stdout". Default is "stdout".', enumParser.bind(null, '--output-mode', ['file', 'stdout']))
       .option('--port <port>', 'port to listen on for SSE transport.')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
@@ -110,8 +112,12 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         if (options.daemon) {
-          config.snapshot.mode = 'none';
+          config.outputDir = path.join(process.cwd(), '.playwright-cli');
+          config.outputMode = 'file';
           config.codegen = 'none';
+          config.snapshot.mode = 'full';
+          config.capabilities = ['core', 'internal', 'tracing', 'pdf', 'vision'];
+
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',

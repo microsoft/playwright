@@ -40,7 +40,7 @@ test('list initial tabs', async ({ client }) => {
       action: 'list',
     },
   })).toHaveResponse({
-    tabs: `- 0: (current) [] (about:blank)`,
+    result: `- 0: (current) [](about:blank)`,
   });
 });
 
@@ -52,33 +52,27 @@ test('list first tab', async ({ client }) => {
       action: 'list',
     },
   })).toHaveResponse({
-    tabs: `- 0: [] (about:blank)
-- 1: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)`,
+    result: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 
 test('create new tab', async ({ client }) => {
   expect(await createTab(client, 'Tab one', 'Body one')).toHaveResponse({
-    tabs: `- 0: [] (about:blank)
-- 1: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)`,
-    pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab one</title><body>Body one</body>
-- Page Title: Tab one
-- Page Snapshot:
-\`\`\`yaml
+    tabs: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+    snapshot: `\`\`\`yaml
 - generic [active] [ref=e1]: Body one
-\`\`\``),
+\`\`\``,
   });
 
   expect(await createTab(client, 'Tab two', 'Body two')).toHaveResponse({
-    tabs: `- 0: [] (about:blank)
-- 1: [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: (current) [Tab two] (data:text/html,<title>Tab two</title><body>Body two</body>)`,
-    pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab two</title><body>Body two</body>
-- Page Title: Tab two
-- Page Snapshot:
-\`\`\`yaml
+    tabs: `- 0: [](about:blank)
+- 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 2: (current) [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
+    snapshot: `\`\`\`yaml
 - generic [active] [ref=e1]: Body two
-\`\`\``),
+\`\`\``,
   });
 });
 
@@ -93,15 +87,9 @@ test('select tab', async ({ client }) => {
       index: 1,
     },
   })).toHaveResponse({
-    tabs: `- 0: [] (about:blank)
-- 1: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: [Tab two] (data:text/html,<title>Tab two</title><body>Body two</body>)`,
-    pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab one</title><body>Body one</body>
-- Page Title: Tab one
-- Page Snapshot:
-\`\`\`yaml
-- generic [active] [ref=e1]: Body one
-\`\`\``),
+    result: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
 
   expect(await client.callTool({
@@ -111,10 +99,9 @@ test('select tab', async ({ client }) => {
       index: 0,
     },
   })).toHaveResponse({
-    tabs: `- 0: (current) [] (about:blank)
-- 1: [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)
-- 2: [Tab two] (data:text/html,<title>Tab two</title><body>Body two</body>)`,
-    pageState: expect.stringContaining(`- Page URL: about:blank`),
+    result: `- 0: (current) [](about:blank)
+- 1: [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)
+- 2: [Tab two](data:text/html,<title>Tab two</title><body>Body two</body>)`,
   });
 });
 
@@ -129,14 +116,8 @@ test('close tab', async ({ client }) => {
       index: 2,
     },
   })).toHaveResponse({
-    tabs: `- 0: [] (about:blank)
-- 1: (current) [Tab one] (data:text/html,<title>Tab one</title><body>Body one</body>)`,
-    pageState: expect.stringContaining(`- Page URL: data:text/html,<title>Tab one</title><body>Body one</body>
-- Page Title: Tab one
-- Page Snapshot:
-\`\`\`yaml
-- generic [active] [ref=e1]: Body one
-\`\`\``),
+    result: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
   });
 });
 

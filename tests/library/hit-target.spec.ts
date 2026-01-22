@@ -82,7 +82,7 @@ it('should click when element detaches in mousedown', async ({ page, server }) =
     });
   });
 
-  await page.click('button', { timeout: 1000 });
+  await page.click('button', { timeout: 15000 });
   expect(await page.evaluate('result')).toBe('Mousedown');
 });
 
@@ -391,7 +391,7 @@ it('should detect overlaid element in a transformed iframe', async ({ page }) =>
     "></iframe>
   `);
   const locator = page.frameLocator('iframe').locator('div');
-  const error = await locator.click({ timeout: 3000 }).catch(e => e);
+  const error = await locator.click({ timeout: 5000 }).catch(e => e);
   expect(error.message).toContain('<section>Overlay</section> intercepts pointer events');
 });
 

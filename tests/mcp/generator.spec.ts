@@ -45,6 +45,7 @@ test('generator tools intent', async ({ startClient }) => {
     'browser_mouse_move_xy',
     'browser_navigate',
     'browser_navigate_back',
+    'browser_open',
     'browser_press_key',
     'browser_resize',
     'browser_run_code',
@@ -164,7 +165,7 @@ test('click after generator_log_action', async ({ startClient }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('button', { name: 'Submit' }).click();`,
-    pageState: expect.stringContaining(`- button "Submit"`),
+    snapshot: expect.stringContaining(`- button "Submit"`),
   });
 
   expect(await client.callTool({

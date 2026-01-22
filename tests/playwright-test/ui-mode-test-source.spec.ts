@@ -192,3 +192,22 @@ test('should load error (dupe tests) indicator on sources', async ({ runUITest }
         Error: duplicate test title "first", first declared in a.test.ts:3
   `);
 });
+
+test('should keep showing source when test is pending', async ({ runUITest }, testInfo) => {
+  const { page } = await runUITest({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('zero', () => {});
+      test('first', async () => {
+        await new Promise(f => setTimeout(f, ${testInfo.timeout}));
+      });
+      test('second', () => {});
+    `,
+  });
+
+  await page.getByTitle('Run all').click();
+  await page.getByTestId('test-tree').getByText('second').click();
+  await expect(page.getByTestId('status-line')).toHaveText('Running 1/3 passed (33%)');
+  await expect(page.getByTestId('source-code').locator('.source-tab-file-name')).toHaveText('a.test.ts');
+  await expect(page.locator('.CodeMirror .source-line-running')).toHaveText(`7      test('second', () => {});`);
+});

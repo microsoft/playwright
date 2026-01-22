@@ -30,6 +30,14 @@
   top: 5px;
 }
 
+.attachment-flash {
+  animation: attachmentflash-bg 2s;
+}
+@keyframes attachmentflash-bg {
+  from { background: var(--color-attention-subtle); }
+  to   { background: transparent; }
+}
+
 .link-badge {
   flex: none;
   background-color: transparent;

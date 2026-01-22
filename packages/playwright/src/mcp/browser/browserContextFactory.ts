@@ -47,13 +47,21 @@ export type BrowserContextFactoryResult = {
   close: () => Promise<void>;
 };
 
+export type HeadlessOption = {
+  forceHeadless?: 'headless' | 'headed';
+};
+
+type CreateContextOptions = HeadlessOption & {
+  toolName?: string;
+};
+
 export interface BrowserContextFactory {
-  createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<BrowserContextFactoryResult>;
+  createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, options: CreateContextOptions): Promise<BrowserContextFactoryResult>;
 }
 
 export function identityBrowserContextFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
   return {
-    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined) => {
+    createContext: async (clientInfo: ClientInfo, abortSignal: AbortSignal, options: CreateContextOptions) => {
       return {
         browserContext,
         close: async () => {}
@@ -72,11 +80,11 @@ class BaseContextFactory implements BrowserContextFactory {
     this.config = config;
   }
 
-  protected async _obtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
+  protected async _obtainBrowser(clientInfo: ClientInfo, options: CreateContextOptions): Promise<playwright.Browser> {
     if (this._browserPromise)
       return this._browserPromise;
     testDebug(`obtain browser (${this._logName})`);
-    this._browserPromise = this._doObtainBrowser(clientInfo);
+    this._browserPromise = this._doObtainBrowser(clientInfo, options);
     void this._browserPromise.then(browser => {
       browser.on('disconnected', () => {
         this._browserPromise = undefined;
@@ -87,13 +95,13 @@ class BaseContextFactory implements BrowserContextFactory {
     return this._browserPromise;
   }
 
-  protected async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
+  protected async _doObtainBrowser(clientInfo: ClientInfo, options: CreateContextOptions): Promise<playwright.Browser> {
     throw new Error('Not implemented');
   }
 
-  async createContext(clientInfo: ClientInfo): Promise<BrowserContextFactoryResult> {
+  async createContext(clientInfo: ClientInfo, _: AbortSignal, options: CreateContextOptions): Promise<BrowserContextFactoryResult> {
     testDebug(`create browser context (${this._logName})`);
-    const browser = await this._obtainBrowser(clientInfo);
+    const browser = await this._obtainBrowser(clientInfo, options);
     const browserContext = await this._doCreateContext(browser, clientInfo);
     await addInitScript(browserContext, this.config.browser.initScript);
     return {
@@ -123,7 +131,7 @@ class IsolatedContextFactory extends BaseContextFactory {
     super('isolated', config);
   }
 
-  protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
+  protected override async _doObtainBrowser(clientInfo: ClientInfo, options: CreateContextOptions): Promise<playwright.Browser> {
     await injectCdpPort(this.config.browser);
     const browserType = playwright[this.config.browser.browserName];
     const tracesDir = await computeTracesDir(this.config, clientInfo);
@@ -134,6 +142,7 @@ class IsolatedContextFactory extends BaseContextFactory {
       ...this.config.browser.launchOptions,
       handleSIGINT: false,
       handleSIGTERM: false,
+      ...(options.forceHeadless !== undefined ? { headless: options.forceHeadless === 'headless' } : {}),
     }).catch(error => {
       if (error.message.includes('Executable doesn\'t exist'))
         throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
@@ -192,7 +201,7 @@ class PersistentContextFactory implements BrowserContextFactory {
     this.config = config;
   }
 
-  async createContext(clientInfo: ClientInfo): Promise<BrowserContextFactoryResult> {
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, options: CreateContextOptions): Promise<BrowserContextFactoryResult> {
     await injectCdpPort(this.config.browser);
     testDebug('create browser context (persistent)');
     const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo);
@@ -215,6 +224,7 @@ class PersistentContextFactory implements BrowserContextFactory {
           '--disable-extensions',
         ],
         assistantMode: true,
+        ...(options.forceHeadless !== undefined ? { headless: options.forceHeadless === 'headless' } : {}),
       };
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
@@ -317,10 +327,10 @@ export class SharedContextFactory implements BrowserContextFactory {
     this._baseFactory = baseFactory;
   }
 
-  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
+  async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, options: { toolName?: string }): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
     if (!this._contextPromise) {
       testDebug('create shared browser context');
-      this._contextPromise = this._baseFactory.createContext(clientInfo, abortSignal, toolName);
+      this._contextPromise = this._baseFactory.createContext(clientInfo, abortSignal, options);
     }
 
     const { browserContext } = await this._contextPromise;
@@ -350,13 +360,13 @@ export class SharedContextFactory implements BrowserContextFactory {
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
   if (!config.saveTrace && !config.capabilities?.includes('tracing'))
     return;
-  return await outputFile(config, clientInfo, `traces`, { origin: 'code', reason: 'Collecting trace' });
+  return await outputFile(config, clientInfo, `traces`, { origin: 'code', title: 'Collecting trace' });
 }
 
 async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
   const result = { ...config.browser.contextOptions };
   if (config.saveVideo) {
-    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code', reason: 'Saving video' });
+    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code', title: 'Saving video' });
     result.recordVideo = {
       dir,
       size: config.saveVideo,

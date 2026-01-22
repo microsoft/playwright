@@ -300,7 +300,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
     reporter: resolveReporterOption(options.reporter),
     shard: resolveShardOption(options.shard),
-    shardWeights: resolveShardWeightsOption(options.shardWeights),
+    shardWeights: resolveShardWeightsOption(),
     timeout: options.timeout ? parseInt(options.timeout, 10) : undefined,
     tsconfig: options.tsconfig ? path.resolve(process.cwd(), options.tsconfig) : undefined,
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
@@ -308,7 +308,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     updateSourceMethod: options.updateSourceMethod,
     runAgents: options.runAgents,
     workers: options.workers,
-    pause: options.pause ? true : undefined,
+    pause: process.env.PWPAUSE ? true : undefined,
   };
 
   if (options.browser) {
@@ -328,7 +328,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
     overrides.debug = true;
-    overrides.pause = true;
     process.env.PWDEBUG = '1';
   }
   if (!options.ui && options.trace) {
@@ -375,14 +374,15 @@ function resolveShardOption(shard?: string): ConfigCLIOverrides['shard'] {
   return { current, total };
 }
 
-function resolveShardWeightsOption(shardWeights?: string): ConfigCLIOverrides['shardWeights'] {
+function resolveShardWeightsOption(): ConfigCLIOverrides['shardWeights'] {
+  const shardWeights = process.env.PWTEST_SHARD_WEIGHTS;
   if (!shardWeights)
     return undefined;
 
   return shardWeights.split(':').map(w => {
     const weight = parseInt(w, 10);
     if (isNaN(weight) || weight < 0)
-      throw new Error(`--shard-weights "${shardWeights}" weights must be non-negative numbers`);
+      throw new Error(`PWTEST_SHARD_WEIGHTS="${shardWeights}" weights must be non-negative numbers`);
     return weight;
   });
 }
@@ -403,7 +403,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
-  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1 --pause" options` }],
+  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
@@ -419,14 +419,12 @@ const testOptions: [string, { description: string, choices?: string[], preset?: 
   ['--output <dir>', { description: `Folder for output artifacts (default: "test-results")` }],
   ['--only-changed [ref]', { description: `Only run test files that have been changed between 'HEAD' and 'ref'. Defaults to running all uncommitted changes. Only supports Git.` }],
   ['--pass-with-no-tests', { description: `Makes test run succeed even if no tests were found` }],
-  ['--pause', { description: `Run tests in headed mode and pause at the end of test execution` }],
   ['--project <project-name...>', { description: `Only run tests from the specified list of projects, supports '*' wildcard (default: run all projects)` }],
   ['--quiet', { description: `Suppress stdio` }],
   ['--repeat-each <N>', { description: `Run each test N times (default: 1)` }],
   ['--reporter <reporter>', { description: `Reporter to use, comma-separated, can be ${builtInReporters.map(name => `"${name}"`).join(', ')} (default: "${defaultReporter}")` }],
   ['--retries <retries>', { description: `Maximum retry count for flaky tests, zero for no retries (default: no retries)` }],
   ['--shard <shard>', { description: `Shard tests and execute only the selected shard, specify in the form "current/all", 1-based, for example "3/5"` }],
-  ['--shard-weights <weights>', { description: `Weights for each shard, colon-separated, for example "2:1:1" for 3 shards where the first shard should be allocated half of the work` }],
   ['--test-list <file>', { description: `Path to a file containing a list of tests to run. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--test-list-invert <file>', { description: `Path to a file containing a list of tests to skip. See https://playwright.dev/docs/test-cli for more details.` }],
   ['--timeout <timeout>', { description: `Specify test timeout threshold in milliseconds, zero for unlimited (default: ${defaultTimeout})` }],

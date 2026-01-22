@@ -34,7 +34,7 @@ test('browser_run_code', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await (${code})(page);`,
-    consoleMessages: expect.stringContaining('- [LOG] Submit'),
+    events: expect.stringContaining('- [LOG] Submit'),
   });
 });
 
@@ -54,7 +54,7 @@ test('browser_run_code block', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: expect.stringContaining(`await page.getByRole(\"button\", { name: \"Submit\" }).click()`),
-    consoleMessages: expect.stringMatching(/\[LOG\] Submit.*\n.*\[LOG\] Submit/),
+    events: expect.stringMatching(/\[LOG\] Submit.*\n.*\[LOG\] Submit/),
   });
 });
 
@@ -73,7 +73,8 @@ test('browser_run_code no-require', async ({ client, server }) => {
       code: `(page) => { require('fs'); }`,
     },
   })).toHaveResponse({
-    result: expect.stringContaining(`ReferenceError: require is not defined`),
+    error: expect.stringContaining(`ReferenceError: require is not defined`),
+    isError: true,
   });
 });
 
@@ -89,7 +90,7 @@ test('browser_run_code blocks fetch of file:// URLs by default', async ({ client
       code: `async (page) => { await page.request.get('file:///etc/passwd'); }`,
     },
   })).toHaveResponse({
-    result: expect.stringContaining('Error: apiRequestContext.get: Access to "file:" URL is blocked. Allowed protocols: http:, https:, about:, data:. Attempted URL: file:///etc/passwd'),
+    error: expect.stringContaining('Error: apiRequestContext.get: Access to "file:" URL is blocked. Allowed protocols: http:, https:, about:, data:. Attempted URL: file:///etc/passwd'),
     isError: true,
   });
 });
@@ -141,7 +142,7 @@ test('browser_run_code restricts setInputFiles to roots by default', async ({ st
     },
   })).toHaveResponse({
     isError: true,
-    result: expect.stringMatching('File access denied: .* is outside allowed roots'),
+    error: expect.stringMatching('File access denied: .* is outside allowed roots'),
   });
 });
 
@@ -162,7 +163,7 @@ test('browser_run_code return value', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await (${code})(page);`,
-    consoleMessages: expect.stringContaining('- [LOG] Submit'),
+    events: expect.stringContaining('- [LOG] Submit'),
     result: '{"message":"Hello, world!"}',
   });
 });
