@@ -5,7 +5,7 @@
       "content": [
         {
           "type": "text",
-          "text": "I need to verify that the page title is \"My Page Title\". I'll use the browser_expect_title tool to check this."
+          "text": "I need to verify that the page title is \"My Page Title\". I'll use the browser_expect_title tool to assert this condition."
         },
         {
           "type": "tool_call",
@@ -14,7 +14,7 @@
             "title": "My Page Title",
             "_is_done": true
           },
-          "id": "toolu_01R1QyAwfxk2KSz3tsAx9RCA"
+          "id": "toolu_01Xvf7Srkdda8vHPsMEbP2cC"
         }
       ],
       "stopReason": {
@@ -23,7 +23,7 @@
     },
     "usage": {
       "input": 2195,
-      "output": 105
+      "output": 106
     }
   }
 }
