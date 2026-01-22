@@ -258,7 +258,7 @@ const tab = declareCommand({
     index: z.number().optional().describe('Tab index. If omitted, current tab is closed.'),
   }),
   toolName: 'browser_tabs',
-  toolParams: ({ index }) => ({ action: 'close', index }),
+  toolParams: ({ action, index }) => ({ action, index }),
 });
 
 const mouseClickXy = declareCommand({

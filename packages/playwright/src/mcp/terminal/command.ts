@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import type zodType from 'zod';
 
 export type CommandSchema<Args extends zodType.ZodTypeAny, Options extends zodType.ZodTypeAny> = {
@@ -39,8 +40,22 @@ export function parseCommand(command: AnyCommandSchema, args: Record<string, str
   let i = 0;
   for (const name of Object.keys(shape))
     argsObject[name] = argv[++i];
-  const parsedArgsObject = command.args?.parse(argsObject) ?? {};
+
+  let parsedArgsObject: Record<string, string> = {};
+  try {
+    parsedArgsObject = command.args?.parse(argsObject) ?? {};
+  } catch (e) {
+    throw new Error(formatZodError(e as zodType.ZodError));
+  }
+
   const toolName = typeof command.toolName === 'function' ? command.toolName(parsedArgsObject, options) : command.toolName;
   const toolParams = command.toolParams(parsedArgsObject, options);
   return { toolName, toolParams };
+}
+
+function formatZodError(error: zodType.ZodError): string {
+  const issue = error.issues[0];
+  if (issue.code === 'invalid_type')
+    return `${issue.message} in <${issue.path.join('.')}>`;
+  return error.issues.map(i => i.message).join('\n');
 }

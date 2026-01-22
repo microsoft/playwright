@@ -52,7 +52,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
 class SocketSession {
   private _connection: SocketConnection;
   private _nextMessageId = 1;
-  private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, error: Error }>();
+  private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void }>();
 
   constructor(connection: SocketConnection) {
     this._connection = connection;
@@ -78,13 +78,13 @@ class SocketSession {
     };
     await this._connection.send(message);
     return new Promise<any>((resolve, reject) => {
-      this._callbacks.set(messageId, { resolve, reject, error: new Error(`Error in method: ${method}`) });
+      this._callbacks.set(messageId, { resolve, reject });
     });
   }
 
   dispose() {
     for (const callback of this._callbacks.values())
-      callback.reject(callback.error);
+      callback.reject(new Error('Disposed'));
     this._callbacks.clear();
     this._connection.close();
   }
@@ -93,12 +93,10 @@ class SocketSession {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
-      if (object.error) {
-        callback.error.cause = new Error(object.error);
-        callback.reject(callback.error);
-      } else {
+      if (object.error)
+        callback.reject(new Error(object.error));
+      else
         callback.resolve(object.result);
-      }
     } else if (object.id) {
       throw new Error(`Unexpected message id: ${object.id}`);
     } else {
@@ -209,8 +207,7 @@ function main() {
   }
 
   runCliCommand(args).catch(e => {
-    console.error(e);
-
+    console.error(e.message);
     process.exit(1);
   });
 }
