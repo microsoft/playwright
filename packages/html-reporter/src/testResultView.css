@@ -43,6 +43,51 @@
   border-radius: 12px;
   color: var(--color-canvas-default);
   padding: 2px 8px;
+  line-height: normal;
+}
+
+.step-title-container {
+  display: flex;
+  align-items: center;
+  flex: auto;
+  min-width: 0;
+}
+
+.step-title-container > * {
+  flex-shrink: 0;
+}
+
+.step-title-text {
+  flex-shrink: 1;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.step-spacer {
+  flex: auto;
+}
+
+.step-attachment-link {
+  display: flex;
+  flex: none;
+  border-radius: 4px;
+  padding: 4px;
+}
+
+.step-attachment-link:hover {
+  background-color: var(--color-neutral-muted);
+}
+
+.step-attachment-link .octicon {
+  margin-right: 0;
+}
+
+.step-duration {
+  flex: none;
+  white-space: nowrap;
+  margin-left: 4px;
 }
 
 :root.light-mode {

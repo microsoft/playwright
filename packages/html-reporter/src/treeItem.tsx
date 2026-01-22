@@ -30,12 +30,12 @@ export const TreeItem: React.FunctionComponent<{
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, style, flash }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
   return <div role='treeitem' className={clsx('tree-item', flash && 'yellow-flash')} style={style}>
-    <span className='tree-item-title' style={{ whiteSpace: 'nowrap', paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
+    <div className='tree-item-title' style={{ paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
       {loadChildren && !expanded && icons.rightArrow()}
       {!loadChildren && <span style={{ visibility: 'hidden' }}>{icons.rightArrow()}</span>}
       {title}
-    </span>
+    </div>
     {expanded && loadChildren?.()}
   </div>;
 };
