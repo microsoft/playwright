@@ -21,6 +21,8 @@ import path from 'path';
 import url from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
+import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+
 import { SocketConnection } from './socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
@@ -82,7 +84,12 @@ export async function startMcpDaemonServer(
       const { id, method, params } = message;
       try {
         daemonDebug('received command', method);
-        if (method === 'runCliCommand') {
+        if (method === 'stop') {
+          daemonDebug('stop command received, shutting down');
+          await connection.send({ id, result: 'ok' });
+          server.close();
+          gracefullyProcessExitDoNotHang(0);
+        } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           const response = await backend.callTool(toolName, toolParams, () => {});
           await connection.send({ id, result: formatResult(response) });

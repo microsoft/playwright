@@ -74,6 +74,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'tabs', title: 'Tabs' },
   { name: 'storage', title: 'Storage' },
   { name: 'devtools', title: 'DevTools' },
+  { name: 'session', title: 'Sessions' },
 ] as const;
 
 function generateHelp() {

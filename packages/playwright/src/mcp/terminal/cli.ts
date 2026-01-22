@@ -26,46 +26,29 @@ import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 
-import type * as mcp from '../sdk/exports';
-
 const debugCli = debug('pw:cli');
-
 const packageJSON = require('../../../package.json');
 
-async function runCliCommand(sessionName: string, args: any) {
-  const session = await connectToDaemon(sessionName);
-  const result = await session.runCliCommand(args);
-  console.log(result);
-  session.dispose();
-}
-
-async function socketExists(socketPath: string): Promise<boolean> {
-  try {
-    const stat = await fs.promises.stat(socketPath);
-    if (stat?.isSocket())
-      return true;
-  } catch (e) {
-  }
-  return false;
-}
-
-class SocketSession {
+class Session {
+  readonly name: string;
   private _connection: SocketConnection;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void }>();
 
-  constructor(connection: SocketConnection) {
+  constructor(name: string, connection: SocketConnection) {
+    this.name = name;
     this._connection = connection;
     this._connection.onmessage = message => this._onMessage(message);
-    this._connection.onclose = () => this.dispose();
+    this._connection.onclose = () => this.close();
   }
 
-  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
-    return this._send(name, args);
+  async run(args: any): Promise<string> {
+    return await this._send('run', { args });
   }
 
-  async runCliCommand(args: any): Promise<string> {
-    return await this._send('runCliCommand', { args });
+  async stop(): Promise<void> {
+    await this._send('stop');
+    this.close();
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -81,9 +64,9 @@ class SocketSession {
     });
   }
 
-  dispose() {
+  close() {
     for (const callback of this._callbacks.values())
-      callback.reject(new Error('Disposed'));
+      callback.reject(new Error('Session closed'));
     this._callbacks.clear();
     this._connection.close();
   }
@@ -104,189 +87,216 @@ class SocketSession {
   }
 }
 
-function localCacheDir(): string {
-  if (process.platform === 'linux')
-    return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-  if (process.platform === 'darwin')
-    return path.join(os.homedir(), 'Library', 'Caches');
-  if (process.platform === 'win32')
-    return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-  throw new Error('Unsupported platform: ' + process.platform);
-}
+class SessionManager {
 
-function playwrightCacheDir(): string {
-  return path.join(localCacheDir(), 'ms-playwright');
-}
-
-function calculateSha1(buffer: Buffer | string): string {
-  const hash = crypto.createHash('sha1');
-  hash.update(buffer);
-  return hash.digest('hex');
-}
-
-function socketDirHash(): string {
-  return calculateSha1(__dirname);
-}
-
-function daemonSocketDir(): string {
-  return path.resolve(playwrightCacheDir(), 'daemon', socketDirHash());
-}
-
-function daemonSocketPath(sessionName: string): string {
-  const socketName = `${sessionName}.sock`;
-  if (os.platform() === 'win32')
-    return `\\\\.\\pipe\\${socketDirHash()}-${socketName}`;
-  return path.resolve(daemonSocketDir(), socketName);
-}
-
-async function connectToDaemon(sessionName: string): Promise<SocketSession> {
-  const socketPath = daemonSocketPath(sessionName);
-  debugCli(`Connecting to daemon at ${socketPath}`);
-
-  if (await socketExists(socketPath)) {
-    debugCli(`Socket file exists, attempting to connect...`);
+  async list(): Promise<{ name: string, live: boolean }[]> {
+    const dir = daemonSocketDir;
     try {
-      return await connectToSocket(socketPath);
-    } catch (e) {
-      // Connection failed, delete the stale socket file.
-      if (os.platform() !== 'win32')
-        await fs.promises.unlink(socketPath).catch(() => {});
+      const files = await fs.promises.readdir(dir);
+      const sessions: { name: string, live: boolean }[] = [];
+      for (const file of files) {
+        if (file.endsWith('-user-data')) {
+          const sessionName = file.slice(0, -'-user-data'.length);
+          const live = await this._canConnect(sessionName);
+          sessions.push({ name: sessionName, live });
+        }
+      }
+      return sessions;
+    } catch {
+      return [];
     }
   }
 
-  const cliPath = path.join(__dirname, '../../../cli.js');
-  debugCli(`Will launch daemon process: ${cliPath}`);
+  async run(args: any): Promise<void> {
+    const sessionName = this._resolveSessionName(args.session);
+    const session = await this._connect(sessionName);
+    const result = await session.run(args);
+    console.log(result);
+    session.close();
+  }
 
-  const userDataDir = path.resolve(daemonSocketDir(), `${sessionName}-user-data`);
-  const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
-    detached: true,
-    stdio: 'ignore',
-    cwd: process.cwd(), // Will be used as root.
-  });
-  child.unref();
+  async stop(sessionName?: string): Promise<void> {
+    sessionName = this._resolveSessionName(sessionName);
 
-  // Wait for the socket to become available with retries.
-  const maxRetries = 50;
-  const retryDelay = 100; // ms
-  for (let i = 0; i < maxRetries; i++) {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    if (!await this._canConnect(sessionName)) {
+      console.log(`Session '${sessionName}' is not running.`);
+      return;
+    }
+
+    const session = await this._connect(sessionName);
+    await session.stop();
+    console.log(`Session '${sessionName}' stopped.`);
+  }
+
+  async delete(sessionName?: string): Promise<void> {
+    sessionName = this._resolveSessionName(sessionName);
+
+    // Stop the session if it's running
+    if (await this._canConnect(sessionName)) {
+      const session = await this._connect(sessionName);
+      await session.stop();
+    }
+
+    // Delete user data directory
+    const userDataDir = path.resolve(daemonSocketDir, `${sessionName}-user-data`);
     try {
-      return await connectToSocket(socketPath);
-    } catch (e) {
-      if (e.code !== 'ENOENT')
+      await fs.promises.rm(userDataDir, { recursive: true });
+      console.log(`Deleted user data for session '${sessionName}'.`);
+    } catch (e: any) {
+      if (e.code === 'ENOENT')
+        console.log(`No user data found for session '${sessionName}'.`);
+      else
         throw e;
-      debugCli(`Retrying to connect to daemon at ${socketPath} (${i + 1}/${maxRetries})`);
+
+    }
+
+    // Also try to delete the socket file if it exists
+    if (os.platform() !== 'win32') {
+      const socketPath = this._daemonSocketPath(sessionName);
+      await fs.promises.unlink(socketPath).catch(() => {});
     }
   }
-  throw new Error(`Failed to connect to daemon at ${socketPath} after ${maxRetries * retryDelay}ms`);
-}
 
-async function connectToSocket(socketPath: string): Promise<SocketSession> {
-  const socket = await new Promise<net.Socket>((resolve, reject) => {
-    const socket = net.createConnection(socketPath, () => {
-      debugCli(`Connected to daemon at ${socketPath}`);
-      resolve(socket);
-    });
-    socket.on('error', reject);
-  });
-  return new SocketSession(new SocketConnection(socket));
-}
+  private async _connect(sessionName: string): Promise<Session> {
+    const socketPath = this._daemonSocketPath(sessionName);
+    debugCli(`Connecting to daemon at ${socketPath}`);
 
-function currentSessionPath(): string {
-  return path.resolve(daemonSocketDir(), 'current-session');
-}
+    const socketExists = await fs.promises.stat(socketPath)
+        .then(stat => stat?.isSocket() ?? false)
+        .catch(() => false);
 
-async function getCurrentSession(): Promise<string> {
-  try {
-    const session = await fs.promises.readFile(currentSessionPath(), 'utf-8');
-    return session.trim() || 'default';
-  } catch {
-    return 'default';
-  }
-}
-
-async function setCurrentSession(sessionName: string): Promise<void> {
-  await fs.promises.mkdir(daemonSocketDir(), { recursive: true });
-  await fs.promises.writeFile(currentSessionPath(), sessionName);
-}
-
-async function canConnectToSocket(socketPath: string): Promise<boolean> {
-  return new Promise<boolean>(resolve => {
-    const socket = net.createConnection(socketPath, () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.on('error', () => {
-      resolve(false);
-    });
-  });
-}
-
-async function listSessions(): Promise<{ name: string, live: boolean }[]> {
-  const dir = daemonSocketDir();
-  try {
-    const files = await fs.promises.readdir(dir);
-    const sessions: { name: string, live: boolean }[] = [];
-    for (const file of files) {
-      if (file.endsWith('-user-data')) {
-        const sessionName = file.slice(0, -'-user-data'.length);
-        const socketPath = daemonSocketPath(sessionName);
-        const live = await canConnectToSocket(socketPath);
-        sessions.push({ name: sessionName, live });
+    if (socketExists) {
+      debugCli(`Socket file exists, attempting to connect...`);
+      try {
+        return await this._connectToSocket(sessionName, socketPath);
+      } catch (e) {
+        // Connection failed, delete the stale socket file.
+        if (os.platform() !== 'win32')
+          await fs.promises.unlink(socketPath).catch(() => {});
       }
     }
-    return sessions;
-  } catch {
-    return [];
+
+    const cliPath = path.join(__dirname, '../../../cli.js');
+    debugCli(`Will launch daemon process: ${cliPath}`);
+
+    const userDataDir = path.resolve(daemonSocketDir, `${sessionName}-user-data`);
+    const child = spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
+      detached: true,
+      stdio: 'ignore',
+      cwd: process.cwd(), // Will be used as root.
+    });
+    child.unref();
+
+    // Wait for the socket to become available with retries.
+    const maxRetries = 50;
+    const retryDelay = 100; // ms
+    for (let i = 0; i < maxRetries; i++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      try {
+        return await this._connectToSocket(sessionName, socketPath);
+      } catch (e) {
+        if (e.code !== 'ENOENT')
+          throw e;
+        debugCli(`Retrying to connect to daemon at ${socketPath} (${i + 1}/${maxRetries})`);
+      }
+    }
+    throw new Error(`Failed to connect to daemon at ${socketPath} after ${maxRetries * retryDelay}ms`);
+  }
+
+  private async _connectToSocket(sessionName: string, socketPath: string): Promise<Session> {
+    const socket = await new Promise<net.Socket>((resolve, reject) => {
+      const socket = net.createConnection(socketPath, () => {
+        debugCli(`Connected to daemon at ${socketPath}`);
+        resolve(socket);
+      });
+      socket.on('error', reject);
+    });
+    return new Session(sessionName, new SocketConnection(socket));
+  }
+
+  private async _canConnect(sessionName: string): Promise<boolean> {
+    const socketPath = this._daemonSocketPath(sessionName);
+    return new Promise<boolean>(resolve => {
+      const socket = net.createConnection(socketPath, () => {
+        socket.destroy();
+        resolve(true);
+      });
+      socket.on('error', () => {
+        resolve(false);
+      });
+    });
+  }
+
+  private _resolveSessionName(sessionName?: string): string {
+    if (sessionName)
+      return sessionName;
+    if (process.env.PLAYWRIGHT_CLI_SESSION)
+      return process.env.PLAYWRIGHT_CLI_SESSION;
+    return 'default';
+  }
+
+  private _daemonSocketPath(sessionName: string): string {
+    const socketName = `${sessionName}.sock`;
+    if (os.platform() === 'win32')
+      return `\\\\.\\pipe\\${socketDirHash}-${socketName}`;
+    return path.join(daemonSocketDir, socketName);
   }
 }
 
-function resolveSessionName(args: any): string {
-  if (args.session)
-    return args.session;
-  if (process.env.PLAYWRIGHT_CLI_SESSION)
-    return process.env.PLAYWRIGHT_CLI_SESSION;
-  return 'default';
-}
-
-async function handleSessionCommand(args: any): Promise<void> {
-  const subcommand = args._[1];
-
-  if (!subcommand) {
-    // Show current session
-    const current = await getCurrentSession();
-    console.log(current);
-    return;
-  }
+async function handleSessionCommand(sessionManager: SessionManager, args: any): Promise<void> {
+  const subcommand = args._[0].split('-').slice(1).join('-');
 
   if (subcommand === 'list') {
-    const sessions = await listSessions();
-    const current = await getCurrentSession();
+    const sessions = await sessionManager.list();
     console.log('Sessions:');
     for (const session of sessions) {
-      const marker = session.name === current ? '->' : '  ';
       const liveMarker = session.live ? ' (live)' : '';
-      console.log(`${marker} ${session.name}${liveMarker}`);
+      console.log(`  ${session.name}${liveMarker}`);
     }
     if (sessions.length === 0)
-      console.log('   (no sessions)');
+      console.log('  (no sessions)');
     return;
   }
 
-  if (subcommand === 'set') {
-    const sessionName = args._[2];
-    if (!sessionName) {
-      console.error('Usage: playwright-cli session set <session-name>');
-      process.exit(1);
-    }
-    await setCurrentSession(sessionName);
-    console.log(`Current session set to: ${sessionName}`);
+  if (subcommand === 'stop') {
+    await sessionManager.stop(args._[1]);
+    return;
+  }
+
+  if (subcommand === 'stop-all') {
+    const sessions = await sessionManager.list();
+    for (const session of sessions)
+      await sessionManager.stop(session.name);
+    return;
+  }
+
+  if (subcommand === 'delete') {
+    await sessionManager.delete(args._[1]);
     return;
   }
 
   console.error(`Unknown session subcommand: ${subcommand}`);
   process.exit(1);
 }
+
+const socketDirHash = (() => {
+  const hash = crypto.createHash('sha1');
+  hash.update(require.resolve('../../../package.json'));
+  return hash.digest('hex');
+})();
+
+const daemonSocketDir = (() => {
+  let localCacheDir: string | undefined;
+  if (process.platform === 'linux')
+    localCacheDir = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+  if (process.platform === 'darwin')
+    localCacheDir = path.join(os.homedir(), 'Library', 'Caches');
+  if (process.platform === 'win32')
+    localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+  if (!localCacheDir)
+    throw new Error('Unsupported platform: ' + process.platform);
+  return path.join(localCacheDir, 'ms-playwright', 'daemon', 'daemon', socketDirHash);
+})();
 
 async function main() {
   const argv = process.argv.slice(2);
@@ -297,12 +307,6 @@ async function main() {
   if (args.version || args.v) {
     console.log(packageJSON.version);
     process.exit(0);
-  }
-
-  // Handle 'session' command specially - it doesn't need daemon connection
-  if (commandName === 'session') {
-    await handleSessionCommand(args);
-    return;
   }
 
   const command = help.commands[commandName];
@@ -321,15 +325,13 @@ async function main() {
     process.exit(1);
   }
 
-  // Resolve session name: --session flag > PLAYWRIGHT_CLI_SESSION env > current session > 'default'
-  let sessionName = resolveSessionName(args);
-  if (sessionName === 'default' && !args.session && !process.env.PLAYWRIGHT_CLI_SESSION)
-    sessionName = await getCurrentSession();
+  const sessionManager = new SessionManager();
+  if (commandName.startsWith('session')) {
+    await handleSessionCommand(sessionManager, args);
+    return;
+  }
 
-  runCliCommand(sessionName, args).catch(e => {
-    console.error(e.message);
-    process.exit(1);
-  });
+  await sessionManager.run(args);
 }
 
 main().catch(e => {
