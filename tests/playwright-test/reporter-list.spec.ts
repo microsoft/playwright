@@ -430,7 +430,7 @@ test.describe('onTestPaused', () => {
           console.log('Running teardown');
         });
       `,
-    }, { pause: true, reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+    }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWPAUSE: '1' });
 
     await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
     const { exitCode } = await runner.kill('SIGINT');
@@ -460,7 +460,7 @@ Running teardown
           throw new Error('teardown error');
         });
       `,
-    }, { pause: true, reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+    }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWPAUSE: '1' });
 
     await runner.waitForOutput('Paused at test end. Press Ctrl+C to end.');
     const { exitCode } = await runner.kill('SIGINT');
@@ -502,7 +502,7 @@ Running 1 test using 1 worker
           expect(3).toBe(4);
         });
       `,
-    }, { pause: true, reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1' });
+    }, { reporter: 'list' }, { PW_TEST_DEBUG_REPORTERS: '1', PWPAUSE: '1' });
 
     await runner.waitForOutput('Paused on error. Press Ctrl+C to end.');
     const { exitCode } = await runner.kill('SIGINT');
