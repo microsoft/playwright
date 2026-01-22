@@ -335,7 +335,7 @@ test('should shard tests with beforeAll based on shards total instead of workers
 
 test('should respect custom shard weights', async ({ runInlineTest }) => {
   await test.step('shard 1', async () => {
-    const result = await runInlineTest(tests, { 'shard': '1/2', 'shard-weights': '40:60', 'workers': 1 });
+    const result = await runInlineTest(tests, { 'shard': '1/2', 'workers': 1 }, { PWTEST_SHARD_WEIGHTS: '40:60' });
     expect.soft(result.exitCode).toBe(0);
     expect.soft(result.outputLines).toEqual([
       'a1-test1-done',
@@ -345,7 +345,7 @@ test('should respect custom shard weights', async ({ runInlineTest }) => {
     ]);
   });
   await test.step('shard 2', async () => {
-    const result = await runInlineTest(tests, { 'shard': '2/2', 'shard-weights': '40:60', 'workers': 1 });
+    const result = await runInlineTest(tests, { 'shard': '2/2', 'workers': 1 }, { PWTEST_SHARD_WEIGHTS: '40:60' });
     expect.soft(result.exitCode).toBe(0);
     expect.soft(result.outputLines).toEqual([
       'a2-test1-done',

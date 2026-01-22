@@ -200,7 +200,6 @@ class JSONReporter implements ReporterV2 {
     const jsonResult: JSONReportTestResult = {
       workerIndex: result.workerIndex,
       parallelIndex: result.parallelIndex,
-      shardIndex: result.shardIndex,
       status: result.status,
       duration: result.duration,
       error: result.error,

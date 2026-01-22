@@ -14,14 +14,14 @@
   limitations under the License.
 */
 
-.barchart-bar {
+.gantt-bar {
   transition: opacity 0.2s;
   cursor: pointer;
   outline: none;
 }
 
-.barchart-bar:hover,
-.barchart-bar:focus {
+.gantt-bar:hover,
+.gantt-bar:focus {
   opacity: 0.8;
   stroke: var(--color-fg-default);
   stroke-width: 2;
