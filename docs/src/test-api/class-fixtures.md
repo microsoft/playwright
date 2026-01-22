@@ -20,6 +20,7 @@ Playwright Test comes with builtin fixtures listed below, and you can add your o
 
 ## property: Fixtures.agent
 * since: v1.58
+* hidden
 - type: <[PageAgent]>
 
 ## property: Fixtures.browser

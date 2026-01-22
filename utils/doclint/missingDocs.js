@@ -29,12 +29,16 @@ module.exports = function lint(documentation, jsSources, apiFileName) {
   documentation.copyDocsFromSuperclasses(errors);
   const apiMethods = listMethods(jsSources, apiFileName);
   for (const [className, methods] of apiMethods) {
+    if (className === 'PageAgent')
+      continue;
     const docClass = documentation.classes.get(className);
     if (!docClass) {
       errors.push(`Missing documentation for "${className}"`);
       continue;
     }
     for (const [methodName, params] of methods) {
+      if (className === 'Page' && methodName === 'agent')
+        continue;
       const members = docClass.membersArray.filter(m => m.alias === methodName && m.kind !== 'event');
       if (!members.length) {
         errors.push(`Missing documentation for "${className}.${methodName}"`);

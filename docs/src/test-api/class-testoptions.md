@@ -48,6 +48,7 @@ export default defineConfig({
 
 ## property: TestOptions.agentOptions
 * since: v1.58
+* hidden
 - type: <[Object]>
   - `provider` <[Object]>
     - `api` <[PageAgentAPI]<"openai"|"openai-compatible"|"anthropic"|"google">> API to use.

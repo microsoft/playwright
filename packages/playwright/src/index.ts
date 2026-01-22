@@ -58,6 +58,9 @@ type TestFixtures = PlaywrightTestArgs & PlaywrightTestOptions & {
   _setupContextOptions: void;
   _setupArtifacts: void;
   _contextFactory: (options?: BrowserContextOptions) => Promise<{ context: BrowserContext, close: () => Promise<void> }>;
+
+  agent: {};
+  agentOptions?: any;
 };
 
 type WorkerFixtures = PlaywrightWorkerArgs & PlaywrightWorkerOptions & {
@@ -152,7 +155,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   }, { option: true, box: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
   contextOptions: [{}, { option: true, box: true }],
-  agentOptions: [({}, use) => use(undefined), { option: true, box: true }],
+  agentOptions: [undefined, { option: true, box: true }],
 
   _combinedContextOptions: [async ({
     acceptDownloads,
@@ -459,9 +462,11 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const testInfoImpl = testInfo as TestInfoImpl;
     const cachePathTemplate = agentOptions?.cachePathTemplate ?? '{testDir}/{testFilePath}-cache.json';
     const resolvedCacheFile = testInfoImpl._applyPathTemplate(cachePathTemplate, '', '.json');
+    // @ts-expect-error runAgents is hidden
     const cacheFile = testInfoImpl.config.runAgents === 'all' ? undefined : await testInfoImpl._cloneStorage(resolvedCacheFile);
     const cacheOutFile = path.join(testInfoImpl.artifactsDir(), 'agent-cache-' + createGuid() + '.json');
 
+    // @ts-expect-error runAgents is hidden
     const provider = agentOptions?.provider && testInfo.config.runAgents !== 'none' ? agentOptions.provider : undefined;
     if (provider)
       testInfo.setTimeout(0);
@@ -471,6 +476,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       cacheOutFile,
     };
 
+    // @ts-expect-error agent is hidden
     const agent = await page.agent({
       provider,
       cache,
