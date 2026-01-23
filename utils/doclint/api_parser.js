@@ -93,9 +93,6 @@ class ApiParser {
     if (!match)
       throw new Error('Invalid member: ' + spec.text);
     const metainfo = extractMetainfo(spec);
-    if (metainfo.hidden)
-      return;
-
     const name = match[3];
     let returnType = null;
     let optional = false;
@@ -128,6 +125,8 @@ class ApiParser {
     const clazz = /** @type {docs.Class} */(this.classes.get(match[2]));
     if (!clazz)
       throw new Error(`Unknown class ${match[2]} for member: ` + spec.text);
+    if (metainfo.hidden)
+      return;
 
     const existingMember = clazz.membersArray.find(m => m.name === name && m.kind === member.kind);
     if (existingMember && isTypeOverride(existingMember, member)) {
@@ -147,9 +146,6 @@ class ApiParser {
     const match = spec.text.match(/(param|option): (.*)/);
     if (!match)
       throw `Something went wrong with matching ${spec.text}`;
-    const metainfo = extractMetainfo(spec);
-    if (metainfo.hidden)
-      return null;
 
     // For "test.describe.only.title":
     // - className is "test"

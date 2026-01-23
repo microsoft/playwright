@@ -777,7 +777,6 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   tags: [],
   updateSnapshots: 'missing',
   updateSourceMethod: 'patch',
-  // @ts-expect-error runAgents is hidden
   runAgents: 'none',
   version: '',
   workers: 0,

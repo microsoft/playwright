@@ -372,7 +372,6 @@ Emulates consistent window screen size available inside web page via `window.scr
 
 ## page-agent-cache-key
 * since: v1.58
-* hidden
 - `cacheKey` <[string]>
 
 All the agentic actions are converted to the Playwright calls and are cached.
@@ -380,7 +379,6 @@ By default, they are cached globally with the `task` as a key. This option allow
 
 ## page-agent-max-tokens
 * since: v1.58
-* hidden
 - `maxTokens` <[int]>
 
 Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
@@ -388,14 +386,12 @@ Defaults to context-wide value specified in `agent` property.
 
 ## page-agent-max-actions
 * since: v1.58
-* hidden
 - `maxActions` <[int]>
 
 Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
 
 ## page-agent-max-action-retries
 * since: v1.58
-* hidden
 - `maxActionRetries` <[int]>
 
 Maximum number of retries when generating each action, defaults to context-wide value specified in `agent` property.

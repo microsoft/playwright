@@ -230,14 +230,12 @@ test('empty cache file works', async ({ context }) => {
 });
 
 test('missing apiKey throws a nice error', async ({ page }) => {
-  // @ts-expect-error
   const agent = await page.agent({ provider: { api: 'anthropic', model: 'some model' } as any });
   const error = await agent.perform('click the Test button').catch(e => e);
   expect(error.message).toContain(`This action requires API key to be set on the page agent`);
 });
 
 test('malformed apiEndpoint throws a nice error', async ({ page }) => {
-  // @ts-expect-error
   const agent = await page.agent({ provider: { api: 'anthropic', model: 'some model', apiKey: 'some key', apiEndpoint: 'foobar' } });
   const error = await agent.perform('click the Test button').catch(e => e);
   expect(error.message).toContain(`Agent API endpoint "foobar" is not a valid URL`);

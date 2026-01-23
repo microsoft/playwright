@@ -112,8 +112,7 @@ export class FullConfigInternal {
       quiet: takeFirst(configCLIOverrides.quiet, userConfig.quiet, false),
       reporter: takeFirst(configCLIOverrides.reporter, resolveReporters(userConfig.reporter, configDir), [[defaultReporter]]),
       reportSlowTests: takeFirst(userConfig.reportSlowTests, { max: 5, threshold: 300_000 /* 5 minutes */ }),
-      // @ts-expect-error runAgents is hidden
-      runAgents: takeFirst(configCLIOverrides.runAgents, 'none'),
+      runAgents: takeFirst(configCLIOverrides.runAgents, userConfig.runAgents, 'none'),
       shard: takeFirst(configCLIOverrides.shard, userConfig.shard, null),
       tags: globalTags,
       updateSnapshots: takeFirst(configCLIOverrides.updateSnapshots, userConfig.updateSnapshots, 'missing'),
@@ -197,7 +196,7 @@ export class FullProjectInternal {
       testDir,
       snapshotDir: takeFirst(pathResolve(configDir, projectConfig.snapshotDir), pathResolve(configDir, config.snapshotDir), testDir),
       testIgnore: takeFirst(projectConfig.testIgnore, config.testIgnore, []),
-      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).?(c|m)[jt]s?(x)'),
+      testMatch: takeFirst(projectConfig.testMatch, config.testMatch, '**/*.@(spec|test).{md,?(c|m)[jt]s?(x)}'),
       timeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.timeout, projectConfig.timeout, config.timeout, defaultTimeout),
       use: mergeObjects(config.use, projectConfig.use, configCLIOverrides.use),
       dependencies: projectConfig.dependencies || [],

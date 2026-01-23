@@ -27,6 +27,13 @@ type ElementHandleWaitForSelectorOptionsNotHidden = ElementHandleWaitForSelector
   state?: 'visible'|'attached';
 };
 
+// @ts-ignore this will be any if zod is not installed
+import { ZodTypeAny, z } from 'zod';
+// @ts-ignore this will be any if zod is not installed
+import * as z3 from 'zod/v3';
+type ZodSchema = ZodTypeAny | z3.ZodTypeAny;
+type InferZodSchema<T extends ZodSchema> = T extends z3.ZodTypeAny ? z3.infer<T> : T extends ZodTypeAny ? z.infer<T> : never;
+
 /**
  * Page provides methods to interact with a single tab in a [Browser](https://playwright.dev/docs/api/class-browser),
  * or an [extension background page](https://developer.chrome.com/extensions/background_pages) in Chromium. One
@@ -2087,6 +2094,89 @@ export interface Page {
      */
     url?: string;
   }): Promise<ElementHandle>;
+
+  /**
+   * Initialize page agent with the llm provider and cache.
+   * @param options
+   */
+  agent(options?: {
+    cache?: {
+      /**
+       * Cache file to use/generate code for performed actions into. Cache is not used if not specified (default).
+       */
+      cacheFile?: string;
+
+      /**
+       * When specified, generated entries are written into the `cacheOutFile` instead of updating the `cacheFile`.
+       */
+      cacheOutFile?: string;
+    };
+
+    expect?: {
+      /**
+       * Default timeout for expect calls in milliseconds, defaults to 5000ms.
+       */
+      timeout?: number;
+    };
+
+    /**
+     * Limits to use for the agentic loop.
+     */
+    limits?: {
+      /**
+       * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+       * Defaults to unlimited.
+       */
+      maxTokens?: number;
+
+      /**
+       * Maximum number of agentic actions to generate, defaults to 10.
+       */
+      maxActions?: number;
+
+      /**
+       * Maximum number retries per action, defaults to 3.
+       */
+      maxActionRetries?: number;
+    };
+
+    provider?: {
+      /**
+       * API to use.
+       */
+      api: "openai"|"openai-compatible"|"anthropic"|"google";
+
+      /**
+       * Endpoint to use if different from default.
+       */
+      apiEndpoint?: string;
+
+      /**
+       * API key for the LLM provider.
+       */
+      apiKey: string;
+
+      /**
+       * Amount of time to wait for the provider to respond to each request.
+       */
+      apiTimeout?: number;
+
+      /**
+       * Model identifier within the provider. Required in non-cache mode.
+       */
+      model: string;
+    };
+
+    /**
+     * Secrets to hide from the LLM.
+     */
+    secrets?: { [key: string]: string; };
+
+    /**
+     * System prompt for the agent's loop.
+     */
+    systemPrompt?: string;
+  }): Promise<PageAgent>;
 
   /**
    * Brings page to front (activates tab).
@@ -5200,6 +5290,243 @@ export interface Page {
   request: APIRequestContext;
 
   touchscreen: Touchscreen;
+
+  [Symbol.asyncDispose](): Promise<void>;
+}
+
+/**
+ *
+ */
+export interface PageAgent {
+  /**
+   * Extract information from the page using the agentic loop, return it in a given Zod format.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await agent.extract('List of items in the cart', z.object({
+   *   title: z.string().describe('Item title to extract'),
+   *   price: z.string().describe('Item price to extract'),
+   * }).array());
+   * ```
+   *
+   * @param query Task to perform using agentic loop.
+   * @param schema
+   * @param options
+   */
+  extract<Schema extends ZodSchema>(query: string, schema: Schema): Promise<{ result: InferZodSchema<Schema>, usage: { turns: number, inputTokens: number, outputTokens: number } }>;
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  on(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  addListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Emitted when the agent makes a turn.
+   */
+  prependListener(event: 'turn', listener: (data: {
+    role: string;
+
+    message: string;
+
+    usage?: {
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }) => any): this;
+
+  /**
+   * Dispose this agent.
+   */
+  dispose(): Promise<void>;
+
+  /**
+   * Expect certain condition to be met.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await agent.expect('"0 items" to be reported');
+   * ```
+   *
+   * @param expectation Expectation to assert.
+   * @param options
+   */
+  expect(expectation: string, options?: {
+    /**
+     * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
+     * with the `task` as a key. This option allows controlling the cache key explicitly.
+     */
+    cacheKey?: string;
+
+    /**
+     * Maximum number of retries when generating each action, defaults to context-wide value specified in `agent`
+     * property.
+     */
+    maxActionRetries?: number;
+
+    /**
+     * Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
+     */
+    maxActions?: number;
+
+    /**
+     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+     * Defaults to context-wide value specified in `agent` property.
+     */
+    maxTokens?: number;
+
+    /**
+     * Expect timeout in milliseconds. Defaults to `5000`. The default value can be changed via `expect.timeout` option in
+     * the config, or by specifying the `expect` property of the
+     * [`expect`](https://playwright.dev/docs/api/class-page#page-agent-option-expect) option. Pass `0` to disable
+     * timeout.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Perform action using agentic loop.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await agent.perform('Click submit button');
+   * ```
+   *
+   * @param task Task to perform using agentic loop.
+   * @param options
+   */
+  perform(task: string, options?: {
+    /**
+     * All the agentic actions are converted to the Playwright calls and are cached. By default, they are cached globally
+     * with the `task` as a key. This option allows controlling the cache key explicitly.
+     */
+    cacheKey?: string;
+
+    /**
+     * Maximum number of retries when generating each action, defaults to context-wide value specified in `agent`
+     * property.
+     */
+    maxActionRetries?: number;
+
+    /**
+     * Maximum number of agentic actions to generate, defaults to context-wide value specified in `agent` property.
+     */
+    maxActions?: number;
+
+    /**
+     * Maximum number of tokens to consume. The agentic loop will stop after input + output tokens exceed this value.
+     * Defaults to context-wide value specified in `agent` property.
+     */
+    maxTokens?: number;
+
+    /**
+     * Perform timeout in milliseconds. Defaults to `5000`. The default value can be changed via `actionTimeout` option in
+     * the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     * Pass `0` to disable timeout.
+     */
+    timeout?: number;
+  }): Promise<{
+    usage: {
+      turns: number;
+
+      inputTokens: number;
+
+      outputTokens: number;
+    };
+  }>;
+
+  /**
+   * Returns the current token usage for this agent.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const usage = await agent.usage();
+   * console.log(`Tokens used: ${usage.inputTokens} in, ${usage.outputTokens} out`);
+   * ```
+   *
+   */
+  usage(): Promise<{
+    turns: number;
+
+    inputTokens: number;
+
+    outputTokens: number;
+  }>;
 
   [Symbol.asyncDispose](): Promise<void>;
 }
