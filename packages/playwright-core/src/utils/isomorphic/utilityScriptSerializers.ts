@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f32' | 'f64' | 'bi64' | 'bui64';
+type TypedArrayKind = 'i8' | 'ui8' | 'ui8c' | 'i16' | 'ui16' | 'i32' | 'ui32' | 'f16' | 'f32' | 'f64' | 'bi64' | 'bui64';
 
 export type SerializedValue =
     undefined | boolean | number | string |
@@ -86,7 +86,7 @@ const typedArrayConstructors: Record<TypedArrayKind, Function> = {
   ui16: Uint16Array,
   i32: Int32Array,
   ui32: Uint32Array,
-  // TODO: add Float16Array once it's in baseline
+  f16: Float16Array,
   f32: Float32Array,
   f64: Float64Array,
   bi64: BigInt64Array,
