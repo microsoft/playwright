@@ -43,8 +43,6 @@ const screenshot = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    if (!!params.element !== !!params.ref)
-      throw new Error('Both element and ref must be provided or neither.');
     if (params.fullPage && params.ref)
       throw new Error('fullPage cannot be used with element screenshots.');
 
@@ -55,9 +53,8 @@ const screenshot = defineTabTool({
       scale: 'css',
       ...(params.fullPage !== undefined && { fullPage: params.fullPage })
     };
-    const isElementScreenshot = params.element && params.ref;
 
-    const screenshotTarget = isElementScreenshot ? params.element : (params.fullPage ? 'full page' : 'viewport');
+    const screenshotTarget = params.ref ? params.element || 'element' : (params.fullPage ? 'full page' : 'viewport');
     const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
 
     const data = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);

@@ -191,8 +191,9 @@ const check = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { resolved } = await tab.refLocator(params);
+    const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.check();`);
+    await locator.check();
   },
 });
 
@@ -208,8 +209,9 @@ const uncheck = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const { resolved } = await tab.refLocator(params);
+    const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.uncheck();`);
+    await locator.uncheck();
   },
 });
 

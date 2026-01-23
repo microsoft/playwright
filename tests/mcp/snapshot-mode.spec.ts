@@ -35,7 +35,7 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
 - button "Button 1" [ref=e2]`),
   });
 
-  expect(await client.callTool({
+  await client.callTool({
     name: 'browser_evaluate',
     arguments: {
       function: `async () => {
@@ -44,6 +44,10 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
         document.body.appendChild(button2);
       }`,
     },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
   })).toHaveResponse({
     snapshot: expect.stringContaining(`
   - button "Button 1" [ref=e2]
@@ -68,7 +72,7 @@ test('should respect --snapshot-mode=incremental', async ({ startClient, server 
 - button "Button 1" [ref=e2]`),
   });
 
-  expect(await client.callTool({
+  await client.callTool({
     name: 'browser_evaluate',
     arguments: {
       function: `async () => {
@@ -77,11 +81,19 @@ test('should respect --snapshot-mode=incremental', async ({ startClient, server 
         document.body.appendChild(button2);
       }`,
     },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Button 2',
+      ref: 'e3',
+    },
   })).toHaveResponse({
     snapshot: expect.stringContaining(`
-- <changed> generic [active] [ref=e1]:
+- <changed> generic [ref=e1]:
   - ref=e2 [unchanged]
-  - button \"Button 2\" [ref=e3]`),
+  - button \"Button 2\" [active] [ref=e3]`),
   });
 });
 
