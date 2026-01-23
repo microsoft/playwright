@@ -82,7 +82,11 @@ function isRegExp(obj: any): obj is RegExp {
   return obj instanceof RegExp || Object.prototype.toString.call(obj) === '[object RegExp]';
 }
 
-export type URLMatch = string | RegExp | ((url: URL) => boolean);
+export type URLMatch = string | RegExp | ((url: URL) => boolean) | URLPattern;
+// URLPattern is not in @types/node@18, so we polyfill it ourselves
+export type URLPattern = {
+  test(input: string | URL): boolean;
+};
 
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   if (isRegExp(match1) && isRegExp(match2))
@@ -102,8 +106,12 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   const url = parseURL(urlString);
   if (!url)
     return false;
+  // @ts-expect-error urlpattern is not in @types/node yet
+  // eslint-disable-next-line no-restricted-globals
+  if (typeof globalThis.URLPattern === 'function' && match instanceof globalThis.URLPattern)
+    return (match as URLPattern).test(url.href);
   if (typeof match !== 'function')
-    throw new Error('url parameter should be string, RegExp or function');
+    throw new Error('url parameter should be string, RegExp, URLPattern or function');
   return match(url);
 }
 

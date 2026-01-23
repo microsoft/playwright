@@ -1173,6 +1173,14 @@ Enabling routing disables http cache.
 
 ### param: BrowserContext.route.url
 * since: v1.8
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+
+### param: BrowserContext.route.url
+* since: v1.8
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -1520,9 +1528,9 @@ routes for the [`param: url`].
 
 ### param: BrowserContext.unroute.url
 * since: v1.8
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
 [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler

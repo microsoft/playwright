@@ -315,6 +315,11 @@ type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWor
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
+// we depend on @types/node@18 which does not have URLPattern yet, so we polyfill it
+type URLPattern = {
+  test(input: string | URL): boolean;
+}
+
 type AsymmetricMatcher = Record<string, any>;
 
 interface AsymmetricMatchers {

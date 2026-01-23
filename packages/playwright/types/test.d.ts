@@ -7693,6 +7693,11 @@ type CustomProperties<T> = ExcludeProps<T, PlaywrightTestOptions & PlaywrightWor
 export type PlaywrightTestProject<TestArgs = {}, WorkerArgs = {}> = Project<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 export type PlaywrightTestConfig<TestArgs = {}, WorkerArgs = {}> = Config<PlaywrightTestOptions & CustomProperties<TestArgs>, PlaywrightWorkerOptions & CustomProperties<WorkerArgs>>;
 
+// we depend on @types/node@18 which does not have URLPattern yet, so we polyfill it
+type URLPattern = {
+  test(input: string | URL): boolean;
+}
+
 type AsymmetricMatcher = Record<string, any>;
 
 interface AsymmetricMatchers {
@@ -9663,6 +9668,9 @@ interface PageAssertions {
    * // Check for the page URL to contain 'doc', followed by an optional 's', followed by '/'
    * await expect(page).toHaveURL(/docs?\//);
    *
+   * // Check for the page URL to match the URL pattern
+   * await expect(page).toHaveURL(new URLPattern({ pathname: '/docs/*' }));
+   *
    * // Check for the predicate to be satisfied
    * // For example: verify query strings
    * await expect(page).toHaveURL(url => {
@@ -9678,7 +9686,7 @@ interface PageAssertions {
    * against the current browser URL.
    * @param options
    */
-  toHaveURL(url: string|RegExp|((url: URL) => boolean), options?: {
+  toHaveURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
      * Whether to perform case-insensitive match.
      * [`ignoreCase`](https://playwright.dev/docs/api/class-pageassertions#page-assertions-to-have-url-option-ignore-case)

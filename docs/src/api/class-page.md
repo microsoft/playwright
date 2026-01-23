@@ -2177,7 +2177,7 @@ var frame = page.FrameByUrl(".*domain.*");
 * langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` ?<[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
+  - `url` ?<[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern, URL pattern or predicate receiving
     frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
@@ -3691,9 +3691,11 @@ Enabling routing disables http cache.
 
 ### param: Page.route.url
 * since: v1.8
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+TODO: dont support ports
+
+A glob pattern, regex pattern, URL Pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
 
 ### param: Page.route.handler
 * since: v1.8
@@ -3823,7 +3825,7 @@ await page.RouteWebSocketAsync("/ws", ws => {
 
 ### param: Page.routeWebSocket.url
 * since: v1.48
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
 Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
 
@@ -4348,9 +4350,9 @@ the [`param: url`].
 
 ### param: Page.unroute.url
 * since: v1.8
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while routing.
 
 ### param: Page.unroute.handler
 * since: v1.8
