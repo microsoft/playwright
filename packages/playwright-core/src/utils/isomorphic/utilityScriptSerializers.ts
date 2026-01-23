@@ -28,7 +28,8 @@ export type SerializedValue =
     { o: { k: string, v: SerializedValue }[], id: number } |
     { ref: number } |
     { h: number } |
-    { ta: { b: string, k: TypedArrayKind } };
+    { ta: { b: string, k: TypedArrayKind } } |
+    { ab: { b: string } };
 
 type HandleOrValue = { h: number } | { fallThrough: any };
 
@@ -73,6 +74,14 @@ function isError(obj: any): obj is Error {
 function isTypedArray(obj: any, constructor: Function): boolean {
   try {
     return obj instanceof constructor || Object.prototype.toString.call(obj) === `[object ${constructor.name}]`;
+  } catch (error) {
+    return false;
+  }
+}
+
+function isArrayBuffer(obj: any): obj is ArrayBuffer {
+  try {
+    return obj instanceof ArrayBuffer || Object.prototype.toString.call(obj) === '[object ArrayBuffer]';
   } catch (error) {
     return false;
   }
@@ -170,6 +179,8 @@ export function parseEvaluationResultValue(value: SerializedValue, handles: any[
       return handles[value.h];
     if ('ta' in value)
       return base64ToTypedArray(value.ta.b, typedArrayConstructors[value.ta.k]);
+    if ('ab' in value)
+      return base64ToTypedArray(value.ab.b, Uint8Array).buffer;
   }
   return value;
 }
@@ -244,6 +255,8 @@ function innerSerialize(value: any, handleSerializer: (value: any) => HandleOrVa
     if (isTypedArray(value, ctor))
       return { ta: { b: typedArrayToBase64(value), k } };
   }
+  if (isArrayBuffer(value))
+    return { ab: { b: typedArrayToBase64(new Uint8Array(value)) } };
 
   const id = visitorInfo.visited.get(value);
   if (id)

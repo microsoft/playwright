@@ -409,14 +409,18 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
               keyPath: 'taskTitle',
               records: [
                 {
-                  value: {
-                    day: '01',
-                    hours: '1',
-                    minutes: '1',
-                    month: 'January',
-                    notified: 'no',
-                    taskTitle: 'Pet the cat',
-                    year: '2025',
+                  valueEncoded: {
+                    id: 1,
+                    o: [
+                      { k: 'taskTitle', v: 'Pet the cat' },
+                      { k: 'hours', v: '1' },
+                      { k: 'minutes', v: '1' },
+                      { k: 'day', v: '01' },
+                      { k: 'month', v: 'January' },
+                      { k: 'year', v: '2025' },
+                      { k: 'notified', v: 'no' },
+                      { k: 'binaryTitle', v: { ab: { b: 'UGV0IHRoZSBjYXQ=' } }, }
+                    ]
                   },
                 },
               ],
@@ -473,7 +477,7 @@ it('should support IndexedDB', async ({ page, server, contextFactory }) => {
   await expect(recreatedPage.locator('#task-list')).toMatchAriaSnapshot(`
     - list:
       - listitem:
-        - text: /Pet the cat/
+        - text: /Pet the cat \\[Pet the cat\\]/
   `);
 
   expect(await context.storageState()).toEqual({ cookies: [], origins: [] });

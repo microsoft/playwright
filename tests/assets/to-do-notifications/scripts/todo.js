@@ -91,11 +91,13 @@ window.onload = () => {
       }
       
       // Check which suffix the deadline day of the month needs
-      const { hours, minutes, day, month, year, notified, taskTitle } = cursor.value;
+      const { hours, minutes, day, month, year, notified, taskTitle, binaryTitle } = cursor.value;
       const ordDay = ordinal(day);
 
+      const decodedBinaryTitle = new TextDecoder().decode(new Uint8Array(binaryTitle));
+
       // Build the to-do list entry and put it into the list item.
-      const toDoText = `${taskTitle} — ${hours}:${minutes}, ${month} ${ordDay} ${year}.`;
+      const toDoText = `${taskTitle} [${decodedBinaryTitle}] — ${hours}:${minutes}, ${month} ${ordDay} ${year}.`;
       const listItem = createListItem(toDoText);
 
       if (notified === 'yes') {
@@ -140,7 +142,7 @@ window.onload = () => {
     
     // Grab the values entered into the form fields and store them in an object ready for being inserted into the IndexedDB
     const newItem = [
-      { taskTitle: title.value, hours: hours.value, minutes: minutes.value, day: day.value, month: month.value, year: year.value, notified: 'no' },
+      { taskTitle: title.value, hours: hours.value, minutes: minutes.value, day: day.value, month: month.value, year: year.value, notified: 'no', binaryTitle: new TextEncoder().encode(title.value).buffer },
     ];
 
     // Open a read/write DB transaction, ready for adding the data
