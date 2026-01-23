@@ -32,9 +32,9 @@ export const setupPage = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
+  handle: async (context, params, signal) => {
     const seed = await context.getOrCreateSeedFile(params.seedFile, params.project);
-    const { output, status } = await context.runSeedTest(seed.file, seed.projectName);
+    const { output, status } = await context.runSeedTest(seed.file, seed.projectName, signal);
     return { content: [{ type: 'text', text: output }], isError: status !== 'paused' };
   },
 });
