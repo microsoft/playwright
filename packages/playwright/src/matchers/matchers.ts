@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
+import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, isURLPattern, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
@@ -440,9 +440,6 @@ export function toHaveURL(
     return await (page.mainFrame() as FrameEx)._expect('to.have.url', { expectedText, isNot, timeout });
   }, expected, options);
 }
-
-// @ts-expect-error globalThis.URLPattern is not in @types/node yet
-const isURLPattern = (v: any): v is URLPattern => 'URLPattern' in globalThis && v instanceof globalThis.URLPattern;
 
 export async function toBeOK(
   this: ExpectMatcherStateInternal,

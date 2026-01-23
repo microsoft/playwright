@@ -20,10 +20,9 @@ import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
-// we depend on @types/node@18 which does not have URLPattern yet, so we polyfill it
-type URLPattern = {
-  test(input: string | URL): boolean;
-}
+// Use the global URLPattern type if available (Node.js 22+, modern browsers),
+// otherwise fall back to `never` so it disappears from union types.
+type URLPattern = typeof globalThis extends { URLPattern: infer T } ? T : never;
 
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
@@ -2755,7 +2754,7 @@ export interface Page {
     name?: string;
 
     /**
-     * A glob pattern, regex pattern, URL pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving frame's `url` as a [URL] object. Optional.
      */
     url?: string|RegExp|URLPattern|((url: URL) => boolean);
   }): null|Frame;
@@ -4012,9 +4011,7 @@ export interface Page {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url TODO: dont support ports
-   *
-   * A glob pattern, regex pattern, URL Pattern, or predicate that receives a [URL] to match during routing. If
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
    * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -5025,7 +5022,7 @@ export interface Page {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern, URL pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
      * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
      * is exactly equal to the string.
      */
@@ -5143,7 +5140,7 @@ export interface Page {
    * await page.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern, URL pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
    * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
    * is exactly equal to the string.
    * @param options
@@ -7971,7 +7968,7 @@ export interface Frame {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern, URL pattern or predicate receiving [URL] to match while waiting for the navigation.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
      * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
      * is exactly equal to the string.
      */
@@ -8012,7 +8009,7 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern, URL pattern or predicate receiving [URL] to match while waiting for the navigation.
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
    * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
    * is exactly equal to the string.
    * @param options

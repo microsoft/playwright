@@ -88,6 +88,10 @@ export type URLPattern = {
   test(input: string | URL): boolean;
 };
 
+// @ts-expect-error URLPattern is not in @types/node yet
+// eslint-disable-next-line no-restricted-globals
+export const isURLPattern = (v: unknown): v is URLPattern => typeof globalThis.URLPattern === 'function' && v instanceof globalThis.URLPattern;
+
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   if (isRegExp(match1) && isRegExp(match2))
     return match1.source === match2.source && match1.flags === match2.flags;
@@ -106,10 +110,8 @@ export function urlMatches(baseURL: string | undefined, urlString: string, match
   const url = parseURL(urlString);
   if (!url)
     return false;
-  // @ts-expect-error urlpattern is not in @types/node yet
-  // eslint-disable-next-line no-restricted-globals
-  if (typeof globalThis.URLPattern === 'function' && match instanceof globalThis.URLPattern)
-    return (match as URLPattern).test(url.href);
+  if (isURLPattern(match))
+    return match.test(url.href);
   if (typeof match !== 'function')
     throw new Error('url parameter should be string, RegExp, URLPattern or function');
   return match(url);

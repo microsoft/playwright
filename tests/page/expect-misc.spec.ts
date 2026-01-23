@@ -414,9 +414,9 @@ Timeout:  10000ms
   test('support URLPattern', async ({ page }) => {
     test.skip(globalThis.URLPattern === undefined, 'URLPattern is not supported in this environment');
     await page.goto('data:text/html,<div>A</div>');
-    // @ts-expect-error URLPattern is not in @types/node yet
+    // @ts-ignore URLPattern is not in @types/node yet
     await expect(page).toHaveURL(new URLPattern({ protocol: 'data' }));
-    // @ts-expect-error
+    // @ts-ignore
     await expect(page).not.toHaveURL(new URLPattern({ protocol: 'http' }));
   });
 });

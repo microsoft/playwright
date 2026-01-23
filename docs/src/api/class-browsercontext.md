@@ -1528,9 +1528,18 @@ routes for the [`param: url`].
 
 ### param: BrowserContext.unroute.url
 * since: v1.8
+* langs: js
 - `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
+[`method: BrowserContext.route`].
+
+### param: BrowserContext.unroute.url
+* since: v1.8
+* langs: python, csharp, java
+- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, or predicate receiving [URL] used to register a routing with
 [`method: BrowserContext.route`].
 
 ### param: BrowserContext.unroute.handler
