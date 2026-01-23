@@ -28,6 +28,7 @@ import { requireOrImport } from '../../transform/transform';
 import type { Context } from './context';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { Locator } from '../../../../playwright-core/src/client/locator';
+import type { FullConfig } from './config';
 
 export const TabEvents = {
   modalState: 'modalState'
@@ -111,7 +112,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         type: 'fileChooser',
         description: 'File chooser',
         fileChooser: chooser,
-        clearedBy: uploadFile.schema.name,
+        clearedBy: { tool: uploadFile.schema.name, skill: 'upload' }
       });
     });
     page.on('dialog', dialog => this._dialogShown(dialog));
@@ -173,7 +174,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       type: 'dialog',
       description: `"${dialog.type()}" dialog with message "${dialog.message()}"`,
       dialog,
-      clearedBy: handleDialog.schema.name
+      clearedBy: { tool: handleDialog.schema.name, skill: 'dialog-accept or dialog-dismiss' }
     });
   }
 
@@ -403,12 +404,12 @@ function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
   };
 }
 
-export function renderModalStates(modalStates: ModalState[]): string[] {
+export function renderModalStates(config: FullConfig, modalStates: ModalState[]): string[] {
   const result: string[] = [];
   if (modalStates.length === 0)
     result.push('- There is no modal state present');
   for (const state of modalStates)
-    result.push(`- [${state.description}]: can be handled by the "${state.clearedBy}" tool`);
+    result.push(`- [${state.description}]: can be handled by ${config.skillMode ? state.clearedBy.skill : state.clearedBy.tool}`);
   return result;
 }
 

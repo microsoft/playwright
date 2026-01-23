@@ -52,7 +52,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
       ref: 'e2',
     },
   })).toHaveResponse({
-    modalState: expect.stringContaining(`- [File chooser]: can be handled by the "browser_file_upload" tool`),
+    modalState: expect.stringContaining(`- [File chooser]: can be handled by browser_file_upload`),
   });
 
   const filePath = testInfo.outputPath('test.txt');
@@ -82,7 +82,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
     });
 
     expect(response).toHaveResponse({
-      modalState: `- [File chooser]: can be handled by the "browser_file_upload" tool`,
+      modalState: `- [File chooser]: can be handled by browser_file_upload`,
     });
   }
 
@@ -98,7 +98,7 @@ test('browser_file_upload', async ({ client, server }, testInfo) => {
     expect(response).toHaveResponse({
       isError: true,
       error: `Error: Tool "browser_click" does not handle the modal state.`,
-      modalState: expect.stringContaining(`- [File chooser]: can be handled by the "browser_file_upload" tool`),
+      modalState: expect.stringContaining(`- [File chooser]: can be handled by browser_file_upload`),
     });
   }
 });

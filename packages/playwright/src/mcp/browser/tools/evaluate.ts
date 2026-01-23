@@ -39,6 +39,8 @@ const evaluate = defineTabTool({
 
   handle: async (tab, params, response) => {
     let locator: Awaited<ReturnType<Tab['refLocator']>> | undefined;
+    if (!params.function.includes('=>'))
+      params.function = `() => (${params.function})`;
     if (params.ref) {
       locator = await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
       response.addCode(`await page.${locator.resolved}.evaluate(${escapeWithQuotes(params.function)});`);

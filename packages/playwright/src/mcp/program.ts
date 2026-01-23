@@ -112,6 +112,7 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         if (options.daemon) {
+          config.skillMode = true;
           config.outputDir = path.join(process.cwd(), '.playwright-cli');
           config.outputMode = 'file';
           config.codegen = 'none';

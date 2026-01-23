@@ -126,6 +126,7 @@ export type FullConfig = Config & {
     action: number;
     navigation: number;
   },
+  skillMode?: boolean;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {

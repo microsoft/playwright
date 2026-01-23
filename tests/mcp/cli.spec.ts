@@ -132,6 +132,12 @@ test.describe('core', () => {
     expect(output).toContain('"Title"');
   });
 
+  test('eval no arrow', async ({ cli, daemon, server }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output } = await cli('eval', 'document.title');
+    expect(output).toContain('"Title"');
+  });
+
   test('eval <ref>', async ({ cli, daemon, server }) => {
     server.setContent('/', `<button>Submit</button>`, 'text/html');
     await cli('open', server.PREFIX);
@@ -144,6 +150,7 @@ test.describe('core', () => {
     await cli('open', server.PREFIX);
     const { output } = await cli('click', 'e2');
     expect(output).toContain('MyAlert');
+    expect(output).toContain('["alert" dialog with message "MyAlert"]: can be handled by dialog-accept or dialog-dismiss');
     await cli('dialog-accept');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).not.toContain('MyAlert');
@@ -198,50 +205,50 @@ test.describe('navigation', () => {
 });
 
 test.describe('keyboard', () => {
-  test('key-press', async ({ cli, daemon, server }) => {
+  test('press', async ({ cli, daemon, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('click', 'e2');
-    await cli('key-press', 'h');
+    await cli('press', 'h');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toBe(`- textbox [active] [ref=e2]: h`);
   });
 
-  test('key-down key-up', async ({ cli, daemon, server }) => {
+  test('keydown keyup', async ({ cli, daemon, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('click', 'e2');
-    await cli('key-down', 'h');
-    await cli('key-up', 'h');
+    await cli('keydown', 'h');
+    await cli('keyup', 'h');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toBe(`- textbox [active] [ref=e2]: h`);
   });
 });
 
 test.describe('mouse', () => {
-  test('mouse-move', async ({ cli, daemon, server }) => {
+  test('mousemove', async ({ cli, daemon, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
-    await cli('mouse-move', '45', '35');
+    await cli('mousemove', '45', '35');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toContain('mouse move 45 35');
   });
 
-  test('mouse-down mouse-up', async ({ cli, daemon, server }) => {
+  test('mousedown mouseup', async ({ cli, daemon, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
-    await cli('mouse-move', '45', '35');
-    await cli('mouse-down');
-    await cli('mouse-up');
+    await cli('mousemove', '45', '35');
+    await cli('mousedown');
+    await cli('mouseup');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toContain('mouse down');
     expect(snapshot).toContain('mouse up');
   });
 
-  test('mouse-wheel', async ({ cli, daemon, server }) => {
+  test('mousewheel', async ({ cli, daemon, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
-    await cli('mouse-wheel', '10', '5');
+    await cli('mousewheel', '10', '5');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toContain('wheel 5 10');
   });

@@ -75,7 +75,7 @@ const reload = declareCommand({
 // Keyboard
 
 const pressKey = declareCommand({
-  name: 'key-press',
+  name: 'press',
   description: 'Press a key on the keyboard, `a`, `ArrowLeft`',
   category: 'keyboard',
   args: z.object({
@@ -100,7 +100,7 @@ const type = declareCommand({
 });
 
 const keydown = declareCommand({
-  name: 'key-down',
+  name: 'keydown',
   description: 'Press a key down on the keyboard',
   category: 'keyboard',
   args: z.object({
@@ -111,7 +111,7 @@ const keydown = declareCommand({
 });
 
 const keyup = declareCommand({
-  name: 'key-up',
+  name: 'keyup',
   description: 'Press a key up on the keyboard',
   category: 'keyboard',
   args: z.object({
@@ -124,7 +124,7 @@ const keyup = declareCommand({
 // Mouse
 
 const mouseMove = declareCommand({
-  name: 'mouse-move',
+  name: 'mousemove',
   description: 'Move mouse to a given position',
   category: 'mouse',
   args: z.object({
@@ -136,7 +136,7 @@ const mouseMove = declareCommand({
 });
 
 const mouseDown = declareCommand({
-  name: 'mouse-down',
+  name: 'mousedown',
   description: 'Press mouse down',
   category: 'mouse',
   args: z.object({
@@ -147,7 +147,7 @@ const mouseDown = declareCommand({
 });
 
 const mouseUp = declareCommand({
-  name: 'mouse-up',
+  name: 'mouseup',
   description: 'Press mouse up',
   category: 'mouse',
   args: z.object({
@@ -158,7 +158,7 @@ const mouseUp = declareCommand({
 });
 
 const mouseWheel = declareCommand({
-  name: 'mouse-wheel',
+  name: 'mousewheel',
   description: 'Scroll mouse wheel',
   category: 'mouse',
   args: z.object({
