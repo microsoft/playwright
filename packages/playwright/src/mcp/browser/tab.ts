@@ -28,6 +28,7 @@ import { requireOrImport } from '../../transform/transform';
 import type { Context } from './context';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { Locator } from '../../../../playwright-core/src/client/locator';
+import type { Response } from './response';
 
 export const TabEvents = {
   modalState: 'modalState'
@@ -337,9 +338,13 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     ]);
   }
 
-  async waitForCompletion(callback: () => Promise<void>) {
+  async waitForCompletion(response: Response, callback: () => Promise<void>) {
     await this._initializedPromise;
-    await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
+    await this._raceAgainstModalStates(async () => {
+      const { trivial } = await waitForCompletion(this, callback);
+      if (!trivial)
+        response.setIncludeSnapshot();
+    });
   }
 
   async refLocator(params: { element?: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {

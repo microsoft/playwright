@@ -17,7 +17,7 @@
 import type * as playwright from 'playwright-core';
 import type { Tab } from '../tab';
 
-export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>): Promise<R> {
+export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>): Promise<{ result: R, trivial: boolean }> {
   const requests: playwright.Request[] = [];
 
   const requestListener = (request: playwright.Request) => requests.push(request);
@@ -37,7 +37,7 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   const requestedNavigation = requests.some(request => request.isNavigationRequest());
   if (requestedNavigation) {
     await tab.page.mainFrame().waitForLoadState('load', { timeout: 10000 }).catch(() => {});
-    return result;
+    return { result, trivial: false };
   }
 
   const promises: Promise<any>[] = [];
@@ -47,12 +47,14 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     else
       promises.push(request.response().catch(() => {}));
   }
-  const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
-  await Promise.race([Promise.all(promises), timeout]);
-  if (requests.length)
-    await tab.waitForTimeout(500);
 
-  return result;
+  if (requests.length) {
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
+    await Promise.race([Promise.all(promises), timeout]);
+    await tab.waitForTimeout(500);
+  }
+
+  return { result, trivial: true };
 }
 
 export async function callOnPageNoTrace<T>(page: playwright.Page, callback: (page: playwright.Page) => Promise<T>): Promise<T> {

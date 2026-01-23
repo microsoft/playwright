@@ -37,7 +37,7 @@ export const handleDialog = defineTabTool({
       throw new Error('No dialog visible');
 
     tab.clearModalState(dialogState);
-    await tab.waitForCompletion(async () => {
+    await tab.waitForCompletion(response, async () => {
       if (params.accept)
         await dialogState.dialog.accept(params.promptText);
       else

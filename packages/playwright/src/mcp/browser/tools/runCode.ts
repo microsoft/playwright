@@ -43,7 +43,7 @@ const runCode = defineTabTool({
       __end__,
     };
     vm.createContext(context);
-    await tab.waitForCompletion(async () => {
+    await tab.waitForCompletion(response, async () => {
       const snippet = `(async () => {
         try {
           const result = await (${params.code})(page);

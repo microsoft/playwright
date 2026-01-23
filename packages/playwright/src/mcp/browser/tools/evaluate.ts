@@ -46,7 +46,7 @@ const evaluate = defineTabTool({
       response.addCode(`await page.evaluate(${escapeWithQuotes(params.function)});`);
     }
 
-    await tab.waitForCompletion(async () => {
+    await tab.waitForCompletion(response, async () => {
       const receiver = locator?.locator ?? tab.page;
       const result = await receiver._evaluateFunction(params.function);
       const text = JSON.stringify(result, null, 2) || 'undefined';
