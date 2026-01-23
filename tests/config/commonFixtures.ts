@@ -208,9 +208,9 @@ export class TestChildProcess {
   async cleanExit() {
     const r = await this.exited;
     if (r.exitCode)
-      throw new Error(`Process failed with exit code ${r.exitCode}`);
+      throw new Error(`Process failed with exit code ${r.exitCode}. Output:\n${this.output}`);
     if (r.signal)
-      throw new Error(`Process received signal: ${r.signal}`);
+      throw new Error(`Process received signal: ${r.signal}. Output:\n${this.output}`);
   }
 
   async waitForOutput(substring: string, count = 1) {

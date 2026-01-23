@@ -17,17 +17,17 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { spawn } from 'child_process';
 
 import { test as baseTest } from './fixtures';
 import { calculateSha1 } from '../../packages/playwright-core/src/server/utils/crypto';
 
-import type { ChildProcess } from 'child_process';
+import type { TestChildProcess } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
   socketPath: string;
-  daemon: ChildProcess;
+  daemon: TestChildProcess;
+  cliNoDaemon: (...args: string[]) => Promise<string>;
   cli: (...args: string[]) => Promise<{ output: string, error: string, snapshot?: string, attachments?: { name: string, data: Buffer | null }[] }>;
 }>({
   socketPath: async ({}, use, testInfo) => {
@@ -39,60 +39,44 @@ export const test = baseTest.extend<{
     await use(path.join(test.info().outputPath(), 'socket.sock'));
   },
 
-  daemon: async ({ socketPath }, use, testInfo) => {
+  daemon: async ({ socketPath, childProcess }, use, testInfo) => {
     const userDataDir = testInfo.outputPath('user-data-dir');
-
     const daemonPath = path.resolve(__dirname, '../../packages/playwright/cli.js');
-    const daemon = spawn(process.execPath, [daemonPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
-      stdio: 'pipe',
+    const daemon = childProcess({
+      command: [process.execPath, daemonPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`],
       cwd: testInfo.outputPath(),
     });
-    let stderr = '';
-    await new Promise<void>((resolve, reject) => {
-      daemon.stdout.on('data', () => {});
-      daemon.stderr.on('data', data => {
-        stderr += data.toString();
-        if (stderr.includes('Daemon server listening'))
-          resolve();
-      });
-      daemon.on('close', code => {
-        if (code === 0)
-          resolve();
-        else
-          reject(new Error(`Daemon exited with code ${code}`));
-      });
-    });
+    await daemon.waitForOutput('Daemon server listening');
     await use(daemon);
-    daemon.kill('SIGTERM');
   },
 
-  cli: async ({ socketPath }, use, testInfo) => {
+  cliNoDaemon: async ({ childProcess }, use, testInfo) => {
     await use(async (...args: string[]) => {
-      const cli = spawn(process.execPath, [require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args], {
+      const child = childProcess({
+        command: [process.execPath, require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args],
         cwd: testInfo.outputPath(),
-        stdio: 'pipe',
+      });
+      await child.cleanExit();
+      return child.output;
+    });
+  },
+
+  cli: async ({ socketPath, daemon, childProcess }, use, testInfo) => {
+    await use(async (...args: string[]) => {
+      const cli = childProcess({
+        command: [process.execPath, require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args],
+        cwd: testInfo.outputPath(),
         env: {
           ...process.env,
           PLAYWRIGHT_DAEMON_SOCKET_PATH: socketPath,
         },
       });
-      let stdout = '';
-      let stderr = '';
-      cli.stdout.on('data', data => { stdout += data.toString(); });
-      cli.stderr.on('data', data => { stderr += data.toString(); });
-      await new Promise<void>((resolve, reject) => {
-        cli.on('close', code => {
-          if (code === 0)
-            resolve();
-          else
-            reject(new Error(`CLI exited with code ${code}: ${stderr}`));
-        });
-      });
+      await cli.cleanExit();
       let snapshot: string | undefined;
-      if (stdout.includes('### Snapshot'))
-        snapshot = await loadSnapshot(stdout);
-      const attachments = loadAttachments(stdout);
-      return { output: stdout.trim(), error: stderr.trim(), snapshot, attachments };
+      if (cli.stdout.includes('### Snapshot'))
+        snapshot = await loadSnapshot(cli.stdout);
+      const attachments = loadAttachments(cli.stdout);
+      return { output: cli.stdout.trim(), error: cli.stderr.trim(), snapshot, attachments };
     });
   },
 });
