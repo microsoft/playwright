@@ -39,6 +39,14 @@ export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAML
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
 
+program.exitOverride(err => {
+  // Calling process.exit() might truncate large stdout/stderr output.
+  // See https://github.com/nodejs/node/issues/6456.
+  // See https://github.com/nodejs/node/issues/12921
+  // eslint-disable-next-line no-restricted-properties
+  process.stdout.write('', () => process.stderr.write('', () => process.exit(err.exitCode)));
+});
+
 export function ms(ms: number): string {
   if (!isFinite(ms))
     return '-';
