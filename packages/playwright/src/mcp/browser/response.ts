@@ -28,9 +28,8 @@ import type { Context } from './context';
 export const requestDebug = debug('pw:mcp:request');
 
 type Result = {
-  text?: string;
-  data?: Buffer;
-  title?: string;
+  data: Buffer | string;
+  title: string;
   filename?: string;
 };
 
@@ -61,26 +60,22 @@ export class Response {
   }
 
   addTextResult(result: string) {
-    this._results.push({ text: result });
+    this._results.push({ title: '', data: result });
   }
 
-  async addResult(result: { text?: string, data?: Buffer, title?: string, suggestedFilename?: string, ext?: string }): Promise<{ fileName?: string }> {
-    // Binary always goes into a file.
-    if (result.data && !result.suggestedFilename)
-      result.suggestedFilename = dateAsFileName(result.ext ?? 'bin');
-
-    // What can go into a file goes into a file in outputMode === file.
-    if (this._context.config.outputMode === 'file') {
-      if (!result.suggestedFilename)
-        result.suggestedFilename = dateAsFileName(result.ext ?? (result.text !== undefined ? 'txt' : 'bin'));
+  async addResult(title: string, data: string | Buffer, file: { prefix: string, ext: string, suggestedFilename?: string }) {
+    let filename: string | undefined;
+    if (!file.suggestedFilename) {
+      // Binary always goes into a file.
+      if (typeof data !== 'string')
+        filename = dateAsFileName(file.prefix, file.ext);
+      // What can go into a file goes into a file in outputMode === file.
+      if (this._context.config.outputMode === 'file')
+        filename = dateAsFileName(file.prefix, file.ext);
+    } else {
+      filename = await this._context.outputFile(file.suggestedFilename, { origin: 'llm', title });
     }
-
-    const entry: Result = { text: result.text, data: result.data, title: result.title };
-    if (result.suggestedFilename)
-      entry.filename = await this._context.outputFile(result.suggestedFilename, { origin: 'llm', title: result.title || 'Saved result' });
-
-    this._results.push(entry);
-    return { fileName: entry.filename };
+    this._results.push({ data, title, filename });
   }
 
   addError(error: string) {
@@ -124,14 +119,13 @@ export class Response {
       const text = addSection('Result');
       for (const result of this._results) {
         if (result.filename) {
-          if (result.text !== undefined || result.data)
-            text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
-          if (result.data)
+          text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
+          if (typeof result.data === 'string')
+            await fs.promises.writeFile(result.filename, this._redactText(result.data), 'utf-8');
+          else
             await fs.promises.writeFile(result.filename, result.data);
-          else if (result.text !== undefined)
-            await fs.promises.writeFile(result.filename, this._redactText(result.text));
-        } else if (result.text) {
-          text.push(result.text);
+        } else if (typeof result.data === 'string' && result.data.trim()) {
+          text.push(result.data);
         }
       }
     }
@@ -167,9 +161,9 @@ export class Response {
       if (this._includeSnapshotFileName)
         fileName = await this._context.outputFile(this._includeSnapshotFileName, { origin: 'llm', title: 'Saved snapshot' });
       else if (this._context.config.outputMode === 'file')
-        fileName = await this._context.outputFile(`snapshot-${this._ordinal}.yml`, { origin: 'code', title: 'Saved snapshot' });
+        fileName = await this._context.outputFile(dateAsFileName('snapshot', 'yml'), { origin: 'code', title: 'Saved snapshot' });
       if (fileName) {
-        await fs.promises.writeFile(fileName, tabSnapshot.ariaSnapshot);
+        await fs.promises.writeFile(fileName, tabSnapshot.ariaSnapshot, 'utf-8');
         const text = addSection('Snapshot');
         text.push(`- File: ${rootPath ? path.relative(rootPath, fileName) : fileName}`);
       } else {
