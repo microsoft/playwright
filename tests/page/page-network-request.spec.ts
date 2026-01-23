@@ -207,7 +207,8 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
   }
 });
 
-it('should return postData', async ({ page, server }) => {
+it('should return postData', async ({ page, server, isBidi }) => {
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -217,7 +218,8 @@ it('should return postData', async ({ page, server }) => {
   expect(request.postData()).toBe('{"foo":"bar"}');
 });
 
-it('should work with binary post data', async ({ page, server }) => {
+it('should work with binary post data', async ({ page, server, isBidi }) => {
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -232,7 +234,8 @@ it('should work with binary post data', async ({ page, server }) => {
     expect(buffer[i]).toBe(i);
 });
 
-it('should work with binary post data and interception', async ({ page, server }) => {
+it('should work with binary post data and interception', async ({ page, server, isBidi }) => {
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -275,7 +278,8 @@ it('should get |undefined| with postData() when there is no post data', async ({
   expect(response.request().postData()).toBe(null);
 });
 
-it('should parse the json post data', async ({ page, server }) => {
+it('should parse the json post data', async ({ page, server, isBidi }) => {
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -285,7 +289,8 @@ it('should parse the json post data', async ({ page, server }) => {
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar' });
 });
 
-it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server }) => {
+it('should parse the data if content-type is application/x-www-form-urlencoded', async ({ page, server, isBidi }) => {
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());
   let request = null;
@@ -296,8 +301,9 @@ it('should parse the data if content-type is application/x-www-form-urlencoded',
   expect(request.postDataJSON()).toEqual({ 'foo': 'bar', 'baz': '123' });
 });
 
-it('should parse the data if content-type is application/x-www-form-urlencoded; charset=UTF-8', async ({ page, server }) => {
+it('should parse the data if content-type is application/x-www-form-urlencoded; charset=UTF-8', async ({ page, server, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29872' });
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   const requestPromise = page.waitForRequest('**/post');
   await page.evaluate(() => fetch('./post', {
@@ -315,9 +321,10 @@ it('should get |undefined| with postDataJSON() when there is no post data', asyn
   expect(response.request().postDataJSON()).toBe(null);
 });
 
-it('should return multipart/form-data', async ({ page, server, browserName, browserMajorVersion }) => {
+it('should return multipart/form-data', async ({ page, server, browserName, browserMajorVersion, isBidi }) => {
   it.fixme(browserName === 'webkit', 'File content is missing in WebKit');
   it.skip(browserName === 'chromium' && browserMajorVersion < 126, 'Requires a recent enough protocol');
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
 
   await page.goto(server.EMPTY_PAGE);
   server.setRoute('/post', (req, res) => res.end());

@@ -324,8 +324,9 @@ it('should round-trip har with postData', async ({ contextFactory, server }, tes
   expect(await page2.evaluate(fetchFunction, '4').catch(e => e)).toBeTruthy();
 });
 
-it('should record overridden requests to har', async ({ contextFactory, server }, testInfo) => {
+it('should record overridden requests to har', async ({ contextFactory, server, isBidi }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   server.setRoute('/echo', async (req, res) => {
     const body = await req.postBody;
     res.end(body.toString());

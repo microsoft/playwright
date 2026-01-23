@@ -1036,8 +1036,9 @@ for (const method of ['fulfill', 'continue', 'fallback', 'abort'] as const) {
   });
 }
 
-it('should intercept when postData is more than 1MB', async ({ page, server }) => {
+it('should intercept when postData is more than 1MB', async ({ page, server, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22753' });
+  it.skip(isBidi, 'request.postData is not supported with BiDi');
   await page.goto(server.EMPTY_PAGE);
   let interceptionCallback;
   const interceptionPromise = new Promise(x => interceptionCallback = x);
