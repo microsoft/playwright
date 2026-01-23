@@ -158,7 +158,7 @@ export class Response {
     // Handle modal states.
     if (tabSnapshot?.modalStates.length) {
       const text = addSection('Modal state');
-      text.push(...renderModalStates(tabSnapshot.modalStates));
+      text.push(...renderModalStates(this._context.config, tabSnapshot.modalStates));
     }
 
     // Handle tab snapshot
