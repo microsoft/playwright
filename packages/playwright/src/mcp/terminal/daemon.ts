@@ -29,6 +29,8 @@ import { parseCommand } from './command';
 
 import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
+import type { StructuredResponse } from './program';
+import type { Section } from '../browser/response';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -116,15 +118,11 @@ export async function startMcpDaemonServer(
   });
 }
 
-function formatResult(result: mcp.CallToolResult) {
-  const lines = [];
-  for (const content of result.content) {
-    if (content.type === 'text')
-      lines.push(content.text);
-    else
-      lines.push(`<${content.type} content>`);
-  }
-  return lines.join('\n');
+function formatResult(result: mcp.CallToolResult): StructuredResponse {
+  const isError = result.isError;
+  const text = result.content[0].type === 'text' ? result.content[0].text : undefined;
+  const sections = result.content[0]._meta?.sections as Section[];
+  return { isError, text, sections };
 }
 
 function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: mcp.CallToolRequest['params']['arguments'] } {

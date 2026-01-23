@@ -17,7 +17,6 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
-import path from 'path';
 
 import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
@@ -43,6 +42,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
+      .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .option('--config <path>', 'path to the configuration file.')
       .option('--console-level <level>', 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, '--console-level', ['error', 'warning', 'info', 'debug']))
       .option('--device <device>', 'device to emulate, for example: "iPhone 15"')
@@ -75,7 +75,6 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-agent <ua string>', 'specify user agent string')
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
-      .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
       .action(async options => {
@@ -113,7 +112,6 @@ export function decorateCommand(command: Command, version: string) {
 
         if (options.daemon) {
           config.skillMode = true;
-          config.outputDir = path.join(process.cwd(), '.playwright-cli');
           config.outputMode = 'file';
           config.codegen = 'none';
           config.snapshot.mode = 'full';
@@ -122,7 +120,7 @@ export function decorateCommand(command: Command, version: string) {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',
             version,
-            create: () => new BrowserServerBackend(config, browserContextFactory, { allTools: true })
+            create: () => new BrowserServerBackend(config, browserContextFactory, { allTools: true, structuredOutput: true })
           };
           const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory);
           console.error(`Daemon server listening on ${socketPath}`);

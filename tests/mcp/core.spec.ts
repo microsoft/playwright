@@ -116,7 +116,6 @@ test('browser_select_option', async ({ client, server }) => {
       values: ['bar'],
     },
   })).toHaveResponse({
-    page: undefined,  // Did not change.
     snapshot: `\`\`\`yaml
 - <changed> combobox [ref=e2]:
   - option "Foo"
@@ -149,7 +148,6 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('listbox').selectOption(['bar', 'baz']);`,
-    page: undefined,  // did not change
     snapshot: `\`\`\`yaml
 - <changed> option "Bar" [selected] [ref=e4]
 - <changed> option "Baz" [selected] [ref=e5]

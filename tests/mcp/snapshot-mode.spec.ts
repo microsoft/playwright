@@ -134,7 +134,7 @@ test('should respect snapshot[filename]', async ({ startClient, server }, testIn
     arguments: {
       filename: 'snapshot1.yml',
     },
-  })).toHaveTextResponse(expect.stringContaining('- File: output' + path.sep + 'snapshot1.yml'));
+  })).toHaveTextResponse(expect.stringContaining('output' + path.sep + 'snapshot1.yml'));
 
   expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
 });

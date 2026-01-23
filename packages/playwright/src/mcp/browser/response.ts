@@ -20,6 +20,7 @@ import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates, shouldIncludeMessage } from './tab';
 import { dateAsFileName } from './tools/utils';
+import { scaleImageToFitMessage } from './tools/screenshot';
 
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
@@ -28,17 +29,28 @@ import type { Context } from './context';
 export const requestDebug = debug('pw:mcp:request');
 
 type Result = {
-  data: Buffer | string;
+  text?: string;
+  data?: Buffer;
+  isBase64?: boolean;
   title: string;
-  filename?: string;
+  file?:  {
+    prefix: string;
+    ext: string;
+    suggestedFilename?: string;
+    contentType?: string;
+  };
+};
+
+export type Section = {
+  title: string;
+  content: Result[];
+  isError?: boolean;
 };
 
 export class Response {
-  private _ordinal: number;
   private _results: Result[] = [];
   private _errors: string[] = [];
   private _code: string[] = [];
-  private _images: { contentType: string, data: Buffer }[] = [];
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeSnapshotFileName: string | undefined;
@@ -47,7 +59,6 @@ export class Response {
   readonly toolArgs: Record<string, any>;
 
   private constructor(ordinal: number, context: Context, toolName: string, toolArgs: Record<string, any>) {
-    this._ordinal = ordinal;
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
@@ -59,23 +70,17 @@ export class Response {
     return new Response(++Response._ordinal, context, toolName, toolArgs);
   }
 
-  addTextResult(result: string) {
-    this._results.push({ title: '', data: result });
+  addTextResult(text: string) {
+    this._results.push({ title: '', text });
   }
 
-  async addResult(title: string, data: string | Buffer, file: { prefix: string, ext: string, suggestedFilename?: string }) {
-    let filename: string | undefined;
-    if (!file.suggestedFilename) {
-      // Binary always goes into a file.
-      if (typeof data !== 'string')
-        filename = dateAsFileName(file.prefix, file.ext);
-      // What can go into a file goes into a file in outputMode === file.
-      if (this._context.config.outputMode === 'file')
-        filename = dateAsFileName(file.prefix, file.ext);
-    } else {
-      filename = await this._context.outputFile(file.suggestedFilename, { origin: 'llm', title });
-    }
-    this._results.push({ data, title, filename });
+  async addResult(title: string, data: string | Buffer, file: Result['file']) {
+    this._results.push({
+      text: typeof data === 'string' ? data : undefined,
+      data: typeof data === 'string' ? undefined : data,
+      title,
+      file
+    });
   }
 
   addError(error: string) {
@@ -84,10 +89,6 @@ export class Response {
 
   addCode(code: string) {
     this._code.push(code);
-  }
-
-  addImage(image: { contentType: string, data: Buffer }) {
-    this._images.push(image);
   }
 
   setIncludeSnapshot() {
@@ -99,94 +100,63 @@ export class Response {
     this._includeSnapshotFileName = includeSnapshotFileName;
   }
 
-  async build(): Promise<{ content: (TextContent | ImageContent)[], isError?: boolean }> {
+  async build(): Promise<Section[]> {
     const rootPath = this._context.firstRootPath();
-    const sections: { title: string, content: string[] }[] = [];
-    const addSection = (title: string): string[] => {
-      const section = { title, content: [] as string[] };
+    const sections: Section[] = [];
+    const addSection = (title: string) => {
+      const section = { title, content: [] as Result[], isError: title === 'Error' };
       sections.push(section);
       return section.content;
     };
 
     if (this._errors.length) {
-      const text = addSection('Error');
-      text.push('### Error');
-      text.push(this._errors.join('\n'));
+      const content = addSection('Error');
+      content.push({ text: this._errors.join('\n'), title: 'error' });
     }
 
-    // Results
     if (this._results.length) {
-      const text = addSection('Result');
-      for (const result of this._results) {
-        if (result.filename) {
-          text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, result.filename) : result.filename})`);
-          if (typeof result.data === 'string')
-            await fs.promises.writeFile(result.filename, this._redactText(result.data), 'utf-8');
-          else
-            await fs.promises.writeFile(result.filename, result.data);
-        } else if (typeof result.data === 'string' && result.data.trim()) {
-          text.push(result.data);
-        }
-      }
+      const content = addSection('Result');
+      content.push(...this._results);
     }
+
 
     // Code
     if (this._context.config.codegen !== 'none' && this._code.length) {
-      const text = addSection('Ran Playwright code');
-      text.push(...this._code);
+      const content = addSection('Ran Playwright code');
+      for (const code of this._code)
+        content.push({ text: code, title: 'code' });
     }
 
     // Render tab titles upon changes or when more than one tab.
     const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot() : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
-    if (tabHeaders.some(header => header.changed)) {
+    if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1) {
-        const text = addSection('Open tabs');
-        text.push(...renderTabsMarkdown(tabHeaders));
+        const content = addSection('Open tabs');
+        content.push({ text: renderTabsMarkdown(tabHeaders).join('\n'), title: 'Open tabs' });
       }
 
-      const text = addSection('Page');
-      text.push(...renderTabMarkdown(tabHeaders[0]));
+      const content = addSection('Page');
+      content.push({ text: renderTabMarkdown(tabHeaders[0]).join('\n'), title: 'Page' });
     }
 
     // Handle modal states.
     if (tabSnapshot?.modalStates.length) {
-      const text = addSection('Modal state');
-      text.push(...renderModalStates(this._context.config, tabSnapshot.modalStates));
+      const content = addSection('Modal state');
+      content.push({ text: renderModalStates(this._context.config, tabSnapshot.modalStates).join('\n'), title: 'Modal state' });
     }
 
     // Handle tab snapshot
-    if (tabSnapshot && this._includeSnapshot === 'full') {
-      let fileName: string | undefined;
-      if (this._includeSnapshotFileName)
-        fileName = await this._context.outputFile(this._includeSnapshotFileName, { origin: 'llm', title: 'Saved snapshot' });
-      else if (this._context.config.outputMode === 'file')
-        fileName = await this._context.outputFile(dateAsFileName('snapshot', 'yml'), { origin: 'code', title: 'Saved snapshot' });
-      if (fileName) {
-        await fs.promises.writeFile(fileName, tabSnapshot.ariaSnapshot, 'utf-8');
-        const text = addSection('Snapshot');
-        text.push(`- File: ${rootPath ? path.relative(rootPath, fileName) : fileName}`);
-      } else {
-        const text = addSection('Snapshot');
-        text.push('```yaml');
-        text.push(tabSnapshot.ariaSnapshot);
-        text.push('```');
-      }
-    }
-
-    if (tabSnapshot && this._includeSnapshot === 'incremental') {
-      const text = addSection('Snapshot');
-      text.push('```yaml');
-      if (tabSnapshot.ariaSnapshotDiff !== undefined)
-        text.push(tabSnapshot.ariaSnapshotDiff);
-      else
-        text.push(tabSnapshot.ariaSnapshot);
-      text.push('```');
+    if (tabSnapshot && this._includeSnapshot !== 'none') {
+      const content = addSection('Snapshot');
+      const snapshot = this._includeSnapshot === 'full' ? tabSnapshot.ariaSnapshot : tabSnapshot.ariaSnapshotDiff ?? tabSnapshot.ariaSnapshot;
+      content.push({ text: snapshot, title: 'snapshot', file: { prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName } });
     }
 
     // Handle tab log
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
-      const text = addSection('Events');
+      const content = addSection('Events');
+      const text: string[] = [];
       for (const event of tabSnapshot.events) {
         if (event.type === 'console') {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
@@ -197,39 +167,9 @@ export class Response {
           text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${rootPath ? path.relative(rootPath, event.download.outputFile) : event.download.outputFile}"`);
         }
       }
+      content.push({ text: text.join('\n'), title: 'events' });
     }
-
-    const allText = sections.flatMap(section => {
-      const content: string[] = [];
-      content.push(`### ${section.title}`);
-      content.push(...section.content);
-      content.push('');
-      return content;
-    }).join('\n');
-
-    const content: (TextContent | ImageContent)[] = [
-      {
-        type: 'text',
-        text: this._redactText(allText)
-      },
-    ];
-
-    // Image attachments.
-    if (this._context.config.imageResponses !== 'omit') {
-      for (const image of this._images)
-        content.push({ type: 'image', data: image.data.toString('base64'), mimeType: image.contentType });
-    }
-
-    return {
-      content,
-      ...this._errors.length > 0 ? { isError: true } : {},
-    };
-  }
-
-  private _redactText(text: string): string {
-    for (const [secretName, secretValue] of Object.entries(this._context.config.secrets ?? {}))
-      text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
-    return text;
+    return sections;
   }
 }
 
@@ -274,6 +214,76 @@ function parseSections(text: string): Map<string, string> {
   }
 
   return sections;
+}
+
+export async function serializeResponse(context: Context, sections: Section[], rootPath?: string): Promise<CallToolResult> {
+  const redactText = (text: string): string => {
+    for (const [secretName, secretValue] of Object.entries(context.config.secrets ?? {}))
+      text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
+    return text;
+  };
+
+  const text: string[] = [];
+  for (const section of sections) {
+    text.push(`### ${section.title}`);
+    for (const result of section.content) {
+      if (!result.file) {
+        if (result.text !== undefined)
+          text.push(result.text);
+        continue;
+      }
+
+      if (result.file.suggestedFilename || context.config.outputMode === 'file' || result.data) {
+        const generatedFileName = await context.outputFile(dateAsFileName(result.file.prefix, result.file.ext), { origin: 'code', title: section.title });
+        const fileName = result.file.suggestedFilename ? await context.outputFile(result.file.suggestedFilename, { origin: 'llm', title: section.title }) : generatedFileName;
+        text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, fileName) : fileName})`);
+        if (result.data)
+          await fs.promises.writeFile(fileName, result.data, 'utf-8');
+        else
+          await fs.promises.writeFile(fileName, result.text!);
+      } else {
+        if (result.file.ext === 'yml')
+          text.push(`\`\`\`yaml\n${result.text!}\n\`\`\``);
+        else
+          text.push(result.text!);
+      }
+    }
+  }
+  const content: (TextContent | ImageContent)[] = [
+    {
+      type: 'text',
+      text: redactText(text.join('\n')),
+    }
+  ];
+
+  // Image attachments.
+  if (context.config.imageResponses !== 'omit') {
+    for (const result of sections.flatMap(section => section.content).filter(result => result.file?.contentType)) {
+      const scaledData = scaleImageToFitMessage(result.data as Buffer, result.file!.contentType === 'image/png' ? 'png' : 'jpeg');
+      content.push({ type: 'image', data: scaledData.toString('base64'), mimeType: result.file!.contentType! });
+    }
+  }
+
+  return {
+    content,
+    ...(sections.some(section => section.isError) ? { isError: true } : {}),
+  };
+}
+
+export async function serializeStructuredResponse(sections: Section[]): Promise<CallToolResult> {
+  for (const section of sections) {
+    for (const result of section.content) {
+      if (!result.data)
+        continue;
+      result.isBase64 = true;
+      result.text = result.data.toString('base64');
+      result.data = undefined;
+    }
+  }
+  return {
+    content: [{ type: 'text' as const, text: '', _meta: { sections } }],
+    isError: sections.some(section => section.isError),
+  };
 }
 
 export function parseResponse(response: CallToolResult) {
