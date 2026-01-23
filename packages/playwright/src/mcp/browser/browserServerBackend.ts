@@ -17,7 +17,7 @@
 import { FullConfig } from './config';
 import { Context } from './context';
 import { logUnhandledError } from '../log';
-import { Response } from './response';
+import { Response, serializeResponse, serializeStructuredResponse } from './response';
 import { SessionLog } from './sessionLog';
 import { browserTools, filteredTools } from './tools';
 import { toMcpTool } from '../sdk/tool';
@@ -33,11 +33,13 @@ export class BrowserServerBackend implements ServerBackend {
   private _sessionLog: SessionLog | undefined;
   private _config: FullConfig;
   private _browserContextFactory: BrowserContextFactory;
+  private _isStructuredOutput: boolean;
 
-  constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean } = {}) {
+  constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean, structuredOutput?: boolean } = {}) {
     this._config = config;
     this._browserContextFactory = factory;
     this._tools = options.allTools ? browserTools : filteredTools(config);
+    this._isStructuredOutput = options.structuredOutput ?? false;
   }
 
   async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {
@@ -69,7 +71,11 @@ export class BrowserServerBackend implements ServerBackend {
     let responseObject: mcpServer.CallToolResult;
     try {
       await tool.handle(context, parsedArguments, response);
-      responseObject = await response.build();
+      const sections = await response.build();
+      if (this._isStructuredOutput)
+        responseObject = await serializeStructuredResponse(sections);
+      else
+        responseObject = await serializeResponse(context, sections, context.firstRootPath());
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
       return {

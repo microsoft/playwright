@@ -115,12 +115,12 @@ export function loadAttachments(output: string) {
 }
 
 export async function loadSnapshot(output: string) {
-  const match = output.match(/- File: (.+)/m);
-  if (!match)
+  const lines = output.split('\n');
+  if (!lines.includes('### Snapshot'))
     throw new Error('Snapshot file not found');
-  const snapshotPath = match[1];
-  const fileName = test.info().outputPath(snapshotPath);
-  return await fs.promises.readFile(fileName, 'utf8');
+  const fileLine = lines[lines.indexOf('### Snapshot') + 1];
+  const fileName = fileLine.match(/- \[(.+)\]\((.+)\)/)![2];
+  return await fs.promises.readFile(test.info().outputPath(fileName), 'utf8');
 }
 
 export const eventsPage = `<!DOCTYPE html>

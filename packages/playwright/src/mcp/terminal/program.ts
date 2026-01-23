@@ -28,6 +28,13 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 
 import type { SpawnOptions } from 'child_process';
+import type { Section } from '../browser/response';
+
+export type StructuredResponse = {
+  isError?: boolean;
+  text?: string;
+  sections: Section[];
+};
 
 const debugCli = debug('pw:cli');
 
@@ -44,7 +51,7 @@ class Session {
     this._connection.onclose = () => this.close();
   }
 
-  async run(args: any): Promise<string> {
+  async run(args: any) {
     return await this._send('run', { args });
   }
 
@@ -113,7 +120,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     const session = await this._connect(sessionName);
     const result = await session.run(args);
-    console.log(result);
+    await printResponse(result);
     session.close();
   }
 
@@ -340,4 +347,70 @@ export async function program(options: { version: string }) {
   }
 
   await sessionManager.run(args);
+}
+
+export async function printResponse(response: StructuredResponse) {
+  const { sections } = response;
+  if (!sections) {
+    console.log('### Error\n' + response.text);
+    return;
+  }
+
+  const text: string[] = [];
+  for (const section of sections) {
+    text.push(`### ${section.title}`);
+    for (const result of section.content) {
+      if (!result.file) {
+        if (result.text !== undefined)
+          text.push(result.text);
+        continue;
+      }
+
+      const generatedFileName = await outputFile(dateAsFileName(result.file.prefix, result.file.ext), { origin: 'code' });
+      const fileName = result.file.suggestedFilename ? await outputFile(result.file.suggestedFilename, { origin: 'llm' }) : generatedFileName;
+      text.push(`- [${result.title}](${path.relative(process.cwd(), fileName)})`);
+      if (result.data)
+        await fs.promises.writeFile(fileName, result.data);
+      else if (result.isBase64)
+        await fs.promises.writeFile(fileName, Buffer.from(result.text!, 'base64'));
+      else
+        await fs.promises.writeFile(fileName, result.text!);
+    }
+  }
+  console.log(text.join('\n'));
+}
+
+function dateAsFileName(prefix: string, extension: string): string {
+  const date = new Date();
+  return `${prefix}-${date.toISOString().replace(/[:.]/g, '-')}.${extension}`;
+}
+
+const outputDir = path.join(process.cwd(), '.playwright-cli');
+
+async function outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
+  await fs.promises.mkdir(outputDir, { recursive: true });
+
+  // Trust code.
+  if (options.origin === 'code')
+    return path.resolve(outputDir, fileName);
+
+  // Trust llm to use valid characters in file names.
+  if (options.origin === 'llm') {
+    fileName = fileName.split('\\').join('/');
+    const resolvedFile = path.resolve(outputDir, fileName);
+    if (!resolvedFile.startsWith(path.resolve(outputDir) + path.sep))
+      throw new Error(`Resolved file path ${resolvedFile} is outside of the output directory ${outputDir}. Use relative file names to stay within the output directory.`);
+    return resolvedFile;
+  }
+
+  // Do not trust web, at all.
+  return path.join(outputDir, sanitizeForFilePath(fileName));
+}
+
+function sanitizeForFilePath(s: string) {
+  const sanitize = (s: string) => s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+  const separator = s.lastIndexOf('.');
+  if (separator === -1)
+    return sanitize(s);
+  return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
 }
