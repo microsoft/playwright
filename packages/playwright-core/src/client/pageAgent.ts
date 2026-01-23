@@ -22,7 +22,6 @@ import { Page } from './page';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
-// @ts-expect-error runAgents is hidden
 export class PageAgent extends ChannelOwner<channels.PageAgentChannel> implements api.PageAgent {
   private _page: Page;
   _expectTimeout?: number;

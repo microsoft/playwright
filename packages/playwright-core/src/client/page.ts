@@ -847,7 +847,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  // @ts-expect-error agents are hidden
   async agent(options: Parameters<api.Page['agent']>[0] = {}) {
     const params: channels.PageAgentParams = {
       api: options.provider?.api,
@@ -862,7 +861,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       maxTokens: options.limits?.maxTokens,
       maxActions: options.limits?.maxActions,
       maxActionRetries: options.limits?.maxActionRetries,
-      // @ts-expect-error runAgents is hidden
       secrets: options.secrets ? Object.entries(options.secrets).map(([name, value]) => ({ name, value })) : undefined,
       systemPrompt: options.systemPrompt,
     };

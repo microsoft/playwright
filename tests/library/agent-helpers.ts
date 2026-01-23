@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { browserTest as test } from '../config/browserTest';
-// @ts-expect-error
 import type { BrowserContext, Page, PageAgent } from '@playwright/test';
 
 export function cacheFile() {
@@ -33,14 +32,12 @@ export async function setCacheObject(object: any) {
   await fs.promises.writeFile(cacheFile(), JSON.stringify(object, null, 2), 'utf8');
 }
 
-// @ts-expect-error
 type AgentOptions = Parameters<Page['agent']>[0];
 
 export async function generateAgent(context: BrowserContext, options: AgentOptions = {}) {
   const apiCacheFile = path.join(__dirname, '__llm_cache__', sanitizeFileName(test.info().titlePath.join(' ')) + '.json');
 
   const page = await context.newPage();
-  // @ts-expect-error
   const agent = await page.agent({
     provider: {
       api: 'anthropic' as const,
@@ -60,7 +57,6 @@ export async function generateAgent(context: BrowserContext, options: AgentOptio
 
 export async function runAgent(context: BrowserContext, options: AgentOptions = {}) {
   const page = await context.newPage();
-  // @ts-expect-error
   const agent = await page.agent({
     ...options,
     cache: { cacheFile: cacheFile() },

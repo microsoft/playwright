@@ -106,7 +106,6 @@ Base directory for all relative paths used in the reporters.
 
 ## property: FullConfig.runAgents
 * since: v1.58
-* hidden
 - type: <['RunAgentsMode]<"all"|"missing"|"none">>
 
 Whether to run LLM agent for [PageAgent]:
