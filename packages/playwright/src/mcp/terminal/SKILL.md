@@ -18,9 +18,8 @@ playwright-cli press Enter
 ## Core workflow
 
 1. Navigate: `playwright-cli open https://example.com`
-2. Snapshot: `playwright-cli snapshot` (returns elements with refs like `ref=e1`, `ref=e2`)
-3. Interact using refs from the snapshot
-4. Re-snapshot after navigation or significant DOM changes
+2. Interact using refs from the snapshot
+3. Re-snapshot after significant changes
 
 ## Commands
 
