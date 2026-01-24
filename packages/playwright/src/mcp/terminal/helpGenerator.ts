@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { commands } from './commands';
 
 import type zodType from 'zod';
@@ -77,7 +75,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'session', title: 'Sessions' },
 ] as const;
 
-function generateHelp() {
+export function generateHelp() {
   const lines: string[] = [];
   lines.push('Usage: playwright-cli <command> [args] [options]');
 
@@ -99,7 +97,7 @@ function generateHelp() {
 }
 
 
-function generateReadme() {
+export function generateReadme() {
   const lines: string[] = [];
   lines.push('\n## Commands');
 
@@ -136,27 +134,17 @@ function generateReadmeEntry(command: AnyCommandSchema): string {
   return formatWithGap(prefix, suffix, 40);
 }
 
-async function main() {
+export function generateHelpJSON() {
   const help = {
     global: generateHelp(),
     commands: Object.fromEntries(
         Object.entries(commands).map(([name, command]) => [name, generateCommandHelp(command)])
     ),
   };
-  const readme = generateReadme();
-  const fileName = path.resolve(__dirname, 'help.json').replace('lib', 'src');
-  // eslint-disable-next-line no-console
-  console.log('Writing ', path.relative(process.cwd(), fileName));
-  await fs.promises.writeFile(fileName, JSON.stringify(help, null, 2));
-  // eslint-disable-next-line no-console
-  console.log(help.global);
-  // eslint-disable-next-line no-console
-  console.log(readme);
+  return help;
 }
 
 function formatWithGap(prefix: string, text: string, threshold: number = 30) {
   const indent = Math.max(1, threshold - prefix.length);
   return prefix + ' '.repeat(indent) + text;
 }
-
-void main();

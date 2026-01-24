@@ -19,6 +19,7 @@ drivers/
 nohup.out
 .trace
 .tmp
+.playwright-cli
 allure*
 blob-report
 playwright-report
