@@ -391,7 +391,10 @@ export class WorkerMain extends ProcessRunner {
         await this._runEachHooksForSuites(suites, 'beforeEach', testInfo);
 
         // Setup fixtures required by the test.
-        testFunctionParams = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
+        const params = await this._fixtureRunner.resolveParametersForFunction(test.fn, testInfo, 'test', { type: 'test' });
+        if (params !== null)
+          testFunctionParams = params.result;
+
       });
 
       if (testFunctionParams === null) {
