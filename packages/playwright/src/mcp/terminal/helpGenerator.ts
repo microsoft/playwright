@@ -80,6 +80,7 @@ const categories: { name: Category, title: string }[] = [
 function generateHelp() {
   const lines: string[] = [];
   lines.push('Usage: playwright-cli <command> [args] [options]');
+
   const commandsByCategory = new Map<string, AnyCommandSchema[]>();
   for (const c of categories)
     commandsByCategory.set(c.name, []);
@@ -97,11 +98,42 @@ function generateHelp() {
   return lines.join('\n');
 }
 
+
+function generateReadme() {
+  const lines: string[] = [];
+  lines.push('\n## Commands');
+
+  const commandsByCategory = new Map<string, AnyCommandSchema[]>();
+  for (const c of categories)
+    commandsByCategory.set(c.name, []);
+  for (const command of Object.values(commands))
+    commandsByCategory.get(command.category)!.push(command);
+
+  for (const c of categories) {
+    const cc = commandsByCategory.get(c.name)!;
+    if (!cc.length)
+      continue;
+    lines.push(`\n### ${c.title}\n`);
+    lines.push('```bash');
+    for (const command of cc)
+      lines.push(generateReadmeEntry(command));
+    lines.push('```');
+  }
+  return lines.join('\n');
+}
+
 function generateHelpEntry(command: AnyCommandSchema): string {
   const args = commandArgs(command);
   const prefix = `  ${command.name} ${commandArgsText(args)}`;
   const suffix = command.description.toLowerCase();
   return formatWithGap(prefix, suffix);
+}
+
+function generateReadmeEntry(command: AnyCommandSchema): string {
+  const args = commandArgs(command);
+  const prefix = `playwright-cli ${command.name} ${commandArgsText(args)}`;
+  const suffix = '# ' + command.description.toLowerCase();
+  return formatWithGap(prefix, suffix, 40);
 }
 
 async function main() {
@@ -111,16 +143,19 @@ async function main() {
         Object.entries(commands).map(([name, command]) => [name, generateCommandHelp(command)])
     ),
   };
+  const readme = generateReadme();
   const fileName = path.resolve(__dirname, 'help.json').replace('lib', 'src');
   // eslint-disable-next-line no-console
   console.log('Writing ', path.relative(process.cwd(), fileName));
   await fs.promises.writeFile(fileName, JSON.stringify(help, null, 2));
   // eslint-disable-next-line no-console
   console.log(help.global);
+  // eslint-disable-next-line no-console
+  console.log(readme);
 }
 
-function formatWithGap(prefix: string, text: string) {
-  const indent = Math.max(1, 30 - prefix.length);
+function formatWithGap(prefix: string, text: string, threshold: number = 30) {
+  const indent = Math.max(1, threshold - prefix.length);
   return prefix + ' '.repeat(indent) + text;
 }
 
