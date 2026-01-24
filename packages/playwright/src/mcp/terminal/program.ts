@@ -295,16 +295,7 @@ const socketDirHash = (() => {
 })();
 
 const daemonSocketDir = (() => {
-  let localCacheDir: string | undefined;
-  if (process.platform === 'linux')
-    localCacheDir = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-  if (process.platform === 'darwin')
-    localCacheDir = path.join(os.homedir(), 'Library', 'Caches');
-  if (process.platform === 'win32')
-    localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-  if (!localCacheDir)
-    throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon', 'daemon', socketDirHash);
+  return path.join(os.tmpdir(), 'ms-playwright', 'daemon', 'daemon', socketDirHash);
 })();
 
 function spawnDaemon(socketPath: string, userDataDir: string, options: SpawnOptions) {
