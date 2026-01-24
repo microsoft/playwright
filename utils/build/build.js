@@ -551,6 +551,15 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
   }));
 }
 
+// Generate CLI help.
+onChanges.push({
+  inputs: [
+    'packages/playwright/src/mcp/terminal/commands.ts',
+    'utils/generate_cli_help.js',
+  ],
+  script: 'utils/generate_cli_help.js',
+});
+
 // Generate injected.
 onChanges.push({
   inputs: [
@@ -632,12 +641,6 @@ copyFiles.push({
 
 copyFiles.push({
   files: 'packages/playwright/src/agents/*.yml',
-  from: 'packages/playwright/src',
-  to: 'packages/playwright/lib',
-});
-
-copyFiles.push({
-  files: 'packages/playwright/src/mcp/terminal/*.json',
   from: 'packages/playwright/src',
   to: 'packages/playwright/lib',
 });
