@@ -291,7 +291,7 @@ async function handleSessionCommand(sessionManager: SessionManager, args: any): 
 const socketDirHash = (() => {
   const hash = crypto.createHash('sha1');
   hash.update(require.resolve('../../../package.json'));
-  return hash.digest('hex');
+  return hash.digest('hex').substring(0, 16);
 })();
 
 const daemonSocketDir = (() => {
@@ -304,7 +304,7 @@ const daemonSocketDir = (() => {
     localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   if (!localCacheDir)
     throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon', 'daemon', socketDirHash);
+  return path.join(localCacheDir, 'ms-playwright', 'daemon', socketDirHash);
 })();
 
 function spawnDaemon(socketPath: string, userDataDir: string, options: SpawnOptions) {
