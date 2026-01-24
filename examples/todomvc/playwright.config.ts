@@ -3,7 +3,7 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ quiet: true });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
