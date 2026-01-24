@@ -276,6 +276,13 @@ function allRootPaths(clientInfo: ClientInfo): string[] {
 
 
 function originOrHostGlob(originOrHost: string) {
+  // Support wildcard port patterns like "http://localhost:*" or "https://example.com:*"
+  const wildcardPortMatch = originOrHost.match(/^(https?):\/\/([^/:]+):\*$/);
+  if (wildcardPortMatch) {
+    const [, protocol, hostname] = wildcardPortMatch;
+    return `${protocol}://${hostname}:*/**`;
+  }
+
   try {
     const url = new URL(originOrHost);
     // localhost:1234 will parse as protocol 'localhost:' and 'null' origin.
