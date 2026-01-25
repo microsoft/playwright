@@ -142,6 +142,16 @@ export class Suite extends Base {
     path.push(...this._tags);
   }
 
+  _collectTagTitlePath(path: string[]) {
+    // Only collect titles from describe blocks for tag extraction.
+    // Skip file/project/root titles to avoid parsing file names as tags.
+    if (this.parent?._type === 'describe')
+      this.parent._collectTagTitlePath(path);
+    if (this._type === 'describe')
+      path.push(this.title);
+    path.push(...this._tags);
+  }
+
   _getOnlyItems(): (TestCase | Suite)[] {
     const items: (TestCase | Suite)[] = [];
     if (this._only)
@@ -289,7 +299,11 @@ export class TestCase extends Base implements reporterTypes.TestCase {
   }
 
   get tags(): string[] {
-    const titleTags = this._grepBaseTitlePath().join(' ').match(/@[\S]+/g) || [];
+    // Only extract inline tags from describe blocks and test title, not from file/project/root titles.
+    const path: string[] = [];
+    this.parent._collectTagTitlePath(path);
+    path.push(this.title);
+    const titleTags = path.join(' ').match(/@[\S]+/g) || [];
 
     return [
       ...titleTags,
