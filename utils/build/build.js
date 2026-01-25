@@ -555,6 +555,7 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
 onChanges.push({
   inputs: [
     'packages/playwright/src/mcp/terminal/commands.ts',
+    'packages/playwright/src/mcp/terminal/helpGenerator.ts',
     'utils/generate_cli_help.js',
   ],
   script: 'utils/generate_cli_help.js',

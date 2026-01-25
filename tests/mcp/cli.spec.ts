@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { test, expect, eventsPage } from './cli-fixtures';
-
-test.skip(({}) => process.platform === 'win32');
 
 test.describe('help', () => {
   test('prints help by default', async ({ cli }) => {
@@ -31,7 +30,7 @@ test.describe('help', () => {
 });
 
 test.describe('core', () => {
-  test('open', async ({ cli, daemon, server }) => {
+  test('open', async ({ cli, server }) => {
     const { output, snapshot } = await cli('open', server.HELLO_WORLD);
     expect(output).toContain(`### Page
 - Page URL: ${server.HELLO_WORLD}
@@ -40,13 +39,13 @@ test.describe('core', () => {
     expect(snapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
   });
 
-  test('close', async ({ cli, daemon, server }) => {
+  test('close', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('close');
     expect(output).toContain(`No open tabs. Navigate to a URL to create one.`);
   });
 
-  test('click button', async ({ cli, daemon, server }) => {
+  test('click button', async ({ cli, server }) => {
     server.setContent('/', `<button>Submit</button>`, 'text/html');
 
     const { snapshot } = await cli('open', server.PREFIX);
@@ -56,7 +55,7 @@ test.describe('core', () => {
     expect(clickSnapshot).toBeTruthy();
   });
 
-  test('click link', async ({ cli, daemon, server }) => {
+  test('click link', async ({ cli, server }) => {
     server.setContent('/', `<a href="/hello-world">Hello, world!</a>`, 'text/html');
 
     const { snapshot } = await cli('open', server.PREFIX);
@@ -69,14 +68,14 @@ test.describe('core', () => {
     expect(clickSnapshot).toContain('Hello, world!');
   });
 
-  test('dblclick', async ({ cli, daemon, server }) => {
+  test('dblclick', async ({ cli, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
     const { snapshot } = await cli('dblclick', 'e2');
     expect(snapshot).toContain('dblclick 0');
   });
 
-  test('type', async ({ cli, daemon, server }) => {
+  test('type', async ({ cli, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     const { snapshot } = await cli('open', server.PREFIX);
     expect(snapshot).toContain(`- textbox [ref=e2]`);
@@ -85,7 +84,7 @@ test.describe('core', () => {
     expect(typeSnapshot).toBe(`- textbox [ref=e2]`);
   });
 
-  test('fill', async ({ cli, daemon, server }) => {
+  test('fill', async ({ cli, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     const { snapshot } = await cli('open', server.PREFIX);
     expect(snapshot).toContain(`- textbox [ref=e2]`);
@@ -94,7 +93,7 @@ test.describe('core', () => {
     expect(fillSnapshot).toBe(`- textbox [active] [ref=e2]: Hello, world!`);
   });
 
-  test('hover', async ({ cli, daemon, server }) => {
+  test('hover', async ({ cli, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
     await cli('hover', 'e2');
@@ -102,7 +101,7 @@ test.describe('core', () => {
     expect(snapshot).toContain('mouse move 50 50');
   });
 
-  test('select', async ({ cli, daemon, server }) => {
+  test('select', async ({ cli, server }) => {
     server.setContent('/', `<select><option value="1">One</option><option value="2">Two</option></select>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('select', 'e2', 'Two');
@@ -110,42 +109,44 @@ test.describe('core', () => {
     expect(snapshot).toContain('- option "Two" [selected]');
   });
 
-  test('check', async ({ cli, daemon, server }) => {
+  test('check', async ({ cli, server, mcpBrowser }) => {
+    const active = mcpBrowser === 'webkit' && process.platform === 'darwin' ? '' : '[active] ';
     server.setContent('/', `<input type="checkbox">`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('check', 'e2');
     const { snapshot } = await cli('snapshot');
-    expect(snapshot).toContain('- checkbox [checked] [active] [ref=e2]');
+    expect(snapshot).toContain(`- checkbox [checked] ${active}[ref=e2]`);
   });
 
-  test('uncheck', async ({ cli, daemon, server }) => {
+  test('uncheck', async ({ cli, server, mcpBrowser }) => {
+    const active = mcpBrowser === 'webkit' && process.platform === 'darwin' ? '' : '[active] ';
     server.setContent('/', `<input type="checkbox" checked>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('uncheck', 'e2');
     const { snapshot } = await cli('snapshot');
-    expect(snapshot).toContain('- checkbox [active] [ref=e2]');
+    expect(snapshot).toContain(`- checkbox ${active}[ref=e2]`);
   });
 
-  test('eval', async ({ cli, daemon, server }) => {
+  test('eval', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('eval', '() => document.title');
     expect(output).toContain('"Title"');
   });
 
-  test('eval no arrow', async ({ cli, daemon, server }) => {
+  test('eval no arrow', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('eval', 'document.title');
     expect(output).toContain('"Title"');
   });
 
-  test('eval <ref>', async ({ cli, daemon, server }) => {
+  test('eval <ref>', async ({ cli, server }) => {
     server.setContent('/', `<button>Submit</button>`, 'text/html');
     await cli('open', server.PREFIX);
     const { output } = await cli('eval', 'element => element.nodeName', 'e2');
     expect(output).toContain('"BUTTON"');
   });
 
-  test('dialog-accept', async ({ cli, daemon, server }) => {
+  test('dialog-accept', async ({ cli, server }) => {
     server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
     await cli('open', server.PREFIX);
     const { output } = await cli('click', 'e2');
@@ -156,7 +157,7 @@ test.describe('core', () => {
     expect(snapshot).not.toContain('MyAlert');
   });
 
-  test('dialog-dismiss', async ({ cli, daemon, server }) => {
+  test('dialog-dismiss', async ({ cli, server }) => {
     server.setContent('/', `<button onclick="alert('MyAlert')">Button</button>`, 'text/html');
     await cli('open', server.PREFIX);
     const { output } = await cli('click', 'e2');
@@ -166,7 +167,7 @@ test.describe('core', () => {
     expect(snapshot).not.toContain('MyAlert');
   });
 
-  test('dialog-accept <prompt>', async ({ cli, daemon, server }) => {
+  test('dialog-accept <prompt>', async ({ cli, server }) => {
     server.setContent('/', `<button onclick="document.body.textContent = prompt('MyAlert')">Button</button>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('click', 'e2');
@@ -175,7 +176,7 @@ test.describe('core', () => {
     expect(snapshot).toContain('my reply');
   });
 
-  test('resize', async ({ cli, daemon, server }) => {
+  test('resize', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('resize', '480', '320');
     const { output } = await cli('eval', '() => window.innerWidth + "x" + window.innerHeight');
@@ -184,7 +185,7 @@ test.describe('core', () => {
 });
 
 test.describe('navigation', () => {
-  test('go-back', async ({ cli, daemon, server }) => {
+  test('go-back', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     await cli('open', server.PREFIX);
     const { output } = await cli('go-back');
@@ -193,7 +194,7 @@ test.describe('navigation', () => {
 - Page Title: Title`);
   });
 
-  test('go-forward', async ({ cli, daemon, server }) => {
+  test('go-forward', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('open', server.HELLO_WORLD);
     await cli('go-back');
@@ -205,7 +206,7 @@ test.describe('navigation', () => {
 });
 
 test.describe('keyboard', () => {
-  test('press', async ({ cli, daemon, server }) => {
+  test('press', async ({ cli, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('click', 'e2');
@@ -214,7 +215,7 @@ test.describe('keyboard', () => {
     expect(snapshot).toBe(`- textbox [active] [ref=e2]: h`);
   });
 
-  test('keydown keyup', async ({ cli, daemon, server }) => {
+  test('keydown keyup', async ({ cli, server }) => {
     server.setContent('/', `<input type=text>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('click', 'e2');
@@ -226,7 +227,7 @@ test.describe('keyboard', () => {
 });
 
 test.describe('mouse', () => {
-  test('mousemove', async ({ cli, daemon, server }) => {
+  test('mousemove', async ({ cli, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
     await cli('mousemove', '45', '35');
@@ -234,7 +235,7 @@ test.describe('mouse', () => {
     expect(snapshot).toContain('mouse move 45 35');
   });
 
-  test('mousedown mouseup', async ({ cli, daemon, server }) => {
+  test('mousedown mouseup', async ({ cli, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
     await cli('mousemove', '45', '35');
@@ -245,9 +246,14 @@ test.describe('mouse', () => {
     expect(snapshot).toContain('mouse up');
   });
 
-  test('mousewheel', async ({ cli, daemon, server }) => {
+  test('mousewheel', async ({ cli, server }) => {
     server.setContent('/', eventsPage, 'text/html');
     await cli('open', server.PREFIX);
+    // click to focus
+    await cli('mousemove', '50', '50');
+    await cli('mousedown');
+    await cli('mouseup');
+
     await cli('mousewheel', '10', '5');
     const { snapshot } = await cli('snapshot');
     expect(snapshot).toContain('wheel 5 10');
@@ -256,14 +262,14 @@ test.describe('mouse', () => {
 
 
 test.describe('save as', () => {
-  test('screenshot', async ({ cli, daemon, server, mcpBrowser }) => {
+  test('screenshot', async ({ cli, server, mcpBrowser }) => {
     await cli('open', server.HELLO_WORLD);
     const { attachments } = await cli('screenshot');
     expect(attachments[0].name).toEqual('Screenshot of viewport');
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
 
-  test('screenshot <ref>', async ({ cli, daemon, server, mcpBrowser }) => {
+  test('screenshot <ref>', async ({ cli, server, mcpBrowser }) => {
     server.setContent('/', `<div id="square" style="width: 100px; height: 100px; background-color: red;"></div>`, 'text/html');
     await cli('open', server.PREFIX);
     const { attachments } = await cli('screenshot', 'e2');
@@ -271,14 +277,14 @@ test.describe('save as', () => {
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
 
-  test('screenshot --full-page', async ({ cli, daemon, server, mcpBrowser }) => {
+  test('screenshot --full-page', async ({ cli, server, mcpBrowser }) => {
     await cli('open', server.HELLO_WORLD);
     const { attachments } = await cli('screenshot', '--full-page');
     expect(attachments[0].name).toEqual('Screenshot of full page');
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
 
-  test('pdf', async ({ cli, daemon, server, mcpBrowser }) => {
+  test('pdf', async ({ cli, server, mcpBrowser }) => {
     test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
     await cli('open', server.HELLO_WORLD);
     const { attachments } = await cli('pdf');
@@ -288,7 +294,7 @@ test.describe('save as', () => {
 });
 
 test.describe('devtools', () => {
-  test('console', async ({ cli, daemon, server }) => {
+  test('console', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('eval', 'console.log("Hello, world!")');
     const { attachments } = await cli('console');
@@ -296,7 +302,7 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).toContain('Hello, world!');
   });
 
-  test('console error', async ({ cli, daemon, server }) => {
+  test('console error', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('eval', 'console.log("log-level")');
     await cli('eval', 'console.error("error-level")');
@@ -306,7 +312,7 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).toContain('error-level');
   });
 
-  test('console --clear', async ({ cli, daemon, server }) => {
+  test('console --clear', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('eval', 'console.log("log-level")');
     await cli('console', '--clear');
@@ -315,7 +321,7 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).not.toContain('log-level');
   });
 
-  test('network', async ({ cli, daemon, server }) => {
+  test('network', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('eval', '() => fetch("/hello-world")');
     const { attachments } = await cli('network');
@@ -324,14 +330,14 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).toContain(`[GET] ${`${server.PREFIX}/hello-world`} => [200] OK`);
   });
 
-  test('network --static', async ({ cli, daemon, server }) => {
+  test('network --static', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     const { attachments } = await cli('network', '--static');
     expect(attachments[0].name).toEqual('Network');
     expect(attachments[0].data.toString()).toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
   });
 
-  test('network --clear', async ({ cli, daemon, server }) => {
+  test('network --clear', async ({ cli, server }) => {
     await cli('open', server.PREFIX);
     await cli('eval', '() => fetch("/hello-world")');
     await cli('network', '--clear');
@@ -340,18 +346,135 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).not.toContain(`[GET] ${`${server.PREFIX}/hello-world`} => [200] OK`);
   });
 
-  test('run-code', async ({ cli, daemon, server }) => {
+  test('run-code', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('run-code', '() => page.title()');
     expect(output).toContain('"Title"');
   });
 
-  test('tracing-start-stop', async ({ cli, daemon, server }) => {
+  test('tracing-start-stop', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('tracing-start');
     expect(output).toContain('Tracing started, saving to');
     await cli('eval', '() => fetch("/hello-world")');
     const { output: tracingStopOutput } = await cli('tracing-stop');
     expect(tracingStopOutput).toContain('Tracing stopped.');
+  });
+});
+
+test.describe('config', () => {
+  test('user-data-dir', async ({ cli, server }, testInfo) => {
+    const config = {
+      browser: {
+        userDataDir: testInfo.outputPath('my-data-dir'),
+      },
+    };
+    await fs.promises.writeFile(testInfo.outputPath('config.json'), JSON.stringify(config, null, 2));
+    await cli('open', `--config=config.json`, server.PREFIX);
+    expect(fs.existsSync(testInfo.outputPath('my-data-dir'))).toBe(true);
+  });
+
+  test('context options', async ({ cli, server }, testInfo) => {
+    const config = {
+      browser: {
+        contextOptions: {
+          viewport: { width: 800, height: 600 },
+        },
+      },
+    };
+    await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+    await cli('open', server.PREFIX);
+    const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+    expect(output).toContain('800x600');
+  });
+
+  test('isolated', async ({ cli, server }, testInfo) => {
+    const config = {
+      browser: {
+        isolated: true,
+      },
+    };
+    await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+    await cli('open', server.PREFIX);
+    expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
+  });
+});
+
+test.describe('session', () => {
+  test('session-list', async ({ cli, server }) => {
+    const { output: emptyOutput } = await cli('session-list');
+    expect(emptyOutput).toContain('Sessions:');
+    expect(emptyOutput).toContain('(no sessions)');
+
+    await cli('open', server.HELLO_WORLD);
+
+    const { output: listOutput } = await cli('session-list');
+    expect(listOutput).toContain('Sessions:');
+    expect(listOutput).toContain('default (live)');
+  });
+
+  test('session-stop', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+
+    const { output } = await cli('session-stop');
+    expect(output).toContain(`Session 'default' stopped.`);
+
+    const { output: listOutput } = await cli('session-list');
+    expect(listOutput).not.toContain('(live)');
+  });
+
+  test('session-stop named session', async ({ cli, server }) => {
+    await cli('open', '--session=mysession', server.HELLO_WORLD);
+
+    const { output } = await cli('session-stop', 'mysession');
+    expect(output).toContain(`Session 'mysession' stopped.`);
+  });
+
+  test('session-stop non-running session', async ({ cli }) => {
+    const { output } = await cli('session-stop', 'nonexistent');
+    expect(output).toContain(`Session 'nonexistent' is not running.`);
+  });
+
+  test('session-stop-all', async ({ cli, server }) => {
+    await cli('open', '--session=session1', server.HELLO_WORLD);
+    await cli('open', '--session=session2', server.HELLO_WORLD);
+
+    const { output: listBefore } = await cli('session-list');
+    expect(listBefore).toContain('session1 (live)');
+    expect(listBefore).toContain('session2 (live)');
+
+    await cli('session-stop-all');
+
+    const { output: listAfter } = await cli('session-list');
+    expect(listAfter).not.toContain('(live)');
+  });
+
+  test('session-delete', async ({ cli, server, mcpBrowser }, testInfo) => {
+    await cli('open', server.HELLO_WORLD);
+
+    const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
+    expect(fs.existsSync(dataDir)).toBe(true);
+
+    const { output } = await cli('session-delete');
+    expect(output).toContain(`Deleted user data for session 'default'.`);
+
+    expect(fs.existsSync(dataDir)).toBe(false);
+  });
+
+  test('session-delete named session', async ({ cli, server, mcpBrowser }, testInfo) => {
+    await cli('open', '--session=mysession', server.HELLO_WORLD);
+
+    const dataDir = testInfo.outputPath('daemon', 'ud-mysession-' + mcpBrowser);
+    expect(fs.existsSync(dataDir)).toBe(true);
+
+    const { output } = await cli('session-delete', 'mysession');
+    expect(output).toContain(`Deleted user data for session 'mysession'.`);
+
+    expect(fs.existsSync(dataDir)).toBe(false);
+  });
+
+  test('session-delete non-existent session', async ({ cli }) => {
+    const { output } = await cli('session-delete', 'nonexistent');
+    expect(output).toContain(`No user data found for session 'nonexistent'.`);
   });
 });

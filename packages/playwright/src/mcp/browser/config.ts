@@ -42,6 +42,9 @@ export type CLIOptions = {
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
+  daemon?: string;
+  daemonDataDir?: string;
+  daemonHeaded?: boolean;
   device?: string;
   executablePath?: string;
   grantPermissions?: string[];
@@ -104,6 +107,20 @@ export const defaultConfig: FullConfig = {
   },
 };
 
+const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
+  browser: {
+    userDataDir: '<daemon-data-dir>',
+    launchOptions: {
+      headless: !cliOptions.daemonHeaded,
+    }
+  },
+  outputMode: 'file',
+  codegen: 'none',
+  snapshot: {
+    mode: 'full',
+  },
+});
+
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
@@ -137,10 +154,19 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   const configInFile = await loadConfig(cliOptions.config);
   const envOverrides = configFromEnv();
   const cliOverrides = configFromCLIOptions(cliOptions);
-  let result = defaultConfig;
+  let result = cliOptions.daemon ? defaultDaemonConfig(cliOptions) : defaultConfig;
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
+  if (cliOptions.daemon)
+    result.skillMode = true;
+
+  if (result.browser.userDataDir === '<daemon-data-dir>') {
+    // No custom value provided, use the daemon data dir.
+    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+    result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+  }
+
   await validateConfig(result);
   return result;
 }
@@ -195,6 +221,8 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
 
   // --no-sandbox was passed, disable the sandbox
   if (cliOptions.sandbox === false)
+    launchOptions.chromiumSandbox = false;
+  if (process.env.CI && process.platform === 'linux')
     launchOptions.chromiumSandbox = false;
 
   if (cliOptions.proxyServer) {

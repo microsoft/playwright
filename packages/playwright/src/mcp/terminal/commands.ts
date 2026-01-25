@@ -29,11 +29,8 @@ const open = declareCommand({
   args: z.object({
     url: z.string().describe('The URL to navigate to'),
   }),
-  options: z.object({
-    headed: z.boolean().default(false).describe('Run browser in headed mode'),
-  }),
-  toolName: 'browser_open',
-  toolParams: ({ url, headed }) => ({ url, headed }),
+  toolName: 'browser_navigate',
+  toolParams: ({ url }) => ({ url }),
 });
 
 const close = declareCommand({

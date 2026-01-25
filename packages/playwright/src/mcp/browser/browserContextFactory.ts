@@ -47,11 +47,7 @@ export type BrowserContextFactoryResult = {
   close: () => Promise<void>;
 };
 
-export type HeadlessOption = {
-  forceHeadless?: 'headless' | 'headed';
-};
-
-type CreateContextOptions = HeadlessOption & {
+type CreateContextOptions = {
   toolName?: string;
 };
 
@@ -142,7 +138,6 @@ class IsolatedContextFactory extends BaseContextFactory {
       ...this.config.browser.launchOptions,
       handleSIGINT: false,
       handleSIGTERM: false,
-      ...(options.forceHeadless !== undefined ? { headless: options.forceHeadless === 'headless' } : {}),
     }).catch(error => {
       if (error.message.includes('Executable doesn\'t exist'))
         throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
@@ -224,7 +219,6 @@ class PersistentContextFactory implements BrowserContextFactory {
           '--disable-extensions',
         ],
         assistantMode: true,
-        ...(options.forceHeadless !== undefined ? { headless: options.forceHeadless === 'headless' } : {}),
       };
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
