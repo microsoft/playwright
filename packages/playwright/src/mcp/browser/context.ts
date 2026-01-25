@@ -30,7 +30,6 @@ import type { BrowserContextFactory, BrowserContextFactoryResult } from './brows
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../../../playwright-core/src/client/tracing';
 import type { ClientInfo } from '../sdk/server';
-import type { HeadlessOption } from './browserContextFactory';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -46,7 +45,6 @@ export class Context {
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
   private _browserContextPromise: Promise<BrowserContextFactoryResult> | undefined;
-  private _browserContextOption: HeadlessOption | undefined;
   private _browserContextFactory: BrowserContextFactory;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
@@ -86,7 +84,7 @@ export class Context {
   }
 
   async newTab(): Promise<Tab> {
-    const { browserContext } = await this._ensureBrowserContext({});
+    const { browserContext } = await this._ensureBrowserContext();
     const page = await browserContext.newPage();
     this._currentTab = this._tabs.find(t => t.page === page)!;
     return this._currentTab;
@@ -101,8 +99,8 @@ export class Context {
     return tab;
   }
 
-  async ensureTab(options: HeadlessOption = {}): Promise<Tab> {
-    const { browserContext } = await this._ensureBrowserContext(options);
+  async ensureTab(): Promise<Tab> {
+    const { browserContext } = await this._ensureBrowserContext();
     if (!this._currentTab)
       await browserContext.newPage();
     return this._currentTab!;
@@ -163,7 +161,6 @@ export class Context {
 
     const promise = this._browserContextPromise;
     this._browserContextPromise = undefined;
-    this._browserContextOption = undefined;
 
     await promise.then(async ({ browserContext, close }) => {
       if (this.config.saveTrace)
@@ -192,33 +189,30 @@ export class Context {
     }
   }
 
-  async ensureBrowserContext(options: HeadlessOption = {}): Promise<playwright.BrowserContext> {
-    const { browserContext } = await this._ensureBrowserContext(options);
+  async ensureBrowserContext(): Promise<playwright.BrowserContext> {
+    const { browserContext } = await this._ensureBrowserContext();
     return browserContext;
   }
 
-  private _ensureBrowserContext(options: HeadlessOption) {
-    if (this._browserContextPromise && (options.forceHeadless === undefined || this._browserContextOption?.forceHeadless === options.forceHeadless))
+  private _ensureBrowserContext() {
+    if (this._browserContextPromise)
       return this._browserContextPromise;
 
-    const closePrework = this._browserContextPromise ? this.closeBrowserContext() : Promise.resolve();
-    this._browserContextPromise = closePrework.then(() => this._setupBrowserContext(options));
+    this._browserContextPromise = this._setupBrowserContext();
     this._browserContextPromise.catch(() => {
       this._browserContextPromise = undefined;
-      this._browserContextOption = undefined;
     });
-    this._browserContextOption = options;
     return this._browserContextPromise;
   }
 
-  private async _setupBrowserContext(options: HeadlessOption): Promise<BrowserContextFactoryResult> {
+  private async _setupBrowserContext(): Promise<BrowserContextFactoryResult> {
     if (this._closeBrowserContextPromise)
       throw new Error('Another browser context is being closed.');
     // TODO: move to the browser context factory to make it based on isolation mode.
 
     if (this.config.testIdAttribute)
       selectors.setTestIdAttribute(this.config.testIdAttribute);
-    const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, { toolName: this._runningToolName, ...options });
+    const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, { toolName: this._runningToolName });
     const { browserContext } = result;
     if (!this.config.allowUnrestrictedFileAccess) {
       (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);

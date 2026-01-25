@@ -93,6 +93,14 @@ export function generateHelp() {
     for (const command of cc)
       lines.push(generateHelpEntry(command));
   }
+
+  lines.push('\nGlobal options:');
+  lines.push(formatWithGap('  --config <path>', 'use custom configuration file, defaults to "playwright-cli.json"'));
+  lines.push(formatWithGap('  --headed', 'run in headed mode'));
+  lines.push(formatWithGap('  --help [command]', 'print help'));
+  lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));
+  lines.push(formatWithGap('  --version', 'print version'));
+
   return lines.join('\n');
 }
 

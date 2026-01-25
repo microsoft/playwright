@@ -15,87 +15,84 @@
  */
 
 import fs from 'fs';
-import os from 'os';
 import path from 'path';
 import { spawn } from 'child_process';
 
 import { test as baseTest } from './fixtures';
-import { calculateSha1 } from '../../packages/playwright-core/src/server/utils/crypto';
-
-import type { ChildProcess } from 'child_process';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
-  socketPath: string;
-  daemon: ChildProcess;
-  cli: (...args: string[]) => Promise<{ output: string, error: string, snapshot?: string, attachments?: { name: string, data: Buffer | null }[] }>;
+  cli: (...args: string[]) => Promise<{
+    output: string,
+    error: string,
+    snapshot?: string,
+    attachments?: { name: string, data: Buffer | null }[],
+  }>;
 }>({
-  socketPath: async ({}, use, testInfo) => {
-    if (os.platform() === 'win32') {
-      const hash = calculateSha1(testInfo.outputPath());
-      await use(`\\\\.\\pipe\\${hash}`);
-      return;
-    }
-    await use(path.join(test.info().outputPath(), 'socket.sock'));
-  },
+  cli: async ({ mcpBrowser, mcpHeadless }, use) => {
+    const sessions: { name: string, pid: number }[] = [];
 
-  daemon: async ({ socketPath }, use, testInfo) => {
-    const userDataDir = testInfo.outputPath('user-data-dir');
-
-    const daemonPath = path.resolve(__dirname, '../../packages/playwright/cli.js');
-    const daemon = spawn(process.execPath, [daemonPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], {
-      stdio: 'pipe',
-      cwd: testInfo.outputPath(),
-    });
-    let stderr = '';
-    await new Promise<void>((resolve, reject) => {
-      daemon.stdout.on('data', () => {});
-      daemon.stderr.on('data', data => {
-        stderr += data.toString();
-        if (stderr.includes('Daemon server listening'))
-          resolve();
-      });
-      daemon.on('close', code => {
-        if (code === 0)
-          resolve();
-        else
-          reject(new Error(`Daemon exited with code ${code}`));
-      });
-    });
-    await use(daemon);
-    daemon.kill('SIGTERM');
-  },
-
-  cli: async ({ socketPath }, use, testInfo) => {
     await use(async (...args: string[]) => {
-      const cli = spawn(process.execPath, [require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args], {
-        cwd: testInfo.outputPath(),
-        stdio: 'pipe',
-        env: {
-          ...process.env,
-          PLAYWRIGHT_DAEMON_SOCKET_PATH: socketPath,
-        },
-      });
-      let stdout = '';
-      let stderr = '';
-      cli.stdout.on('data', data => { stdout += data.toString(); });
-      cli.stderr.on('data', data => { stderr += data.toString(); });
-      await new Promise<void>((resolve, reject) => {
-        cli.on('close', code => {
-          if (code === 0)
-            resolve();
-          else
-            reject(new Error(`CLI exited with code ${code}: ${stderr}`));
-        });
-      });
-      let snapshot: string | undefined;
-      if (stdout.includes('### Snapshot'))
-        snapshot = await loadSnapshot(stdout);
-      const attachments = loadAttachments(stdout);
-      return { output: stdout.trim(), error: stderr.trim(), snapshot, attachments };
+      return await runCli(args, { mcpBrowser, mcpHeadless }, sessions);
     });
+
+    for (const session of sessions) {
+      await runCli(['session-stop', session.name], { mcpBrowser, mcpHeadless }, []);
+      try {
+        process.kill(session.pid, 'SIGTERM');
+      } catch (e) {
+      }
+    }
+
+    const daemonDir = path.join(test.info().outputDir, 'daemon');
+    const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
+    for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
+      await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
 });
+
+async function runCli(args: string[], options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+  const testInfo = test.info();
+  const cli = spawn(process.execPath, [require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args], {
+    cwd: testInfo.outputPath(),
+    stdio: 'pipe',
+    env: {
+      ...process.env,
+      PLAYWRIGHT_DAEMON_INSTALL_DIR: testInfo.outputPath(),
+      PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
+      PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+    },
+  });
+  let stdout = '';
+  let stderr = '';
+  cli.stdout.on('data', data => { stdout += data.toString(); });
+  cli.stderr.on('data', data => { stderr += data.toString(); });
+  await new Promise<void>((resolve, reject) => {
+    cli.on('close', code => {
+      if (code === 0)
+        resolve();
+      else
+        reject(new Error(`CLI exited with code ${code}: ${stderr}`));
+    });
+  });
+  let snapshot: string | undefined;
+  if (stdout.includes('### Snapshot'))
+    snapshot = await loadSnapshot(stdout);
+  const attachments = loadAttachments(stdout);
+
+  const matches = stdout.includes('Daemon for') ? stdout.match(/Daemon for `(.+)` session started with pid (\d+)\./) : undefined;
+  const [, sessionName, pid] = matches ?? [];
+  if (sessionName && pid)
+    sessions.push({ name: sessionName, pid: +pid });
+  return {
+    output: stdout.trim(),
+    error: stderr.trim(),
+    snapshot,
+    attachments
+  };
+}
 
 export function loadAttachments(output: string) {
   // attachments look like md links  - [Page as pdf](.playwright-cli/page-2026-01-22T23-13-56-347Z.pdf)

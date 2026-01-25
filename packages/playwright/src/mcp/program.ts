@@ -77,6 +77,8 @@ export function decorateCommand(command: Command, version: string) {
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
       .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
+      .addOption(new ProgramOption('--daemon-data-dir <path>', 'path to the daemon data directory.').hideHelp())
+      .addOption(new ProgramOption('--daemon-headed', 'run daemon in headed mode').hideHelp())
       .action(async options => {
         setupExitWatchdog();
 
@@ -111,11 +113,6 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         if (options.daemon) {
-          config.skillMode = true;
-          config.outputMode = 'file';
-          config.codegen = 'none';
-          config.snapshot.mode = 'full';
-
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',

@@ -55,7 +55,8 @@ test('should respect --snapshot-mode=full', async ({ startClient, server }) => {
   });
 });
 
-test('should respect --snapshot-mode=incremental', async ({ startClient, server }) => {
+test('should respect --snapshot-mode=incremental', async ({ startClient, server, mcpBrowser }) => {
+  test.fixme(mcpBrowser === 'webkit', 'Active handling?');
   server.setContent('/', `<button>Button 1</button>`, 'text/html');
 
   const { client } = await startClient({

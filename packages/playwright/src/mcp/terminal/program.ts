@@ -27,7 +27,6 @@ import path from 'path';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 
-import type { SpawnOptions } from 'child_process';
 import type { Section } from '../browser/response';
 
 export type StructuredResponse = {
@@ -96,16 +95,24 @@ class Session {
   }
 }
 
+type SessionManagerOptions = { config?: string, headed?: boolean };
+
 class SessionManager {
+  private _options: SessionManagerOptions;
+
+  constructor(options: SessionManagerOptions) {
+    this._options = options;
+  }
 
   async list(): Promise<{ name: string, live: boolean }[]> {
-    const dir = daemonSocketDir;
+    const dir = daemonProfilesDir;
     try {
       const files = await fs.promises.readdir(dir);
       const sessions: { name: string, live: boolean }[] = [];
       for (const file of files) {
-        if (file.endsWith('-user-data')) {
-          const sessionName = file.slice(0, -'-user-data'.length);
+        if (file.startsWith('ud-')) {
+          // Session is like ud-<sessionName>-browserName
+          const sessionName = file.split('-')[1];
           const live = await this._canConnect(sessionName);
           sessions.push({ name: sessionName, live });
         }
@@ -147,16 +154,29 @@ class SessionManager {
     }
 
     // Delete user data directory
-    const userDataDir = path.resolve(daemonSocketDir, `${sessionName}-user-data`);
-    try {
-      await fs.promises.rm(userDataDir, { recursive: true });
-      console.log(`Deleted user data for session '${sessionName}'.`);
-    } catch (e: any) {
-      if (e.code === 'ENOENT')
-        console.log(`No user data found for session '${sessionName}'.`);
-      else
-        throw e;
-
+    const dataDirs = await fs.promises.readdir(daemonProfilesDir).catch(() => []);
+    const matchingDirs = dataDirs.filter(dir => dir.startsWith(`ud-${sessionName}-`));
+    if (matchingDirs.length === 0) {
+      console.log(`No user data found for session '${sessionName}'.`);
+      return;
+    }
+    for (const dir of matchingDirs) {
+      const userDataDir = path.resolve(daemonProfilesDir, dir);
+      for (let i = 0; i < 5; i++) {
+        try {
+          await fs.promises.rm(userDataDir, { recursive: true });
+          console.log(`Deleted user data for session '${sessionName}'.`);
+          break;
+        } catch (e: any) {
+          if (e.code === 'ENOENT') {
+            console.log(`No user data found for session '${sessionName}'.`);
+            break;
+          }
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          if (i === 4)
+            throw e;
+        }
+      }
     }
 
     // Also try to delete the socket file if it exists
@@ -167,7 +187,7 @@ class SessionManager {
   }
 
   private async _connect(sessionName: string): Promise<Session> {
-    const socketPath = process.env.PLAYWRIGHT_DAEMON_SOCKET_PATH || this._daemonSocketPath(sessionName);
+    const socketPath = this._daemonSocketPath(sessionName);
     debugCli(`Connecting to daemon at ${socketPath}`);
 
     const socketExists = await fs.promises.stat(socketPath)
@@ -185,16 +205,40 @@ class SessionManager {
       }
     }
 
-    if (process.env.PLAYWRIGHT_DAEMON_SOCKET_PATH)
-      throw new Error(`Socket path ${socketPath} does not exist`);
+    await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
+    const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}`);
+    const cliPath = path.join(__dirname, '../../../cli.js');
+    debugCli(`Will launch daemon process: ${cliPath}`);
+    const configFile = resolveConfigFile(this._options.config);
+    const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
+    const headedArg = this._options.headed ? [`--daemon-headed`] : [];
 
-    const userDataDir = path.resolve(daemonSocketDir, `${sessionName}-user-data`);
-    const child = spawnDaemon(socketPath, userDataDir, {
+    const outLog = path.join(daemonProfilesDir, 'out.log');
+    const errLog = path.join(daemonProfilesDir, 'err.log');
+    const out = fs.openSync(outLog, 'w');
+    const err = fs.openSync(errLog, 'w');
+
+    const child = spawn(process.execPath, [
+      cliPath,
+      'run-mcp-server',
+      `--daemon=${socketPath}`,
+      `--daemon-data-dir=${userDataDir}`,
+      ...configArg,
+      ...headedArg,
+    ], {
       detached: true,
-      stdio: 'ignore',
+      stdio: ['ignore', out, err],
       cwd: process.cwd(), // Will be used as root.
     });
     child.unref();
+
+    console.log(`<!-- Daemon for \`${sessionName}\` session started with pid ${child.pid}.`);
+    if (configFile)
+      console.log(`- Using config file at \`${configFile}\`.`);
+    const sessionSuffix = sessionName !== 'default' ? ` "${sessionName}"` : '';
+    console.log(`- You can stop the session daemon with \`playwright-cli session-stop${sessionSuffix}\` when done.`);
+    console.log(`- You can delete the session data with \`playwright-cli session-delete${sessionSuffix}\` when done.`);
+    console.log('-->');
 
     // Wait for the socket to become available with retries.
     const maxRetries = 50;
@@ -209,7 +253,16 @@ class SessionManager {
         debugCli(`Retrying to connect to daemon at ${socketPath} (${i + 1}/${maxRetries})`);
       }
     }
-    throw new Error(`Failed to connect to daemon at ${socketPath} after ${maxRetries * retryDelay}ms`);
+
+    const outData = await fs.promises.readFile(outLog, 'utf-8').catch(() => '');
+    const errData = await fs.promises.readFile(errLog, 'utf-8').catch(() => '');
+
+    console.error(`Failed to connect to daemon at ${socketPath} after ${maxRetries * retryDelay}ms`);
+    if (outData.length)
+      console.log(outData);
+    if (errData.length)
+      console.error(errData);
+    process.exit(1);
   }
 
   private async _connectToSocket(sessionName: string, socketPath: string): Promise<Session> {
@@ -247,8 +300,9 @@ class SessionManager {
   private _daemonSocketPath(sessionName: string): string {
     const socketName = `${sessionName}.sock`;
     if (os.platform() === 'win32')
-      return `\\\\.\\pipe\\${socketDirHash}-${socketName}`;
-    return path.join(daemonSocketDir, socketName);
+      return `\\\\.\\pipe\\${installationDirHash}-${socketName}`;
+    const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
+    return path.join(socketsDir, installationDirHash, socketName);
   }
 }
 
@@ -288,13 +342,16 @@ async function handleSessionCommand(sessionManager: SessionManager, args: any): 
   process.exit(1);
 }
 
-const socketDirHash = (() => {
+const installationDirHash = (() => {
   const hash = crypto.createHash('sha1');
-  hash.update(require.resolve('../../../package.json'));
+  hash.update(process.env.PLAYWRIGHT_DAEMON_INSTALL_DIR || require.resolve('../../../package.json'));
   return hash.digest('hex').substring(0, 16);
 })();
 
-const daemonSocketDir = (() => {
+const daemonProfilesDir = (() => {
+  if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
+    return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
+
   let localCacheDir: string | undefined;
   if (process.platform === 'linux')
     localCacheDir = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
@@ -304,18 +361,17 @@ const daemonSocketDir = (() => {
     localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   if (!localCacheDir)
     throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon', socketDirHash);
+  return path.join(localCacheDir, 'ms-playwright', 'daemon', installationDirHash);
 })();
-
-function spawnDaemon(socketPath: string, userDataDir: string, options: SpawnOptions) {
-  const cliPath = path.join(__dirname, '../../../cli.js');
-  debugCli(`Will launch daemon process: ${cliPath}`);
-  return spawn(process.execPath, [cliPath, 'run-mcp-server', `--daemon=${socketPath}`, `--user-data-dir=${userDataDir}`], options);
-}
 
 export async function program(options: { version: string }) {
   const argv = process.argv.slice(2);
-  const args = require('minimist')(argv);
+  const args = require('minimist')(argv, {
+    boolean: ['help', 'version', 'headed'],
+  });
+  if (!argv.includes('--headed') && !argv.includes('--no-headed'))
+    delete args.headed;
+
   const help = require('./help.json');
   const commandName = args._[0];
 
@@ -340,7 +396,7 @@ export async function program(options: { version: string }) {
     process.exit(1);
   }
 
-  const sessionManager = new SessionManager();
+  const sessionManager = new SessionManager(args);
   if (commandName.startsWith('session')) {
     await handleSessionCommand(sessionManager, args);
     return;
@@ -413,4 +469,17 @@ function sanitizeForFilePath(s: string) {
   if (separator === -1)
     return sanitize(s);
   return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
+}
+
+function resolveConfigFile(configParam: string | undefined) {
+  const configFile = configParam || process.env.PLAYWRIGHT_CLI_CONFIG;
+  if (configFile)
+    return path.resolve(process.cwd(), configFile);
+
+  try {
+    if (fs.existsSync(path.resolve(process.cwd(), 'playwright-cli.json')))
+      return path.resolve(process.cwd(), 'playwright-cli.json');
+  } catch {
+  }
+  return undefined;
 }
