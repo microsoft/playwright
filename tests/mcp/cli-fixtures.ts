@@ -16,9 +16,11 @@
 
 import fs from 'fs';
 import path from 'path';
-import { spawn } from 'child_process';
 
 import { test as baseTest } from './fixtures';
+import { killProcessGroup } from '../config/commonFixtures';
+
+import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
@@ -29,19 +31,16 @@ export const test = baseTest.extend<{
     attachments?: { name: string, data: Buffer | null }[],
   }>;
 }>({
-  cli: async ({ mcpBrowser, mcpHeadless }, use) => {
+  cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
 
     await use(async (...args: string[]) => {
-      return await runCli(args, { mcpBrowser, mcpHeadless }, sessions);
+      return await runCli(childProcess, args, { mcpBrowser, mcpHeadless }, sessions);
     });
 
     for (const session of sessions) {
-      await runCli(['session-stop', session.name], { mcpBrowser, mcpHeadless }, []);
-      try {
-        process.kill(session.pid, 'SIGTERM');
-      } catch (e) {
-      }
+      await runCli(childProcess, ['session-stop', session.name], { mcpBrowser, mcpHeadless }, []);
+      killProcessGroup(session.pid);
     }
 
     const daemonDir = path.join(test.info().outputDir, 'daemon');
@@ -51,50 +50,45 @@ export const test = baseTest.extend<{
   },
 });
 
-async function runCli(args: string[], options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
-  const testInfo = test.info();
-  const cli = spawn(process.execPath, [require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args], {
-    cwd: testInfo.outputPath(),
-    stdio: 'pipe',
-    env: {
-      ...process.env,
-      PLAYWRIGHT_DAEMON_INSTALL_DIR: testInfo.outputPath(),
-      PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-      PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
-      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
-      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-    },
-  });
-  let stdout = '';
-  let stderr = '';
-  cli.stdout.on('data', data => { stdout += data.toString(); });
-  cli.stderr.on('data', data => { stderr += data.toString(); });
-  await new Promise<void>((resolve, reject) => {
-    cli.on('close', code => {
-      if (code === 0)
-        resolve();
-      else
-        reject(new Error(`CLI exited with code ${code}: ${stderr}`));
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+  const stepTitle = `cli ${args.join(' ')}`;
+  return await test.step(stepTitle, async () => {
+    const testInfo = test.info();
+    const cli = childProcess({
+      command: [process.execPath, require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args],
+      cwd: testInfo.outputPath(),
+      env: {
+        ...process.env,
+        PLAYWRIGHT_DAEMON_INSTALL_DIR: testInfo.outputPath(),
+        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
+        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+        PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+        PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+      },
     });
-  });
-  let snapshot: string | undefined;
-  if (stdout.includes('### Snapshot'))
-    snapshot = await loadSnapshot(stdout);
-  const attachments = loadAttachments(stdout);
+    await cli.cleanExit().finally(async () => {
+      await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
+    });
 
-  const matches = stdout.includes('Daemon for') ? stdout.match(/Daemon for `(.+)` session started with pid (\d+)\./) : undefined;
-  const [, sessionName, pid] = matches ?? [];
-  if (sessionName && pid)
-    sessions.push({ name: sessionName, pid: +pid });
-  return {
-    output: stdout.trim(),
-    error: stderr.trim(),
-    snapshot,
-    attachments
-  };
+    let snapshot: string | undefined;
+    if (cli.stdout.includes('### Snapshot'))
+      snapshot = await loadSnapshot(cli.stdout);
+    const attachments = loadAttachments(cli.stdout);
+
+    const matches = cli.stdout.includes('Daemon for') ? cli.stdout.match(/Daemon for `(.+)` session started with pid (\d+)\./) : undefined;
+    const [, sessionName, pid] = matches ?? [];
+    if (sessionName && pid)
+      sessions.push({ name: sessionName, pid: +pid });
+    return {
+      output: cli.stdout.trim(),
+      error: cli.stderr.trim(),
+      snapshot,
+      attachments
+    };
+  });
 }
 
-export function loadAttachments(output: string) {
+function loadAttachments(output: string) {
   // attachments look like md links  - [Page as pdf](.playwright-cli/page-2026-01-22T23-13-56-347Z.pdf)
   const match = output.match(/- \[(.+)\]\((.+)\)/g);
   if (!match)
@@ -111,7 +105,7 @@ export function loadAttachments(output: string) {
   });
 }
 
-export async function loadSnapshot(output: string) {
+async function loadSnapshot(output: string) {
   const lines = output.split('\n');
   if (!lines.includes('### Snapshot'))
     throw new Error('Snapshot file not found');
