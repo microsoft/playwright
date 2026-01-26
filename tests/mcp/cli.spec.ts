@@ -478,3 +478,29 @@ test.describe('session', () => {
     expect(output).toContain(`No user data found for session 'nonexistent'.`);
   });
 });
+
+test.describe('config', () => {
+  test('should work', async ({ cli, server }, testInfo) => {
+    // Start a session with default config
+    await cli('open', server.PREFIX);
+    const { output: beforeOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+    expect(beforeOutput).toContain('1280x720');
+
+    const config = {
+      browser: {
+        contextOptions: {
+          viewport: { width: 700, height: 500 },
+        },
+      },
+    };
+    const configPath = testInfo.outputPath('session-config.json');
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+
+    const { output: configureOutput } = await cli('config', configPath);
+    expect(configureOutput).toContain(`- Using config file at \`session-config.json\`.`);
+
+    await cli('open', server.PREFIX);
+    const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+    expect(afterOutput).toContain('700x500');
+  });
+});

@@ -72,6 +72,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'tabs', title: 'Tabs' },
   { name: 'storage', title: 'Storage' },
   { name: 'devtools', title: 'DevTools' },
+  { name: 'config', title: 'Configuration' },
   { name: 'session', title: 'Sessions' },
 ] as const;
 
@@ -95,8 +96,8 @@ export function generateHelp() {
   }
 
   lines.push('\nGlobal options:');
-  lines.push(formatWithGap('  --config <path>', 'use custom configuration file, defaults to "playwright-cli.json"'));
-  lines.push(formatWithGap('  --headed', 'run in headed mode'));
+  lines.push(formatWithGap('  --config <path>', 'create a session with custom config, defaults to `playwright-cli.json`'));
+  lines.push(formatWithGap('  --headed', 'create a headed session'));
   lines.push(formatWithGap('  --help [command]', 'print help'));
   lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));
   lines.push(formatWithGap('  --version', 'print version'));
