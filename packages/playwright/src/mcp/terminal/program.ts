@@ -190,11 +190,7 @@ class SessionManager {
     const socketPath = this._daemonSocketPath(sessionName);
     debugCli(`Connecting to daemon at ${socketPath}`);
 
-    const socketExists = await fs.promises.stat(socketPath)
-        .then(stat => stat?.isSocket() ?? false)
-        .catch(() => false);
-
-    if (socketExists) {
+    if (await this._canConnect(sessionName)) {
       debugCli(`Socket file exists, attempting to connect...`);
       try {
         return await this._connectToSocket(sessionName, socketPath);
