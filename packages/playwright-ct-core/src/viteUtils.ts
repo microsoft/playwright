@@ -164,7 +164,7 @@ export function hasJSComponents(components: ImportInfo[]): boolean {
   return false;
 }
 
-const importReactRE = /(^|\n|;)import\s+(\*\s+as\s+)?React(,|\s+)/;
+const importReactRE = /(^|[\n;}\])])import\s+(\*\s+as\s+)?React(,|\s+)/;
 const compiledReactRE = /(const|var)\s+React\s*=/;
 const runtimeImportRequire = /import\(['"`]react['"`]\)|require\(['"`]react['"`]\)/i;
 
