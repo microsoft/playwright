@@ -73,7 +73,7 @@ const networkMock = defineTabTool({
         status: z.number().default(200).describe('HTTP status code for the mocked response'),
         contentType: z.string().default('application/json').describe('Content-Type header for the response'),
         body: z.string().describe('Response body as a string. For JSON responses, provide a JSON string.'),
-        headers: z.record(z.string()).optional().describe('Additional headers to include in the response'),
+        headers: z.record(z.string(), z.string()).optional().describe('Additional headers to include in the response'),
       }).describe('The mock response to return'),
     }),
     type: 'action',
