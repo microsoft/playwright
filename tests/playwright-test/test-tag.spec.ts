@@ -182,3 +182,48 @@ test('should be included in testInfo if coming from describe or global tag', asy
   });
   expect(result.exitCode).toBe(0);
 });
+
+test('should not parse file names as tags', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    '@sample.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test in file', () => {
+      });
+      test('test with tag @inline', { tag: '@foo' }, () => {
+      });
+    `,
+    'dir/@nested/regular.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test in nested dir', () => {
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  // File names should NOT be parsed as tags, only inline tags in describe/test titles
+  expect(result.outputLines).toEqual([
+    `title=test in file, tags=`,
+    `title=test with tag @inline, tags=@inline,@foo`,
+    `title=test in nested dir, tags=`,
+  ]);
+});
