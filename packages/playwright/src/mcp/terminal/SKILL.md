@@ -105,6 +105,16 @@ playwright-cli tracing-start
 playwright-cli tracing-stop
 ```
 
+### Configuration
+```bash
+# configure the session
+playwright-cli config my-config.json
+# Configure named session
+playwright-cli --session=mysession config my-config.json
+# Start with configured session
+playwright-cli open --config=my-config.json
+```
+
 ### Sessions
 
 ```bash

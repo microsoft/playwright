@@ -112,7 +112,10 @@ const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfi
     userDataDir: '<daemon-data-dir>',
     launchOptions: {
       headless: !cliOptions.daemonHeaded,
-    }
+    },
+    contextOptions: {
+      viewport: cliOptions.daemonHeaded ? null : { width: 1280, height: 720 },
+    },
   },
   outputMode: 'file',
   codegen: 'none',

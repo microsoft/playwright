@@ -512,6 +512,17 @@ const sessionDelete = declareCommand({
   toolParams: ({ name }) => ({ name }),
 });
 
+const config = declareCommand({
+  name: 'config',
+  description: 'Restart session with new config, defaults to `playwright-cli.json`',
+  category: 'config',
+  args: z.object({
+    config: z.string().optional().describe('Path to the configuration file'),
+  }),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -558,6 +569,9 @@ const commandsArray: AnyCommandSchema[] = [
   tabNew,
   tabClose,
   tabSelect,
+
+  // config
+  config,
 
   // devtools category
   networkRequests,
