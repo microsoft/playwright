@@ -125,8 +125,9 @@ export class Context {
         promises.push(request.response());
     }
 
-    await progress.race([...promises, progress.wait(5000)]);
-    if (!promises.length)
+    if (promises.length)
+      await progress.race([...promises, progress.wait(5000)]);
+    else
       await progress.wait(500);
 
     return result;
@@ -134,12 +135,11 @@ export class Context {
 
   async takeSnapshot(progress: Progress) {
     const { full } = await this.page.snapshotForAI(progress, { doNotRenderActive: this.agentParams.doNotRenderActive });
-    // TODO: it seems like redactText should be here.
-    return full;
+    return redactSecrets(full, this.agentParams?.secrets);
   }
 
   async snapshotResult(progress: Progress, error?: Error): Promise<loopTypes.ToolResult> {
-    const snapshot = this._redactText(await this.takeSnapshot(progress));
+    const snapshot = await this.takeSnapshot(progress);
 
     const text: string[] = [];
     if (error)
@@ -166,17 +166,23 @@ export class Context {
     }));
   }
 
-  private _redactText(text: string): string {
-    const secrets = this.agentParams?.secrets;
-    if (!secrets)
-      return text;
+}
 
-    const redactText = (text: string) => {
-      for (const { name, value } of secrets)
-        text = text.replaceAll(value, `<secret>${name}</secret>`);
-      return text;
-    };
+export function redactSecrets(text: string, secrets: channels.NameValue[] | undefined): string {
+  if (!secrets)
+    return text;
+  for (const { name, value } of secrets)
+    text = text.replaceAll(value, `<secret>${name}</secret>`);
+  return text;
+}
 
-    return redactText(text);
-  }
+export function applySecrets(text: string, secrets: channels.NameValue[] | undefined): string {
+  if (!secrets)
+    return text;
+  const secret = secrets.find(s => s.name === text);
+  if (secret)
+    return secret.value;
+  for (const { name, value } of secrets)
+    text = text.replaceAll(`<secret>${name}</secret>`, value);
+  return text;
 }
