@@ -100,7 +100,7 @@ playwright-cli tab-select 0
 playwright-cli console
 playwright-cli console warning
 playwright-cli network
-playwright-cli run-code "await page.waitForTimeout(1000)"
+playwright-cli run-code "async page => await page.context().grantPermissions(['geolocation'])"
 playwright-cli tracing-start
 playwright-cli tracing-stop
 ```
