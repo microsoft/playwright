@@ -22,6 +22,12 @@ See [`property: TestProject.grep`].
 
 See [`property: TestProject.grepInvert`].
 
+## property: FullProject.ignoreSnapshots
+* since: v1.59
+- type: <[boolean]>
+
+See [`property: TestProject.ignoreSnapshots`].
+
 ## property: FullProject.metadata
 * since: v1.10
 - type: <[Metadata]>

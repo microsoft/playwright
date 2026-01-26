@@ -765,6 +765,11 @@ export interface FullProject<TestArgs = {}, WorkerArgs = {}> {
   grepInvert: null|RegExp|Array<RegExp>;
 
   /**
+   * See [testProject.ignoreSnapshots](https://playwright.dev/docs/api/class-testproject#test-project-ignore-snapshots).
+   */
+  ignoreSnapshots: boolean;
+
+  /**
    * See [testProject.metadata](https://playwright.dev/docs/api/class-testproject#test-project-metadata).
    */
   metadata: Metadata;

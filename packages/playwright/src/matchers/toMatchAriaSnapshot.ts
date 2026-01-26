@@ -46,7 +46,7 @@ export async function toMatchAriaSnapshot(
   if (!testInfo)
     throw new Error(`toMatchAriaSnapshot() must be called during the test`);
 
-  if (testInfo._projectInternal.ignoreSnapshots)
+  if (testInfo._projectInternal.project.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
 
   const updateSnapshots = testInfo.config.updateSnapshots;

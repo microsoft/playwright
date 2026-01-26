@@ -215,6 +215,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       dependencies: project.dependencies,
       snapshotDir: this._relativePath(project.snapshotDir),
       teardown: project.teardown,
+      ignoreSnapshots: project.ignoreSnapshots ? true : undefined,
       use: this._serializeProjectUseOptions(project.use),
     };
     return report;
