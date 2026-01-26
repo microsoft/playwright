@@ -624,8 +624,9 @@ it('should be able to download a inline PDF file via response interception', asy
   await page.close();
 });
 
-it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, isHeadlessShell }) => {
+it('should be able to download a inline PDF file via navigation', async ({ browser, server, asset, browserName, isHeadlessShell, isBidi }) => {
   it.skip(browserName === 'chromium' && !isHeadlessShell, 'We expect PDF Viewer to open up in headed Chromium');
+  it.skip(browserName === 'firefox' && isBidi, 'We expect PDF Viewer to open up in Firefox with Bidi');
 
   const page = await browser.newPage();
   await page.goto(server.EMPTY_PAGE);
