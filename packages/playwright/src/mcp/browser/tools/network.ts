@@ -61,6 +61,69 @@ const networkClear = defineTabTool({
   },
 });
 
+const networkMock = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_network_mock',
+    title: 'Mock network response',
+    description: 'Mock a network response for a URL pattern. When a request matches the pattern, it will be fulfilled with the provided response instead of going to the network.',
+    inputSchema: z.object({
+      urlPattern: z.string().describe('URL pattern to match (glob pattern). Examples: "**/api/users", "https://example.com/api/**"'),
+      response: z.object({
+        status: z.number().default(200).describe('HTTP status code for the mocked response'),
+        contentType: z.string().default('application/json').describe('Content-Type header for the response'),
+        body: z.string().describe('Response body as a string. For JSON responses, provide a JSON string.'),
+        headers: z.record(z.string()).optional().describe('Additional headers to include in the response'),
+      }).describe('The mock response to return'),
+    }),
+    type: 'action',
+  },
+  handle: async (tab, params, response) => {
+    const headers: Record<string, string> = {
+      'content-type': params.response.contentType,
+      ...params.response.headers,
+    };
+
+    await tab.page.route(params.urlPattern, route => {
+      void route.fulfill({
+        status: params.response.status,
+        contentType: params.response.contentType,
+        body: params.response.body,
+        headers,
+      });
+    });
+
+    response.addCode(`// Mock network response for ${params.urlPattern}`);
+    response.addCode(`await page.route('${params.urlPattern}', route => {`);
+    response.addCode(`  route.fulfill({`);
+    response.addCode(`    status: ${params.response.status},`);
+    response.addCode(`    contentType: '${params.response.contentType}',`);
+    response.addCode(`    body: ${JSON.stringify(params.response.body)},`);
+    if (params.response.headers)
+      response.addCode(`    headers: ${JSON.stringify(headers)},`);
+    response.addCode(`  });`);
+    response.addCode(`});`);
+  },
+});
+
+const networkUnmock = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_network_unmock',
+    title: 'Remove network mock',
+    description: 'Remove all network mocks for a URL pattern',
+    inputSchema: z.object({
+      urlPattern: z.string().describe('URL pattern to unmock (must match the pattern used in browser_network_mock)'),
+    }),
+    type: 'action',
+  },
+  handle: async (tab, params, response) => {
+    await tab.page.unroute(params.urlPattern);
+    response.addCode(`// Remove network mock for ${params.urlPattern}`);
+    response.addCode(`await page.unroute('${params.urlPattern}');`);
+  },
+});
+
 async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
   const response = (request as Request)._hasResponse ? await request.response() : undefined;
   const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
@@ -79,4 +142,6 @@ async function renderRequest(request: playwright.Request, includeStatic: boolean
 export default [
   requests,
   networkClear,
+  networkMock,
+  networkUnmock,
 ];
