@@ -280,7 +280,7 @@ test('expectURL wrong URL error', async ({ context, server }) => {
     await page.goto(server.PREFIX + '/empty.html');
     const error = await agent.expect('page URL is /counter.html').catch(e => e);
     expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
-    expect(stripAnsi(error.message)).toContain(`Received: ${server.PREFIX}/empty.html`);
+    expect(stripAnsi(error.message)).toContain(`Received: <secret>SERVER</secret>/empty.html`);
   }
 });
 
@@ -324,7 +324,7 @@ test('expectURL with regex error', async ({ context, server }) => {
     await page.goto(server.PREFIX + '/empty.html');
     const error = await agent.expect('page URL matches /counter pattern').catch(e => e);
     expect(stripAnsi(error.message)).toContain(`pageAgent.expect: expect(page).toHaveURL(expected) failed`);
-    expect(stripAnsi(error.message)).toContain(`Received: ${server.PREFIX}/empty.html`);
+    expect(stripAnsi(error.message)).toContain(`Received: <secret>SERVER</secret>/empty.html`);
   }
 });
 
