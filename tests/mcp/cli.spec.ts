@@ -42,7 +42,7 @@ test.describe('core', () => {
   test('close', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('close');
-    expect(output).toContain(`No open tabs. Navigate to a URL to create one.`);
+    expect(output).toContain(`Session closed`);
   });
 
   test('click button', async ({ cli, server }) => {

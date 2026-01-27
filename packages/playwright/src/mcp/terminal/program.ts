@@ -413,7 +413,15 @@ export async function program(options: { version: string }) {
     return;
   }
 
-  await sessionManager.run(args);
+  try {
+    await sessionManager.run(args);
+  } catch (e) {
+    // Close command stops the daemon.
+    if (commandName === 'close' && 'Session closed' === (e as Error).message)
+      console.log(e.message);
+    else
+      throw e;
+  }
 }
 
 export async function printResponse(response: StructuredResponse) {
