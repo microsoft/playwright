@@ -29,7 +29,9 @@ export class Download {
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
     const unaccessibleErrorMessage = page.browserContext._options.acceptDownloads === 'deny' ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
 
-    // we don't have tests for this, so be careful
+    // we don't have tests for this, so be careful.
+    // most users don't pass "isLocal" so _isCollocatedWithServer can be false-negative.
+    // to not break downloads for them, we only show this message after reading the download already failed.
     const remoteErrorMessage = page.browserContext._browser._isCollocatedWithServer
       ? undefined
       : 'Download could not read from disk, most likely because you are using connectOverCDP with a remote browser. To make downloads work, please use BrowserType.connect instead (https://playwright.dev/docs/api/class-browsertype#browser-type-connect).';
