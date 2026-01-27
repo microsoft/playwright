@@ -389,7 +389,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         const preserveVideo = captureVideo && (videoMode === 'on' || (testFailed && videoMode === 'retain-on-failure') || (videoMode === 'on-first-retry' && testInfo.retry === 1));
         if (preserveVideo) {
           const { pagesWithVideo: pagesForVideo } = contexts.get(context)!;
-          const videos = pagesForVideo.map(p => p.video()).filter(video => !!video);
+          const videos = pagesForVideo.map(p => p.video());
           await Promise.all(videos.map(async v => {
             try {
               const savedPath = testInfo.outputPath(`video${counter ? '-' + counter : ''}.webm`);

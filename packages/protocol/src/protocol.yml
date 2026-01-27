@@ -1998,6 +1998,20 @@ Page:
     bringToFront:
       title: Bring to front
 
+    videoStart:
+      title: Start video recording
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+
+    videoStop:
+      title: Stop video recording
+      group: configuration
+
     updateSubscription:
       internal: true
       parameters:

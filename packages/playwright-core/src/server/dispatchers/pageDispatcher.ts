@@ -337,6 +337,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await progress.race(this._page.bringToFront());
   }
 
+  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<void> {
+    await this._page.screencast.startExplicitVideoRecording(params);
+  }
+
+  async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
+    await this._page.screencast.stopVideoRecording();
+  }
+
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {
     const coverage = this._page.coverage as CRCoverage;
     await coverage.startJSCoverage(progress, params);

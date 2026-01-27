@@ -288,12 +288,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._video;
   }
 
-  video(): Video | null {
+  video(): Video {
     // Note: we are creating Video object lazily, because we do not know
     // BrowserContextOptions when constructing the page - it is assigned
     // too late during launchPersistentContext.
-    if (!this._browserContext._options.recordVideo)
-      return null;
     return this._forceVideo();
   }
 

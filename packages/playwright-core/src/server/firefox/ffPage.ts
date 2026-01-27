@@ -99,7 +99,7 @@ export class FFPage implements PageDelegate {
     ];
 
     const screencast = this._page.screencast;
-    const videoOptions = screencast.launchVideoRecorder();
+    const videoOptions = screencast.launchAutomaticVideoRecorder();
     if (videoOptions)
       screencast.startVideoRecording(videoOptions).catch(e => debugLogger.log('error', e));
 

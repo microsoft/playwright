@@ -745,26 +745,27 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.acceptDownloads = 'internal-browser-default';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
-  if (options.recordVideo) {
-    if (!options.recordVideo.size) {
-      if (options.noDefaultViewport) {
-        options.recordVideo.size = { width: 800, height: 600 };
-      } else {
-        const size = options.viewport!;
-        const scale = Math.min(1, 800 / Math.max(size.width, size.height));
-        options.recordVideo.size = {
-          width: Math.floor(size.width * scale),
-          height: Math.floor(size.height * scale)
-        };
-      }
-    }
-    // Make sure both dimensions are odd, this is required for vp8
-    options.recordVideo.size!.width &= ~1;
-    options.recordVideo.size!.height &= ~1;
-  }
+  if (options.recordVideo)
+    options.recordVideo.size = validateVideoSize(options.recordVideo.size, options.viewport);
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
   verifyGeolocation(options.geolocation);
+}
+
+export function validateVideoSize(size: types.Size | undefined, viewport: types.Size | undefined): types.Size {
+  if (!size) {
+    viewport ??= { width: 800, height: 600 };
+    const scale = Math.min(1, 800 / Math.max(viewport.width, viewport.height));
+    size = {
+      width: Math.floor(viewport.width * scale),
+      height: Math.floor(viewport.height * scale)
+    };
+  }
+  // Make sure both dimensions are odd, this is required for vp8
+  return {
+    width: size.width & ~1,
+    height: size.height & ~1
+  };
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation): asserts geolocation is types.Geolocation {

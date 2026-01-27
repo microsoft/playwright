@@ -1482,6 +1482,15 @@ scheme.PageStopCSSCoverageResult = tObject({
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
+scheme.PageVideoStartParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+});
+scheme.PageVideoStartResult = tOptional(tObject({}));
+scheme.PageVideoStopParams = tOptional(tObject({}));
+scheme.PageVideoStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,

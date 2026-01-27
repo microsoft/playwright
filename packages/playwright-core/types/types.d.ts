@@ -4802,9 +4802,12 @@ export interface Page {
   url(): string;
 
   /**
-   * Video object associated with this page.
+   * Video object associated with this page. Can be used to control video recording with
+   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
+   * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop), or to access the video file when
+   * using the `recordVideo` context option.
    */
-  video(): null|Video;
+  video(): Video;
 
   viewportSize(): null|{
     /**
@@ -21757,6 +21760,16 @@ export interface Tracing {
  * console.log(await page.video().path());
  * ```
  *
+ * Alternatively, you can use [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
+ * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop) to record video manually. This
+ * approach is mutually exclusive with the `recordVideo` option.
+ *
+ * ```js
+ * await page.video().start();
+ * // ... perform actions ...
+ * await page.video().stop({ path: 'video.webm' });
+ * ```
+ *
  */
 export interface Video {
   /**
@@ -21776,6 +21789,50 @@ export interface Video {
    * @param path Path where the video should be saved.
    */
   saveAs(path: string): Promise<void>;
+
+  /**
+   * Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.video().start();
+   * // ... perform actions ...
+   * await page.video().stop({ path: 'video.webm' });
+   * ```
+   *
+   * @param options
+   */
+  start(options?: {
+    /**
+     * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
+     * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+     */
+    size?: {
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Stops video recording started with
+   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and either saves or discards the
+   * video file.
+   * @param options
+   */
+  stop(options?: {
+    /**
+     * Path where the video should be saved.
+     */
+    path?: string;
+  }): Promise<void>;
 }
 
 /**
