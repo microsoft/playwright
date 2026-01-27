@@ -63,10 +63,11 @@ class Session {
       method,
       params,
     };
-    await this._connection.send(message);
-    return new Promise<any>((resolve, reject) => {
+    const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject });
     });
+    const [result] = await Promise.all([responsePromise, this._connection.send(message)]);
+    return result;
   }
 
   close() {
