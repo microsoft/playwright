@@ -251,7 +251,9 @@ test('perform reports error', async ({ context }) => {
   expect(e.message).toContain('Agent refused to perform action:');
 });
 
-test('should dispatch event and respect dispose()', async ({ context, server }) => {
+test('should dispatch event and respect dispose()', async ({ context, server, mode }) => {
+  test.skip(mode !== 'default', 'Different errors due to timing');
+
   let apiResponse;
   server.setRoute('/api', (req, res) => {
     apiResponse = res;
