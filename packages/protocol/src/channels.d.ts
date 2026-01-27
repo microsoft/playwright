@@ -4461,6 +4461,7 @@ export interface ElectronChannel extends ElectronEventTarget, Channel {
 export type ElectronLaunchParams = {
   executablePath?: string,
   args?: string[],
+  chromiumSandbox?: boolean,
   cwd?: string,
   env?: NameValue[],
   timeout: number,
@@ -4497,6 +4498,7 @@ export type ElectronLaunchParams = {
 export type ElectronLaunchOptions = {
   executablePath?: string,
   args?: string[],
+  chromiumSandbox?: boolean,
   cwd?: string,
   env?: NameValue[],
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
