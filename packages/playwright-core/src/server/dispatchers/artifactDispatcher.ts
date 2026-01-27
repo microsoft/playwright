@@ -62,7 +62,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
           await fs.promises.copyFile(localPath, params.path);
           resolve();
         } catch (e) {
-          reject(e);
+          reject(this._object.wrapDownloadError(e));
         }
       });
     }));
@@ -87,7 +87,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
             readable.on('error', resolve);
           });
         } catch (e) {
-          reject(e);
+          reject(this._object.wrapDownloadError(e));
         }
       });
     }));

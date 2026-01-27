@@ -28,9 +28,15 @@ export class Download {
 
   constructor(page: Page, downloadsPath: string, uuid: string, url: string, suggestedFilename?: string) {
     const unaccessibleErrorMessage = page.browserContext._options.acceptDownloads === 'deny' ? 'Pass { acceptDownloads: true } when you are creating your browser context.' : undefined;
+
+    // we don't have tests for this, so be careful
+    const remoteErrorMessage = page.browserContext._browser._isCollocatedWithServer
+      ? undefined
+      : 'Download could not read from disk, most likely because you are using connectOverCDP with a remote browser. To make downloads work, please use BrowserType.connect instead (https://playwright.dev/docs/api/class-browsertype#browser-type-connect).';
+
     this.artifact = new Artifact(page, path.join(downloadsPath, uuid), unaccessibleErrorMessage, () => {
       return this._page.browserContext.cancelDownload(uuid);
-    });
+    }, remoteErrorMessage);
     this._page = page;
     this.url = url;
     this._suggestedFilename = suggestedFilename;

@@ -27,6 +27,7 @@ type CancelCallback = () => Promise<void>;
 export class Artifact extends SdkObject {
   private _localPath: string;
   private _unaccessibleErrorMessage: string | undefined;
+  private _remoteErrorMessage: string | undefined;
   private _cancelCallback: CancelCallback | undefined;
   private _finishedPromise = new ManualPromise<void>();
   private _saveCallbacks: SaveCallback[] = [];
@@ -34,10 +35,11 @@ export class Artifact extends SdkObject {
   private _deleted = false;
   private _failureError: Error | undefined;
 
-  constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback) {
+  constructor(parent: SdkObject, localPath: string, unaccessibleErrorMessage?: string, cancelCallback?: CancelCallback, remoteErrorMessage?: string) {
     super(parent, 'artifact');
     this._localPath = localPath;
     this._unaccessibleErrorMessage = unaccessibleErrorMessage;
+    this._remoteErrorMessage = remoteErrorMessage;
     this._cancelCallback = cancelCallback;
   }
 
@@ -123,5 +125,11 @@ export class Artifact extends SdkObject {
     this._saveCallbacks = [];
 
     this._finishedPromise.resolve();
+  }
+
+  wrapDownloadError(e: any) {
+    if (this._remoteErrorMessage && e instanceof Error && (e as any).code === 'ENOENT')
+      return new Error(this._remoteErrorMessage);
+    return e;
   }
 }
