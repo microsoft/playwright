@@ -334,6 +334,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     return await progress.race(this._context.storageState(progress, params.indexedDB));
   }
 
+  async setStorageState(params: channels.BrowserContextSetStorageStateParams, progress: Progress): Promise<void> {
+    await this._context.setStorageState(progress, params.storageState, 'api');
+  }
+
   async close(params: channels.BrowserContextCloseParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
     await this._context.close(params);

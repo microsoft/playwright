@@ -644,7 +644,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return this._creatingStorageStatePage;
   }
 
-  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse') {
+  async setStorageState(progress: Progress, state: channels.BrowserNewContextParams['storageState'], mode: 'initial' | 'resetForReuse' | 'api') {
     let page: Page | undefined;
     let interceptor: network.RouteHandler | undefined;
     try {

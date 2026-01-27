@@ -1500,6 +1500,46 @@ Returns storage state for this browser context, contains current cookies, local 
 Set to `true` to include [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) in the storage state snapshot.
 If your application uses IndexedDB to store authentication tokens, like Firebase Authentication, enable this.
 
+## async method: BrowserContext.setStorageState
+* since: v1.59
+
+Clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state.
+
+**Usage**
+
+```js
+// Load storage state from a file and apply it to the context.
+await context.setStorageState('state.json');
+```
+
+```java
+// Load storage state from a file and apply it to the context.
+context.setStorageState(Paths.get("state.json"));
+```
+
+```python async
+# Load storage state from a file and apply it to the context.
+await context.set_storage_state("state.json")
+```
+
+```python sync
+# Load storage state from a file and apply it to the context.
+context.set_storage_state("state.json")
+```
+
+```csharp
+// Load storage state from a file and apply it to the context.
+await context.SetStorageStateAsync("state.json");
+```
+
+### param: BrowserContext.setStorageState.storageState = %%-js-python-context-option-storage-state-%%
+* since: v1.59
+* langs: js, python
+
+### param: BrowserContext.setStorageState.storageState = %%-csharp-java-context-option-storage-state-path-%%
+* since: v1.59
+* langs: csharp, java
+
 ## property: BrowserContext.tracing
 * since: v1.12
 - type: <[Tracing]>

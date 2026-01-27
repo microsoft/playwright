@@ -376,6 +376,7 @@ APIRequestContext:
 
     storageState:
       title: Get storage state
+      group: configuration
       parameters:
         indexedDB: boolean?
       returns:
@@ -1299,6 +1300,7 @@ BrowserContext:
 
     storageState:
       title: Get storage state
+      group: configuration
       parameters:
         indexedDB: boolean?
       returns:
@@ -1308,6 +1310,20 @@ BrowserContext:
         origins:
           type: array
           items: OriginStorage
+
+    setStorageState:
+      title: Set storage state
+      group: configuration
+      parameters:
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
 
     pause:
       title: Pause
