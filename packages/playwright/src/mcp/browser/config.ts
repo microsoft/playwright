@@ -82,7 +82,6 @@ export const defaultConfig: FullConfig = {
     launchOptions: {
       channel: 'chrome',
       headless: os.platform() === 'linux' && !process.env.DISPLAY,
-      chromiumSandbox: true,
     },
     contextOptions: {
       viewport: null,
@@ -127,7 +126,7 @@ const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfi
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
-  browser: Omit<BrowserUserConfig, 'browserName'> & {
+  browser: Omit<BrowserUserConfig, 'browserName' | 'launchOptions' | 'contextOptions'> & {
     browserName: 'chromium' | 'firefox' | 'webkit';
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
@@ -161,6 +160,7 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
+
   if (cliOptions.daemon)
     result.skillMode = true;
 
@@ -168,6 +168,13 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+  }
+
+  if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
+    if (process.platform === 'linux')
+      result.browser.launchOptions.chromiumSandbox = result.browser.launchOptions.channel !== 'chromium';
+    else
+      result.browser.launchOptions.chromiumSandbox = true;
   }
 
   await validateConfig(result);
@@ -222,11 +229,10 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     headless: cliOptions.headless,
   };
 
+  // --sandbox was passed, enable the sandbox
   // --no-sandbox was passed, disable the sandbox
-  if (cliOptions.sandbox === false)
-    launchOptions.chromiumSandbox = false;
-  if (process.env.CI && process.platform === 'linux')
-    launchOptions.chromiumSandbox = false;
+  if (cliOptions.sandbox !== undefined)
+    launchOptions.chromiumSandbox = cliOptions.sandbox;
 
   if (cliOptions.proxyServer) {
     launchOptions.proxy = {

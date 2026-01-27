@@ -62,6 +62,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--port <port>', 'port to listen on for SSE transport.')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+      .option('--sandbox', 'enable the sandbox for all process types that are normally not sandboxed.')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
       .option('--save-video <size>', 'Whether to save the video of the session into the output directory. For example "--save-video=800x600"', resolutionParser.bind(null, '--save-video'))
@@ -80,6 +81,10 @@ export function decorateCommand(command: Command, version: string) {
       .addOption(new ProgramOption('--daemon-data-dir <path>', 'path to the daemon data directory.').hideHelp())
       .addOption(new ProgramOption('--daemon-headed', 'run daemon in headed mode').hideHelp())
       .action(async options => {
+
+        // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
+        options.sandbox = options.sandbox === true ? undefined : false;
+
         setupExitWatchdog();
 
         if (options.vision) {

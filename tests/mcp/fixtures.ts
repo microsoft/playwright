@@ -98,8 +98,6 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
         if (!options?.args?.some(arg => arg.startsWith('--config')))
           args.push(`--config=${test.info().outputPath()}`);
       } else {
-        if (process.env.CI && process.platform === 'linux')
-          args.push('--no-sandbox');
         if (mcpBrowser)
           args.push(`--browser=${mcpBrowser}`);
         if (options?.config) {
