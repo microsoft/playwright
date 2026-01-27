@@ -49,8 +49,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
  */
 export async function startMcpDaemonServer(
   socketPath: string,
-  serverBackendFactory: ServerBackendFactory,
-  exitOnBrowserClose: boolean,
+  serverBackendFactory: ServerBackendFactory
 ): Promise<string> {
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
@@ -106,13 +105,11 @@ export async function startMcpDaemonServer(
     };
   });
 
-  if (exitOnBrowserClose) {
-    backend.onBrowserContextClosed = () => {
-      daemonDebug('browser closed, shutting down daemon');
-      server.close();
-      gracefullyProcessExitDoNotHang(0);
-    };
-  }
+  backend.onBrowserContextClosed = () => {
+    daemonDebug('browser closed, shutting down daemon');
+    server.close();
+    gracefullyProcessExitDoNotHang(0);
+  };
 
   return new Promise((resolve, reject) => {
     server.on('error', (error: NodeJS.ErrnoException) => {
