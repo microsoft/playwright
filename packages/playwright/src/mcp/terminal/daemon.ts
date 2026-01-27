@@ -88,9 +88,10 @@ export async function startMcpDaemonServer(
         daemonDebug('received command', method);
         if (method === 'stop') {
           daemonDebug('stop command received, shutting down');
-          await connection.send({ id, result: 'ok' });
-          server.close();
-          gracefullyProcessExitDoNotHang(0);
+          gracefullyProcessExitDoNotHang(0, async () => {
+            await connection.send({ id, result: 'ok' });
+            server.close();
+          });
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           const response = await backend.callTool(toolName, toolParams, () => {});

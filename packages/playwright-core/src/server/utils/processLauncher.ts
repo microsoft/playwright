@@ -55,15 +55,13 @@ export async function gracefullyCloseAll() {
   await Promise.all(Array.from(gracefullyCloseSet).map(gracefullyClose => gracefullyClose().catch(e => {})));
 }
 
-export function gracefullyProcessExitDoNotHang(code: number) {
+export function gracefullyProcessExitDoNotHang(code: number, callback?: () => Promise<void>) {
   // Force exit after 30 seconds.
   // eslint-disable-next-line no-restricted-properties
-  setTimeout(() => process.exit(code), 30000);
+  const exit = callback ? () => callback().then(() => process.exit(code)) : () => process.exit(code);
+  setTimeout(exit, 30000);
   // Meanwhile, try to gracefully close all browsers.
-  gracefullyCloseAll().then(() => {
-    // eslint-disable-next-line no-restricted-properties
-    process.exit(code);
-  });
+  gracefullyCloseAll().then(exit);
 }
 
 function exitHandler() {

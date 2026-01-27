@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { test as baseTest } from './fixtures';
-import { killProcessGroup } from '../config/commonFixtures';
 
 import type { CommonFixtures } from '../config/commonFixtures';
 
@@ -38,10 +37,8 @@ export const test = baseTest.extend<{
       return await runCli(childProcess, args, { mcpBrowser, mcpHeadless }, sessions);
     });
 
-    for (const session of sessions) {
+    for (const session of sessions)
       await runCli(childProcess, ['session-stop', session.name], { mcpBrowser, mcpHeadless }, []);
-      killProcessGroup(session.pid);
-    }
 
     const daemonDir = path.join(test.info().outputDir, 'daemon');
     const userDataDirs = await fs.promises.readdir(daemonDir).catch(() => []);
