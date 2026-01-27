@@ -8396,203 +8396,7 @@ type FunctionAssertions = {
   toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
 };
 
-type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
-type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
-
-type SpecificMatchers<R, T> =
-  T extends Page ? PageAssertions & AllowedGenericMatchers<R, T> :
-  T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R, T> :
-  T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R, T> :
-  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
-type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
-
-type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
-type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
-type ToUserMatcher<F, DefaultReturnType> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType) : never;
-type ToUserMatcherObject<T, DefaultReturnType, ArgType> = {
-  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType>;
-};
-
-type MatcherHintColor = (arg: string) => string;
-
-export type MatcherHintOptions = {
-  comment?: string;
-  expectedColor?: MatcherHintColor;
-  isDirectExpectCall?: boolean;
-  isNot?: boolean;
-  promise?: string;
-  receivedColor?: MatcherHintColor;
-  secondArgument?: string;
-  secondArgumentColor?: MatcherHintColor;
-};
-
-export interface ExpectMatcherUtils {
-  matcherHint(matcherName: string, received: unknown, expected: unknown, options?: MatcherHintOptions): string;
-  printDiffOrStringify(expected: unknown, received: unknown, expectedLabel: string, receivedLabel: string, expand: boolean): string;
-  printExpected(value: unknown): string;
-  printReceived(object: unknown): string;
-  printWithType<T>(name: string, value: T, print: (value: T) => string): string;
-  diff(a: unknown, b: unknown): string | null;
-  stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
-}
-
-export type ExpectMatcherState = {
-  /**
-   * Whether this matcher was called with the negated .not modifier.
-   */
-  isNot: boolean;
-  /**
-   * - 'rejects' if matcher was called with the promise .rejects modifier
-   * - 'resolves' if matcher was called with the promise .resolves modifier
-   * - '' if matcher was not called with a promise modifier
-   */
-  promise: 'rejects' | 'resolves' | '';
-  utils: ExpectMatcherUtils;
-  /**
-   * Timeout in milliseconds for the assertion to be fulfilled.
-   */
-  timeout: number;
-};
-
-export type MatcherReturnType = {
-  message: () => string;
-  pass: boolean;
-  name?: string;
-  expected?: unknown;
-  actual?: any;
-  log?: string[];
-  timeout?: number;
-};
-
-type MakeMatchers<R, T, ExtendedMatchers> = {
-  /**
-   * If you know how to test something, `.not` lets you test its opposite.
-   */
-  not: MakeMatchers<R, T, ExtendedMatchers>;
-  /**
-   * Use resolves to unwrap the value of a fulfilled promise so any other
-   * matcher can be chained. If the promise is rejected the assertion fails.
-   */
-  resolves: MakeMatchers<Promise<R>, Awaited<T>, ExtendedMatchers>;
-  /**
-   * Unwraps the reason of a rejected promise so any other matcher can be chained.
-   * If the promise is fulfilled the assertion fails.
-   */
-  rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
-} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>>;
-
-type PollMatchers<R, T, ExtendedMatchers> = {
-  /**
-   * If you know how to test something, `.not` lets you test its opposite.
-   */
-  not: PollMatchers<R, T, ExtendedMatchers>;
-} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>;
-
-export type Expect<ExtendedMatchers = {}> = {
-  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
-  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
-  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
-  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
-  configure: (configuration: {
-    message?: string,
-    timeout?: number,
-    soft?: boolean,
-  }) => Expect<ExtendedMatchers>;
-  getState(): unknown;
-  not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
-} & AsymmetricMatchers;
-
-// --- BEGINGLOBAL ---
-declare global {
-  export namespace PlaywrightTest {
-    export interface Matchers<R, T = unknown> {
-    }
-  }
-}
-// --- ENDGLOBAL ---
-
-/**
- * These tests are executed in Playwright environment that launches the browser
- * and provides a fresh page to each test.
- */
-export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
-export default test;
-
-export const _baseTest: TestType<{}, {}>;
-export const expect: Expect<{}>;
-
-/**
- * Defines Playwright config
- */
-export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
-export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
-export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
-export function defineConfig(config: PlaywrightTestConfig, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig;
-export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig<T>[]): PlaywrightTestConfig<T>;
-export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig<T, W>[]): PlaywrightTestConfig<T, W>;
-
-type MergedT<List> = List extends [TestType<infer T, any>, ...(infer Rest)] ? T & MergedT<Rest> : {};
-type MergedW<List> = List extends [TestType<any, infer W>, ...(infer Rest)] ? W & MergedW<Rest> : {};
-type MergedTestType<List> = TestType<MergedT<List>, MergedW<List>>;
-
-/**
- * Merges fixtures
- */
-export function mergeTests<List extends any[]>(...tests: List): MergedTestType<List>;
-
-type MergedExpectMatchers<List> = List extends [Expect<infer M>, ...(infer Rest)] ? M & MergedExpectMatchers<Rest> : {};
-type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
-
-/**
- * Merges expects
- */
-export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
-
-// This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
-export { };
-
-
-
-/**
- * The [APIResponseAssertions](https://playwright.dev/docs/api/class-apiresponseassertions) class provides assertion
- * methods that can be used to make assertions about the
- * [APIResponse](https://playwright.dev/docs/api/class-apiresponse) in the tests.
- *
- * ```js
- * import { test, expect } from '@playwright/test';
- *
- * test('navigates to login', async ({ page }) => {
- *   // ...
- *   const response = await page.request.get('https://playwright.dev');
- *   await expect(response).toBeOK();
- * });
- * ```
- *
- */
-interface APIResponseAssertions {
-  /**
-   * Ensures the response status code is within `200..299` range.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await expect(response).toBeOK();
-   * ```
-   *
-   */
-  toBeOK(): Promise<void>;
-
-  /**
-   * Makes the assertion check for the opposite condition. For example, this code tests that the response status is not
-   * successful:
-   *
-   * ```js
-   * await expect(response).not.toBeOK();
-   * ```
-   *
-   */
-  not: APIResponseAssertions;
-}
+type CSSStyleProperties = { [k in Exclude<keyof CSSStyleDeclaration, 'parentRule' | number>]?: CSSStyleDeclaration[k] extends Function ? never : CSSStyleDeclaration[k] };
 
 /**
  * The [LocatorAssertions](https://playwright.dev/docs/api/class-locatorassertions) class provides assertion methods
@@ -8611,6 +8415,41 @@ interface APIResponseAssertions {
  *
  */
 interface LocatorAssertions {
+  /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
+   * CSS style.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByRole('button');
+   * await expect(locator).toHaveCSS('display', 'flex');
+   * ```
+   *
+   * @param name CSS property name.
+   * @param value CSS property value.
+   * @param options
+   */
+  toHaveCSS(name: string, value: string|RegExp, options?: { timeout?: number }): Promise<void>;
+  /**
+   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
+   * CSS properties. Only the listed properties are checked.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = page.getByRole('button');
+   * await expect(locator).toHaveCSS({
+   *   display: 'flex',
+   *   backgroundColor: 'rgb(255, 0, 0)'
+   * });
+   * ```
+   *
+   * @param styles CSS properties object. See
+   * [CSSStyleProperties](https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleProperties) for available properties.
+   * @param options
+   */
+  toHaveCSS(values: CSSStyleProperties, options?: { timeout?: number }): Promise<void>;
   /**
    * Ensures that [Locator](https://playwright.dev/docs/api/class-locator) points to an element that is
    * [connected](https://developer.mozilla.org/en-US/docs/Web/API/Node/isConnected) to a Document or a ShadowRoot.
@@ -9164,28 +9003,6 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) resolves to an element with the given computed
-   * CSS style.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = page.getByRole('button');
-   * await expect(locator).toHaveCSS('display', 'flex');
-   * ```
-   *
-   * @param name CSS property name.
-   * @param value CSS property value.
-   * @param options
-   */
-  toHaveCSS(name: string, value: string|RegExp, options?: {
-    /**
-     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
-     */
-    timeout?: number;
-  }): Promise<void>;
-
-  /**
    * Ensures the [Locator](https://playwright.dev/docs/api/class-locator) points to an element with the given DOM Node
    * ID.
    *
@@ -9624,6 +9441,204 @@ interface LocatorAssertions {
    *
    */
   not: LocatorAssertions;
+}
+
+type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
+type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
+
+type SpecificMatchers<R, T> =
+  T extends Page ? PageAssertions & AllowedGenericMatchers<R, T> :
+  T extends Locator ? LocatorAssertions & AllowedGenericMatchers<R, T> :
+  T extends APIResponse ? APIResponseAssertions & AllowedGenericMatchers<R, T> :
+  BaseMatchers<R, T> & (T extends Function ? FunctionAssertions : {});
+type AllMatchers<R, T> = PageAssertions & LocatorAssertions & APIResponseAssertions & FunctionAssertions & BaseMatchers<R, T>;
+
+type IfAny<T, Y, N> = 0 extends (1 & T) ? Y : N;
+type Awaited<T> = T extends PromiseLike<infer U> ? U : T;
+type ToUserMatcher<F, DefaultReturnType> = F extends (first: any, ...args: infer Rest) => infer R ? (...args: Rest) => (R extends PromiseLike<infer U> ? Promise<void> : DefaultReturnType) : never;
+type ToUserMatcherObject<T, DefaultReturnType, ArgType> = {
+  [K in keyof T as T[K] extends (arg: ArgType, ...rest: any[]) => any ? K : never]: ToUserMatcher<T[K], DefaultReturnType>;
+};
+
+type MatcherHintColor = (arg: string) => string;
+
+export type MatcherHintOptions = {
+  comment?: string;
+  expectedColor?: MatcherHintColor;
+  isDirectExpectCall?: boolean;
+  isNot?: boolean;
+  promise?: string;
+  receivedColor?: MatcherHintColor;
+  secondArgument?: string;
+  secondArgumentColor?: MatcherHintColor;
+};
+
+export interface ExpectMatcherUtils {
+  matcherHint(matcherName: string, received: unknown, expected: unknown, options?: MatcherHintOptions): string;
+  printDiffOrStringify(expected: unknown, received: unknown, expectedLabel: string, receivedLabel: string, expand: boolean): string;
+  printExpected(value: unknown): string;
+  printReceived(object: unknown): string;
+  printWithType<T>(name: string, value: T, print: (value: T) => string): string;
+  diff(a: unknown, b: unknown): string | null;
+  stringify(object: unknown, maxDepth?: number, maxWidth?: number): string;
+}
+
+export type ExpectMatcherState = {
+  /**
+   * Whether this matcher was called with the negated .not modifier.
+   */
+  isNot: boolean;
+  /**
+   * - 'rejects' if matcher was called with the promise .rejects modifier
+   * - 'resolves' if matcher was called with the promise .resolves modifier
+   * - '' if matcher was not called with a promise modifier
+   */
+  promise: 'rejects' | 'resolves' | '';
+  utils: ExpectMatcherUtils;
+  /**
+   * Timeout in milliseconds for the assertion to be fulfilled.
+   */
+  timeout: number;
+};
+
+export type MatcherReturnType = {
+  message: () => string;
+  pass: boolean;
+  name?: string;
+  expected?: unknown;
+  actual?: any;
+  log?: string[];
+  timeout?: number;
+};
+
+type MakeMatchers<R, T, ExtendedMatchers> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: MakeMatchers<R, T, ExtendedMatchers>;
+  /**
+   * Use resolves to unwrap the value of a fulfilled promise so any other
+   * matcher can be chained. If the promise is rejected the assertion fails.
+   */
+  resolves: MakeMatchers<Promise<R>, Awaited<T>, ExtendedMatchers>;
+  /**
+   * Unwraps the reason of a rejected promise so any other matcher can be chained.
+   * If the promise is fulfilled the assertion fails.
+   */
+  rejects: MakeMatchers<Promise<R>, any, ExtendedMatchers>;
+} & IfAny<T, AllMatchers<R, T>, SpecificMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>>;
+
+type PollMatchers<R, T, ExtendedMatchers> = {
+  /**
+   * If you know how to test something, `.not` lets you test its opposite.
+   */
+  not: PollMatchers<R, T, ExtendedMatchers>;
+} & BaseMatchers<R, T> & ToUserMatcherObject<ExtendedMatchers, R, T>;
+
+export type Expect<ExtendedMatchers = {}> = {
+  <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }): MakeMatchers<void, T, ExtendedMatchers>;
+  soft: <T = unknown>(actual: T, messageOrOptions?: string | { message?: string }) => MakeMatchers<void, T, ExtendedMatchers>;
+  poll: <T = unknown>(actual: () => T | Promise<T>, messageOrOptions?: string | { message?: string, timeout?: number, intervals?: number[] }) => PollMatchers<Promise<void>, T, ExtendedMatchers>;
+  extend<MoreMatchers extends Record<string, (this: ExpectMatcherState, receiver: any, ...args: any[]) => MatcherReturnType | Promise<MatcherReturnType>>>(matchers: MoreMatchers): Expect<ExtendedMatchers & MoreMatchers>;
+  configure: (configuration: {
+    message?: string,
+    timeout?: number,
+    soft?: boolean,
+  }) => Expect<ExtendedMatchers>;
+  getState(): unknown;
+  not: Omit<AsymmetricMatchers, 'any' | 'anything'>;
+} & AsymmetricMatchers;
+
+// --- BEGINGLOBAL ---
+declare global {
+  export namespace PlaywrightTest {
+    export interface Matchers<R, T = unknown> {
+    }
+  }
+}
+// --- ENDGLOBAL ---
+
+/**
+ * These tests are executed in Playwright environment that launches the browser
+ * and provides a fresh page to each test.
+ */
+export const test: TestType<PlaywrightTestArgs & PlaywrightTestOptions, PlaywrightWorkerArgs & PlaywrightWorkerOptions>;
+export default test;
+
+export const _baseTest: TestType<{}, {}>;
+export const expect: Expect<{}>;
+
+/**
+ * Defines Playwright config
+ */
+export function defineConfig(config: PlaywrightTestConfig): PlaywrightTestConfig;
+export function defineConfig<T>(config: PlaywrightTestConfig<T>): PlaywrightTestConfig<T>;
+export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>): PlaywrightTestConfig<T, W>;
+export function defineConfig(config: PlaywrightTestConfig, ...configs: PlaywrightTestConfig[]): PlaywrightTestConfig;
+export function defineConfig<T>(config: PlaywrightTestConfig<T>, ...configs: PlaywrightTestConfig<T>[]): PlaywrightTestConfig<T>;
+export function defineConfig<T, W>(config: PlaywrightTestConfig<T, W>, ...configs: PlaywrightTestConfig<T, W>[]): PlaywrightTestConfig<T, W>;
+
+type MergedT<List> = List extends [TestType<infer T, any>, ...(infer Rest)] ? T & MergedT<Rest> : {};
+type MergedW<List> = List extends [TestType<any, infer W>, ...(infer Rest)] ? W & MergedW<Rest> : {};
+type MergedTestType<List> = TestType<MergedT<List>, MergedW<List>>;
+
+/**
+ * Merges fixtures
+ */
+export function mergeTests<List extends any[]>(...tests: List): MergedTestType<List>;
+
+type MergedExpectMatchers<List> = List extends [Expect<infer M>, ...(infer Rest)] ? M & MergedExpectMatchers<Rest> : {};
+type MergedExpect<List> = Expect<MergedExpectMatchers<List>>;
+
+/**
+ * Merges expects
+ */
+export function mergeExpects<List extends any[]>(...expects: List): MergedExpect<List>;
+
+// This is required to not export everything by default. See https://github.com/Microsoft/TypeScript/issues/19545#issuecomment-340490459
+export { };
+
+
+
+/**
+ * The [APIResponseAssertions](https://playwright.dev/docs/api/class-apiresponseassertions) class provides assertion
+ * methods that can be used to make assertions about the
+ * [APIResponse](https://playwright.dev/docs/api/class-apiresponse) in the tests.
+ *
+ * ```js
+ * import { test, expect } from '@playwright/test';
+ *
+ * test('navigates to login', async ({ page }) => {
+ *   // ...
+ *   const response = await page.request.get('https://playwright.dev');
+ *   await expect(response).toBeOK();
+ * });
+ * ```
+ *
+ */
+interface APIResponseAssertions {
+  /**
+   * Ensures the response status code is within `200..299` range.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(response).toBeOK();
+   * ```
+   *
+   */
+  toBeOK(): Promise<void>;
+
+  /**
+   * Makes the assertion check for the opposite condition. For example, this code tests that the response status is not
+   * successful:
+   *
+   * ```js
+   * await expect(response).not.toBeOK();
+   * ```
+   *
+   */
+  not: APIResponseAssertions;
 }
 
 /**

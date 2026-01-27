@@ -1480,8 +1480,11 @@ export class Frame extends SdkObject<FrameEventMap> {
         lastIntermediateResult.received = received;
       }
       lastIntermediateResult.isSet = true;
-      if (!missingReceived && !Array.isArray(received))
-        progress.log(`  unexpected value "${renderUnexpectedValue(options.expression, received)}"`);
+      if (!missingReceived) {
+        const rendered = renderUnexpectedValue(options.expression, received);
+        if (rendered !== undefined)
+          progress.log(`  unexpected value "${rendered}"`);
+      }
     }
     return { matches, received };
   }
@@ -1745,8 +1748,10 @@ function verifyLifecycle(name: string, waitUntil: types.LifecycleEvent): types.L
   return waitUntil;
 }
 
-function renderUnexpectedValue(expression: string, received: any): string {
+function renderUnexpectedValue(expression: string, received: any): string | undefined {
   if (expression === 'to.match.aria')
-    return received ? received.raw : received;
-  return received;
+    received = received?.raw;
+  if (Array.isArray(received) || (!!received && typeof received === 'object'))
+    return;
+  return String(received);
 }

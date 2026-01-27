@@ -518,6 +518,57 @@ test.describe('toHaveCSS', () => {
     const locator = page.locator('#node');
     await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF');
   });
+
+  test('fail with bad arguments', async ({ page }) => {
+    await page.setContent(`<div id=node>hi</div>`);
+    const locator = page.locator('#node');
+    try {
+      await expect(locator).toHaveCSS('property', {} as any);
+      expect(true, 'should throw!').toBe(false);
+    } catch (error) {
+      expect(error.message).toContain(`toHaveCSS expected value must be a string or a regular expression`);
+    }
+    try {
+      await expect(locator).toHaveCSS(123 as any, '123');
+      expect(true, 'should throw!').toBe(false);
+    } catch (error) {
+      expect(error.message).toContain(`toHaveCSS argument must be a string or an object`);
+    }
+  });
+
+  test('pass with object', async ({ page }) => {
+    await page.setContent(`<div id=node style="color: rgb(255, 0, 0); display: flex; background-color: red;">Text content</div>`);
+    const locator = page.locator('#node');
+    await expect(locator).toHaveCSS({
+      color: 'rgb(255, 0, 0)',
+      display: 'flex',
+      backgroundColor: 'rgb(255, 0, 0)',
+    });
+  });
+
+  test('does not support custom properties inside object', async ({ page }) => {
+    await page.setContent(`<div id=node style="--my-color: blue">Text content</div>`);
+    const locator = page.locator('#node');
+    await expect(locator).toHaveCSS({ '--my-color': '' } as any);
+  });
+
+  test('fail with object', async ({ page }) => {
+    await page.setContent(`<div id=node style="color: rgb(255, 0, 0); display: flex; background-color: red;">Text content</div>`);
+    const locator = page.locator('#node');
+    const error = await expect(locator).toHaveCSS({
+      'color': 'blue',
+      'display': 'flex',
+      'backgroundColor': 'rgb(255, 0, 0)',
+    }, { timeout: 3000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`
+  Object {
+    "backgroundColor": "rgb(255, 0, 0)",
+-   "color": "blue",
++   "color": "rgb(255, 0, 0)",
+    "display": "flex",
+  }`);
+    expect(stripAnsi(error.message)).not.toContain(`unexpected value "[object Object]"`);
+  });
 });
 
 test.describe('toHaveId', () => {

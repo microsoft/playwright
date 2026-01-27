@@ -400,6 +400,13 @@ type FunctionAssertions = {
   toPass(options?: { timeout?: number, intervals?: number[] }): Promise<void>;
 };
 
+type CSSStyleProperties = { [k in Exclude<keyof CSSStyleDeclaration, 'parentRule' | number>]?: CSSStyleDeclaration[k] extends Function ? never : CSSStyleDeclaration[k] };
+
+interface LocatorAssertions {
+  toHaveCSS(name: string, value: string|RegExp, options?: { timeout?: number }): Promise<void>;
+  toHaveCSS(values: CSSStyleProperties, options?: { timeout?: number }): Promise<void>;
+}
+
 type BaseMatchers<R, T> = GenericAssertions<R> & PlaywrightTest.Matchers<R, T> & SnapshotAssertions;
 type AllowedGenericMatchers<R, T> = PlaywrightTest.Matchers<R, T> & Pick<GenericAssertions<R>, 'toBe' | 'toBeDefined' | 'toBeFalsy' | 'toBeNull' | 'toBeTruthy' | 'toBeUndefined'>;
 

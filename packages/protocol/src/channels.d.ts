@@ -3317,7 +3317,7 @@ export type FrameWaitForSelectorResult = {
 export type FrameExpectParams = {
   selector?: string,
   expression: string,
-  expressionArg?: any,
+  expressionArg?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3327,7 +3327,7 @@ export type FrameExpectParams = {
 };
 export type FrameExpectOptions = {
   selector?: string,
-  expressionArg?: any,
+  expressionArg?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,

@@ -2794,7 +2794,7 @@ Frame:
       parameters:
         selector: string?
         expression: string
-        expressionArg: json?
+        expressionArg: string?
         expectedText:
           type: array?
           items: ExpectedTextValue
