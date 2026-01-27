@@ -2529,6 +2529,7 @@ scheme.ElectronInitializer = tOptional(tObject({}));
 scheme.ElectronLaunchParams = tObject({
   executablePath: tOptional(tString),
   args: tOptional(tArray(tString)),
+  chromiumSandbox: tOptional(tBoolean),
   cwd: tOptional(tString),
   env: tOptional(tArray(tType('NameValue'))),
   timeout: tFloat,

@@ -160,8 +160,7 @@ export class Electron extends SdkObject {
     let electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...(options.args || [])];
 
     if (os.platform() === 'linux') {
-      const runningAsRoot = process.geteuid && process.geteuid() === 0;
-      if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
+      if (!options.chromiumSandbox && electronArguments.indexOf('--no-sandbox') === -1)
         electronArguments.unshift('--no-sandbox');
     }
 

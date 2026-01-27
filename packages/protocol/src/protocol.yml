@@ -3869,6 +3869,7 @@ Electron:
         args:
           type: array?
           items: string
+        chromiumSandbox: boolean?
         cwd: string?
         env:
           type: array?
