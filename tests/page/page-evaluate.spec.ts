@@ -103,6 +103,7 @@ it('should transfer typed arrays', async ({ page }) => {
     new Uint16Array([1, 2, 3]),
     new Int32Array([1, 2, 3]),
     new Uint32Array([1, 2, 3]),
+    new Float16Array([1.1, 2.2, 3.3]),
     new Float32Array([1.1, 2.2, 3.3]),
     new Float64Array([1.1, 2.2, 3.3]),
     new BigInt64Array([1n, 2n, 3n]),
