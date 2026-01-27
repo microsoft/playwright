@@ -38,7 +38,7 @@ const close = declareCommand({
   description: 'Close the page',
   category: 'core',
   args: z.object({}),
-  toolName: 'browser_close',
+  toolName: '',
   toolParams: () => ({}),
 });
 

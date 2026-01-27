@@ -39,7 +39,10 @@ export const test = baseTest.extend<{
     });
 
     for (const session of sessions) {
-      await runCli(childProcess, ['session-stop', session.name], { mcpBrowser, mcpHeadless }, []);
+      await runCli(childProcess, ['session-stop', session.name], { mcpBrowser, mcpHeadless }, []).catch(e => {
+        if (!e.message.includes('is not running'))
+          throw e;
+      });
       killProcessGroup(session.pid);
     }
 
