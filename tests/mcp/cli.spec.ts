@@ -479,8 +479,7 @@ test.describe('session', () => {
   });
 
   test('session stops when browser exits', async ({ cli, server }) => {
-    // Start session in headed mode - daemon only exits on browser close when headed
-    await cli('open', '--headed', server.HELLO_WORLD);
+    await cli('open', server.HELLO_WORLD);
 
     const { output: listBefore } = await cli('session-list');
     expect(listBefore).toContain('default (live)');
@@ -488,11 +487,7 @@ test.describe('session', () => {
     // Close the browser - this will cause the daemon to exit so the command may fail
     await cli('run-code', '() => page.context().browser().close()').catch(() => {});
 
-    // Wait a bit for the daemon to process the close event
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    const { output: listAfter } = await cli('session-list');
-    expect(listAfter).not.toContain('(live)');
+    await expect.poll(async() => cli('session-list').then(result => result.output)).not.toContain('(live)');
   });
 });
 
