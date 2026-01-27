@@ -211,6 +211,8 @@ jobs:
         runs-on: [ubuntu-22.04, macos-latest, windows-latest]
     steps:
     - uses: actions/checkout@v6
+    - run: defaults write com.microsoft.Edge UpdateDefault 0
+      if: ${{ runner.os == 'macOS' }}
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.channel }}
