@@ -34,15 +34,17 @@ export type StructuredResponse = {
   sections: Section[];
 };
 
+type SessionOptions = { config?: string, headed?: boolean, extension?: boolean };
+
 class Session {
   readonly name: string;
   private _socketPath: string;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
-  private _options: { config?: string, headed?: boolean };
+  private _options: SessionOptions;
 
-  constructor(name: string, options: { config?: string, headed?: boolean }) {
+  constructor(name: string, options: SessionOptions) {
     this.name = name;
     this._socketPath = this._daemonSocketPath();
     this._options = options;
@@ -190,6 +192,7 @@ class Session {
     const configFile = resolveConfigFile(this._options.config);
     const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
     const headedArg = this._options.headed ? [`--daemon-headed`] : [];
+    const extensionArg = this._options.extension ? [`--extension`] : [];
 
     const outLog = path.join(daemonProfilesDir, 'out.log');
     const errLog = path.join(daemonProfilesDir, 'err.log');
@@ -203,6 +206,7 @@ class Session {
       `--daemon-data-dir=${userDataDir}`,
       ...configArg,
       ...headedArg,
+      ...extensionArg,
     ], {
       detached: true,
       stdio: ['ignore', out, err],
@@ -252,8 +256,6 @@ class Session {
     return path.join(socketsDir, installationDirHash, socketName);
   }
 }
-
-type SessionOptions = { config?: string, headed?: boolean };
 
 class SessionManager {
   readonly sessions: Map<string, Session>;
@@ -400,10 +402,12 @@ const daemonProfilesDir = (() => {
 export async function program(options: { version: string }) {
   const argv = process.argv.slice(2);
   const args = require('minimist')(argv, {
-    boolean: ['help', 'version', 'headed'],
+    boolean: ['help', 'version', 'headed', 'extension'],
   });
   if (!argv.includes('--headed') && !argv.includes('--no-headed'))
     delete args.headed;
+  if (!argv.includes('--extension'))
+    delete args.extension;
 
   const help = require('./help.json');
   const commandName = args._[0];

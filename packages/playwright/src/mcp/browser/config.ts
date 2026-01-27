@@ -46,6 +46,7 @@ export type CLIOptions = {
   daemonDataDir?: string;
   daemonHeaded?: boolean;
   device?: string;
+  extension?: boolean;
   executablePath?: string;
   grantPermissions?: string[];
   headless?: boolean;
@@ -165,9 +166,14 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
     result.skillMode = true;
 
   if (result.browser.userDataDir === '<daemon-data-dir>') {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    if (cliOptions.extension) {
+      // Use default user profile with extension.
+      result.browser.userDataDir = undefined;
+    } else {
+      // No custom value provided, use the daemon data dir.
+      const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+      result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    }
   }
 
   if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {

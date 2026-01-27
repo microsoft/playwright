@@ -97,6 +97,7 @@ export function generateHelp() {
 
   lines.push('\nGlobal options:');
   lines.push(formatWithGap('  --config <path>', 'create a session with custom config, defaults to `playwright-cli.json`'));
+  lines.push(formatWithGap('  --extension', 'connect to a running browser instance using Playwright MCP Bridge extension'));
   lines.push(formatWithGap('  --headed', 'create a headed session'));
   lines.push(formatWithGap('  --help [command]', 'print help'));
   lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));

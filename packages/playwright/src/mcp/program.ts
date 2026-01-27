@@ -106,6 +106,19 @@ export function decorateCommand(command: Command, version: string) {
         const browserContextFactory = contextFactory(config);
         const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
+        if (options.daemon) {
+          const contextFactory = options.extension ? extensionContextFactory : browserContextFactory;
+          const serverBackendFactory: mcpServer.ServerBackendFactory = {
+            name: 'Playwright',
+            nameInConfig: 'playwright-daemon',
+            version,
+            create: () => new BrowserServerBackend(config, contextFactory, { allTools: true, structuredOutput: true })
+          };
+          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory);
+          console.error(`Daemon server listening on ${socketPath}`);
+          return;
+        }
+
         if (options.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright w/ extension',
@@ -114,18 +127,6 @@ export function decorateCommand(command: Command, version: string) {
             create: () => new BrowserServerBackend(config, extensionContextFactory)
           };
           await mcpServer.start(serverBackendFactory, config.server);
-          return;
-        }
-
-        if (options.daemon) {
-          const serverBackendFactory: mcpServer.ServerBackendFactory = {
-            name: 'Playwright',
-            nameInConfig: 'playwright-daemon',
-            version,
-            create: () => new BrowserServerBackend(config, browserContextFactory, { allTools: true, structuredOutput: true })
-          };
-          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory);
-          console.error(`Daemon server listening on ${socketPath}`);
           return;
         }
 
