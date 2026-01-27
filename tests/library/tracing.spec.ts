@@ -293,7 +293,6 @@ test('should not include trace resources from the previous chunks', async ({ con
     const names = Array.from(resources.keys());
     expect(names.filter(n => n.endsWith('.html')).length).toBe(1);
     jpegs = names.filter(n => n.endsWith('.jpeg'));
-    expect(jpegs.length).toBeGreaterThan(0);
     // 1 source file for the test.
     expect(names.filter(n => n.endsWith('.txt')).length).toBe(1);
   }

@@ -321,10 +321,10 @@ test('should copy network request', async ({ runUITest, server }) => {
 
   await page.getByRole('tab', { name: 'Network' }).click();
   await page.getByRole('listitem').filter({ hasText: 'post-data-1' }).click();
-  await page.getByRole('button', { name: 'Copy request' }).hover();
 
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
 
+  await page.getByRole('button', { name: 'Copy request' }).hover();
   await page.getByRole('button', { name: 'Copy as cURL' }).click();
   await expect(async () => {
     const curlRequest = await page.evaluate(() => (window as any).__clipboardCall);
@@ -339,6 +339,7 @@ test('should copy network request', async ({ runUITest, server }) => {
     }
   }).toPass();
 
+  await page.getByRole('button', { name: 'Copy request' }).hover();
   await page.getByRole('button', { name: 'Copy as Fetch' }).click();
   await expect(async () => {
     const fetchRequest = await page.evaluate(() => (window as any).__clipboardCall);
@@ -348,6 +349,7 @@ test('should copy network request', async ({ runUITest, server }) => {
     expect(fetchRequest).toContain(`"method": "POST"`);
   }).toPass();
 
+  await page.getByRole('button', { name: 'Copy request' }).hover();
   await page.getByRole('button', { name: 'Copy as Playwright' }).click();
   await expect(async () => {
     const playwrightRequest = await page.evaluate(() => (window as any).__clipboardCall);

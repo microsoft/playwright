@@ -110,7 +110,7 @@ test.describe('core', () => {
   });
 
   test('check', async ({ cli, server, mcpBrowser }) => {
-    const active = mcpBrowser === 'webkit' && process.platform === 'darwin' ? '' : '[active] ';
+    const active = mcpBrowser === 'webkit' && process.platform !== 'linux' ? '' : '[active] ';
     server.setContent('/', `<input type="checkbox">`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('check', 'e2');
@@ -119,7 +119,7 @@ test.describe('core', () => {
   });
 
   test('uncheck', async ({ cli, server, mcpBrowser }) => {
-    const active = mcpBrowser === 'webkit' && process.platform === 'darwin' ? '' : '[active] ';
+    const active = mcpBrowser === 'webkit' && process.platform !== 'linux' ? '' : '[active] ';
     server.setContent('/', `<input type="checkbox" checked>`, 'text/html');
     await cli('open', server.PREFIX);
     await cli('uncheck', 'e2');
