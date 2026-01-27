@@ -255,8 +255,8 @@ test.describe('mouse', () => {
     await cli('mouseup');
 
     await cli('mousewheel', '10', '5');
-    const { snapshot } = await cli('snapshot');
-    expect(snapshot).toContain('wheel 5 10');
+
+    await expect.poll(() => cli('snapshot').then(result => result.snapshot)).toContain('wheel 5 10');
   });
 });
 
