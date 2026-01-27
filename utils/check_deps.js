@@ -150,6 +150,9 @@ async function innerCheckDeps(root) {
         if (!allowImport(fileName, importPath, mergedDeps))
           errors.push(`Disallowed import ${path.relative(root, importPath)} in ${path.relative(root, fileName)}`);
         return;
+      } else {
+        if (mergedDeps.includes('"strict"') && !builtins.has(node.moduleSpecifier.text))
+          errors.push(`Disallowed import ${node.moduleSpecifier.text} in ${path.relative(root, fileName)}`);
       }
 
       const fullStart = node.getFullStart();
@@ -193,6 +196,8 @@ async function innerCheckDeps(root) {
         }
         if (line === '***')
           group.push('***');
+        else if (line === '"strict"')
+          group.push('"strict"');
         else if (line.startsWith('@'))
           group.push(line.replace(/@([\w-]+)\/(.*)/, (_, arg1, arg2) => packages.get(arg1) + arg2));
         else
@@ -205,12 +210,16 @@ async function innerCheckDeps(root) {
   }
 
   function allowImport(from, to, mergedDeps) {
+    const strict = mergedDeps.includes('"strict"');
     const fromDirectory = path.dirname(from);
     const toDirectory = isDirectory(to) ? to : path.dirname(to);
     if (to === toDirectory)
       to = path.join(to, 'index.ts');
-    if (fromDirectory === toDirectory)
+    if (!strict && fromDirectory === toDirectory)
       return true;
+
+    if (strict)
+      return mergedDeps.includes(to) && calculateDeps(to).includes('"strict"');
 
     for (const dep of mergedDeps) {
       if (dep === '***')

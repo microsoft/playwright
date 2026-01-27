@@ -3,4 +3,12 @@
 ../cli/socketConnection.ts
 
 [cli.ts]
+"strict"
+./program.ts
+
+[program.ts]
+"strict"
 ./socketConnection.ts
+
+[socketConnection.ts]
+"strict"

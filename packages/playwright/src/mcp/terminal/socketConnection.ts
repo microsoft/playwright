@@ -16,10 +16,6 @@
 
 import net from 'net';
 
-import { debug } from 'playwright-core/lib/utilsBundle';
-
-const daemonDebug = debug('pw:daemon');
-
 export class SocketConnection {
   private _socket: net.Socket;
   private _pendingBuffers: Buffer[] = [];
@@ -33,7 +29,9 @@ export class SocketConnection {
     socket.on('close', () => {
       this.onclose?.();
     });
-    socket.on('error', e => daemonDebug(`error: ${e.message}`));
+
+    // eslint-disable-next-line no-console
+    socket.on('error', e => console.error(`error: ${e.message}`));
   }
 
   async send(message: any) {
@@ -76,7 +74,8 @@ export class SocketConnection {
     try {
       this.onmessage?.(JSON.parse(message));
     } catch (e) {
-      daemonDebug('failed to dispatch message', e);
+      // eslint-disable-next-line no-console
+      console.error('failed to dispatch message', e);
     }
   }
 }

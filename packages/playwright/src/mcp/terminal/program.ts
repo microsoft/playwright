@@ -24,7 +24,6 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
-import { debug } from 'playwright-core/lib/utilsBundle';
 import { SocketConnection } from './socketConnection';
 
 import type { Section } from '../browser/response';
@@ -34,8 +33,6 @@ export type StructuredResponse = {
   text?: string;
   sections: Section[];
 };
-
-const debugCli = debug('pw:cli');
 
 class Session {
   readonly name: string;
@@ -201,10 +198,8 @@ class SessionManager {
 
   private async _connect(sessionName: string): Promise<Session> {
     const socketPath = this._daemonSocketPath(sessionName);
-    debugCli(`Connecting to daemon at ${socketPath}`);
 
     if (await this._canConnect(sessionName)) {
-      debugCli(`Socket file exists, attempting to connect...`);
       try {
         return await this._connectToSocket(sessionName, socketPath);
       } catch (e) {
@@ -217,7 +212,6 @@ class SessionManager {
     await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
     const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}`);
     const cliPath = path.join(__dirname, '../../../cli.js');
-    debugCli(`Will launch daemon process: ${cliPath}`);
     const configFile = resolveConfigFile(this._options.config);
     const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
     const headedArg = this._options.headed ? [`--daemon-headed`] : [];
@@ -259,7 +253,6 @@ class SessionManager {
       } catch (e) {
         if (e.code !== 'ENOENT')
           throw e;
-        debugCli(`Retrying to connect to daemon at ${socketPath} (${i + 1}/${maxRetries})`);
       }
     }
 
@@ -277,7 +270,6 @@ class SessionManager {
   private async _connectToSocket(sessionName: string, socketPath: string): Promise<Session> {
     const socket = await new Promise<net.Socket>((resolve, reject) => {
       const socket = net.createConnection(socketPath, () => {
-        debugCli(`Connected to daemon at ${socketPath}`);
         resolve(socket);
       });
       socket.on('error', reject);
