@@ -132,6 +132,10 @@ function findVideos(videoDir: string) {
 }
 
 function expectRedFrames(videoFile: string, size: { width: number, height: number }) {
+  expectFrames(videoFile, size, isAlmostRed);
+}
+
+function expectFrames(videoFile: string, size: { width: number, height: number }, pixelPredicate: PixelPredicate) {
   const videoPlayer = new VideoPlayer(videoFile);
   const duration = videoPlayer.duration;
   expect(duration).toBeGreaterThan(0);
@@ -141,11 +145,11 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 
   {
     const pixels = videoPlayer.seekLastFrame().data;
-    expectAll(pixels, isAlmostRed);
+    expectAll(pixels, pixelPredicate);
   }
   {
     const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: 0 }).data;
-    expectAll(pixels, isAlmostRed);
+    expectAll(pixels, pixelPredicate);
   }
 }
 
@@ -831,6 +835,63 @@ it.describe('screencast', () => {
       alpha: image.data.readUInt8(offset + 3),
     };
     expect(isAlmostRed(pixel)).toBe(true);
+  });
+
+  it('video.start/stop twice', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    const videoPath1 = testInfo.outputPath('video1.webm');
+    await page.video().stop({ path: videoPath1 });
+    expectRedFrames(videoPath1, size);
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
+    await rafraf(page, 100);
+    const videoPath2 = testInfo.outputPath('video2.webm');
+    await page.video().stop({ path: videoPath2 });
+    expectFrames(videoPath2, size, isAlmostGray);
+
+    const videoPath3 = testInfo.outputPath('video3.webm');
+    await page.video().saveAs(videoPath3);
+    const contents2 = fs.readFileSync(videoPath2).toString('base64');
+    const contents3 = fs.readFileSync(videoPath3).toString('base64');
+    expect(contents2 === contents3).toBeTruthy();
+
+    await context.close();
+  });
+
+  it('should fail when recordVideo is set', async ({ browser }, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+        size
+      },
+      viewport: size,
+    });
+    const page = await context.newPage();
+
+    const error = await page.video().start().catch(e => e);
+    expect(error.message).toContain('Video is already being recorded');
+    await context.close();
+  });
+
+  it('should fail when another recording is in progress', async ({ browser }, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const context = await browser.newContext({
+      viewport: size,
+    });
+    const page = await context.newPage();
+
+    await page.video().start({ size });
+    const error = await page.video().start().catch(e => e);
+    expect(error.message).toContain('Video is already being recorded');
+    await context.close();
   });
 });
 

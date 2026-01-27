@@ -4365,9 +4365,10 @@ Optional handler function to route the request.
 
 ## method: Page.video
 * since: v1.8
-- returns: <[null]|[Video]>
+- returns: <[Video]>
 
-Video object associated with this page.
+Video object associated with this page. Can be used to control video recording with [`method: Video.start`]
+and [`method: Video.stop`], or to access the video file when using the `recordVideo` context option.
 
 ## method: Page.viewportSize
 * since: v1.8

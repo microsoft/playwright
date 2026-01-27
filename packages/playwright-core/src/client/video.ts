@@ -15,24 +15,41 @@
  */
 
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
+import { Artifact } from './artifact';
 
-import type { Artifact } from './artifact';
 import type { Connection } from './connection';
 import type { Page } from './page';
 import type * as api from '../../types/types';
 
 export class Video implements api.Video {
   private _artifact: Promise<Artifact | null> | null = null;
-  private _artifactReadyPromise = new ManualPromise<Artifact>();
+  private _artifactReadyPromise: ManualPromise<Artifact>;
   private _isRemote = false;
+  private _page: Page;
 
   constructor(page: Page, connection: Connection) {
+    this._page = page;
     this._isRemote = connection.isRemote();
+    this._artifactReadyPromise = new ManualPromise<Artifact>();
     this._artifact = page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
   }
 
   _artifactReady(artifact: Artifact) {
     this._artifactReadyPromise.resolve(artifact);
+  }
+
+  async start(options: { size?: { width: number, height: number } } = {}): Promise<void> {
+    await this._page._channel.videoStart(options);
+    this._artifactReadyPromise = new ManualPromise<Artifact>();
+    this._artifact = this._page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
+  }
+
+  async stop(options: { path?: string } = {}): Promise<void> {
+    await this._page._wrapApiCall(async () => {
+      await this._page._channel.videoStop();
+      if (options.path)
+        await this.saveAs(options.path);
+    });
   }
 
   async path(): Promise<string> {

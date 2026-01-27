@@ -20,6 +20,7 @@ import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
 import { registry } from './registry';
+import { validateVideoSize } from './browserContext';
 
 import type * as types from './types';
 
@@ -56,20 +57,24 @@ export class Screencast {
     this._frameThrottler.recharge();
   }
 
-  launchVideoRecorder(): types.VideoOptions | undefined {
+  // Note: it is important to start video recorder before sending Screencast.startScreencast,
+  // and it is equally important to send Screencast.startScreencast before sending Target.resume.
+  launchAutomaticVideoRecorder(): types.VideoOptions | undefined {
     const recordVideo = this._page.browserContext._options.recordVideo;
     if (!recordVideo)
-      return undefined;
+      return;
+    // validateBrowserContextOptions ensures correct video size.
+    return this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
+  }
+
+  private _launchVideoRecorder(dir: string, size: { width: number, height: number }): types.VideoOptions {
     assert(!this._videoId);
     this._videoId = createGuid();
-    const outputFile = path.join(recordVideo.dir, this._videoId + '.webm');
+    const outputFile = path.join(dir, this._videoId + '.webm');
     const videoOptions = {
-      // validateBrowserContextOptions ensures correct video size.
-      ...recordVideo.size!,
+      ...size,
       outputFile,
     };
-    // Note: it is important to start video recorder before sending Screencast.startScreencast,
-    // and it is equally important to send Screencast.startScreencast before sending Target.resume.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
     this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
     this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
@@ -112,6 +117,14 @@ export class Screencast {
     // starts closing before the video is fully written to disk it will wait for it.
     const video = this._page.browserContext._browser._takeVideo(videoId);
     video?.reportFinished();
+  }
+
+  async startExplicitVideoRecording(options: { size?: types.Size } = {}) {
+    if (this._videoId)
+      throw new Error('Video is already being recorded');
+    const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
+    const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
+    await this.startVideoRecording(videoOptions);
   }
 
   private async _setOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {

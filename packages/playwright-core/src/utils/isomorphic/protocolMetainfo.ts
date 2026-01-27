@@ -139,6 +139,8 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.startCSSCoverage', { title: 'Start CSS coverage', group: 'configuration', }],
   ['Page.stopCSSCoverage', { title: 'Stop CSS coverage', group: 'configuration', }],
   ['Page.bringToFront', { title: 'Bring to front', }],
+  ['Page.videoStart', { title: 'Start video recording', group: 'configuration', }],
+  ['Page.videoStop', { title: 'Stop video recording', group: 'configuration', }],
   ['Page.updateSubscription', { internal: true, }],
   ['Page.agent', { internal: true, }],
   ['Frame.evalOnSelector', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],
