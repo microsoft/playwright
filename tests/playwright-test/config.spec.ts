@@ -549,7 +549,8 @@ test('should throw when workers option is invalid', async ({ runInlineTest }) =>
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('config.workers must be a number or percentage');
+  expect(result.output).toContain('workers');
+  expect(result.output).toContain('percentage');
 });
 
 test('should work with undefined values and base', async ({ runInlineTest }) => {
@@ -755,7 +756,8 @@ test('should throw on invalid config.tsconfig option', async ({ runInlineTest })
   });
 
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain(`config.tsconfig must be a string`);
+  expect(result.output).toContain('tsconfig');
+  expect(result.output).toContain('expected string');
 });
 
 test('should throw on nonexistant config.tsconfig', async ({ runInlineTest }) => {

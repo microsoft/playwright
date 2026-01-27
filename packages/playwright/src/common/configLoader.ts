@@ -18,12 +18,14 @@ import fs from 'fs';
 import path from 'path';
 
 import { isRegExp } from 'playwright-core/lib/utils';
+import type { ZodError } from 'zod';
 
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
 import { errorWithFile, fileIsModule } from '../util';
 import { FullConfigInternal } from './config';
 import { configureESMLoader, configureESMLoaderTransformConfig, registerESMLoader } from './esmLoaderHost';
 import { addToCompilationCache } from '../transform/compilationCache';
+import { testConfigSchema } from './schemas/config';
 
 import type { ConfigLocation } from './config';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
@@ -100,6 +102,31 @@ async function loadUserConfig(location: ConfigLocation): Promise<Config> {
   return object as Config;
 }
 
+function findSimilarProperty(unknown: string, known: string[]): string | null {
+  const unknownLower = unknown.toLowerCase();
+
+  for (const key of known) {
+    if (key.toLowerCase() === unknownLower) {
+      return key;
+    }
+  }
+
+  for (const key of known) {
+    if (Math.abs(key.length - unknown.length) <= 2) {
+      const keyLower = key.toLowerCase();
+      let distance = 0;
+      for (let i = 0; i < Math.max(key.length, unknown.length); i++) {
+        if (keyLower[i] !== unknownLower[i]) distance++;
+      }
+      if (distance <= 2) {
+        return key;
+      }
+    }
+  }
+
+  return null;
+}
+
 export async function loadConfig(location: ConfigLocation, overrides?: ConfigCLIOverrides, ignoreProjectDependencies = false, metadata?: Config['metadata']): Promise<FullConfigInternal> {
   // 0. Setup ESM loader if needed.
   if (!registerESMLoader()) {
@@ -142,7 +169,71 @@ function validateConfig(file: string, config: Config) {
   if (typeof config !== 'object' || !config)
     throw errorWithFile(file, `Configuration file must export a single object`);
 
+  try {
+    testConfigSchema.parse(config);
+  } catch (error) {
+    const zodError = error as ZodError;
+    if (zodError.issues.length > 0) {
+      const issue = zodError.issues[0];
+      const path = issue.path.join('.');
+
+      if (issue.code === 'invalid_type') {
+        let receivedValue: any = undefined;
+        if (issue.path.length > 0) {
+          let current: any = config;
+          for (const key of issue.path) {
+            current = current[key];
+          }
+          receivedValue = current;
+        }
+        const message = issue.message.replace('Invalid input: ', '');
+        throw errorWithFile(file,
+          `Configuration option "${path}" ${message}\n` +
+          `Received: ${JSON.stringify(receivedValue)}`
+        );
+      }
+
+      if (issue.code === 'invalid_value') {
+        const receivedValue = issue.path.length > 0 ? config[path as keyof Config] : undefined;
+        throw errorWithFile(file,
+          `Configuration option "${path}" ${issue.message}\n` +
+          `Received: ${JSON.stringify(receivedValue)}`
+        );
+      }
+
+      if (issue.code === 'unrecognized_keys') {
+        const unknownKey = issue.keys[0];
+        const knownKeys = Object.keys(testConfigSchema.shape);
+        const suggestion = findSimilarProperty(unknownKey, knownKeys);
+        let message = 'is not recognized';
+        if (suggestion) {
+          message += `. Did you mean "${suggestion}"?`;
+        }
+        const propertyName = path || unknownKey;
+        throw errorWithFile(file,
+          `Configuration option "${propertyName}" ${message}\n` +
+          `Received: ${JSON.stringify(config[unknownKey as keyof Config])}`
+        );
+      }
+
+      if (issue.code === 'too_small' || issue.code === 'too_big') {
+        const receivedValue = issue.path.length > 0 ? config[path as keyof Config] : undefined;
+        throw errorWithFile(file,
+          `Configuration option "${path}" ${issue.message}\n` +
+          `Received: ${JSON.stringify(receivedValue)}`
+        );
+      }
+
+      const propertyName = path || 'configuration';
+      throw errorWithFile(file,
+        `Configuration option "${propertyName}" ${issue.message}`
+      );
+    }
+    throw error;
+  }
+
   validateProject(file, config, 'config');
+
 
   if ('forbidOnly' in config && config.forbidOnly !== undefined) {
     if (typeof config.forbidOnly !== 'boolean')
@@ -174,28 +265,6 @@ function validateConfig(file: string, config: Config) {
   if ('globalTimeout' in config && config.globalTimeout !== undefined) {
     if (typeof config.globalTimeout !== 'number' || config.globalTimeout < 0)
       throw errorWithFile(file, `config.globalTimeout must be a non-negative number`);
-  }
-
-  if ('grep' in config && config.grep !== undefined) {
-    if (Array.isArray(config.grep)) {
-      config.grep.forEach((item, index) => {
-        if (!isRegExp(item))
-          throw errorWithFile(file, `config.grep[${index}] must be a RegExp`);
-      });
-    } else if (!isRegExp(config.grep)) {
-      throw errorWithFile(file, `config.grep must be a RegExp`);
-    }
-  }
-
-  if ('grepInvert' in config && config.grepInvert !== undefined) {
-    if (Array.isArray(config.grepInvert)) {
-      config.grepInvert.forEach((item, index) => {
-        if (!isRegExp(item))
-          throw errorWithFile(file, `config.grepInvert[${index}] must be a RegExp`);
-      });
-    } else if (!isRegExp(config.grepInvert)) {
-      throw errorWithFile(file, `config.grepInvert must be a RegExp`);
-    }
   }
 
   if ('maxFailures' in config && config.maxFailures !== undefined) {

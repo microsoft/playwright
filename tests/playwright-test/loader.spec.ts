@@ -140,7 +140,9 @@ test('should validate configuration object', async ({ runInlineTest }) => {
 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(0);
-  expect(result.output).toContain('playwright.config.ts: config.timeout must be a non-negative number');
+  expect(result.output).toContain('playwright.config.ts:');
+  expect(result.output).toContain('timeout');
+  expect(result.output).toContain('expected number');
 });
 
 test('should match tests well', async ({ runInlineTest }) => {
