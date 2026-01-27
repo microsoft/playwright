@@ -48,6 +48,8 @@
       "revision": "2251",
       "installByDefault": true,
       "revisionOverrides": {
+        "mac14": "2251",
+        "mac14-arm64": "2251",
         "debian11-x64": "2105",
         "debian11-arm64": "2105",
         "ubuntu20.04-x64": "2092",
