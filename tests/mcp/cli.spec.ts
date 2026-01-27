@@ -487,7 +487,7 @@ test.describe('session', () => {
     // Close the browser - this will cause the daemon to exit so the command may fail
     await cli('run-code', '() => page.context().browser().close()').catch(() => {});
 
-    await expect.poll(async() => cli('session-list').then(result => result.output)).not.toContain('(live)');
+    await expect.poll(() => cli('session-list').then(r => r.output)).not.toContain('(live)');
   });
 });
 
