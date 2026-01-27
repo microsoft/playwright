@@ -20,7 +20,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
-import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, isCodingAgent, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -219,6 +219,9 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   if (opts.ui || opts.uiHost || opts.uiPort) {
     if (opts.onlyChanged)
       throw new Error(`--only-changed is not supported in UI mode. If you'd like that to change, see https://github.com/microsoft/playwright/issues/15075 for more details.`);
+
+    if (isCodingAgent())
+      opts.uiPort ??= '0';
 
     const status = await testServer.runUIMode(opts.config, cliOverrides, {
       host: opts.uiHost,

@@ -2248,3 +2248,28 @@ test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) 
   const frame = await traceViewer.snapshotFrame('Evaluate');
   await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
+
+test('should print correct host', async ({ childProcess }, testInfo) => {
+  const cp = childProcess({
+    command: ['npx', 'playwright', 'show-trace', testInfo.outputPath(), '--port=0'],
+  });
+  await cp.waitForOutput('Listening on');
+  const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
+  expect(proto).toEqual('http');
+  expect(host).not.toBe('undefined');
+  expect(+port).toBeGreaterThan(0);
+});
+
+test('coding agent mode', async ({ childProcess }, testInfo) => {
+  const cp = childProcess({
+    command: ['npx', 'playwright', 'show-trace', testInfo.outputPath()],
+    env: {
+      CLAUDECODE: '1',
+    }
+  });
+  await cp.waitForOutput('Listening on');
+  const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
+  expect(proto).toEqual('http');
+  expect(host).not.toBe('undefined');
+  expect(+port).toBeGreaterThan(0);
+});

@@ -383,3 +383,19 @@ test('should restart webserver on reload', async ({ runUITest }) => {
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });
+
+test('coding agent mode', async ({ childProcess, writeFiles }, testInfo) => {
+  await writeFiles({});
+  const cp = childProcess({
+    command: ['npx', 'playwright', 'test', '--ui'],
+    env: {
+      CLAUDECODE: '1',
+    },
+    cwd: testInfo.outputDir,
+  });
+  await cp.waitForOutput('Listening on');
+  const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
+  expect(proto).toEqual('http');
+  expect(host).not.toBe('undefined');
+  expect(+port).toBeGreaterThan(0);
+});

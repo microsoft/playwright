@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '../../../utils';
+import { gracefullyProcessExitDoNotHang, isCodingAgent } from '../../../utils';
 import { isUnderTest } from '../../../utils';
 import { HttpServer } from '../../utils/httpServer';
 import { open } from '../../../utilsBundle';
@@ -206,7 +206,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
 export async function openTraceInBrowser(url: string) {
   // eslint-disable-next-line no-console
   console.log('\nListening on ' + url);
-  if (!isUnderTest())
+  if (!isUnderTest() && !isCodingAgent())
     await open(url.replace('0.0.0.0', 'localhost')).catch(() => {});
 }
 

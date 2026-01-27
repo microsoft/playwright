@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { Transform } from 'stream';
 
-import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath } from 'playwright-core/lib/utils';
+import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecCommand, copyFileAndMakeWritable, gracefullyProcessExitDoNotHang, removeFolders, sanitizeForFilePath, toPosixPath, isCodingAgent } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
@@ -155,7 +155,7 @@ class HtmlReporter implements ReporterV2 {
     if (process.env.CI || !this._buildResult)
       return;
     const { ok, singleTestId } = this._buildResult;
-    const shouldOpen = !!process.stdin.isTTY && (this._open === 'always' || (!ok && this._open === 'on-failure'));
+    const shouldOpen = !!process.stdin.isTTY && !isCodingAgent() && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
     } else if (this._options._mode === 'test' && !!process.stdin.isTTY) {
