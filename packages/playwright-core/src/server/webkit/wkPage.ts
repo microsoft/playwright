@@ -34,6 +34,7 @@ import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
+import { registry } from '../registry';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -46,7 +47,7 @@ import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS;
+const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS && parseInt(registry.findExecutable('webkit').revision!, 10) >= 2245;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
