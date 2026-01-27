@@ -105,6 +105,12 @@ export async function startMcpDaemonServer(
     };
   });
 
+  backend.onBrowserContextClosed = () => {
+    daemonDebug('browser closed, shutting down daemon');
+    server.close();
+    gracefullyProcessExitDoNotHang(0);
+  };
+
   return new Promise((resolve, reject) => {
     server.on('error', (error: NodeJS.ErrnoException) => {
       daemonDebug(`server error: ${error.message}`);

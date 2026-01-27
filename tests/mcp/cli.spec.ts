@@ -42,7 +42,7 @@ test.describe('core', () => {
   test('close', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('close');
-    expect(output).toContain(`No open tabs. Navigate to a URL to create one.`);
+    expect(output).toContain(`Session closed`);
   });
 
   test('click button', async ({ cli, server }) => {
@@ -476,6 +476,18 @@ test.describe('session', () => {
   test('session-delete non-existent session', async ({ cli }) => {
     const { output } = await cli('session-delete', 'nonexistent');
     expect(output).toContain(`No user data found for session 'nonexistent'.`);
+  });
+
+  test('session stops when browser exits', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+
+    const { output: listBefore } = await cli('session-list');
+    expect(listBefore).toContain('default (live)');
+
+    // Close the browser - this will cause the daemon to exit so the command may fail
+    await cli('run-code', '() => page.context().browser().close()').catch(() => {});
+
+    await expect.poll(() => cli('session-list').then(r => r.output)).not.toContain('(live)');
   });
 });
 

@@ -35,6 +35,8 @@ export class BrowserServerBackend implements ServerBackend {
   private _browserContextFactory: BrowserContextFactory;
   private _isStructuredOutput: boolean;
 
+  onBrowserContextClosed: (() => void) | undefined;
+
   constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean, structuredOutput?: boolean } = {}) {
     this._config = config;
     this._browserContextFactory = factory;
@@ -50,6 +52,7 @@ export class BrowserServerBackend implements ServerBackend {
       sessionLog: this._sessionLog,
       clientInfo,
     });
+    this._context.onBrowserContextClosed = () => this.onBrowserContextClosed?.();
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
