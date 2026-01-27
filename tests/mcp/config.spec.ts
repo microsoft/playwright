@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 
 import { test, expect } from './fixtures';
-import { configFromCLIOptions } from '../../packages/playwright/lib/mcp/browser/config';
+import { resolveCLIConfig } from '../../packages/playwright/lib/mcp/browser/config';
 import type { Config } from '../../packages/playwright/src/mcp/config';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -78,14 +78,15 @@ test.describe(() => {
   });
 });
 
-test.describe('sandbox configuration', () => {
-  test('should enable sandbox by default (no --no-sandbox flag)', async () => {
-    const config = configFromCLIOptions({ sandbox: undefined });
-    expect(config.browser?.launchOptions?.chromiumSandbox).toBeUndefined();
-  });
+async function sandboxOption(cli: any) {
+  const config: any = await resolveCLIConfig(cli);
+  return config.browser.launchOptions.chromiumSandbox;
+}
 
-  test('should disable sandbox when --no-sandbox flag is passed', async () => {
-    const config = configFromCLIOptions({ sandbox: false });
-    expect(config.browser?.launchOptions?.chromiumSandbox).toBe(false);
-  });
+test('test sandbox configuration', async ({}) => {
+  expect(await sandboxOption({ browser: 'chromium' })).toBe(process.platform !== 'linux');
+  expect(await sandboxOption({ browser: 'chromium', sandbox: true })).toBe(true);
+  expect(await sandboxOption({ browser: 'chrome', sandbox: false })).toBe(false);
+  expect(await sandboxOption({ browser: 'chrome' })).toBe(true);
+  expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
 });
