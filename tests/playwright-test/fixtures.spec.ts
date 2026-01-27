@@ -834,3 +834,19 @@ test('should error if use is not called', async ({ runInlineTest }) => {
   expect(result.failed).toBe(1);
   expect(result.output).toContain(`use() was not called in fixture "fixture"`);
 });
+
+test('should not treat fixtures as thenable promise', async ({ runInlineTest }) => {
+  const { results } = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend({
+        then: async ({}, use) => await use(() => 'test-function'),
+      });
+
+      test('should not treat fixtures as thenable promise', async ({ then }) => {
+        expect(typeof then).toBe('function');
+      });
+    `,
+  });
+  expect(results[0].status).toBe('passed');
+});
