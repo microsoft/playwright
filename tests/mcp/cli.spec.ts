@@ -477,6 +477,23 @@ test.describe('session', () => {
     const { output } = await cli('session-delete', 'nonexistent');
     expect(output).toContain(`No user data found for session 'nonexistent'.`);
   });
+
+  test('session stops when browser exits', async ({ cli, server }) => {
+    // Start session in headed mode - daemon only exits on browser close when headed
+    await cli('open', '--headed', server.HELLO_WORLD);
+
+    const { output: listBefore } = await cli('session-list');
+    expect(listBefore).toContain('default (live)');
+
+    // Close the browser - this will cause the daemon to exit so the command may fail
+    await cli('run-code', '() => page.context().browser().close()').catch(() => {});
+
+    // Wait a bit for the daemon to process the close event
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    const { output: listAfter } = await cli('session-list');
+    expect(listAfter).not.toContain('(live)');
+  });
 });
 
 test.describe('config', () => {

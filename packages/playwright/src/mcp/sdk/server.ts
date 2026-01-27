@@ -47,6 +47,7 @@ export interface ServerBackend {
   listTools(): Promise<Tool[]>;
   callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
+  onBrowserContextClosed?: (() => void) | undefined;
 }
 
 export type ServerBackendFactory = {
