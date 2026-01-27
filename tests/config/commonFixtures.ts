@@ -75,7 +75,7 @@ function readAllProcessesMacOS(): { pid: number, ppid: number, pgrp: number }[] 
   return result;
 }
 
-function buildProcessTreePosix(pid: number): ProcessData | undefined {
+function buildProcessTreePosix(pid: number): ProcessData {
   // Certain Linux distributions might not have `ps` installed.
   const allProcesses = process.platform === 'darwin' ? readAllProcessesMacOS() : readAllProcessesLinux();
   const pidToProcess = new Map<number, ProcessData>();
@@ -89,7 +89,7 @@ function buildProcessTreePosix(pid: number): ProcessData | undefined {
     if (parent && child)
       parent.children.add(child);
   }
-  return pidToProcess.get(pid);
+  return pidToProcess.get(pid)!;
 }
 
 export class TestChildProcess {
@@ -167,15 +167,50 @@ export class TestChildProcess {
   private _killProcessTree(signal: 'SIGINT' | 'SIGKILL') {
     if (!this.process.pid || !this.process.kill(0))
       return;
-    killProcessGroup(this.process.pid, signal);
+
+    // On Windows, we always call `taskkill` no matter signal.
+    if (process.platform === 'win32') {
+      try {
+        execSync(`taskkill /pid ${this.process.pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGINT` signal, send it to the main process group only.
+    if (signal === 'SIGINT') {
+      try {
+        process.kill(-this.process.pid, 'SIGINT');
+      } catch (e) {
+        // the process might have already stopped
+      }
+      return;
+    }
+
+    // In case of POSIX and `SIGKILL` signal, we should send it to all descendant process groups.
+    const rootProcess = buildProcessTreePosix(this.process.pid);
+    const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
+      // Process can nullify its own process group with `setpgid`. Use its PID instead.
+      result.add(processData.pgrp || processData.pid);
+      processData.children.forEach(child => flatten(child, result));
+      return result;
+    })(rootProcess);
+    for (const pgrp of descendantProcessGroups) {
+      try {
+        process.kill(-pgrp, 'SIGKILL');
+      } catch (e) {
+        // the process might have already stopped
+      }
+    }
   }
 
   async cleanExit() {
     const r = await this.exited;
     if (r.exitCode)
-      throw new Error(`Process failed with exit code ${r.exitCode}. Output:\n${this.output}`);
+      throw new Error(`Process failed with exit code ${r.exitCode}`);
     if (r.signal)
-      throw new Error(`Process received signal: ${r.signal}. Output:\n${this.output}`);
+      throw new Error(`Process received signal: ${r.signal}`);
   }
 
   async waitForOutput(substring: string, count = 1) {
@@ -189,47 +224,6 @@ export class TestChildProcess {
 
   write(chars: string) {
     this.process.stdin!.write(chars);
-  }
-}
-
-export function killProcessGroup(pid: number, signal: 'SIGINT' | 'SIGKILL' = 'SIGKILL') {
-  // On Windows, we always call `taskkill` no matter signal.
-  if (process.platform === 'win32') {
-    try {
-      execSync(`taskkill /pid ${pid} /T /F /FI "MEMUSAGE gt 0"`, { stdio: 'ignore' });
-    } catch (e) {
-      // the process might have already stopped
-    }
-    return;
-  }
-
-  // In case of POSIX and `SIGINT` signal, send it to the main process group only.
-  if (signal === 'SIGINT') {
-    try {
-      process.kill(-pid, 'SIGINT');
-    } catch (e) {
-      // the process might have already stopped
-    }
-    return;
-  }
-
-  // In case of POSIX and `SIGKILL` signal, we should send it to all descendant process groups.
-  const rootProcess = buildProcessTreePosix(pid);
-  if (!rootProcess)
-    return;
-
-  const descendantProcessGroups = (function flatten(processData: ProcessData, result: Set<number> = new Set()) {
-    // Process can nullify its own process group with `setpgid`. Use its PID instead.
-    result.add(processData.pgrp || processData.pid);
-    processData.children.forEach(child => flatten(child, result));
-    return result;
-  })(rootProcess);
-  for (const pgrp of descendantProcessGroups) {
-    try {
-      process.kill(-pgrp, 'SIGKILL');
-    } catch (e) {
-      // the process might have already stopped
-    }
   }
 }
 

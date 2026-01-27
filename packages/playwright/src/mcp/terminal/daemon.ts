@@ -88,7 +88,7 @@ export async function startMcpDaemonServer(
         daemonDebug('received command', method);
         if (method === 'stop') {
           daemonDebug('stop command received, shutting down');
-          await connection.send({ id, result: 'ok' });
+          await connection.send({ id, result: 'ok' }).catch(() => {});
           server.close();
           gracefullyProcessExitDoNotHang(0);
         } else if (method === 'run') {

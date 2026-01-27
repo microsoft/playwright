@@ -248,11 +248,13 @@ class SessionManager {
     const maxRetries = 50;
     const retryDelay = 100; // ms
     for (let i = 0; i < maxRetries; i++) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, retryDelay));
       try {
         return await this._connectToSocket(sessionName, socketPath);
-      } catch (e) {
-        if (e.code !== 'ENOENT')
+      } catch (e: any) {
+        // ENOENT: socket file doesn't exist yet
+        // ECONNREFUSED: socket file exists but daemon isn't listening yet
+        if (e.code !== 'ENOENT' && e.code !== 'ECONNREFUSED')
           throw e;
       }
     }
