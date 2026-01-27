@@ -1051,6 +1051,13 @@ scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
 });
+scheme.BrowserContextSetStorageStateParams = tObject({
+  storageState: tOptional(tObject({
+    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
+  })),
+});
+scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({

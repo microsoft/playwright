@@ -311,7 +311,6 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
     /Create context/,
     /Create page/,
     /Navigate to "\/empty.html"/,
-    /Get storage state/,
     /After Hooks/,
   ]);
 });
