@@ -149,10 +149,16 @@ function renderJSSignature(args) {
  * @param {string} content
  * @param {string} languagePath
  * @param {string} relativePath
+ * @param {boolean} releaseNotesMode
  * @returns {string}
  */
-function renderPlaywrightDevLinks(content, languagePath, relativePath) {
+function renderPlaywrightDevLinks(content, languagePath, relativePath, releaseNotesMode = false) {
   return content.replace(/\[([^\]]+)\]\((\.[^\)]+)\)/g, (match, p1, p2) => {
+    if (releaseNotesMode && p2.includes('/images/')) {
+      const url = new URL(p2, `https://github.com/microsoft/playwright/blob/main/docs/src/`);
+      url.searchParams.set('raw', 'true');
+      return `[${p1}](${url.toString()})`;
+    }
     return `[${p1}](${new URL(p2.replace('.md', ''), `https://playwright.dev${languagePath}/docs${relativePath}/`).toString()})`;
   });
 }
