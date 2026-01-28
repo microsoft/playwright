@@ -26,6 +26,7 @@ export class Video implements api.Video {
   private _artifactReadyPromise: ManualPromise<Artifact>;
   private _isRemote = false;
   private _page: Page;
+  private _path: string | undefined;
 
   constructor(page: Page, connection: Connection) {
     this._page = page;
@@ -39,7 +40,8 @@ export class Video implements api.Video {
   }
 
   async start(options: { size?: { width: number, height: number } } = {}): Promise<void> {
-    await this._page._channel.videoStart(options);
+    const result = await this._page._channel.videoStart(options);
+    this._path = result.path;
     this._artifactReadyPromise = new ManualPromise<Artifact>();
     this._artifact = this._page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
   }
@@ -55,6 +57,9 @@ export class Video implements api.Video {
   async path(): Promise<string> {
     if (this._isRemote)
       throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
+    if (this._path)
+      return this._path;
+
     const artifact = await this._artifact;
     if (!artifact)
       throw new Error('Page did not produce any video frames');

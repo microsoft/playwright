@@ -2602,7 +2602,9 @@ export type PageVideoStartOptions = {
     height: number,
   },
 };
-export type PageVideoStartResult = void;
+export type PageVideoStartResult = {
+  path: string,
+};
 export type PageVideoStopParams = {};
 export type PageVideoStopOptions = {};
 export type PageVideoStopResult = void;

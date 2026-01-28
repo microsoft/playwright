@@ -843,6 +843,8 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.video().start({ size });
+    const tmpPath1 = await page.video().path();
+    expect(tmpPath1).toBeDefined();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
     const videoPath1 = testInfo.outputPath('video1.webm');
@@ -850,6 +852,9 @@ it.describe('screencast', () => {
     expectRedFrames(videoPath1, size);
 
     await page.video().start({ size });
+    const tmpPath2 = await page.video().path();
+    expect(tmpPath2).toBeDefined();
+    expect(tmpPath2).not.toEqual(tmpPath1);
     await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
     await rafraf(page, 100);
     const videoPath2 = testInfo.outputPath('video2.webm');

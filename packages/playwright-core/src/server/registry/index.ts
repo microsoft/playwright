@@ -589,21 +589,37 @@ export class Registry {
         const currentDockerVersion = readDockerVersionSync();
         const preferredDockerVersion = currentDockerVersion ? dockerVersion(currentDockerVersion.dockerImageNameTemplate) : null;
         const isOutdatedDockerImage = currentDockerVersion && preferredDockerVersion && currentDockerVersion.dockerImageName !== preferredDockerVersion.dockerImageName;
-        const prettyMessage = isOutdatedDockerImage ? [
-          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
-          `Please update docker image as well.`,
-          `-  current: ${currentDockerVersion.dockerImageName}`,
-          `- required: ${preferredDockerVersion.dockerImageName}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n') : [
-          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
-          `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
-          ``,
-          `    ${installCommand}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n');
+        const isFfmpeg = name === 'ffmpeg';
+        let prettyMessage;
+        if (isOutdatedDockerImage) {
+          prettyMessage = [
+            `Looks like Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
+            `Please update docker image as well.`,
+            `-  current: ${currentDockerVersion.dockerImageName}`,
+            `- required: ${preferredDockerVersion.dockerImageName}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        } else if (isFfmpeg) {
+          prettyMessage = [
+            `Video rendering requires ffmpeg binary.`,
+            `Downloading it will not affect any of the system-wide settings.`,
+            `Please run the following command:`,
+            ``,
+            `    ${buildPlaywrightCLICommand(sdkLanguage, 'install ffmpeg')}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        } else {
+          prettyMessage = [
+            `Looks like Playwright was just installed or updated.`,
+            `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
+            ``,
+            `    ${installCommand}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        }
         throw new Error(`Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
       }
       return e;
