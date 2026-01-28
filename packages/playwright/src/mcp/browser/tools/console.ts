@@ -32,7 +32,7 @@ const console = defineTabTool({
   handle: async (tab, params, response) => {
     const messages = await tab.consoleMessages(params.level);
     const text = messages.map(message => message.toString()).join('\n');
-    await response.addResult('Console', text, { prefix: 'console', ext: 'log', suggestedFilename: params.filename });
+    response.addResult('Console', text, { prefix: 'console', ext: 'log', suggestedFilename: params.filename });
   },
 });
 

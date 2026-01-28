@@ -74,7 +74,7 @@ export class Response {
     this._results.push({ title: '', text });
   }
 
-  async addResult(title: string, data: string | Buffer, file: Result['file']) {
+  addResult(title: string, data: string | Buffer, file: Result['file']) {
     this._results.push({
       text: typeof data === 'string' ? data : undefined,
       data: typeof data === 'string' ? undefined : data,

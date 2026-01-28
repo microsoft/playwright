@@ -18,15 +18,15 @@ import type * as playwright from 'playwright-core';
 
 export type ToolCapability =
   'core' |
-  'core-input' |
   'core-navigation' |
   'core-tabs' |
-  'core-install' |
   'core-input' |
-  'vision' |
+  'core-install' |
   'pdf' |
+  'storage' |
   'testing' |
-  'tracing';
+  'tracing' |
+  'vision';
 
 export type Config = {
   /**

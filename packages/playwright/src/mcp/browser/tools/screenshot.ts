@@ -67,7 +67,7 @@ const screenshot = defineTabTool({
       response.addCode(`await page.screenshot(${formatObject({ ...options, path: suggestedFilename })});`);
 
     const contentType = fileType === 'png' ? 'image/png' : 'image/jpeg';
-    await response.addResult(`Screenshot of ${screenshotTarget}`, data, { prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename, contentType });
+    response.addResult(`Screenshot of ${screenshotTarget}`, data, { prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename, contentType });
   }
 });
 

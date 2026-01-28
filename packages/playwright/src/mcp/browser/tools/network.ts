@@ -42,7 +42,7 @@ const requests = defineTabTool({
       if (rendered)
         text.push(rendered);
     }
-    await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
+    response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
 });
 
