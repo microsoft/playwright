@@ -411,3 +411,162 @@ test('browser_take_screenshot (viewport without snapshot)', async ({ startClient
     ],
   });
 });
+
+// OCR Screenshot Tests
+test('browser_take_ocr_friendly_screenshot (basic)', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+  })).toHaveResponse({
+    code: expect.stringContaining(`fullPage: true`),
+    attachments: [{
+      data: expect.any(String),
+      mimeType: 'image/png',
+      type: 'image',
+    }],
+  });
+});
+
+test('browser_take_ocr_friendly_screenshot (without tiling)', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  // With tileHeight=0, should capture full page as single image
+  expect(await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+    arguments: { tileHeight: 0 },
+  })).toHaveResponse({
+    code: expect.stringContaining(`fullPage: true`),
+    attachments: [{
+      data: expect.any(String),
+      mimeType: 'image/png',
+      type: 'image',
+    }],
+  });
+});
+
+test('browser_take_ocr_friendly_screenshot (with tiling)', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser ?? ''), 'Non-chrome has unusual full page size');
+
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+
+  // Create a tall page that will require tiling
+  server.setContent('/', `<body style="width: 800px; height: 2000px; background: linear-gradient(red, blue); margin: 0;"><h1>OCR Test Page</h1></body>`, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  // With tileHeight=500, should create multiple tiles for 2000px page
+  const result = await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+    arguments: { tileHeight: 500 },
+  });
+
+  // Should have multiple image attachments (tiles)
+  const content = result.content as Array<{ type: string; mimeType?: string; text?: string }>;
+  const attachments = content?.filter(c => c.type === 'image') || [];
+  expect(attachments.length).toBeGreaterThan(1);
+
+  // All attachments should be PNG
+  for (const attachment of attachments)
+    expect(attachment.mimeType).toBe('image/png');
+
+  // Text should mention the tiling
+  const textContent = content?.find(c => c.type === 'text');
+  expect(textContent?.text).toContain('tiles');
+});
+
+test('browser_take_ocr_friendly_screenshot (style injection)', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  // Custom CSS should be accepted
+  expect(await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+    arguments: { style: 'body { background: yellow; }' },
+  })).toHaveResponse({
+    attachments: [{
+      data: expect.any(String),
+      mimeType: 'image/png',
+      type: 'image',
+    }],
+  });
+});
+
+test('browser_take_ocr_friendly_screenshot (hideFixed)', async ({ startClient, server }, testInfo) => {
+  const { client } = await startClient({
+    config: { outputDir: testInfo.outputPath('output') },
+  });
+
+  // Create a page with fixed position element
+  server.setContent('/', `
+    <body style="height: 500px; margin: 0;">
+      <div style="position: fixed; top: 0; left: 0; background: red; width: 100px; height: 50px;">Fixed Header</div>
+      <h1 style="margin-top: 100px;">Main Content</h1>
+    </body>
+  `, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  // Should accept hideFixed parameter (page fits in single tile at 500px height)
+  expect(await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+    arguments: { hideFixed: true },
+  })).toHaveResponse({
+    attachments: [{
+      data: expect.any(String),
+      mimeType: 'image/png',
+      type: 'image',
+    }],
+  });
+});
+
+test('browser_take_ocr_friendly_screenshot (no downscaling)', async ({ startClient, server, mcpBrowser }, testInfo) => {
+  test.skip(!['chrome', 'msedge', 'chromium'].includes(mcpBrowser ?? ''), 'Non-chrome has unusual page size');
+
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+
+  // Create a page with known dimensions
+  server.setContent('/', `<body style="width: 1000px; height: 500px; background: red; margin: 0;"></body>`, 'text/html');
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX } });
+
+  const result = await client.callTool({
+    name: 'browser_take_ocr_friendly_screenshot',
+    arguments: { tileHeight: 0 },
+  });
+
+  const content = result.content as Array<{ type: string; data?: string }>;
+  const imageData = content?.find(c => c.type === 'image');
+  expect(imageData).toBeTruthy();
+
+  // Verify the image was not downscaled - it should be at least 1000px wide
+  // (device scale may make it larger, but it should never be smaller than CSS pixels)
+  const png = PNG.sync.read(Buffer.from(imageData!.data!, 'base64'));
+  expect(png.width).toBeGreaterThanOrEqual(1000);
+  expect(png.height).toBeGreaterThanOrEqual(500);
+});
