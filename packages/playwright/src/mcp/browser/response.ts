@@ -38,6 +38,7 @@ type Result = {
     ext: string;
     suggestedFilename?: string;
     contentType?: string;
+    skipScaling?: boolean;
   };
 };
 
@@ -259,8 +260,10 @@ export async function serializeResponse(context: Context, sections: Section[], r
   // Image attachments.
   if (context.config.imageResponses !== 'omit') {
     for (const result of sections.flatMap(section => section.content).filter(result => result.file?.contentType)) {
-      const scaledData = scaleImageToFitMessage(result.data as Buffer, result.file!.contentType === 'image/png' ? 'png' : 'jpeg');
-      content.push({ type: 'image', data: scaledData.toString('base64'), mimeType: result.file!.contentType! });
+      const imageData = result.file!.skipScaling
+        ? result.data as Buffer
+        : scaleImageToFitMessage(result.data as Buffer, result.file!.contentType === 'image/png' ? 'png' : 'jpeg');
+      content.push({ type: 'image', data: imageData.toString('base64'), mimeType: result.file!.contentType! });
     }
   }
 
