@@ -42,7 +42,7 @@ test.describe('core', () => {
   test('close', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('close');
-    expect(output).toContain(`Session closed`);
+    expect(output).toContain(`Session 'default' stopped.`);
   });
 
   test('click button', async ({ cli, server }) => {
@@ -404,7 +404,7 @@ test.describe('session', () => {
   test('session-list', async ({ cli, server }) => {
     const { output: emptyOutput } = await cli('session-list');
     expect(emptyOutput).toContain('Sessions:');
-    expect(emptyOutput).toContain('(no sessions)');
+    expect(emptyOutput).toContain('  default');
 
     await cli('open', server.HELLO_WORLD);
 
