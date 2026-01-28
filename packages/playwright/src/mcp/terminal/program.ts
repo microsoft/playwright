@@ -112,7 +112,6 @@ class Session {
       console.log(`No user data found for session '${this.name}'.`);
       return;
     }
-    console.log(matchingDirs);
     for (const dir of matchingDirs) {
       const userDataDir = path.resolve(daemonProfilesDir, dir);
       for (let i = 0; i < 5; i++) {
@@ -202,6 +201,7 @@ class Session {
     const child = spawn(process.execPath, [
       cliPath,
       'run-mcp-server',
+      `--output-dir=${outputDir}`,
       `--daemon=${this._socketPath}`,
       `--daemon-data-dir=${userDataDir}`,
       ...configArg,
@@ -291,7 +291,7 @@ class SessionManager {
       this.sessions.set(sessionName, session);
     }
 
-    const result = await session.run(args);
+    const result = await session.run({ ...args, outputDir });
     await printResponse(result);
     session.close();
   }
