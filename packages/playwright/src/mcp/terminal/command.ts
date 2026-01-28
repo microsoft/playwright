@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import path from 'path';
 
 import type zodType from 'zod';
 
@@ -36,6 +37,9 @@ export function declareCommand<Args extends zodType.ZodTypeAny, Options extends 
 }
 
 export function parseCommand(command: AnyCommandSchema, args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: any } {
+  if (args.filename)
+    args.filename = path.resolve(args.outputDir, args.filename);
+
   const shape = command.args ? (command.args as zodType.ZodObject<any>).shape : {};
   const argv = args['_'];
   const options = command.options?.parse({ ...args, _: undefined }) ?? {};

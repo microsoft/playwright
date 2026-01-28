@@ -32,8 +32,9 @@ import screenshot from './tools/screenshot';
 import storage from './tools/storage';
 import tabs from './tools/tabs';
 import tracing from './tools/tracing';
-import wait from './tools/wait';
 import verify from './tools/verify';
+import video from './tools/video';
+import wait from './tools/wait';
 
 import type { Tool } from './tools/tool';
 import type { FullConfig } from './config';
@@ -57,8 +58,9 @@ export const browserTools: Tool<any>[] = [
   ...storage,
   ...tabs,
   ...tracing,
-  ...wait,
   ...verify,
+  ...video,
+  ...wait,
 ];
 
 export function filteredTools(config: FullConfig) {

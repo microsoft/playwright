@@ -25,8 +25,8 @@ export type ToolCapability =
   'pdf' |
   'storage' |
   'testing' |
-  'tracing' |
-  'vision';
+  'vision' |
+  'devtools';
 
 export type Config = {
   /**
@@ -119,6 +119,7 @@ export type Config = {
    *   - 'core': Core browser automation features.
    *   - 'pdf': PDF generation and manipulation.
    *   - 'vision': Coordinate-based interactions.
+   *   - 'devtools': Developer tools features.
    */
   capabilities?: ToolCapability[];
 

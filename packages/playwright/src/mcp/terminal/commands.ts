@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { z } from 'playwright-core/lib/mcpBundle';
 import { declareCommand } from './command';
 
@@ -340,6 +339,17 @@ const resize = declareCommand({
   toolParams: ({ w: width, h: height }) => ({ width, height }),
 });
 
+const runCode = declareCommand({
+  name: 'run-code',
+  description: 'Run Playwright code snippet',
+  category: 'devtools',
+  args: z.object({
+    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+  }),
+  toolName: 'browser_run_code',
+  toolParams: ({ code }) => ({ code }),
+});
+
 // Tabs
 
 const tabList = declareCommand({
@@ -442,17 +452,6 @@ const networkRequests = declareCommand({
   toolParams: ({ static: includeStatic, clear }) => clear ? ({}) : ({ includeStatic }),
 });
 
-const runCode = declareCommand({
-  name: 'run-code',
-  description: 'Run Playwright code snippet',
-  category: 'devtools',
-  args: z.object({
-    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
-  }),
-  toolName: 'browser_run_code',
-  toolParams: ({ code }) => ({ code }),
-});
-
 const tracingStart = declareCommand({
   name: 'tracing-start',
   description: 'Start trace recording',
@@ -469,6 +468,26 @@ const tracingStop = declareCommand({
   args: z.object({}),
   toolName: 'browser_stop_tracing',
   toolParams: () => ({}),
+});
+
+const videoStart = declareCommand({
+  name: 'video-start',
+  description: 'Start video recording',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_start_video',
+  toolParams: () => ({}),
+});
+
+const videoStop = declareCommand({
+  name: 'video-stop',
+  description: 'Stop video recording',
+  category: 'devtools',
+  options: z.object({
+    filename: z.string().optional().describe('Filename to save the video.'),
+  }),
+  toolName: 'browser_stop_video',
+  toolParams: ({ filename }) => ({ filename }),
 });
 
 // Sessions
@@ -543,6 +562,7 @@ const commandsArray: AnyCommandSchema[] = [
   dialogAccept,
   dialogDismiss,
   resize,
+  runCode,
 
   // navigation category
   goBack,
@@ -575,9 +595,10 @@ const commandsArray: AnyCommandSchema[] = [
 
   // devtools category
   networkRequests,
-  runCode,
   tracingStart,
   tracingStop,
+  videoStart,
+  videoStop,
 
   // session category
   sessionList,

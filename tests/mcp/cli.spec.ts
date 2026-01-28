@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { test, expect, eventsPage } from './cli-fixtures';
 
 test.describe('help', () => {
@@ -203,6 +204,12 @@ test.describe('navigation', () => {
 - Page URL: ${server.HELLO_WORLD}
 - Page Title: Title`);
   });
+
+  test('run-code', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output } = await cli('run-code', '() => page.title()');
+    expect(output).toContain('"Title"');
+  });
 });
 
 test.describe('keyboard', () => {
@@ -284,10 +291,27 @@ test.describe('save as', () => {
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
 
+  test('screenshot --filename', async ({ cli, server, mcpBrowser }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output, attachments } = await cli('screenshot', '--filename=screenshot.png');
+    expect(output).toContain('.playwright-cli' + path.sep + 'screenshot.png');
+    expect(attachments[0].name).toEqual('Screenshot of viewport');
+    expect(attachments[0].data).toEqual(expect.any(Buffer));
+  });
+
   test('pdf', async ({ cli, server, mcpBrowser }) => {
     test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
     await cli('open', server.HELLO_WORLD);
     const { attachments } = await cli('pdf');
+    expect(attachments[0].name).toEqual('Page as pdf');
+    expect(attachments[0].data).toEqual(expect.any(Buffer));
+  });
+
+  test('pdf --filename', async ({ cli, server, mcpBrowser }) => {
+    test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
+    await cli('open', server.HELLO_WORLD);
+    const { output, attachments } = await cli('pdf', '--filename=pdf.pdf');
+    expect(output).toContain('.playwright-cli' + path.sep + 'pdf.pdf');
     expect(attachments[0].name).toEqual('Page as pdf');
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
@@ -346,12 +370,6 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).not.toContain(`[GET] ${`${server.PREFIX}/hello-world`} => [200] OK`);
   });
 
-  test('run-code', async ({ cli, server }) => {
-    await cli('open', server.HELLO_WORLD);
-    const { output } = await cli('run-code', '() => page.title()');
-    expect(output).toContain('"Title"');
-  });
-
   test('tracing-start-stop', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('tracing-start');
@@ -359,6 +377,16 @@ test.describe('devtools', () => {
     await cli('eval', '() => fetch("/hello-world")');
     const { output: tracingStopOutput } = await cli('tracing-stop');
     expect(tracingStopOutput).toContain('Tracing stopped.');
+  });
+
+  test('video-start-stop', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output: videoStartOutput } = await cli('video-start');
+    expect(videoStartOutput).toContain('Video recording started.');
+    await cli('open', server.HELLO_WORLD);
+    const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
+    expect(videoStopOutput).toContain('Video recording stopped:');
+    expect(videoStopOutput).toContain('.playwright-cli' + path.sep + 'video.webm');
   });
 });
 

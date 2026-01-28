@@ -20,7 +20,7 @@ import { defineTool } from './tool';
 import type { Tracing } from '../../../../../playwright-core/src/client/tracing';
 
 const tracingStart = defineTool({
-  capability: 'tracing',
+  capability: 'devtools',
 
   schema: {
     name: 'browser_start_tracing',
@@ -50,7 +50,7 @@ const tracingStart = defineTool({
 });
 
 const tracingStop = defineTool({
-  capability: 'tracing',
+  capability: 'devtools',
 
   schema: {
     name: 'browser_stop_tracing',

@@ -352,7 +352,7 @@ export class SharedContextFactory implements BrowserContextFactory {
 }
 
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
-  if (!config.saveTrace && !config.capabilities?.includes('tracing'))
+  if (!config.saveTrace && !config.capabilities?.includes('devtools'))
     return;
   return await outputFile(config, clientInfo, `traces`, { origin: 'code', title: 'Collecting trace' });
 }
