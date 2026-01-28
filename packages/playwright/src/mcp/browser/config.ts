@@ -277,8 +277,8 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       cdpHeaders: cliOptions.cdpHeader,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
-      extension: cliOptions.extension,
     },
+    extension: cliOptions.extension,
     server: {
       port: cliOptions.port,
       host: cliOptions.host,

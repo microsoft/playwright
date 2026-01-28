@@ -94,13 +94,14 @@ export type Config = {
      * The scripts will be evaluated in every page before any of the page's scripts.
      */
     initScript?: string[];
-
-    /**
-     * Connect to a running browser instance (Edge/Chrome only).
-     * Requires the "Playwright MCP Bridge" browser extension to be installed.
-     */
-    extension?: boolean;
   },
+
+  /**
+   * Connect to a running browser instance (Edge/Chrome only). If specified, `browser`
+   * config is ignored.
+   * Requires the "Playwright MCP Bridge" browser extension to be installed.
+   */
+  extension?: boolean;
 
   server?: {
     /**
