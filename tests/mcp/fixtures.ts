@@ -26,9 +26,7 @@ import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
-import { commonFixtures } from '../config/commonFixtures';
 
-import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
@@ -76,9 +74,7 @@ type WorkerFixtures = {
   _workerServers: { server: TestServer, httpsServer: TestServer };
 };
 
-export const serverTest = baseTest
-    .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
-    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
+export const serverTest = baseTest.extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
 
 export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures>({
   mcpArgs: [undefined, { option: true }],
