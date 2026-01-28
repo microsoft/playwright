@@ -46,6 +46,7 @@ export type CLIOptions = {
   daemonDataDir?: string;
   daemonHeaded?: boolean;
   device?: string;
+  extension?: boolean;
   executablePath?: string;
   grantPermissions?: string[];
   headless?: boolean;
@@ -108,7 +109,7 @@ export const defaultConfig: FullConfig = {
 
 const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
   browser: {
-    userDataDir: '<daemon-data-dir>',
+    userDataDir: cliOptions.extension ? undefined : '<daemon-data-dir>', // Use default user profile with extension.
     launchOptions: {
       headless: !cliOptions.daemonHeaded,
     },
