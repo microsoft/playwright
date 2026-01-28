@@ -45,7 +45,8 @@ export async function pageAgentPerform(progress: Progress, context: Context, use
   const task = `
 ### Instructions
 - Perform the following task on the page.
-- Your reply should be a tool call that performs action the page".
+- Your reply should be a tool call that performs action the page.
+- If you see text surrounded by <secret></secret>, it is a secret and you should preserve it as such. It will be replaced with the actual value before the tool call.
 
 ### Task
 ${userTask}
@@ -63,7 +64,7 @@ export async function pageAgentExpect(progress: Progress, context: Context, expe
   const task = `
 ### Instructions
 - Call one of the "browser_expect_*" tools to verify / assert the condition.
-- You can call exactly one tool and it can't be report_results, must be one of the assertion tools.
+- If you see text surrounded by <secret></secret>, it is a secret and you should preserve it as such. It will be replaced with the actual value before the tool call.
 
 ### Expectation
 ${expectation}
@@ -78,6 +79,7 @@ export async function pageAgentExtract(progress: Progress, context: Context, que
   const task = `
 ### Instructions
 Extract the following information from the page. Do not perform any actions, just extract the information.
+If you see text surrounded by <secret></secret>, it is a secret and you should preserve it as such. It will be replaced with the actual value before the tool call.
 
 ### Query
 ${query}`;
@@ -97,7 +99,6 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
 
   const snapshot = await context.takeSnapshot(progress);
   const { tools, callTool, reportedResult, refusedToPerformReason } = toolsForLoop(progress, context, toolDefinitions, { resultSchema, refuseToPerform: 'allow' });
-  const secrets = Object.fromEntries((context.agentParams.secrets || [])?.map(s => ([s.name, s.value])));
 
   const apiCacheTextBefore = context.agentParams.apiCacheFile ?
     await fs.promises.readFile(context.agentParams.apiCacheFile, 'utf-8').catch(() => '{}') : '{}';
@@ -116,7 +117,6 @@ async function runLoop(progress: Progress, context: Context, toolDefinitions: To
     debug,
     callTool,
     tools,
-    secrets,
     cache: apiCacheBefore,
     ...context.events,
   });
