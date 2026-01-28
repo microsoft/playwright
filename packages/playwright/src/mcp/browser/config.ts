@@ -277,6 +277,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       cdpHeaders: cliOptions.cdpHeader,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
+      extension: cliOptions.extension,
     },
     server: {
       port: cliOptions.port,
@@ -328,6 +329,7 @@ function configFromEnv(): Config {
     options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
   options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.extension = envToBoolean(process.env.PLAYWRIGHT_MCP_EXTENSION);
   options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
