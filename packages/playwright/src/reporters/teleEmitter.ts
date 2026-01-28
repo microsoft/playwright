@@ -186,6 +186,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       maxFailures: config.maxFailures,
       metadata: config.metadata,
       rootDir: config.rootDir,
+      shard: config.shard,
       version: config.version,
       workers: config.workers,
       globalSetup: config.globalSetup,
