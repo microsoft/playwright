@@ -52,6 +52,10 @@ export function isLikelyNpxGlobal() {
   return process.argv.length >= 2 && process.argv[1].includes('_npx');
 }
 
+export function isCodingAgent(): boolean {
+  return !!process.env.CLAUDECODE;
+}
+
 // Indicate that this and child processes are running under Playwright Test.
 export function setPlaywrightTestProcessEnv() {
   return process.env['PLAYWRIGHT_TEST'] = '1';
