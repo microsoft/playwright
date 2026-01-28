@@ -80,6 +80,7 @@ export function decorateCommand(command: Command, version: string) {
       .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
       .addOption(new ProgramOption('--daemon-data-dir <path>', 'path to the daemon data directory.').hideHelp())
       .addOption(new ProgramOption('--daemon-headed', 'run daemon in headed mode').hideHelp())
+      .addOption(new ProgramOption('--daemon-version <version>', 'version of this daemon').hideHelp())
       .action(async options => {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
@@ -117,7 +118,7 @@ export function decorateCommand(command: Command, version: string) {
             version,
             create: () => new BrowserServerBackend(config, contextFactory, { allTools: true, structuredOutput: true })
           };
-          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory);
+          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory, options.daemonVersion);
           console.error(`Daemon server listening on ${socketPath}`);
           return;
         }

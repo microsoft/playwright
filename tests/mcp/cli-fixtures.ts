@@ -27,6 +27,7 @@ export const test = baseTest.extend<{
   cli: (...args: string[]) => Promise<{
     output: string,
     error: string,
+    exitCode: number | undefined,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
   }>;
@@ -69,7 +70,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
       },
     });
-    await cli.cleanExit().finally(async () => {
+    await cli.exited.finally(async () => {
       await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
     });
 
@@ -83,6 +84,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     if (sessionName && pid)
       sessions.push({ name: sessionName, pid: +pid });
     return {
+      exitCode: await cli.exitCode,
       output: cli.stdout.trim(),
       error: cli.stderr.trim(),
       snapshot,
