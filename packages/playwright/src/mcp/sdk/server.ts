@@ -45,7 +45,7 @@ export type ProgressCallback = (params: ProgressParams) => void;
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
   listTools(): Promise<Tool[]>;
-  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback, signal?: AbortSignal): Promise<CallToolResult>;
   serverClosed?(server: Server): void;
   onBrowserContextClosed?: (() => void) | undefined;
 }
@@ -112,7 +112,7 @@ export function createServer(name: string, version: string, backend: ServerBacke
       if (!initializePromise)
         initializePromise = initializeServer(server, backend, runHeartbeat);
       await initializePromise;
-      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress);
+      const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress, extra.signal);
       const mergedResult = mergeTextParts(toolResult);
       serverDebugResponse('callResult', mergedResult);
       return mergedResult;

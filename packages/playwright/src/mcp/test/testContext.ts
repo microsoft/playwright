@@ -180,7 +180,7 @@ export class TestContext {
     };
   }
 
-  async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+  async runSeedTest(seedFile: string, projectName: string, signal?: AbortSignal): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
       locations: ['/' + escapeRegExp(seedFile) + '/'],
@@ -190,7 +190,7 @@ export class TestContext {
       pauseAtEnd: true,
       disableConfigReporters: true,
       failOnLoadErrors: true,
-    });
+    }, signal);
     if (result.status === 'passed')
       result.output += '\nError: seed test not found.';
     else if (result.status !== 'paused')
@@ -198,10 +198,14 @@ export class TestContext {
     return result;
   }
 
-  async runTestsWithGlobalSetupAndPossiblePause(params: RunTestsParams): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
+  async runTestsWithGlobalSetupAndPossiblePause(params: RunTestsParams, signal?: AbortSignal): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const configDir = this._configLocation.configDir;
     const testRunnerAndScreen = await this.createTestRunner();
     const { testRunner, screen, claimStdio, releaseStdio } = testRunnerAndScreen;
+
+    // Stop tests when the signal is aborted
+    const abortHandler = () => testRunner.stopTests();
+    signal?.addEventListener('abort', abortHandler);
 
     claimStdio();
     try {
@@ -216,6 +220,7 @@ export class TestContext {
     let status: FullResultStatus | 'paused' = 'passed';
 
     const cleanup = async () => {
+      signal?.removeEventListener('abort', abortHandler);
       claimStdio();
       try {
         const result = await testRunner.runGlobalTeardown();
