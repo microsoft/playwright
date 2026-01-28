@@ -18,11 +18,33 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect } from './fixtures';
 
+test('browser_storage_state unavailable', async ({ startClient, server }) => {
+  const { client } = await startClient();
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_storage_state',
+  })).toHaveResponse({
+    error: 'Tool "browser_storage_state" not found',
+    isError: true,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_set_storage_state',
+  })).toHaveResponse({
+    error: 'Tool "browser_set_storage_state" not found',
+    isError: true,
+  });
+});
+
 test('browser_storage_state saves storage state to file', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({
-    args: [`--output-dir=${outputDir}`],
+    config: { outputDir, capabilities: ['storage'] },
   });
 
   // Navigate and set some cookies
@@ -43,8 +65,8 @@ test('browser_storage_state saves storage state to file', async ({ startClient, 
   });
 
   expect(result).toHaveResponse({
-    result: expect.stringContaining('Storage state saved to'),
-    code: expect.stringContaining('context.storageState'),
+    result: expect.stringMatching(/- \[Storage state\]\(output.storage-state-.*.json/),
+    code: expect.stringContaining('page.context().storageState'),
   });
 
   // Verify the file was created and contains the cookie
@@ -63,7 +85,7 @@ test('browser_storage_state saves to custom filename', async ({ startClient, ser
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({
-    args: [`--output-dir=${outputDir}`],
+    config: { outputDir, capabilities: ['storage'] },
   });
 
   await client.callTool({
@@ -109,7 +131,7 @@ test('browser_set_storage_state restores storage state from file', async ({ star
   await fs.promises.writeFile(stateFile, JSON.stringify(storageState));
 
   const { client } = await startClient({
-    args: [`--output-dir=${outputDir}`],
+    config: { outputDir, capabilities: ['storage'] },
   });
 
   await client.callTool({
@@ -125,7 +147,7 @@ test('browser_set_storage_state restores storage state from file', async ({ star
 
   expect(result).toHaveResponse({
     result: expect.stringContaining('Storage state restored'),
-    code: expect.stringContaining('context.setStorageState'),
+    code: expect.stringContaining('page.context().setStorageState'),
   });
 
   // Verify the cookie was restored
@@ -153,7 +175,7 @@ test('browser_storage_state and browser_set_storage_state roundtrip', async ({ s
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({
-    args: [`--output-dir=${outputDir}`],
+    config: { outputDir, capabilities: ['storage'] },
   });
 
   // Navigate and set data

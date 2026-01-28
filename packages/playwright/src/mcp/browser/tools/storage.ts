@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 import { dateAsFileName } from './utils';
 
 const storageState = defineTool({
-  capability: 'core',
+  capability: 'storage',
 
   schema: {
     name: 'browser_storage_state',
@@ -37,15 +35,14 @@ const storageState = defineTool({
     const browserContext = await context.ensureBrowserContext();
     const state = await browserContext.storageState();
     const suggestedFilename = params.filename || dateAsFileName('storage-state', 'json');
-    const outputPath = await context.outputFile(suggestedFilename, { origin: params.filename ? 'llm' : 'code', title: 'Saving storage state' });
-    await fs.promises.writeFile(outputPath, JSON.stringify(state, null, 2));
-    response.addTextResult(`Storage state saved to ${outputPath}`);
-    response.addCode(`await context.storageState({ path: '${suggestedFilename}' });`);
+    const serializedState = JSON.stringify(state, null, 2);
+    response.addResult('Storage state', serializedState, { prefix: 'storage-state', ext: 'json', suggestedFilename });
+    response.addCode(`await page.context().storageState({ path: '${suggestedFilename}' });`);
   },
 });
 
 const setStorageState = defineTool({
-  capability: 'core',
+  capability: 'storage',
 
   schema: {
     name: 'browser_set_storage_state',
@@ -61,7 +58,7 @@ const setStorageState = defineTool({
     const browserContext = await context.ensureBrowserContext();
     await browserContext.setStorageState(params.filename);
     response.addTextResult(`Storage state restored from ${params.filename}`);
-    response.addCode(`await context.setStorageState('${params.filename}');`);
+    response.addCode(`await page.context().setStorageState('${params.filename}');`);
   },
 });
 
