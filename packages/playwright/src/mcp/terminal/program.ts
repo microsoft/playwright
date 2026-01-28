@@ -34,7 +34,7 @@ export type StructuredResponse = {
   sections: Section[];
 };
 
-type SessionOptions = { config?: string, headed?: boolean, extension?: boolean };
+type SessionOptions = { config?: string, headed?: boolean, extension?: boolean, daemonVersion: string };
 
 class Session {
   readonly name: string;
@@ -71,7 +71,7 @@ class Session {
     console.log(`Session '${this.name}' stopped.`);
   }
 
-  async restart(options: { config?: string, headed?: boolean }): Promise<void> {
+  async restart(options: SessionOptions): Promise<void> {
     await this.stop();
 
     this._options = options;
@@ -85,6 +85,7 @@ class Session {
       id: messageId,
       method,
       params,
+      version: this._options.daemonVersion,
     };
     const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject, method, params });
@@ -163,13 +164,25 @@ class Session {
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket);
+    this._connection = new SocketConnection(socket, this._options.daemonVersion);
     this._connection.onmessage = message => this._onMessage(message);
+    this._connection.onversionerror = (id, e) => {
+      if (e.received && e.received !== 'undefined-for-test') {
+        // This is daemon telling us the version is bad.
+        return false;
+      }
+
+      // This will only happen once when hitting the non-versione-aware daemon.
+      // Only kill daemon if it is older.
+      console.error(`Daemon is older than client, killing it.`);
+      this.stop().then(() => process.exit(1)).catch(() => process.exit(1));
+      return true;
+    };
     this._connection.onclose = () => this.close();
     return this._connection;
   }
 
-  private _onMessage(object: any) {
+  private _onMessage(object: { id: number, error?: string, result: any }) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
@@ -204,6 +217,7 @@ class Session {
       `--output-dir=${outputDir}`,
       `--daemon=${this._socketPath}`,
       `--daemon-data-dir=${userDataDir}`,
+      `--daemon-version=${this._options.daemonVersion}`,
       ...configArg,
       ...headedArg,
       ...extensionArg,
@@ -259,9 +273,11 @@ class Session {
 
 class SessionManager {
   readonly sessions: Map<string, Session>;
+  readonly options: SessionOptions;
 
-  private constructor(sessions: Map<string, Session>) {
+  private constructor(sessions: Map<string, Session>, options: SessionOptions) {
     this.sessions = sessions;
+    this.options = options;
   }
 
   static async create(options: SessionOptions): Promise<SessionManager> {
@@ -280,14 +296,14 @@ class SessionManager {
       }
     } catch {
     }
-    return new SessionManager(sessions);
+    return new SessionManager(sessions, options);
   }
 
   async run(args: any): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(sessionName, args);
+      session = new Session(sessionName, { ...this.options, ...args });
       this.sessions.set(sessionName, session);
     }
 
@@ -322,10 +338,10 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(sessionName, {});
+      session = new Session(sessionName, this.options);
       this.sessions.set(sessionName, session);
     }
-    await session.restart({ ...args, config: args._[1] });
+    await session.restart({ ...this.options, ...args, config: args._[1] });
     session.close();
   }
 
@@ -433,7 +449,7 @@ export async function program(options: { version: string }) {
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create(args);
+  const sessionManager = await SessionManager.create({ daemonVersion: options.version, ...args });
   if (commandName.startsWith('session')) {
     const subcommand = args._[0].split('-').slice(1).join('-');
     await handleSessionCommand(sessionManager, subcommand, args);

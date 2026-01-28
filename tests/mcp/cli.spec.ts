@@ -544,3 +544,38 @@ test.describe('config', () => {
     expect(afterOutput).toContain('700x500');
   });
 });
+
+test.describe('versions', () => {
+  test('old client', async ({ cli, server }) => {
+    await cli('config', '--daemonVersion=2.0.0');
+    const { error, exitCode } = await cli('open', server.PREFIX);
+    expect(exitCode).toBe(1);
+    expect(error).toMatch(/Client is too old: daemon is 2\.0\.0, client is 1.*/);
+  });
+
+  test('old daemon', async ({ cli, server }) => {
+    await cli('config');
+    {
+      const { error, exitCode } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      expect(exitCode).toBe(1);
+      expect(error).toMatch(/Daemon is too old: daemon is 1.*, client is 2\.0\.0. Stopping it/);
+    }
+    {
+      const { output } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      expect(output).toContain('Daemon for `default` session started with pid');
+    }
+  });
+
+  test('very old daemon', async ({ cli, server }) => {
+    {
+      const { exitCode } = await cli('open', server.PREFIX, '--daemonVersion=undefined-for-test');
+      expect(exitCode).toBe(0);
+    }
+
+    {
+      const { exitCode, error } = await cli('open', server.PREFIX);
+      expect(exitCode).toBe(1);
+      expect(error).toContain('Daemon is older than client, killing it.');
+    }
+  });
+});
