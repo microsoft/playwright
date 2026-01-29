@@ -116,7 +116,7 @@ export function decorateCommand(command: Command, version: string) {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',
             version,
-            create: () => new BrowserServerBackend(config, contextFactory, { allTools: true, structuredOutput: true })
+            create: () => new BrowserServerBackend(config, contextFactory, { allTools: true })
           };
           const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory, options.daemonVersion);
           console.error(`Daemon server listening on ${socketPath}`);

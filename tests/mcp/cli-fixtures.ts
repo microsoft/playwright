@@ -24,7 +24,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
-  cli: (...args: string[]) => Promise<{
+  cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
     exitCode: number | undefined,
@@ -36,11 +36,13 @@ export const test = baseTest.extend<{
     const sessions: { name: string, pid: number }[] = [];
 
     await use(async (...args: string[]) => {
-      return await runCli(childProcess, args, { mcpBrowser, mcpHeadless }, sessions);
+      const cliArgs = args.filter(arg => typeof arg === 'string');
+      const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
+      return await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
     });
 
     for (const session of sessions) {
-      await runCli(childProcess, ['session-stop', session.name], { mcpBrowser, mcpHeadless }, []).catch(e => {
+      await runCli(childProcess, ['session-stop', session.name], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
         if (!e.message.includes('is not running'))
           throw e;
       });
@@ -54,13 +56,13 @@ export const test = baseTest.extend<{
   },
 });
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
     const cli = childProcess({
       command: [process.execPath, require.resolve('../../packages/playwright/lib/mcp/terminal/cli.js'), ...args],
-      cwd: testInfo.outputPath(),
+      cwd: cliOptions.cwd ?? testInfo.outputPath(),
       env: {
         ...process.env,
         PLAYWRIGHT_DAEMON_INSTALL_DIR: testInfo.outputPath(),
@@ -116,7 +118,11 @@ async function loadSnapshot(output: string) {
     throw new Error('Snapshot file not found');
   const fileLine = lines[lines.indexOf('### Snapshot') + 1];
   const fileName = fileLine.match(/- \[(.+)\]\((.+)\)/)![2];
-  return await fs.promises.readFile(test.info().outputPath(fileName), 'utf8');
+  try {
+    return await fs.promises.readFile(test.info().outputPath(fileName), 'utf8').catch(() => undefined);
+  } catch (e) {
+    return '';
+  }
 }
 
 export const eventsPage = `<!DOCTYPE html>
