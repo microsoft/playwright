@@ -108,6 +108,19 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
+  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, browserName }) => {
+    it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
+    it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
+
+    const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.screen.orientation.type)).toBe('portrait-primary');
+    await page.goto(server.CROSS_PROCESS_PREFIX + '/mobile.html');
+    expect(await page.evaluate(() => window.screen.orientation.type)).toBe('portrait-primary');
+    await context.close();
+  });
+
   it('should fire orientationchange event', async ({ browser, server }) => {
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
