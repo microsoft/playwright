@@ -24,6 +24,7 @@
 
 import { spawn } from 'child_process';
 import http from 'http';
+import os from 'os';
 
 import { debug, ws, wsServer } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server/registry/index';
@@ -145,8 +146,9 @@ export class CDPRelayServer {
     const args: string[] = [];
     if (this._userDataDir)
       args.push(`--user-data-dir=${this._userDataDir}`);
+    if (os.platform() === 'linux' && this._browserChannel === 'chromium')
+      args.push('--no-sandbox');
     args.push(href);
-
     spawn(executablePath, args, {
       windowsHide: true,
       detached: true,
