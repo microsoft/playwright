@@ -26,7 +26,7 @@ import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches, URLPattern } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 
 import type { Artifact } from '../artifact';
@@ -51,7 +51,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _interceptionUrlMatchers: (string | RegExp | URLPattern)[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
@@ -201,7 +201,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
         await this._page.removeRequestInterceptor(this._requestInterceptor);
       this._interceptionUrlMatchers = [];
     } else {
-      this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
+      this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
       if (!hadMatchers)
         await this._page.addRequestInterceptor(progress, this._requestInterceptor);
     }

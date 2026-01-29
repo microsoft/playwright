@@ -23,7 +23,7 @@ import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { assert } from '../utils/isomorphic/assert';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { urlMatches } from '../utils/isomorphic/urlMatch';
+import { isURLPattern, serializeURLPattern, urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
 import { MultiMap } from '../utils/isomorphic/multimap';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
@@ -591,6 +591,8 @@ export class WebSocketRouteHandler {
         patterns.push({ glob: handler.url });
       else if (isRegExp(handler.url))
         patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      else if (isURLPattern(handler.url))
+        patterns.push({ urlPattern: serializeURLPattern(handler.url) });
       else
         all = true;
     }
@@ -832,6 +834,8 @@ export class RouteHandler {
         patterns.push({ glob: handler.url });
       else if (isRegExp(handler.url))
         patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      else if (isURLPattern(handler.url))
+        patterns.push({ urlPattern: serializeURLPattern(handler.url) });
       else
         all = true;
     }

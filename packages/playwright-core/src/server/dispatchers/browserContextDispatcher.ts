@@ -31,7 +31,7 @@ import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches, URLPattern } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -57,7 +57,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _interceptionUrlMatchers: (string | RegExp | URLPattern)[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
@@ -318,7 +318,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         await this._context.removeRequestInterceptor(this._requestInterceptor);
       this._interceptionUrlMatchers = [];
     } else {
-      this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
+      this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
       if (!hadMatchers)
         await this._context.addRequestInterceptor(progress, this._requestInterceptor);
     }

@@ -86,11 +86,55 @@ export type URLMatch = string | RegExp | ((url: URL) => boolean) | URLPattern;
 // URLPattern is not in @types/node@18, so we polyfill it ourselves
 export type URLPattern = {
   test(input: string | URL): boolean;
+  hash: string;
+  hostname: string;
+  password: string;
+  pathname: string;
+  port: string;
+  protocol: string;
+  search: string;
+  username: string;
 };
 
 // @ts-expect-error URLPattern is not in @types/node yet
 // eslint-disable-next-line no-restricted-globals
 export const isURLPattern = (v: unknown): v is URLPattern => typeof globalThis.URLPattern === 'function' && v instanceof globalThis.URLPattern;
+
+export function serializeURLPattern(v: URLPattern) {
+  return {
+    hash: v.hash,
+    hostname: v.hostname,
+    password: v.password,
+    pathname: v.pathname,
+    port: v.port,
+    protocol: v.protocol,
+    search: v.search,
+    username: v.username,
+  };
+}
+
+function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPattern {
+  // @ts-expect-error URLPattern is not in @types/node yet
+  // eslint-disable-next-line no-restricted-globals
+  return new globalThis.URLPattern({
+    hash: v.hash,
+    hostname: v.hostname,
+    password: v.password,
+    pathname: v.pathname,
+    port: v.port,
+    protocol: v.protocol,
+    search: v.search,
+    username: v.username,
+  });
+}
+
+export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): (RegExp | URLPattern | string) {
+  if (match.regexSource)
+    return new RegExp(match.regexSource, match.regexFlags);
+  if (match.urlPattern)
+    return deserializeURLPattern(match.urlPattern);
+  return match.glob!;
+}
 
 export function urlMatchesEqual(match1: URLMatch, match2: URLMatch) {
   if (isRegExp(match1) && isRegExp(match2))
