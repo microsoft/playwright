@@ -96,6 +96,13 @@ export type Config = {
     initScript?: string[];
   },
 
+  /**
+   * Connect to a running browser instance (Edge/Chrome only). If specified, `browser`
+   * config is ignored.
+   * Requires the "Playwright MCP Bridge" browser extension to be installed.
+   */
+  extension?: boolean;
+
   server?: {
     /**
      * The port to listen on for SSE or MCP transport.

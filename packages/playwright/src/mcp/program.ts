@@ -111,7 +111,7 @@ export function decorateCommand(command: Command, version: string) {
         const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
         if (options.daemon) {
-          const contextFactory = options.extension ? extensionContextFactory : browserContextFactory;
+          const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',
             nameInConfig: 'playwright-daemon',
@@ -123,7 +123,7 @@ export function decorateCommand(command: Command, version: string) {
           return;
         }
 
-        if (options.extension) {
+        if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright w/ extension',
             nameInConfig: 'playwright-extension',
