@@ -302,6 +302,9 @@ await expect(page).toHaveURL('https://playwright.dev/docs/intro');
 // Check for the page URL to contain 'doc', followed by an optional 's', followed by '/'
 await expect(page).toHaveURL(/docs?\//);
 
+// Check for the page URL to match the URL pattern
+await expect(page).toHaveURL(new URLPattern({ pathname: '/docs/*' }));
+
 // Check for the predicate to be satisfied
 // For example: verify query strings
 await expect(page).toHaveURL(url => {
@@ -337,7 +340,7 @@ await Expect(Page).ToHaveURLAsync(new Regex(".*checkout"));
 ### param: PageAssertions.toHaveURL.url
 * since: v1.18
 * langs: js
-- `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
 
 Expected URL string, RegExp, or predicate receiving [URL] to match.
 When [`option: Browser.newContext.baseURL`] is provided via the context options and the `url` argument is a string, the two values are merged via the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor and used for the comparison against the current browser URL.

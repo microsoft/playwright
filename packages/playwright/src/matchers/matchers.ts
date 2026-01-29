@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
+import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, isURLPattern, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
 import { expectTypes } from '../util';
@@ -33,7 +33,7 @@ import type { TestStepInfoImpl } from '../worker/testInfo';
 import type { APIResponse, Locator, Frame, Page } from 'playwright-core';
 import type { FrameExpectParams } from 'playwright-core/lib/client/types';
 import type { ExpectMatcherUtils } from '../../types/test';
-import type { InternalMatcherUtils } from 'playwright-core/lib/utils';
+import type { InternalMatcherUtils, URLPattern } from 'playwright-core/lib/utils';
 
 export type ExpectMatcherStateInternal = Omit<ExpectMatcherState, 'utils'> & {
   _stepInfo?: TestStepInfoImpl;
@@ -435,9 +435,12 @@ export function toHaveTitle(
 export function toHaveURL(
   this: ExpectMatcherStateInternal,
   page: Page,
-  expected: string | RegExp | ((url: URL) => boolean),
+  expected: string | RegExp | URLPattern | ((url: URL) => boolean),
   options?: { ignoreCase?: boolean; timeout?: number },
 ) {
+  if (isURLPattern(expected))
+    return toHaveURLWithPredicate.call(this, page, url => (expected as URLPattern).test(url.href), options);
+
   // Ports don't support predicates. Keep separate server and client codepaths
   if (typeof expected === 'function')
     return toHaveURLWithPredicate.call(this, page, expected, options);

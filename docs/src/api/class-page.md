@@ -2170,7 +2170,7 @@ var frame = page.FrameByUrl(".*domain.*");
 * langs: js
 - `frameSelector` <[string]|[Object]>
   - `name` ?<[string]> Frame name specified in the `iframe`'s `name` attribute. Optional.
-  - `url` ?<[string]|[RegExp]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern or predicate receiving
+  - `url` ?<[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]> A glob pattern, regex pattern, URL pattern, or predicate receiving
     frame's `url` as a [URL] object. Optional.
 
 Frame name or other frame lookup options.
@@ -3684,6 +3684,14 @@ Enabling routing disables http cache.
 
 ### param: Page.route.url
 * since: v1.8
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
+
+### param: Page.route.url
+* since: v1.8
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If [`option: Browser.newContext.baseURL`] is set in the context options and the provided URL is a string that does not start with `*`, it is resolved using the [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
@@ -3816,6 +3824,14 @@ await page.RouteWebSocketAsync("/ws", ws => {
 
 ### param: Page.routeWebSocket.url
 * since: v1.48
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
+
+### param: Page.routeWebSocket.url
+* since: v1.48
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
 Only WebSockets with the url matching this pattern will be routed. A string pattern can be relative to the [`option: Browser.newContext.baseURL`] context option.
@@ -4341,9 +4357,17 @@ the [`param: url`].
 
 ### param: Page.unroute.url
 * since: v1.8
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while routing.
+
+### param: Page.unroute.url
+* since: v1.8
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+A glob pattern, regex pattern, or predicate receiving [URL] to match while routing.
 
 ### param: Page.unroute.handler
 * since: v1.8
@@ -4840,7 +4864,10 @@ a navigation.
 ### param: Page.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### option: Page.waitForNavigation.url = %%-wait-for-navigation-url-%%
+### option: Page.waitForNavigation.url = %%-js-wait-for-navigation-url-%%
+* since: v1.8
+
+### option: Page.waitForNavigation.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.8
 
 ### option: Page.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
@@ -5377,7 +5404,10 @@ await page.ClickAsync("a.delayed-navigation"); // clicking the link will indirec
 await page.WaitForURLAsync("**/target.html");
 ```
 
-### param: Page.waitForURL.url = %%-wait-for-navigation-url-%%
+### param: Page.waitForURL.url = %%-js-wait-for-navigation-url-%%
+* since: v1.11
+
+### param: Page.waitForURL.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.11
 
 ### option: Page.waitForURL.timeout = %%-navigation-timeout-%%
