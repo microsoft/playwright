@@ -215,7 +215,8 @@ article, aside, details, figcaption, figure, footer, header, main, menu, nav, se
   background-color: var(--color-canvas-subtle);
 }
 
-.subnav-item[aria-selected="true"] {
+.subnav-item[aria-selected="true"],
+.subnav-item[aria-pressed="true"] {
   background: var(--color-control-transparent-bg-hover);
 }
 

@@ -229,9 +229,9 @@ export function filterWithQuery(searchParams: URLSearchParams, token: string, ap
   let prefix: 's:' | 'p:' | '@';
   if (token.startsWith('s:'))
     prefix = 's:';
-  if (token.startsWith('p:'))
+  else if (token.startsWith('p:'))
     prefix = 'p:';
-  if (token.startsWith('@'))
+  else if (token.startsWith('@'))
     prefix = '@';
 
   const newTokens = tokens.filter(t => !t.startsWith(prefix));
