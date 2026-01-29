@@ -29,8 +29,6 @@ import { parseCommand } from './command';
 
 import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
-import type { StructuredResponse } from './program';
-import type { Section } from '../browser/response';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -111,6 +109,8 @@ export async function startMcpDaemonServer(
           });
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
+          if (params.cwd)
+            toolParams._meta = { cwd: params.cwd };
           const response = await backend.callTool(toolName, toolParams, () => {});
           await connection.send({ id, result: formatResult(response) });
         } else {
@@ -142,14 +142,13 @@ export async function startMcpDaemonServer(
   });
 }
 
-function formatResult(result: mcp.CallToolResult): StructuredResponse {
+function formatResult(result: mcp.CallToolResult) {
   const isError = result.isError;
   const text = result.content[0].type === 'text' ? result.content[0].text : undefined;
-  const sections = result.content[0]._meta?.sections as Section[];
-  return { isError, text, sections };
+  return { isError, text };
 }
 
-function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: mcp.CallToolRequest['params']['arguments'] } {
+function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']> } {
   const command = commands[args._[0]];
   if (!command)
     throw new Error('Command is required');
