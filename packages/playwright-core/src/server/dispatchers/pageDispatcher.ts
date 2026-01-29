@@ -51,7 +51,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp | URLPattern)[] = [];
+  private _interceptionUrlMatchers: (string | RegExp | URLPattern | undefined)[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;

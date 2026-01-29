@@ -57,7 +57,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp | URLPattern)[] = [];
+  private _interceptionUrlMatchers: (string | RegExp | URLPattern | undefined)[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {

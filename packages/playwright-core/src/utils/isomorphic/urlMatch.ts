@@ -113,7 +113,13 @@ export function serializeURLPattern(v: URLPattern) {
   };
 }
 
-function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPattern {
+function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPattern | undefined {
+  // Client is on Node 24+ and can use URLPattern, Server is not. Let's match all URLs on the server, they'll be filtered again on the client.
+  // @ts-expect-error URLPattern is not in @types/node yet
+  // eslint-disable-next-line no-restricted-globals
+  if (typeof globalThis.URLPattern !== 'function')
+    return;
+
   // @ts-expect-error URLPattern is not in @types/node yet
   // eslint-disable-next-line no-restricted-globals
   return new globalThis.URLPattern({
@@ -128,7 +134,7 @@ function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPa
   });
 }
 
-export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): (RegExp | URLPattern | string) {
+export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): (RegExp | URLPattern | string | undefined) {
   if (match.regexSource)
     return new RegExp(match.regexSource, match.regexFlags);
   if (match.urlPattern)
