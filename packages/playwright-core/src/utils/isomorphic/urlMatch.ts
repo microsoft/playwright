@@ -113,12 +113,25 @@ export function serializeURLPattern(v: URLPattern) {
   };
 }
 
-function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPattern | undefined {
+export type SerializedURLMatch = { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> };
+
+export function serializeURLMatch(match: URLMatch): SerializedURLMatch | undefined {
+  if (isString(match))
+    return { glob: match };
+  if (isRegExp(match))
+    return { regexSource: match.source, regexFlags: match.flags };
+  if (isURLPattern(match))
+    return { urlPattern: serializeURLPattern(match) };
+  // Functions cannot be serialized
+  return undefined;
+}
+
+function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPattern | ((url: URL) => boolean) {
   // Client is on Node 24+ and can use URLPattern, Server is not. Let's match all URLs on the server, they'll be filtered again on the client.
   // @ts-expect-error URLPattern is not in @types/node yet
   // eslint-disable-next-line no-restricted-globals
   if (typeof globalThis.URLPattern !== 'function')
-    return;
+    return () => true;
 
   // @ts-expect-error URLPattern is not in @types/node yet
   // eslint-disable-next-line no-restricted-globals
@@ -134,7 +147,7 @@ function deserializeURLPattern(v: ReturnType<typeof serializeURLPattern>): URLPa
   });
 }
 
-export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): (RegExp | URLPattern | string | undefined) {
+export function deserializeURLMatch(match: { glob?: string, regexSource?: string, regexFlags?: string, urlPattern?: ReturnType<typeof serializeURLPattern> }): URLMatch {
   if (match.regexSource)
     return new RegExp(match.regexSource, match.regexFlags);
   if (match.urlPattern)

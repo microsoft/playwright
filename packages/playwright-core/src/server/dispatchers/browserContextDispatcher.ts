@@ -31,7 +31,7 @@ import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
-import { deserializeURLMatch, urlMatches, URLPattern } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -45,6 +45,7 @@ import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -57,7 +58,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp | URLPattern | undefined)[] = [];
+  private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {

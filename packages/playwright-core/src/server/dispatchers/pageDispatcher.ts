@@ -26,7 +26,7 @@ import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
-import { deserializeURLMatch, urlMatches, URLPattern } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 
 import type { Artifact } from '../artifact';
@@ -41,6 +41,7 @@ import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -51,7 +52,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp | URLPattern | undefined)[] = [];
+  private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
