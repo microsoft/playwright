@@ -146,7 +146,7 @@ export class CDPRelayServer {
     const args: string[] = [];
     if (this._userDataDir)
       args.push(`--user-data-dir=${this._userDataDir}`);
-    if (os.platform() === 'linux' && (!this._browserChannel || this._browserChannel === 'chromium'))
+    if (os.platform() === 'linux' && this._browserChannel === 'chromium')
       args.push('--no-sandbox');
     args.push(href);
     spawn(executablePath, args, {
