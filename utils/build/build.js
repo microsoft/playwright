@@ -344,7 +344,7 @@ steps.push(new GroupStep(updateSteps));
 // Generate third party licenses for bundles.
 steps.push(new ProgramStep({
   command: 'node',
-  args: [path.resolve(__dirname, '../generate_third_party_notice.js')],
+  args: [quotePath(path.resolve(__dirname, '../generate_third_party_notice.js'))],
   shell: true,
 }));
 
