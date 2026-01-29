@@ -17,7 +17,11 @@ test('assert a value', async ({ page }) => {
 * since: v1.9
 - returns: <[GenericAssertions]>
 
-Makes the assertion check for the opposite condition. For example, the following code passes:
+Makes the assertion check for the opposite condition.
+
+**Usage**
+
+For example, the following code passes:
 
 ```js
 const value = 1;
