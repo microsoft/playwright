@@ -25,8 +25,8 @@ export type ToolCapability =
   'pdf' |
   'storage' |
   'testing' |
-  'tracing' |
-  'vision';
+  'vision' |
+  'devtools';
 
 export type Config = {
   /**
@@ -96,6 +96,13 @@ export type Config = {
     initScript?: string[];
   },
 
+  /**
+   * Connect to a running browser instance (Edge/Chrome only). If specified, `browser`
+   * config is ignored.
+   * Requires the "Playwright MCP Bridge" browser extension to be installed.
+   */
+  extension?: boolean;
+
   server?: {
     /**
      * The port to listen on for SSE or MCP transport.
@@ -119,6 +126,7 @@ export type Config = {
    *   - 'core': Core browser automation features.
    *   - 'pdf': PDF generation and manipulation.
    *   - 'vision': Coordinate-based interactions.
+   *   - 'devtools': Developer tools features.
    */
   capabilities?: ToolCapability[];
 

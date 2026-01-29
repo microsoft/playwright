@@ -156,8 +156,8 @@ export class Electron extends SdkObject {
 
   async launch(progress: Progress, options: Omit<channels.ElectronLaunchParams, 'timeout'>): Promise<ElectronApplication> {
     let app: ElectronApplication | undefined = undefined;
-    // --remote-debugging-port=0 must be the last playwright's argument, loader.ts relies on it.
-    let electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...(options.args || [])];
+    // --inspect=0 must be the last playwright's argument, loader.ts relies on it.
+    let electronArguments = ['--inspect=0', ...(options.args || [])];
 
     if (os.platform() === 'linux') {
       if (!options.chromiumSandbox && electronArguments.indexOf('--no-sandbox') === -1)

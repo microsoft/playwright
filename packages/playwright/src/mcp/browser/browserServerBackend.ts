@@ -17,7 +17,7 @@
 import { FullConfig } from './config';
 import { Context } from './context';
 import { logUnhandledError } from '../log';
-import { Response, serializeResponse, serializeStructuredResponse } from './response';
+import { Response, serializeResponse } from './response';
 import { SessionLog } from './sessionLog';
 import { browserTools, filteredTools } from './tools';
 import { toMcpTool } from '../sdk/tool';
@@ -33,7 +33,6 @@ export class BrowserServerBackend implements ServerBackend {
   private _sessionLog: SessionLog | undefined;
   private _config: FullConfig;
   private _browserContextFactory: BrowserContextFactory;
-  private _isStructuredOutput: boolean;
 
   onBrowserContextClosed: (() => void) | undefined;
 
@@ -41,7 +40,6 @@ export class BrowserServerBackend implements ServerBackend {
     this._config = config;
     this._browserContextFactory = factory;
     this._tools = options.allTools ? browserTools : filteredTools(config);
-    this._isStructuredOutput = options.structuredOutput ?? false;
   }
 
   async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {
@@ -68,6 +66,7 @@ export class BrowserServerBackend implements ServerBackend {
       };
     }
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {}) as any;
+    const cwd = rawArguments?._meta && typeof rawArguments?._meta === 'object' && (rawArguments._meta as any)?.cwd;
     const context = this._context!;
     const response = Response.create(context, name, parsedArguments);
     context.setRunningTool(name);
@@ -75,10 +74,7 @@ export class BrowserServerBackend implements ServerBackend {
     try {
       await tool.handle(context, parsedArguments, response);
       const sections = await response.build();
-      if (this._isStructuredOutput)
-        responseObject = await serializeStructuredResponse(sections);
-      else
-        responseObject = await serializeResponse(context, sections, context.firstRootPath());
+      responseObject = await serializeResponse(context, sections, cwd ?? context.firstRootPath());
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
       return {

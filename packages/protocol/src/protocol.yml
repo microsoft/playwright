@@ -2023,6 +2023,8 @@ Page:
           properties:
             width: int
             height: int
+      returns:
+        path: string
 
     videoStop:
       title: Stop video recording

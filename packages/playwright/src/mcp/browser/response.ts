@@ -46,6 +46,7 @@ export type Section = {
   title: string;
   content: Result[];
   isError?: boolean;
+  codeframe?: 'yaml' | 'js';
 };
 
 export class Response {
@@ -104,8 +105,8 @@ export class Response {
   async build(): Promise<Section[]> {
     const rootPath = this._context.firstRootPath();
     const sections: Section[] = [];
-    const addSection = (title: string) => {
-      const section = { title, content: [] as Result[], isError: title === 'Error' };
+    const addSection = (title: string, codeframe?: 'yaml' | 'js') => {
+      const section = { title, content: [] as Result[], isError: title === 'Error', codeframe };
       sections.push(section);
       return section.content;
     };
@@ -123,7 +124,7 @@ export class Response {
 
     // Code
     if (this._context.config.codegen !== 'none' && this._code.length) {
-      const content = addSection('Ran Playwright code');
+      const content = addSection('Ran Playwright code', 'js');
       for (const code of this._code)
         content.push({ text: code, title: 'code' });
     }
@@ -149,7 +150,7 @@ export class Response {
 
     // Handle tab snapshot
     if (tabSnapshot && this._includeSnapshot !== 'none') {
-      const content = addSection('Snapshot');
+      const content = addSection('Snapshot', 'yaml');
       const snapshot = this._includeSnapshot === 'full' ? tabSnapshot.ariaSnapshot : tabSnapshot.ariaSnapshotDiff ?? tabSnapshot.ariaSnapshot;
       content.push({ text: snapshot, title: 'snapshot', file: { prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName } });
     }
@@ -217,7 +218,7 @@ function parseSections(text: string): Map<string, string> {
   return sections;
 }
 
-export async function serializeResponse(context: Context, sections: Section[], rootPath?: string): Promise<CallToolResult> {
+export async function serializeResponse(context: Context, sections: Section[], relativeTo?: string): Promise<CallToolResult> {
   const redactText = (text: string): string => {
     for (const [secretName, secretValue] of Object.entries(context.config.secrets ?? {}))
       text = text.replaceAll(secretValue, `<secret>${secretName}</secret>`);
@@ -227,29 +228,30 @@ export async function serializeResponse(context: Context, sections: Section[], r
   const text: string[] = [];
   for (const section of sections) {
     text.push(`### ${section.title}`);
+    const codeframe: string[] = [];
     for (const result of section.content) {
-      if (!result.file) {
-        if (result.text !== undefined)
-          text.push(result.text);
-        continue;
-      }
-
-      if (result.file.suggestedFilename || context.config.outputMode === 'file' || result.data) {
+      if (result.file && (result.file.suggestedFilename || context.config.outputMode === 'file' || result.data)) {
         const generatedFileName = await context.outputFile(dateAsFileName(result.file.prefix, result.file.ext), { origin: 'code', title: section.title });
         const fileName = result.file.suggestedFilename ? await context.outputFile(result.file.suggestedFilename, { origin: 'llm', title: section.title }) : generatedFileName;
-        text.push(`- [${result.title}](${rootPath ? path.relative(rootPath, fileName) : fileName})`);
+        text.push(`- [${result.title}](${relativeTo ? path.relative(relativeTo, fileName) : fileName})`);
         if (result.data)
           await fs.promises.writeFile(fileName, result.data, 'utf-8');
         else
           await fs.promises.writeFile(fileName, result.text!);
       } else {
-        if (result.file.ext === 'yml')
-          text.push(`\`\`\`yaml\n${result.text!}\n\`\`\``);
-        else
-          text.push(result.text!);
+        if (result.text !== undefined)
+          codeframe.push(result.text);
       }
     }
+
+    if (codeframe?.length) {
+      if (section.codeframe)
+        text.push(`\`\`\`${section.codeframe}\n${codeframe.join('\n')}\n\`\`\``);
+      else
+        text.push(codeframe.join('\n'));
+    }
   }
+
   const content: (TextContent | ImageContent)[] = [
     {
       type: 'text',
@@ -270,22 +272,6 @@ export async function serializeResponse(context: Context, sections: Section[], r
   return {
     content,
     ...(sections.some(section => section.isError) ? { isError: true } : {}),
-  };
-}
-
-export async function serializeStructuredResponse(sections: Section[]): Promise<CallToolResult> {
-  for (const section of sections) {
-    for (const result of section.content) {
-      if (!result.data)
-        continue;
-      result.isBase64 = true;
-      result.text = result.data.toString('base64');
-      result.data = undefined;
-    }
-  }
-  return {
-    content: [{ type: 'text' as const, text: '', _meta: { sections } }],
-    isError: sections.some(section => section.isError),
   };
 }
 

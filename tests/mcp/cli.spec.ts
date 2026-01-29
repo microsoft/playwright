@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { test, expect, eventsPage } from './cli-fixtures';
 
 test.describe('help', () => {
@@ -51,8 +52,12 @@ test.describe('core', () => {
     const { snapshot } = await cli('open', server.PREFIX);
     expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
 
-    const { snapshot: clickSnapshot } = await cli('click', 'e2');
+    const { output, snapshot: clickSnapshot } = await cli('click', 'e2');
     expect(clickSnapshot).toBeTruthy();
+    expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.getByRole('button', { name: 'Submit' }).click();
+\`\`\``);
   });
 
   test('click link', async ({ cli, server }) => {
@@ -203,6 +208,12 @@ test.describe('navigation', () => {
 - Page URL: ${server.HELLO_WORLD}
 - Page Title: Title`);
   });
+
+  test('run-code', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output } = await cli('run-code', '() => page.title()');
+    expect(output).toContain('"Title"');
+  });
 });
 
 test.describe('keyboard', () => {
@@ -284,10 +295,27 @@ test.describe('save as', () => {
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
 
+  test('screenshot --filename', async ({ cli, server, mcpBrowser }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output, attachments } = await cli('screenshot', '--filename=screenshot.png');
+    expect(output).toContain('.playwright-cli' + path.sep + 'screenshot.png');
+    expect(attachments[0].name).toEqual('Screenshot of viewport');
+    expect(attachments[0].data).toEqual(expect.any(Buffer));
+  });
+
   test('pdf', async ({ cli, server, mcpBrowser }) => {
     test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
     await cli('open', server.HELLO_WORLD);
     const { attachments } = await cli('pdf');
+    expect(attachments[0].name).toEqual('Page as pdf');
+    expect(attachments[0].data).toEqual(expect.any(Buffer));
+  });
+
+  test('pdf --filename', async ({ cli, server, mcpBrowser }) => {
+    test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
+    await cli('open', server.HELLO_WORLD);
+    const { output, attachments } = await cli('pdf', '--filename=pdf.pdf');
+    expect(output).toContain('.playwright-cli' + path.sep + 'pdf.pdf');
     expect(attachments[0].name).toEqual('Page as pdf');
     expect(attachments[0].data).toEqual(expect.any(Buffer));
   });
@@ -346,12 +374,6 @@ test.describe('devtools', () => {
     expect(attachments[0].data.toString()).not.toContain(`[GET] ${`${server.PREFIX}/hello-world`} => [200] OK`);
   });
 
-  test('run-code', async ({ cli, server }) => {
-    await cli('open', server.HELLO_WORLD);
-    const { output } = await cli('run-code', '() => page.title()');
-    expect(output).toContain('"Title"');
-  });
-
   test('tracing-start-stop', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('tracing-start');
@@ -359,6 +381,16 @@ test.describe('devtools', () => {
     await cli('eval', '() => fetch("/hello-world")');
     const { output: tracingStopOutput } = await cli('tracing-stop');
     expect(tracingStopOutput).toContain('Tracing stopped.');
+  });
+
+  test('video-start-stop', async ({ cli, server }) => {
+    await cli('open', server.HELLO_WORLD);
+    const { output: videoStartOutput } = await cli('video-start');
+    expect(videoStartOutput).toContain('Video recording started.');
+    await cli('open', server.HELLO_WORLD);
+    const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
+    expect(videoStopOutput).toContain('Video recording stopped:');
+    expect(videoStopOutput).toContain('.playwright-cli' + path.sep + 'video.webm');
   });
 });
 
@@ -514,5 +546,55 @@ test.describe('config', () => {
     await cli('open', server.PREFIX);
     const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
     expect(afterOutput).toContain('700x500');
+  });
+});
+
+test.describe('versions', () => {
+  test('old client', async ({ cli, server }) => {
+    await cli('config', '--daemonVersion=2.0.0');
+    const { error, exitCode } = await cli('open', server.PREFIX);
+    expect(exitCode).toBe(1);
+    expect(error).toMatch(/Client is too old: daemon is 2\.0\.0, client is 1.*/);
+  });
+
+  test('old daemon', async ({ cli, server }) => {
+    await cli('config');
+    {
+      const { error, exitCode } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      expect(exitCode).toBe(1);
+      expect(error).toMatch(/Daemon is too old: daemon is 1.*, client is 2\.0\.0. Stopping it/);
+    }
+    {
+      const { output } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      expect(output).toContain('Daemon for `default` session started with pid');
+    }
+  });
+
+  test('very old daemon', async ({ cli, server }) => {
+    {
+      const { exitCode } = await cli('open', server.PREFIX, '--daemonVersion=undefined-for-test');
+      expect(exitCode).toBe(0);
+    }
+
+    {
+      const { exitCode, error } = await cli('open', server.PREFIX);
+      expect(exitCode).toBe(1);
+      expect(error).toContain('Daemon is older than client, killing it.');
+    }
+  });
+});
+
+test.describe('folders', () => {
+  test('snapshot', async ({ cli, server }, testInfo) => {
+    {
+      const { output } = await cli('open', server.HELLO_WORLD);
+      expect(output).toContain('.playwright-cli' + path.sep + 'page-');
+    }
+    {
+      const nested = testInfo.outputPath('nested');
+      await fs.promises.mkdir(nested, { recursive: true });
+      const { output } = await cli('open', server.HELLO_WORLD, { cwd: nested });
+      expect(output).toContain('..' + path.sep + '.playwright-cli' + path.sep + 'page-');
+    }
   });
 });

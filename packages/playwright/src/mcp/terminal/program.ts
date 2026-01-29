@@ -34,7 +34,7 @@ export type StructuredResponse = {
   sections: Section[];
 };
 
-type SessionOptions = { config?: string, headed?: boolean, extension?: boolean };
+type SessionOptions = { config?: string, headed?: boolean, extension?: boolean, daemonVersion: string };
 
 class Session {
   readonly name: string;
@@ -51,7 +51,7 @@ class Session {
   }
 
   async run(args: any) {
-    return await this._send('run', { args });
+    return await this._send('run', { args, cwd: process.cwd() });
   }
 
   async stop(): Promise<void> {
@@ -71,7 +71,7 @@ class Session {
     console.log(`Session '${this.name}' stopped.`);
   }
 
-  async restart(options: { config?: string, headed?: boolean }): Promise<void> {
+  async restart(options: SessionOptions): Promise<void> {
     await this.stop();
 
     this._options = options;
@@ -85,6 +85,7 @@ class Session {
       id: messageId,
       method,
       params,
+      version: this._options.daemonVersion,
     };
     const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject, method, params });
@@ -112,7 +113,6 @@ class Session {
       console.log(`No user data found for session '${this.name}'.`);
       return;
     }
-    console.log(matchingDirs);
     for (const dir of matchingDirs) {
       const userDataDir = path.resolve(daemonProfilesDir, dir);
       for (let i = 0; i < 5; i++) {
@@ -164,13 +164,25 @@ class Session {
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket);
+    this._connection = new SocketConnection(socket, this._options.daemonVersion);
     this._connection.onmessage = message => this._onMessage(message);
+    this._connection.onversionerror = (id, e) => {
+      if (e.received && e.received !== 'undefined-for-test') {
+        // This is daemon telling us the version is bad.
+        return false;
+      }
+
+      // This will only happen once when hitting the non-versione-aware daemon.
+      // Only kill daemon if it is older.
+      console.error(`Daemon is older than client, killing it.`);
+      this.stop().then(() => process.exit(1)).catch(() => process.exit(1));
+      return true;
+    };
     this._connection.onclose = () => this.close();
     return this._connection;
   }
 
-  private _onMessage(object: any) {
+  private _onMessage(object: { id: number, error?: string, result: any }) {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
@@ -202,8 +214,10 @@ class Session {
     const child = spawn(process.execPath, [
       cliPath,
       'run-mcp-server',
+      `--output-dir=${outputDir}`,
       `--daemon=${this._socketPath}`,
       `--daemon-data-dir=${userDataDir}`,
+      `--daemon-version=${this._options.daemonVersion}`,
       ...configArg,
       ...headedArg,
       ...extensionArg,
@@ -259,9 +273,11 @@ class Session {
 
 class SessionManager {
   readonly sessions: Map<string, Session>;
+  readonly options: SessionOptions;
 
-  private constructor(sessions: Map<string, Session>) {
+  private constructor(sessions: Map<string, Session>, options: SessionOptions) {
     this.sessions = sessions;
+    this.options = options;
   }
 
   static async create(options: SessionOptions): Promise<SessionManager> {
@@ -280,19 +296,19 @@ class SessionManager {
       }
     } catch {
     }
-    return new SessionManager(sessions);
+    return new SessionManager(sessions, options);
   }
 
   async run(args: any): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(sessionName, args);
+      session = new Session(sessionName, { ...this.options, ...args });
       this.sessions.set(sessionName, session);
     }
 
-    const result = await session.run(args);
-    await printResponse(result);
+    const result = await session.run({ ...args, outputDir });
+    console.log(result.text);
     session.close();
   }
 
@@ -322,10 +338,10 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(sessionName, {});
+      session = new Session(sessionName, this.options);
       this.sessions.set(sessionName, session);
     }
-    await session.restart({ ...args, config: args._[1] });
+    await session.restart({ ...this.options, ...args, config: args._[1] });
     session.close();
   }
 
@@ -433,7 +449,7 @@ export async function program(options: { version: string }) {
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create(args);
+  const sessionManager = await SessionManager.create({ daemonVersion: options.version, ...args });
   if (commandName.startsWith('session')) {
     const subcommand = args._[0].split('-').slice(1).join('-');
     await handleSessionCommand(sessionManager, subcommand, args);
@@ -453,71 +469,7 @@ export async function program(options: { version: string }) {
   await sessionManager.run(args);
 }
 
-export async function printResponse(response: StructuredResponse) {
-  const { sections } = response;
-  if (!sections) {
-    console.log('### Error\n' + response.text);
-    return;
-  }
-
-  const text: string[] = [];
-  for (const section of sections) {
-    text.push(`### ${section.title}`);
-    for (const result of section.content) {
-      if (!result.file) {
-        if (result.text !== undefined)
-          text.push(result.text);
-        continue;
-      }
-
-      const generatedFileName = await outputFile(dateAsFileName(result.file.prefix, result.file.ext), { origin: 'code' });
-      const fileName = result.file.suggestedFilename ? await outputFile(result.file.suggestedFilename, { origin: 'llm' }) : generatedFileName;
-      text.push(`- [${result.title}](${path.relative(process.cwd(), fileName)})`);
-      if (result.data)
-        await fs.promises.writeFile(fileName, result.data);
-      else if (result.isBase64)
-        await fs.promises.writeFile(fileName, Buffer.from(result.text!, 'base64'));
-      else
-        await fs.promises.writeFile(fileName, result.text!);
-    }
-  }
-  console.log(text.join('\n'));
-}
-
-function dateAsFileName(prefix: string, extension: string): string {
-  const date = new Date();
-  return `${prefix}-${date.toISOString().replace(/[:.]/g, '-')}.${extension}`;
-}
-
 const outputDir = path.join(process.cwd(), '.playwright-cli');
-
-async function outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
-  await fs.promises.mkdir(outputDir, { recursive: true });
-
-  // Trust code.
-  if (options.origin === 'code')
-    return path.resolve(outputDir, fileName);
-
-  // Trust llm to use valid characters in file names.
-  if (options.origin === 'llm') {
-    fileName = fileName.split('\\').join('/');
-    const resolvedFile = path.resolve(outputDir, fileName);
-    if (!resolvedFile.startsWith(path.resolve(outputDir) + path.sep))
-      throw new Error(`Resolved file path ${resolvedFile} is outside of the output directory ${outputDir}. Use relative file names to stay within the output directory.`);
-    return resolvedFile;
-  }
-
-  // Do not trust web, at all.
-  return path.join(outputDir, sanitizeForFilePath(fileName));
-}
-
-function sanitizeForFilePath(s: string) {
-  const sanitize = (s: string) => s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-  const separator = s.lastIndexOf('.');
-  if (separator === -1)
-    return sanitize(s);
-  return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
-}
 
 function resolveConfigFile(configParam: string | undefined) {
   const configFile = configParam || process.env.PLAYWRIGHT_CLI_CONFIG;
