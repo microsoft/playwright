@@ -34,7 +34,14 @@ export type StructuredResponse = {
   sections: Section[];
 };
 
-type SessionOptions = { config?: string, headed?: boolean, extension?: boolean, daemonVersion: string };
+type SessionOptions = {
+  config?: string;
+  headed?: boolean;
+  extension?: boolean;
+  daemonVersion: string;
+  browser?: string;
+  isolated?: boolean;
+};
 
 class Session {
   readonly name: string;
@@ -205,6 +212,8 @@ class Session {
     const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
     const headedArg = this._options.headed ? [`--daemon-headed`] : [];
     const extensionArg = this._options.extension ? [`--extension`] : [];
+    const isolatedArg = this._options.isolated ? [`--isolated`] : [];
+    const browserArg = this._options.browser ? [`--browser=${this._options.browser}`] : [];
 
     const outLog = path.join(daemonProfilesDir, 'out.log');
     const errLog = path.join(daemonProfilesDir, 'err.log');
@@ -221,6 +230,8 @@ class Session {
       ...configArg,
       ...headedArg,
       ...extensionArg,
+      ...isolatedArg,
+      ...browserArg,
     ], {
       detached: true,
       stdio: ['ignore', out, err],
@@ -341,7 +352,7 @@ class SessionManager {
       session = new Session(sessionName, this.options);
       this.sessions.set(sessionName, session);
     }
-    await session.restart({ ...this.options, ...args, config: args._[1] });
+    await session.restart({ ...this.options, ...args });
     session.close();
   }
 
@@ -415,15 +426,21 @@ const daemonProfilesDir = (() => {
   return path.join(localCacheDir, 'ms-playwright', 'daemon', installationDirHash);
 })();
 
+const booleanOptions = [
+  'extension',
+  'headed',
+  'help',
+  'isolated',
+  'version',
+];
+
 export async function program(options: { version: string }) {
   const argv = process.argv.slice(2);
-  const args = require('minimist')(argv, {
-    boolean: ['help', 'version', 'headed', 'extension'],
-  });
-  if (!argv.includes('--headed') && !argv.includes('--no-headed'))
-    delete args.headed;
-  if (!argv.includes('--extension'))
-    delete args.extension;
+  const args = require('minimist')(argv, { boolean: booleanOptions });
+  for (const option of booleanOptions) {
+    if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
+      delete args[option];
+  }
 
   const help = require('./help.json');
   const commandName = args._[0];

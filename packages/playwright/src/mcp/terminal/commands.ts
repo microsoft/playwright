@@ -535,8 +535,11 @@ const config = declareCommand({
   name: 'config',
   description: 'Restart session with new config, defaults to `playwright-cli.json`',
   category: 'config',
-  args: z.object({
+  options: z.object({
+    browser: z.string().optional().describe('browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file'),
+    isolated: z.boolean().optional().describe('keep the browser profile in memory, do not save it to disk.'),
+    headed: z.boolean().optional().describe('run browser in headed mode'),
   }),
   toolName: '',
   toolParams: () => ({}),

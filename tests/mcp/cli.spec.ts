@@ -539,7 +539,7 @@ test.describe('config', () => {
     const configPath = testInfo.outputPath('session-config.json');
     await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
-    const { output: configureOutput } = await cli('config', configPath);
+    const { output: configureOutput } = await cli('config', '--config=' + configPath);
     expect(configureOutput).toContain(`- Using config file at \`session-config.json\`.`);
 
     await cli('open', server.PREFIX);
@@ -595,5 +595,19 @@ test.describe('folders', () => {
       const { output } = await cli('open', server.HELLO_WORLD, { cwd: nested });
       expect(output).toContain('..' + path.sep + '.playwright-cli' + path.sep + 'page-');
     }
+  });
+});
+
+test.describe('isolated', () => {
+  test('should not save user data', async ({ cli, server, mcpBrowser }, testInfo) => {
+    await cli('open', server.HELLO_WORLD, '--isolated');
+    const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
+    expect(fs.existsSync(dataDir)).toBe(true);
+    const listFiles = await fs.promises.readdir(dataDir);
+    expect(listFiles).toEqual([]);
+
+    const { output: listOutput } = await cli('session-list');
+    expect(listOutput).toContain('Sessions:');
+    expect(listOutput).toContain('default (live)');
   });
 });
