@@ -33,6 +33,7 @@ type Result = {
   data?: Buffer;
   isBase64?: boolean;
   title: string;
+  codeframe?: 'yaml' | 'js';
   file?:  {
     prefix: string;
     ext: string;
@@ -124,7 +125,7 @@ export class Response {
     if (this._context.config.codegen !== 'none' && this._code.length) {
       const content = addSection('Ran Playwright code');
       for (const code of this._code)
-        content.push({ text: code, title: 'code' });
+        content.push({ text: code, title: 'code', codeframe: 'js' });
     }
 
     // Render tab titles upon changes or when more than one tab.
@@ -150,7 +151,7 @@ export class Response {
     if (tabSnapshot && this._includeSnapshot !== 'none') {
       const content = addSection('Snapshot');
       const snapshot = this._includeSnapshot === 'full' ? tabSnapshot.ariaSnapshot : tabSnapshot.ariaSnapshotDiff ?? tabSnapshot.ariaSnapshot;
-      content.push({ text: snapshot, title: 'snapshot', file: { prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName } });
+      content.push({ text: snapshot, codeframe: 'yaml', title: 'snapshot', file: { prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName } });
     }
 
     // Handle tab log
@@ -242,8 +243,8 @@ export async function serializeResponse(context: Context, sections: Section[], r
         else
           await fs.promises.writeFile(fileName, result.text!);
       } else {
-        if (result.file.ext === 'yml')
-          text.push(`\`\`\`yaml\n${result.text!}\n\`\`\``);
+        if (result.codeframe)
+          text.push(`\`\`\`${result.codeframe}\n${result.text!}\n\`\`\``);
         else
           text.push(result.text!);
       }

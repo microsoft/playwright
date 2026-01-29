@@ -52,8 +52,12 @@ test.describe('core', () => {
     const { snapshot } = await cli('open', server.PREFIX);
     expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
 
-    const { snapshot: clickSnapshot } = await cli('click', 'e2');
+    const { output, snapshot: clickSnapshot } = await cli('click', 'e2');
     expect(clickSnapshot).toBeTruthy();
+    expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.getByRole('button', { name: 'Submit' }).click();
+\`\`\``);
   });
 
   test('click link', async ({ cli, server }) => {
