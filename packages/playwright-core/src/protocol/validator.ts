@@ -1495,7 +1495,9 @@ scheme.PageVideoStartParams = tObject({
     height: tInt,
   })),
 });
-scheme.PageVideoStartResult = tOptional(tObject({}));
+scheme.PageVideoStartResult = tObject({
+  path: tString,
+});
 scheme.PageVideoStopParams = tOptional(tObject({}));
 scheme.PageVideoStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({

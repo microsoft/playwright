@@ -69,13 +69,16 @@ export class Screencast {
 
   private _launchVideoRecorder(dir: string, size: { width: number, height: number }): types.VideoOptions {
     assert(!this._videoId);
+    // Do this first, it likes to throw.
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
+
     this._videoId = createGuid();
     const outputFile = path.join(dir, this._videoId + '.webm');
     const videoOptions = {
       ...size,
       outputFile,
     };
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
+
     this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
     this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
     this._page.waitForInitializedOrError().then(p => {
@@ -125,6 +128,13 @@ export class Screencast {
     const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
     const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
     await this.startVideoRecording(videoOptions);
+    return { path: videoOptions.outputFile };
+  }
+
+  async stopExplicitVideoRecording() {
+    if (!this._videoId)
+      throw new Error('Video is not being recorded');
+    await this.stopVideoRecording();
   }
 
   private async _setOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {

@@ -337,12 +337,12 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await progress.race(this._page.bringToFront());
   }
 
-  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<void> {
-    await this._page.screencast.startExplicitVideoRecording(params);
+  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
+    return await this._page.screencast.startExplicitVideoRecording(params);
   }
 
   async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
-    await this._page.screencast.stopVideoRecording();
+    await this._page.screencast.stopExplicitVideoRecording();
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {

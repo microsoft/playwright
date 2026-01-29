@@ -54,13 +54,13 @@ const stopVideo = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const tmpPath = await tab.page.video().path();
     let videoPath: string | undefined;
     if (params.filename) {
       const suggestedFilename = params.filename ?? dateAsFileName('video', 'webm');
       videoPath = await tab.context.outputFile(suggestedFilename, { origin: 'llm', title: 'Saving video' });
     }
     await tab.page.video().stop({ path: videoPath });
+    const tmpPath = await tab.page.video().path();
     response.addTextResult(`Video recording stopped: ${videoPath ?? tmpPath}`);
   },
 });

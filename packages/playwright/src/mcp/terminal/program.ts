@@ -472,7 +472,7 @@ export async function program(options: { version: string }) {
 export async function printResponse(response: StructuredResponse) {
   const { sections } = response;
   if (!sections) {
-    console.log('### Error\n' + response.text);
+    console.log(response.text);
     return;
   }
 
