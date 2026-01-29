@@ -2682,6 +2682,118 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('passes title')).toBeHidden();
     });
 
+    test('state filter buttons should have aria-pressed and visual feedback', async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+          test('fails', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('flaky', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+          test('skipped', async ({}) => {
+            test.skip('Does not work');
+          });
+        `,
+      }, { reporter: 'dot,html', retries: 1 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      await showReport();
+
+      // Initially on "All" - no state filters should be pressed
+      await expect(page.locator('.subnav-item:has-text("Passed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.subnav-item:has-text("Failed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.subnav-item:has-text("Flaky")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.subnav-item:has-text("Skipped")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+
+      // Click "Failed" button
+      await page.locator('.subnav-item:has-text("Failed")').click();
+      await expect(page.locator('.subnav-item:has-text("Failed")[role="button"]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.subnav-item:has-text("Passed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      
+      // Verify visual feedback - aria-pressed="true" should have background style
+      await expect(page.locator('.subnav-item:has-text("Failed")[aria-pressed="true"]')).toBeVisible();
+
+      // Click "Passed" button - should replace "Failed" filter
+      await page.locator('.subnav-item:has-text("Passed")').click();
+      await expect(page.locator('.subnav-item:has-text("Passed")[role="button"]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.subnav-item:has-text("Failed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.subnav-item:has-text("Flaky")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+
+      // Click "Flaky" button - should replace "Passed" filter  
+      await page.locator('.subnav-item:has-text("Flaky")').click();
+      await expect(page.locator('.subnav-item:has-text("Flaky")[role="button"]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.subnav-item:has-text("Passed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+      await expect(page.locator('.subnav-item:has-text("Failed")[role="button"]')).toHaveAttribute('aria-pressed', 'false');
+    });
+
+    test('state filter buttons should act as presets, not toggles', async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+          test('fails', async ({}) => {
+            expect(1).toBe(2);
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      await showReport();
+
+      // Click "Failed" - should show only failed tests
+      await page.locator('.subnav-item:has-text("Failed")').click();
+      await expect(page).toHaveURL(/#\?q=s%3Afailed/);
+      await expect(page.getByText('fails')).toBeVisible();
+      await expect(page.getByText('passes')).toBeHidden();
+
+      // Click "Passed" - should replace the failed filter with passed filter
+      await page.locator('.subnav-item:has-text("Passed")').click();
+      await expect(page).toHaveURL(/#\?q=s%3Apassed/);
+      await expect(page.getByText('passes')).toBeVisible();
+      await expect(page.getByText('fails')).toBeHidden();
+
+      // Click "All" - should clear status filters
+      await page.locator('.subnav-item:has-text("All")').click();
+      await expect(page).toHaveURL(/#\?$/);
+      await expect(page.getByText('passes')).toBeVisible();
+      await expect(page.getByText('fails')).toBeVisible();
+    });
+
+    test('state filter buttons should work with ctrl/meta+click for multiple filters', async ({ runInlineTest, showReport, page }) => {
+      await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+          test('fails', async ({}) => {
+            expect(1).toBe(2);
+          });
+          test('flaky', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `,
+      }, { reporter: 'dot,html', retries: 1 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      await showReport();
+
+      // Click "Failed" with Ctrl/Meta key
+      await page.locator('.subnav-item:has-text("Failed")').click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
+      await expect(page).toHaveURL(/#\?q=s%3Afailed/);
+      
+      // Click "Passed" with Ctrl/Meta key - should add to filters
+      await page.locator('.subnav-item:has-text("Passed")').click({ modifiers: [process.platform === 'darwin' ? 'Meta' : 'Control'] });
+      await expect(page).toHaveURL(/#\?q=s%3Afailed\+s%3Apassed/);
+      
+      // Both filters should show as active
+      await expect(page.locator('.subnav-item:has-text("Failed")[role="button"]')).toHaveAttribute('aria-pressed', 'true');
+      await expect(page.locator('.subnav-item:has-text("Passed")[role="button"]')).toHaveAttribute('aria-pressed', 'true');
+
+      // All matching tests should be visible
+      await expect(page.getByText('passes')).toBeVisible();
+      await expect(page.getByText('fails')).toBeVisible();
+      await expect(page.getByText('flaky')).toBeVisible();
+    });
+
     test('tests should filter by annotation texts', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'a.test.js': `
