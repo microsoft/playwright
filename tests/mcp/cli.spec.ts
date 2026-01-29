@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { test, expect, eventsPage } from './cli-fixtures';
+import { writeFiles } from './fixtures';
 
 test.describe('help', () => {
   test('prints help by default', async ({ cli }) => {
@@ -437,12 +438,14 @@ test.describe('session', () => {
     const { output: emptyOutput } = await cli('session-list');
     expect(emptyOutput).toContain('Sessions:');
     expect(emptyOutput).toContain('  default');
+    expect(emptyOutput).toContain('  test');
 
     await cli('open', server.HELLO_WORLD);
 
     const { output: listOutput } = await cli('session-list');
     expect(listOutput).toContain('Sessions:');
-    expect(listOutput).toContain('default (live)');
+    expect(listOutput).toContain('  default (live)');
+    expect(listOutput).toContain('  test');
   });
 
   test('session-stop', async ({ cli, server }) => {
@@ -523,6 +526,36 @@ test.describe('session', () => {
   });
 });
 
+
+test.describe('test', () => {
+  test('run test', async ({ cli, server }) => {
+    await writeFiles({
+      'playwright.config.ts': `
+        import { defineConfig } from '@playwright/test';
+        export default defineConfig({
+          testDir: './',
+          outputDir: './test-results/',
+        });
+      `,
+      'example.spec.ts': `
+        import { test, expect } from '@playwright/test';
+        test('my test', async ({ page }) => {
+          await page.goto('${server.EMPTY_PAGE}');
+        });
+      `,
+    });
+
+    const { output: testOutput } = await cli('test');
+    expect(testOutput).toContain('Running 1 test using 1 worker');
+    expect(testOutput).toContain('1 passed');
+
+    const { output: listOutput } = await cli('session-list');
+    expect(listOutput).toContain('Sessions:');
+    expect(listOutput).toContain('  default');
+    expect(listOutput).toContain('  test (live)');
+  });
+});
+
 test.describe('config', () => {
   test('should work', async ({ cli, server }, testInfo) => {
     // Start a session with default config
@@ -546,6 +579,12 @@ test.describe('config', () => {
     await cli('open', server.PREFIX);
     const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
     expect(afterOutput).toContain('700x500');
+  });
+
+  test('should not allow "test" session', async ({ cli, server }, testInfo) => {
+    const { error, exitCode } = await cli('config', '--session=test', 'config.json');
+    expect(error).toContain(`Error: session name 'test' is reserved`);
+    expect(exitCode).toBe(1);
   });
 });
 

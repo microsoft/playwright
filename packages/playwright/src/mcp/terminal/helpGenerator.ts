@@ -74,6 +74,7 @@ const categories: { name: Category, title: string }[] = [
   { name: 'devtools', title: 'DevTools' },
   { name: 'config', title: 'Configuration' },
   { name: 'session', title: 'Sessions' },
+  { name: 'test', title: 'Testing' },
 ] as const;
 
 export function generateHelp() {

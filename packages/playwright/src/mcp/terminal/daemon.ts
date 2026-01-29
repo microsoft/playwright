@@ -28,6 +28,7 @@ import { commands } from './commands';
 import { parseCommand } from './command';
 
 import type { ServerBackendFactory } from '../sdk/server';
+import type { AnyCommandSchema } from './command';
 import type * as mcp from '../sdk/exports';
 
 const daemonDebug = debug('pw:daemon');
@@ -48,7 +49,8 @@ async function socketExists(socketPath: string): Promise<boolean> {
 export async function startMcpDaemonServer(
   socketPath: string,
   serverBackendFactory: ServerBackendFactory,
-  daemonVersion: string
+  daemonVersion: string,
+  includeTestCommands: boolean,
 ): Promise<string> {
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
@@ -108,7 +110,7 @@ export async function startMcpDaemonServer(
             server.close();
           });
         } else if (method === 'run') {
-          const { toolName, toolParams } = parseCliCommand(params.args);
+          const { toolName, toolParams } = parseCliCommand(params.args, includeTestCommands);
           if (params.cwd)
             toolParams._meta = { cwd: params.cwd };
           const response = await backend.callTool(toolName, toolParams, () => {});
@@ -148,8 +150,10 @@ function formatResult(result: mcp.CallToolResult) {
   return { isError, text };
 }
 
-function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']> } {
-  const command = commands[args._[0]];
+function parseCliCommand(args: Record<string, string> & { _: string[] }, includeTestCommands: boolean): { toolName: string, toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']> } {
+  let command: AnyCommandSchema | undefined = commands[args._[0]];
+  if (!includeTestCommands && command?.category === 'test')
+    command = undefined;
   if (!command)
     throw new Error('Command is required');
   return parseCommand(command, args);

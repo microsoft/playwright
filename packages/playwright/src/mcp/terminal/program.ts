@@ -34,7 +34,7 @@ export type StructuredResponse = {
   sections: Section[];
 };
 
-type SessionOptions = { config?: string, headed?: boolean, extension?: boolean, daemonVersion: string };
+type SessionOptions = { config?: string, headed?: boolean, extension?: boolean, daemonVersion: string, playwrightTestDir?: string };
 
 class Session {
   readonly name: string;
@@ -46,8 +46,8 @@ class Session {
 
   constructor(name: string, options: SessionOptions) {
     this.name = name;
-    this._socketPath = this._daemonSocketPath();
     this._options = options;
+    this._socketPath = this._daemonSocketPath();
   }
 
   async run(args: any) {
@@ -197,8 +197,7 @@ class Session {
     }
   }
 
-  private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
+  private _prepareDaemonArgs() {
     const userDataDir = path.resolve(daemonProfilesDir, `ud-${this.name}`);
     const cliPath = path.join(__dirname, '../../../cli.js');
     const configFile = resolveConfigFile(this._options.config);
@@ -206,12 +205,7 @@ class Session {
     const headedArg = this._options.headed ? [`--daemon-headed`] : [];
     const extensionArg = this._options.extension ? [`--extension`] : [];
 
-    const outLog = path.join(daemonProfilesDir, 'out.log');
-    const errLog = path.join(daemonProfilesDir, 'err.log');
-    const out = fs.openSync(outLog, 'w');
-    const err = fs.openSync(errLog, 'w');
-
-    const child = spawn(process.execPath, [
+    const args = [
       cliPath,
       'run-mcp-server',
       `--output-dir=${outputDir}`,
@@ -221,7 +215,33 @@ class Session {
       ...configArg,
       ...headedArg,
       ...extensionArg,
-    ], {
+    ];
+    return { args, configFile };
+  }
+
+  private _prepareTestDaemonArgs() {
+    const cliPath = path.join(this._options.playwrightTestDir!, 'cli.js');
+    const configFile = this._options.config;
+    const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
+    const args = [
+      cliPath,
+      'run-test-mcp-server',
+      // TODO: figure out output dir
+      `--daemon=${this._socketPath}`,
+      `--daemon-version=${this._options.daemonVersion}`,
+      ...configArg,
+    ];
+    return { args, configFile };
+  }
+
+  private async _startDaemon(): Promise<net.Socket> {
+    await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
+    const { args, configFile } = this._options.playwrightTestDir ? this._prepareTestDaemonArgs() : this._prepareDaemonArgs();
+    const outLog = path.join(daemonProfilesDir, 'out.log');
+    const errLog = path.join(daemonProfilesDir, 'err.log');
+    const out = fs.openSync(outLog, 'w');
+    const err = fs.openSync(errLog, 'w');
+    const child = spawn(process.execPath, args, {
       detached: true,
       stdio: ['ignore', out, err],
       cwd: process.cwd(), // Will be used as root.
@@ -263,7 +283,11 @@ class Session {
   }
 
   private _daemonSocketPath(): string {
-    const socketName = `${this.name}.sock`;
+    let socketName = `${this.name}.sock`;
+    if (this._options.playwrightTestDir) {
+      const playwrightTestDirHash = crypto.createHash('sha1').update(this._options.playwrightTestDir).digest('hex').substring(0, 16);
+      socketName = `${playwrightTestDirHash}.sock`;
+    }
     if (os.platform() === 'win32')
       return `\\\\.\\pipe\\${installationDirHash}-${socketName}`;
     const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
@@ -296,11 +320,22 @@ class SessionManager {
       }
     } catch {
     }
+
+    {
+      let playwrightTestDir;
+      try {
+        playwrightTestDir = path.resolve(require.resolve('@playwright/test', { paths: [process.cwd()] }), '..');
+      } catch {
+      }
+      if (playwrightTestDir)
+        sessions.set('test', new Session('test', { ...options, playwrightTestDir }));
+    }
+
     return new SessionManager(sessions, options);
   }
 
   async run(args: any): Promise<void> {
-    const sessionName = this._resolveSessionName(args.session);
+    const sessionName = await this._resolveSessionName(args.session, args._[0] === 'test' ? 'force-test' : 'prefer-test');
     let session = this.sessions.get(sessionName);
     if (!session) {
       session = new Session(sessionName, { ...this.options, ...args });
@@ -313,7 +348,7 @@ class SessionManager {
   }
 
   async stop(sessionName?: string): Promise<void> {
-    sessionName = this._resolveSessionName(sessionName);
+    sessionName = await this._resolveSessionName(sessionName, 'prefer-test');
     const session = this.sessions.get(sessionName);
     if (!session || !await session.canConnect()) {
       console.log(`Session '${sessionName}' is not running.`);
@@ -324,7 +359,7 @@ class SessionManager {
   }
 
   async delete(sessionName?: string): Promise<void> {
-    sessionName = this._resolveSessionName(sessionName);
+    sessionName = await this._resolveSessionName(sessionName, 'disallow-test');
     const session = this.sessions.get(sessionName);
     if (!session) {
       console.log(`No user data found for session '${sessionName}'.`);
@@ -335,7 +370,7 @@ class SessionManager {
   }
 
   async configure(args: any): Promise<void> {
-    const sessionName = this._resolveSessionName(args.session);
+    const sessionName = await this._resolveSessionName(args.session, 'disallow-test');
     let session = this.sessions.get(sessionName);
     if (!session) {
       session = new Session(sessionName, this.options);
@@ -345,12 +380,18 @@ class SessionManager {
     session.close();
   }
 
-  private _resolveSessionName(sessionName?: string): string {
-    if (sessionName)
+  private async _resolveSessionName(sessionName: string | undefined, test: 'force-test' | 'prefer-test' | 'disallow-test'): Promise<string> {
+    sessionName = sessionName ?? process.env.PLAYWRIGHT_CLI_SESSION;
+    if (sessionName) {
+      if (test === 'disallow-test' && sessionName === 'test')
+        throw new Error(`Error: session name 'test' is reserved`);
       return sessionName;
-    if (process.env.PLAYWRIGHT_CLI_SESSION)
-      return process.env.PLAYWRIGHT_CLI_SESSION;
-    return 'default';
+    }
+    return {
+      'force-test': 'test',
+      'prefer-test': await this.sessions.get('test')!.canConnect() ? 'test' : 'default',
+      'disallow-test': 'default',
+    }[test];
   }
 }
 

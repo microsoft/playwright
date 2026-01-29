@@ -21,6 +21,7 @@ import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -38,6 +39,7 @@ import { TestServerBackend } from './mcp/test/testBackend';
 import { decorateCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { startMcpDaemonServer } from './mcp/terminal/daemon';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -160,6 +162,8 @@ function addTestMCPServerCommand(program: Command) {
   command.option('-c, --config <file>', `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"`);
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
+  command.addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp());
+  command.addOption(new ProgramOption('--daemon-version <version>', 'version of this daemon').hideHelp());
   command.action(async options => {
     setupExitWatchdog();
     const factory: mcp.ServerBackendFactory = {
@@ -168,8 +172,13 @@ function addTestMCPServerCommand(program: Command) {
       version: packageJSON.version,
       create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
     };
-    // TODO: add all options from mcp.startHttpServer.
-    await mcp.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    if (options.daemon) {
+      const socketPath = await startMcpDaemonServer(options.daemon, factory, options.daemonVersion, true /* includeTestCommands */);
+      console.error(`Daemon server listening on ${socketPath}`);
+    } else {
+      // TODO: add all options from mcp.startHttpServer.
+      await mcp.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    }
   });
 }
 
