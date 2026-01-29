@@ -542,6 +542,17 @@ const config = declareCommand({
   toolParams: () => ({}),
 });
 
+const test = declareCommand({
+  name: 'test',
+  description: 'Run tests',
+  category: 'test',
+  options: z.object({
+    config: z.string().optional().describe('Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"'),
+  }),
+  toolName: 'test_run',
+  toolParams: ({}) => ({}),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -605,6 +616,9 @@ const commandsArray: AnyCommandSchema[] = [
   sessionStop,
   sessionStopAll,
   sessionDelete,
+
+  // test category
+  test,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));
