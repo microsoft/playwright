@@ -21,7 +21,7 @@ import type { ToolSchema } from '../sdk/tool.js';
 
 export type TestTool<Input extends z.Schema = z.Schema> = {
   schema: ToolSchema<Input>;
-  handle: (context: TestContext, params: z.output<Input>) => Promise<CallToolResult>;
+  handle: (context: TestContext, params: z.output<Input>, signal: AbortSignal) => Promise<CallToolResult>;
 };
 
 export function defineTestTool<Input extends z.Schema>(tool: TestTool<Input>): TestTool<Input> {
