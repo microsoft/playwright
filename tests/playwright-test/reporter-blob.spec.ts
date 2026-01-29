@@ -2237,3 +2237,53 @@ test('should report duration across all shards', async ({ runInlineTest, mergeRe
   const { duration } = JSON.parse(outputLines[0]) as FullResult;
   expect(duration).toBeGreaterThanOrEqual(1500);
 });
+
+test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-reports');
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        tag: process.env.BOT_TAG,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      import timers from 'timers/promises';
+      test('one', async () => {
+        await timers.setTimeout(100);
+      });
+      test('two', async () => {
+        await timers.setTimeout(200);
+      });
+      test('three', async () => {
+        await timers.setTimeout(300);
+      });
+    `,
+  });
+
+  await runInlineTest({}, { shard: '1/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+  await runInlineTest({}, { shard: '2/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+  await runInlineTest({}, { shard: '3/3' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@linux' });
+
+  await runInlineTest({}, { shard: '1/2' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
+  await runInlineTest({}, { shard: '2/2' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1', BOT_TAG: '@mac' });
+
+  const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+
+  await page.getByRole('link', { name: 'Speedboard' }).click();
+
+  await expect(page.getByRole('main')).toMatchAriaSnapshot(`
+    - button "Timeline"
+    - region:
+      - img:
+        - listitem /@linux/
+        - listitem /@linux/
+        - listitem /@linux/
+        - listitem /@mac/
+        - listitem /@mac/
+  `);
+});
