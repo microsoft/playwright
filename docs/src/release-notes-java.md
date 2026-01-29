@@ -175,7 +175,7 @@ This version was also tested against the following stable channels:
     assertThat(page.getByRole(AriaRole.LISTITEM, new Page.GetByRoleOptions().setName("Ship v1.52"))).containsClass("done");
   ```
 
-- [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and `/url` for links.
+- [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and [`/url`](./aria-snapshots.md#links) for links.
 
   ```java
   assertThat(locator).toMatchAriaSnapshot("""

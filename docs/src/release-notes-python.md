@@ -177,7 +177,7 @@ This version was also tested against the following stable channels:
     expect(page.get_by_role('listitem', name='Ship v1.52')).to_contain_class('done')
   ```
 
-- [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and `/url` for links.
+- [Aria Snapshots](./aria-snapshots.md) got two new properties: [`/children`](./aria-snapshots.md#strict-matching) for strict matching and [`/url`](./aria-snapshots.md#links) for links.
 
   ```python
   expect(locator).to_match_aria_snapshot("""
