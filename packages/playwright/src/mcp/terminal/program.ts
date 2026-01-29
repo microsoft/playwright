@@ -330,6 +330,8 @@ class SessionManager {
       this.sessions.set(sessionName, session);
     }
 
+    for (const globalOption of ['browser', 'config', 'daemonVersion', 'extension', 'headed', 'help', 'isolated', 'session', 'version'])
+      delete args[globalOption];
     const result = await session.run(args);
     console.log(result.text);
     session.close();
