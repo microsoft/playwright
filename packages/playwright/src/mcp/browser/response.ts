@@ -60,15 +60,11 @@ export class Response {
   private _relativeTo: string | undefined;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
 
-  private constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
     this._relativeTo = relativeTo ?? context.firstRootPath();
-  }
-
-  static create(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
-    return new Response(context, toolName, toolArgs, relativeTo);
   }
 
   private _computRelativeTo(fileName: string): string {
@@ -221,8 +217,16 @@ export class Response {
     // Handle tab log
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       const text: string[] = [];
+      if (tabSnapshot.consoleLog) {
+        const logFilePath = this._computRelativeTo(tabSnapshot.consoleLog.file);
+        const entryWord = tabSnapshot.consoleLog.newEntryCount === 1 ? 'entry' : 'entries';
+        const lineRange = tabSnapshot.consoleLog.firstNewLine === tabSnapshot.consoleLog.lastNewLine
+            ? `line ${tabSnapshot.consoleLog.firstNewLine}`
+            : `lines ${tabSnapshot.consoleLog.firstNewLine}-${tabSnapshot.consoleLog.lastNewLine}`;
+        text.push(`- ${tabSnapshot.consoleLog.newEntryCount} new console ${entryWord} in ${logFilePath}, ${lineRange}`);
+      }
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console') {
+        if (event.type === 'console' && !tabSnapshot.consoleLog) {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {
