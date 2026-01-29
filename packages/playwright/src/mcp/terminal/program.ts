@@ -481,8 +481,12 @@ export async function printResponse(response: StructuredResponse) {
     text.push(`### ${section.title}`);
     for (const result of section.content) {
       if (!result.file) {
-        if (result.text !== undefined)
-          text.push(result.text);
+        if (result.text !== undefined) {
+          if (result.codeframe)
+            text.push(`\`\`\`${result.codeframe}\n${result.text}\n\`\`\``);
+          else
+            text.push(result.text);
+        }
         continue;
       }
 

@@ -118,7 +118,6 @@ const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfi
     },
   },
   outputMode: 'file',
-  codegen: 'none',
   snapshot: {
     mode: 'full',
   },
