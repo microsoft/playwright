@@ -18,7 +18,6 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { formatObject } from 'playwright-core/lib/utils';
 
 import { defineTabTool } from './tool';
-import { dateAsFileName } from './utils';
 
 const pdfSchema = z.object({
   filename: z.string().optional().describe('File name to save the pdf to. Defaults to `page-{timestamp}.pdf` if not specified. Prefer relative file names to stay within the output directory.'),
@@ -37,9 +36,9 @@ const pdf = defineTabTool({
 
   handle: async (tab, params, response) => {
     const data = await tab.page.pdf();
-    const suggestedFilename = params.filename ?? dateAsFileName('page', 'pdf');
-    response.addResult('Page as pdf', data, { prefix: 'page', ext: 'pdf', suggestedFilename });
-    response.addCode(`await page.pdf(${formatObject({ path: suggestedFilename })});`);
+    const result = await response.resolveFile({ prefix: 'page', ext: 'pdf', suggestedFilename: params.filename }, 'Page as pdf');
+    await response.addFileResult(result, data);
+    response.addCode(`await page.pdf(${formatObject({ path: result.relativeName })});`);
   },
 });
 

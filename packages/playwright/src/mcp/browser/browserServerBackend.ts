@@ -17,7 +17,7 @@
 import { FullConfig } from './config';
 import { Context } from './context';
 import { logUnhandledError } from '../log';
-import { Response, serializeResponse } from './response';
+import { Response } from './response';
 import { SessionLog } from './sessionLog';
 import { browserTools, filteredTools } from './tools';
 import { toMcpTool } from '../sdk/tool';
@@ -68,13 +68,12 @@ export class BrowserServerBackend implements ServerBackend {
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {}) as any;
     const cwd = rawArguments?._meta && typeof rawArguments?._meta === 'object' && (rawArguments._meta as any)?.cwd;
     const context = this._context!;
-    const response = Response.create(context, name, parsedArguments);
+    const response = Response.create(context, name, parsedArguments, cwd);
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult;
     try {
       await tool.handle(context, parsedArguments, response);
-      const sections = await response.build();
-      responseObject = await serializeResponse(context, sections, cwd ?? context.firstRootPath());
+      responseObject = await response.serialize();
       this._sessionLog?.logResponse(name, parsedArguments, responseObject);
     } catch (error: any) {
       return {

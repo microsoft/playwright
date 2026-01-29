@@ -40,12 +40,11 @@ const tracingStart = defineTool({
       snapshots: true,
       _live: true,
     });
-    const traceLegend = `- Action log: ${tracesDir}/${name}.trace
-- Network log: ${tracesDir}/${name}.network
-- Resources with content by sha1: ${tracesDir}/resources`;
-
-    response.addTextResult(`Tracing started, saving to ${tracesDir}.\n${traceLegend}`);
-    (browserContext.tracing as any)[traceLegendSymbol] = traceLegend;
+    response.addTextResult(`Trace recording started`);
+    response.addFileLink('Action log', `${tracesDir}/${name}.trace`);
+    response.addFileLink('Network log', `${tracesDir}/${name}.network`);
+    response.addFileLink('Resources', `${tracesDir}/resources`);
+    (browserContext.tracing as any)[traceLegendSymbol] = { tracesDir, name };
   },
 });
 
@@ -64,7 +63,10 @@ const tracingStop = defineTool({
     const browserContext = await context.ensureBrowserContext();
     await browserContext.tracing.stop();
     const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
-    response.addTextResult(`Tracing stopped.\n${traceLegend}`);
+    response.addTextResult(`Trace recording stopped.`);
+    response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
+    response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);
+    response.addFileLink('Resources', `${traceLegend.tracesDir}/resources`);
   },
 });
 

@@ -20,7 +20,6 @@ import { formatObject } from 'playwright-core/lib/utils';
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
-import { dateAsFileName } from './utils';
 
 import type * as playwright from 'playwright-core';
 
@@ -56,18 +55,18 @@ const screenshot = defineTabTool({
 
     const screenshotTarget = params.ref ? params.element || 'element' : (params.fullPage ? 'full page' : 'viewport');
     const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
-
     const data = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
-    const suggestedFilename = params.filename || dateAsFileName(ref ? 'element' : 'page', fileType);
 
-    response.addCode(`// Screenshot ${screenshotTarget} and save it as ${suggestedFilename}`);
+    const resolvedFile = await response.resolveFile({ prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTarget}`);
+
+    response.addCode(`// Screenshot ${screenshotTarget} and save it as ${resolvedFile.relativeName}`);
     if (ref)
-      response.addCode(`await page.${ref.resolved}.screenshot(${formatObject({ ...options, path: suggestedFilename })});`);
+      response.addCode(`await page.${ref.resolved}.screenshot(${formatObject({ ...options, path: resolvedFile.relativeName })});`);
     else
-      response.addCode(`await page.screenshot(${formatObject({ ...options, path: suggestedFilename })});`);
+      response.addCode(`await page.screenshot(${formatObject({ ...options, path: resolvedFile.relativeName })});`);
 
-    const contentType = fileType === 'png' ? 'image/png' : 'image/jpeg';
-    response.addResult(`Screenshot of ${screenshotTarget}`, data, { prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename, contentType });
+    await response.addFileResult(resolvedFile, data);
+    await response.registerImageResult(data, fileType);
   }
 });
 

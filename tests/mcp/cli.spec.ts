@@ -377,10 +377,10 @@ test.describe('devtools', () => {
   test('tracing-start-stop', async ({ cli, server }) => {
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('tracing-start');
-    expect(output).toContain('Tracing started, saving to');
+    expect(output).toContain('Trace recording started');
     await cli('eval', '() => fetch("/hello-world")');
     const { output: tracingStopOutput } = await cli('tracing-stop');
-    expect(tracingStopOutput).toContain('Tracing stopped.');
+    expect(tracingStopOutput).toContain('Trace recording stopped');
   });
 
   test('video-start-stop', async ({ cli, server }) => {
@@ -389,8 +389,7 @@ test.describe('devtools', () => {
     expect(videoStartOutput).toContain('Video recording started.');
     await cli('open', server.HELLO_WORLD);
     const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
-    expect(videoStopOutput).toContain('Video recording stopped:');
-    expect(videoStopOutput).toContain('.playwright-cli' + path.sep + 'video.webm');
+    expect(videoStopOutput).toContain(`### Result\n- [Video](.playwright-cli${path.sep}video.webm)`);
   });
 });
 

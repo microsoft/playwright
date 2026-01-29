@@ -16,7 +16,6 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
-import { dateAsFileName } from './utils';
 
 const startVideo = defineTabTool({
   capability: 'devtools',
@@ -54,14 +53,9 @@ const stopVideo = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    let videoPath: string | undefined;
-    if (params.filename) {
-      const suggestedFilename = params.filename ?? dateAsFileName('video', 'webm');
-      videoPath = await tab.context.outputFile(suggestedFilename, { origin: 'llm', title: 'Saving video' });
-    }
-    await tab.page.video().stop({ path: videoPath });
-    const tmpPath = await tab.page.video().path();
-    response.addTextResult(`Video recording stopped: ${videoPath ?? tmpPath}`);
+    const resolvedFile = await response.resolveFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
+    await tab.page.video().stop({ path: resolvedFile.fileName });
+    await response.addFileResult(resolvedFile, null);
   },
 });
 
