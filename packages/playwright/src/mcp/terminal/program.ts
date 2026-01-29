@@ -307,7 +307,7 @@ class SessionManager {
       this.sessions.set(sessionName, session);
     }
 
-    const result = await session.run({ ...args, outputDir });
+    const result = await session.run(args);
     console.log(result.text);
     session.close();
   }

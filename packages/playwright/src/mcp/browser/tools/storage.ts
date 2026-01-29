@@ -16,7 +16,6 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
-import { dateAsFileName } from './utils';
 
 const storageState = defineTool({
   capability: 'storage',
@@ -34,10 +33,10 @@ const storageState = defineTool({
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
     const state = await browserContext.storageState();
-    const suggestedFilename = params.filename || dateAsFileName('storage-state', 'json');
     const serializedState = JSON.stringify(state, null, 2);
-    response.addResult('Storage state', serializedState, { prefix: 'storage-state', ext: 'json', suggestedFilename });
-    response.addCode(`await page.context().storageState({ path: '${suggestedFilename}' });`);
+    const resolvedFile = await response.resolveFile({ prefix: 'storage-state', ext: 'json', suggestedFilename: params.filename }, 'Storage state');
+    response.addCode(`await page.context().storageState({ path: '${resolvedFile.relativeName}' });`);
+    await response.addFileResult(resolvedFile, serializedState);
   },
 });
 

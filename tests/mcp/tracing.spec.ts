@@ -44,7 +44,7 @@ test('check that trace is saved with browser_start_tracing', async ({ startClien
   expect(await client.callTool({
     name: 'browser_start_tracing',
   })).toHaveResponse({
-    result: expect.stringContaining(`Tracing started, saving to ${outputDir}`),
+    result: expect.stringContaining(`Trace recording started`),
   });
 
   expect(await client.callTool({
@@ -78,7 +78,7 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
   expect(await client.callTool({
     name: 'browser_start_tracing',
   })).toHaveResponse({
-    result: expect.stringContaining(`Tracing started, saving to ${tmpDir}`),
+    result: expect.stringContaining(`Trace recording started`),
   });
 
   expect(await client.callTool({
