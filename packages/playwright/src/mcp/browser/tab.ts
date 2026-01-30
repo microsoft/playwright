@@ -112,7 +112,7 @@ class LogFile {
     this._entryCount = 0;
   }
 
-  append(text: string) {
+  appendLine(text: string) {
     this._writeChain = (this._writeChain ?? Promise.resolve()).then(() => this._write(text));
     this._writeChain.catch(logUnhandledError);
   }
@@ -130,8 +130,8 @@ class LogFile {
   private async _write(text: string) {
     if (!this._file)
       this._file = await this._createFile();
-    await fs.promises.appendFile(this._file, text);
-    const lineCount = text.split('\n').length - 1;
+    await fs.promises.appendFile(this._file, text + '\n');
+    const lineCount = text.split('\n').length;
     this._lastLine += lineCount;
     this._entryCount++;
     return {
@@ -283,8 +283,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
 
     const relativeTime = wallTime - this._consoleLog.startTime;
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] [${message.type.toUpperCase()}] ${message.toString()}\n`;
-    this._consoleLog.append(logLine);
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] [${message.type.toUpperCase()}] ${message.toString()}`;
+    this._consoleLog.appendLine(logLine);
   }
 
   private _addLogEntry(entry: EventEntry) {
