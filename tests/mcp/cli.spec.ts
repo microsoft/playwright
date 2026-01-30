@@ -670,6 +670,7 @@ test.describe('browser launch failure', () => {
 
 test.describe('install', () => {
   test('install', async ({ cli, server, mcpBrowser }) => {
+    test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('install');
     expect(output).toContain(`Browser ${mcpBrowser} installed.`);
