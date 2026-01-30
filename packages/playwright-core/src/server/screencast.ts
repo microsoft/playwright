@@ -128,7 +128,6 @@ export class Screencast {
     const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
     const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
     await this.startVideoRecording(videoOptions);
-    return { path: videoOptions.outputFile };
   }
 
   async stopExplicitVideoRecording() {

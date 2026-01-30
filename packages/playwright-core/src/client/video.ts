@@ -22,11 +22,10 @@ import type { Page } from './page';
 import type * as api from '../../types/types';
 
 export class Video implements api.Video {
-  private _artifact: Promise<Artifact | null> | null = null;
+  private _artifact: Promise<Artifact | undefined> | undefined;
   private _artifactReadyPromise: ManualPromise<Artifact>;
   private _isRemote = false;
   private _page: Page;
-  private _path: string | undefined;
 
   constructor(page: Page, connection: Connection) {
     this._page = page;
@@ -40,25 +39,18 @@ export class Video implements api.Video {
   }
 
   async start(options: { size?: { width: number, height: number } } = {}): Promise<void> {
-    const result = await this._page._channel.videoStart(options);
-    this._path = result.path;
+    await this._page._channel.videoStart(options);
     this._artifactReadyPromise = new ManualPromise<Artifact>();
     this._artifact = this._page._closedOrCrashedScope.safeRace(this._artifactReadyPromise);
   }
 
-  async stop(options: { path?: string } = {}): Promise<void> {
-    await this._page._wrapApiCall(async () => {
-      await this._page._channel.videoStop();
-      if (options.path)
-        await this.saveAs(options.path);
-    });
+  async stop(): Promise<void> {
+    await this._page._channel.videoStop();
   }
 
   async path(): Promise<string> {
     if (this._isRemote)
       throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
-    if (this._path)
-      return this._path;
 
     const artifact = await this._artifact;
     if (!artifact)

@@ -21,6 +21,7 @@ import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { expect, browserTest as it } from '../config/browserTest';
 import { parseTraceRaw, rafraf } from '../config/utils';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 export class VideoPlayer {
   fileName: string;
@@ -843,22 +844,20 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.video().start({ size });
-    const tmpPath1 = await page.video().path();
-    expect(tmpPath1).toBeDefined();
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
-    const videoPath1 = testInfo.outputPath('video1.webm');
-    await page.video().stop({ path: videoPath1 });
+    const videoPath1 = await page.video().path();
+    expect(videoPath1).toBeDefined();
+    await page.video().stop();
     expectRedFrames(videoPath1, size);
 
     await page.video().start({ size });
-    const tmpPath2 = await page.video().path();
-    expect(tmpPath2).toBeDefined();
-    expect(tmpPath2).not.toEqual(tmpPath1);
     await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
     await rafraf(page, 100);
-    const videoPath2 = testInfo.outputPath('video2.webm');
-    await page.video().stop({ path: videoPath2 });
+    const videoPath2 = await page.video().path();
+    expect(videoPath2).toBeDefined();
+    expect(videoPath2).not.toEqual(videoPath1);
+    await page.video().stop();
     expectFrames(videoPath2, size, isAlmostGray);
 
     const videoPath3 = testInfo.outputPath('video3.webm');
@@ -870,32 +869,49 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('should fail when recordVideo is set', async ({ browser }, testInfo) => {
-    const size = { width: 320, height: 240 };
+  it('video.start should fail when recordVideo is set', async ({ browser }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
-        size
       },
-      viewport: size,
     });
     const page = await context.newPage();
-
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
     await context.close();
   });
 
-  it('should fail when another recording is in progress', async ({ browser }, testInfo) => {
-    const size = { width: 320, height: 240 };
-    const context = await browser.newContext({
-      viewport: size,
-    });
+  it('video.start should fail when another recording is in progress', async ({ browser }, testInfo) => {
+    const context = await browser.newContext();
     const page = await context.newPage();
-
-    await page.video().start({ size });
+    await page.video().start();
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
+    await context.close();
+  });
+
+  it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const error = await page.video().stop().catch(e => e);
+    expect(error.message).toContain('Video is not being recorded');
+    await context.close();
+  });
+
+  it('video.start should finish when page is closed', async ({ browser, browserName }, testInfo) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.video().start();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    const videoPath = await page.video().path();
+    expect(videoPath).toBeDefined();
+    await page.close();
+    const error = await page.video().stop().catch(e => e);
+    expect(error.message).toContain(kTargetClosedErrorMessage);
+    const newPath = testInfo.outputPath('video.webm');
+    await page.video().saveAs(newPath);
+    expect(fs.existsSync(newPath)).toBeTruthy();
     await context.close();
   });
 });
