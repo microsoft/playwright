@@ -52,8 +52,22 @@ export function isLikelyNpxGlobal() {
   return process.argv.length >= 2 && process.argv[1].includes('_npx');
 }
 
-export function isCodingAgent(): boolean {
-  return !!process.env.CLAUDECODE;
+// https://github.com/firebase/firebase-tools/blob/fbaa1af6fd7a6b1bdb8c21ace7d3ec4f0959c989/src/env.ts#L16C1-L25C2
+export function isCodingAgent() {
+  if (process.env.ANTIGRAVITY_CLI_ALIAS)
+    return 'antigravity';
+  if (process.env.CLAUDECODE)
+    return 'claude_code';
+  if (process.env.CLINE_ACTIVE)
+    return 'cline';
+  if (process.env.CODEX_SANDBOX)
+    return 'codex_cli';
+  if (process.env.CURSOR_AGENT)
+    return 'cursor';
+  if (process.env.GEMINI_CLI)
+    return 'gemini_cli';
+  if (process.env.OPENCODE)
+    return 'open_code';
 }
 
 // Indicate that this and child processes are running under Playwright Test.
