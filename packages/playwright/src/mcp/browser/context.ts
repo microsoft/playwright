@@ -202,7 +202,7 @@ export class Context {
       return this._browserContextPromise;
 
     this._browserContextPromise = this._setupBrowserContext();
-    this._browserContextPromise.catch((error) => {
+    this._browserContextPromise.catch(error => {
       this._browserContextPromise = undefined;
       this.onBrowserLaunchFailed?.(error);
     });

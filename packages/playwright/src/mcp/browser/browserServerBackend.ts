@@ -52,7 +52,7 @@ export class BrowserServerBackend implements ServerBackend {
       clientInfo,
     });
     this._context.onBrowserContextClosed = () => this.onBrowserContextClosed?.();
-    this._context.onBrowserLaunchFailed = (error) => this.onBrowserLaunchFailed?.(error);
+    this._context.onBrowserLaunchFailed = error => this.onBrowserLaunchFailed?.(error);
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
