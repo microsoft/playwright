@@ -98,13 +98,16 @@ class LogFile {
   private _context: Context;
   private _filePrefix: string;
   private _title: string;
+
   private _file: string | undefined;
-  private _currentLine: number = 0;
-  private _currentEntryCount: number = 0;
-  private _lastTakenLine: number = 0;
-  private _lastTakenEntryCount: number = 0;
-  private _writeChain: Promise<void> = Promise.resolve();
   private _stopped: boolean = false;
+
+  private _line: number = 0;
+  private _entries: number = 0;
+  private _lastLine: number = 0;
+  private _lastEntries: number = 0;
+
+  private _writeChain: Promise<void> = Promise.resolve();
 
   constructor(context: Context, filePrefix: string, title: string) {
     this._context = context;
@@ -113,8 +116,7 @@ class LogFile {
   }
 
   appendLine(wallTime: number, text: string) {
-    this._writeChain = this._writeChain.then(() => this._write(wallTime, text));
-    this._writeChain.catch(logUnhandledError);
+    this._writeChain = this._writeChain.then(() => this._write(wallTime, text)).catch(logUnhandledError);
   }
 
   stop() {
@@ -123,34 +125,31 @@ class LogFile {
 
   async take(): Promise<LogChunk | undefined> {
     await this._writeChain;
-    if (!this._file || this._currentEntryCount === this._lastTakenEntryCount)
+    if (!this._file || this._entries === this._lastEntries)
       return undefined;
     const chunk: LogChunk = {
       file: this._file,
-      fromLine: this._lastTakenLine + 1,
-      toLine: this._currentLine,
-      entryCount: this._currentEntryCount - this._lastTakenEntryCount,
+      fromLine: this._lastLine + 1,
+      toLine: this._line,
+      entryCount: this._entries - this._lastEntries,
     };
-    this._lastTakenLine = this._currentLine;
-    this._lastTakenEntryCount = this._currentEntryCount;
+    this._lastLine = this._line;
+    this._lastEntries = this._entries;
     return chunk;
-  }
-
-  private async _createFile(): Promise<string> {
-    return await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
   }
 
   private async _write(wallTime: number, text: string) {
     if (this._stopped)
       return;
-    if (!this._file)
-      this._file = await this._createFile();
+    this._file ??= await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
     const relativeTime = wallTime - this._startTime;
+
     const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
     await fs.promises.appendFile(this._file, logLine);
+
     const lineCount = logLine.split('\n').length - 1;
-    this._currentLine += lineCount;
-    this._currentEntryCount++;
+    this._line += lineCount;
+    this._entries++;
   }
 }
 

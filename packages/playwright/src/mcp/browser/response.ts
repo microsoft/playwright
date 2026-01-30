@@ -22,7 +22,7 @@ import { renderModalStates, shouldIncludeMessage } from './tab';
 import { dateAsFileName } from './tools/utils';
 import { scaleImageToFitMessage } from './tools/screenshot';
 
-import type { TabHeader } from './tab';
+import type { LogChunk, TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context } from './context';
 
@@ -215,15 +215,7 @@ export class Response {
     }
 
     // Handle tab log
-    const text: string[] = [];
-    if (tabSnapshot?.logChunk) {
-      const logFilePath = this._computRelativeTo(tabSnapshot.logChunk.file);
-      const entryWord = tabSnapshot.logChunk.entryCount === 1 ? 'entry' : 'entries';
-      const lineRange = tabSnapshot.logChunk.fromLine === tabSnapshot.logChunk.toLine
-        ? `#L${tabSnapshot.logChunk.fromLine}`
-        : `#L${tabSnapshot.logChunk.fromLine}-L${tabSnapshot.logChunk.toLine}`;
-      text.push(`- ${tabSnapshot.logChunk.entryCount} new console ${entryWord} in "${logFilePath}${lineRange}"`);
-    }
+    const text: string[] = renderLogChunk(tabSnapshot?.logChunk, 'console', file => this._computRelativeTo(file));
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
         if (event.type === 'console' && !tabSnapshot.logChunk) {
@@ -259,6 +251,19 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
     const current = tab.current ? ' (current)' : '';
     lines.push(`- ${i}:${current} [${tab.title}](${tab.url})`);
   }
+  return lines;
+}
+
+function renderLogChunk(logChunk: LogChunk | undefined, type: string, relativeTo: (fileName: string) => string): string[] {
+  if (!logChunk)
+    return [];
+  const lines: string[] = [];
+  const logFilePath = relativeTo(logChunk.file);
+  const entryWord = logChunk.entryCount === 1 ? 'entry' : 'entries';
+  const lineRange = logChunk.fromLine === logChunk.toLine
+    ? `#L${logChunk.fromLine}`
+    : `#L${logChunk.fromLine}-L${logChunk.toLine}`;
+  lines.push(`- ${logChunk.entryCount} new ${type} ${entryWord} in "${logFilePath}${lineRange}"`);
   return lines;
 }
 
