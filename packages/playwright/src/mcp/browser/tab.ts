@@ -24,6 +24,7 @@ import { logUnhandledError } from '../log';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
+import { hasResponseOrFailed, isStaticRequest, renderRequest } from './tools/network';
 import { requireOrImport } from '../../transform/transform';
 
 import type { Context } from './context';
@@ -79,6 +80,7 @@ export type TabHeader = {
 };
 
 export type LogChunk = {
+  type: string;
   file: string;
   fromLine: number;
   toLine: number;
@@ -90,11 +92,11 @@ export type TabSnapshot = {
   ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   events: EventEntry[];
-  logChunk?: LogChunk;
+  logs?: LogChunk[];
 };
 
 class LogFile {
-  private _startTime: number = Date.now();
+  private _startTime: number;
   private _context: Context;
   private _filePrefix: string;
   private _title: string;
@@ -109,13 +111,14 @@ class LogFile {
 
   private _writeChain: Promise<void> = Promise.resolve();
 
-  constructor(context: Context, filePrefix: string, title: string) {
+  constructor(context: Context, startTime: number, filePrefix: string, title: string) {
     this._context = context;
+    this._startTime = startTime;
     this._filePrefix = filePrefix;
     this._title = title;
   }
 
-  appendLine(wallTime: number, text: string) {
+  appendLine(wallTime: number, text: () => string | Promise<string>) {
     this._writeChain = this._writeChain.then(() => this._write(wallTime, text)).catch(logUnhandledError);
   }
 
@@ -128,6 +131,7 @@ class LogFile {
     if (!this._file || this._entries === this._lastEntries)
       return undefined;
     const chunk: LogChunk = {
+      type: this._title.toLowerCase(),
       file: this._file,
       fromLine: this._lastLine + 1,
       toLine: this._line,
@@ -138,13 +142,13 @@ class LogFile {
     return chunk;
   }
 
-  private async _write(wallTime: number, text: string) {
+  private async _write(wallTime: number, text: () => string | Promise<string>) {
     if (this._stopped)
       return;
     this._file ??= await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
     const relativeTime = wallTime - this._startTime;
-
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
+    const renderedText = await text();
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${renderedText}\n`;
     await fs.promises.appendFile(this._file, logLine);
 
     const lineCount = logLine.split('\n').length - 1;
@@ -159,13 +163,16 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false };
   private _consoleMessages: ConsoleMessage[] = [];
   private _downloads: Download[] = [];
-  private _requests: Set<playwright.Request> = new Set();
+  private _requests: playwright.Request[] = [];
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
-  private _consoleLog: LogFile | undefined;
+
+  private _consoleLogs: Map<ConsoleMessageLevel, LogFile> | undefined;
+  private _networkRequestsLog: LogFile | undefined;
+  private _networkAssetsLog: LogFile | undefined;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -174,7 +181,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose = onPageClose;
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
-    page.on('request', request => this._handleRequest(request));
+    page.on('response', response => this._handleResponse(response));
+    page.on('requestfailed', request => this._handleRequestFailed(request));
     page.on('close', () => this._onClose());
     page.on('filechooser', chooser => {
       this.setModalState({
@@ -191,7 +199,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
-    this._resetConsoleLogFile();
+    this._resetLogs();
     this._initializedPromise = this._initialize();
   }
 
@@ -214,8 +222,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     for (const message of await Tab.collectConsoleMessages(this.page))
       this._handleConsoleMessage(message);
     const requests = await this.page.requests().catch(() => []);
-    for (const request of requests)
-      this._requests.add(request);
+    for (const request of requests.filter(hasResponseOrFailed))
+      this._requests.push(request);
     for (const initPage of this.context.config.browser.initPage || []) {
       try {
         const { default: func } = await requireOrImport(initPage);
@@ -264,28 +272,54 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _clearCollectedArtifacts() {
     this._consoleMessages.length = 0;
     this._downloads.length = 0;
-    this._requests.clear();
+    this._requests.length = 0;
     this._recentEventEntries.length = 0;
-    this._resetConsoleLogFile();
+    this._resetLogs();
   }
 
-  private _resetConsoleLogFile() {
+  private _resetLogs() {
     if (this.context.config.outputMode !== 'file')
       return;
-    this._consoleLog?.stop();
-    this._consoleLog = new LogFile(this.context, 'console', 'Console');
+
+    const wallTime = Date.now();
+    for (const log of this._consoleLogs?.values() ?? [])
+      log.stop();
+    this._consoleLogs = new Map();
+    for (const level of consoleMessageLevels)
+      this._consoleLogs.set(level, new LogFile(this.context, wallTime, `console-${level}`, 'Console'));
+    this._networkRequestsLog?.stop();
+    this._networkRequestsLog = new LogFile(this.context, wallTime, 'network-requests', 'Network');
+    this._networkAssetsLog?.stop();
+    this._networkAssetsLog = new LogFile(this.context, wallTime, 'network-assets', 'Network');
   }
 
-  private _handleRequest(request: playwright.Request) {
-    this._requests.add(request);
-    this._addLogEntry({ type: 'request', wallTime: Date.now(), request });
+  private _handleResponse(response: playwright.Response) {
+    this._requests.push(response.request());
+    const wallTime = Date.now();
+    this._addLogEntry({ type: 'request', wallTime, request: response.request() });
+    const render = async () => (await renderRequest(response.request())).text;
+    if (isStaticRequest(response.request()))
+      this._networkAssetsLog?.appendLine(wallTime, render);
+    else
+      this._networkRequestsLog?.appendLine(wallTime, render);
+  }
+
+  private _handleRequestFailed(request: playwright.Request) {
+    this._requests.push(request);
+    const wallTime = Date.now();
+    this._addLogEntry({ type: 'request', wallTime, request });
+    const render = async () => (await renderRequest(request)).text;
+    if (isStaticRequest(request))
+      this._networkAssetsLog?.appendLine(wallTime, render);
+    else
+      this._networkRequestsLog?.appendLine(wallTime, render);
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
     this._consoleMessages.push(message);
     const wallTime = Date.now();
     this._addLogEntry({ type: 'console', wallTime, message });
-    this._consoleLog?.appendLine(wallTime, message.toString());
+    this._consoleLogs?.get(consoleLevelForMessageType(message.type))?.appendLine(wallTime, () => message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -357,14 +391,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._consoleMessages.length = 0;
   }
 
-  async requests(): Promise<Set<playwright.Request>> {
+  async requests(): Promise<playwright.Request[]> {
     await this._initializedPromise;
     return this._requests;
   }
 
   async clearRequests() {
     await this._initializedPromise;
-    this._requests.clear();
+    this._requests.length = 0;
   }
 
   async captureSnapshot(): Promise<TabSnapshot> {
@@ -380,7 +414,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       };
     });
     if (tabSnapshot) {
-      tabSnapshot.logChunk = await this._consoleLog?.take();
+      tabSnapshot.logs = (await Promise.all([
+        ...consoleMessageLevels.map(level => this._consoleLogs?.get(level)?.take()),
+        this._networkRequestsLog?.take(),
+        this._networkAssetsLog?.take(),
+      ])).filter(l => !!l);
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
     }
