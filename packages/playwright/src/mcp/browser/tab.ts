@@ -98,18 +98,18 @@ type LogState = {
 };
 
 class LogFile {
+  readonly startTime: number;
+  private _context: Context;
   private _file: string | undefined;
-  private _startTime: number;
   private _lastLine: number;
   private _entryCount: number;
-  private _context: Context;
   private _writeChain: Promise<LogState> | undefined;
 
   constructor(startTime: number, context: Context) {
-    this._startTime = startTime;
+    this.startTime = startTime;
+    this._context = context;
     this._lastLine = 0;
     this._entryCount = 0;
-    this._context = context;
   }
 
   append(text: string) {
@@ -124,7 +124,7 @@ class LogFile {
   }
 
   private async _createFile() : Promise<string> {
-    return await this._context.outputFile(dateAsFileName('console', 'log', new Date(this._startTime)), { origin: 'code', title: 'Console log' });
+    return await this._context.outputFile(dateAsFileName('console', 'log', new Date(this.startTime)), { origin: 'code', title: 'Console log' });
   }
 
   private async _write(text: string) {
@@ -282,7 +282,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     if (!this._consoleLog)
       return;
 
-    const logLine = `[${String(wallTime).padStart(10, ' ')}ms] [${message.type.toUpperCase()}] ${message.toString()}\n`;
+    const relativeTime = wallTime - this._consoleLog.startTime;
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] [${message.type.toUpperCase()}] ${message.toString()}\n`;
     this._consoleLog.append(logLine);
   }
 
