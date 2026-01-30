@@ -22,7 +22,7 @@ import { renderModalStates, shouldIncludeMessage } from './tab';
 import { dateAsFileName } from './tools/utils';
 import { scaleImageToFitMessage } from './tools/screenshot';
 
-import type { TabHeader } from './tab';
+import type { LogChunk, TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context } from './context';
 
@@ -60,15 +60,11 @@ export class Response {
   private _relativeTo: string | undefined;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
 
-  private constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
     this._relativeTo = relativeTo ?? context.firstRootPath();
-  }
-
-  static create(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
-    return new Response(context, toolName, toolArgs, relativeTo);
   }
 
   private _computRelativeTo(fileName: string): string {
@@ -219,10 +215,10 @@ export class Response {
     }
 
     // Handle tab log
+    const text: string[] = renderLogChunk(tabSnapshot?.logChunk, 'console', file => this._computRelativeTo(file));
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
-      const text: string[] = [];
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console') {
+        if (event.type === 'console' && !tabSnapshot.logChunk) {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {
@@ -232,8 +228,8 @@ export class Response {
           text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
         }
       }
-      addSection('Events', text);
     }
+    addSection('Events', text);
     return sections;
   }
 }
@@ -255,6 +251,19 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
     const current = tab.current ? ' (current)' : '';
     lines.push(`- ${i}:${current} [${tab.title}](${tab.url})`);
   }
+  return lines;
+}
+
+function renderLogChunk(logChunk: LogChunk | undefined, type: string, relativeTo: (fileName: string) => string): string[] {
+  if (!logChunk)
+    return [];
+  const lines: string[] = [];
+  const logFilePath = relativeTo(logChunk.file);
+  const entryWord = logChunk.entryCount === 1 ? 'entry' : 'entries';
+  const lineRange = logChunk.fromLine === logChunk.toLine
+    ? `#L${logChunk.fromLine}`
+    : `#L${logChunk.fromLine}-L${logChunk.toLine}`;
+  lines.push(`- ${logChunk.entryCount} new ${type} ${entryWord} in "${logFilePath}${lineRange}"`);
   return lines;
 }
 

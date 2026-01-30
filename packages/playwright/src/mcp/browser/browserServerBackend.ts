@@ -68,7 +68,7 @@ export class BrowserServerBackend implements ServerBackend {
     const parsedArguments = tool.schema.inputSchema.parse(rawArguments || {}) as any;
     const cwd = rawArguments?._meta && typeof rawArguments?._meta === 'object' && (rawArguments._meta as any)?.cwd;
     const context = this._context!;
-    const response = Response.create(context, name, parsedArguments, cwd);
+    const response = new Response(context, name, parsedArguments, cwd);
     context.setRunningTool(name);
     let responseObject: mcpServer.CallToolResult;
     try {

@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import { EventEmitter } from 'events';
 import * as playwright from 'playwright-core';
 import { asLocator, ManualPromise } from 'playwright-core/lib/utils';
 
-import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './tools/utils';
+import { callOnPageNoTrace, waitForCompletion, eventWaiter, dateAsFileName } from './tools/utils';
 import { logUnhandledError } from '../log';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
@@ -77,12 +78,80 @@ export type TabHeader = {
   current: boolean;
 };
 
+export type LogChunk = {
+  file: string;
+  fromLine: number;
+  toLine: number;
+  entryCount: number;
+};
+
 export type TabSnapshot = {
   ariaSnapshot: string;
   ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   events: EventEntry[];
+  logChunk?: LogChunk;
 };
+
+class LogFile {
+  private _startTime: number = Date.now();
+  private _context: Context;
+  private _filePrefix: string;
+  private _title: string;
+
+  private _file: string | undefined;
+  private _stopped: boolean = false;
+
+  private _line: number = 0;
+  private _entries: number = 0;
+  private _lastLine: number = 0;
+  private _lastEntries: number = 0;
+
+  private _writeChain: Promise<void> = Promise.resolve();
+
+  constructor(context: Context, filePrefix: string, title: string) {
+    this._context = context;
+    this._filePrefix = filePrefix;
+    this._title = title;
+  }
+
+  appendLine(wallTime: number, text: string) {
+    this._writeChain = this._writeChain.then(() => this._write(wallTime, text)).catch(logUnhandledError);
+  }
+
+  stop() {
+    this._stopped = true;
+  }
+
+  async take(): Promise<LogChunk | undefined> {
+    await this._writeChain;
+    if (!this._file || this._entries === this._lastEntries)
+      return undefined;
+    const chunk: LogChunk = {
+      file: this._file,
+      fromLine: this._lastLine + 1,
+      toLine: this._line,
+      entryCount: this._entries - this._lastEntries,
+    };
+    this._lastLine = this._line;
+    this._lastEntries = this._entries;
+    return chunk;
+  }
+
+  private async _write(wallTime: number, text: string) {
+    if (this._stopped)
+      return;
+    this._file ??= await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
+    const relativeTime = wallTime - this._startTime;
+
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
+    await fs.promises.appendFile(this._file, logLine);
+
+    const lineCount = logLine.split('\n').length - 1;
+    this._line += lineCount;
+    this._entries++;
+  }
+}
 
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
@@ -95,8 +164,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
   private _needsFullSnapshot = false;
-  private _eventEntries: EventEntry[] = [];
   private _recentEventEntries: EventEntry[] = [];
+  private _consoleLog: LogFile | undefined;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -122,6 +191,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
+    this._resetConsoleLogFile();
     this._initializedPromise = this._initialize();
   }
 
@@ -195,8 +265,15 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._consoleMessages.length = 0;
     this._downloads.length = 0;
     this._requests.clear();
-    this._eventEntries.length = 0;
     this._recentEventEntries.length = 0;
+    this._resetConsoleLogFile();
+  }
+
+  private _resetConsoleLogFile() {
+    if (this.context.config.outputMode !== 'file')
+      return;
+    this._consoleLog?.stop();
+    this._consoleLog = new LogFile(this.context, 'console', 'Console');
   }
 
   private _handleRequest(request: playwright.Request) {
@@ -206,11 +283,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private _handleConsoleMessage(message: ConsoleMessage) {
     this._consoleMessages.push(message);
-    this._addLogEntry({ type: 'console', wallTime: Date.now(), message });
+    const wallTime = Date.now();
+    this._addLogEntry({ type: 'console', wallTime, message });
+    this._consoleLog?.appendLine(wallTime, message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
-    this._eventEntries.push(entry);
     this._recentEventEntries.push(entry);
   }
 
@@ -302,6 +380,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       };
     });
     if (tabSnapshot) {
+      tabSnapshot.logChunk = await this._consoleLog?.take();
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
     }
