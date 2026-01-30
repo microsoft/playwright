@@ -153,7 +153,8 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 }
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
-  const configInFile = await loadConfig(cliOptions.config);
+  const configPath = cliOptions.config || process.env.PLAYWRIGHT_MCP_CONFIG;
+  const configInFile = await loadConfig(configPath);
   const envOverrides = configFromEnv();
   const cliOverrides = configFromCLIOptions(cliOptions);
   let result = cliOptions.daemon ? defaultDaemonConfig(cliOptions) : defaultConfig;
