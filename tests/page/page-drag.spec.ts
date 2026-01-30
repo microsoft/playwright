@@ -300,7 +300,9 @@ it.describe('Drag and drop', () => {
     title: 'dragTo',
     drag: (page: Page, steps?: number) => page.locator('#red').dragTo(page.locator('#blue'), { steps }),
   }].forEach(({ title, drag }) => {
-    it(`should ${title} with tweened mouse movement`, async ({ page }) => {
+    it(`should ${title} with tweened mouse movement`, async ({ page, headless }) => {
+      it.skip(!headless, 'actual mouse interferes with the exact mousemove events');
+
       await page.setContent(`
         <body style="margin: 0; padding: 0;">
           <div style="width:100px;height:100px;background:red;" id="red"></div>

@@ -267,8 +267,9 @@ it('should set modifier keys on click', async ({ page, server, browserName, isMa
   }
 });
 
-it('should tween mouse movement', async ({ page, browserName, isAndroid }) => {
+it('should tween mouse movement', async ({ page, browserName, isAndroid, headless }) => {
   it.skip(isAndroid, 'Bad rounding');
+  it.skip(!headless, 'actual mouse interferes with the exact mousemove events');
 
   // The test becomes flaky on WebKit without next line.
   if (browserName === 'webkit')
