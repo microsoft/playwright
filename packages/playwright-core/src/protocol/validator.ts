@@ -97,6 +97,16 @@ scheme.SelectorEngine = tObject({
   source: tString,
   contentScript: tOptional(tBoolean),
 });
+scheme.URLPattern = tObject({
+  hash: tString,
+  hostname: tString,
+  password: tString,
+  pathname: tString,
+  port: tString,
+  protocol: tString,
+  search: tString,
+  username: tString,
+});
 scheme.SetNetworkCookie = tObject({
   name: tString,
   value: tString,
@@ -1029,6 +1039,7 @@ scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
@@ -1037,6 +1048,7 @@ scheme.BrowserContextSetWebSocketInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.BrowserContextSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
@@ -1336,6 +1348,7 @@ scheme.PageSetNetworkInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
@@ -1344,6 +1357,7 @@ scheme.PageSetWebSocketInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.PageSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));

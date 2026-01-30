@@ -161,6 +161,17 @@ SelectorEngine:
     source: string
     contentScript: boolean?
 
+URLPattern:
+  type: object
+  properties:
+    hash: string
+    hostname: string
+    password: string
+    pathname: string
+    port: string
+    protocol: string
+    search: string
+    username: string
 
 SetNetworkCookie:
   type: object
@@ -1279,6 +1290,7 @@ BrowserContext:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
@@ -1292,6 +1304,7 @@ BrowserContext:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setOffline:
       title: Set offline mode
@@ -1747,6 +1760,7 @@ Page:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
@@ -1760,6 +1774,7 @@ Page:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setViewportSize:
       title: Set viewport size

@@ -2077,7 +2077,10 @@ a navigation.
 ### param: Frame.waitForNavigation.action = %%-csharp-wait-for-event-action-%%
 * since: v1.12
 
-### option: Frame.waitForNavigation.url = %%-wait-for-navigation-url-%%
+### option: Frame.waitForNavigation.url = %%-js-wait-for-navigation-url-%%
+* since: v1.8
+
+### option: Frame.waitForNavigation.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.8
 
 ### option: Frame.waitForNavigation.waitUntil = %%-navigation-wait-until-%%
@@ -2273,7 +2276,10 @@ await frame.ClickAsync("a.delayed-navigation"); // clicking the link will indire
 await frame.WaitForURLAsync("**/target.html");
 ```
 
-### param: Frame.waitForURL.url = %%-wait-for-navigation-url-%%
+### param: Frame.waitForURL.url = %%-js-wait-for-navigation-url-%%
+* since: v1.11
+
+### param: Frame.waitForURL.url = %%-python-csharp-java-wait-for-navigation-url-%%
 * since: v1.11
 
 ### option: Frame.waitForURL.timeout = %%-navigation-timeout-%%

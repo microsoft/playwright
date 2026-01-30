@@ -224,6 +224,17 @@ export type SelectorEngine = {
   contentScript?: boolean,
 };
 
+export type URLPattern = {
+  hash: string,
+  hostname: string,
+  password: string,
+  pathname: string,
+  port: string,
+  protocol: string,
+  search: string,
+  username: string,
+};
+
 export type SetNetworkCookie = {
   name: string,
   value: string,
@@ -1812,6 +1823,7 @@ export type BrowserContextSetNetworkInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type BrowserContextSetNetworkInterceptionPatternsOptions = {
@@ -1823,6 +1835,7 @@ export type BrowserContextSetWebSocketInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type BrowserContextSetWebSocketInterceptionPatternsOptions = {
@@ -2355,6 +2368,7 @@ export type PageSetNetworkInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type PageSetNetworkInterceptionPatternsOptions = {
@@ -2366,6 +2380,7 @@ export type PageSetWebSocketInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type PageSetWebSocketInterceptionPatternsOptions = {
