@@ -35,6 +35,7 @@ export class BrowserServerBackend implements ServerBackend {
   private _browserContextFactory: BrowserContextFactory;
 
   onBrowserContextClosed: (() => void) | undefined;
+  onBrowserLaunchFailed: ((error: Error) => void) | undefined;
 
   constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean, structuredOutput?: boolean } = {}) {
     this._config = config;
@@ -51,6 +52,7 @@ export class BrowserServerBackend implements ServerBackend {
       clientInfo,
     });
     this._context.onBrowserContextClosed = () => this.onBrowserContextClosed?.();
+    this._context.onBrowserLaunchFailed = (error) => this.onBrowserLaunchFailed?.(error);
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {

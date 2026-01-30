@@ -615,3 +615,14 @@ test.describe('isolated', () => {
     expect(listOutput).toContain('default (live)');
   });
 });
+
+test.describe('browser launch failure', () => {
+  test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
+    const first = await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_EXECUTABLE_PATH: '/nonexistent/browser/path' } });
+    expect(first.output).toContain('Failed to launch');
+
+    const second = await cli('open', server.PREFIX);
+    expect(second.exitCode).toBe(0);
+    expect(second.output).toContain('Page URL');
+  });
+});

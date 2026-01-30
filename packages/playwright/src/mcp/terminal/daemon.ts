@@ -75,6 +75,14 @@ export async function startMcpDaemonServer(
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
+  let shutdownPending = false;
+
+  const shutdown = (exitCode: number) => {
+    daemonDebug(`shutting down daemon with exit code ${exitCode}`);
+    server.close();
+    gracefullyProcessExitDoNotHang(exitCode);
+  };
+
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
     const connection = new SocketConnection(socket, daemonVersion);
@@ -113,20 +121,28 @@ export async function startMcpDaemonServer(
             toolParams._meta = { cwd: params.cwd };
           const response = await backend.callTool(toolName, toolParams, () => {});
           await connection.send({ id, result: formatResult(response) });
+          if (shutdownPending)
+            shutdown(1);
         } else {
           throw new Error(`Unknown method: ${method}`);
         }
       } catch (e) {
         daemonDebug('command failed', e);
         await connection.send({ id, error: (e as Error).message });
+        if (shutdownPending)
+          shutdown(1);
       }
     };
   });
 
   backend.onBrowserContextClosed = () => {
     daemonDebug('browser closed, shutting down daemon');
-    server.close();
-    gracefullyProcessExitDoNotHang(0);
+    shutdown(0);
+  };
+
+  backend.onBrowserLaunchFailed = error => {
+    daemonDebug('browser launch failed, will shut down after response', error);
+    shutdownPending = true;
   };
 
   return new Promise((resolve, reject) => {
