@@ -56,6 +56,7 @@ export class Context {
   private _abortController = new AbortController();
 
   onBrowserContextClosed: (() => void) | undefined;
+  onBrowserLaunchFailed: ((error: Error) => void) | undefined;
 
   constructor(options: ContextOptions) {
     this.config = options.config;
@@ -201,8 +202,9 @@ export class Context {
       return this._browserContextPromise;
 
     this._browserContextPromise = this._setupBrowserContext();
-    this._browserContextPromise.catch(() => {
+    this._browserContextPromise.catch(error => {
       this._browserContextPromise = undefined;
+      this.onBrowserLaunchFailed?.(error);
     });
     return this._browserContextPromise;
   }

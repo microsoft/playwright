@@ -56,7 +56,7 @@ export const test = baseTest.extend<{
   },
 });
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
@@ -70,6 +70,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
         PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+        ...cliOptions.env,
       },
     });
     await cli.exited.finally(async () => {
