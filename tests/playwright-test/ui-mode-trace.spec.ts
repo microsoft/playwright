@@ -39,12 +39,12 @@ test('should merge trace events', async ({ runUITest }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Set content/,
     /Expect "toBe"/,
     /Click.*getByRole/,
     /Expect "toBe"/,
-    /After Hooks[\d.]+m?s/,
+    /After Hooks/,
   ]);
 });
 
@@ -95,10 +95,10 @@ test('should merge web assertion events', async ({  runUITest }, testInfo) => {
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Set content/,
     /Expect "toBeVisible".*locator/,
-    /After Hooks[\d.]+m?s/,
+    /After Hooks/,
   ]);
 });
 
@@ -120,12 +120,12 @@ test('should merge screenshot assertions', async ({ runUITest }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Set content/,
-    /Expect "toHaveScreenshot"[\d.]+m?s/,
-    /After Hooks[\d.]+m?s/,
+    /Expect "toHaveScreenshot"/,
+    /After Hooks/,
     /Attach "error-context"/,
-    /Worker Cleanup[\d.]+m?s/,
+    /Worker Cleanup/,
   ]);
 });
 
@@ -169,11 +169,11 @@ test('should show snapshots for sync assertions', async ({ runUITest }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Set content/,
     /Click.*getByRole/,
     /Expect "toBe"/,
-    /After Hooks[\d.]+m?s/,
+    /After Hooks/,
   ]);
 
   await expect(
@@ -209,11 +209,11 @@ test('should show snapshots for steps', {
 
   await expect(page.getByTestId('actions-tree')).toMatchAriaSnapshot(`
     - tree:
-      - treeitem /Before Hooks \\d+[hmsp]+/
-      - treeitem /first \\d+[hmsp]+/
-      - treeitem /middle \\d+[hmsp]+/
-      - treeitem /last \\d+[hmsp]+/
-      - treeitem /After Hooks \\d+[hmsp]+/
+      - treeitem /Before Hooks/
+      - treeitem /first/
+      - treeitem /middle/
+      - treeitem /last/
+      - treeitem /After Hooks/
   `);
 
   await page.getByTestId('actions-tree').getByText('first').click();
@@ -307,7 +307,7 @@ test('should not fail on internal page logs', async ({ runUITest, server }) => {
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Create context/,
     /Create page/,
     /Navigate to "\/empty.html"/,
@@ -333,7 +333,7 @@ test('should not show caught errors in the errors tab', async ({ runUITest }, te
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
+    /Before Hooks/,
     /Set content/,
     /Expect "toBeChecked".*locator/,
     /After Hooks/,
@@ -509,10 +509,10 @@ test('should show custom fixture titles in actions tree', async ({ runUITest }) 
   await page.getByText('fixture test').dblclick();
   const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(listItem, 'action list').toHaveText([
-    /Before Hooks[\d.]+m?s/,
-    /Fixture "My Custom Fixture"[\d.]+m?s/,
-    /Fixture "fixture2"[\d.]+m?s/,
-    /After Hooks[\d.]+m?s/,
+    /Before Hooks/,
+    /Fixture "My Custom Fixture"/,
+    /Fixture "fixture2"/,
+    /After Hooks/,
   ]);
 });
 
@@ -531,9 +531,9 @@ line2\`);
   await page.getByText('multiline test').dblclick();
   const listItem = page.getByTestId('actions-tree').getByRole('treeitem');
   await expect(listItem, 'action list').toHaveText([
-    /Before Hooks[\d.]+m?s/,
-    /Type "line1\\nline2"[\d.]+m?s/,
-    /After Hooks[\d.]+m?s/,
+    /Before Hooks/,
+    /Type "line1\\nline2"/,
+    /After Hooks/,
   ]);
 });
 
@@ -754,9 +754,9 @@ test('should be able to create and dispose APIRequestContext inside Promise.all'
       listItem,
       'action list'
   ).toHaveText([
-    /Before Hooks[\d.]+m?s/,
-    ...Array.from({ length: 100 }).map(() => /Create request context[\d.]+m?s/),
-    /After Hooks[\d.]+m?s/,
+    /Before Hooks/,
+    ...Array.from({ length: 100 }).map(() => /Create request context/),
+    /After Hooks/,
   ]);
 });
 
