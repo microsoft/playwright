@@ -109,7 +109,7 @@ export const defaultConfig: FullConfig = {
 
 const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
   browser: {
-    userDataDir: cliOptions.extension ? undefined : '<daemon-data-dir>', // Use default user profile with extension.
+    userDataDir: '<daemon-data-dir>',
     launchOptions: {
       headless: !cliOptions.daemonHeaded,
     },
@@ -167,7 +167,12 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   if (result.browser.userDataDir === '<daemon-data-dir>') {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    const userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    await fs.promises.mkdir(userDataDir, { recursive: true });
+
+    // Use default user profile with extension.
+    if (!result.extension)
+      result.browser.userDataDir = userDataDir;
   }
 
   if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
