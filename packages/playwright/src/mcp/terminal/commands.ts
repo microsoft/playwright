@@ -542,6 +542,17 @@ const config = declareCommand({
   toolParams: () => ({}),
 });
 
+const install = declareCommand({
+  name: 'install',
+  description: 'Install browser',
+  category: 'install',
+  options: z.object({
+    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
+  }),
+  toolName: 'browser_install',
+  toolParams: () => ({}),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -590,8 +601,11 @@ const commandsArray: AnyCommandSchema[] = [
   tabClose,
   tabSelect,
 
-  // config
+  // config category
   config,
+
+  // install category
+  install,
 
   // devtools category
   networkRequests,
