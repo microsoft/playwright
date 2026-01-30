@@ -160,17 +160,14 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
 
-  if (cliOptions.daemon)
+  if (cliOptions.daemon) {
     result.skillMode = true;
-
-  if (cliOptions.daemon && !result.browser.userDataDir) {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    const userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
-
-    // Use default user profile with extension.
-    if (!result.extension)
-      result.browser.userDataDir = userDataDir;
+    if (!result.browser.userDataDir && !result.extension) {
+      // No custom value provided, use the daemon data dir.
+      // Use default user profile with extension.
+      const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+      result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    }
   }
 
   if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
