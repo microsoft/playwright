@@ -18,7 +18,25 @@
 
 // @ts-check
 const toKebabCase = require('lodash/kebabCase.js')
+const toSnakeCase = require('lodash/snakeCase.js')
+const toCamelCase = require('lodash/camelCase.js')
+const upperFirst = require('lodash/upperFirst.js')
 const Documentation = require('./documentation');
+
+/** @param {string} s */
+const toPascalCase = s => upperFirst(toCamelCase(s));
+
+/**
+ * @param {string} language
+ */
+function codeFormatterForLanguage(language) {
+  if (language === 'python')
+    return { toMemberCase: toSnakeCase, toClassCase: toSnakeCase };
+  if (language === 'csharp')
+    return { toMemberCase: toPascalCase, toClassCase: toPascalCase };
+  const identity = (/** @type {string} */ s) => s;
+  return { toMemberCase: identity, toClassCase: identity };
+}
 
 /**
  * @param {string} languagePath
@@ -58,24 +76,25 @@ function createClassMarkdownLink(languagePath, clazz) {
  */
 function docsLinkRendererForLanguage(language, outputType) {
   const languagePath = languageToRelativeDocsPath(language);
+  const { toMemberCase, toClassCase } = codeFormatterForLanguage(language);
   return ({ clazz, member, param, option }) => {
     if (clazz)
       return createClassMarkdownLink(languagePath, clazz);
     if (!member || !member.clazz)
       throw new Error('Internal error');
     if (param)
-      return createMarkdownLink(languagePath, member, `\`${param.alias}\``, param.name);
+      return createMarkdownLink(languagePath, member, `\`${toMemberCase(param.alias)}\``, param.name);
     if (option)
-      return createMarkdownLink(languagePath, member, `\`${option.alias}\``, option.name);
-    const className = member.clazz.varName === 'playwrightAssertions' ? '' : member.clazz.varName + '.';
+      return createMarkdownLink(languagePath, member, `\`${toMemberCase(option.alias)}\``, option.name);
+    const className = member.clazz.varName === 'playwrightAssertions' ? '' : toClassCase(member.clazz.varName) + '.';
     if (member.kind === 'method') {
       const args = outputType === 'ReleaseNotesMd' ? '' : renderJSSignature(member.argsArray);
-      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${member.alias}(${args})`);
+      return createMarkdownLink(languagePath, member, `${formatClassName(className, language)}${toMemberCase(member.alias)}(${args})`);
     }
     if (member.kind === 'event')
       return createMarkdownLink(languagePath, member, `${className}on('${member.alias.toLowerCase()}')`);
     if (member.kind === 'property')
-      return createMarkdownLink(languagePath, member, `${className}${member.alias}`);
+      return createMarkdownLink(languagePath, member, `${className}${toMemberCase(member.alias)}`);
     throw new Error('Unknown member kind ' + member.kind);
   }
 }
