@@ -109,7 +109,7 @@ export const defaultConfig: FullConfig = {
 
 const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
   browser: {
-    userDataDir: '<daemon-data-dir>',
+    userDataDir: cliOptions.extension ? undefined : '<daemon-data-dir>',
     launchOptions: {
       headless: !cliOptions.daemonHeaded,
     },
@@ -164,7 +164,7 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   if (cliOptions.daemon)
     result.skillMode = true;
 
-  if (result.browser.userDataDir === '<daemon-data-dir>') {
+  if (result.browser.userDataDir === '<daemon-data-dir>' || (cliOptions.daemon && result.extension)) {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     const userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
