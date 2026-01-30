@@ -80,7 +80,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       mainFrame,
       viewportSize: page.emulatedSize()?.viewport,
       isClosed: page.isClosed(),
-      opener: PageDispatcher.fromNullable(parentScope, page.opener())
+      opener: PageDispatcher.fromNullable(parentScope, page.opener()),
+      video: page.video ? createVideoDispatcher(parentScope, page.video) : undefined,
     });
 
     this.adopt(mainFrame);
@@ -114,9 +115,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.addObjectListener(Page.Events.LocatorHandlerTriggered, (uid: number) => this._dispatchEvent('locatorHandlerTriggered', { uid }));
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
-    this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
-    if (page.video)
-      this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page.video) });
     // Ensure client knows about all frames.
     const frames = page.frameManager.frames();
     for (let i = 1; i < frames.length; i++)
@@ -339,7 +337,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
-    return await this._page.screencast.startExplicitVideoRecording(params);
+    const artifact = await this._page.screencast.startExplicitVideoRecording(params);
+    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
   }
 
   async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
@@ -480,4 +479,10 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     this._reject!(parseError(params.error));
     this._dispose();
   }
+}
+
+function createVideoDispatcher(parentScope: BrowserContextDispatcher, video: Artifact): ArtifactDispatcher {
+  // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
+  // after closing the context. We use |scope| for it.
+  return ArtifactDispatcher.from(parentScope.parentScope(), video);
 }

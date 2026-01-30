@@ -928,9 +928,6 @@ scheme.BrowserContextRouteEvent = tObject({
 scheme.BrowserContextWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
 });
-scheme.BrowserContextVideoEvent = tObject({
-  artifact: tChannel(['Artifact']),
-});
 scheme.BrowserContextServiceWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });
@@ -1167,6 +1164,7 @@ scheme.PageInitializer = tObject({
   })),
   isClosed: tBoolean,
   opener: tOptional(tChannel(['Page'])),
+  video: tOptional(tChannel(['Artifact'])),
 });
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
@@ -1202,9 +1200,6 @@ scheme.PageRouteEvent = tObject({
 });
 scheme.PageWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
-});
-scheme.PageVideoEvent = tObject({
-  artifact: tChannel(['Artifact']),
 });
 scheme.PageWebSocketEvent = tObject({
   webSocket: tChannel(['WebSocket']),
@@ -1509,7 +1504,9 @@ scheme.PageVideoStartParams = tObject({
     height: tInt,
   })),
 });
-scheme.PageVideoStartResult = tOptional(tObject({}));
+scheme.PageVideoStartResult = tObject({
+  artifact: tChannel(['Artifact']),
+});
 scheme.PageVideoStopParams = tOptional(tObject({}));
 scheme.PageVideoStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({

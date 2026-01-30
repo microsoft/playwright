@@ -82,6 +82,10 @@ export class VideoPlayer {
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
 
+function isAlmostWhite({ r, g, b, alpha }: Pixel): boolean {
+  return r > 185 && g > 185 && b > 185 && alpha === 255;
+}
+
 function isAlmostRed({ r, g, b, alpha }: Pixel): boolean {
   return r > 185 && g < 70 && b < 70 && alpha === 255;
 }
@@ -253,36 +257,6 @@ it.describe('screencast', () => {
     expect(path).toContain(videosPath);
     await context.close();
     expect(fs.existsSync(path)).toBeTruthy();
-  });
-
-  it('saveAs should throw when no video frames', async ({ browser }, testInfo) => {
-    const videosPath = testInfo.outputPath('');
-    const size = { width: 320, height: 240 };
-    const context = await browser.newContext({
-      recordVideo: {
-        dir: videosPath,
-        size
-      },
-      viewport: size,
-    });
-
-    const page = await context.newPage();
-    const [popup] = await Promise.all([
-      page.context().waitForEvent('page'),
-      page.evaluate(() => {
-        const win = window.open('about:blank');
-        win.close();
-      }),
-    ]);
-    await page.close();
-
-    const saveAsPath = testInfo.outputPath('my-video.webm');
-    const error = await popup.video().saveAs(saveAsPath).catch(e => e);
-    // WebKit pauses renderer before win.close() and actually writes something,
-    // and other browsers are sometimes fast as well.
-    if (!fs.existsSync(saveAsPath))
-      expect(error.message).toContain('Page did not produce any video frames');
-    await context.close();
   });
 
   it('should delete video', async ({ browser }, testInfo) => {
@@ -698,7 +672,6 @@ it.describe('screencast', () => {
   });
 
   it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
-    it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
       res.end();
@@ -869,7 +842,7 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('video.start should fail when recordVideo is set', async ({ browser }, testInfo) => {
+  it('video.start should fail when recordVideo is set, but stop should work', async ({ browser }, testInfo) => {
     const context = await browser.newContext({
       recordVideo: {
         dir: testInfo.outputPath(''),
@@ -878,6 +851,8 @@ it.describe('screencast', () => {
     const page = await context.newPage();
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
+    await page.video().stop();
+    await page.video().saveAs(testInfo.outputPath('video.webm'));
     await context.close();
   });
 
@@ -913,6 +888,18 @@ it.describe('screencast', () => {
     await page.video().saveAs(newPath);
     expect(fs.existsSync(newPath)).toBeTruthy();
     await context.close();
+  });
+
+  it('empty video', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+    await page.video().start({ size });
+    await page.video().stop();
+    const videoPath = testInfo.outputPath('empty-video.webm');
+    await page.video().saveAs(videoPath);
+    await context.close();
+    expectFrames(videoPath, size, isAlmostWhite);
   });
 });
 

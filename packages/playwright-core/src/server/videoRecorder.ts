@@ -16,6 +16,7 @@
 
 import { assert, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
 import { launchProcess } from './utils/processLauncher';
+import { jpegjs } from '../utilsBundle';
 
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';
@@ -23,6 +24,7 @@ import type { ChildProcess } from 'child_process';
 const fps = 25;
 
 export class VideoRecorder {
+  private _options: types.VideoOptions;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
   private _lastWritePromise: Promise<void> = Promise.resolve();
@@ -38,11 +40,12 @@ export class VideoRecorder {
     this._ffmpegPath = ffmpegPath;
     if (!options.outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
-    this._launchPromise = this._launch(options).catch(e => e);
+    this._options = options;
+    this._launchPromise = this._launch().catch(e => e);
   }
 
-  private async _launch(options: types.VideoOptions) {
-    await mkdirIfNeeded(options.outputFile);
+  private async _launch() {
+    await mkdirIfNeeded(this._options.outputFile);
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
     //   https://www.webmproject.org/docs/encoder-parameters/
@@ -82,10 +85,10 @@ export class VideoRecorder {
     // "-threads 1" means using one thread. This drastically reduces stalling when
     //   cpu is overbooked. By default vp8 tries to use all available threads?
 
-    const w = options.width;
-    const h = options.height;
+    const w = this._options.width;
+    const h = this._options.height;
     const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
-    args.push(options.outputFile);
+    args.push(this._options.outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
@@ -157,12 +160,16 @@ export class VideoRecorder {
     const error = await this._launchPromise;
     if (error)
       throw error;
-    if (this._isStopped || !this._lastFrame)
+    if (this._isStopped)
       return;
+    if (!this._lastFrame) {
+      // ffmpeg only creates a file upon some non-empty input
+      this._writeFrame(createWhiteImage(this._options.width, this._options.height), monotonicTime());
+    }
     // Pad with at least 1s of the last frame in the end for convenience.
     // This also ensures non-empty videos with 1 frame.
     const addTime = Math.max((monotonicTime() - this._lastWriteNodeTime) / 1000, 1);
-    this._writeFrame(Buffer.from([]), this._lastFrame.timestamp + addTime);
+    this._writeFrame(Buffer.from([]), this._lastFrame!.timestamp + addTime);
     this._isStopped = true;
     try {
       await this._lastWritePromise;
@@ -171,4 +178,9 @@ export class VideoRecorder {
       debugLogger.log('error', `ffmpeg failed to stop: ${String(e)}`);
     }
   }
+}
+
+function createWhiteImage(width: number, height: number): Buffer {
+  const data = Buffer.alloc(width * height * 4, 255);
+  return jpegjs.encode({ data, width, height }, 80).data;
 }

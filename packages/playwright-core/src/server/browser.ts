@@ -151,16 +151,11 @@ export abstract class Browser extends SdkObject {
     this._downloads.delete(uuid);
   }
 
-  _videoStarted(context: BrowserContext, videoId: string, path: string, pageOrError: Promise<Page | Error>) {
-    const artifact = new Artifact(context, path);
-    this._idToVideo.set(videoId, { context, artifact });
-    pageOrError.then(page => {
-      if (page instanceof Page) {
-        page.video = artifact;
-        page.emitOnContext(BrowserContext.Events.VideoStarted, artifact);
-        page.emit(Page.Events.Video, artifact);
-      }
-    });
+  _videoStarted(page: Page, videoId: string, path: string) {
+    const artifact = new Artifact(page.browserContext, path);
+    page.video = artifact;
+    this._idToVideo.set(videoId, { context: page.browserContext, artifact });
+    return artifact;
   }
 
   _takeVideo(videoId: string): Artifact | undefined {

@@ -21,7 +21,6 @@ import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { WKConnection, WKSession, kPageProxyMessageReceived } from './wkConnection';
 import { WKPage } from './wkPage';
-import { TargetClosedError } from '../errors';
 import { translatePathToWSL } from './webkit';
 
 import type { BrowserOptions } from '../browser';
@@ -76,9 +75,6 @@ export class WKBrowser extends Browser {
     for (const wkPage of this._wkPages.values())
       wkPage.didClose();
     this._wkPages.clear();
-    for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(new TargetClosedError(this.closeReason()));
-    this._idToVideo.clear();
     this._didClose();
   }
 

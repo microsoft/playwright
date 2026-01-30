@@ -18,7 +18,6 @@
 import { assert } from '../../utils';
 import { Browser } from '../browser';
 import { BrowserContext, verifyGeolocation } from '../browserContext';
-import { TargetClosedError } from '../errors';
 import * as network from '../network';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
@@ -142,7 +141,7 @@ export class FFBrowser extends Browser {
     if (!originPage) {
       // Resume the page creation with an error. The page will automatically close right
       // after the download begins.
-      ffPage._markAsError(new Error('Starting new page download'));
+      ffPage._reportAsNew(new Error('Starting new page download'));
       if (ffPage._opener)
         originPage = ffPage._opener._page.initializedOrUndefined();
     }
@@ -157,9 +156,6 @@ export class FFBrowser extends Browser {
   }
 
   _onDisconnect() {
-    for (const video of this._idToVideo.values())
-      video.artifact.reportFinished(new TargetClosedError(this.closeReason()));
-    this._idToVideo.clear();
     for (const ffPage of this._ffPages.values())
       ffPage.didClose();
     this._ffPages.clear();
