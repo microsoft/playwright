@@ -104,6 +104,7 @@ class LogFile {
   private _lastTakenLine: number = 0;
   private _lastTakenEntryCount: number = 0;
   private _writeChain: Promise<void> = Promise.resolve();
+  private _stopped: boolean = false;
 
   constructor(context: Context, filePrefix: string, title: string) {
     this._context = context;
@@ -114,6 +115,10 @@ class LogFile {
   appendLine(wallTime: number, text: string) {
     this._writeChain = this._writeChain.then(() => this._write(wallTime, text));
     this._writeChain.catch(logUnhandledError);
+  }
+
+  stop() {
+    this._stopped = true;
   }
 
   async take(): Promise<LogChunk | undefined> {
@@ -136,6 +141,8 @@ class LogFile {
   }
 
   private async _write(wallTime: number, text: string) {
+    if (this._stopped)
+      return;
     if (!this._file)
       this._file = await this._createFile();
     const relativeTime = wallTime - this._startTime;
@@ -266,6 +273,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _resetConsoleLogFile() {
     if (this.context.config.outputMode !== 'file')
       return;
+    this._consoleLog?.stop();
     this._consoleLog = new LogFile(this.context, 'console', 'Console');
   }
 
