@@ -215,18 +215,18 @@ export class Response {
     }
 
     // Handle tab log
+    const text: string[] = [];
+    if (tabSnapshot?.logChunk) {
+      const logFilePath = this._computRelativeTo(tabSnapshot.logChunk.file);
+      const entryWord = tabSnapshot.logChunk.entryCount === 1 ? 'entry' : 'entries';
+      const lineRange = tabSnapshot.logChunk.fromLine === tabSnapshot.logChunk.toLine
+        ? `#L${tabSnapshot.logChunk.fromLine}`
+        : `#L${tabSnapshot.logChunk.fromLine}-L${tabSnapshot.logChunk.toLine}`;
+      text.push(`- ${tabSnapshot.logChunk.entryCount} new console ${entryWord} in "${logFilePath}${lineRange}"`);
+    }
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
-      const text: string[] = [];
-      if (tabSnapshot.consoleLog) {
-        const logFilePath = this._computRelativeTo(tabSnapshot.consoleLog.file);
-        const entryWord = tabSnapshot.consoleLog.newEntryCount === 1 ? 'entry' : 'entries';
-        const lineRange = tabSnapshot.consoleLog.firstNewLine === tabSnapshot.consoleLog.lastNewLine
-          ? `line ${tabSnapshot.consoleLog.firstNewLine}`
-          : `lines ${tabSnapshot.consoleLog.firstNewLine}-${tabSnapshot.consoleLog.lastNewLine}`;
-        text.push(`- ${tabSnapshot.consoleLog.newEntryCount} new console ${entryWord} in ${logFilePath}, ${lineRange}`);
-      }
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console' && !tabSnapshot.consoleLog) {
+        if (event.type === 'console' && !tabSnapshot.logChunk) {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {
@@ -236,8 +236,8 @@ export class Response {
           text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
         }
       }
-      addSection('Events', text);
     }
+    addSection('Events', text);
     return sections;
   }
 }

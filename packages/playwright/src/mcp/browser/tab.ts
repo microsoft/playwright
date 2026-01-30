@@ -78,65 +78,72 @@ export type TabHeader = {
   current: boolean;
 };
 
+export type LogChunk = {
+  file: string;
+  fromLine: number;
+  toLine: number;
+  entryCount: number;
+};
+
 export type TabSnapshot = {
   ariaSnapshot: string;
   ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   events: EventEntry[];
-  consoleLog?: {
-    file: string;
-    firstNewLine: number;
-    lastNewLine: number;
-    newEntryCount: number;
-  };
-};
-
-type LogState = {
-  file: string;
-  lastLine: number;
-  entryCount: number;
+  logChunk?: LogChunk;
 };
 
 class LogFile {
-  readonly startTime: number;
+  private _startTime: number = Date.now();
   private _context: Context;
+  private _filePrefix: string;
+  private _title: string;
   private _file: string | undefined;
-  private _lastLine: number;
-  private _entryCount: number;
-  private _writeChain: Promise<LogState> | undefined;
+  private _currentLine: number = 0;
+  private _currentEntryCount: number = 0;
+  private _lastTakenLine: number = 0;
+  private _lastTakenEntryCount: number = 0;
+  private _writeChain: Promise<void> = Promise.resolve();
 
-  constructor(startTime: number, context: Context) {
-    this.startTime = startTime;
+  constructor(context: Context, filePrefix: string, title: string) {
     this._context = context;
-    this._lastLine = 0;
-    this._entryCount = 0;
+    this._filePrefix = filePrefix;
+    this._title = title;
   }
 
-  appendLine(text: string) {
-    this._writeChain = (this._writeChain ?? Promise.resolve()).then(() => this._write(text));
+  appendLine(wallTime: number, text: string) {
+    this._writeChain = this._writeChain.then(() => this._write(wallTime, text));
     this._writeChain.catch(logUnhandledError);
   }
 
-  async flush(): Promise<LogState|undefined> {
-    return await this._writeChain;
+  async take(): Promise<LogChunk | undefined> {
+    await this._writeChain;
+    if (!this._file || this._currentEntryCount === this._lastTakenEntryCount)
+      return undefined;
+    const chunk: LogChunk = {
+      file: this._file,
+      fromLine: this._lastTakenLine + 1,
+      toLine: this._currentLine,
+      entryCount: this._currentEntryCount - this._lastTakenEntryCount,
+    };
+    this._lastTakenLine = this._currentLine;
+    this._lastTakenEntryCount = this._currentEntryCount;
+    return chunk;
   }
 
   private async _createFile(): Promise<string> {
-    return await this._context.outputFile(dateAsFileName('console', 'log', new Date(this.startTime)), { origin: 'code', title: 'Console log' });
+    return await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
   }
 
-  private async _write(text: string) {
+  private async _write(wallTime: number, text: string) {
     if (!this._file)
       this._file = await this._createFile();
-    await fs.promises.appendFile(this._file, text + '\n');
-    const lineCount = text.split('\n').length;
-    this._lastLine += lineCount;
-    this._entryCount++;
-    return {
-      file: this._file,
-      lastLine: this._lastLine,
-      entryCount: this._entryCount,
-    };
+    const relativeTime = wallTime - this._startTime;
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text}\n`;
+    await fs.promises.appendFile(this._file, logLine);
+    const lineCount = logLine.split('\n').length - 1;
+    this._currentLine += lineCount;
+    this._currentEntryCount++;
   }
 }
 
@@ -153,7 +160,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile | undefined;
-  private _lastReportedConsoleLogState: LogState | undefined;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -260,8 +266,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _resetConsoleLogFile() {
     if (this.context.config.outputMode !== 'file')
       return;
-    this._consoleLog = new LogFile(Date.now(), this.context);
-    this._lastReportedConsoleLogState = undefined;
+    this._consoleLog = new LogFile(this.context, 'console', 'Console');
   }
 
   private _handleRequest(request: playwright.Request) {
@@ -273,16 +278,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._consoleMessages.push(message);
     const wallTime = Date.now();
     this._addLogEntry({ type: 'console', wallTime, message });
-    this._writeConsoleEntryToFile(wallTime, message);
-  }
-
-  private _writeConsoleEntryToFile(wallTime: number, message: ConsoleMessage) {
-    if (!this._consoleLog)
-      return;
-
-    const relativeTime = wallTime - this._consoleLog.startTime;
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] [${message.type.toUpperCase()}] ${message.toString()}`;
-    this._consoleLog.appendLine(logLine);
+    this._consoleLog?.appendLine(wallTime, message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -377,16 +373,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       };
     });
     if (tabSnapshot) {
-      const consoleLogState = await this._consoleLog?.flush();
-      if (consoleLogState) {
-        tabSnapshot.consoleLog = {
-          file: consoleLogState.file,
-          firstNewLine: (this._lastReportedConsoleLogState?.lastLine ?? 0) + 1,
-          lastNewLine: consoleLogState.lastLine,
-          newEntryCount: (consoleLogState.entryCount - (this._lastReportedConsoleLogState?.entryCount ?? 0)),
-        };
-        this._lastReportedConsoleLogState = consoleLogState;
-      }
+      tabSnapshot.logChunk = await this._consoleLog?.take();
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
     }

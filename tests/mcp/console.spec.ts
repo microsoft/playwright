@@ -217,7 +217,7 @@ test('console log file is created on snapshot', async ({ startClient, server }, 
   }));
 
   // Check events section mentions the log file with line range
-  expect(response.events).toMatch(/\d+ new console entr(y|ies) in .+\.log, lines? \d+(-\d+)?/);
+  expect(response.events).toMatch(/\d+ new console entr(y|ies) in ".+\.log#L\d+(-L\d+)?"/);
 
   // Verify log file exists and contains the messages
   const files = await fs.promises.readdir(outputDir);
