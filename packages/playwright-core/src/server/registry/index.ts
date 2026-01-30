@@ -130,9 +130,9 @@ type DownloadPathFunction = (params: BrowsersJSONDescriptor) => { path: string, 
 function cftUrl(suffix: string): DownloadPathFunction {
   return ({ browserVersion }) => {
     return {
-      path: `${browserVersion}/${suffix}`,
+      path: `builds/cft/${browserVersion}/${suffix}`,
       mirrors: [
-        'https://cdn.playwright.dev/chrome-for-testing-public',
+        'https://cdn.playwright.dev',
       ],
     };
   };
