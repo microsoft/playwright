@@ -388,6 +388,13 @@ test.describe('devtools', () => {
     const { output: videoStartOutput } = await cli('video-start');
     expect(videoStartOutput).toContain('Video recording started.');
     await cli('open', server.HELLO_WORLD);
+    await cli('eval', `
+      async () => {
+        document.body.style.backgroundColor = "red";
+        for (let i = 0; i < 100; i++)
+          await new Promise(f => requestAnimationFrame(() => requestAnimationFrame(f)));
+      }
+    `);
     const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
     expect(videoStopOutput).toContain(`### Result\n- [Video](.playwright-cli${path.sep}video.webm)`);
   });
@@ -564,8 +571,10 @@ test.describe('versions', () => {
       expect(error).toMatch(/Daemon is too old: daemon is 1.*, client is 2\.0\.0. Stopping it/);
     }
     {
-      const { output } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      const { output, exitCode } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
+      expect(exitCode).toBe(0);
       expect(output).toContain('Daemon for `default` session started with pid');
+      await cli('session-stop', '--daemonVersion=2.0.0');
     }
   });
 
@@ -580,6 +589,38 @@ test.describe('versions', () => {
       expect(exitCode).toBe(1);
       expect(error).toContain('Daemon is older than client, killing it.');
     }
+  });
+});
+
+test.describe('parsing', () => {
+  test('unknown option', async ({ cli, server }) => {
+    const { error, exitCode } = await cli('open', '--some-option', 'value', 'about:blank');
+    expect(exitCode).toBe(1);
+    expect(error).toContain(`error: unknown '--some-option' option`);
+  });
+
+  test('too many arguments', async ({ cli, server }) => {
+    const { error, exitCode } = await cli('open', 'foo', 'bar');
+    expect(exitCode).toBe(1);
+    expect(error).toContain(`error: too many arguments: expected 1, received 2`);
+  });
+
+  test('wrong option type', async ({ cli, server }) => {
+    const { error, exitCode } = await cli('type', 'foo', '--submit=bar');
+    expect(exitCode).toBe(1);
+    expect(error).toContain(`error: '--submit' option: expected boolean, received string`);
+  });
+
+  test('missing argument', async ({ cli, server }) => {
+    const { error, exitCode } = await cli('open');
+    expect(exitCode).toBe(1);
+    expect(error).toContain(`error: 'url' argument: expected string, received undefined`);
+  });
+
+  test('wrong argument type', async ({ cli, server }) => {
+    const { error, exitCode } = await cli('mousemove', '12', 'foo');
+    expect(exitCode).toBe(1);
+    expect(error).toContain(`error: 'y' argument: expected number, received string`);
   });
 });
 
