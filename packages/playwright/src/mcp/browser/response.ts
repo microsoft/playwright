@@ -221,8 +221,8 @@ export class Response {
         const logFilePath = this._computRelativeTo(tabSnapshot.consoleLog.file);
         const entryWord = tabSnapshot.consoleLog.newEntryCount === 1 ? 'entry' : 'entries';
         const lineRange = tabSnapshot.consoleLog.firstNewLine === tabSnapshot.consoleLog.lastNewLine
-            ? `line ${tabSnapshot.consoleLog.firstNewLine}`
-            : `lines ${tabSnapshot.consoleLog.firstNewLine}-${tabSnapshot.consoleLog.lastNewLine}`;
+          ? `line ${tabSnapshot.consoleLog.firstNewLine}`
+          : `lines ${tabSnapshot.consoleLog.firstNewLine}-${tabSnapshot.consoleLog.lastNewLine}`;
         text.push(`- ${tabSnapshot.consoleLog.newEntryCount} new console ${entryWord} in ${logFilePath}, ${lineRange}`);
       }
       for (const event of tabSnapshot.events) {

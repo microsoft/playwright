@@ -117,13 +117,11 @@ class LogFile {
     this._writeChain.catch(logUnhandledError);
   }
 
-  async flush() : Promise<LogState|undefined> {
-    if (this._writeChain)
-      return await this._writeChain;
-    return undefined;
+  async flush(): Promise<LogState|undefined> {
+    return await this._writeChain;
   }
 
-  private async _createFile() : Promise<string> {
+  private async _createFile(): Promise<string> {
     return await this._context.outputFile(dateAsFileName('console', 'log', new Date(this.startTime)), { origin: 'code', title: 'Console log' });
   }
 
@@ -138,7 +136,7 @@ class LogFile {
       file: this._file,
       lastLine: this._lastLine,
       entryCount: this._entryCount,
-    }
+    };
   }
 }
 
