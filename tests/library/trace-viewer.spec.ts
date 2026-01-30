@@ -2256,7 +2256,7 @@ test('should print correct host', async ({ childProcess }, testInfo) => {
   await cp.waitForOutput('Listening on');
   const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
   expect(proto).toEqual('http');
-  expect(host).not.toBe('undefined');
+  expect(host).toBe('localhost');
   expect(+port).toBeGreaterThan(0);
 });
 
@@ -2270,6 +2270,6 @@ test('coding agent mode', async ({ childProcess }, testInfo) => {
   await cp.waitForOutput('Listening on');
   const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
   expect(proto).toEqual('http');
-  expect(host).not.toBe('undefined');
+  expect(host).toBe('localhost');
   expect(+port).toBeGreaterThan(0);
 });
