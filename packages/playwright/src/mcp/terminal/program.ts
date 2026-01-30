@@ -26,38 +26,58 @@ import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
 
-import type { Section } from '../browser/response';
-
-export type StructuredResponse = {
-  isError?: boolean;
-  text?: string;
-  sections: Section[];
+type MinimistArgs = {
+  _: string[];
+  [key: string]: any;
 };
 
-type SessionOptions = {
-  config?: string;
-  headed?: boolean;
-  extension?: boolean;
-  daemonVersion: string;
-  browser?: string;
-  isolated?: boolean;
+export type SessionConfig = {
+  version: string;
+  socketPath: string;
+  cli: {
+    headed?: boolean;
+    extension?: boolean;
+    browser?: string;
+    isolated?: boolean;
+    config?: string;
+  };
+  userDataDirPrefix?: string;
 };
 
 class Session {
   readonly name: string;
-  private _socketPath: string;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
-  private _options: SessionOptions;
+  private _config: SessionConfig;
+  private _clientVersion: string;
 
-  constructor(name: string, options: SessionOptions) {
+  constructor(clientVersion: string, name: string, options: SessionConfig) {
     this.name = name;
-    this._socketPath = this._daemonSocketPath();
-    this._options = options;
+    this._clientVersion = clientVersion;
+    this._config = options;
   }
 
-  async run(args: any) {
+  config(): SessionConfig {
+    return this._config;
+  }
+
+  isCompatible(): boolean {
+    return this._clientVersion === this._config.version;
+  }
+
+  checkCompatible() {
+    if (!this.isCompatible()) {
+      throw new Error(`Client is v${this._clientVersion}, session '${this.name}' is v${this._config.version}. Run
+
+  playwright-cli session-restart${this.name !== 'default' ? ` ${this.name}` : ''}
+
+to restart the session daemon.`);
+    }
+  }
+
+  async run(args: MinimistArgs) {
+    this.checkCompatible();
     return await this._send('run', { args, cwd: process.cwd() });
   }
 
@@ -74,14 +94,13 @@ class Session {
     this.close();
 
     if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._socketPath).catch(() => {});
+      await fs.promises.unlink(this._config.socketPath).catch(() => {});
     console.log(`Session '${this.name}' stopped.`);
   }
 
-  async restart(options: SessionOptions): Promise<void> {
+  async restart(config: SessionConfig): Promise<void> {
     await this.stop();
-
-    this._options = options;
+    this._config = config;
     await this._startDaemonIfNeeded();
   }
 
@@ -92,7 +111,7 @@ class Session {
       id: messageId,
       method,
       params,
-      version: this._options.daemonVersion,
+      version: this._config.version,
     };
     const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject, method, params });
@@ -121,12 +140,13 @@ class Session {
       return;
     }
 
-    for (const dir of matchingEntries) {
-      const userDataDir = path.resolve(daemonProfilesDir, dir);
+    for (const entry of matchingEntries) {
+      const userDataDir = path.resolve(daemonProfilesDir, entry);
       for (let i = 0; i < 5; i++) {
         try {
           await fs.promises.rm(userDataDir, { recursive: true });
-          console.log(`Deleted user data for session '${this.name}'.`);
+          if (entry.startsWith('ud-'))
+            console.log(`Deleted user data for session '${this.name}'.`);
           break;
         } catch (e: any) {
           if (e.code === 'ENOENT') {
@@ -143,12 +163,12 @@ class Session {
 
   async _connect(): Promise<{ socket?: net.Socket, error?: Error }> {
     return await new Promise(resolve => {
-      const socket = net.createConnection(this._socketPath, () => {
+      const socket = net.createConnection(this._config.socketPath, () => {
         resolve({ socket });
       });
       socket.on('error', error => {
         if (os.platform() !== 'win32')
-          void fs.promises.unlink(this._socketPath).catch(() => {}).then(() => resolve({ error }));
+          void fs.promises.unlink(this._config.socketPath).catch(() => {}).then(() => resolve({ error }));
         else
           resolve({ error });
       });
@@ -172,20 +192,8 @@ class Session {
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket, this._options.daemonVersion);
+    this._connection = new SocketConnection(socket, this._config.version);
     this._connection.onmessage = message => this._onMessage(message);
-    this._connection.onversionerror = (id, e) => {
-      if (e.received && e.received !== 'undefined-for-test') {
-        // This is daemon telling us the version is bad.
-        return false;
-      }
-
-      // This will only happen once when hitting the non-versione-aware daemon.
-      // Only kill daemon if it is older.
-      console.error(`Daemon is older than client, killing it.`);
-      this.stop().then(() => process.exit(1)).catch(() => process.exit(1));
-      return true;
-    };
     this._connection.onclose = () => this.close();
     return this._connection;
   }
@@ -207,36 +215,25 @@ class Session {
 
   private async _startDaemon(): Promise<net.Socket> {
     await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
-    const userDataDir = path.resolve(daemonProfilesDir, `ud-${this.name}`);
     const cliPath = path.join(__dirname, '../../../cli.js');
-    const configFile = resolveConfigFile(this._options.config);
-    const configArg = configFile !== undefined ? [`--config=${configFile}`] : [];
-    const headedArg = this._options.headed ? [`--daemon-headed`] : [];
-    const extensionArg = this._options.extension ? [`--extension`] : [];
-    const isolatedArg = this._options.isolated ? [`--isolated`] : [];
-    const browserArg = this._options.browser ? [`--browser=${this._options.browser}`] : [];
 
-    const sessionOptionsFile = path.resolve(daemonProfilesDir, `${this.name}.session`);
-    await fs.promises.writeFile(sessionOptionsFile, JSON.stringify({ ...this._options, _: undefined }, null, 2));
+    const sessionConfigFile = path.resolve(daemonProfilesDir, `${this.name}.session`);
+    this._config.version = this._clientVersion;
+    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
     const outLog = path.join(daemonProfilesDir, 'out.log');
     const errLog = path.join(daemonProfilesDir, 'err.log');
     const out = fs.openSync(outLog, 'w');
     const err = fs.openSync(errLog, 'w');
 
-    const child = spawn(process.execPath, [
+    const args = [
       cliPath,
       'run-mcp-server',
       `--output-dir=${outputDir}`,
-      `--daemon=${this._socketPath}`,
-      `--daemon-data-dir=${userDataDir}`,
-      `--daemon-version=${this._options.daemonVersion}`,
-      ...configArg,
-      ...headedArg,
-      ...extensionArg,
-      ...isolatedArg,
-      ...browserArg,
-    ], {
+      `--daemon-session=${sessionConfigFile}`,
+    ];
+
+    const child = spawn(process.execPath, args, {
       detached: true,
       stdio: ['ignore', out, err],
       cwd: process.cwd(), // Will be used as root.
@@ -244,8 +241,8 @@ class Session {
     child.unref();
 
     console.log(`<!-- Daemon for \`${this.name}\` session started with pid ${child.pid}.`);
-    if (configFile)
-      console.log(`- Using config file at \`${path.relative(process.cwd(), configFile)}\`.`);
+    if (this._config.cli.config)
+      console.log(`- Using config file at \`${path.relative(process.cwd(), this._config.cli.config)}\`.`);
     const sessionSuffix = this.name !== 'default' ? ` "${this.name}"` : '';
     console.log(`- You can stop the session daemon with \`playwright-cli session-stop${sessionSuffix}\` when done.`);
     console.log(`- You can delete the session data with \`playwright-cli session-delete${sessionSuffix}\` when done.`);
@@ -269,43 +266,34 @@ class Session {
     const outData = await fs.promises.readFile(outLog, 'utf-8').catch(() => '');
     const errData = await fs.promises.readFile(errLog, 'utf-8').catch(() => '');
 
-    console.error(`Failed to connect to daemon at ${this._socketPath} after ${maxRetries * retryDelay}ms`);
+    console.error(`Failed to connect to daemon at ${this._config.socketPath} after ${maxRetries * retryDelay}ms`);
     if (outData.length)
       console.log(outData);
     if (errData.length)
       console.error(errData);
     process.exit(1);
   }
-
-  private _daemonSocketPath(): string {
-    const socketName = `${this.name}.sock`;
-    if (os.platform() === 'win32')
-      return `\\\\.\\pipe\\${installationDirHash}-${socketName}`;
-    const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-    return path.join(socketsDir, installationDirHash, socketName);
-  }
 }
 
 class SessionManager {
+  readonly clientVersion: string;
   readonly sessions: Map<string, Session>;
-  readonly options: SessionOptions;
 
-  private constructor(sessions: Map<string, Session>, options: SessionOptions) {
+  private constructor(clientVersion: string, sessions: Map<string, Session>, args: MinimistArgs) {
+    this.clientVersion = clientVersion;
     this.sessions = sessions;
-    this.options = options;
   }
 
-  static async create(options: SessionOptions): Promise<SessionManager> {
+  static async create(clientVersion: string, args: MinimistArgs): Promise<SessionManager> {
     const dir = daemonProfilesDir;
-    const sessions = new Map<string, Session>([
-      ['default', new Session('default', options)],
-    ]);
+    const sessions = new Map<string, Session>();
     const files = await fs.promises.readdir(dir).catch(() => []);
     for (const file of files) {
       try {
         if (file.endsWith('.session')) {
           const sessionName = path.basename(file, '.session');
-          sessions.set(sessionName, new Session(sessionName, options));
+          const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
+          sessions.set(sessionName, new Session(clientVersion, sessionName, sessionConfig));
           continue;
         }
 
@@ -313,24 +301,26 @@ class SessionManager {
         if (file.startsWith('ud-')) {
           // Session is like ud-<sessionName>-browserName
           const sessionName = file.split('-')[1];
-          if (!sessions.has(sessionName))
-            sessions.set(sessionName, new Session(sessionName, options));
+          if (!sessions.has(sessionName)) {
+            const sessionConfig = sessionConfigFromArgs('0.0.61', sessionName, { _: [] });
+            sessions.set(sessionName, new Session(clientVersion, sessionName, sessionConfig));
+          }
         }
       } catch {
       }
     }
-    return new SessionManager(sessions, options);
+    return new SessionManager(clientVersion, sessions, args);
   }
 
-  async run(args: any): Promise<void> {
+  async run(args: MinimistArgs): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(sessionName, { ...this.options, ...args });
+      session = new Session(this.clientVersion, sessionName, sessionConfigFromArgs(this.clientVersion, sessionName, args));
       this.sessions.set(sessionName, session);
     }
 
-    for (const globalOption of ['browser', 'config', 'daemonVersion', 'extension', 'headed', 'help', 'isolated', 'session', 'version'])
+    for (const globalOption of ['browser', 'config', 'extension', 'headed', 'help', 'isolated', 'session', 'version'])
       delete args[globalOption];
     const result = await session.run(args);
     console.log(result.text);
@@ -359,14 +349,26 @@ class SessionManager {
     this.sessions.delete(sessionName);
   }
 
+  async restart(sessionName?: string): Promise<void> {
+    sessionName = this._resolveSessionName(sessionName);
+    const session = this.sessions.get(sessionName);
+    if (!session) {
+      console.log(`Session '${sessionName}' does not exist.`);
+      return;
+    }
+    await session.restart(session.config());
+    session.close();
+  }
+
   async configure(args: any): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
+    const sessionConfig = sessionConfigFromArgs(this.clientVersion, sessionName, args);
     if (!session) {
-      session = new Session(sessionName, this.options);
+      session = new Session(this.clientVersion, sessionName, sessionConfig);
       this.sessions.set(sessionName, session);
     }
-    await session.restart({ ...this.options, ...args });
+    await session.restart(sessionConfig);
     session.close();
   }
 
@@ -384,11 +386,17 @@ async function handleSessionCommand(sessionManager: SessionManager, subcommand: 
     const sessions = sessionManager.sessions;
     console.log('Sessions:');
     for (const session of sessions.values()) {
-      const liveMarker = await session.canConnect() ? ' (live)' : '';
-      console.log(`  ${session.name}${liveMarker}`);
+      const liveMarker = await session.canConnect() ? `[running] ` : '[stopped] ';
+      const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, needs restart` : '';
+      console.log(`  ${liveMarker}${session.name}${restartMarker}`);
     }
     if (sessions.size === 0)
       console.log('  (no sessions)');
+    return;
+  }
+
+  if (subcommand === 'restart') {
+    await sessionManager.restart(args._[1]);
     return;
   }
 
@@ -449,8 +457,9 @@ const booleanOptions = [
 ];
 
 export async function program(options: { version: string }) {
+  const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || options.version;
   const argv = process.argv.slice(2);
-  const args = require('minimist')(argv, { boolean: booleanOptions });
+  const args: MinimistArgs = require('minimist')(argv, { boolean: booleanOptions });
   for (const option of booleanOptions) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
@@ -460,7 +469,7 @@ export async function program(options: { version: string }) {
   const commandName = args._[0];
 
   if (args.version || args.v) {
-    console.log(options.version);
+    console.log(version);
     process.exit(0);
   }
 
@@ -474,13 +483,14 @@ export async function program(options: { version: string }) {
     }
     process.exit(0);
   }
+
   if (!command) {
     console.error(`Unknown command: ${commandName}\n`);
     console.log(help.global);
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create({ daemonVersion: options.version, ...args });
+  const sessionManager = await SessionManager.create(version, args);
   if (commandName.startsWith('session')) {
     const subcommand = args._[0].split('-').slice(1).join('-');
     await handleSessionCommand(sessionManager, subcommand, args);
@@ -502,15 +512,31 @@ export async function program(options: { version: string }) {
 
 const outputDir = path.join(process.cwd(), '.playwright-cli');
 
-function resolveConfigFile(configParam: string | undefined) {
-  const configFile = configParam || process.env.PLAYWRIGHT_CLI_CONFIG;
-  if (configFile)
-    return path.resolve(process.cwd(), configFile);
+function daemonSocketPath(sessionName: string): string {
+  const socketName = `${sessionName}.sock`;
+  if (os.platform() === 'win32')
+    return `\\\\.\\pipe\\${installationDirHash}-${socketName}`;
+  const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
+  return path.join(socketsDir, installationDirHash, socketName);
+}
 
+function sessionConfigFromArgs(version: string, sessionName: string, args: MinimistArgs): SessionConfig {
+  let config = args.config;
   try {
-    if (fs.existsSync(path.resolve(process.cwd(), 'playwright-cli.json')))
-      return path.resolve(process.cwd(), 'playwright-cli.json');
+    if (!config && fs.existsSync('playwright-cli.json'))
+      config = path.resolve('playwright-cli.json');
   } catch {
   }
-  return undefined;
+  return {
+    version,
+    socketPath: daemonSocketPath(sessionName),
+    cli: {
+      headed: args.headed,
+      extension: args.extension,
+      browser: args.browser,
+      isolated: args.isolated,
+      config,
+    },
+    userDataDirPrefix: path.resolve(daemonProfilesDir, `ud-${sessionName}`),
+  };
 }

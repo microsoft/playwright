@@ -29,6 +29,7 @@ import { parseCommand } from './command';
 
 import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
+import type { SessionConfig } from './program';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -42,14 +43,11 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
-/**
- * Start a daemon server listening on Unix domain socket (Unix) or named pipe (Windows).
- */
 export async function startMcpDaemonServer(
-  socketPath: string,
+  sessionConfig: SessionConfig,
   serverBackendFactory: ServerBackendFactory,
-  daemonVersion: string
 ): Promise<string> {
+  const { socketPath, version } = sessionConfig;
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
     daemonDebug(`Socket already exists, removing: ${socketPath}`);
@@ -85,25 +83,9 @@ export async function startMcpDaemonServer(
 
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
-    const connection = new SocketConnection(socket, daemonVersion);
+    const connection = new SocketConnection(socket, version);
     connection.onclose = () => {
       daemonDebug('client disconnected');
-    };
-    connection.onversionerror = (id, e) => {
-      if (daemonVersion === 'undefined-for-test')
-        return false;
-
-      if (semverGreater(daemonVersion, e.received)) {
-        // eslint-disable-next-line no-console
-        connection.send({ id, error: `Client is too old: daemon is ${daemonVersion}, client is ${e.received}.` }).catch(e => console.error(e));
-      } else {
-        gracefullyProcessExitDoNotHang(0, async () => {
-          // eslint-disable-next-line no-console
-          await connection.send({ id, error: `Daemon is too old: daemon is ${daemonVersion}, client is ${e.received}. Stopping it.` }).catch(e => console.error(e));
-          server.close();
-        });
-      }
-      return true;
     };
     connection.onmessage = async message => {
       const { id, method, params } = message;
@@ -169,18 +151,4 @@ function parseCliCommand(args: Record<string, string> & { _: string[] }): { tool
   if (!command)
     throw new Error('Command is required');
   return parseCommand(command, args);
-}
-
-function semverGreater(a: string, b: string): boolean {
-  a = a.replace(/-next$/, '');
-  b = b.replace(/-next$/, '');
-  const aParts = a.split('.').map(Number);
-  const bParts = b.split('.').map(Number);
-  for (let i = 0; i < 4; i++) {
-    if (aParts[i] > bParts[i])
-      return true;
-    if (aParts[i] < bParts[i])
-      return false;
-  }
-  return false;
 }

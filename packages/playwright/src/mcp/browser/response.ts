@@ -142,6 +142,8 @@ export class Response {
 
     const text: string[] = [];
     for (const section of sections) {
+      if (!section.content.length)
+        continue;
       text.push(`### ${section.title}`);
       if (section.codeframe)
         text.push(`\`\`\`${section.codeframe}`);

@@ -77,10 +77,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
-      .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
-      .addOption(new ProgramOption('--daemon-data-dir <path>', 'path to the daemon data directory.').hideHelp())
-      .addOption(new ProgramOption('--daemon-headed', 'run daemon in headed mode').hideHelp())
-      .addOption(new ProgramOption('--daemon-version <version>', 'version of this daemon').hideHelp())
+      .addOption(new ProgramOption('--daemon-session <path>', 'path to the daemon config.').hideHelp())
       .action(async options => {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
@@ -110,7 +107,7 @@ export function decorateCommand(command: Command, version: string) {
         const browserContextFactory = contextFactory(config);
         const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
-        if (options.daemon) {
+        if (config.sessionConfig) {
           const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright',
@@ -118,7 +115,7 @@ export function decorateCommand(command: Command, version: string) {
             version,
             create: () => new BrowserServerBackend(config, contextFactory, { allTools: true })
           };
-          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory, options.daemonVersion);
+          const socketPath = await startMcpDaemonServer(config.sessionConfig, serverBackendFactory);
           console.error(`Daemon server listening on ${socketPath}`);
           return;
         }
