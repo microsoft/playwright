@@ -168,7 +168,6 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     const userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
-    await fs.promises.mkdir(userDataDir, { recursive: true });
 
     // Use default user profile with extension.
     if (!result.extension)
