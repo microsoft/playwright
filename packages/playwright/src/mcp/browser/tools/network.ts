@@ -37,9 +37,10 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      const rendered = await renderRequest(request, params.includeStatic);
-      if (rendered)
-        text.push(rendered);
+      const rendered = await renderRequest(request);
+      if (!params.includeStatic && isStaticRequest(request) && rendered.isSuccessful)
+        continue;
+      text.push(rendered.text);
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -60,19 +61,28 @@ const networkClear = defineTabTool({
   },
 });
 
-async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
-  const response = request.existingResponse();
-  const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
-  const isSuccessfulRequest = !response || response.status() < 400;
+export function hasResponseOrFailed(request: playwright.Request): boolean {
+  return (request as Request)._hasResponse || request.failure() !== null;
+}
 
-  if (isStaticRequest && isSuccessfulRequest && !includeStatic)
-    return undefined;
+export function isStaticRequest(request: playwright.Request): boolean {
+  return ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
+}
+
+export async function renderRequest(request: playwright.Request): Promise<{ text: string, isSuccessful: boolean }> {
+  const response = (request as Request)._hasResponse ? await request.response() : undefined;
+  const isSuccessful = !!response && response.status() < 400;
 
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
   if (response)
     result.push(`=> [${response.status()}] ${response.statusText()}`);
-  return result.join(' ');
+  else
+    result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
+  return {
+    text: result.join(' '),
+    isSuccessful,
+  };
 }
 
 export default [

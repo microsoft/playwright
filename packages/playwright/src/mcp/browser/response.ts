@@ -217,21 +217,21 @@ export class Response {
     }
 
     // Handle tab log
-    const text: string[] = renderLogChunk(tabSnapshot?.logChunk, 'console', file => this._computRelativeTo(file));
+    const text: string[] = tabSnapshot?.logs?.map(log => renderLogChunk(log, log.type, file => this._computRelativeTo(file))).flat() ?? [];
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console' && !tabSnapshot.logChunk) {
+        if (event.type === 'console' && this._context.config.outputMode !== 'file') {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {
-
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
         } else if (event.type === 'download-finish') {
           text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
         }
       }
     }
-    addSection('Events', text);
+    if (text.length)
+      addSection('Events', text);
     return sections;
   }
 }
