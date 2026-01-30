@@ -602,9 +602,13 @@ test.describe('isolated', () => {
   test('should not save user data', async ({ cli, server, mcpBrowser }, testInfo) => {
     await cli('open', server.HELLO_WORLD, '--isolated');
     const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
-    expect(fs.existsSync(dataDir)).toBe(true);
-    const listFiles = await fs.promises.readdir(dataDir);
-    expect(listFiles).toEqual([]);
+    expect(fs.existsSync(dataDir)).toBe(false);
+    const sessionFile = testInfo.outputPath('daemon', 'default.session');
+    expect(fs.existsSync(sessionFile)).toBe(true);
+    const sessionOptions = JSON.parse(await fs.promises.readFile(sessionFile, 'utf-8'));
+    expect(sessionOptions).toEqual(expect.objectContaining({
+      isolated: true,
+    }));
 
     const { output: listOutput } = await cli('session-list');
     expect(listOutput).toContain('Sessions:');

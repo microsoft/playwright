@@ -115,12 +115,13 @@ class Session {
     await this.stop();
 
     const dataDirs = await fs.promises.readdir(daemonProfilesDir).catch(() => []);
-    const matchingDirs = dataDirs.filter(dir => dir.startsWith(`ud-${this.name}-`));
-    if (matchingDirs.length === 0) {
+    const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
+    if (matchingEntries.length === 0) {
       console.log(`No user data found for session '${this.name}'.`);
       return;
     }
-    for (const dir of matchingDirs) {
+
+    for (const dir of matchingEntries) {
       const userDataDir = path.resolve(daemonProfilesDir, dir);
       for (let i = 0; i < 5; i++) {
         try {
@@ -215,6 +216,9 @@ class Session {
     const isolatedArg = this._options.isolated ? [`--isolated`] : [];
     const browserArg = this._options.browser ? [`--browser=${this._options.browser}`] : [];
 
+    const sessionOptionsFile = path.resolve(daemonProfilesDir, `${this.name}.session`);
+    await fs.promises.writeFile(sessionOptionsFile, JSON.stringify({ ...this._options, _: undefined }, null, 2));
+
     const outLog = path.join(daemonProfilesDir, 'out.log');
     const errLog = path.join(daemonProfilesDir, 'err.log');
     const out = fs.openSync(outLog, 'w');
@@ -296,16 +300,24 @@ class SessionManager {
     const sessions = new Map<string, Session>([
       ['default', new Session('default', options)],
     ]);
-    try {
-      const files = await fs.promises.readdir(dir);
-      for (const file of files) {
+    const files = await fs.promises.readdir(dir).catch(() => []);
+    for (const file of files) {
+      try {
+        if (file.endsWith('.session')) {
+          const sessionName = path.basename(file, '.session');
+          sessions.set(sessionName, new Session(sessionName, options));
+          continue;
+        }
+
+        // Legacy session support.
         if (file.startsWith('ud-')) {
           // Session is like ud-<sessionName>-browserName
           const sessionName = file.split('-')[1];
-          sessions.set(sessionName, new Session(sessionName, options));
+          if (!sessions.has(sessionName))
+            sessions.set(sessionName, new Session(sessionName, options));
         }
+      } catch {
       }
-    } catch {
     }
     return new SessionManager(sessions, options);
   }
