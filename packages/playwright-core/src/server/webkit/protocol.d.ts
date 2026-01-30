@@ -7555,7 +7555,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
       /**
        * Browser context id.
        */
-      browserContextId: ContextID;
+      browserContextId?: ContextID;
     }
     export type clearMemoryCacheReturnValue = {
     }
