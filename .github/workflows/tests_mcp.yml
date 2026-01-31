@@ -23,7 +23,6 @@ env:
   # Force terminal colors. @see https://www.npmjs.com/package/colors
   FORCE_COLOR: 1
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1
-  PWDEBUGIMPL: 1
   DEBUG: pw:mcp:error
 
 jobs:
