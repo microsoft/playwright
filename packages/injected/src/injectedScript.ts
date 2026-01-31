@@ -269,7 +269,11 @@ export class InjectedScript {
   }
 
   generateSelectorSimple(targetElement: Element, options?: GenerateSelectorOptions): string {
-    return generateSelector(this, targetElement, { ...options, testIdAttributeName: this._testIdAttributeNameForStrictErrorAndConsoleCodegen }).selector;
+    return generateSelector(this, targetElement, { 
+      testIdAttributeName: this._testIdAttributeNameForStrictErrorAndConsoleCodegen,
+      omitSelectors: options?.omitSelectors || [],
+      ...options
+    }).selector;
   }
 
   querySelector(selector: ParsedSelector, root: Node, strict: boolean): Element | undefined {

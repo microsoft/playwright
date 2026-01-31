@@ -1078,6 +1078,7 @@ scheme.BrowserContextEnableRecorderParams = tObject({
   recorderMode: tOptional(tEnum(['default', 'api'])),
   pauseOnNextStatement: tOptional(tBoolean),
   testIdAttributeName: tOptional(tString),
+  omitSelectors: tOptional(tArray(tString)),
   launchOptions: tOptional(tAny),
   contextOptions: tOptional(tAny),
   device: tOptional(tString),

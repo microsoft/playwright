@@ -69,6 +69,7 @@ const kScoreThresholdForTextExpect = 1000;
 export type GenerateSelectorOptions = {
   testIdAttributeName: string;
   omitInternalEngines?: boolean;
+  omitSelectors?: string[];
   root?: Element | Document;
   forTextExpect?: boolean;
   multiple?: boolean;
@@ -229,6 +230,13 @@ function generateSelectorFor(cache: Cache, injectedScript: InjectedScript, targe
   return result;
 }
 
+function shouldOmitCSSId(options: InternalOptions): boolean {
+  if (options.noCSSId)
+    return true;
+  const omitSelectors = options.omitSelectors || [];
+  return omitSelectors.includes('id') || omitSelectors.includes('cssId');
+}
+
 function buildNoTextCandidates(injectedScript: InjectedScript, element: Element, options: InternalOptions): SelectorToken[] {
   const candidates: SelectorToken[] = [];
 
@@ -239,7 +247,7 @@ function buildNoTextCandidates(injectedScript: InjectedScript, element: Element,
         candidates.push({ engine: 'css', selector: `[${attr}=${quoteCSSAttributeValue(element.getAttribute(attr)!)}]`, score: kOtherTestIdScore });
     }
 
-    if (!options.noCSSId) {
+    if (!shouldOmitCSSId(options)) {
       const idAttr = element.getAttribute('id');
       if (idAttr && !isGuidLike(idAttr))
         candidates.push({ engine: 'css', selector: makeSelectorForId(idAttr), score: kCSSIdScore });
@@ -401,7 +409,7 @@ function cssFallback(injectedScript: InjectedScript, targetElement: Element, opt
     let bestTokenForLevel: string = '';
 
     // Element ID is the strongest signal, use it.
-    if (element.id && !options.noCSSId) {
+    if (element.id && !shouldOmitCSSId(options)) {
       const token = makeSelectorForId(element.id);
       const selector = uniqueCSSSelector(token);
       if (selector)

@@ -58,6 +58,7 @@ export type UIState = {
   ariaTemplate?: AriaTemplateNode;
   language: Language;
   testIdAttributeName: string;
+  omitSelectors?: string[];
   overlay: OverlayState;
 };
 
