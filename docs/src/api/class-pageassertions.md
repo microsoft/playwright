@@ -72,7 +72,11 @@ public class ExampleTests : PageTest
 * langs: java, js, csharp
 - returns: <[PageAssertions]>
 
-Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't contain `"error"`:
+Makes the assertion check for the opposite condition.
+
+**Usage**
+
+For example, this code tests that the page URL doesn't contain `"error"`:
 
 ```js
 await expect(page).not.toHaveURL('error');

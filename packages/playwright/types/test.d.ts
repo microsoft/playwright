@@ -7924,7 +7924,11 @@ interface AsymmetricMatchers {
  */
 interface GenericAssertions<R> {
   /**
-   * Makes the assertion check for the opposite condition. For example, the following code passes:
+   * Makes the assertion check for the opposite condition.
+   *
+   * **Usage**
+   *
+   * For example, the following code passes:
    *
    * ```js
    * const value = 1;
@@ -9435,8 +9439,11 @@ interface LocatorAssertions {
   }): Promise<void>;
 
   /**
-   * Makes the assertion check for the opposite condition. For example, this code tests that the Locator doesn't contain
-   * text `"error"`:
+   * Makes the assertion check for the opposite condition.
+   *
+   * **Usage**
+   *
+   * For example, this code tests that the Locator doesn't contain text `"error"`:
    *
    * ```js
    * await expect(locator).not.toContainText('error');
@@ -9633,8 +9640,11 @@ interface APIResponseAssertions {
   toBeOK(): Promise<void>;
 
   /**
-   * Makes the assertion check for the opposite condition. For example, this code tests that the response status is not
-   * successful:
+   * Makes the assertion check for the opposite condition.
+   *
+   * **Usage**
+   *
+   * For example, this code tests that the response status is not successful:
    *
    * ```js
    * await expect(response).not.toBeOK();
@@ -9756,8 +9766,11 @@ interface PageAssertions {
   }): Promise<void>;
 
   /**
-   * Makes the assertion check for the opposite condition. For example, this code tests that the page URL doesn't
-   * contain `"error"`:
+   * Makes the assertion check for the opposite condition.
+   *
+   * **Usage**
+   *
+   * For example, this code tests that the page URL doesn't contain `"error"`:
    *
    * ```js
    * await expect(page).not.toHaveURL('error');
