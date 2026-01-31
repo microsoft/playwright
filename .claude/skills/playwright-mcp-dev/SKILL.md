@@ -13,6 +13,7 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
 
 ## Testing
 - Run tests as `npm run ctest-mcp <category>`
+- Do not run test --debug
 
 # CLI
 
@@ -28,6 +29,7 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
 
 ## Testing
 - Run tests as `npm run ctest-mcp cli-<category>`
+- Do not run test --debug
 
 # Lint
-- run `npm run flint:mcp` to lint everything before commit
+- run `npm run flint` to lint everything before commit

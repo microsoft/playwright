@@ -589,6 +589,53 @@ const sessionStorageClear = declareCommand({
   toolParams: () => ({}),
 });
 
+// Network
+
+const routeMock = declareCommand({
+  name: 'route',
+  description: 'Mock network requests matching a URL pattern',
+  category: 'network',
+  args: z.object({
+    pattern: z.string().describe('URL pattern to match (e.g., "**/api/users")'),
+  }),
+  options: z.object({
+    status: z.number().optional().describe('HTTP status code (default: 200)'),
+    body: z.string().optional().describe('Response body (text or JSON string)'),
+    ['content-type']: z.string().optional().describe('Content-Type header'),
+    ['add-headers']: z.string().optional().describe('JSON object of headers to add'),
+    ['remove-headers']: z.string().optional().describe('Comma-separated header names to remove'),
+  }),
+  toolName: 'browser_route',
+  toolParams: ({ pattern, status, body, ['content-type']: contentType, ['add-headers']: addHeaders, ['remove-headers']: removeHeaders }) => ({
+    pattern,
+    status,
+    body,
+    contentType,
+    addHeaders,
+    removeHeaders,
+  }),
+});
+
+const routeList = declareCommand({
+  name: 'route-list',
+  description: 'List all active network routes',
+  category: 'network',
+  args: z.object({}),
+  toolName: 'browser_route_list',
+  toolParams: () => ({}),
+});
+
+const unroute = declareCommand({
+  name: 'unroute',
+  description: 'Remove routes matching a pattern (or all routes)',
+  category: 'network',
+  args: z.object({
+    pattern: z.string().optional().describe('URL pattern to unroute (omit to remove all)'),
+  }),
+  toolName: 'browser_unroute',
+  toolParams: ({ pattern }) => ({ pattern }),
+});
+
 // Export
 
 const screenshot = declareCommand({
@@ -828,6 +875,11 @@ const commandsArray: AnyCommandSchema[] = [
   sessionStorageSet,
   sessionStorageDelete,
   sessionStorageClear,
+
+  // network category
+  routeMock,
+  routeList,
+  unroute,
 
   // config category
   config,
