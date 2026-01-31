@@ -26,6 +26,7 @@ import { firstRootPath } from '../sdk/server';
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
+import type { SessionConfig } from '../terminal/program';
 
 type ViewportSize = { width: number; height: number };
 
@@ -42,9 +43,7 @@ export type CLIOptions = {
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
-  daemon?: string;
-  daemonDataDir?: string;
-  daemonHeaded?: boolean;
+  daemonSession?: string;
   device?: string;
   extension?: boolean;
   executablePath?: string;
@@ -107,22 +106,6 @@ export const defaultConfig: FullConfig = {
   },
 };
 
-const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
-  browser: {
-    userDataDir: '<daemon-data-dir>',
-    launchOptions: {
-      headless: !cliOptions.daemonHeaded,
-    },
-    contextOptions: {
-      viewport: cliOptions.daemonHeaded ? null : { width: 1280, height: 720 },
-    },
-  },
-  outputMode: 'file',
-  snapshot: {
-    mode: 'full',
-  },
-});
-
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
@@ -146,6 +129,8 @@ export type FullConfig = Config & {
     navigation: number;
   },
   skillMode?: boolean;
+  configFile?: string;
+  sessionConfig?: SessionConfig;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -153,25 +138,27 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 }
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
-  const configInFile = await loadConfig(cliOptions.config);
   const envOverrides = configFromEnv();
+  const daemonOverrides = await configForDaemonSession(cliOptions);
   const cliOverrides = configFromCLIOptions(cliOptions);
-  let result = cliOptions.daemon ? defaultDaemonConfig(cliOptions) : defaultConfig;
+  const configFile = cliOverrides.configFile ?? envOverrides.configFile ?? daemonOverrides.configFile;
+  const configInFile = await loadConfig(configFile);
+
+  let result = defaultConfig;
   result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
 
-  if (cliOptions.daemon)
+  if (daemonOverrides.sessionConfig) {
     result.skillMode = true;
 
-  if (result.browser.userDataDir === '<daemon-data-dir>') {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    const userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
-
-    // Use default user profile with extension.
-    if (!result.extension)
+    if (!result.extension && !result.browser.userDataDir && daemonOverrides.sessionConfig.userDataDirPrefix) {
+      // No custom value provided, use the daemon data dir.
+      const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+      const userDataDir = `${daemonOverrides.sessionConfig.userDataDirPrefix}-${browserToken}`;
       result.browser.userDataDir = userDataDir;
+    }
   }
 
   if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
@@ -181,7 +168,15 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
       result.browser.launchOptions.chromiumSandbox = true;
   }
 
+  result.configFile = configFile;
+  result.sessionConfig = daemonOverrides.sessionConfig;
+
+  // Daemon has different defaults.
+  if (result.sessionConfig && result.browser.launchOptions.headless !== false)
+    result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
+
   await validateConfig(result);
+
   return result;
 }
 
@@ -202,7 +197,7 @@ async function validateConfig(config: FullConfig): Promise<void> {
     throw new Error('saveVideo is not supported when sharedBrowserContext is true');
 }
 
-export function configFromCLIOptions(cliOptions: CLIOptions): Config {
+export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
@@ -269,7 +264,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.grantPermissions)
     contextOptions.permissions = cliOptions.grantPermissions;
 
-  const result: Config = {
+  const config: Config = {
     browser: {
       browserName,
       isolated: cliOptions.isolated,
@@ -313,10 +308,10 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     },
   };
 
-  return result;
+  return { ...config, configFile: cliOptions.config };
 }
 
-function configFromEnv(): Config {
+function configFromEnv(): Config & { configFile?: string } {
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
@@ -362,6 +357,23 @@ function configFromEnv(): Config {
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   return configFromCLIOptions(options);
+}
+
+async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & { configFile?: string, sessionConfig?: SessionConfig }> {
+  if (!cliOptions.daemonSession)
+    return {};
+
+  const sessionConfig = await fs.promises.readFile(cliOptions.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
+  const config = configFromCLIOptions({
+    config: sessionConfig.cli.config,
+    browser: sessionConfig.cli.browser,
+    isolated: sessionConfig.cli.isolated,
+    headless: !sessionConfig.cli.headed,
+    extension: sessionConfig.cli.extension,
+    outputMode: 'file',
+    snapshotMode: 'full',
+  });
+  return { ...config, sessionConfig };
 }
 
 async function loadConfig(configFile: string | undefined): Promise<Config> {

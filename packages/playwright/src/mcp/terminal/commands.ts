@@ -26,10 +26,10 @@ const open = declareCommand({
   description: 'Open URL',
   category: 'core',
   args: z.object({
-    url: z.string().describe('The URL to navigate to'),
+    url: z.string().optional().describe('The URL to navigate to'),
   }),
   toolName: 'browser_navigate',
-  toolParams: ({ url }) => ({ url }),
+  toolParams: ({ url }) => ({ url: url || 'about:blank' }),
 });
 
 const close = declareCommand({
@@ -498,6 +498,17 @@ const sessionList = declareCommand({
   toolParams: () => ({}),
 });
 
+const sessionRestart = declareCommand({
+  name: 'session-restart',
+  description: 'Restart session',
+  category: 'session',
+  args: z.object({
+    name: z.string().optional().describe('Name of the session to restart. If omitted, current session is restarted.'),
+  }),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const sessionStop = declareCommand({
   name: 'session-stop',
   description: 'Stop session',
@@ -617,6 +628,7 @@ const commandsArray: AnyCommandSchema[] = [
   // session category
   sessionList,
   sessionStop,
+  sessionRestart,
   sessionStopAll,
   sessionDelete,
 ];

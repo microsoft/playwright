@@ -442,13 +442,13 @@ test.describe('session', () => {
   test('session-list', async ({ cli, server }) => {
     const { output: emptyOutput } = await cli('session-list');
     expect(emptyOutput).toContain('Sessions:');
-    expect(emptyOutput).toContain('  default');
+    expect(emptyOutput).toContain('  (no sessions)');
 
     await cli('open', server.HELLO_WORLD);
 
     const { output: listOutput } = await cli('session-list');
     expect(listOutput).toContain('Sessions:');
-    expect(listOutput).toContain('default (live)');
+    expect(listOutput).toContain('  [running] default');
   });
 
   test('session-stop', async ({ cli, server }) => {
@@ -458,7 +458,7 @@ test.describe('session', () => {
     expect(output).toContain(`Session 'default' stopped.`);
 
     const { output: listOutput } = await cli('session-list');
-    expect(listOutput).not.toContain('(live)');
+    expect(listOutput).toContain('[stopped] default');
   });
 
   test('session-stop named session', async ({ cli, server }) => {
@@ -478,13 +478,13 @@ test.describe('session', () => {
     await cli('open', '--session=session2', server.HELLO_WORLD);
 
     const { output: listBefore } = await cli('session-list');
-    expect(listBefore).toContain('session1 (live)');
-    expect(listBefore).toContain('session2 (live)');
+    expect(listBefore).toContain('[running] session1');
+    expect(listBefore).toContain('[running] session2');
 
     await cli('session-stop-all');
 
     const { output: listAfter } = await cli('session-list');
-    expect(listAfter).not.toContain('(live)');
+    expect(listAfter).not.toContain('[running]');
   });
 
   test('session-delete', async ({ cli, server, mcpBrowser }, testInfo) => {
@@ -520,17 +520,32 @@ test.describe('session', () => {
     await cli('open', server.HELLO_WORLD);
 
     const { output: listBefore } = await cli('session-list');
-    expect(listBefore).toContain('default (live)');
+    expect(listBefore).toContain('[running] default');
 
     // Close the browser - this will cause the daemon to exit so the command may fail
     await cli('run-code', '() => page.context().browser().close()').catch(() => {});
 
-    await expect.poll(() => cli('session-list').then(r => r.output)).not.toContain('(live)');
+    await expect.poll(() => cli('session-list').then(r => r.output)).toContain('[stopped]');
   });
-});
 
-test.describe('config', () => {
-  test('should work', async ({ cli, server }, testInfo) => {
+  test('session restart', async ({ cli, server }, testInfo) => {
+    const config = { browser: { contextOptions: { viewport: { width: 700, height: 500 } } } };
+    const configPath = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+    {
+      await cli('open', server.HELLO_WORLD, '--config=' + configPath);
+      const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+      expect(output).toContain('700x500');
+      await cli('close');
+    }
+    {
+      await cli('open', server.HELLO_WORLD);
+      const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+      expect(output).toContain('700x500');
+    }
+  });
+
+  test('config should work', async ({ cli, server }, testInfo) => {
     // Start a session with default config
     await cli('open', server.PREFIX);
     const { output: beforeOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
@@ -556,39 +571,17 @@ test.describe('config', () => {
 });
 
 test.describe('versions', () => {
-  test('old client', async ({ cli, server }) => {
-    await cli('config', '--daemonVersion=2.0.0');
-    const { error, exitCode } = await cli('open', server.PREFIX);
-    expect(exitCode).toBe(1);
-    expect(error).toMatch(/Client is too old: daemon is 2\.0\.0, client is 1.*/);
-  });
+  test('old client', async ({ cli }) => {
+    await cli('open', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '2.0.0' } });
+    const { output: output1 } = await cli('session-list');
+    expect(output1).toContain('  [running] default - v2.0.0, needs restart');
 
-  test('old daemon', async ({ cli, server }) => {
-    await cli('config');
-    {
-      const { error, exitCode } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
-      expect(exitCode).toBe(1);
-      expect(error).toMatch(/Daemon is too old: daemon is 1.*, client is 2\.0\.0. Stopping it/);
-    }
-    {
-      const { output, exitCode } = await cli('open', server.PREFIX, '--daemonVersion=2.0.0');
-      expect(exitCode).toBe(0);
-      expect(output).toContain('Daemon for `default` session started with pid');
-      await cli('session-stop', '--daemonVersion=2.0.0');
-    }
-  });
-
-  test('very old daemon', async ({ cli, server }) => {
-    {
-      const { exitCode } = await cli('open', server.PREFIX, '--daemonVersion=undefined-for-test');
-      expect(exitCode).toBe(0);
-    }
-
-    {
-      const { exitCode, error } = await cli('open', server.PREFIX);
-      expect(exitCode).toBe(1);
-      expect(error).toContain('Daemon is older than client, killing it.');
-    }
+    await cli('session-stop');
+    const { output: output2 } = await cli('session-list');
+    expect(output2).toContain('  [stopped] default - v2.0.0, needs restart');
+    await cli('session-delete');
+    const { output: output3 } = await cli('session-list');
+    expect(output3).toContain('  (no sessions)');
   });
 });
 
@@ -612,9 +605,9 @@ test.describe('parsing', () => {
   });
 
   test('missing argument', async ({ cli, server }) => {
-    const { error, exitCode } = await cli('open');
+    const { error, exitCode } = await cli('keyup');
     expect(exitCode).toBe(1);
-    expect(error).toContain(`error: 'url' argument: expected string, received undefined`);
+    expect(error).toContain(`error: 'key' argument: expected string, received undefined`);
   });
 
   test('wrong argument type', async ({ cli, server }) => {
@@ -647,13 +640,18 @@ test.describe('isolated', () => {
     const sessionFile = testInfo.outputPath('daemon', 'default.session');
     expect(fs.existsSync(sessionFile)).toBe(true);
     const sessionOptions = JSON.parse(await fs.promises.readFile(sessionFile, 'utf-8'));
-    expect(sessionOptions).toEqual(expect.objectContaining({
-      isolated: true,
-    }));
+    expect(sessionOptions).toEqual({
+      cli: {
+        isolated: true,
+      },
+      socketPath: expect.any(String),
+      userDataDirPrefix: expect.any(String),
+      version: expect.any(String),
+    });
 
     const { output: listOutput } = await cli('session-list');
     expect(listOutput).toContain('Sessions:');
-    expect(listOutput).toContain('default (live)');
+    expect(listOutput).toContain('  [running] default');
   });
 });
 
