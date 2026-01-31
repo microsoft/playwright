@@ -106,7 +106,7 @@ playwright-cli run-code "async page => {
 ```bash
 # Work with iframe
 playwright-cli run-code "async page => {
-  const frame = page.frameLocator('iframe#my-iframe');
+  const frame = page.locator('iframe#my-iframe').contentFrame();
   await frame.locator('button').click();
 }"
 
