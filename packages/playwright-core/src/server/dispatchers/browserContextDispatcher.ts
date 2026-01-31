@@ -37,7 +37,6 @@ import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 
-import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { Request, Response, RouteHandler } from '../network';
@@ -96,18 +95,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context = context;
     // Note: when launching persistent context, or connecting to an existing browser,
     // dispatcher is created very late, so we can already have pages, videos and everything else.
-
-    const onVideo = (artifact: Artifact) => {
-      // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
-      // after closing the context. We use |scope| for it.
-      const artifactDispatcher = ArtifactDispatcher.from(parentScope, artifact);
-      this._dispatchEvent('video', { artifact: artifactDispatcher });
-    };
-    this.addObjectListener(BrowserContext.Events.VideoStarted, onVideo);
-    for (const video of context._browser._idToVideo.values()) {
-      if (video.context === context)
-        onVideo(video.artifact);
-    }
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });

@@ -63,7 +63,6 @@ const BrowserContextEvent = {
   RequestFulfilled: 'requestfulfilled',
   RequestContinued: 'requestcontinued',
   BeforeClose: 'beforeclose',
-  VideoStarted: 'videostarted',
   RecorderEvent: 'recorderevent',
 } as const;
 
@@ -80,7 +79,6 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.RequestFulfilled]: [request: network.Request];
   [BrowserContextEvent.RequestContinued]: [request: network.Request];
   [BrowserContextEvent.BeforeClose]: [];
-  [BrowserContextEvent.VideoStarted]: [artifact: Artifact];
   [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
 };
 

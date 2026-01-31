@@ -99,7 +99,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
-  private _video: Video | null = null;
+  private _video: Video;
   readonly _opener: Page | null;
   private _closeReason: string | undefined;
   _closeWasCalled: boolean = false;
@@ -133,6 +133,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._viewportSize = initializer.viewportSize;
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
+    this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -147,10 +148,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._channel.on('locatorHandlerTriggered', ({ uid }) => this._onLocatorHandlerTriggered(uid));
     this._channel.on('route', ({ route }) => this._onRoute(Route.from(route)));
     this._channel.on('webSocketRoute', ({ webSocketRoute }) => this._onWebSocketRoute(WebSocketRoute.from(webSocketRoute)));
-    this._channel.on('video', ({ artifact }) => {
-      const artifactObject = Artifact.from(artifact);
-      this._forceVideo()._artifactReady(artifactObject);
-    });
     this._channel.on('viewportSizeChanged', ({ viewportSize }) => this._viewportSize = viewportSize);
     this._channel.on('webSocket', ({ webSocket }) => this.emit(Events.Page.WebSocket, WebSocket.from(webSocket)));
     this._channel.on('worker', ({ worker }) => this._onWorker(Worker.from(worker)));
@@ -282,17 +279,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  private _forceVideo(): Video {
-    if (!this._video)
-      this._video = new Video(this, this._connection);
-    return this._video;
-  }
-
   video(): Video {
-    // Note: we are creating Video object lazily, because we do not know
-    // BrowserContextOptions when constructing the page - it is assigned
-    // too late during launchPersistentContext.
-    return this._forceVideo();
+    return this._video;
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {

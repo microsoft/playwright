@@ -26,7 +26,6 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { TargetClosedError } from '../errors';
-import { debugLogger } from '../utils/debugLogger';
 
 import type { Progress } from '../progress';
 import type { FFBrowserContext } from './ffBrowser';
@@ -52,7 +51,6 @@ export class FFPage implements PageDelegate {
   private readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _eventListeners: RegisteredListener[];
   private _workers = new Map<string, { frameId: string, session: FFSession }>();
-  private _screencastId: string | undefined;
   private _initScripts: { initScript: InitScript, worldName?: string }[] = [];
 
   constructor(session: FFSession, browserContext: FFBrowserContext, opener: FFPage | null) {
@@ -98,23 +96,18 @@ export class FFPage implements PageDelegate {
 
     ];
 
-    const screencast = this._page.screencast;
-    const videoOptions = screencast.launchAutomaticVideoRecorder();
-    if (videoOptions)
-      screencast.startVideoRecording(videoOptions).catch(e => debugLogger.log('error', e));
+    const promises: Promise<any>[] = [];
 
-    this._session.once('Page.ready', () => {
-      if (this._reportedAsNew)
-        return;
-      this._reportedAsNew = true;
-      this._page.reportAsNew(this._opener?._page);
-    });
-    // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
-    // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._markAsError(e));
+    const videoOptions = this._page.screencast.launchAutomaticVideoRecorder();
+    if (videoOptions)
+      promises.push(this._page.screencast.startVideoRecording(videoOptions));
+    promises.push(this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME));
+    promises.push(new Promise(f => this._session.once('Page.ready', f)));
+
+    Promise.all(promises).then(() => this._reportAsNew(), error => this._reportAsNew(error));
   }
 
-  async _markAsError(error: Error) {
+  _reportAsNew(error?: Error) {
     // Same error may be reported twice: channel disconnected and session.send fails.
     if (this._reportedAsNew)
       return;
@@ -318,7 +311,7 @@ export class FFPage implements PageDelegate {
 
 
   didClose() {
-    this._markAsError(new TargetClosedError(this._page.closeReason()));
+    this._reportAsNew(new TargetClosedError(this._page.closeReason()));
     this._session.dispose();
     eventsHelper.removeEventListeners(this._eventListeners);
     this._networkManager.dispose();

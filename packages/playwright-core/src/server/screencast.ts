@@ -61,7 +61,7 @@ export class Screencast {
   // and it is equally important to send Screencast.startScreencast before sending Target.resume.
   launchAutomaticVideoRecorder(): types.VideoOptions | undefined {
     const recordVideo = this._page.browserContext._options.recordVideo;
-    if (!recordVideo)
+    if (!recordVideo || this._page.isStorageStatePage)
       return;
     // validateBrowserContextOptions ensures correct video size.
     return this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
@@ -92,16 +92,12 @@ export class Screencast {
     const videoId = this._videoId;
     assert(videoId);
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
-    const gotFirstFrame = new Promise(f => this._page.once(Page.Events.ScreencastFrame, f));
     await this._startScreencast(this._videoRecorder, {
       quality: 90,
       width: options.width,
       height: options.height,
     });
-    // Wait for the first frame before reporting video to the client.
-    gotFirstFrame.then(() => {
-      this._page.browserContext._browser._videoStarted(this._page.browserContext, videoId, options.outputFile, this._page.waitForInitializedOrError());
-    });
+    return this._page.browserContext._browser._videoStarted(this._page, videoId, options.outputFile);
   }
 
   async stopVideoRecording(): Promise<void> {
@@ -127,8 +123,7 @@ export class Screencast {
       throw new Error('Video is already being recorded');
     const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
     const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
-    await this.startVideoRecording(videoOptions);
-    return { path: videoOptions.outputFile };
+    return await this.startVideoRecording(videoOptions);
   }
 
   async stopExplicitVideoRecording() {

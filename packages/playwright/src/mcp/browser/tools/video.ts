@@ -54,7 +54,8 @@ const stopVideo = defineTabTool({
 
   handle: async (tab, params, response) => {
     const resolvedFile = await response.resolveFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await tab.page.video().stop({ path: resolvedFile.fileName });
+    await tab.page.video().stop();
+    await tab.page.video().saveAs(resolvedFile.fileName);
     await response.addFileResult(resolvedFile, null);
   },
 });

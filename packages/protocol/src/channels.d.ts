@@ -1580,7 +1580,6 @@ export interface BrowserContextEventTarget {
   on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: BrowserContextWebSocketRouteEvent) => void): this;
-  on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
   on(event: 'request', callback: (params: BrowserContextRequestEvent) => void): this;
   on(event: 'requestFailed', callback: (params: BrowserContextRequestFailedEvent) => void): this;
@@ -1657,9 +1656,6 @@ export type BrowserContextRouteEvent = {
 };
 export type BrowserContextWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
-};
-export type BrowserContextVideoEvent = {
-  artifact: ArtifactChannel,
 };
 export type BrowserContextServiceWorkerEvent = {
   worker: WorkerChannel,
@@ -2029,7 +2025,6 @@ export interface BrowserContextEvents {
   'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
   'webSocketRoute': BrowserContextWebSocketRouteEvent;
-  'video': BrowserContextVideoEvent;
   'serviceWorker': BrowserContextServiceWorkerEvent;
   'request': BrowserContextRequestEvent;
   'requestFailed': BrowserContextRequestFailedEvent;
@@ -2047,6 +2042,7 @@ export type PageInitializer = {
   },
   isClosed: boolean,
   opener?: PageChannel,
+  video?: ArtifactChannel,
 };
 export interface PageEventTarget {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
@@ -2060,7 +2056,6 @@ export interface PageEventTarget {
   on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
-  on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
 }
@@ -2143,9 +2138,6 @@ export type PageRouteEvent = {
 };
 export type PageWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
-};
-export type PageVideoEvent = {
-  artifact: ArtifactChannel,
 };
 export type PageWebSocketEvent = {
   webSocket: WebSocketChannel,
@@ -2618,7 +2610,7 @@ export type PageVideoStartOptions = {
   },
 };
 export type PageVideoStartResult = {
-  path: string,
+  artifact: ArtifactChannel,
 };
 export type PageVideoStopParams = {};
 export type PageVideoStopOptions = {};
@@ -2679,7 +2671,6 @@ export interface PageEvents {
   'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
   'route': PageRouteEvent;
   'webSocketRoute': PageWebSocketRouteEvent;
-  'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;
 }

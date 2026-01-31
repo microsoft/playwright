@@ -1500,10 +1500,6 @@ BrowserContext:
       parameters:
         webSocketRoute: WebSocketRoute
 
-    video:
-      parameters:
-        artifact: Artifact
-
     serviceWorker:
       parameters:
         worker: Worker
@@ -1558,6 +1554,7 @@ Page:
         height: int
     isClosed: boolean
     opener: Page?
+    video: Artifact?
 
   commands:
 
@@ -2039,7 +2036,7 @@ Page:
             width: int
             height: int
       returns:
-        path: string
+        artifact: Artifact
 
     videoStop:
       title: Stop video recording
@@ -2130,10 +2127,6 @@ Page:
     webSocketRoute:
       parameters:
         webSocketRoute: WebSocketRoute
-
-    video:
-      parameters:
-        artifact: Artifact
 
     webSocket:
       parameters:

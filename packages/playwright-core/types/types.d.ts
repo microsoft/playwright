@@ -4808,8 +4808,8 @@ export interface Page {
   /**
    * Video object associated with this page. Can be used to control video recording with
    * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
-   * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop), or to access the video file when
-   * using the `recordVideo` context option.
+   * [video.stop()](https://playwright.dev/docs/api/class-video#video-stop), or to access the video file when using the
+   * `recordVideo` context option.
    */
   video(): Video;
 
@@ -21835,13 +21835,14 @@ export interface Tracing {
  * ```
  *
  * Alternatively, you can use [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
- * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop) to record video manually. This
- * approach is mutually exclusive with the `recordVideo` option.
+ * [video.stop()](https://playwright.dev/docs/api/class-video#video-stop) to record video manually. This approach is
+ * mutually exclusive with the `recordVideo` option.
  *
  * ```js
  * await page.video().start();
  * // ... perform actions ...
- * await page.video().stop({ path: 'video.webm' });
+ * await page.video().stop();
+ * await page.video().saveAs('video.webm');
  * ```
  *
  */
@@ -21897,16 +21898,11 @@ export interface Video {
 
   /**
    * Stops video recording started with
-   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and either saves or discards the
-   * video file.
-   * @param options
+   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start). Use
+   * [video.path()](https://playwright.dev/docs/api/class-video#video-path) or
+   * [video.saveAs(path)](https://playwright.dev/docs/api/class-video#video-save-as) methods to access the video file.
    */
-  stop(options?: {
-    /**
-     * Path where the video should be saved.
-     */
-    path?: string;
-  }): Promise<void>;
+  stop(): Promise<void>;
 }
 
 /**
