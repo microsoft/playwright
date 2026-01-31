@@ -215,6 +215,33 @@ const uncheck = defineTabTool({
   },
 });
 
+const setCheckedSchema = elementSchema.extend({
+  checked: z.boolean().describe('Whether the checkbox or radio button should be checked'),
+});
+
+const setChecked = defineTabTool({
+  capability: 'core',
+
+  schema: {
+    name: 'browser_set_checked',
+    title: 'Check or uncheck',
+    description: 'Set the checked state of a checkbox or radio button',
+    inputSchema: setCheckedSchema,
+    type: 'input',
+  },
+
+  handle: async (tab, params, response) => {
+    response.setIncludeSnapshot();
+
+    const { locator, resolved } = await tab.refLocator(params);
+    response.addCode(`await page.${resolved}.setChecked(${params.checked});`);
+
+    await tab.waitForCompletion(async () => {
+      await locator.setChecked(params.checked);
+    });
+  },
+});
+
 export default [
   snapshot,
   click,
@@ -224,4 +251,5 @@ export default [
   pickLocator,
   check,
   uncheck,
+  setChecked,
 ];
