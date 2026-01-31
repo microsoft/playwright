@@ -452,7 +452,7 @@ const booleanOptions = [
   'extension',
   'headed',
   'help',
-  'isolated',
+  'in-memory',
   'version',
 ];
 
@@ -534,7 +534,7 @@ function sessionConfigFromArgs(version: string, sessionName: string, args: Minim
       headed: args.headed,
       extension: args.extension,
       browser: args.browser,
-      isolated: args.isolated,
+      isolated: args['in-memory'],
       config,
     },
     userDataDirPrefix: path.resolve(daemonProfilesDir, `ud-${sessionName}`),
