@@ -94,6 +94,14 @@ playwright-cli tab-close 2
 playwright-cli tab-select 0
 ```
 
+### Storage
+
+```bash
+playwright-cli state-save
+playwright-cli state-save auth.json
+playwright-cli state-load auth.json
+```
+
 ### DevTools
 
 ```bash
@@ -109,8 +117,9 @@ playwright-cli video-stop video.webm
 
 ### Configuration
 ```bash
-# configure the session
-playwright-cli config my-config.json
+# Configure the session
+playwright-cli config --config my-config.json
+playwright-cli config --headed --in-memory --browser=firefox
 # Configure named session
 playwright-cli --session=mysession config my-config.json
 # Start with configured session
@@ -168,3 +177,29 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
 ```
+
+## Example: Authentication state reuse
+
+```bash
+# Login and save auth state
+playwright-cli open https://app.example.com/login
+playwright-cli snapshot
+playwright-cli fill e1 "user@example.com"
+playwright-cli fill e2 "password123"
+playwright-cli click e3
+playwright-cli state-save auth.json
+
+# Later, restore state and skip login
+playwright-cli state-load auth.json
+playwright-cli open https://app.example.com/dashboard
+```
+
+## Specific tasks
+
+* **Request mocking** [references/request-mocking.md](references/request-mocking.md)
+* **Running Playwright code** [references/running-code.md](references/running-code.md)
+* **Session management** [references/session-management.md](references/session-management.md)
+* **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
+* **Test generation** [references/test-generation.md](references/test-generation.md)
+* **Tracing** [references/tracing.md](references/tracin.md`)
+* **Video recording** [references/video-recording.md](references/video-recording.md)

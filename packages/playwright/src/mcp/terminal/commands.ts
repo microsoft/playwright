@@ -391,6 +391,30 @@ const tabSelect = declareCommand({
   toolParams: ({ index }) => ({ action: 'select', index }),
 });
 
+// Storage
+
+const stateLoad = declareCommand({
+  name: 'state-load',
+  description: 'Loads storage (authentication) state from a file',
+  category: 'storage',
+  args: z.object({
+    filename: z.string().describe('File name to load the storage state from.'),
+  }),
+  toolName: 'browser_set_storage_state',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
+const stateSave = declareCommand({
+  name: 'state-save',
+  description: 'Saves the current storage (authentication) state to a file',
+  category: 'storage',
+  args: z.object({
+    filename: z.string().optional().describe('File name to save the storage state to.'),
+  }),
+  toolName: 'browser_storage_state',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
 // Export
 
 const screenshot = declareCommand({
@@ -611,6 +635,10 @@ const commandsArray: AnyCommandSchema[] = [
   tabNew,
   tabClose,
   tabSelect,
+
+  // storage category
+  stateLoad,
+  stateSave,
 
   // config category
   config,
