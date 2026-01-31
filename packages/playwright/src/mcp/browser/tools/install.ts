@@ -48,6 +48,7 @@ const install = defineTool({
           reject(new Error(`Failed to install browser: ${output.join('')}`));
       });
     });
+    response.addTextResult(`Browser ${channel} installed.`);
     const tabHeaders = await Promise.all(context.tabs().map(tab => tab.headerSnapshot()));
     const result = renderTabsMarkdown(tabHeaders);
     response.addTextResult(result.join('\n'));

@@ -18,7 +18,7 @@ import { z } from 'playwright-core/lib/mcpBundle';
 
 import type zodType from 'zod';
 
-export type Category = 'core' | 'navigation' | 'keyboard' | 'mouse' | 'export' | 'storage' | 'tabs' | 'devtools' | 'session' | 'config';
+export type Category = 'core' | 'navigation' | 'keyboard' | 'mouse' | 'export' | 'storage' | 'tabs' | 'devtools' | 'session' | 'config' | 'install';
 
 export type CommandSchema<Args extends zodType.ZodTypeAny, Options extends zodType.ZodTypeAny> = {
   name: string;
