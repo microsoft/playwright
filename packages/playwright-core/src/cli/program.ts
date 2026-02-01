@@ -23,7 +23,7 @@ import path from 'path';
 import * as playwright from '../..';
 import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
 import { registry, writeDockerVersion } from '../server';
-import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, ManualPromise } from '../utils';
+import { gracefullyProcessExitDoNotHang, isCodingAgent, isLikelyNpxGlobal, ManualPromise } from '../utils';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
@@ -334,6 +334,9 @@ program
         options.browser = 'firefox';
       if (options.browser === 'wk')
         options.browser = 'webkit';
+
+      if (isCodingAgent())
+        options.port ??= 0;
 
       const openOptions: TraceViewerServerOptions = {
         host: options.host,
