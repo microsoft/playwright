@@ -2277,7 +2277,6 @@ scheme.RequestInitializer = tObject({
   headers: tArray(tType('NameValue')),
   isNavigationRequest: tBoolean,
   redirectedFrom: tOptional(tChannel(['Request'])),
-  hasResponse: tBoolean,
 });
 scheme.RequestResponseParams = tOptional(tObject({}));
 scheme.RequestResponseResult = tObject({

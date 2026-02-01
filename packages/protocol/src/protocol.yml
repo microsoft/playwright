@@ -3451,7 +3451,6 @@ Request:
       items: NameValue
     isNavigationRequest: boolean
     redirectedFrom: Request?
-    hasResponse: boolean
 
   commands:
 

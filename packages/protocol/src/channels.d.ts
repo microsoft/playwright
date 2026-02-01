@@ -3903,7 +3903,6 @@ export type RequestInitializer = {
   headers: NameValue[],
   isNavigationRequest: boolean,
   redirectedFrom?: RequestChannel,
-  hasResponse: boolean,
 };
 export interface RequestEventTarget {
 }
