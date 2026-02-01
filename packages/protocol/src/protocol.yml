@@ -1357,6 +1357,9 @@ BrowserContext:
           - api
         pauseOnNextStatement: boolean?
         testIdAttributeName: string?
+        omitSelectors:
+          type: array?
+          items: string
         launchOptions: json?
         contextOptions: json?
         device: string?

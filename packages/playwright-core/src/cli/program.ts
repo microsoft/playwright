@@ -70,6 +70,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['-o, --output <file name>', 'saves the generated script to a file'],
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
+      ['--omit-selectors <sources>', 'comma-separated list of selector sources to omit (e.g., id)'],
     ]).action(async function(url, options) {
   await codegen(options, url);
 }).addHelpText('afterAll', `
@@ -77,7 +78,8 @@ Examples:
 
   $ codegen
   $ codegen --target=python
-  $ codegen -b webkit https://example.com`);
+  $ codegen -b webkit https://example.com
+  $ codegen --omit-selectors=id`);
 
 function printInstalledBrowsers(browsers: BrowserInfo[]) {
   const browserPaths = new Set<string>();
@@ -556,8 +558,9 @@ async function open(options: Options, url: string | undefined) {
   await openPage(context, url);
 }
 
-async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
-  const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
+async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string, omitSelectors?: string }, url: string | undefined) {
+  const { target: language, output: outputFile, testIdAttribute: testIdAttributeName, omitSelectors: omitSelectorsRaw } = options;
+  const omitSelectors = omitSelectorsRaw?.split(',').map(s => s.trim()).filter(Boolean);
   const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
   const { context, browser, launchOptions, contextOptions, closeBrowser } = await launchContext(options, {
     headless: !!process.env.PWTEST_CLI_HEADLESS,
@@ -575,6 +578,7 @@ async function codegen(options: Options & { target: string, output?: string, tes
     saveStorage: options.saveStorage,
     mode: 'recording',
     testIdAttributeName,
+    omitSelectors,
     outputFile: outputFile ? path.resolve(outputFile) : undefined,
     handleSIGINT: false,
   });

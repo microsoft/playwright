@@ -181,6 +181,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           ariaTemplate: this._highlightedElement.ariaTemplate,
           language: this._currentLanguage,
           testIdAttributeName: this._testIdAttributeName(),
+          omitSelectors: this._omitSelectors(),
           overlay: this._overlayState,
         };
         return uiState;
@@ -517,6 +518,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   private _testIdAttributeName(): string {
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
+  }
+
+  private _omitSelectors(): string[] {
+    return this._params.omitSelectors || [];
   }
 
   private async _createActionInContext(frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {

@@ -123,7 +123,11 @@ class InspectTool implements RecorderTool {
 
     let model: HighlightModel | null = null;
     if (this._hoveredElement) {
-      const generated = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName, multiple: false });
+      const generated = this._recorder.injectedScript.generateSelector(this._hoveredElement, { 
+        testIdAttributeName: this._recorder.state.testIdAttributeName, 
+        omitSelectors: this._recorder.state.omitSelectors || [],
+        multiple: false 
+      });
       model = {
         selector: generated.selector,
         elements: generated.elements,
@@ -605,7 +609,10 @@ class RecordActionTool implements RecorderTool {
     // We'd like to ignore this stray event.
     if (userGesture && activeElement === this._recorder.document.body)
       return;
-    const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : null;
+    const result = activeElement ? this._recorder.injectedScript.generateSelector(activeElement, { 
+      testIdAttributeName: this._recorder.state.testIdAttributeName,
+      omitSelectors: this._recorder.state.omitSelectors || []
+    }) : null;
     this._activeModel = result && result.selector ? { ...result, color: HighlightColors.action } : null;
     if (userGesture) {
       this._hoveredElement = activeElement as HTMLElement | null;
@@ -728,7 +735,10 @@ class RecordActionTool implements RecorderTool {
       this._updateHighlight(true);
       return;
     }
-    const { selector, elements } = this._recorder.injectedScript.generateSelector(this._hoveredElement, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+    const { selector, elements } = this._recorder.injectedScript.generateSelector(this._hoveredElement, { 
+      testIdAttributeName: this._recorder.state.testIdAttributeName,
+      omitSelectors: this._recorder.state.omitSelectors || []
+    });
     if (this._hoveredModel && this._hoveredModel.selector === selector)
       return;
     this._hoveredModel = selector ? { selector, elements, color: HighlightColors.action } : null;
@@ -945,7 +955,10 @@ class JsonRecordActionTool implements RecorderTool {
   private _ariaSnapshot(element: HTMLElement | undefined): { ariaSnapshot: string, selector?: string, ref?: string } {
     const { ariaSnapshot, refs } = this._recorder.injectedScript.ariaSnapshotForRecorder();
     const ref = element ? refs.get(element) : undefined;
-    const elementInfo = element ? this._recorder.injectedScript.generateSelector(element, { testIdAttributeName: this._recorder.state.testIdAttributeName }) : undefined;
+    const elementInfo = element ? this._recorder.injectedScript.generateSelector(element, { 
+      testIdAttributeName: this._recorder.state.testIdAttributeName,
+      omitSelectors: this._recorder.state.omitSelectors || []
+    }) : undefined;
     return { ariaSnapshot, selector: elementInfo?.selector, ref };
   }
 }
@@ -1008,7 +1021,10 @@ class TextAssertionTool implements RecorderTool {
     if (this._kind === 'text' || this._kind === 'snapshot') {
       this._hoverHighlight = this._recorder.injectedScript.utils.elementText(this._textCache, target).full ? { elements: [target], selector: '', color: HighlightColors.assert } : null;
     } else if (this._elementHasValue(target)) {
-      const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      const generated = this._recorder.injectedScript.generateSelector(target, { 
+        testIdAttributeName: this._recorder.state.testIdAttributeName,
+        omitSelectors: this._recorder.state.omitSelectors || []
+      });
       this._hoverHighlight = { selector: generated.selector, elements: generated.elements, color: HighlightColors.assert };
     } else {
       this._hoverHighlight = null;
@@ -1038,7 +1054,10 @@ class TextAssertionTool implements RecorderTool {
     if (this._kind === 'value') {
       if (!this._elementHasValue(target))
         return null;
-      const { selector } = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName });
+      const { selector } = this._recorder.injectedScript.generateSelector(target, { 
+        testIdAttributeName: this._recorder.state.testIdAttributeName,
+        omitSelectors: this._recorder.state.omitSelectors || []
+      });
       if (target.nodeName === 'INPUT' && ['checkbox', 'radio'].includes((target as HTMLInputElement).type.toLowerCase())) {
         return {
           name: 'assertChecked',
@@ -1068,7 +1087,11 @@ class TextAssertionTool implements RecorderTool {
         ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { mode: 'codegen' }),
       };
     } else {
-      const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
+      const generated = this._recorder.injectedScript.generateSelector(target, { 
+        testIdAttributeName: this._recorder.state.testIdAttributeName, 
+        omitSelectors: this._recorder.state.omitSelectors || [],
+        forTextExpect: true 
+      });
       this._hoverHighlight = { selector: generated.selector, elements: generated.elements, color: HighlightColors.assert };
       // forTextExpect can update the target, re-highlight it.
       this._recorder.updateHighlight(this._hoverHighlight, true);
@@ -1707,7 +1730,10 @@ export class Recorder {
     this._lastActionAutoexpectSnapshot = this._captureAutoExpectSnapshot();
     if (!isAssertAction(action) && this._lastActionAutoexpectSnapshot) {
       const element = this.injectedScript.utils.findNewElement(previousSnapshot?.root, this._lastActionAutoexpectSnapshot?.root);
-      action.preconditionSelector = element ? this.injectedScript.generateSelector(element, { testIdAttributeName: this.state.testIdAttributeName }).selector : undefined;
+      action.preconditionSelector = element ? this.injectedScript.generateSelector(element, { 
+        testIdAttributeName: this.state.testIdAttributeName,
+        omitSelectors: this.state.omitSelectors || []
+      }).selector : undefined;
       if (action.preconditionSelector === action.selector)
         action.preconditionSelector = undefined;
     }
