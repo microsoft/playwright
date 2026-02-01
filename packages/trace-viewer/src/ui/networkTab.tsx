@@ -72,10 +72,8 @@ export const NetworkTab: React.FunctionComponent<{
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onResourceHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-  const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
+  const [selectedEntryKey, setSelectedEntryKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
-
-  const visibleSelectedEntry = React.useMemo(() => (selectedEntry && networkModel.resources.includes(selectedEntry.resource)) ? selectedEntry : undefined, [selectedEntry, networkModel.resources]);
 
   const { renderedEntries } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
@@ -84,13 +82,15 @@ export const NetworkTab: React.FunctionComponent<{
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
+  const visibleSelectedEntry = React.useMemo(() => (selectedEntryKey ? renderedEntries.find(entry => JSON.stringify(entry) === selectedEntryKey) : undefined), [selectedEntryKey, renderedEntries]);
+
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
   });
 
   const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
     setFilterState(newFilterState);
-    setSelectedEntry(undefined);
+    setSelectedEntryKey(undefined);
   }, []);
 
   if (!networkModel.resources.length)
@@ -101,7 +101,7 @@ export const NetworkTab: React.FunctionComponent<{
     ariaLabel='Network requests'
     items={renderedEntries}
     selectedItem={visibleSelectedEntry}
-    onSelected={item => setSelectedEntry(item)}
+    onSelected={item => setSelectedEntryKey(JSON.stringify(item))}
     onHighlighted={item => onResourceHovered?.(item?.ordinal)}
     columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
@@ -122,7 +122,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
+        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedEntryKey(undefined)} />}
         sidebar={grid}
       />}
   </>;
