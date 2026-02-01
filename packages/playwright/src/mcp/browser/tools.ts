@@ -27,6 +27,7 @@ import mouse from './tools/mouse';
 import navigate from './tools/navigate';
 import network from './tools/network';
 import pdf from './tools/pdf';
+import route from './tools/route';
 import runCode from './tools/runCode';
 import snapshot from './tools/snapshot';
 import screenshot from './tools/screenshot';
@@ -55,6 +56,7 @@ export const browserTools: Tool<any>[] = [
   ...navigate,
   ...network,
   ...pdf,
+  ...route,
   ...runCode,
   ...screenshot,
   ...snapshot,
