@@ -47,12 +47,12 @@ export const runTests = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
+  handle: async (context, params, signal) => {
     const { output } = await context.runTestsWithGlobalSetupAndPossiblePause({
       locations: params.locations ?? [],
       projects: params.projects,
       disableConfigReporters: true,
-    });
+    }, signal);
     return { content: [{ type: 'text', text: output }] };
   },
 });
@@ -71,7 +71,7 @@ export const debugTest = defineTestTool({
     type: 'readOnly',
   },
 
-  handle: async (context, params) => {
+  handle: async (context, params, signal) => {
     const { output, status } = await context.runTestsWithGlobalSetupAndPossiblePause({
       headed: context.computedHeaded,
       locations: [], // we can make this faster by passing the test's location, so we don't need to scan all tests to find the ID
@@ -82,7 +82,7 @@ export const debugTest = defineTestTool({
       pauseOnError: true,
       disableConfigReporters: true,
       actionTimeout: 5000,
-    });
+    }, signal);
     return { content: [{ type: 'text', text: output }], isError: status !== 'paused' && status !== 'passed' };
   },
 });
