@@ -11,8 +11,12 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
 - Add ToolCapability in `packages/playwright/src/mcp/config.d.ts`
 - Place new tests in `tests/mcp/mcp-<category>.spec.ts`
 
+## Building
+- Assume watch is running at all times, run lint to see type errors
+
 ## Testing
 - Run tests as `npm run ctest-mcp <category>`
+- Do not run test --debug
 
 # CLI
 
@@ -26,8 +30,12 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
   in `packages/playwright/src/skill/references/`
 - Place new tests in `tests/mcp/cli-<category>.spec.ts`
 
+## Building
+- Assume watch is running at all times, run lint to see type errors
+
 ## Testing
 - Run tests as `npm run ctest-mcp cli-<category>`
+- Do not run test --debug
 
 # Lint
-- run `npm run flint:mcp` to lint everything before commit
+- run `npm run flint` to lint everything before commit

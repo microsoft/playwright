@@ -40,6 +40,16 @@ type ContextOptions = {
   clientInfo: ClientInfo;
 };
 
+export type RouteEntry = {
+  pattern: string;
+  status?: number;
+  body?: string;
+  contentType?: string;
+  addHeaders?: Record<string, string>;
+  removeHeaders?: string[];
+  handler: (route: playwright.Route) => Promise<void>;
+};
+
 export class Context {
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
@@ -49,6 +59,7 @@ export class Context {
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
   private _clientInfo: ClientInfo;
+  private _routes: RouteEntry[] = [];
 
   private static _allContexts: Set<Context> = new Set();
   private _closeBrowserContextPromise: Promise<void> | undefined;
@@ -146,6 +157,36 @@ export class Context {
       this._closeBrowserContextPromise = this._closeBrowserContextImpl().catch(logUnhandledError);
     await this._closeBrowserContextPromise;
     this._closeBrowserContextPromise = undefined;
+  }
+
+  routes(): RouteEntry[] {
+    return this._routes;
+  }
+
+  async addRoute(entry: RouteEntry): Promise<void> {
+    const { browserContext } = await this._ensureBrowserContext();
+    await browserContext.route(entry.pattern, entry.handler);
+    this._routes.push(entry);
+  }
+
+  async removeRoute(pattern?: string): Promise<number> {
+    if (!this._browserContextPromise)
+      return 0;
+    const { browserContext } = await this._browserContextPromise;
+    let removed = 0;
+    if (pattern) {
+      const toRemove = this._routes.filter(r => r.pattern === pattern);
+      for (const route of toRemove)
+        await browserContext.unroute(route.pattern, route.handler);
+      this._routes = this._routes.filter(r => r.pattern !== pattern);
+      removed = toRemove.length;
+    } else {
+      for (const route of this._routes)
+        await browserContext.unroute(route.pattern, route.handler);
+      removed = this._routes.length;
+      this._routes = [];
+    }
+    return removed;
   }
 
   isRunningTool() {
