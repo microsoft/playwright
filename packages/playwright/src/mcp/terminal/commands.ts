@@ -395,7 +395,7 @@ const tabSelect = declareCommand({
 
 const stateLoad = declareCommand({
   name: 'state-load',
-  description: 'Loads storage (authentication) state from a file',
+  description: 'Loads browser storage (authentication) state from a file',
   category: 'storage',
   args: z.object({
     filename: z.string().describe('File name to load the storage state from.'),
@@ -413,6 +413,180 @@ const stateSave = declareCommand({
   }),
   toolName: 'browser_storage_state',
   toolParams: ({ filename }) => ({ filename }),
+});
+
+// Cookies
+
+const cookieList = declareCommand({
+  name: 'cookie-list',
+  description: 'List all cookies (optionally filtered by domain/path)',
+  category: 'storage',
+  args: z.object({}),
+  options: z.object({
+    domain: z.string().optional().describe('Filter cookies by domain'),
+    path: z.string().optional().describe('Filter cookies by path'),
+  }),
+  toolName: 'browser_cookie_list',
+  toolParams: ({ domain, path }) => ({ domain, path }),
+});
+
+const cookieGet = declareCommand({
+  name: 'cookie-get',
+  description: 'Get a specific cookie by name',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+  }),
+  toolName: 'browser_cookie_get',
+  toolParams: ({ name }) => ({ name }),
+});
+
+const cookieSet = declareCommand({
+  name: 'cookie-set',
+  description: 'Set a cookie with optional flags',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+    value: z.string().describe('Cookie value'),
+  }),
+  options: z.object({
+    domain: z.string().optional().describe('Cookie domain'),
+    path: z.string().optional().describe('Cookie path'),
+    expires: z.number().optional().describe('Cookie expiration as Unix timestamp'),
+    httpOnly: z.boolean().optional().describe('Whether the cookie is HTTP only'),
+    secure: z.boolean().optional().describe('Whether the cookie is secure'),
+    sameSite: z.enum(['Strict', 'Lax', 'None']).optional().describe('Cookie SameSite attribute'),
+  }),
+  toolName: 'browser_cookie_set',
+  toolParams: ({ name, value, domain, path, expires, httpOnly, secure, sameSite }) => ({ name, value, domain, path, expires, httpOnly, secure, sameSite }),
+});
+
+const cookieDelete = declareCommand({
+  name: 'cookie-delete',
+  description: 'Delete a specific cookie',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+  }),
+  toolName: 'browser_cookie_delete',
+  toolParams: ({ name }) => ({ name }),
+});
+
+const cookieClear = declareCommand({
+  name: 'cookie-clear',
+  description: 'Clear all cookies',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_cookie_clear',
+  toolParams: () => ({}),
+});
+
+// LocalStorage
+
+const localStorageList = declareCommand({
+  name: 'localstorage-list',
+  description: 'List all localStorage key-value pairs',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_localstorage_list',
+  toolParams: () => ({}),
+});
+
+const localStorageGet = declareCommand({
+  name: 'localstorage-get',
+  description: 'Get a localStorage item by key',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to get'),
+  }),
+  toolName: 'browser_localstorage_get',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const localStorageSet = declareCommand({
+  name: 'localstorage-set',
+  description: 'Set a localStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to set'),
+    value: z.string().describe('Value to set'),
+  }),
+  toolName: 'browser_localstorage_set',
+  toolParams: ({ key, value }) => ({ key, value }),
+});
+
+const localStorageDelete = declareCommand({
+  name: 'localstorage-delete',
+  description: 'Delete a localStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to delete'),
+  }),
+  toolName: 'browser_localstorage_delete',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const localStorageClear = declareCommand({
+  name: 'localstorage-clear',
+  description: 'Clear all localStorage',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_localstorage_clear',
+  toolParams: () => ({}),
+});
+
+// SessionStorage
+
+const sessionStorageList = declareCommand({
+  name: 'sessionstorage-list',
+  description: 'List all sessionStorage key-value pairs',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_sessionstorage_list',
+  toolParams: () => ({}),
+});
+
+const sessionStorageGet = declareCommand({
+  name: 'sessionstorage-get',
+  description: 'Get a sessionStorage item by key',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to get'),
+  }),
+  toolName: 'browser_sessionstorage_get',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const sessionStorageSet = declareCommand({
+  name: 'sessionstorage-set',
+  description: 'Set a sessionStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to set'),
+    value: z.string().describe('Value to set'),
+  }),
+  toolName: 'browser_sessionstorage_set',
+  toolParams: ({ key, value }) => ({ key, value }),
+});
+
+const sessionStorageDelete = declareCommand({
+  name: 'sessionstorage-delete',
+  description: 'Delete a sessionStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to delete'),
+  }),
+  toolName: 'browser_sessionstorage_delete',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const sessionStorageClear = declareCommand({
+  name: 'sessionstorage-clear',
+  description: 'Clear all sessionStorage',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_sessionstorage_clear',
+  toolParams: () => ({}),
 });
 
 // Export
@@ -639,6 +813,21 @@ const commandsArray: AnyCommandSchema[] = [
   // storage category
   stateLoad,
   stateSave,
+  cookieList,
+  cookieGet,
+  cookieSet,
+  cookieDelete,
+  cookieClear,
+  localStorageList,
+  localStorageGet,
+  localStorageSet,
+  localStorageDelete,
+  localStorageClear,
+  sessionStorageList,
+  sessionStorageGet,
+  sessionStorageSet,
+  sessionStorageDelete,
+  sessionStorageClear,
 
   // config category
   config,

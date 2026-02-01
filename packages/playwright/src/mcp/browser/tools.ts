@@ -16,6 +16,7 @@
 
 import common from './tools/common';
 import console from './tools/console';
+import cookies from './tools/cookies';
 import dialogs from './tools/dialogs';
 import evaluate from './tools/evaluate';
 import files from './tools/files';
@@ -35,6 +36,7 @@ import tracing from './tools/tracing';
 import verify from './tools/verify';
 import video from './tools/video';
 import wait from './tools/wait';
+import webstorage from './tools/webstorage';
 
 import type { Tool } from './tools/tool';
 import type { FullConfig } from './config';
@@ -42,6 +44,7 @@ import type { FullConfig } from './config';
 export const browserTools: Tool<any>[] = [
   ...common,
   ...console,
+  ...cookies,
   ...dialogs,
   ...evaluate,
   ...files,
@@ -61,6 +64,7 @@ export const browserTools: Tool<any>[] = [
   ...verify,
   ...video,
   ...wait,
+  ...webstorage,
 ];
 
 export function filteredTools(config: FullConfig) {

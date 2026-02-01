@@ -491,7 +491,7 @@ export async function program(options: { version: string }) {
   }
 
   const sessionManager = await SessionManager.create(version, args);
-  if (commandName.startsWith('session')) {
+  if (commandName.startsWith('session-')) {
     const subcommand = args._[0].split('-').slice(1).join('-');
     await handleSessionCommand(sessionManager, subcommand, args);
     return;
