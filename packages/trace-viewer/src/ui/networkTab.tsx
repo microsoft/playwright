@@ -72,7 +72,7 @@ export const NetworkTab: React.FunctionComponent<{
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onResourceHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-  const [selectedEntryKey, setSelectedEntryKey] = React.useState<string | undefined>(undefined);
+  const [selectedResourceKey, setSelectedResourceKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
   const { renderedEntries } = React.useMemo(() => {
@@ -82,7 +82,7 @@ export const NetworkTab: React.FunctionComponent<{
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
-  const visibleSelectedEntry = React.useMemo(() => (selectedEntryKey ? renderedEntries.find(entry => JSON.stringify(entry) === selectedEntryKey) : undefined), [selectedEntryKey, renderedEntries]);
+  const visibleSelectedEntry = React.useMemo(() => (selectedResourceKey ? renderedEntries.find(entry => JSON.stringify(entry.resource) === selectedResourceKey) : undefined), [selectedResourceKey, renderedEntries]);
 
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
@@ -90,7 +90,7 @@ export const NetworkTab: React.FunctionComponent<{
 
   const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
     setFilterState(newFilterState);
-    setSelectedEntryKey(undefined);
+    setSelectedResourceKey(undefined);
   }, []);
 
   if (!networkModel.resources.length)
@@ -101,7 +101,7 @@ export const NetworkTab: React.FunctionComponent<{
     ariaLabel='Network requests'
     items={renderedEntries}
     selectedItem={visibleSelectedEntry}
-    onSelected={item => setSelectedEntryKey(JSON.stringify(item))}
+    onSelected={item => setSelectedResourceKey(JSON.stringify(item.resource))}
     onHighlighted={item => onResourceHovered?.(item?.ordinal)}
     columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
@@ -122,7 +122,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedEntryKey(undefined)} />}
+        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedResourceKey(undefined)} />}
         sidebar={grid}
       />}
   </>;
