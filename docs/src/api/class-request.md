@@ -286,7 +286,7 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
 ## method: Request.existingResponse
-* since: v1.51
+* since: v1.59
 - returns: <[null]|[Response]>
 
 Returns the [Response] object if the response has already been received, `null` otherwise.
