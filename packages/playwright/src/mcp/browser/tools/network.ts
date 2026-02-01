@@ -18,7 +18,6 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 
 import type * as playwright from 'playwright-core';
-import type { Request } from '../../../../../playwright-core/src/client/network';
 
 const requests = defineTabTool({
   capability: 'core',
@@ -62,7 +61,7 @@ const networkClear = defineTabTool({
 });
 
 async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
-  const response = (request as Request)._hasResponse ? await request.response() : undefined;
+  const response = request.existingResponse();
   const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
   const isSuccessfulRequest = !response || response.status() < 400;
 

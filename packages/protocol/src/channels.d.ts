@@ -3906,14 +3906,12 @@ export type RequestInitializer = {
   hasResponse: boolean,
 };
 export interface RequestEventTarget {
-  on(event: 'response', callback: (params: RequestResponseEvent) => void): this;
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
   response(params?: RequestResponseParams, progress?: Progress): Promise<RequestResponseResult>;
   rawRequestHeaders(params?: RequestRawRequestHeadersParams, progress?: Progress): Promise<RequestRawRequestHeadersResult>;
 }
-export type RequestResponseEvent = {};
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {
@@ -3926,7 +3924,6 @@ export type RequestRawRequestHeadersResult = {
 };
 
 export interface RequestEvents {
-  'response': RequestResponseEvent;
 }
 
 // ----------- Route -----------

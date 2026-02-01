@@ -63,7 +63,6 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
     });
     this._type_Request = true;
     this._browserContextDispatcher = scope;
-    this.addObjectListener(Request.Events.Response, () => this._dispatchEvent('response', {}));
   }
 
   async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {
