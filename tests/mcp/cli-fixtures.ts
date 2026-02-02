@@ -66,7 +66,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       env: {
         ...process.env,
         ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_INSTALL_DIR: testInfo.outputPath(),
+        PLAYWRIGHT_CLI_INSTALLATION_FOR_TEST: testInfo.outputPath(),
         PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
         PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,

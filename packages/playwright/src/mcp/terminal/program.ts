@@ -44,17 +44,24 @@ export type SessionConfig = {
   userDataDirPrefix?: string;
 };
 
+type ClientInfo = {
+  version: string;
+  installationDir: string;
+  installationDirHash: string;
+  daemonProfilesDir: string;
+};
+
 class Session {
   readonly name: string;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
   private _config: SessionConfig;
-  private _clientVersion: string;
+  private _clientInfo: ClientInfo;
 
-  constructor(clientVersion: string, name: string, options: SessionConfig) {
+  constructor(clientInfo: ClientInfo, name: string, options: SessionConfig) {
     this.name = name;
-    this._clientVersion = clientVersion;
+    this._clientInfo = clientInfo;
     this._config = options;
   }
 
@@ -63,12 +70,12 @@ class Session {
   }
 
   isCompatible(): boolean {
-    return this._clientVersion === this._config.version;
+    return this._clientInfo.version === this._config.version;
   }
 
   checkCompatible() {
     if (!this.isCompatible()) {
-      throw new Error(`Client is v${this._clientVersion}, session '${this.name}' is v${this._config.version}. Run
+      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this._config.version}. Run
 
   playwright-cli session-restart${this.name !== 'default' ? ` ${this.name}` : ''}
 
@@ -133,7 +140,7 @@ to restart the session daemon.`);
   async delete() {
     await this.stop();
 
-    const dataDirs = await fs.promises.readdir(daemonProfilesDir).catch(() => []);
+    const dataDirs = await fs.promises.readdir(this._clientInfo.daemonProfilesDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
     if (matchingEntries.length === 0) {
       console.log(`No user data found for session '${this.name}'.`);
@@ -141,7 +148,7 @@ to restart the session daemon.`);
     }
 
     for (const entry of matchingEntries) {
-      const userDataDir = path.resolve(daemonProfilesDir, entry);
+      const userDataDir = path.resolve(this._clientInfo.daemonProfilesDir, entry);
       for (let i = 0; i < 5; i++) {
         try {
           await fs.promises.rm(userDataDir, { recursive: true });
@@ -214,15 +221,15 @@ to restart the session daemon.`);
   }
 
   private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(daemonProfilesDir, { recursive: true });
+    await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = path.resolve(daemonProfilesDir, `${this.name}.session`);
-    this._config.version = this._clientVersion;
+    const sessionConfigFile = path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}.session`);
+    this._config.version = this._clientInfo.version;
     await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
-    const outLog = path.join(daemonProfilesDir, 'out.log');
-    const errLog = path.join(daemonProfilesDir, 'err.log');
+    const outLog = path.join(this._clientInfo.daemonProfilesDir, 'out.log');
+    const errLog = path.join(this._clientInfo.daemonProfilesDir, 'err.log');
     const out = fs.openSync(outLog, 'w');
     const err = fs.openSync(errLog, 'w');
 
@@ -276,16 +283,16 @@ to restart the session daemon.`);
 }
 
 class SessionManager {
-  readonly clientVersion: string;
+  readonly clientInfo: ClientInfo;
   readonly sessions: Map<string, Session>;
 
-  private constructor(clientVersion: string, sessions: Map<string, Session>, args: MinimistArgs) {
-    this.clientVersion = clientVersion;
+  private constructor(clientInfo: ClientInfo, sessions: Map<string, Session>, args: MinimistArgs) {
+    this.clientInfo = clientInfo;
     this.sessions = sessions;
   }
 
-  static async create(clientVersion: string, args: MinimistArgs): Promise<SessionManager> {
-    const dir = daemonProfilesDir;
+  static async create(clientInfo: ClientInfo, args: MinimistArgs): Promise<SessionManager> {
+    const dir = clientInfo.daemonProfilesDir;
     const sessions = new Map<string, Session>();
     const files = await fs.promises.readdir(dir).catch(() => []);
     for (const file of files) {
@@ -293,7 +300,7 @@ class SessionManager {
         if (file.endsWith('.session')) {
           const sessionName = path.basename(file, '.session');
           const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-          sessions.set(sessionName, new Session(clientVersion, sessionName, sessionConfig));
+          sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
           continue;
         }
 
@@ -302,21 +309,24 @@ class SessionManager {
           // Session is like ud-<sessionName>-browserName
           const sessionName = file.split('-')[1];
           if (!sessions.has(sessionName)) {
-            const sessionConfig = sessionConfigFromArgs('0.0.61', sessionName, { _: [] });
-            sessions.set(sessionName, new Session(clientVersion, sessionName, sessionConfig));
+            const sessionConfig = sessionConfigFromArgs({
+              ...clientInfo,
+              version: '0.0.61'
+            }, sessionName, { _: [] });
+            sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
           }
         }
       } catch {
       }
     }
-    return new SessionManager(clientVersion, sessions, args);
+    return new SessionManager(clientInfo, sessions, args);
   }
 
   async run(args: MinimistArgs): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(this.clientVersion, sessionName, sessionConfigFromArgs(this.clientVersion, sessionName, args));
+      session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
       this.sessions.set(sessionName, session);
     }
 
@@ -363,9 +373,9 @@ class SessionManager {
   async configure(args: any): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
-    const sessionConfig = sessionConfigFromArgs(this.clientVersion, sessionName, args);
+    const sessionConfig = sessionConfigFromArgs(this.clientInfo, sessionName, args);
     if (!session) {
-      session = new Session(this.clientVersion, sessionName, sessionConfig);
+      session = new Session(this.clientInfo, sessionName, sessionConfig);
       this.sessions.set(sessionName, session);
     }
     await session.restart(sessionConfig);
@@ -426,13 +436,24 @@ async function handleSessionCommand(sessionManager: SessionManager, subcommand: 
   process.exit(1);
 }
 
-const installationDirHash = (() => {
-  const hash = crypto.createHash('sha1');
-  hash.update(process.env.PLAYWRIGHT_DAEMON_INSTALL_DIR || require.resolve('../../../package.json'));
-  return hash.digest('hex').substring(0, 16);
-})();
+function createClientInfo(packageLocation: string): ClientInfo {
+  const packageJSON = require(packageLocation);
+  const installationDir = process.env.PLAYWRIGHT_CLI_INSTALLATION_FOR_TEST || packageLocation;
+  const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
 
-const daemonProfilesDir = (() => {
+  const hash = crypto.createHash('sha1');
+  hash.update(installationDir);
+  const installationDirHash = hash.digest('hex').substring(0, 16);
+
+  return {
+    version,
+    installationDir,
+    installationDirHash,
+    daemonProfilesDir: daemonProfilesDir(installationDirHash),
+  };
+}
+
+const daemonProfilesDir = (installationDirHash: string) => {
   if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
     return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
 
@@ -446,7 +467,7 @@ const daemonProfilesDir = (() => {
   if (!localCacheDir)
     throw new Error('Unsupported platform: ' + process.platform);
   return path.join(localCacheDir, 'ms-playwright', 'daemon', installationDirHash);
-})();
+};
 
 const booleanOptions = [
   'extension',
@@ -456,8 +477,9 @@ const booleanOptions = [
   'version',
 ];
 
-export async function program(options: { version: string }) {
-  const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || options.version;
+export async function program(packageLocation: string) {
+  const clientInfo = createClientInfo(packageLocation);
+
   const argv = process.argv.slice(2);
   const args: MinimistArgs = require('minimist')(argv, { boolean: booleanOptions });
   for (const option of booleanOptions) {
@@ -469,7 +491,7 @@ export async function program(options: { version: string }) {
   const commandName = args._[0];
 
   if (args.version || args.v) {
-    console.log(version);
+    console.log(clientInfo.version);
     process.exit(0);
   }
 
@@ -490,7 +512,7 @@ export async function program(options: { version: string }) {
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create(version, args);
+  const sessionManager = await SessionManager.create(clientInfo, args);
   if (commandName.startsWith('session-')) {
     const subcommand = args._[0].split('-').slice(1).join('-');
     await handleSessionCommand(sessionManager, subcommand, args);
@@ -530,15 +552,15 @@ async function installSkills() {
 
 const outputDir = path.join(process.cwd(), '.playwright-cli');
 
-function daemonSocketPath(sessionName: string): string {
+function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   const socketName = `${sessionName}.sock`;
   if (os.platform() === 'win32')
-    return `\\\\.\\pipe\\${installationDirHash}-${socketName}`;
+    return `\\\\.\\pipe\\${clientInfo.installationDirHash}-${socketName}`;
   const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-  return path.join(socketsDir, installationDirHash, socketName);
+  return path.join(socketsDir, clientInfo.installationDirHash, socketName);
 }
 
-function sessionConfigFromArgs(version: string, sessionName: string, args: MinimistArgs): SessionConfig {
+function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config;
   try {
     if (!config && fs.existsSync('playwright-cli.json'))
@@ -546,8 +568,8 @@ function sessionConfigFromArgs(version: string, sessionName: string, args: Minim
   } catch {
   }
   return {
-    version,
-    socketPath: daemonSocketPath(sessionName),
+    version: clientInfo.version,
+    socketPath: daemonSocketPath(clientInfo, sessionName),
     cli: {
       headed: args.headed,
       extension: args.extension,
@@ -555,6 +577,6 @@ function sessionConfigFromArgs(version: string, sessionName: string, args: Minim
       isolated: args['in-memory'],
       config,
     },
-    userDataDirPrefix: path.resolve(daemonProfilesDir, `ud-${sessionName}`),
+    userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
   };
 }
