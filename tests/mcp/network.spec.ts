@@ -19,6 +19,15 @@ import path from 'path';
 
 import { test, expect, parseResponse } from './fixtures';
 
+function parseLogEvents(events: string) {
+  const dynamicMatch = /\d+ new network entr(y|ies) in "(output[\\/]network-dynamic-.+\.log)#L\d+(-L\d+)?"/.exec(events);
+  const fullMatch = /\d+ new network entr(y|ies) in "(output[\\/]network-full-.+\.log)#L\d+(-L\d+)?"/.exec(events);
+  return {
+    dynamicLogFile: dynamicMatch?.[2],
+    fullLogFile: fullMatch?.[2],
+  };
+}
+
 test('browser_network_requests', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/json')">Click me</button>
@@ -70,7 +79,7 @@ test('network log file is returned on snapshot', async ({ startClient, server },
     config: { outputDir, outputMode: 'file' },
   });
 
-  server.setContent('/', `
+  server.setContent('/empty.html', `
     <html>
       <head>
         <link rel="stylesheet" href="/one-style.css">
@@ -84,22 +93,27 @@ test('network log file is returned on snapshot', async ({ startClient, server },
 
   const response = parseResponse(await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
+    arguments: { url: server.EMPTY_PAGE },
   }));
 
-  expect(response.events).toMatch(/\d+ new network entr(y|ies) in "output\/network-assets-.+\.log#L\d+(-L\d+)?"/);
+  expect(response.events).toMatch(/\d+ new network entr(y|ies) in "output\/network-full-.+\.log#L\d+(-L\d+)?"/);
 
   // Verify network log file exist
   const files = await fs.readdir(outputDir);
-  const networkLogFiles = files.filter(f => f.startsWith('network-assets-') && f.endsWith('.log'));
+  const networkLogFiles = files.filter(f => f.startsWith('network-full-') && f.endsWith('.log'));
   expect(networkLogFiles.length).toBe(1);
 
+  const { fullLogFile } = parseLogEvents(response.events);
+  expect(fullLogFile).toBeTruthy();
   // Verify the log contains both requests
-  const logContent = await fs.readFile(path.join(outputDir, networkLogFiles[0]), 'utf-8');
-  expect(logContent).toContain(`[GET] ${server.PREFIX}/ => [200] OK`);
-  expect(logContent).toContain('/image.png => [404] Not Found');
-  expect(logContent).toContain('/one-style.css => [200] OK');
-  expect(logContent).toContain('/script.js => [404] Not Found');
+  const logContent = await fs.readFile(testInfo.outputPath(fullLogFile), 'utf-8');
+  expect(logContent).toMatch(new RegExp([
+      /\[GET\].*empty\.html => \[200\] OK/,
+      /\/image\.png => \[404\] Not Found/,
+      /\/one-style\.css => \[200\] OK/,
+      /\/script\.js => \[404\] Not Found/,
+    ].map(r => `(?=[\\s\\S]*${r.source})`).join(''))
+  );
 });
 
 test('network log file separates requests and assets', async ({ startClient, server }, testInfo) => {
@@ -108,7 +122,7 @@ test('network log file separates requests and assets', async ({ startClient, ser
     config: { outputDir, outputMode: 'file' },
   });
 
-  server.setContent('/', `
+  server.setContent('/empty.html', `
     <html>
       <body>
         <img src="/image.png" />
@@ -120,32 +134,36 @@ test('network log file separates requests and assets', async ({ startClient, ser
 
   await client.callTool({
     name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
+    arguments: { url: server.EMPTY_PAGE },
   });
 
   const response = parseResponse(await client.callTool({
     name: 'browser_evaluate',
     arguments: { function: '() => fetch("/api/data")' },
   }));
-  expect(response.events).toMatch(/1 new network entry in "output\/network-requests-.+\.log#L\d+(-L\d+)?"/);
+  expect(response.events).toMatch(/\d+ new network entr(y|ies) in "output\/network-dynamic-.+\.log#L\d+(-L\d+)?"/);
 
-  const files = await fs.readdir(outputDir);
+  // Check that both network-dynamic and network-full log files exist
+  const { dynamicLogFile, fullLogFile } = parseLogEvents(response.events);
+  expect(dynamicLogFile).toBeTruthy();
+  expect(fullLogFile).toBeTruthy();
 
-  // Check that both network-requests and network-assets log files exist
-  const requestsLog = files.find(f => f.startsWith('network-requests-') && f.endsWith('.log'));
-  const assetsLog = files.find(f => f.startsWith('network-assets-') && f.endsWith('.log'));
+  // API request should be in network-dynamic log
+  const dynamicContent = await fs.readFile(testInfo.outputPath(dynamicLogFile), 'utf-8');
+  expect(dynamicContent).toMatch(new RegExp([
+    /\/api\/data => \[200\] OK/,
+    /\/image\.png => \[404\] Not Found/,
+  ].map(r => `(?=[\\s\\S]*${r.source})`).join('')));
+  // main resource
+  expect(dynamicContent).not.toContain(`[GET] ${server.EMPTY_PAGE}`);
 
-  expect(requestsLog).toBeTruthy();
-  expect(assetsLog).toBeTruthy();
-
-  // API request should be in network-requests log
-  const requestsContent = await fs.readFile(path.join(outputDir, requestsLog!), 'utf-8');
-  expect(requestsContent).toContain('/api/data => [200] OK');
-
-  // Image should be in network-assets log
-  const assetsContent = await fs.readFile(path.join(outputDir, assetsLog!), 'utf-8');
-  expect(assetsContent).toContain('/image.png');
-  expect(assetsContent).not.toContain('/api/data');
+  // network-full should contain all requests
+  const fullContent = await fs.readFile(testInfo.outputPath(fullLogFile), 'utf-8');
+  expect(fullContent).toMatch(new RegExp([
+    /\[GET\].*empty\.html => \[200\] OK/,
+    /\/image\.png => \[404\] Not Found/,
+    /\/api\/data => \[200\] OK/,
+  ].map(r => `(?=[\\s\\S]*${r.source})`).join('')));
 });
 
 test('network log file stores method and status', async ({ startClient, server }, testInfo) => {
@@ -170,19 +188,23 @@ test('network log file stores method and status', async ({ startClient, server }
       }`
     },
   }));
-  expect(response.events).toMatch(/2 new network entries in "output\/network-requests-.+\.log#L\d+(-L\d+)?"/);
+  expect(response.events).toMatch(/\d+ new network entr(y|ies) in "output\/network-dynamic-.+\.log#L\d+(-L\d+)?"/);
 
-  const files = await fs.readdir(outputDir);
-  const requestsLog = files.find(f => f.startsWith('network-requests-') && f.endsWith('.log'));
-  expect(requestsLog).toBeTruthy();
+  const { dynamicLogFile, fullLogFile } = parseLogEvents(response.events);
+  expect(dynamicLogFile).toBeTruthy();
+  expect(fullLogFile).toBeTruthy();
 
-  const logContent = await fs.readFile(path.join(outputDir, requestsLog!), 'utf-8');
+  const logContent = await fs.readFile(testInfo.outputPath(dynamicLogFile), 'utf-8');
+  expect(logContent).toMatch(new RegExp([
+    /\[GET\].*\/api\/get.*=>\s*\[200\]/,
+    /\[POST\].*\/api\/post.*=>\s*\[200\]/,
+  ].map(r => `(?=[\\s\\S]*${r.source})`).join('')));
 
-  // Check that method and status are stored
-  expect(logContent).toMatch(/\[GET\].*\/api\/get.*=>\s*\[200\]/);
-  expect(logContent).toMatch(/\[POST\].*\/api\/post.*=>\s*\[200\]/);
-
-  expect(logContent.split('\n').filter(Boolean).length).toBe(2);
+  const fullContent = await fs.readFile(testInfo.outputPath(fullLogFile), 'utf-8');
+  expect(fullContent).toMatch(new RegExp([
+    /\[GET\].*\/api\/get.*=>\s*\[200\]/,
+    /\[POST\].*\/api\/post.*=>\s*\[200\]/,
+  ].map(r => `(?=[\\s\\S]*${r.source})`).join('')));
 });
 
 test('new network log file after navigation', async ({ startClient, server }, testInfo) => {
@@ -211,18 +233,17 @@ test('new network log file after navigation', async ({ startClient, server }, te
   `, 'text/html');
 
   // Navigate to first page
-  await client.callTool({
+  const response1 = parseResponse(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX + '/page1' },
-  });
+  }));
 
   {
-    // Should have one network-assets log file
-    const files = await fs.readdir(outputDir);
-    const networkLogs = files.filter(f => f.startsWith('network-assets-') && f.endsWith('.log'));
-    expect(networkLogs.length).toBe(1);
+    // Should have one network-full log file
+    const { fullLogFile } = parseLogEvents(response1.events);
+    expect(fullLogFile).toBeTruthy();
 
-    const logContent = await fs.readFile(path.join(outputDir, networkLogs[0]), 'utf-8');
+    const logContent = await fs.readFile(testInfo.outputPath(fullLogFile), 'utf-8');
     expect(logContent).toContain('/one-style.css');
   }
 
@@ -232,20 +253,20 @@ test('new network log file after navigation', async ({ startClient, server }, te
     arguments: { url: server.PREFIX + '/page2' },
   }));
 
-  expect(response2.events).toMatch(/\d+ new network entries in "output\/network-assets-.+\.log#L\d+(-L\d+)?"/);
-  const secondFileName = response2.events.match(/(network-assets-.+\.log)#/)![1];
+  expect(response2.events).toMatch(/\d+ new network entries in "output\/network-full-.+\.log#L\d+(-L\d+)?"/);
+  const { fullLogFile: secondLogFile } = parseLogEvents(response2.events);
 
   {
-    // Should have 2 network-requests log files (one per navigation)
+    // Should have 2 network-full log files (one per navigation)
     const files = await fs.readdir(outputDir);
-    const networkLogs = files.filter(f => f.startsWith('network-assets-') && f.endsWith('.log'));
+    const networkLogs = files.filter(f => f.startsWith('network-full-') && f.endsWith('.log'));
     expect(networkLogs.length).toBe(2);
 
-    const file = networkLogs.find(f => f === secondFileName);
-    expect(file).toBeTruthy();
-
-    const logContent = await fs.readFile(path.join(outputDir, file), 'utf-8');
-    expect(logContent).toContain('/one-style.css');
-    expect(logContent).toContain('/image.png');
+    expect(secondLogFile).toBeTruthy();
+    const logContent = await fs.readFile(testInfo.outputPath(secondLogFile), 'utf-8');
+    expect(logContent).toMatch(new RegExp([
+      /\/one-style\.css => \[200\] OK/,
+      /\/image\.png => \[404\] Not Found/,
+    ].map(r => `(?=[\\s\\S]*${r.source})`).join('')));
   }
 });

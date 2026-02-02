@@ -24,7 +24,7 @@ import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
-import { isStaticRequest, renderRequest } from './tools/network';
+import { isStatic, renderRequest } from './tools/network';
 import { requireOrImport } from '../../transform/transform';
 
 import type { Context } from './context';
@@ -101,7 +101,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
 
-  private _logs!: Record<'console-error' | 'console-warning' | 'console-info' | 'console-debug' | 'network-requests' | 'network-assets', LogFile>;
+  private _logs!: Record<'console-error' | 'console-warning' | 'console-info' | 'console-debug' | 'network-full' | 'network-dynamic', LogFile>;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -110,6 +110,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose = onPageClose;
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
+    page.on('request', request => this._handleRequest(request));
     page.on('response', response => this._handleResponse(response));
     page.on('requestfailed', request => this._handleRequestFailed(request));
     page.on('close', () => this._onClose());
@@ -215,31 +216,41 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       'console-warning': new LogFile(this.context, wallTime, 'console-warning', 'Console'),
       'console-info': new LogFile(this.context, wallTime, 'console-info', 'Console'),
       'console-debug': new LogFile(this.context, wallTime, 'console-debug', 'Console'),
-      'network-requests': new LogFile(this.context, wallTime, 'network-requests', 'Network'),
-      'network-assets': new LogFile(this.context, wallTime, 'network-assets', 'Network'),
+      'network-full': new LogFile(this.context, wallTime, 'network-full', 'Network'),
+      'network-dynamic': new LogFile(this.context, wallTime, 'network-dynamic', 'Network'),
     };
   }
 
+  private _handleRequest(request: playwright.Request) {
+    this._requests.push(request);
+    // TODO: request start time is not available for fetch() before the
+    // response is received, so we use Date.now() as a fallback.
+    const wallTime = request.timing().startTime || Date.now();
+    this._addLogEntry({ type: 'request', wallTime, request });
+    const render = async () => await renderRequest(request);
+    this._logs['network-full'].appendLine(wallTime, render);
+    if (!isStatic(request))
+      this._logs['network-dynamic'].appendLine(wallTime, render);
+  }
+
   private _handleResponse(response: playwright.Response) {
-    this._requests.push(response.request());
-    const wallTime = Date.now();
+    const timing = response.request().timing();
+    const wallTime = timing.responseStart + timing.startTime;
     this._addLogEntry({ type: 'request', wallTime, request: response.request() });
     const render = async () => await renderRequest(response.request());
-    if (isStaticRequest(response.request()))
-      this._logs['network-assets'].appendLine(wallTime, render);
-    else
-      this._logs['network-requests'].appendLine(wallTime, render);
+    this._logs['network-full'].appendLine(wallTime, render);
+    if (!isStatic(response.request()) || response.status() >= 400)
+      this._logs['network-dynamic'].appendLine(wallTime, render);
   }
 
   private _handleRequestFailed(request: playwright.Request) {
     this._requests.push(request);
-    const wallTime = Date.now();
+    const timing = request.timing();
+    const wallTime = timing.responseEnd + timing.startTime;
     this._addLogEntry({ type: 'request', wallTime, request });
     const render = async () => await renderRequest(request);
-    if (isStaticRequest(request))
-      this._logs['network-assets'].appendLine(wallTime, render);
-    else
-      this._logs['network-requests'].appendLine(wallTime, render);
+    this._logs['network-full'].appendLine(wallTime, render);
+    this._logs['network-dynamic'].appendLine(wallTime, render);
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {

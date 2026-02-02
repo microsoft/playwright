@@ -37,7 +37,7 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      if (!params.includeStatic && isStaticRequest(request) && isSuccessfulResponse(request))
+      if (!params.includeStatic && isStatic(request) && isSuccessfulResponse(request))
         continue;
       text.push(await renderRequest(request));
     }
@@ -61,11 +61,13 @@ const networkClear = defineTabTool({
 });
 
 function isSuccessfulResponse(request: playwright.Request): boolean {
+  if (request.failure())
+    return false;
   const response = request.existingResponse();
   return !!response && response.status() < 400;
 }
 
-export function isStaticRequest(request: playwright.Request): boolean {
+export function isStatic(request: playwright.Request): boolean {
   return ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
 }
 
@@ -76,7 +78,7 @@ export async function renderRequest(request: playwright.Request): Promise<string
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
   if (response)
     result.push(`=> [${response.status()}] ${response.statusText()}`);
-  else
+  else if (request.failure())
     result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
   return result.join(' ');
 }
