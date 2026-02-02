@@ -97,14 +97,16 @@ export class FFPage implements PageDelegate {
     ];
 
     const promises: Promise<any>[] = [];
-
-    const videoOptions = this._page.screencast.launchAutomaticVideoRecorder();
+    const videoOptions = this._page.isStorageStatePage ? undefined : this._page.screencast.launchAutomaticVideoRecorder();
     if (videoOptions)
       promises.push(this._page.screencast.startVideoRecording(videoOptions));
-    promises.push(this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME));
     promises.push(new Promise(f => this._session.once('Page.ready', f)));
-
     Promise.all(promises).then(() => this._reportAsNew(), error => this._reportAsNew(error));
+
+    // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
+    // Even worse, sometimes this protocol call never returns, for example when popup opens a dialog synchronously.
+    // Therefore, we can end up with an initialized page without utility world, although very unlikely.
+    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._reportAsNew(e));
   }
 
   _reportAsNew(error?: Error) {

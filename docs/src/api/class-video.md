@@ -28,36 +28,31 @@ Alternatively, you can use [`method: Video.start`] and [`method: Video.stop`] to
 ```js
 await page.video().start();
 // ... perform actions ...
-await page.video().stop();
-await page.video().saveAs('video.webm');
+await page.video().stop({ path: 'video.webm' });
 ```
 
 ```java
 page.video().start();
 // ... perform actions ...
-page.video().stop();
-page.video().saveAs(Paths.get("video.webm"));
+page.video().stop(new Video.StopOptions().setPath(Paths.get("video.webm")));
 ```
 
 ```python async
 await page.video.start()
 # ... perform actions ...
-await page.video.stop()
-await page.video.save_as("video.webm")
+await page.video.stop(path="video.webm")
 ```
 
 ```python sync
 page.video.start()
 # ... perform actions ...
-page.video.stop()
-page.video.save_as("video.webm")
+page.video.stop(path="video.webm")
 ```
 
 ```csharp
 await page.Video.StartAsync();
 // ... perform actions ...
-await page.Video.StopAsync();
-await page.Video.SaveAsAsync("video.webm");
+await page.Video.StopAsync(new() { Path = "video.webm" });
 ```
 
 ## async method: Video.delete
@@ -145,4 +140,10 @@ Optional dimensions of the recorded video. If not specified the size will be equ
 ## async method: Video.stop
 * since: v1.59
 
-Stops video recording started with [`method: Video.start`]. Use [`method: Video.path`] or [`method: Video.saveAs`] methods to access the video file.
+Stops video recording started with [`method: Video.start`].
+
+### option: Video.stop.path
+* since: v1.59
+- `path` <[path]>
+
+Path where the video should be saved.
