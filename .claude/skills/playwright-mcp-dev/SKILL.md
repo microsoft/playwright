@@ -39,3 +39,8 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
 
 # Lint
 - run `npm run flint` to lint everything before commit
+
+# SKILL File
+
+The skill file is located at `packages/playwright/src/skill/SKILL.md`. It contains documentation for all available CLI commands and MCP tools. Update it whenever you add new commands or tools.
+At any point in time you can run "npm run playwright-cli -- --help" to see the latest available commands and use them to update the skill file.

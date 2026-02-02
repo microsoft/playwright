@@ -125,6 +125,16 @@ playwright-cli sessionstorage-delete step
 playwright-cli sessionstorage-clear
 ```
 
+### Network
+
+```bash
+playwright-cli route "**/*.jpg" --status=404
+playwright-cli route "https://api.example.com/**" --body='{"mock": true}'
+playwright-cli route-list
+playwright-cli unroute "**/*.jpg"
+playwright-cli unroute
+```
+
 ### DevTools
 
 ```bash
@@ -138,8 +148,23 @@ playwright-cli video-start
 playwright-cli video-stop video.webm
 ```
 
+### Install
+
+```bash
+playwright-cli install-browser
+playwright-cli install-skills
+```
+
 ### Configuration
 ```bash
+# Use specific browser when creating session
+playwright-cli open --browser=chrome
+playwright-cli open --browser=firefox
+playwright-cli open --browser=webkit
+playwright-cli open --browser=msedge
+# Connect to browser via extension
+playwright-cli open --extension
+
 # Configure the session
 playwright-cli config --config my-config.json
 playwright-cli config --headed --in-memory --browser=firefox
@@ -156,6 +181,7 @@ playwright-cli --session=mysession open example.com
 playwright-cli --session=mysession click e6
 playwright-cli session-list
 playwright-cli session-stop mysession
+playwright-cli session-restart mysession
 playwright-cli session-stop-all
 playwright-cli session-delete
 playwright-cli session-delete mysession
@@ -199,22 +225,6 @@ playwright-cli tracing-start
 playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
-```
-
-## Example: Authentication state reuse
-
-```bash
-# Login and save auth state
-playwright-cli open https://app.example.com/login
-playwright-cli snapshot
-playwright-cli fill e1 "user@example.com"
-playwright-cli fill e2 "password123"
-playwright-cli click e3
-playwright-cli state-save auth.json
-
-# Later, restore state and skip login
-playwright-cli state-load auth.json
-playwright-cli open https://app.example.com/dashboard
 ```
 
 ## Specific tasks

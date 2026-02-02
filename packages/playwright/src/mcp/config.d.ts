@@ -22,6 +22,7 @@ export type ToolCapability =
   'core-tabs' |
   'core-input' |
   'core-install' |
+  'network' |
   'pdf' |
   'storage' |
   'testing' |

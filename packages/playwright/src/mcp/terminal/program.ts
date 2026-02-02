@@ -507,7 +507,25 @@ export async function program(options: { version: string }) {
     return;
   }
 
+  if (commandName === 'install-skills') {
+    await installSkills();
+    return;
+  }
+
   await sessionManager.run(args);
+}
+
+async function installSkills() {
+  const skillSourceDir = path.join(__dirname, '../../skill');
+  const skillDestDir = path.join(process.cwd(), '.claude', 'skills', 'playwright');
+
+  if (!fs.existsSync(skillSourceDir)) {
+    console.error('Skills source directory not found:', skillSourceDir);
+    process.exit(1);
+  }
+
+  await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
+  console.log(`Skills installed to ${path.relative(process.cwd(), skillDestDir)}`);
 }
 
 const outputDir = path.join(process.cwd(), '.playwright-cli');
