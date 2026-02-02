@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs/promises';
-import path from 'path';
 
 import { test, expect, parseResponse } from './fixtures';
 
@@ -108,11 +107,11 @@ test('network log file is returned on snapshot', async ({ startClient, server },
   // Verify the log contains both requests
   const logContent = await fs.readFile(testInfo.outputPath(fullLogFile), 'utf-8');
   expect(logContent).toMatch(new RegExp([
-      /\[GET\].*empty\.html => \[200\] OK/,
-      /\/image\.png => \[404\] Not Found/,
-      /\/one-style\.css => \[200\] OK/,
-      /\/script\.js => \[404\] Not Found/,
-    ].map(r => `(?=[\\s\\S]*${r.source})`).join(''))
+    /\[GET\].*empty\.html => \[200\] OK/,
+    /\/image\.png => \[404\] Not Found/,
+    /\/one-style\.css => \[200\] OK/,
+    /\/script\.js => \[404\] Not Found/,
+  ].map(r => `(?=[\\s\\S]*${r.source})`).join(''))
   );
 });
 
