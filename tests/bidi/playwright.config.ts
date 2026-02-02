@@ -83,7 +83,7 @@ const getExecutablePath = (browserName: BrowserName) => {
 };
 
 const browserToChannels = {
-  'chromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome-stable'],
+  'chromium': ['bidi-chromium', 'bidi-chrome-canary', 'bidi-chrome'],
   'firefox': ['moz-firefox', 'moz-firefox-beta', 'moz-firefox-nightly'],
 };
 

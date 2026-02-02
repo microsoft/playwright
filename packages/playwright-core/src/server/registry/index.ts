@@ -549,7 +549,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 const allDownloadableDirectoriesThatEverExisted = ['android', 'chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree', 'chromium-headless-shell', 'chromium-tip-of-tree-headless-shell', 'winldd'];
-const chromiumAliases = ['bidi-chromium', 'chrome-for-testing'];
+const chromiumAliases = ['chrome-for-testing'];
 
 export interface Executable {
   name: string;
@@ -786,17 +786,6 @@ export class Registry {
       'win32': '\\Mozilla Firefox\\firefox.exe',
     }));
 
-    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-stable', {
-      'linux': '/opt/google/chrome/chrome',
-      'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
-    }));
-    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-canary', {
-      'linux': '/opt/google/chrome-canary/chrome',
-      'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
-      'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
-    }));
-
     const firefox = descriptors.find(d => d.name === 'firefox')!;
     const firefoxExecutable = findExecutablePath(firefox.dir, 'firefox');
     this._executables.push({
@@ -1018,46 +1007,6 @@ export class Registry {
       _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: true,
       _install: install,
-    };
-  }
-
-  private _createBidiChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>): ExecutableImpl {
-    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
-      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
-      if (!suffix) {
-        if (shouldThrow)
-          throw new Error(`Chromium distribution '${name}' is not supported on ${process.platform}`);
-        return undefined;
-      }
-      const prefixes = (process.platform === 'win32' ? [
-        process.env.LOCALAPPDATA,
-        process.env.PROGRAMFILES,
-        process.env['PROGRAMFILES(X86)'],
-        // In some cases there is no PROGRAMFILES/(86) env var set but HOMEDRIVE is set.
-        process.env.HOMEDRIVE + '\\Program Files',
-        process.env.HOMEDRIVE + '\\Program Files (x86)',
-      ].filter(Boolean) : ['']) as string[];
-
-      for (const prefix of prefixes) {
-        const executablePath = path.join(prefix, suffix);
-        if (canAccessFile(executablePath))
-          return executablePath;
-      }
-      if (!shouldThrow)
-        return undefined;
-
-      const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
-      throw new Error(`Chromium distribution '${name}' is not found${location}`);
-    };
-    return {
-      name,
-      browserName: 'chromium',
-      directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
-      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
-      installType: 'none',
-      _validateHostRequirements: () => Promise.resolve(),
-      _isHermeticInstallation: false,
     };
   }
 
