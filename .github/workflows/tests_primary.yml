@@ -43,7 +43,7 @@ jobs:
           - os: ubuntu-22.04
             node-version: 24
             browser: chromium
-    runs-on: [ self-hosted, 1ES.Pool=devDivPlaywrightShardTesting32core128gig, "JobId=devdiv-playwright-browser-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}" ]
+    runs-on: [ self-hosted, 1ES.Pool=devDivPlaywrightShardTesting32core128gig, "JobId=devdiv-playwright-browser-${{ matrix.browser }}-node${{ matrix.node-version }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}" ]
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
@@ -91,7 +91,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         node-version: [20, 22, 24]
-    runs-on: [ self-hosted, 1ES.Pool=devDivPlaywrightShardTesting32core128gig, "JobId=devdiv-playwright-runner-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}" ]
+    runs-on: [ self-hosted, 1ES.Pool=devDivPlaywrightShardTesting32core128gig, "JobId=devdiv-playwright-runner-node${{ matrix.node-version }}-${{ github.run_id }}-${{ github.run_number }}-${{ github.run_attempt }}" ]
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
