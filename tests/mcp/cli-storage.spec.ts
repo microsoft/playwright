@@ -59,8 +59,6 @@ test('state-save saves to custom filename', async ({ cli, server }, testInfo) =>
 });
 
 test('state-load restores storage state from file', async ({ cli, server, mcpBrowser }, testInfo) => {
-  test.fixme(mcpBrowser === 'webkit', 'setStorageState is failing');
-
   const config = { capabilities: ['storage'] };
   await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
 
@@ -103,8 +101,6 @@ test('state-load restores storage state from file', async ({ cli, server, mcpBro
 });
 
 test('state-save and state-load roundtrip', async ({ cli, server, mcpBrowser }, testInfo) => {
-  test.fixme(mcpBrowser === 'webkit', 'setStorageState is failing');
-
   const config = { capabilities: ['storage'] };
   await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
 

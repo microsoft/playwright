@@ -107,8 +107,6 @@ test('browser_storage_state saves to custom filename', async ({ startClient, ser
 });
 
 test('browser_set_storage_state restores storage state from file', async ({ startClient, server, mcpBrowser }, testInfo) => {
-  test.fixme(mcpBrowser === 'webkit', 'setStorageState is failing');
-
   const outputDir = testInfo.outputPath('output');
   await fs.promises.mkdir(outputDir, { recursive: true });
 
@@ -174,8 +172,6 @@ test('browser_set_storage_state restores storage state from file', async ({ star
 });
 
 test('browser_storage_state and browser_set_storage_state roundtrip', async ({ startClient, server, mcpBrowser }, testInfo) => {
-  test.fixme(mcpBrowser === 'webkit', 'setStorageState is failing');
-
   const outputDir = testInfo.outputPath('output');
 
   const { client } = await startClient({
