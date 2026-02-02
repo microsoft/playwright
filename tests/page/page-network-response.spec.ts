@@ -399,7 +399,7 @@ it('request.existingResponse should return null before response is received', as
   const [request] = await Promise.all([
     page.waitForEvent('request'),
     server.waitForRequest('/get'),
-    page.evaluate(() => { fetch('./get', { method: 'GET' }); }),
+    page.evaluate(() => { void fetch('./get', { method: 'GET' }); }),
   ]);
 
   // Response hasn't been received yet
