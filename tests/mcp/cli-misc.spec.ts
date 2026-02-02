@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { test, expect } from './cli-fixtures';
 
 test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
@@ -41,6 +43,18 @@ test('old client', async ({ cli }) => {
 test('install', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
   await cli('open', server.HELLO_WORLD);
-  const { output } = await cli('install');
+  const { output } = await cli('install-browser');
   expect(output).toContain(`Browser ${mcpBrowser} installed.`);
+});
+
+test('install-skills', async ({ cli }, testInfo) => {
+  const { output } = await cli('install-skills');
+  expect(output).toContain(`Skills installed to .claude${path.sep}skills${path.sep}playwright`);
+
+  const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright', 'SKILL.md');
+  expect(fs.existsSync(skillFile)).toBe(true);
+
+  const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright', 'references');
+  const references = await fs.promises.readdir(referencesDir);
+  expect(references.length).toBeGreaterThan(0);
 });

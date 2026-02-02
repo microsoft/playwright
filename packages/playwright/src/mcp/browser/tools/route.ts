@@ -21,7 +21,7 @@ import type * as playwright from 'playwright-core';
 import type { RouteEntry } from '../context';
 
 const route = defineTool({
-  capability: 'core',
+  capability: 'network',
 
   schema: {
     name: 'browser_route',
@@ -86,7 +86,7 @@ const route = defineTool({
 });
 
 const routeList = defineTool({
-  capability: 'core',
+  capability: 'network',
 
   schema: {
     name: 'browser_route_list',
@@ -126,7 +126,7 @@ const routeList = defineTool({
 });
 
 const unroute = defineTool({
-  capability: 'core',
+  capability: 'network',
 
   schema: {
     name: 'browser_unroute',

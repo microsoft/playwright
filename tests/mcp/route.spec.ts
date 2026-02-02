@@ -16,6 +16,10 @@
 
 import { test, expect, parseResponse } from './fixtures';
 
+test.use({
+  mcpCaps: ['network'],
+});
+
 test('browser_route mocks response with JSON body', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api/users').then(r => r.json()).then(d => document.body.textContent = JSON.stringify(d))">Fetch</button>

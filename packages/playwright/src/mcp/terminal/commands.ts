@@ -799,13 +799,22 @@ const config = declareCommand({
 });
 
 const install = declareCommand({
-  name: 'install',
+  name: 'install-browser',
   description: 'Install browser',
   category: 'install',
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
   }),
   toolName: 'browser_install',
+  toolParams: () => ({}),
+});
+
+const installSkills = declareCommand({
+  name: 'install-skills',
+  description: 'Install Claude / GitGub Copilot skills to the local workspace',
+  category: 'install',
+  args: z.object({}),
+  toolName: '',
   toolParams: () => ({}),
 });
 
@@ -886,6 +895,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // install category
   install,
+  installSkills,
 
   // devtools category
   networkRequests,

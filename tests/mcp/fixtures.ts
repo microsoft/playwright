@@ -40,6 +40,7 @@ export { parseResponse };
 export type TestOptions = {
   mcpArgs: string[] | undefined;
   mcpBrowser: string | undefined;
+  mcpCaps: string[] | undefined;
   mcpServerType: 'mcp' | 'test-mcp';
 };
 
@@ -82,13 +83,14 @@ export const serverTest = baseTest
 
 export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures>({
   mcpArgs: [undefined, { option: true }],
+  mcpCaps: [undefined, { option: true }],
 
   client: async ({ startClient }, use) => {
     const { client } = await startClient();
     await use(client);
   },
 
-  startClient: async ({ mcpHeadless, mcpBrowser, mcpArgs, mcpServerType }, use, testInfo) => {
+  startClient: async ({ mcpHeadless, mcpBrowser, mcpArgs, mcpServerType, mcpCaps }, use, testInfo) => {
     const configDir = path.dirname(test.info().config.configFile!);
     const clients: Client[] = [];
 
@@ -97,6 +99,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
 
       if (mcpHeadless)
         args.push('--headless');
+      if (mcpCaps?.length)
+        args.push(`--caps=${mcpCaps.join(',')}`);
 
       if (mcpServerType === 'test-mcp') {
         if (!options?.args?.some(arg => arg.startsWith('--config')))

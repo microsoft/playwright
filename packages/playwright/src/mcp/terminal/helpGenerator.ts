@@ -103,7 +103,7 @@ export function generateHelp() {
   lines.push(formatWithGap('  --extension', 'connect to a running browser instance using Playwright MCP Bridge extension'));
   lines.push(formatWithGap('  --headed', 'create a headed session'));
   lines.push(formatWithGap('  --help [command]', 'print help'));
-  lines.push(formatWithGap('  --isolated', 'keep the browser profile in memory, do not save it to disk'));
+  lines.push(formatWithGap('  --in-memory', 'keep the browser profile in memory, do not save it to disk'));
   lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));
   lines.push(formatWithGap('  --version', 'print version'));
 
