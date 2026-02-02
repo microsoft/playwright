@@ -31,6 +31,7 @@ function firefoxUserPrefs() {
     'network.proxy.allow_hijacking_localhost': true,
     'network.proxy.testing_localhost_is_secure_when_hijacked': true,
     'remote.bidi.dismiss_file_pickers.enabled': true,
+    'network.cookie.cookieBehavior': 4,
   };
   const prefsString = process.env.PWTEST_FIREFOX_USER_PREFS;
   if (!prefsString)
