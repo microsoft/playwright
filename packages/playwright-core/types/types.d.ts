@@ -20770,6 +20770,16 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * Returns the [Response](https://playwright.dev/docs/api/class-response) object if the response has already been
+   * received, `null` otherwise.
+   *
+   * Unlike [request.response()](https://playwright.dev/docs/api/class-request#request-response), this method does not
+   * wait for the response to arrive. It returns immediately with the response object if the response has been received,
+   * or `null` if the response has not been received yet.
+   */
+  existingResponse(): null|Response;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**

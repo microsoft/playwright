@@ -285,6 +285,16 @@ following: `document`, `stylesheet`, `image`, `media`, `font`, `script`, `texttr
 
 Returns the matching [Response] object, or `null` if the response was not received due to error.
 
+## method: Request.existingResponse
+* since: v1.59
+- returns: <[null]|[Response]>
+
+Returns the [Response] object if the response has already been received, `null` otherwise.
+
+Unlike [`method: Request.response`], this method does not wait for the response to arrive. It returns
+immediately with the response object if the response has been received, or `null` if the response
+has not been received yet.
+
 ## method: Request.serviceWorker
 * since: v1.24
 * langs: js, python
