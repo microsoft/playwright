@@ -33,11 +33,11 @@ import type { Locator } from '../../../../playwright-core/src/client/locator';
 import type { FullConfig } from './config';
 import type { LogChunk } from './logFile';
 
-export const TabEvents = {
+const TabEvents = {
   modalState: 'modalState'
 };
 
-export type TabEventsInterface = {
+type TabEventsInterface = {
   [TabEvents.modalState]: [modalState: ModalState];
 };
 
@@ -80,9 +80,7 @@ export type TabHeader = {
   current: boolean;
 };
 
-export type { LogChunk };
-
-export type TabSnapshot = {
+type TabSnapshot = {
   ariaSnapshot: string;
   ariaSnapshotDiff?: string;
   modalStates: ModalState[];
@@ -103,9 +101,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
 
-  private _consoleLogs: Map<ConsoleMessageLevel, LogFile> | undefined;
-  private _networkRequestsLog: LogFile | undefined;
-  private _networkAssetsLog: LogFile | undefined;
+  private _logs!: Record<'console-error' | 'console-warning' | 'console-info' | 'console-debug' | 'network-requests' | 'network-assets', LogFile>;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -211,19 +207,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _resetLogs() {
-    if (this.context.config.outputMode !== 'file')
-      return;
-
     const wallTime = Date.now();
-    for (const log of this._consoleLogs?.values() ?? [])
+    for (const log of Object.values(this._logs ?? {}))
       log.stop();
-    this._consoleLogs = new Map();
-    for (const level of consoleMessageLevels)
-      this._consoleLogs.set(level, new LogFile(this.context, wallTime, `console-${level}`, 'Console'));
-    this._networkRequestsLog?.stop();
-    this._networkRequestsLog = new LogFile(this.context, wallTime, 'network-requests', 'Network');
-    this._networkAssetsLog?.stop();
-    this._networkAssetsLog = new LogFile(this.context, wallTime, 'network-assets', 'Network');
+    this._logs = {
+      'console-error': new LogFile(this.context, wallTime, 'console-error', 'Console'),
+      'console-warning': new LogFile(this.context, wallTime, 'console-warning', 'Console'),
+      'console-info': new LogFile(this.context, wallTime, 'console-info', 'Console'),
+      'console-debug': new LogFile(this.context, wallTime, 'console-debug', 'Console'),
+      'network-requests': new LogFile(this.context, wallTime, 'network-requests', 'Network'),
+      'network-assets': new LogFile(this.context, wallTime, 'network-assets', 'Network'),
+    };
   }
 
   private _handleResponse(response: playwright.Response) {
@@ -232,9 +226,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._addLogEntry({ type: 'request', wallTime, request: response.request() });
     const render = async () => await renderRequest(response.request());
     if (isStaticRequest(response.request()))
-      this._networkAssetsLog?.appendLine(wallTime, render);
+      this._logs['network-assets'].appendLine(wallTime, render);
     else
-      this._networkRequestsLog?.appendLine(wallTime, render);
+      this._logs['network-requests'].appendLine(wallTime, render);
   }
 
   private _handleRequestFailed(request: playwright.Request) {
@@ -243,16 +237,17 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._addLogEntry({ type: 'request', wallTime, request });
     const render = async () => await renderRequest(request);
     if (isStaticRequest(request))
-      this._networkAssetsLog?.appendLine(wallTime, render);
+      this._logs['network-assets'].appendLine(wallTime, render);
     else
-      this._networkRequestsLog?.appendLine(wallTime, render);
+      this._logs['network-requests'].appendLine(wallTime, render);
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
     this._consoleMessages.push(message);
     const wallTime = Date.now();
     this._addLogEntry({ type: 'console', wallTime, message });
-    this._consoleLogs?.get(consoleLevelForMessageType(message.type))?.appendLine(wallTime, () => message.toString());
+    const level = consoleLevelForMessageType(message.type);
+    this._logs[`console-${level}`].appendLine(wallTime, () => message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -347,11 +342,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       };
     });
     if (tabSnapshot) {
-      tabSnapshot.logs = (await Promise.all([
-        ...consoleMessageLevels.map(level => this._consoleLogs?.get(level)?.take()),
-        this._networkRequestsLog?.take(),
-        this._networkAssetsLog?.take(),
-      ])).filter(l => !!l);
+      tabSnapshot.logs = (await Promise.all(Object.values(this._logs).map(log => log.take()))).filter(l => !!l);
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
     }
