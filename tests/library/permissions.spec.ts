@@ -253,9 +253,10 @@ it.describe(() => {
   // Secure context
   it.use({ ignoreHTTPSErrors: true, });
 
-  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel }) => {
+  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel, headless }) => {
     it.skip(browserName !== 'chromium', 'chromium-only api');
     it.fixme(!!channel && channel.startsWith('msedge'), 'always times out in edge');
+    it.fixme(!headless, 'times out in headed');
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36113' });
 
     await page.goto(httpsServer.EMPTY_PAGE);

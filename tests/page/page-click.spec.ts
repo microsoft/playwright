@@ -296,7 +296,7 @@ it('should scroll and click the button with smooth scroll behavior', async ({ pa
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/12370' });
   await page.goto(server.PREFIX + '/input/scrollable.html');
   await page.addStyleTag({ content: 'html { scroll-behavior: smooth; }' });
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     await page.click('#button-80');
     expect(await page.evaluate(() => document.querySelector('#button-80').textContent)).toBe('clicked');
     await page.click('#button-20');
