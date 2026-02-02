@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
 import { EventEmitter } from 'events';
 import * as playwright from 'playwright-core';
 import { asLocator, ManualPromise } from 'playwright-core/lib/utils';
 
-import { callOnPageNoTrace, waitForCompletion, eventWaiter, dateAsFileName } from './tools/utils';
+import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './tools/utils';
 import { logUnhandledError } from '../log';
+import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
-import { hasResponseOrFailed, isStaticRequest, renderRequest } from './tools/network';
+import { isStaticRequest, renderRequest } from './tools/network';
 import { requireOrImport } from '../../transform/transform';
 
 import type { Context } from './context';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { Locator } from '../../../../playwright-core/src/client/locator';
 import type { FullConfig } from './config';
+import type { LogChunk } from './logFile';
 
 export const TabEvents = {
   modalState: 'modalState'
@@ -79,13 +80,7 @@ export type TabHeader = {
   current: boolean;
 };
 
-export type LogChunk = {
-  type: string;
-  file: string;
-  fromLine: number;
-  toLine: number;
-  entryCount: number;
-};
+export type { LogChunk };
 
 export type TabSnapshot = {
   ariaSnapshot: string;
@@ -94,68 +89,6 @@ export type TabSnapshot = {
   events: EventEntry[];
   logs?: LogChunk[];
 };
-
-class LogFile {
-  private _startTime: number;
-  private _context: Context;
-  private _filePrefix: string;
-  private _title: string;
-
-  private _file: string | undefined;
-  private _stopped: boolean = false;
-
-  private _line: number = 0;
-  private _entries: number = 0;
-  private _lastLine: number = 0;
-  private _lastEntries: number = 0;
-
-  private _writeChain: Promise<void> = Promise.resolve();
-
-  constructor(context: Context, startTime: number, filePrefix: string, title: string) {
-    this._context = context;
-    this._startTime = startTime;
-    this._filePrefix = filePrefix;
-    this._title = title;
-  }
-
-  appendLine(wallTime: number, text: () => string | Promise<string>) {
-    this._writeChain = this._writeChain.then(() => this._write(wallTime, text)).catch(logUnhandledError);
-  }
-
-  stop() {
-    this._stopped = true;
-  }
-
-  async take(): Promise<LogChunk | undefined> {
-    await this._writeChain;
-    if (!this._file || this._entries === this._lastEntries)
-      return undefined;
-    const chunk: LogChunk = {
-      type: this._title.toLowerCase(),
-      file: this._file,
-      fromLine: this._lastLine + 1,
-      toLine: this._line,
-      entryCount: this._entries - this._lastEntries,
-    };
-    this._lastLine = this._line;
-    this._lastEntries = this._entries;
-    return chunk;
-  }
-
-  private async _write(wallTime: number, text: () => string | Promise<string>) {
-    if (this._stopped)
-      return;
-    this._file ??= await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
-    const relativeTime = wallTime - this._startTime;
-    const renderedText = await text();
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${renderedText}\n`;
-    await fs.promises.appendFile(this._file, logLine);
-
-    const lineCount = logLine.split('\n').length - 1;
-    this._line += lineCount;
-    this._entries++;
-  }
-}
 
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
@@ -222,7 +155,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     for (const message of await Tab.collectConsoleMessages(this.page))
       this._handleConsoleMessage(message);
     const requests = await this.page.requests().catch(() => []);
-    for (const request of requests.filter(hasResponseOrFailed))
+    for (const request of requests.filter(r => r.existingResponse() || r.failure()))
       this._requests.push(request);
     for (const initPage of this.context.config.browser.initPage || []) {
       try {
@@ -297,7 +230,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.push(response.request());
     const wallTime = Date.now();
     this._addLogEntry({ type: 'request', wallTime, request: response.request() });
-    const render = async () => (await renderRequest(response.request())).text;
+    const render = async () => await renderRequest(response.request());
     if (isStaticRequest(response.request()))
       this._networkAssetsLog?.appendLine(wallTime, render);
     else
@@ -308,7 +241,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.push(request);
     const wallTime = Date.now();
     this._addLogEntry({ type: 'request', wallTime, request });
-    const render = async () => (await renderRequest(request)).text;
+    const render = async () => await renderRequest(request);
     if (isStaticRequest(request))
       this._networkAssetsLog?.appendLine(wallTime, render);
     else

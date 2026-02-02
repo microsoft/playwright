@@ -37,10 +37,9 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      const rendered = await renderRequest(request);
-      if (!params.includeStatic && isStaticRequest(request) && rendered.isSuccessful)
+      if (!params.includeStatic && isStaticRequest(request) && isSuccessfulResponse(request))
         continue;
-      text.push(rendered.text);
+      text.push(await renderRequest(request));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -61,17 +60,17 @@ const networkClear = defineTabTool({
   },
 });
 
-export function hasResponseOrFailed(request: playwright.Request): boolean {
-  return (request as Request)._hasResponse || request.failure() !== null;
+function isSuccessfulResponse(request: playwright.Request): boolean {
+  const response = request.existingResponse();
+  return !!response && response.status() < 400;
 }
 
 export function isStaticRequest(request: playwright.Request): boolean {
   return ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
 }
 
-export async function renderRequest(request: playwright.Request): Promise<{ text: string, isSuccessful: boolean }> {
-  const response = (request as Request)._hasResponse ? await request.response() : undefined;
-  const isSuccessful = !!response && response.status() < 400;
+export async function renderRequest(request: playwright.Request): Promise<string> {
+  const response = request.existingResponse();
 
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
@@ -79,10 +78,7 @@ export async function renderRequest(request: playwright.Request): Promise<{ text
     result.push(`=> [${response.status()}] ${response.statusText()}`);
   else
     result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
-  return {
-    text: result.join(' '),
-    isSuccessful,
-  };
+  return result.join(' ');
 }
 
 export default [
