@@ -61,7 +61,7 @@ export class Screencast {
   // and it is equally important to send Screencast.startScreencast before sending Target.resume.
   launchAutomaticVideoRecorder(): types.VideoOptions | undefined {
     const recordVideo = this._page.browserContext._options.recordVideo;
-    if (!recordVideo || this._page.isStorageStatePage)
+    if (!recordVideo)
       return;
     // validateBrowserContextOptions ensures correct video size.
     return this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);

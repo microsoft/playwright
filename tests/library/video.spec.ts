@@ -830,14 +830,12 @@ it.describe('screencast', () => {
     const videoPath2 = await page.video().path();
     expect(videoPath2).toBeDefined();
     expect(videoPath2).not.toEqual(videoPath1);
-    await page.video().stop();
-    expectFrames(videoPath2, size, isAlmostGray);
-
     const videoPath3 = testInfo.outputPath('video3.webm');
-    await page.video().saveAs(videoPath3);
+    await page.video().stop({ path: videoPath3 });
     const contents2 = fs.readFileSync(videoPath2).toString('base64');
     const contents3 = fs.readFileSync(videoPath3).toString('base64');
     expect(contents2 === contents3).toBeTruthy();
+    expectFrames(videoPath3, size, isAlmostGray);
 
     await context.close();
   });
@@ -851,8 +849,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
-    await page.video().stop();
-    await page.video().saveAs(testInfo.outputPath('video.webm'));
+    await page.video().stop({ path: testInfo.outputPath('video.webm') });
     await context.close();
   });
 
@@ -895,9 +892,8 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
     await page.video().start({ size });
-    await page.video().stop();
     const videoPath = testInfo.outputPath('empty-video.webm');
-    await page.video().saveAs(videoPath);
+    await page.video().stop({ path: videoPath });
     await context.close();
     expectFrames(videoPath, size, isAlmostWhite);
   });
