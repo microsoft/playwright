@@ -154,6 +154,22 @@ export class BidiChromium extends BrowserType {
     chromeArguments.push(...args);
     return chromeArguments;
   }
+
+  override getExecutableName(options: types.LaunchOptions): string {
+    switch (options.channel) {
+      case 'bidi-chromium':
+        return 'chromium';
+      case 'bidi-chrome':
+        return 'chrome';
+      case 'bidi-chrome-beta':
+        return 'chrome-beta';
+      case 'bidi-chrome-dev':
+        return 'chrome-dev';
+      case 'bidi-chrome-canary':
+        return 'chrome-canary';
+    }
+    throw new Error(`Unsupported Bidi Chromium channel: ${options.channel}`);
+  }
 }
 
 const kBidiOverCdpWrapper = Symbol('kBidiConnectionWrapper');
