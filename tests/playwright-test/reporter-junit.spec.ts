@@ -50,7 +50,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(0);
     });
 
-    test('should render unexpected', async ({ runInlineTest }) => {
+    test('should render assertion failure', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
@@ -70,7 +70,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
-    test('should render unexpected after retry', async ({ runInlineTest }) => {
+    test('should render assertion failure after retry', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.js': `
           import { test, expect } from '@playwright/test';
