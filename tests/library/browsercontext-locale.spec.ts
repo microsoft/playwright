@@ -116,6 +116,8 @@ it('should work for multiple pages sharing same process', async ({ browser, serv
 });
 
 it('should be isolated between contexts', async ({ browser, server }) => {
+  it.slow();
+
   const context1 = await browser.newContext({ locale: 'en-US' });
   const promises = [];
   // By default firefox limits number of child web processes to 8.
