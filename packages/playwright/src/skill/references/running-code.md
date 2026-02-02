@@ -146,23 +146,6 @@ playwright-cli run-code "async page => {
 }"
 ```
 
-## Accessibility
-
-```bash
-# Get accessibility tree
-playwright-cli run-code "async page => {
-  const snapshot = await page.accessibility.snapshot();
-  return snapshot;
-}"
-
-# Get accessibility info for element
-playwright-cli run-code "async page => {
-  const button = page.getByRole('button', { name: 'Submit' });
-  const snapshot = await page.accessibility.snapshot({ root: button });
-  return snapshot;
-}"
-```
-
 ## Page Information
 
 ```bash
