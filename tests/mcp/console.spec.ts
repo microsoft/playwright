@@ -206,7 +206,8 @@ test('console log file is created on snapshot', async ({ startClient, server }, 
     <html>
       <script>
         console.log("Hello from console");
-        console.error("Error message");
+        console.error("Error message1");
+        console.error("Error message2");
       </script>
     </html>
   `, 'text/html');
@@ -217,16 +218,27 @@ test('console log file is created on snapshot', async ({ startClient, server }, 
   }));
 
   // Check events section mentions the log file with line range
-  expect(response.events).toMatch(/\d+ new console entr(y|ies) in ".+\.log#L\d+(-L\d+)?"/);
+  expect(response.events).toMatch(/1 new console entry in "output\/console-info.+\.log#L\d+(-L\d+)?"/);
+  expect(response.events).toMatch(/2 new console entries in "output\/console-error.+\.log#L\d+(-L\d+)?"/);
 
-  // Verify log file exists and contains the messages
+  // Verify log files exist and contain the messages
   const files = await fs.promises.readdir(outputDir);
-  const logFile = files.find(f => f.startsWith('console-') && f.endsWith('.log'));
-  expect(logFile).toBeTruthy();
+  const logFiles = files.filter(f => f.startsWith('console-') && f.endsWith('.log'));
+  expect(logFiles.length).toBe(2);
 
-  const logContent = await fs.promises.readFile(path.join(outputDir, logFile!), 'utf-8');
-  expect(logContent).toContain('Hello from console');
-  expect(logContent).toContain('Error message');
+  async function readLog(level: string) {
+    const file = logFiles.find(f => f.startsWith(`console-${level}-`));
+    if (!file)
+      return '<no log file>';
+    return fs.promises.readFile(path.join(outputDir, file), 'utf-8');
+  }
+
+  const infoLog = await readLog('info');
+  expect(infoLog).toContain('Hello from console');
+
+  const errorLog = await readLog('error');
+  expect(errorLog).toContain('Error message1');
+  expect(errorLog).toContain('Error message2');
 });
 
 test('console log file shows correct entry count', async ({ startClient, server }, testInfo) => {
@@ -389,22 +401,35 @@ test('console log file stores message type and content', async ({ startClient, s
   });
 
   const files = await fs.promises.readdir(outputDir);
-  const logFile = files.find(f => f.startsWith('console-') && f.endsWith('.log'));
-  expect(logFile).toBeTruthy();
+  const logFiles = files.filter(f => f.startsWith('console-') && f.endsWith('.log'));
+  expect(logFiles.length).toBe(4);
 
-  const logContent = await fs.promises.readFile(path.join(outputDir, logFile!), 'utf-8');
+  async function readLog(level: string) {
+    const file = logFiles.find(f => f.startsWith(`console-${level}-`));
+    if (!file)
+      return '<no log file>';
+    return fs.promises.readFile(path.join(outputDir, file), 'utf-8');
+  }
 
   // Check that message types are stored
-  expect(logContent).toContain('[LOG] Log message');
-  expect(logContent).toContain('[WARNING] Warning message');
-  expect(logContent).toContain('[ERROR] Error message');
-  expect(logContent).toContain('[INFO] Info message');
-  expect(logContent).toContain('[DEBUG] Debug message');
+  const infoContent = await readLog('info');
+  expect(infoContent).toContain('[LOG] Log message');
+  expect(infoContent).toContain('[INFO] Info message');
+
+  const warningContent = await readLog('warning');
+  expect(warningContent).toContain('[WARNING] Warning message');
+
+  const errorContent = await readLog('error');
+  expect(errorContent).toContain('[ERROR] Error message');
+
+  const debugContent = await readLog('debug');
+  expect(debugContent).toContain('[DEBUG] Debug message');
 
   // Check that source location is stored
-  expect(logContent).toMatch(/@ http:\/\/localhost:\d+\/:5/);  // console.log line
-  expect(logContent).toMatch(/@ http:\/\/localhost:\d+\/:6/);  // console.warn line
-  expect(logContent).toMatch(/@ http:\/\/localhost:\d+\/:7/);  // console.error line
+  expect(infoContent).toMatch(/@ http:\/\/localhost:\d+\/:\d/);  // console.log line
+  expect(warningContent).toMatch(/@ http:\/\/localhost:\d+\/:\d/);  // console.warn line
+  expect(errorContent).toMatch(/@ http:\/\/localhost:\d+\/:\d/);  // console.error line
+  expect(debugContent).toMatch(/@ http:\/\/localhost:\d+\/:\d/);  // console.debug line
 });
 
 test('console log is updated without taking snapshots', async ({ startClient, server }, testInfo) => {

@@ -37,9 +37,9 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      const rendered = await renderRequest(request, params.includeStatic);
-      if (rendered)
-        text.push(rendered);
+      if (!params.includeStatic && isStatic(request) && isSuccessfulResponse(request))
+        continue;
+      text.push(await renderRequest(request));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -60,18 +60,26 @@ const networkClear = defineTabTool({
   },
 });
 
-async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
+function isSuccessfulResponse(request: playwright.Request): boolean {
+  if (request.failure())
+    return false;
   const response = request.existingResponse();
-  const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
-  const isSuccessfulRequest = !response || response.status() < 400;
+  return !!response && response.status() < 400;
+}
 
-  if (isStaticRequest && isSuccessfulRequest && !includeStatic)
-    return undefined;
+export function isStatic(request: playwright.Request): boolean {
+  return ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
+}
+
+export async function renderRequest(request: playwright.Request): Promise<string> {
+  const response = request.existingResponse();
 
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
   if (response)
     result.push(`=> [${response.status()}] ${response.statusText()}`);
+  else if (request.failure())
+    result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
   return result.join(' ');
 }
 
