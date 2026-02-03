@@ -137,7 +137,6 @@ page/page-request-continue.spec.ts › continue should drop content-length on re
 page/page-request-continue.spec.ts › should not throw if request was cancelled by the page [timeout]
 page/page-request-fulfill.spec.ts › should fulfill with gzip and readback [timeout]
 page/page-request-fulfill.spec.ts › should not throw if request was cancelled by the page [timeout]
-page/page-request-gc.spec.ts › should work [fail]
 page/page-request-intercept.spec.ts › request.postData is not null when fetching FormData with a Blob [fail]
 page/page-request-intercept.spec.ts › should intercept multipart/form-data request body [fail]
 page/page-route.spec.ts › should be abortable with custom error codes [fail]

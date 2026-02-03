@@ -403,7 +403,13 @@ export class BidiPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
-    throw new Error('Method not implemented.');
+    const result = await this._session.send('script.evaluate', {
+      expression: 'TestUtils.gc()',
+      target: { context: this._session.sessionId },
+      awaitPromise: true,
+    });
+    if (result.type === 'exception')
+      throw new Error('Method not implemented.');
   }
 
   private async _onScriptMessage(event: bidi.Script.MessageParameters) {
