@@ -57,7 +57,7 @@ const screenshot = defineTabTool({
     const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
     const data = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
 
-    const resolvedFile = await response.resolveFile({ prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTarget}`);
+    const resolvedFile = await response.resolveClientFile({ prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTarget}`);
 
     response.addCode(`// Screenshot ${screenshotTarget} and save it as ${resolvedFile.relativeName}`);
     if (ref)

@@ -36,7 +36,7 @@ const pdf = defineTabTool({
 
   handle: async (tab, params, response) => {
     const data = await tab.page.pdf();
-    const result = await response.resolveFile({ prefix: 'page', ext: 'pdf', suggestedFilename: params.filename }, 'Page as pdf');
+    const result = await response.resolveClientFile({ prefix: 'page', ext: 'pdf', suggestedFilename: params.filename }, 'Page as pdf');
     await response.addFileResult(result, data);
     response.addCode(`await page.pdf(${formatObject({ path: result.relativeName })});`);
   },

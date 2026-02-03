@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { test, expect } from './cli-fixtures';
 
 test('screenshot', async ({ cli, server, mcpBrowser }) => {
@@ -42,7 +41,7 @@ test('screenshot --full-page', async ({ cli, server, mcpBrowser }) => {
 test('screenshot --filename', async ({ cli, server, mcpBrowser }) => {
   await cli('open', server.HELLO_WORLD);
   const { output, attachments } = await cli('screenshot', '--filename=screenshot.png');
-  expect(output).toContain('.playwright-cli' + path.sep + 'screenshot.png');
+  expect(output).toContain('[Screenshot of viewport](screenshot.png)');
   expect(attachments[0].name).toEqual('Screenshot of viewport');
   expect(attachments[0].data).toEqual(expect.any(Buffer));
 });
@@ -59,7 +58,7 @@ test('pdf --filename', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium' && mcpBrowser !== 'chrome', 'PDF is only supported in Chromium and Chrome');
   await cli('open', server.HELLO_WORLD);
   const { output, attachments } = await cli('pdf', '--filename=pdf.pdf');
-  expect(output).toContain('.playwright-cli' + path.sep + 'pdf.pdf');
+  expect(output).toContain('[Page as pdf](pdf.pdf)');
   expect(attachments[0].name).toEqual('Page as pdf');
   expect(attachments[0].data).toEqual(expect.any(Buffer));
 });

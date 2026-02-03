@@ -59,11 +59,6 @@ export async function callOnPageNoTrace<T>(page: playwright.Page, callback: (pag
   return await (page as any)._wrapApiCall(() => callback(page), { internal: true });
 }
 
-export function dateAsFileName(prefix: string, extension: string, date?: Date): string {
-  date = date ?? new Date();
-  return `${prefix}-${date.toISOString().replace(/[:.]/g, '-')}.${extension}`;
-}
-
 export function eventWaiter<T>(page: playwright.Page, event: string, timeout: number): { promise: Promise<T | undefined>, abort: () => void } {
   const disposables: (() => void)[] = [];
 

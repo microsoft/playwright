@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 
-import { dateAsFileName } from './tools/utils';
 import { logUnhandledError } from '../log';
 
 import type { Context } from './context';
@@ -79,7 +78,7 @@ export class LogFile {
   private async _write(wallTime: number, text: () => string | Promise<string>) {
     if (this._stopped)
       return;
-    this._file ??= await this._context.outputFile(dateAsFileName(this._filePrefix, 'log', new Date(this._startTime)), { origin: 'code', title: this._title });
+    this._file ??= await this._context.outputFile({ prefix: this._filePrefix, ext: 'log', date: new Date(this._startTime) }, { origin: 'code' });
     const relativeTime = Math.round(wallTime - this._startTime);
     const renderedText = await text();
     const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${renderedText}\n`;

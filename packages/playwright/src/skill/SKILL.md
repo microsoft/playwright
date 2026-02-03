@@ -39,6 +39,7 @@ playwright-cli upload ./document.pdf
 playwright-cli check e12
 playwright-cli uncheck e12
 playwright-cli snapshot
+playwright-cli snapshot --filename=after-click.yaml
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 playwright-cli dialog-accept
@@ -80,7 +81,8 @@ playwright-cli mousewheel 0 100
 ```bash
 playwright-cli screenshot
 playwright-cli screenshot e5
-playwright-cli pdf
+playwright-cli screenshot --filename=page.png
+playwright-cli pdf --filename=page.pdf
 ```
 
 ### Tabs

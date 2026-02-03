@@ -19,21 +19,14 @@ import path from 'path';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { renderModalStates, shouldIncludeMessage } from './tab';
-import { dateAsFileName } from './tools/utils';
 import { scaleImageToFitMessage } from './tools/screenshot';
 
 import type { TabHeader } from './tab';
 import type { LogChunk } from './logFile';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
-import type { Context } from './context';
+import type { Context, FilenameTemplate } from './context';
 
 export const requestDebug = debug('pw:mcp:request');
-
-type FilenameTemplate = {
-  prefix: string;
-  ext: string;
-  suggestedFilename?: string;
-};
 
 type ResolvedFile = {
   fileName: string;
@@ -58,28 +51,28 @@ export class Response {
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
-  private _relativeTo: string | undefined;
+  private _clientWorkspace: string | undefined;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
 
   constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
-    this._relativeTo = relativeTo ?? context.firstRootPath();
+    this._clientWorkspace = relativeTo ?? context.firstRootPath();
   }
 
   private _computRelativeTo(fileName: string): string {
-    if (this._relativeTo)
-      return path.relative(this._relativeTo, fileName);
+    if (this._clientWorkspace)
+      return path.relative(this._clientWorkspace, fileName);
     return fileName;
   }
 
-  async resolveFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
+  async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
     if (template.suggestedFilename)
-      fileName = await this._context.outputFile(template.suggestedFilename, { origin: 'llm', title });
+      fileName = await this._context.workspaceFile(template.suggestedFilename, this._clientWorkspace);
     else
-      fileName = await this._context.outputFile(dateAsFileName(template.prefix, template.ext), { origin: 'code', title });
+      fileName = await this._context.outputFile(template, { origin: 'llm' });
     const relativeName = this._computRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
@@ -91,7 +84,7 @@ export class Response {
 
   async addResult(title: string, data: Buffer | string, file: FilenameTemplate) {
     if (this._context.config.outputMode === 'file' || file.suggestedFilename || typeof data !== 'string') {
-      const resolvedFile = await this.resolveFile(file, title);
+      const resolvedFile = await this.resolveClientFile(file, title);
       await this.addFileResult(resolvedFile, data);
     } else {
       this.addTextResult(data);
@@ -209,7 +202,7 @@ export class Response {
     if (tabSnapshot && this._includeSnapshot !== 'none') {
       const snapshot = this._includeSnapshot === 'full' ? tabSnapshot.ariaSnapshot : tabSnapshot.ariaSnapshotDiff ?? tabSnapshot.ariaSnapshot;
       if (this._context.config.outputMode === 'file' || this._includeSnapshotFileName) {
-        const resolvedFile = await this.resolveFile({ prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName }, 'Snapshot');
+        const resolvedFile = await this.resolveClientFile({ prefix: 'page', ext: 'yml', suggestedFilename: this._includeSnapshotFileName }, 'Snapshot');
         await fs.promises.writeFile(resolvedFile.fileName, snapshot, 'utf-8');
         addSection('Snapshot', [resolvedFile.printableLink]);
       } else {

@@ -82,10 +82,8 @@ test('browser_storage_state saves storage state to file', async ({ startClient, 
 });
 
 test('browser_storage_state saves to custom filename', async ({ startClient, server }, testInfo) => {
-  const outputDir = testInfo.outputPath('output');
-
   const { client } = await startClient({
-    config: { outputDir, capabilities: ['storage'] },
+    config: { capabilities: ['storage'] },
   });
 
   await client.callTool({
@@ -102,7 +100,7 @@ test('browser_storage_state saves to custom filename', async ({ startClient, ser
     result: expect.stringContaining('my-state.json'),
   });
 
-  const stateFile = path.join(outputDir, 'my-state.json');
+  const stateFile = testInfo.outputPath('my-state.json');
   expect(await fs.promises.stat(stateFile).catch(() => null)).not.toBeNull();
 });
 
@@ -172,10 +170,8 @@ test('browser_set_storage_state restores storage state from file', async ({ star
 });
 
 test('browser_storage_state and browser_set_storage_state roundtrip', async ({ startClient, server, mcpBrowser }, testInfo) => {
-  const outputDir = testInfo.outputPath('output');
-
   const { client } = await startClient({
-    config: { outputDir, capabilities: ['storage'] },
+    config: { capabilities: ['storage'] },
   });
 
   // Navigate and set data
@@ -214,7 +210,7 @@ test('browser_storage_state and browser_set_storage_state roundtrip', async ({ s
   // Restore storage state
   await client.callTool({
     name: 'browser_set_storage_state',
-    arguments: { filename: path.join(outputDir, 'roundtrip-state.json') },
+    arguments: { filename: testInfo.outputPath('roundtrip-state.json') },
   });
 
   // Reload to pick up cookies
