@@ -11,7 +11,7 @@ test('should load font without routes', async ({ mount, page }) => {
   const request = await promise;
   const response = await request.response();
   const body = await response!.body();
-  expect(body.length).toBe(2656);
+  expect(body.length).toBe(348);
 });
 
 test('should load font with routes', async ({ mount, page }) => {
@@ -22,7 +22,7 @@ test('should load font with routes', async ({ mount, page }) => {
   const request = await promise;
   const response = await request.response();
   const body = await response!.body();
-  expect(body.length).toBe(2656);
+  expect(body.length).toBe(348);
 });
 
 test.describe('request handlers', () => {
