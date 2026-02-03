@@ -42,6 +42,23 @@ test('context options', async ({ cli, server }, testInfo) => {
   expect(output).toContain('800x600');
 });
 
+test('headless options from config is respected', async ({ cli, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome', 'HeadlessChrome detection only works in Chromium');
+  const config = {
+    browser: {
+      launchOptions: {
+        headless: false,
+      },
+    },
+  };
+  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  const options = { env: { PLAYWRIGHT_MCP_HEADLESS: undefined } };
+  await cli('open', server.PREFIX, options);
+  const { output } = await cli('eval', 'navigator.userAgent', options);
+  expect(output).not.toContain('HeadlessChrome');
+  expect(output).toContain(' Chrome/');
+});
+
 test('isolated', async ({ cli, server }, testInfo) => {
   const config = {
     browser: {
