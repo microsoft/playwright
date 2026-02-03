@@ -384,15 +384,8 @@ test('should restart webserver on reload', async ({ runUITest }) => {
   await expect(page.getByTestId('status-line')).toHaveText('1/1 passed (100%)');
 });
 
-test('coding agent mode', async ({ childProcess, writeFiles }, testInfo) => {
-  await writeFiles({});
-  const cp = childProcess({
-    command: ['npx', 'playwright', 'test', '--ui'],
-    env: {
-      CLAUDECODE: '1',
-    },
-    cwd: testInfo.outputDir,
-  });
+test('coding agent mode', async ({ interactWithTestRunner }) => {
+  const cp = await interactWithTestRunner({}, { ui: true }, { CLAUDECODE: '1' });
   await cp.waitForOutput('Listening on');
   const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
   expect(proto).toEqual('http');
