@@ -60,7 +60,7 @@ export type Platform = {
   streamReadable: (channel: channels.StreamChannel) => Readable,
   streamWritable: (channel: channels.WritableStreamChannel) => Writable,
   zodToJsonSchema: (schema: any) => any,
-  zones: { empty: Zone, current: () => Zone; };
+  zones: { empty: Zone, current: () => Zone, mcp: () => Zone };
 };
 
 export const emptyPlatform: Platform = {
@@ -124,5 +124,5 @@ export const emptyPlatform: Platform = {
     throw new Error('Zod is not available');
   },
 
-  zones: { empty: noopZone, current: () => noopZone },
+  zones: { empty: noopZone, current: () => noopZone, mcp: () => noopZone },
 };

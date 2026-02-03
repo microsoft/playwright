@@ -68,7 +68,7 @@ export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Too
       else if (!tool.clearsModalState && modalStates.length)
         response.addError(`Error: Tool "${tool.schema.name}" does not handle the modal state.`);
       else
-        return tool.handle(tab, params, response);
+        return tab.page.context()._wrapMcpCall({ cwd: response.clientWorkspace() }, () => tool.handle(tab, params, response));
     },
   };
 }

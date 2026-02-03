@@ -15,6 +15,7 @@
  */
 
 import { test, expect } from './cli-fixtures';
+import fs from 'fs';
 
 test('screenshot', async ({ cli, server, mcpBrowser }) => {
   await cli('open', server.HELLO_WORLD);
@@ -61,4 +62,24 @@ test('pdf --filename', async ({ cli, server, mcpBrowser }) => {
   expect(output).toContain('[Page as pdf](pdf.pdf)');
   expect(attachments[0].name).toEqual('Page as pdf');
   expect(attachments[0].data).toEqual(expect.any(Buffer));
+});
+
+test('download file via run-code', async ({ cli, server }) => {
+  server.setContent('/', `<a href="/file" download>Download</a>`, 'text/html');
+  server.setRoute('/file', (req, res) => {
+    res.setHeader('Content-Disposition', 'attachment; filename="file.txt"');
+    res.end('Hello world');
+  });
+  await cli('open', server.PREFIX);
+  const subdir = test.info().outputPath('subdir');
+  fs.mkdirSync(subdir, { recursive: true });
+  await cli('run-code', `async page => {
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.getByText('Download').click()
+    ]);
+    await download.saveAs('downloaded.txt');
+  }`, { cwd: subdir });
+  expect.soft(fs.readdirSync(test.info().outputDir)).not.toContain('downloaded.txt');
+  expect.soft(fs.readdirSync(subdir)).toContain('downloaded.txt');
 });

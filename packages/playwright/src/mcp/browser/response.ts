@@ -61,7 +61,12 @@ export class Response {
     this._clientWorkspace = relativeTo ?? context.firstRootPath();
   }
 
-  private _computRelativeTo(fileName: string): string {
+
+  clientWorkspace() {
+    return this._clientWorkspace;
+  }
+
+  private _computeRelativeTo(fileName: string): string {
     if (this._clientWorkspace)
       return path.relative(this._clientWorkspace, fileName);
     return fileName;
@@ -73,7 +78,7 @@ export class Response {
       fileName = await this._context.workspaceFile(template.suggestedFilename, this._clientWorkspace);
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     const printableLink = `- [${title}](${relativeName})`;
     return { fileName, relativeName, printableLink };
   }
@@ -100,7 +105,7 @@ export class Response {
   }
 
   addFileLink(title: string, fileName: string) {
-    const relativeName = this._computRelativeTo(fileName);
+    const relativeName = this._computeRelativeTo(fileName);
     this.addTextResult(`- [${title}](${relativeName})`);
   }
 
@@ -211,7 +216,7 @@ export class Response {
     }
 
     // Handle tab log
-    const text: string[] = tabSnapshot?.logs?.map(log => renderLogChunk(log, log.type, file => this._computRelativeTo(file))).flat() ?? [];
+    const text: string[] = tabSnapshot?.logs?.map(log => renderLogChunk(log, log.type, file => this._computeRelativeTo(file))).flat() ?? [];
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
         if (event.type === 'console' && this._context.config.outputMode !== 'file') {
@@ -220,7 +225,7 @@ export class Response {
         } else if (event.type === 'download-start') {
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);
         } else if (event.type === 'download-finish') {
-          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computRelativeTo(event.download.outputFile)}"`);
+          text.push(`- Downloaded file ${event.download.download.suggestedFilename()} to "${this._computeRelativeTo(event.download.outputFile)}"`);
         }
       }
     }

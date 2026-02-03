@@ -30,24 +30,26 @@ import type zod3 from 'zod/v3';
 import type zod4 from 'zod';
 
 import type { Platform, Zone } from '../../client/platform';
-import type { Zone as ZoneImpl } from './zones';
+import type { Zone as ZoneImpl, ZoneType } from './zones';
 import type * as channels from '@protocol/channels';
 
 const pipelineAsync = util.promisify(pipeline);
 
 class NodeZone implements Zone {
   private _zone: ZoneImpl;
+  private _type: ZoneType;
 
-  constructor(zone: ZoneImpl) {
+  constructor(zone: ZoneImpl, type: ZoneType) {
     this._zone = zone;
+    this._type = type;
   }
 
   push<T>(data: T) {
-    return new NodeZone(this._zone.with('apiZone', data));
+    return new NodeZone(this._zone.with(this._type, data), this._type);
   }
 
   pop() {
-    return new NodeZone(this._zone.without('apiZone'));
+    return new NodeZone(this._zone.without(this._type), this._type);
   }
 
   run<R>(func: () => R): R {
@@ -55,7 +57,7 @@ class NodeZone implements Zone {
   }
 
   data<T>(): T | undefined {
-    return this._zone.data('apiZone');
+    return this._zone.data(this._type);
   }
 }
 
@@ -134,8 +136,9 @@ export const nodePlatform: Platform = {
   },
 
   zones: {
-    current: () => new NodeZone(currentZone()),
-    empty: new NodeZone(emptyZone),
+    current: () => new NodeZone(currentZone(), 'apiZone'),
+    empty: new NodeZone(emptyZone, 'apiZone'),
+    mcp: () => new NodeZone(currentZone(), 'mcpZone'),
   }
 };
 

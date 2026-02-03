@@ -49,6 +49,10 @@ import type { Platform } from './platform';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 
+interface McpZoneData {
+  cwd?: string;
+}
+
 interface RecorderEventSink {
   actionAdded?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
   actionUpdated?(page: Page, actionInContext: actions.ActionInContext, code: string): void;
@@ -584,6 +588,17 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     if (this._allowedDirectories.some(root => isInsideDir(root, path)))
       return;
     throw new Error(`File access denied: ${filePath} is outside allowed roots. Allowed roots: ${this._allowedDirectories.length ? this._allowedDirectories.join(', ') : 'none'}`);
+  }
+
+  _resolvePath(filePath: string): string {
+    const cwd = this._platform.zones.mcp().data<McpZoneData>()?.cwd;
+    if (!cwd)
+      return filePath;
+    return this._platform.path().resolve(cwd, filePath);
+  }
+
+  async _wrapMcpCall<T>(data: McpZoneData, fn: () => Promise<T>): Promise<T> {
+    return await this._platform.zones.mcp().push(data).run(fn);
   }
 }
 
