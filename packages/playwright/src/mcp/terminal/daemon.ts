@@ -63,7 +63,7 @@ export async function startMcpDaemonServer(
   const cwd = url.pathToFileURL(process.cwd()).href;
   await backend.initialize?.({
     name: 'playwright-cli',
-    version: '1.0.0',
+    version: sessionConfig.version,
     roots: [{
       uri: cwd,
       name: 'cwd'
