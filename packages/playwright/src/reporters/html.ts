@@ -443,7 +443,11 @@ class HtmlBuilder {
         path,
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
         results: results.map(result => {
-          return { attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })) };
+          return {
+            attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })),
+            startTime: result.startTime,
+            workerIndex: result.workerIndex,
+          };
         }),
       },
     };
@@ -552,6 +556,7 @@ class HtmlBuilder {
         ...result.attachments,
         ...result.stdout.map(m => stdioAttachment(m, 'stdout')),
         ...result.stderr.map(m => stdioAttachment(m, 'stderr'))]),
+      workerIndex: result.workerIndex,
     };
   }
 

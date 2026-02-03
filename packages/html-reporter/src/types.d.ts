@@ -88,6 +88,8 @@ export type TestCaseSummary = {
 
 export type TestResultSummary = {
   attachments: { name: string, contentType: string, path?: string }[];
+  startTime: string;
+  workerIndex: number;
 };
 
 export type TestCase = Omit<TestCaseSummary, 'results'> & {
@@ -110,6 +112,7 @@ export type TestResult = {
   attachments: TestAttachment[];
   status: 'passed' | 'failed' | 'timedOut' | 'skipped' | 'interrupted';
   annotations: TestAnnotation[];
+  workerIndex: number;
 };
 
 export type TestStep = {

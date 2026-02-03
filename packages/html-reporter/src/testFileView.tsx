@@ -25,14 +25,13 @@ import { video, image } from './icons';
 import { clsx } from '@web/uiUtils';
 import { ProjectAndTagLabelsView } from './labels';
 
-export const TestFileView: React.FC<React.PropsWithChildren<{
+export const TestFileView: React.FC<{
   file: TestFileSummary;
   projectNames: string[];
   isFileExpanded?: (fileId: string) => boolean;
   setFileExpanded?: (fileId: string, expanded: boolean) => void;
   footer?: React.JSX.Element | string;
-}>> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
-  const searchParams = useSearchParams();
+}> = ({ file, projectNames, isFileExpanded, setFileExpanded, footer }) => {
   return <Chip
     expanded={isFileExpanded ? isFileExpanded(file.fileId) : undefined}
     noInsets={true}
@@ -42,15 +41,31 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
     </span>}
     footer={footer}
   >
-    {file.tests.map(test =>
-      <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome)}>
+    <TestCaseListView tests={file.tests} projectNames={projectNames} />
+  </Chip>;
+};
+
+export const TestCaseListView: React.FC<{
+  tests: TestCaseSummary[];
+  projectNames: string[];
+  runs?: number[];
+  selectedTestId?: string;
+}> = ({ tests, projectNames, runs, selectedTestId }) => {
+  const searchParams = useSearchParams();
+  return <div role='list'>
+    {tests.map((test, index) => {
+      const run = runs?.[index];
+      const result = run !== undefined ? test.results[run] : undefined;
+      const href = testResultHref({ test, result }, searchParams);
+      const selected = selectedTestId === test.testId;
+      return <div key={`test-${test.testId}`} className={clsx('test-file-test', 'test-file-test-outcome-' + test.outcome, selected && 'test-file-test-selected')} role='listitem' aria-current={selected}>
         <div className='hbox' style={{ alignItems: 'flex-start' }}>
           <div className='hbox'>
             <span className='test-file-test-status-icon'>
               {statusIcon(test.outcome)}
             </span>
             <span>
-              <Link href={testResultHref({ test }, searchParams)} title={[...test.path, test.title].join(' › ')}>
+              <Link href={href} title={[...test.path, test.title].join(' › ')}>
                 <span className='test-file-title'>{[...test.path, test.title].join(' › ')}</span>
               </Link>
               <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
@@ -60,7 +75,7 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
         </div>
         <div className='test-file-details-row'>
           <div className='test-file-details-row-items'>
-            <Link href={testResultHref({ test }, searchParams)} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
+            <Link href={href} title={[...test.path, test.title].join(' › ')} className='test-file-path-link'>
               <span className='test-file-path'>{test.location.file}:{test.location.line}</span>
             </Link>
             <ImageDiffBadge test={test} />
@@ -68,9 +83,9 @@ export const TestFileView: React.FC<React.PropsWithChildren<{
             <TraceLink test={test} dim={true} />
           </div>
         </div>
-      </div>
-    )}
-  </Chip>;
+      </div>;
+    })}
+  </div>;
 };
 
 function ImageDiffBadge({ test }: { test: TestCaseSummary }) {

@@ -84,6 +84,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   };
 
   await dispatchEvents(eventData.prologue);
+  let usedWorkers = 0;
   for (const { reportFile, zipFile, eventPatchers, metadata, config, fullResult } of eventData.reports) {
     multiplexer.onReportConfigure({
       reportPath: zipFile,
@@ -97,7 +98,10 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
       eventPatchers.patchers.push(new GlobalErrorPatcher(metadata.name));
     if (config?.tags?.length)
       eventPatchers.patchers.push(new GlobalErrorPatcher(config.tags.join(' ')));
+    const workerIndexPatcher = new WorkerIndexPatcher(usedWorkers);
+    eventPatchers.patchers.push(workerIndexPatcher);
     eventPatchers.patchEvents(events);
+    usedWorkers += workerIndexPatcher.usedWorkers();
     await dispatchEvents(events);
     multiplexer.onReportEnd({
       reportPath: zipFile,
@@ -604,6 +608,26 @@ class GlobalErrorPatcher {
       error.message = this._prefix + error.message;
     if (error.stack !== undefined)
       error.stack = this._prefix + error.stack;
+  }
+}
+
+class WorkerIndexPatcher {
+  private _baseWorkerIndex: number;
+  private _maxWorkerIndex = 0;
+
+  constructor(baseWorkerIndex: number) {
+    this._baseWorkerIndex = baseWorkerIndex;
+  }
+
+  patchEvent(event: JsonEvent) {
+    if (event.method === 'onTestBegin') {
+      this._maxWorkerIndex = Math.max(this._maxWorkerIndex, event.params.result.workerIndex);
+      event.params.result.workerIndex += this._baseWorkerIndex;
+    }
+  }
+
+  usedWorkers() {
+    return this._maxWorkerIndex + 1;
   }
 }
 
