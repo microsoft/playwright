@@ -236,7 +236,6 @@ to restart the session daemon.`);
     const args = [
       cliPath,
       'run-mcp-server',
-      `--output-dir=${outputDir}`,
       `--daemon-session=${sessionConfigFile}`,
     ];
 
@@ -549,8 +548,6 @@ async function installSkills() {
   await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
   console.log(`Skills installed to ${path.relative(process.cwd(), skillDestDir)}`);
 }
-
-const outputDir = path.join(process.cwd(), '.playwright-cli');
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   const socketName = `${sessionName}.sock`;

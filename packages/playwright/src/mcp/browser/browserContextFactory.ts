@@ -354,13 +354,13 @@ export class SharedContextFactory implements BrowserContextFactory {
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
   if (!config.saveTrace && !config.capabilities?.includes('devtools'))
     return;
-  return await outputFile(config, clientInfo, `traces`, { origin: 'code', title: 'Collecting trace' });
+  return await outputFile(config, clientInfo, `traces`, { origin: 'code' });
 }
 
 async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
   const result = { ...config.browser.contextOptions };
   if (config.saveVideo) {
-    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code', title: 'Saving video' });
+    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code' });
     result.recordVideo = {
       dir,
       size: config.saveVideo,

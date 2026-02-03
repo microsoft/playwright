@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import os from 'os';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
 import { fileURLToPath } from 'url';
-import os from 'os';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
-import { outputFile  } from './config';
+import { outputFile, workspaceFile } from './config';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
@@ -48,6 +49,13 @@ export type RouteEntry = {
   addHeaders?: Record<string, string>;
   removeHeaders?: string[];
   handler: (route: playwright.Route) => Promise<void>;
+};
+
+export type FilenameTemplate = {
+  prefix: string;
+  ext: string;
+  suggestedFilename?: string;
+  date?: Date;
 };
 
 export class Context {
@@ -129,8 +137,13 @@ export class Context {
     return url;
   }
 
-  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
-    return outputFile(this.config, this._clientInfo, fileName, options);
+  async workspaceFile(fileName: string, perCallWorkspaceDir: string | undefined): Promise<string> {
+    return await workspaceFile(this.config, this._clientInfo, fileName, perCallWorkspaceDir);
+  }
+
+  async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
+    const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
+    return await outputFile(this.config, this._clientInfo, baseName, options);
   }
 
   private _onPageCreated(page: playwright.Page) {

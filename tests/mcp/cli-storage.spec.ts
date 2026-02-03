@@ -54,16 +54,13 @@ test('state-save saves to custom filename', async ({ cli, server }, testInfo) =>
   const { output } = await cli('state-save', 'my-state.json');
   expect(output).toContain('my-state.json');
 
-  const stateFile = testInfo.outputPath('.playwright-cli', 'my-state.json');
+  const stateFile = testInfo.outputPath('my-state.json');
   expect(await fs.promises.stat(stateFile).catch(() => null)).not.toBeNull();
 });
 
 test('state-load restores storage state from file', async ({ cli, server, mcpBrowser }, testInfo) => {
   const config = { capabilities: ['storage'] };
   await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
-
-  const outputDir = testInfo.outputPath('.playwright-cli');
-  await fs.promises.mkdir(outputDir, { recursive: true });
 
   // Create a storage state file
   const storageState = {
@@ -82,13 +79,13 @@ test('state-load restores storage state from file', async ({ cli, server, mcpBro
     }],
   };
 
-  const stateFile = path.join(outputDir, 'state.json');
+  const stateFile = testInfo.outputPath('state.json');
   await fs.promises.writeFile(stateFile, JSON.stringify(storageState));
 
   await cli('open', server.EMPTY_PAGE);
 
   // Restore storage state
-  const { output } = await cli('state-load', stateFile);
+  const { output } = await cli('state-load', 'state.json');
   expect(output).toContain('Storage state restored');
 
   // Verify the cookie was restored
@@ -120,7 +117,7 @@ test('state-save and state-load roundtrip', async ({ cli, server, mcpBrowser }, 
   expect(clearedResult).toContain('|null');
 
   // Restore storage state
-  await cli('state-load', testInfo.outputPath('.playwright-cli', 'roundtrip-state.json'));
+  await cli('state-load', testInfo.outputPath('roundtrip-state.json'));
 
   // Reload to pick up cookies
   await cli('open', server.EMPTY_PAGE);

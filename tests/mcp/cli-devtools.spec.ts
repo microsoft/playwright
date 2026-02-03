@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { test, expect } from './cli-fixtures';
 
 test('console', async ({ cli, server }) => {
@@ -91,5 +90,5 @@ test('video-start-stop', async ({ cli, server }) => {
     }
   `);
   const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
-  expect(videoStopOutput).toContain(`### Result\n- [Video](.playwright-cli${path.sep}video.webm)`);
+  expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)`);
 });

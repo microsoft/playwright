@@ -387,42 +387,47 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-function tmpDir(): string {
-  return path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output');
+// These methods should return resolved absolute file names.
+
+export function workspaceDir(clientInfo: ClientInfo): string {
+  return path.resolve(firstRootPath(clientInfo) ?? process.cwd());
+}
+
+export async function workspaceFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, perCallWorkspaceDir?: string): Promise<string> {
+  const workspace = perCallWorkspaceDir ?? workspaceDir(clientInfo);
+  const resolvedName = path.resolve(workspace, fileName);
+  await checkFile(config, clientInfo, resolvedName, { origin: 'code' });
+  return resolvedName;
 }
 
 export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
+  if (config.outputDir)
+    return path.resolve(config.outputDir);
   const rootPath = firstRootPath(clientInfo);
-  return config.outputDir
-    ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
-    ?? path.join(tmpDir(), String(clientInfo.timestamp));
+  if (rootPath)
+    return path.resolve(rootPath, config.skillMode ? '.playwright-cli' : '.playwright-mcp');
+  const tmpDir = process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir();
+  return path.resolve(tmpDir, 'playwright-mcp-output', String(clientInfo.timestamp));
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
-  const file = await resolveFile(config, clientInfo, fileName, options);
-  await fs.promises.mkdir(path.dirname(file), { recursive: true });
-  debug('pw:mcp:file')(options.title, file);
-  return file;
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' }): Promise<string> {
+  const resolvedFile = path.resolve(outputDir(config, clientInfo), fileName);
+  await checkFile(config, clientInfo, resolvedFile, options);
+  await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+  debug('pw:mcp:file')(resolvedFile);
+  return resolvedFile;
 }
 
-async function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
-  const dir = outputDir(config, clientInfo);
-
+async function checkFile(config: FullConfig, clientInfo: ClientInfo, resolvedFilename: string, options: { origin: 'code' | 'llm' }) {
   // Trust code.
   if (options.origin === 'code')
-    return path.resolve(dir, fileName);
+    return;
 
   // Trust llm to use valid characters in file names.
-  if (options.origin === 'llm') {
-    fileName = fileName.split('\\').join('/');
-    const resolvedFile = path.resolve(dir, fileName);
-    if (!resolvedFile.startsWith(path.resolve(dir) + path.sep))
-      throw new Error(`Resolved file path ${resolvedFile} is outside of the output directory ${dir}. Use relative file names to stay within the output directory.`);
-    return resolvedFile;
-  }
-
-  // Do not trust web, at all.
-  return path.join(dir, sanitizeForFilePath(fileName));
+  const output = outputDir(config, clientInfo);
+  const workspace = workspaceDir(clientInfo);
+  if (!resolvedFilename.startsWith(output) && !resolvedFilename.startsWith(workspace))
+    throw new Error(`Resolved file path ${resolvedFilename} is outside of the output directory ${output} and workspace directory ${workspace}. Use relative file names to stay within the output directory.`);
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
@@ -548,12 +553,4 @@ function envToBoolean(value: string | undefined): boolean | undefined {
 
 function envToString(value: string | undefined): string | undefined {
   return value ? value.trim() : undefined;
-}
-
-function sanitizeForFilePath(s: string) {
-  const sanitize = (s: string) => s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-  const separator = s.lastIndexOf('.');
-  if (separator === -1)
-    return sanitize(s);
-  return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
 }

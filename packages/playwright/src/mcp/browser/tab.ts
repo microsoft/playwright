@@ -187,10 +187,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private async _downloadStarted(download: playwright.Download) {
+    // Do not trust web names.
+    const outputFile = await this.context.outputFile({ suggestedFilename: sanitizeForFilePath(download.suggestedFilename()), prefix: 'download', ext: 'bin' }, { origin: 'code' });
     const entry = {
       download,
       finished: false,
-      outputFile: await this.context.outputFile(download.suggestedFilename(), { origin: 'web', title: 'Saving download' })
+      outputFile,
     };
     this._downloads.push(entry);
     this._addLogEntry({ type: 'download-start', wallTime: Date.now(), download: entry });
@@ -505,3 +507,11 @@ function consoleLevelForMessageType(type: ConsoleMessageType): ConsoleMessageLev
 }
 
 const tabSymbol = Symbol('tabSymbol');
+
+function sanitizeForFilePath(s: string) {
+  const sanitize = (s: string) => s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
+  const separator = s.lastIndexOf('.');
+  if (separator === -1)
+    return sanitize(s);
+  return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
+}

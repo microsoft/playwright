@@ -34,7 +34,7 @@ const storageState = defineTool({
     const browserContext = await context.ensureBrowserContext();
     const state = await browserContext.storageState();
     const serializedState = JSON.stringify(state, null, 2);
-    const resolvedFile = await response.resolveFile({ prefix: 'storage-state', ext: 'json', suggestedFilename: params.filename }, 'Storage state');
+    const resolvedFile = await response.resolveClientFile({ prefix: 'storage-state', ext: 'json', suggestedFilename: params.filename }, 'Storage state');
     response.addCode(`await page.context().storageState({ path: '${resolvedFile.relativeName}' });`);
     await response.addFileResult(resolvedFile, serializedState);
   },

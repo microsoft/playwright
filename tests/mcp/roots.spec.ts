@@ -133,7 +133,6 @@ test('should return relative paths when root is specified', async ({ startClient
 
   const { client } = await startClient({
     clientName: 'test-client',
-    config: { outputDir: path.join(rootPath, 'output') },
     roots: [
       {
         name: 'workspace',
@@ -151,6 +150,6 @@ test('should return relative paths when root is specified', async ({ startClient
     name: 'browser_take_screenshot',
     arguments: { filename: 'screenshot.png' },
   })).toHaveResponse({
-    result: expect.stringContaining(`[Screenshot of viewport](output${path.sep}screenshot.png)`),
+    result: expect.stringContaining(`[Screenshot of viewport](screenshot.png)`),
   });
 });
