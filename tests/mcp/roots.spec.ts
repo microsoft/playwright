@@ -64,8 +64,8 @@ test('check that trace is saved in workspace', async ({ startClient, server }, t
     code: expect.stringContaining(`page.goto('http://localhost`),
   });
 
-  const [file] = await fs.promises.readdir(path.join(rootPath, '.playwright-mcp'));
-  expect(file).toContain('traces');
+  const files = await fs.promises.readdir(path.join(rootPath, '.playwright-mcp'));
+  expect(files).toContain('traces');
 });
 
 test('should list all tools when listRoots is slow', async ({ startClient }) => {
