@@ -108,9 +108,10 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, browserName }) => {
+  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, browserName, isMac, macVersion }) => {
     it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
     it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
+    it.skip(browserName === 'webkit' && isMac && macVersion < 15, 'WebKit on macOS < 15 is frozen.');
 
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();
