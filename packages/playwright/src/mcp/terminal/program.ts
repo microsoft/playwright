@@ -246,13 +246,18 @@ to restart the session daemon.`);
     });
     child.unref();
 
-    console.log(`<!-- Daemon for \`${this.name}\` session started with pid ${child.pid}.`);
-    if (this._config.cli.config)
-      console.log(`- Using config file at \`${path.relative(process.cwd(), this._config.cli.config)}\`.`);
+    console.log(`### Daemon for \`${this.name}\` session started with pid ${child.pid}.`);
+    const configArgs = configToFormattedArgs(this._config.cli);
+    if (configArgs.length) {
+      console.log(`- Session options:`);
+      for (const flag of configArgs)
+        console.log(`  ${flag}`);
+    }
     const sessionSuffix = this.name !== 'default' ? ` "${this.name}"` : '';
-    console.log(`- You can stop the session daemon with \`playwright-cli session-stop${sessionSuffix}\` when done.`);
-    console.log(`- You can delete the session data with \`playwright-cli session-delete${sessionSuffix}\` when done.`);
-    console.log('-->');
+    const sessionOption = this.name !== 'default' ? ` --session="${this.name}"` : '';
+    console.log(`- playwright-cli session-stop${sessionSuffix} # to stop when done.`);
+    console.log(`- playwright-cli${sessionOption} config [options] # to change session options.`);
+    console.log(`- playwright-cli session-delete${sessionSuffix} # to delete session data.`);
 
     // Wait for the socket to become available with retries.
     const maxRetries = 50;
@@ -327,9 +332,18 @@ class SessionManager {
     if (!session) {
       session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
       this.sessions.set(sessionName, session);
+    } else {
+      if (hasGlobalArgs(args)) {
+        const configFromArgs = sessionConfigFromArgs(this.clientInfo, sessionName, args);
+        const formattedArgs = configToFormattedArgs(configFromArgs.cli);
+        console.log('The session is already configured. To change session options, run:');
+        console.log('');
+        console.log(`  playwright-cli${sessionName !== 'default' ? ` --session=${sessionName}` : ''} config ${formattedArgs.join(' ')}`);
+        process.exit(1);
+      }
     }
 
-    for (const globalOption of ['browser', 'config', 'extension', 'headed', 'help', 'isolated', 'session', 'version'])
+    for (const globalOption of globalArgs)
       delete args[globalOption];
     const result = await session.run(args);
     console.log(result.text);
@@ -576,4 +590,26 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
     },
     userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
   };
+}
+
+const globalArgs = ['browser', 'config', 'extension', 'headed', 'help', 'in-memory', 'version', 'session'];
+
+function hasGlobalArgs(args: MinimistArgs): boolean {
+  return globalArgs.some(option => args[option] !== undefined);
+}
+
+function configToFormattedArgs(config: SessionConfig['cli']): string[] {
+  const args: string[] = [];
+  const add = (flag: string, value: string | boolean | undefined) => {
+    if (typeof value === 'boolean' && value)
+      args.push(`--${flag}`);
+    else if (typeof value === 'string')
+      args.push(`--${flag}=${value}`);
+  };
+  add('browser', config.browser);
+  add('config', config.config ? path.relative(process.cwd(), config.config) : undefined);
+  add('extension', config.extension);
+  add('headed', config.headed);
+  add('in-memory', config.isolated);
+  return args;
 }
