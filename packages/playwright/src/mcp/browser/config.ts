@@ -145,6 +145,9 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   const configInFile = await loadConfig(configFile);
 
   let result = defaultConfig;
+  // Daemon session is always headless by default.
+  if (cliOptions.daemonSession)
+    result.browser.launchOptions.headless = true;
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
@@ -368,7 +371,7 @@ async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & 
     config: sessionConfig.cli.config,
     browser: sessionConfig.cli.browser,
     isolated: sessionConfig.cli.isolated,
-    headless: !sessionConfig.cli.headed,
+    headless: sessionConfig.cli.headed ? false : undefined,
     extension: sessionConfig.cli.extension,
     outputMode: 'file',
     snapshotMode: 'full',
