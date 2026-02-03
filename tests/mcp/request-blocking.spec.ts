@@ -125,3 +125,37 @@ test('blocked without allowed allows non-explicitly specified origins (origin)',
   const result = await fetchPage(client, server.PREFIX + '/ppp');
   expect(result).toContain('content:PPP');
 });
+
+test('allowed works (wildcard port)', async ({ server, startClient }) => {
+  server.setContent('/ppp', 'content:PPP', 'text/html');
+  const { client } = await startClient({
+    args: ['--allowed-origins', 'http://localhost:*']
+  });
+  const result = await fetchPage(client, server.PREFIX + '/ppp');
+  expect(result).toContain('content:PPP');
+});
+
+test('allowed blocks different hostname (wildcard port)', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--allowed-origins', 'http://localhost:*'],
+  });
+  const result = await fetchPage(client, 'http://example.com/');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});
+
+test('allowed blocks different protocol (wildcard port)', async ({ startClient }) => {
+  const { client } = await startClient({
+    args: ['--allowed-origins', 'http://localhost:*'],
+  });
+  const result = await fetchPage(client, 'https://localhost:8080/');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});
+
+test('blocked works (wildcard port)', async ({ server, startClient }) => {
+  server.setContent('/ppp', 'content:PPP', 'text/html');
+  const { client } = await startClient({
+    args: ['--blocked-origins', `http://${new URL(server.PREFIX).host.split(':')[0]}:*`]
+  });
+  const result = await fetchPage(client, server.PREFIX + '/ppp');
+  expect(result).toMatch(BLOCK_MESSAGE);
+});

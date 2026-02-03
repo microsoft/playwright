@@ -181,11 +181,19 @@ export type Config = {
   network?: {
     /**
      * List of origins to allow the browser to request. Default is to allow all. Origins matching both `allowedOrigins` and `blockedOrigins` will be blocked.
+     *
+     * Supported formats:
+     * - Full origin: `https://example.com:8080` - matches only that origin
+     * - Wildcard port: `http://localhost:*` - matches any port on localhost with http protocol
      */
     allowedOrigins?: string[];
 
     /**
      * List of origins to block the browser to request. Origins matching both `allowedOrigins` and `blockedOrigins` will be blocked.
+     *
+     * Supported formats:
+     * - Full origin: `https://example.com:8080` - matches only that origin
+     * - Wildcard port: `http://localhost:*` - matches any port on localhost with http protocol
      */
     blockedOrigins?: string[];
   };
