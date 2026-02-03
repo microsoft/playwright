@@ -140,9 +140,41 @@ test('config should work', async ({ cli, server }, testInfo) => {
   await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
   const { output: configureOutput } = await cli('config', '--config=' + configPath);
-  expect(configureOutput).toContain(`- Using config file at \`session-config.json\`.`);
+  expect(configureOutput).toContain(`--config=`);
 
   await cli('open', server.PREFIX);
   const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
   expect(afterOutput).toContain('700x500');
+});
+
+test('session start should print session options', async ({ cli, server }, testInfo) => {
+  const configPath = testInfo.outputPath('my-config.json');
+  await fs.promises.writeFile(configPath, JSON.stringify({}, null, 2));
+
+  const { output } = await cli('open', '--headed', '--config=' + configPath, server.HELLO_WORLD);
+  expect(output).toContain('Session options:');
+  expect(output).toContain('--headed');
+  expect(output).toContain('--config=my-config.json');
+});
+
+test('session mismatch should report error for default session', async ({ cli, server }) => {
+  // Start a default session
+  await cli('open', server.HELLO_WORLD);
+
+  // Try to pass global options to the already running session
+  const { output, exitCode } = await cli('snapshot', '--headed');
+  expect(exitCode).toBe(1);
+  expect(output).toContain('The session is already configured.');
+  expect(output).toContain('playwright-cli config --headed');
+});
+
+test('session mismatch should report error for named session', async ({ cli, server }) => {
+  // Start a named session
+  await cli('open', '--session=mismatch-named', server.HELLO_WORLD);
+
+  // Try to pass global options to the already running session
+  const { output, exitCode } = await cli('snapshot', '--session=mismatch-named', '--headed');
+  expect(exitCode).toBe(1);
+  expect(output).toContain('The session is already configured.');
+  expect(output).toContain('playwright-cli --session=mismatch-named config --headed');
 });
