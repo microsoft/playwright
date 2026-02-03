@@ -25,6 +25,7 @@ import type { Page } from '../page';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 
+const REQUEST_BODY_HEADERS = new Set(['content-encoding', 'content-language', 'content-location', 'content-type']);
 
 export class BidiNetworkManager {
   private readonly _session: BidiSession;
@@ -72,6 +73,10 @@ export class BidiNetworkManager {
         if (redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders) {
           const originalHeaders = fromBidiHeaders(param.request.headers);
           headersOverride = network.applyHeadersOverrides(originalHeaders, redirectedFrom._originalRequestRoute._alreadyContinuedHeaders);
+          // If the redirect turned a POST into a GET request, remove the request body headers,
+          // corresponding to step 12 of https://fetch.spec.whatwg.org/#http-redirect-fetch.
+          if (redirectedFrom.request.method() === 'POST' && param.request.method === 'GET')
+            headersOverride = headersOverride.filter(({ name }) => !REQUEST_BODY_HEADERS.has(name.toLowerCase()));
           params = toBidiRequestHeaders(headersOverride);
         }
 
