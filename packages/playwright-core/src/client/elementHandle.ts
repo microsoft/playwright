@@ -260,14 +260,14 @@ async function resolvePathsAndDirectoryForInputFiles(platform: Platform, items: 
   let localPaths: string[] | undefined;
   let localDirectory: string | undefined;
   for (const item of items) {
-    const stat = await platform.fs().promises.stat(item as string);
+    const stat = await platform.fs().promises.stat(platform.resolve(item));
     if (stat.isDirectory()) {
       if (localDirectory)
         throw new Error('Multiple directories are not supported');
-      localDirectory = platform.path().resolve(item as string);
+      localDirectory = platform.resolve(item);
     } else {
       localPaths ??= [];
-      localPaths.push(platform.path().resolve(item as string));
+      localPaths.push(platform.resolve(item));
     }
   }
   if (localPaths?.length && localDirectory)

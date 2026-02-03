@@ -106,7 +106,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       ignoreAllDefaultArgs: !!options.ignoreDefaultArgs && !Array.isArray(options.ignoreDefaultArgs),
       env: options.env ? envObjectToArray(options.env) : undefined,
       channel: options.channel,
-      userDataDir: (this._platform.path().isAbsolute(userDataDir) || !userDataDir) ? userDataDir : this._platform.path().resolve(userDataDir),
+      userDataDir: userDataDir ? this._platform.resolve(userDataDir) : userDataDir,
       timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     const context = await this._wrapApiCall(async () => {

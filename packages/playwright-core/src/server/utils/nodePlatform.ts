@@ -112,6 +112,8 @@ export const nodePlatform: Platform = {
 
   pathSeparator: path.sep,
 
+  resolve: (...pathSegments: string[]) => path.resolve(process.cwd(), ...pathSegments),
+
   showInternalStackFrames: () => !!process.env.PWDEBUGIMPL,
 
   async streamFile(path: string, stream: Writable): Promise<void> {

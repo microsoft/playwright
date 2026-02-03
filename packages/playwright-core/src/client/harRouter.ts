@@ -29,6 +29,7 @@ export class HarRouter {
   private _options: { urlMatch?: URLMatch; baseURL?: string; };
 
   static async create(localUtils: LocalUtils, file: string, notFoundAction: HarNotFoundAction, options: { urlMatch?: URLMatch }): Promise<HarRouter> {
+    file = localUtils._platform.resolve(file);
     const { harId, error } = await localUtils.harOpen({ file });
     if (error)
       throw new Error(error);

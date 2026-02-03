@@ -376,6 +376,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async _recordIntoHAR(har: string, page: Page | null, options: { url?: string | RegExp, updateContent?: 'attach' | 'embed' | 'omit', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {
+    har = this._platform.resolve(har);
     const { harId } = await this._channel.harStart({
       page: page?._channel,
       options: {
@@ -575,7 +576,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   _checkFileAccess(filePath: string) {
     if (!this._allowedDirectories)
       return;
-    const path = this._platform.path().resolve(filePath);
+    const path = this._platform.resolve(filePath);
     const isInsideDir = (container: string, child: string): boolean => {
       const path = this._platform.path();
       const rel = path.relative(container, child);
@@ -624,7 +625,7 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
     };
   }
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
-    contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
+    contextParams.recordVideo.dir = platform.resolve(contextParams.recordVideo.dir);
   return contextParams;
 }
 

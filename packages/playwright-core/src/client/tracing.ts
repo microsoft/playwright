@@ -76,13 +76,13 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
   async stopChunk(options: { path?: string } = {}) {
     await this._wrapApiCall(async () => {
-      await this._doStopChunk(options.path);
+      await this._doStopChunk(options.path ? this._platform.resolve(options.path) : undefined);
     });
   }
 
   async stop(options: { path?: string } = {}) {
     await this._wrapApiCall(async () => {
-      await this._doStopChunk(options.path);
+      await this._doStopChunk(options.path ? this._platform.resolve(options.path) : undefined);
       await this._channel.tracingStop();
     });
   }

@@ -49,7 +49,7 @@ export class Download implements api.Download {
   }
 
   async saveAs(path: string): Promise<void> {
-    return await this._artifact.saveAs(path);
+    return await this._artifact.saveAs(this._page._platform.resolve(path));
   }
 
   async failure(): Promise<string | null> {

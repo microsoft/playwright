@@ -33,6 +33,7 @@ export class Artifact extends ChannelOwner<channels.ArtifactChannel> {
   }
 
   async saveAs(path: string): Promise<void> {
+    path = this._platform.resolve(path);
     if (!this._connection.isRemote()) {
       await this._channel.saveAs({ path });
       return;

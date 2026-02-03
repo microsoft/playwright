@@ -55,6 +55,7 @@ export type Platform = {
   log: (name: 'api' | 'channel', message: string | Error | object) => void;
   path: () => typeof path;
   pathSeparator: string;
+  resolve: (...pathSegments: string[]) => string;
   showInternalStackFrames: () => boolean,
   streamFile: (path: string, writable: Writable) => Promise<void>,
   streamReadable: (channel: channels.StreamChannel) => Readable,
@@ -105,6 +106,10 @@ export const emptyPlatform: Platform = {
   },
 
   pathSeparator: '/',
+
+  resolve(...pathSegments: string[]): string {
+    throw new Error('Not implemented');
+  },
 
   showInternalStackFrames: () => false,
 

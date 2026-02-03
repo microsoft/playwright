@@ -40,7 +40,7 @@ export class Video implements api.Video {
     await this._page._wrapApiCall(async () => {
       await this._page._channel.videoStop();
       if (options.path)
-        await this.saveAs(options.path);
+        await this.saveAs(this._page._platform.resolve(options.path));
     });
   }
 
@@ -55,7 +55,7 @@ export class Video implements api.Video {
   async saveAs(path: string): Promise<void> {
     if (!this._artifact)
       throw new Error('Video recording has not been started.');
-    return await this._artifact.saveAs(path);
+    return await this._artifact.saveAs(this._page._platform.resolve(path));
   }
 
   async delete(): Promise<void> {
