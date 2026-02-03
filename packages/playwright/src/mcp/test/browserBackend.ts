@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import { createGuid } from 'playwright-core/lib/utils';
+
 import * as mcp from '../sdk/exports';
 import { defaultConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { Tab } from '../browser/tab';
 import { stripAnsiEscapes } from '../../util';
 import { identityBrowserContextFactory } from '../browser/browserContextFactory';
+import { startMcpDaemonServer } from '../terminal/daemon';
+import { sessionConfigFromArgs, createClientInfo } from '../terminal/program';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
@@ -114,4 +119,44 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
     lines.push(`### Task`, `Try recovering from the error prior to continuing`);
 
   return lines.join('\n');
+}
+
+export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playwright.BrowserContext) {
+  const sessionName = createGuid().slice(0, 8);
+  const clientInfo = createClientInfo(require.resolve('../../../package.json'));
+  const sessionConfig = sessionConfigFromArgs(clientInfo, sessionName, { _: [] });
+  const backend = new BrowserServerBackend({
+    ...defaultConfig,
+    outputMode: 'file',
+    snapshot: { mode: 'full', output: 'file' },
+    outputDir: path.resolve(process.cwd(), '.playwright-cli'),
+  }, identityBrowserContextFactory(context), { allTools: true });
+  const serverBackendFactory: mcp.ServerBackendFactory = {
+    name: 'Playwright',
+    nameInConfig: 'playwright-daemon',
+    version: sessionConfig.version,
+    create: () => backend,
+  };
+  await startMcpDaemonServer(sessionConfig, serverBackendFactory);
+  const snapshotResponse = await backend.callTool('browser_snapshot', {});
+
+  const lines = [''];
+  if (testInfo.errors.length) {
+    lines.push(`### Paused on test error`);
+    for (const error of testInfo.errors)
+      lines.push(stripAnsiEscapes(error.message || ''));
+  } else {
+    lines.push(`### Paused at the end of the test`);
+  }
+  lines.push(snapshotResponse.content[0].type === 'text' ? snapshotResponse.content[0].text : '');
+  lines.push(
+      `### Instructions`,
+      `- Use "playwright-cli session-attach <name> '${sessionConfig.socketPath}'" to add a session.`,
+      `- Use "playwright-cli --session <name>" to explore the page and fix the problem.`,
+      `- Stop this test run when finished. Restart if needed.`,
+  );
+  lines.push('');
+  /* eslint-disable-next-line no-console */
+  console.log(lines.join('\n'));
+  await new Promise(() => {});
 }

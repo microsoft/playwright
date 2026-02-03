@@ -23,7 +23,7 @@ import type { ReporterDescription, TestInfoError, TestStatus } from '../../types
 import type { SerializedCompilationCache  } from '../transform/compilationCache';
 
 export type ConfigCLIOverrides = {
-  debug?: boolean;
+  debug?: 'cli' | 'inspector';
   failOnFlakyTests?: boolean;
   forbidOnly?: boolean;
   fullyParallel?: boolean;

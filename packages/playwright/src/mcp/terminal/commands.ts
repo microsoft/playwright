@@ -762,6 +762,18 @@ const sessionList = declareCommand({
   toolParams: () => ({}),
 });
 
+const sessionAttach = declareCommand({
+  name: 'session-attach',
+  description: 'Attach an external session',
+  category: 'session',
+  args: z.object({
+    name: z.string().optional().describe('Name of the session.'),
+    socket: z.string().optional().describe('Socket path of the external session.'),
+  }),
+  toolName: '',
+  toolParams: ({ name, socket }) => ({ name, socket }),
+});
+
 const sessionCloseAll = declareCommand({
   name: 'session-close-all',
   description: 'Stop all sessions',
@@ -908,6 +920,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // session category
   sessionList,
+  sessionAttach,
   sessionCloseAll,
   killAll,
 ];
