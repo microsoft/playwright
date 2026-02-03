@@ -791,8 +791,9 @@ const config = declareCommand({
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file'),
-    isolated: z.boolean().optional().describe('Keep the browser profile in memory, do not save it to disk.'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
+    isolated: z.boolean().optional().describe('Keep the browser profile in memory, do not save it to disk.'),
+    show: z.boolean().optional().describe('Print the final resolved config after merging CLI options, environment variables and config file.'),
   }),
   toolName: '',
   toolParams: () => ({}),

@@ -88,6 +88,11 @@ to restart the session daemon.`);
     return await this._send('run', { args, cwd: process.cwd() });
   }
 
+  async showConfig(): Promise<any> {
+    this.checkCompatible();
+    return await this._send('config-show');
+  }
+
   async stop(): Promise<void> {
     if (!await this.canConnect()) {
       console.log(`Session '${this.name}' is not running.`);
@@ -383,6 +388,18 @@ class SessionManager {
     session.close();
   }
 
+  async showConfig(args: any): Promise<void> {
+    const sessionName = this._resolveSessionName(args.session);
+    const session = this.sessions.get(sessionName);
+    if (!session) {
+      console.log(`Session '${sessionName}' does not exist.`);
+      return;
+    }
+    const config = await session.showConfig();
+    console.log(JSON.stringify(config, null, 2));
+    session.close();
+  }
+
   async configure(args: any): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
@@ -441,6 +458,10 @@ async function handleSessionCommand(sessionManager: SessionManager, subcommand: 
   }
 
   if (subcommand === 'config') {
+    if (args.show) {
+      await sessionManager.showConfig(args);
+      return;
+    }
     await sessionManager.configure(args);
     return;
   }
@@ -487,6 +508,7 @@ const booleanOptions = [
   'headed',
   'help',
   'in-memory',
+  'show',
   'version',
 ];
 
