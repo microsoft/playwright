@@ -17,3 +17,7 @@
 
 [backend.ts]
 ../browser/tools.ts
+
+[browserBackend.ts]
+../terminal/daemon.ts
+../terminal/program.ts

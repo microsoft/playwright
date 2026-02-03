@@ -47,8 +47,12 @@ export class Session {
     this.name = options.name;
   }
 
+  isAttached() {
+    return !!this.config.cli.attached;
+  }
+
   isCompatible(): boolean {
-    return this._clientInfo.version === this.config.version;
+    return this.isAttached() || this._clientInfo.version === this.config.version;
   }
 
   checkCompatible() {
@@ -74,6 +78,12 @@ to restart the browser session.`);
   }
 
   async stop(quiet: boolean = false): Promise<void> {
+    if (this.isAttached()) {
+      if (!quiet)
+        console.log(`Cannot close attached browser '${this.name}'.`);
+      return;
+    }
+
     if (!await this.canConnect()) {
       if (!quiet)
         console.log(`Browser '${this.name}' is not open.`);
@@ -199,14 +209,8 @@ to restart the browser session.`);
   }
 
   private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
-
-    const sessionConfigFile = this._sessionFile('.session');
-    this.config.version = this._clientInfo.version;
-    this.config.timestamp = Date.now();
-    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
-
+    const sessionConfigFile = await this.writeSessionConfig();
     const errLog = this._sessionFile('.err');
     const err = fs.openSync(errLog, 'w');
 
@@ -294,6 +298,14 @@ to restart the browser session.`);
       await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
+  }
+
+  async writeSessionConfig() {
+    const sessionConfigFile = this._sessionFile('.session');
+    this.config.version = this._clientInfo.version;
+    await fs.promises.mkdir(path.dirname(sessionConfigFile), { recursive: true });
+    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
+    return sessionConfigFile;
   }
 
   async deleteSessionConfig() {

@@ -40,6 +40,7 @@ export type SessionConfig = {
     persistent?: boolean;
     profile?: string;
     config?: string;
+    attached?: boolean;
   };
   userDataDirPrefix?: string;
   workspaceDir?: string;

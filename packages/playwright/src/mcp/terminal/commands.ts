@@ -804,6 +804,17 @@ const sessionList = declareCommand({
   toolParams: () => ({}),
 });
 
+const sessionAttach = declareCommand({
+  name: 'attach',
+  description: 'Attach an external browser session',
+  category: 'browsers',
+  args: z.object({
+    socket: z.string().describe('Socket path of the external browser session.'),
+  }),
+  toolName: '',
+  toolParams: ({ socket }) => ({ socket }),
+});
+
 const sessionCloseAll = declareCommand({
   name: 'close-all',
   description: 'Close all browser sessions',
@@ -962,6 +973,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // session category
   sessionList,
+  sessionAttach,
   sessionCloseAll,
   killAll,
 

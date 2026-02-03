@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import { createGuid } from 'playwright-core/lib/utils';
+
 import * as mcp from '../sdk/exports';
 import { defaultConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { Tab } from '../browser/tab';
 import { stripAnsiEscapes } from '../../util';
 import { identityBrowserContextFactory } from '../browser/browserContextFactory';
+import { startMcpDaemonServer } from '../terminal/daemon';
+import { sessionConfigFromArgs } from '../terminal/program';
+import { createClientInfo } from '../terminal/registry';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
@@ -114,4 +120,36 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
     lines.push(`### Task`, `Try recovering from the error prior to continuing`);
 
   return lines.join('\n');
+}
+
+export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playwright.BrowserContext) {
+  const sessionConfig = sessionConfigFromArgs(createClientInfo(), createGuid().slice(0, 8), { _: [] });
+  const { backend } = await startMcpDaemonServer({
+    ...defaultConfig,
+    outputMode: 'file',
+    snapshot: { mode: 'full', output: 'file' },
+    outputDir: path.resolve(process.cwd(), '.playwright-cli'),
+    sessionConfig,
+  }, identityBrowserContextFactory(context));
+  const snapshotResponse = await backend.callTool('browser_snapshot', {});
+
+  const lines = [''];
+  if (testInfo.errors.length) {
+    lines.push(`### Paused on test error`);
+    for (const error of testInfo.errors)
+      lines.push(stripAnsiEscapes(error.message || ''));
+  } else {
+    lines.push(`### Paused at the end of the test`);
+  }
+  lines.push(snapshotResponse.content[0].type === 'text' ? snapshotResponse.content[0].text : '');
+  lines.push(
+      `### Debugging Instructions`,
+      `- Use "playwright-cli --session <name> attach '${sessionConfig.socketPath}'" to add a session.`,
+      `- Use "playwright-cli --session <name>" to explore the page and fix the problem.`,
+      `- See "playwright-cli" skill for details. Stop this test run when finished. Restart if needed.`,
+  );
+  lines.push('');
+  /* eslint-disable-next-line no-console */
+  console.log(lines.join('\n'));
+  await new Promise(() => {});
 }

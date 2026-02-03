@@ -100,7 +100,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _configInternal: FullConfigInternal;
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
-  _onDidFinishTestFunctionCallback?: () => Promise<void>;
+  _onDidFinishTestFunctionCallbacks = new Set<() => Promise<void>>();
   _onCustomMessageCallback?: (data: any) => Promise<any>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
@@ -204,7 +204,7 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
-    if (configInternal.configCLIOverrides.debug)
+    if (configInternal.configCLIOverrides.debug === 'inspector')
       this._setDebugMode();
 
     this.outputDir = (() => {
@@ -478,7 +478,8 @@ export class TestInfoImpl implements TestInfo {
         this._interruptedPromise,
       ]);
     }
-    await this._onDidFinishTestFunctionCallback?.();
+    for (const cb of this._onDidFinishTestFunctionCallbacks)
+      await cb();
   }
 
   // ------------ TestInfo methods ------------
