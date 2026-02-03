@@ -17,7 +17,7 @@
 /* eslint-disable no-console */
 /* eslint-disable no-restricted-properties */
 
-import { spawn } from 'child_process';
+import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
 import fs from 'fs';
@@ -435,6 +435,11 @@ async function handleSessionCommand(sessionManager: SessionManager, subcommand: 
     return;
   }
 
+  if (subcommand === 'kill-all') {
+    await killAllDaemons();
+    return;
+  }
+
   if (subcommand === 'delete') {
     await sessionManager.delete(args._[1]);
     return;
@@ -547,6 +552,11 @@ export async function program(packageLocation: string) {
     return;
   }
 
+  if (commandName === 'kill-all') {
+    await handleSessionCommand(sessionManager, 'kill-all', args);
+    return;
+  }
+
   if (commandName === 'install-skills') {
     await installSkills();
     return;
@@ -617,4 +627,52 @@ function configToFormattedArgs(config: SessionConfig['cli']): string[] {
   add('headed', config.headed);
   add('in-memory', config.isolated);
   return args;
+}
+
+async function killAllDaemons(): Promise<void> {
+  const platform = os.platform();
+  let killed = 0;
+
+  try {
+    if (platform === 'win32') {
+      const result = execSync(
+          `powershell -NoProfile -NonInteractive -Command `
+          + `"Get-CimInstance Win32_Process `
+          + `| Where-Object { $_.CommandLine -like '*run-mcp-server*' -and $_.CommandLine -like '*--daemon-session*' } `
+          + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
+          { encoding: 'utf-8' }
+      );
+      const pids = result.split('\n')
+          .map(line => line.trim())
+          .filter(line => /^\d+$/.test(line));
+      for (const pid of pids)
+        console.log(`Killed daemon process ${pid}`);
+      killed = pids.length;
+    } else {
+      const result = execSync('ps aux', { encoding: 'utf-8' });
+      const lines = result.split('\n');
+      for (const line of lines) {
+        if (line.includes('run-mcp-server') && line.includes('--daemon-session')) {
+          const parts = line.trim().split(/\s+/);
+          const pid = parts[1];
+          if (pid && /^\d+$/.test(pid)) {
+            try {
+              process.kill(parseInt(pid, 10), 'SIGKILL');
+              console.log(`Killed daemon process ${pid}`);
+              killed++;
+            } catch {
+              // Process may have already exited
+            }
+          }
+        }
+      }
+    }
+  } catch (e) {
+    // Silently handle errors - no processes to kill is fine
+  }
+
+  if (killed === 0)
+    console.log('No daemon processes found.');
+  else if (killed > 0)
+    console.log(`Killed ${killed} daemon process${killed === 1 ? '' : 'es'}.`);
 }

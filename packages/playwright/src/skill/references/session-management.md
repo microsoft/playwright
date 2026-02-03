@@ -40,6 +40,9 @@ playwright-cli session-stop mysession
 # Stop all sessions
 playwright-cli session-stop-all
 
+# Forcefully kill all daemon processes (for stale/zombie processes)
+playwright-cli kill-all
+
 # Restart a session (useful after version updates)
 playwright-cli session-restart mysession
 
@@ -153,6 +156,9 @@ playwright-cli session-stop scrape
 
 # Or stop all at once
 playwright-cli session-stop-all
+
+# If sessions become unresponsive or zombie processes remain
+playwright-cli kill-all
 ```
 
 ### 3. Delete Stale Session Data
