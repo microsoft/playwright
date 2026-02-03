@@ -13,9 +13,9 @@ await page.goto('https://playwright.dev/');
 await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
+    - link "Get started":
       - /url: /docs/intro
-    - link "Star microsoft/playwright on GitHub"
+    - link "Star microsoft/playwright on GitHub":
       - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 `);
@@ -26,9 +26,9 @@ page.goto('https://playwright.dev/')
 expect(page.query_selector('banner')).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
+    - link "Get started":
       - /url: /docs/intro
-    - link "Star microsoft/playwright on GitHub"
+    - link "Star microsoft/playwright on GitHub":
       - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """)
@@ -39,9 +39,9 @@ await page.goto('https://playwright.dev/')
 await expect(page.query_selector('banner')).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
+    - link "Get started":
       - /url: /docs/intro
-    - link "Star microsoft/playwright on GitHub"
+    - link "Star microsoft/playwright on GitHub":
       - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """)
@@ -52,9 +52,9 @@ page.navigate("https://playwright.dev/");
 assertThat(page.locator("banner")).matchesAriaSnapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
+    - link "Get started":
       - /url: /docs/intro
-    - link "Star microsoft/playwright on GitHub"
+    - link "Star microsoft/playwright on GitHub":
       - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """);
@@ -65,9 +65,9 @@ await page.GotoAsync("https://playwright.dev/");
 await Expect(page.Locator("banner")).ToMatchAriaSnapshotAsync(@"
   - banner:
     - heading ""Playwright enables reliable end-to-end testing for modern web apps."" [level=1]
-    - link ""Get started""
+    - link ""Get started"":
       - /url: /docs/intro
-    - link ""Star microsoft/playwright on GitHub""
+    - link ""Star microsoft/playwright on GitHub"":
       - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 ");
@@ -487,8 +487,6 @@ Links display their text or composed content from pseudo-elements. The link’s 
 - link "Read more about Accessibility":
     - /url: "#more-info"
 ```
-
-<hr/>
 
 The value of `/url` may also be a regular expression:
 
