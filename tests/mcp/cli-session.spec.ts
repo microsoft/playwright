@@ -146,3 +146,16 @@ test('config should work', async ({ cli, server }, testInfo) => {
   const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
   expect(afterOutput).toContain('700x500');
 });
+
+test('warns on config mismatch', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const openHeaded = await cli('open', '--headed', server.HELLO_WORLD);
+  expect(openHeaded.output).toContain(`<!-- Warning: Session 'default' is already running and has different options than requested.`);
+  expect(openHeaded.output).toContain(`Use the 'config' command to update the session configuration and restart your browser. -->`);
+
+  const config = await cli('config', '--headed');
+  expect(config.output).not.toContain(`Warning`);
+
+  const openAfterRestart = await cli('open', '--headed', server.HELLO_WORLD);
+  expect(openAfterRestart.output).not.toContain(`Warning`);
+});

@@ -323,10 +323,13 @@ class SessionManager {
 
   async run(args: MinimistArgs): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
+    const requestedConfig = sessionConfigFromArgs(this.clientInfo, sessionName, args);
     let session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
+      session = new Session(this.clientInfo, sessionName, requestedConfig);
       this.sessions.set(sessionName, session);
+    } else {
+      this._warnOnConfigMismatch(session, requestedConfig);
     }
 
     for (const globalOption of ['browser', 'config', 'extension', 'headed', 'help', 'isolated', 'session', 'version'])
@@ -379,6 +382,15 @@ class SessionManager {
     }
     await session.restart(sessionConfig);
     session.close();
+  }
+
+  private _warnOnConfigMismatch(session: Session, requested: SessionConfig): void {
+    const config = session.config().cli;
+    const mismatch = Object.entries(requested.cli).some(([key, value]) => value !== undefined && config[key as keyof typeof config] !== value);
+    if (mismatch) {
+      console.log(`<!-- Warning: Session '${session.name}' is already running and has different options than requested.`);
+      console.log(`Use the 'config' command to update the session configuration and restart your browser. -->`);
+    }
   }
 
   private _resolveSessionName(sessionName?: string): string {
