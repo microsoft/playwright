@@ -22,7 +22,6 @@ import { renderModalStates, shouldIncludeMessage } from './tab';
 import { scaleImageToFitMessage } from './tools/screenshot';
 
 import type { TabHeader } from './tab';
-import type { LogChunk } from './logFile';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
 import type { Context, FilenameTemplate } from './context';
 
@@ -186,7 +185,7 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot() : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._clientWorkspace) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
@@ -211,7 +210,9 @@ export class Response {
     }
 
     // Handle tab log
-    const text: string[] = tabSnapshot?.logs?.map(log => renderLogChunk(log, log.type, file => this._computRelativeTo(file))).flat() ?? [];
+    const text: string[] = [];
+    if (tabSnapshot?.consoleLink)
+      text.push(`- New console entries: ${tabSnapshot.consoleLink}`);
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
         if (event.type === 'console' && this._context.config.outputMode !== 'file') {
@@ -234,6 +235,8 @@ export function renderTabMarkdown(tab: TabHeader): string[] {
   const lines = [`- Page URL: ${tab.url}`];
   if (tab.title)
     lines.push(`- Page Title: ${tab.title}`);
+  if (tab.console.errors || tab.console.warnings)
+    lines.push(`- Console: ${tab.console.errors} errors, ${tab.console.warnings} warnings`);
   return lines;
 }
 
@@ -247,19 +250,6 @@ export function renderTabsMarkdown(tabs: TabHeader[]): string[] {
     const current = tab.current ? ' (current)' : '';
     lines.push(`- ${i}:${current} [${tab.title}](${tab.url})`);
   }
-  return lines;
-}
-
-function renderLogChunk(logChunk: LogChunk | undefined, type: string, relativeTo: (fileName: string) => string): string[] {
-  if (!logChunk)
-    return [];
-  const lines: string[] = [];
-  const logFilePath = relativeTo(logChunk.file);
-  const entryWord = logChunk.entryCount === 1 ? 'entry' : 'entries';
-  const lineRange = logChunk.fromLine === logChunk.toLine
-    ? `#L${logChunk.fromLine}`
-    : `#L${logChunk.fromLine}-L${logChunk.toLine}`;
-  lines.push(`- ${logChunk.entryCount} new ${type} ${entryWord} in "${logFilePath}${lineRange}"`);
   return lines;
 }
 

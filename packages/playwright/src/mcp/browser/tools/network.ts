@@ -37,7 +37,7 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      if (!params.includeStatic && isStatic(request) && isSuccessfulResponse(request))
+      if (!params.includeStatic && !isFetch(request) && isSuccessfulResponse(request))
         continue;
       text.push(await renderRequest(request));
     }
@@ -67,8 +67,8 @@ function isSuccessfulResponse(request: playwright.Request): boolean {
   return !!response && response.status() < 400;
 }
 
-export function isStatic(request: playwright.Request): boolean {
-  return ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
+export function isFetch(request: playwright.Request): boolean {
+  return ['fetch', 'xhr'].includes(request.resourceType());
 }
 
 export async function renderRequest(request: playwright.Request): Promise<string> {

@@ -30,8 +30,12 @@ const console = defineTabTool({
     type: 'readOnly',
   },
   handle: async (tab, params, response) => {
+    const count = await tab.consoleMessageCount();
+    const header = [`Total messages: ${count.total} (Errors: ${count.errors}, Warnings: ${count.warnings})`];
     const messages = await tab.consoleMessages(params.level);
-    const text = messages.map(message => message.toString()).join('\n');
+    if (messages.length !== count.total)
+      header.push(`Returning ${messages.length} messages for level "${params.level}"`);
+    const text = [...header, '', ...messages.map(message => message.toString())].join('\n');
     await response.addResult('Console', text, { prefix: 'console', ext: 'log', suggestedFilename: params.filename });
   },
 });

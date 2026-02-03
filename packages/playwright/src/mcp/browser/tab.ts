@@ -24,14 +24,12 @@ import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
-import { isStatic, renderRequest } from './tools/network';
 import { requireOrImport } from '../../transform/transform';
 
 import type { Context } from './context';
 import type { Page } from '../../../../playwright-core/src/client/page';
 import type { Locator } from '../../../../playwright-core/src/client/locator';
 import type { FullConfig } from './config';
-import type { LogChunk } from './logFile';
 
 const TabEvents = {
   modalState: 'modalState'
@@ -78,6 +76,7 @@ export type TabHeader = {
   title: string;
   url: string;
   current: boolean;
+  console: { total: number, warnings: number, errors: number };
 };
 
 type TabSnapshot = {
@@ -85,13 +84,13 @@ type TabSnapshot = {
   ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   events: EventEntry[];
-  logs?: LogChunk[];
+  consoleLink?: string;
 };
 
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
   readonly page: Page;
-  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false };
+  private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _consoleMessages: ConsoleMessage[] = [];
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
@@ -100,8 +99,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _initializedPromise: Promise<void>;
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
-
-  private _logs!: Record<'console-error' | 'console-warning' | 'console-info' | 'console-debug' | 'network-full' | 'network-dynamic', LogFile>;
+  private _consoleLog: LogFile;
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -129,7 +127,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
-    this._resetLogs();
+    const wallTime = Date.now();
+    this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
     this._initializedPromise = this._initialize();
   }
 
@@ -211,16 +210,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private _resetLogs() {
     const wallTime = Date.now();
-    for (const log of Object.values(this._logs ?? {}))
-      log.stop();
-    this._logs = {
-      'console-error': new LogFile(this.context, wallTime, 'console-error', 'Console'),
-      'console-warning': new LogFile(this.context, wallTime, 'console-warning', 'Console'),
-      'console-info': new LogFile(this.context, wallTime, 'console-info', 'Console'),
-      'console-debug': new LogFile(this.context, wallTime, 'console-debug', 'Console'),
-      'network-full': new LogFile(this.context, wallTime, 'network-full', 'Network'),
-      'network-dynamic': new LogFile(this.context, wallTime, 'network-dynamic', 'Network'),
-    };
+    this._consoleLog.stop();
+    this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
   }
 
   private _handleRequest(request: playwright.Request) {
@@ -229,20 +220,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     // response is received, so we use Date.now() as a fallback.
     const wallTime = request.timing().startTime || Date.now();
     this._addLogEntry({ type: 'request', wallTime, request });
-    const render = async () => await renderRequest(request);
-    this._logs['network-full'].appendLine(wallTime, render);
-    if (!isStatic(request))
-      this._logs['network-dynamic'].appendLine(wallTime, render);
   }
 
   private _handleResponse(response: playwright.Response) {
     const timing = response.request().timing();
     const wallTime = timing.responseStart + timing.startTime;
     this._addLogEntry({ type: 'request', wallTime, request: response.request() });
-    const render = async () => await renderRequest(response.request());
-    this._logs['network-full'].appendLine(wallTime, render);
-    if (!isStatic(response.request()) || response.status() >= 400)
-      this._logs['network-dynamic'].appendLine(wallTime, render);
   }
 
   private _handleRequestFailed(request: playwright.Request) {
@@ -250,9 +233,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const timing = request.timing();
     const wallTime = timing.responseEnd + timing.startTime;
     this._addLogEntry({ type: 'request', wallTime, request });
-    const render = async () => await renderRequest(request);
-    this._logs['network-full'].appendLine(wallTime, render);
-    this._logs['network-dynamic'].appendLine(wallTime, render);
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
@@ -260,7 +240,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const wallTime = Date.now();
     this._addLogEntry({ type: 'console', wallTime, message });
     const level = consoleLevelForMessageType(message.type);
-    this._logs[`console-${level}`].appendLine(wallTime, () => message.toString());
+    if (level === 'error' || level === 'warning')
+      this._consoleLog.appendLine(wallTime, () => message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {
@@ -277,13 +258,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._raceAgainstModalStates(async () => {
       title = await callOnPageNoTrace(this.page, page => page.title());
     });
-    if (this._lastHeader.title !== title || this._lastHeader.url !== this.page.url() || this._lastHeader.current !== this.isCurrentTab()) {
-      this._lastHeader = { title: title ?? '', url: this.page.url(), current: this.isCurrentTab() };
+    const newHeader: TabHeader = {
+      title: title ?? '',
+      url: this.page.url(),
+      current: this.isCurrentTab(),
+      console: await this.consoleMessageCount()
+    };
+
+    if (!tabHeaderEquals(this._lastHeader, newHeader)) {
+      this._lastHeader = newHeader;
       return { ...this._lastHeader, changed: true };
     }
     return { ...this._lastHeader, changed: false };
   }
-
 
   isCurrentTab(): boolean {
     return this === this.context.currentTab();
@@ -322,6 +309,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.waitForLoadState('load', { timeout: 5000 });
   }
 
+  async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
+    await this._initializedPromise;
+    let errors = 0;
+    let warnings = 0;
+    for (const message of this._consoleMessages) {
+      if (message.type === 'error')
+        errors++;
+      else if (message.type === 'warning')
+        warnings++;
+    }
+    return { total: this._consoleMessages.length, errors, warnings };
+  }
+
   async consoleMessages(level: ConsoleMessageLevel): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
     return this._consoleMessages.filter(message => shouldIncludeMessage(level, message.type));
@@ -342,7 +342,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(): Promise<TabSnapshot> {
+  async captureSnapshot(relativeTo: string | undefined): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
@@ -351,11 +351,11 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         ariaSnapshot: snapshot.full,
         ariaSnapshotDiff: this._needsFullSnapshot ? undefined : snapshot.incremental,
         modalStates: [],
-        events: []
+        events: [],
       };
     });
     if (tabSnapshot) {
-      tabSnapshot.logs = (await Promise.all(Object.values(this._logs).map(log => log.take()))).filter(l => !!l);
+      tabSnapshot.consoleLink = await this._consoleLog.take(relativeTo);
       tabSnapshot.events = this._recentEventEntries;
       this._recentEventEntries = [];
     }
@@ -514,4 +514,13 @@ function sanitizeForFilePath(s: string) {
   if (separator === -1)
     return sanitize(s);
   return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
+}
+
+function tabHeaderEquals(a: TabHeader, b: TabHeader): boolean {
+  return a.title === b.title &&
+      a.url === b.url &&
+      a.current === b.current &&
+      a.console.errors === b.console.errors &&
+      a.console.warnings === b.console.warnings &&
+      a.console.total === b.console.total;
 }
