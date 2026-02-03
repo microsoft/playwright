@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 
 import { logUnhandledError } from '../log';
 
@@ -59,7 +60,18 @@ export class LogFile {
     this._stopped = true;
   }
 
-  async take(): Promise<LogChunk | undefined> {
+  async take(relativeTo?: string): Promise<string | undefined> {
+    const logChunk = await this._take();
+    if (!logChunk)
+      return undefined;
+    const logFilePath = relativeTo ? path.relative(relativeTo, logChunk.file) : logChunk.file;
+    const lineRange = logChunk.fromLine === logChunk.toLine
+      ? `#L${logChunk.fromLine}`
+      : `#L${logChunk.fromLine}-L${logChunk.toLine}`;
+    return `${logFilePath}${lineRange}`;
+  }
+
+  private async _take(): Promise<LogChunk | undefined> {
     await this._writeChain;
     if (!this._file || this._entries === this._lastEntries)
       return undefined;

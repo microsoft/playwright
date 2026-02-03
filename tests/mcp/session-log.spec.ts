@@ -61,8 +61,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 \\{
   "code": "await page.goto\\('http://localhost:${server.PORT}'\\);",
   "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
-  "snapshot": "\\\`\\\`\\\`yaml\\\\n- button \\\\"Submit\\\\" \\[ref=e2\\]\\\\n\\\`\\\`\\\`",
-  "events": "- \\d+ new network entr(?:y|ies) in \\\\"output/network-full-.+\\.log#L\\d+(?:-L\\d+)?\\\\""
+  "snapshot": "\\\`\\\`\\\`yaml\\\\n- button \\\\"Submit\\\\" \\[ref=e2\\]\\\\n\\\`\\\`\\\`"
 \\}
 \\\`\\\`\\\`
 

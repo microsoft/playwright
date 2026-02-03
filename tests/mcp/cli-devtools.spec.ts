@@ -21,6 +21,7 @@ test('console', async ({ cli, server }) => {
   await cli('eval', 'console.log("Hello, world!")');
   const { attachments } = await cli('console');
   expect(attachments[0].name).toEqual('Console');
+  expect(attachments[0].data.toString()).toContain('Total messages: 1 (Errors: 0, Warnings: 0)');
   expect(attachments[0].data.toString()).toContain('Hello, world!');
 });
 
@@ -30,6 +31,8 @@ test('console error', async ({ cli, server }) => {
   await cli('eval', 'console.error("error-level")');
   const { attachments } = await cli('console', 'error');
   expect(attachments[0].name).toEqual('Console');
+  expect(attachments[0].data.toString()).toContain('Total messages: 2 (Errors: 1, Warnings: 0)');
+  expect(attachments[0].data.toString()).toContain('Returning 1 messages for level "error"');
   expect(attachments[0].data.toString()).not.toContain('log-level');
   expect(attachments[0].data.toString()).toContain('error-level');
 });
