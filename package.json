@@ -59,7 +59,7 @@
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.34.0",
     "@lowire/loop": "^0.0.25",
-    "@modelcontextprotocol/sdk": "^1.25.2",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@octokit/graphql-schema": "^15.26.0",
     "@stylistic/eslint-plugin": "^5.2.3",
     "@types/codemirror": "^5.60.7",
