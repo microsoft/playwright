@@ -237,7 +237,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private _handleConsoleMessage(message: ConsoleMessage) {
     this._consoleMessages.push(message);
-    const wallTime = Date.now();
+    const wallTime = message.timestamp;
     this._addLogEntry({ type: 'console', wallTime, message });
     const level = consoleLevelForMessageType(message.type);
     if (level === 'error' || level === 'warning')
@@ -431,6 +431,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
 export type ConsoleMessage = {
   type: ReturnType<playwright.ConsoleMessage['type']>;
+  timestamp: number;
   text: string;
   toString(): string;
 };
@@ -438,6 +439,7 @@ export type ConsoleMessage = {
 function messageToConsoleMessage(message: playwright.ConsoleMessage): ConsoleMessage {
   return {
     type: message.type(),
+    timestamp: message.timestamp(),
     text: message.text(),
     toString: () => `[${message.type().toUpperCase()}] ${message.text()} @ ${message.location().url}:${message.location().lineNumber}`,
   };
@@ -447,12 +449,14 @@ function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
   if (errorOrValue instanceof Error) {
     return {
       type: 'error',
+      timestamp: Date.now(),
       text: errorOrValue.message,
       toString: () => errorOrValue.stack || errorOrValue.message,
     };
   }
   return {
     type: 'error',
+    timestamp: Date.now(),
     text: String(errorOrValue),
     toString: () => String(errorOrValue),
   };
