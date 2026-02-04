@@ -13,8 +13,10 @@ await page.goto('https://playwright.dev/');
 await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
-    - link "Star microsoft/playwright on GitHub"
+    - link "Get started":
+      - /url: /docs/intro
+    - link "Star microsoft/playwright on GitHub":
+      - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 `);
 ```
@@ -24,8 +26,10 @@ page.goto('https://playwright.dev/')
 expect(page.query_selector('banner')).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
-    - link "Star microsoft/playwright on GitHub"
+    - link "Get started":
+      - /url: /docs/intro
+    - link "Star microsoft/playwright on GitHub":
+      - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """)
 ```
@@ -35,8 +39,10 @@ await page.goto('https://playwright.dev/')
 await expect(page.query_selector('banner')).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
-    - link "Star microsoft/playwright on GitHub"
+    - link "Get started":
+      - /url: /docs/intro
+    - link "Star microsoft/playwright on GitHub":
+      - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """)
 ```
@@ -46,8 +52,10 @@ page.navigate("https://playwright.dev/");
 assertThat(page.locator("banner")).matchesAriaSnapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
-    - link "Get started"
-    - link "Star microsoft/playwright on GitHub"
+    - link "Get started":
+      - /url: /docs/intro
+    - link "Star microsoft/playwright on GitHub":
+      - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 """);
 ```
@@ -57,8 +65,10 @@ await page.GotoAsync("https://playwright.dev/");
 await Expect(page.Locator("banner")).ToMatchAriaSnapshotAsync(@"
   - banner:
     - heading ""Playwright enables reliable end-to-end testing for modern web apps."" [level=1]
-    - link ""Get started""
-    - link ""Star microsoft/playwright on GitHub""
+    - link ""Get started"":
+      - /url: /docs/intro
+    - link ""Star microsoft/playwright on GitHub"":
+      - /url: https://github.com/microsoft/playwright
     - link /[\\d]+k\\+ stargazers on GitHub/
 ");
 ```
@@ -215,9 +225,7 @@ attributes.
 <button>Submit</button>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - button
 ```
 
@@ -233,9 +241,7 @@ focusing solely on role and hierarchy.
 <input type="checkbox" checked>
 ```
 
-*aria snapshot for partial match*
-
-```yaml
+```yaml title="aria snapshot (partial match)"
 - checkbox
 ```
 
@@ -253,9 +259,7 @@ Similarly, you can partially match children in lists or groups by omitting speci
 </ul>
 ```
 
-*aria snapshot for partial match*
-
-```yaml
+```yaml title="aria snapshot (partial match)"
 - list
   - listitem: Feature B
 ```
@@ -275,9 +279,7 @@ By default, a template containing the subset of children will be matched:
 </ul>
 ```
 
-*aria snapshot for partial match*
-
-```yaml
+```yaml title="aria snapshot (partial match)"
 - list
   - listitem: Feature B
 ```
@@ -296,9 +298,9 @@ The `/children` property can be used to control how child elements are matched:
 </ul>
 ```
 
-*aria snapshot will fail due to Feature C not being in the template*
+Following snapshot will fail due to Feature C not being in the template:
 
-```yaml
+```yaml title="aria snapshot"
 - list
   - /children: equal
   - listitem: Feature A
@@ -314,9 +316,7 @@ support regex patterns.
 <h1>Issues 12</h1>
 ```
 
-*aria snapshot with regular expression*
-
-```yaml
+```yaml title="aria snapshot"
 - heading /Issues \d+/
 ```
 
@@ -445,9 +445,7 @@ Headings can include a `level` attribute indicating their heading level.
 <h2>Subtitle</h2>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - heading "Title" [level=1]
 - heading "Subtitle" [level=2]
 ```
@@ -460,9 +458,7 @@ Standalone or descriptive text elements appear as text nodes.
 <div>Sample accessible name</div>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - text: Sample accessible name
 ```
 
@@ -474,24 +470,33 @@ Multiline text, such as paragraphs, is normalized in the aria snapshot.
 <p>Line 1<br>Line 2</p>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - paragraph: Line 1 Line 2
 ```
 
 ### Links
 
-Links display their text or composed content from pseudo-elements.
+Links display their text or composed content from pseudo-elements. The link’s destination may be matched using the
+`/url` property.
 
 ```html
 <a href="#more-info">Read more about Accessibility</a>
 ```
 
-*aria snapshot*
+```yaml title="aria snapshot"
+- link "Read more about Accessibility":
+    - /url: "#more-info"
+```
 
-```yaml
-- link "Read more about Accessibility"
+The value of `/url` may also be a regular expression:
+
+```html
+<a href="https://www.youtube.com/channel/UC46Zj8pDH5tDosqm1gd7WTg">YouTube channel</a>
+```
+
+```yaml title="aria snapshot"
+- link:
+  - /url: /https://www.youtube.com/channel/.*/
 ```
 
 ### Text boxes
@@ -502,9 +507,7 @@ Input elements of type `text` show their `value` attribute content.
 <input type="text" value="Enter your name">
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - textbox: Enter your name
 ```
 
@@ -519,9 +522,7 @@ Ordered and unordered lists include their list items.
 </ul>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - list "Main Features":
   - listitem: Feature 1
   - listitem: Feature 2
@@ -538,9 +539,7 @@ Groups capture nested elements, such as `<details>` elements with summary conten
 </details>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - group: Summary
 ```
 
@@ -555,9 +554,7 @@ control states.
 <input type="checkbox" checked>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - checkbox [checked]
 ```
 
@@ -567,8 +564,6 @@ control states.
 <button aria-pressed="true">Toggle</button>
 ```
 
-*aria snapshot*
-
-```yaml
+```yaml title="aria snapshot"
 - button "Toggle" [pressed=true]
 ```
