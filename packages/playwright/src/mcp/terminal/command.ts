@@ -24,6 +24,7 @@ export type CommandSchema<Args extends zodType.ZodTypeAny, Options extends zodTy
   name: string;
   category: Category;
   description: string;
+  hidden?: boolean;
   args?: Args;
   options?: Options;
   toolName: string | ((args: zodType.infer<Args> & zodType.infer<Options>) => string);

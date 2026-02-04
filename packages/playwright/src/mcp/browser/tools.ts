@@ -15,6 +15,7 @@
  */
 
 import common from './tools/common';
+import config from './tools/config';
 import console from './tools/console';
 import cookies from './tools/cookies';
 import dialogs from './tools/dialogs';
@@ -44,6 +45,7 @@ import type { FullConfig } from './config';
 
 export const browserTools: Tool<any>[] = [
   ...common,
+  ...config,
   ...console,
   ...cookies,
   ...dialogs,

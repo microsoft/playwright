@@ -441,6 +441,10 @@ async function handleSessionCommand(sessionManager: SessionManager, subcommand: 
   }
 
   if (subcommand === 'config') {
+    if (args.print) {
+      await sessionManager.run(args);
+      return;
+    }
     await sessionManager.configure(args);
     return;
   }
@@ -487,6 +491,7 @@ const booleanOptions = [
   'headed',
   'help',
   'in-memory',
+  'print',
   'version',
 ];
 

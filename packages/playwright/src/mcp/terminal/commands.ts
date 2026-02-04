@@ -791,10 +791,19 @@ const config = declareCommand({
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file'),
-    isolated: z.boolean().optional().describe('Keep the browser profile in memory, do not save it to disk.'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
+    ['in-memory']: z.boolean().optional().describe('Keep the browser profile in memory, do not save it to disk.'),
   }),
   toolName: '',
+  toolParams: () => ({}),
+});
+
+const configPrint = declareCommand({
+  name: 'config-print',
+  description: 'Print the final resolved config after merging CLI options, environment variables and config file.',
+  category: 'config',
+  hidden: true,
+  toolName: 'browser_get_config',
   toolParams: () => ({}),
 });
 
@@ -892,6 +901,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // config category
   config,
+  configPrint,
 
   // install category
   install,

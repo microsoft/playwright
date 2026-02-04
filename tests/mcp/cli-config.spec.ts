@@ -59,6 +59,44 @@ test('headless options from config is respected', async ({ cli, server, mcpBrows
   expect(output).toContain(' Chrome/');
 });
 
+test('config-print prints merged config from file, env and cli', async ({ cli, server }, testInfo) => {
+  // Config file provides viewport and timeouts.
+  const fileConfig = {
+    browser: {
+      contextOptions: {
+        viewport: { width: 800, height: 600 },
+      },
+    },
+    timeouts: {
+      action: 10000,
+      navigation: 30000,
+    },
+  };
+  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(fileConfig, null, 2));
+
+  // Env var overrides navigation timeout (30000 from file → 45000 from env).
+  const env = { PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION: '45000' };
+
+  // CLI arg: --in-memory sets browser.isolated = true.
+  await cli('open', '--in-memory', server.PREFIX, { env });
+
+  // Query the resolved config from the running daemon.
+  const { output } = await cli('config-print', { env });
+  const configBegin = output.indexOf('{');
+  expect(configBegin).not.toBe(-1);
+  const config = JSON.parse(output.slice(configBegin));
+
+  // From config file.
+  expect(config.browser.contextOptions.viewport).toEqual({ width: 800, height: 600 });
+  expect(config.timeouts.action).toBe(10000);
+
+  // Env var overrides file value.
+  expect(config.timeouts.navigation).toBe(45000);
+
+  // From CLI arg (--in-memory).
+  expect(config.browser.isolated).toBe(true);
+});
+
 test('isolated', async ({ cli, server }, testInfo) => {
   const config = {
     browser: {

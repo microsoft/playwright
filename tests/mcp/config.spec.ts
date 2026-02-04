@@ -16,7 +16,7 @@
 
 import fs from 'node:fs';
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse } from './fixtures';
 import { resolveCLIConfig } from '../../packages/playwright/lib/mcp/browser/config';
 import type { Config } from '../../packages/playwright/src/mcp/config';
 
@@ -89,4 +89,43 @@ test('test sandbox configuration', async ({}) => {
   expect(await sandboxOption({ browser: 'chrome', sandbox: false })).toBe(false);
   expect(await sandboxOption({ browser: 'chrome' })).toBe(true);
   expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
+});
+
+test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {
+  const { client } = await startClient({
+    config: {
+      browser: {
+        contextOptions: {
+          viewport: { width: 800, height: 600 },
+        },
+      },
+      capabilities: ['config'],
+      timeouts: {
+        action: 10000,
+        navigation: 30000,
+      },
+    },
+    args: ['--isolated'],
+    env: {
+      PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION: '45000',
+    },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_get_config',
+  });
+
+  expect(result.isError).toBeFalsy();
+  const parsed = parseResponse(result);
+  const config = JSON.parse(parsed.result);
+
+  // From config file.
+  expect(config.browser.contextOptions.viewport).toEqual({ width: 800, height: 600 });
+  expect(config.timeouts.action).toBe(10000);
+
+  // Env var overrides file value.
+  expect(config.timeouts.navigation).toBe(45000);
+
+  // From CLI arg (--isolated).
+  expect(config.browser.isolated).toBe(true);
 });
