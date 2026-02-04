@@ -773,6 +773,14 @@ const sessionStopAll = declareCommand({
   toolParams: () => ({}),
 });
 
+const killAll = declareCommand({
+  name: 'kill-all',
+  description: 'Forcefully kill all daemon processes (for stale/zombie processes)',
+  category: 'session',
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const sessionDelete = declareCommand({
   name: 'session-delete',
   description: 'Delete session data',
@@ -920,6 +928,7 @@ const commandsArray: AnyCommandSchema[] = [
   sessionRestart,
   sessionStopAll,
   sessionDelete,
+  killAll,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));

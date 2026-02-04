@@ -187,6 +187,7 @@ playwright-cli session-restart mysession
 playwright-cli session-stop-all
 playwright-cli session-delete
 playwright-cli session-delete mysession
+playwright-cli kill-all  # forcefully kill all daemon processes (for stale/zombie processes)
 ```
 
 ## Example: Form submission

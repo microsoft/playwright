@@ -65,6 +65,20 @@ test('session-stop-all', async ({ cli, server }) => {
   expect(listAfter).not.toContain('[running]');
 });
 
+test('kill-all', async ({ cli, server }) => {
+  await cli('open', '--session=killsession1', server.HELLO_WORLD);
+  await cli('open', '--session=killsession2', server.HELLO_WORLD);
+
+  const { output: listBefore } = await cli('session-list');
+  expect(listBefore).toContain('[running] killsession1');
+  expect(listBefore).toContain('[running] killsession2');
+
+  const { output } = await cli('kill-all');
+  expect(output).toContain('Killed daemon process');
+
+  await expect.poll(() => cli('session-list').then(r => r.output)).not.toContain('[running]');
+});
+
 test('session-delete', async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
 
