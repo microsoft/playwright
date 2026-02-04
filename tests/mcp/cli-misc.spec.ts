@@ -49,12 +49,12 @@ test('install', async ({ cli, server, mcpBrowser }) => {
 
 test('install-skills', async ({ cli }, testInfo) => {
   const { output } = await cli('install-skills');
-  expect(output).toContain(`Skills installed to .claude${path.sep}skills${path.sep}playwright`);
+  expect(output).toContain(`Skills installed to .claude${path.sep}skills${path.sep}playwright-cli`);
 
-  const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright', 'SKILL.md');
+  const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'SKILL.md');
   expect(fs.existsSync(skillFile)).toBe(true);
 
-  const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright', 'references');
+  const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'references');
   const references = await fs.promises.readdir(referencesDir);
   expect(references.length).toBeGreaterThan(0);
 });
