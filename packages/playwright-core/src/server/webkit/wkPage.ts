@@ -579,9 +579,9 @@ export class WKPage implements PageDelegate {
         url: url || '',
         lineNumber: (lineNumber || 1) - 1,
         columnNumber: (columnNumber || 1) - 1,
-      }
+      },
     };
-    this._onConsoleRepeatCountUpdated({ count: 1 });
+    this._onConsoleRepeatCountUpdated({ count: 1, timestamp: event.message.timestamp });
   }
 
   _onConsoleRepeatCountUpdated(event: Protocol.Console.messageRepeatCountUpdatedPayload) {
@@ -593,8 +593,9 @@ export class WKPage implements PageDelegate {
         count,
         location
       } = this._lastConsoleMessage;
+      const timestamp = event.timestamp ? event.timestamp * 1000 : Date.now();
       for (let i = count; i < event.count; ++i)
-        this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text, event.timestamp ?? Date.now());
+        this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text, timestamp);
       this._lastConsoleMessage.count = event.count;
     }
   }
