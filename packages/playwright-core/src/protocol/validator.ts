@@ -908,6 +908,7 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tInt,
     columnNumber: tInt,
   }),
+  timestamp: tFloat,
   page: tOptional(tChannel(['Page'])),
   worker: tOptional(tChannel(['Worker'])),
 });
@@ -1227,6 +1228,7 @@ scheme.PageConsoleMessagesResult = tObject({
       lineNumber: tInt,
       columnNumber: tInt,
     }),
+    timestamp: tFloat,
   })),
 });
 scheme.PageEmulateMediaParams = tObject({
@@ -2604,6 +2606,7 @@ scheme.ElectronApplicationConsoleEvent = tObject({
     lineNumber: tInt,
     columnNumber: tInt,
   }),
+  timestamp: tFloat,
 });
 scheme.ElectronApplicationBrowserWindowParams = tObject({
   page: tChannel(['Page']),

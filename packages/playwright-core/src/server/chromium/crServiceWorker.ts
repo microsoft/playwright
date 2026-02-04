@@ -55,7 +55,7 @@ export class CRServiceWorker extends Worker {
       if (!this.existingExecutionContext || process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE)
         return;
       const args = event.args.map(o => createHandle(this.existingExecutionContext!, o));
-      const message = new ConsoleMessage(null, this, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+      const message = new ConsoleMessage(null, this, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace), event.timestamp);
       this.browserContext.emit(BrowserContext.Events.Console, message);
     });
 

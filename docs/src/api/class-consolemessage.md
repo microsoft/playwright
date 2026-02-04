@@ -137,6 +137,12 @@ The page that produced this console message, if any.
 
 The text of the console message.
 
+## method: ConsoleMessage.timestamp
+* since: v1.59
+- returns: <[float]>
+
+The timestamp of the console message in milliseconds since the Unix epoch.
+
 ## method: ConsoleMessage.type
 * since: v1.8
 * langs: js, python

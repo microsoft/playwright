@@ -62,6 +62,10 @@ export class ConsoleMessage implements api.ConsoleMessage {
     return this._event.location;
   }
 
+  timestamp(): number {
+    return this._event.timestamp;
+  }
+
   private _inspect() {
     return this.text();
   }

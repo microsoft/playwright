@@ -19267,6 +19267,11 @@ export interface ConsoleMessage {
    */
   text(): string;
 
+  /**
+   * The timestamp of the console message in milliseconds since the Unix epoch.
+   */
+  timestamp(): number;
+
   type(): "log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"time"|"timeEnd";
 
   /**

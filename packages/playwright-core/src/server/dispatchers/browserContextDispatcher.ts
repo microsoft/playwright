@@ -207,6 +207,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         return JSHandleDispatcher.fromJSHandle(jsScope, a);
       }),
       location: message.location(),
+      timestamp: message.timestamp(),
     };
   }
 
