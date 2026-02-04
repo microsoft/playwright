@@ -287,7 +287,7 @@ export class BidiBrowserContext extends BrowserContext {
         expiry: (c.expires === -1 || c.expires === undefined) ? undefined : Math.round(c.expires),
       };
       return this._browser._browserSession.send('storage.setCookie',
-          { cookie, partition: { type: 'storageKey', userContext: this._browserContextId } });
+          { cookie, partition: { type: 'storageKey', userContext: this._browserContextId, sourceOrigin: c.partitionKey } });
     });
     await Promise.all(promises);
   }
