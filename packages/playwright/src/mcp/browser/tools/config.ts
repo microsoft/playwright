@@ -21,9 +21,9 @@ const configShow = defineTool({
   capability: 'config',
 
   schema: {
-    name: 'browser_config_print',
-    title: 'Print config',
-    description: 'Print the final resolved config after merging CLI options, environment variables and config file.',
+    name: 'browser_get_config',
+    title: 'Get config',
+    description: 'Get the final resolved config after merging CLI options, environment variables and config file.',
     inputSchema: z.object({}),
     type: 'readOnly',
   },

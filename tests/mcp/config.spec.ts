@@ -91,7 +91,7 @@ test('test sandbox configuration', async ({}) => {
   expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
 });
 
-test('browser_config_print returns merged config from file, env and cli', async ({ startClient }) => {
+test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {
   const { client } = await startClient({
     config: {
       browser: {
@@ -112,7 +112,7 @@ test('browser_config_print returns merged config from file, env and cli', async 
   });
 
   const result = await client.callTool({
-    name: 'browser_config_print',
+    name: 'browser_get_config',
   });
 
   expect(result.isError).toBeFalsy();

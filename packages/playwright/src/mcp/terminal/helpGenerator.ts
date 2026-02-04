@@ -85,8 +85,11 @@ export function generateHelp() {
   const commandsByCategory = new Map<string, AnyCommandSchema[]>();
   for (const c of categories)
     commandsByCategory.set(c.name, []);
-  for (const command of Object.values(commands))
+  for (const command of Object.values(commands)) {
+    if (command.hidden)
+      continue;
     commandsByCategory.get(command.category)!.push(command);
+  }
 
   for (const c of categories) {
     const cc = commandsByCategory.get(c.name)!;
