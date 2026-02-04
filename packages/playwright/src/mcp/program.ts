@@ -115,7 +115,7 @@ export function decorateCommand(command: Command, version: string) {
             version,
             create: () => new BrowserServerBackend(config, contextFactory, { allTools: true })
           };
-          const socketPath = await startMcpDaemonServer(config.sessionConfig, serverBackendFactory, config);
+          const socketPath = await startMcpDaemonServer(config.sessionConfig, serverBackendFactory);
           console.error(`Daemon server listening on ${socketPath}`);
           return;
         }

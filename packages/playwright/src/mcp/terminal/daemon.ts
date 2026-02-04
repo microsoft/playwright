@@ -30,7 +30,6 @@ import { parseCommand } from './command';
 import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
 import type { SessionConfig } from './program';
-import type { FullConfig } from '../browser/config';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -47,7 +46,6 @@ async function socketExists(socketPath: string): Promise<boolean> {
 export async function startMcpDaemonServer(
   sessionConfig: SessionConfig,
   serverBackendFactory: ServerBackendFactory,
-  config: FullConfig,
 ): Promise<string> {
   const { socketPath, version } = sessionConfig;
   // Clean up existing socket file on Unix
@@ -99,8 +97,6 @@ export async function startMcpDaemonServer(
             await connection.send({ id, result: 'ok' }).catch(() => {});
             server.close();
           });
-        } else if (method === 'config-show') {
-          await connection.send({ id, result: config });
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           if (params.cwd)

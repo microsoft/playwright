@@ -59,7 +59,7 @@ test('headless options from config is respected', async ({ cli, server, mcpBrows
   expect(output).toContain(' Chrome/');
 });
 
-test('config --show prints merged config from file, env and cli', async ({ cli, server }, testInfo) => {
+test('config --print prints merged config from file, env and cli', async ({ cli, server }, testInfo) => {
   // Config file provides viewport and timeouts.
   const fileConfig = {
     browser: {
@@ -81,8 +81,10 @@ test('config --show prints merged config from file, env and cli', async ({ cli, 
   await cli('open', '--in-memory', server.PREFIX, { env });
 
   // Query the resolved config from the running daemon.
-  const { output } = await cli('config', '--show', { env });
-  const config = JSON.parse(output);
+  const { output } = await cli('config', '--print', { env });
+  const configBegin = output.indexOf('{');
+  expect(configBegin).not.toBe(-1);
+  const config = JSON.parse(output.slice(configBegin));
 
   // From config file.
   expect(config.browser.contextOptions.viewport).toEqual({ width: 800, height: 600 });
