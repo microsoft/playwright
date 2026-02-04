@@ -291,7 +291,7 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
   if (!path.isAbsolute(id))
     return;
-  const normalizedId = path.normalize(id);
+  const normalizedId = path.normalize(id).split(/\?|#/)[0];
   if (deps.has(normalizedId))
     return;
   deps.add(normalizedId);
