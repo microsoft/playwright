@@ -1125,7 +1125,7 @@ ConsoleMessage:
         url: string
         lineNumber: int
         columnNumber: int
-    timestamp: number
+    timestamp: float
 
 
 EventTarget:
