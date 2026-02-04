@@ -552,7 +552,7 @@ export async function program(packageLocation: string) {
 
 async function installSkills() {
   const skillSourceDir = path.join(__dirname, '../../skill');
-  const skillDestDir = path.join(process.cwd(), '.claude', 'skills', 'playwright');
+  const skillDestDir = path.join(process.cwd(), '.claude', 'skills', 'playwright-cli');
 
   if (!fs.existsSync(skillSourceDir)) {
     console.error('Skills source directory not found:', skillSourceDir);
