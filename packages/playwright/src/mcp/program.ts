@@ -42,6 +42,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf, devtools.', commaSeparatedList)
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
+      .option('--cdp-timeout <timeout>', 'timeout in milliseconds for connecting to CDP endpoint, defaults to 30000ms', numberParser)
       .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .option('--config <path>', 'path to the configuration file.')
       .option('--console-level <level>', 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, '--console-level', ['error', 'warning', 'info', 'debug']))

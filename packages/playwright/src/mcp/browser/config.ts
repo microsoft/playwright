@@ -40,6 +40,7 @@ export type CLIOptions = {
   caps?: string[];
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
+  cdpTimeout?: number;
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
@@ -276,6 +277,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
     },
@@ -325,6 +327,7 @@ function configFromEnv(): Config & { configFile?: string } {
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
   options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
+  options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
     options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
