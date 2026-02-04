@@ -64,7 +64,8 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
         type: message.type(),
         text: message.text(),
         args: message.args().map(a => JSHandleDispatcher.fromJSHandle(this, a)),
-        location: message.location()
+        location: message.location(),
+        timestamp: message.timestamp(),
       });
     });
   }

@@ -1637,6 +1637,7 @@ export type BrowserContextConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  timestamp: number,
   page?: PageChannel,
   worker?: WorkerChannel,
 };
@@ -2173,6 +2174,7 @@ export type PageConsoleMessagesResult = {
       lineNumber: number,
       columnNumber: number,
     },
+    timestamp: number,
   }[],
 };
 export type PageEmulateMediaParams = {
@@ -4567,6 +4569,7 @@ export type ElectronApplicationConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  timestamp: number,
 };
 export type ElectronApplicationBrowserWindowParams = {
   page: PageChannel,

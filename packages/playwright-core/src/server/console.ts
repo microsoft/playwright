@@ -25,14 +25,16 @@ export class ConsoleMessage {
   private _location: ConsoleMessageLocation;
   private _page: Page | null;
   private _worker: Worker | null;
+  private _timestamp: number;
 
-  constructor(page: Page | null, worker: Worker | null, type: string, text: string | undefined, args: js.JSHandle[], location?: ConsoleMessageLocation) {
+  constructor(page: Page | null, worker: Worker | null, type: string, text: string | undefined, args: js.JSHandle[], location: ConsoleMessageLocation, timestamp: number) {
     this._page = page;
     this._worker = worker;
     this._type = type;
     this._text = text;
     this._args = args;
     this._location = location || { url: '', lineNumber: 0, columnNumber: 0 };
+    this._timestamp = timestamp;
   }
 
   page() {
@@ -59,5 +61,9 @@ export class ConsoleMessage {
 
   location(): ConsoleMessageLocation {
     return this._location;
+  }
+
+  timestamp(): number {
+    return this._timestamp;
   }
 }

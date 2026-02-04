@@ -223,6 +223,42 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
   await expect.poll(() => messages).toEqual(['begin', 'end']);
 });
 
+it('should have timestamp', async ({ page }) => {
+  const before = Date.now();
+  const [message] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => console.log('timestamp test')),
+  ]);
+  const after = Date.now();
+  expect(message.timestamp()).toBeGreaterThanOrEqual(before);
+  expect(message.timestamp()).toBeLessThanOrEqual(after);
+});
+
+it('should have increasing timestamps', async ({ page }) => {
+  const messages = [];
+  page.on('console', msg => messages.push(msg));
+  await page.evaluate(() => {
+    console.log('first');
+    console.log('second');
+    console.log('third');
+  });
+  expect(messages.length).toBe(3);
+  for (let i = 1; i < messages.length; i++)
+    expect(messages[i].timestamp()).toBeGreaterThanOrEqual(messages[i - 1].timestamp());
+});
+
+it('should have timestamp in consoleMessages', async ({ page }) => {
+  const before = Date.now();
+  await page.evaluate(() => console.log('stored message'));
+  const after = Date.now();
+  const messages = await page.consoleMessages();
+  expect(messages.length).toBeGreaterThanOrEqual(1);
+  const last = messages[messages.length - 1];
+  expect(last.text()).toBe('stored message');
+  expect(last.timestamp()).toBeGreaterThanOrEqual(before);
+  expect(last.timestamp()).toBeLessThanOrEqual(after);
+});
+
 it('consoleMessages should work', async ({ page }) => {
   await page.evaluate(() => {
     for (let i = 0; i < 301; i++)

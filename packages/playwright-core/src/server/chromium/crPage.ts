@@ -736,7 +736,7 @@ class FrameSession {
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
-      this._page.addConsoleMessage(worker, event.type, args, toConsoleMessageLocation(event.stackTrace));
+      this._page.addConsoleMessage(worker, event.type, args, toConsoleMessageLocation(event.stackTrace), undefined, event.timestamp);
     });
     session.on('Runtime.exceptionThrown', exception => this._page.addPageError(exceptionToError(exception.exceptionDetails)));
   }
@@ -799,7 +799,7 @@ class FrameSession {
     if (!context)
       return;
     const values = event.args.map(arg => createHandle(context, arg));
-    this._page.addConsoleMessage(null, event.type, values, toConsoleMessageLocation(event.stackTrace));
+    this._page.addConsoleMessage(null, event.type, values, toConsoleMessageLocation(event.stackTrace), undefined, event.timestamp);
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
@@ -846,7 +846,7 @@ class FrameSession {
         lineNumber: lineNumber || 0,
         columnNumber: 0,
       };
-      this._page.addConsoleMessage(null, level, [], location, text);
+      this._page.addConsoleMessage(null, level, [], location, text, event.entry.timestamp);
     }
   }
 
