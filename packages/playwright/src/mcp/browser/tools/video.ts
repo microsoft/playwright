@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
+import path from 'path';
 import { z } from 'playwright-core/lib/mcpBundle';
-import { defineTabTool } from './tool';
+import { defineTool } from './tool';
 
-const startVideo = defineTabTool({
+const startVideo = defineTool({
   capability: 'devtools',
 
   schema: {
@@ -33,13 +34,13 @@ const startVideo = defineTabTool({
     type: 'readOnly',
   },
 
-  handle: async (tab, params, response) => {
-    await tab.page.video().start({ size: params.size });
+  handle: async (context, params, response) => {
+    await context.startVideoRecording({ size: params.size });
     response.addTextResult('Video recording started.');
   },
 });
 
-const stopVideo = defineTabTool({
+const stopVideo = defineTool({
   capability: 'devtools',
 
   schema: {
@@ -52,11 +53,23 @@ const stopVideo = defineTabTool({
     type: 'readOnly',
   },
 
-  handle: async (tab, params, response) => {
-    const resolvedFile = await response.resolveClientFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
-    await tab.page.video().stop();
-    await tab.page.video().saveAs(resolvedFile.fileName);
-    await response.addFileResult(resolvedFile, null);
+  handle: async (context, params, response) => {
+    const videos = await context.stopVideoRecording();
+    if (!videos.size) {
+      response.addTextResult('No videos were recorded.');
+      return;
+    }
+    for (const [index, video] of [...videos].entries()) {
+      const suffix = index ? `-${index}` : '';
+      let suggestedFilename = params.filename;
+      if (suggestedFilename && suffix) {
+        const ext = path.extname(suggestedFilename);
+        suggestedFilename = path.basename(suggestedFilename, ext) + suffix + ext;
+      }
+      const resolvedFile = await response.resolveClientFile({ prefix: 'video' + suffix, ext: 'webm', suggestedFilename }, 'Video');
+      await video.saveAs(resolvedFile.fileName);
+      await response.addFileResult(resolvedFile, null);
+    }
   },
 });
 

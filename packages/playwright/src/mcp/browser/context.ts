@@ -58,6 +58,8 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
+type VideoParams = NonNullable<Parameters<playwright.Video['start']>[0]>;
+
 export class Context {
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
@@ -68,6 +70,10 @@ export class Context {
   private _currentTab: Tab | undefined;
   private _clientInfo: ClientInfo;
   private _routes: RouteEntry[] = [];
+  private _video: {
+    allVideos: Set<playwright.Video>;
+    listener: (page: playwright.Page) => void;
+  } | undefined;
 
   private static _allContexts: Set<Context> = new Set();
   private _closeBrowserContextPromise: Promise<void> | undefined;
@@ -144,6 +150,33 @@ export class Context {
   async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
     const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
     return await outputFile(this.config, this._clientInfo, baseName, options);
+  }
+
+  async startVideoRecording(params: VideoParams) {
+    if (this._video)
+      throw new Error('Video recording has already been started.');
+    const listener = (page: playwright.Page) => {
+      this._video?.allVideos.add(page.video());
+      page.video().start(params).catch(() => {});
+    };
+    this._video = { allVideos: new Set(), listener };
+    const browserContext = await this.ensureBrowserContext();
+    browserContext.pages().forEach(listener);
+    browserContext.on('page', listener);
+  }
+
+  async stopVideoRecording() {
+    if (!this._video)
+      throw new Error('Video recording has not been started.');
+    const video = this._video;
+    if (this._browserContextPromise) {
+      const { browserContext } = await this._browserContextPromise;
+      browserContext.off('page', video.listener);
+      for (const page of browserContext.pages())
+        await page.video().stop().catch(() => {});
+    }
+    this._video = undefined;
+    return video.allVideos;
   }
 
   private _onPageCreated(page: playwright.Page) {
