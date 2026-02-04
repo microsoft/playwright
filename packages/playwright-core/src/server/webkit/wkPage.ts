@@ -593,9 +593,7 @@ export class WKPage implements PageDelegate {
         count,
         location
       } = this._lastConsoleMessage;
-      console.log('event.timestamp', event.timestamp);
       const timestamp = event.timestamp ? event.timestamp * 1000 : Date.now();
-      console.log('timestamp', timestamp);
       for (let i = count; i < event.count; ++i)
         this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text, timestamp);
       this._lastConsoleMessage.count = event.count;
