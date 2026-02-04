@@ -29,82 +29,68 @@ test('session-list', async ({ cli, server }) => {
   expect(listOutput).toContain('  [running] default');
 });
 
-test('session-stop', async ({ cli, server }) => {
+test('close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
-  const { output } = await cli('session-stop');
+  const { output } = await cli('close');
   expect(output).toContain(`Session 'default' stopped.`);
 
   const { output: listOutput } = await cli('session-list');
   expect(listOutput).toContain('[stopped] default');
 });
 
-test('session-stop named session', async ({ cli, server }) => {
-  await cli('open', '--session=mysession', server.HELLO_WORLD);
+test('close named session', async ({ cli, server }) => {
+  await cli('--session=mysession', 'open', server.HELLO_WORLD);
 
-  const { output } = await cli('session-stop', 'mysession');
+  const { output } = await cli('--session=mysession', 'close');
   expect(output).toContain(`Session 'mysession' stopped.`);
 });
 
-test('session-stop non-running session', async ({ cli }) => {
-  const { output } = await cli('session-stop', 'nonexistent');
+test('close non-running session', async ({ cli }) => {
+  const { output } = await cli('--session=nonexistent', 'close');
   expect(output).toContain(`Session 'nonexistent' is not running.`);
 });
 
-test('session-stop-all', async ({ cli, server }) => {
-  await cli('open', '--session=session1', server.HELLO_WORLD);
-  await cli('open', '--session=session2', server.HELLO_WORLD);
+test('session-close-all', async ({ cli, server }) => {
+  await cli('--session=session1', 'open', server.HELLO_WORLD);
+  await cli('--session=session2', 'open', server.HELLO_WORLD);
 
   const { output: listBefore } = await cli('session-list');
   expect(listBefore).toContain('[running] session1');
   expect(listBefore).toContain('[running] session2');
 
-  await cli('session-stop-all');
+  await cli('session-close-all');
 
   const { output: listAfter } = await cli('session-list');
   expect(listAfter).not.toContain('[running]');
 });
 
-test('kill-all', async ({ cli, server }) => {
-  await cli('open', '--session=killsession1', server.HELLO_WORLD);
-  await cli('open', '--session=killsession2', server.HELLO_WORLD);
-
-  const { output: listBefore } = await cli('session-list');
-  expect(listBefore).toContain('[running] killsession1');
-  expect(listBefore).toContain('[running] killsession2');
-
-  const { output } = await cli('kill-all');
-  expect(output).toContain('Killed daemon process');
-
-  await expect.poll(() => cli('session-list').then(r => r.output)).not.toContain('[running]');
-});
-
-test('session-delete', async ({ cli, server, mcpBrowser }, testInfo) => {
-  await cli('open', server.HELLO_WORLD);
+test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
+  await cli('open', server.HELLO_WORLD, '--persistent');
 
   const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
 
-  const { output } = await cli('session-delete');
+  const { output } = await cli('delete-data');
   expect(output).toContain(`Deleted user data for session 'default'.`);
 
   expect(fs.existsSync(dataDir)).toBe(false);
 });
 
-test('session-delete named session', async ({ cli, server, mcpBrowser }, testInfo) => {
-  await cli('open', '--session=mysession', server.HELLO_WORLD);
+test('delete-data named session', async ({ cli, server, mcpBrowser }, testInfo) => {
+  await cli('--session=mysession', 'open', server.HELLO_WORLD, '--persistent');
 
   const dataDir = testInfo.outputPath('daemon', 'ud-mysession-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
 
-  const { output } = await cli('session-delete', 'mysession');
+  const { output } = await cli('--session=mysession', 'delete-data');
   expect(output).toContain(`Deleted user data for session 'mysession'.`);
 
   expect(fs.existsSync(dataDir)).toBe(false);
 });
 
-test('session-delete non-existent session', async ({ cli }) => {
-  const { output } = await cli('session-delete', 'nonexistent');
+test('delete-data non-existent session', async ({ cli }) => {
+  const { output } = await cli('--session=nonexistent', 'delete-data');
   expect(output).toContain(`No user data found for session 'nonexistent'.`);
 });
 
@@ -120,7 +106,7 @@ test('session stops when browser exits', async ({ cli, server }) => {
   await expect.poll(() => cli('session-list').then(r => r.output)).toContain('[stopped]');
 });
 
-test('session restart', async ({ cli, server }, testInfo) => {
+test('session reopen with different config', async ({ cli, server }, testInfo) => {
   const config = { browser: { contextOptions: { viewport: { width: 700, height: 500 } } } };
   const configPath = testInfo.outputPath('config.json');
   await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
@@ -128,37 +114,13 @@ test('session restart', async ({ cli, server }, testInfo) => {
     await cli('open', server.HELLO_WORLD, '--config=' + configPath);
     const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
     expect(output).toContain('700x500');
-    await cli('close');
   }
   {
+    // Reopen without config should use default viewport
     await cli('open', server.HELLO_WORLD);
     const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
-    expect(output).toContain('700x500');
+    expect(output).toContain('1280x720');
   }
-});
-
-test('config should work', async ({ cli, server }, testInfo) => {
-  // Start a session with default config
-  await cli('open', server.PREFIX);
-  const { output: beforeOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
-  expect(beforeOutput).toContain('1280x720');
-
-  const config = {
-    browser: {
-      contextOptions: {
-        viewport: { width: 700, height: 500 },
-      },
-    },
-  };
-  const configPath = testInfo.outputPath('session-config.json');
-  await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
-
-  const { output: configureOutput } = await cli('config', '--config=' + configPath);
-  expect(configureOutput).toContain(`--config=`);
-
-  await cli('open', server.PREFIX);
-  const { output: afterOutput } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
-  expect(afterOutput).toContain('700x500');
 });
 
 test('session start should print session options', async ({ cli, server }, testInfo) => {
@@ -169,26 +131,4 @@ test('session start should print session options', async ({ cli, server }, testI
   expect(output).toContain('Session options:');
   expect(output).toContain('--headed');
   expect(output).toContain('--config=my-config.json');
-});
-
-test('session mismatch should report error for default session', async ({ cli, server }) => {
-  // Start a default session
-  await cli('open', server.HELLO_WORLD);
-
-  // Try to pass global options to the already running session
-  const { output, exitCode } = await cli('snapshot', '--headed');
-  expect(exitCode).toBe(1);
-  expect(output).toContain('The session is already configured.');
-  expect(output).toContain('playwright-cli config --headed');
-});
-
-test('session mismatch should report error for named session', async ({ cli, server }) => {
-  // Start a named session
-  await cli('open', '--session=mismatch-named', server.HELLO_WORLD);
-
-  // Try to pass global options to the already running session
-  const { output, exitCode } = await cli('snapshot', '--session=mismatch-named', '--headed');
-  expect(exitCode).toBe(1);
-  expect(output).toContain('The session is already configured.');
-  expect(output).toContain('playwright-cli --session=mismatch-named config --headed');
 });

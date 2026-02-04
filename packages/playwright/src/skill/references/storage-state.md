@@ -272,4 +272,4 @@ playwright-cli open https://example.com
 - Add `*.auth-state.json` to `.gitignore`
 - Delete state files after automation completes
 - Use environment variables for sensitive data
-- Consider using `--in-memory` mode for sensitive operations
+- By default, sessions run in-memory mode which is safer for sensitive operations

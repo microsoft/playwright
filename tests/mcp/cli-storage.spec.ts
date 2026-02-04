@@ -120,7 +120,7 @@ test('state-save and state-load roundtrip', async ({ cli, server, mcpBrowser }, 
   await cli('state-load', testInfo.outputPath('roundtrip-state.json'));
 
   // Reload to pick up cookies
-  await cli('open', server.EMPTY_PAGE);
+  await cli('goto', server.EMPTY_PAGE);
 
   // Verify storage was restored
   const { output: restoredResult } = await cli('eval', '() => document.cookie + "|" + localStorage.getItem("roundtripKey")');

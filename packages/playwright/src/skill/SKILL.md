@@ -167,13 +167,15 @@ playwright-cli open --browser=msedge
 # Connect to browser via extension
 playwright-cli open --extension
 
-# Configure the session
-playwright-cli config --config my-config.json
-playwright-cli config --headed --in-memory --browser=firefox
-# Configure named session
-playwright-cli --session=mysession config my-config.json
-# Start with configured session
+# Use persistent profile (by default profile is in-memory)
+playwright-cli open --persistent
+# Use persistent profile with custom directory
+playwright-cli open --profile=/path/to/profile
+
+# Start with config file
 playwright-cli open --config=my-config.json
+
+playwright-cli close                      # stop the default session
 ```
 
 ### Sessions
@@ -181,13 +183,13 @@ playwright-cli open --config=my-config.json
 ```bash
 playwright-cli --session=mysession open example.com
 playwright-cli --session=mysession click e6
+playwright-cli --session=mysession close  # stop a named session
+playwright-cli --session=mysession delete-data  # delete user data for named session
+
 playwright-cli session-list
-playwright-cli session-stop mysession
-playwright-cli session-restart mysession
-playwright-cli session-stop-all
-playwright-cli session-delete
-playwright-cli session-delete mysession
-playwright-cli kill-all  # forcefully kill all daemon processes (for stale/zombie processes)
+playwright-cli session-close-all          # stop all sessions
+playwright-cli delete-data                # delete user data for default session
+playwright-cli kill-all                   # forcefully kill all daemon processes (for stale/zombie processes)
 ```
 
 ## Example: Form submission

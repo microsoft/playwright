@@ -18,7 +18,7 @@ import { test, expect } from './cli-fixtures';
 
 test('go-back', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  await cli('open', server.PREFIX);
+  await cli('goto', server.PREFIX);
   const { output } = await cli('go-back');
   expect(output).toContain(`### Page
 - Page URL: ${server.HELLO_WORLD}
@@ -27,7 +27,7 @@ test('go-back', async ({ cli, server }) => {
 
 test('go-forward', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
-  await cli('open', server.HELLO_WORLD);
+  await cli('goto', server.HELLO_WORLD);
   await cli('go-back');
   const { output } = await cli('go-forward');
   expect(output).toContain(`### Page

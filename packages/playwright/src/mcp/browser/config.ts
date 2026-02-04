@@ -87,6 +87,7 @@ export const defaultConfig: FullConfig = {
     contextOptions: {
       viewport: null,
     },
+    isolated: false,
   },
   console: {
     level: 'info',
@@ -107,6 +108,15 @@ export const defaultConfig: FullConfig = {
   },
 };
 
+const defaultDaemonConfig: FullConfig = mergeConfig(defaultConfig, {
+  browser: {
+    launchOptions: {
+      headless: true,
+    },
+    isolated: true,
+  }
+});
+
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
@@ -114,6 +124,7 @@ export type FullConfig = Config & {
     browserName: 'chromium' | 'firefox' | 'webkit';
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+    isolated: boolean;
   },
   console: {
     level: 'error' | 'warning' | 'info' | 'debug';
@@ -145,10 +156,7 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   const configFile = cliOverrides.configFile ?? envOverrides.configFile ?? daemonOverrides.configFile;
   const configInFile = await loadConfig(configFile);
 
-  let result = defaultConfig;
-  // Daemon session is always headless by default.
-  if (cliOptions.daemonSession)
-    result.browser.launchOptions.headless = true;
+  let result = cliOptions.daemonSession ? defaultDaemonConfig : defaultConfig;
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
@@ -373,9 +381,10 @@ async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & 
   const config = configFromCLIOptions({
     config: sessionConfig.cli.config,
     browser: sessionConfig.cli.browser,
-    isolated: sessionConfig.cli.isolated,
+    isolated: sessionConfig.cli.persistent === true ? false : undefined,
     headless: sessionConfig.cli.headed ? false : undefined,
     extension: sessionConfig.cli.extension,
+    userDataDir: sessionConfig.cli.profile,
     outputMode: 'file',
     snapshotMode: 'full',
   });
