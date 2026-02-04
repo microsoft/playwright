@@ -11,6 +11,11 @@ When you shard your tests, each shard can run on its own, utilizing the availabl
 
 In a CI pipeline, each shard can run as a separate job, making use of the hardware resources available in your CI pipeline, like CPU cores, to run tests faster.
 
+:::info[Before sharding]
+Sharding adds per-shard overhead like checking out the codebase, installing dependencies, and downloading browsers.
+If your test suite can run in parallel without becoming flaky, consider scaling up the machine (more CPU / memory) and increasing the number of [workers](./api/class-testconfig.md#test-config-workers) before introducing sharding.
+:::
+
 ## Sharding tests between multiple machines
 
 To shard the test suite, pass `--shard=x/y` to the command line. For example, to split the suite into four shards, each running one fourth of the tests:
