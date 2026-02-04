@@ -175,7 +175,7 @@ it('should propagate locale to workers', async ({ browser, browserName, server }
     page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(Intl.NumberFormat().resolvedOptions().locale)'], { type: 'application/javascript' })))),
   ]);
   if (browserName === 'webkit')
-    expect(msg.text()).toBe('ru');
+    expect(msg.text()).toContain('ru'); // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
   else
     expect(msg.text()).toBe('ru-RU');
   await context.close();
