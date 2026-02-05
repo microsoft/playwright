@@ -283,15 +283,17 @@ to restart the session daemon.`);
   private async _stopDaemon(): Promise<void> {
     let error: Error | undefined;
     await this._send('stop').catch(e => { error = e; });
+    if (os.platform() !== 'win32')
+      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+
     this.disconnect();
-    await this.deleteSession();
+    if (!this._config.cli.persistent)
+      await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
   }
 
-  async deleteSession() {
-    if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+  async deleteSessionConfig() {
     await fs.promises.rm(this._sessionConfigFile()).catch(() => {});
   }
 }
@@ -663,28 +665,14 @@ async function killAllDaemons(): Promise<void> {
 async function listSessions(sessionManager: SessionManager): Promise<void> {
   const sessions = sessionManager.sessions;
   console.log('Sessions:');
-  for (const session of sessions.values()) {
-    const canConnect = await session.canConnect();
-    if (!canConnect) {
-      console.log(`  ${session.name} is stale, removing`);
-      await session.deleteSession();
-    } else {
-      const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, please reopen` : '';
-      console.log(`  ${session.name}${restartMarker}`);
-      const config = session.config();
-      configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
-    }
-  }
-  if (sessions.size === 0)
-    console.log('  (no sessions)');
+  await gcAndPrintSessions([...sessions.values()]);
 }
 
 async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
   const hashes = await fs.promises.readdir(baseDaemonDir).catch(() => []);
 
   // Group sessions by workspace folder
-  const sessionsByWorkspace = new Map<string, { name: string, config: SessionConfig, canConnect: boolean, isCompatible: boolean }[]>();
-
+  const sessionsByWorkspace = new Map<string, Session[]>();
   for (const hash of hashes) {
     const hashDir = path.join(baseDaemonDir, hash);
     const stat = await fs.promises.stat(hashDir).catch(() => null);
@@ -699,14 +687,10 @@ async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
         const sessionName = path.basename(file, '.session');
         const sessionConfig = await fs.promises.readFile(path.join(hashDir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
         const session = new Session(clientInfo, sessionName, sessionConfig);
-        const canConnect = await session.canConnect();
-        const isCompatible = session.isCompatible();
-
-        // Use workspace folder from config, or empty string if not set (installation folder case)
-        const workspaceKey = sessionConfig.workspaceDir || '';
+        const workspaceKey = sessionConfig.workspaceDir || '<global>';
         if (!sessionsByWorkspace.has(workspaceKey))
           sessionsByWorkspace.set(workspaceKey, []);
-        sessionsByWorkspace.get(workspaceKey)!.push({ name: sessionName, config: sessionConfig, canConnect, isCompatible });
+        sessionsByWorkspace.get(workspaceKey)!.push(session);
       } catch {
       }
     }
@@ -717,30 +701,52 @@ async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
     return;
   }
 
-  // Sort workspace keys: empty string (no workspace) last, others alphabetically
-  const sortedWorkspaces = [...sessionsByWorkspace.keys()].sort((a, b) => {
-    if (a === '' && b !== '')
-      return 1;
-    if (a !== '' && b === '')
-      return -1;
-    return a.localeCompare(b);
-  });
+  const sortedWorkspaces = [...sessionsByWorkspace.keys()].sort();
 
   for (const workspace of sortedWorkspaces) {
     const sessions = sessionsByWorkspace.get(workspace)!;
-    // Only print workspace folder if it's set
-    if (workspace)
-      console.log(`${workspace}:`);
-    for (const { name, config, canConnect, isCompatible } of sessions) {
-      if (!canConnect) {
-        console.log(`  ${name} (stale)`);
-      } else {
-        const restartMarker = !isCompatible ? ` - v${config.version}, please reopen` : '';
-        console.log(`  ${name}${restartMarker}`);
-        configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
-      }
+    console.log(`${workspace}:`);
+    await gcAndPrintSessions(sessions);
+  }
+}
+
+async function gcAndPrintSessions(sessions: Session[]) {
+  const running: Session[] = [];
+  const stopped: Session[] = [];
+
+  for (const session of sessions.values()) {
+    const canConnect = await session.canConnect();
+    if (canConnect) {
+      running.push(session);
+    } else {
+      if (session.config().cli.persistent)
+        stopped.push(session);
+      else
+        await session.deleteSessionConfig();
     }
   }
+
+  for (const session of running)
+    console.log(await renderSessionStatus(session));
+  for (const session of stopped)
+    console.log(await renderSessionStatus(session));
+
+  if (running.length === 0 && stopped.length === 0)
+    console.log('  (no sessions)');
+
+}
+
+async function renderSessionStatus(session: Session) {
+  const text: string[] = [];
+  const config = session.config();
+  const canConnect = await session.canConnect();
+  const isPersistent = config.cli.persistent;
+  const statusMarker = canConnect ? '[running]' : '[stopped]';
+  const persistentMarker = isPersistent ? ' [persistent]' : '';
+  const restartMarker = canConnect && !session.isCompatible() ? ` - v${config.version}, please reopen` : '';
+  text.push(`  ${session.name} ${statusMarker}${persistentMarker}${restartMarker}`);
+  configToFormattedArgs(config.cli).forEach(arg => text.push(`     ${arg}`));
+  return text.join('\n');
 }
 
 function formatWithGap(prefix: string, text: string, threshold: number = 40) {

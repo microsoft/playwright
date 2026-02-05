@@ -52,6 +52,18 @@ test('close non-running session', async ({ cli }) => {
   expect(output).toContain(`Session 'nonexistent' is not running.`);
 });
 
+test('stopped persistent session shows in session-list', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD, '--persistent');
+
+  const { output: listBefore } = await cli('session-list');
+  expect(listBefore).toContain('default [running] [persistent]');
+
+  await cli('close');
+
+  const { output: listAfter } = await cli('session-list');
+  expect(listAfter).toContain('default [stopped] [persistent]');
+});
+
 test('session-close-all', async ({ cli, server }) => {
   await cli('--session=session1', 'open', server.HELLO_WORLD);
   await cli('--session=session2', 'open', server.HELLO_WORLD);
@@ -104,7 +116,6 @@ test('session stops when browser exits', async ({ cli, server }) => {
   // Close the browser - this will cause the daemon to exit so the command may fail
   await cli('run-code', '() => page.context().browser().close()').catch(() => {});
 
-  await expect.poll(() => cli('session-list').then(r => r.output)).toContain('default is stale, removing');
   await cli('close');
   const { output: listAfter } = await cli('session-list');
   expect(listAfter).toContain('(no sessions)');
@@ -157,7 +168,7 @@ test('workspace isolation - sessions in different workspaces are isolated', asyn
   const { output: list1 } = await cli('session-list', { cwd: workspace1 });
   expect(list1).toContain('default');
   const { output: list2 } = await cli('session-list', { cwd: workspace2 });
-  expect(list2).toContain('default');
+  expect(list2).toContain(' default');
 
   await cli('close', { cwd: workspace1 });
 
