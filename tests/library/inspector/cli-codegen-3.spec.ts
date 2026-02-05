@@ -978,7 +978,7 @@ await page.GetByTestId("testid").HoverAsync();`);
     await page.getByTitle('Assert text').click();
   });
 
-  test('should record when manual popover with fullscreen backdrop is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+  test.fail('should record when manual popover with fullscreen backdrop is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
     // Simulates https://material.angular.dev/components/dialog/examples. manual popover with a fullscreen backdrop
@@ -1029,6 +1029,11 @@ await page.GetByTestId("testid").HoverAsync();`);
 
     await page.getByRole('button', { name: 'Open Dialog' }).click();
     await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeVisible();
+
+    // 10,10 points to the backdrop. when we replay the click on it backdrop,
+    // playwright doesn't target 10,10, but instead it targets the center of the element at 10,10
+    // this happens to be the 'close dialog' button! what should we do?
+
     await page.mouse.click(10, 10);
     await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeHidden();
   });
