@@ -22,7 +22,7 @@ import { test, expect } from './cli-fixtures';
 test('cookie-list shows no cookies when empty', async ({ cli, server, mcpBrowser }, testInfo) => {
   test.skip(mcpBrowser === 'msedge', 'Edge is leaking some internal cookies');
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   const { output } = await cli('cookie-list');
@@ -31,7 +31,7 @@ test('cookie-list shows no cookies when empty', async ({ cli, server, mcpBrowser
 
 test('cookie-set and cookie-get', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 
@@ -45,7 +45,7 @@ test('cookie-set and cookie-get', async ({ cli, server }, testInfo) => {
 
 test('cookie-list shows cookies', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('cookie-set', 'cookie1', 'value1');
@@ -58,7 +58,7 @@ test('cookie-list shows cookies', async ({ cli, server }, testInfo) => {
 
 test('cookie-delete removes cookie', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('cookie-set', 'testCookie', 'testValue');
@@ -73,7 +73,7 @@ test('cookie-delete removes cookie', async ({ cli, server }, testInfo) => {
 
 test('cookie-clear removes all cookies', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('cookie-set', 'cookie1', 'value1');

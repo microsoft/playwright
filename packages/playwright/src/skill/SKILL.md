@@ -175,7 +175,10 @@ playwright-cli open --profile=/path/to/profile
 # Start with config file
 playwright-cli open --config=my-config.json
 
-playwright-cli close                      # stop the default session
+# Close the browser
+playwright-cli close
+# Delete user data for the default session
+playwright-cli delete-data
 ```
 
 ### Sessions
@@ -187,9 +190,10 @@ playwright-cli --session=mysession close  # stop a named session
 playwright-cli --session=mysession delete-data  # delete user data for named session
 
 playwright-cli session-list
-playwright-cli session-close-all          # stop all sessions
-playwright-cli delete-data                # delete user data for default session
-playwright-cli kill-all                   # forcefully kill all daemon processes (for stale/zombie processes)
+# Close all browsers
+playwright-cli session-close-all
+# Forcefully kill all browser processes
+playwright-cli session-kill-all
 ```
 
 ## Example: Form submission

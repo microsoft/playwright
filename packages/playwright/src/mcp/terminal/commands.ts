@@ -23,14 +23,14 @@ import type { AnyCommandSchema } from './command';
 
 const open = declareCommand({
   name: 'open',
-  description: 'Open browser',
+  description: 'Open the browser',
   category: 'core',
   args: z.object({
     url: z.string().optional().describe('The URL to navigate to'),
   }),
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
-    config: z.string().optional().describe('Path to the configuration file'),
+    config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
     extension: z.boolean().optional().describe('Connect to browser extension'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
@@ -42,7 +42,7 @@ const open = declareCommand({
 
 const close = declareCommand({
   name: 'close',
-  description: 'Close the page',
+  description: 'Close the browser',
   category: 'core',
   args: z.object({}),
   toolName: '',
@@ -771,7 +771,7 @@ const sessionCloseAll = declareCommand({
 });
 
 const killAll = declareCommand({
-  name: 'kill-all',
+  name: 'session-kill-all',
   description: 'Forcefully kill all daemon processes (for stale/zombie processes)',
   category: 'session',
   toolName: '',
@@ -796,6 +796,18 @@ const configPrint = declareCommand({
 });
 
 const install = declareCommand({
+  name: 'install',
+  description: 'Initialize workspace',
+  category: 'install',
+  args: z.object({}),
+  options: z.object({
+    skills: z.boolean().optional().describe('Install skills for Claude / GitHub Copilot'),
+  }),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const installBrowser = declareCommand({
   name: 'install-browser',
   description: 'Install browser',
   category: 'install',
@@ -803,15 +815,6 @@ const install = declareCommand({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
   }),
   toolName: 'browser_install',
-  toolParams: () => ({}),
-});
-
-const installSkills = declareCommand({
-  name: 'install-skills',
-  description: 'Install Claude / GitGub Copilot skills to the local workspace',
-  category: 'install',
-  args: z.object({}),
-  toolName: '',
   toolParams: () => ({}),
 });
 
@@ -894,7 +897,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // install category
   install,
-  installSkills,
+  installBrowser,
 
   // devtools category
   networkRequests,

@@ -19,7 +19,7 @@ import { test, expect } from './cli-fixtures';
 
 test('localstorage-list shows no items when empty', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   const { output } = await cli('localstorage-list');
@@ -28,7 +28,7 @@ test('localstorage-list shows no items when empty', async ({ cli, server }, test
 
 test('localstorage-set and localstorage-get', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 
@@ -42,7 +42,7 @@ test('localstorage-set and localstorage-get', async ({ cli, server }, testInfo) 
 
 test('localstorage-list shows items', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('localstorage-set', 'key1', 'value1');
@@ -55,7 +55,7 @@ test('localstorage-list shows items', async ({ cli, server }, testInfo) => {
 
 test('localstorage-delete removes item', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('localstorage-set', 'testKey', 'testValue');
@@ -70,7 +70,7 @@ test('localstorage-delete removes item', async ({ cli, server }, testInfo) => {
 
 test('localstorage-clear removes all items', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('localstorage-set', 'key1', 'value1');
@@ -86,7 +86,7 @@ test('localstorage-clear removes all items', async ({ cli, server }, testInfo) =
 
 test('sessionstorage-list shows no items when empty', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   const { output } = await cli('sessionstorage-list');
@@ -95,7 +95,7 @@ test('sessionstorage-list shows no items when empty', async ({ cli, server }, te
 
 test('sessionstorage-set and sessionstorage-get', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 
@@ -109,7 +109,7 @@ test('sessionstorage-set and sessionstorage-get', async ({ cli, server }, testIn
 
 test('sessionstorage-list shows items', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('sessionstorage-set', 'key1', 'value1');
@@ -122,7 +122,7 @@ test('sessionstorage-list shows items', async ({ cli, server }, testInfo) => {
 
 test('sessionstorage-delete removes item', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('sessionstorage-set', 'testKey', 'testValue');
@@ -137,7 +137,7 @@ test('sessionstorage-delete removes item', async ({ cli, server }, testInfo) => 
 
 test('sessionstorage-clear removes all items', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
   await cli('sessionstorage-set', 'key1', 'value1');

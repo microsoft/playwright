@@ -15,7 +15,8 @@
  */
 
 import fs from 'fs';
-import { test, expect } from './cli-fixtures';
+import path from 'path';
+import { test, expect, daemonFolder } from './cli-fixtures';
 
 test('session-list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('session-list');
@@ -68,7 +69,7 @@ test('session-close-all', async ({ cli, server }) => {
 test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('open', server.HELLO_WORLD, '--persistent');
 
-  const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
 
   const { output } = await cli('delete-data');
@@ -80,7 +81,7 @@ test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
 test('delete-data named session', async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('--session=mysession', 'open', server.HELLO_WORLD, '--persistent');
 
-  const dataDir = testInfo.outputPath('daemon', 'ud-mysession-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-mysession-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
 
   const { output } = await cli('--session=mysession', 'delete-data');
@@ -134,4 +135,36 @@ test('session start should print session options', async ({ cli, server }, testI
   expect(output).toContain('Session options:');
   expect(output).toContain('--headed');
   expect(output).toContain('--config=my-config.json');
+});
+
+test('workspace isolation - sessions in different workspaces are isolated', async ({ cli, server }, testInfo) => {
+  // Create two separate workspaces with their own daemon dirs
+  const workspace1 = testInfo.outputPath('workspace1');
+  const workspace2 = testInfo.outputPath('workspace2');
+  await fs.promises.mkdir(workspace1, { recursive: true });
+  await fs.promises.mkdir(workspace2, { recursive: true });
+
+  await cli('install', { cwd: workspace1 });
+  await cli('install', { cwd: workspace2 });
+
+  expect(fs.existsSync(path.join(workspace1, '.playwright'))).toBe(true);
+  expect(fs.existsSync(path.join(workspace2, '.playwright'))).toBe(true);
+
+  // Open sessions in both workspaces
+  await cli('open', server.HELLO_WORLD, { cwd: workspace1 });
+  await cli('open', server.HELLO_WORLD, { cwd: workspace2 });
+
+  const { output: list1 } = await cli('session-list', { cwd: workspace1 });
+  expect(list1).toContain('default');
+  const { output: list2 } = await cli('session-list', { cwd: workspace2 });
+  expect(list2).toContain('default');
+
+  await cli('close', { cwd: workspace1 });
+
+  const { output: list1After } = await cli('session-list', { cwd: workspace1 });
+  expect(list1After).toContain('(no sessions)');
+  const { output: list2After } = await cli('session-list', { cwd: workspace2 });
+  expect(list2After).toContain('default');
+
+  await cli('close', { cwd: workspace2 });
 });
