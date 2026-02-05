@@ -575,8 +575,25 @@ async function install(args: MinimistArgs) {
     console.log(`Skills installed to ${path.relative(cwd, skillDestDir)}`);
   }
 
-  if (!args.config && !fs.existsSync(defaultConfigFile())) {
-    const channel = await checkAndInstallBrowser();
+  if (!args.config)
+    await ensureConfiguredBrowserInstalled();
+}
+
+async function ensureConfiguredBrowserInstalled() {
+  if (fs.existsSync(defaultConfigFile())) {
+    const { registry } = await import('playwright-core/lib/server/registry/index');
+    // Config exists, ensure configured browser is installed
+    const config = JSON.parse(await fs.promises.readFile(defaultConfigFile(), 'utf-8')) as Config;
+    const browserName = config.browser?.browserName ?? 'chromium';
+    const channel = config.browser?.launchOptions?.channel;
+    if (!channel || channel.startsWith('chromium')) {
+      const executable = registry.findExecutable(browserName);
+      if (executable && !fs.existsSync(executable?.executablePath()!))
+        await registry.install([executable]);
+    }
+  } else {
+    // No config exists, detect or install a browser and create config
+    const channel = await findOrInstallDefaultBrowser();
     if (channel !== 'chrome')
       await createDefaultConfig(channel);
   }
@@ -595,7 +612,7 @@ async function createDefaultConfig(channel: string) {
   console.log(`Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
 }
 
-async function checkAndInstallBrowser() {
+async function findOrInstallDefaultBrowser() {
   const { registry } = await import('playwright-core/lib/server/registry/index');
   const channels = ['chrome', 'msedge'];
   for (const channel of channels) {
