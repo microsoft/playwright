@@ -20,7 +20,7 @@ import { test, expect } from './cli-fixtures';
 
 test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
   const first = await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_EXECUTABLE_PATH: '/nonexistent/browser/path' } });
-  expect(first.output).toContain('Failed to launch');
+  expect(first.error).toContain(`executable doesn't exist`);
 
   const second = await cli('open', server.PREFIX);
   expect(second.exitCode).toBe(0);

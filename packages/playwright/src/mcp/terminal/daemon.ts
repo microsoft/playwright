@@ -23,13 +23,14 @@ import url from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
+import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { SocketConnection } from './socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
 
-import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
-import type { SessionConfig } from './program';
+import type { BrowserContextFactory } from '../browser/browserContextFactory';
+import type { FullConfig } from '../browser/config';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -44,9 +45,10 @@ async function socketExists(socketPath: string): Promise<boolean> {
 }
 
 export async function startMcpDaemonServer(
-  sessionConfig: SessionConfig,
-  serverBackendFactory: ServerBackendFactory,
+  config: FullConfig,
+  contextFactory: BrowserContextFactory,
 ): Promise<string> {
+  const sessionConfig = config.sessionConfig!;
   const { socketPath, version } = sessionConfig;
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
@@ -59,9 +61,8 @@ export async function startMcpDaemonServer(
     }
   }
 
-  const backend = serverBackendFactory.create();
   const cwd = url.pathToFileURL(process.cwd()).href;
-  await backend.initialize?.({
+  const clientInfo = {
     name: 'playwright-cli',
     version: sessionConfig.version,
     roots: [{
@@ -69,11 +70,21 @@ export async function startMcpDaemonServer(
       name: 'cwd'
     }],
     timestamp: Date.now(),
+  };
+
+  const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {});
+  browserContext.on('close', () => {
+    daemonDebug('browser closed, shutting down daemon');
+    shutdown(0);
   });
 
-  await fs.mkdir(path.dirname(socketPath), { recursive: true });
+  const existingContextFactory = {
+    createContext: () => Promise.resolve({ browserContext, close }),
+  };
+  const backend = new BrowserServerBackend(config, existingContextFactory, { allTools: true });
+  await backend.initialize?.(clientInfo);
 
-  let shutdownPending = false;
+  await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
   const shutdown = (exitCode: number) => {
     daemonDebug(`shutting down daemon with exit code ${exitCode}`);
@@ -101,31 +112,17 @@ export async function startMcpDaemonServer(
           const { toolName, toolParams } = parseCliCommand(params.args);
           if (params.cwd)
             toolParams._meta = { cwd: params.cwd };
-          const response = await backend.callTool(toolName, toolParams, () => {});
+          const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
-          if (shutdownPending)
-            shutdown(1);
         } else {
           throw new Error(`Unknown method: ${method}`);
         }
       } catch (e) {
         daemonDebug('command failed', e);
         await connection.send({ id, error: (e as Error).message });
-        if (shutdownPending)
-          shutdown(1);
       }
     };
   });
-
-  backend.onBrowserContextClosed = () => {
-    daemonDebug('browser closed, shutting down daemon');
-    shutdown(0);
-  };
-
-  backend.onBrowserLaunchFailed = error => {
-    daemonDebug('browser launch failed, will shut down after response', error);
-    shutdownPending = true;
-  };
 
   return new Promise((resolve, reject) => {
     server.on('error', (error: NodeJS.ErrnoException) => {

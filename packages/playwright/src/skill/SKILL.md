@@ -184,10 +184,10 @@ playwright-cli delete-data
 ### Browser Sessions
 
 ```bash
-playwright-cli -b mysession open example.com
-playwright-cli -b mysession click e6
-playwright-cli -b mysession close  # stop a named browser
-playwright-cli -b mysession delete-data  # delete user data for named browser
+playwright-cli -s=mysession open example.com
+playwright-cli -s=mysession click e6
+playwright-cli -s=mysession close  # stop a named browser
+playwright-cli -s=mysession delete-data  # delete user data for named browser
 
 playwright-cli list
 # Close all browsers

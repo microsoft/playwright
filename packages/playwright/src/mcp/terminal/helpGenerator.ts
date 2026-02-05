@@ -81,7 +81,7 @@ const categories: { name: Category, title: string }[] = [
 export function generateHelp() {
   const lines: string[] = [];
   lines.push('Usage: playwright-cli <command> [args] [options]');
-  lines.push('Usage: playwright-cli -b=<session> <command> [args] [options]');
+  lines.push('Usage: playwright-cli -s=<session> <command> [args] [options]');
 
   const commandsByCategory = new Map<string, AnyCommandSchema[]>();
   for (const c of categories)

@@ -140,7 +140,7 @@ class IsolatedContextFactory extends BaseContextFactory {
       handleSIGTERM: false,
     }).catch(error => {
       if (error.message.includes('Executable doesn\'t exist'))
-        throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+        throwBrowserIsNotInstalledError(this.config);
       throw error;
     });
   }
@@ -227,7 +227,7 @@ class PersistentContextFactory implements BrowserContextFactory {
         return { browserContext, close };
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
-          throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+          throwBrowserIsNotInstalledError(this.config);
         if (error.message.includes('cannot open shared object file: No such file or directory')) {
           const browserName = launchOptions.channel ?? this.config.browser.browserName;
           throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
@@ -367,4 +367,12 @@ async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: C
     };
   }
   return result;
+}
+
+function throwBrowserIsNotInstalledError(config: FullConfig): never {
+  const channel = config.browser.launchOptions?.channel ?? config.browser.browserName;
+  if (config.skillMode)
+    throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
+  else
+    throw new Error(`Browser "${channel}" is not installed. Either install it (likely) or change the config.`);
 }
