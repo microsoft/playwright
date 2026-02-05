@@ -583,7 +583,7 @@ async function createDefaultConfig(channel: string) {
 
 async function checkAndInstallBrowser() {
   const { registry } = await import('playwright-core/lib/server/registry/index');
-  const channels = ['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary'];
+  const channels = ['chrome', 'msedge'];
   for (const channel of channels) {
     const executable = registry.findExecutable(channel);
     if (!executable?.executablePath())
@@ -592,12 +592,9 @@ async function checkAndInstallBrowser() {
     return channel;
   }
   const chromiumExecutable = registry.findExecutable('chromium');
-  // Unlike channels, chromium executable path is always valid even if the browser is not installed.
-  if (fs.existsSync(chromiumExecutable?.executablePath()!))
-    return 'chromium';
-  console.log('No Chrome or Edge browser installation found. Installing Chromium...');
-  await registry.install([chromiumExecutable]);
-  console.log('Chromium browser installed successfully.');
+  // Unlike channels, chromium executable path is always valid, even if the browser is not installed.
+  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
+    await registry.install([chromiumExecutable]);
   return 'chromium';
 }
 
