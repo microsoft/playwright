@@ -2287,3 +2287,42 @@ test('shard chart', async ({ runInlineTest, writeFiles, showReport, page, mergeR
         - listitem /@mac/
   `);
 });
+
+test('should populate projects in config when merging reports', async ({ runInlineTest, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-report');
+  class CustomReporter {
+    onBegin(config, suite) {
+      const projectNames = config.projects.map(p => p.name);
+      console.log('%%' + JSON.stringify(projectNames));
+    }
+  }
+  const files = {
+    'reporter.js': `module.exports = ${CustomReporter.toString()};`,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]],
+        projects: [
+          { name: 'setup' },
+          { name: 'p1', dependencies: ['setup'] },
+          { name: 'p2', dependencies: ['setup'] },
+        ]
+      };
+    `,
+    'a.test.js': `
+      import { test } from '@playwright/test';
+      test('test 1', async ({}) => {});
+    `,
+  };
+
+  await runInlineTest(files, { shard: `1/2`, workers: 1 });
+  await runInlineTest(files, { shard: `2/2`, workers: 1 }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const reportFiles = await fs.promises.readdir(reportDir);
+  expect(reportFiles).toHaveLength(2);
+
+  const { exitCode, outputLines } = await mergeReports(reportDir, {}, { additionalArgs: ['--reporter', test.info().outputPath('reporter.js')] });
+  expect(exitCode).toBe(0);
+
+  const projectNames = JSON.parse(outputLines[0]);
+  expect(projectNames).toEqual(['setup', 'p1', 'setup', 'p2']);
+});
