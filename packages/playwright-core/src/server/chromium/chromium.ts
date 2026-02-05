@@ -22,7 +22,7 @@ import path from 'path';
 import { chromiumSwitches } from './chromiumSwitches';
 import { CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
-import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
+import { debugMode, hasGpuMac, headersArrayToObject, headersObjectToArray } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
@@ -313,8 +313,10 @@ export class Chromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches(options.assistantMode, options.channel)];
 
-    // See https://issues.chromium.org/issues/40277080
-    chromeArguments.push('--enable-unsafe-swiftshader');
+    if (os.platform() !== 'darwin' || !hasGpuMac()) {
+      // See https://issues.chromium.org/issues/40277080
+      chromeArguments.push('--enable-unsafe-swiftshader');
+    }
 
     if (options.headless) {
       chromeArguments.push('--headless');
