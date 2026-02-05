@@ -30,9 +30,12 @@ test('too many arguments', async ({ cli, server }) => {
 
 test('wrong option type', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  const { error, exitCode } = await cli('type', 'foo', '--submit=bar');
-  expect(exitCode).toBe(1);
-  expect(error).toContain(`error: '--submit' option: expected boolean, received string`);
+  // boolean options are silently allowed
+  const boolean = await cli('type', 'foo', '--submit=bar');
+  expect(boolean.exitCode).toBe(0);
+  const status = await cli('route', '.', '--status=OK');
+  expect(status.exitCode).toBe(1);
+  expect(status.error).toContain(`error: '--status' option: expected number, received string`);
 });
 
 test('missing argument', async ({ cli, server }) => {
