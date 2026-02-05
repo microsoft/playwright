@@ -925,6 +925,58 @@ await page.GetByTestId("testid").HoverAsync();`);
     await page.locator('x-pw-glass').click();
     await expect(dialog).toBeHidden();
   });
+
+  test('should record when top layer popover is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <div
+        popover="manual"
+        id="mypopover"
+        style="inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 20px;"
+      >
+        <button>Close</button>
+      </div>
+      <button popovertarget="mypopover">Show Popover</button>
+    `);
+
+    await page.getByRole('button', { name: 'Show Popover' }).click();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
+
+  test('should record when top layer popover inside shadow DOM is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <my-component></my-component>
+      <script>
+        class MyComponent extends HTMLElement {
+          constructor() {
+            super();
+            const shadow = this.attachShadow({ mode: 'open' });
+            shadow.innerHTML = \`
+              <div
+                popover="manual"
+                id="mypopover"
+                style="inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 20px;"
+              >
+                <button>Close</button>
+              </div>
+              <button popovertarget="mypopover">Show Popover</button>
+            \`;
+          }
+        }
+        customElements.define('my-component', MyComponent);
+      </script>
+    `);
+
+    await page.getByRole('button', { name: 'Show Popover' }).click();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
 });
 
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {
