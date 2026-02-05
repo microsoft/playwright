@@ -758,6 +758,9 @@ const sessionList = declareCommand({
   description: 'List all sessions',
   category: 'session',
   args: z.object({}),
+  options: z.object({
+    all: z.boolean().optional().describe('List all sessions across all workspaces'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });

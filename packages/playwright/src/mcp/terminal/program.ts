@@ -43,12 +43,14 @@ export type SessionConfig = {
     config?: string;
   };
   userDataDirPrefix?: string;
+  workspaceDir?: string;
 };
 
 type ClientInfo = {
   version: string;
   workspaceDirHash: string;
   daemonProfilesDir: string;
+  workspaceDir: string | undefined;
 };
 
 class Session {
@@ -308,26 +310,12 @@ class SessionManager {
     const sessions = new Map<string, Session>();
     const files = await fs.promises.readdir(dir).catch(() => []);
     for (const file of files) {
+      if (!file.endsWith('.session'))
+        continue;
       try {
-        if (file.endsWith('.session')) {
-          const sessionName = path.basename(file, '.session');
-          const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-          sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
-          continue;
-        }
-
-        // Legacy session support.
-        if (file.startsWith('ud-')) {
-          // Session is like ud-<sessionName>-browserName
-          const sessionName = file.split('-')[1];
-          if (!sessions.has(sessionName)) {
-            const sessionConfig = sessionConfigFromArgs({
-              ...clientInfo,
-              version: '0.0.61'
-            }, sessionName, { _: [] });
-            sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
-          }
-        }
+        const sessionName = path.basename(file, '.session');
+        const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
+        sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
       } catch {
       }
     }
@@ -395,15 +383,16 @@ class SessionManager {
 
 function createClientInfo(packageLocation: string): ClientInfo {
   const packageJSON = require(packageLocation);
-  const workspaceDir = findWorkspaceDir(process.cwd()) || packageLocation;
+  const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
 
   const hash = crypto.createHash('sha1');
-  hash.update(workspaceDir);
+  hash.update(workspaceDir || packageLocation);
   const workspaceDirHash = hash.digest('hex').substring(0, 16);
 
   return {
     version,
+    workspaceDir,
     workspaceDirHash,
     daemonProfilesDir: daemonProfilesDir(workspaceDirHash),
   };
@@ -422,9 +411,9 @@ function findWorkspaceDir(startDir: string): string | undefined {
   return undefined;
 }
 
-const daemonProfilesDir = (workspaceDirHash: string) => {
+const baseDaemonDir = (() => {
   if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
-    return path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash);
+    return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
 
   let localCacheDir: string | undefined;
   if (process.platform === 'linux')
@@ -435,7 +424,11 @@ const daemonProfilesDir = (workspaceDirHash: string) => {
     localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   if (!localCacheDir)
     throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon', workspaceDirHash);
+  return path.join(localCacheDir, 'ms-playwright', 'daemon');
+})();
+
+const daemonProfilesDir = (workspaceDirHash: string) => {
+  return path.join(baseDaemonDir, workspaceDirHash);
 };
 
 type GlobalOptions = {
@@ -465,7 +458,8 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'version',
 ];
 
-const booleanOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[] = [
+  'all',
   'help',
   'version',
   'extension',
@@ -512,22 +506,10 @@ export async function program(packageLocation: string) {
 
   switch (commandName) {
     case 'session-list': {
-      const sessions = sessionManager.sessions;
-      console.log('Sessions:');
-      for (const session of sessions.values()) {
-        const canConnect = await session.canConnect();
-        if (!canConnect) {
-          console.log(`  ${session.name} is stale, removing`);
-          await session.deleteSession();
-        } else {
-          const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, please reopen` : '';
-          console.log(`  ${session.name}${restartMarker}`);
-          const config = session.config();
-          configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
-        }
-      }
-      if (sessions.size === 0)
-        console.log('  (no sessions)');
+      if (args.all)
+        await listAllSessions(clientInfo);
+      else
+        await listSessions(sessionManager);
       return;
     }
     case 'session-close-all': {
@@ -609,6 +591,7 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
       config,
     },
     userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
+    workspaceDir: clientInfo.workspaceDir,
   };
 }
 
@@ -675,6 +658,89 @@ async function killAllDaemons(): Promise<void> {
     console.log('No daemon processes found.');
   else if (killed > 0)
     console.log(`Killed ${killed} daemon process${killed === 1 ? '' : 'es'}.`);
+}
+
+async function listSessions(sessionManager: SessionManager): Promise<void> {
+  const sessions = sessionManager.sessions;
+  console.log('Sessions:');
+  for (const session of sessions.values()) {
+    const canConnect = await session.canConnect();
+    if (!canConnect) {
+      console.log(`  ${session.name} is stale, removing`);
+      await session.deleteSession();
+    } else {
+      const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, please reopen` : '';
+      console.log(`  ${session.name}${restartMarker}`);
+      const config = session.config();
+      configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
+    }
+  }
+  if (sessions.size === 0)
+    console.log('  (no sessions)');
+}
+
+async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
+  const hashes = await fs.promises.readdir(baseDaemonDir).catch(() => []);
+
+  // Group sessions by workspace folder
+  const sessionsByWorkspace = new Map<string, { name: string, config: SessionConfig, canConnect: boolean, isCompatible: boolean }[]>();
+
+  for (const hash of hashes) {
+    const hashDir = path.join(baseDaemonDir, hash);
+    const stat = await fs.promises.stat(hashDir).catch(() => null);
+    if (!stat?.isDirectory())
+      continue;
+
+    const files = await fs.promises.readdir(hashDir).catch(() => []);
+    for (const file of files) {
+      if (!file.endsWith('.session'))
+        continue;
+      try {
+        const sessionName = path.basename(file, '.session');
+        const sessionConfig = await fs.promises.readFile(path.join(hashDir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
+        const session = new Session(clientInfo, sessionName, sessionConfig);
+        const canConnect = await session.canConnect();
+        const isCompatible = session.isCompatible();
+
+        // Use workspace folder from config, or empty string if not set (installation folder case)
+        const workspaceKey = sessionConfig.workspaceDir || '';
+        if (!sessionsByWorkspace.has(workspaceKey))
+          sessionsByWorkspace.set(workspaceKey, []);
+        sessionsByWorkspace.get(workspaceKey)!.push({ name: sessionName, config: sessionConfig, canConnect, isCompatible });
+      } catch {
+      }
+    }
+  }
+
+  if (sessionsByWorkspace.size === 0) {
+    console.log('No sessions found.');
+    return;
+  }
+
+  // Sort workspace keys: empty string (no workspace) last, others alphabetically
+  const sortedWorkspaces = [...sessionsByWorkspace.keys()].sort((a, b) => {
+    if (a === '' && b !== '')
+      return 1;
+    if (a !== '' && b === '')
+      return -1;
+    return a.localeCompare(b);
+  });
+
+  for (const workspace of sortedWorkspaces) {
+    const sessions = sessionsByWorkspace.get(workspace)!;
+    // Only print workspace folder if it's set
+    if (workspace)
+      console.log(`${workspace}:`);
+    for (const { name, config, canConnect, isCompatible } of sessions) {
+      if (!canConnect) {
+        console.log(`  ${name} (stale)`);
+      } else {
+        const restartMarker = !isCompatible ? ` - v${config.version}, please reopen` : '';
+        console.log(`  ${name}${restartMarker}`);
+        configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
+      }
+    }
+  }
 }
 
 function formatWithGap(prefix: string, text: string, threshold: number = 40) {
