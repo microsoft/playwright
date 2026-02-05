@@ -95,14 +95,7 @@ to restart the session daemon.`);
       return;
     }
 
-    await this._send('stop').catch(e => {
-      if (e.message !== 'Session closed')
-        throw e;
-    });
-    this.disconnect();
-
-    if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+    await this._stopDaemon();
     console.log(`Session '${this.name}' stopped.`);
   }
 
@@ -215,11 +208,15 @@ to restart the session daemon.`);
     }
   }
 
+  private _sessionConfigFile() {
+    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}.session`);
+  }
+
   private async _startDaemon(): Promise<net.Socket> {
     await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}.session`);
+    const sessionConfigFile = this._sessionConfigFile();
     this._config.version = this._clientInfo.version;
     await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
@@ -277,6 +274,21 @@ to restart the session daemon.`);
     if (errData.length)
       console.error(errData);
     process.exit(1);
+  }
+
+  private async _stopDaemon(): Promise<void> {
+    let error: Error | undefined;
+    await this._send('stop').catch(e => { error = e; });
+    this.disconnect();
+    await this.deleteSession();
+    if (error && !error?.message?.includes('Session closed'))
+      throw error;
+  }
+
+  async deleteSession() {
+    if (os.platform() !== 'win32')
+      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+    await fs.promises.rm(this._sessionConfigFile()).catch(() => {});
   }
 }
 
@@ -491,9 +503,14 @@ export async function program(packageLocation: string) {
       const sessions = sessionManager.sessions;
       console.log('Sessions:');
       for (const session of sessions.values()) {
-        const liveMarker = await session.canConnect() ? `[running] ` : '[stopped] ';
-        const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, needs restart` : '';
-        console.log(`  ${liveMarker}${session.name}${restartMarker}`);
+        const canConnect = await session.canConnect();
+        if (!canConnect) {
+          console.log(`  ${session.name} is stale, removing`);
+          await session.deleteSession();
+        } else {
+          const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, please reopen` : '';
+          console.log(`  ${session.name}${restartMarker}`);
+        }
       }
       if (sessions.size === 0)
         console.log('  (no sessions)');

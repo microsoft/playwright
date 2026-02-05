@@ -34,7 +34,7 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
 
   const { output: listOutput } = await cli('session-list');
   expect(listOutput).toContain('Sessions:');
-  expect(listOutput).toContain('  [running] default');
+  expect(listOutput).toContain('  default');
 });
 
 test('should save user data with --persistent flag', async ({ cli, server, mcpBrowser }, testInfo) => {

@@ -26,7 +26,7 @@ test('session-list', async ({ cli, server }) => {
 
   const { output: listOutput } = await cli('session-list');
   expect(listOutput).toContain('Sessions:');
-  expect(listOutput).toContain('  [running] default');
+  expect(listOutput).toContain('  default');
 });
 
 test('close', async ({ cli, server }) => {
@@ -36,7 +36,7 @@ test('close', async ({ cli, server }) => {
   expect(output).toContain(`Session 'default' stopped.`);
 
   const { output: listOutput } = await cli('session-list');
-  expect(listOutput).toContain('[stopped] default');
+  expect(listOutput).toContain('(no sessions)');
 });
 
 test('close named session', async ({ cli, server }) => {
@@ -56,13 +56,13 @@ test('session-close-all', async ({ cli, server }) => {
   await cli('--session=session2', 'open', server.HELLO_WORLD);
 
   const { output: listBefore } = await cli('session-list');
-  expect(listBefore).toContain('[running] session1');
-  expect(listBefore).toContain('[running] session2');
+  expect(listBefore).toContain('session1');
+  expect(listBefore).toContain('session2');
 
   await cli('session-close-all');
 
   const { output: listAfter } = await cli('session-list');
-  expect(listAfter).not.toContain('[running]');
+  expect(listAfter).not.toContain('session1');
 });
 
 test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
@@ -98,12 +98,15 @@ test('session stops when browser exits', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
   const { output: listBefore } = await cli('session-list');
-  expect(listBefore).toContain('[running] default');
+  expect(listBefore).toContain('default');
 
   // Close the browser - this will cause the daemon to exit so the command may fail
   await cli('run-code', '() => page.context().browser().close()').catch(() => {});
 
-  await expect.poll(() => cli('session-list').then(r => r.output)).toContain('[stopped]');
+  await expect.poll(() => cli('session-list').then(r => r.output)).toContain('default is stale, removing');
+  await cli('close');
+  const { output: listAfter } = await cli('session-list');
+  expect(listAfter).toContain('(no sessions)');
 });
 
 test('session reopen with different config', async ({ cli, server }, testInfo) => {
