@@ -143,8 +143,8 @@ const mouseMove = declareCommand({
   description: 'Move mouse to a given position',
   category: 'mouse',
   args: z.object({
-    x: z.number().describe('X coordinate'),
-    y: z.number().describe('Y coordinate'),
+    x: z.coerce.number().describe('X coordinate'),
+    y: z.coerce.number().describe('Y coordinate'),
   }),
   toolName: 'browser_mouse_move_xy',
   toolParams: ({ x, y }) => ({ x, y }),
@@ -177,8 +177,8 @@ const mouseWheel = declareCommand({
   description: 'Scroll mouse wheel',
   category: 'mouse',
   args: z.object({
-    dx: z.number().describe('Y delta'),
-    dy: z.number().describe('X delta'),
+    dx: z.coerce.number().describe('Y delta'),
+    dy: z.coerce.number().describe('X delta'),
   }),
   toolName: 'browser_mouse_wheel',
   toolParams: ({ dx: deltaY, dy: deltaX }) => ({ deltaY, deltaX }),
@@ -348,8 +348,8 @@ const resize = declareCommand({
   description: 'Resize the browser window',
   category: 'core',
   args: z.object({
-    w: z.number().describe('Width of the browser window'),
-    h: z.number().describe('Height of the browser window'),
+    w: z.coerce.number().describe('Width of the browser window'),
+    h: z.coerce.number().describe('Height of the browser window'),
   }),
   toolName: 'browser_resize',
   toolParams: ({ w: width, h: height }) => ({ width, height }),
@@ -393,7 +393,7 @@ const tabClose = declareCommand({
   description: 'Close a browser tab',
   category: 'tabs',
   args: z.object({
-    index: z.number().optional().describe('Tab index. If omitted, current tab is closed.'),
+    index: z.coerce.number().optional().describe('Tab index. If omitted, current tab is closed.'),
   }),
   toolName: 'browser_tabs',
   toolParams: ({ index }) => ({ action: 'close', index }),
@@ -404,7 +404,7 @@ const tabSelect = declareCommand({
   description: 'Select a browser tab',
   category: 'tabs',
   args: z.object({
-    index: z.number().describe('Tab index'),
+    index: z.coerce.number().describe('Tab index'),
   }),
   toolName: 'browser_tabs',
   toolParams: ({ index }) => ({ action: 'select', index }),
