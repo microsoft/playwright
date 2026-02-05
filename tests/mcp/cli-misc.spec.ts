@@ -52,3 +52,11 @@ test('install workspace w/skills', async ({ cli }, testInfo) => {
   const references = await fs.promises.readdir(referencesDir);
   expect(references.length).toBeGreaterThan(0);
 });
+
+test('install handles browser detection', async ({ cli }) => {
+  const { output } = await cli('install');
+  // Verify that one of the browser detection outcomes occurred
+  const foundMatch = output.match(/Found ((?:chrome|msedge)[\w-]*) browser\./m);
+  if (foundMatch?.[1] !== 'chrome')
+    expect(output).toContain(`Created default config for ${foundMatch?.[1] ?? 'chromium'}.`);
+});

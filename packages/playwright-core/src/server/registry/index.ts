@@ -561,7 +561,7 @@ export interface Executable {
   revision?: string,
   browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
-  executablePath(sdkLanguage: string): string | undefined;
+  executablePath(): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
   wslExecutablePath?: string
 }
@@ -962,7 +962,7 @@ export class Registry {
       name,
       browserName: 'chromium',
       directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: install ? 'install-script' : 'none',
       _validateHostRequirements: () => Promise.resolve(),
@@ -1001,7 +1001,7 @@ export class Registry {
       name,
       browserName: 'firefox',
       directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: 'none',
       _validateHostRequirements: () => Promise.resolve(),
@@ -1083,8 +1083,8 @@ export class Registry {
         if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
-        const { embedderName } = getEmbedderName();
-        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !options?.force && executable.executablePath(embedderName)) {
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !options?.force && executable.executablePath()) {
+          const { embedderName } = getEmbedderName();
           const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
           // eslint-disable-next-line no-restricted-properties
           process.stderr.write('\n' + wrapInASCIIBox([
