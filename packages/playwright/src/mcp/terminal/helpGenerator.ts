@@ -75,12 +75,13 @@ const categories: { name: Category, title: string }[] = [
   { name: 'devtools', title: 'DevTools' },
   { name: 'install', title: 'Install' },
   { name: 'config', title: 'Configuration' },
-  { name: 'session', title: 'Sessions' },
+  { name: 'browsers', title: 'Browser sessions' },
 ] as const;
 
 export function generateHelp() {
   const lines: string[] = [];
   lines.push('Usage: playwright-cli <command> [args] [options]');
+  lines.push('Usage: playwright-cli -b=<session> <command> [args] [options]');
 
   const commandsByCategory = new Map<string, AnyCommandSchema[]>();
   for (const c of categories)
@@ -102,7 +103,6 @@ export function generateHelp() {
 
   lines.push('\nGlobal options:');
   lines.push(formatWithGap('  --help [command]', 'print help'));
-  lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));
   lines.push(formatWithGap('  --version', 'print version'));
 
   return lines.join('\n');
