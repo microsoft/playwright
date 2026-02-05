@@ -15,16 +15,14 @@
  */
 
 import fs from 'fs';
-import { test, expect } from './cli-fixtures';
+import path from 'path';
+import { test, expect, findDefaultSession, daemonFolder } from './cli-fixtures';
 
 test('should not save user data by default (in-memory mode)', async ({ cli, server, mcpBrowser }, testInfo) => {
-  // Default behavior is now in-memory (isolated), no flag needed
   await cli('open', server.HELLO_WORLD);
-  const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
+  const sessionOptions = await findDefaultSession();
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(false);
-  const sessionFile = testInfo.outputPath('daemon', 'default.session');
-  expect(fs.existsSync(sessionFile)).toBe(true);
-  const sessionOptions = JSON.parse(await fs.promises.readFile(sessionFile, 'utf-8'));
   expect(sessionOptions).toEqual({
     cli: {},
     socketPath: expect.any(String),
@@ -39,11 +37,9 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
 
 test('should save user data with --persistent flag', async ({ cli, server, mcpBrowser }, testInfo) => {
   await cli('open', server.HELLO_WORLD, '--persistent');
-  const dataDir = testInfo.outputPath('daemon', 'ud-default-' + mcpBrowser);
+  const sessionOptions = await findDefaultSession();
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
-  const sessionFile = testInfo.outputPath('daemon', 'default.session');
-  expect(fs.existsSync(sessionFile)).toBe(true);
-  const sessionOptions = JSON.parse(await fs.promises.readFile(sessionFile, 'utf-8'));
   expect(sessionOptions).toEqual({
     cli: {
       persistent: true,
@@ -58,9 +54,7 @@ test('should use custom user data dir with --profile=<dir>', async ({ cli, serve
   const customDir = testInfo.outputPath('custom-profile');
   await cli('open', server.HELLO_WORLD, `--profile=${customDir}`);
   expect(fs.existsSync(customDir)).toBe(true);
-  const sessionFile = testInfo.outputPath('daemon', 'default.session');
-  expect(fs.existsSync(sessionFile)).toBe(true);
-  const sessionOptions = JSON.parse(await fs.promises.readFile(sessionFile, 'utf-8'));
+  const sessionOptions = await findDefaultSession();
   expect(sessionOptions).toEqual({
     cli: {
       persistent: true,

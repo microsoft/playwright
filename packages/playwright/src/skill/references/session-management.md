@@ -42,7 +42,7 @@ playwright-cli --session=mysession close  # stop a named session
 playwright-cli session-close-all
 
 # Forcefully kill all daemon processes (for stale/zombie processes)
-playwright-cli kill-all
+playwright-cli session-kill-all
 
 # Delete session user data (profile directory)
 playwright-cli delete-data                      # delete default session data
@@ -122,7 +122,7 @@ Configure a session with specific settings when opening:
 
 ```bash
 # Open with config file
-playwright-cli open https://example.com --config=playwright-cli.json
+playwright-cli open https://example.com --config=.playwright/my-cli.json
 
 # Open with specific browser
 playwright-cli open https://example.com --browser=firefox
@@ -158,7 +158,7 @@ playwright-cli --session=scrape close
 playwright-cli session-close-all
 
 # If sessions become unresponsive or zombie processes remain
-playwright-cli kill-all
+playwright-cli session-kill-all
 ```
 
 ### 3. Delete Stale Session Data

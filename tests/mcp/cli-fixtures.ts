@@ -34,6 +34,7 @@ export const test = baseTest.extend<{
 }>({
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
+    await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
@@ -66,7 +67,6 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       env: {
         ...process.env,
         ...cliOptions.env,
-        PLAYWRIGHT_CLI_INSTALLATION_FOR_TEST: testInfo.outputPath(),
         PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
         PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
@@ -162,3 +162,20 @@ export const eventsPage = `<!DOCTYPE html>
   </body>
 </html>
 `;
+
+export async function findDefaultSession() {
+  const daemonDir = await daemonFolder();
+  const fileName = path.join(daemonDir, 'default.session');
+  return await fs.promises.readFile(fileName, 'utf-8').then(JSON.parse).catch(() => null);
+}
+
+export async function daemonFolder() {
+  const daemonDir = test.info().outputPath('daemon');
+  const folders = await fs.promises.readdir(daemonDir);
+  for (const folder of folders) {
+    const fullName = path.join(daemonDir, folder);
+    if (fs.existsSync(path.join(fullName)) && fs.lstatSync(path.join(fullName)).isDirectory())
+      return fullName;
+  }
+  return null;
+}

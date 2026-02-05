@@ -36,7 +36,7 @@ test('context options', async ({ cli, server }, testInfo) => {
       },
     },
   };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
   await cli('open', server.PREFIX);
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
   expect(output).toContain('800x600');
@@ -61,7 +61,7 @@ test('config-print prints merged config from file, env and cli', async ({ cli, s
       navigation: 30000,
     },
   };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(fileConfig, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(fileConfig, null, 2));
 
   // Env var overrides navigation timeout (30000 from file → 45000 from env).
   const env = { PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION: '45000' };
@@ -95,7 +95,7 @@ test('isolated', async ({ cli, server }, testInfo) => {
       isolated: true,
     },
   };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
   await cli('open', server.PREFIX);
   expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
 });

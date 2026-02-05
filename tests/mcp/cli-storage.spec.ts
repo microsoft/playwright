@@ -20,7 +20,7 @@ import { test, expect } from './cli-fixtures';
 
 test('state-save saves storage state to file', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 
@@ -47,7 +47,7 @@ test('state-save saves storage state to file', async ({ cli, server }, testInfo)
 
 test('state-save saves to custom filename', async ({ cli, server }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 
@@ -60,7 +60,7 @@ test('state-save saves to custom filename', async ({ cli, server }, testInfo) =>
 
 test('state-load restores storage state from file', async ({ cli, server, mcpBrowser }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   // Create a storage state file
   const storageState = {
@@ -99,7 +99,7 @@ test('state-load restores storage state from file', async ({ cli, server, mcpBro
 
 test('state-save and state-load roundtrip', async ({ cli, server, mcpBrowser }, testInfo) => {
   const config = { capabilities: ['storage'] };
-  await fs.promises.writeFile(testInfo.outputPath('playwright-cli.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
 
   await cli('open', server.EMPTY_PAGE);
 

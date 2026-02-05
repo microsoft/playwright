@@ -27,15 +27,22 @@ test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
   expect(second.output).toContain('Page URL');
 });
 
-test('install', async ({ cli, server, mcpBrowser }) => {
+test('install-browser', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('install-browser');
   expect(output).toContain(`Browser ${mcpBrowser} installed.`);
 });
 
-test('install-skills', async ({ cli }, testInfo) => {
-  const { output } = await cli('install-skills');
+test('install workspace', async ({ cli }, testInfo) => {
+  const { output } = await cli('install');
+  expect(output).toContain(`Workspace initialized at`);
+  const playwrightDir = testInfo.outputPath('.playwright');
+  expect(fs.existsSync(playwrightDir)).toBe(true);
+});
+
+test('install workspace w/skills', async ({ cli }, testInfo) => {
+  const { output } = await cli('install', '--skills');
   expect(output).toContain(`Skills installed to .claude${path.sep}skills${path.sep}playwright-cli`);
 
   const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'SKILL.md');
