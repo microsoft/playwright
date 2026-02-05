@@ -174,7 +174,7 @@ export async function daemonFolder() {
   const folders = await fs.promises.readdir(daemonDir);
   for (const folder of folders) {
     const fullName = path.join(daemonDir, folder);
-    if (fs.existsSync(path.join(fullName)) && fs.lstatSync(path.join(fullName)).isDirectory())
+    if (fs.lstatSync(path.join(fullName)).isDirectory())
       return fullName;
   }
   return null;
