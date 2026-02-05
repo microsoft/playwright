@@ -20,21 +20,21 @@ import { test, expect, daemonFolder } from './cli-fixtures';
 
 test('list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('list');
-  expect(emptyOutput).toContain('Browsers:');
+  expect(emptyOutput).toContain('### Browsers');
   expect(emptyOutput).toContain('  (no browsers)');
 
   await cli('open', server.HELLO_WORLD);
 
   const { output: listOutput } = await cli('list');
-  expect(listOutput).toContain('Browsers:');
-  expect(listOutput).toContain('  default');
+  expect(listOutput).toContain('### Browsers');
+  expect(listOutput).toContain('- default:');
 });
 
 test('close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
   const { output } = await cli('close');
-  expect(output).toContain(`Browser 'default' closed.`);
+  expect(output).toContain(`Browser 'default' closed`);
 
   const { output: listOutput } = await cli('list');
   expect(listOutput).toContain('(no browsers)');
@@ -44,7 +44,7 @@ test('close named session', async ({ cli, server }) => {
   await cli('-b', 'mysession', 'open', server.HELLO_WORLD);
 
   const { output } = await cli('-b', 'mysession', 'close');
-  expect(output).toContain(`Browser 'mysession' closed.`);
+  expect(output).toContain(`Browser 'mysession' closed`);
 });
 
 test('close non-running session', async ({ cli }) => {
@@ -52,16 +52,17 @@ test('close non-running session', async ({ cli }) => {
   expect(output).toContain(`Browser 'nonexistent' is not open.`);
 });
 
-test('stopped persistent session shows in list', async ({ cli, server }) => {
+test('persistent session shows in list after close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD, '--persistent');
 
   const { output: listBefore } = await cli('list');
-  expect(listBefore).toContain('default [open] [persistent]');
+  expect(listBefore).toContain('- default:');
+  expect(listBefore).not.toContain('<in-memory>');
 
   await cli('close');
 
   const { output: listAfter } = await cli('list');
-  expect(listAfter).toContain('default [closed] [persistent]');
+  expect(listAfter).toContain('- default:');
 });
 
 test('close-all', async ({ cli, server }) => {
@@ -138,14 +139,14 @@ test('session reopen with different config', async ({ cli, server }, testInfo) =
   }
 });
 
-test('session start should print session options', async ({ cli, server }, testInfo) => {
+test('session start should print browser config', async ({ cli, server }, testInfo) => {
   const configPath = testInfo.outputPath('my-config.json');
   await fs.promises.writeFile(configPath, JSON.stringify({}, null, 2));
 
   const { output } = await cli('open', '--headed', '--config=' + configPath, server.HELLO_WORLD);
-  expect(output).toContain('Browser options:');
-  expect(output).toContain('--headed');
-  expect(output).toContain('--config=my-config.json');
+  expect(output).toContain('### Browser `default` opened');
+  expect(output).toContain('- default:');
+  expect(output).toContain('- headed:');
 });
 
 test('workspace isolation - sessions in different workspaces are isolated', async ({ cli, server }, testInfo) => {

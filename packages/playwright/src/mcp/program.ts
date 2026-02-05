@@ -116,6 +116,10 @@ export function decorateCommand(command: Command, version: string) {
             version,
             create: () => new BrowserServerBackend(config, contextFactory, { allTools: true })
           };
+          console.error(`### Config`);
+          console.error('```json');
+          console.error(JSON.stringify(config, null, 2));
+          console.error('```');
           const socketPath = await startMcpDaemonServer(config.sessionConfig, serverBackendFactory);
           console.error(`Daemon server listening on ${socketPath}`);
           return;
