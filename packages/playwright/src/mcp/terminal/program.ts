@@ -26,6 +26,8 @@ import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
 
+import type { Config } from '../config';
+
 type MinimistArgs = {
   _: string[];
   [key: string]: any;
@@ -558,6 +560,45 @@ async function install(args: MinimistArgs) {
     await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
     console.log(`Skills installed to ${path.relative(cwd, skillDestDir)}`);
   }
+
+  if (!args.config && !fs.existsSync(defaultConfigFile())) {
+    const channel = await checkAndInstallBrowser();
+    if (channel !== 'chrome')
+      await createDefaultConfig(channel);
+  }
+}
+
+async function createDefaultConfig(channel: string) {
+  const config: Config = {
+    browser: {
+      browserName: 'chromium',
+      launchOptions: {
+        channel,
+      },
+    },
+  };
+  await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
+  console.log(`Created default config for ${channel}.`);
+}
+
+async function checkAndInstallBrowser() {
+  const { registry } = await import('playwright-core/lib/server/registry/index');
+  const channels = ['chrome', 'chrome-beta', 'chrome-dev', 'chrome-canary', 'msedge', 'msedge-beta', 'msedge-dev', 'msedge-canary'];
+  for (const channel of channels) {
+    const executable = registry.findExecutable(channel);
+    if (!executable?.executablePath())
+      continue;
+    console.log(`Found ${channel} browser. ${executable.executablePath()}`);
+    return channel;
+  }
+  const chromiumExecutable = registry.findExecutable('chromium');
+  // Unlike channels, chromium executable path is always valid even if the browser is not installed.
+  if (fs.existsSync(chromiumExecutable?.executablePath()!))
+    return 'chromium';
+  console.log('No Chrome or Edge browser installation found. Installing Chromium...');
+  await registry.install([chromiumExecutable]);
+  console.log('Chromium browser installed successfully.');
+  return 'chromium';
 }
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
@@ -568,11 +609,15 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 
+function defaultConfigFile(): string {
+  return path.resolve('.playwright', 'cli.config.json');
+}
+
 function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
-    if (!config && fs.existsSync(path.join('.playwright', 'cli.config.json')))
-      config = path.resolve('.playwright', 'cli.config.json');
+    if (!config && fs.existsSync(defaultConfigFile()))
+      config = defaultConfigFile();
   } catch {
   }
 

@@ -145,7 +145,7 @@ export function decorateCommand(command: Command, version: string) {
 function checkFfmpeg(): boolean {
   try {
     const executable = registry.findExecutable('ffmpeg')!;
-    return fs.existsSync(executable.executablePath('javascript')!);
+    return fs.existsSync(executable.executablePath()!);
   } catch (error) {
     return false;
   }
