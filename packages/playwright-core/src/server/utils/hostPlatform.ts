@@ -140,7 +140,7 @@ let hasGpuMacValue: boolean | undefined;
 export function hasGpuMac() {
   try {
     if (hasGpuMacValue === undefined) {
-      const output = execSync('system_profiler SPDisplaysDataType').toString();
+      const output = execSync('system_profiler SPDisplaysDataType', { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
       hasGpuMacValue = output.includes('Metal: Supported') || output.includes('Metal Support: Metal');
     }
     return hasGpuMacValue;
