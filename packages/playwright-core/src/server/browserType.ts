@@ -56,7 +56,7 @@ export abstract class BrowserType extends SdkObject {
   }
 
   executablePath(): string {
-    return registry.findExecutable(this._name).executablePath(this.attribution.playwright.options.sdkLanguage) || '';
+    return registry.findExecutable(this._name).executablePath() || '';
   }
 
   name(): string {
