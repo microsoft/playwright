@@ -92,12 +92,13 @@ to restart the session daemon.`);
 
   async stop(): Promise<void> {
     if (!await this.canConnect()) {
-      console.log(`Session '${this.name}' is not running.`);
+      console.log(`Browser '${this.name}' is not open.`);
       return;
     }
 
     await this._stopDaemon();
-    console.log(`Session '${this.name}' stopped.`);
+    console.log(`Browser '${this.name}' closed.`);
+    console.log('');
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -132,7 +133,7 @@ to restart the session daemon.`);
     const dataDirs = await fs.promises.readdir(this._clientInfo.daemonProfilesDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
     if (matchingEntries.length === 0) {
-      console.log(`No user data found for session '${this.name}'.`);
+      console.log(`No user data found for browser '${this.name}'.`);
       return;
     }
 
@@ -142,11 +143,11 @@ to restart the session daemon.`);
         try {
           await fs.promises.rm(userDataDir, { recursive: true });
           if (entry.startsWith('ud-'))
-            console.log(`Deleted user data for session '${this.name}'.`);
+            console.log(`Deleted user data for browser '${this.name}'.`);
           break;
         } catch (e: any) {
           if (e.code === 'ENOENT') {
-            console.log(`No user data found for session '${this.name}'.`);
+            console.log(`No user data found for browser '${this.name}'.`);
             break;
           }
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -239,17 +240,17 @@ to restart the session daemon.`);
     });
     child.unref();
 
-    console.log(`### Session \`${this.name}\` started with pid ${child.pid}.`);
+    console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
     const configArgs = configToFormattedArgs(this._config.cli);
     if (configArgs.length) {
-      console.log(`- Session options:`);
+      console.log(`- Browser options:`);
       for (const flag of configArgs)
         console.log(`  ${flag}`);
     }
-    const sessionOption = this.name !== 'default' ? ` --session="${this.name}"` : '';
-    console.log(formatWithGap(`- playwright-cli${sessionOption} close`, `# to stop when done.`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} open [options]`, `# to reopen with new config.`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} delete-data`, `# to delete session data.`));
+    const sessionOption = this.name !== 'default' ? ` -b ${this.name}` : '';
+    console.log(formatWithGap(`- playwright-cli${sessionOption} close`, `# to stop when done`));
+    console.log(formatWithGap(`- playwright-cli${sessionOption} open [options]`, `# to reopen with new config`));
+    console.log(formatWithGap(`- playwright-cli${sessionOption} delete-data`, `# to delete profile data dir`));
     console.log(`---`);
     console.log(``);
 
@@ -339,9 +340,9 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     const session = this.sessions.get(sessionName);
     if (!session) {
-      console.log(`The session '${sessionName}' is not open, please run open first`);
+      console.log(`The browser '${sessionName}' is not open, please run open first`);
       console.log('');
-      console.log(`  playwright-cli${sessionName !== 'default' ? ` --session=${sessionName}` : ''} open [params]`);
+      console.log(`  playwright-cli${sessionName !== 'default' ? ` -b ${sessionName}` : ''} open [params]`);
       process.exit(1);
     }
 
@@ -356,7 +357,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session || !await session.canConnect()) {
-      console.log(`Session '${sessionName}' is not running.`);
+      console.log(`Browser '${sessionName}' is not open.`);
       return;
     }
 
@@ -367,7 +368,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session) {
-      console.log(`No user data found for session '${sessionName}'.`);
+      console.log(`No user data found for browser '${sessionName}'.`);
       return;
     }
     await session.deleteData();
@@ -478,6 +479,11 @@ export async function program(packageLocation: string) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
   }
+  // Normalize -b alias to --session
+  if (args.b) {
+    args.session = args.b;
+    delete args.b;
+  }
 
   const help = require('./help.json');
   const commandName = args._?.[0];
@@ -507,14 +513,14 @@ export async function program(packageLocation: string) {
   const sessionManager = await SessionManager.create(clientInfo);
 
   switch (commandName) {
-    case 'session-list': {
+    case 'list': {
       if (args.all)
         await listAllSessions(clientInfo);
       else
         await listSessions(sessionManager);
       return;
     }
-    case 'session-close-all': {
+    case 'close-all': {
       const sessions = sessionManager.sessions;
       for (const session of sessions.values())
         await session.stop();
@@ -523,7 +529,7 @@ export async function program(packageLocation: string) {
     case 'delete-data':
       await sessionManager.deleteData(args as GlobalOptions);
       return;
-    case 'session-kill-all':
+    case 'kill-all':
       await killAllDaemons();
       return;
     case 'open':
@@ -664,7 +670,7 @@ async function killAllDaemons(): Promise<void> {
 
 async function listSessions(sessionManager: SessionManager): Promise<void> {
   const sessions = sessionManager.sessions;
-  console.log('Sessions:');
+  console.log('Browsers:');
   await gcAndPrintSessions([...sessions.values()]);
 }
 
@@ -697,7 +703,7 @@ async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
   }
 
   if (sessionsByWorkspace.size === 0) {
-    console.log('No sessions found.');
+    console.log('No browsers found.');
     return;
   }
 
@@ -732,7 +738,7 @@ async function gcAndPrintSessions(sessions: Session[]) {
     console.log(await renderSessionStatus(session));
 
   if (running.length === 0 && stopped.length === 0)
-    console.log('  (no sessions)');
+    console.log('  (no browsers)');
 
 }
 
@@ -741,7 +747,7 @@ async function renderSessionStatus(session: Session) {
   const config = session.config();
   const canConnect = await session.canConnect();
   const isPersistent = config.cli.persistent;
-  const statusMarker = canConnect ? '[running]' : '[stopped]';
+  const statusMarker = canConnect ? '[open]' : '[closed]';
   const persistentMarker = isPersistent ? ' [persistent]' : '';
   const restartMarker = canConnect && !session.isCompatible() ? ` - v${config.version}, please reopen` : '';
   text.push(`  ${session.name} ${statusMarker}${persistentMarker}${restartMarker}`);

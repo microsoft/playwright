@@ -31,8 +31,8 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
     workspaceDir: testInfo.outputPath(),
   });
 
-  const { output: listOutput } = await cli('session-list');
-  expect(listOutput).toContain('Sessions:');
+  const { output: listOutput } = await cli('list');
+  expect(listOutput).toContain('Browsers:');
   expect(listOutput).toContain('  default');
 });
 
