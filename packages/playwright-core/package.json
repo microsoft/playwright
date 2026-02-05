@@ -1,6 +1,6 @@
 {
   "name": "playwright-core",
-  "version": "1.58.1",
+  "version": "1.58.2",
   "description": "A high-level API to automate web browsers",
   "repository": {
     "type": "git",
