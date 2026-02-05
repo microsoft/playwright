@@ -168,3 +168,30 @@ test('workspace isolation - sessions in different workspaces are isolated', asyn
 
   await cli('close', { cwd: workspace2 });
 });
+
+test('session-list --all lists sessions from all workspaces', async ({ cli, server }, testInfo) => {
+  // Create two separate workspaces with their own daemon dirs
+  const workspace1 = testInfo.outputPath('workspace1');
+  const workspace2 = testInfo.outputPath('workspace2');
+  await fs.promises.mkdir(workspace1, { recursive: true });
+  await fs.promises.mkdir(workspace2, { recursive: true });
+
+  await cli('install', { cwd: workspace1 });
+  await cli('install', { cwd: workspace2 });
+
+  // Open sessions in both workspaces
+  await cli('--session=session1', 'open', server.HELLO_WORLD, { cwd: workspace1 });
+  await cli('--session=session2', 'open', server.HELLO_WORLD, { cwd: workspace2 });
+
+  // List all sessions from workspace1
+  const { output: allList } = await cli('session-list', '--all', { cwd: workspace1 });
+
+  // Should include both workspace folders and sessions
+  expect(allList).toContain(workspace1);
+  expect(allList).toContain(workspace2);
+  expect(allList).toContain('session1');
+  expect(allList).toContain('session2');
+
+  await cli('--session=session1', 'close', { cwd: workspace1 });
+  await cli('--session=session2', 'close', { cwd: workspace2 });
+});
