@@ -578,7 +578,7 @@ async function createDefaultConfig(channel: string) {
     },
   };
   await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
-  console.log(`Created default config for ${channel}.`);
+  console.log(`Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
 }
 
 async function checkAndInstallBrowser() {
@@ -588,7 +588,7 @@ async function checkAndInstallBrowser() {
     const executable = registry.findExecutable(channel);
     if (!executable?.executablePath())
       continue;
-    console.log(`Found ${channel} browser. ${executable.executablePath()}`);
+    console.log(`Found ${channel} browser.`);
     return channel;
   }
   const chromiumExecutable = registry.findExecutable('chromium');
