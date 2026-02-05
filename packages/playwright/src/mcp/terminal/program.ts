@@ -465,25 +465,17 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'version',
 ];
 
-const booleanOptions: (keyof (GlobalOptions & OpenOptions))[] = [
-  'help',
-  'version',
-  'extension',
-  'headed',
-  'persistent'
-];
-
 export async function program(packageLocation: string) {
   const clientInfo = createClientInfo(packageLocation);
+  const help = require('./help.json');
 
   const argv = process.argv.slice(2);
-  const args: MinimistArgs = require('minimist')(argv, { boolean: booleanOptions });
-  for (const option of booleanOptions) {
+  const args: MinimistArgs = require('minimist')(argv, { boolean: [...help.booleanOptions, 'help', 'version'], string: [...help.stringOptions, '_'] });
+  for (const option of help.booleanOptions) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
   }
 
-  const help = require('./help.json');
   const commandName = args._?.[0];
 
   if (args.version || args.v) {

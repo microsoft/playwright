@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { z } from 'playwright-core/lib/mcpBundle';
+
 import { commands } from './commands';
 
 import type zodType from 'zod';
@@ -146,12 +148,35 @@ function generateReadmeEntry(command: AnyCommandSchema): string {
   return formatWithGap(prefix, suffix, 40);
 }
 
+function unwrapZodType(schema: zodType.ZodTypeAny): zodType.ZodTypeAny {
+  if ('unwrap' in schema && typeof schema.unwrap === 'function')
+    return unwrapZodType(schema.unwrap());
+  return schema;
+}
+
 export function generateHelpJSON() {
+  const stringOptions = new Set<string>();
+  const booleanOptions = new Set<string>();
+  for (const command of Object.values(commands)) {
+    if (!command.options)
+      continue;
+    const optionsShape = (command.options as zodType.ZodObject<any>).shape;
+    for (const [name, schema] of Object.entries(optionsShape)) {
+      const innerSchema = unwrapZodType(schema as zodType.ZodTypeAny);
+      if (innerSchema instanceof z.ZodString)
+        stringOptions.add(name);
+      if (innerSchema instanceof z.ZodBoolean)
+        booleanOptions.add(name);
+    }
+  }
+
   const help = {
     global: generateHelp(),
     commands: Object.fromEntries(
         Object.entries(commands).map(([name, command]) => [name, generateCommandHelp(command)])
     ),
+    stringOptions: [...stringOptions],
+    booleanOptions: [...booleanOptions],
   };
   return help;
 }
