@@ -590,7 +590,7 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
     if (!config && fs.existsSync(path.join('.playwright', 'cli.config.json')))
-      config = path.join('.playwright', 'cli.config.json');
+      config = path.resolve('.playwright', 'cli.config.json');
   } catch {
   }
 
