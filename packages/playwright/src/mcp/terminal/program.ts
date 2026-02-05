@@ -587,7 +587,7 @@ async function ensureConfiguredBrowserInstalled() {
     const browserName = config.browser?.browserName ?? 'chromium';
     const channel = config.browser?.launchOptions?.channel;
     if (!channel || channel.startsWith('chromium')) {
-      const executable = registry.findExecutable(browserName);
+      const executable = registry.findExecutable(channel ?? browserName);
       if (executable && !fs.existsSync(executable?.executablePath()!))
         await registry.install([executable]);
     }
