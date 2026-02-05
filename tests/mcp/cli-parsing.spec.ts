@@ -29,18 +29,21 @@ test('too many arguments', async ({ cli, server }) => {
 });
 
 test('wrong option type', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('type', 'foo', '--submit=bar');
   expect(exitCode).toBe(1);
   expect(error).toContain(`error: '--submit' option: expected boolean, received string`);
 });
 
 test('missing argument', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('keyup');
   expect(exitCode).toBe(1);
   expect(error).toContain(`error: 'key' argument: expected string, received undefined`);
 });
 
 test('wrong argument type', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('mousemove', '12', 'foo');
   expect(exitCode).toBe(1);
   expect(error).toContain(`error: 'y' argument: expected number, received string`);

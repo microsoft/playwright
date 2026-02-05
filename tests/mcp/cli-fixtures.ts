@@ -42,7 +42,7 @@ export const test = baseTest.extend<{
     });
 
     for (const session of sessions) {
-      await runCli(childProcess, ['session-stop', session.name], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
+      await runCli(childProcess, ['--session=' + session.name, 'close'], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
         if (!e.message.includes('is not running'))
           throw e;
       });
@@ -83,7 +83,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       snapshot = await loadSnapshot(cli.stdout);
     const attachments = loadAttachments(cli.stdout);
 
-    const matches = cli.stdout.includes('Daemon for') ? cli.stdout.match(/Daemon for `(.+)` session started with pid (\d+)\./) : undefined;
+    const matches = cli.stdout.includes('Session') ? cli.stdout.match(/Session `(.+)` started with pid (\d+)\./) : undefined;
     const [, sessionName, pid] = matches ?? [];
     if (sessionName && pid)
       sessions.push({ name: sessionName, pid: +pid });

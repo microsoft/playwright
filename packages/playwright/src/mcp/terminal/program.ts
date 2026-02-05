@@ -38,7 +38,8 @@ export type SessionConfig = {
     headed?: boolean;
     extension?: boolean;
     browser?: string;
-    isolated?: boolean;
+    persistent?: boolean;
+    profile?: string;
     config?: string;
   };
   userDataDirPrefix?: string;
@@ -83,7 +84,7 @@ to restart the session daemon.`);
     }
   }
 
-  async run(args: MinimistArgs) {
+  async run(args: MinimistArgs): Promise<{ text: string }> {
     this.checkCompatible();
     return await this._send('run', { args, cwd: process.cwd() });
   }
@@ -98,17 +99,11 @@ to restart the session daemon.`);
       if (e.message !== 'Session closed')
         throw e;
     });
-    this.close();
+    this.disconnect();
 
     if (os.platform() !== 'win32')
       await fs.promises.unlink(this._config.socketPath).catch(() => {});
     console.log(`Session '${this.name}' stopped.`);
-  }
-
-  async restart(config: SessionConfig): Promise<void> {
-    await this.stop();
-    this._config = config;
-    await this._startDaemonIfNeeded();
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -127,7 +122,7 @@ to restart the session daemon.`);
     return result;
   }
 
-  close() {
+  disconnect() {
     if (!this._connection)
       return;
     for (const callback of this._callbacks.values())
@@ -137,7 +132,7 @@ to restart the session daemon.`);
     this._connection = undefined;
   }
 
-  async delete() {
+  async deleteData() {
     await this.stop();
 
     const dataDirs = await fs.promises.readdir(this._clientInfo.daemonProfilesDir).catch(() => []);
@@ -201,7 +196,7 @@ to restart the session daemon.`);
 
     this._connection = new SocketConnection(socket, this._config.version);
     this._connection.onmessage = message => this._onMessage(message);
-    this._connection.onclose = () => this.close();
+    this._connection.onclose = () => this.disconnect();
     return this._connection;
   }
 
@@ -246,18 +241,17 @@ to restart the session daemon.`);
     });
     child.unref();
 
-    console.log(`### Daemon for \`${this.name}\` session started with pid ${child.pid}.`);
+    console.log(`### Session \`${this.name}\` started with pid ${child.pid}.`);
     const configArgs = configToFormattedArgs(this._config.cli);
     if (configArgs.length) {
       console.log(`- Session options:`);
       for (const flag of configArgs)
         console.log(`  ${flag}`);
     }
-    const sessionSuffix = this.name !== 'default' ? ` "${this.name}"` : '';
     const sessionOption = this.name !== 'default' ? ` --session="${this.name}"` : '';
-    console.log(`- playwright-cli session-stop${sessionSuffix} # to stop when done.`);
-    console.log(`- playwright-cli${sessionOption} config [options] # to change session options.`);
-    console.log(`- playwright-cli session-delete${sessionSuffix} # to delete session data.`);
+    console.log(formatWithGap(`- playwright-cli${sessionOption} close`, `# to stop when done.`));
+    console.log(formatWithGap(`- playwright-cli${sessionOption} open [options]`, `# to reopen with new config.`));
+    console.log(formatWithGap(`- playwright-cli${sessionOption} delete-data`, `# to delete session data.`));
 
     // Wait for the socket to become available with retries.
     const maxRetries = 50;
@@ -290,12 +284,12 @@ class SessionManager {
   readonly clientInfo: ClientInfo;
   readonly sessions: Map<string, Session>;
 
-  private constructor(clientInfo: ClientInfo, sessions: Map<string, Session>, args: MinimistArgs) {
+  private constructor(clientInfo: ClientInfo, sessions: Map<string, Session>) {
     this.clientInfo = clientInfo;
     this.sessions = sessions;
   }
 
-  static async create(clientInfo: ClientInfo, args: MinimistArgs): Promise<SessionManager> {
+  static async create(clientInfo: ClientInfo): Promise<SessionManager> {
     const dir = clientInfo.daemonProfilesDir;
     const sessions = new Map<string, Session>();
     const files = await fs.promises.readdir(dir).catch(() => []);
@@ -323,35 +317,41 @@ class SessionManager {
       } catch {
       }
     }
-    return new SessionManager(clientInfo, sessions, args);
+    return new SessionManager(clientInfo, sessions);
+  }
+
+  async open(args: MinimistArgs): Promise<void> {
+    const sessionName = this._resolveSessionName(args.session);
+    let session = this.sessions.get(sessionName);
+    if (session)
+      await session.stop();
+
+    session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
+    this.sessions.set(sessionName, session);
+    await this.run(args);
   }
 
   async run(args: MinimistArgs): Promise<void> {
     const sessionName = this._resolveSessionName(args.session);
-    let session = this.sessions.get(sessionName);
+    const session = this.sessions.get(sessionName);
     if (!session) {
-      session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
-      this.sessions.set(sessionName, session);
-    } else {
-      if (hasGlobalArgs(args)) {
-        const configFromArgs = sessionConfigFromArgs(this.clientInfo, sessionName, args);
-        const formattedArgs = configToFormattedArgs(configFromArgs.cli);
-        console.log('The session is already configured. To change session options, run:');
-        console.log('');
-        console.log(`  playwright-cli${sessionName !== 'default' ? ` --session=${sessionName}` : ''} config ${formattedArgs.join(' ')}`);
-        process.exit(1);
-      }
+      const configFromArgs = sessionConfigFromArgs(this.clientInfo, sessionName, args);
+      const formattedArgs = configToFormattedArgs(configFromArgs.cli);
+      console.log(`The session '${sessionName}' is not open, please run open first:`);
+      console.log('');
+      console.log(`  playwright-cli${sessionName !== 'default' ? ` --session=${sessionName}` : ''} open ${formattedArgs.join(' ')}`);
+      process.exit(1);
     }
 
-    for (const globalOption of globalArgs)
+    for (const globalOption of globalOptions)
       delete args[globalOption];
     const result = await session.run(args);
     console.log(result.text);
-    session.close();
+    session.disconnect();
   }
 
-  async stop(sessionName?: string): Promise<void> {
-    sessionName = this._resolveSessionName(sessionName);
+  async close(options: GlobalOptions): Promise<void> {
+    const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session || !await session.canConnect()) {
       console.log(`Session '${sessionName}' is not running.`);
@@ -361,38 +361,15 @@ class SessionManager {
     await session.stop();
   }
 
-  async delete(sessionName?: string): Promise<void> {
-    sessionName = this._resolveSessionName(sessionName);
+  async deleteData(options: GlobalOptions): Promise<void> {
+    const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session) {
       console.log(`No user data found for session '${sessionName}'.`);
       return;
     }
-    await session.delete();
+    await session.deleteData();
     this.sessions.delete(sessionName);
-  }
-
-  async restart(sessionName?: string): Promise<void> {
-    sessionName = this._resolveSessionName(sessionName);
-    const session = this.sessions.get(sessionName);
-    if (!session) {
-      console.log(`Session '${sessionName}' does not exist.`);
-      return;
-    }
-    await session.restart(session.config());
-    session.close();
-  }
-
-  async configure(args: any): Promise<void> {
-    const sessionName = this._resolveSessionName(args.session);
-    let session = this.sessions.get(sessionName);
-    const sessionConfig = sessionConfigFromArgs(this.clientInfo, sessionName, args);
-    if (!session) {
-      session = new Session(this.clientInfo, sessionName, sessionConfig);
-      this.sessions.set(sessionName, session);
-    }
-    await session.restart(sessionConfig);
-    session.close();
   }
 
   private _resolveSessionName(sessionName?: string): string {
@@ -402,60 +379,6 @@ class SessionManager {
       return process.env.PLAYWRIGHT_CLI_SESSION;
     return 'default';
   }
-}
-
-async function handleSessionCommand(sessionManager: SessionManager, subcommand: string, args: any): Promise<void> {
-  if (subcommand === 'list') {
-    const sessions = sessionManager.sessions;
-    console.log('Sessions:');
-    for (const session of sessions.values()) {
-      const liveMarker = await session.canConnect() ? `[running] ` : '[stopped] ';
-      const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, needs restart` : '';
-      console.log(`  ${liveMarker}${session.name}${restartMarker}`);
-    }
-    if (sessions.size === 0)
-      console.log('  (no sessions)');
-    return;
-  }
-
-  if (subcommand === 'restart') {
-    await sessionManager.restart(args._[1]);
-    return;
-  }
-
-  if (subcommand === 'stop') {
-    await sessionManager.stop(args._[1]);
-    return;
-  }
-
-  if (subcommand === 'stop-all') {
-    const sessions = sessionManager.sessions;
-    for (const session of sessions.values())
-      await session.stop();
-    return;
-  }
-
-  if (subcommand === 'kill-all') {
-    await killAllDaemons();
-    return;
-  }
-
-  if (subcommand === 'delete') {
-    await sessionManager.delete(args._[1]);
-    return;
-  }
-
-  if (subcommand === 'config') {
-    if (args.print) {
-      await sessionManager.run(args);
-      return;
-    }
-    await sessionManager.configure(args);
-    return;
-  }
-
-  console.error(`Unknown session subcommand: ${subcommand}`);
-  process.exit(1);
 }
 
 function createClientInfo(packageLocation: string): ClientInfo {
@@ -491,13 +414,39 @@ const daemonProfilesDir = (installationDirHash: string) => {
   return path.join(localCacheDir, 'ms-playwright', 'daemon', installationDirHash);
 };
 
-const booleanOptions = [
+type GlobalOptions = {
+  help?: boolean;
+  session?: string;
+  version?: boolean;
+};
+
+type OpenOptions = {
+  browser?: string;
+  config?: string;
+  extension?: boolean;
+  headed?: boolean;
+  persistent?: boolean;
+  profile?: string;
+};
+
+const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+  'browser',
+  'config',
   'extension',
   'headed',
   'help',
-  'in-memory',
-  'print',
+  'persistent',
+  'profile',
+  'session',
   'version',
+];
+
+const booleanOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+  'help',
+  'version',
+  'extension',
+  'headed',
+  'persistent'
 ];
 
 export async function program(packageLocation: string) {
@@ -511,14 +460,14 @@ export async function program(packageLocation: string) {
   }
 
   const help = require('./help.json');
-  const commandName = args._[0];
+  const commandName = args._?.[0];
 
   if (args.version || args.v) {
     console.log(clientInfo.version);
     process.exit(0);
   }
 
-  const command = help.commands[commandName];
+  const command = commandName && help.commands[commandName];
   if (args.help || args.h) {
     if (command) {
       console.log(command);
@@ -535,34 +484,45 @@ export async function program(packageLocation: string) {
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create(clientInfo, args);
-  if (commandName.startsWith('session-')) {
-    const subcommand = args._[0].split('-').slice(1).join('-');
-    await handleSessionCommand(sessionManager, subcommand, args);
-    return;
-  }
+  const sessionManager = await SessionManager.create(clientInfo);
 
-  if (commandName === 'config') {
-    await handleSessionCommand(sessionManager, 'config', args);
-    return;
+  switch (commandName) {
+    case 'session-list': {
+      const sessions = sessionManager.sessions;
+      console.log('Sessions:');
+      for (const session of sessions.values()) {
+        const liveMarker = await session.canConnect() ? `[running] ` : '[stopped] ';
+        const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, needs restart` : '';
+        console.log(`  ${liveMarker}${session.name}${restartMarker}`);
+      }
+      if (sessions.size === 0)
+        console.log('  (no sessions)');
+      return;
+    }
+    case 'session-close-all': {
+      const sessions = sessionManager.sessions;
+      for (const session of sessions.values())
+        await session.stop();
+      return;
+    }
+    case 'delete-data':
+      await sessionManager.deleteData(args as GlobalOptions);
+      return;
+    case 'kill-all':
+      await killAllDaemons();
+      return;
+    case 'open':
+      await sessionManager.open(args);
+      return;
+    case 'close':
+      await sessionManager.close(args as GlobalOptions);
+      return;
+    case 'install-skills':
+      await installSkills();
+      return;
+    default:
+      await sessionManager.run(args);
   }
-
-  if (commandName === 'close') {
-    await handleSessionCommand(sessionManager, 'stop', args);
-    return;
-  }
-
-  if (commandName === 'kill-all') {
-    await handleSessionCommand(sessionManager, 'kill-all', args);
-    return;
-  }
-
-  if (commandName === 'install-skills') {
-    await installSkills();
-    return;
-  }
-
-  await sessionManager.run(args);
 }
 
 async function installSkills() {
@@ -587,12 +547,16 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
 }
 
 function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
-  let config = args.config;
+  let config = args.config ? path.resolve(args.config) : undefined;
   try {
     if (!config && fs.existsSync('playwright-cli.json'))
       config = path.resolve('playwright-cli.json');
   } catch {
   }
+
+  if (!args.persistent && args.profile)
+    args.persistent = true;
+
   return {
     version: clientInfo.version,
     socketPath: daemonSocketPath(clientInfo, sessionName),
@@ -600,20 +564,15 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
       headed: args.headed,
       extension: args.extension,
       browser: args.browser,
-      isolated: args['in-memory'],
+      persistent: args.persistent,
+      profile: args.profile,
       config,
     },
     userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
   };
 }
 
-const globalArgs = ['browser', 'config', 'extension', 'headed', 'help', 'in-memory', 'version', 'session'];
-
-function hasGlobalArgs(args: MinimistArgs): boolean {
-  return globalArgs.some(option => args[option] !== undefined);
-}
-
-function configToFormattedArgs(config: SessionConfig['cli']): string[] {
+function configToFormattedArgs(cli: SessionConfig['cli']): string[] {
   const args: string[] = [];
   const add = (flag: string, value: string | boolean | undefined) => {
     if (typeof value === 'boolean' && value)
@@ -621,11 +580,12 @@ function configToFormattedArgs(config: SessionConfig['cli']): string[] {
     else if (typeof value === 'string')
       args.push(`--${flag}=${value}`);
   };
-  add('browser', config.browser);
-  add('config', config.config ? path.relative(process.cwd(), config.config) : undefined);
-  add('extension', config.extension);
-  add('headed', config.headed);
-  add('in-memory', config.isolated);
+  add('browser', cli.browser);
+  add('config', cli.config ? path.relative(process.cwd(), cli.config) : undefined);
+  add('extension', cli.extension);
+  add('headed', cli.headed);
+  add('persistent', cli.persistent);
+  add('profile', cli.profile);
   return args;
 }
 
@@ -675,4 +635,9 @@ async function killAllDaemons(): Promise<void> {
     console.log('No daemon processes found.');
   else if (killed > 0)
     console.log(`Killed ${killed} daemon process${killed === 1 ? '' : 'es'}.`);
+}
+
+function formatWithGap(prefix: string, text: string, threshold: number = 40) {
+  const indent = Math.max(1, threshold - prefix.length);
+  return prefix + ' '.repeat(indent) + text;
 }

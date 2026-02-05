@@ -81,12 +81,12 @@ test('tracing-start-stop', async ({ cli, server }) => {
 });
 
 test('video-start-stop', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
   const { output: videoStartOutput } = await cli('video-start');
   expect(videoStartOutput).toContain('Video recording started.');
-  await cli('open', server.HELLO_WORLD);
   const { output: tabNewOutput } = await cli('tab-new');
   expect(tabNewOutput).toContain('1: (current) [](about:blank)');
-  await cli('open', server.EMPTY_PAGE);
+  await cli('goto', server.EMPTY_PAGE);
   await cli('tab-select', '0');
   const { output: tabCloseOutput } = await cli('tab-close');
   expect(tabCloseOutput).toContain(`0: (current) [](${server.EMPTY_PAGE})`);

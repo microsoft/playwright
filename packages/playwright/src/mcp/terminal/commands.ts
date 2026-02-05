@@ -23,10 +23,18 @@ import type { AnyCommandSchema } from './command';
 
 const open = declareCommand({
   name: 'open',
-  description: 'Open URL',
+  description: 'Open browser',
   category: 'core',
   args: z.object({
     url: z.string().optional().describe('The URL to navigate to'),
+  }),
+  options: z.object({
+    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
+    config: z.string().optional().describe('Path to the configuration file'),
+    extension: z.boolean().optional().describe('Connect to browser extension'),
+    headed: z.boolean().optional().describe('Run browser in headed mode'),
+    persistent: z.boolean().optional().describe('Use persistent browser profile'),
+    profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
   }),
   toolName: 'browser_navigate',
   toolParams: ({ url }) => ({ url: url || 'about:blank' }),
@@ -39,6 +47,17 @@ const close = declareCommand({
   args: z.object({}),
   toolName: '',
   toolParams: () => ({}),
+});
+
+const goto = declareCommand({
+  name: 'goto',
+  description: 'Navigate to a URL',
+  category: 'core',
+  args: z.object({
+    url: z.string().describe('The URL to navigate to'),
+  }),
+  toolName: 'browser_navigate',
+  toolParams: ({ url }) => ({ url }),
 });
 
 const goBack = declareCommand({
@@ -743,30 +762,8 @@ const sessionList = declareCommand({
   toolParams: () => ({}),
 });
 
-const sessionRestart = declareCommand({
-  name: 'session-restart',
-  description: 'Restart session',
-  category: 'session',
-  args: z.object({
-    name: z.string().optional().describe('Name of the session to restart. If omitted, current session is restarted.'),
-  }),
-  toolName: '',
-  toolParams: () => ({}),
-});
-
-const sessionStop = declareCommand({
-  name: 'session-stop',
-  description: 'Stop session',
-  category: 'session',
-  args: z.object({
-    name: z.string().optional().describe('Name of the session to stop. If omitted, current session is stopped.'),
-  }),
-  toolName: '',
-  toolParams: () => ({}),
-});
-
-const sessionStopAll = declareCommand({
-  name: 'session-stop-all',
+const sessionCloseAll = declareCommand({
+  name: 'session-close-all',
   description: 'Stop all sessions',
   category: 'session',
   toolName: '',
@@ -781,27 +778,10 @@ const killAll = declareCommand({
   toolParams: () => ({}),
 });
 
-const sessionDelete = declareCommand({
-  name: 'session-delete',
+const deleteData = declareCommand({
+  name: 'delete-data',
   description: 'Delete session data',
-  category: 'session',
-  args: z.object({
-    name: z.string().optional().describe('Name of the session to delete. If omitted, current session is deleted.'),
-  }),
-  toolName: '',
-  toolParams: ({ name }) => ({ name }),
-});
-
-const config = declareCommand({
-  name: 'config',
-  description: 'Restart session with new config, defaults to `playwright-cli.json`',
-  category: 'config',
-  options: z.object({
-    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
-    config: z.string().optional().describe('Path to the configuration file'),
-    headed: z.boolean().optional().describe('Run browser in headed mode'),
-    ['in-memory']: z.boolean().optional().describe('Keep the browser profile in memory, do not save it to disk.'),
-  }),
+  category: 'core',
   toolName: '',
   toolParams: () => ({}),
 });
@@ -839,6 +819,7 @@ const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
   close,
+  goto,
   type,
   click,
   doubleClick,
@@ -856,6 +837,7 @@ const commandsArray: AnyCommandSchema[] = [
   dialogDismiss,
   resize,
   runCode,
+  deleteData,
 
   // navigation category
   goBack,
@@ -908,7 +890,6 @@ const commandsArray: AnyCommandSchema[] = [
   unroute,
 
   // config category
-  config,
   configPrint,
 
   // install category
@@ -924,10 +905,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // session category
   sessionList,
-  sessionStop,
-  sessionRestart,
-  sessionStopAll,
-  sessionDelete,
+  sessionCloseAll,
   killAll,
 ];
 

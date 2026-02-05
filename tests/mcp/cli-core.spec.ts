@@ -184,7 +184,7 @@ test('snapshot', async ({ cli, server }, testInfo) => {
   {
     const nested = testInfo.outputPath('nested');
     await fs.promises.mkdir(nested, { recursive: true });
-    const { output } = await cli('open', server.HELLO_WORLD, { cwd: nested });
+    const { output } = await cli('goto', server.HELLO_WORLD, { cwd: nested });
     expect(output).toContain('..' + path.sep + '.playwright-cli' + path.sep + 'page-');
   }
 });

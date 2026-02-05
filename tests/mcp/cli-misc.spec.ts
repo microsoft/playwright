@@ -27,19 +27,6 @@ test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
   expect(second.output).toContain('Page URL');
 });
 
-test('old client', async ({ cli }) => {
-  await cli('open', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '2.0.0' } });
-  const { output: output1 } = await cli('session-list');
-  expect(output1).toContain('  [running] default - v2.0.0, needs restart');
-
-  await cli('session-stop');
-  const { output: output2 } = await cli('session-list');
-  expect(output2).toContain('  [stopped] default - v2.0.0, needs restart');
-  await cli('session-delete');
-  const { output: output3 } = await cli('session-list');
-  expect(output3).toContain('  (no sessions)');
-});
-
 test('install', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
   await cli('open', server.HELLO_WORLD);

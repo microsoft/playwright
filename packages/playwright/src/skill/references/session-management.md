@@ -34,20 +34,19 @@ Each session has independent:
 # List all sessions
 playwright-cli session-list
 
-# Stop a specific session
-playwright-cli session-stop mysession
+# Stop a session (close the browser)
+playwright-cli close                      # stop the default session
+playwright-cli --session=mysession close  # stop a named session
 
 # Stop all sessions
-playwright-cli session-stop-all
+playwright-cli session-close-all
 
 # Forcefully kill all daemon processes (for stale/zombie processes)
 playwright-cli kill-all
 
-# Restart a session (useful after version updates)
-playwright-cli session-restart mysession
-
-# Delete session data (cookies, storage, etc.)
-playwright-cli session-delete mysession
+# Delete session user data (profile directory)
+playwright-cli delete-data                      # delete default session data
+playwright-cli --session=mysession delete-data  # delete named session data
 ```
 
 ## Environment Variable
@@ -79,9 +78,7 @@ playwright-cli --session=site2 snapshot
 playwright-cli --session=site3 snapshot
 
 # Cleanup
-playwright-cli --session=site1 close
-playwright-cli --session=site2 close
-playwright-cli --session=site3 close
+playwright-cli session-close-all
 ```
 
 ### A/B Testing Sessions
@@ -96,13 +93,16 @@ playwright-cli --session=variant-a screenshot
 playwright-cli --session=variant-b screenshot
 ```
 
-### Testing without persistent profile
+### Persistent Profile
 
-Use `--in-memory` flag to keep the browser profile in memory only:
+By default, browser profile is kept in memory only. Use `--persistent` flag on `open` to persist the browser profile to disk:
 
 ```bash
-# Session data won't persist to disk
-playwright-cli --in-memory open https://example.com
+# Use persistent profile (auto-generated location)
+playwright-cli open https://example.com --persistent
+
+# Use persistent profile with custom directory
+playwright-cli open https://example.com --profile=/path/to/profile
 ```
 
 ## Default Session
@@ -113,25 +113,25 @@ When `--session` is omitted, commands use the default session:
 # These use the same default session
 playwright-cli open https://example.com
 playwright-cli snapshot
-playwright-cli close  # Closes default session
+playwright-cli close  # Stops default session
 ```
 
 ## Session Configuration
 
-Configure a session with specific settings:
+Configure a session with specific settings when opening:
 
 ```bash
-# Configure session with config file
-playwright-cli --session=mysession config --config=playwright-cli.json
+# Open with config file
+playwright-cli open https://example.com --config=playwright-cli.json
 
-# Configure session with specific browser
-playwright-cli --session=mysession config --browser=firefox
+# Open with specific browser
+playwright-cli open https://example.com --browser=firefox
 
-# Configure session in headed mode
-playwright-cli --session=mysession config --headed
+# Open in headed mode
+playwright-cli open https://example.com --headed
 
-# Restart session to apply changes
-playwright-cli session-restart mysession
+# Open with persistent profile
+playwright-cli open https://example.com --persistent
 ```
 
 ## Best Practices
@@ -151,11 +151,11 @@ playwright-cli --session=s1 open https://github.com
 
 ```bash
 # Stop sessions when done
-playwright-cli session-stop auth
-playwright-cli session-stop scrape
+playwright-cli --session=auth close
+playwright-cli --session=scrape close
 
 # Or stop all at once
-playwright-cli session-stop-all
+playwright-cli session-close-all
 
 # If sessions become unresponsive or zombie processes remain
 playwright-cli kill-all
@@ -165,5 +165,5 @@ playwright-cli kill-all
 
 ```bash
 # Remove old session data to free disk space
-playwright-cli session-delete oldsession
+playwright-cli --session=oldsession delete-data
 ```
