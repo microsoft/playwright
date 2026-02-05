@@ -34,6 +34,7 @@ type MinimistArgs = {
 export type SessionConfig = {
   version: string;
   socketPath: string;
+  external?: boolean;
   cli: {
     headed?: boolean;
     extension?: boolean;
@@ -71,8 +72,12 @@ class Session {
     return this._config;
   }
 
+  isExternal() {
+    return !!this._config.external;
+  }
+
   isCompatible(): boolean {
-    return this._clientInfo.version === this._config.version;
+    return this.isExternal() || this._clientInfo.version === this._config.version;
   }
 
   checkCompatible() {
@@ -91,6 +96,9 @@ to restart the session daemon.`);
   }
 
   async stop(): Promise<void> {
+    if (this.isExternal())
+      return;
+
     if (!await this.canConnect()) {
       console.log(`Session '${this.name}' is not running.`);
       return;
@@ -180,6 +188,24 @@ to restart the session daemon.`);
     return false;
   }
 
+  async attach(socketPath: string): Promise<void> {
+    this._config.external = true;
+    this._config.socketPath = socketPath;
+    if (!await this.canConnect()) {
+      console.log(`Cannot connect to '${socketPath}'.`);
+      return;
+    }
+    await this._writeConfig();
+  }
+
+  private async _writeConfig() {
+    await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
+    const sessionConfigFile = this._sessionConfigFile();
+    this._config.version = this._clientInfo.version;
+    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+    return sessionConfigFile;
+  }
+
   private async _startDaemonIfNeeded() {
     if (this._connection)
       return this._connection;
@@ -214,12 +240,9 @@ to restart the session daemon.`);
   }
 
   private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = this._sessionConfigFile();
-    this._config.version = this._clientInfo.version;
-    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+    const sessionConfigFile = await this._writeConfig();
 
     const outLog = path.join(this._clientInfo.daemonProfilesDir, 'out.log');
     const errLog = path.join(this._clientInfo.daemonProfilesDir, 'err.log');
@@ -372,6 +395,20 @@ class SessionManager {
     this.sessions.delete(sessionName);
   }
 
+  async attach(args: any): Promise<void> {
+    const sessionName = this._resolveSessionName(args._[1]);
+    if (sessionName === 'default') {
+      console.log(`Cannot attach 'default' session.`);
+      return;
+    }
+    let session = this.sessions.get(sessionName);
+    if (!session) {
+      session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
+      this.sessions.set(sessionName, session);
+    }
+    await session.attach(args._[2]);
+  }
+
   private _resolveSessionName(sessionName?: string): string {
     if (sessionName)
       return sessionName;
@@ -381,7 +418,7 @@ class SessionManager {
   }
 }
 
-function createClientInfo(packageLocation: string): ClientInfo {
+export function createClientInfo(packageLocation: string): ClientInfo {
   const packageJSON = require(packageLocation);
   const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
@@ -512,6 +549,10 @@ export async function program(packageLocation: string) {
         await listSessions(sessionManager);
       return;
     }
+    case 'session-attach': {
+      await sessionManager.attach(args);
+      return;
+    }
     case 'session-close-all': {
       const sessions = sessionManager.sessions;
       for (const session of sessions.values())
@@ -568,7 +609,7 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 
-function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
+export function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
     if (!config && fs.existsSync(path.join('.playwright', 'cli.config.json')))

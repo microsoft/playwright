@@ -238,6 +238,7 @@ playwright-cli tracing-stop
 
 ## Specific tasks
 
+* **Debugging Playwright tests** [references/test-debugging.md](references/test-debugging.md)
 * **Request mocking** [references/request-mocking.md](references/request-mocking.md)
 * **Running Playwright code** [references/running-code.md](references/running-code.md)
 * **Session management** [references/session-management.md](references/session-management.md)

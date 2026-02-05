@@ -105,7 +105,7 @@ export class FullConfigInternal {
       globalTimeout: takeFirst(configCLIOverrides.debug ? 0 : undefined, configCLIOverrides.globalTimeout, userConfig.globalTimeout, 0),
       grep: takeFirst(userConfig.grep, defaultGrep),
       grepInvert: takeFirst(userConfig.grepInvert, null),
-      maxFailures: takeFirst(configCLIOverrides.debug ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
+      maxFailures: takeFirst(configCLIOverrides.debug === 'inspector' ? 1 : undefined, configCLIOverrides.maxFailures, userConfig.maxFailures, 0),
       metadata: metadata ?? userConfig.metadata,
       preserveOutput: takeFirst(userConfig.preserveOutput, 'always'),
       projects: [],
