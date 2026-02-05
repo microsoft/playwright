@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import { test, expect } from './cli-fixtures';
 
 test('user-data-dir', async ({ cli, server }, testInfo) => {
