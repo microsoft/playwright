@@ -25,6 +25,7 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
+import type { FullConfig } from '../browser/config';
 
 type MinimistArgs = {
   _: string[];
@@ -44,6 +45,7 @@ export type SessionConfig = {
   };
   userDataDirPrefix?: string;
   workspaceDir?: string;
+  resolvedConfig?: FullConfig
 };
 
 type ClientInfo = {
@@ -97,7 +99,7 @@ to restart the session daemon.`);
     }
 
     await this._stopDaemon();
-    console.log(`Browser '${this.name}' closed.`);
+    console.log(`Browser '${this.name}' closed`);
     console.log('');
   }
 
@@ -210,20 +212,20 @@ to restart the session daemon.`);
     }
   }
 
-  private _sessionConfigFile() {
-    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}.session`);
+  private _sessionFile(suffix: string) {
+    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}${suffix}`);
   }
 
   private async _startDaemon(): Promise<net.Socket> {
     await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = this._sessionConfigFile();
+    const sessionConfigFile = this._sessionFile('.session');
     this._config.version = this._clientInfo.version;
     await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
-    const outLog = path.join(this._clientInfo.daemonProfilesDir, 'out.log');
-    const errLog = path.join(this._clientInfo.daemonProfilesDir, 'err.log');
+    const outLog = this._sessionFile('.out');
+    const errLog = this._sessionFile('.err');
     const out = fs.openSync(outLog, 'w');
     const err = fs.openSync(errLog, 'w');
 
@@ -240,20 +242,6 @@ to restart the session daemon.`);
     });
     child.unref();
 
-    console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
-    const configArgs = configToFormattedArgs(this._config.cli);
-    if (configArgs.length) {
-      console.log(`- Browser options:`);
-      for (const flag of configArgs)
-        console.log(`  ${flag}`);
-    }
-    const sessionOption = this.name !== 'default' ? ` -b ${this.name}` : '';
-    console.log(formatWithGap(`- playwright-cli${sessionOption} close`, `# to stop when done`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} open [options]`, `# to reopen with new config`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} delete-data`, `# to delete profile data dir`));
-    console.log(`---`);
-    console.log(``);
-
     // Wait for the socket to become available with retries.
     const retryDelay = [100, 200, 400]; // ms
     let totalWaited = 0;
@@ -262,8 +250,26 @@ to restart the session daemon.`);
       totalWaited += retryDelay[i] || 1000;
       try {
         const { socket } = await this._connect();
-        if (socket)
+        if (socket) {
+          console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
+          const resolvedConfig = await parseResolvedConfig(errLog);
+          if (resolvedConfig) {
+            this._config.resolvedConfig = resolvedConfig;
+            console.log(`- ${this.name}:`);
+            console.log(renderResolvedConfig(resolvedConfig).join('\n'));
+          }
+          const sessionOption = this.name !== 'default' ? ` -b ${this.name}` : '';
+          console.log(``);
+          console.log(`\`\`\`bash`);
+          console.log(formatWithGap(`> playwright-cli${sessionOption} close`, `# to close when done`));
+          console.log(formatWithGap(`> playwright-cli${sessionOption} open [options]`, `# to reopen with new config`));
+          console.log(formatWithGap(`> playwright-cli${sessionOption} delete-data`, `# to delete profile data dir`));
+          console.log(`\`\`\``);
+          console.log(``);
+
+          await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
           return socket;
+        }
       } catch (e) {
         if (e.code !== 'ENOENT' && e.code !== 'ECONNREFUSED')
           throw e;
@@ -295,7 +301,7 @@ to restart the session daemon.`);
   }
 
   async deleteSessionConfig() {
-    await fs.promises.rm(this._sessionConfigFile()).catch(() => {});
+    await fs.promises.rm(this._sessionFile('.session')).catch(() => {});
   }
 }
 
@@ -603,23 +609,6 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
   };
 }
 
-function configToFormattedArgs(cli: SessionConfig['cli']): string[] {
-  const args: string[] = [];
-  const add = (flag: string, value: string | boolean | undefined) => {
-    if (typeof value === 'boolean' && value)
-      args.push(`--${flag}`);
-    else if (typeof value === 'string')
-      args.push(`--${flag}=${value}`);
-  };
-  add('browser', cli.browser);
-  add('config', cli.config ? path.relative(process.cwd(), cli.config) : undefined);
-  add('extension', cli.extension);
-  add('headed', cli.headed);
-  add('persistent', cli.persistent);
-  add('profile', cli.profile);
-  return args;
-}
-
 async function killAllDaemons(): Promise<void> {
   const platform = os.platform();
   let killed = 0;
@@ -670,7 +659,7 @@ async function killAllDaemons(): Promise<void> {
 
 async function listSessions(sessionManager: SessionManager): Promise<void> {
   const sessions = sessionManager.sessions;
-  console.log('Browsers:');
+  console.log('### Browsers');
   await gcAndPrintSessions([...sessions.values()]);
 }
 
@@ -746,16 +735,46 @@ async function renderSessionStatus(session: Session) {
   const text: string[] = [];
   const config = session.config();
   const canConnect = await session.canConnect();
-  const isPersistent = config.cli.persistent;
-  const statusMarker = canConnect ? '[open]' : '[closed]';
-  const persistentMarker = isPersistent ? ' [persistent]' : '';
   const restartMarker = canConnect && !session.isCompatible() ? ` - v${config.version}, please reopen` : '';
-  text.push(`  ${session.name} ${statusMarker}${persistentMarker}${restartMarker}`);
-  configToFormattedArgs(config.cli).forEach(arg => text.push(`     ${arg}`));
+  text.push(`- ${session.name}:`);
+  text.push(`  - status: ${canConnect ? 'open' : 'closed'}${restartMarker}`);
+  if (config.resolvedConfig)
+    text.push(...renderResolvedConfig(config.resolvedConfig));
   return text.join('\n');
+}
+
+function renderResolvedConfig(resolvedConfig: FullConfig) {
+  const channel = resolvedConfig.browser.launchOptions.channel ?? resolvedConfig.browser.browserName;
+  const lines = [];
+  if (channel)
+    lines.push(`  - browser-type: ${channel}`);
+  if (resolvedConfig.browser.isolated)
+    lines.push(`  - user-data-dir: <in-memory>`);
+  else
+    lines.push(`  - user-data-dir: ${resolvedConfig.browser.userDataDir}`);
+  lines.push(`  - headed: ${!resolvedConfig.browser.launchOptions.headless}`);
+  return lines;
 }
 
 function formatWithGap(prefix: string, text: string, threshold: number = 40) {
   const indent = Math.max(1, threshold - prefix.length);
   return prefix + ' '.repeat(indent) + text;
+}
+
+async function parseResolvedConfig(logFile: string): Promise<FullConfig | null> {
+  const logData = await fs.promises.readFile(logFile, 'utf-8').catch(() => '');
+  const marker = '### Config\n```json\n';
+  const markerIndex = logData.indexOf(marker);
+  if (markerIndex === -1)
+    return null;
+  const jsonStart = markerIndex + marker.length;
+  const jsonEnd = logData.indexOf('\n```', jsonStart);
+  if (jsonEnd === -1)
+    throw null;
+  const jsonString = logData.substring(jsonStart, jsonEnd).trim();
+  try {
+    return JSON.parse(jsonString) as FullConfig;
+  } catch {
+    return null;
+  }
 }

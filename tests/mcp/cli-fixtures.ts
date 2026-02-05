@@ -83,7 +83,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       snapshot = await loadSnapshot(cli.stdout);
     const attachments = loadAttachments(cli.stdout);
 
-    const matches = cli.stdout.includes('Session') ? cli.stdout.match(/Session `(.+)` started with pid (\d+)\./) : undefined;
+    const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
     const [, sessionName, pid] = matches ?? [];
     if (sessionName && pid)
       sessions.push({ name: sessionName, pid: +pid });

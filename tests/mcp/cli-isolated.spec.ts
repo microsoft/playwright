@@ -29,11 +29,16 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
     userDataDirPrefix: expect.any(String),
     version: expect.any(String),
     workspaceDir: testInfo.outputPath(),
+    resolvedConfig: expect.any(Object),
   });
 
   const { output: listOutput } = await cli('list');
-  expect(listOutput).toContain('Browsers:');
-  expect(listOutput).toContain('  default');
+  expect(listOutput).toContain(`### Browsers
+- default:
+  - status: open
+  - browser-type: chrome
+  - user-data-dir: <in-memory>
+  - headed: false`);
 });
 
 test('should save user data with --persistent flag', async ({ cli, server, mcpBrowser }, testInfo) => {
@@ -49,6 +54,7 @@ test('should save user data with --persistent flag', async ({ cli, server, mcpBr
     userDataDirPrefix: expect.any(String),
     version: expect.any(String),
     workspaceDir: testInfo.outputPath(),
+    resolvedConfig: expect.any(Object),
   });
 });
 
@@ -66,5 +72,6 @@ test('should use custom user data dir with --profile=<dir>', async ({ cli, serve
     userDataDirPrefix: expect.any(String),
     version: expect.any(String),
     workspaceDir: testInfo.outputPath(),
+    resolvedConfig: expect.any(Object),
   });
 });
