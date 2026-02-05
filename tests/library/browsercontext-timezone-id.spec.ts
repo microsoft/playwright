@@ -115,3 +115,16 @@ it('should affect Intl.DateTimeFormat().resolvedOptions().timeZone', async ({ br
   expect(await page.evaluate(() => (new Intl.DateTimeFormat()).resolvedOptions().timeZone)).toBe('America/Jamaica');
   await context.close();
 });
+
+it('should propagate timezone to workers', async ({ browser, browserName, server }) => {
+  it.fail(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/38919');
+  const context = await browser.newContext({ timezoneId: 'America/Jamaica' });
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  const [msg] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(Intl.DateTimeFormat().resolvedOptions().timeZone)'], { type: 'application/javascript' })))),
+  ]);
+  expect(msg.text()).toBe('America/Jamaica');
+  await context.close();
+});

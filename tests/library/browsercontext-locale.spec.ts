@@ -165,16 +165,19 @@ it('should not change default locale in another context', async ({ browser }) =>
   }
 });
 
-it('should format number in workers', async ({ browser, browserName, server }) => {
+it('should propagate locale to workers', async ({ browser, browserName, server }) => {
   it.fail(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/38919');
   const context = await browser.newContext({ locale: 'ru-RU' });
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
-  const [worker] = await Promise.all([
-    page.waitForEvent('worker'),
-    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(1)'], { type: 'application/javascript' })))),
+  const [msg] = await Promise.all([
+    page.waitForEvent('console'),
+    page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log(Intl.NumberFormat().resolvedOptions().locale)'], { type: 'application/javascript' })))),
   ]);
-  expect(await worker.evaluate(() => (10000.20).toLocaleString())).toBe('10\u00A0000,2');
+  if (browserName === 'webkit')
+    expect(msg.text()).toContain('ru'); // Webkit on Ubuntu is "ru-RU", and on other platforms is "ru"
+  else
+    expect(msg.text()).toBe('ru-RU');
   await context.close();
 });
 
