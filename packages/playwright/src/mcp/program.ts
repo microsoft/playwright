@@ -121,7 +121,8 @@ export function decorateCommand(command: Command, version: string) {
             console.log(`### Success\nDaemon listening on ${socketPath}`);
             console.log('<EOF>');
           } catch (error) {
-            console.log(`### Error\n${error.message}`);
+            const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
+            console.log(`### Error\n${message}`);
             console.log('<EOF>');
           }
           return;
