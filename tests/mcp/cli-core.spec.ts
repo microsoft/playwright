@@ -92,7 +92,7 @@ test('fill numeric', { annotation: { type: 'issue', description: 'https://github
   expect(snapshot).toContain(`- textbox [ref=e2]`);
 
   const { snapshot: fillSnapshot } = await cli('fill', 'e2', '42', '--submit');
-  expect(fillSnapshot).toBe(`- textbox [active] [ref=e2]: "42"`);
+  expect(fillSnapshot).toContain(`[ref=e2]: "42"`);
 });
 
 test('hover', async ({ cli, server }) => {

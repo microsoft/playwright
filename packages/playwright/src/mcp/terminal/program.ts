@@ -482,15 +482,29 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'version',
 ];
 
+const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[] = [
+  'all',
+  'help',
+  'version',
+  'extension',
+  'headed',
+  'persistent'
+];
+
 export async function program(packageLocation: string) {
   const clientInfo = createClientInfo(packageLocation);
   const help = require('./help.json');
 
   const argv = process.argv.slice(2);
-  const args: MinimistArgs = require('minimist')(argv, { boolean: [...help.booleanOptions, 'help', 'version'], string: [...help.stringOptions, '_'] });
-  for (const option of help.booleanOptions) {
+  const boolean = [...help.booleanOptions, ...booleanOptions];
+  const args: MinimistArgs = require('minimist')(argv, { boolean, string: [...help.stringOptions, '_'] });
+  for (const option of boolean) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
+    if (argv.some(arg => arg.startsWith(`--${option}=`) || arg.startsWith(`--no-${option}=`))) {
+      console.error(`boolean option '--${option}' should not be passed with '=value', use '--${option}' or '--no-${option}' instead`);
+      process.exit(1);
+    }
   }
   // Normalize -s alias to --session
   if (args.s) {

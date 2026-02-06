@@ -30,9 +30,9 @@ test('too many arguments', async ({ cli, server }) => {
 
 test('wrong option type', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  // boolean options are silently allowed
   const boolean = await cli('type', 'foo', '--submit=bar');
-  expect(boolean.exitCode).toBe(0);
+  expect(boolean.exitCode).toBe(1);
+  expect(boolean.error).toContain(`boolean option '--submit' should not be passed with '=value', use '--submit' or '--no-submit' instead`);
   const status = await cli('route', '.', '--status=OK');
   expect(status.exitCode).toBe(1);
   expect(status.error).toContain(`error: '--status' option: expected number, received string`);
