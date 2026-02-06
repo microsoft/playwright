@@ -93,7 +93,7 @@ export class HttpServer {
     assert(!this._started, 'server already started');
     this._started = true;
 
-    const host = options.host;
+    const host = options.host ?? 'localhost';
     if (options.preferredPort) {
       try {
         await startHttpServer(this._server, { port: options.preferredPort, host });
@@ -115,7 +115,7 @@ export class HttpServer {
       this._port = address.port;
       const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
       this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
-      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
+      this._urlPrefixHumanReadable = `http://${host}:${address.port}`;
     }
   }
 
