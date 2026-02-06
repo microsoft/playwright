@@ -9,7 +9,7 @@ By default, Playwright runs test files in [parallel](./test-parallel.md) and str
 To speed up your test runs, often increasing the number of available CPU cores in your CI environment and [not limiting workers](./ci.md#workers) is the best way.
 
 For some test suites, this can lead to instability and flakiness due to hidden race conditions and shared state.
-If you face this issue and can't resolve it, you can instead run run tests on multiple machines simultaneously.
+If you face this issue and can't resolve it, you can instead run tests on multiple machines simultaneously.
 We call this mode of operation "sharding". Sharding in Playwright means splitting your tests into smaller parts called "shards". Each shard is like a separate job that can run independently. The whole purpose is to divide your tests to speed up test runtime.
 
 When you shard your tests, each shard can run on its own, utilizing the available CPU cores. This helps speed up the testing process by doing tasks simultaneously.
