@@ -72,9 +72,7 @@ export async function startMcpDaemonServer(
     timestamp: Date.now(),
   };
 
-  const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {
-    toolName: 'browser_navigate',
-  });
+  const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {});
   browserContext.on('close', () => {
     daemonDebug('browser closed, shutting down daemon');
     shutdown(0);
