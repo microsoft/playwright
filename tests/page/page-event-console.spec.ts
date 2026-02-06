@@ -224,12 +224,12 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
 });
 
 it('should have timestamp', async ({ page }) => {
-  const before = Date.now();
+  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   const [message] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluate(() => console.log('timestamp test')),
   ]);
-  const after = Date.now();
+  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
   expect(message.timestamp()).toBeGreaterThanOrEqual(before);
   expect(message.timestamp()).toBeLessThanOrEqual(after);
 });
@@ -248,9 +248,9 @@ it('should have increasing timestamps', async ({ page }) => {
 });
 
 it('should have timestamp in consoleMessages', async ({ page }) => {
-  const before = Date.now();
+  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   await page.evaluate(() => console.log('stored message'));
-  const after = Date.now();
+  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
   const messages = await page.consoleMessages();
   expect(messages.length).toBeGreaterThanOrEqual(1);
   const last = messages[messages.length - 1];
