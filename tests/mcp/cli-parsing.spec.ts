@@ -56,4 +56,6 @@ test('wrong argument type', async ({ cli, server }) => {
   const { error, exitCode } = await cli('mousemove', '12', 'foo');
   expect(exitCode).toBe(1);
   expect(error).toContain(`error: 'y' argument: expected number, received 'foo'`);
+  const press = await cli('press', '5');
+  expect(press.exitCode).toBe(0);
 });

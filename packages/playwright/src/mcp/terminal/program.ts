@@ -497,7 +497,13 @@ export async function program(packageLocation: string) {
 
   const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
-  const args: MinimistArgs = require('minimist')(argv, { boolean, string: [...help.stringOptions, '_'] });
+  const args: MinimistArgs = require('minimist')(argv, { boolean });
+  for (const [key, value] of Object.entries(args)) {
+    if (key !== '_' && typeof value !== 'boolean')
+      args[key] = String(value);
+  }
+  for (let index = 0; index < args._.length; index++)
+    args._[index] = String(args._[index]);
   for (const option of boolean) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];

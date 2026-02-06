@@ -483,7 +483,7 @@ const cookieSet = declareCommand({
   options: z.object({
     domain: z.string().optional().describe('Cookie domain'),
     path: z.string().optional().describe('Cookie path'),
-    expires: z.number().optional().describe('Cookie expiration as Unix timestamp'),
+    expires: numberArg.optional().describe('Cookie expiration as Unix timestamp'),
     httpOnly: z.boolean().optional().describe('Whether the cookie is HTTP only'),
     secure: z.boolean().optional().describe('Whether the cookie is secure'),
     sameSite: z.enum(['Strict', 'Lax', 'None']).optional().describe('Cookie SameSite attribute'),
@@ -630,7 +630,7 @@ const routeMock = declareCommand({
     pattern: z.string().describe('URL pattern to match (e.g., "**/api/users")'),
   }),
   options: z.object({
-    status: z.number().optional().describe('HTTP status code (default: 200)'),
+    status: numberArg.optional().describe('HTTP status code (default: 200)'),
     body: z.string().optional().describe('Response body (text or JSON string)'),
     ['content-type']: z.string().optional().describe('Content-Type header'),
     header: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Header to add in "Name: Value" format (repeatable)'),
