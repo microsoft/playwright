@@ -32,6 +32,7 @@ const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 test.skip(({ trace }) => trace === 'on');
 test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(process.env.PW_CLOCK === 'frozen');
 test.slow();
 
 let traceFile: string;
