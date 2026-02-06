@@ -73,6 +73,12 @@ export class TestTypeImpl {
   }
 
   private _currentSuite(location: Location, title: string): Suite | undefined {
+    // Skip registrations from ESM preflight imports. This can happen when external
+    // ESM loaders (like tsx/esm) intercept Playwright's .esm.preflight requests
+    // and execute the actual test file content instead of returning empty content.
+    if (location.file?.endsWith('.esm.preflight'))
+      return undefined;
+
     const suite = currentlyLoadingFileSuite();
     if (!suite) {
       throw new Error([
