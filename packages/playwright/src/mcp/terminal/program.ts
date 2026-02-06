@@ -632,7 +632,7 @@ async function findOrInstallDefaultBrowser() {
     const executable = registry.findExecutable(channel);
     if (!executable?.executablePath())
       continue;
-    console.log(`Found ${channel} browser.`);
+    console.log(`Detected ${channel}, will use it as the default browser.`);
     return channel;
   }
   const chromiumExecutable = registry.findExecutable('chromium');
