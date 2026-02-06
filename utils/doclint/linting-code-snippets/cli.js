@@ -25,7 +25,7 @@ const md = require('../../markdown');
 const { ESLint } = require('eslint')
 const child_process = require('child_process');
 const os = require('os');
-const actions = require('@actions/core')
+
 const { codeFrameColumns } = require('@babel/code-frame');
 
 /** @typedef {import('../documentation').Type} Type */
@@ -300,11 +300,13 @@ class LintingServiceFactory {
           console.log(`File: ${filePath}`);
           console.log(code);
           console.log('-'.repeat(80));
-          if (process.env.GITHUB_ACTION)
+          if (process.env.GITHUB_ACTION) {
+            const actions = await import('@actions/core');
             actions.warning(`Error: ${error}\nUnable to lint:\n${code}`, {
               title: `${codeLang} linting error`,
               file: filePath,
             });
+          }
         }
       }
     }

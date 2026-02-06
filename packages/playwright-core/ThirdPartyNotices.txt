@@ -4,15 +4,15 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
--	@hono/node-server@1.19.8 (https://github.com/honojs/node-server)
+-	@hono/node-server@1.19.9 (https://github.com/honojs/node-server)
 -	@lowire/loop@0.0.25 (https://github.com/pavelfeldman/lowire)
--	@modelcontextprotocol/sdk@1.25.2 (https://github.com/modelcontextprotocol/typescript-sdk)
+-	@modelcontextprotocol/sdk@1.26.0 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
 -	ajv-formats@3.0.1 (https://github.com/ajv-validator/ajv-formats)
 -	ajv@8.17.1 (https://github.com/ajv-validator/ajv)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
--	body-parser@2.2.1 (https://github.com/expressjs/body-parser)
+-	body-parser@2.2.2 (https://github.com/expressjs/body-parser)
 -	brace-expansion@1.1.12 (https://github.com/juliangruber/brace-expansion)
 -	buffer-crc32@0.2.13 (https://github.com/brianloveswords/buffer-crc32)
 -	bytes@3.1.2 (https://github.com/visionmedia/bytes.js)
@@ -22,7 +22,7 @@ This project incorporates components from the projects listed below. The origina
 -	colors@1.4.0 (https://github.com/Marak/colors.js)
 -	commander@13.1.0 (https://github.com/tj/commander.js)
 -	concat-map@0.0.1 (https://github.com/substack/node-concat-map)
--	content-disposition@1.0.0 (https://github.com/jshttp/content-disposition)
+-	content-disposition@1.0.1 (https://github.com/jshttp/content-disposition)
 -	content-type@1.0.5 (https://github.com/jshttp/content-type)
 -	cookie-signature@1.2.2 (https://github.com/visionmedia/node-cookie-signature)
 -	cookie@0.7.2 (https://github.com/jshttp/cookie)
@@ -46,11 +46,11 @@ This project incorporates components from the projects listed below. The origina
 -	etag@1.8.1 (https://github.com/jshttp/etag)
 -	eventsource-parser@3.0.3 (https://github.com/rexxars/eventsource-parser)
 -	eventsource@3.0.7 (git://git@github.com/EventSource/eventsource)
--	express-rate-limit@7.5.1 (https://github.com/express-rate-limit/express-rate-limit)
--	express@5.1.0 (https://github.com/expressjs/express)
+-	express-rate-limit@8.2.1 (https://github.com/express-rate-limit/express-rate-limit)
+-	express@5.2.1 (https://github.com/expressjs/express)
 -	fast-deep-equal@3.1.3 (https://github.com/epoberezkin/fast-deep-equal)
 -	fast-uri@3.1.0 (https://github.com/fastify/fast-uri)
--	finalhandler@2.1.0 (https://github.com/pillarjs/finalhandler)
+-	finalhandler@2.1.1 (https://github.com/pillarjs/finalhandler)
 -	forwarded@0.2.0 (https://github.com/jshttp/forwarded)
 -	fresh@2.0.0 (https://github.com/jshttp/fresh)
 -	function-bind@1.1.2 (https://github.com/Raynos/function-bind)
@@ -61,11 +61,12 @@ This project incorporates components from the projects listed below. The origina
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
 -	has-symbols@1.1.0 (https://github.com/inspect-js/has-symbols)
 -	hasown@2.0.2 (https://github.com/inspect-js/hasOwn)
--	hono@4.11.3 (https://github.com/honojs/hono)
+-	hono@4.11.8 (https://github.com/honojs/hono)
 -	http-errors@2.0.1 (https://github.com/jshttp/http-errors)
 -	https-proxy-agent@7.0.6 (https://github.com/TooTallNate/proxy-agents)
--	iconv-lite@0.7.0 (https://github.com/pillarjs/iconv-lite)
+-	iconv-lite@0.7.2 (https://github.com/pillarjs/iconv-lite)
 -	inherits@2.0.4 (https://github.com/isaacs/inherits)
+-	ip-address@10.0.1 (https://github.com/beaugunderson/ip-address)
 -	ip-address@9.0.5 (https://github.com/beaugunderson/ip-address)
 -	ipaddr.js@1.9.1 (https://github.com/whitequark/ipaddr.js)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
@@ -81,7 +82,7 @@ This project incorporates components from the projects listed below. The origina
 -	media-typer@1.1.0 (https://github.com/jshttp/media-typer)
 -	merge-descriptors@2.0.0 (https://github.com/sindresorhus/merge-descriptors)
 -	mime-db@1.54.0 (https://github.com/jshttp/mime-db)
--	mime-types@3.0.1 (https://github.com/jshttp/mime-types)
+-	mime-types@3.0.2 (https://github.com/jshttp/mime-types)
 -	mime@3.0.0 (https://github.com/broofa/mime)
 -	minimatch@3.1.2 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
@@ -94,7 +95,7 @@ This project incorporates components from the projects listed below. The origina
 -	open@8.4.0 (https://github.com/sindresorhus/open)
 -	parseurl@1.3.3 (https://github.com/pillarjs/parseurl)
 -	path-key@3.1.1 (https://github.com/sindresorhus/path-key)
--	path-to-regexp@8.2.0 (https://github.com/pillarjs/path-to-regexp)
+-	path-to-regexp@8.3.0 (https://github.com/pillarjs/path-to-regexp)
 -	pend@1.2.0 (https://github.com/andrewrk/node-pend)
 -	pkce-challenge@5.0.0 (https://github.com/crouchcd/pkce-challenge)
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
@@ -108,10 +109,9 @@ This project incorporates components from the projects listed below. The origina
 -	require-from-string@2.0.2 (https://github.com/floatdrop/require-from-string)
 -	retry@0.12.0 (https://github.com/tim-kos/node-retry)
 -	router@2.2.0 (https://github.com/pillarjs/router)
--	safe-buffer@5.2.1 (https://github.com/feross/safe-buffer)
 -	safer-buffer@2.1.2 (https://github.com/ChALkeR/safer-buffer)
--	send@1.2.0 (https://github.com/pillarjs/send)
--	serve-static@2.2.0 (https://github.com/expressjs/serve-static)
+-	send@1.2.1 (https://github.com/pillarjs/send)
+-	serve-static@2.2.1 (https://github.com/expressjs/serve-static)
 -	setprototypeof@1.2.0 (https://github.com/wesleytodd/setprototypeof)
 -	shebang-command@2.0.0 (https://github.com/kevva/shebang-command)
 -	shebang-regex@3.0.0 (https://github.com/sindresorhus/shebang-regex)
@@ -138,7 +138,7 @@ This project incorporates components from the projects listed below. The origina
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
 -	zod@4.3.5 (https://github.com/colinhacks/zod)
 
-%% @hono/node-server@1.19.8 NOTICES AND INFORMATION BEGIN HERE
+%% @hono/node-server@1.19.9 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 # Node.js Adapter for Hono
 
@@ -498,7 +498,7 @@ Yusuke Wada <https://github.com/yusukebe>
 
 MIT
 =========================================
-END OF @hono/node-server@1.19.8 AND INFORMATION
+END OF @hono/node-server@1.19.9 AND INFORMATION
 
 %% @lowire/loop@0.0.25 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -706,7 +706,7 @@ Apache License
 =========================================
 END OF @lowire/loop@0.0.25 AND INFORMATION
 
-%% @modelcontextprotocol/sdk@1.25.2 NOTICES AND INFORMATION BEGIN HERE
+%% @modelcontextprotocol/sdk@1.26.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -730,7 +730,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @modelcontextprotocol/sdk@1.25.2 AND INFORMATION
+END OF @modelcontextprotocol/sdk@1.26.0 AND INFORMATION
 
 %% accepts@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -865,7 +865,7 @@ SOFTWARE.
 =========================================
 END OF balanced-match@1.0.2 AND INFORMATION
 
-%% body-parser@2.2.1 NOTICES AND INFORMATION BEGIN HERE
+%% body-parser@2.2.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -891,7 +891,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF body-parser@2.2.1 AND INFORMATION
+END OF body-parser@2.2.2 AND INFORMATION
 
 %% brace-expansion@1.1.12 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1129,7 +1129,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF concat-map@0.0.1 AND INFORMATION
 
-%% content-disposition@1.0.0 NOTICES AND INFORMATION BEGIN HERE
+%% content-disposition@1.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -1154,7 +1154,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF content-disposition@1.0.0 AND INFORMATION
+END OF content-disposition@1.0.1 AND INFORMATION
 
 %% content-type@1.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1758,7 +1758,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF eventsource@3.0.7 AND INFORMATION
 
-%% express-rate-limit@7.5.1 NOTICES AND INFORMATION BEGIN HERE
+%% express-rate-limit@8.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 # MIT License
 
@@ -1781,9 +1781,9 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF express-rate-limit@7.5.1 AND INFORMATION
+END OF express-rate-limit@8.2.1 AND INFORMATION
 
-%% express@5.1.0 NOTICES AND INFORMATION BEGIN HERE
+%% express@5.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -1810,7 +1810,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF express@5.1.0 AND INFORMATION
+END OF express@5.2.1 AND INFORMATION
 
 %% fast-deep-equal@3.1.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1875,7 +1875,7 @@ The complete list of contributors can be found at:
 =========================================
 END OF fast-uri@3.1.0 AND INFORMATION
 
-%% finalhandler@2.1.0 NOTICES AND INFORMATION BEGIN HERE
+%% finalhandler@2.1.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -1900,7 +1900,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF finalhandler@2.1.0 AND INFORMATION
+END OF finalhandler@2.1.1 AND INFORMATION
 
 %% forwarded@0.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2145,7 +2145,7 @@ SOFTWARE.
 =========================================
 END OF hasown@2.0.2 AND INFORMATION
 
-%% hono@4.11.3 NOTICES AND INFORMATION BEGIN HERE
+%% hono@4.11.8 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -2169,7 +2169,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF hono@4.11.3 AND INFORMATION
+END OF hono@4.11.8 AND INFORMATION
 
 %% http-errors@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2225,7 +2225,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF https-proxy-agent@7.0.6 AND INFORMATION
 
-%% iconv-lite@0.7.0 NOTICES AND INFORMATION BEGIN HERE
+%% iconv-lite@0.7.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (c) 2011 Alexander Shtuchkin
 
@@ -2248,7 +2248,7 @@ LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF iconv-lite@0.7.0 AND INFORMATION
+END OF iconv-lite@0.7.2 AND INFORMATION
 
 %% inherits@2.0.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2269,6 +2269,30 @@ OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF inherits@2.0.4 AND INFORMATION
+
+%% ip-address@10.0.1 NOTICES AND INFORMATION BEGIN HERE
+=========================================
+Copyright (C) 2011 by Beau Gunderson
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+=========================================
+END OF ip-address@10.0.1 AND INFORMATION
 
 %% ip-address@9.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2676,7 +2700,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF mime-db@1.54.0 AND INFORMATION
 
-%% mime-types@3.0.1 NOTICES AND INFORMATION BEGIN HERE
+%% mime-types@3.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -2702,7 +2726,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF mime-types@3.0.1 AND INFORMATION
+END OF mime-types@3.0.2 AND INFORMATION
 
 %% mime@3.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2987,7 +3011,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF path-key@3.1.1 AND INFORMATION
 
-%% path-to-regexp@8.2.0 NOTICES AND INFORMATION BEGIN HERE
+%% path-to-regexp@8.3.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3011,7 +3035,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF path-to-regexp@8.2.0 AND INFORMATION
+END OF path-to-regexp@8.3.0 AND INFORMATION
 
 %% pend@1.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3366,32 +3390,6 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF router@2.2.0 AND INFORMATION
 
-%% safe-buffer@5.2.1 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-The MIT License (MIT)
-
-Copyright (c) Feross Aboukhadijeh
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE.
-=========================================
-END OF safe-buffer@5.2.1 AND INFORMATION
-
 %% safer-buffer@2.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -3418,7 +3416,7 @@ SOFTWARE.
 =========================================
 END OF safer-buffer@2.1.2 AND INFORMATION
 
-%% send@1.2.0 NOTICES AND INFORMATION BEGIN HERE
+%% send@1.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -3444,9 +3442,9 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF send@1.2.0 AND INFORMATION
+END OF send@1.2.1 AND INFORMATION
 
-%% serve-static@2.2.0 NOTICES AND INFORMATION BEGIN HERE
+%% serve-static@2.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 (The MIT License)
 
@@ -3474,7 +3472,7 @@ CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF serve-static@2.2.0 AND INFORMATION
+END OF serve-static@2.2.1 AND INFORMATION
 
 %% setprototypeof@1.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
