@@ -51,7 +51,7 @@ configurations for common CI providers.
 If you have a powerful CI environment available, we recommend enabling [parallel](./test-parallel.md) tests and *not* limiting [workers](./api/class-testconfig.md#test-config-workers) to `1` in CI environments, to leverage all available resources and speed up your test runs.
 
 In some test suites, this can lead to instability and flakiness due to hidden race conditions and shared state.
-If you can't resolve this, set [workers](./api/class-testconfig.md#test-config-workers) to "1" in CI environments to ensure each test gets the full system resources, avoiding potential conflicts.
+If you can't resolve this, set [workers](./api/class-testconfig.md#test-config-workers) to `1` in CI environments to ensure each test gets the full system resources, avoiding potential conflicts.
 For wider parallelization, use [sharding](./test-parallel.md#shard-tests-between-multiple-machines) to distribute tests across multiple CI jobs.
 This comes the cost of per-shard overhead (checkout, installing dependencies, downloading browsers, etc).
 
