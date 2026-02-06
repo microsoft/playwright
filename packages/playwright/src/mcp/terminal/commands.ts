@@ -19,6 +19,18 @@ import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
 
+const numberArg = z.preprocess((val, ctx) => {
+  const number = Number(val);
+  if (Number.isNaN(number)) {
+    ctx.issues.push({
+      code: 'custom',
+      message: `expected number, received '${val}'`,
+      input: val,
+    });
+  }
+  return number;
+}, z.number());
+
 // Navigation commands
 
 const open = declareCommand({
@@ -143,8 +155,8 @@ const mouseMove = declareCommand({
   description: 'Move mouse to a given position',
   category: 'mouse',
   args: z.object({
-    x: z.number().describe('X coordinate'),
-    y: z.number().describe('Y coordinate'),
+    x: numberArg.describe('X coordinate'),
+    y: numberArg.describe('Y coordinate'),
   }),
   toolName: 'browser_mouse_move_xy',
   toolParams: ({ x, y }) => ({ x, y }),
@@ -177,8 +189,8 @@ const mouseWheel = declareCommand({
   description: 'Scroll mouse wheel',
   category: 'mouse',
   args: z.object({
-    dx: z.number().describe('Y delta'),
-    dy: z.number().describe('X delta'),
+    dx: numberArg.describe('Y delta'),
+    dy: numberArg.describe('X delta'),
   }),
   toolName: 'browser_mouse_wheel',
   toolParams: ({ dx: deltaY, dy: deltaX }) => ({ deltaY, deltaX }),
@@ -348,8 +360,8 @@ const resize = declareCommand({
   description: 'Resize the browser window',
   category: 'core',
   args: z.object({
-    w: z.number().describe('Width of the browser window'),
-    h: z.number().describe('Height of the browser window'),
+    w: numberArg.describe('Width of the browser window'),
+    h: numberArg.describe('Height of the browser window'),
   }),
   toolName: 'browser_resize',
   toolParams: ({ w: width, h: height }) => ({ width, height }),
@@ -393,7 +405,7 @@ const tabClose = declareCommand({
   description: 'Close a browser tab',
   category: 'tabs',
   args: z.object({
-    index: z.number().optional().describe('Tab index. If omitted, current tab is closed.'),
+    index: numberArg.optional().describe('Tab index. If omitted, current tab is closed.'),
   }),
   toolName: 'browser_tabs',
   toolParams: ({ index }) => ({ action: 'close', index }),
@@ -404,7 +416,7 @@ const tabSelect = declareCommand({
   description: 'Select a browser tab',
   category: 'tabs',
   args: z.object({
-    index: z.number().describe('Tab index'),
+    index: numberArg.describe('Tab index'),
   }),
   toolName: 'browser_tabs',
   toolParams: ({ index }) => ({ action: 'select', index }),

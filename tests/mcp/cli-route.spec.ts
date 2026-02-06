@@ -55,6 +55,16 @@ test('route with header', async ({ cli, server }) => {
   expect(output).toContain('Authorization');
 });
 
+test('route with numerical body', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/235' } }, async ({ cli, server }) => {
+  await cli('open', server.EMPTY_PAGE);
+
+  await cli('route', '**/api/data', '--body', '42', '--content-type', 'text/plain');
+
+  const { output } = await cli('route-list');
+  expect(output).toContain('**/api/data');
+  expect(output).toContain('contentType=text/plain');
+});
+
 test('unroute removes specific route', async ({ cli, server }) => {
   await cli('open', server.EMPTY_PAGE);
 

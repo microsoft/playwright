@@ -86,6 +86,15 @@ test('fill', async ({ cli, server }) => {
   expect(fillSnapshot).toBe(`- textbox [active] [ref=e2]: Hello, world!`);
 });
 
+test('fill numeric', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/235' } }, async ({ cli, server }) => {
+  server.setContent('/', `<input type=text>`, 'text/html');
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- textbox [ref=e2]`);
+
+  const { snapshot: fillSnapshot } = await cli('fill', 'e2', '42', '--submit');
+  expect(fillSnapshot).toContain(`[ref=e2]: "42"`);
+});
+
 test('hover', async ({ cli, server }) => {
   server.setContent('/', eventsPage, 'text/html');
   await cli('open', server.PREFIX);
