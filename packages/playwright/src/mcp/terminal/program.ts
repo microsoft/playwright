@@ -573,19 +573,19 @@ async function install(args: MinimistArgs) {
   // Create .playwright folder to mark workspace root
   const playwrightDir = path.join(cwd, '.playwright');
   await fs.promises.mkdir(playwrightDir, { recursive: true });
-  console.log(`Workspace initialized at ${cwd}`);
+  console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
   if (args.skills) {
     const skillSourceDir = path.join(__dirname, '../../skill');
     const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
 
     if (!fs.existsSync(skillSourceDir)) {
-      console.error('Skills source directory not found:', skillSourceDir);
+      console.error('❌ Skills source directory not found:', skillSourceDir);
       process.exit(1);
     }
 
     await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
-    console.log(`Skills installed to ${path.relative(cwd, skillDestDir)}`);
+    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
   }
 
   if (!args.config)
@@ -622,7 +622,7 @@ async function createDefaultConfig(channel: string) {
     },
   };
   await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
-  console.log(`Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
+  console.log(`✅ Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
 }
 
 async function findOrInstallDefaultBrowser() {
@@ -632,7 +632,7 @@ async function findOrInstallDefaultBrowser() {
     const executable = registry.findExecutable(channel);
     if (!executable?.executablePath())
       continue;
-    console.log(`Found ${channel}, will use it as the default browser.`);
+    console.log(`✅ Found ${channel}, will use it as the default browser.`);
     return channel;
   }
   const chromiumExecutable = registry.findExecutable('chromium');

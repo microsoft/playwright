@@ -43,7 +43,7 @@ test('install workspace', async ({ cli }, testInfo) => {
 
 test('install workspace w/skills', async ({ cli }, testInfo) => {
   const { output } = await cli('install', '--skills');
-  expect(output).toContain(`Skills installed to .claude${path.sep}skills${path.sep}playwright-cli`);
+  expect(output).toContain(`Skills installed to \`.claude${path.sep}skills${path.sep}playwright-cli\`.`);
 
   const skillFile = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'SKILL.md');
   expect(fs.existsSync(skillFile)).toBe(true);

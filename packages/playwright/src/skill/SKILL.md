@@ -9,25 +9,29 @@ allowed-tools: Bash(playwright-cli:*)
 ## Quick start
 
 ```bash
-playwright-cli open https://playwright.dev
+# open new browser
+playwright-cli open
+# navigate to a page
+playwright-cli goto https://playwright.dev
+# interact with the page using refs from the snapshot
 playwright-cli click e15
 playwright-cli type "page.click"
 playwright-cli press Enter
+# take a screenshot
+playwright-cli screenshot
+# close the browser
+playwright-cli close
 ```
-
-## Core workflow
-
-1. Navigate: `playwright-cli open https://example.com`
-2. Interact using refs from the snapshot
-3. Re-snapshot after significant changes
 
 ## Commands
 
 ### Core
 
 ```bash
+playwright-cli open
+# open and navigate right away
 playwright-cli open https://example.com/
-playwright-cli close
+playwright-cli goto https://playwright.dev
 playwright-cli type "search query"
 playwright-cli click e3
 playwright-cli dblclick e7
@@ -46,6 +50,7 @@ playwright-cli dialog-accept
 playwright-cli dialog-accept "confirmation text"
 playwright-cli dialog-dismiss
 playwright-cli resize 1920 1080
+playwright-cli close
 ```
 
 ### Navigation
@@ -153,8 +158,8 @@ playwright-cli video-stop video.webm
 ### Install
 
 ```bash
+playwright-cli install --skills
 playwright-cli install-browser
-playwright-cli install-skills
 ```
 
 ### Configuration
@@ -184,10 +189,13 @@ playwright-cli delete-data
 ### Browser Sessions
 
 ```bash
-playwright-cli -s=mysession open example.com
+# create new browser session named "mysession" with persistent profile
+playwright-cli -s=mysession open example.com --persistent
+# same with manually specified profile directory (use when requested explicitly)
+playwright-cli -s=mysession open example.com --profile=/path/to/profile
 playwright-cli -s=mysession click e6
 playwright-cli -s=mysession close  # stop a named browser
-playwright-cli -s=mysession delete-data  # delete user data for named browser
+playwright-cli -s=mysession delete-data  # delete user data for persistent session
 
 playwright-cli list
 # Close all browsers
@@ -206,6 +214,7 @@ playwright-cli fill e1 "user@example.com"
 playwright-cli fill e2 "password123"
 playwright-cli click e3
 playwright-cli snapshot
+playwright-cli close
 ```
 
 ## Example: Multi-tab workflow
@@ -216,6 +225,7 @@ playwright-cli tab-new https://example.com/other
 playwright-cli tab-list
 playwright-cli tab-select 0
 playwright-cli snapshot
+playwright-cli close
 ```
 
 ## Example: Debugging with DevTools
@@ -226,6 +236,7 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli console
 playwright-cli network
+playwright-cli close
 ```
 
 ```bash
@@ -234,6 +245,7 @@ playwright-cli tracing-start
 playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
+playwright-cli close
 ```
 
 ## Specific tasks
