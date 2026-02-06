@@ -1459,7 +1459,7 @@ Consider the following DOM structure.
 <button data-testid="directions">Itinéraire</button>
 ```
 
-You can locate the element by it's test id:
+You can locate the element by its test id:
 
 ```js
 await page.getByTestId('directions').click();
@@ -1731,7 +1731,7 @@ Consider the following DOM structure.
 <button>Submit</button>
 ```
 
-You can locate each element by it's implicit role:
+You can locate each element by its implicit role:
 
 ```js
 await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
