@@ -36,7 +36,7 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
   expect(listOutput).toContain(`### Browsers
 - default:
   - status: open
-  - browser-type: chrome
+  - browser-type: ${mcpBrowser}
   - user-data-dir: <in-memory>
   - headed: false`);
 });

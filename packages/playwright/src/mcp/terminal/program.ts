@@ -94,15 +94,16 @@ to restart the session daemon.`);
     return await this._send('run', { args, cwd: process.cwd() });
   }
 
-  async stop(): Promise<void> {
+  async stop(quiet: boolean = false): Promise<void> {
     if (!await this.canConnect()) {
-      console.log(`Browser '${this.name}' is not open.`);
+      if (!quiet)
+        console.log(`Browser '${this.name}' is not open.`);
       return;
     }
 
     await this._stopDaemon();
-    console.log(`Browser '${this.name}' closed`);
-    console.log('');
+    if (!quiet)
+      console.log(`Browser '${this.name}' closed\n`);
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -226,9 +227,7 @@ to restart the session daemon.`);
     this._config.version = this._clientInfo.version;
     await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
-    const outLog = this._sessionFile('.out');
     const errLog = this._sessionFile('.err');
-    const out = fs.openSync(outLog, 'w');
     const err = fs.openSync(errLog, 'w');
 
     const args = [
@@ -239,53 +238,67 @@ to restart the session daemon.`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
-      stdio: ['ignore', out, err],
+      stdio: ['ignore', 'pipe', err],
       cwd: process.cwd(), // Will be used as root.
     });
+
+    let signalled = false;
+    const sigintHandler = () => {
+      signalled = true;
+      child.kill('SIGINT');
+    };
+    const sigtermHandler = () => {
+      signalled = true;
+      child.kill('SIGTERM');
+    };
+    process.on('SIGINT', sigintHandler);
+    process.on('SIGTERM', sigtermHandler);
+
+    let outLog = '';
+    await new Promise<void>((resolve, reject) => {
+      child.stdout!.on('data', data => {
+        outLog += data.toString();
+        if (!outLog.includes('<EOF>'))
+          return;
+        const errorMatch = outLog.match(/### Error\n([\s\S]*)<EOF>/);
+        const error = errorMatch ? errorMatch[1].trim() : undefined;
+        if (error) {
+          const errLogContent = fs.readFileSync(errLog, 'utf-8');
+          const message = error + (errLogContent ? '\n' + errLogContent : '');
+          reject(new Error(message));
+        }
+
+        const successMatch = outLog.match(/### Success\nDaemon listening on (.*)\n<EOF>/);
+        if (successMatch)
+          resolve();
+      });
+      child.on('close', code => {
+        if (!signalled)
+          reject(new Error(`Daemon process exited with code ${code}`));
+      });
+    });
+
+    process.off('SIGINT', sigintHandler);
+    process.off('SIGTERM', sigtermHandler);
+    child.stdout!.destroy();
     child.unref();
 
-    // Wait for the socket to become available with retries.
-    const retryDelay = [100, 200, 400]; // ms
-    let totalWaited = 0;
-    for (let i = 0; i < 10; i++) {
-      await new Promise(resolve => setTimeout(resolve, retryDelay[i] || 1000));
-      totalWaited += retryDelay[i] || 1000;
-      try {
-        const { socket } = await this._connect();
-        if (socket) {
-          console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
-          const resolvedConfig = await parseResolvedConfig(errLog);
-          if (resolvedConfig) {
-            this._config.resolvedConfig = resolvedConfig;
-            console.log(`- ${this.name}:`);
-            console.log(renderResolvedConfig(resolvedConfig).join('\n'));
-          }
-          const sessionOption = this.name !== 'default' ? ` -b ${this.name}` : '';
-          console.log(``);
-          console.log(`\`\`\`bash`);
-          console.log(formatWithGap(`> playwright-cli${sessionOption} close`, `# to close when done`));
-          console.log(formatWithGap(`> playwright-cli${sessionOption} open [options]`, `# to reopen with new config`));
-          console.log(formatWithGap(`> playwright-cli${sessionOption} delete-data`, `# to delete profile data dir`));
-          console.log(`\`\`\``);
-          console.log(``);
-
-          await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
-          return socket;
-        }
-      } catch (e) {
-        if (e.code !== 'ENOENT' && e.code !== 'ECONNREFUSED')
-          throw e;
+    const { socket } = await this._connect();
+    if (socket) {
+      console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
+      const resolvedConfig = await parseResolvedConfig(outLog);
+      if (resolvedConfig) {
+        this._config.resolvedConfig = resolvedConfig;
+        console.log(`- ${this.name}:`);
+        console.log(renderResolvedConfig(resolvedConfig).join('\n'));
       }
+      console.log(`---`);
+
+      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+      return socket;
     }
 
-    const outData = await fs.promises.readFile(outLog, 'utf-8').catch(() => '');
-    const errData = await fs.promises.readFile(errLog, 'utf-8').catch(() => '');
-
-    console.error(`Failed to connect to daemon at ${this._config.socketPath} after ${totalWaited}ms`);
-    if (outData.length)
-      console.log(outData);
-    if (errData.length)
-      console.error(errData);
+    console.error(`Failed to connect to daemon at ${this._config.socketPath}`);
     process.exit(1);
   }
 
@@ -337,7 +350,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (session)
-      await session.stop();
+      await session.stop(true);
 
     session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
     this.sessions.set(sessionName, session);
@@ -350,7 +363,7 @@ class SessionManager {
     if (!session) {
       console.log(`The browser '${sessionName}' is not open, please run open first`);
       console.log('');
-      console.log(`  playwright-cli${sessionName !== 'default' ? ` -b ${sessionName}` : ''} open [params]`);
+      console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
       process.exit(1);
     }
 
@@ -487,10 +500,10 @@ export async function program(packageLocation: string) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
   }
-  // Normalize -b alias to --session
-  if (args.b) {
-    args.session = args.b;
-    delete args.b;
+  // Normalize -s alias to --session
+  if (args.s) {
+    args.session = args.s;
+    delete args.s;
   }
 
   const help = require('./help.json');
@@ -531,7 +544,7 @@ export async function program(packageLocation: string) {
     case 'close-all': {
       const sessions = sessionManager.sessions;
       for (const session of sessions.values())
-        await session.stop();
+        await session.stop(true);
       return;
     }
     case 'delete-data':
@@ -815,22 +828,16 @@ function renderResolvedConfig(resolvedConfig: FullConfig) {
   return lines;
 }
 
-function formatWithGap(prefix: string, text: string, threshold: number = 40) {
-  const indent = Math.max(1, threshold - prefix.length);
-  return prefix + ' '.repeat(indent) + text;
-}
-
-async function parseResolvedConfig(logFile: string): Promise<FullConfig | null> {
-  const logData = await fs.promises.readFile(logFile, 'utf-8').catch(() => '');
+async function parseResolvedConfig(errLog: string): Promise<FullConfig | null> {
   const marker = '### Config\n```json\n';
-  const markerIndex = logData.indexOf(marker);
+  const markerIndex = errLog.indexOf(marker);
   if (markerIndex === -1)
     return null;
   const jsonStart = markerIndex + marker.length;
-  const jsonEnd = logData.indexOf('\n```', jsonStart);
+  const jsonEnd = errLog.indexOf('\n```', jsonStart);
   if (jsonEnd === -1)
     throw null;
-  const jsonString = logData.substring(jsonStart, jsonEnd).trim();
+  const jsonString = errLog.substring(jsonStart, jsonEnd).trim();
   try {
     return JSON.parse(jsonString) as FullConfig;
   } catch {

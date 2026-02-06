@@ -8,14 +8,14 @@ Use `-b` flag to isolate browser contexts:
 
 ```bash
 # Browser 1: Authentication flow
-playwright-cli -b auth open https://app.example.com/login
+playwright-cli -s=auth open https://app.example.com/login
 
 # Browser 2: Public browsing (separate cookies, storage)
-playwright-cli -b public open https://example.com
+playwright-cli -s=public open https://example.com
 
 # Commands are isolated by browser session
-playwright-cli -b auth fill e1 "user@example.com"
-playwright-cli -b public snapshot
+playwright-cli -s=auth fill e1 "user@example.com"
+playwright-cli -s=public snapshot
 ```
 
 ## Browser Session Isolation Properties
@@ -36,7 +36,7 @@ playwright-cli list
 
 # Stop a browser session (close the browser)
 playwright-cli close                # stop the default browser
-playwright-cli -b mysession close   # stop a named browser
+playwright-cli -s=mysession close   # stop a named browser
 
 # Stop all browser sessions
 playwright-cli close-all
@@ -46,7 +46,7 @@ playwright-cli kill-all
 
 # Delete browser session user data (profile directory)
 playwright-cli delete-data                # delete default browser data
-playwright-cli -b mysession delete-data   # delete named browser data
+playwright-cli -s=mysession delete-data   # delete named browser data
 ```
 
 ## Environment Variable
@@ -67,15 +67,15 @@ playwright-cli open example.com  # Uses "mysession" automatically
 # Scrape multiple sites concurrently
 
 # Start all browsers
-playwright-cli -b site1 open https://site1.com &
-playwright-cli -b site2 open https://site2.com &
-playwright-cli -b site3 open https://site3.com &
+playwright-cli -s=site1 open https://site1.com &
+playwright-cli -s=site2 open https://site2.com &
+playwright-cli -s=site3 open https://site3.com &
 wait
 
 # Take snapshots from each
-playwright-cli -b site1 snapshot
-playwright-cli -b site2 snapshot
-playwright-cli -b site3 snapshot
+playwright-cli -s=site1 snapshot
+playwright-cli -s=site2 snapshot
+playwright-cli -s=site3 snapshot
 
 # Cleanup
 playwright-cli close-all
@@ -85,12 +85,12 @@ playwright-cli close-all
 
 ```bash
 # Test different user experiences
-playwright-cli -b variant-a open "https://app.com?variant=a"
-playwright-cli -b variant-b open "https://app.com?variant=b"
+playwright-cli -s=variant-a open "https://app.com?variant=a"
+playwright-cli -s=variant-b open "https://app.com?variant=b"
 
 # Compare
-playwright-cli -b variant-a screenshot
-playwright-cli -b variant-b screenshot
+playwright-cli -s=variant-a screenshot
+playwright-cli -s=variant-b screenshot
 ```
 
 ### Persistent Profile
@@ -107,7 +107,7 @@ playwright-cli open https://example.com --profile=/path/to/profile
 
 ## Default Browser Session
 
-When `-b` is omitted, commands use the default browser session:
+When `-s` is omitted, commands use the default browser session:
 
 ```bash
 # These use the same default browser session
@@ -140,19 +140,19 @@ playwright-cli open https://example.com --persistent
 
 ```bash
 # GOOD: Clear purpose
-playwright-cli -b github-auth open https://github.com
-playwright-cli -b docs-scrape open https://docs.example.com
+playwright-cli -s=github-auth open https://github.com
+playwright-cli -s=docs-scrape open https://docs.example.com
 
 # AVOID: Generic names
-playwright-cli -b s1 open https://github.com
+playwright-cli -s=s1 open https://github.com
 ```
 
 ### 2. Always Clean Up
 
 ```bash
 # Stop browsers when done
-playwright-cli -b auth close
-playwright-cli -b scrape close
+playwright-cli -s=auth close
+playwright-cli -s=scrape close
 
 # Or stop all at once
 playwright-cli close-all
@@ -165,5 +165,5 @@ playwright-cli kill-all
 
 ```bash
 # Remove old browser data to free disk space
-playwright-cli -b oldsession delete-data
+playwright-cli -s=oldsession delete-data
 ```

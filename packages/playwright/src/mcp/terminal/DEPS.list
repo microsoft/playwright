@@ -1,4 +1,5 @@
 [daemon.ts]
+../browser/browserServerBackend.ts
 ../browser/tools
 ../cli/socketConnection.ts
 

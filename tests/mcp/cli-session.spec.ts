@@ -41,14 +41,14 @@ test('close', async ({ cli, server }) => {
 });
 
 test('close named session', async ({ cli, server }) => {
-  await cli('-b', 'mysession', 'open', server.HELLO_WORLD);
+  await cli('-s', 'mysession', 'open', server.HELLO_WORLD);
 
-  const { output } = await cli('-b', 'mysession', 'close');
+  const { output } = await cli('-s', 'mysession', 'close');
   expect(output).toContain(`Browser 'mysession' closed`);
 });
 
 test('close non-running session', async ({ cli }) => {
-  const { output } = await cli('-b', 'nonexistent', 'close');
+  const { output } = await cli('-s', 'nonexistent', 'close');
   expect(output).toContain(`Browser 'nonexistent' is not open.`);
 });
 
@@ -66,8 +66,8 @@ test('persistent session shows in list after close', async ({ cli, server }) => 
 });
 
 test('close-all', async ({ cli, server }) => {
-  await cli('-b', 'session1', 'open', server.HELLO_WORLD);
-  await cli('-b', 'session2', 'open', server.HELLO_WORLD);
+  await cli('-s', 'session1', 'open', server.HELLO_WORLD);
+  await cli('-s', 'session2', 'open', server.HELLO_WORLD);
 
   const { output: listBefore } = await cli('list');
   expect(listBefore).toContain('session1');
@@ -92,19 +92,19 @@ test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
 });
 
 test('delete-data named session', async ({ cli, server, mcpBrowser }, testInfo) => {
-  await cli('-b', 'mysession', 'open', server.HELLO_WORLD, '--persistent');
+  await cli('-s', 'mysession', 'open', server.HELLO_WORLD, '--persistent');
 
   const dataDir = path.resolve(await daemonFolder(), 'ud-mysession-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
 
-  const { output } = await cli('-b', 'mysession', 'delete-data');
+  const { output } = await cli('-s', 'mysession', 'delete-data');
   expect(output).toContain(`Deleted user data for browser 'mysession'.`);
 
   expect(fs.existsSync(dataDir)).toBe(false);
 });
 
 test('delete-data non-existent session', async ({ cli }) => {
-  const { output } = await cli('-b', 'nonexistent', 'delete-data');
+  const { output } = await cli('-s', 'nonexistent', 'delete-data');
   expect(output).toContain(`No user data found for browser 'nonexistent'.`);
 });
 
@@ -192,8 +192,8 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   await cli('install', { cwd: workspace2 });
 
   // Open sessions in both workspaces
-  await cli('-b', 'session1', 'open', server.HELLO_WORLD, { cwd: workspace1 });
-  await cli('-b', 'session2', 'open', server.HELLO_WORLD, { cwd: workspace2 });
+  await cli('-s', 'session1', 'open', server.HELLO_WORLD, { cwd: workspace1 });
+  await cli('-s', 'session2', 'open', server.HELLO_WORLD, { cwd: workspace2 });
 
   // List all sessions from workspace1
   const { output: allList } = await cli('list', '--all', { cwd: workspace1 });
@@ -204,6 +204,6 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   expect(allList).toContain('session1');
   expect(allList).toContain('session2');
 
-  await cli('-b', 'session1', 'close', { cwd: workspace1 });
-  await cli('-b', 'session2', 'close', { cwd: workspace2 });
+  await cli('-s', 'session1', 'close', { cwd: workspace1 });
+  await cli('-s', 'session2', 'close', { cwd: workspace2 });
 });
