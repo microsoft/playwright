@@ -15,7 +15,7 @@
 */
 
 import type { TestAnnotation } from '@playwright/test';
-import type { HTMLReportOptions, TestCase, TestCaseSummary } from './types';
+import type { TestCase, TestCaseSummary } from './types';
 import * as React from 'react';
 import { TabbedPane } from './tabbedPane';
 import { AutoChip } from './chip';
@@ -29,18 +29,16 @@ import { msToString } from './utils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { HeaderView } from './headerView';
-import type { MetadataWithCommitInfo } from '@playwright/isomorphic/types';
 import { ProjectAndTagLabelsView } from './labels';
+import type { LoadedReport } from './loadedReport';
 
 export const TestCaseView: React.FC<{
-  projectNames: string[],
+  report: LoadedReport,
   test: TestCase,
-  testRunMetadata: MetadataWithCommitInfo | undefined,
   next: TestCaseSummary | undefined,
   prev: TestCaseSummary | undefined,
   run: number,
-  options?: HTMLReportOptions,
-}> = ({ projectNames, test, testRunMetadata, run, next, prev, options }) => {
+}> = ({ report, test, run, next, prev }) => {
   const [selectedResultIndex, setSelectedResultIndex] = React.useState(run);
   const searchParams = useSearchParams();
 
@@ -66,7 +64,7 @@ export const TestCaseView: React.FC<{
       <TraceLink test={test} trailingSeparator={true} />
       <div className='test-case-duration'>{msToString(test.duration)}</div>
     </div>
-    <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
+    <ProjectAndTagLabelsView style={{ marginLeft: '6px' }} projectNames={report.json().projectNames} activeProjectName={test.projectName} otherLabels={test.tags} />
     {/* If there are no results, display test annotations. Otherwise test annotations will be displayed alongside runtime annotations in individual result pane */}
     {test.results.length === 0 && visibleTestAnnotations.length !== 0 && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
       {visibleTestAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
@@ -84,7 +82,7 @@ export const TestCaseView: React.FC<{
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
             </AutoChip>}
-            <TestResultView test={test!} result={result} testRunMetadata={testRunMetadata} options={options} />
+            <TestResultView test={test!} result={result} report={report} />
           </>;
         },
       })) || []} selectedTab={String(selectedResultIndex)} setSelectedTab={id => setSelectedResultIndex(+id)} />
