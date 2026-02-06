@@ -34,6 +34,7 @@ import { WKInterceptableRequest, WKRouteImpl } from './wkInterceptableRequest';
 import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
+import { registry } from '../registry';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -46,7 +47,7 @@ import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS;
+const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS && parseInt(registry.findExecutable('webkit').revision!, 10) >= 2245;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -578,9 +579,9 @@ export class WKPage implements PageDelegate {
         url: url || '',
         lineNumber: (lineNumber || 1) - 1,
         columnNumber: (columnNumber || 1) - 1,
-      }
+      },
     };
-    this._onConsoleRepeatCountUpdated({ count: 1 });
+    this._onConsoleRepeatCountUpdated({ count: 1, timestamp: event.message.timestamp });
   }
 
   _onConsoleRepeatCountUpdated(event: Protocol.Console.messageRepeatCountUpdatedPayload) {
@@ -592,8 +593,9 @@ export class WKPage implements PageDelegate {
         count,
         location
       } = this._lastConsoleMessage;
+      const timestamp = event.timestamp ? event.timestamp * 1000 : Date.now();
       for (let i = count; i < event.count; ++i)
-        this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text);
+        this._page.addConsoleMessage(null, derivedType, handles, location, handles.length ? undefined : text, timestamp);
       this._lastConsoleMessage.count = event.count;
     }
   }
@@ -846,7 +848,7 @@ export class WKPage implements PageDelegate {
 
   private async _initializeVideoRecording() {
     const screencast = this._page.screencast;
-    const videoOptions = screencast.launchVideoRecorder();
+    const videoOptions = this._page.isStorageStatePage ? undefined : screencast.launchAutomaticVideoRecorder();
     if (videoOptions)
       await screencast.startVideoRecording(videoOptions);
   }

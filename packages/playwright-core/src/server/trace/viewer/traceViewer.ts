@@ -55,7 +55,7 @@ export type TraceViewerAppOptions = {
 
 const tracesDirMarker = 'traces.dir';
 
-function validateTraceUrl(traceFileOrUrl: string | undefined): string | undefined {
+function validateTraceUrlOrPath(traceFileOrUrl: string | undefined): string | undefined {
   if (!traceFileOrUrl)
     return traceFileOrUrl;
 
@@ -152,7 +152,7 @@ export async function installRootRedirect(server: HttpServer, traceUrl: string |
 }
 
 export async function runTraceViewerApp(traceUrl: string | undefined, browserName: string, options: TraceViewerServerOptions & { headless?: boolean }, exitOnClose?: boolean) {
-  traceUrl = validateTraceUrl(traceUrl);
+  traceUrl = validateTraceUrlOrPath(traceUrl);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrl, options);
   const page = await openTraceViewerApp(server.urlPrefix('precise'), browserName, options);
@@ -162,7 +162,7 @@ export async function runTraceViewerApp(traceUrl: string | undefined, browserNam
 }
 
 export async function runTraceInBrowser(traceUrl: string | undefined, options: TraceViewerServerOptions) {
-  traceUrl = validateTraceUrl(traceUrl);
+  traceUrl = validateTraceUrlOrPath(traceUrl);
   const server = await startTraceViewerServer(options);
   await installRootRedirect(server, traceUrl, options);
   await openTraceInBrowser(server.urlPrefix('human-readable'));
@@ -216,8 +216,8 @@ class StdinServer implements Transport {
 
   constructor() {
     process.stdin.on('data', data => {
-      const url = data.toString().trim();
-      if (url === this._traceUrl)
+      const url = validateTraceUrlOrPath(data.toString().trim());
+      if (!url || url === this._traceUrl)
         return;
       if (url.endsWith('.json'))
         this._pollLoadTrace(url);

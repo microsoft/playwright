@@ -59,11 +59,11 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
       headers: request.headers(),
       isNavigationRequest: request.isNavigationRequest(),
       redirectedFrom: RequestDispatcher.fromNullable(scope, request.redirectedFrom()),
-      hasResponse: !!request._existingResponse(),
     });
     this._type_Request = true;
     this._browserContextDispatcher = scope;
-    this.addObjectListener(Request.Events.Response, () => this._dispatchEvent('response', {}));
+    // Push existing response to the client if it exists.
+    ResponseDispatcher.fromNullable(scope, request._existingResponse());
   }
 
   async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {
@@ -79,8 +79,8 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   _type_Response = true;
 
   static from(scope: BrowserContextDispatcher, response: Response): ResponseDispatcher {
-    const result = scope.connection.existingDispatcher<ResponseDispatcher>(response);
     const requestDispatcher = RequestDispatcher.from(scope, response.request());
+    const result = scope.connection.existingDispatcher<ResponseDispatcher>(response);
     return result || new ResponseDispatcher(requestDispatcher, response);
   }
 

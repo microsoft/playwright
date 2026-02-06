@@ -26,7 +26,9 @@ import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
+import { commonFixtures } from '../config/commonFixtures';
 
+import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import type { Config } from '../../packages/playwright/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
@@ -38,6 +40,7 @@ export { parseResponse };
 export type TestOptions = {
   mcpArgs: string[] | undefined;
   mcpBrowser: string | undefined;
+  mcpCaps: string[] | undefined;
   mcpServerType: 'mcp' | 'test-mcp';
 };
 
@@ -74,17 +77,20 @@ type WorkerFixtures = {
   _workerServers: { server: TestServer, httpsServer: TestServer };
 };
 
-export const serverTest = baseTest.extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
+export const serverTest = baseTest
+    .extend<CommonFixtures, CommonWorkerFixtures>(commonFixtures)
+    .extend<ServerFixtures, ServerWorkerOptions>(serverFixtures);
 
 export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures>({
   mcpArgs: [undefined, { option: true }],
+  mcpCaps: [undefined, { option: true }],
 
   client: async ({ startClient }, use) => {
     const { client } = await startClient();
     await use(client);
   },
 
-  startClient: async ({ mcpHeadless, mcpBrowser, mcpArgs, mcpServerType }, use, testInfo) => {
+  startClient: async ({ mcpHeadless, mcpBrowser, mcpArgs, mcpServerType, mcpCaps }, use, testInfo) => {
     const configDir = path.dirname(test.info().config.configFile!);
     const clients: Client[] = [];
 
@@ -93,6 +99,8 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
 
       if (mcpHeadless)
         args.push('--headless');
+      if (mcpCaps?.length)
+        args.push(`--caps=${mcpCaps.join(',')}`);
 
       if (mcpServerType === 'test-mcp') {
         if (!options?.args?.some(arg => arg.startsWith('--config')))

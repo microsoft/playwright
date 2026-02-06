@@ -23,6 +23,8 @@ import { parseAriaSnapshotUnsafe } from '../../utils/isomorphic/ariaSnapshot';
 import { asLocatorDescription } from '../../utils/isomorphic/locatorGenerators';
 import { yaml } from '../../utilsBundle';
 import { serializeError } from '../errors';
+import { rewriteErrorMessage } from '../../utils/isomorphic/stackTrace';
+import { applySecrets, redactSecrets } from './context';
 
 import type * as actions from './actions';
 import type { Page } from '../page';
@@ -47,8 +49,10 @@ export async function runAction(progress: Progress, mode: 'generate' | 'run', pa
   callMetadata.error = error ? serializeError(error) : undefined;
   callMetadata.result = error ? undefined : result;
   await frame.instrumentation.onAfterCall(frame, callMetadata);
-  if (error)
+  if (error) {
+    rewriteErrorMessage(error, redactSecrets(error.message, secrets));
     throw error;
+  }
   return result;
 }
 
@@ -78,21 +82,20 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
       });
       break;
     case 'selectOption':
-      await frame.selectOption(progress, action.selector, [], action.labels.map(a => ({ label: a })), { ...commonOptions });
+      const labels = action.labels.map(label => applySecrets(label, secrets));
+      await frame.selectOption(progress, action.selector, [], labels.map(a => ({ label: a })), { ...commonOptions });
       break;
     case 'pressKey':
       await page.keyboard.press(progress, action.key);
       break;
     case 'pressSequentially': {
-      const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
-      await frame.type(progress, action.selector, secret, { ...commonOptions });
+      await frame.type(progress, action.selector, applySecrets(action.text, secrets), { ...commonOptions });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
       break;
     }
     case 'fill': {
-      const secret = secrets?.find(s => s.name === action.text)?.value ?? action.text;
-      await frame.fill(progress, action.selector, secret, { ...commonOptions });
+      await frame.fill(progress, action.selector, applySecrets(action.text, secrets), { ...commonOptions });
       if (action.submit)
         await page.keyboard.press(progress, 'Enter');
       break;
@@ -109,8 +112,9 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
     }
     case 'expectValue': {
       if (action.type === 'textbox' || action.type === 'combobox' || action.type === 'slider') {
-        const expectedText = serializeExpectedTextValues([action.value]);
-        await runExpect(frame, progress, mode, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot }, action.value, 'toHaveValue', 'expected');
+        const value = applySecrets(action.value, secrets);
+        const expectedText = serializeExpectedTextValues([value]);
+        await runExpect(frame, progress, mode, action.selector, { expression: 'to.have.value', expectedText, isNot: !!action.isNot }, value, 'toHaveValue', 'expected');
       } else if (action.type === 'checkbox' || action.type === 'radio') {
         const expectedValue = { checked: action.value === 'true' };
         await runExpect(frame, progress, mode, action.selector, { selector: action.selector, expression: 'to.be.checked', expectedValue, isNot: !!action.isNot }, action.value ? 'checked' : 'unchecked', 'toBeChecked', '');
@@ -120,8 +124,9 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
       break;
     }
     case 'expectAria': {
-      const expectedValue = parseAriaSnapshotUnsafe(yaml, action.template);
-      await runExpect(frame, progress, mode, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + action.template, 'toMatchAriaSnapshot', 'expected');
+      const template = applySecrets(action.template, secrets);
+      const expectedValue = parseAriaSnapshotUnsafe(yaml, template);
+      await runExpect(frame, progress, mode, 'body', { expression: 'to.match.aria', expectedValue, isNot: !!action.isNot }, '\n' + template, 'toMatchAriaSnapshot', 'expected');
       break;
     }
     case 'expectURL': {
@@ -135,8 +140,9 @@ async function innerRunAction(progress: Progress, mode: 'generate' | 'run', page
       break;
     }
     case 'expectTitle': {
-      const expectedText = serializeExpectedTextValues([action.value], { normalizeWhiteSpace: true });
-      await runExpect(frame, progress, mode, undefined, { expression: 'to.have.title', expectedText, isNot: !!action.isNot }, action.value, 'toHaveTitle', 'expected');
+      const value = applySecrets(action.value, secrets);
+      const expectedText = serializeExpectedTextValues([value], { normalizeWhiteSpace: true });
+      await runExpect(frame, progress, mode, undefined, { expression: 'to.have.title', expectedText, isNot: !!action.isNot }, value, 'toHaveTitle', 'expected');
       break;
     }
   }

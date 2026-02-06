@@ -161,6 +161,17 @@ SelectorEngine:
     source: string
     contentScript: boolean?
 
+URLPattern:
+  type: object
+  properties:
+    hash: string
+    hostname: string
+    password: string
+    pathname: string
+    port: string
+    protocol: string
+    search: string
+    username: string
 
 SetNetworkCookie:
   type: object
@@ -376,6 +387,7 @@ APIRequestContext:
 
     storageState:
       title: Get storage state
+      group: configuration
       parameters:
         indexedDB: boolean?
       returns:
@@ -1113,6 +1125,7 @@ ConsoleMessage:
         url: string
         lineNumber: int
         columnNumber: int
+    timestamp: float
 
 
 EventTarget:
@@ -1278,6 +1291,7 @@ BrowserContext:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
@@ -1291,6 +1305,7 @@ BrowserContext:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setOffline:
       title: Set offline mode
@@ -1299,6 +1314,7 @@ BrowserContext:
 
     storageState:
       title: Get storage state
+      group: configuration
       parameters:
         indexedDB: boolean?
       returns:
@@ -1308,6 +1324,20 @@ BrowserContext:
         origins:
           type: array
           items: OriginStorage
+
+    setStorageState:
+      title: Set storage state
+      group: configuration
+      parameters:
+        storageState:
+          type: object?
+          properties:
+            cookies:
+              type: array?
+              items: SetNetworkCookie
+            origins:
+              type: array?
+              items: SetOriginStorage
 
     pause:
       title: Pause
@@ -1471,10 +1501,6 @@ BrowserContext:
       parameters:
         webSocketRoute: WebSocketRoute
 
-    video:
-      parameters:
-        artifact: Artifact
-
     serviceWorker:
       parameters:
         worker: Worker
@@ -1529,6 +1555,7 @@ Page:
         height: int
     isClosed: boolean
     opener: Page?
+    video: Artifact?
 
   commands:
 
@@ -1731,6 +1758,7 @@ Page:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setWebSocketInterceptionPatterns:
       title: Route WebSockets
@@ -1744,6 +1772,7 @@ Page:
               glob: string?
               regexSource: string?
               regexFlags: string?
+              urlPattern: URLPattern?
 
     setViewportSize:
       title: Set viewport size
@@ -1998,6 +2027,22 @@ Page:
     bringToFront:
       title: Bring to front
 
+    videoStart:
+      title: Start video recording
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+      returns:
+        artifact: Artifact
+
+    videoStop:
+      title: Stop video recording
+      group: configuration
+
     updateSubscription:
       internal: true
       parameters:
@@ -2083,10 +2128,6 @@ Page:
     webSocketRoute:
       parameters:
         webSocketRoute: WebSocketRoute
-
-    video:
-      parameters:
-        artifact: Artifact
 
     webSocket:
       parameters:
@@ -2764,7 +2805,7 @@ Frame:
       parameters:
         selector: string?
         expression: string
-        expressionArg: json?
+        expressionArg: string?
         expectedText:
           type: array?
           items: ExpectedTextValue
@@ -3411,7 +3452,6 @@ Request:
       items: NameValue
     isNavigationRequest: boolean
     redirectedFrom: Request?
-    hasResponse: boolean
 
   commands:
 
@@ -3426,9 +3466,6 @@ Request:
         headers:
           type: array
           items: NameValue
-
-  events:
-    response:
 
 Route:
   type: interface
@@ -3869,6 +3906,7 @@ Electron:
         args:
           type: array?
           items: string
+        chromiumSandbox: boolean?
         cwd: string?
         env:
           type: array?

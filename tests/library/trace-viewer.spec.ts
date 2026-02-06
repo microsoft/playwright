@@ -2249,27 +2249,15 @@ test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) 
   await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
 
-test('should print correct host', async ({ childProcess }, testInfo) => {
-  const cp = childProcess({
-    command: ['npx', 'playwright', 'show-trace', testInfo.outputPath(), '--port=0'],
-  });
+test('take trace paths via stdin', async ({ childProcess, page }) => {
+  const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
+  const cp = childProcess({ command: ['node', cliEntrypoint, 'show-trace', '--port', '0', '--stdin'] });
   await cp.waitForOutput('Listening on');
-  const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
-  expect(proto).toEqual('http');
-  expect(host).toBe('localhost');
-  expect(+port).toBeGreaterThan(0);
-});
-
-test('coding agent mode', async ({ childProcess }, testInfo) => {
-  const cp = childProcess({
-    command: ['npx', 'playwright', 'show-trace', testInfo.outputPath()],
-    env: {
-      CLAUDECODE: '1',
-    }
-  });
-  await cp.waitForOutput('Listening on');
-  const [, proto, host, port] = cp.output.match(/Listening on (.*?):\/\/(.*?):(\d+)\n/);
-  expect(proto).toEqual('http');
-  expect(host).toBe('localhost');
-  expect(+port).toBeGreaterThan(0);
+  const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
+  await page.goto(url);
+  await expect(page).toHaveTitle('Playwright Trace Viewer');
+  cp.write(traceFile);
+  await expect(page.locator('.action-title')).toContainText([
+    /Create page/,
+  ]);
 });

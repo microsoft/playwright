@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
+import os from 'os';
+
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 import { selectors } from 'playwright-core';
 import { fileURLToPath } from 'url';
-import os from 'os';
 
 import { logUnhandledError } from '../log';
 import { Tab } from './tab';
-import { outputFile  } from './config';
+import { outputFile, workspaceFile } from './config';
 
 import type * as playwright from '../../../types/test';
 import type { FullConfig } from './config';
@@ -40,6 +41,25 @@ type ContextOptions = {
   clientInfo: ClientInfo;
 };
 
+export type RouteEntry = {
+  pattern: string;
+  status?: number;
+  body?: string;
+  contentType?: string;
+  addHeaders?: Record<string, string>;
+  removeHeaders?: string[];
+  handler: (route: playwright.Route) => Promise<void>;
+};
+
+export type FilenameTemplate = {
+  prefix: string;
+  ext: string;
+  suggestedFilename?: string;
+  date?: Date;
+};
+
+type VideoParams = NonNullable<Parameters<playwright.Video['start']>[0]>;
+
 export class Context {
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
@@ -49,6 +69,11 @@ export class Context {
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
   private _clientInfo: ClientInfo;
+  private _routes: RouteEntry[] = [];
+  private _video: {
+    allVideos: Set<playwright.Video>;
+    listener: (page: playwright.Page) => void;
+  } | undefined;
 
   private static _allContexts: Set<Context> = new Set();
   private _closeBrowserContextPromise: Promise<void> | undefined;
@@ -115,8 +140,40 @@ export class Context {
     return url;
   }
 
-  async outputFile(fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
-    return outputFile(this.config, this._clientInfo, fileName, options);
+  async workspaceFile(fileName: string, perCallWorkspaceDir: string | undefined): Promise<string> {
+    return await workspaceFile(this.config, this._clientInfo, fileName, perCallWorkspaceDir);
+  }
+
+  async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
+    const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
+    return await outputFile(this.config, this._clientInfo, baseName, options);
+  }
+
+  async startVideoRecording(params: VideoParams) {
+    if (this._video)
+      throw new Error('Video recording has already been started.');
+    const listener = (page: playwright.Page) => {
+      this._video?.allVideos.add(page.video());
+      page.video().start(params).catch(() => {});
+    };
+    this._video = { allVideos: new Set(), listener };
+    const browserContext = await this.ensureBrowserContext();
+    browserContext.pages().forEach(listener);
+    browserContext.on('page', listener);
+  }
+
+  async stopVideoRecording() {
+    if (!this._video)
+      throw new Error('Video recording has not been started.');
+    const video = this._video;
+    if (this._browserContextPromise) {
+      const { browserContext } = await this._browserContextPromise;
+      browserContext.off('page', video.listener);
+      for (const page of browserContext.pages())
+        await page.video().stop().catch(() => {});
+    }
+    this._video = undefined;
+    return video.allVideos;
   }
 
   private _onPageCreated(page: playwright.Page) {
@@ -143,6 +200,36 @@ export class Context {
       this._closeBrowserContextPromise = this._closeBrowserContextImpl().catch(logUnhandledError);
     await this._closeBrowserContextPromise;
     this._closeBrowserContextPromise = undefined;
+  }
+
+  routes(): RouteEntry[] {
+    return this._routes;
+  }
+
+  async addRoute(entry: RouteEntry): Promise<void> {
+    const { browserContext } = await this._ensureBrowserContext();
+    await browserContext.route(entry.pattern, entry.handler);
+    this._routes.push(entry);
+  }
+
+  async removeRoute(pattern?: string): Promise<number> {
+    if (!this._browserContextPromise)
+      return 0;
+    const { browserContext } = await this._browserContextPromise;
+    let removed = 0;
+    if (pattern) {
+      const toRemove = this._routes.filter(r => r.pattern === pattern);
+      for (const route of toRemove)
+        await browserContext.unroute(route.pattern, route.handler);
+      this._routes = this._routes.filter(r => r.pattern !== pattern);
+      removed = toRemove.length;
+    } else {
+      for (const route of this._routes)
+        await browserContext.unroute(route.pattern, route.handler);
+      removed = this._routes.length;
+      this._routes = [];
+    }
+    return removed;
   }
 
   isRunningTool() {
@@ -270,6 +357,11 @@ function allRootPaths(clientInfo: ClientInfo): string[] {
 
 
 function originOrHostGlob(originOrHost: string) {
+  // Support wildcard port patterns like "http://localhost:*" or "https://example.com:*"
+  const wildcardPortMatch = originOrHost.match(/^(https?:\/\/[^/:]+):\*$/);
+  if (wildcardPortMatch)
+    return `${wildcardPortMatch[1]}:*/**`;
+
   try {
     const url = new URL(originOrHost);
     // localhost:1234 will parse as protocol 'localhost:' and 'null' origin.

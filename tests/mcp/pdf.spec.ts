@@ -56,10 +56,9 @@ test('save as pdf', async ({ startClient, mcpBrowser, server }, testInfo) => {
 });
 
 test('save as pdf (filename: output.pdf)', async ({ startClient, mcpBrowser, server }, testInfo) => {
-  const outputDir = testInfo.outputPath('output');
   test.skip(!!mcpBrowser && !['chromium', 'chrome', 'msedge'].includes(mcpBrowser), 'Save as PDF is only supported in Chromium.');
   const { client } = await startClient({
-    config: { outputDir, capabilities: ['pdf'] },
+    config: { capabilities: ['pdf'] },
   });
 
   expect(await client.callTool({
@@ -79,9 +78,9 @@ test('save as pdf (filename: output.pdf)', async ({ startClient, mcpBrowser, ser
     code: expect.stringContaining(`await page.pdf(`),
   });
 
-  const files = [...fs.readdirSync(outputDir)];
+  const files = [...fs.readdirSync(testInfo.outputPath())];
 
-  expect(fs.existsSync(outputDir)).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath())).toBeTruthy();
   const pdfFiles = files.filter(f => f.endsWith('.pdf'));
   expect(pdfFiles).toHaveLength(1);
   expect(pdfFiles[0]).toMatch(/^output.pdf$/);

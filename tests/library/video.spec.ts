@@ -21,6 +21,7 @@ import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
 import { registry } from '../../packages/playwright-core/lib/server';
 import { expect, browserTest as it } from '../config/browserTest';
 import { parseTraceRaw, rafraf } from '../config/utils';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 export class VideoPlayer {
   fileName: string;
@@ -36,7 +37,7 @@ export class VideoPlayer {
     const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
     // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
     // which is 1 / (25 * 1000).
-    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%03d.png`]).stderr.toString();
+    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%04d.png`]).stderr.toString();
 
     const lines = this.output.split('\n');
     let framesLine = lines.find(l => l.startsWith('frame='))!;
@@ -67,7 +68,7 @@ export class VideoPlayer {
 
   frame(frame: number, offset = { x: 10, y: 10 }): any {
     if (!this.cache.has(frame)) {
-      const gap = '0'.repeat(3 - String(frame).length);
+      const gap = '0'.repeat(4 - String(frame).length);
       const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);
       this.cache.set(frame, PNG.sync.read(buffer));
     }
@@ -80,6 +81,10 @@ export class VideoPlayer {
 
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
+
+function isAlmostWhite({ r, g, b, alpha }: Pixel): boolean {
+  return r > 185 && g > 185 && b > 185 && alpha === 255;
+}
 
 function isAlmostRed({ r, g, b, alpha }: Pixel): boolean {
   return r > 185 && g < 70 && b < 70 && alpha === 255;
@@ -132,6 +137,10 @@ function findVideos(videoDir: string) {
 }
 
 function expectRedFrames(videoFile: string, size: { width: number, height: number }) {
+  expectFrames(videoFile, size, isAlmostRed);
+}
+
+function expectFrames(videoFile: string, size: { width: number, height: number }, pixelPredicate: PixelPredicate) {
   const videoPlayer = new VideoPlayer(videoFile);
   const duration = videoPlayer.duration;
   expect(duration).toBeGreaterThan(0);
@@ -141,11 +150,11 @@ function expectRedFrames(videoFile: string, size: { width: number, height: numbe
 
   {
     const pixels = videoPlayer.seekLastFrame().data;
-    expectAll(pixels, isAlmostRed);
+    expectAll(pixels, pixelPredicate);
   }
   {
-    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: 0 }).data;
-    expectAll(pixels, isAlmostRed);
+    const pixels = videoPlayer.seekLastFrame({ x: size.width - 20, y: 10 }).data;
+    expectAll(pixels, pixelPredicate);
   }
 }
 
@@ -248,36 +257,6 @@ it.describe('screencast', () => {
     expect(path).toContain(videosPath);
     await context.close();
     expect(fs.existsSync(path)).toBeTruthy();
-  });
-
-  it('saveAs should throw when no video frames', async ({ browser }, testInfo) => {
-    const videosPath = testInfo.outputPath('');
-    const size = { width: 320, height: 240 };
-    const context = await browser.newContext({
-      recordVideo: {
-        dir: videosPath,
-        size
-      },
-      viewport: size,
-    });
-
-    const page = await context.newPage();
-    const [popup] = await Promise.all([
-      page.context().waitForEvent('page'),
-      page.evaluate(() => {
-        const win = window.open('about:blank');
-        win.close();
-      }),
-    ]);
-    await page.close();
-
-    const saveAsPath = testInfo.outputPath('my-video.webm');
-    const error = await popup.video().saveAs(saveAsPath).catch(e => e);
-    // WebKit pauses renderer before win.close() and actually writes something,
-    // and other browsers are sometimes fast as well.
-    if (!fs.existsSync(saveAsPath))
-      expect(error.message).toContain('Page did not produce any video frames');
-    await context.close();
   });
 
   it('should delete video', async ({ browser }, testInfo) => {
@@ -502,15 +481,15 @@ it.describe('screencast', () => {
     expect(duration).toBeGreaterThan(0);
 
     {
-      const pixels = videoPlayer.seekLastFrame({ x: 0, y: 0 }).data;
+      const pixels = videoPlayer.seekLastFrame({ x: 10, y: 10 }).data;
       expectAll(pixels, isAlmostRed);
     }
     {
-      const pixels = videoPlayer.seekLastFrame({ x: 300, y: 0 }).data;
+      const pixels = videoPlayer.seekLastFrame({ x: 300, y: 10 }).data;
       expectAll(pixels, isAlmostGray);
     }
     {
-      const pixels = videoPlayer.seekLastFrame({ x: 0, y: 200 }).data;
+      const pixels = videoPlayer.seekLastFrame({ x: 10, y: 200 }).data;
       expectAll(pixels, isAlmostGray);
     }
     {
@@ -693,7 +672,6 @@ it.describe('screencast', () => {
   });
 
   it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
-    it.fixme(true, 'https://github.com/microsoft/playwright/issues/6743');
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
       res.end();
@@ -831,6 +809,93 @@ it.describe('screencast', () => {
       alpha: image.data.readUInt8(offset + 3),
     };
     expect(isAlmostRed(pixel)).toBe(true);
+  });
+
+  it('video.start/stop twice', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    const videoPath1 = await page.video().path();
+    expect(videoPath1).toBeDefined();
+    await page.video().stop();
+    expectRedFrames(videoPath1, size);
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
+    await rafraf(page, 100);
+    const videoPath2 = await page.video().path();
+    expect(videoPath2).toBeDefined();
+    expect(videoPath2).not.toEqual(videoPath1);
+    const videoPath3 = testInfo.outputPath('video3.webm');
+    await page.video().stop({ path: videoPath3 });
+    const contents2 = fs.readFileSync(videoPath2).toString('base64');
+    const contents3 = fs.readFileSync(videoPath3).toString('base64');
+    expect(contents2 === contents3).toBeTruthy();
+    expectFrames(videoPath3, size, isAlmostGray);
+
+    await context.close();
+  });
+
+  it('video.start should fail when recordVideo is set, but stop should work', async ({ browser }, testInfo) => {
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: testInfo.outputPath(''),
+      },
+    });
+    const page = await context.newPage();
+    const error = await page.video().start().catch(e => e);
+    expect(error.message).toContain('Video is already being recorded');
+    await page.video().stop({ path: testInfo.outputPath('video.webm') });
+    await context.close();
+  });
+
+  it('video.start should fail when another recording is in progress', async ({ browser }, testInfo) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.video().start();
+    const error = await page.video().start().catch(e => e);
+    expect(error.message).toContain('Video is already being recorded');
+    await context.close();
+  });
+
+  it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    const error = await page.video().stop().catch(e => e);
+    expect(error.message).toContain('Video is not being recorded');
+    await context.close();
+  });
+
+  it('video.start should finish when page is closed', async ({ browser, browserName }, testInfo) => {
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.video().start();
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    const videoPath = await page.video().path();
+    expect(videoPath).toBeDefined();
+    await page.close();
+    const error = await page.video().stop().catch(e => e);
+    expect(error.message).toContain(kTargetClosedErrorMessage);
+    const newPath = testInfo.outputPath('video.webm');
+    await page.video().saveAs(newPath);
+    expect(fs.existsSync(newPath)).toBeTruthy();
+    await context.close();
+  });
+
+  it('empty video', async ({ browser, browserName }, testInfo) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+    await page.video().start({ size });
+    const videoPath = testInfo.outputPath('empty-video.webm');
+    await page.video().stop({ path: videoPath });
+    await context.close();
+    expectFrames(videoPath, size, isAlmostWhite);
   });
 });
 

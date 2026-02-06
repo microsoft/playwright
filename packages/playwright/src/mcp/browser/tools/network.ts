@@ -18,7 +18,6 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
 
 import type * as playwright from 'playwright-core';
-import type { Request } from '../../../../../playwright-core/src/client/network';
 
 const requests = defineTabTool({
   capability: 'core',
@@ -38,9 +37,9 @@ const requests = defineTabTool({
     const requests = await tab.requests();
     const text: string[] = [];
     for (const request of requests) {
-      const rendered = await renderRequest(request, params.includeStatic);
-      if (rendered)
-        text.push(rendered);
+      if (!params.includeStatic && !isFetch(request) && isSuccessfulResponse(request))
+        continue;
+      text.push(await renderRequest(request));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -61,18 +60,26 @@ const networkClear = defineTabTool({
   },
 });
 
-async function renderRequest(request: playwright.Request, includeStatic: boolean): Promise<string | undefined> {
-  const response = (request as Request)._hasResponse ? await request.response() : undefined;
-  const isStaticRequest = ['document', 'stylesheet', 'image', 'media', 'font', 'script', 'manifest'].includes(request.resourceType());
-  const isSuccessfulRequest = !response || response.status() < 400;
+function isSuccessfulResponse(request: playwright.Request): boolean {
+  if (request.failure())
+    return false;
+  const response = request.existingResponse();
+  return !!response && response.status() < 400;
+}
 
-  if (isStaticRequest && isSuccessfulRequest && !includeStatic)
-    return undefined;
+export function isFetch(request: playwright.Request): boolean {
+  return ['fetch', 'xhr'].includes(request.resourceType());
+}
+
+export async function renderRequest(request: playwright.Request): Promise<string> {
+  const response = request.existingResponse();
 
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
   if (response)
     result.push(`=> [${response.status()}] ${response.statusText()}`);
+  else if (request.failure())
+    result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
   return result.join(' ');
 }
 

@@ -71,20 +71,26 @@ const categories: { name: Category, title: string }[] = [
   { name: 'export', title: 'Save as' },
   { name: 'tabs', title: 'Tabs' },
   { name: 'storage', title: 'Storage' },
+  { name: 'network', title: 'Network' },
   { name: 'devtools', title: 'DevTools' },
+  { name: 'install', title: 'Install' },
   { name: 'config', title: 'Configuration' },
-  { name: 'session', title: 'Sessions' },
+  { name: 'browsers', title: 'Browser sessions' },
 ] as const;
 
 export function generateHelp() {
   const lines: string[] = [];
   lines.push('Usage: playwright-cli <command> [args] [options]');
+  lines.push('Usage: playwright-cli -s=<session> <command> [args] [options]');
 
   const commandsByCategory = new Map<string, AnyCommandSchema[]>();
   for (const c of categories)
     commandsByCategory.set(c.name, []);
-  for (const command of Object.values(commands))
+  for (const command of Object.values(commands)) {
+    if (command.hidden)
+      continue;
     commandsByCategory.get(command.category)!.push(command);
+  }
 
   for (const c of categories) {
     const cc = commandsByCategory.get(c.name)!;
@@ -96,10 +102,7 @@ export function generateHelp() {
   }
 
   lines.push('\nGlobal options:');
-  lines.push(formatWithGap('  --config <path>', 'create a session with custom config, defaults to `playwright-cli.json`'));
-  lines.push(formatWithGap('  --headed', 'create a headed session'));
   lines.push(formatWithGap('  --help [command]', 'print help'));
-  lines.push(formatWithGap('  --session', 'run command in the scope of a specific session'));
   lines.push(formatWithGap('  --version', 'print version'));
 
   return lines.join('\n');

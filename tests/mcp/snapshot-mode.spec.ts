@@ -115,13 +115,8 @@ test('should respect --snapshot-mode=none', async ({ startClient, server }) => {
   });
 });
 
-test('should respect snapshot[filename]', async ({ startClient, server }, testInfo) => {
+test('should respect snapshot[filename]', async ({ client, server }, testInfo) => {
   server.setContent('/', `<button>Button 1</button>`, 'text/html');
-
-  const outputDir = testInfo.outputPath('output');
-  const { client } = await startClient({
-    config: { outputDir },
-  });
 
   await client.callTool({
     name: 'browser_navigate',
@@ -135,7 +130,7 @@ test('should respect snapshot[filename]', async ({ startClient, server }, testIn
     arguments: {
       filename: 'snapshot1.yml',
     },
-  })).toHaveTextResponse(expect.stringContaining('output' + path.sep + 'snapshot1.yml'));
+  })).toHaveTextResponse(expect.stringContaining('snapshot1.yml'));
 
-  expect(await fs.promises.readFile(path.join(outputDir, 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
+  expect(await fs.promises.readFile(path.join(testInfo.outputPath(), 'snapshot1.yml'), 'utf8')).toContain(`- button "Button 1" [ref=e2]`);
 });

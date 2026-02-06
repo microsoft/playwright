@@ -3,30 +3,30 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1208",
+      "revision": "1209",
       "installByDefault": true,
-      "browserVersion": "145.0.7632.6",
+      "browserVersion": "145.0.7632.18",
       "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1208",
+      "revision": "1209",
       "installByDefault": true,
-      "browserVersion": "145.0.7632.6",
+      "browserVersion": "145.0.7632.18",
       "title": "Chrome Headless Shell"
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1401",
+      "revision": "1404",
       "installByDefault": false,
-      "browserVersion": "146.0.7644.0",
+      "browserVersion": "146.0.7657.0",
       "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1401",
+      "revision": "1404",
       "installByDefault": false,
-      "browserVersion": "146.0.7644.0",
+      "browserVersion": "146.0.7657.0",
       "title": "Chrome Canary Headless Shell"
     },
     {
@@ -45,9 +45,11 @@
     },
     {
       "name": "webkit",
-      "revision": "2251",
+      "revision": "2255",
       "installByDefault": true,
       "revisionOverrides": {
+        "mac14": "2251",
+        "mac14-arm64": "2251",
         "debian11-x64": "2105",
         "debian11-arm64": "2105",
         "ubuntu20.04-x64": "2092",

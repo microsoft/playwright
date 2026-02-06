@@ -228,7 +228,7 @@ export class FixtureRunner {
       throw firstError;
   }
 
-  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<object | null> {
+  async resolveParametersForFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription): Promise<{ result: object } | null> {
     const collector = new Set<FixtureRegistration>();
 
     // Collect automatic fixtures.
@@ -264,7 +264,8 @@ export class FixtureRunner {
         return null;
       params[name] = fixture.value;
     }
-    return params;
+    // Wrap in an object to avoid returning a thenable if a fixture is named 'then'.
+    return { result: params };
   }
 
   async resolveParametersAndRunFunction(fn: Function, testInfo: TestInfoImpl, autoFixtures: 'worker' | 'test' | 'all-hooks-only', runnable: RunnableDescription) {
@@ -273,7 +274,7 @@ export class FixtureRunner {
       // Do not run the function when fixture setup has already failed.
       return null;
     }
-    await testInfo._runWithTimeout(runnable, () => fn(params, testInfo));
+    await testInfo._runWithTimeout(runnable, () => fn(params.result, testInfo));
   }
 
   private async _setupFixtureForRegistration(registration: FixtureRegistration, testInfo: TestInfoImpl, runnable: RunnableDescription): Promise<Fixture> {

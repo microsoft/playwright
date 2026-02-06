@@ -130,7 +130,6 @@ const PageEvent = {
   InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
   LocatorHandlerTriggered: 'locatorhandlertriggered',
   ScreencastFrame: 'screencastframe',
-  Video: 'video',
   WebSocket: 'websocket',
   Worker: 'worker',
 } as const;
@@ -146,7 +145,6 @@ export type PageEventMap = {
   [PageEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame];
   [PageEvent.LocatorHandlerTriggered]: [uid: number];
   [PageEvent.ScreencastFrame]: [frame: types.ScreencastFrame];
-  [PageEvent.Video]: [artifact: Artifact];
   [PageEvent.WebSocket]: [webSocket: network.WebSocket];
   [PageEvent.Worker]: [worker: Worker];
 };
@@ -179,7 +177,7 @@ export class Page extends SdkObject<PageEventMap> {
   readonly pdf: ((options: channels.PagePdfParams) => Promise<Buffer>) | undefined;
   readonly coverage: any;
   readonly requestInterceptors: network.RouteHandler[] = [];
-  video: Artifact | null = null;
+  video: Artifact | undefined;
   private _opener: Page | undefined;
   readonly isStorageStatePage: boolean;
   private _locatorHandlers = new Map<number, { selector: string, noWaitAfter?: boolean, resolved?: ManualPromise<void> }>();
@@ -382,8 +380,8 @@ export class Page extends SdkObject<PageEventMap> {
     await PageBinding.dispatch(this, payload, context);
   }
 
-  addConsoleMessage(worker: Worker | null, type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text?: string) {
-    const message = new ConsoleMessage(this, worker, type, text, args, location);
+  addConsoleMessage(worker: Worker | null, type: string, args: js.JSHandle[], location: types.ConsoleMessageLocation, text: string | undefined, timestamp: number) {
+    const message = new ConsoleMessage(this, worker, type, text, args, location, timestamp);
     const intercepted = this.frameManager.interceptConsoleMessage(message);
     if (intercepted) {
       args.forEach(arg => arg.dispose());

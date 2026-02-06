@@ -59,7 +59,7 @@ test('browser_navigate allows about:, data: and javascript: protocols', async ({
     arguments: { url: 'data:text/html,<h1>Hello</h1>' },
   })).toHaveResponse({
     code: `await page.goto('data:text/html,<h1>Hello</h1>');`,
-    page: `- Page URL: data:text/html,<h1>Hello</h1>`,
+    page: expect.stringContaining(`- Page URL: data:text/html,<h1>Hello</h1>`),
     snapshot: `\`\`\`yaml
 - heading \"Hello\" [level=1] [ref=e2]
 \`\`\``,

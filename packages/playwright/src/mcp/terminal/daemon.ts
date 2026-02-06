@@ -23,14 +23,14 @@ import url from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
+import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { SocketConnection } from './socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
 
-import type { ServerBackendFactory } from '../sdk/server';
 import type * as mcp from '../sdk/exports';
-import type { StructuredResponse } from './program';
-import type { Section } from '../browser/response';
+import type { BrowserContextFactory } from '../browser/browserContextFactory';
+import type { FullConfig } from '../browser/config';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -44,13 +44,12 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
-/**
- * Start a daemon server listening on Unix domain socket (Unix) or named pipe (Windows).
- */
 export async function startMcpDaemonServer(
-  socketPath: string,
-  serverBackendFactory: ServerBackendFactory
+  config: FullConfig,
+  contextFactory: BrowserContextFactory,
 ): Promise<string> {
+  const sessionConfig = config.sessionConfig!;
+  const { socketPath, version } = sessionConfig;
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
     daemonDebug(`Socket already exists, removing: ${socketPath}`);
@@ -62,23 +61,40 @@ export async function startMcpDaemonServer(
     }
   }
 
-  const backend = serverBackendFactory.create();
   const cwd = url.pathToFileURL(process.cwd()).href;
-  await backend.initialize?.({
+  const clientInfo = {
     name: 'playwright-cli',
-    version: '1.0.0',
+    version: sessionConfig.version,
     roots: [{
       uri: cwd,
       name: 'cwd'
     }],
     timestamp: Date.now(),
+  };
+
+  const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {});
+  browserContext.on('close', () => {
+    daemonDebug('browser closed, shutting down daemon');
+    shutdown(0);
   });
+
+  const existingContextFactory = {
+    createContext: () => Promise.resolve({ browserContext, close }),
+  };
+  const backend = new BrowserServerBackend(config, existingContextFactory, { allTools: true });
+  await backend.initialize?.(clientInfo);
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
+  const shutdown = (exitCode: number) => {
+    daemonDebug(`shutting down daemon with exit code ${exitCode}`);
+    server.close();
+    gracefullyProcessExitDoNotHang(exitCode);
+  };
+
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
-    const connection = new SocketConnection(socket);
+    const connection = new SocketConnection(socket, version);
     connection.onclose = () => {
       daemonDebug('client disconnected');
     };
@@ -88,12 +104,15 @@ export async function startMcpDaemonServer(
         daemonDebug('received command', method);
         if (method === 'stop') {
           daemonDebug('stop command received, shutting down');
-          await connection.send({ id, result: 'ok' });
-          server.close();
-          gracefullyProcessExitDoNotHang(0);
+          gracefullyProcessExitDoNotHang(0, async () => {
+            await connection.send({ id, result: 'ok' }).catch(() => {});
+            server.close();
+          });
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
-          const response = await backend.callTool(toolName, toolParams, () => {});
+          if (params.cwd)
+            toolParams._meta = { cwd: params.cwd };
+          const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
         } else {
           throw new Error(`Unknown method: ${method}`);
@@ -118,14 +137,13 @@ export async function startMcpDaemonServer(
   });
 }
 
-function formatResult(result: mcp.CallToolResult): StructuredResponse {
+function formatResult(result: mcp.CallToolResult) {
   const isError = result.isError;
   const text = result.content[0].type === 'text' ? result.content[0].text : undefined;
-  const sections = result.content[0]._meta?.sections as Section[];
-  return { isError, text, sections };
+  return { isError, text };
 }
 
-function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: mcp.CallToolRequest['params']['arguments'] } {
+function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']> } {
   const command = commands[args._[0]];
   if (!command)
     throw new Error('Command is required');

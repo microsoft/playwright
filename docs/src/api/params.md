@@ -890,10 +890,19 @@ Options to select. If the `<select>` has the `multiple` attribute, all matching 
 first option matching one of the passed options is selected. String values are matching both values and labels. Option
 is considered matching if all specified properties match.
 
-## wait-for-navigation-url
+## js-wait-for-navigation-url
+* langs: js
+- `url` <[string]|[RegExp]|[URLPattern]|[function]\([URL]\):[boolean]>
+
+A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation. Note that if
+the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
+equal to the string.
+
+## python-csharp-java-wait-for-navigation-url
+* langs: python, csharp, java
 - `url` <[string]|[RegExp]|[function]\([URL]\):[boolean]>
 
-A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
+A glob pattern, regex pattern, or predicate receiving [URL] to match while waiting for the navigation. Note that if
 the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
 equal to the string.
 

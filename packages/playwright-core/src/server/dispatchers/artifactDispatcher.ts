@@ -32,7 +32,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
     return ArtifactDispatcher.fromNullable(parentScope, artifact)!;
   }
 
-  static fromNullable(parentScope: DispatcherScope, artifact: Artifact): ArtifactDispatcher | undefined {
+  static fromNullable(parentScope: DispatcherScope, artifact: Artifact | undefined): ArtifactDispatcher | undefined {
     if (!artifact)
       return undefined;
     const result = parentScope.connection.existingDispatcher<ArtifactDispatcher>(artifact);

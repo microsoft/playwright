@@ -97,6 +97,16 @@ scheme.SelectorEngine = tObject({
   source: tString,
   contentScript: tOptional(tBoolean),
 });
+scheme.URLPattern = tObject({
+  hash: tString,
+  hostname: tString,
+  password: tString,
+  pathname: tString,
+  port: tString,
+  protocol: tString,
+  search: tString,
+  username: tString,
+});
 scheme.SetNetworkCookie = tObject({
   name: tString,
   value: tString,
@@ -898,6 +908,7 @@ scheme.BrowserContextConsoleEvent = tObject({
     lineNumber: tInt,
     columnNumber: tInt,
   }),
+  timestamp: tFloat,
   page: tOptional(tChannel(['Page'])),
   worker: tOptional(tChannel(['Worker'])),
 });
@@ -917,9 +928,6 @@ scheme.BrowserContextRouteEvent = tObject({
 });
 scheme.BrowserContextWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
-});
-scheme.BrowserContextVideoEvent = tObject({
-  artifact: tChannel(['Artifact']),
 });
 scheme.BrowserContextServiceWorkerEvent = tObject({
   worker: tChannel(['Worker']),
@@ -1029,6 +1037,7 @@ scheme.BrowserContextSetNetworkInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.BrowserContextSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
@@ -1037,6 +1046,7 @@ scheme.BrowserContextSetWebSocketInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.BrowserContextSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
@@ -1051,6 +1061,13 @@ scheme.BrowserContextStorageStateResult = tObject({
   cookies: tArray(tType('NetworkCookie')),
   origins: tArray(tType('OriginStorage')),
 });
+scheme.BrowserContextSetStorageStateParams = tObject({
+  storageState: tOptional(tObject({
+    cookies: tOptional(tArray(tType('SetNetworkCookie'))),
+    origins: tOptional(tArray(tType('SetOriginStorage'))),
+  })),
+});
+scheme.BrowserContextSetStorageStateResult = tOptional(tObject({}));
 scheme.BrowserContextPauseParams = tOptional(tObject({}));
 scheme.BrowserContextPauseResult = tOptional(tObject({}));
 scheme.BrowserContextEnableRecorderParams = tObject({
@@ -1148,6 +1165,7 @@ scheme.PageInitializer = tObject({
   })),
   isClosed: tBoolean,
   opener: tOptional(tChannel(['Page'])),
+  video: tOptional(tChannel(['Artifact'])),
 });
 scheme.PageBindingCallEvent = tObject({
   binding: tChannel(['BindingCall']),
@@ -1184,9 +1202,6 @@ scheme.PageRouteEvent = tObject({
 scheme.PageWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
 });
-scheme.PageVideoEvent = tObject({
-  artifact: tChannel(['Artifact']),
-});
 scheme.PageWebSocketEvent = tObject({
   webSocket: tChannel(['WebSocket']),
 });
@@ -1213,6 +1228,7 @@ scheme.PageConsoleMessagesResult = tObject({
       lineNumber: tInt,
       columnNumber: tInt,
     }),
+    timestamp: tFloat,
   })),
 });
 scheme.PageEmulateMediaParams = tObject({
@@ -1329,6 +1345,7 @@ scheme.PageSetNetworkInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.PageSetNetworkInterceptionPatternsResult = tOptional(tObject({}));
@@ -1337,6 +1354,7 @@ scheme.PageSetWebSocketInterceptionPatternsParams = tObject({
     glob: tOptional(tString),
     regexSource: tOptional(tString),
     regexFlags: tOptional(tString),
+    urlPattern: tOptional(tType('URLPattern')),
   })),
 });
 scheme.PageSetWebSocketInterceptionPatternsResult = tOptional(tObject({}));
@@ -1482,6 +1500,17 @@ scheme.PageStopCSSCoverageResult = tObject({
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
+scheme.PageVideoStartParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+});
+scheme.PageVideoStartResult = tObject({
+  artifact: tChannel(['Artifact']),
+});
+scheme.PageVideoStopParams = tOptional(tObject({}));
+scheme.PageVideoStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,
@@ -1905,7 +1934,7 @@ scheme.FrameWaitForSelectorResult = tObject({
 scheme.FrameExpectParams = tObject({
   selector: tOptional(tString),
   expression: tString,
-  expressionArg: tOptional(tAny),
+  expressionArg: tOptional(tString),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tFloat),
   expectedValue: tOptional(tType('SerializedArgument')),
@@ -2250,9 +2279,7 @@ scheme.RequestInitializer = tObject({
   headers: tArray(tType('NameValue')),
   isNavigationRequest: tBoolean,
   redirectedFrom: tOptional(tChannel(['Request'])),
-  hasResponse: tBoolean,
 });
-scheme.RequestResponseEvent = tOptional(tObject({}));
 scheme.RequestResponseParams = tOptional(tObject({}));
 scheme.RequestResponseResult = tObject({
   response: tOptional(tChannel(['Response'])),
@@ -2529,6 +2556,7 @@ scheme.ElectronInitializer = tOptional(tObject({}));
 scheme.ElectronLaunchParams = tObject({
   executablePath: tOptional(tString),
   args: tOptional(tArray(tString)),
+  chromiumSandbox: tOptional(tBoolean),
   cwd: tOptional(tString),
   env: tOptional(tArray(tType('NameValue'))),
   timeout: tFloat,
@@ -2578,6 +2606,7 @@ scheme.ElectronApplicationConsoleEvent = tObject({
     lineNumber: tInt,
     columnNumber: tInt,
   }),
+  timestamp: tFloat,
 });
 scheme.ElectronApplicationBrowserWindowParams = tObject({
   page: tChannel(['Page']),

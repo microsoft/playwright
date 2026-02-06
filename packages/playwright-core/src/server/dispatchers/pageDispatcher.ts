@@ -26,7 +26,7 @@ import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 
 import type { Artifact } from '../artifact';
@@ -41,6 +41,7 @@ import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -51,7 +52,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _bindings: PageBinding[] = [];
   private _initScripts: InitScript[] = [];
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
@@ -79,7 +80,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       mainFrame,
       viewportSize: page.emulatedSize()?.viewport,
       isClosed: page.isClosed(),
-      opener: PageDispatcher.fromNullable(parentScope, page.opener())
+      opener: PageDispatcher.fromNullable(parentScope, page.opener()),
+      video: page.video ? createVideoDispatcher(parentScope, page.video) : undefined,
     });
 
     this.adopt(mainFrame);
@@ -113,9 +115,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this.addObjectListener(Page.Events.LocatorHandlerTriggered, (uid: number) => this._dispatchEvent('locatorHandlerTriggered', { uid }));
     this.addObjectListener(Page.Events.WebSocket, webSocket => this._dispatchEvent('webSocket', { webSocket: new WebSocketDispatcher(this, webSocket) }));
     this.addObjectListener(Page.Events.Worker, worker => this._dispatchEvent('worker', { worker: new WorkerDispatcher(this, worker) }));
-    this.addObjectListener(Page.Events.Video, (artifact: Artifact) => this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(parentScope, artifact) }));
-    if (page.video)
-      this._dispatchEvent('video', { artifact: ArtifactDispatcher.from(this.parentScope(), page.video) });
     // Ensure client knows about all frames.
     const frames = page.frameManager.frames();
     for (let i = 1; i < frames.length; i++)
@@ -201,7 +200,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
         await this._page.removeRequestInterceptor(this._requestInterceptor);
       this._interceptionUrlMatchers = [];
     } else {
-      this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
+      this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
       if (!hadMatchers)
         await this._page.addRequestInterceptor(progress, this._requestInterceptor);
     }
@@ -335,6 +334,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {
     await progress.race(this._page.bringToFront());
+  }
+
+  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
+    const artifact = await this._page.screencast.startExplicitVideoRecording(params);
+    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
+  }
+
+  async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
+    await this._page.screencast.stopExplicitVideoRecording();
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {
@@ -471,4 +479,10 @@ export class BindingCallDispatcher extends Dispatcher<SdkObject, channels.Bindin
     this._reject!(parseError(params.error));
     this._dispose();
   }
+}
+
+function createVideoDispatcher(parentScope: BrowserContextDispatcher, video: Artifact): ArtifactDispatcher {
+  // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
+  // after closing the context. We use |scope| for it.
+  return ArtifactDispatcher.from(parentScope.parentScope(), video);
 }

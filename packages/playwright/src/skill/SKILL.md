@@ -39,6 +39,7 @@ playwright-cli upload ./document.pdf
 playwright-cli check e12
 playwright-cli uncheck e12
 playwright-cli snapshot
+playwright-cli snapshot --filename=after-click.yaml
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 playwright-cli dialog-accept
@@ -80,7 +81,8 @@ playwright-cli mousewheel 0 100
 ```bash
 playwright-cli screenshot
 playwright-cli screenshot e5
-playwright-cli pdf
+playwright-cli screenshot --filename=page.png
+playwright-cli pdf --filename=page.pdf
 ```
 
 ### Tabs
@@ -94,6 +96,47 @@ playwright-cli tab-close 2
 playwright-cli tab-select 0
 ```
 
+### Storage
+
+```bash
+playwright-cli state-save
+playwright-cli state-save auth.json
+playwright-cli state-load auth.json
+
+# Cookies
+playwright-cli cookie-list
+playwright-cli cookie-list --domain=example.com
+playwright-cli cookie-get session_id
+playwright-cli cookie-set session_id abc123
+playwright-cli cookie-set session_id abc123 --domain=example.com --httpOnly --secure
+playwright-cli cookie-delete session_id
+playwright-cli cookie-clear
+
+# LocalStorage
+playwright-cli localstorage-list
+playwright-cli localstorage-get theme
+playwright-cli localstorage-set theme dark
+playwright-cli localstorage-delete theme
+playwright-cli localstorage-clear
+
+# SessionStorage
+playwright-cli sessionstorage-list
+playwright-cli sessionstorage-get step
+playwright-cli sessionstorage-set step 3
+playwright-cli sessionstorage-delete step
+playwright-cli sessionstorage-clear
+```
+
+### Network
+
+```bash
+playwright-cli route "**/*.jpg" --status=404
+playwright-cli route "https://api.example.com/**" --body='{"mock": true}'
+playwright-cli route-list
+playwright-cli unroute "**/*.jpg"
+playwright-cli unroute
+```
+
 ### DevTools
 
 ```bash
@@ -103,28 +146,54 @@ playwright-cli network
 playwright-cli run-code "async page => await page.context().grantPermissions(['geolocation'])"
 playwright-cli tracing-start
 playwright-cli tracing-stop
+playwright-cli video-start
+playwright-cli video-stop video.webm
+```
+
+### Install
+
+```bash
+playwright-cli install-browser
+playwright-cli install-skills
 ```
 
 ### Configuration
 ```bash
-# configure the session
-playwright-cli config my-config.json
-# Configure named session
-playwright-cli --session=mysession config my-config.json
-# Start with configured session
+# Use specific browser when creating session
+playwright-cli open --browser=chrome
+playwright-cli open --browser=firefox
+playwright-cli open --browser=webkit
+playwright-cli open --browser=msedge
+# Connect to browser via extension
+playwright-cli open --extension
+
+# Use persistent profile (by default profile is in-memory)
+playwright-cli open --persistent
+# Use persistent profile with custom directory
+playwright-cli open --profile=/path/to/profile
+
+# Start with config file
 playwright-cli open --config=my-config.json
+
+# Close the browser
+playwright-cli close
+# Delete user data for the default session
+playwright-cli delete-data
 ```
 
-### Sessions
+### Browser Sessions
 
 ```bash
-playwright-cli --session=mysession open example.com
-playwright-cli --session=mysession click e6
-playwright-cli session-list
-playwright-cli session-stop mysession
-playwright-cli session-stop-all
-playwright-cli session-delete
-playwright-cli session-delete mysession
+playwright-cli -s=mysession open example.com
+playwright-cli -s=mysession click e6
+playwright-cli -s=mysession close  # stop a named browser
+playwright-cli -s=mysession delete-data  # delete user data for named browser
+
+playwright-cli list
+# Close all browsers
+playwright-cli close-all
+# Forcefully kill all browser processes
+playwright-cli kill-all
 ```
 
 ## Example: Form submission
@@ -166,3 +235,13 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
 ```
+
+## Specific tasks
+
+* **Request mocking** [references/request-mocking.md](references/request-mocking.md)
+* **Running Playwright code** [references/running-code.md](references/running-code.md)
+* **Browser session management** [references/session-management.md](references/session-management.md)
+* **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
+* **Test generation** [references/test-generation.md](references/test-generation.md)
+* **Tracing** [references/tracing.md](references/tracing.md)
+* **Video recording** [references/video-recording.md](references/video-recording.md)

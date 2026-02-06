@@ -647,7 +647,7 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/mcp/terminal/*.md',
+  files: 'packages/playwright/src/skill/**/*.md',
   from: 'packages/playwright/src',
   to: 'packages/playwright/lib',
 });

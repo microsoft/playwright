@@ -46,14 +46,34 @@ test('click a button', async ({ context }) => {
 
 test('retrieve a secret', async ({ context }) => {
   await run(context, async (page, agent) => {
-    await page.setContent('<input type="email" name="email" placeholder="Email Address"/>');
+    await page.setContent(`
+      <input type="email" name="email" placeholder="Email Address"/>
+      <ul aria-label="list of emails"></ul>
+      <script>
+        const input = document.querySelector('input');
+        const list = document.querySelector('ul');
+        input.addEventListener('keydown', () => {
+          const item = document.createElement('li');
+          item.textContent = input.value;
+          list.appendChild(item);
+          input.value = '';
+        });
+      </script>
+    `);
     await agent.perform('Enter x-secret-email into the email field');
+    await agent.expect('Check that email fields contains x-secret-email');
+    await agent.perform('Press enter to add the email to the list');
+    await agent.perform('Enter x-secret-email into the email field and press enter');
+    await agent.expect('Check that list of emails contains two entries with x-secret-email');
     await expect(page.locator('body')).toMatchAriaSnapshot(`
-      - textbox "Email Address": secret-email@at-microsoft.com
+      - textbox "Email Address"
+      - list "list of emails":
+        - listitem: secret-email@at-microsoft.com
+        - listitem: secret-email@at-microsoft.com
     `);
   }, { secrets: { 'x-secret-email': 'secret-email@at-microsoft.com' } });
 
-  expect(await cacheObject()).toEqual({
+  expect(await cacheObject()).toEqual(expect.objectContaining({
     'Enter x-secret-email into the email field': {
       actions: [{
         code: `await page.getByRole('textbox', { name: 'Email Address' }).fill('x-secret-email');`,
@@ -62,7 +82,16 @@ test('retrieve a secret', async ({ context }) => {
         text: 'x-secret-email',
       }],
     },
-  });
+    'Check that email fields contains x-secret-email': {
+      'actions': [{
+        'code': `await expect(page.getByRole('textbox', { name: 'Email Address' })).toHaveValue('<secret>x-secret-email</secret>');`,
+        'method': 'expectValue',
+        'selector': 'internal:role=textbox[name="Email Address"i]',
+        'type': 'textbox',
+        'value': '<secret>x-secret-email</secret>',
+      }],
+    },
+  }));
 });
 
 test('extract task', async ({ context }) => {
@@ -251,7 +280,9 @@ test('perform reports error', async ({ context }) => {
   expect(e.message).toContain('Agent refused to perform action:');
 });
 
-test('should dispatch event and respect dispose()', async ({ context, server }) => {
+test('should dispatch event and respect dispose()', async ({ context, server, mode }) => {
+  test.skip(mode !== 'default', 'Different errors due to timing');
+
   let apiResponse;
   server.setRoute('/api', (req, res) => {
     apiResponse = res;

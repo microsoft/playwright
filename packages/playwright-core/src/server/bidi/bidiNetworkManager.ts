@@ -25,6 +25,7 @@ import type { Page } from '../page';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
 
+const REQUEST_BODY_HEADERS = new Set(['content-encoding', 'content-language', 'content-location', 'content-type']);
 
 export class BidiNetworkManager {
   private readonly _session: BidiSession;
@@ -64,12 +65,20 @@ export class BidiNetworkManager {
     if (redirectedFrom)
       this._deleteRequest(redirectedFrom._id);
     let route;
+    let headersOverride: types.HeadersArray | undefined;
     if (param.intercepts) {
       // We do not support intercepting redirects.
       if (redirectedFrom) {
         let params = {};
-        if (redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders)
-          params = toBidiRequestHeaders(redirectedFrom._originalRequestRoute._alreadyContinuedHeaders ?? []);
+        if (redirectedFrom._originalRequestRoute?._alreadyContinuedHeaders) {
+          const originalHeaders = fromBidiHeaders(param.request.headers);
+          headersOverride = network.applyHeadersOverrides(originalHeaders, redirectedFrom._originalRequestRoute._alreadyContinuedHeaders);
+          // If the redirect turned a POST into a GET request, remove the request body headers,
+          // corresponding to step 12 of https://fetch.spec.whatwg.org/#http-redirect-fetch.
+          if (redirectedFrom.request.method() === 'POST' && param.request.method === 'GET')
+            headersOverride = headersOverride.filter(({ name }) => !REQUEST_BODY_HEADERS.has(name.toLowerCase()));
+          params = toBidiRequestHeaders(headersOverride);
+        }
 
         this._session.sendMayFail('network.continueRequest', {
           request: param.request.request,
@@ -79,7 +88,7 @@ export class BidiNetworkManager {
         route = new BidiRouteImpl(this._session, param.request.request);
       }
     }
-    const request = new BidiRequest(frame, redirectedFrom, param, route);
+    const request = new BidiRequest(frame, redirectedFrom, param, route, headersOverride);
     this._requests.set(request._id, request);
     this._page.frameManager.requestStarted(request.request, route);
   }
@@ -236,14 +245,21 @@ class BidiRequest {
   // store the first and only Route in the chain (if any).
   _originalRequestRoute: BidiRouteImpl | undefined;
 
-  constructor(frame: frames.Frame, redirectedFrom: BidiRequest | null, payload: bidi.Network.BeforeRequestSentParameters, route: BidiRouteImpl | undefined) {
+  constructor(
+    frame: frames.Frame,
+    redirectedFrom: BidiRequest | null,
+    payload: bidi.Network.BeforeRequestSentParameters,
+    route: BidiRouteImpl | undefined,
+    headersOverride: types.HeadersArray | undefined
+  ) {
     this._id = payload.request.request;
     if (redirectedFrom)
       redirectedFrom._redirectedTo = this;
     // TODO: missing in the spec?
     const postDataBuffer = null;
-    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined, payload.request.url,
-        resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method, postDataBuffer, fromBidiHeaders(payload.request.headers));
+    this.request = new network.Request(frame._page.browserContext, frame, null, redirectedFrom ? redirectedFrom.request : null, payload.navigation ?? undefined,
+        payload.request.url, resourceTypeFromBidi(payload.request.destination, payload.request.initiatorType, payload.initiator?.type), payload.request.method,
+        postDataBuffer, headersOverride || fromBidiHeaders(payload.request.headers));
     // "raw" headers are the same as "provisional" headers in Bidi.
     this.request.setRawRequestHeaders(null);
     this.request._setBodySize(payload.request.bodySize || 0);

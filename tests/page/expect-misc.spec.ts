@@ -410,6 +410,15 @@ Timeout:  10000ms
     await page.goto('data:text/html,<div>A</div>');
     await expect(page).toHaveURL('DATA:teXT/HTml,<div>a</div>', { ignoreCase: true });
   });
+
+  test('support URLPattern', async ({ page }) => {
+    test.skip(globalThis.URLPattern === undefined, 'URLPattern is not supported in this environment');
+    await page.goto('data:text/html,<div>A</div>');
+    // @ts-ignore URLPattern is not in @types/node yet
+    await expect(page).toHaveURL(new URLPattern({ protocol: 'data' }));
+    // @ts-ignore
+    await expect(page).not.toHaveURL(new URLPattern({ protocol: 'http' }));
+  });
 });
 
 test.describe('toHaveAttribute', () => {
@@ -518,6 +527,57 @@ test.describe('toHaveCSS', () => {
     const locator = page.locator('#node');
     await expect(locator).toHaveCSS('--custom-color-property', '#FF00FF');
   });
+
+  test('fail with bad arguments', async ({ page }) => {
+    await page.setContent(`<div id=node>hi</div>`);
+    const locator = page.locator('#node');
+    try {
+      await expect(locator).toHaveCSS('property', {} as any);
+      expect(true, 'should throw!').toBe(false);
+    } catch (error) {
+      expect(error.message).toContain(`toHaveCSS expected value must be a string or a regular expression`);
+    }
+    try {
+      await expect(locator).toHaveCSS(123 as any, '123');
+      expect(true, 'should throw!').toBe(false);
+    } catch (error) {
+      expect(error.message).toContain(`toHaveCSS argument must be a string or an object`);
+    }
+  });
+
+  test('pass with object', async ({ page }) => {
+    await page.setContent(`<div id=node style="color: rgb(255, 0, 0); display: flex; background-color: red;">Text content</div>`);
+    const locator = page.locator('#node');
+    await expect(locator).toHaveCSS({
+      color: 'rgb(255, 0, 0)',
+      display: 'flex',
+      backgroundColor: 'rgb(255, 0, 0)',
+    });
+  });
+
+  test('does not support custom properties inside object', async ({ page }) => {
+    await page.setContent(`<div id=node style="--my-color: blue">Text content</div>`);
+    const locator = page.locator('#node');
+    await expect(locator).toHaveCSS({ '--my-color': '' } as any);
+  });
+
+  test('fail with object', async ({ page }) => {
+    await page.setContent(`<div id=node style="color: rgb(255, 0, 0); display: flex; background-color: red;">Text content</div>`);
+    const locator = page.locator('#node');
+    const error = await expect(locator).toHaveCSS({
+      'color': 'blue',
+      'display': 'flex',
+      'backgroundColor': 'rgb(255, 0, 0)',
+    }, { timeout: 3000 }).catch(e => e);
+    expect(stripAnsi(error.message)).toContain(`
+  Object {
+    "backgroundColor": "rgb(255, 0, 0)",
+-   "color": "blue",
++   "color": "rgb(255, 0, 0)",
+    "display": "flex",
+  }`);
+    expect(stripAnsi(error.message)).not.toContain(`unexpected value "[object Object]"`);
+  });
 });
 
 test.describe('toHaveId', () => {
@@ -565,7 +625,7 @@ test.describe('toBeInViewport', () => {
   test('should have good stack', async ({ page }) => {
     let error;
     try {
-      await expect(page.locator('body')).not.toBeInViewport({ timeout: 500 });
+      await expect(page.locator('body')).not.toBeInViewport({ timeout: 3000 });
     } catch (e) {
       error = e;
     }

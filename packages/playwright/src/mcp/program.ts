@@ -39,9 +39,10 @@ export function decorateCommand(command: Command, version: string) {
       .option('--blocked-origins <origins>', 'semicolon-separated list of origins to block the browser from requesting. Blocklist is evaluated before allowlist. If used without the allowlist, requests not matching the blocklist are still allowed.\nImportant: *does not* serve as a security boundary and *does not* affect redirects.', semicolonSeparatedList)
       .option('--block-service-workers', 'block service workers')
       .option('--browser <browser>', 'browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.')
-      .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf.', commaSeparatedList)
+      .option('--caps <caps>', 'comma-separated list of additional capabilities to enable, possible values: vision, pdf, devtools.', commaSeparatedList)
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
+      .option('--cdp-timeout <timeout>', 'timeout in milliseconds for connecting to CDP endpoint, defaults to 30000ms', numberParser)
       .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .option('--config <path>', 'path to the configuration file.')
       .option('--console-level <level>', 'level of console messages to return: "error", "warning", "info", "debug". Each level includes the messages of more severe levels.', enumParser.bind(null, '--console-level', ['error', 'warning', 'info', 'debug']))
@@ -77,9 +78,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
-      .addOption(new ProgramOption('--daemon <socket>', 'run as daemon').hideHelp())
-      .addOption(new ProgramOption('--daemon-data-dir <path>', 'path to the daemon data directory.').hideHelp())
-      .addOption(new ProgramOption('--daemon-headed', 'run daemon in headed mode').hideHelp())
+      .addOption(new ProgramOption('--daemon-session <path>', 'path to the daemon config.').hideHelp())
       .action(async options => {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
@@ -91,6 +90,9 @@ export function decorateCommand(command: Command, version: string) {
           console.error('The --vision option is deprecated, use --caps=vision instead');
           options.caps = 'vision';
         }
+
+        if (options.caps?.includes('tracing'))
+          options.caps.push('devtools');
 
         const config = await resolveCLIConfig(options);
 
@@ -104,9 +106,28 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         const browserContextFactory = contextFactory(config);
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
+        // Always force new tab in cli mode as the first command is always navigation.
+        const forceNewTab = !!config.sessionConfig;
+        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath, forceNewTab);
 
-        if (options.extension) {
+        if (config.sessionConfig) {
+          const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
+          console.log(`### Config`);
+          console.log('```json');
+          console.log(JSON.stringify(config, null, 2));
+          console.log('```');
+          try {
+            const socketPath = await startMcpDaemonServer(config, contextFactory);
+            console.log(`### Success\nDaemon listening on ${socketPath}`);
+            console.log('<EOF>');
+          } catch (error) {
+            console.log(`### Error\n${error.message}`);
+            console.log('<EOF>');
+          }
+          return;
+        }
+
+        if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright w/ extension',
             nameInConfig: 'playwright-extension',
@@ -114,18 +135,6 @@ export function decorateCommand(command: Command, version: string) {
             create: () => new BrowserServerBackend(config, extensionContextFactory)
           };
           await mcpServer.start(serverBackendFactory, config.server);
-          return;
-        }
-
-        if (options.daemon) {
-          const serverBackendFactory: mcpServer.ServerBackendFactory = {
-            name: 'Playwright',
-            nameInConfig: 'playwright-daemon',
-            version,
-            create: () => new BrowserServerBackend(config, browserContextFactory, { allTools: true, structuredOutput: true })
-          };
-          const socketPath = await startMcpDaemonServer(options.daemon, serverBackendFactory);
-          console.error(`Daemon server listening on ${socketPath}`);
           return;
         }
 
@@ -142,7 +151,7 @@ export function decorateCommand(command: Command, version: string) {
 function checkFfmpeg(): boolean {
   try {
     const executable = registry.findExecutable('ffmpeg')!;
-    return fs.existsSync(executable.executablePath('javascript')!);
+    return fs.existsSync(executable.executablePath()!);
   } catch (error) {
     return false;
   }

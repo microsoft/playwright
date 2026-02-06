@@ -72,5 +72,5 @@ documentation.renderLinksInNodes(nodes);
     throw new Error(`Could not find version ${version} in release notes.\nUsage: node ${path.basename(process.argv[1])} <language> <version>\n\nWhere <version> is a version tag without v prefix, e.g. 1.45`);
 }
 
-const output = renderPlaywrightDevLinks(md.render(nodes), languageToRelativeDocsPath(language), '');
+const output = renderPlaywrightDevLinks(md.render(nodes), languageToRelativeDocsPath(language), '', true);
 process.stdout.write(output);

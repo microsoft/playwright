@@ -23,10 +23,10 @@ import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { assert } from '../utils/isomorphic/assert';
 import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { urlMatches } from '../utils/isomorphic/urlMatch';
+import { serializeURLMatch, urlMatches } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
 import { MultiMap } from '../utils/isomorphic/multimap';
-import { isRegExp, isString } from '../utils/isomorphic/rtti';
+import { isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
 
@@ -87,11 +87,11 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
   private _redirectedFrom: Request | null = null;
   private _redirectedTo: Request | null = null;
   _failureText: string | null = null;
+  _response: Response | null = null;
   private _provisionalHeaders: RawHeaders;
   private _actualHeadersPromise: Promise<RawHeaders> | undefined;
   _timing: ResourceTiming;
   private _fallbackOverrides: SerializedFallbackOverrides = {};
-  _hasResponse = false;
 
   static from(request: channels.RequestChannel): Request {
     return (request as any)._object;
@@ -118,8 +118,6 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
       responseStart: -1,
       responseEnd: -1,
     };
-    this._hasResponse = this._initializer.hasResponse;
-    this._channel.on('response', () => this._hasResponse = true);
   }
 
   url(): string {
@@ -202,6 +200,10 @@ export class Request extends ChannelOwner<channels.RequestChannel> implements ap
 
   async _internalResponse(): Promise<Response | null> {
     return Response.fromNullable((await this._channel.response()).response);
+  }
+
+  existingResponse(): Response | null {
+    return this._response;
   }
 
   frame(): Frame {
@@ -587,10 +589,9 @@ export class WebSocketRouteHandler {
     const patterns: channels.BrowserContextSetWebSocketInterceptionPatternsParams['patterns'] = [];
     let all = false;
     for (const handler of handlers) {
-      if (isString(handler.url))
-        patterns.push({ glob: handler.url });
-      else if (isRegExp(handler.url))
-        patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      const serialized = serializeURLMatch(handler.url);
+      if (serialized)
+        patterns.push(serialized);
       else
         all = true;
     }
@@ -650,6 +651,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
     super(parent, type, guid, initializer);
     this._provisionalHeaders = new RawHeaders(initializer.headers);
     this._request = Request.from(this._initializer.request);
+    this._request._response = this;
     Object.assign(this._request._timing, this._initializer.timing);
   }
 
@@ -828,10 +830,9 @@ export class RouteHandler {
     const patterns: channels.BrowserContextSetNetworkInterceptionPatternsParams['patterns'] = [];
     let all = false;
     for (const handler of handlers) {
-      if (isString(handler.url))
-        patterns.push({ glob: handler.url });
-      else if (isRegExp(handler.url))
-        patterns.push({ regexSource: handler.url.source, regexFlags: handler.url.flags });
+      const serialized = serializeURLMatch(handler.url);
+      if (serialized)
+        patterns.push(serialized);
       else
         all = true;
     }

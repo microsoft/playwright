@@ -289,7 +289,7 @@ export class BidiPage implements PageDelegate {
 
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
-    this._page.addConsoleMessage(null, entry.method, entry.args.map(arg => createHandle(context, arg)), location);
+    this._page.addConsoleMessage(null, entry.method, entry.args.map(arg => createHandle(context, arg)), location, undefined, params.timestamp);
   }
 
   private async _onFileDialogOpened(params: bidi.Input.FileDialogInfo) {
@@ -403,7 +403,13 @@ export class BidiPage implements PageDelegate {
   }
 
   async requestGC(): Promise<void> {
-    throw new Error('Method not implemented.');
+    const result = await this._session.send('script.evaluate', {
+      expression: 'TestUtils.gc()',
+      target: { context: this._session.sessionId },
+      awaitPromise: true,
+    });
+    if (result.type === 'exception')
+      throw new Error('Method not implemented.');
   }
 
   private async _onScriptMessage(event: bidi.Script.MessageParameters) {

@@ -18,7 +18,7 @@ import { compare } from 'playwright-core/lib/server/utils/image_tools/compare';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import { expect, playwrightTest as it } from '../config/browserTest';
 
-it.use({ headless: false });
+it.skip(({ headless }) => headless, 'avoid popping windows in headless mode');
 it.skip(({ channel }) => channel === 'chromium-headless-shell' || channel === 'chromium-tip-of-tree-headless-shell', 'shell is never headed');
 
 it('should have default url when launching browser @smoke', async ({ launchPersistent }) => {

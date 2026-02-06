@@ -224,6 +224,17 @@ export type SelectorEngine = {
   contentScript?: boolean,
 };
 
+export type URLPattern = {
+  hash: string,
+  hostname: string,
+  password: string,
+  pathname: string,
+  port: string,
+  protocol: string,
+  search: string,
+  username: string,
+};
+
 export type SetNetworkCookie = {
   name: string,
   value: string,
@@ -1569,7 +1580,6 @@ export interface BrowserContextEventTarget {
   on(event: 'pageError', callback: (params: BrowserContextPageErrorEvent) => void): this;
   on(event: 'route', callback: (params: BrowserContextRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: BrowserContextWebSocketRouteEvent) => void): this;
-  on(event: 'video', callback: (params: BrowserContextVideoEvent) => void): this;
   on(event: 'serviceWorker', callback: (params: BrowserContextServiceWorkerEvent) => void): this;
   on(event: 'request', callback: (params: BrowserContextRequestEvent) => void): this;
   on(event: 'requestFailed', callback: (params: BrowserContextRequestFailedEvent) => void): this;
@@ -1597,6 +1607,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress?: Progress): Promise<BrowserContextSetOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
+  setStorageState(params: BrowserContextSetStorageStateParams, progress?: Progress): Promise<BrowserContextSetStorageStateResult>;
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
   enableRecorder(params: BrowserContextEnableRecorderParams, progress?: Progress): Promise<BrowserContextEnableRecorderResult>;
   disableRecorder(params?: BrowserContextDisableRecorderParams, progress?: Progress): Promise<BrowserContextDisableRecorderResult>;
@@ -1626,6 +1637,7 @@ export type BrowserContextConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  timestamp: number,
   page?: PageChannel,
   worker?: WorkerChannel,
 };
@@ -1645,9 +1657,6 @@ export type BrowserContextRouteEvent = {
 };
 export type BrowserContextWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
-};
-export type BrowserContextVideoEvent = {
-  artifact: ArtifactChannel,
 };
 export type BrowserContextServiceWorkerEvent = {
   worker: WorkerChannel,
@@ -1811,6 +1820,7 @@ export type BrowserContextSetNetworkInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type BrowserContextSetNetworkInterceptionPatternsOptions = {
@@ -1822,6 +1832,7 @@ export type BrowserContextSetWebSocketInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type BrowserContextSetWebSocketInterceptionPatternsOptions = {
@@ -1845,6 +1856,19 @@ export type BrowserContextStorageStateResult = {
   cookies: NetworkCookie[],
   origins: OriginStorage[],
 };
+export type BrowserContextSetStorageStateParams = {
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: SetOriginStorage[],
+  },
+};
+export type BrowserContextSetStorageStateOptions = {
+  storageState?: {
+    cookies?: SetNetworkCookie[],
+    origins?: SetOriginStorage[],
+  },
+};
+export type BrowserContextSetStorageStateResult = void;
 export type BrowserContextPauseParams = {};
 export type BrowserContextPauseOptions = {};
 export type BrowserContextPauseResult = void;
@@ -2002,7 +2026,6 @@ export interface BrowserContextEvents {
   'pageError': BrowserContextPageErrorEvent;
   'route': BrowserContextRouteEvent;
   'webSocketRoute': BrowserContextWebSocketRouteEvent;
-  'video': BrowserContextVideoEvent;
   'serviceWorker': BrowserContextServiceWorkerEvent;
   'request': BrowserContextRequestEvent;
   'requestFailed': BrowserContextRequestFailedEvent;
@@ -2020,6 +2043,7 @@ export type PageInitializer = {
   },
   isClosed: boolean,
   opener?: PageChannel,
+  video?: ArtifactChannel,
 };
 export interface PageEventTarget {
   on(event: 'bindingCall', callback: (params: PageBindingCallEvent) => void): this;
@@ -2033,7 +2057,6 @@ export interface PageEventTarget {
   on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
-  on(event: 'video', callback: (params: PageVideoEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
 }
@@ -2077,6 +2100,8 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   startCSSCoverage(params: PageStartCSSCoverageParams, progress?: Progress): Promise<PageStartCSSCoverageResult>;
   stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
+  videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
+  videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   agent(params: PageAgentParams, progress?: Progress): Promise<PageAgentResult>;
 }
@@ -2115,9 +2140,6 @@ export type PageRouteEvent = {
 export type PageWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
 };
-export type PageVideoEvent = {
-  artifact: ArtifactChannel,
-};
 export type PageWebSocketEvent = {
   webSocket: WebSocketChannel,
 };
@@ -2152,6 +2174,7 @@ export type PageConsoleMessagesResult = {
       lineNumber: number,
       columnNumber: number,
     },
+    timestamp: number,
   }[],
 };
 export type PageEmulateMediaParams = {
@@ -2339,6 +2362,7 @@ export type PageSetNetworkInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type PageSetNetworkInterceptionPatternsOptions = {
@@ -2350,6 +2374,7 @@ export type PageSetWebSocketInterceptionPatternsParams = {
     glob?: string,
     regexSource?: string,
     regexFlags?: string,
+    urlPattern?: URLPattern,
   }[],
 };
 export type PageSetWebSocketInterceptionPatternsOptions = {
@@ -2574,6 +2599,24 @@ export type PageStopCSSCoverageResult = {
 export type PageBringToFrontParams = {};
 export type PageBringToFrontOptions = {};
 export type PageBringToFrontResult = void;
+export type PageVideoStartParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+};
+export type PageVideoStartOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+};
+export type PageVideoStartResult = {
+  artifact: ArtifactChannel,
+};
+export type PageVideoStopParams = {};
+export type PageVideoStopOptions = {};
+export type PageVideoStopResult = void;
 export type PageUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,
@@ -2630,7 +2673,6 @@ export interface PageEvents {
   'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
   'route': PageRouteEvent;
   'webSocketRoute': PageWebSocketRouteEvent;
-  'video': PageVideoEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;
 }
@@ -3285,7 +3327,7 @@ export type FrameWaitForSelectorResult = {
 export type FrameExpectParams = {
   selector?: string,
   expression: string,
-  expressionArg?: any,
+  expressionArg?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3295,7 +3337,7 @@ export type FrameExpectParams = {
 };
 export type FrameExpectOptions = {
   selector?: string,
-  expressionArg?: any,
+  expressionArg?: string,
   expectedText?: ExpectedTextValue[],
   expectedNumber?: number,
   expectedValue?: SerializedArgument,
@@ -3863,17 +3905,14 @@ export type RequestInitializer = {
   headers: NameValue[],
   isNavigationRequest: boolean,
   redirectedFrom?: RequestChannel,
-  hasResponse: boolean,
 };
 export interface RequestEventTarget {
-  on(event: 'response', callback: (params: RequestResponseEvent) => void): this;
 }
 export interface RequestChannel extends RequestEventTarget, Channel {
   _type_Request: boolean;
   response(params?: RequestResponseParams, progress?: Progress): Promise<RequestResponseResult>;
   rawRequestHeaders(params?: RequestRawRequestHeadersParams, progress?: Progress): Promise<RequestRawRequestHeadersResult>;
 }
-export type RequestResponseEvent = {};
 export type RequestResponseParams = {};
 export type RequestResponseOptions = {};
 export type RequestResponseResult = {
@@ -3886,7 +3925,6 @@ export type RequestRawRequestHeadersResult = {
 };
 
 export interface RequestEvents {
-  'response': RequestResponseEvent;
 }
 
 // ----------- Route -----------
@@ -4429,6 +4467,7 @@ export interface ElectronChannel extends ElectronEventTarget, Channel {
 export type ElectronLaunchParams = {
   executablePath?: string,
   args?: string[],
+  chromiumSandbox?: boolean,
   cwd?: string,
   env?: NameValue[],
   timeout: number,
@@ -4465,6 +4504,7 @@ export type ElectronLaunchParams = {
 export type ElectronLaunchOptions = {
   executablePath?: string,
   args?: string[],
+  chromiumSandbox?: boolean,
   cwd?: string,
   env?: NameValue[],
   acceptDownloads?: 'accept' | 'deny' | 'internal-browser-default',
@@ -4529,6 +4569,7 @@ export type ElectronApplicationConsoleEvent = {
     lineNumber: number,
     columnNumber: number,
   },
+  timestamp: number,
 };
 export type ElectronApplicationBrowserWindowParams = {
   page: PageChannel,

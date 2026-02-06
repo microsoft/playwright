@@ -26,6 +26,7 @@ import { firstRootPath } from '../sdk/server';
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
+import type { SessionConfig } from '../terminal/program';
 
 type ViewportSize = { width: number; height: number };
 
@@ -39,13 +40,13 @@ export type CLIOptions = {
   caps?: string[];
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
+  cdpTimeout?: number;
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
-  daemon?: string;
-  daemonDataDir?: string;
-  daemonHeaded?: boolean;
+  daemonSession?: string;
   device?: string;
+  extension?: boolean;
   executablePath?: string;
   grantPermissions?: string[];
   headless?: boolean;
@@ -86,6 +87,7 @@ export const defaultConfig: FullConfig = {
     contextOptions: {
       viewport: null,
     },
+    isolated: false,
   },
   console: {
     level: 'info',
@@ -106,21 +108,13 @@ export const defaultConfig: FullConfig = {
   },
 };
 
-const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
+const defaultDaemonConfig: FullConfig = mergeConfig(defaultConfig, {
   browser: {
-    userDataDir: '<daemon-data-dir>',
     launchOptions: {
-      headless: !cliOptions.daemonHeaded,
+      headless: true,
     },
-    contextOptions: {
-      viewport: cliOptions.daemonHeaded ? null : { width: 1280, height: 720 },
-    },
-  },
-  outputMode: 'file',
-  codegen: 'none',
-  snapshot: {
-    mode: 'full',
-  },
+    isolated: true,
+  }
 });
 
 type BrowserUserConfig = NonNullable<Config['browser']>;
@@ -130,6 +124,7 @@ export type FullConfig = Config & {
     browserName: 'chromium' | 'firefox' | 'webkit';
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+    isolated: boolean;
   },
   console: {
     level: 'error' | 'warning' | 'info' | 'debug';
@@ -146,6 +141,8 @@ export type FullConfig = Config & {
     navigation: number;
   },
   skillMode?: boolean;
+  configFile?: string;
+  sessionConfig?: SessionConfig;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -153,21 +150,27 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 }
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
-  const configInFile = await loadConfig(cliOptions.config);
   const envOverrides = configFromEnv();
+  const daemonOverrides = await configForDaemonSession(cliOptions);
   const cliOverrides = configFromCLIOptions(cliOptions);
-  let result = cliOptions.daemon ? defaultDaemonConfig(cliOptions) : defaultConfig;
+  const configFile = cliOverrides.configFile ?? envOverrides.configFile ?? daemonOverrides.configFile;
+  const configInFile = await loadConfig(configFile);
+
+  let result = cliOptions.daemonSession ? defaultDaemonConfig : defaultConfig;
   result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
 
-  if (cliOptions.daemon)
+  if (daemonOverrides.sessionConfig) {
     result.skillMode = true;
 
-  if (result.browser.userDataDir === '<daemon-data-dir>') {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    result.browser.userDataDir = `${cliOptions.daemonDataDir}-${browserToken}`;
+    if (!result.extension && !result.browser.userDataDir && daemonOverrides.sessionConfig.userDataDirPrefix) {
+      // No custom value provided, use the daemon data dir.
+      const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+      const userDataDir = `${daemonOverrides.sessionConfig.userDataDirPrefix}-${browserToken}`;
+      result.browser.userDataDir = userDataDir;
+    }
   }
 
   if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
@@ -177,7 +180,15 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
       result.browser.launchOptions.chromiumSandbox = true;
   }
 
+  result.configFile = configFile;
+  result.sessionConfig = daemonOverrides.sessionConfig;
+
+  // Daemon has different defaults.
+  if (result.sessionConfig && result.browser.launchOptions.headless !== false)
+    result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
+
   await validateConfig(result);
+
   return result;
 }
 
@@ -198,7 +209,7 @@ async function validateConfig(config: FullConfig): Promise<void> {
     throw new Error('saveVideo is not supported when sharedBrowserContext is true');
 }
 
-export function configFromCLIOptions(cliOptions: CLIOptions): Config {
+export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
@@ -265,7 +276,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
   if (cliOptions.grantPermissions)
     contextOptions.permissions = cliOptions.grantPermissions;
 
-  const result: Config = {
+  const config: Config = {
     browser: {
       browserName,
       isolated: cliOptions.isolated,
@@ -274,9 +285,11 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
       cdpHeaders: cliOptions.cdpHeader,
+      cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
     },
+    extension: cliOptions.extension,
     server: {
       port: cliOptions.port,
       host: cliOptions.host,
@@ -308,10 +321,10 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     },
   };
 
-  return result;
+  return { ...config, configFile: cliOptions.config };
 }
 
-function configFromEnv(): Config {
+function configFromEnv(): Config & { configFile?: string } {
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
@@ -322,11 +335,13 @@ function configFromEnv(): Config {
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
   options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
+  options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
     options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
   options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
   options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.extension = envToBoolean(process.env.PLAYWRIGHT_MCP_EXTENSION);
   options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
   options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
   options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
@@ -358,6 +373,24 @@ function configFromEnv(): Config {
   return configFromCLIOptions(options);
 }
 
+async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & { configFile?: string, sessionConfig?: SessionConfig }> {
+  if (!cliOptions.daemonSession)
+    return {};
+
+  const sessionConfig = await fs.promises.readFile(cliOptions.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
+  const config = configFromCLIOptions({
+    config: sessionConfig.cli.config,
+    browser: sessionConfig.cli.browser,
+    isolated: sessionConfig.cli.persistent === true ? false : undefined,
+    headless: sessionConfig.cli.headed ? false : undefined,
+    extension: sessionConfig.cli.extension,
+    userDataDir: sessionConfig.cli.profile,
+    outputMode: 'file',
+    snapshotMode: 'full',
+  });
+  return { ...config, sessionConfig };
+}
+
 async function loadConfig(configFile: string | undefined): Promise<Config> {
   if (!configFile)
     return {};
@@ -369,42 +402,47 @@ async function loadConfig(configFile: string | undefined): Promise<Config> {
   }
 }
 
-function tmpDir(): string {
-  return path.join(process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir(), 'playwright-mcp-output');
+// These methods should return resolved absolute file names.
+
+export function workspaceDir(clientInfo: ClientInfo): string {
+  return path.resolve(firstRootPath(clientInfo) ?? process.cwd());
+}
+
+export async function workspaceFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, perCallWorkspaceDir?: string): Promise<string> {
+  const workspace = perCallWorkspaceDir ?? workspaceDir(clientInfo);
+  const resolvedName = path.resolve(workspace, fileName);
+  await checkFile(config, clientInfo, resolvedName, { origin: 'code' });
+  return resolvedName;
 }
 
 export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
+  if (config.outputDir)
+    return path.resolve(config.outputDir);
   const rootPath = firstRootPath(clientInfo);
-  return config.outputDir
-    ?? (rootPath ? path.join(rootPath, '.playwright-mcp') : undefined)
-    ?? path.join(tmpDir(), String(clientInfo.timestamp));
+  if (rootPath)
+    return path.resolve(rootPath, config.skillMode ? '.playwright-cli' : '.playwright-mcp');
+  const tmpDir = process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir();
+  return path.resolve(tmpDir, 'playwright-mcp-output', String(clientInfo.timestamp));
 }
 
-export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web', title: string }): Promise<string> {
-  const file = await resolveFile(config, clientInfo, fileName, options);
-  await fs.promises.mkdir(path.dirname(file), { recursive: true });
-  debug('pw:mcp:file')(options.title, file);
-  return file;
+export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' }): Promise<string> {
+  const resolvedFile = path.resolve(outputDir(config, clientInfo), fileName);
+  await checkFile(config, clientInfo, resolvedFile, options);
+  await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+  debug('pw:mcp:file')(resolvedFile);
+  return resolvedFile;
 }
 
-async function resolveFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' | 'web' }): Promise<string> {
-  const dir = outputDir(config, clientInfo);
-
+async function checkFile(config: FullConfig, clientInfo: ClientInfo, resolvedFilename: string, options: { origin: 'code' | 'llm' }) {
   // Trust code.
   if (options.origin === 'code')
-    return path.resolve(dir, fileName);
+    return;
 
   // Trust llm to use valid characters in file names.
-  if (options.origin === 'llm') {
-    fileName = fileName.split('\\').join('/');
-    const resolvedFile = path.resolve(dir, fileName);
-    if (!resolvedFile.startsWith(path.resolve(dir) + path.sep))
-      throw new Error(`Resolved file path ${resolvedFile} is outside of the output directory ${dir}. Use relative file names to stay within the output directory.`);
-    return resolvedFile;
-  }
-
-  // Do not trust web, at all.
-  return path.join(dir, sanitizeForFilePath(fileName));
+  const output = outputDir(config, clientInfo);
+  const workspace = workspaceDir(clientInfo);
+  if (!resolvedFilename.startsWith(output) && !resolvedFilename.startsWith(workspace))
+    throw new Error(`Resolved file path ${resolvedFilename} is outside of the output directory ${output} and workspace directory ${workspace}. Use relative file names to stay within the output directory.`);
 }
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
@@ -530,12 +568,4 @@ function envToBoolean(value: string | undefined): boolean | undefined {
 
 function envToString(value: string | undefined): string | undefined {
   return value ? value.trim() : undefined;
-}
-
-function sanitizeForFilePath(s: string) {
-  const sanitize = (s: string) => s.replace(/[\x00-\x2C\x2E-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]+/g, '-');
-  const separator = s.lastIndexOf('.');
-  if (separator === -1)
-    return sanitize(s);
-  return sanitize(s.substring(0, separator)) + '.' + sanitize(s.substring(separator + 1));
 }

@@ -16,11 +16,14 @@
 
 import type { FullConfig, FullResult, Reporter, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
 
-export interface MachineEndResult {
-  tag: string[];
-  shardIndex?: number;
-  startTime: Date;
-  duration: number;
+export interface ReportConfigureParams {
+  config: FullConfig;
+  reportPath: string;
+}
+
+export interface ReportEndParams {
+  reportPath: string;
+  result: FullResult;
 }
 
 export interface ReporterV2 {
@@ -31,7 +34,8 @@ export interface ReporterV2 {
   onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onTestPaused?(test: TestCase, result: TestResult): Promise<void>;
   onTestEnd?(test: TestCase, result: TestResult): void;
-  onMachineEnd?(result: MachineEndResult): void;
+  onReportConfigure?(params: ReportConfigureParams): void;
+  onReportEnd?(params: ReportEndParams): void;
   onEnd?(result: FullResult): Promise<{ status?: FullResult['status'] } | undefined | void> | void;
   onExit?(): void | Promise<void>;
   onError?(error: TestError): void;

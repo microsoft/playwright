@@ -31,13 +31,12 @@ import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
 
-import type { Artifact } from '../artifact';
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { Request, Response, RouteHandler } from '../network';
@@ -45,6 +44,7 @@ import type { InitScript, Page, PageBinding } from '../page';
 import type { DispatcherScope } from './dispatcher';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
+import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 
 export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channels.BrowserContextChannel, DispatcherScope> implements channels.BrowserContextChannel {
   _type_EventTarget = true;
@@ -57,7 +57,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   private _dialogHandler: (dialog: Dialog) => boolean;
   private _clockPaused = false;
   private _requestInterceptor: RouteHandler;
-  private _interceptionUrlMatchers: (string | RegExp)[] = [];
+  private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
 
   static from(parentScope: DispatcherScope, context: BrowserContext): BrowserContextDispatcher {
@@ -95,18 +95,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context = context;
     // Note: when launching persistent context, or connecting to an existing browser,
     // dispatcher is created very late, so we can already have pages, videos and everything else.
-
-    const onVideo = (artifact: Artifact) => {
-      // Note: Video must outlive Page and BrowserContext, so that client can saveAs it
-      // after closing the context. We use |scope| for it.
-      const artifactDispatcher = ArtifactDispatcher.from(parentScope, artifact);
-      this._dispatchEvent('video', { artifact: artifactDispatcher });
-    };
-    this.addObjectListener(BrowserContext.Events.VideoStarted, onVideo);
-    for (const video of context._browser._idToVideo.values()) {
-      if (video.context === context)
-        onVideo(video.artifact);
-    }
 
     for (const page of context.pages())
       this._dispatchEvent('page', { page: PageDispatcher.from(this, page) });
@@ -219,6 +207,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         return JSHandleDispatcher.fromJSHandle(jsScope, a);
       }),
       location: message.location(),
+      timestamp: message.timestamp(),
     };
   }
 
@@ -318,7 +307,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
         await this._context.removeRequestInterceptor(this._requestInterceptor);
       this._interceptionUrlMatchers = [];
     } else {
-      this._interceptionUrlMatchers = params.patterns.map(pattern => pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags!) : pattern.glob!);
+      this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
       if (!hadMatchers)
         await this._context.addRequestInterceptor(progress, this._requestInterceptor);
     }
@@ -332,6 +321,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
     return await progress.race(this._context.storageState(progress, params.indexedDB));
+  }
+
+  async setStorageState(params: channels.BrowserContextSetStorageStateParams, progress: Progress): Promise<void> {
+    await this._context.setStorageState(progress, params.storageState, 'api');
   }
 
   async close(params: channels.BrowserContextCloseParams, progress: Progress): Promise<void> {

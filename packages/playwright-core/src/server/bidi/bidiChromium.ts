@@ -23,6 +23,7 @@ import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { waitForReadyState } from '../chromium/chromium';
+import { hasGpuMac } from '../utils/hostPlatform';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -114,7 +115,7 @@ export class BidiChromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches(options.assistantMode)];
 
-    if (os.platform() === 'darwin') {
+    if (os.platform() !== 'darwin' || !hasGpuMac()) {
       // See https://issues.chromium.org/issues/40277080
       chromeArguments.push('--enable-unsafe-swiftshader');
     }
@@ -153,6 +154,22 @@ export class BidiChromium extends BrowserType {
     }
     chromeArguments.push(...args);
     return chromeArguments;
+  }
+
+  override getExecutableName(options: types.LaunchOptions): string {
+    switch (options.channel) {
+      case 'bidi-chromium':
+        return 'chromium';
+      case 'bidi-chrome':
+        return 'chrome';
+      case 'bidi-chrome-beta':
+        return 'chrome-beta';
+      case 'bidi-chrome-dev':
+        return 'chrome-dev';
+      case 'bidi-chrome-canary':
+        return 'chrome-canary';
+    }
+    throw new Error(`Unsupported Bidi Chromium channel: ${options.channel}`);
   }
 }
 

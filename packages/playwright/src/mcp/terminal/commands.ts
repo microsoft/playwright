@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-
 import { z } from 'playwright-core/lib/mcpBundle';
 import { declareCommand } from './command';
 
@@ -24,22 +23,41 @@ import type { AnyCommandSchema } from './command';
 
 const open = declareCommand({
   name: 'open',
-  description: 'Open URL',
+  description: 'Open the browser',
+  category: 'core',
+  args: z.object({
+    url: z.string().optional().describe('The URL to navigate to'),
+  }),
+  options: z.object({
+    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
+    config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
+    extension: z.boolean().optional().describe('Connect to browser extension'),
+    headed: z.boolean().optional().describe('Run browser in headed mode'),
+    persistent: z.boolean().optional().describe('Use persistent browser profile'),
+    profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
+  }),
+  toolName: 'browser_navigate',
+  toolParams: ({ url }) => ({ url: url || 'about:blank' }),
+});
+
+const close = declareCommand({
+  name: 'close',
+  description: 'Close the browser',
+  category: 'core',
+  args: z.object({}),
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const goto = declareCommand({
+  name: 'goto',
+  description: 'Navigate to a URL',
   category: 'core',
   args: z.object({
     url: z.string().describe('The URL to navigate to'),
   }),
   toolName: 'browser_navigate',
   toolParams: ({ url }) => ({ url }),
-});
-
-const close = declareCommand({
-  name: 'close',
-  description: 'Close the page',
-  category: 'core',
-  args: z.object({}),
-  toolName: 'browser_close',
-  toolParams: () => ({}),
 });
 
 const goBack = declareCommand({
@@ -206,9 +224,6 @@ const drag = declareCommand({
     startRef: z.string().describe('Exact source element reference from the page snapshot'),
     endRef: z.string().describe('Exact target element reference from the page snapshot'),
   }),
-  options: z.object({
-    headed: z.boolean().default(false).describe('Run browser in headed mode'),
-  }),
   toolName: 'browser_drag',
   toolParams: ({ startRef, endRef }) => ({ startRef, endRef }),
 });
@@ -340,6 +355,17 @@ const resize = declareCommand({
   toolParams: ({ w: width, h: height }) => ({ width, height }),
 });
 
+const runCode = declareCommand({
+  name: 'run-code',
+  description: 'Run Playwright code snippet',
+  category: 'devtools',
+  args: z.object({
+    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+  }),
+  toolName: 'browser_run_code',
+  toolParams: ({ code }) => ({ code }),
+});
+
 // Tabs
 
 const tabList = declareCommand({
@@ -382,6 +408,251 @@ const tabSelect = declareCommand({
   }),
   toolName: 'browser_tabs',
   toolParams: ({ index }) => ({ action: 'select', index }),
+});
+
+// Storage
+
+const stateLoad = declareCommand({
+  name: 'state-load',
+  description: 'Loads browser storage (authentication) state from a file',
+  category: 'storage',
+  args: z.object({
+    filename: z.string().describe('File name to load the storage state from.'),
+  }),
+  toolName: 'browser_set_storage_state',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
+const stateSave = declareCommand({
+  name: 'state-save',
+  description: 'Saves the current storage (authentication) state to a file',
+  category: 'storage',
+  args: z.object({
+    filename: z.string().optional().describe('File name to save the storage state to.'),
+  }),
+  toolName: 'browser_storage_state',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
+// Cookies
+
+const cookieList = declareCommand({
+  name: 'cookie-list',
+  description: 'List all cookies (optionally filtered by domain/path)',
+  category: 'storage',
+  args: z.object({}),
+  options: z.object({
+    domain: z.string().optional().describe('Filter cookies by domain'),
+    path: z.string().optional().describe('Filter cookies by path'),
+  }),
+  toolName: 'browser_cookie_list',
+  toolParams: ({ domain, path }) => ({ domain, path }),
+});
+
+const cookieGet = declareCommand({
+  name: 'cookie-get',
+  description: 'Get a specific cookie by name',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+  }),
+  toolName: 'browser_cookie_get',
+  toolParams: ({ name }) => ({ name }),
+});
+
+const cookieSet = declareCommand({
+  name: 'cookie-set',
+  description: 'Set a cookie with optional flags',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+    value: z.string().describe('Cookie value'),
+  }),
+  options: z.object({
+    domain: z.string().optional().describe('Cookie domain'),
+    path: z.string().optional().describe('Cookie path'),
+    expires: z.number().optional().describe('Cookie expiration as Unix timestamp'),
+    httpOnly: z.boolean().optional().describe('Whether the cookie is HTTP only'),
+    secure: z.boolean().optional().describe('Whether the cookie is secure'),
+    sameSite: z.enum(['Strict', 'Lax', 'None']).optional().describe('Cookie SameSite attribute'),
+  }),
+  toolName: 'browser_cookie_set',
+  toolParams: ({ name, value, domain, path, expires, httpOnly, secure, sameSite }) => ({ name, value, domain, path, expires, httpOnly, secure, sameSite }),
+});
+
+const cookieDelete = declareCommand({
+  name: 'cookie-delete',
+  description: 'Delete a specific cookie',
+  category: 'storage',
+  args: z.object({
+    name: z.string().describe('Cookie name'),
+  }),
+  toolName: 'browser_cookie_delete',
+  toolParams: ({ name }) => ({ name }),
+});
+
+const cookieClear = declareCommand({
+  name: 'cookie-clear',
+  description: 'Clear all cookies',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_cookie_clear',
+  toolParams: () => ({}),
+});
+
+// LocalStorage
+
+const localStorageList = declareCommand({
+  name: 'localstorage-list',
+  description: 'List all localStorage key-value pairs',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_localstorage_list',
+  toolParams: () => ({}),
+});
+
+const localStorageGet = declareCommand({
+  name: 'localstorage-get',
+  description: 'Get a localStorage item by key',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to get'),
+  }),
+  toolName: 'browser_localstorage_get',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const localStorageSet = declareCommand({
+  name: 'localstorage-set',
+  description: 'Set a localStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to set'),
+    value: z.string().describe('Value to set'),
+  }),
+  toolName: 'browser_localstorage_set',
+  toolParams: ({ key, value }) => ({ key, value }),
+});
+
+const localStorageDelete = declareCommand({
+  name: 'localstorage-delete',
+  description: 'Delete a localStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to delete'),
+  }),
+  toolName: 'browser_localstorage_delete',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const localStorageClear = declareCommand({
+  name: 'localstorage-clear',
+  description: 'Clear all localStorage',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_localstorage_clear',
+  toolParams: () => ({}),
+});
+
+// SessionStorage
+
+const sessionStorageList = declareCommand({
+  name: 'sessionstorage-list',
+  description: 'List all sessionStorage key-value pairs',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_sessionstorage_list',
+  toolParams: () => ({}),
+});
+
+const sessionStorageGet = declareCommand({
+  name: 'sessionstorage-get',
+  description: 'Get a sessionStorage item by key',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to get'),
+  }),
+  toolName: 'browser_sessionstorage_get',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const sessionStorageSet = declareCommand({
+  name: 'sessionstorage-set',
+  description: 'Set a sessionStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to set'),
+    value: z.string().describe('Value to set'),
+  }),
+  toolName: 'browser_sessionstorage_set',
+  toolParams: ({ key, value }) => ({ key, value }),
+});
+
+const sessionStorageDelete = declareCommand({
+  name: 'sessionstorage-delete',
+  description: 'Delete a sessionStorage item',
+  category: 'storage',
+  args: z.object({
+    key: z.string().describe('Key to delete'),
+  }),
+  toolName: 'browser_sessionstorage_delete',
+  toolParams: ({ key }) => ({ key }),
+});
+
+const sessionStorageClear = declareCommand({
+  name: 'sessionstorage-clear',
+  description: 'Clear all sessionStorage',
+  category: 'storage',
+  args: z.object({}),
+  toolName: 'browser_sessionstorage_clear',
+  toolParams: () => ({}),
+});
+
+// Network
+
+const routeMock = declareCommand({
+  name: 'route',
+  description: 'Mock network requests matching a URL pattern',
+  category: 'network',
+  args: z.object({
+    pattern: z.string().describe('URL pattern to match (e.g., "**/api/users")'),
+  }),
+  options: z.object({
+    status: z.number().optional().describe('HTTP status code (default: 200)'),
+    body: z.string().optional().describe('Response body (text or JSON string)'),
+    ['content-type']: z.string().optional().describe('Content-Type header'),
+    header: z.union([z.string(), z.array(z.string())]).optional().transform(v => v ? (Array.isArray(v) ? v : [v]) : undefined).describe('Header to add in "Name: Value" format (repeatable)'),
+    ['remove-header']: z.string().optional().describe('Comma-separated header names to remove'),
+  }),
+  toolName: 'browser_route',
+  toolParams: ({ pattern, status, body, ['content-type']: contentType, header: headers, ['remove-header']: removeHeaders }) => ({
+    pattern,
+    status,
+    body,
+    contentType,
+    headers,
+    removeHeaders,
+  }),
+});
+
+const routeList = declareCommand({
+  name: 'route-list',
+  description: 'List all active network routes',
+  category: 'network',
+  args: z.object({}),
+  toolName: 'browser_route_list',
+  toolParams: () => ({}),
+});
+
+const unroute = declareCommand({
+  name: 'unroute',
+  description: 'Remove routes matching a pattern (or all routes)',
+  category: 'network',
+  args: z.object({
+    pattern: z.string().optional().describe('URL pattern to unroute (omit to remove all)'),
+  }),
+  toolName: 'browser_unroute',
+  toolParams: ({ pattern }) => ({ pattern }),
 });
 
 // Export
@@ -442,17 +713,6 @@ const networkRequests = declareCommand({
   toolParams: ({ static: includeStatic, clear }) => clear ? ({}) : ({ includeStatic }),
 });
 
-const runCode = declareCommand({
-  name: 'run-code',
-  description: 'Run Playwright code snippet',
-  category: 'devtools',
-  args: z.object({
-    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
-  }),
-  toolName: 'browser_run_code',
-  toolParams: ({ code }) => ({ code }),
-});
-
 const tracingStart = declareCommand({
   name: 'tracing-start',
   description: 'Start trace recording',
@@ -471,55 +731,93 @@ const tracingStop = declareCommand({
   toolParams: () => ({}),
 });
 
+const videoStart = declareCommand({
+  name: 'video-start',
+  description: 'Start video recording',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_start_video',
+  toolParams: () => ({}),
+});
+
+const videoStop = declareCommand({
+  name: 'video-stop',
+  description: 'Stop video recording',
+  category: 'devtools',
+  options: z.object({
+    filename: z.string().optional().describe('Filename to save the video.'),
+  }),
+  toolName: 'browser_stop_video',
+  toolParams: ({ filename }) => ({ filename }),
+});
+
 // Sessions
 
 const sessionList = declareCommand({
-  name: 'session-list',
-  description: 'List all sessions',
-  category: 'session',
+  name: 'list',
+  description: 'List browser sessions',
+  category: 'browsers',
   args: z.object({}),
-  toolName: '',
-  toolParams: () => ({}),
-});
-
-const sessionStop = declareCommand({
-  name: 'session-stop',
-  description: 'Stop session',
-  category: 'session',
-  args: z.object({
-    name: z.string().optional().describe('Name of the session to stop. If omitted, current session is stopped.'),
+  options: z.object({
+    all: z.boolean().optional().describe('List all browser sessions across all workspaces'),
   }),
   toolName: '',
   toolParams: () => ({}),
 });
 
-const sessionStopAll = declareCommand({
-  name: 'session-stop-all',
-  description: 'Stop all sessions',
-  category: 'session',
+const sessionCloseAll = declareCommand({
+  name: 'close-all',
+  description: 'Close all browser sessions',
+  category: 'browsers',
   toolName: '',
   toolParams: () => ({}),
 });
 
-const sessionDelete = declareCommand({
-  name: 'session-delete',
+const killAll = declareCommand({
+  name: 'kill-all',
+  description: 'Forcefully kill all browser sessions (for stale/zombie processes)',
+  category: 'browsers',
+  toolName: '',
+  toolParams: () => ({}),
+});
+
+const deleteData = declareCommand({
+  name: 'delete-data',
   description: 'Delete session data',
-  category: 'session',
-  args: z.object({
-    name: z.string().optional().describe('Name of the session to delete. If omitted, current session is deleted.'),
-  }),
+  category: 'core',
   toolName: '',
-  toolParams: ({ name }) => ({ name }),
+  toolParams: () => ({}),
 });
 
-const config = declareCommand({
-  name: 'config',
-  description: 'Restart session with new config, defaults to `playwright-cli.json`',
+const configPrint = declareCommand({
+  name: 'config-print',
+  description: 'Print the final resolved config after merging CLI options, environment variables and config file.',
   category: 'config',
-  args: z.object({
-    config: z.string().optional().describe('Path to the configuration file'),
+  hidden: true,
+  toolName: 'browser_get_config',
+  toolParams: () => ({}),
+});
+
+const install = declareCommand({
+  name: 'install',
+  description: 'Initialize workspace',
+  category: 'install',
+  args: z.object({}),
+  options: z.object({
+    skills: z.boolean().optional().describe('Install skills for Claude / GitHub Copilot'),
   }),
   toolName: '',
+  toolParams: () => ({}),
+});
+
+const installBrowser = declareCommand({
+  name: 'install-browser',
+  description: 'Install browser',
+  category: 'install',
+  options: z.object({
+    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
+  }),
+  toolName: 'browser_install',
   toolParams: () => ({}),
 });
 
@@ -527,6 +825,7 @@ const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
   close,
+  goto,
   type,
   click,
   doubleClick,
@@ -543,6 +842,8 @@ const commandsArray: AnyCommandSchema[] = [
   dialogAccept,
   dialogDismiss,
   resize,
+  runCode,
+  deleteData,
 
   // navigation category
   goBack,
@@ -570,20 +871,48 @@ const commandsArray: AnyCommandSchema[] = [
   tabClose,
   tabSelect,
 
-  // config
-  config,
+  // storage category
+  stateLoad,
+  stateSave,
+  cookieList,
+  cookieGet,
+  cookieSet,
+  cookieDelete,
+  cookieClear,
+  localStorageList,
+  localStorageGet,
+  localStorageSet,
+  localStorageDelete,
+  localStorageClear,
+  sessionStorageList,
+  sessionStorageGet,
+  sessionStorageSet,
+  sessionStorageDelete,
+  sessionStorageClear,
+
+  // network category
+  routeMock,
+  routeList,
+  unroute,
+
+  // config category
+  configPrint,
+
+  // install category
+  install,
+  installBrowser,
 
   // devtools category
   networkRequests,
-  runCode,
   tracingStart,
   tracingStop,
+  videoStart,
+  videoStop,
 
   // session category
   sessionList,
-  sessionStop,
-  sessionStopAll,
-  sessionDelete,
+  sessionCloseAll,
+  killAll,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));

@@ -130,9 +130,9 @@ type DownloadPathFunction = (params: BrowsersJSONDescriptor) => { path: string, 
 function cftUrl(suffix: string): DownloadPathFunction {
   return ({ browserVersion }) => {
     return {
-      path: `${browserVersion}/${suffix}`,
+      path: `builds/cft/${browserVersion}/${suffix}`,
       mirrors: [
-        'https://cdn.playwright.dev/chrome-for-testing-public',
+        'https://cdn.playwright.dev',
       ],
     };
   };
@@ -549,7 +549,7 @@ function readDescriptors(browsersJSON: BrowsersJSON): BrowsersJSONDescriptor[] {
 
 export type BrowserName = 'chromium' | 'firefox' | 'webkit';
 const allDownloadableDirectoriesThatEverExisted = ['android', 'chromium', 'firefox', 'webkit', 'ffmpeg', 'firefox-beta', 'chromium-tip-of-tree', 'chromium-headless-shell', 'chromium-tip-of-tree-headless-shell', 'winldd'];
-const chromiumAliases = ['bidi-chromium', 'chrome-for-testing'];
+const chromiumAliases = ['chrome-for-testing'];
 
 export interface Executable {
   name: string;
@@ -561,7 +561,7 @@ export interface Executable {
   revision?: string,
   browserVersion?: string,
   executablePathOrDie(sdkLanguage: string): string;
-  executablePath(sdkLanguage: string): string | undefined;
+  executablePath(): string | undefined;
   _validateHostRequirements(sdkLanguage: string): Promise<void>;
   wslExecutablePath?: string
 }
@@ -589,21 +589,37 @@ export class Registry {
         const currentDockerVersion = readDockerVersionSync();
         const preferredDockerVersion = currentDockerVersion ? dockerVersion(currentDockerVersion.dockerImageNameTemplate) : null;
         const isOutdatedDockerImage = currentDockerVersion && preferredDockerVersion && currentDockerVersion.dockerImageName !== preferredDockerVersion.dockerImageName;
-        const prettyMessage = isOutdatedDockerImage ? [
-          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
-          `Please update docker image as well.`,
-          `-  current: ${currentDockerVersion.dockerImageName}`,
-          `- required: ${preferredDockerVersion.dockerImageName}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n') : [
-          `Looks like ${sdkLanguage === 'javascript' ? 'Playwright Test or ' : ''}Playwright was just installed or updated.`,
-          `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
-          ``,
-          `    ${installCommand}`,
-          ``,
-          `<3 Playwright Team`,
-        ].join('\n');
+        const isFfmpeg = name === 'ffmpeg';
+        let prettyMessage;
+        if (isOutdatedDockerImage) {
+          prettyMessage = [
+            `Looks like Playwright was just updated to ${preferredDockerVersion.driverVersion}.`,
+            `Please update docker image as well.`,
+            `-  current: ${currentDockerVersion.dockerImageName}`,
+            `- required: ${preferredDockerVersion.dockerImageName}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        } else if (isFfmpeg) {
+          prettyMessage = [
+            `Video rendering requires ffmpeg binary.`,
+            `Downloading it will not affect any of the system-wide settings.`,
+            `Please run the following command:`,
+            ``,
+            `    ${buildPlaywrightCLICommand(sdkLanguage, 'install ffmpeg')}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        } else {
+          prettyMessage = [
+            `Looks like Playwright was just installed or updated.`,
+            `Please run the following command to download new browser${installByDefault ? 's' : ''}:`,
+            ``,
+            `    ${installCommand}`,
+            ``,
+            `<3 Playwright Team`,
+          ].join('\n');
+        }
         throw new Error(`Executable doesn't exist at ${e}\n${wrapInASCIIBox(prettyMessage, 1)}`);
       }
       return e;
@@ -768,17 +784,6 @@ export class Registry {
       'linux': '/opt/firefox-nightly/firefox',
       'darwin': '/Applications/Firefox Nightly.app/Contents/MacOS/firefox',
       'win32': '\\Mozilla Firefox\\firefox.exe',
-    }));
-
-    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-stable', {
-      'linux': '/opt/google/chrome/chrome',
-      'darwin': '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
-      'win32': `\\Google\\Chrome\\Application\\chrome.exe`,
-    }));
-    this._executables.push(this._createBidiChromiumChannel('bidi-chrome-canary', {
-      'linux': '/opt/google/chrome-canary/chrome',
-      'darwin': '/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary',
-      'win32': `\\Google\\Chrome SxS\\Application\\chrome.exe`,
     }));
 
     const firefox = descriptors.find(d => d.name === 'firefox')!;
@@ -957,7 +962,7 @@ export class Registry {
       name,
       browserName: 'chromium',
       directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: install ? 'install-script' : 'none',
       _validateHostRequirements: () => Promise.resolve(),
@@ -996,52 +1001,12 @@ export class Registry {
       name,
       browserName: 'firefox',
       directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
+      executablePath: () => executablePath('', false),
       executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
       installType: 'none',
       _validateHostRequirements: () => Promise.resolve(),
       _isHermeticInstallation: true,
       _install: install,
-    };
-  }
-
-  private _createBidiChromiumChannel(name: string, lookAt: Record<'linux' | 'darwin' | 'win32', string>): ExecutableImpl {
-    const executablePath = (sdkLanguage: string, shouldThrow: boolean) => {
-      const suffix = lookAt[process.platform as 'linux' | 'darwin' | 'win32'];
-      if (!suffix) {
-        if (shouldThrow)
-          throw new Error(`Chromium distribution '${name}' is not supported on ${process.platform}`);
-        return undefined;
-      }
-      const prefixes = (process.platform === 'win32' ? [
-        process.env.LOCALAPPDATA,
-        process.env.PROGRAMFILES,
-        process.env['PROGRAMFILES(X86)'],
-        // In some cases there is no PROGRAMFILES/(86) env var set but HOMEDRIVE is set.
-        process.env.HOMEDRIVE + '\\Program Files',
-        process.env.HOMEDRIVE + '\\Program Files (x86)',
-      ].filter(Boolean) : ['']) as string[];
-
-      for (const prefix of prefixes) {
-        const executablePath = path.join(prefix, suffix);
-        if (canAccessFile(executablePath))
-          return executablePath;
-      }
-      if (!shouldThrow)
-        return undefined;
-
-      const location = prefixes.length ? ` at ${path.join(prefixes[0], suffix)}` : ``;
-      throw new Error(`Chromium distribution '${name}' is not found${location}`);
-    };
-    return {
-      name,
-      browserName: 'chromium',
-      directory: undefined,
-      executablePath: (sdkLanguage: string) => executablePath(sdkLanguage, false),
-      executablePathOrDie: (sdkLanguage: string) => executablePath(sdkLanguage, true)!,
-      installType: 'none',
-      _validateHostRequirements: () => Promise.resolve(),
-      _isHermeticInstallation: false,
     };
   }
 
@@ -1118,8 +1083,8 @@ export class Registry {
         if (!executable._install)
           throw new Error(`ERROR: Playwright does not support installing ${executable.name}`);
 
-        const { embedderName } = getEmbedderName();
-        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !options?.force && executable.executablePath(embedderName)) {
+        if (!getAsBooleanFromENV('CI') && !executable._isHermeticInstallation && !options?.force && executable.executablePath()) {
+          const { embedderName } = getEmbedderName();
           const command = buildPlaywrightCLICommand(embedderName, 'install --force ' + executable.name);
           // eslint-disable-next-line no-restricted-properties
           process.stderr.write('\n' + wrapInASCIIBox([

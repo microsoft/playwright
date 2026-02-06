@@ -48,40 +48,40 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 
   const output = stderr().split('\n').filter(line => line.startsWith('Session: '))[0];
   const sessionFolder = output.substring('Session: '.length);
-  await expect.poll(() => readSessionLog(sessionFolder)).toBe(`
+  await expect.poll(() => readSessionLog(sessionFolder)).toMatch(new RegExp(`
 ### Tool call: browser_navigate
 - Args
-\`\`\`json
-{
+\\\`\\\`\\\`json
+\\{
   "url": "http://localhost:${server.PORT}"
-}
-\`\`\`
+\\}
+\\\`\\\`\\\`
 - Result
-\`\`\`json
-{
-  "code": "await page.goto('http://localhost:${server.PORT}');",
-  "page": "- Page URL: http://localhost:${server.PORT}/\\n- Page Title: Title",
-  "snapshot": "\`\`\`yaml\\n- button \\"Submit\\" [ref=e2]\\n\`\`\`"
-}
-\`\`\`
+\\\`\\\`\\\`json
+\\{
+  "code": "await page.goto\\('http://localhost:${server.PORT}'\\);",
+  "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
+  "snapshot": "\\\`\\\`\\\`yaml\\\\n- button \\\\"Submit\\\\" \\[ref=e2\\]\\\\n\\\`\\\`\\\`"
+\\}
+\\\`\\\`\\\`
 
 ### Tool call: browser_click
 - Args
-\`\`\`json
-{
+\\\`\\\`\\\`json
+\\{
   "element": "Submit button",
   "ref": "e2"
-}
-\`\`\`
+\\}
+\\\`\\\`\\\`
 - Result
-\`\`\`json
-{
-  "code": "await page.getByRole('button', { name: 'Submit' }).click();",
-  "page": "- Page URL: http://localhost:${server.PORT}/\\n- Page Title: Title",
-  "snapshot": "\`\`\`yaml\\n- <changed> button \\"Submit\\" [active] [ref=e2]\\n\`\`\`"
-}
-\`\`\`
-`);
+\\\`\\\`\\\`json
+\\{
+  "code": "await page.getByRole\\('button', \\{ name: 'Submit' \\}\\).click\\(\\);",
+  "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
+  "snapshot": "\\\`\\\`\\\`yaml\\\\n- <changed> button \\\\"Submit\\\\" \\[active\\] \\[ref=e2\\]\\\\n\\\`\\\`\\\`"
+\\}
+\\\`\\\`\\\`
+`.trim()));
 });
 
 async function readSessionLog(sessionFolder: string): Promise<string> {

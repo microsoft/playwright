@@ -20,6 +20,10 @@ import { ReadStream } from 'fs';
 import { Protocol } from './protocol';
 import { Serializable, EvaluationArgument, PageFunction, PageFunctionOn, SmartHandle, ElementHandleForTag, BindingSource } from './structs';
 
+// Use the global URLPattern type if available (Node.js 22+, modern browsers),
+// otherwise fall back to `never` so it disappears from union types.
+type URLPattern = typeof globalThis extends { URLPattern: infer T } ? T : never;
+
 type PageWaitForSelectorOptionsNotHidden = PageWaitForSelectorOptions & {
   state?: 'visible'|'attached';
 };
@@ -2840,9 +2844,9 @@ export interface Page {
     name?: string;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving frame's `url` as a [URL] object. Optional.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving frame's `url` as a [URL] object. Optional.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp|URLPattern|((url: URL) => boolean);
   }): null|Frame;
 
   /**
@@ -4097,14 +4101,14 @@ export interface Page {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
    * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
+  route(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
      * How often a route should be used. By default it will be used every time.
      */
@@ -4185,7 +4189,7 @@ export interface Page {
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) context option.
    * @param handler Handler function to route the WebSocket.
    */
-  routeWebSocket(url: string|RegExp|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+  routeWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
 
   /**
    * Returns the buffer with the captured screenshot.
@@ -4776,10 +4780,10 @@ export interface Page {
    * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route). When
    * [`handler`](https://playwright.dev/docs/api/class-page#page-unroute-option-handler) is not specified, removes all
    * routes for the [`url`](https://playwright.dev/docs/api/class-page#page-unroute-option-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while routing.
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while routing.
    * @param handler Optional handler function to route the request.
    */
-  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
+  unroute(url: string|RegExp|URLPattern|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
 
   /**
    * Removes all routes created with
@@ -4802,9 +4806,12 @@ export interface Page {
   url(): string;
 
   /**
-   * Video object associated with this page.
+   * Video object associated with this page. Can be used to control video recording with
+   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
+   * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop), or to access the video file when
+   * using the `recordVideo` context option.
    */
-  video(): null|Video;
+  video(): Video;
 
   viewportSize(): null|{
     /**
@@ -5108,11 +5115,11 @@ export interface Page {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-     * the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
-     * equal to the string.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+     * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+     * is exactly equal to the string.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp|URLPattern|((url: URL) => boolean);
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
@@ -5226,12 +5233,12 @@ export interface Page {
    * await page.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-   * the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
-   * equal to the string.
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+   * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+   * is exactly equal to the string.
    * @param options
    */
-  waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
+  waitForURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -8291,11 +8298,11 @@ export interface Frame {
     timeout?: number;
 
     /**
-     * A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-     * the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
-     * equal to the string.
+     * A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+     * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+     * is exactly equal to the string.
      */
-    url?: string|RegExp|((url: URL) => boolean);
+    url?: string|RegExp|URLPattern|((url: URL) => boolean);
 
     /**
      * When to consider operation succeeded, defaults to `load`. Events can be either:
@@ -8332,12 +8339,12 @@ export interface Frame {
    * await frame.waitForURL('**\/target.html');
    * ```
    *
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] to match while waiting for the navigation. Note that if
-   * the parameter is a string without wildcard characters, the method will wait for navigation to URL that is exactly
-   * equal to the string.
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] to match while waiting for the navigation.
+   * Note that if the parameter is a string without wildcard characters, the method will wait for navigation to URL that
+   * is exactly equal to the string.
    * @param options
    */
-  waitForURL(url: string|RegExp|((url: URL) => boolean), options?: {
+  waitForURL(url: string|RegExp|URLPattern|((url: URL) => boolean), options?: {
     /**
      * Maximum operation time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via
      * `navigationTimeout` option in the config, or by using the
@@ -9415,14 +9422,14 @@ export interface BrowserContext {
    *
    * **NOTE** Enabling routing disables http cache.
    *
-   * @param url A glob pattern, regex pattern, or predicate that receives a [URL] to match during routing. If
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate that receives a [URL] to match during routing. If
    * [`baseURL`](https://playwright.dev/docs/api/class-browser#browser-new-context-option-base-url) is set in the
    * context options and the provided URL is a string that does not start with `*`, it is resolved using the
    * [`new URL()`](https://developer.mozilla.org/en-US/docs/Web/API/URL/URL) constructor.
    * @param handler handler function to route the request.
    * @param options
    */
-  route(url: string|RegExp|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
+  route(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((route: Route, request: Request) => Promise<any>|any), options?: {
     /**
      * How often a route should be used. By default it will be used every time.
      */
@@ -9612,6 +9619,71 @@ export interface BrowserContext {
   setOffline(offline: boolean): Promise<void>;
 
   /**
+   * Clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Load storage state from a file and apply it to the context.
+   * await context.setStorageState('state.json');
+   * ```
+   *
+   * @param storageState Learn more about [storage state and auth](https://playwright.dev/docs/auth).
+   *
+   * Populates context with given storage state. This option can be used to initialize context with logged-in
+   * information obtained via
+   * [browserContext.storageState([options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-storage-state).
+   */
+  setStorageState(storageState: string|{
+    /**
+     * Cookies to set for context
+     */
+    cookies: Array<{
+      name: string;
+
+      value: string;
+
+      /**
+       * Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like
+       * this: ".example.com"
+       */
+      domain: string;
+
+      /**
+       * Domain and path are required
+       */
+      path: string;
+
+      /**
+       * Unix time in seconds.
+       */
+      expires: number;
+
+      httpOnly: boolean;
+
+      secure: boolean;
+
+      /**
+       * sameSite flag
+       */
+      sameSite: "Strict"|"Lax"|"None";
+    }>;
+
+    origins: Array<{
+      origin: string;
+
+      /**
+       * localStorage to set for context
+       */
+      localStorage: Array<{
+        name: string;
+
+        value: string;
+      }>;
+    }>;
+  }): Promise<void>;
+
+  /**
    * Returns storage state for this browser context, contains current cookies, local storage snapshot and IndexedDB
    * snapshot.
    * @param options
@@ -9670,12 +9742,12 @@ export interface BrowserContext {
    * When [`handler`](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute-option-handler) is
    * not specified, removes all routes for the
    * [`url`](https://playwright.dev/docs/api/class-browsercontext#browser-context-unroute-option-url).
-   * @param url A glob pattern, regex pattern or predicate receiving [URL] used to register a routing with
+   * @param url A glob pattern, regex pattern, URL pattern, or predicate receiving [URL] used to register a routing with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    * @param handler Optional handler function used to register a routing with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route).
    */
-  unroute(url: string|RegExp|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
+  unroute(url: string|RegExp|URLPattern|((url: URL) => boolean), handler?: ((route: Route, request: Request) => Promise<any>|any)): Promise<void>;
 
   /**
    * Removes all routes created with
@@ -19195,6 +19267,11 @@ export interface ConsoleMessage {
    */
   text(): string;
 
+  /**
+   * The timestamp of the console message in milliseconds since the Unix epoch.
+   */
+  timestamp(): number;
+
   type(): "log"|"debug"|"info"|"error"|"warning"|"dir"|"dirxml"|"table"|"trace"|"clear"|"startGroup"|"startGroupCollapsed"|"endGroup"|"assert"|"profile"|"profileEnd"|"count"|"time"|"timeEnd";
 
   /**
@@ -19565,6 +19642,11 @@ export interface Electron {
      * Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
      */
     bypassCSP?: boolean;
+
+    /**
+     * Enable Chromium sandboxing. Defaults to `false`.
+     */
+    chromiumSandbox?: boolean;
 
     /**
      * Emulates [prefers-colors-scheme](https://developer.mozilla.org/en-US/docs/Web/CSS/@media/prefers-color-scheme)
@@ -20693,6 +20775,16 @@ export interface Request {
   allHeaders(): Promise<{ [key: string]: string; }>;
 
   /**
+   * Returns the [Response](https://playwright.dev/docs/api/class-response) object if the response has already been
+   * received, `null` otherwise.
+   *
+   * Unlike [request.response()](https://playwright.dev/docs/api/class-request#request-response), this method does not
+   * wait for the response to arrive. It returns immediately with the response object if the response has been received,
+   * or `null` if the response has not been received yet.
+   */
+  existingResponse(): null|Response;
+
+  /**
    * The method returns `null` unless this request has failed, as reported by `requestfailed` event.
    *
    * **Usage**
@@ -21757,6 +21849,16 @@ export interface Tracing {
  * console.log(await page.video().path());
  * ```
  *
+ * Alternatively, you can use [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
+ * [video.stop([options])](https://playwright.dev/docs/api/class-video#video-stop) to record video manually. This
+ * approach is mutually exclusive with the `recordVideo` option.
+ *
+ * ```js
+ * await page.video().start();
+ * // ... perform actions ...
+ * await page.video().stop({ path: 'video.webm' });
+ * ```
+ *
  */
 export interface Video {
   /**
@@ -21776,6 +21878,49 @@ export interface Video {
    * @param path Path where the video should be saved.
    */
   saveAs(path: string): Promise<void>;
+
+  /**
+   * Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.video().start();
+   * // ... perform actions ...
+   * await page.video().stop({ path: 'video.webm' });
+   * ```
+   *
+   * @param options
+   */
+  start(options?: {
+    /**
+     * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
+     * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+     */
+    size?: {
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Stops video recording started with
+   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start).
+   * @param options
+   */
+  stop(options?: {
+    /**
+     * Path where the video should be saved.
+     */
+    path?: string;
+  }): Promise<void>;
 }
 
 /**

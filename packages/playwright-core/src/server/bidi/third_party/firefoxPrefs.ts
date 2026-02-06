@@ -265,6 +265,9 @@ function defaultProfilePreferences(
 
     // Prevent starting into safe mode after application crashes
     'toolkit.startup.max_resumed_crashes': -1,
+
+    // Enable TestUtils
+    'dom.testing.testutils.enabled': true,
   };
 
   return Object.assign(defaultPrefs, extraPrefs);

@@ -76,11 +76,15 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
     const self = this;
     return {
       onBeforeTurn(params: { conversation: loopTypes.Conversation }) {
+        if (self._disposed)
+          return;
         const userMessage = params.conversation.messages.find(m => m.role === 'user');
         self._dispatchEvent('turn', { role: 'user', message: userMessage?.content ?? '' });
       },
 
       onAfterTurn(params: { assistantMessage: loopTypes.AssistantMessage, totalUsage: loopTypes.Usage }) {
+        if (self._disposed)
+          return;
         const usage = { inputTokens: params.totalUsage.input, outputTokens: params.totalUsage.output };
         const intent = params.assistantMessage.content.filter(c => c.type === 'text').map(c => c.text).join('\n');
         self._dispatchEvent('turn', { role: 'assistant', message: intent, usage });
@@ -90,15 +94,21 @@ export class PageAgentDispatcher extends Dispatcher<SdkObject, channels.PageAgen
       },
 
       onBeforeToolCall(params: { toolCall: loopTypes.ToolCallContentPart }) {
+        if (self._disposed)
+          return;
         self._dispatchEvent('turn', { role: 'assistant', message: `call tool "${params.toolCall.name}"` });
       },
 
       onAfterToolCall(params: { toolCall: loopTypes.ToolCallContentPart, result: loopTypes.ToolResult }) {
+        if (self._disposed)
+          return;
         const suffix = params.toolCall.result?.isError ? 'failed' : 'succeeded';
         self._dispatchEvent('turn', { role: 'user', message: `tool "${params.toolCall.name}" ${suffix}` });
       },
 
       onToolCallError(params: { toolCall: loopTypes.ToolCallContentPart, error: Error }) {
+        if (self._disposed)
+          return;
         self._dispatchEvent('turn', { role: 'user', message: `tool "${params.toolCall.name}" failed: ${params.error.message}` });
       }
     };

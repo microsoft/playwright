@@ -133,7 +133,7 @@ test('clicking on download link emits download', async ({ startClient, server },
     if (p.events)
       events += '\n' + p.events;
     return events;
-  }).toBe(`- Downloading file test.txt ...
+  }).toContain(`- Downloading file test.txt ...
 - Downloaded file test.txt to "output${path.sep}test.txt"`);
 });
 

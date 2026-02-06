@@ -15,7 +15,9 @@
  */
 
 import common from './tools/common';
+import config from './tools/config';
 import console from './tools/console';
+import cookies from './tools/cookies';
 import dialogs from './tools/dialogs';
 import evaluate from './tools/evaluate';
 import files from './tools/files';
@@ -26,20 +28,26 @@ import mouse from './tools/mouse';
 import navigate from './tools/navigate';
 import network from './tools/network';
 import pdf from './tools/pdf';
+import route from './tools/route';
 import runCode from './tools/runCode';
 import snapshot from './tools/snapshot';
 import screenshot from './tools/screenshot';
+import storage from './tools/storage';
 import tabs from './tools/tabs';
 import tracing from './tools/tracing';
-import wait from './tools/wait';
 import verify from './tools/verify';
+import video from './tools/video';
+import wait from './tools/wait';
+import webstorage from './tools/webstorage';
 
 import type { Tool } from './tools/tool';
 import type { FullConfig } from './config';
 
 export const browserTools: Tool<any>[] = [
   ...common,
+  ...config,
   ...console,
+  ...cookies,
   ...dialogs,
   ...evaluate,
   ...files,
@@ -50,13 +58,17 @@ export const browserTools: Tool<any>[] = [
   ...navigate,
   ...network,
   ...pdf,
+  ...route,
   ...runCode,
   ...screenshot,
   ...snapshot,
+  ...storage,
   ...tabs,
   ...tracing,
-  ...wait,
   ...verify,
+  ...video,
+  ...wait,
+  ...webstorage,
 ];
 
 export function filteredTools(config: FullConfig) {

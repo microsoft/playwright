@@ -606,3 +606,40 @@ test('should not reuse utility worlds between two clients', async ({ browserType
     await browserServer.close();
   }
 });
+
+test('should get title and URL of existing page', async ({ browserType, mode, server }, testInfo) => {
+  const port = 9339 + testInfo.workerIndex;
+  const browserServer = await browserType.launch({
+    args: ['--remote-debugging-port=' + port]
+  });
+  const browsers = [];
+  try {
+    {
+      const cdpBrowser = await browserType.connectOverCDP({
+        endpointURL: `http://127.0.0.1:${port}/`,
+      });
+      browsers.push(cdpBrowser);
+      const [context] = cdpBrowser.contexts();
+      const page = await context.newPage();
+      await page.goto(server.EMPTY_PAGE);
+      await page.evaluate(() => document.title = 'my title');
+    }
+
+    {
+      const cdpBrowser = await browserType.connectOverCDP({
+        endpointURL: `http://127.0.0.1:${port}/`,
+      });
+      browsers.push(cdpBrowser);
+
+      const [context] = cdpBrowser.contexts();
+      const [page] = context.pages();
+      expect(page.url()).toBe(server.EMPTY_PAGE);
+      expect(await page.title()).toBe('my title');
+    }
+
+  } finally {
+    for (const browser of browsers)
+      await browser.close();
+    await browserServer.close();
+  }
+});

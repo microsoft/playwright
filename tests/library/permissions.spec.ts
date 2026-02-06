@@ -253,9 +253,10 @@ it.describe(() => {
   // Secure context
   it.use({ ignoreHTTPSErrors: true, });
 
-  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel }) => {
+  it('should be able to use the local-fonts API', async ({ page, context, httpsServer, browserName, channel, headless }) => {
     it.skip(browserName !== 'chromium', 'chromium-only api');
     it.fixme(!!channel && channel.startsWith('msedge'), 'always times out in edge');
+    it.fixme(!headless, 'times out in headed');
     it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36113' });
 
     await page.goto(httpsServer.EMPTY_PAGE);
@@ -270,7 +271,6 @@ it('local network request is allowed from public origin', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/37861' }
 }, async ({ page, context, server, browserName, channel, browserMajorVersion }) => {
   it.skip(browserName === 'webkit');
-  it.skip(channel?.startsWith('msedge'));
   it.skip(browserName === 'chromium' && browserMajorVersion < 145, 'local-network-access permission support has changed between versions');
 
   if (browserName === 'chromium')

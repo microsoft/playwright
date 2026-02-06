@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { execSync } from 'child_process';
 import os from 'os';
 
 import { getLinuxDistributionInfoSync } from './linuxUtils';
@@ -133,3 +134,17 @@ function toShortPlatform(hostPlatform: HostPlatform): ShortPlatform {
 }
 
 export const shortPlatform = toShortPlatform(hostPlatform);
+
+let hasGpuMacValue: boolean | undefined;
+
+export function hasGpuMac() {
+  try {
+    if (hasGpuMacValue === undefined) {
+      const output = execSync('system_profiler SPDisplaysDataType', { stdio: ['ignore', 'pipe', 'ignore'] }).toString();
+      hasGpuMacValue = output.includes('Metal: Supported') || output.includes('Metal Support: Metal');
+    }
+    return hasGpuMacValue;
+  } catch (e) {
+    return false;
+  }
+}

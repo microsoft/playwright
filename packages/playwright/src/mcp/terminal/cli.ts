@@ -16,8 +16,7 @@
 
 import { program } from './program';
 
-const packageJSON = require('../../../package.json');
-program({ version: packageJSON.version }).catch(e => {
+program(require.resolve('../../../package.json')).catch(e => {
   /* eslint-disable no-console */
   console.error(e.message);
   /* eslint-disable no-restricted-properties */

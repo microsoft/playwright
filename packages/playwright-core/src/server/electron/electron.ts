@@ -114,7 +114,7 @@ export class ElectronApplication extends SdkObject {
     if (!this._nodeExecutionContext)
       return;
     const args = event.args.map(arg => createHandle(this._nodeExecutionContext!, arg));
-    const message = new ConsoleMessage(null, null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace));
+    const message = new ConsoleMessage(null, null, event.type, undefined, args, toConsoleMessageLocation(event.stackTrace), event.timestamp);
     this.emit(ElectronApplication.Events.Console, message);
   }
 
@@ -156,12 +156,11 @@ export class Electron extends SdkObject {
 
   async launch(progress: Progress, options: Omit<channels.ElectronLaunchParams, 'timeout'>): Promise<ElectronApplication> {
     let app: ElectronApplication | undefined = undefined;
-    // --remote-debugging-port=0 must be the last playwright's argument, loader.ts relies on it.
-    let electronArguments = ['--inspect=0', '--remote-debugging-port=0', ...(options.args || [])];
+    // --inspect=0 must be the last playwright's argument, loader.ts relies on it.
+    let electronArguments = ['--inspect=0', ...(options.args || [])];
 
     if (os.platform() === 'linux') {
-      const runningAsRoot = process.geteuid && process.geteuid() === 0;
-      if (runningAsRoot && electronArguments.indexOf('--no-sandbox') === -1)
+      if (!options.chromiumSandbox && electronArguments.indexOf('--no-sandbox') === -1)
         electronArguments.unshift('--no-sandbox');
     }
 

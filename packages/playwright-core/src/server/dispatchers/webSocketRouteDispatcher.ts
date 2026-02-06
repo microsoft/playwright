@@ -19,7 +19,7 @@ import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
 import { SdkObject } from '../instrumentation';
-import { urlMatches } from '../../utils/isomorphic/urlMatch';
+import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { eventsHelper } from '../utils/eventsHelper';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
@@ -161,8 +161,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
 
 function matchesPattern(dispatcher: PageDispatcher | BrowserContextDispatcher, baseURL: string | undefined, url: string) {
   for (const pattern of dispatcher._webSocketInterceptionPatterns || []) {
-    const urlMatch = pattern.regexSource ? new RegExp(pattern.regexSource, pattern.regexFlags) : pattern.glob;
-    if (urlMatches(baseURL, url, urlMatch, true))
+    if (urlMatches(baseURL, url, deserializeURLMatch(pattern), true))
       return true;
   }
   return false;
