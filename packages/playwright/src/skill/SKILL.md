@@ -181,19 +181,19 @@ playwright-cli close
 playwright-cli delete-data
 ```
 
-### Sessions
+### Browser Sessions
 
 ```bash
-playwright-cli --session=mysession open example.com
-playwright-cli --session=mysession click e6
-playwright-cli --session=mysession close  # stop a named session
-playwright-cli --session=mysession delete-data  # delete user data for named session
+playwright-cli -s=mysession open example.com
+playwright-cli -s=mysession click e6
+playwright-cli -s=mysession close  # stop a named browser
+playwright-cli -s=mysession delete-data  # delete user data for named browser
 
-playwright-cli session-list
+playwright-cli list
 # Close all browsers
-playwright-cli session-close-all
+playwright-cli close-all
 # Forcefully kill all browser processes
-playwright-cli session-kill-all
+playwright-cli kill-all
 ```
 
 ## Example: Form submission
@@ -240,7 +240,7 @@ playwright-cli tracing-stop
 
 * **Request mocking** [references/request-mocking.md](references/request-mocking.md)
 * **Running Playwright code** [references/running-code.md](references/running-code.md)
-* **Session management** [references/session-management.md](references/session-management.md)
+* **Browser session management** [references/session-management.md](references/session-management.md)
 * **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
 * **Test generation** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)

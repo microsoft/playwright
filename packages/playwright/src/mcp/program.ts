@@ -106,18 +106,24 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         const browserContextFactory = contextFactory(config);
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
+        // Always force new tab in cli mode as the first command is always navigation.
+        const forceNewTab = !!config.sessionConfig;
+        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath, forceNewTab);
 
         if (config.sessionConfig) {
           const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
-          const serverBackendFactory: mcpServer.ServerBackendFactory = {
-            name: 'Playwright',
-            nameInConfig: 'playwright-daemon',
-            version,
-            create: () => new BrowserServerBackend(config, contextFactory, { allTools: true })
-          };
-          const socketPath = await startMcpDaemonServer(config.sessionConfig, serverBackendFactory);
-          console.error(`Daemon server listening on ${socketPath}`);
+          console.log(`### Config`);
+          console.log('```json');
+          console.log(JSON.stringify(config, null, 2));
+          console.log('```');
+          try {
+            const socketPath = await startMcpDaemonServer(config, contextFactory);
+            console.log(`### Success\nDaemon listening on ${socketPath}`);
+            console.log('<EOF>');
+          } catch (error) {
+            console.log(`### Error\n${error.message}`);
+            console.log('<EOF>');
+          }
           return;
         }
 
@@ -145,7 +151,7 @@ export function decorateCommand(command: Command, version: string) {
 function checkFfmpeg(): boolean {
   try {
     const executable = registry.findExecutable('ffmpeg')!;
-    return fs.existsSync(executable.executablePath('javascript')!);
+    return fs.existsSync(executable.executablePath()!);
   } catch (error) {
     return false;
   }

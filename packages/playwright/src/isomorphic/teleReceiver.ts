@@ -338,8 +338,19 @@ export class TeleReporterReceiver {
       projectSuite = new TeleSuite(project.name, 'project');
       this._rootSuite._addSuite(projectSuite);
     }
+
+    const parsed = this._parseProject(project);
     // Always update project in watch mode.
-    projectSuite._project = this._parseProject(project);
+    projectSuite._project = parsed;
+
+    let index = -1;
+    if (this._options.mergeProjects)
+      index = this._config.projects.findIndex(p => p.name === project.name);
+    if (index === -1)
+      this._config.projects.push(parsed);
+    else
+      this._config.projects[index] = parsed;
+
     for (const suite of project.suites)
       this._mergeSuiteInto(suite, projectSuite);
   }

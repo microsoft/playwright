@@ -31,7 +31,7 @@ test('open', async ({ cli, server }) => {
 test('close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('close');
-  expect(output).toContain(`Session 'default' stopped.`);
+  expect(output).toContain(`Browser 'default' closed`);
 });
 
 test('click button', async ({ cli, server }) => {

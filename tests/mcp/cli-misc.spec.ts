@@ -20,7 +20,7 @@ import { test, expect } from './cli-fixtures';
 
 test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
   const first = await cli('open', server.PREFIX, { env: { PLAYWRIGHT_MCP_EXECUTABLE_PATH: '/nonexistent/browser/path' } });
-  expect(first.output).toContain('Failed to launch');
+  expect(first.error).toContain(`executable doesn't exist`);
 
   const second = await cli('open', server.PREFIX);
   expect(second.exitCode).toBe(0);
@@ -51,4 +51,12 @@ test('install workspace w/skills', async ({ cli }, testInfo) => {
   const referencesDir = testInfo.outputPath('.claude', 'skills', 'playwright-cli', 'references');
   const references = await fs.promises.readdir(referencesDir);
   expect(references.length).toBeGreaterThan(0);
+});
+
+test('install handles browser detection', async ({ cli }) => {
+  const { output } = await cli('install');
+  // Verify that one of the browser detection outcomes occurred
+  const foundMatch = output.match(/Found ((?:chrome|msedge)[\w-]*), will use it as the default browser\./m);
+  if (foundMatch?.[1] !== 'chrome')
+    expect(output).toContain(`Created default config for ${foundMatch?.[1] ?? 'chromium'}.`);
 });

@@ -754,26 +754,29 @@ const videoStop = declareCommand({
 // Sessions
 
 const sessionList = declareCommand({
-  name: 'session-list',
-  description: 'List all sessions',
-  category: 'session',
+  name: 'list',
+  description: 'List browser sessions',
+  category: 'browsers',
   args: z.object({}),
+  options: z.object({
+    all: z.boolean().optional().describe('List all browser sessions across all workspaces'),
+  }),
   toolName: '',
   toolParams: () => ({}),
 });
 
 const sessionCloseAll = declareCommand({
-  name: 'session-close-all',
-  description: 'Stop all sessions',
-  category: 'session',
+  name: 'close-all',
+  description: 'Close all browser sessions',
+  category: 'browsers',
   toolName: '',
   toolParams: () => ({}),
 });
 
 const killAll = declareCommand({
-  name: 'session-kill-all',
-  description: 'Forcefully kill all daemon processes (for stale/zombie processes)',
-  category: 'session',
+  name: 'kill-all',
+  description: 'Forcefully kill all browser sessions (for stale/zombie processes)',
+  category: 'browsers',
   toolName: '',
   toolParams: () => ({}),
 });

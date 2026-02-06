@@ -115,7 +115,7 @@ export class HttpServer {
       this._port = address.port;
       const resolvedHost = address.family === 'IPv4' ? address.address : `[${address.address}]`;
       this._urlPrefixPrecise = `http://${resolvedHost}:${address.port}`;
-      this._urlPrefixHumanReadable = `http://${host}:${address.port}`;
+      this._urlPrefixHumanReadable = `http://${host ?? 'localhost'}:${address.port}`;
     }
   }
 

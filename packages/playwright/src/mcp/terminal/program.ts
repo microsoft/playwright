@@ -25,6 +25,9 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
+import type { FullConfig } from '../browser/config';
+
+import type { Config } from '../config';
 
 type MinimistArgs = {
   _: string[];
@@ -43,12 +46,15 @@ export type SessionConfig = {
     config?: string;
   };
   userDataDirPrefix?: string;
+  workspaceDir?: string;
+  resolvedConfig?: FullConfig
 };
 
 type ClientInfo = {
   version: string;
   workspaceDirHash: string;
   daemonProfilesDir: string;
+  workspaceDir: string | undefined;
 };
 
 class Session {
@@ -88,14 +94,16 @@ to restart the session daemon.`);
     return await this._send('run', { args, cwd: process.cwd() });
   }
 
-  async stop(): Promise<void> {
+  async stop(quiet: boolean = false): Promise<void> {
     if (!await this.canConnect()) {
-      console.log(`Session '${this.name}' is not running.`);
+      if (!quiet)
+        console.log(`Browser '${this.name}' is not open.`);
       return;
     }
 
     await this._stopDaemon();
-    console.log(`Session '${this.name}' stopped.`);
+    if (!quiet)
+      console.log(`Browser '${this.name}' closed\n`);
   }
 
   private async _send(method: string, params: any = {}): Promise<any> {
@@ -130,7 +138,7 @@ to restart the session daemon.`);
     const dataDirs = await fs.promises.readdir(this._clientInfo.daemonProfilesDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
     if (matchingEntries.length === 0) {
-      console.log(`No user data found for session '${this.name}'.`);
+      console.log(`No user data found for browser '${this.name}'.`);
       return;
     }
 
@@ -140,11 +148,11 @@ to restart the session daemon.`);
         try {
           await fs.promises.rm(userDataDir, { recursive: true });
           if (entry.startsWith('ud-'))
-            console.log(`Deleted user data for session '${this.name}'.`);
+            console.log(`Deleted user data for browser '${this.name}'.`);
           break;
         } catch (e: any) {
           if (e.code === 'ENOENT') {
-            console.log(`No user data found for session '${this.name}'.`);
+            console.log(`No user data found for browser '${this.name}'.`);
             break;
           }
           await new Promise(resolve => setTimeout(resolve, 1000));
@@ -207,21 +215,19 @@ to restart the session daemon.`);
     }
   }
 
-  private _sessionConfigFile() {
-    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}.session`);
+  private _sessionFile(suffix: string) {
+    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}${suffix}`);
   }
 
   private async _startDaemon(): Promise<net.Socket> {
     await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = this._sessionConfigFile();
+    const sessionConfigFile = this._sessionFile('.session');
     this._config.version = this._clientInfo.version;
     await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
 
-    const outLog = path.join(this._clientInfo.daemonProfilesDir, 'out.log');
-    const errLog = path.join(this._clientInfo.daemonProfilesDir, 'err.log');
-    const out = fs.openSync(outLog, 'w');
+    const errLog = this._sessionFile('.err');
     const err = fs.openSync(errLog, 'w');
 
     const args = [
@@ -232,65 +238,85 @@ to restart the session daemon.`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
-      stdio: ['ignore', out, err],
+      stdio: ['ignore', 'pipe', err],
       cwd: process.cwd(), // Will be used as root.
     });
+
+    let signalled = false;
+    const sigintHandler = () => {
+      signalled = true;
+      child.kill('SIGINT');
+    };
+    const sigtermHandler = () => {
+      signalled = true;
+      child.kill('SIGTERM');
+    };
+    process.on('SIGINT', sigintHandler);
+    process.on('SIGTERM', sigtermHandler);
+
+    let outLog = '';
+    await new Promise<void>((resolve, reject) => {
+      child.stdout!.on('data', data => {
+        outLog += data.toString();
+        if (!outLog.includes('<EOF>'))
+          return;
+        const errorMatch = outLog.match(/### Error\n([\s\S]*)<EOF>/);
+        const error = errorMatch ? errorMatch[1].trim() : undefined;
+        if (error) {
+          const errLogContent = fs.readFileSync(errLog, 'utf-8');
+          const message = error + (errLogContent ? '\n' + errLogContent : '');
+          reject(new Error(message));
+        }
+
+        const successMatch = outLog.match(/### Success\nDaemon listening on (.*)\n<EOF>/);
+        if (successMatch)
+          resolve();
+      });
+      child.on('close', code => {
+        if (!signalled)
+          reject(new Error(`Daemon process exited with code ${code}`));
+      });
+    });
+
+    process.off('SIGINT', sigintHandler);
+    process.off('SIGTERM', sigtermHandler);
+    child.stdout!.destroy();
     child.unref();
 
-    console.log(`### Session \`${this.name}\` started with pid ${child.pid}.`);
-    const configArgs = configToFormattedArgs(this._config.cli);
-    if (configArgs.length) {
-      console.log(`- Session options:`);
-      for (const flag of configArgs)
-        console.log(`  ${flag}`);
-    }
-    const sessionOption = this.name !== 'default' ? ` --session="${this.name}"` : '';
-    console.log(formatWithGap(`- playwright-cli${sessionOption} close`, `# to stop when done.`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} open [options]`, `# to reopen with new config.`));
-    console.log(formatWithGap(`- playwright-cli${sessionOption} delete-data`, `# to delete session data.`));
-    console.log(`---`);
-    console.log(``);
-
-    // Wait for the socket to become available with retries.
-    const retryDelay = [100, 200, 400]; // ms
-    let totalWaited = 0;
-    for (let i = 0; i < 10; i++) {
-      await new Promise(resolve => setTimeout(resolve, retryDelay[i] || 1000));
-      totalWaited += retryDelay[i] || 1000;
-      try {
-        const { socket } = await this._connect();
-        if (socket)
-          return socket;
-      } catch (e) {
-        if (e.code !== 'ENOENT' && e.code !== 'ECONNREFUSED')
-          throw e;
+    const { socket } = await this._connect();
+    if (socket) {
+      console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
+      const resolvedConfig = await parseResolvedConfig(outLog);
+      if (resolvedConfig) {
+        this._config.resolvedConfig = resolvedConfig;
+        console.log(`- ${this.name}:`);
+        console.log(renderResolvedConfig(resolvedConfig).join('\n'));
       }
+      console.log(`---`);
+
+      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+      return socket;
     }
 
-    const outData = await fs.promises.readFile(outLog, 'utf-8').catch(() => '');
-    const errData = await fs.promises.readFile(errLog, 'utf-8').catch(() => '');
-
-    console.error(`Failed to connect to daemon at ${this._config.socketPath} after ${totalWaited}ms`);
-    if (outData.length)
-      console.log(outData);
-    if (errData.length)
-      console.error(errData);
+    console.error(`Failed to connect to daemon at ${this._config.socketPath}`);
     process.exit(1);
   }
 
   private async _stopDaemon(): Promise<void> {
     let error: Error | undefined;
     await this._send('stop').catch(e => { error = e; });
+    if (os.platform() !== 'win32')
+      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+
     this.disconnect();
-    await this.deleteSession();
+    if (!this._config.cli.persistent)
+      await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
   }
 
-  async deleteSession() {
-    if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._config.socketPath).catch(() => {});
-    await fs.promises.rm(this._sessionConfigFile()).catch(() => {});
+  async deleteSessionConfig() {
+    await fs.promises.rm(this._sessionFile('.session')).catch(() => {});
   }
 }
 
@@ -308,26 +334,12 @@ class SessionManager {
     const sessions = new Map<string, Session>();
     const files = await fs.promises.readdir(dir).catch(() => []);
     for (const file of files) {
+      if (!file.endsWith('.session'))
+        continue;
       try {
-        if (file.endsWith('.session')) {
-          const sessionName = path.basename(file, '.session');
-          const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-          sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
-          continue;
-        }
-
-        // Legacy session support.
-        if (file.startsWith('ud-')) {
-          // Session is like ud-<sessionName>-browserName
-          const sessionName = file.split('-')[1];
-          if (!sessions.has(sessionName)) {
-            const sessionConfig = sessionConfigFromArgs({
-              ...clientInfo,
-              version: '0.0.61'
-            }, sessionName, { _: [] });
-            sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
-          }
-        }
+        const sessionName = path.basename(file, '.session');
+        const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
+        sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
       } catch {
       }
     }
@@ -338,7 +350,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     let session = this.sessions.get(sessionName);
     if (session)
-      await session.stop();
+      await session.stop(true);
 
     session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
     this.sessions.set(sessionName, session);
@@ -349,9 +361,9 @@ class SessionManager {
     const sessionName = this._resolveSessionName(args.session);
     const session = this.sessions.get(sessionName);
     if (!session) {
-      console.log(`The session '${sessionName}' is not open, please run open first`);
+      console.log(`The browser '${sessionName}' is not open, please run open first`);
       console.log('');
-      console.log(`  playwright-cli${sessionName !== 'default' ? ` --session=${sessionName}` : ''} open [params]`);
+      console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
       process.exit(1);
     }
 
@@ -366,7 +378,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session || !await session.canConnect()) {
-      console.log(`Session '${sessionName}' is not running.`);
+      console.log(`Browser '${sessionName}' is not open.`);
       return;
     }
 
@@ -377,7 +389,7 @@ class SessionManager {
     const sessionName = this._resolveSessionName(options.session);
     const session = this.sessions.get(sessionName);
     if (!session) {
-      console.log(`No user data found for session '${sessionName}'.`);
+      console.log(`No user data found for browser '${sessionName}'.`);
       return;
     }
     await session.deleteData();
@@ -395,15 +407,16 @@ class SessionManager {
 
 function createClientInfo(packageLocation: string): ClientInfo {
   const packageJSON = require(packageLocation);
-  const workspaceDir = findWorkspaceDir(process.cwd()) || packageLocation;
+  const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
 
   const hash = crypto.createHash('sha1');
-  hash.update(workspaceDir);
+  hash.update(workspaceDir || packageLocation);
   const workspaceDirHash = hash.digest('hex').substring(0, 16);
 
   return {
     version,
+    workspaceDir,
     workspaceDirHash,
     daemonProfilesDir: daemonProfilesDir(workspaceDirHash),
   };
@@ -422,9 +435,9 @@ function findWorkspaceDir(startDir: string): string | undefined {
   return undefined;
 }
 
-const daemonProfilesDir = (workspaceDirHash: string) => {
+const baseDaemonDir = (() => {
   if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
-    return path.join(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR, workspaceDirHash);
+    return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
 
   let localCacheDir: string | undefined;
   if (process.platform === 'linux')
@@ -435,7 +448,11 @@ const daemonProfilesDir = (workspaceDirHash: string) => {
     localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
   if (!localCacheDir)
     throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon', workspaceDirHash);
+  return path.join(localCacheDir, 'ms-playwright', 'daemon');
+})();
+
+const daemonProfilesDir = (workspaceDirHash: string) => {
+  return path.join(baseDaemonDir, workspaceDirHash);
 };
 
 type GlobalOptions = {
@@ -475,6 +492,11 @@ export async function program(packageLocation: string) {
     if (!argv.includes(`--${option}`) && !argv.includes(`--no-${option}`))
       delete args[option];
   }
+  // Normalize -s alias to --session
+  if (args.s) {
+    args.session = args.s;
+    delete args.s;
+  }
 
   const commandName = args._?.[0];
 
@@ -503,35 +525,23 @@ export async function program(packageLocation: string) {
   const sessionManager = await SessionManager.create(clientInfo);
 
   switch (commandName) {
-    case 'session-list': {
-      const sessions = sessionManager.sessions;
-      console.log('Sessions:');
-      for (const session of sessions.values()) {
-        const canConnect = await session.canConnect();
-        if (!canConnect) {
-          console.log(`  ${session.name} is stale, removing`);
-          await session.deleteSession();
-        } else {
-          const restartMarker = !session.isCompatible() ? ` - v${session.config().version}, please reopen` : '';
-          console.log(`  ${session.name}${restartMarker}`);
-          const config = session.config();
-          configToFormattedArgs(config.cli).forEach(arg => console.log(`     ${arg}`));
-        }
-      }
-      if (sessions.size === 0)
-        console.log('  (no sessions)');
+    case 'list': {
+      if (args.all)
+        await listAllSessions(clientInfo);
+      else
+        await listSessions(sessionManager);
       return;
     }
-    case 'session-close-all': {
+    case 'close-all': {
       const sessions = sessionManager.sessions;
       for (const session of sessions.values())
-        await session.stop();
+        await session.stop(true);
       return;
     }
     case 'delete-data':
       await sessionManager.deleteData(args as GlobalOptions);
       return;
-    case 'session-kill-all':
+    case 'kill-all':
       await killAllDaemons();
       return;
     case 'open':
@@ -568,6 +578,59 @@ async function install(args: MinimistArgs) {
     await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
     console.log(`Skills installed to ${path.relative(cwd, skillDestDir)}`);
   }
+
+  if (!args.config)
+    await ensureConfiguredBrowserInstalled();
+}
+
+async function ensureConfiguredBrowserInstalled() {
+  if (fs.existsSync(defaultConfigFile())) {
+    const { registry } = await import('playwright-core/lib/server/registry/index');
+    // Config exists, ensure configured browser is installed
+    const config = JSON.parse(await fs.promises.readFile(defaultConfigFile(), 'utf-8')) as Config;
+    const browserName = config.browser?.browserName ?? 'chromium';
+    const channel = config.browser?.launchOptions?.channel;
+    if (!channel || channel.startsWith('chromium')) {
+      const executable = registry.findExecutable(channel ?? browserName);
+      if (executable && !fs.existsSync(executable?.executablePath()!))
+        await registry.install([executable]);
+    }
+  } else {
+    // No config exists, detect or install a browser and create config
+    const channel = await findOrInstallDefaultBrowser();
+    if (channel !== 'chrome')
+      await createDefaultConfig(channel);
+  }
+}
+
+async function createDefaultConfig(channel: string) {
+  const config: Config = {
+    browser: {
+      browserName: 'chromium',
+      launchOptions: {
+        channel,
+      },
+    },
+  };
+  await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
+  console.log(`Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
+}
+
+async function findOrInstallDefaultBrowser() {
+  const { registry } = await import('playwright-core/lib/server/registry/index');
+  const channels = ['chrome', 'msedge'];
+  for (const channel of channels) {
+    const executable = registry.findExecutable(channel);
+    if (!executable?.executablePath())
+      continue;
+    console.log(`Found ${channel}, will use it as the default browser.`);
+    return channel;
+  }
+  const chromiumExecutable = registry.findExecutable('chromium');
+  // Unlike channels, chromium executable path is always valid, even if the browser is not installed.
+  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
+    await registry.install([chromiumExecutable]);
+  return 'chromium';
 }
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
@@ -578,11 +641,15 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 
+function defaultConfigFile(): string {
+  return path.resolve('.playwright', 'cli.config.json');
+}
+
 function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
-    if (!config && fs.existsSync(path.join('.playwright', 'cli.config.json')))
-      config = path.resolve('.playwright', 'cli.config.json');
+    if (!config && fs.existsSync(defaultConfigFile()))
+      config = defaultConfigFile();
   } catch {
   }
 
@@ -601,24 +668,8 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
       config,
     },
     userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
+    workspaceDir: clientInfo.workspaceDir,
   };
-}
-
-function configToFormattedArgs(cli: SessionConfig['cli']): string[] {
-  const args: string[] = [];
-  const add = (flag: string, value: string | boolean | undefined) => {
-    if (typeof value === 'boolean' && value)
-      args.push(`--${flag}`);
-    else if (typeof value === 'string')
-      args.push(`--${flag}=${value}`);
-  };
-  add('browser', cli.browser);
-  add('config', cli.config ? path.relative(process.cwd(), cli.config) : undefined);
-  add('extension', cli.extension);
-  add('headed', cli.headed);
-  add('persistent', cli.persistent);
-  add('profile', cli.profile);
-  return args;
 }
 
 async function killAllDaemons(): Promise<void> {
@@ -669,7 +720,118 @@ async function killAllDaemons(): Promise<void> {
     console.log(`Killed ${killed} daemon process${killed === 1 ? '' : 'es'}.`);
 }
 
-function formatWithGap(prefix: string, text: string, threshold: number = 40) {
-  const indent = Math.max(1, threshold - prefix.length);
-  return prefix + ' '.repeat(indent) + text;
+async function listSessions(sessionManager: SessionManager): Promise<void> {
+  const sessions = sessionManager.sessions;
+  console.log('### Browsers');
+  await gcAndPrintSessions([...sessions.values()]);
+}
+
+async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
+  const hashes = await fs.promises.readdir(baseDaemonDir).catch(() => []);
+
+  // Group sessions by workspace folder
+  const sessionsByWorkspace = new Map<string, Session[]>();
+  for (const hash of hashes) {
+    const hashDir = path.join(baseDaemonDir, hash);
+    const stat = await fs.promises.stat(hashDir).catch(() => null);
+    if (!stat?.isDirectory())
+      continue;
+
+    const files = await fs.promises.readdir(hashDir).catch(() => []);
+    for (const file of files) {
+      if (!file.endsWith('.session'))
+        continue;
+      try {
+        const sessionName = path.basename(file, '.session');
+        const sessionConfig = await fs.promises.readFile(path.join(hashDir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
+        const session = new Session(clientInfo, sessionName, sessionConfig);
+        const workspaceKey = sessionConfig.workspaceDir || '<global>';
+        if (!sessionsByWorkspace.has(workspaceKey))
+          sessionsByWorkspace.set(workspaceKey, []);
+        sessionsByWorkspace.get(workspaceKey)!.push(session);
+      } catch {
+      }
+    }
+  }
+
+  if (sessionsByWorkspace.size === 0) {
+    console.log('No browsers found.');
+    return;
+  }
+
+  const sortedWorkspaces = [...sessionsByWorkspace.keys()].sort();
+
+  for (const workspace of sortedWorkspaces) {
+    const sessions = sessionsByWorkspace.get(workspace)!;
+    console.log(`${workspace}:`);
+    await gcAndPrintSessions(sessions);
+  }
+}
+
+async function gcAndPrintSessions(sessions: Session[]) {
+  const running: Session[] = [];
+  const stopped: Session[] = [];
+
+  for (const session of sessions.values()) {
+    const canConnect = await session.canConnect();
+    if (canConnect) {
+      running.push(session);
+    } else {
+      if (session.config().cli.persistent)
+        stopped.push(session);
+      else
+        await session.deleteSessionConfig();
+    }
+  }
+
+  for (const session of running)
+    console.log(await renderSessionStatus(session));
+  for (const session of stopped)
+    console.log(await renderSessionStatus(session));
+
+  if (running.length === 0 && stopped.length === 0)
+    console.log('  (no browsers)');
+
+}
+
+async function renderSessionStatus(session: Session) {
+  const text: string[] = [];
+  const config = session.config();
+  const canConnect = await session.canConnect();
+  const restartMarker = canConnect && !session.isCompatible() ? ` - v${config.version}, please reopen` : '';
+  text.push(`- ${session.name}:`);
+  text.push(`  - status: ${canConnect ? 'open' : 'closed'}${restartMarker}`);
+  if (config.resolvedConfig)
+    text.push(...renderResolvedConfig(config.resolvedConfig));
+  return text.join('\n');
+}
+
+function renderResolvedConfig(resolvedConfig: FullConfig) {
+  const channel = resolvedConfig.browser.launchOptions.channel ?? resolvedConfig.browser.browserName;
+  const lines = [];
+  if (channel)
+    lines.push(`  - browser-type: ${channel}`);
+  if (resolvedConfig.browser.isolated)
+    lines.push(`  - user-data-dir: <in-memory>`);
+  else
+    lines.push(`  - user-data-dir: ${resolvedConfig.browser.userDataDir}`);
+  lines.push(`  - headed: ${!resolvedConfig.browser.launchOptions.headless}`);
+  return lines;
+}
+
+async function parseResolvedConfig(errLog: string): Promise<FullConfig | null> {
+  const marker = '### Config\n```json\n';
+  const markerIndex = errLog.indexOf(marker);
+  if (markerIndex === -1)
+    return null;
+  const jsonStart = markerIndex + marker.length;
+  const jsonEnd = errLog.indexOf('\n```', jsonStart);
+  if (jsonEnd === -1)
+    throw null;
+  const jsonString = errLog.substring(jsonStart, jsonEnd).trim();
+  try {
+    return JSON.parse(jsonString) as FullConfig;
+  } catch {
+    return null;
+  }
 }

@@ -80,9 +80,6 @@ export class Context {
   private _runningToolName: string | undefined;
   private _abortController = new AbortController();
 
-  onBrowserContextClosed: (() => void) | undefined;
-  onBrowserLaunchFailed: ((error: Error) => void) | undefined;
-
   constructor(options: ContextOptions) {
     this.config = options.config;
     this.sessionLog = options.sessionLog;
@@ -289,9 +286,8 @@ export class Context {
       return this._browserContextPromise;
 
     this._browserContextPromise = this._setupBrowserContext();
-    this._browserContextPromise.catch(error => {
+    this._browserContextPromise.catch(() => {
       this._browserContextPromise = undefined;
-      this.onBrowserLaunchFailed?.(error);
     });
     return this._browserContextPromise;
   }
@@ -313,7 +309,6 @@ export class Context {
     for (const page of browserContext.pages())
       this._onPageCreated(page);
     browserContext.on('page', page => this._onPageCreated(page));
-    browserContext.on('close', () => this.onBrowserContextClosed?.());
     if (this.config.saveTrace) {
       await (browserContext.tracing as Tracing).start({
         name: 'trace-' + Date.now(),
