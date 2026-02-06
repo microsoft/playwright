@@ -155,7 +155,6 @@ function unwrapZodType(schema: zodType.ZodTypeAny): zodType.ZodTypeAny {
 }
 
 export function generateHelpJSON() {
-  const stringOptions = new Set<string>();
   const booleanOptions = new Set<string>();
   for (const command of Object.values(commands)) {
     if (!command.options)
@@ -163,8 +162,6 @@ export function generateHelpJSON() {
     const optionsShape = (command.options as zodType.ZodObject<any>).shape;
     for (const [name, schema] of Object.entries(optionsShape)) {
       const innerSchema = unwrapZodType(schema as zodType.ZodTypeAny);
-      if (innerSchema instanceof z.ZodString)
-        stringOptions.add(name);
       if (innerSchema instanceof z.ZodBoolean)
         booleanOptions.add(name);
     }
@@ -175,7 +172,6 @@ export function generateHelpJSON() {
     commands: Object.fromEntries(
         Object.entries(commands).map(([name, command]) => [name, generateCommandHelp(command)])
     ),
-    stringOptions: [...stringOptions],
     booleanOptions: [...booleanOptions],
   };
   return help;
