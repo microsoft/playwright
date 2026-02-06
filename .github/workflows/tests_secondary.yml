@@ -229,7 +229,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-22.04, macos-13, windows-latest]
+        os: [ubuntu-22.04, macos-14-large, windows-latest]
         headed: ['--headed', '']
         exclude:
           # Tested in tests_primary.yml already
