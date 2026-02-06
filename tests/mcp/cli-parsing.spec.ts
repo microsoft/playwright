@@ -38,6 +38,12 @@ test('wrong option type', async ({ cli, server }) => {
   expect(status.error).toContain(`error: '--status' option: expected number, received string`);
 });
 
+test('arg after boolean option', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const boolean = await cli('type', '--submit', 'foo');
+  expect(boolean.exitCode).toBe(0);
+});
+
 test('missing argument', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('keyup');
