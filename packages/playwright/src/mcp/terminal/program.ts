@@ -83,9 +83,9 @@ class Session {
     if (!this.isCompatible()) {
       throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this._config.version}. Run
 
-  playwright-cli session-restart${this.name !== 'default' ? ` ${this.name}` : ''}
+  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open
 
-to restart the session daemon.`);
+to restart the browser session.`);
     }
   }
 
@@ -818,9 +818,10 @@ async function renderSessionStatus(session: Session) {
   const text: string[] = [];
   const config = session.config();
   const canConnect = await session.canConnect();
-  const restartMarker = canConnect && !session.isCompatible() ? ` - v${config.version}, please reopen` : '';
   text.push(`- ${session.name}:`);
-  text.push(`  - status: ${canConnect ? 'open' : 'closed'}${restartMarker}`);
+  text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);
+  if (canConnect && !session.isCompatible())
+    text.push(`  - version: v${config.version} [incompatible please re-open]`);
   if (config.resolvedConfig)
     text.push(...renderResolvedConfig(config.resolvedConfig));
   return text.join('\n');
