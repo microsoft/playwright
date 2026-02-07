@@ -59,6 +59,7 @@ for (const useIntermediateMergeReport of [false, true] as const) {
           });
         `,
       }, { reporter: 'junit' });
+
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
@@ -87,6 +88,60 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.output).toContain('Retry #3');
       expect(result.exitCode).toBe(1);
     });
+
+    test('should render thrown error message', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test } from '@playwright/test';
+          test('one', async () => {
+            throw new Error('Boom!');
+          });
+        `,
+      }, { reporter: 'junit' });
+
+      const xml = parseXML(result.output);
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      const error = testcase['error'][0];
+
+      expect(error['$']['message']).toContain('Boom!');
+      expect(error['$']['type']).toBe('Error');
+      expect(error['_']).toContain('Boom!');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render thrown error', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test } from '@playwright/test';
+          test('one', async () => {
+            throw new Error('Boom!');
+          });
+        `,
+      }, { reporter: 'junit' });
+
+      const xml = parseXML(result.output);
+      const suite = xml['testsuites']['testsuite'][0];
+      const testcase = suite['testcase'][0];
+
+      const error = testcase['error']?.[0];
+      expect(error, 'Expected JUnit <error> for thrown exceptions').toBeTruthy();
+
+      expect(error['$']['type']).toBe('Error');
+      expect(error['$']['message']).toContain('Boom!');
+      expect(error['_']).toContain('Error: Boom!');
+
+      expect(suite['$']['errors']).toBe('1');
+      expect(suite['$']['failures']).toBe('0');
+
+      const rootAttrs = xml['testsuites']['$'];
+      expect(rootAttrs['errors']).toBe('1');
+      expect(rootAttrs['failures']).toBe('0');
+
+      expect(result.exitCode).toBe(1);
+    });
+
+
+
 
     test('should render flaky', async ({ runInlineTest }) => {
       const result = await runInlineTest({

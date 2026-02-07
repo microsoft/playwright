@@ -34,6 +34,7 @@ class JUnitReporter implements ReporterV2 {
   private totalTests = 0;
   private totalFailures = 0;
   private totalSkipped = 0;
+  private totalErrors = 0;
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
@@ -79,7 +80,7 @@ class JUnitReporter implements ReporterV2 {
         tests: self.totalTests,
         failures: self.totalFailures,
         skipped: self.totalSkipped,
-        errors: 0,
+        errors: self.totalErrors,
         time: result.duration / 1000
       },
       children
@@ -100,6 +101,7 @@ class JUnitReporter implements ReporterV2 {
     let tests = 0;
     let skipped = 0;
     let failures = 0;
+    let errors = 0; 
     let duration = 0;
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
@@ -108,8 +110,16 @@ class JUnitReporter implements ReporterV2 {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
-      if (!test.ok())
-        ++failures;
+      if (!test.ok()) {
+        const failureText = stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test));
+        const isAssertionFailure = failureText.includes('expect(');
+
+        if (isAssertionFailure)
+          ++failures;
+        else
+          ++errors;
+      }
+
       for (const result of test.results)
         duration += result.duration;
       await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
@@ -118,6 +128,7 @@ class JUnitReporter implements ReporterV2 {
     this.totalTests += tests;
     this.totalSkipped += skipped;
     this.totalFailures += failures;
+    this.totalErrors += errors;
 
     const entry: XMLEntry = {
       name: 'testsuite',
@@ -129,7 +140,7 @@ class JUnitReporter implements ReporterV2 {
         failures,
         skipped,
         time: duration / 1000,
-        errors: 0,
+        errors, 
       },
       children
     };
@@ -180,15 +191,34 @@ class JUnitReporter implements ReporterV2 {
     }
 
     if (!test.ok()) {
-      entry.children.push({
-        name: 'failure',
-        attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-          type: 'FAILURE',
-        },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-      });
+      const failureText = stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test));
+      const isAssertionFailure = /^\s*Error:\s*expect\(/m.test(failureText);
+
+      if (!isAssertionFailure) {
+        const firstLine = failureText.split('\n').find(l => l.trim())?.trim() || '';
+        const firstErrorLine = failureText.split('\n').map(l => l.trim()).find(l => l.startsWith('Error:'));
+        const message = firstErrorLine
+          ? firstErrorLine.replace(/^Error:\s*/, '')
+          : (firstLine || 'Error');
+
+        entry.children.push({
+          name: 'error',
+          attributes: { message, type: 'Error' },
+          text: failureText
+        });
+      } else {
+        entry.children.push({
+          name: 'failure',
+          attributes: {
+            message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+            type: 'FAILURE',
+          },
+          text: failureText
+        });
+      }
     }
+
+
 
     const systemOut: string[] = [];
     const systemErr: string[] = [];
