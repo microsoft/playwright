@@ -152,8 +152,6 @@ export abstract class BrowserType extends SdkObject {
       args = [],
       executablePath = null,
     } = options;
-    await this._createArtifactDirs(options);
-
     const tempDirectories: string[] = [];
     const artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
     tempDirectories.push(artifactsDir);
@@ -279,13 +277,6 @@ export abstract class BrowserType extends SdkObject {
       await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
       throw error;
     }
-  }
-
-  async _createArtifactDirs(options: types.LaunchOptions): Promise<void> {
-    if (options.downloadsPath)
-      await fs.promises.mkdir(options.downloadsPath, { recursive: true });
-    if (options.tracesDir)
-      await fs.promises.mkdir(options.tracesDir, { recursive: true });
   }
 
   async connectOverCDP(progress: Progress, endpointURL: string, options: { slowMo?: number, timeout?: number, headers?: types.HeadersArray, isLocal?: boolean }): Promise<Browser> {

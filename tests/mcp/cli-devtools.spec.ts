@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { test, expect } from './cli-fixtures';
 
 test('console', async ({ cli, server }) => {
@@ -71,13 +73,22 @@ test('network --clear', async ({ cli, server }) => {
   expect(attachments[0].data.toString()).not.toContain(`[GET] ${`${server.PREFIX}/hello-world`} => [200] OK`);
 });
 
-test('tracing-start-stop', async ({ cli, server }) => {
+test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('tracing-start');
   expect(output).toContain('Trace recording started');
   await cli('eval', '() => fetch("/hello-world")');
+
   const { output: tracingStopOutput } = await cli('tracing-stop');
   expect(tracingStopOutput).toContain('Trace recording stopped');
+  const [, timestamp] = tracingStopOutput.match(/trace-(\d+)\.trace/);
+  expect(tracingStopOutput).toContain(`- [Trace](.playwright-cli${path.sep}traces${path.sep}trace-${timestamp}.trace)`);
+  expect(tracingStopOutput).toContain(`- [Network log](.playwright-cli${path.sep}traces${path.sep}trace-${timestamp}.network)`);
+  expect(tracingStopOutput).toContain(`- [Resources](.playwright-cli${path.sep}traces${path.sep}resources)`);
+
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', 'resources'))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.trace`))).toBeTruthy();
+  expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
 
 test('video-start-stop', async ({ cli, server }) => {

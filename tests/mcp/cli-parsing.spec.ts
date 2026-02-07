@@ -35,7 +35,7 @@ test('wrong option type', async ({ cli, server }) => {
   expect(boolean.error).toContain(`boolean option '--submit' should not be passed with '=value', use '--submit' or '--no-submit' instead`);
   const status = await cli('route', '.', '--status=OK');
   expect(status.exitCode).toBe(1);
-  expect(status.error).toContain(`error: '--status' option: expected number, received string`);
+  expect(status.error).toContain(`error: '--status' option: expected number, received 'OK'`);
 });
 
 test('arg after boolean option', async ({ cli, server }) => {

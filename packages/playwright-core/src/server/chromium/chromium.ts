@@ -183,8 +183,6 @@ export class Chromium extends BrowserType {
   }
 
   override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
-    await progress.race(this._createArtifactDirs(options));
-
     if (!hubUrl.endsWith('/'))
       hubUrl = hubUrl + '/';
 

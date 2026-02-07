@@ -71,11 +71,11 @@ function zodParse(schema: zodType.ZodAny, data: unknown, type: 'option' | 'argum
         const label = type === 'option' ? `'--${prop}' option` : `'${prop}' argument`;
         switch (issue.code) {
           case 'invalid_type':
-            return 'error: ' + label + ': ' + issue.message.toLowerCase().replace(/invalid input:/, '').trim();
+            return 'error: ' + label + ': ' + issue.message.replace(/Invalid input:/, '').trim();
           case 'unrecognized_keys':
             return 'error: unknown ' + label;
           default:
-            return 'error: ' + label + ': ' + issue.message.toLowerCase();
+            return 'error: ' + label + ': ' + issue.message;
         }
       });
     }).flat().join('\n'));

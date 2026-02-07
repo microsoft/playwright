@@ -119,7 +119,8 @@ export async function startMcpDaemonServer(
         }
       } catch (e) {
         daemonDebug('command failed', e);
-        await connection.send({ id, error: (e as Error).message });
+        const error = process.env.PWDEBUGIMPL ? (e as Error).stack || (e as Error).message : (e as Error).message;
+        await connection.send({ id, error });
       }
     };
   });
