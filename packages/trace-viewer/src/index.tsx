@@ -26,8 +26,6 @@ import { LiveWorkbenchLoader } from './ui/liveWorkbenchLoader';
 
   applyTheme();
   if (window.location.protocol !== 'file:') {
-    if (queryParams.get('isUnderTest') === 'true')
-      await new Promise(f => setTimeout(f, 1000));
     if (!navigator.serviceWorker)
       throw new Error(`Service workers are not supported.\nMake sure to serve the Trace Viewer (${window.location}) via HTTPS or localhost.`);
     navigator.serviceWorker.register('sw.bundle.js');
