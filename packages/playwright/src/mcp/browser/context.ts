@@ -317,6 +317,14 @@ export class Context {
         _live: true,
       });
     }
+    if (this.config.remoteControl) {
+      const { url } = await browserContext.rc.startHttp({
+        size: this.config.remoteControl.viewport,
+        port: this.config.server.port,
+        host: this.config.server.host,
+      });
+      this.config.remoteControl.resolvedUrl = url;
+    }
     return result;
   }
 

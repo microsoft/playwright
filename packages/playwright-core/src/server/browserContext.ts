@@ -37,6 +37,8 @@ import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
 import * as rawStorageSource from '../generated/storageScriptSource';
 
+import { RemoteControl } from './remoteControl';
+
 import type { Artifact } from './artifact';
 import type { Browser, BrowserOptions } from './browser';
 import type { ConsoleMessage } from './console';
@@ -64,6 +66,8 @@ const BrowserContextEvent = {
   RequestContinued: 'requestcontinued',
   BeforeClose: 'beforeclose',
   RecorderEvent: 'recorderevent',
+  PageClosed: 'pageclosed',
+  InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
 } as const;
 
 export type BrowserContextEventMap = {
@@ -80,6 +84,8 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.RequestContinued]: [request: network.Request];
   [BrowserContextEvent.BeforeClose]: [];
   [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
+  [BrowserContextEvent.PageClosed]: [page: Page];
+  [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame, page: Page];
 };
 
 export abstract class BrowserContext<EM extends EventMap = EventMap> extends SdkObject<BrowserContextEventMap | EM> {
@@ -114,6 +120,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
+  private _remoteControl: RemoteControl | null = null;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -509,6 +516,23 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     await this.doUpdateRequestInterception();
   }
 
+  async startRemoteControl(options: { size?: types.Size, port?: number, host?: string } = {}): Promise<string> {
+    if (this._remoteControl)
+      throw new Error('Remote control is already running');
+    const size = validateVideoSize(options.size, undefined);
+    this._remoteControl = new RemoteControl(this);
+    const url = await this._remoteControl.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
+    return url;
+  }
+
+  async stopRemoteControl(): Promise<void> {
+    if (!this._remoteControl)
+      throw new Error('Remote control is not running');
+    const remoteControl = this._remoteControl;
+    this._remoteControl = null;
+    await remoteControl.stop();
+  }
+
   isClosingOrClosed() {
     return this._closedStatus !== 'open';
   }
@@ -531,6 +555,11 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         this._closeReason = options.reason;
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
+
+      if (this._remoteControl) {
+        await this._remoteControl.stop();
+        this._remoteControl = null;
+      }
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();

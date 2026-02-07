@@ -44,6 +44,7 @@ export type SessionConfig = {
     persistent?: boolean;
     profile?: string;
     config?: string;
+    remoteControl?: boolean;
   };
   userDataDirPrefix?: string;
   workspaceDir?: string;
@@ -486,9 +487,6 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'all',
   'help',
   'version',
-  'extension',
-  'headed',
-  'persistent'
 ];
 
 export async function program(packageLocation: string) {
@@ -686,6 +684,7 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
       persistent: args.persistent,
       profile: args.profile,
       config,
+      remoteControl: args['remote-control'],
     },
     userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
     workspaceDir: clientInfo.workspaceDir,
@@ -837,6 +836,8 @@ function renderResolvedConfig(resolvedConfig: FullConfig) {
   else
     lines.push(`  - user-data-dir: ${resolvedConfig.browser.userDataDir}`);
   lines.push(`  - headed: ${!resolvedConfig.browser.launchOptions.headless}`);
+  if (resolvedConfig.remoteControl?.resolvedUrl)
+    lines.push(`  - remote-control-url: ${resolvedConfig.remoteControl.resolvedUrl}`);
   return lines;
 }
 

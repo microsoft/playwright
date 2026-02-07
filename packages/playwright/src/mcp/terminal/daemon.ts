@@ -78,6 +78,11 @@ export async function startMcpDaemonServer(
     shutdown(0);
   });
 
+  if (config.remoteControl) {
+    const result = await browserContext.rc.startHttp();
+    config.remoteControl.resolvedUrl = result.url;
+  }
+
   const existingContextFactory = {
     createContext: () => Promise.resolve({ browserContext, close }),
   };

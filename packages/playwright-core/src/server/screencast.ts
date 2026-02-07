@@ -132,6 +132,14 @@ export class Screencast {
     await this.stopVideoRecording();
   }
 
+  async startScreencastForClient(client: unknown, options: { width: number, height: number, quality: number }) {
+    await this._startScreencast(client, options);
+  }
+
+  async stopScreencastForClient(client: unknown) {
+    await this._stopScreencast(client);
+  }
+
   private async _setOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
     if (options)
       await this._startScreencast(this, options);

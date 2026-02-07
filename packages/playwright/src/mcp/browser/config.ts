@@ -62,6 +62,7 @@ export type CLIOptions = {
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
+  remoteControl?: boolean;
   saveSession?: boolean;
   saveTrace?: boolean;
   saveVideo?: ViewportSize;
@@ -143,6 +144,13 @@ export type FullConfig = Config & {
   skillMode?: boolean;
   configFile?: string;
   sessionConfig?: SessionConfig;
+  remoteControl?: {
+    viewport?: {
+      width: number;
+      height: number;
+    };
+    resolvedUrl?: string;
+  };
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -314,6 +322,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
+    remoteControl: cliOptions.remoteControl ? { enabled: true } : undefined,
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
@@ -360,6 +369,7 @@ function configFromEnv(): Config & { configFile?: string } {
   options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.remoteControl = envToBoolean(process.env.PLAYWRIGHT_MCP_REMOTE_CONTROL);
   options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
   options.saveVideo = resolutionParser('--save-video', process.env.PLAYWRIGHT_MCP_SAVE_VIDEO);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
@@ -387,6 +397,7 @@ async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & 
     userDataDir: sessionConfig.cli.profile,
     outputMode: 'file',
     snapshotMode: 'full',
+    remoteControl: sessionConfig.cli.remoteControl,
   });
   return { ...config, sessionConfig };
 }

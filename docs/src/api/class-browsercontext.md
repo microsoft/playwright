@@ -1007,6 +1007,12 @@ Allows to wait for async listeners to complete or to ignore subsequent errors fr
 ### option: BrowserContext.removeAllListeners.behavior = %%-remove-all-listeners-options-behavior-%%
 * since: v1.47
 
+## property: BrowserContext.rc
+* since: v1.59
+- type: <[RC]>
+
+Remote control for the browser context. Can be used to stream live screencast of all pages in the context with a tabbed UI.
+
 ## property: BrowserContext.request
 * since: v1.16
 * langs:

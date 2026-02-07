@@ -63,6 +63,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--port <port>', 'port to listen on for SSE transport.')
       .option('--proxy-bypass <bypass>', 'comma-separated domains to bypass proxy, for example ".com,chromium.org,.domain.com"')
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
+      .option('--remote-control', 'start the remote control HTTP server for the browser context.')
       .option('--sandbox', 'enable the sandbox for all process types that are normally not sandboxed.')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
@@ -112,12 +113,12 @@ export function decorateCommand(command: Command, version: string) {
 
         if (config.sessionConfig) {
           const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
-          console.log(`### Config`);
-          console.log('```json');
-          console.log(JSON.stringify(config, null, 2));
-          console.log('```');
           try {
             const socketPath = await startMcpDaemonServer(config, contextFactory);
+            console.log(`### Config`);
+            console.log('```json');
+            console.log(JSON.stringify(config, null, 2));
+            console.log('```');
             console.log(`### Success\nDaemon listening on ${socketPath}`);
             console.log('<EOF>');
           } catch (error) {

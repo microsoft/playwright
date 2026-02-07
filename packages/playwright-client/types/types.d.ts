@@ -9912,6 +9912,12 @@ export interface BrowserContext {
   clock: Clock;
 
   /**
+   * Remote control for the browser context. Can be used to stream live screencast of all pages in the context with a
+   * tabbed UI.
+   */
+  rc: RC;
+
+  /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
    */
   request: APIRequestContext;
@@ -20747,6 +20753,65 @@ export const selectors: Selectors;
  * [Browser](https://playwright.dev/docs/api/class-browser).
  */
 export const webkit: BrowserType;
+
+/**
+ * Remote control allows streaming live screencast of the browser context over WebSocket. It shows a tabbed
+ * browser-like UI with all context pages.
+ */
+export interface RC {
+  /**
+   * Starts an HTTP server that streams live screencast frames over WebSocket. Returns an object with the server URL.
+   * Open the URL in a browser to see the live screencast with a tabbed UI showing all pages in the context.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const { url } = await context.rc.startHttp();
+   * console.log('Open to view screencast:', url);
+   * // ... perform actions ...
+   * await context.rc.stopHttp();
+   * ```
+   *
+   * @param options
+   */
+  startHttp(options?: {
+    /**
+     * Host to bind the HTTP server to. Default is localhost.
+     */
+    host?: string;
+
+    /**
+     * Port to bind the HTTP server to. If not specified, a random available port will be used.
+     */
+    port?: number;
+
+    /**
+     * Optional dimensions of the screencast frames. If not specified the size will be scaled down to fit into 800x800.
+     */
+    size?: {
+      /**
+       * Video frame width.
+       */
+      width: number;
+
+      /**
+       * Video frame height.
+       */
+      height: number;
+    };
+  }): Promise<{
+    /**
+     * URL of the screencast server.
+     */
+    url: string;
+  }>;
+
+  /**
+   * Stops the screencast server started with
+   * [rC.startHttp([options])](https://playwright.dev/docs/api/class-rc#rc-start-http).
+   */
+  stopHttp(): Promise<void>;
+}
 
 /**
  * Whenever the page sends a request for a network resource the following sequence of events are emitted by
