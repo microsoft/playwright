@@ -29,8 +29,10 @@ import type { ContextEntry } from '@isomorphic/trace/entries';
 import { NetworkFilters, defaultFilterState, type FilterState, type ResourceType } from './networkFilters';
 import type { Language } from '@isomorphic/locatorGenerators';
 
+type EntryWithId = Entry & { id: string };
+
 type NetworkTabModel = {
-  resources: Entry[],
+  resources: EntryWithId[],
   contextIdMap: ContextIdMap,
 };
 
@@ -44,7 +46,7 @@ type RenderedEntry = {
   size: number,
   start: number,
   route: string,
-  resource: Entry,
+  resource: EntryWithId,
   contextId: string,
 };
 type ColumnName = keyof RenderedEntry;
@@ -53,13 +55,12 @@ const NetworkGridView = GridView<RenderedEntry>;
 
 export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: Boundaries | undefined): NetworkTabModel {
   const resources = React.useMemo(() => {
-    const resources = model?.resources || [];
-    const filtered = resources.filter(resource => {
+    const resourcesWithIds = (model?.resources || []).map((resource, i) => ({ ...resource, id: `${context(resource).contextId}-${i}`, }));
+    return resourcesWithIds.filter(resource => {
       if (!selectedTime)
         return true;
       return !!resource._monotonicTime && (resource._monotonicTime >= selectedTime.minimum && resource._monotonicTime <= selectedTime.maximum);
     });
-    return filtered;
   }, [model, selectedTime]);
   const contextIdMap = React.useMemo(() => new ContextIdMap(model), [model]);
   return { resources, contextIdMap };
@@ -72,10 +73,8 @@ export const NetworkTab: React.FunctionComponent<{
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onResourceHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
-  const [selectedEntry, setSelectedEntry] = React.useState<RenderedEntry | undefined>(undefined);
+  const [selectedResourceKey, setSelectedResourceKey] = React.useState<string | undefined>(undefined);
   const [filterState, setFilterState] = React.useState(defaultFilterState);
-
-  const visibleSelectedEntry = React.useMemo(() => (selectedEntry && networkModel.resources.includes(selectedEntry.resource)) ? selectedEntry : undefined, [selectedEntry, networkModel.resources]);
 
   const { renderedEntries } = React.useMemo(() => {
     const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
@@ -84,13 +83,15 @@ export const NetworkTab: React.FunctionComponent<{
     return { renderedEntries };
   }, [networkModel.resources, networkModel.contextIdMap, filterState, sorting, boundaries]);
 
+  const visibleSelectedEntry = React.useMemo(() => (selectedResourceKey ? renderedEntries.find(entry => entry.resource.id === selectedResourceKey) : undefined), [selectedResourceKey, renderedEntries]);
+
   const [columnWidths, setColumnWidths] = React.useState<Map<ColumnName, number>>(() => {
     return new Map(allColumns().map(column => [column, columnWidth(column)]));
   });
 
   const onFilterStateChange = React.useCallback((newFilterState: FilterState) => {
     setFilterState(newFilterState);
-    setSelectedEntry(undefined);
+    setSelectedResourceKey(undefined);
   }, []);
 
   if (!networkModel.resources.length)
@@ -101,7 +102,7 @@ export const NetworkTab: React.FunctionComponent<{
     ariaLabel='Network requests'
     items={renderedEntries}
     selectedItem={visibleSelectedEntry}
-    onSelected={item => setSelectedEntry(item)}
+    onSelected={item => setSelectedResourceKey(item.resource.id)}
     onHighlighted={item => onResourceHovered?.(item?.ordinal)}
     columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
@@ -122,7 +123,7 @@ export const NetworkTab: React.FunctionComponent<{
         sidebarIsFirst={true}
         orientation='horizontal'
         settingName='networkResourceDetails'
-        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedEntry(undefined)} />}
+        main={<NetworkResourceDetails resource={visibleSelectedEntry.resource} sdkLanguage={sdkLanguage} startTimeOffset={visibleSelectedEntry.start} onClose={() => setSelectedResourceKey(undefined)} />}
         sidebar={grid}
       />}
   </>;
@@ -265,7 +266,7 @@ function hasMultipleContexts(renderedEntries: RenderedEntry[]): boolean {
   return false;
 }
 
-const renderEntry = (resource: Entry, boundaries: Boundaries, contextIdGenerator: ContextIdMap, ordinal: number): RenderedEntry => {
+const renderEntry = (resource: EntryWithId, boundaries: Boundaries, contextIdGenerator: ContextIdMap, ordinal: number): RenderedEntry => {
   const routeStatus = formatRouteStatus(resource);
   let resourceName: string;
   try {
