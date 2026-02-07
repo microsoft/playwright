@@ -32,6 +32,7 @@ const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
 test.skip(({ trace }) => trace === 'on');
 test.skip(({ mode }) => mode.startsWith('service'));
+test.skip(process.env.PW_CLOCK === 'frozen');
 test.slow();
 
 let traceFile: string;
@@ -2249,15 +2250,11 @@ test('should capture iframe with srcdoc', async ({ page, server, runAndTrace }) 
   await expect(frame.frameLocator('iframe').getByRole('button')).toHaveText('Hello iframe');
 });
 
-test('take trace paths via stdin', async ({ childProcess, page }) => {
-  const cliEntrypoint = path.join(__dirname, '../../packages/playwright-core/cli.js');
-  const cp = childProcess({ command: ['node', cliEntrypoint, 'show-trace', '--port', '0', '--stdin'] });
-  await cp.waitForOutput('Listening on');
-  const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
-  await page.goto(url);
-  await expect(page).toHaveTitle('Playwright Trace Viewer');
-  cp.write(traceFile);
-  await expect(page.locator('.action-title')).toContainText([
+test('take trace paths via stdin', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(undefined, { stdin: true });
+  await expect(traceViewer.page).toHaveTitle('Playwright Trace Viewer');
+  traceViewer.process.write(traceFile);
+  await expect(traceViewer.actionTitles).toContainText([
     /Create page/,
   ]);
 });
