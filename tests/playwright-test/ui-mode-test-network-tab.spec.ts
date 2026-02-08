@@ -387,6 +387,7 @@ test('should not preserve selection across test runs', async ({ runUITest, serve
   await expect(headersPanel).toBeVisible();
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await expect(headersPanel).toBeHidden();
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
   await expect(headersPanel).toBeHidden();
 });
