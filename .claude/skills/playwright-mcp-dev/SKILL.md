@@ -30,6 +30,18 @@ description: Explains how to add and debug playwright MCP tools and CLI commands
   in `packages/playwright/src/skill/references/`
 - Place new tests in `tests/mcp/cli-<category>.spec.ts`
 
+## Adding CLI options or Config options
+When you need to add something to config.
+
+- `packages/playwright/src/mcp/program.ts`
+  - add CLI option and doc
+- `packages/playwright/src/mcp/config.d.ts`
+  - add and document the option
+- `packages/playwright/src/mcp/config.ts`
+  - modify FullConfig if needed
+  - and CLIOptions if needed
+  - add it to configFromEnv
+
 ## Building
 - Assume watch is running at all times, run lint to see type errors
 

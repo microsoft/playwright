@@ -1466,6 +1466,24 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
+    rcStartHttp:
+      title: Start remote control HTTP server
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        port: int?
+        host: string?
+      returns:
+        url: string
+
+    rcStopHttp:
+      title: Stop remote control HTTP server
+      group: configuration
+
   events:
 
     bindingCall:

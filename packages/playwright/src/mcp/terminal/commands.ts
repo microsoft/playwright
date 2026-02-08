@@ -47,6 +47,7 @@ const open = declareCommand({
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
+    ['remote-control']: z.boolean().optional().describe('Enable remote control of the browser over HTTP API'),
   }),
   toolName: 'browser_navigate',
   toolParams: ({ url }) => ({ url: url || 'about:blank' }),

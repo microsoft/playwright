@@ -1624,6 +1624,8 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
+  rcStartHttp(params: BrowserContextRcStartHttpParams, progress?: Progress): Promise<BrowserContextRcStartHttpResult>;
+  rcStopHttp(params?: BrowserContextRcStopHttpParams, progress?: Progress): Promise<BrowserContextRcStopHttpResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -2016,6 +2018,28 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
+export type BrowserContextRcStartHttpParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  port?: number,
+  host?: string,
+};
+export type BrowserContextRcStartHttpOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+  port?: number,
+  host?: string,
+};
+export type BrowserContextRcStartHttpResult = {
+  url: string,
+};
+export type BrowserContextRcStopHttpParams = {};
+export type BrowserContextRcStopHttpOptions = {};
+export type BrowserContextRcStopHttpResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

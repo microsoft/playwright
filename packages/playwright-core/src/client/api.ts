@@ -37,6 +37,7 @@ export { Request, Response, Route, WebSocket, WebSocketRoute } from './network';
 export { APIRequest, APIRequestContext, APIResponse } from './fetch';
 export { Page } from './page';
 export { PageAgent } from './pageAgent';
+export { RC } from './rc';
 export { Selectors } from './selectors';
 export { Tracing } from './tracing';
 export { Video } from './video';

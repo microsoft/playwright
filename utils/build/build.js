@@ -635,6 +635,12 @@ copyFiles.push({
 });
 
 copyFiles.push({
+  files: 'packages/playwright-core/src/server/rc/*.{html,css}',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
+});
+
+copyFiles.push({
   files: 'packages/playwright/src/agents/*.md',
   from: 'packages/playwright/src',
   to: 'packages/playwright/lib',

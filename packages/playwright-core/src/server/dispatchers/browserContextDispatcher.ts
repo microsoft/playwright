@@ -401,6 +401,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.clock.setSystemTime(progress, params.timeString ?? params.timeNumber ?? 0);
   }
 
+  async rcStartHttp(params: channels.BrowserContextRcStartHttpParams, progress: Progress): Promise<channels.BrowserContextRcStartHttpResult> {
+    const url = await this._context.startRemoteControl(params);
+    return { url };
+  }
+
+  async rcStopHttp(params: channels.BrowserContextRcStopHttpParams, progress: Progress): Promise<channels.BrowserContextRcStopHttpResult> {
+    await this._context.stopRemoteControl();
+  }
+
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);

@@ -30,6 +30,7 @@ import { Frame } from './frame';
 import { HarRouter } from './harRouter';
 import * as network from './network';
 import { BindingCall, Page } from './page';
+import { RC } from './rc';
 import { Tracing } from './tracing';
 import { Waiter } from './waiter';
 import { WebError } from './webError';
@@ -68,6 +69,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closedPromise: Promise<void>;
   readonly _options: channels.BrowserNewContextParams;
 
+  readonly rc: RC;
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
   readonly clock: Clock;
@@ -93,6 +95,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     super(parent, type, guid, initializer);
     this._options = initializer.options;
     this._timeoutSettings = new TimeoutSettings(this._platform);
+    this.rc = new RC(this._channel);
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
     this.request._timeoutSettings = this._timeoutSettings;

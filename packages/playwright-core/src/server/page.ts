@@ -279,6 +279,7 @@ export class Page extends SdkObject<PageEventMap> {
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
+    this.browserContext.emit(BrowserContext.Events.PageClosed, this);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError(this.closeReason()));
@@ -830,6 +831,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
+    this.browserContext.emit(BrowserContext.Events.InternalFrameNavigatedToNewDocument, frame, this);
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);

@@ -238,4 +238,18 @@ export type Config = {
    * Specify the language to use for code generation.
    */
   codegen?: 'typescript' | 'none';
+
+  /**
+   * Whether to start the remote control HTTP server for the browser context.
+   */
+  remoteControl?: {
+    // Whether to start the remote control HTTP server for the browser context.
+    enabled: boolean;
+
+    // Screencast resolution for the remote server.
+    viewport?: {
+      width: number;
+      height: number;
+    };
+  }
 };
