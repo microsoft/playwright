@@ -41,6 +41,7 @@ export interface RecorderDelegate {
   setMode?(mode: Mode): Promise<void>;
   setOverlayState?(state: OverlayState): Promise<void>;
   highlightUpdated?(): void;
+  log?(...args: any[]): void;
 }
 
 interface RecorderTool {
@@ -1524,6 +1525,7 @@ export class Recorder {
   }
 
   private _onClick(event: MouseEvent) {
+    this._delegate.log?.('_onClick', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this.overlay?.onClick(event))
@@ -1534,6 +1536,7 @@ export class Recorder {
   }
 
   private _onDblClick(event: MouseEvent) {
+    this._delegate.log?.('_onDblClick', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this.overlay?.onDblClick(event))
@@ -1544,6 +1547,7 @@ export class Recorder {
   }
 
   private _onContextMenu(event: MouseEvent) {
+    this._delegate.log?.('_onContextMenu', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     // Note: in chromium windows, context menu event always includes overlay,
@@ -1554,6 +1558,7 @@ export class Recorder {
   }
 
   private _onDragStart(event: DragEvent) {
+    this._delegate.log?.('_onDragStart', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1562,6 +1567,7 @@ export class Recorder {
   }
 
   private _onPointerDown(event: PointerEvent) {
+    this._delegate.log?.('_onPointerDown', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1570,6 +1576,7 @@ export class Recorder {
   }
 
   private _onPointerUp(event: PointerEvent) {
+    this._delegate.log?.('_onPointerUp', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1578,6 +1585,7 @@ export class Recorder {
   }
 
   private _onMouseDown(event: MouseEvent) {
+    this._delegate.log?.('_onMouseDown', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1586,6 +1594,7 @@ export class Recorder {
   }
 
   private _onMouseUp(event: MouseEvent) {
+    this._delegate.log?.('_onMouseUp', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this.overlay?.onMouseUp(event))
@@ -1596,6 +1605,7 @@ export class Recorder {
   }
 
   private _onMouseMove(event: MouseEvent) {
+    this._delegate.log?.('_onMouseMove', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this.overlay?.onMouseMove(event))
@@ -1606,6 +1616,7 @@ export class Recorder {
   }
 
   private _onMouseEnter(event: MouseEvent) {
+    this._delegate.log?.('_onMouseEnter', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1614,6 +1625,7 @@ export class Recorder {
   }
 
   private _onMouseLeave(event: MouseEvent) {
+    this._delegate.log?.('_onMouseLeave', { x: event.clientX, y: event.clientY, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1622,6 +1634,7 @@ export class Recorder {
   }
 
   private _onFocus(event: Event) {
+    this._delegate.log?.('_onFocus', { target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1630,6 +1643,7 @@ export class Recorder {
   }
 
   private _onScroll(event: Event) {
+    this._delegate.log?.('_onScroll', { target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     this._lastHighlightedSelector = undefined;
@@ -1639,12 +1653,14 @@ export class Recorder {
   }
 
   private _onInput(event: Event) {
+    this._delegate.log?.('_onInput', { target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (this._ignoreOverlayEvent(event))
       return;
     this._currentTool.onInput?.(event);
   }
 
   private _onKeyDown(event: KeyboardEvent) {
+    this._delegate.log?.('_onKeyDown', { key: event.key, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))
@@ -1653,6 +1669,7 @@ export class Recorder {
   }
 
   private _onKeyUp(event: KeyboardEvent) {
+    this._delegate.log?.('_onKeyUp', { key: event.key, target: event.target ? (event.target as Element).nodeName : 'unknown' });
     if (!event.isTrusted)
       return;
     if (this._ignoreOverlayEvent(event))

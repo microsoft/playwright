@@ -167,6 +167,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
     const controller = new ProgressController();
     await controller.run(async progress => {
+      if (isUnderTest()) {
+        await this._context.exposeBinding(progress, '__pw_recorderLog', false, async ({ frame }, args: any[]) => {
+          this._debugLog('__pw_recorderLog', ...args);
+        });
+      }
       await this._context.exposeBinding(progress, '__pw_recorderState', false, async source => {
         let actionSelector: string | undefined;
         let actionPoint: Point | undefined;
