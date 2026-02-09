@@ -152,7 +152,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private async _debugLog(...args: any[]) {
     if (isUnderTest())
       // eslint-disable-next-line no-console
-      console.log(...args);
+      console.log(monotonicTime(), ...args);
   }
 
   private async _install() {
