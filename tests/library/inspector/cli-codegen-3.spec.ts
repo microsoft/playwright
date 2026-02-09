@@ -1034,6 +1034,30 @@ await page.GetByTestId("testid").HoverAsync();`);
     await page.mouse.click(10, 10);
     await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeHidden();
   });
+
+  test('should record when fullscreen element is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <div id="fullscreen-container">
+        <button id="closeBtn">Close Fullscreen</button>
+      </div>
+      <button id="openBtn">Go Fullscreen</button>
+      <script>
+        document.getElementById('openBtn').onclick = () => {
+          document.getElementById('fullscreen-container').requestFullscreen();
+        };
+        document.getElementById('closeBtn').onclick = () => {
+          document.exitFullscreen();
+        };
+      </script>
+    `);
+
+    await page.getByRole('button', { name: 'Go Fullscreen' }).click();
+    await expect(page.getByRole('button', { name: 'Close Fullscreen' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
 });
 
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {
