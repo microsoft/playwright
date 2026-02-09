@@ -978,10 +978,12 @@ await page.GetByTestId("testid").HoverAsync();`);
     await page.getByTitle('Assert text').click();
   });
 
-  test.fail('should record when manual popover with fullscreen backdrop is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+  test('should record when manual popover with fullscreen backdrop is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
-    // Simulates https://material.angular.dev/components/dialog/examples. manual popover with a fullscreen backdrop
+    // Mirrors the dialog pattern from Angular Material: https://material.angular.dev/components/dialog/examples
+    // A manual popover with a fullscreen backdrop and a dialog content area.
+    // Difference: the dialog is not centered, because Playwright recorder has trouble clicking on backdrops with centered occlusion.
     await recorder.setContentAndWait(`
       <style>
         .cdk-overlay-backdrop {
@@ -996,9 +998,8 @@ await page.GetByTestId("testid").HoverAsync();`);
         }
         .dialog-content {
           position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
+          bottom: 20px;
+          right: 20px;
           background: white;
           padding: 20px;
           z-index: 1001;
@@ -1029,10 +1030,6 @@ await page.GetByTestId("testid").HoverAsync();`);
 
     await page.getByRole('button', { name: 'Open Dialog' }).click();
     await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeVisible();
-
-    // 10,10 points to the backdrop. when we replay the click on it backdrop,
-    // playwright doesn't target 10,10, but instead it targets the center of the element at 10,10
-    // this happens to be the 'close dialog' button! what should we do?
 
     await page.mouse.click(10, 10);
     await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeHidden();
