@@ -112,12 +112,12 @@ export function decorateCommand(command: Command, version: string) {
 
         if (config.sessionConfig) {
           const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
-          console.log(`### Config`);
-          console.log('```json');
-          console.log(JSON.stringify(config, null, 2));
-          console.log('```');
           try {
             const socketPath = await startMcpDaemonServer(config, contextFactory);
+            console.log(`### Config`);
+            console.log('```json');
+            console.log(JSON.stringify(config, null, 2));
+            console.log('```');
             console.log(`### Success\nDaemon listening on ${socketPath}`);
             console.log('<EOF>');
           } catch (error) {

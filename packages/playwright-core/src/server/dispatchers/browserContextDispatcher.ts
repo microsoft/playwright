@@ -401,6 +401,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.clock.setSystemTime(progress, params.timeString ?? params.timeNumber ?? 0);
   }
 
+  async devtoolsStart(params: channels.BrowserContextDevtoolsStartParams, progress: Progress): Promise<channels.BrowserContextDevtoolsStartResult> {
+    const url = await this._context.devtoolsStart(params);
+    return { url };
+  }
+
+  async devtoolsStop(params: channels.BrowserContextDevtoolsStopParams, progress: Progress): Promise<channels.BrowserContextDevtoolsStopResult> {
+    await this._context.devtoolsStop();
+  }
+
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {
     if (params.enabled)
       this._subscriptions.add(params.event);

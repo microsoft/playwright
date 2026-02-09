@@ -1,0 +1,6 @@
+{
+  "name": "@playwright/devtools",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module"
+}

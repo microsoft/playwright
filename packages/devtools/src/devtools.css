@@ -1,0 +1,342 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:root {
+  --bg: #202124;
+  --bg-elevated: #35363a;
+  --bg-tab: #292b2e;
+  --fg: #e8eaed;
+  --fg-dim: #9aa0a6;
+  --fg-muted: #5f6368;
+  --accent: #8ab4f8;
+  --ok: #81c995;
+  --err: #f28b82;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+button {
+  background: none;
+  border: none;
+  color: var(--fg-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+button:hover {
+  color: var(--fg);
+}
+
+/* -- Tab bar -- */
+.tabbar {
+  display: flex;
+  align-items: flex-end;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 10px 0 12px;
+  user-select: none;
+}
+
+.tabbar-brand span {
+  font-size: 12px;
+  color: var(--fg-dim);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  line-height: 34px;
+  margin-right: 10px;
+}
+
+.tabstrip {
+  display: flex;
+  align-items: flex-end;
+  gap: 1px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  min-width: 0;
+  padding-top: 8px;
+}
+
+.tabstrip::-webkit-scrollbar {
+  display: none;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 10px;
+  background: var(--bg-tab);
+  color: var(--fg-dim);
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  max-width: 200px;
+  min-width: 48px;
+  border-radius: 8px 8px 0 0;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.tab:hover {
+  background: var(--bg-elevated);
+  color: var(--fg-dim);
+}
+
+.tab.active {
+  background: var(--bg-elevated);
+  color: var(--fg);
+}
+
+.tab-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.tab-favicon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  background: var(--fg-muted);
+  border-radius: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.tab-close {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  opacity: 0;
+  margin-left: auto;
+}
+
+.tab-close svg {
+  width: 10px;
+  height: 10px;
+}
+
+.tab:hover .tab-close,
+.tab.active .tab-close {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.new-tab-btn {
+  width: 28px;
+  height: 34px;
+  border-radius: 8px;
+  margin-left: 4px;
+  align-self: flex-end;
+}
+
+.new-tab-btn:hover {
+  background: var(--bg-elevated);
+}
+
+.new-tab-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.status {
+  font-size: 11px;
+  color: var(--fg-muted);
+  margin-left: auto;
+  padding-left: 12px;
+  align-self: center;
+}
+
+.status.connected {
+  color: var(--ok);
+}
+
+.status.error {
+  color: var(--err);
+}
+
+/* -- Toolbar -- */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 40px;
+  min-height: 40px;
+  background: var(--bg-elevated);
+  padding: 0 8px;
+}
+
+.nav-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+}
+
+.nav-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.nav-btn:active {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.nav-btn:disabled {
+  color: var(--fg-muted);
+  cursor: default;
+}
+
+.nav-btn:disabled:hover {
+  background: none;
+}
+
+.nav-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.omnibox {
+  flex: 1;
+  height: 30px;
+  padding: 0 12px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg);
+  color: var(--fg);
+  border: 1px solid transparent;
+  border-radius: 16px;
+  outline: none;
+  min-width: 0;
+}
+
+.omnibox:focus {
+  border-color: var(--accent);
+  background: var(--bg-tab);
+}
+
+.omnibox::placeholder {
+  color: var(--fg-muted);
+}
+
+.omnibox::selection {
+  background: #394457;
+}
+
+/* -- Viewport -- */
+.viewport-wrapper {
+  flex: 1;
+  display: flex;
+  background: #000;
+  overflow: hidden;
+  position: relative;
+  min-height: 0;
+}
+
+.screen {
+  position: relative;
+  outline: none;
+  width: 100%;
+  height: 100%;
+}
+
+.screen.captured {
+  cursor: default;
+}
+
+.screen.captured .display {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.display {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  object-fit: contain;
+}
+
+.no-pages {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  font-size: 14px;
+  background: #000;
+}
+
+.no-pages.visible {
+  display: flex;
+}
+
+.capture-hint {
+  position: absolute;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(32, 33, 36, 0.85);
+  backdrop-filter: blur(8px);
+  color: var(--fg);
+  font-size: 12px;
+  padding: 6px 16px;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.capture-hint.visible {
+  opacity: 1;
+}
