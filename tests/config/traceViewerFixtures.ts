@@ -153,7 +153,8 @@ class TraceViewerPage {
 }
 
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
-  showTraceViewer: async ({ childProcess, browser }, use) => {
+  showTraceViewer: async ({ playwright, childProcess }, use) => {
+    const browsers: Browser[] = [];
     await use(async (trace: string | undefined, { host, port, stdin } = {}) => {
       const command = [
         'node',
@@ -169,11 +170,15 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
         command.push(trace);
       const cp = childProcess({ command });
       await cp.waitForOutput('Listening on');
-      const page = await browser.newPage(); // page fixture might have been used for recording the trace, let's use a fresh one
+      const browser = await playwright.chromium.launch();
+      browsers.push(browser);
+      const page = await browser.newPage();
       const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
       await page.goto(url);
       return new TraceViewerPage(page, cp);
     });
+    for (const browser of browsers)
+      await browser.close();
   },
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
