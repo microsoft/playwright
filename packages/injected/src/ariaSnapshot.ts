@@ -673,6 +673,8 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
 
 function convertToBestGuessRegex(text: string): string {
   const dynamicContent = [
+    // 550e8400-e29b-41d4-a716-446655440000
+    { regex: /\b[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\b/, replacement: '[0-9a-fA-F-]+' },
     // 2mb
     { regex: /\b[\d,.]+[bkmBKM]+\b/, replacement: '[\\d,.]+[bkmBKM]+' },
     // 2ms, 20s
