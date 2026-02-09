@@ -925,6 +925,139 @@ await page.GetByTestId("testid").HoverAsync();`);
     await page.locator('x-pw-glass').click();
     await expect(dialog).toBeHidden();
   });
+
+  test('should record when top layer popover is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <div
+        popover="manual"
+        id="mypopover"
+        style="inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 20px;"
+      >
+        <button>Close</button>
+      </div>
+      <button popovertarget="mypopover">Show Popover</button>
+    `);
+
+    await page.getByRole('button', { name: 'Show Popover' }).click();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
+
+  test('should record when top layer popover inside shadow DOM is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <my-component></my-component>
+      <script>
+        class MyComponent extends HTMLElement {
+          constructor() {
+            super();
+            const shadow = this.attachShadow({ mode: 'open' });
+            shadow.innerHTML = \`
+              <div
+                popover="manual"
+                id="mypopover"
+                style="inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 20px;"
+              >
+                <button>Close</button>
+              </div>
+              <button popovertarget="mypopover">Show Popover</button>
+            \`;
+          }
+        }
+        customElements.define('my-component', MyComponent);
+      </script>
+    `);
+
+    await page.getByRole('button', { name: 'Show Popover' }).click();
+    await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
+
+  test('should record when manual popover with fullscreen backdrop is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    // Mirrors the dialog pattern from Angular Material: https://material.angular.dev/components/dialog/examples
+    // A manual popover with a fullscreen backdrop and a dialog content area.
+    // Difference: the dialog is not centered, because Playwright recorder has trouble clicking on backdrops with centered occlusion.
+    await recorder.setContentAndWait(`
+      <style>
+        .cdk-overlay-backdrop {
+          position: fixed;
+          top: 0;
+          bottom: 0;
+          left: 0;
+          right: 0;
+          pointer-events: auto;
+          background: rgba(0, 0, 0, 0.32);
+          opacity: 1;
+        }
+        .dialog-content {
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          background: white;
+          padding: 20px;
+          z-index: 1001;
+        }
+      </style>
+      <div
+        popover="manual"
+        id="mypopover"
+      >
+        <div class="cdk-overlay-backdrop" id="backdrop"></div>
+        <div class="dialog-content">
+          <button id="closeBtn">Close Dialog</button>
+        </div>
+      </div>
+      <button id="openBtn">Open Dialog</button>
+      <script>
+        document.getElementById('openBtn').onclick = () => {
+          document.getElementById('mypopover').showPopover();
+        };
+        document.getElementById('backdrop').onclick = () => {
+          document.getElementById('mypopover').hidePopover();
+        };
+        document.getElementById('closeBtn').onclick = () => {
+          document.getElementById('mypopover').hidePopover();
+        };
+      </script>
+    `);
+
+    await page.getByRole('button', { name: 'Open Dialog' }).click();
+    await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeVisible();
+
+    await page.mouse.click(10, 10);
+    await expect(page.getByRole('button', { name: 'Close Dialog' })).toBeHidden();
+  });
+
+  test('should record when fullscreen element is open', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39095' } }, async ({ openRecorder }) => {
+    const { page, recorder } = await openRecorder();
+
+    await recorder.setContentAndWait(`
+      <div id="fullscreen-container">
+        <button id="closeBtn">Close Fullscreen</button>
+      </div>
+      <button id="openBtn">Go Fullscreen</button>
+      <script>
+        document.getElementById('openBtn').onclick = () => {
+          document.getElementById('fullscreen-container').requestFullscreen();
+        };
+        document.getElementById('closeBtn').onclick = () => {
+          document.exitFullscreen();
+        };
+      </script>
+    `);
+
+    await page.getByRole('button', { name: 'Go Fullscreen' }).click();
+    await expect(page.getByRole('button', { name: 'Close Fullscreen' })).toBeVisible();
+
+    await page.getByTitle('Assert text').click();
+  });
 });
 
 async function createFrameHierarchy(page: Page, recorder: Recorder, server: TestServer) {

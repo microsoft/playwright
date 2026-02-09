@@ -56,12 +56,16 @@ export class Highlight {
     const document = injectedScript.document;
     this._isUnderTest = injectedScript.isUnderTest;
     this._glassPaneElement = document.createElement('x-pw-glass');
-    this._glassPaneElement.style.position = 'fixed';
-    this._glassPaneElement.style.top = '0';
-    this._glassPaneElement.style.right = '0';
-    this._glassPaneElement.style.bottom = '0';
-    this._glassPaneElement.style.left = '0';
-    this._glassPaneElement.style.zIndex = '2147483647';
+    this._glassPaneElement.setAttribute('popover', 'manual');
+    this._glassPaneElement.style.inset = '0';
+    this._glassPaneElement.style.width = '100%';
+    this._glassPaneElement.style.height = '100%';
+    this._glassPaneElement.style.maxWidth = 'none';
+    this._glassPaneElement.style.maxHeight = 'none';
+    this._glassPaneElement.style.padding = '0';
+    this._glassPaneElement.style.margin = '0';
+    this._glassPaneElement.style.border = 'none';
+    this._glassPaneElement.style.overflow = 'visible';
     this._glassPaneElement.style.pointerEvents = 'none';
     this._glassPaneElement.style.display = 'flex';
     this._glassPaneElement.style.backgroundColor = 'transparent';
@@ -88,6 +92,12 @@ export class Highlight {
       return;
     if (!this._injectedScript.document.documentElement.contains(this._glassPaneElement) || this._glassPaneElement.nextElementSibling)
       this._injectedScript.document.documentElement.appendChild(this._glassPaneElement);
+    this._bringToFront();
+  }
+
+  private _bringToFront() {
+    this._glassPaneElement.hidePopover();
+    this._glassPaneElement.showPopover();
   }
 
   setLanguage(language: Language) {
