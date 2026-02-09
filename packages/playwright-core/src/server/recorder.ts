@@ -149,6 +149,12 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     }
   }
 
+  private async _debugLog(...args: any[]) {
+    if (isUnderTest())
+      // eslint-disable-next-line no-console
+      console.log(...args);
+  }
+
   private async _install() {
     this.emit(RecorderEvent.ModeChanged, this._mode);
     this.emit(RecorderEvent.PausedStateChanged, this._debugger.isPaused());
@@ -183,27 +189,33 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
           testIdAttributeName: this._testIdAttributeName(),
           overlay: this._overlayState,
         };
+        this._debugLog('__pw_recorderState', uiState);
         return uiState;
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
+        this._debugLog('__pw_recorderElementPicked', elementInfo);
         const selectorChain = await generateFrameSelector(frame);
+        this._debugLog('__pw_recorderElementPicked selector', selectorChain);
         this.emit(RecorderEvent.ElementPicked, { selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
+        this._debugLog('__pw_recorderSetMode', mode);
         if (frame.parentFrame())
           return;
         this.setMode(mode);
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
+        this._debugLog('__pw_recorderSetOverlayState', state);
         if (frame.parentFrame())
           return;
         this._overlayState = state;
       });
 
       await this._context.exposeBinding(progress, '__pw_resume', false, () => {
+        this._debugLog('__pw_resume');
         this._debugger.resume(false);
       });
 
@@ -234,6 +246,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private _pausedStateChanged() {
+    this._debugLog('_pausedStateChanged');
     // If we are called upon page.pause, we don't have metadatas, populate them.
     for (const { metadata, sdkObject } of this._debugger.pausedDetails()) {
       if (!this._currentCallsMetadata.has(metadata))
@@ -249,6 +262,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   setMode(mode: Mode) {
+    this._debugLog('setMode', mode);
     if (this._mode === mode)
       return;
     this._highlightedElement = {};
@@ -267,6 +281,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   setHighlightedSelector(selector: string) {
+    this._debugLog('setHighlightedSelector', selector);
     this._highlightedElement = { selector: locatorOrSelectorAsSelector(this._currentLanguage, selector, this._context.selectors().testIdAttributeName()) };
     this._refreshOverlay();
   }
@@ -360,6 +375,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._omitCallTracking || this._isRecording())
       return;
+    this._debugLog('onBeforeCall', metadata.method, metadata.params);
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
     this.updateCallLog([metadata]);
@@ -372,6 +388,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._omitCallTracking || this._isRecording())
       return;
+    this._debugLog('onAfterCall', metadata.method, metadata.params);
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
@@ -446,9 +463,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _onPage(page: Page) {
+    this._debugLog('_onPage', page.guid);
     // First page is called page, others are called popup1, popup2, etc.
     const frame = page.mainFrame();
     page.on(Page.Events.Close, () => {
+      this._debugLog('close');
       this._signalProcessor.addAction({
         frame: this._describeMainFrame(page),
         action: {
@@ -461,6 +480,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this._filePrimaryURLChanged();
     });
     frame.on(Frame.Events.InternalNavigation, event => {
+      this._debugLog('internal navigation');
       if (event.isPublic) {
         this._onFrameNavigated(frame, page);
         this._filePrimaryURLChanged();
@@ -531,6 +551,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
+    this._debugLog('_performAction', action);
     const actionInContext = await this._createActionInContext(frame, action);
     this._signalProcessor.addAction(actionInContext);
     if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
@@ -539,6 +560,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _recordAction(frame: Frame, action: actions.Action) {
+    this._debugLog('_recordAction', action);
     const actionInContext = await this._createActionInContext(frame, action);
     this._signalProcessor.addAction(actionInContext);
   }
@@ -549,18 +571,21 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private _onPopup(page: Page, popup: Page) {
+    this._debugLog('popup');
     const pageAlias = this._pageAliases.get(page)!;
     const popupAlias = this._pageAliases.get(popup)!;
     this._signalProcessor.signal(pageAlias, page.mainFrame(), { name: 'popup', popupAlias });
   }
 
   private _onDownload(page: Page) {
+    this._debugLog('download');
     const pageAlias = this._pageAliases.get(page)!;
     ++this._lastDownloadOrdinal;
     this._signalProcessor.signal(pageAlias, page.mainFrame(), { name: 'download', downloadAlias: this._lastDownloadOrdinal ? String(this._lastDownloadOrdinal) : '' });
   }
 
   private _onDialog(page: Page) {
+    this._debugLog('onDialog');
     const pageAlias = this._pageAliases.get(page)!;
     ++this._lastDialogOrdinal;
     this._signalProcessor.signal(pageAlias, page.mainFrame(), { name: 'dialog', dialogAlias: this._lastDialogOrdinal ? String(this._lastDialogOrdinal) : '' });
