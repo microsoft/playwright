@@ -10,6 +10,10 @@
 [program.ts]
 "strict"
 ./socketConnection.ts
+./registry.ts
 
 [socketConnection.ts]
+"strict"
+
+[registry.ts]
 "strict"
