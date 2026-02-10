@@ -165,6 +165,92 @@ it('should show remote tabs in unified tab bar', async ({ rcPage, browser, contr
   await remoteContext.close();
 });
 
+it('should navigate via omnibox', async ({ rcPage, page, server }) => {
+  const omnibox = rcPage.locator('#omnibox');
+  await omnibox.fill(server.PREFIX + '/title.html');
+  await omnibox.press('Enter');
+  await expect(page).toHaveURL(server.PREFIX + '/title.html');
+  await expect(page).toHaveTitle('Woof-Woof');
+});
+
+it('should navigate back and forward via toolbar buttons', async ({ rcPage, page, server }) => {
+  await page.goto(server.PREFIX + '/title.html');
+  await expect(rcPage.locator('#omnibox')).toHaveValue(/\/title\.html$/);
+
+  await page.goto(server.EMPTY_PAGE);
+  await expect(rcPage.locator('#omnibox')).toHaveValue(/\/empty\.html$/);
+
+  // Click back button.
+  await rcPage.locator('.nav-btn[title="Back"]').click();
+  await expect(page).toHaveURL(server.PREFIX + '/title.html');
+  await expect(rcPage.locator('#omnibox')).toHaveValue(/\/title\.html$/);
+
+  // Click forward button.
+  await rcPage.locator('.nav-btn[title="Forward"]').click();
+  await expect(page).toHaveURL(server.EMPTY_PAGE);
+  await expect(rcPage.locator('#omnibox')).toHaveValue(/\/empty\.html$/);
+});
+
+it('should reload page via toolbar button', async ({ rcPage, page, server }) => {
+  await page.goto(server.PREFIX + '/title.html');
+  await page.evaluate(() => (window as any).__reloadTest = true);
+  expect(await page.evaluate(() => (window as any).__reloadTest)).toBe(true);
+
+  const [response] = await Promise.all([
+    page.waitForNavigation(),
+    rcPage.locator('.nav-btn[title="Reload"]').click(),
+  ]);
+  expect(response!.url()).toContain('/title.html');
+  // After reload, the injected variable should be gone.
+  expect(await page.evaluate(() => (window as any).__reloadTest)).toBe(undefined);
+});
+
+it('should send mouse clicks through screencast', async ({ rcPage, page }) => {
+  await page.goto('data:text/html,<body style="margin:0"><div id="target" style="width:100vw;height:100vh"></div><script>window.clicked=false;document.getElementById("target").addEventListener("click",()=>{window.clicked=true})</script></body>');
+  await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+
+  // First click captures the screencast.
+  const display = rcPage.locator('#display');
+  await display.click();
+  await expect(rcPage.locator('.screen')).toHaveClass(/captured/);
+
+  // Second click sends the click through to the target page's full-viewport div.
+  await display.click();
+  await expect.poll(() => page.evaluate(() => (window as any).clicked)).toBe(true);
+});
+
+it('should send keyboard input through screencast', async ({ rcPage, page }) => {
+  await page.goto('data:text/html,<body style="margin:0"><input id="inp" style="position:fixed;left:0;top:0;width:100vw;height:100vh;font-size:24px" /></body>');
+  await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+
+  // First click captures the screencast.
+  const display = rcPage.locator('#display');
+  await display.click();
+  await expect(rcPage.locator('.screen')).toHaveClass(/captured/);
+
+  // Second click hits the full-viewport input to focus it.
+  await display.click();
+  await expect(page.locator('#inp')).toBeFocused();
+
+  // Type text through the screencast.
+  const screen = rcPage.locator('.screen');
+  await screen.pressSequentially('hello');
+
+  await expect(page.locator('#inp')).toHaveValue('hello');
+});
+
+it('should release capture on Escape', async ({ rcPage, page }) => {
+  await page.goto('data:text/html,<body>test</body>');
+  await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+
+  const display = rcPage.locator('#display');
+  await display.click();
+  await expect(rcPage.locator('.screen')).toHaveClass(/captured/);
+
+  await rcPage.locator('.screen').press('Escape');
+  await expect(rcPage.locator('.screen')).not.toHaveClass(/captured/);
+});
+
 it('should switch to a remote tab on click', async ({ rcPage, browser, controller }) => {
   const remoteContext = await browser.newContext();
   const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
@@ -179,6 +265,40 @@ it('should switch to a remote tab on click', async ({ rcPage, browser, controlle
 
   await rcPage.locator('#tabstrip [role="tab"]').first().click();
   await expect(rcPage.locator('#tabstrip [role="tab"]').first()).toHaveAttribute('aria-selected', 'true');
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
+});
+
+it('should send keyboard input to a remote tab through screencast', async ({ rcPage, browser, controller }) => {
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<body style="margin:0"><input id="inp" style="position:fixed;left:0;top:0;width:100vw;height:100vh;font-size:24px" /></body>');
+
+  await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+
+  // Select the remote tab.
+  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1, { timeout: 10000 });
+  await rcPage.locator('#tabstrip [role="tab"]').first().click();
+  await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+
+  // First click captures the screencast.
+  const display = rcPage.locator('#display');
+  await display.click();
+  await expect(rcPage.locator('.screen')).toHaveClass(/captured/);
+
+  // Second click hits the full-viewport input to focus it.
+  await display.click();
+  await expect(remotePage.locator('#inp')).toBeFocused();
+
+  // Type text through the screencast.
+  const screen = rcPage.locator('.screen');
+  await screen.pressSequentially('hello');
+
+  await expect(remotePage.locator('#inp')).toHaveValue('hello');
 
   await (remoteContext as any)._devtoolsStop();
   await remoteContext.close();

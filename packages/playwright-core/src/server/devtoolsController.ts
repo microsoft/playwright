@@ -341,8 +341,12 @@ class DevToolsConnection implements Transport {
   }
 
   private async _selectPage(page: Page) {
-    if (this.selectedPage === page)
+    if (this.selectedPage === page) {
+      // Resend cached state so the client gets the current frame immediately.
+      if (this._lastFrameData)
+        this.sendEvent?.('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize?.width, viewportHeight: this._lastViewportSize?.height });
       return;
+    }
 
     // Stop screencast on old page.
     if (this.selectedPage) {
