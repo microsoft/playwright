@@ -97,7 +97,7 @@ iframe[name=snapshot] {
   width: 100%;
   height: 100%;
   border: none;
-  background: white;
+  background: light-dark(white, #333);
   visibility: hidden;
 }
 
