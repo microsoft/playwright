@@ -35,6 +35,7 @@ import { Page, PageBinding } from './page';
 import { RecorderApp } from './recorder/recorderApp';
 import { Selectors } from './selectors';
 import { Tracing } from './trace/recorder/tracing';
+import { DevToolsController } from './devtoolsController';
 import * as rawStorageSource from '../generated/storageScriptSource';
 
 import type { Artifact } from './artifact';
@@ -64,6 +65,8 @@ const BrowserContextEvent = {
   RequestContinued: 'requestcontinued',
   BeforeClose: 'beforeclose',
   RecorderEvent: 'recorderevent',
+  PageClosed: 'pageclosed',
+  InternalFrameNavigatedToNewDocument: 'internalframenavigatedtonewdocument',
 } as const;
 
 export type BrowserContextEventMap = {
@@ -80,6 +83,8 @@ export type BrowserContextEventMap = {
   [BrowserContextEvent.RequestContinued]: [request: network.Request];
   [BrowserContextEvent.BeforeClose]: [];
   [BrowserContextEvent.RecorderEvent]: [event: { event: 'actionAdded' | 'actionUpdated' | 'signalAdded', data: any, page: Page, code: string }];
+  [BrowserContextEvent.PageClosed]: [page: Page];
+  [BrowserContextEvent.InternalFrameNavigatedToNewDocument]: [frame: frames.Frame, page: Page];
 };
 
 export abstract class BrowserContext<EM extends EventMap = EventMap> extends SdkObject<BrowserContextEventMap | EM> {
@@ -114,6 +119,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
+  private _devtools: DevToolsController | undefined;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -509,6 +515,22 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     await this.doUpdateRequestInterception();
   }
 
+  async devtoolsStart(options: { size?: types.Size, port?: number, host?: string } = {}): Promise<string> {
+    if (this._devtools)
+      throw new Error('DevTools is already running');
+    const size = validateVideoSize(options.size, undefined);
+    this._devtools = new DevToolsController(this);
+    const url = await this._devtools.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
+    return url;
+  }
+
+  async devtoolsStop(): Promise<void> {
+    if (!this._devtools)
+      throw new Error('DevTools is not running');
+    await this._devtools.stop();
+    this._devtools = undefined;
+  }
+
   isClosingOrClosed() {
     return this._closedStatus !== 'open';
   }
@@ -531,6 +553,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         this._closeReason = options.reason;
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
+
+      await this._devtools?.stop();
+      this._devtools = undefined;
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();

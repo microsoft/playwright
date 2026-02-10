@@ -486,9 +486,6 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'all',
   'help',
   'version',
-  'extension',
-  'headed',
-  'persistent'
 ];
 
 export async function program(packageLocation: string) {
