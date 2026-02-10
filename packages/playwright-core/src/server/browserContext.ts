@@ -519,7 +519,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._devtools)
       throw new Error('DevTools is already running');
     const size = validateVideoSize(options.size, undefined);
-    this._devtools = new DevToolsController(this);
+    this._devtools = new DevToolsController();
+    this._devtools.addContext(this);
     const url = await this._devtools.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
     return url;
   }

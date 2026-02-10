@@ -18,7 +18,7 @@ import React from 'react';
 import './devtools.css';
 import { DevToolsTransport } from './transport';
 
-type TabInfo = { id: string; title: string; url: string };
+type TabInfo = { id: string; title: string; url: string; contextId: string };
 
 function tabFavicon(url: string): string {
   try {
@@ -33,6 +33,7 @@ function tabFavicon(url: string): string {
 export const DevTools: React.FC = () => {
   const [status, setStatus] = React.useState<{ text: string; cls: string }>({ text: 'Connecting', cls: '' });
   const [tabs, setTabs] = React.useState<TabInfo[]>([]);
+  const [contexts, setContexts] = React.useState<{ id: string }[]>([]);
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
   const [url, setUrl] = React.useState('');
   const [frameSrc, setFrameSrc] = React.useState('');
@@ -78,6 +79,8 @@ export const DevTools: React.FC = () => {
         setUrl(params.url);
       if (method === 'tabs')
         setTabs(params.tabs);
+      if (method === 'contexts')
+        setContexts(params.contexts);
     };
 
     transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
@@ -242,7 +245,12 @@ export const DevTools: React.FC = () => {
           </div>
         ))}
       </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => transportRef.current?.sendNoReply('newTab')}>
+      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => {
+        const selectedTab = tabs.find(t => t.id === selectedPageId);
+        const contextId = selectedTab?.contextId ?? tabs[0]?.contextId ?? contexts[0]?.id;
+        if (contextId)
+          transportRef.current?.sendNoReply('newTab', { contextId });
+      }}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
           <line x1='12' y1='5' x2='12' y2='19'/>
           <line x1='5' y1='12' x2='19' y2='12'/>
