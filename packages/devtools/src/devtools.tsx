@@ -40,6 +40,7 @@ export const DevTools: React.FC = () => {
   // Remote sources directory + their tabs.
   const [remoteSources, setRemoteSources] = React.useState<RemoteSource[]>([]);
   const [remoteTabsBySource, setRemoteTabsBySource] = React.useState<Record<string, TabInfo[]>>({});
+  const [remoteContextsBySource, setRemoteContextsBySource] = React.useState<Record<string, string[]>>({});
   const remoteTransportsRef = React.useRef<Map<string, DevToolsTransport>>(new Map());
 
   const sourceGroups = React.useMemo<SourceGroup[]>(() => {
@@ -114,6 +115,11 @@ export const DevTools: React.FC = () => {
           delete next[wsUrl];
           return next;
         });
+        setRemoteContextsBySource(prev => {
+          const next = { ...prev };
+          delete next[wsUrl];
+          return next;
+        });
       }
     }
 
@@ -147,6 +153,7 @@ export const DevTools: React.FC = () => {
         }
         if (method === 'contexts') {
           const ids = new Set((params.contexts as { id: string }[]).map(c => c.id));
+          setRemoteContextsBySource(prev => ({ ...prev, [source.wsUrl]: [...ids] }));
           setRemoteTabsBySource(prev => {
             const current = prev[source.wsUrl] || [];
             const filtered = current.filter(t => ids.has(t.contextId));
@@ -176,6 +183,11 @@ export const DevTools: React.FC = () => {
       remote.onclose = () => {
         remoteTransportsRef.current.delete(source.wsUrl);
         setRemoteTabsBySource(prev => {
+          const next = { ...prev };
+          delete next[source.wsUrl];
+          return next;
+        });
+        setRemoteContextsBySource(prev => {
           const next = { ...prev };
           delete next[source.wsUrl];
           return next;
@@ -251,6 +263,18 @@ export const DevTools: React.FC = () => {
     };
 
     transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
+
+    (window as any).connect = (urlOrWs: string, name = 'Remote') => {
+      const u = new URL(urlOrWs);
+      if (u.protocol === 'http:')
+        u.protocol = 'ws:';
+      else if (u.protocol === 'https:')
+        u.protocol = 'wss:';
+      if (!u.pathname.endsWith('/ws'))
+        u.pathname = u.pathname.replace(/\/$/, '') + '/ws';
+      const wsUrl = u.toString();
+      return fetch('/sources?name=' + encodeURIComponent(name) + '&wsUrl=' + encodeURIComponent(wsUrl), { method: 'POST' });
+    };
 
     return () => transport.close();
   }, []);
@@ -401,7 +425,7 @@ export const DevTools: React.FC = () => {
                 onClick={e => {
                   e.stopPropagation();
                   if (group.wsUrl) {
-                    const contextId = group.tabs[0]?.contextId;
+                    const contextId = group.tabs[0]?.contextId ?? remoteContextsBySource[group.wsUrl]?.[0];
                     if (contextId)
                       remoteTransportsRef.current.get(group.wsUrl)?.sendNoReply('newTab', { contextId });
                   } else {
