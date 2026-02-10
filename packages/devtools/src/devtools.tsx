@@ -20,6 +20,7 @@ import { DevToolsTransport } from './transport';
 
 type TabInfo = { id: string; title: string; url: string; contextId: string; sourceWsUrl?: string; sourceName?: string };
 type RemoteSource = { name: string; wsUrl: string };
+type SourceGroup = { name: string; wsUrl?: string; tabs: TabInfo[] };
 
 function tabFavicon(url: string): string {
   try {
@@ -41,11 +42,30 @@ export const DevTools: React.FC = () => {
   const [remoteTabsBySource, setRemoteTabsBySource] = React.useState<Record<string, TabInfo[]>>({});
   const remoteTransportsRef = React.useRef<Map<string, DevToolsTransport>>(new Map());
 
-  const tabs = React.useMemo(() => {
-    const local = Object.values(tabsByContext).flat();
-    const remote = Object.values(remoteTabsBySource).flat();
-    return [...local, ...remote];
-  }, [tabsByContext, remoteTabsBySource]);
+  const sourceGroups = React.useMemo<SourceGroup[]>(() => {
+    const groups: SourceGroup[] = [];
+    const localTabs = Object.values(tabsByContext).flat();
+    // Always show the Local group so the "new tab" button is accessible.
+    groups.push({ name: 'Local', tabs: localTabs });
+    for (const source of remoteSources) {
+      const sourceTabs = remoteTabsBySource[source.wsUrl] || [];
+      groups.push({ name: source.name, wsUrl: source.wsUrl, tabs: sourceTabs });
+    }
+    return groups;
+  }, [tabsByContext, remoteSources, remoteTabsBySource]);
+
+  const [collapsedSources, setCollapsedSources] = React.useState<Set<string>>(new Set());
+
+  function toggleSource(name: string) {
+    setCollapsedSources(prev => {
+      const next = new Set(prev);
+      if (next.has(name))
+        next.delete(name);
+      else
+        next.add(name);
+      return next;
+    });
+  }
 
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
   const [selectedSourceWsUrl, setSelectedSourceWsUrl] = React.useState<string | undefined>();
@@ -240,14 +260,15 @@ export const DevTools: React.FC = () => {
     if (!vw || !vh || resizedRef.current)
       return;
     resizedRef.current = true;
-    const tabbar = document.querySelector('.tabbar') as HTMLElement;
+    const sidebar = document.querySelector('.sidebar') as HTMLElement;
     const toolbar = document.querySelector('.toolbar') as HTMLElement;
-    if (!tabbar || !toolbar)
+    if (!sidebar || !toolbar)
       return;
-    const chromeHeight = tabbar.offsetHeight + toolbar.offsetHeight;
+    const chromeHeight = toolbar.offsetHeight;
+    const sidebarWidth = sidebar.offsetWidth;
     const extraW = window.outerWidth - window.innerWidth;
     const extraH = window.outerHeight - window.innerHeight;
-    const targetW = Math.min(vw + extraW, screen.availWidth);
+    const targetW = Math.min(vw + sidebarWidth + extraW, screen.availWidth);
     const targetH = Math.min(vh + chromeHeight + extraH, screen.availHeight);
     window.resizeTo(targetW, targetH);
   }
@@ -358,128 +379,150 @@ export const DevTools: React.FC = () => {
 
   const hasPages = !!selectedPageId;
 
-  return (<>
-    {/* Tab bar */}
-    <div className='tabbar'>
-      <div className='tabbar-brand'>
-        <span>Playwright</span>
+  return (<div className='app-layout'>
+    {/* Sidebar */}
+    <div className='sidebar'>
+      <div className='sidebar-header'>
+        <span className='sidebar-brand'>Playwright</span>
+        <div id='status' className={'status ' + status.cls}>{status.text}</div>
       </div>
-      <div id='tabstrip' className='tabstrip' role='tablist'>
-        {tabs.map(tab => (
-          <div
-            key={(tab.sourceWsUrl || 'local') + ':' + tab.id}
-            className={'tab' + (tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl ? ' active' : '')}
-            role='tab'
-            aria-selected={tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl}
-            title={tab.url || ''}
-            onClick={() => {
-              setSelectedSourceWsUrl(tab.sourceWsUrl);
-              selectedSourceRef.current = tab.sourceWsUrl;
-              setSelectedPageId(tab.id);
-              if (tab.sourceWsUrl)
-                remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('selectTab', { id: tab.id });
-              else
-                transportRef.current?.sendNoReply('selectTab', { id: tab.id });
-            }}
-          >
-            <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
-            <span className='tab-label'>{tab.title || 'New Tab'}</span>
-            {tab.sourceName && <span className='tab-source'>{tab.sourceName}</span>}
-            <button
-              className='tab-close'
-              title='Close tab'
-              onClick={e => {
-                e.stopPropagation();
-                if (tab.sourceWsUrl)
-                  remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('closeTab', { id: tab.id });
-                else
-                  transportRef.current?.sendNoReply('closeTab', { id: tab.id });
-              }}
-            >
-              <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
-                <line x1='2' y1='2' x2='10' y2='10'/>
-                <line x1='10' y1='2' x2='2' y2='10'/>
+      <div id='sidebar-tree' className='sidebar-tree' role='tree'>
+        {sourceGroups.map(group => (
+          <div key={group.wsUrl || 'local'} className='source-group' role='treeitem' aria-label={group.name} aria-expanded={!collapsedSources.has(group.name)}>
+            <div className='source-header' onClick={() => toggleSource(group.name)}>
+              <svg className={'source-chevron' + (collapsedSources.has(group.name) ? ' collapsed' : '')} viewBox='0 0 16 16' fill='currentColor' aria-hidden='true'>
+                <path d='M5.7 13.7L5 13l4.6-4.6L5 3.7l.7-.7 5 5.3z'/>
               </svg>
-            </button>
+              <span className='source-name' aria-hidden='true'>{group.name}</span>
+              <span className='source-count' aria-hidden='true'>{group.tabs.length}</span>
+              <button
+                className='source-add-btn'
+                title='New Tab'
+                onClick={e => {
+                  e.stopPropagation();
+                  if (group.wsUrl) {
+                    const contextId = group.tabs[0]?.contextId;
+                    if (contextId)
+                      remoteTransportsRef.current.get(group.wsUrl)?.sendNoReply('newTab', { contextId });
+                  } else {
+                    const contextId = group.tabs[0]?.contextId ?? contexts[0]?.id;
+                    if (contextId)
+                      transportRef.current?.sendNoReply('newTab', { contextId });
+                  }
+                }}
+              >
+                <svg viewBox='0 0 16 16' fill='currentColor'>
+                  <path d='M8 3v10M3 8h10' stroke='currentColor' strokeWidth='1.5' fill='none' strokeLinecap='round'/>
+                </svg>
+              </button>
+            </div>
+            {!collapsedSources.has(group.name) && (
+              <div className='source-tabs' role='group'>
+                {group.tabs.map(tab => (
+                  <div
+                    key={(tab.sourceWsUrl || 'local') + ':' + tab.id}
+                    className={'tree-tab' + (tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl ? ' active' : '')}
+                    role='treeitem'
+                    aria-selected={tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl}
+                    title={tab.url || ''}
+                    onClick={() => {
+                      setSelectedSourceWsUrl(tab.sourceWsUrl);
+                      selectedSourceRef.current = tab.sourceWsUrl;
+                      setSelectedPageId(tab.id);
+                      if (tab.sourceWsUrl)
+                        remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('selectTab', { id: tab.id });
+                      else
+                        transportRef.current?.sendNoReply('selectTab', { id: tab.id });
+                    }}
+                  >
+                    <span className='tree-tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
+                    <span className='tree-tab-label'>{tab.title || 'New Tab'}</span>
+                    <button
+                      className='tree-tab-close'
+                      title='Close tab'
+                      onClick={e => {
+                        e.stopPropagation();
+                        if (tab.sourceWsUrl)
+                          remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('closeTab', { id: tab.id });
+                        else
+                          transportRef.current?.sendNoReply('closeTab', { id: tab.id });
+                      }}
+                    >
+                      <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                        <line x1='2' y1='2' x2='10' y2='10'/>
+                        <line x1='10' y1='2' x2='2' y2='10'/>
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => {
-        const selectedTab = tabs.find(t => t.id === selectedPageId && t.sourceWsUrl === selectedSourceWsUrl);
-        if (selectedTab?.sourceWsUrl) {
-          remoteTransportsRef.current.get(selectedTab.sourceWsUrl)?.sendNoReply('newTab', { contextId: selectedTab.contextId });
-        } else {
-          const contextId = selectedTab?.contextId ?? tabs.find(t => !t.sourceWsUrl)?.contextId ?? contexts[0]?.id;
-          if (contextId)
-            transportRef.current?.sendNoReply('newTab', { contextId });
-        }
-      }}>
-        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
-          <line x1='12' y1='5' x2='12' y2='19'/>
-          <line x1='5' y1='12' x2='19' y2='12'/>
-        </svg>
-      </button>
-      <div id='status' className={'status ' + status.cls}>{status.text}</div>
     </div>
 
-    {/* Toolbar */}
-    <div className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => activeTransport()?.sendNoReply('back')}>
-        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-          <polyline points='15 18 9 12 15 6'/>
-        </svg>
-      </button>
-      <button className='nav-btn' title='Forward' onClick={() => activeTransport()?.sendNoReply('forward')}>
-        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-          <polyline points='9 18 15 12 9 6'/>
-        </svg>
-      </button>
-      <button className='nav-btn' title='Reload' onClick={() => activeTransport()?.sendNoReply('reload')}>
-        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-          <polyline points='23 4 23 10 17 10'/>
-          <path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/>
-        </svg>
-      </button>
-      <input
-        ref={omniboxRef}
-        id='omnibox'
-        className='omnibox'
-        type='text'
-        placeholder='Search or enter URL'
-        spellCheck={false}
-        autoComplete='off'
-        value={url}
-        onChange={e => setUrl(e.target.value)}
-        onKeyDown={onOmniboxKeyDown}
-        onFocus={e => e.target.select()}
-      />
-    </div>
-
-    {/* Viewport */}
-    <div className='viewport-wrapper'>
-      <div
-        ref={screenRef}
-        className={'screen' + (captured ? ' captured' : '')}
-        tabIndex={0}
-        style={{ display: hasPages ? '' : 'none' }}
-        onMouseDown={onScreenMouseDown}
-        onMouseUp={onScreenMouseUp}
-        onMouseMove={onScreenMouseMove}
-        onWheel={onScreenWheel}
-        onKeyDown={onScreenKeyDown}
-        onKeyUp={onScreenKeyUp}
-        onBlur={onScreenBlur}
-        onContextMenu={e => e.preventDefault()}
-        onMouseEnter={() => {
-          if (!capturedRef.current)
-            setHintVisible(true);
-        }}
-        onMouseLeave={() => setHintVisible(false)}
-      >
-        <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
-        <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+    {/* Main content */}
+    <div className='main-content'>
+      {/* Toolbar */}
+      <div className='toolbar'>
+        <button className='nav-btn' title='Back' onClick={() => activeTransport()?.sendNoReply('back')}>
+          <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+            <polyline points='15 18 9 12 15 6'/>
+          </svg>
+        </button>
+        <button className='nav-btn' title='Forward' onClick={() => activeTransport()?.sendNoReply('forward')}>
+          <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+            <polyline points='9 18 15 12 9 6'/>
+          </svg>
+        </button>
+        <button className='nav-btn' title='Reload' onClick={() => activeTransport()?.sendNoReply('reload')}>
+          <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+            <polyline points='23 4 23 10 17 10'/>
+            <path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/>
+          </svg>
+        </button>
+        <input
+          ref={omniboxRef}
+          id='omnibox'
+          className='omnibox'
+          type='text'
+          placeholder='Search or enter URL'
+          spellCheck={false}
+          autoComplete='off'
+          value={url}
+          onChange={e => setUrl(e.target.value)}
+          onKeyDown={onOmniboxKeyDown}
+          onFocus={e => e.target.select()}
+        />
       </div>
-      <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
+
+      {/* Viewport */}
+      <div className='viewport-wrapper'>
+        <div
+          ref={screenRef}
+          className={'screen' + (captured ? ' captured' : '')}
+          tabIndex={0}
+          style={{ display: hasPages ? '' : 'none' }}
+          onMouseDown={onScreenMouseDown}
+          onMouseUp={onScreenMouseUp}
+          onMouseMove={onScreenMouseMove}
+          onWheel={onScreenWheel}
+          onKeyDown={onScreenKeyDown}
+          onKeyUp={onScreenKeyUp}
+          onBlur={onScreenBlur}
+          onContextMenu={e => e.preventDefault()}
+          onMouseEnter={() => {
+            if (!capturedRef.current)
+              setHintVisible(true);
+          }}
+          onMouseLeave={() => setHintVisible(false)}
+        >
+          <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
+          <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+        </div>
+        <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
+      </div>
     </div>
-  </>);
+  </div>);
 };

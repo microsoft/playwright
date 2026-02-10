@@ -45,10 +45,11 @@ it('should show connected status', async ({ rcPage }) => {
 
 it('should show tab title after navigation', async ({ rcPage, page, server }) => {
   await page.goto(server.PREFIX + '/title.html');
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected]
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
   `);
 });
 
@@ -56,11 +57,12 @@ it('should show multiple tabs', async ({ rcPage, context, page, server }) => {
   await page.goto(server.PREFIX + '/title.html');
   const page2 = await context.newPage();
   await page2.goto(server.EMPTY_PAGE);
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected]
-      - tab /.*/ [selected=false]
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
+          - treeitem /.*/ [selected=false]
   `);
 });
 
@@ -68,19 +70,21 @@ it('should switch active tab on click', async ({ rcPage, context, page, server }
   await page.goto(server.PREFIX + '/title.html');
   const page2 = await context.newPage();
   await page2.goto(server.EMPTY_PAGE);
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected]
-      - tab /.*/ [selected=false]
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
+          - treeitem /.*/ [selected=false]
   `);
   // Click the second (unselected) tab.
-  await rcPage.locator('#tabstrip [role="tab"]').last().click();
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected=false]
-      - tab /.*/ [selected]
+  await rcPage.locator('.tree-tab').last().click();
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected=false]
+          - treeitem /.*/ [selected]
   `);
 });
 
@@ -88,47 +92,35 @@ it('should close tab via close button', async ({ rcPage, context, page, server }
   await page.goto(server.PREFIX + '/title.html');
   const page2 = await context.newPage();
   await page2.goto(server.EMPTY_PAGE);
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected]
-      - tab /.*/ [selected=false]
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
+          - treeitem /.*/ [selected=false]
   `);
   // Close the second tab.
-  await rcPage.locator('#tabstrip [role="tab"]').last().locator('.tab-close').click();
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab "Woof-Woof" [selected]
+  await rcPage.locator('.tree-tab').last().locator('.tree-tab-close').click();
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
   `);
 });
 
 it('should show no-pages placeholder when all tabs are closed', async ({ rcPage, page }) => {
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab /.*/ [selected]
-  `);
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(1);
   await page.close();
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - /children: deep-equal
-    - tablist
-  `);
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(0);
   await expect(rcPage.locator('#no-pages')).toBeVisible();
   await expect(rcPage.locator('#no-pages')).toHaveText('No tabs open');
 });
 
 it('should open new tab via new-tab button', async ({ rcPage }) => {
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - /children: deep-equal
-    - tablist
-  `);
-  await rcPage.locator('#new-tab-btn').click();
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab /.*/ [selected]
-  `);
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(0);
+  await rcPage.locator('.source-add-btn').first().click();
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(1);
 });
 
 it('should update omnibox on navigation', async ({ rcPage, page, server }) => {
@@ -155,10 +147,125 @@ it('should show remote tabs in unified tab bar', async ({ rcPage, browser, contr
   const response = await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
   expect(response.status()).toBe(200);
 
-  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1);
-  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
-    - tablist:
-      - tab /Remote Page.*/
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(1);
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Remote" [expanded]:
+        - group:
+          - treeitem /Remote Page.*/
+  `);
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
+});
+
+it('should show local and remote tabs in separate groups', async ({ rcPage, page, server, browser, controller }) => {
+  await page.goto(server.PREFIX + '/title.html');
+
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<title>Remote Page</title>');
+
+  await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected]
+      - treeitem "Remote" [expanded]:
+        - group:
+          - treeitem /Remote Page.*/
+  `);
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
+});
+
+it('should show remote tabs after interacting with local tabs', async ({ rcPage, page, context, server, browser, controller }) => {
+  // Open two local tabs and interact with them.
+  await page.goto(server.PREFIX + '/title.html');
+  const page2 = await context.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(2);
+
+  // Switch to the second local tab.
+  await rcPage.locator('.tree-tab').last().click();
+  await expect(rcPage.locator('.tree-tab').last()).toHaveAttribute('aria-selected', 'true');
+
+  // Navigate via omnibox while second tab is selected.
+  const omnibox = rcPage.locator('#omnibox');
+  await omnibox.fill(server.PREFIX + '/title.html');
+  await omnibox.press('Enter');
+  await expect(page2).toHaveURL(server.PREFIX + '/title.html');
+
+  // Now contribute a remote context.
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<title>Remote Page</title>');
+
+  await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+
+  // Both groups should appear, with the local tab still selected.
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem "Woof-Woof" [selected=false]
+          - treeitem /.*/ [selected]
+      - treeitem "Remote" [expanded]:
+        - group:
+          - treeitem /Remote Page.*/
+  `);
+
+  // Close one local tab — remote group should remain.
+  await page.close();
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]:
+        - group:
+          - treeitem /.*/ [selected]
+      - treeitem "Remote" [expanded]:
+        - group:
+          - treeitem /Remote Page.*/
+  `);
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
+});
+
+it('should show empty remote context and then its tab', async ({ rcPage, browser, controller }) => {
+  // Contribute a remote context that has no pages yet.
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+
+  // The Remote group should appear even with zero tabs.
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]
+      - treeitem "Remote" [expanded]
+  `);
+
+  // Now open a page in the remote context.
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<title>Late Page</title>');
+
+  // The tab should appear under the Remote group.
+  await expect(rcPage.locator('#sidebar-tree')).toMatchAriaSnapshot(`
+    - tree:
+      - treeitem "Local" [expanded]
+      - treeitem "Remote" [expanded]:
+        - group:
+          - treeitem /Late Page.*/
   `);
 
   await (remoteContext as any)._devtoolsStop();
@@ -261,10 +368,10 @@ it('should switch to a remote tab on click', async ({ rcPage, browser, controlle
 
   await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
 
-  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1, { timeout: 10000 });
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(1, { timeout: 10000 });
 
-  await rcPage.locator('#tabstrip [role="tab"]').first().click();
-  await expect(rcPage.locator('#tabstrip [role="tab"]').first()).toHaveAttribute('aria-selected', 'true');
+  await rcPage.locator('.tree-tab').first().click();
+  await expect(rcPage.locator('.tree-tab').first()).toHaveAttribute('aria-selected', 'true');
 
   await (remoteContext as any)._devtoolsStop();
   await remoteContext.close();
@@ -281,8 +388,8 @@ it('should send keyboard input to a remote tab through screencast', async ({ rcP
   await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
 
   // Select the remote tab.
-  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1, { timeout: 10000 });
-  await rcPage.locator('#tabstrip [role="tab"]').first().click();
+  await expect(rcPage.locator('.tree-tab')).toHaveCount(1, { timeout: 10000 });
+  await rcPage.locator('.tree-tab').first().click();
   await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
 
   // First click captures the screencast.
