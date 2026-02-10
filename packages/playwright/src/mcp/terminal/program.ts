@@ -494,7 +494,7 @@ export async function program(packageLocation: string) {
 
   const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
-  const args: MinimistArgs = require('minimist')(argv, { boolean });
+  const args: MinimistArgs = require('minimist')(argv, { boolean, string: ['_'] });
   for (const [key, value] of Object.entries(args)) {
     if (key !== '_' && typeof value !== 'boolean')
       args[key] = String(value);
