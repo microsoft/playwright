@@ -378,6 +378,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (isUnderTest() && metadata.params.selector && metadata.params.selector.startsWith('x-pw'))
+      return;
     if (this._omitCallTracking || this._isRecording())
       return;
     this._debugLog('onBeforeCall', metadata.method, metadata.params);
@@ -391,6 +393,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata) {
+    if (isUnderTest() && metadata.params.selector && metadata.params.selector.startsWith('x-pw'))
+      return;
     if (this._omitCallTracking || this._isRecording())
       return;
     this._debugLog('onAfterCall', metadata.method, metadata.params);
