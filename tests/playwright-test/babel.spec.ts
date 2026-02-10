@@ -184,3 +184,53 @@ for (const type of ['module', undefined]) {
     expect(result.stdout).toContain('imported value: bar');
   });
 }
+
+test('should report correct line numbers with destructured TypeScript parameters', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ foo: string; bar: string; baz: string }>({
+        foo: async ({}, use) => await use('foo'),
+        bar: async ({}, use) => await use('bar'),
+        baz: async ({}, use) => await use('baz'),
+      });
+      test('first test', async ({ foo, bar, baz }) => {
+        expect(foo).toBe('foo');
+      });
+      test('second test', async ({ foo, bar, baz }) => {
+        expect(bar).toBe('bar');
+      });
+      test('third test', async ({ foo, bar, baz }) => {
+        expect(baz).toBe('baz');
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(3);
+  expect(result.report.suites[0].specs[0].line).toBe(8);
+  expect(result.report.suites[0].specs[1].line).toBe(11);
+  expect(result.report.suites[0].specs[2].line).toBe(14);
+});
+
+test('should report correct error location with destructured TypeScript parameters', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test as base, expect } from '@playwright/test';
+      const test = base.extend<{ foo: string; bar: string }>({
+        foo: async ({}, use) => await use('foo'),
+        bar: async ({}, use) => await use('bar'),
+      });
+      test('first test', async ({ foo, bar }) => {
+        expect(1).toBe(1);
+      });
+      test('second test', async ({ foo, bar }) => {
+        expect(1).toBe(2);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  // Error should be at line 11 (the expect(1).toBe(2) line), not inflated
+  expect(result.report.suites[0].specs[1].tests[0].results[0].errorLocation!.line).toBe(11);
+});

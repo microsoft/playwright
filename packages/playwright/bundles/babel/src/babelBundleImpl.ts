@@ -112,6 +112,14 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       ...pluginsEpilogue.map(([name, options]) => [require(name), options]),
     ],
     compact: false,
+    // Ensure compiled output preserves original source line numbers.
+    // Without this, babel expands destructured parameters across multiple lines:
+    //   async ({ page }) =>     becomes    async ({
+    //                                        page
+    //                                      }) =>
+    // This causes the Playwright Inspector (PWDEBUG=1) to highlight wrong lines,
+    // as it uses compiled line numbers against the original source file.
+    retainLines: true,
     sourceMaps: 'both',
   };
 }
