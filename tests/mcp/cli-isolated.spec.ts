@@ -24,6 +24,7 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
   const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(false);
   expect(sessionOptions).toEqual({
+    name: 'default',
     cli: {},
     socketPath: expect.any(String),
     userDataDirPrefix: expect.any(String),
@@ -47,6 +48,7 @@ test('should save user data with --persistent flag', async ({ cli, server, mcpBr
   const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
   expect(fs.existsSync(dataDir)).toBe(true);
   expect(sessionOptions).toEqual({
+    name: 'default',
     cli: {
       persistent: true,
     },
@@ -64,6 +66,7 @@ test('should use custom user data dir with --profile=<dir>', async ({ cli, serve
   expect(fs.existsSync(customDir)).toBe(true);
   const sessionOptions = await findDefaultSession();
   expect(sessionOptions).toEqual({
+    name: 'default',
     cli: {
       persistent: true,
       profile: customDir,
