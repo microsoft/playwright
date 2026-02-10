@@ -170,7 +170,9 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
         command.push(trace);
       const cp = childProcess({ command });
       await cp.waitForOutput('Listening on');
-      const browser = await playwright.chromium.launch();
+      const browser = await playwright.chromium.launch({
+        executablePath: process.env.CRPATH,
+      });
       browsers.push(browser);
       const page = await browser.newPage();
       const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
