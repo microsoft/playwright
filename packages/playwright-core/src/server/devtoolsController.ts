@@ -148,7 +148,7 @@ class DevToolsConnection implements Transport {
   onContextAdded(context: BrowserContext) {
     this._subscribeContext(context);
     this._sendContextList();
-    this._sendTabList();
+    this._sendTabList(context);
 
     // Auto-select first page if none is selected.
     if (!this.selectedPage) {
@@ -176,7 +176,6 @@ class DevToolsConnection implements Transport {
     }
 
     this._sendContextList();
-    this._sendTabList();
   }
 
   async dispatch(method: string, params: any): Promise<any> {
@@ -234,7 +233,7 @@ class DevToolsConnection implements Transport {
   private _subscribeContext(context: BrowserContext) {
     const listeners: RegisteredListener[] = [
       eventsHelper.addEventListener(context, BrowserContext.Events.Page, (page: Page) => {
-        this._sendTabList();
+        this._sendTabList(context);
         if (!this.selectedPage)
           this._selectPage(page);
       }),
@@ -247,11 +246,11 @@ class DevToolsConnection implements Transport {
           else
             this.sendEvent?.('selectPage', { pageId: undefined });
         }
-        this._sendTabList();
+        this._sendTabList(context);
       }),
       eventsHelper.addEventListener(context, BrowserContext.Events.InternalFrameNavigatedToNewDocument, (frame, page) => {
         if (frame === page.mainFrame()) {
-          this._sendTabList();
+          this._sendTabList(context);
           if (page === this.selectedPage)
             this.sendEvent?.('url', { url: frame.url() });
         }
@@ -334,7 +333,8 @@ class DevToolsConnection implements Transport {
       if (url)
         this.sendEvent?.('url', { url });
     }
-    this._sendTabList();
+    for (const context of this._controller.contexts)
+      this._sendTabList(context);
   }
 
   private _sendContextList() {
@@ -342,22 +342,16 @@ class DevToolsConnection implements Transport {
     this.sendEvent?.('contexts', { contexts });
   }
 
-  private async _tabList(): Promise<{ id: string, title: string, url: string, contextId: string }[]> {
-    const tabs: { id: string, title: string, url: string, contextId: string }[] = [];
-    for (const context of this._controller.contexts) {
-      const contextTabs = await Promise.all(context.pages().map(async page => ({
-        id: page.guid,
-        title: await page.mainFrame().title().catch(() => '') || page.mainFrame().url(),
-        url: page.mainFrame().url(),
-        contextId: context.guid,
-      })));
-      tabs.push(...contextTabs);
-    }
-    return tabs;
+  private async _contextTabList(context: BrowserContext): Promise<{ id: string, title: string, url: string }[]> {
+    return await Promise.all(context.pages().map(async page => ({
+      id: page.guid,
+      title: await page.mainFrame().title().catch(() => '') || page.mainFrame().url(),
+      url: page.mainFrame().url(),
+    })));
   }
 
-  private _sendTabList() {
-    this._tabList().then(tabs => this.sendEvent?.('tabs', { tabs }));
+  private _sendTabList(context: BrowserContext) {
+    this._contextTabList(context).then(tabs => this.sendEvent?.('tabs', { contextId: context.guid, tabs }));
   }
 
   private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {

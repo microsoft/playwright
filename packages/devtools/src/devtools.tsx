@@ -32,8 +32,10 @@ function tabFavicon(url: string): string {
 
 export const DevTools: React.FC = () => {
   const [status, setStatus] = React.useState<{ text: string; cls: string }>({ text: 'Connecting', cls: '' });
-  const [tabs, setTabs] = React.useState<TabInfo[]>([]);
+  const [tabsByContext, setTabsByContext] = React.useState<Record<string, TabInfo[]>>({});
   const [contexts, setContexts] = React.useState<{ id: string }[]>([]);
+
+  const tabs = React.useMemo(() => Object.values(tabsByContext).flat(), [tabsByContext]);
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
   const [url, setUrl] = React.useState('');
   const [frameSrc, setFrameSrc] = React.useState('');
@@ -77,10 +79,30 @@ export const DevTools: React.FC = () => {
       }
       if (method === 'url')
         setUrl(params.url);
-      if (method === 'tabs')
-        setTabs(params.tabs);
-      if (method === 'contexts')
+      if (method === 'tabs') {
+        setTabsByContext(prev => {
+          const next = { ...prev };
+          const contextId = params.contextId as string;
+          const contextTabs = (params.tabs as { id: string; title: string; url: string }[]).map(t => ({ ...t, contextId }));
+          if (contextTabs.length === 0)
+            delete next[contextId];
+          else
+            next[contextId] = contextTabs;
+          return next;
+        });
+      }
+      if (method === 'contexts') {
+        const ids = new Set((params.contexts as { id: string }[]).map(c => c.id));
         setContexts(params.contexts);
+        setTabsByContext(prev => {
+          const next: Record<string, TabInfo[]> = {};
+          for (const [id, tabs] of Object.entries(prev)) {
+            if (ids.has(id))
+              next[id] = tabs;
+          }
+          return next;
+        });
+      }
     };
 
     transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
