@@ -16,9 +16,10 @@
 
 import type { Fixtures, FrameLocator, Locator, Page, Browser, BrowserContext } from '@playwright/test';
 import { step } from './baseTest';
-import { runTraceViewerApp } from '../../packages/playwright-core/lib/server';
+import path from 'path';
+import { CommonFixtures, TestChildProcess } from './commonFixtures';
 
-type BaseTestFixtures = {
+type BaseTestFixtures = CommonFixtures & {
   context: BrowserContext;
 };
 
@@ -30,7 +31,7 @@ type BaseWorkerFixtures = {
 };
 
 export type TraceViewerFixtures = {
-  showTraceViewer: (trace: string | undefined, options?: {host?: string, port?: number}) => Promise<TraceViewerPage>;
+  showTraceViewer: (trace: string | undefined, options?: {host?: string, port?: number, stdin?: boolean}) => Promise<TraceViewerPage>;
   runAndTrace: (body: () => Promise<void>, optsOverrides?: Parameters<BrowserContext['tracing']['start']>[0]) => Promise<TraceViewerPage>;
 };
 
@@ -53,7 +54,7 @@ class TraceViewerPage {
   themeSetting: Locator;
   displayCanvasContentSetting: Locator;
 
-  constructor(public page: Page) {
+  constructor(public page: Page, public process: TestChildProcess) {
     this.actionTitles = page.locator('.action-title');
     this.actionsTree = page.getByTestId('actions-tree');
     this.callLines = page.locator('.call-tab .call-line');
@@ -152,21 +153,32 @@ class TraceViewerPage {
 }
 
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
-  showTraceViewer: async ({ playwright, browserName, headless }, use, testInfo) => {
+  showTraceViewer: async ({ playwright, childProcess }, use) => {
     const browsers: Browser[] = [];
-    const contextImpls: any[] = [];
-    await use(async (trace: string | undefined, { host, port } = {}) => {
-      const pageImpl = await runTraceViewerApp(trace, browserName, { headless, host, port });
-      const contextImpl = pageImpl.browserContext;
-      const browser = await playwright.chromium.connectOverCDP(contextImpl._browser.options.wsEndpoint);
+    await use(async (trace: string | undefined, { host, port, stdin } = {}) => {
+      const command = [
+        'node',
+        path.join(__dirname, '../../packages/playwright-core/cli.js'),
+        'show-trace',
+        '--port', '' + (port ?? '0'),
+      ];
+      if (host)
+        command.push('--host', host);
+      if (stdin)
+        command.push('--stdin');
+      if (trace)
+        command.push(trace);
+      const cp = childProcess({ command });
+      await cp.waitForOutput('Listening on');
+      const browser = await playwright.chromium.launch();
       browsers.push(browser);
-      contextImpls.push(contextImpl);
-      return new TraceViewerPage(browser.contexts()[0].pages()[0]);
+      const page = await browser.newPage();
+      const url = cp.output.match(/Listening on (http:\/\/[^\s]+)/)![1];
+      await page.goto(url);
+      return new TraceViewerPage(page, cp);
     });
     for (const browser of browsers)
       await browser.close();
-    for (const contextImpl of contextImpls)
-      await contextImpl._browser.close({ reason: 'Trace viewer closed' });
   },
 
   runAndTrace: async ({ context, showTraceViewer }, use, testInfo) => {
