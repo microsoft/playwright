@@ -59,3 +59,12 @@ test('wrong argument type', async ({ cli, server }) => {
   const press = await cli('press', '5');
   expect(press.exitCode).toBe(0);
 });
+
+test('should preserve leading zeros in string arguments', async ({ cli, server }) => {
+  server.setContent('/', `<input type=text>`, 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+  await cli('type', '0812345679');
+  const { snapshot } = await cli('snapshot');
+  expect(snapshot).toContain(`0812345679`);
+});
