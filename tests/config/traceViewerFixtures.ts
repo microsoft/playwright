@@ -171,7 +171,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       const cp = childProcess({ command });
       await cp.waitForOutput('Listening on');
       const browser = await playwright.chromium.launch({
-        executablePath: process.env.CRPATH,
+        executablePath: process.env.CRPATH, // without this, setting FFPATH makes us launch Firefox with Chromium args
       });
       browsers.push(browser);
       const page = await browser.newPage();
