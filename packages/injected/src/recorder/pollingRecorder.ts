@@ -98,7 +98,8 @@ export class PollingRecorder implements RecorderDelegate {
   }
 
   async log(...args: any[]) {
-    await this._embedder.__pw_recorderLog(args);
+    if (this._recorder.injectedScript.isUnderTest)
+      await this._embedder.__pw_recorderLog(args);
   }
 }
 
