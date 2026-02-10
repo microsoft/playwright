@@ -16,17 +16,25 @@
 
 import { contextTest, expect } from '../config/browserTest';
 
-import type { Page } from 'playwright-core';
+import type { APIRequestContext, Page } from 'playwright-core';
 
-const it = contextTest.extend<{ rcPage: Page }>({
-  rcPage: async ({ context, browserType }, use) => {
+const it = contextTest.extend<{ rcPage: Page, controllerUrl: string, controller: APIRequestContext }>({
+  controllerUrl: async ({ context }, use) => {
     const { url } = await (context as any)._devtoolsStart();
+    await use(url);
+    await (context as any)._devtoolsStop();
+  },
+  rcPage: async ({ controllerUrl, browserType }, use) => {
     const rcBrowser = await browserType.launch();
     const rcPage = await rcBrowser.newPage();
-    await rcPage.goto(url);
+    await rcPage.goto(controllerUrl);
     await use(rcPage);
     await rcBrowser.close();
-    await (context as any)._devtoolsStop();
+  },
+  controller: async ({ controllerUrl, playwright }, use) => {
+    const controller = await playwright.request.newContext({ baseURL: controllerUrl });
+    await use(controller);
+    await controller.dispose();
   },
 });
 
@@ -134,4 +142,44 @@ it('should update omnibox on navigation', async ({ rcPage, page, server }) => {
 it('should display screencast image', async ({ rcPage, page }) => {
   await page.goto('data:text/html,<body style="background:red"></body>');
   await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+});
+
+it('should show remote tabs in unified tab bar', async ({ rcPage, browser, controller }) => {
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<title>Remote Page</title>');
+
+  const response = await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+  expect(response.status()).toBe(200);
+
+  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1);
+  await expect(rcPage.locator('#tabstrip')).toMatchAriaSnapshot(`
+    - tablist:
+      - tab /Remote Page.*/
+  `);
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
+});
+
+it('should switch to a remote tab on click', async ({ rcPage, browser, controller }) => {
+  const remoteContext = await browser.newContext();
+  const { url: remoteUrl } = await (remoteContext as any)._devtoolsStart();
+  const remoteWsUrl = remoteUrl.replace(/^http/, 'ws') + '/ws';
+
+  const remotePage = await remoteContext.newPage();
+  await remotePage.goto('data:text/html,<title>Remote Tab</title>');
+
+  await controller.post('/sources?name=Remote&wsUrl=' + encodeURIComponent(remoteWsUrl));
+
+  await expect(rcPage.locator('#tabstrip [role="tab"]')).toHaveCount(1, { timeout: 10000 });
+
+  await rcPage.locator('#tabstrip [role="tab"]').first().click();
+  await expect(rcPage.locator('#tabstrip [role="tab"]').first()).toHaveAttribute('aria-selected', 'true');
+
+  await (remoteContext as any)._devtoolsStop();
+  await remoteContext.close();
 });

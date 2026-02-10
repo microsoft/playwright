@@ -18,7 +18,8 @@ import React from 'react';
 import './devtools.css';
 import { DevToolsTransport } from './transport';
 
-type TabInfo = { id: string; title: string; url: string; contextId: string };
+type TabInfo = { id: string; title: string; url: string; contextId: string; sourceWsUrl?: string; sourceName?: string };
+type RemoteSource = { name: string; wsUrl: string };
 
 function tabFavicon(url: string): string {
   try {
@@ -35,8 +36,19 @@ export const DevTools: React.FC = () => {
   const [tabsByContext, setTabsByContext] = React.useState<Record<string, TabInfo[]>>({});
   const [contexts, setContexts] = React.useState<{ id: string }[]>([]);
 
-  const tabs = React.useMemo(() => Object.values(tabsByContext).flat(), [tabsByContext]);
+  // Remote sources directory + their tabs.
+  const [remoteSources, setRemoteSources] = React.useState<RemoteSource[]>([]);
+  const [remoteTabsBySource, setRemoteTabsBySource] = React.useState<Record<string, TabInfo[]>>({});
+  const remoteTransportsRef = React.useRef<Map<string, DevToolsTransport>>(new Map());
+
+  const tabs = React.useMemo(() => {
+    const local = Object.values(tabsByContext).flat();
+    const remote = Object.values(remoteTabsBySource).flat();
+    return [...local, ...remote];
+  }, [tabsByContext, remoteTabsBySource]);
+
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
+  const [selectedSourceWsUrl, setSelectedSourceWsUrl] = React.useState<string | undefined>();
   const [url, setUrl] = React.useState('');
   const [frameSrc, setFrameSrc] = React.useState('');
   const [captured, setCaptured] = React.useState(false);
@@ -50,11 +62,116 @@ export const DevTools: React.FC = () => {
   const resizedRef = React.useRef(false);
   const capturedRef = React.useRef(false);
   const moveThrottleRef = React.useRef(0);
+  const selectedSourceRef = React.useRef<string | undefined>(undefined);
 
-  // Keep capturedRef in sync with state.
+  // Keep refs in sync with state.
   React.useEffect(() => {
     capturedRef.current = captured;
   }, [captured]);
+  React.useEffect(() => {
+    selectedSourceRef.current = selectedSourceWsUrl;
+  }, [selectedSourceWsUrl]);
+
+  function activeTransport(): DevToolsTransport | null {
+    if (!selectedSourceRef.current)
+      return transportRef.current;
+    return remoteTransportsRef.current.get(selectedSourceRef.current) ?? null;
+  }
+
+  // Manage remote transport connections when remoteSources changes.
+  React.useEffect(() => {
+    const currentUrls = new Set(remoteSources.map(s => s.wsUrl));
+    const existingUrls = new Set(remoteTransportsRef.current.keys());
+
+    // Remove transports for sources that are no longer in the directory.
+    for (const wsUrl of existingUrls) {
+      if (!currentUrls.has(wsUrl)) {
+        const t = remoteTransportsRef.current.get(wsUrl)!;
+        t.close();
+        remoteTransportsRef.current.delete(wsUrl);
+        setRemoteTabsBySource(prev => {
+          const next = { ...prev };
+          delete next[wsUrl];
+          return next;
+        });
+      }
+    }
+
+    // Create transports for new sources.
+    for (const source of remoteSources) {
+      if (existingUrls.has(source.wsUrl))
+        continue;
+      const remote = new DevToolsTransport(source.wsUrl);
+      remoteTransportsRef.current.set(source.wsUrl, remote);
+
+      remote.onevent = (method: string, params: any) => {
+        if (method === 'tabs') {
+          const contextId = params.contextId as string;
+          const contextTabs = (params.tabs as { id: string; title: string; url: string }[]).map(t => ({
+            ...t,
+            contextId,
+            sourceWsUrl: source.wsUrl,
+            sourceName: source.name,
+          }));
+          setRemoteTabsBySource(prev => {
+            const next = { ...prev };
+            // Build complete tab list for this source: replace context's tabs.
+            const existing = (prev[source.wsUrl] || []).filter(t => t.contextId !== contextId);
+            const merged = [...existing, ...contextTabs];
+            if (merged.length === 0)
+              delete next[source.wsUrl];
+            else
+              next[source.wsUrl] = merged;
+            return next;
+          });
+        }
+        if (method === 'contexts') {
+          const ids = new Set((params.contexts as { id: string }[]).map(c => c.id));
+          setRemoteTabsBySource(prev => {
+            const current = prev[source.wsUrl] || [];
+            const filtered = current.filter(t => ids.has(t.contextId));
+            const next = { ...prev };
+            if (filtered.length === 0)
+              delete next[source.wsUrl];
+            else
+              next[source.wsUrl] = filtered;
+            return next;
+          });
+        }
+        // Only relay frame/url/selectPage if this source owns the selected page.
+        if (method === 'frame' && selectedSourceRef.current === source.wsUrl) {
+          setFrameSrc('data:image/jpeg;base64,' + params.data);
+          if (params.viewportWidth)
+            viewportSizeRef.current.width = params.viewportWidth;
+          if (params.viewportHeight)
+            viewportSizeRef.current.height = params.viewportHeight;
+          resizeToFit();
+        }
+        if (method === 'url' && selectedSourceRef.current === source.wsUrl)
+          setUrl(params.url);
+        if (method === 'selectPage' && selectedSourceRef.current === source.wsUrl)
+          setSelectedPageId(params.pageId);
+      };
+
+      remote.onclose = () => {
+        remoteTransportsRef.current.delete(source.wsUrl);
+        setRemoteTabsBySource(prev => {
+          const next = { ...prev };
+          delete next[source.wsUrl];
+          return next;
+        });
+      };
+    }
+  }, [remoteSources]);
+
+  // Clean up all remote transports on unmount.
+  React.useEffect(() => {
+    return () => {
+      for (const t of remoteTransportsRef.current.values())
+        t.close();
+      remoteTransportsRef.current.clear();
+    };
+  }, []);
 
   React.useEffect(() => {
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
@@ -65,19 +182,25 @@ export const DevTools: React.FC = () => {
 
     transport.onevent = (method: string, params: any) => {
       if (method === 'selectPage') {
-        setSelectedPageId(params.pageId);
-        if (params.pageId)
-          omniboxRef.current?.focus();
+        // Only update if the local source is active.
+        if (!selectedSourceRef.current) {
+          setSelectedPageId(params.pageId);
+          if (params.pageId)
+            omniboxRef.current?.focus();
+        }
       }
       if (method === 'frame') {
-        setFrameSrc('data:image/jpeg;base64,' + params.data);
-        if (params.viewportWidth)
-          viewportSizeRef.current.width = params.viewportWidth;
-        if (params.viewportHeight)
-          viewportSizeRef.current.height = params.viewportHeight;
-        resizeToFit();
+        // Only update if local source is active.
+        if (!selectedSourceRef.current) {
+          setFrameSrc('data:image/jpeg;base64,' + params.data);
+          if (params.viewportWidth)
+            viewportSizeRef.current.width = params.viewportWidth;
+          if (params.viewportHeight)
+            viewportSizeRef.current.height = params.viewportHeight;
+          resizeToFit();
+        }
       }
-      if (method === 'url')
+      if (method === 'url' && !selectedSourceRef.current)
         setUrl(params.url);
       if (method === 'tabs') {
         setTabsByContext(prev => {
@@ -103,6 +226,8 @@ export const DevTools: React.FC = () => {
           return next;
         });
       }
+      if (method === 'remoteSources')
+        setRemoteSources(params.sources as RemoteSource[]);
     };
 
     transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
@@ -168,7 +293,7 @@ export const DevTools: React.FC = () => {
       return;
     }
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mousedown', { x, y, button: BUTTONS[e.button] || 'left' });
+    activeTransport()?.sendNoReply('mousedown', { x, y, button: BUTTONS[e.button] || 'left' });
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
@@ -176,7 +301,7 @@ export const DevTools: React.FC = () => {
       return;
     e.preventDefault();
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mouseup', { x, y, button: BUTTONS[e.button] || 'left' });
+    activeTransport()?.sendNoReply('mouseup', { x, y, button: BUTTONS[e.button] || 'left' });
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
@@ -187,14 +312,14 @@ export const DevTools: React.FC = () => {
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mousemove', { x, y });
+    activeTransport()?.sendNoReply('mousemove', { x, y });
   }
 
   function onScreenWheel(e: React.WheelEvent) {
     if (!capturedRef.current)
       return;
     e.preventDefault();
-    transportRef.current?.sendNoReply('wheel', { deltaX: e.deltaX, deltaY: e.deltaY });
+    activeTransport()?.sendNoReply('wheel', { deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
@@ -205,14 +330,14 @@ export const DevTools: React.FC = () => {
       setCaptured(false);
       return;
     }
-    transportRef.current?.sendNoReply('keydown', { key: e.key });
+    activeTransport()?.sendNoReply('keydown', { key: e.key });
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
     if (!capturedRef.current)
       return;
     e.preventDefault();
-    transportRef.current?.sendNoReply('keyup', { key: e.key });
+    activeTransport()?.sendNoReply('keyup', { key: e.key });
   }
 
   function onScreenBlur() {
@@ -226,7 +351,7 @@ export const DevTools: React.FC = () => {
       if (!/^https?:\/\//i.test(value))
         value = 'https://' + value;
       setUrl(value);
-      transportRef.current?.send('navigate', { url: value });
+      activeTransport()?.send('navigate', { url: value });
       omniboxRef.current?.blur();
     }
   }
@@ -242,21 +367,33 @@ export const DevTools: React.FC = () => {
       <div id='tabstrip' className='tabstrip' role='tablist'>
         {tabs.map(tab => (
           <div
-            key={tab.id}
-            className={'tab' + (tab.id === selectedPageId ? ' active' : '')}
+            key={(tab.sourceWsUrl || 'local') + ':' + tab.id}
+            className={'tab' + (tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl ? ' active' : '')}
             role='tab'
-            aria-selected={tab.id === selectedPageId}
+            aria-selected={tab.id === selectedPageId && tab.sourceWsUrl === selectedSourceWsUrl}
             title={tab.url || ''}
-            onClick={() => transportRef.current?.sendNoReply('selectTab', { id: tab.id })}
+            onClick={() => {
+              setSelectedSourceWsUrl(tab.sourceWsUrl);
+              selectedSourceRef.current = tab.sourceWsUrl;
+              setSelectedPageId(tab.id);
+              if (tab.sourceWsUrl)
+                remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('selectTab', { id: tab.id });
+              else
+                transportRef.current?.sendNoReply('selectTab', { id: tab.id });
+            }}
           >
             <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
             <span className='tab-label'>{tab.title || 'New Tab'}</span>
+            {tab.sourceName && <span className='tab-source'>{tab.sourceName}</span>}
             <button
               className='tab-close'
               title='Close tab'
               onClick={e => {
                 e.stopPropagation();
-                transportRef.current?.sendNoReply('closeTab', { id: tab.id });
+                if (tab.sourceWsUrl)
+                  remoteTransportsRef.current.get(tab.sourceWsUrl)?.sendNoReply('closeTab', { id: tab.id });
+                else
+                  transportRef.current?.sendNoReply('closeTab', { id: tab.id });
               }}
             >
               <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
@@ -268,10 +405,14 @@ export const DevTools: React.FC = () => {
         ))}
       </div>
       <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => {
-        const selectedTab = tabs.find(t => t.id === selectedPageId);
-        const contextId = selectedTab?.contextId ?? tabs[0]?.contextId ?? contexts[0]?.id;
-        if (contextId)
-          transportRef.current?.sendNoReply('newTab', { contextId });
+        const selectedTab = tabs.find(t => t.id === selectedPageId && t.sourceWsUrl === selectedSourceWsUrl);
+        if (selectedTab?.sourceWsUrl) {
+          remoteTransportsRef.current.get(selectedTab.sourceWsUrl)?.sendNoReply('newTab', { contextId: selectedTab.contextId });
+        } else {
+          const contextId = selectedTab?.contextId ?? tabs.find(t => !t.sourceWsUrl)?.contextId ?? contexts[0]?.id;
+          if (contextId)
+            transportRef.current?.sendNoReply('newTab', { contextId });
+        }
       }}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
           <line x1='12' y1='5' x2='12' y2='19'/>
@@ -283,17 +424,17 @@ export const DevTools: React.FC = () => {
 
     {/* Toolbar */}
     <div className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => transportRef.current?.sendNoReply('back')}>
+      <button className='nav-btn' title='Back' onClick={() => activeTransport()?.sendNoReply('back')}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='15 18 9 12 15 6'/>
         </svg>
       </button>
-      <button className='nav-btn' title='Forward' onClick={() => transportRef.current?.sendNoReply('forward')}>
+      <button className='nav-btn' title='Forward' onClick={() => activeTransport()?.sendNoReply('forward')}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='9 18 15 12 9 6'/>
         </svg>
       </button>
-      <button className='nav-btn' title='Reload' onClick={() => transportRef.current?.sendNoReply('reload')}>
+      <button className='nav-btn' title='Reload' onClick={() => activeTransport()?.sendNoReply('reload')}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='23 4 23 10 17 10'/>
           <path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/>

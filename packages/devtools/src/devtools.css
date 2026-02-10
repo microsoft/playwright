@@ -171,6 +171,20 @@ button:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
+.tab-source {
+  font-size: 9px;
+  color: var(--accent);
+  background: rgba(138, 180, 248, 0.12);
+  border-radius: 4px;
+  padding: 1px 5px;
+  flex-shrink: 0;
+  line-height: 14px;
+  max-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .new-tab-btn {
   width: 28px;
   height: 34px;

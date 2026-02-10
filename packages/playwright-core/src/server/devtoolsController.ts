@@ -31,9 +31,32 @@ export class DevToolsController {
   private _connections = new Set<DevToolsConnection>();
   private _screencastOptions: { width: number, height: number, quality: number } = { width: 800, height: 600, quality: 90 };
   private _httpServer: HttpServer;
+  private _sources = new Map<string, string>(); // wsUrl -> name
 
   constructor() {
     this._httpServer = new HttpServer();
+  }
+
+  addSource(name: string, wsUrl: string) {
+    this._sources.set(wsUrl, name);
+    this._broadcastSources();
+  }
+
+  removeSource(wsUrl: string): boolean {
+    const deleted = this._sources.delete(wsUrl);
+    if (deleted)
+      this._broadcastSources();
+    return deleted;
+  }
+
+  sources(): { name: string, wsUrl: string }[] {
+    return [...this._sources.entries()].map(([wsUrl, name]) => ({ name, wsUrl }));
+  }
+
+  private _broadcastSources() {
+    const sources = this.sources();
+    for (const connection of this._connections)
+      connection.sendEvent?.('remoteSources', { sources });
   }
 
   get contexts(): ReadonlySet<BrowserContext> {
@@ -75,6 +98,39 @@ export class DevToolsController {
   async start(options: { width: number, height: number, quality: number, port?: number, host?: string }): Promise<string> {
     this._screencastOptions = options;
 
+    // REST endpoint for managing remote sources.
+    this._httpServer.routePath('/sources', (request: http.IncomingMessage, response: http.ServerResponse) => {
+      const url = new URL(request.url!, `http://${request.headers.host}`);
+      const name = url.searchParams.get('name');
+      const wsUrl = url.searchParams.get('wsUrl');
+      response.setHeader('Content-Type', 'application/json');
+      if (request.method === 'POST') {
+        if (!name || !wsUrl) {
+          response.statusCode = 400;
+          response.end(JSON.stringify({ error: 'name and wsUrl query params are required' }));
+          return true;
+        }
+        this.addSource(name, wsUrl);
+        response.statusCode = 200;
+        response.end();
+        return true;
+      }
+      if (request.method === 'DELETE') {
+        if (!wsUrl) {
+          response.statusCode = 400;
+          response.end(JSON.stringify({ error: 'wsUrl query param is required' }));
+          return true;
+        }
+        const deleted = this.removeSource(wsUrl);
+        response.statusCode = deleted ? 200 : 404;
+        response.end();
+        return true;
+      }
+      response.statusCode = 405;
+      response.end();
+      return true;
+    });
+
     const devtoolsDir = path.join(__dirname, '..', 'vite', 'devtools');
     this._httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
       const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
@@ -103,6 +159,7 @@ export class DevToolsController {
     this._contextCleanup.clear();
     this._contexts.clear();
     this._connections.clear();
+    this._sources.clear();
   }
 }
 
@@ -325,6 +382,7 @@ class DevToolsConnection implements Transport {
 
   private _sendCachedState() {
     this._sendContextList();
+    this.sendEvent?.('remoteSources', { sources: this._controller.sources() });
     this.sendEvent?.('selectPage', { pageId: this.selectedPage?.guid });
     if (this._lastFrameData)
       this.sendEvent?.('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize?.width, viewportHeight: this._lastViewportSize?.height });
