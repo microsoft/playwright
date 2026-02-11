@@ -262,12 +262,10 @@ export class VSCodeGenerator {
     if (!mcpJson.servers)
       mcpJson.servers = {};
 
-    const mcpServer = process.platform === 'win32'
-        ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
-        : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
     mcpJson.servers['playwright-test'] = {
       type: 'stdio',
-      ...mcpServer,
+      command: 'npx',
+      args: ['playwright', 'run-test-mcp-server'],
     };
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
   }

@@ -90,19 +90,3 @@ test('claude generates correct mcp config', async ({  }) => {
   }
 });
 
-test('vscode generates correct mcp config', async ({  }) => {
-  const baseDir = await writeFiles({
-    'playwright.config.ts': `module.exports = {};`,
-  });
-
-  await runInitAgents({ cwd: baseDir, args: ['--loop', 'vscode'] });
-
-  const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.vscode', 'mcp.json'), 'utf-8'));
-  if (process.platform === 'win32') {
-    expect(mcpJson.servers['playwright-test'].command).toBe('cmd');
-    expect(mcpJson.servers['playwright-test'].args).toEqual(['/c', 'npx', 'playwright', 'run-test-mcp-server']);
-  } else {
-    expect(mcpJson.servers['playwright-test'].command).toBe('npx');
-    expect(mcpJson.servers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
-  }
-});
