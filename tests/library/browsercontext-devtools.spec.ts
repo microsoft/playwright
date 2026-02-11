@@ -19,11 +19,11 @@ import { contextTest, expect } from '../config/browserTest';
 import type { Page } from 'playwright-core';
 
 const it = contextTest.extend<{ rcPage: Page }>({
-  launchOptions: async ({ launchOptions }, use, testInfo) => {
+  launchOptions: async ({ launchOptions, browserName }, use, testInfo) => {
     await use({
       ...launchOptions,
       // @ts-expect-error
-      cdpPort: 15123 + testInfo.parallelIndex * 4,
+      cdpPort: browserName === 'chromium' ? 15123 + testInfo.parallelIndex * 4 : undefined,
     });
   },
   rcPage: async ({ context, browserType }, use) => {
