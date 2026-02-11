@@ -280,6 +280,13 @@ button:hover {
   min-height: 0;
 }
 
+.viewport-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+}
 .screen {
   position: relative;
   outline: none;
@@ -339,4 +346,58 @@ button:hover {
 
 .capture-hint.visible {
   opacity: 1;
+}
+
+/* -- Inspector panel -- */
+.inspector-panel {
+  width: 50%;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--bg-elevated);
+}
+
+.inspector-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--bg);
+}
+
+.nav-btn.active-toggle {
+  color: var(--accent);
+  background: rgba(138, 180, 248, 0.12);
+}
+
+/* -- Locator toast -- */
+.locator-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(32, 33, 36, 0.92);
+  backdrop-filter: blur(8px);
+  color: var(--fg);
+  font-size: 12px;
+  padding: 8px 20px;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+  white-space: nowrap;
+  max-width: 80vw;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 100;
+}
+
+.locator-toast.visible {
+  opacity: 1;
+}
+
+.locator-toast code {
+  color: var(--accent);
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  margin-left: 4px;
 }

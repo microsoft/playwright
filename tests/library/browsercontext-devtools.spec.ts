@@ -19,6 +19,13 @@ import { contextTest, expect } from '../config/browserTest';
 import type { Page } from 'playwright-core';
 
 const it = contextTest.extend<{ rcPage: Page }>({
+  launchOptions: async ({ launchOptions }, use, testInfo) => {
+    await use({
+      ...launchOptions,
+      // @ts-expect-error
+      cdpPort: 15123 + testInfo.parallelIndex * 4,
+    });
+  },
   rcPage: async ({ context, browserType }, use) => {
     const { url } = await (context as any)._devtoolsStart();
     const rcBrowser = await browserType.launch();
@@ -134,4 +141,21 @@ it('should update omnibox on navigation', async ({ rcPage, page, server }) => {
 it('should display screencast image', async ({ rcPage, page }) => {
   await page.goto('data:text/html,<body style="background:red"></body>');
   await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+});
+
+it.describe('Chrome DevTools', () => {
+  it.skip(({ browserName }) => browserName !== 'chromium', 'Chrome DevTools is only available in Chromium');
+  it('should show Chrome DevTools panel', async ({ page, rcPage }) => {
+    await page.goto('data:text/html,<body style="background:red"></body>');
+
+    const showButton = rcPage.getByTitle('Show Chrome DevTools');
+    await expect(showButton).toBeVisible();
+    await showButton.click();
+    await expect(rcPage.getByTitle('Hide Chrome DevTools')).toBeVisible();
+    const inspectorFrame = rcPage.locator('.inspector-frame');
+    await expect(inspectorFrame).toBeVisible();
+    await expect(inspectorFrame).toHaveAttribute('title', 'Chrome DevTools');
+    const devtools = rcPage.frameLocator('.inspector-frame');
+    await expect(devtools.getByRole('tab', { name: 'Elements' })).toBeVisible();
+  });
 });

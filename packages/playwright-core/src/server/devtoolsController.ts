@@ -20,9 +20,11 @@ import { HttpServer } from './utils/httpServer';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ProgressController } from './progress';
+import { Recorder, RecorderEvent } from './recorder';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
+import type { ElementInfo } from '@recorder/recorderTypes';
 import type http from 'http';
 
 export class DevToolsController {
@@ -69,8 +71,10 @@ class DevToolsConnection implements Transport {
   private _lastViewportSize: { width: number, height: number } | null = null;
   private _pageListeners: RegisteredListener[] = [];
   private _contextListeners: RegisteredListener[] = [];
+  private _recorderListeners: RegisteredListener[] = [];
   private _context: BrowserContext;
   private _screencastOptions: { width: number, height: number, quality: number };
+  private _recorder: Recorder | null = null;
 
   constructor(context: BrowserContext, screencastOptions: { width: number, height: number, quality: number }) {
     this._context = context;
@@ -93,7 +97,7 @@ class DevToolsConnection implements Transport {
             if (pages.length > 0)
               this._selectPage(pages[0]);
             else
-              this.sendEvent?.('selectPage', { pageId: undefined });
+              this.sendEvent?.('selectPage', { pageId: undefined, inspectorUrl: undefined });
           }
           this._sendTabList();
         }),
@@ -115,6 +119,7 @@ class DevToolsConnection implements Transport {
   }
 
   onclose() {
+    this._cancelPicking();
     this._deselectPage();
     eventsHelper.removeEventListeners(this._contextListeners);
     this._contextListeners = [];
@@ -140,6 +145,16 @@ class DevToolsConnection implements Transport {
         const page = await this._context.newPage(progress);
         await this._selectPage(page);
       });
+      return;
+    }
+
+    if (method === 'pickLocator') {
+      await this._startPicking();
+      return;
+    }
+
+    if (method === 'cancelPickLocator') {
+      this._cancelPicking();
       return;
     }
 
@@ -183,7 +198,7 @@ class DevToolsConnection implements Transport {
     this.selectedPage = page;
     this._lastFrameData = null;
     this._lastViewportSize = null;
-    this.sendEvent?.('selectPage', { pageId: page.guid });
+    this.sendEvent?.('selectPage', { pageId: page.guid, inspectorUrl: this._inspectorUrl(page) });
 
     // Start screencast on new page.
     this._pageListeners.push(
@@ -201,6 +216,7 @@ class DevToolsConnection implements Transport {
   private _deselectPage() {
     if (!this.selectedPage)
       return;
+    this._cancelPicking();
     eventsHelper.removeEventListeners(this._pageListeners);
     this._pageListeners = [];
     this.selectedPage.screencast.stopScreencast(this);
@@ -209,8 +225,53 @@ class DevToolsConnection implements Transport {
     this._lastViewportSize = null;
   }
 
+  private async _startPicking() {
+    this._cancelPicking();
+    const recorder = await Recorder.forContext(this._context, { omitCallTracking: true });
+    this._recorder = recorder;
+    this._recorderListeners.push(
+        eventsHelper.addEventListener(recorder, RecorderEvent.ElementPicked, (elementInfo: ElementInfo) => {
+          this.sendEvent?.('elementPicked', { selector: elementInfo.selector });
+          this._cancelPicking();
+        }),
+    );
+    recorder.setMode('inspecting');
+  }
+
+  private _cancelPicking() {
+    eventsHelper.removeEventListeners(this._recorderListeners);
+    if (this._recorder) {
+      this._recorder.setMode('none');
+      this._recorder = null;
+    }
+    this.sendEvent?.('recorderModeChanged', { picking: false });
+  }
+
+  private _inspectorUrl(page: Page): string | undefined {
+    const launchOptions = this._context._browser.options.originalLaunchOptions;
+    // TODO: read this from a more definitive place, perhaps from the transport!
+    const cdpPort = launchOptions.cdpPort ?? this._cdpPortFromArgs(launchOptions.args);
+    if (!cdpPort)
+      return undefined;
+    const targetId = (page.delegate as any)._targetId as string | undefined;
+    if (!targetId)
+      return undefined;
+    return `http://127.0.0.1:${cdpPort}/devtools/devtools_app.html?ws=127.0.0.1:${cdpPort}/devtools/page/${targetId}`;
+  }
+
+  private _cdpPortFromArgs(args?: string[]): number | undefined {
+    if (!args)
+      return undefined;
+    for (const arg of args) {
+      const match = arg.match(/^--remote-debugging-port=(\d+)$/);
+      if (match)
+        return parseInt(match[1], 10);
+    }
+    return undefined;
+  }
+
   private _sendCachedState() {
-    this.sendEvent?.('selectPage', { pageId: this.selectedPage?.guid });
+    this.sendEvent?.('selectPage', { pageId: this.selectedPage?.guid, inspectorUrl: this.selectedPage ? this._inspectorUrl(this.selectedPage) : undefined });
     if (this._lastFrameData)
       this.sendEvent?.('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize?.width, viewportHeight: this._lastViewportSize?.height });
     if (this.selectedPage) {

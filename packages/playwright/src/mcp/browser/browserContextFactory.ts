@@ -268,8 +268,11 @@ class PersistentContextFactory implements BrowserContextFactory {
 }
 
 async function injectCdpPort(browserConfig: FullConfig['browser']) {
-  if (browserConfig.browserName === 'chromium')
+  if (browserConfig.browserName === 'chromium') {
     (browserConfig.launchOptions as any).cdpPort = await findFreePort();
+    (browserConfig.launchOptions as any).args ??= [];
+    (browserConfig.launchOptions as any).args.push('--remote-allow-origins=*'); // TODO: only allow a single known port here.
+  }
 }
 
 async function findFreePort(): Promise<number> {
