@@ -47,7 +47,7 @@ npx playwright init-agents --loop=opencode
 VS Code v1.105 (released October 9, 2025) is needed for the agentic experience to function properly in VS Code.
 :::
 
-Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests. 
+Once the agents have been generated, you can use your AI tool of choice to command these agents to build Playwright Tests.
 
 
 ## 🎭 Planner

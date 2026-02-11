@@ -28,6 +28,12 @@ import type { AgentSpec } from './agentParser';
 
 /* eslint-disable no-console */
 
+function npxCommand(args: string[], remote?: boolean): { command: string; args: string[] } {
+  if (!remote && process.platform === 'win32')
+    return { command: 'cmd', args: ['/c', 'npx', ...args] };
+  return { command: 'npx', args };
+}
+
 async function loadAgentSpecs(): Promise<AgentSpec[]> {
   const files = await fs.promises.readdir(__dirname);
   return Promise.all(files.filter(file => file.endsWith('.agent.md')).map(file => parseAgentSpec(path.join(__dirname, file))));
@@ -47,10 +53,7 @@ export class ClaudeGenerator {
 
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
-        'playwright-test': {
-          command: 'npx',
-          args: ['playwright', 'run-test-mcp-server'],
-        }
+        'playwright-test': npxCommand(['playwright', 'run-test-mcp-server']),
       }
     }, null, 2), '🔧', 'mcp configuration');
 
@@ -143,9 +146,10 @@ export class OpencodeGenerator {
         asOpencodeTool(tools, tool);
     }
 
+    const { command, args } = npxCommand(['playwright', 'run-test-mcp-server']);
     result['mcp']['playwright-test'] = {
       type: 'local',
-      command: ['npx', 'playwright', 'run-test-mcp-server'],
+      command: [command, ...args],
       enabled: true,
     };
 
@@ -211,17 +215,15 @@ export class CopilotGenerator {
     return lines.join('\n');
   }
 
-  static mcpServers = {
-    'playwright-test': {
-      'type': 'stdio',
-      'command': 'npx',
-      'args': [
-        'playwright',
-        'run-test-mcp-server'
-      ],
-      'tools': ['*']
-    },
-  };
+  static get mcpServers() {
+    return {
+      'playwright-test': {
+        'type': 'stdio',
+        ...npxCommand(['playwright', 'run-test-mcp-server'], true),
+        'tools': ['*']
+      },
+    };
+  }
 }
 
 export class VSCodeGenerator {
@@ -264,8 +266,7 @@ export class VSCodeGenerator {
 
     mcpJson.servers['playwright-test'] = {
       type: 'stdio',
-      command: 'npx',
-      args: ['playwright', 'run-test-mcp-server'],
+      ...npxCommand(['playwright', 'run-test-mcp-server']),
     };
     await writeFile(mcpJsonPath, JSON.stringify(mcpJson, null, 2), '🔧', 'mcp configuration');
   }
