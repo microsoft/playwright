@@ -43,7 +43,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--cdp-endpoint <endpoint>', 'CDP endpoint to connect to.')
       .option('--cdp-header <headers...>', 'CDP headers to send with the connect request, multiple can be specified.', headerParser)
       .option('--cdp-timeout <timeout>', 'timeout in milliseconds for connecting to CDP endpoint, defaults to 30000ms', numberParser)
-      .option('--chromium-sandbox', 'enable the chromium sandbox. on by default, disable with --no-chromium-sandbox.')
+      .option('--chromium-sandbox', 'enable the chromium sandbox. disable with --no-chromium-sandbox.')
       .option('--no-chromium-sandbox', 'disable the chromium sandbox.')
       .option('--codegen <lang>', 'specify the language to use for code generation, possible values: "typescript", "none". Default is "typescript".', enumParser.bind(null, '--codegen', ['none', 'typescript']))
       .option('--config <path>', 'path to the configuration file.')
@@ -81,7 +81,7 @@ export function decorateCommand(command: Command, version: string) {
       .addOption(new ProgramOption('--daemon-session <path>', 'path to the daemon config.').hideHelp())
       .action(async options => {
 
-        // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
+        // normalize the --no-chromium-sandbox option: chromiumSandbox = true => nothing was passed, chromiumSandbox = false => --no-chromium-sandbox was passed.
         options.chromiumSandbox = options.chromiumSandbox === true ? undefined : false;
 
         setupExitWatchdog();
