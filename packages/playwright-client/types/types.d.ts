@@ -4092,6 +4092,8 @@ export interface Page {
    * });
    * ```
    *
+   * If a request matches multiple registered routes, the most recently registered route takes precedence.
+   *
    * Page routes take precedence over browser context routes (set up with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route))
    * when request matches both handlers.
