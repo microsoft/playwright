@@ -9341,6 +9341,7 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
+   * - `'screen-wake-lock'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {
