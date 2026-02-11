@@ -143,6 +143,21 @@ it('should display screencast image', async ({ rcPage, page }) => {
   await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
 });
 
+it('should pick locator', async ({ rcPage, page }) => {
+  await page.goto('data:text/html,<body style="margin:0"><button style="width:100vw;height:100vh">Submit</button></body>');
+  await expect(rcPage.locator('#display')).toHaveAttribute('src', /^data:image\/jpeg;base64,/);
+
+  await rcPage.getByTitle('Pick locator').click();
+  await expect(rcPage.getByTitle('Cancel pick locator')).toBeVisible();
+  await expect(rcPage.locator('.capture-hint.visible')).toHaveText('Click an element to pick its locator');
+
+  await rcPage.locator('#display').click();
+
+  await expect(rcPage.locator('.capture-hint.visible code')).toBeVisible();
+  await expect(rcPage.locator('.capture-hint.visible')).toContainText('Copied:');
+  await expect(rcPage.getByTitle('Pick locator')).toBeVisible();
+});
+
 it.describe('Chrome DevTools', () => {
   it.skip(({ browserName }) => browserName !== 'chromium', 'Chrome DevTools is only available in Chromium');
   it('should show Chrome DevTools panel', async ({ page, rcPage }) => {

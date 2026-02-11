@@ -244,8 +244,8 @@ class DevToolsConnection implements Transport {
     if (this._recorder) {
       this._recorder.setMode('none');
       this._recorder = null;
+      this.sendEvent?.('recorderModeChanged', { picking: false });
     }
-    this.sendEvent?.('recorderModeChanged', { picking: false });
   }
 
   private _inspectorUrl(page: Page) {
