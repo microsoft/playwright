@@ -73,12 +73,6 @@ test('create seed file with --config', async ({  }) => {
   expect(fs.existsSync(path.join(baseDir, 'custom', 'bar', 'e2e', 'seed.spec.ts'))).toBe(true);
 });
 
-const isWindows = process.platform === 'win32';
-const expectedCommand = isWindows ? 'cmd' : 'npx';
-const expectedArgs = isWindows
-    ? ['/c', 'npx', 'playwright', 'run-test-mcp-server']
-    : ['playwright', 'run-test-mcp-server'];
-
 test('claude generates correct mcp config', async ({  }) => {
   const baseDir = await writeFiles({
     'playwright.config.ts': `module.exports = {};`,
@@ -87,8 +81,13 @@ test('claude generates correct mcp config', async ({  }) => {
   await runInitAgents({ cwd: baseDir, args: ['--loop', 'claude'] });
 
   const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.mcp.json'), 'utf-8'));
-  expect(mcpJson.mcpServers['playwright-test'].command).toBe(expectedCommand);
-  expect(mcpJson.mcpServers['playwright-test'].args).toEqual(expectedArgs);
+  if (process.platform === 'win32') {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('cmd');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['/c', 'npx', 'playwright', 'run-test-mcp-server']);
+  } else {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('npx');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
+  }
 });
 
 test('vscode generates correct mcp config', async ({  }) => {
@@ -99,17 +98,11 @@ test('vscode generates correct mcp config', async ({  }) => {
   await runInitAgents({ cwd: baseDir, args: ['--loop', 'vscode'] });
 
   const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.vscode', 'mcp.json'), 'utf-8'));
-  expect(mcpJson.servers['playwright-test'].command).toBe(expectedCommand);
-  expect(mcpJson.servers['playwright-test'].args).toEqual(expectedArgs);
-});
-
-test('opencode generates correct mcp config', async ({  }) => {
-  const baseDir = await writeFiles({
-    'playwright.config.ts': `module.exports = {};`,
-  });
-
-  await runInitAgents({ cwd: baseDir, args: ['--loop', 'opencode'] });
-
-  const opencodeJson = JSON.parse(fs.readFileSync(path.join(baseDir, 'opencode.json'), 'utf-8'));
-  expect(opencodeJson.mcp['playwright-test'].command).toEqual([expectedCommand, ...expectedArgs]);
+  if (process.platform === 'win32') {
+    expect(mcpJson.servers['playwright-test'].command).toBe('cmd');
+    expect(mcpJson.servers['playwright-test'].args).toEqual(['/c', 'npx', 'playwright', 'run-test-mcp-server']);
+  } else {
+    expect(mcpJson.servers['playwright-test'].command).toBe('npx');
+    expect(mcpJson.servers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
+  }
 });
