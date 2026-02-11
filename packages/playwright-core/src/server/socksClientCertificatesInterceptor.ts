@@ -313,7 +313,7 @@ export class ClientCertificatesProxy {
     const proxyFromOptions = createProxyAgent(this._proxy);
     if (proxyFromOptions)
       return proxyFromOptions;
-    const proxyFromEnv = getProxyForUrl(`https://${host}:${port}`);
+    const proxyFromEnv = getProxyForUrl(new URL(`https://${host}:${port}`));
     if (proxyFromEnv)
       return createProxyAgent({ server: proxyFromEnv });
   }
