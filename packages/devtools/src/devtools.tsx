@@ -16,6 +16,7 @@
 
 import React from 'react';
 import './devtools.css';
+import { navigate } from './index';
 import { DevToolsTransport } from './transport';
 
 type TabInfo = { id: string; title: string; url: string };
@@ -30,7 +31,7 @@ function tabFavicon(url: string): string {
   }
 }
 
-export const DevTools: React.FC = () => {
+export const DevTools: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
   const [status, setStatus] = React.useState<{ text: string; cls: string }>({ text: 'Connecting', cls: '' });
   const [tabs, setTabs] = React.useState<TabInfo[]>([]);
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
@@ -54,9 +55,7 @@ export const DevTools: React.FC = () => {
   }, [captured]);
 
   React.useEffect(() => {
-    const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const guid = new URLSearchParams(location.search).get('ws');
-    const transport = new DevToolsTransport(wsProtocol + '//' + location.host + '/' + guid);
+    const transport = new DevToolsTransport(wsUrl);
     transportRef.current = transport;
 
     transport.onopen = () => setStatus({ text: 'Connected', cls: 'connected' });
@@ -84,7 +83,7 @@ export const DevTools: React.FC = () => {
     transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
 
     return () => transport.close();
-  }, []);
+  }, [wsUrl]);
 
   function resizeToFit() {
     const { width: vw, height: vh } = viewportSizeRef.current;
@@ -209,12 +208,14 @@ export const DevTools: React.FC = () => {
 
   const hasPages = !!selectedPageId;
 
-  return (<>
+  return (<div className='devtools-view'>
     {/* Tab bar */}
     <div className='tabbar'>
-      <div className='tabbar-brand'>
-        <span>Playwright</span>
-      </div>
+      <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
+        <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+          <polyline points='15 18 9 12 15 6'/>
+        </svg>
+      </a>
       <div id='tabstrip' className='tabstrip' role='tablist'>
         {tabs.map(tab => (
           <div
@@ -311,5 +312,5 @@ export const DevTools: React.FC = () => {
       </div>
       <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
     </div>
-  </>);
+  </div>);
 };

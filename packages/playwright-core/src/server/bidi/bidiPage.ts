@@ -643,6 +643,9 @@ export class BidiPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+
+  async setDockTile(image: Buffer): Promise<void> {
+  }
 }
 
 function toBidiExecutionContext(executionContext: dom.FrameExecutionContext): BidiExecutionContext {

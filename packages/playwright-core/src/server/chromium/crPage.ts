@@ -356,6 +356,10 @@ export class CRPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return false;
   }
+
+  async setDockTile(image: Buffer): Promise<void> {
+    await this._mainFrameSession._client.send('Browser.setDockTile', { image: image.toString('base64') });
+  }
 }
 
 class FrameSession {

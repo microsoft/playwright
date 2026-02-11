@@ -407,6 +407,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
   }
+
+  async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {
+    await this._page.setDockTile(params.image);
+  }
 }
 
 

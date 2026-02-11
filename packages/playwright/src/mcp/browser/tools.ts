@@ -18,6 +18,7 @@ import common from './tools/common';
 import config from './tools/config';
 import console from './tools/console';
 import cookies from './tools/cookies';
+import devtools from './tools/devtools';
 import dialogs from './tools/dialogs';
 import evaluate from './tools/evaluate';
 import files from './tools/files';
@@ -32,7 +33,6 @@ import route from './tools/route';
 import runCode from './tools/runCode';
 import snapshot from './tools/snapshot';
 import screenshot from './tools/screenshot';
-import show from './tools/show';
 import storage from './tools/storage';
 import tabs from './tools/tabs';
 import tracing from './tools/tracing';
@@ -49,6 +49,7 @@ export const browserTools: Tool<any>[] = [
   ...config,
   ...console,
   ...cookies,
+  ...devtools,
   ...dialogs,
   ...evaluate,
   ...files,
@@ -62,7 +63,6 @@ export const browserTools: Tool<any>[] = [
   ...route,
   ...runCode,
   ...screenshot,
-  ...show,
   ...snapshot,
   ...storage,
   ...tabs,

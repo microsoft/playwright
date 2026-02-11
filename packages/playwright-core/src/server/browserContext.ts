@@ -517,11 +517,10 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
   async devtoolsStart(options: { size?: types.Size, port?: number, host?: string } = {}): Promise<string> {
     if (this._devtools)
-      throw new Error('DevTools is already running');
+      await this._devtools.stop();
     const size = validateVideoSize(options.size, undefined);
     this._devtools = new DevToolsController(this);
-    const url = await this._devtools.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
-    return url;
+    return await this._devtools.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
   }
 
   async devtoolsStop(): Promise<void> {

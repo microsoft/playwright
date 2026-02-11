@@ -9,6 +9,11 @@
 
 [program.ts]
 "strict"
+./session.ts
+./registry.ts
+
+[session.ts]
+"strict"
 ./socketConnection.ts
 ./registry.ts
 

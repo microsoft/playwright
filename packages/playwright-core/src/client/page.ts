@@ -859,6 +859,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
     return await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track });
   }
+
+  async _setDockTile(image: Buffer) {
+    await this._channel.setDockTile({ image });
+  }
 }
 
 export class BindingCall extends ChannelOwner<channels.BindingCallChannel> {

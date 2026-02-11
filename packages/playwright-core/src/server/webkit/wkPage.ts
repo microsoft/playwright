@@ -1230,6 +1230,9 @@ export class WKPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
   }
+
+  async setDockTile(image: Buffer): Promise<void> {
+  }
 }
 
 class WKFrame {

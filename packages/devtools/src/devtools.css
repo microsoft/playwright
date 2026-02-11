@@ -14,59 +14,11 @@
  * limitations under the License.
  */
 
-:root {
-  --bg: #202124;
-  --bg-elevated: #35363a;
-  --bg-tab: #292b2e;
-  --fg: #e8eaed;
-  --fg-dim: #9aa0a6;
-  --fg-muted: #5f6368;
-  --accent: #8ab4f8;
-  --ok: #81c995;
-  --err: #f28b82;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-html,
-body {
-  height: 100%;
-}
-
-body {
-  background: var(--bg);
-  color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+.devtools-view {
   display: flex;
   flex-direction: column;
+  height: 100%;
   overflow: hidden;
-}
-
-#root {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-}
-
-button {
-  background: none;
-  border: none;
-  color: var(--fg-dim);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-button:hover {
-  color: var(--fg);
 }
 
 /* -- Tab bar -- */
@@ -77,6 +29,29 @@ button:hover {
   min-height: 38px;
   padding: 0 10px 0 12px;
   user-select: none;
+}
+
+.tabbar-back {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 34px;
+  align-self: flex-end;
+  color: var(--fg-dim);
+  text-decoration: none;
+  border-radius: 8px;
+  margin-right: 4px;
+}
+
+.tabbar-back:hover {
+  background: var(--bg-elevated);
+  color: var(--fg);
+}
+
+.tabbar-back svg {
+  width: 16px;
+  height: 16px;
 }
 
 .tabbar-brand span {
