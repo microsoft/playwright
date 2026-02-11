@@ -32,6 +32,21 @@ test('browser_navigate', async ({ client, server }) => {
   });
 });
 
+test('browser_navigate with empty url is a noop', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: '' },
+  })).toHaveResponse({
+    page: `- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`,
+  });
+});
+
 test('browser_navigate blocks file:// URLs by default', async ({ client }) => {
   expect(await client.callTool({
     name: 'browser_navigate',

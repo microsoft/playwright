@@ -49,7 +49,7 @@ const open = declareCommand({
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
   }),
   toolName: 'browser_navigate',
-  toolParams: ({ url }) => ({ url: url || 'about:blank' }),
+  toolParams: ({ url }) => ({ url: url || '' }),
 });
 
 const close = declareCommand({

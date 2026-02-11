@@ -35,6 +35,11 @@ test('go-forward', async ({ cli, server }) => {
 - Page Title: Title`);
 });
 
+test('open without url opens about:blank', async ({ cli }) => {
+  const { output } = await cli('open');
+  expect(output).toContain('- Page URL: about:blank');
+});
+
 test('run-code', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('run-code', '() => page.title()');

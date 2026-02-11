@@ -32,6 +32,12 @@ const navigate = defineTool({
 
   handle: async (context, params, response) => {
     const tab = await context.ensureTab();
+
+    if (!params.url) {
+      response.setIncludeSnapshot();
+      return;
+    }
+
     let url = params.url;
     try {
       new URL(url);
