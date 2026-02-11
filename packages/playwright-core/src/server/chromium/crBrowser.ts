@@ -451,6 +451,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       ['storage-access', 'storageAccess'],
       ['local-fonts', 'localFonts'],
       ['local-network-access', ['localNetworkAccess', 'localNetwork', 'loopbackNetwork']],
+      ['screen-wake-lock', 'wakeLockScreen'],
     ]);
 
     const grantPermissions = async (mapping: Map<string, Protocol.Browser.PermissionType | Protocol.Browser.PermissionType[]>) => {

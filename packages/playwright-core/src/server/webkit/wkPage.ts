@@ -1213,6 +1213,7 @@ export class WKPage implements PageDelegate {
       ['geolocation', 'geolocation'],
       ['notifications', 'notifications'],
       ['clipboard-read', 'clipboard-read'],
+      ['screen-wake-lock', 'screen-wake-lock'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);

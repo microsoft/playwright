@@ -957,6 +957,7 @@ Here are some permissions that may be supported by some browsers:
 * `'notifications'`
 * `'payment-handler'`
 * `'storage-access'`
+* `'screen-wake-lock'`
 
 ### option: BrowserContext.grantPermissions.origin
 * since: v1.8
