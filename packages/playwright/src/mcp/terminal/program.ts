@@ -38,29 +38,25 @@ type MinimistArgs = {
 
 export class Session {
   readonly name: string;
+  readonly config: SessionConfig;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
-  private _config: SessionConfig;
   private _clientInfo: ClientInfo;
 
   constructor(clientInfo: ClientInfo, options: SessionConfig) {
     this._clientInfo = clientInfo;
-    this._config = options;
+    this.config = options;
     this.name = options.name;
   }
 
-  config(): SessionConfig {
-    return this._config;
-  }
-
   isCompatible(): boolean {
-    return this._clientInfo.version === this._config.version;
+    return this._clientInfo.version === this.config.version;
   }
 
   checkCompatible() {
     if (!this.isCompatible()) {
-      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this._config.version}. Run
+      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this.config.version}. Run
 
   playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open
 
@@ -94,7 +90,7 @@ to restart the browser session.`);
       id: messageId,
       method,
       params,
-      version: this._config.version,
+      version: this.config.version,
     };
     const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject, method, params });
@@ -146,12 +142,12 @@ to restart the browser session.`);
 
   async _connect(): Promise<{ socket?: net.Socket, error?: Error }> {
     return await new Promise(resolve => {
-      const socket = net.createConnection(this._config.socketPath, () => {
+      const socket = net.createConnection(this.config.socketPath, () => {
         resolve({ socket });
       });
       socket.on('error', error => {
         if (os.platform() !== 'win32')
-          void fs.promises.unlink(this._config.socketPath).catch(() => {}).then(() => resolve({ error }));
+          void fs.promises.unlink(this.config.socketPath).catch(() => {}).then(() => resolve({ error }));
         else
           resolve({ error });
       });
@@ -175,7 +171,7 @@ to restart the browser session.`);
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket, this._config.version);
+    this._connection = new SocketConnection(socket, this.config.version);
     this._connection.onmessage = message => this._onMessage(message);
     this._connection.onclose = () => this.disconnect();
     return this._connection;
@@ -205,8 +201,8 @@ to restart the browser session.`);
     const cliPath = path.join(__dirname, '../../../cli.js');
 
     const sessionConfigFile = this._sessionFile('.session');
-    this._config.version = this._clientInfo.version;
-    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+    this.config.version = this._clientInfo.version;
+    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
 
     const errLog = this._sessionFile('.err');
     const err = fs.openSync(errLog, 'w');
@@ -269,17 +265,17 @@ to restart the browser session.`);
       console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
       const resolvedConfig = await parseResolvedConfig(outLog);
       if (resolvedConfig) {
-        this._config.resolvedConfig = resolvedConfig;
+        this.config.resolvedConfig = resolvedConfig;
         console.log(`- ${this.name}:`);
         console.log(renderResolvedConfig(resolvedConfig).join('\n'));
       }
       console.log(`---`);
 
-      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
       return socket;
     }
 
-    console.error(`Failed to connect to daemon at ${this._config.socketPath}`);
+    console.error(`Failed to connect to daemon at ${this.config.socketPath}`);
     process.exit(1);
   }
 
@@ -287,10 +283,10 @@ to restart the browser session.`);
     let error: Error | undefined;
     await this._send('stop').catch(e => { error = e; });
     if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+      await fs.promises.unlink(this.config.socketPath).catch(() => {});
 
     this.disconnect();
-    if (!this._config.cli.persistent)
+    if (!this.config.cli.persistent)
       await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
@@ -437,18 +433,18 @@ export async function program() {
       return;
     }
     case 'close-all': {
-      const configs = registry.configs(clientInfo);
-      for (const config of configs)
-        await new Session(clientInfo, config).stop(true);
+      const entries = registry.entries(clientInfo);
+      for (const entry of entries)
+        await new Session(clientInfo, entry.config).stop(true);
       return;
     }
     case 'delete-data': {
-      const config = registry.config(clientInfo, sessionName);
-      if (!config) {
+      const entry = registry.entry(clientInfo, sessionName);
+      if (!entry) {
         console.log(`No user data found for browser '${sessionName}'.`);
         return;
       }
-      await new Session(clientInfo, config).deleteData();
+      await new Session(clientInfo, entry.config).deleteData();
       return;
     }
     case 'kill-all': {
@@ -456,9 +452,9 @@ export async function program() {
       return;
     }
     case 'open': {
-      const config = registry.config(clientInfo, sessionName);
-      if (config)
-        await new Session(clientInfo, config).stop(true);
+      const entry = registry.entry(clientInfo, sessionName);
+      if (entry)
+        await new Session(clientInfo, entry.config).stop(true);
       const session = new Session(clientInfo, sessionConfigFromArgs(clientInfo, sessionName, args));
       for (const globalOption of globalOptions)
         delete args[globalOption];
@@ -468,8 +464,8 @@ export async function program() {
     }
 
     case 'close':
-      const config = registry.config(clientInfo, sessionName);
-      const session = config ? new Session(clientInfo, config) : undefined;
+      const closeEntry = registry.entry(clientInfo, sessionName);
+      const session = closeEntry ? new Session(clientInfo, closeEntry.config) : undefined;
       if (!session || !await session.canConnect()) {
         console.log(`Browser '${sessionName}' is not open.`);
         return;
@@ -489,8 +485,8 @@ export async function program() {
       return;
     }
     default: {
-      const config = registry.config(clientInfo, sessionName);
-      if (!config) {
+      const defaultEntry = registry.entry(clientInfo, sessionName);
+      if (!defaultEntry) {
         console.log(`The browser '${sessionName}' is not open, please run open first`);
         console.log('');
         console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
@@ -499,7 +495,7 @@ export async function program() {
 
       for (const globalOption of globalOptions)
         delete args[globalOption];
-      const result = await new Session(clientInfo, config).run(args);
+      const result = await new Session(clientInfo, defaultEntry.config).run(args);
       console.log(result.text);
     }
   }
@@ -670,21 +666,21 @@ async function killAllDaemons(): Promise<void> {
 
 async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<void> {
   if (all) {
-    const configs = registry.configMap();
-    if (configs.size === 0) {
+    const entries = registry.entryMap();
+    if (entries.size === 0) {
       console.log('No browsers found.');
       return;
     }
-    for (const [workspace, list] of configs) {
+    for (const [workspace, list] of entries) {
       if (!list.length)
         continue;
       console.log(`${workspace}:`);
-      await gcAndPrintSessions(list.map(config => new Session(clientInfo, config)));
+      await gcAndPrintSessions(list.map(entry => new Session(clientInfo, entry.config)));
     }
   } else {
     console.log('### Browsers');
-    const configs = registry.configs(clientInfo);
-    await gcAndPrintSessions(configs.map(config => new Session(clientInfo, config)));
+    const entries = registry.entries(clientInfo);
+    await gcAndPrintSessions(entries.map(entry => new Session(clientInfo, entry.config)));
   }
 }
 
@@ -697,7 +693,7 @@ async function gcAndPrintSessions(sessions: Session[]) {
     if (canConnect) {
       running.push(session);
     } else {
-      if (session.config().cli.persistent)
+      if (session.config.cli.persistent)
         stopped.push(session);
       else
         await session.deleteSessionConfig();
@@ -716,7 +712,7 @@ async function gcAndPrintSessions(sessions: Session[]) {
 
 async function renderSessionStatus(session: Session) {
   const text: string[] = [];
-  const config = session.config();
+  const config = session.config;
   const canConnect = await session.canConnect();
   text.push(`- ${session.name}:`);
   text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);

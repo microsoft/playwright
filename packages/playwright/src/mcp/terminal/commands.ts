@@ -763,6 +763,15 @@ const videoStop = declareCommand({
   toolParams: ({ filename }) => ({ filename }),
 });
 
+const show = declareCommand({
+  name: 'show',
+  description: 'Show browser DevTools',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_show',
+  toolParams: () => ({}),
+});
+
 // Sessions
 
 const sessionList = declareCommand({
@@ -925,6 +934,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // devtools category
   networkRequests,
+  show,
   tracingStart,
   tracingStop,
   videoStart,

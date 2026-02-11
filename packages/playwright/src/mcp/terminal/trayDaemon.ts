@@ -18,12 +18,14 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import os from 'os';
+
+import { openUrlInApp, ProgressController } from 'playwright-core/lib/server';
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
 import { createClientInfo, Session } from './program';
 import { Registry } from './registry';
 
-import type { SessionConfig } from './registry';
+import type { SessionEntry } from './registry';
 import type { MenuItem } from '@trayjs/trayjs';
 
 const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
@@ -52,26 +54,27 @@ function acquireSingleton(): Promise<net.Server> {
 }
 
 let lastId = 0;
-const idToConfig = new Map<string, SessionConfig>();
+const idToEntry = new Map<string, SessionEntry>();
 
 async function onMenuRequested(): Promise<MenuItem[]> {
   const registry = await Registry.load();
-  const map = registry.configMap();
+  const map = registry.entryMap();
   const items: MenuItem[] = [];
   let first = true;
-  idToConfig.clear();
-  for (const [workspace, configs] of map) {
+  idToEntry.clear();
+  for (const [workspace, entries] of map) {
     if (!first)
       items.push({ id: '', separator: true });
     first = false;
     const shortName = path.basename(workspace);
     items.push({ id: '', title: shortName, enabled: false });
-    for (const config of configs) {
-      idToConfig.set(String(++lastId), config);
+    for (const entry of entries) {
+      idToEntry.set(String(++lastId), entry);
       items.push({
         id: ``,
-        title: config.name,
+        title: entry.config.name,
         items: [
+          { id: `show:${lastId}`, title: 'Show' },
           { id: `close:${lastId}`, title: 'Close' },
         ],
       });
@@ -105,8 +108,13 @@ async function main() {
     onClicked: (id: string) => {
       if (id === 'quit')
         tray.quit();
-      if (id.startsWith('close:'))
-        session(id.substring('close:'.length))?.stop().catch(() => {});
+      if (id.startsWith('show:'))
+        show(idToEntry.get(id.substring('show:'.length))).catch(() => {});
+      if (id.startsWith('close:')) {
+        const entry = idToEntry.get(id.substring('close:'.length));
+        if (entry)
+          new Session(createClientInfo(), entry.config).stop().catch(() => {});
+      }
     },
     onMenuRequested,
   });
@@ -121,12 +129,47 @@ async function main() {
   tray.on('close', () => gracefullyProcessExitDoNotHang(0));
 }
 
-function session(id: string): Session | undefined {
-  const config = idToConfig.get(id);
-  if (!config)
+async function runShow(entry: SessionEntry): Promise<string | undefined> {
+  const s = new Session(createClientInfo(), entry.config);
+  const { text } = await s.run({ _: ['show'] });
+  return text.match(/Show server is listening on: (.+)/)?.[1];
+}
+
+async function show(entry: SessionEntry | undefined) {
+  if (!entry)
     return;
-  const clientInfo = createClientInfo();
-  return new Session(clientInfo, config);
+  const url = await runShow(entry);
+  if (!url)
+    return;
+
+  const page = await openUrlInApp(url, { name: 'devtools' }).catch(() => null);
+  if (!page)
+    return;
+
+  let closed = false;
+  page.on('close', () => {
+    closed = true;
+  });
+
+  while (!closed) {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    if (closed)
+      break;
+    try {
+      const freshEntry = await Registry.loadSessionEntry(entry.file);
+      if (!freshEntry)
+        continue;
+      const newUrl = await runShow(freshEntry);
+      if (!newUrl)
+        continue;
+      const controller = new ProgressController();
+      await controller.run(async progress => {
+        await page.mainFrame().goto(progress, newUrl);
+      });
+    } catch {
+      // Session might be restarting, try again next poll.
+    }
+  }
 }
 
 void main();

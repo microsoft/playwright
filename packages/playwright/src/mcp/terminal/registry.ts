@@ -44,30 +44,48 @@ export type SessionConfig = {
   resolvedConfig?: FullConfig
 };
 
+export type SessionEntry = {
+  file: string;
+  config: SessionConfig;
+};
+
 export class Registry {
-  private _configs: Map<string, SessionConfig[]>;
+  private _entries: Map<string, SessionEntry[]>;
 
-  private constructor(configs: Map<string, SessionConfig[]>) {
-    this._configs = configs;
+  private constructor(entries: Map<string, SessionEntry[]>) {
+    this._entries = entries;
   }
 
-  config(clientInfo: ClientInfo, sessionName: string): SessionConfig | undefined {
+  entry(clientInfo: ClientInfo, sessionName: string): SessionEntry | undefined {
     const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
-    const configs = this._configs.get(key) || [];
-    return configs.find(config => config.name === sessionName);
+    const entries = this._entries.get(key) || [];
+    return entries.find(entry => entry.config.name === sessionName);
   }
 
-  configs(clientInfo: ClientInfo): SessionConfig[] {
+  entries(clientInfo: ClientInfo): SessionEntry[] {
     const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
-    return this._configs.get(key) || [];
+    return this._entries.get(key) || [];
   }
 
-  configMap(): Map<string, SessionConfig[]> {
-    return this._configs;
+  entryMap(): Map<string, SessionEntry[]> {
+    return this._entries;
+  }
+
+  static async loadSessionEntry(file: string): Promise<SessionEntry | undefined> {
+    try {
+      const data = await fs.promises.readFile(file, 'utf-8');
+      const config = JSON.parse(data) as SessionConfig;
+      // Sessions from 0.1.0 support.
+      if (!config.name)
+        config.name = path.basename(file, '.session');
+      return { file, config };
+    } catch {
+      return undefined;
+    }
   }
 
   static async load(): Promise<Registry> {
-    const sessions = new Map<string, SessionConfig[]>();
+    const sessions = new Map<string, SessionEntry[]>();
     const hashDirs = await fs.promises.readdir(baseDaemonDir).catch(() => []);
     for (const workspaceDirHash of hashDirs) {
       const hashDir = path.join(baseDaemonDir, workspaceDirHash);
@@ -80,18 +98,16 @@ export class Registry {
         if (!file.endsWith('.session'))
           continue;
         const fileName = path.join(hashDir, file);
-        const sessionName = path.basename(file, '.session');
-        const sessionConfig = await fs.promises.readFile(fileName, 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-        // Support for 0.1.0 where session name was not stored in the file.
-        if (!sessionConfig.name)
-          sessionConfig.name = sessionName;
-        const key = sessionConfig.workspaceDir || workspaceDirHash;
+        const entry = await Registry.loadSessionEntry(fileName);
+        if (!entry)
+          continue;
+        const key = entry.config.workspaceDir || workspaceDirHash;
         let list = sessions.get(key);
         if (!list) {
           list = [];
           sessions.set(key, list);
         }
-        list.push(sessionConfig);
+        list.push(entry);
       }
     }
     return new Registry(sessions);
