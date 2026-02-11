@@ -21,6 +21,7 @@ import { BrowserContext } from './browserContext';
 import { Page } from './page';
 import { ProgressController } from './progress';
 import { Recorder, RecorderEvent } from './recorder';
+import { CRPage } from './chromium/crPage';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
@@ -247,27 +248,14 @@ class DevToolsConnection implements Transport {
     this.sendEvent?.('recorderModeChanged', { picking: false });
   }
 
-  private _inspectorUrl(page: Page): string | undefined {
-    const launchOptions = this._context._browser.options.originalLaunchOptions;
-    // TODO: read this from a more definitive place, perhaps from the transport!
-    const cdpPort = launchOptions.cdpPort ?? this._cdpPortFromArgs(launchOptions.args);
-    if (!cdpPort)
-      return undefined;
-    const targetId = (page.delegate as any)._targetId as string | undefined;
-    if (!targetId)
-      return undefined;
-    return `http://127.0.0.1:${cdpPort}/devtools/devtools_app.html?ws=127.0.0.1:${cdpPort}/devtools/page/${targetId}`;
-  }
-
-  private _cdpPortFromArgs(args?: string[]): number | undefined {
-    if (!args)
-      return undefined;
-    for (const arg of args) {
-      const match = arg.match(/^--remote-debugging-port=(\d+)$/);
-      if (match)
-        return parseInt(match[1], 10);
-    }
-    return undefined;
+  private _inspectorUrl(page: Page) {
+    if (!(page.delegate instanceof CRPage) || !this._context._browser.options.wsEndpoint)
+      return;
+    const endpointUrl = new URL(this._context._browser.options.wsEndpoint);
+    endpointUrl.protocol = endpointUrl.protocol.startsWith('wss') ? 'https' : 'http';
+    endpointUrl.pathname = '/devtools/devtools_app.html';
+    endpointUrl.searchParams.set('ws', `${endpointUrl.host}/devtools/page/${page.delegate._targetId}`);
+    return endpointUrl.toString();
   }
 
   private _sendCachedState() {
