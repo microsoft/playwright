@@ -92,6 +92,7 @@ export const test = contextTest.extend<CLITestArgs>({
     await use(async options => {
       await (context as any)._enableRecorder({
         mode: 'recording',
+        omitCallTracking: true,
         ...options
       });
       const page = await context.newPage();
