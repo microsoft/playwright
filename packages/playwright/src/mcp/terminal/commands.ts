@@ -833,6 +833,15 @@ const installBrowser = declareCommand({
   toolParams: () => ({}),
 });
 
+const tray = declareCommand({
+  name: 'tray',
+  description: 'Run tray',
+  category: 'config',
+  hidden: true,
+  toolName: '',
+  toolParams: () => ({}),
+});
+
 const commandsArray: AnyCommandSchema[] = [
   // core category
   open,
@@ -925,6 +934,9 @@ const commandsArray: AnyCommandSchema[] = [
   sessionList,
   sessionCloseAll,
   killAll,
+
+  // Hidden commands
+  tray,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));

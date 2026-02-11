@@ -16,7 +16,7 @@
 
 import { program } from './program';
 
-program(require.resolve('../../../package.json')).catch(e => {
+program().catch(e => {
   /* eslint-disable no-console */
   console.error(e.message);
   /* eslint-disable no-restricted-properties */

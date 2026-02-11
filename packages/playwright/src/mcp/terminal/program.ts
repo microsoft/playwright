@@ -36,7 +36,7 @@ type MinimistArgs = {
   [key: string]: any;
 };
 
-class Session {
+export class Session {
   readonly name: string;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
@@ -309,7 +309,8 @@ function resolveSessionName(sessionName?: string): string {
   return 'default';
 }
 
-function createClientInfo(packageLocation: string): ClientInfo {
+export function createClientInfo(): ClientInfo {
+  const packageLocation = require.resolve('../../../package.json');
   const packageJSON = require(packageLocation);
   const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
@@ -376,8 +377,8 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'version',
 ];
 
-export async function program(packageLocation: string) {
-  const clientInfo = createClientInfo(packageLocation);
+export async function program() {
+  const clientInfo = createClientInfo();
   const help = require('./help.json');
 
   const argv = process.argv.slice(2);
@@ -478,6 +479,15 @@ export async function program(packageLocation: string) {
     case 'install':
       await install(args);
       return;
+    case 'tray': {
+      const daemonScript = path.join(__dirname, 'trayDaemon.js');
+      const child = spawn(process.execPath, [daemonScript], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+      return;
+    }
     default: {
       const config = registry.config(clientInfo, sessionName);
       if (!config) {
