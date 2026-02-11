@@ -69,7 +69,7 @@ export class Response {
   async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
     let fileName: string;
     if (template.suggestedFilename)
-      fileName = await this._context.workspaceFile(template.suggestedFilename, this._clientWorkspace);
+      fileName = await this._context.outputFile(template, { origin: 'llm' });
     else
       fileName = await this._context.outputFile(template, { origin: 'llm' });
     const relativeName = this._computRelativeTo(fileName);
