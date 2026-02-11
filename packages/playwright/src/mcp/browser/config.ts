@@ -26,7 +26,7 @@ import { firstRootPath } from '../sdk/server';
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
-import type { SessionConfig } from '../terminal/program';
+import type { SessionConfig } from '../terminal/registry';
 
 type ViewportSize = { width: number; height: number };
 

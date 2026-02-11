@@ -4,7 +4,7 @@ Run multiple isolated browser sessions concurrently with state persistence.
 
 ## Named Browser Sessions
 
-Use `-b` flag to isolate browser contexts:
+Use `-s` flag to isolate browser contexts:
 
 ```bash
 # Browser 1: Authentication flow

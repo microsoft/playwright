@@ -92,7 +92,7 @@ export class Screencast {
     const videoId = this._videoId;
     assert(videoId);
     this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
-    await this._startScreencast(this._videoRecorder, {
+    await this.startScreencast(this._videoRecorder, {
       quality: 90,
       width: options.width,
       height: options.height,
@@ -110,7 +110,7 @@ export class Screencast {
     this._videoId = null;
     const videoRecorder = this._videoRecorder!;
     this._videoRecorder = null;
-    await this._stopScreencast(videoRecorder);
+    await this.stopScreencast(videoRecorder);
     await videoRecorder.stop();
     // Keep the video artifact in the map until encoding is fully finished, if the context
     // starts closing before the video is fully written to disk it will wait for it.
@@ -134,12 +134,12 @@ export class Screencast {
 
   private async _setOptions(options: { width: number, height: number, quality: number } | null): Promise<void> {
     if (options)
-      await this._startScreencast(this, options);
+      await this.startScreencast(this, options);
     else
-      await this._stopScreencast(this);
+      await this.stopScreencast(this);
   }
 
-  private async _startScreencast(client: unknown, options: { width: number, height: number, quality: number }) {
+  async startScreencast(client: unknown, options: { width: number, height: number, quality: number }) {
     this._screencastClients.add(client);
     if (this._screencastClients.size === 1) {
       await this._page.delegate.startScreencast({
@@ -150,7 +150,7 @@ export class Screencast {
     }
   }
 
-  private async _stopScreencast(client: unknown) {
+  async stopScreencast(client: unknown) {
     this._screencastClients.delete(client);
     if (!this._screencastClients.size)
       await this._page.delegate.stopScreencast();

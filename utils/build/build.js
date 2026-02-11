@@ -535,7 +535,7 @@ steps.push(new ProgramStep({
 }));
 
 // Build/watch web packages.
-for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
   steps.push(new ProgramStep({
     command: 'npx',
     args: [
@@ -634,6 +634,7 @@ copyFiles.push({
   to: 'packages/playwright-core/lib',
 });
 
+
 copyFiles.push({
   files: 'packages/playwright/src/agents/*.md',
   from: 'packages/playwright/src',
@@ -652,6 +653,12 @@ copyFiles.push({
   to: 'packages/playwright/lib',
 });
 
+copyFiles.push({
+  files: 'packages/playwright/src/mcp/terminal/*.{png,ico}',
+  from: 'packages/playwright/src',
+  to: 'packages/playwright/lib',
+});
+
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
@@ -660,7 +667,7 @@ if (watchMode) {
     shell: true,
     concurrent: true,
   }));
-  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer']) {
+  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
     steps.push(new ProgramStep({
       command: 'npx',
       args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],

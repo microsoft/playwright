@@ -14,46 +14,48 @@
  * limitations under the License.
  */
 
-import { context, getOctokit } from '@actions/github';
-import * as core from '@actions/core';
-
 import MarkdownReporter from '../../packages/playwright/src/reporters/markdown';
 
 import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
 import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
 
-function getGithubToken() {
-  const token = process.env.GITHUB_TOKEN || core.getInput('github-token');
-  if (!token) {
-    core.setFailed('Missing "github-token" input');
-    throw new Error('Missing "github-token" input');
-  }
-  return token;
-}
-
-const octokit = getOctokit(getGithubToken());
-
 class GHAMarkdownReporter extends MarkdownReporter {
+  private octokit: ReturnType<typeof import('@actions/github').getOctokit>;
+  private context: typeof import('@actions/github').context;
+  private core: typeof import('@actions/core');
+
   override async publishReport(report: string) {
-    core.info('Publishing report to PR.');
+    // @ts-expect-error dynamic import
+    this.core = await import('@actions/core');
+    const token = process.env.GITHUB_TOKEN || this.core.getInput('github-token');
+    if (!token) {
+      this.core.setFailed('Missing "github-token" input');
+      throw new Error('Missing "github-token" input');
+    }
+    // @ts-expect-error dynamic import
+    const { context, getOctokit } = await import('@actions/github');
+    this.context = context;
+    this.octokit = getOctokit(token);
+
+    this.core.info('Publishing report to PR.');
     const { prNumber, prHref } = this.pullRequestFromMetadata();
     if (!prNumber) {
-      core.info(`No PR number found, skipping GHA comment. PR href: ${prHref}`);
+      this.core.info(`No PR number found, skipping GHA comment. PR href: ${prHref}`);
       return;
     }
-    core.info(`Posting comment to PR ${prHref}`);
+    this.core.info(`Posting comment to PR ${prHref}`);
 
     const prNodeId = await this.collapsePreviousComments(prNumber);
     if (!prNodeId) {
-      core.warning(`No PR node ID found, skipping GHA comment. PR href: ${prHref}`);
+      this.core.warning(`No PR node ID found, skipping GHA comment. PR href: ${prHref}`);
       return;
     }
     await this.addNewReportComment(prNodeId, report);
   }
 
   private async collapsePreviousComments(prNumber: number) {
-    const { owner, repo } = context.repo;
-    const data = await octokit.graphql<{ repository: Repository }>(`
+    const { owner, repo } = this.context.repo;
+    const data = await this.octokit.graphql<{ repository: Repository }>(`
       query {
         repository(owner: "${owner}", name: "${repo}") {
           pullRequest(number: ${prNumber}) {
@@ -81,7 +83,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
       return prId;
     const mutations = comments.map((comment, i) =>
       `m${i}: minimizeComment(input: { subjectId: "${comment!.id}", classifier: OUTDATED }) { clientMutationId }`);
-    await octokit.graphql(`
+    await this.octokit.graphql(`
       mutation {
         ${mutations.join('\n')}
       }
@@ -95,7 +97,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
 
   private _workflowRunName() {
     // When used via 'workflow_run' event.
-    const workflowRunName = context.payload.workflow_run?.name;
+    const workflowRunName = this.context.payload.workflow_run?.name;
     if (workflowRunName)
       return workflowRunName;
     // When used via 'pull_request'/'push' event.
@@ -105,7 +107,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
 
   private async addNewReportComment(prNodeId: string, report: string) {
     const reportUrl = process.env.HTML_REPORT_URL;
-    const mergeWorkflowUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+    const mergeWorkflowUrl = `${this.context.serverUrl}/${this.context.repo.owner}/${this.context.repo.repo}/actions/runs/${this.context.runId}`;
 
     const body = formatComment([
       this._magicComment(),
@@ -117,7 +119,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
       `Merge [workflow run](${mergeWorkflowUrl}).`
     ]);
 
-    const response = await octokit.graphql<{ addComment: { commentEdge: IssueCommentEdge } }>(`
+    const response = await this.octokit.graphql<{ addComment: { commentEdge: IssueCommentEdge } }>(`
       mutation {
         addComment(input: {subjectId: "${prNodeId}", body: """${body}"""}) {
           commentEdge {
@@ -130,7 +132,7 @@ class GHAMarkdownReporter extends MarkdownReporter {
         }
       }
     `);
-    core.info(`Posted comment:  ${response.addComment.commentEdge.node?.url}`);
+    this.core.info(`Posted comment:  ${response.addComment.commentEdge.node?.url}`);
   }
 
   private pullRequestFromMetadata() {

@@ -345,7 +345,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
           frameBoundingRectsInfo.frames.set(iframe, { boundingRect, scrollLeft: 0, scrollTop: 0 });
         const src = iframe.getAttribute('__playwright_src__');
         if (!src) {
-          iframe.setAttribute('src', 'data:text/html,<body style="background: #ddd"></body>');
+          iframe.setAttribute('src', blankSnapshotUrl);
         } else {
           // Retain query parameters to inherit name=, time=, pointX=, pointY= and other values from parent.
           const url = new URL(win.location.href);
@@ -639,3 +639,5 @@ function escapeURLsInStyleSheet(text: string): string {
   };
   return text.replace(urlToEscapeRegex1, replacer).replace(urlToEscapeRegex2, replacer);
 }
+
+export const blankSnapshotUrl = 'data:text/html;base64,' + btoa(`<body></body><style>body { color-scheme: light dark; background: light-dark(white, #333) }</style>`);

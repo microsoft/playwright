@@ -1466,6 +1466,22 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
+    devtoolsStart:
+      internal: true
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+        port: int?
+        host: string?
+      returns:
+        url: string
+
+    devtoolsStop:
+      internal: true
+
   events:
 
     bindingCall:

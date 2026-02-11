@@ -112,7 +112,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 
   const transport = options?.transport || (options?.isServer ? new StdinServer() : undefined);
   if (transport)
-    server.createWebSocket(transport);
+    server.createWebSocket(() => transport);
 
   const { host, port } = options || {};
   await server.start({ preferredPort: port, host });
@@ -208,6 +208,26 @@ export async function openTraceInBrowser(url: string) {
   console.log('\nListening on ' + url);
   if (!isUnderTest())
     await open(url.replace('0.0.0.0', 'localhost')).catch(() => {});
+}
+
+export async function openUrlInApp(url: string, options?: { name?: string }) {
+  const localPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
+  const { context, page } = await launchApp(localPlaywright['chromium'], {
+    sdkLanguage: 'javascript',
+    windowSize: { width: 1280, height: 800 },
+    persistentContextOptions: {
+      headless: false,
+    },
+  });
+
+  const controller = new ProgressController();
+  await controller.run(async progress => {
+    await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+    if (options?.name)
+      await syncLocalStorageWithSettings(page, options.name);
+    await page.mainFrame().goto(progress, url);
+  });
+  return page;
 }
 
 class StdinServer implements Transport {

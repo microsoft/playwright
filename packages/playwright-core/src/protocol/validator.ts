@@ -1157,6 +1157,19 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextDevtoolsStartParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+  port: tOptional(tInt),
+  host: tOptional(tString),
+});
+scheme.BrowserContextDevtoolsStartResult = tObject({
+  url: tString,
+});
+scheme.BrowserContextDevtoolsStopParams = tOptional(tObject({}));
+scheme.BrowserContextDevtoolsStopResult = tOptional(tObject({}));
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({

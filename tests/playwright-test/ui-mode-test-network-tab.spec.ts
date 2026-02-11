@@ -374,7 +374,6 @@ test('should not preserve selection across test runs', async ({ runUITest, serve
       import { test, expect } from '@playwright/test';
       test('network tab test', async ({ page }) => {
         await page.goto('${server.PREFIX}/network-tab/network.html');
-        await page.evaluate(() => (window as any).donePromise);
       });
     `,
   });
@@ -383,11 +382,35 @@ test('should not preserve selection across test runs', async ({ runUITest, serve
   await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
 
   await page.getByRole('tab', { name: 'Network' }).click();
-  const networkItem = page.getByRole('listitem').filter({ hasText: 'network.html' });
-  await networkItem.click();
+  await page.getByRole('listitem').filter({ hasText: 'network.html' }).click();
   const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
   await expect(headersPanel).toBeVisible();
 
   await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
   await expect(headersPanel).toBeHidden();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await expect(headersPanel).toBeHidden();
+});
+
+test('should preserve selection during test run', async ({ runUITest, server }, testInfo) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        // Keep test running to make sure that selected network entry stay open
+        await page.waitForTimeout(${testInfo.timeout});
+      });
+    `,
+  });
+
+  await page.getByRole('treeitem', { name: 'network tab test' }).dblclick();
+  await page.getByRole('tab', { name: 'Network' }).click();
+  await page.getByRole('listitem').filter({ hasText: 'network.html' }).click();
+  const headersPanel = page.getByRole('tabpanel', { name: 'Headers' });
+  await expect(headersPanel).toBeVisible();
+
+  // Wait to ensure that trace polling (every 500ms) does not close the selected entry
+  await page.waitForTimeout(1000);
+  await expect(headersPanel).toBeVisible();
 });

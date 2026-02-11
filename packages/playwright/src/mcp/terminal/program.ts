@@ -25,63 +25,38 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
-import type { FullConfig } from '../browser/config';
+import { baseDaemonDir, Registry } from './registry';
 
+import type { FullConfig } from '../browser/config';
 import type { Config } from '../config';
+import type { SessionConfig, ClientInfo } from './registry';
 
 type MinimistArgs = {
   _: string[];
   [key: string]: any;
 };
 
-export type SessionConfig = {
-  version: string;
-  socketPath: string;
-  cli: {
-    headed?: boolean;
-    extension?: boolean;
-    browser?: string;
-    persistent?: boolean;
-    profile?: string;
-    config?: string;
-  };
-  userDataDirPrefix?: string;
-  workspaceDir?: string;
-  resolvedConfig?: FullConfig
-};
-
-type ClientInfo = {
-  version: string;
-  workspaceDirHash: string;
-  daemonProfilesDir: string;
-  workspaceDir: string | undefined;
-};
-
-class Session {
+export class Session {
   readonly name: string;
+  readonly config: SessionConfig;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
-  private _config: SessionConfig;
   private _clientInfo: ClientInfo;
 
-  constructor(clientInfo: ClientInfo, name: string, options: SessionConfig) {
-    this.name = name;
+  constructor(clientInfo: ClientInfo, options: SessionConfig) {
     this._clientInfo = clientInfo;
-    this._config = options;
-  }
-
-  config(): SessionConfig {
-    return this._config;
+    this.config = options;
+    this.name = options.name;
   }
 
   isCompatible(): boolean {
-    return this._clientInfo.version === this._config.version;
+    return this._clientInfo.version === this.config.version;
   }
 
   checkCompatible() {
     if (!this.isCompatible()) {
-      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this._config.version}. Run
+      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this.config.version}. Run
 
   playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open
 
@@ -91,7 +66,9 @@ to restart the browser session.`);
 
   async run(args: MinimistArgs): Promise<{ text: string }> {
     this.checkCompatible();
-    return await this._send('run', { args, cwd: process.cwd() });
+    const result = await this._send('run', { args, cwd: process.cwd() });
+    this.disconnect();
+    return result;
   }
 
   async stop(quiet: boolean = false): Promise<void> {
@@ -113,7 +90,7 @@ to restart the browser session.`);
       id: messageId,
       method,
       params,
-      version: this._config.version,
+      version: this.config.version,
     };
     const responsePromise = new Promise<any>((resolve, reject) => {
       this._callbacks.set(messageId, { resolve, reject, method, params });
@@ -165,12 +142,12 @@ to restart the browser session.`);
 
   async _connect(): Promise<{ socket?: net.Socket, error?: Error }> {
     return await new Promise(resolve => {
-      const socket = net.createConnection(this._config.socketPath, () => {
+      const socket = net.createConnection(this.config.socketPath, () => {
         resolve({ socket });
       });
       socket.on('error', error => {
         if (os.platform() !== 'win32')
-          void fs.promises.unlink(this._config.socketPath).catch(() => {}).then(() => resolve({ error }));
+          void fs.promises.unlink(this.config.socketPath).catch(() => {}).then(() => resolve({ error }));
         else
           resolve({ error });
       });
@@ -194,7 +171,7 @@ to restart the browser session.`);
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket, this._config.version);
+    this._connection = new SocketConnection(socket, this.config.version);
     this._connection.onmessage = message => this._onMessage(message);
     this._connection.onclose = () => this.disconnect();
     return this._connection;
@@ -224,8 +201,8 @@ to restart the browser session.`);
     const cliPath = path.join(__dirname, '../../../cli.js');
 
     const sessionConfigFile = this._sessionFile('.session');
-    this._config.version = this._clientInfo.version;
-    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+    this.config.version = this._clientInfo.version;
+    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
 
     const errLog = this._sessionFile('.err');
     const err = fs.openSync(errLog, 'w');
@@ -288,17 +265,17 @@ to restart the browser session.`);
       console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
       const resolvedConfig = await parseResolvedConfig(outLog);
       if (resolvedConfig) {
-        this._config.resolvedConfig = resolvedConfig;
+        this.config.resolvedConfig = resolvedConfig;
         console.log(`- ${this.name}:`);
         console.log(renderResolvedConfig(resolvedConfig).join('\n'));
       }
       console.log(`---`);
 
-      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this._config, null, 2));
+      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
       return socket;
     }
 
-    console.error(`Failed to connect to daemon at ${this._config.socketPath}`);
+    console.error(`Failed to connect to daemon at ${this.config.socketPath}`);
     process.exit(1);
   }
 
@@ -306,10 +283,10 @@ to restart the browser session.`);
     let error: Error | undefined;
     await this._send('stop').catch(e => { error = e; });
     if (os.platform() !== 'win32')
-      await fs.promises.unlink(this._config.socketPath).catch(() => {});
+      await fs.promises.unlink(this.config.socketPath).catch(() => {});
 
     this.disconnect();
-    if (!this._config.cli.persistent)
+    if (!this.config.cli.persistent)
       await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
@@ -320,92 +297,16 @@ to restart the browser session.`);
   }
 }
 
-class SessionManager {
-  readonly clientInfo: ClientInfo;
-  readonly sessions: Map<string, Session>;
-
-  private constructor(clientInfo: ClientInfo, sessions: Map<string, Session>) {
-    this.clientInfo = clientInfo;
-    this.sessions = sessions;
-  }
-
-  static async create(clientInfo: ClientInfo): Promise<SessionManager> {
-    const dir = clientInfo.daemonProfilesDir;
-    const sessions = new Map<string, Session>();
-    const files = await fs.promises.readdir(dir).catch(() => []);
-    for (const file of files) {
-      if (!file.endsWith('.session'))
-        continue;
-      try {
-        const sessionName = path.basename(file, '.session');
-        const sessionConfig = await fs.promises.readFile(path.join(dir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-        sessions.set(sessionName, new Session(clientInfo, sessionName, sessionConfig));
-      } catch {
-      }
-    }
-    return new SessionManager(clientInfo, sessions);
-  }
-
-  async open(args: MinimistArgs): Promise<void> {
-    const sessionName = this._resolveSessionName(args.session);
-    let session = this.sessions.get(sessionName);
-    if (session)
-      await session.stop(true);
-
-    session = new Session(this.clientInfo, sessionName, sessionConfigFromArgs(this.clientInfo, sessionName, args));
-    this.sessions.set(sessionName, session);
-    await this.run(args);
-  }
-
-  async run(args: MinimistArgs): Promise<void> {
-    const sessionName = this._resolveSessionName(args.session);
-    const session = this.sessions.get(sessionName);
-    if (!session) {
-      console.log(`The browser '${sessionName}' is not open, please run open first`);
-      console.log('');
-      console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
-      process.exit(1);
-    }
-
-    for (const globalOption of globalOptions)
-      delete args[globalOption];
-    const result = await session.run(args);
-    console.log(result.text);
-    session.disconnect();
-  }
-
-  async close(options: GlobalOptions): Promise<void> {
-    const sessionName = this._resolveSessionName(options.session);
-    const session = this.sessions.get(sessionName);
-    if (!session || !await session.canConnect()) {
-      console.log(`Browser '${sessionName}' is not open.`);
-      return;
-    }
-
-    await session.stop();
-  }
-
-  async deleteData(options: GlobalOptions): Promise<void> {
-    const sessionName = this._resolveSessionName(options.session);
-    const session = this.sessions.get(sessionName);
-    if (!session) {
-      console.log(`No user data found for browser '${sessionName}'.`);
-      return;
-    }
-    await session.deleteData();
-    this.sessions.delete(sessionName);
-  }
-
-  private _resolveSessionName(sessionName?: string): string {
-    if (sessionName)
-      return sessionName;
-    if (process.env.PLAYWRIGHT_CLI_SESSION)
-      return process.env.PLAYWRIGHT_CLI_SESSION;
-    return 'default';
-  }
+function resolveSessionName(sessionName?: string): string {
+  if (sessionName)
+    return sessionName;
+  if (process.env.PLAYWRIGHT_CLI_SESSION)
+    return process.env.PLAYWRIGHT_CLI_SESSION;
+  return 'default';
 }
 
-function createClientInfo(packageLocation: string): ClientInfo {
+export function createClientInfo(): ClientInfo {
+  const packageLocation = require.resolve('../../../package.json');
   const packageJSON = require(packageLocation);
   const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
@@ -434,22 +335,6 @@ function findWorkspaceDir(startDir: string): string | undefined {
   }
   return undefined;
 }
-
-const baseDaemonDir = (() => {
-  if (process.env.PLAYWRIGHT_DAEMON_SESSION_DIR)
-    return process.env.PLAYWRIGHT_DAEMON_SESSION_DIR;
-
-  let localCacheDir: string | undefined;
-  if (process.platform === 'linux')
-    localCacheDir = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-  if (process.platform === 'darwin')
-    localCacheDir = path.join(os.homedir(), 'Library', 'Caches');
-  if (process.platform === 'win32')
-    localCacheDir = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-  if (!localCacheDir)
-    throw new Error('Unsupported platform: ' + process.platform);
-  return path.join(localCacheDir, 'ms-playwright', 'daemon');
-})();
 
 const daemonProfilesDir = (workspaceDirHash: string) => {
   return path.join(baseDaemonDir, workspaceDirHash);
@@ -486,18 +371,15 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'all',
   'help',
   'version',
-  'extension',
-  'headed',
-  'persistent'
 ];
 
-export async function program(packageLocation: string) {
-  const clientInfo = createClientInfo(packageLocation);
+export async function program() {
+  const clientInfo = createClientInfo();
   const help = require('./help.json');
 
   const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
-  const args: MinimistArgs = require('minimist')(argv, { boolean });
+  const args: MinimistArgs = require('minimist')(argv, { boolean, string: ['_'] });
   for (const [key, value] of Object.entries(args)) {
     if (key !== '_' && typeof value !== 'boolean')
       args[key] = String(value);
@@ -542,39 +424,80 @@ export async function program(packageLocation: string) {
     process.exit(1);
   }
 
-  const sessionManager = await SessionManager.create(clientInfo);
+  const registry = await Registry.load();
+  const sessionName = resolveSessionName(args.session);
 
   switch (commandName) {
     case 'list': {
-      if (args.all)
-        await listAllSessions(clientInfo);
-      else
-        await listSessions(sessionManager);
+      await listSessions(registry, clientInfo, args.all);
       return;
     }
     case 'close-all': {
-      const sessions = sessionManager.sessions;
-      for (const session of sessions.values())
-        await session.stop(true);
+      const entries = registry.entries(clientInfo);
+      for (const entry of entries)
+        await new Session(clientInfo, entry.config).stop(true);
       return;
     }
-    case 'delete-data':
-      await sessionManager.deleteData(args as GlobalOptions);
+    case 'delete-data': {
+      const entry = registry.entry(clientInfo, sessionName);
+      if (!entry) {
+        console.log(`No user data found for browser '${sessionName}'.`);
+        return;
+      }
+      await new Session(clientInfo, entry.config).deleteData();
       return;
-    case 'kill-all':
+    }
+    case 'kill-all': {
       await killAllDaemons();
       return;
-    case 'open':
-      await sessionManager.open(args);
+    }
+    case 'open': {
+      const entry = registry.entry(clientInfo, sessionName);
+      if (entry)
+        await new Session(clientInfo, entry.config).stop(true);
+      const session = new Session(clientInfo, sessionConfigFromArgs(clientInfo, sessionName, args));
+      for (const globalOption of globalOptions)
+        delete args[globalOption];
+      const result = await session.run(args);
+      console.log(result.text);
       return;
+    }
+
     case 'close':
-      await sessionManager.close(args as GlobalOptions);
+      const closeEntry = registry.entry(clientInfo, sessionName);
+      const session = closeEntry ? new Session(clientInfo, closeEntry.config) : undefined;
+      if (!session || !await session.canConnect()) {
+        console.log(`Browser '${sessionName}' is not open.`);
+        return;
+      }
+      await session.stop();
       return;
     case 'install':
       await install(args);
       return;
-    default:
-      await sessionManager.run(args);
+    case 'tray': {
+      const daemonScript = path.join(__dirname, 'trayDaemon.js');
+      const child = spawn(process.execPath, [daemonScript], {
+        detached: true,
+        stdio: 'ignore',
+      });
+      child.unref();
+      return;
+    }
+    default: {
+      const defaultEntry = registry.entry(clientInfo, sessionName);
+      if (!defaultEntry) {
+        console.log(`The browser '${sessionName}' is not open, please run open first`);
+        console.log('');
+        console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
+        process.exit(1);
+      }
+
+      for (const globalOption of globalOptions)
+        delete args[globalOption];
+      const result = await new Session(clientInfo, defaultEntry.config).run(args);
+      console.log(result.text);
+    }
   }
 }
 
@@ -677,6 +600,7 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
     args.persistent = true;
 
   return {
+    name: sessionName,
     version: clientInfo.version,
     socketPath: daemonSocketPath(clientInfo, sessionName),
     cli: {
@@ -740,51 +664,23 @@ async function killAllDaemons(): Promise<void> {
     console.log(`Killed ${killed} daemon process${killed === 1 ? '' : 'es'}.`);
 }
 
-async function listSessions(sessionManager: SessionManager): Promise<void> {
-  const sessions = sessionManager.sessions;
-  console.log('### Browsers');
-  await gcAndPrintSessions([...sessions.values()]);
-}
-
-async function listAllSessions(clientInfo: ClientInfo): Promise<void> {
-  const hashes = await fs.promises.readdir(baseDaemonDir).catch(() => []);
-
-  // Group sessions by workspace folder
-  const sessionsByWorkspace = new Map<string, Session[]>();
-  for (const hash of hashes) {
-    const hashDir = path.join(baseDaemonDir, hash);
-    const stat = await fs.promises.stat(hashDir).catch(() => null);
-    if (!stat?.isDirectory())
-      continue;
-
-    const files = await fs.promises.readdir(hashDir).catch(() => []);
-    for (const file of files) {
-      if (!file.endsWith('.session'))
-        continue;
-      try {
-        const sessionName = path.basename(file, '.session');
-        const sessionConfig = await fs.promises.readFile(path.join(hashDir, file), 'utf-8').then(data => JSON.parse(data)) as SessionConfig;
-        const session = new Session(clientInfo, sessionName, sessionConfig);
-        const workspaceKey = sessionConfig.workspaceDir || '<global>';
-        if (!sessionsByWorkspace.has(workspaceKey))
-          sessionsByWorkspace.set(workspaceKey, []);
-        sessionsByWorkspace.get(workspaceKey)!.push(session);
-      } catch {
-      }
+async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<void> {
+  if (all) {
+    const entries = registry.entryMap();
+    if (entries.size === 0) {
+      console.log('No browsers found.');
+      return;
     }
-  }
-
-  if (sessionsByWorkspace.size === 0) {
-    console.log('No browsers found.');
-    return;
-  }
-
-  const sortedWorkspaces = [...sessionsByWorkspace.keys()].sort();
-
-  for (const workspace of sortedWorkspaces) {
-    const sessions = sessionsByWorkspace.get(workspace)!;
-    console.log(`${workspace}:`);
-    await gcAndPrintSessions(sessions);
+    for (const [workspace, list] of entries) {
+      if (!list.length)
+        continue;
+      console.log(`${workspace}:`);
+      await gcAndPrintSessions(list.map(entry => new Session(clientInfo, entry.config)));
+    }
+  } else {
+    console.log('### Browsers');
+    const entries = registry.entries(clientInfo);
+    await gcAndPrintSessions(entries.map(entry => new Session(clientInfo, entry.config)));
   }
 }
 
@@ -792,12 +688,12 @@ async function gcAndPrintSessions(sessions: Session[]) {
   const running: Session[] = [];
   const stopped: Session[] = [];
 
-  for (const session of sessions.values()) {
+  for (const session of sessions) {
     const canConnect = await session.canConnect();
     if (canConnect) {
       running.push(session);
     } else {
-      if (session.config().cli.persistent)
+      if (session.config.cli.persistent)
         stopped.push(session);
       else
         await session.deleteSessionConfig();
@@ -816,7 +712,7 @@ async function gcAndPrintSessions(sessions: Session[]) {
 
 async function renderSessionStatus(session: Session) {
   const text: string[] = [];
-  const config = session.config();
+  const config = session.config;
   const canConnect = await session.canConnect();
   text.push(`- ${session.name}:`);
   text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);

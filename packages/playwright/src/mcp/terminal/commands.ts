@@ -763,6 +763,15 @@ const videoStop = declareCommand({
   toolParams: ({ filename }) => ({ filename }),
 });
 
+const show = declareCommand({
+  name: 'show',
+  description: 'Show browser DevTools',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_show',
+  toolParams: () => ({}),
+});
+
 // Sessions
 
 const sessionList = declareCommand({
@@ -830,6 +839,15 @@ const installBrowser = declareCommand({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
   }),
   toolName: 'browser_install',
+  toolParams: () => ({}),
+});
+
+const tray = declareCommand({
+  name: 'tray',
+  description: 'Run tray',
+  category: 'config',
+  hidden: true,
+  toolName: '',
   toolParams: () => ({}),
 });
 
@@ -916,6 +934,7 @@ const commandsArray: AnyCommandSchema[] = [
 
   // devtools category
   networkRequests,
+  show,
   tracingStart,
   tracingStop,
   videoStart,
@@ -925,6 +944,9 @@ const commandsArray: AnyCommandSchema[] = [
   sessionList,
   sessionCloseAll,
   killAll,
+
+  // Hidden commands
+  tray,
 ];
 
 export const commands = Object.fromEntries(commandsArray.map(cmd => [cmd.name, cmd]));
