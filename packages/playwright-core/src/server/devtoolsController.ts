@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { eventsHelper } from '../utils';
+import { createGuid, eventsHelper } from '../utils';
 import { HttpServer } from './utils/httpServer';
 import { BrowserContext } from './browserContext';
 import { Page } from './page';
@@ -48,10 +48,10 @@ export class DevToolsController {
       return this._httpServer.serveFile(request, response, resolved);
     });
 
-    this._httpServer.createWebSocket(() => new DevToolsConnection(this._context, this._screencastOptions), 'ws');
-
+    const guid = createGuid();
+    this._httpServer.createWebSocket(() => new DevToolsConnection(this._context, this._screencastOptions), guid);
     await this._httpServer.start({ port: options.port, host: options.host });
-    return this._httpServer.urlPrefix('human-readable');
+    return this._httpServer.urlPrefix('human-readable') + `?ws=${guid}`;
   }
 
   async stop() {

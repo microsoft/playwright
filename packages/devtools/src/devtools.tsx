@@ -55,7 +55,8 @@ export const DevTools: React.FC = () => {
 
   React.useEffect(() => {
     const wsProtocol = location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const transport = new DevToolsTransport(wsProtocol + '//' + location.host + '/ws');
+    const guid = new URLSearchParams(location.search).get('ws');
+    const transport = new DevToolsTransport(wsProtocol + '//' + location.host + '/' + guid);
     transportRef.current = transport;
 
     transport.onopen = () => setStatus({ text: 'Connected', cls: 'connected' });

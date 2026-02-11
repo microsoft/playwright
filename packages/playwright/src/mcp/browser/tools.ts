@@ -32,6 +32,7 @@ import route from './tools/route';
 import runCode from './tools/runCode';
 import snapshot from './tools/snapshot';
 import screenshot from './tools/screenshot';
+import show from './tools/show';
 import storage from './tools/storage';
 import tabs from './tools/tabs';
 import tracing from './tools/tracing';
@@ -61,6 +62,7 @@ export const browserTools: Tool<any>[] = [
   ...route,
   ...runCode,
   ...screenshot,
+  ...show,
   ...snapshot,
   ...storage,
   ...tabs,
