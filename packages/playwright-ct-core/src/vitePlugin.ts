@@ -294,6 +294,8 @@ function collectViteModuleDependencies(context: PluginContext, id: string, deps:
   const normalizedId = path.normalize(cleanedId);
   if (!path.isAbsolute(normalizedId))
     return;
+  if (deps.has(normalizedId))
+    return;
   deps.add(normalizedId);
   const module = context.getModuleInfo(id);
   for (const importedId of module?.importedIds || [])
