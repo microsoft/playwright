@@ -71,7 +71,7 @@ export class BidiNetworkManager {
       // the initiator type is incomplete and browser implementations are inconsistent, so we check for an
       // Access-Control-Request-Method header instead. See https://github.com/w3c/webdriver-bidi/issues/698.
       const requestHeaders = Object.fromEntries(param.request.headers.map(h => [h.name.toLowerCase(), bidiBytesValueToString(h.value)]));
-      if (requestHeaders['access-control-request-method']) {
+      if (param.initiator?.type === 'preflight' || requestHeaders['access-control-request-method']) {
         if (param.intercepts) {
           // If interception is enabled, we accept all CORS options, assuming that this was intended when setting the route.
           const responseHeaders: types.HeadersArray = [
