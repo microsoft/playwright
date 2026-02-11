@@ -374,7 +374,7 @@ it('should not expose preflight OPTIONS request with network interception', {
   }, server.CROSS_PROCESS_PREFIX + '/cors').catch(() => {});
   expect(response).toBe('Hello there!');
   expect.soft(serverRequests).toEqual([
-    ...(browserName !== 'chromium' && !isBidi ? ['OPTIONS /cors'] : []),
+    ...(browserName === 'chromium' || isBidi ? [] : ['OPTIONS /cors']),
     'POST /cors',
   ]);
   expect.soft(clientRequests).toEqual([
