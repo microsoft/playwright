@@ -106,9 +106,7 @@ export function decorateCommand(command: Command, version: string) {
         }
 
         const browserContextFactory = contextFactory(config);
-        // Always force new tab in cli mode as the first command is always navigation.
-        const forceNewTab = !!config.sessionConfig;
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath, forceNewTab);
+        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
         if (config.sessionConfig) {
           const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;

@@ -29,13 +29,11 @@ export class ExtensionContextFactory implements BrowserContextFactory {
   private _browserChannel: string;
   private _userDataDir?: string;
   private _executablePath?: string;
-  private _forceNewTab: boolean;
 
-  constructor(browserChannel: string, userDataDir: string | undefined, executablePath: string | undefined, forceNewTab: boolean) {
+  constructor(browserChannel: string, userDataDir: string | undefined, executablePath: string | undefined) {
     this._browserChannel = browserChannel;
     this._userDataDir = userDataDir;
     this._executablePath = executablePath;
-    this._forceNewTab = forceNewTab;
   }
 
   async createContext(clientInfo: ClientInfo, abortSignal: AbortSignal, options: { toolName?: string }): Promise<{ browserContext: playwright.BrowserContext, close: () => Promise<void> }> {
@@ -51,7 +49,7 @@ export class ExtensionContextFactory implements BrowserContextFactory {
 
   private async _obtainBrowser(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<playwright.Browser> {
     const relay = await this._startRelay(abortSignal);
-    const forceNewTab = this._forceNewTab || toolName === 'browser_navigate';
+    const forceNewTab = toolName === 'browser_navigate';
     await relay.ensureExtensionConnectionForMCPContext(clientInfo, abortSignal, forceNewTab);
     return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
   }

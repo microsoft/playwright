@@ -48,7 +48,7 @@ const open = declareCommand({
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
   }),
-  toolName: 'browser_navigate',
+  toolName: ({ url }) => url ? 'browser_navigate' : 'browser_snapshot',
   toolParams: ({ url }) => ({ url: url || 'about:blank' }),
 });
 
