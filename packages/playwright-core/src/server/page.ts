@@ -400,6 +400,10 @@ export class Page extends SdkObject<PageEventMap> {
       this.emitOnContext(BrowserContext.Events.Console, message);
   }
 
+  clearConsoleMessages() {
+    this._consoleMessages.length = 0;
+  }
+
   consoleMessages() {
     return this._consoleMessages;
   }

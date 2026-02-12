@@ -272,6 +272,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.keyboard.press(progress, params.key, params);
   }
 
+  async clearConsoleMessages(params: channels.PageClearConsoleMessagesParams, progress: Progress): Promise<channels.PageClearConsoleMessagesResult> {
+    this._page.clearConsoleMessages();
+  }
+
   async consoleMessages(params: channels.PageConsoleMessagesParams, progress: Progress): Promise<channels.PageConsoleMessagesResult> {
     // Send all future console messages to the client, so that it can reliably receive all of them.
     // Otherwise, if subscription is added in a different task from this call (either before or after),

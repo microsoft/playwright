@@ -275,3 +275,24 @@ it('consoleMessages should work', async ({ page }) => {
   expect(objects.length, 'should be at least 100 messages').toBeGreaterThanOrEqual(100);
   expect(objects.slice(objects.length - expected.length), 'should return last messages').toEqual(expected);
 });
+
+it('clearConsoleMessages should work', async ({ page }) => {
+  await page.evaluate(() => {
+    console.log('message1');
+    console.log('message2');
+  });
+
+  let messages = await page.consoleMessages();
+  expect(messages.map(m => m.text())).toContain('message1');
+  expect(messages.map(m => m.text())).toContain('message2');
+
+  await page.clearConsoleMessages();
+
+  messages = await page.consoleMessages();
+  expect(messages).toEqual([]);
+
+  await page.evaluate(() => console.log('message3'));
+  messages = await page.consoleMessages();
+  expect(messages.length).toBe(1);
+  expect(messages[0].text()).toBe('message3');
+});

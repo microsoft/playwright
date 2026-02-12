@@ -2088,6 +2088,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   _type_Page: boolean;
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
+  clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
   consoleMessages(params?: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
   exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
@@ -2187,6 +2188,9 @@ export type PageCloseOptions = {
   reason?: string,
 };
 export type PageCloseResult = void;
+export type PageClearConsoleMessagesParams = {};
+export type PageClearConsoleMessagesOptions = {};
+export type PageClearConsoleMessagesResult = void;
 export type PageConsoleMessagesParams = {};
 export type PageConsoleMessagesOptions = {};
 export type PageConsoleMessagesResult = {
