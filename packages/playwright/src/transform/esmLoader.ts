@@ -61,8 +61,7 @@ const kSupportedFormats = new Map([
 
 // Node < 18.6: defaultLoad takes 3 arguments.
 // Node >= 18.6: nextLoad from the chain takes 2 arguments.
-async function load(originalModuleUrl: string, context: { format?: string }, defaultLoad: Function) {
-  const moduleUrl = originalModuleUrl.replace(esmPreflightExtension, '');
+async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
   // Bail out for wasm, json, etc.
   if (!kSupportedFormats.has(context.format))
     return defaultLoad(moduleUrl, context, defaultLoad);
@@ -71,7 +70,13 @@ async function load(originalModuleUrl: string, context: { format?: string }, def
   if (!moduleUrl.startsWith('file://'))
     return defaultLoad(moduleUrl, context, defaultLoad);
 
+  const isPreflight = moduleUrl.endsWith(esmPreflightExtension);
+  moduleUrl = moduleUrl.replace(esmPreflightExtension, '');
   const filename = url.fileURLToPath(moduleUrl);
+  const format = kSupportedFormats.get(context.format) || (fileIsModule(filename) ? 'module' : 'commonjs');
+  if (isPreflight)
+    return { format, source: `void 0;`, shortCircuit: true };
+
   // Bail for node_modules.
   if (!shouldTransform(filename))
     return defaultLoad(moduleUrl, context, defaultLoad);
@@ -85,11 +90,7 @@ async function load(originalModuleUrl: string, context: { format?: string }, def
 
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
-  return {
-    format: kSupportedFormats.get(context.format) || (fileIsModule(filename) ? 'module' : 'commonjs'),
-    source: originalModuleUrl.endsWith(esmPreflightExtension) ? `void 0;` : transformed.code,
-    shortCircuit: true,
-  };
+  return { format, source: transformed.code, shortCircuit: true };
 }
 
 let transport: PortTransport | undefined;
