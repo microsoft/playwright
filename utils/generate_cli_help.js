@@ -19,7 +19,7 @@
 const fs = require('fs')
 const path = require('path')
 
-const { generateHelp, generateReadme, generateHelpJSON } = require('../packages/playwright/lib/mcp/terminal/helpGenerator.js');
+const { generateHelp, generateReadme, generateHelpJSON } = require('../packages/playwright/lib/cli/daemon/helpGenerator.js');
 
 if (process.argv[2] === '--readme') {
   console.log(generateReadme());
@@ -31,6 +31,6 @@ if (process.argv[2] === '--print') {
   process.exit(0);
 }
 
-const fileName = path.resolve(__dirname, '../packages/playwright/lib/mcp/terminal/help.json');
+const fileName = path.resolve(__dirname, '../packages/playwright/lib/cli/client/help.json');
 console.log('Writing ', path.relative(process.cwd(), fileName));
 fs.writeFileSync(fileName, JSON.stringify(generateHelpJSON(), null, 2));

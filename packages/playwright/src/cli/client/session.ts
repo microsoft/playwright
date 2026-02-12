@@ -23,9 +23,9 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
-import { SocketConnection } from './socketConnection';
+import { compareSemver, SocketConnection } from './socketConnection';
 
-import type { FullConfig } from '../browser/config';
+import type { FullConfig } from '../../mcp/browser/config';
 import type { SessionConfig, ClientInfo } from './registry';
 
 type MinimistArgs = {
@@ -48,7 +48,7 @@ export class Session {
   }
 
   isCompatible(): boolean {
-    return this._clientInfo.version === this.config.version;
+    return compareSemver(this._clientInfo.version, this.config.version) >= 0;
   }
 
   checkCompatible() {
@@ -212,7 +212,7 @@ to restart the browser session.`);
 
     const args = [
       cliPath,
-      'run-mcp-server',
+      'run-cli-server',
       `--daemon-session=${sessionConfigFile}`,
     ];
 

@@ -23,14 +23,14 @@ import url from 'url';
 import { debug } from 'playwright-core/lib/utilsBundle';
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
-import { BrowserServerBackend } from '../browser/browserServerBackend';
-import { SocketConnection } from './socketConnection';
+import { BrowserServerBackend } from '../../mcp/browser/browserServerBackend';
+import { SocketConnection } from '../client/socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
 
-import type * as mcp from '../sdk/exports';
-import type { BrowserContextFactory } from '../browser/browserContextFactory';
-import type { FullConfig } from '../browser/config';
+import type * as mcp from '../../mcp/sdk/exports';
+import type { BrowserContextFactory } from '../../mcp/browser/browserContextFactory';
+import type { FullConfig } from '../../mcp/browser/config';
 
 const daemonDebug = debug('pw:daemon');
 

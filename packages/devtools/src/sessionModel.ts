@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ClientInfo, SessionConfig } from '../../playwright/src/mcp/terminal/registry';
+import type { ClientInfo, SessionConfig } from '../../playwright/src/cli/client/registry';
 
 export type SessionStatus = {
   config: SessionConfig;

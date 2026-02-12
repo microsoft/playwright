@@ -89,8 +89,8 @@ export class SocketConnection {
 }
 
 export function compareSemver(a: string, b: string): number {
-  a = a.replace(/-[\w]+$/, '');
-  b = b.replace(/-[\w]+$/, '');
+  a = a.replace(/-.*$/, '');
+  b = b.replace(/-.*$/, '');
   const aParts = a.split('.').map(Number);
   const bParts = b.split('.').map(Number);
   for (let i = 0; i < 3; i++) {
