@@ -22,7 +22,7 @@ import { verifyViewport } from '../config/utils';
 browserTest.describe('page screenshot', () => {
   browserTest.skip(({ browserName, headless }) => browserName === 'firefox' && !headless, 'Firefox headed produces a different image.');
 
-  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory, browserName, isHeadlessShell, channel }) => {
+  browserTest('should run in parallel in multiple pages', async ({ server, contextFactory }) => {
     const context = await contextFactory();
     const N = 5;
     const pages = await Promise.all(Array(N).fill(0).map(async () => {
@@ -50,7 +50,7 @@ browserTest.describe('page screenshot', () => {
     await context.close();
   });
 
-  browserTest('should work with a mobile viewport and clip', async ({ browser, server, browserName, channel }) => {
+  browserTest('should work with a mobile viewport and clip', async ({ browser, server, browserName }) => {
     browserTest.skip(browserName === 'firefox');
 
     const context = await browser.newContext({ viewport: { width: 320, height: 480 }, isMobile: true });
@@ -96,6 +96,18 @@ browserTest.describe('page screenshot', () => {
     await page.goto(server.PREFIX + '/grid.html');
     const screenshot = await page.screenshot({ scale: 'css' });
     expect(screenshot).toMatchSnapshot('screenshot-device-scale-factor-css-size.png');
+    await context.close();
+  });
+
+  browserTest('should produce screenshot of correct size with scale:css and null viewport', async ({ browser, server }) => {
+    const context = await browser.newContext({ viewport: null });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/grid.html');
+    const [innerWidth, innerHeight] = await page.evaluate(() => [window.innerWidth, window.innerHeight]);
+    const screenshot = await page.screenshot({ scale: 'css' });
+    const decoded = PNG.sync.read(screenshot);
+    expect(decoded.width).toBe(innerWidth);
+    expect(decoded.height).toBe(innerHeight);
     await context.close();
   });
 
