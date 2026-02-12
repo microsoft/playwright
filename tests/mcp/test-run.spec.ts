@@ -164,3 +164,34 @@ Running 3 tests using 1 worker
   ok 3 [id=<ID>] [project=chromium] › example.test.ts:6:11 › example2 (XXms)
   3 passed (XXms)`);
 });
+
+test('concurrent test_run calls should all receive responses', async ({ startClient }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('a passes', () => {});
+    `,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('b passes', () => {});
+    `,
+    'c.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('c passes', () => {});
+    `,
+  });
+
+  const { client } = await startClient();
+  const [responseA, responseB, responseC] = await Promise.all([
+    client.callTool({ name: 'test_run', arguments: { locations: ['a.test.ts'] } }),
+    client.callTool({ name: 'test_run', arguments: { locations: ['b.test.ts'] } }),
+    client.callTool({ name: 'test_run', arguments: { locations: ['c.test.ts'] } }),
+  ]);
+
+  expect(responseA.content[0].text).toContain('a passes');
+  expect(responseB.content[0].text).toContain('b passes');
+  expect(responseC.content[0].text).toContain('c passes');
+  expect(responseA.isError).toBeFalsy();
+  expect(responseB.isError).toBeFalsy();
+  expect(responseC.isError).toBeFalsy();
+});
