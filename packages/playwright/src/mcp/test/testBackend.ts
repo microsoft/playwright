@@ -44,6 +44,7 @@ export class TestServerBackend implements mcp.ServerBackend {
   private _options: { muteConsole?: boolean, headless?: boolean };
   private _context: TestContext | undefined;
   private _configPath: string | undefined;
+  private _callLock: Promise<unknown> = Promise.resolve();
 
   constructor(configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._options = options || {};
@@ -62,10 +63,18 @@ export class TestServerBackend implements mcp.ServerBackend {
     const tool = this._tools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${this._tools.map(tool => tool.schema.name).join(', ')}`);
+    // Serialize concurrent tool calls to prevent race conditions
+    // in TestContext's single TestRunner slot.
+    const previous = this._callLock;
+    let resolve: () => void;
+    this._callLock = new Promise<void>(r => resolve = r);
+    await previous;
     try {
       return await tool.handle(this._context!, tool.schema.inputSchema.parse(args || {}));
     } catch (e) {
       return { content: [{ type: 'text', text: String(e) }], isError: true };
+    } finally {
+      resolve!();
     }
   }
 

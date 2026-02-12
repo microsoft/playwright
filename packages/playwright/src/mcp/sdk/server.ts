@@ -174,7 +174,15 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
 
 export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], socketPath?: string }) {
   if (options.port === undefined) {
-    await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
+    // Capture the original stdout.write so that monkey-patching
+    // (e.g. claimStdio in testContext) cannot intercept MCP responses.
+    /* eslint-disable no-restricted-properties */
+    const originalWrite = process.stdout.write.bind(process.stdout);
+    const protectedStdout = Object.create(process.stdout, {
+      write: { value: originalWrite, writable: false, configurable: false },
+    });
+    /* eslint-enable no-restricted-properties */
+    await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(process.stdin, protectedStdout), false);
     return;
   }
 
