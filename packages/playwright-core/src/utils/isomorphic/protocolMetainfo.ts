@@ -106,6 +106,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.devtoolsStop', { internal: true, }],
   ['Page.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['Page.close', { title: 'Close page', pausesBeforeAction: true, }],
+  ['Page.clearConsoleMessages', { title: 'Clear console messages', }],
   ['Page.consoleMessages', { title: 'Get console messages', group: 'getter', }],
   ['Page.emulateMedia', { title: 'Emulate media', snapshot: true, pausesBeforeAction: true, }],
   ['Page.exposeBinding', { title: 'Expose binding', group: 'configuration', }],

@@ -1230,6 +1230,8 @@ scheme.PageCloseParams = tObject({
   reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
+scheme.PageClearConsoleMessagesParams = tOptional(tObject({}));
+scheme.PageClearConsoleMessagesResult = tOptional(tObject({}));
 scheme.PageConsoleMessagesParams = tOptional(tObject({}));
 scheme.PageConsoleMessagesResult = tObject({
   messages: tArray(tObject({

@@ -1589,6 +1589,9 @@ Page:
       flags:
         pausesBeforeAction: true
 
+    clearConsoleMessages:
+      title: Clear console messages
+
     consoleMessages:
       title: Get console messages
       group: getter
