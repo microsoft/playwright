@@ -103,7 +103,6 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.clockSetFixedTime', { title: 'Set fixed time "{timeNumber|timeString}"', }],
   ['BrowserContext.clockSetSystemTime', { title: 'Set system time "{timeNumber|timeString}"', }],
   ['BrowserContext.devtoolsStart', { internal: true, }],
-  ['BrowserContext.devtoolsStop', { internal: true, }],
   ['Page.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['Page.close', { title: 'Close page', pausesBeforeAction: true, }],
   ['Page.consoleMessages', { title: 'Get console messages', group: 'getter', }],

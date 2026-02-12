@@ -25,24 +25,26 @@ import type { Transport } from './utils/httpServer';
 
 export class DevToolsController {
   private _context: BrowserContext;
-  private _screencastOptions: { width: number, height: number, quality: number } = { width: 800, height: 600, quality: 90 };
-  private _httpServer: HttpServer;
+  private _url: string | undefined;
+  private _httpServer: HttpServer | undefined;
 
   constructor(context: BrowserContext) {
     this._context = context;
-    this._httpServer = new HttpServer();
   }
 
   async start(options: { width: number, height: number, quality: number, port?: number, host?: string }): Promise<string> {
-    this._screencastOptions = options;
-    const guid = createGuid();
-    this._httpServer.createWebSocket(() => new DevToolsConnection(this._context, this._screencastOptions), guid);
-    await this._httpServer.start({ port: options.port, host: options.host });
-    return (this._httpServer.urlPrefix('human-readable') + `/${guid}`).replace('http://', 'ws://');
+    if (!this._url) {
+      const guid = createGuid();
+      this._httpServer = new HttpServer();
+      this._httpServer.createWebSocket(() => new DevToolsConnection(this._context), guid);
+      await this._httpServer.start({ port: options.port, host: options.host });
+      this._url = (this._httpServer.urlPrefix('human-readable') + `/${guid}`).replace('http://', 'ws://');
+    }
+    return this._url;
   }
 
-  async stop() {
-    await this._httpServer.stop();
+  async dispose() {
+    await this._httpServer?.stop();
   }
 }
 
@@ -56,11 +58,9 @@ class DevToolsConnection implements Transport {
   private _pageListeners: RegisteredListener[] = [];
   private _contextListeners: RegisteredListener[] = [];
   private _context: BrowserContext;
-  private _screencastOptions: { width: number, height: number, quality: number };
 
-  constructor(context: BrowserContext, screencastOptions: { width: number, height: number, quality: number }) {
+  constructor(context: BrowserContext) {
     this._context = context;
-    this._screencastOptions = screencastOptions;
   }
 
   onconnect() {
@@ -176,7 +176,7 @@ class DevToolsConnection implements Transport {
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
     );
 
-    await page.screencast.startScreencast(this, this._screencastOptions);
+    await page.screencast.startScreencast(this, { width: 800, height: 600, quality: 90 });
 
     // Send URL to this client.
     const url = page.mainFrame().url();

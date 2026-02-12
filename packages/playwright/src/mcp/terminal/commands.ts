@@ -781,15 +781,6 @@ const devtoolsStart = declareCommand({
   toolParams: () => ({}),
 });
 
-const devtoolsStop = declareCommand({
-  name: 'devtools-stop',
-  description: 'Stop browser DevTools',
-  category: 'devtools',
-  args: z.object({}),
-  toolName: 'browser_devtools_stop',
-  toolParams: () => ({}),
-});
-
 // Sessions
 
 const sessionList = declareCommand({
@@ -958,7 +949,6 @@ const commandsArray: AnyCommandSchema[] = [
   videoStop,
   devtoolsShow,
   devtoolsStart,
-  devtoolsStop,
 
   // session category
   sessionList,

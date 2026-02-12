@@ -586,12 +586,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     throw new Error(`File access denied: ${filePath} is outside allowed roots. Allowed roots: ${this._allowedDirectories.length ? this._allowedDirectories.join(', ') : 'none'}`);
   }
 
-  async _devtoolsStart(options: { size?: { width: number, height: number }, port?: number, host?: string } = {}): Promise<{ url: string }> {
-    return await this._channel.devtoolsStart(options);
-  }
-
-  async _devtoolsStop(): Promise<void> {
-    await this._channel.devtoolsStop();
+  async _devtoolsStart(): Promise<{ url: string }> {
+    return await this._channel.devtoolsStart();
   }
 }
 

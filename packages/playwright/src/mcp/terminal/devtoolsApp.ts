@@ -58,18 +58,18 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
     const registry = await Registry.load();
-    const result: { config: SessionConfig, canConnect: boolean }[] = [];
+    const sessions: { config: SessionConfig, canConnect: boolean }[] = [];
     for (const [, entries] of registry.entryMap()) {
       for (const entry of entries) {
         const session = new Session(clientInfo, entry.config);
         const canConnect = await session.canConnect();
         if (canConnect || entry.config.cli.persistent)
-          result.push({ config: entry.config, canConnect });
+          sessions.push({ config: entry.config, canConnect });
         else
           await session.deleteSessionConfig();
       }
     }
-    sendJSON(response, result);
+    sendJSON(response, { sessions, clientInfo });
     return;
   }
 
@@ -78,6 +78,15 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
     if (!body.config)
       throw new Error('Missing "config" parameter');
     await new Session(clientInfo, body.config).stop();
+    sendJSON(response, { success: true });
+    return;
+  }
+
+  if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
+    const body = await readBody(request);
+    if (!body.config)
+      throw new Error('Missing "config" parameter');
+    await new Session(clientInfo, body.config).deleteData();
     sendJSON(response, { success: true });
     return;
   }
@@ -93,7 +102,7 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
     return;
   }
 
-  if (apiPath === '/api/sessions/start-screencast' && request.method === 'POST') {
+  if (apiPath === '/api/sessions/devtools-start' && request.method === 'POST') {
     const body = await readBody(request);
     if (!body.config)
       throw new Error('Missing "config" parameter');
@@ -102,15 +111,6 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
     if (!match)
       throw new Error('Failed to parse screencast URL from: ' + result.text);
     sendJSON(response, { url: match[1] });
-    return;
-  }
-
-  if (apiPath === '/api/sessions/stop-screencast' && request.method === 'POST') {
-    const body = await readBody(request);
-    if (!body.config)
-      throw new Error('Missing "config" parameter');
-    await new Session(clientInfo, body.config).run({ _: ['devtools-stop'] });
-    sendJSON(response, { success: true });
     return;
   }
 

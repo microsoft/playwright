@@ -20,113 +20,12 @@ import { navigate } from './index';
 import { Screencast } from './screencast';
 
 import type { SessionConfig } from '../../playwright/src/mcp/terminal/registry';
+import type { SessionModel, SessionStatus } from './sessionModel';
 
-type SessionStatus = {
-  config: SessionConfig;
-  canConnect: boolean;
-};
-
-export const Grid: React.FC = () => {
-  const [sessions, setSessions] = React.useState<SessionStatus[]>([]);
-  const [loading, setLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | undefined>();
-  const [screencastUrls, setScreencastUrls] = React.useState<Record<string, string>>({});
-
-  const lastJsonRef = React.useRef<string>('');
-  const knownTimestampsRef = React.useRef<Map<string, number>>(new Map());
-  const startingRef = React.useRef<Set<string>>(new Set());
-
-  async function fetchSessions() {
-    try {
-      const response = await fetch('/api/sessions/list');
-      if (!response.ok)
-        throw new Error(`HTTP ${response.status}`);
-      const text = await response.text();
-      if (text !== lastJsonRef.current) {
-        lastJsonRef.current = text;
-        setSessions(JSON.parse(text));
-      }
-      setError(undefined);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  React.useEffect(() => {
-    let active = true;
-    let timeoutId: ReturnType<typeof setTimeout>;
-    async function poll() {
-      await fetchSessions();
-      if (active)
-        timeoutId = setTimeout(poll, 3000);
-    }
-    poll();
-    return () => { active = false; clearTimeout(timeoutId); };
-  }, []);
-
-  // Manage screencast lifecycle when sessions change.
-  React.useEffect(() => {
-    let active = true;
-    const liveSockets = new Set<string>();
-
-    for (const { config, canConnect } of sessions) {
-      if (!canConnect)
-        continue;
-      const key = config.socketPath;
-      liveSockets.add(key);
-
-      const known = knownTimestampsRef.current.get(key);
-      if (known === config.timestamp)
-        continue;
-      if (startingRef.current.has(key))
-        continue;
-
-      knownTimestampsRef.current.set(key, config.timestamp);
-      startingRef.current.add(key);
-
-      void (async () => {
-        try {
-          const resp = await fetch('/api/sessions/start-screencast', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ config }),
-          });
-          if (!resp.ok)
-            throw new Error();
-          const { url } = await resp.json();
-          if (active)
-            setScreencastUrls(prev => ({ ...prev, [key]: url }));
-        } catch {
-          knownTimestampsRef.current.delete(key);
-        } finally {
-          startingRef.current.delete(key);
-        }
-      })();
-    }
-
-    // Clean up sessions that are no longer live.
-    setScreencastUrls(prev => {
-      const next = { ...prev };
-      let changed = false;
-      for (const key of Object.keys(next)) {
-        if (!liveSockets.has(key)) {
-          delete next[key];
-          knownTimestampsRef.current.delete(key);
-          changed = true;
-        }
-      }
-      return changed ? next : prev;
-    });
-
-    return () => { active = false; };
-  }, [sessions]);
-
-  // Clear all screencasts on unmount.
-  React.useEffect(() => {
-    return () => setScreencastUrls({});
-  }, []);
+export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
+  const [expandedWorkspaces, setExpandedWorkspaces] = React.useState<Set<string>>(new Set());
+  const sessions = model.sessions;
+  const clientInfo = model.clientInfo;
 
   function browserLabel(config: SessionConfig): string {
     if (config.resolvedConfig)
@@ -134,12 +33,16 @@ export const Grid: React.FC = () => {
     return config.cli.browser || 'chromium';
   }
 
-  function headedLabel(config: SessionConfig): string {
-    if (config.resolvedConfig)
-      return config.resolvedConfig.browser.launchOptions.headless ? 'headless' : 'headed';
-    return config.cli.headed ? 'headed' : 'headless';
+  function toggleWorkspace(workspace: string) {
+    setExpandedWorkspaces(prev => {
+      const next = new Set(prev);
+      if (next.has(workspace))
+        next.delete(workspace);
+      else
+        next.add(workspace);
+      return next;
+    });
   }
-
 
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
@@ -154,59 +57,100 @@ export const Grid: React.FC = () => {
     }
     for (const list of groups.values())
       list.sort((a, b) => a.config.name.localeCompare(b.config.name));
-    return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }, [sessions]);
+
+    // Current workspace first, then alphabetical.
+    const entries = [...groups.entries()];
+    const current = entries.filter(([key]) => key === clientInfo?.workspaceDir);
+    const other = entries.filter(([key]) => key !== clientInfo?.workspaceDir).sort((a, b) => a[0].localeCompare(b[0]));
+    return [...current, ...other];
+  }, [sessions, clientInfo?.workspaceDir]);
+
+  function renderSessionChip(config: SessionConfig, canConnect: boolean, visible: boolean) {
+    const href = '#session=' + encodeURIComponent(config.socketPath);
+    const wsUrl = model.wsUrls.get(config.socketPath);
+    return (
+      <a key={config.socketPath} className={'session-chip' + (canConnect ? '' : ' disconnected')} href={canConnect ? href : undefined} onClick={e => {
+        e.preventDefault(); if (canConnect)
+          navigate(href);
+      }}>
+        <div className='session-chip-header'>
+          <div className={'session-status-dot ' + (canConnect ? 'open' : 'closed')} />
+          <span className='session-chip-name'>{config.name}</span>
+          <span className='session-chip-detail'>{browserLabel(config)}</span>
+          <span className='session-chip-detail'>v{config.version}</span>
+          {canConnect && (
+            <button
+              className='session-chip-action'
+              title='Close session'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                void model.closeSession(config);
+              }}
+            >
+              <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
+                <line x1='2' y1='2' x2='10' y2='10'/>
+                <line x1='10' y1='2' x2='2' y2='10'/>
+              </svg>
+            </button>
+          )}
+          {!canConnect && (
+            <button
+              className='session-chip-action'
+              title='Delete session data'
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                void model.deleteSessionData(config);
+              }}
+            >
+              <svg viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.2' strokeLinecap='round' strokeLinejoin='round'>
+                <path d='M2 4h12'/>
+                <path d='M5 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1'/>
+                <path d='M4 4l.8 9a1 1 0 0 0 1 .9h4.4a1 1 0 0 0 1-.9L12 4'/>
+              </svg>
+            </button>
+          )}
+        </div>
+        <div className='screencast-container'>
+          {canConnect && visible && wsUrl && <Screencast wsUrl={wsUrl} />}
+          {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
+        </div>
+      </a>
+    );
+  }
 
   return (<div className='grid-view'>
-    {loading && sessions.length === 0 && <div className='grid-loading'>Loading sessions...</div>}
-    {error && <div className='grid-error'>Error: {error}</div>}
-    {!loading && !error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
+    {model.loading && sessions.length === 0 && <div className='grid-loading'>Loading sessions...</div>}
+    {model.error && <div className='grid-error'>Error: {model.error}</div>}
+    {!model.loading && !model.error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
 
     <div className='workspace-list'>
-      {workspaceGroups.map(([workspace, entries]) => (
-        <div key={workspace} className='workspace-group'>
-          <div className='workspace-header'>{workspace}</div>
-          <div className='session-chips'>
-            {entries.map(({ config, canConnect }) => {
-              const href = '#session=' + encodeURIComponent(config.socketPath);
-              return (
-                <a key={config.socketPath} className='session-chip' href={href} onClick={e => { e.preventDefault(); navigate(href); }}>
-                  <div className='session-chip-header'>
-                    <div className={'session-status-dot ' + (canConnect ? 'open' : 'closed')} />
-                    <span className='session-chip-name'>{config.name}</span>
-                    <span className='session-chip-detail'>{browserLabel(config)}</span>
-                    <span className='session-chip-detail'>{headedLabel(config)}</span>
-                    <span className='session-chip-detail'>v{config.version}</span>
-                    <button
-                      className='session-chip-close'
-                      title='Close session'
-                      onClick={e => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        void fetch('/api/sessions/close', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ config }),
-                        }).then(() => fetchSessions());
-                      }}
-                    >
-                      <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
-                        <line x1='2' y1='2' x2='10' y2='10'/>
-                        <line x1='10' y1='2' x2='2' y2='10'/>
-                      </svg>
-                    </button>
-                  </div>
-                  <div className='screencast-container'>
-                    {screencastUrls[config.socketPath] && (
-                      <Screencast wsUrl={screencastUrls[config.socketPath]} />
-                    )}
-                  </div>
-                </a>
-              );
-            })}
+      {workspaceGroups.map(([workspace, entries]) => {
+        const isCurrent = workspace === clientInfo?.workspaceDir;
+        const isExpanded = isCurrent || expandedWorkspaces.has(workspace);
+        return (
+          <div key={workspace} className='workspace-group'>
+            <div
+              className={'workspace-header' + (isCurrent ? '' : ' collapsible')}
+              onClick={isCurrent ? undefined : () => toggleWorkspace(workspace)}
+            >
+              {!isCurrent && (
+                <svg className={'workspace-chevron' + (isExpanded ? ' expanded' : '')} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                  <polyline points='9 18 15 12 9 6'/>
+                </svg>
+              )}
+              <span className='workspace-name'>{workspace.split('/').pop() || workspace}</span>
+              <span className='workspace-path'>&mdash; {workspace}</span>
+            </div>
+            {isExpanded && (
+              <div className='session-chips'>
+                {entries.map(({ config, canConnect }) => renderSessionChip(config, canConnect, isExpanded))}
+              </div>
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   </div>);
 };

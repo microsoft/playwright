@@ -119,7 +119,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   private _playwrightBindingExposed?: Promise<void>;
   readonly dialogManager: DialogManager;
   private _consoleApiExposed = false;
-  private _devtools: DevToolsController | undefined;
+  private _devtools: DevToolsController;
 
   constructor(browser: Browser, options: types.BrowserContextOptions, browserContextId: string | undefined) {
     super(browser, 'browser-context');
@@ -130,6 +130,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._isPersistentContext = !browserContextId;
     this._closePromise = new Promise(fulfill => this._closePromiseFulfill = fulfill);
     this._selectors = new Selectors(options.selectorEngines || [], options.testIdAttributeName);
+    this._devtools = new DevToolsController(this);
 
     this.fetchRequest = new BrowserContextAPIRequestContext(this);
     this.tracing = new Tracing(this, browser.options.tracesDir);
@@ -515,19 +516,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     await this.doUpdateRequestInterception();
   }
 
-  async devtoolsStart(options: { size?: types.Size, port?: number, host?: string } = {}): Promise<string> {
-    if (this._devtools)
-      await this._devtools.stop();
-    const size = validateVideoSize(options.size, undefined);
-    this._devtools = new DevToolsController(this);
-    return await this._devtools.start({ width: size.width, height: size.height, quality: 90, port: options.port, host: options.host });
-  }
-
-  async devtoolsStop(): Promise<void> {
-    if (!this._devtools)
-      throw new Error('DevTools is not running');
-    await this._devtools.stop();
-    this._devtools = undefined;
+  async devtoolsStart(): Promise<string> {
+    const size = validateVideoSize(undefined, undefined);
+    return await this._devtools.start({ width: size.width, height: size.height, quality: 90 });
   }
 
   isClosingOrClosed() {
@@ -553,8 +544,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this.emit(BrowserContext.Events.BeforeClose);
       this._closedStatus = 'closing';
 
-      await this._devtools?.stop();
-      this._devtools = undefined;
+      await this._devtools.dispose();
 
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();

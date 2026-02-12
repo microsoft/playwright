@@ -17,7 +17,7 @@
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
 
-const devtoolsStart = defineTool({
+const devtoolsConnect = defineTool({
   capability: 'devtools',
   skillOnly: true,
 
@@ -25,38 +25,15 @@ const devtoolsStart = defineTool({
     name: 'browser_devtools_start',
     title: 'Start browser DevTools',
     description: 'Start browser DevTools',
-    inputSchema: z.object({
-      host: z.string().optional().describe('Host to use'),
-      port: z.number().optional().describe('Port to use'),
-      guid: z.string().optional().describe('Endpoint guid to expose'),
-    }),
+    inputSchema: z.object({}),
     type: 'action',
   },
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    const { url } = await (browserContext as any)._devtoolsStart(params);
+    const { url } = await (browserContext as any)._devtoolsStart();
     response.addTextResult('Server is listening on: ' + url);
   },
 });
 
-const devtoolsStop = defineTool({
-  capability: 'devtools',
-  skillOnly: true,
-
-  schema: {
-    name: 'browser_devtools_stop',
-    title: 'Stop browser DevTools',
-    description: 'Stop browser DevTools',
-    inputSchema: z.object({
-    }),
-    type: 'action',
-  },
-
-  handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
-    await (browserContext as any)._devtoolsStop();
-  },
-});
-
-export default [devtoolsStart, devtoolsStop];
+export default [devtoolsConnect];

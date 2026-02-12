@@ -31,7 +31,7 @@ function tabFavicon(url: string): string {
   }
 }
 
-export const DevTools: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
+export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [status, setStatus] = React.useState<{ text: string; cls: string }>({ text: 'Connecting', cls: '' });
   const [tabs, setTabs] = React.useState<TabInfo[]>([]);
   const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
@@ -55,6 +55,8 @@ export const DevTools: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
   }, [captured]);
 
   React.useEffect(() => {
+    if (!wsUrl)
+      return;
     const transport = new DevToolsTransport(wsUrl);
     transportRef.current = transport;
 
