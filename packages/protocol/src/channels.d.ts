@@ -1624,8 +1624,7 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
-  devtoolsStart(params: BrowserContextDevtoolsStartParams, progress?: Progress): Promise<BrowserContextDevtoolsStartResult>;
-  devtoolsStop(params?: BrowserContextDevtoolsStopParams, progress?: Progress): Promise<BrowserContextDevtoolsStopResult>;
+  devtoolsStart(params?: BrowserContextDevtoolsStartParams, progress?: Progress): Promise<BrowserContextDevtoolsStartResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -2018,28 +2017,11 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
-export type BrowserContextDevtoolsStartParams = {
-  size?: {
-    width: number,
-    height: number,
-  },
-  port?: number,
-  host?: string,
-};
-export type BrowserContextDevtoolsStartOptions = {
-  size?: {
-    width: number,
-    height: number,
-  },
-  port?: number,
-  host?: string,
-};
+export type BrowserContextDevtoolsStartParams = {};
+export type BrowserContextDevtoolsStartOptions = {};
 export type BrowserContextDevtoolsStartResult = {
   url: string,
 };
-export type BrowserContextDevtoolsStopParams = {};
-export type BrowserContextDevtoolsStopOptions = {};
-export type BrowserContextDevtoolsStopResult = void;
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;

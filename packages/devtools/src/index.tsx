@@ -19,8 +19,7 @@ import * as ReactDOM from 'react-dom/client';
 import './common.css';
 import { DevTools } from './devtools';
 import { Grid } from './grid';
-
-import type { SessionConfig } from '../../playwright/src/mcp/terminal/registry';
+import { SessionModel } from './sessionModel';
 
 export function navigate(hash: string) {
   window.history.pushState(null, '', hash);
@@ -35,54 +34,20 @@ function parseHash(): string | undefined {
   return undefined;
 }
 
-const DevToolsSession: React.FC<{ socketPath: string }> = ({ socketPath }) => {
-  const [wsUrl, setWsUrl] = React.useState<string | undefined>();
-  const [error, setError] = React.useState<string | undefined>();
-
-  React.useEffect(() => {
-    setWsUrl(undefined);
-    setError(undefined);
-
-    let cancelled = false;
-
-    void (async () => {
-      try {
-        const listResp = await fetch('/api/sessions/list');
-        if (!listResp.ok)
-          throw new Error(`HTTP ${listResp.status}`);
-        const sessions: { config: SessionConfig; canConnect: boolean }[] = await listResp.json();
-        const session = sessions.find(s => s.config.socketPath === socketPath);
-        if (!session)
-          throw new Error('Session not found');
-
-        const startResp = await fetch('/api/sessions/start-screencast', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ config: session.config }),
-        });
-        if (!startResp.ok)
-          throw new Error(`HTTP ${startResp.status}`);
-        const { url } = await startResp.json();
-        if (!cancelled)
-          setWsUrl(url);
-      } catch (e: any) {
-        if (!cancelled)
-          setError(e.message);
-      }
-    })();
-
-    return () => { cancelled = true; };
-  }, [socketPath]);
-
-  if (error)
-    return <div style={{ color: 'var(--err)', padding: 24, fontSize: 14 }}>Error: {error}</div>;
-  if (!wsUrl)
-    return <div style={{ color: 'var(--fg-muted)', padding: 24, fontSize: 14 }}>Connecting to session...</div>;
-  return <DevTools wsUrl={wsUrl} />;
-};
+const model = new SessionModel();
 
 const App: React.FC = () => {
+  const [, setRevision] = React.useState(0);
   const [socketPath, setSocketPath] = React.useState<string | undefined>(parseHash);
+
+  React.useEffect(() => {
+    model.startPolling();
+    const unsubscribe = model.subscribe(() => setRevision(r => r + 1));
+    return () => {
+      unsubscribe();
+      model.stopPolling();
+    };
+  }, [model]);
 
   React.useEffect(() => {
     const onPopState = () => setSocketPath(parseHash());
@@ -91,8 +56,8 @@ const App: React.FC = () => {
   }, []);
 
   if (socketPath)
-    return <DevToolsSession socketPath={socketPath} />;
-  return <Grid />;
+    return <DevTools wsUrl={model.wsUrls.get(socketPath)} />;
+  return <Grid model={model} />;
 };
 
 ReactDOM.createRoot(document.querySelector('#root')!).render(<App/>);

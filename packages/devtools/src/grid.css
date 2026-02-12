@@ -43,12 +43,40 @@
 
 .workspace-header {
   font-size: 13px;
-  font-weight: 600;
   color: var(--fg-dim);
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+}
+
+.workspace-header.collapsible {
+  cursor: pointer;
+  user-select: none;
+}
+
+.workspace-chevron {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-right: 4px;
+  transition: transform 0.15s ease;
+}
+
+.workspace-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.workspace-name {
+  font-weight: 600;
+}
+
+.workspace-path {
+  margin-left: 6px;
+  color: var(--fg-muted);
+  font-weight: 400;
 }
 
 .session-chips {
@@ -106,7 +134,12 @@
   color: var(--fg-muted);
 }
 
-.session-chip-close {
+.session-chip.disconnected {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.session-chip-action {
   width: 20px;
   height: 20px;
   border-radius: 50%;
@@ -114,16 +147,16 @@
   opacity: 0;
 }
 
-.session-chip-close svg {
-  width: 10px;
-  height: 10px;
+.session-chip-action svg {
+  width: 12px;
+  height: 12px;
 }
 
-.session-chip:hover .session-chip-close {
+.session-chip:hover .session-chip-action {
   opacity: 1;
 }
 
-.session-chip-close:hover {
+.session-chip-action:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 
