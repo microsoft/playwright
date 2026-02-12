@@ -25,7 +25,7 @@ import path from 'path';
 import { createClientInfo, Registry } from './registry';
 import { Session, renderResolvedConfig } from './session';
 
-import type { Config } from '../config';
+import type { Config } from '../../mcp/config';
 import type { SessionConfig, ClientInfo } from './registry';
 
 type MinimistArgs = {
@@ -74,7 +74,7 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'version',
 ];
 
-export async function program() {
+async function program() {
   const clientInfo = createClientInfo();
   const help = require('./help.json');
 
@@ -327,7 +327,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*run-mcp-server*' -and $_.CommandLine -like '*--daemon-session*' } `
+          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-session*' } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -341,7 +341,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if (line.includes('run-mcp-server') && line.includes('--daemon-session')) {
+        if ((line.includes('-server')) && line.includes('--daemon-session')) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
@@ -424,3 +424,10 @@ async function renderSessionStatus(session: Session) {
     text.push(...renderResolvedConfig(config.resolvedConfig));
   return text.join('\n');
 }
+
+program().catch(e => {
+  /* eslint-disable no-console */
+  console.error(e.message);
+  /* eslint-disable no-restricted-properties */
+  process.exit(1);
+});

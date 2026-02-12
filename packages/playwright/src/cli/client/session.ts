@@ -25,7 +25,7 @@ import os from 'os';
 import path from 'path';
 import { SocketConnection } from './socketConnection';
 
-import type { FullConfig } from '../browser/config';
+import type { FullConfig } from '../../mcp/browser/config';
 import type { SessionConfig, ClientInfo } from './registry';
 
 type MinimistArgs = {
@@ -212,7 +212,7 @@ to restart the browser session.`);
 
     const args = [
       cliPath,
-      'run-mcp-server',
+      'run-cli-server',
       `--daemon-session=${sessionConfigFile}`,
     ];
 

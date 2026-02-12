@@ -16,10 +16,10 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 
-import { commands } from './commands';
+import { commands } from '../daemon/commands';
 
 import type zodType from 'zod';
-import type { AnyCommandSchema, Category } from './command';
+import type { AnyCommandSchema, Category } from '../daemon/command';
 
 type CommandArg = { name: string, description: string, optional: boolean };
 

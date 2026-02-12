@@ -19,7 +19,7 @@ import './grid.css';
 import { navigate } from './index';
 import { Screencast } from './screencast';
 
-import type { SessionConfig } from '../../playwright/src/mcp/terminal/registry';
+import type { SessionConfig } from '../../playwright/src/cli/client/registry';
 import type { SessionModel, SessionStatus } from './sessionModel';
 
 export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {

@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import type { FullConfig } from '../browser/config';
+import type { FullConfig } from '../../mcp/browser/config';
 
 export type ClientInfo = {
   version: string;

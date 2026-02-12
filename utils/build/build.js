@@ -654,7 +654,7 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/mcp/terminal/*.{png,ico}',
+  files: 'packages/playwright/src/cli/client/*.{png,ico}',
   from: 'packages/playwright/src',
   to: 'packages/playwright/lib',
 });

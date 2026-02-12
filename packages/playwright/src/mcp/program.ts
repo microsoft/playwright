@@ -22,7 +22,7 @@ import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
 import { registry } from 'playwright-core/lib/server';
 
 import * as mcpServer from './sdk/server';
-import { startMcpDaemonServer } from './terminal/daemon';
+import { startMcpDaemonServer } from '../cli/daemon/daemon';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
@@ -31,7 +31,7 @@ import { ExtensionContextFactory } from './extension/extensionContextFactory';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 
-export function decorateCommand(command: Command, version: string) {
+export function decorateMCPCommand(command: Command, version: string) {
   command
       .option('--allowed-hosts <hosts...>', 'comma-separated list of hosts this server is allowed to serve from. Defaults to the host the server is bound to. Pass \'*\' to disable the host check.', commaSeparatedList)
       .option('--allowed-origins <origins>', 'semicolon-separated list of TRUSTED origins to allow the browser to request. Default is to allow all.\nImportant: *does not* serve as a security boundary and *does not* affect redirects. ', semicolonSeparatedList)

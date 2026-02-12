@@ -1,0 +1,4 @@
+[*]
+../../mcp/browser/browserServerBackend.ts
+../../mcp/browser/tools
+../client/socketConnection.ts
