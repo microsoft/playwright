@@ -419,6 +419,10 @@ export class Page extends SdkObject<PageEventMap> {
       this.emitOnContext(BrowserContext.Events.PageError, pageError, this);
   }
 
+  clearPageErrors() {
+    this._pageErrors.length = 0;
+  }
+
   pageErrors() {
     return this._pageErrors;
   }

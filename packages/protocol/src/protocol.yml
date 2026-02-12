@@ -1920,6 +1920,9 @@ Page:
         snapshot: true
         pausesBeforeAction: true
 
+    clearPageErrors:
+      title: Clear page errors
+
     pageErrors:
       title: Get page errors
       group: getter

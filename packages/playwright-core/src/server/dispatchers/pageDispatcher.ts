@@ -284,6 +284,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { messages: this._page.consoleMessages().map(message => this.parentScope().serializeConsoleMessage(message, this)) };
   }
 
+  async clearPageErrors(params: channels.PageClearPageErrorsParams, progress: Progress): Promise<channels.PageClearPageErrorsResult> {
+    this._page.clearPageErrors();
+  }
+
   async pageErrors(params: channels.PagePageErrorsParams, progress: Progress): Promise<channels.PagePageErrorsResult> {
     return { errors: this._page.pageErrors().map(error => serializeError(error)) };
   }

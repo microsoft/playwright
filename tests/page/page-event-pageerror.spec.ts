@@ -169,6 +169,32 @@ it('pageErrors should work', async ({ page }) => {
   expect(messages.slice(messages.length - expected.length), 'should return last errors').toEqual(expected);
 });
 
+it('clearPageErrors should work', async ({ page }) => {
+  await page.evaluate(() => {
+    window.builtins.setTimeout(() => { throw new Error('error1'); }, 0);
+    window.builtins.setTimeout(() => { throw new Error('error2'); }, 0);
+  });
+  await page.waitForTimeout(1000);
+
+  let errors = await page.pageErrors();
+  expect(errors.map(e => e.message)).toContain('error1');
+  expect(errors.map(e => e.message)).toContain('error2');
+
+  await page.clearPageErrors();
+
+  errors = await page.pageErrors();
+  expect(errors).toEqual([]);
+
+  await page.evaluate(() => {
+    window.builtins.setTimeout(() => { throw new Error('error3'); }, 0);
+  });
+  await page.waitForTimeout(1000);
+
+  errors = await page.pageErrors();
+  expect(errors.length).toBe(1);
+  expect(errors[0].message).toContain('error3');
+});
+
 it('should fire illegal character error', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38388' },
 }, async ({ page, server, browserName, isWindows }) => {

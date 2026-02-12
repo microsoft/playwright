@@ -133,6 +133,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.mouseClick', { title: 'Click', slowMo: true, snapshot: true, pausesBeforeAction: true, }],
   ['Page.mouseWheel', { title: 'Mouse wheel', slowMo: true, snapshot: true, pausesBeforeAction: true, }],
   ['Page.touchscreenTap', { title: 'Tap', slowMo: true, snapshot: true, pausesBeforeAction: true, }],
+  ['Page.clearPageErrors', { title: 'Clear page errors', }],
   ['Page.pageErrors', { title: 'Get page errors', group: 'getter', }],
   ['Page.pdf', { title: 'PDF', }],
   ['Page.requests', { title: 'Get network requests', group: 'getter', }],
