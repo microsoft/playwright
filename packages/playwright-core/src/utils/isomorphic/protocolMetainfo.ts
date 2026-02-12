@@ -146,6 +146,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.videoStop', { title: 'Stop video recording', group: 'configuration', }],
   ['Page.updateSubscription', { internal: true, }],
   ['Page.agent', { internal: true, }],
+  ['Page.setDockTile', { internal: true, }],
   ['Frame.evalOnSelector', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],
   ['Frame.evalOnSelectorAll', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],
   ['Frame.addScriptTag', { title: 'Add script tag', snapshot: true, pausesBeforeAction: true, }],

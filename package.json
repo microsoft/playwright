@@ -62,7 +62,6 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@octokit/graphql-schema": "^15.26.0",
     "@stylistic/eslint-plugin": "^5.2.3",
-    "@trayjs/trayjs": "^0.0.9",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",
     "@types/mdast": "^4.0.4",

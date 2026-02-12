@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { createGuid, eventsHelper } from '../utils';
 import { HttpServer } from './utils/httpServer';
 import { BrowserContext } from './browserContext';
@@ -23,7 +22,6 @@ import { ProgressController } from './progress';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
-import type http from 'http';
 
 export class DevToolsController {
   private _context: BrowserContext;
@@ -37,28 +35,16 @@ export class DevToolsController {
 
   async start(options: { width: number, height: number, quality: number, port?: number, host?: string }): Promise<string> {
     this._screencastOptions = options;
-
-    const devtoolsDir = path.join(__dirname, '..', 'vite', 'devtools');
-    this._httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-      const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
-      const filePath = pathname === '/' ? 'index.html' : pathname.substring(1);
-      const resolved = path.join(devtoolsDir, filePath);
-      if (!resolved.startsWith(devtoolsDir))
-        return false;
-      return this._httpServer.serveFile(request, response, resolved);
-    });
-
     const guid = createGuid();
     this._httpServer.createWebSocket(() => new DevToolsConnection(this._context, this._screencastOptions), guid);
     await this._httpServer.start({ port: options.port, host: options.host });
-    return this._httpServer.urlPrefix('human-readable') + `?ws=${guid}`;
+    return (this._httpServer.urlPrefix('human-readable') + `/${guid}`).replace('http://', 'ws://');
   }
 
   async stop() {
     await this._httpServer.stop();
   }
 }
-
 
 class DevToolsConnection implements Transport {
   sendEvent?: (method: string, params: any) => void;

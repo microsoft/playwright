@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -30,6 +31,7 @@ export type ClientInfo = {
 export type SessionConfig = {
   name: string;
   version: string;
+  timestamp: number;
   socketPath: string;
   cli: {
     headed?: boolean;
@@ -78,6 +80,8 @@ export class Registry {
       // Sessions from 0.1.0 support.
       if (!config.name)
         config.name = path.basename(file, '.session');
+      if (!config.timestamp)
+        config.timestamp = 0;
       return { file, config };
     } catch {
       return undefined;
@@ -129,3 +133,38 @@ export const baseDaemonDir = (() => {
     throw new Error('Unsupported platform: ' + process.platform);
   return path.join(localCacheDir, 'ms-playwright', 'daemon');
 })();
+
+export function createClientInfo(): ClientInfo {
+  const packageLocation = require.resolve('../../../package.json');
+  const packageJSON = require(packageLocation);
+  const workspaceDir = findWorkspaceDir(process.cwd());
+  const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
+
+  const hash = crypto.createHash('sha1');
+  hash.update(workspaceDir || packageLocation);
+  const workspaceDirHash = hash.digest('hex').substring(0, 16);
+
+  return {
+    version,
+    workspaceDir,
+    workspaceDirHash,
+    daemonProfilesDir: daemonProfilesDir(workspaceDirHash),
+  };
+}
+
+function findWorkspaceDir(startDir: string): string | undefined {
+  let dir = startDir;
+  for (let i = 0; i < 10; i++) {
+    if (fs.existsSync(path.join(dir, '.playwright')))
+      return dir;
+    const parentDir = path.dirname(dir);
+    if (parentDir === dir)
+      break;
+    dir = parentDir;
+  }
+  return undefined;
+}
+
+const daemonProfilesDir = (workspaceDirHash: string) => {
+  return path.join(baseDaemonDir, workspaceDirHash);
+};

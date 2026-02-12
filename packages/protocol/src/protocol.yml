@@ -2096,6 +2096,11 @@ Page:
       returns:
         agent: PageAgent
 
+    setDockTile:
+      internal: true
+      parameters:
+        image: binary
+
   events:
 
     bindingCall:

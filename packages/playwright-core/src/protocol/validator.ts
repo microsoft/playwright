@@ -1548,6 +1548,10 @@ scheme.PageAgentParams = tObject({
 scheme.PageAgentResult = tObject({
   agent: tChannel(['PageAgent']),
 });
+scheme.PageSetDockTileParams = tObject({
+  image: tBinary,
+});
+scheme.PageSetDockTileResult = tOptional(tObject({}));
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,

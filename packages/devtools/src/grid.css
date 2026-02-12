@@ -1,0 +1,154 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.grid-view {
+  overflow: auto;
+  padding: 24px;
+  height: 100%;
+}
+
+.grid-loading {
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+
+.grid-empty {
+  color: var(--fg-muted);
+  font-size: 14px;
+}
+
+.grid-error {
+  color: var(--err);
+  font-size: 14px;
+}
+
+.workspace-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.workspace-header {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-dim);
+  margin-bottom: 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.session-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.session-chip {
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  border-radius: 8px;
+  border: 1px solid transparent;
+  min-width: 200px;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.session-chip:hover {
+  border-color: var(--fg-muted);
+}
+
+.session-chip-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.session-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.session-status-dot.open {
+  background: var(--ok);
+}
+
+.session-status-dot.closed {
+  background: var(--fg-muted);
+}
+
+.session-chip-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.session-chip-detail {
+  font-size: 11px;
+  color: var(--fg-muted);
+}
+
+.session-chip-close {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-left: auto;
+  opacity: 0;
+}
+
+.session-chip-close svg {
+  width: 10px;
+  height: 10px;
+}
+
+.session-chip:hover .session-chip-close {
+  opacity: 1;
+}
+
+.session-chip-close:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.screencast-container {
+  width: 533px;
+  height: 300px;
+  background: #000;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.screencast-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.screencast-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--fg-muted);
+  font-size: 12px;
+}

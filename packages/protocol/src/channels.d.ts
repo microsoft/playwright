@@ -2128,6 +2128,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   agent(params: PageAgentParams, progress?: Progress): Promise<PageAgentResult>;
+  setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
 }
 export type PageBindingCallEvent = {
   binding: BindingCallChannel,
@@ -2684,6 +2685,13 @@ export type PageAgentOptions = {
 export type PageAgentResult = {
   agent: PageAgentChannel,
 };
+export type PageSetDockTileParams = {
+  image: Binary,
+};
+export type PageSetDockTileOptions = {
+
+};
+export type PageSetDockTileResult = void;
 
 export interface PageEvents {
   'bindingCall': PageBindingCallEvent;
