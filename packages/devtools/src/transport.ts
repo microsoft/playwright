@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-export class DevToolsTransport {
+export class Transport {
   private _ws: WebSocket;
   private _lastId = 0;
   private _pending = new Map<number, { resolve: (result: any) => void; reject: (error: Error) => void }>();
+  private _sendQueue: string[] | undefined = [];
 
   onopen?: () => void;
   onevent?: (method: string, params: any) => void;
@@ -26,6 +27,9 @@ export class DevToolsTransport {
   constructor(url: string) {
     this._ws = new WebSocket(url);
     this._ws.onopen = () => {
+      for (const message of this._sendQueue || [])
+        this._ws.send(message);
+      this._sendQueue = undefined;
       if (this.onopen)
         this.onopen();
     };
@@ -67,7 +71,11 @@ export class DevToolsTransport {
 
   send(method: string, params?: any): Promise<any> {
     const id = ++this._lastId;
-    this._ws.send(JSON.stringify({ id, method, params }));
+    const message = JSON.stringify({ id, method, params });
+    if (this._sendQueue)
+      this._sendQueue.push(message);
+    else
+      this._ws.send(message);
     return new Promise((resolve, reject) => {
       this._pending.set(id, { resolve, reject });
     });

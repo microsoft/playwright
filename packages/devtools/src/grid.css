@@ -106,6 +106,7 @@
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
+  max-width: 533px;
 }
 
 .session-status-dot {
@@ -127,6 +128,15 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.session-chip-title {
+  color: var(--fg-muted);
+  font-weight: 400;
 }
 
 .session-chip-detail {
