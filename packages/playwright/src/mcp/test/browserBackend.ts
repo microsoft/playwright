@@ -124,14 +124,13 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
 
 export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playwright.BrowserContext) {
   const sessionConfig = sessionConfigFromArgs(createClientInfo(), createGuid().slice(0, 8), { _: [] });
-  const { backend } = await startMcpDaemonServer({
+  const socketPath = await startMcpDaemonServer({
     ...defaultConfig,
     outputMode: 'file',
     snapshot: { mode: 'full', output: 'file' },
     outputDir: path.resolve(process.cwd(), '.playwright-cli'),
     sessionConfig,
   }, identityBrowserContextFactory(context));
-  // const snapshotResponse = await backend.callTool('browser_snapshot', {});
 
   const lines = [''];
   if (testInfo.errors.length) {
@@ -143,13 +142,12 @@ export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playw
   }
   lines.push(
       `### Debugging Instructions`,
-      `- Use "playwright-cli --session <name> attach '${sessionConfig.socketPath}'" to add a session.`,
+      `- Use "playwright-cli --session <name> attach '${socketPath}'" to add a session.`,
       `- Use "playwright-cli --session <name>" to explore the page and fix the problem.`,
-      `- See "playwright-cli" skill for details. Stop this test run when finished. Restart if needed.`,
+      `- Stop this test run when finished. Restart if needed.`,
   );
   lines.push('');
-  // lines.push(snapshotResponse.content[0].type === 'text' ? snapshotResponse.content[0].text : '');
-  // lines.push('');
+
   /* eslint-disable-next-line no-console */
   console.log(lines.join('\n'));
   await new Promise(() => {});

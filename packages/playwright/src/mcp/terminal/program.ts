@@ -228,16 +228,6 @@ export async function program() {
   }
 }
 
-async function installSkill(source: string, dest: string) {
-  if (!fs.existsSync(source)) {
-    console.error('❌ Skills source directory not found:', source);
-    process.exit(1);
-  }
-
-  await fs.promises.cp(source, dest, { recursive: true });
-  console.log(`✅ Skills installed to \`${path.relative(process.cwd(), dest)}\`.`);
-}
-
 async function install(args: MinimistArgs) {
   const cwd = process.cwd();
 
@@ -246,8 +236,18 @@ async function install(args: MinimistArgs) {
   await fs.promises.mkdir(playwrightDir, { recursive: true });
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
-  if (args.skills)
-    await installSkill(path.join(__dirname, '../../skill'), path.join(cwd, '.claude', 'skills', 'playwright-cli'));
+  if (args.skills) {
+    const skillSourceDir = path.join(__dirname, '../../skill');
+    const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
+
+    if (!fs.existsSync(skillSourceDir)) {
+      console.error('❌ Skills source directory not found:', skillSourceDir);
+      process.exit(1);
+    }
+
+    await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
+    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
+  }
 
   if (!args.config)
     await ensureConfiguredBrowserInstalled();

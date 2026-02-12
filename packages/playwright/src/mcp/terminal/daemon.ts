@@ -47,7 +47,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
 export async function startMcpDaemonServer(
   config: FullConfig,
   contextFactory: BrowserContextFactory,
-): Promise<{ socketPath: string, backend: BrowserServerBackend }> {
+): Promise<string> {
   const sessionConfig = config.sessionConfig!;
   const { socketPath, version } = sessionConfig;
   // Clean up existing socket file on Unix
@@ -133,7 +133,7 @@ export async function startMcpDaemonServer(
 
     server.listen(socketPath, () => {
       daemonDebug(`daemon server listening on ${socketPath}`);
-      resolve({ socketPath, backend });
+      resolve(socketPath);
     });
   });
 }
