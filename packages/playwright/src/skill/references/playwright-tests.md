@@ -1,9 +1,3 @@
----
-name: playwright-test
-description: Run and debug Playwright tests. Use when the user needs to execute Playwright test files, run specific test cases, or debug failing tests.
-allowed-tools: "Bash(playwright-cli:*) Bash(npx:*) Bash(npm:*)"
----
-
 # Running Playwright Tests
 
 To run Playwright tests, use the `npx playwright test` command, or a package manager script. To avoid opening the interactive html report, use `PLAYWRIGHT_HTML_OPEN=never` environment variable.
@@ -18,7 +12,9 @@ PLAYWRIGHT_HTML_OPEN=never npm run special-test-command
 
 # Debugging Playwright Tests
 
-To debug a failing test, run it with Playwright as usual, but append `--debug=cli` option and run the command in the background. This command will pause the test at the point of failure, and print the "socket path" and instructions.
+To debug a failing test, run it with Playwright as usual, but append `--debug=cli` option. This command will pause the test at the point of failure, and print the "socket path" and instructions.
+
+IMPORTANT: run the command in the background and check the output until instructions are available.
 
 Once instructions are printed, attach a test session to `playwright-cli` and use it to explore the page.
 
@@ -39,30 +35,16 @@ This code appears in the output and can be copied directly into the test. Most o
 ## Example Workflow
 
 ```bash
-# Run in background:
+# Run tests in background:
 npx playwright test --grep "failing test title" --debug=cli
-# ...
-# ### Paused on test error
-# TimeoutError: locator.click: Timeout 5000ms exceeded.
-# ...
-# await page.getByRole('button', { name: 'Get help' }).click()
-# ...
-# ### Instructions
-# - Use "playwright-cli --session=<name> attach '/path/to/socket/file'" to add a session.
+# ... and wait for the debugging instructions
 
 # Attach test session
 playwright-cli --session=test1 attach '/path/to/socket/file'
-
-# Take a snapshot to see elements
+# Take a snapshot to explore the page
 playwright-cli --session=test1 snapshot
-# Output shows: e17 [button "Get started"]
-
-# Click the right button
+# Find the right button to click, and perform the action to verify it works as expected
 playwright-cli --session=test1 click e17
-# Ran Playwright code:
-# await page.getByRole('button', { name: 'Get started' }).click();
 
-# Update locator in the test
-# - await page.getByRole('button', { name: 'Get help' }).click()
-# + await page.getByRole('button', { name: 'Get started' }).click()
+# Update locator in the test file, based on "Ran Playwright code" snippets
 ```

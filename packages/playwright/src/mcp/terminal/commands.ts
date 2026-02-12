@@ -808,6 +808,7 @@ const sessionAttach = declareCommand({
   name: 'attach',
   description: 'Attach an external browser session',
   category: 'browsers',
+  hidden: true,
   args: z.object({
     socket: z.string().describe('Socket path of the external browser session.'),
   }),

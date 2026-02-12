@@ -248,8 +248,6 @@ async function install(args: MinimistArgs) {
 
   if (args.skills)
     await installSkill(path.join(__dirname, '../../skill'), path.join(cwd, '.claude', 'skills', 'playwright-cli'));
-  if (args.testskills)
-    await installSkill(path.join(__dirname, '../../test-skill'), path.join(cwd, '.claude', 'skills', 'playwright-test'));
 
   if (!args.config)
     await ensureConfiguredBrowserInstalled();

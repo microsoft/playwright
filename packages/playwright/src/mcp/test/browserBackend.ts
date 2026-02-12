@@ -131,7 +131,7 @@ export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playw
     outputDir: path.resolve(process.cwd(), '.playwright-cli'),
     sessionConfig,
   }, identityBrowserContextFactory(context));
-  const snapshotResponse = await backend.callTool('browser_snapshot', {});
+  // const snapshotResponse = await backend.callTool('browser_snapshot', {});
 
   const lines = [''];
   if (testInfo.errors.length) {
@@ -141,7 +141,6 @@ export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playw
   } else {
     lines.push(`### Paused at the end of the test`);
   }
-  lines.push(snapshotResponse.content[0].type === 'text' ? snapshotResponse.content[0].text : '');
   lines.push(
       `### Debugging Instructions`,
       `- Use "playwright-cli --session <name> attach '${sessionConfig.socketPath}'" to add a session.`,
@@ -149,6 +148,8 @@ export async function handleOnTestFunctionEnd(testInfo: TestInfo, context: playw
       `- See "playwright-cli" skill for details. Stop this test run when finished. Restart if needed.`,
   );
   lines.push('');
+  // lines.push(snapshotResponse.content[0].type === 'text' ? snapshotResponse.content[0].text : '');
+  // lines.push('');
   /* eslint-disable-next-line no-console */
   console.log(lines.join('\n'));
   await new Promise(() => {});
