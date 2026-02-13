@@ -19,8 +19,15 @@ import { BrowserServerLauncherImpl } from './browserServerImpl';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from './server';
 import { nodePlatform } from './server/utils/nodePlatform';
 import { Connection } from './client/connection';
+import { BrowserDispatcher } from './server/dispatchers/browserDispatcher';
+import { ProgressController } from './server/progress';
 
+import type { Browser } from './client/browser';
+import type { BrowserContext } from './client/browserContext';
 import type { Playwright as PlaywrightAPI } from './client/playwright';
+import type { Chromium } from './server/chromium/chromium';
+import type { BrowserTypeDispatcher } from './server/dispatchers/browserTypeDispatcher';
+import type { ConnectionTransport } from './server/transport';
 import type { Language } from './utils';
 
 export function createInProcessPlaywright(): PlaywrightAPI {
@@ -42,6 +49,26 @@ export function createInProcessPlaywright(): PlaywrightAPI {
   playwrightAPI.firefox._serverLauncher = new BrowserServerLauncherImpl('firefox');
   playwrightAPI.webkit._serverLauncher = new BrowserServerLauncherImpl('webkit');
   playwrightAPI._android._serverLauncher = new AndroidServerLauncherImpl();
+
+  (playwrightAPI.chromium as any)._connectOverCDPTransport = async (transport: ConnectionTransport) => {
+    const serverChromium = clientConnection.toImpl!(playwrightAPI.chromium) as Chromium;
+    const chromiumDispatcher = dispatcherConnection._dispatcherByGuid.get(playwrightAPI.chromium._guid)! as BrowserTypeDispatcher;
+    const controller = new ProgressController();
+    const browser = await controller.run(async progress => {
+      return await serverChromium.connectOverCDPTransport(progress, transport);
+    });
+    const browserDispatcher = new BrowserDispatcher(chromiumDispatcher, browser);
+    // Wait for async dispatch to process the __create__ message.
+    await new Promise(resolve => setImmediate(resolve));
+    const clientBrowser = clientConnection._objects.get(browserDispatcher._guid)! as Browser;
+    clientBrowser._connectToBrowserType(playwrightAPI.chromium, {}, undefined);
+    if (browser._defaultContext) {
+      // BrowserDispatcher pushes default context to the client in its constructor.
+      const clientBrowserContext = clientConnection._objects.get(browser._defaultContext.guid)! as BrowserContext;
+      await playwrightAPI.chromium._instrumentation.runAfterCreateBrowserContext(clientBrowserContext);
+    }
+    return clientBrowser;
+  };
 
   // Switch to async dispatch after we got Playwright object.
   dispatcherConnection.onmessage = message => setImmediate(() => clientConnection.dispatch(message));
