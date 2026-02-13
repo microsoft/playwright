@@ -84,7 +84,8 @@ export const tBinary: Validator = (arg: any, path: string, context: ValidatorCon
     return (arg as Buffer).toString('base64');
   }
   if (context.binary === 'buffer') {
-    if (!(arg instanceof Buffer))
+    // TODO: support custom binary types.
+    if (!(arg instanceof Buffer) && !(arg instanceof Object))
       throw new ValidationError(`${path}: expected Buffer, got ${typeof arg}`);
     return arg;
   }
