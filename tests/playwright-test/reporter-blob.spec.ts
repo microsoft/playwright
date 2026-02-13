@@ -2196,6 +2196,18 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const reportFiles = await fs.promises.readdir(reportDir);
     expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
   }
+
+  {
+    const result = await runInlineTest({ ...files, 'test-list.txt': `foo` }, { 'test-list': 'test-list.txt' });
+    expect(result.exitCode).toBe(0);
+    const reportFiles = await fs.promises.readdir(reportDir);
+
+    const result2 = await runInlineTest({ ...files, 'test-list.txt': `bar` }, { 'test-list': 'test-list.txt' });
+    expect(result2.exitCode).toBe(0);
+    const reportFiles2 = await fs.promises.readdir(reportDir);
+
+    expect(reportFiles2.sort()).not.toEqual(reportFiles.sort());
+  }
 });
 
 test('should report duration across all shards', async ({ runInlineTest, mergeReports }) => {
