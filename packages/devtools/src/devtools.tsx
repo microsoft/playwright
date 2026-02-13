@@ -18,6 +18,7 @@ import React from 'react';
 import './devtools.css';
 import { navigate } from './index';
 import { DevToolsClient } from './devtoolsClient';
+import { asLocator } from '@isomorphic/locatorGenerators';
 
 import type { DevToolsClientChannel } from './devtoolsClient';
 import type { Tab } from './devtoolsChannel';
@@ -41,20 +42,31 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [frameSrc, setFrameSrc] = React.useState('');
   const [captured, setCaptured] = React.useState(false);
   const [hintVisible, setHintVisible] = React.useState(false);
+  const [showInspector, setShowInspector] = React.useState(false);
+  const [picking, setPicking] = React.useState(false);
+  const [toast, setToast] = React.useState<string | null>(null);
 
   const channelRef = React.useRef<DevToolsClientChannel | null>(null);
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
+  const viewportWrapperRef = React.useRef<HTMLDivElement>(null);
   const omniboxRef = React.useRef<HTMLInputElement>(null);
   const viewportSizeRef = React.useRef<{ width: number; height: number }>({ width: 0, height: 0 });
   const resizedRef = React.useRef(false);
   const capturedRef = React.useRef(false);
   const moveThrottleRef = React.useRef(0);
+  const pickingRef = React.useRef(false);
+  const toastTimerRef = React.useRef<ReturnType<typeof setTimeout>>(0 as any);
+  const [inspectorWidth, setInspectorWidth] = React.useState<number | undefined>();
 
   // Keep capturedRef in sync with state.
   React.useEffect(() => {
     capturedRef.current = captured;
   }, [captured]);
+
+  React.useEffect(() => {
+    pickingRef.current = picking;
+  }, [picking]);
 
   React.useEffect(() => {
     if (!wsUrl)
@@ -69,6 +81,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       const selected = params.tabs.find(t => t.selected);
       if (selected)
         setUrl(selected.url);
+      if (!selected?.inspectorUrl)
+        setShowInspector(false);
     });
 
     channel.on('frame', params => {
@@ -80,9 +94,25 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       resizeToFit();
     });
 
+    channel.on('elementPicked', params => {
+      const locator = asLocator('javascript', params.selector);
+      navigator.clipboard?.writeText(locator).catch(() => {});
+      setPicking(false);
+      setToast(locator);
+      clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = setTimeout(() => setToast(null), 3000);
+    });
+
+    channel.on('recorderModeChanged', params => {
+      setPicking(params.picking);
+    });
+
     channel.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
 
-    return () => channel.close();
+    return () => {
+      clearTimeout(toastTimerRef.current);
+      channel.close();
+    };
   }, [wsUrl]);
 
   function resizeToFit() {
@@ -132,28 +162,33 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     };
   }
 
+  const isForwardingInput = () => showInspector || capturedRef.current;
+
+  function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
+    const { x, y } = imgCoords(e);
+    channelRef.current?.[method]({ x, y, button: BUTTONS[e.button] || 'left' });
+  }
+
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
-    if (!capturedRef.current) {
+    if (!pickingRef.current && !isForwardingInput()) {
       setCaptured(true);
       setHintVisible(false);
       return;
     }
-    const { x, y } = imgCoords(e);
-    channelRef.current?.mousedown({ x, y, button: BUTTONS[e.button] || 'left' });
+    sendMouseEvent('mousedown', e);
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
-    if (!capturedRef.current)
+    if (!pickingRef.current && !isForwardingInput())
       return;
     e.preventDefault();
-    const { x, y } = imgCoords(e);
-    channelRef.current?.mouseup({ x, y, button: BUTTONS[e.button] || 'left' });
+    sendMouseEvent('mouseup', e);
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
-    if (!capturedRef.current)
+    if (!pickingRef.current && !isForwardingInput())
       return;
     const now = Date.now();
     if (now - moveThrottleRef.current < 32)
@@ -164,14 +199,20 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   }
 
   function onScreenWheel(e: React.WheelEvent) {
-    if (!capturedRef.current)
+    if (!isForwardingInput())
       return;
     e.preventDefault();
     channelRef.current?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (!capturedRef.current)
+    if (pickingRef.current && e.key === 'Escape') {
+      e.preventDefault();
+      channelRef.current?.cancelPickLocator();
+      setPicking(false);
+      return;
+    }
+    if (!isForwardingInput())
       return;
     e.preventDefault();
     if (e.key === 'Escape' && !(e.metaKey || e.ctrlKey)) {
@@ -182,15 +223,46 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
-    if (!capturedRef.current)
+    if (!isForwardingInput())
       return;
     e.preventDefault();
     channelRef.current?.keyup({ key: e.key });
   }
 
   function onScreenBlur() {
-    if (capturedRef.current)
-      setCaptured(false);
+    setCaptured(false);
+  }
+
+  function onInspectorGripPointerDown(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.button !== 0)
+      return;
+    const wrapperRect = viewportWrapperRef.current?.getBoundingClientRect();
+    if (!wrapperRect)
+      return;
+    e.preventDefault();
+    const grip = e.currentTarget;
+    grip.setPointerCapture(e.pointerId);
+    const minWidth = 300;
+    const maxWidth = Math.max(minWidth, wrapperRect.width - 320);
+    const startX = e.clientX;
+    const startWidth = inspectorWidth ?? wrapperRect.width * 0.5;
+    const onPointerMove = (event: PointerEvent) => {
+      const delta = startX - event.clientX;
+      const nextWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
+      setInspectorWidth(nextWidth);
+    };
+    const onPointerUp = () => {
+      grip.removeEventListener('pointermove', onPointerMove);
+      grip.removeEventListener('pointerup', onPointerUp);
+      grip.removeEventListener('lostpointercapture', onPointerUp);
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
+    };
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
+    grip.addEventListener('pointermove', onPointerMove);
+    grip.addEventListener('pointerup', onPointerUp);
+    grip.addEventListener('lostpointercapture', onPointerUp);
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -204,7 +276,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     }
   }
 
-  const hasPages = tabs.some(t => t.selected);
+  const selectedTab = tabs.find(t => t.selected);
+  const hasPages = !!selectedTab;
 
   return (<div className='devtools-view'>
     {/* Tab bar */}
@@ -282,33 +355,79 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         onKeyDown={onOmniboxKeyDown}
         onFocus={e => e.target.select()}
       />
+      <button
+        className={'nav-btn' + (picking ? ' active-toggle' : '')}
+        title={picking ? 'Cancel pick locator' : 'Pick locator'}
+        onClick={() => {
+          if (picking) {
+            channelRef.current?.cancelPickLocator();
+            setPicking(false);
+          } else {
+            channelRef.current?.pickLocator();
+            setPicking(true);
+          }
+        }}
+      >
+        <svg viewBox='0 0 48 48' fill='currentColor'>
+          <path d='M18 42h-7.5c-3 0-4.5-1.5-4.5-4.5v-27C6 7.5 7.5 6 10.5 6h27C42 6 42 10.404 42 10.5V18h-3V9H9v30h9v3Zm27-15-9 6 9 9-3 3-9-9-6 9-6-24 24 6Z'/>
+        </svg>
+      </button>
+      {selectedTab?.inspectorUrl && (
+        <button
+          className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
+          title={showInspector ? 'Hide Chrome DevTools' : 'Show Chrome DevTools'}
+          onClick={() => setShowInspector(!showInspector)}
+        >
+          <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+            <rect x='3' y='3' width='18' height='18' rx='2'/>
+            <line x1='9' y1='3' x2='9' y2='21'/>
+          </svg>
+        </button>
+      )}
     </div>
 
     {/* Viewport */}
-    <div className='viewport-wrapper'>
-      <div
-        ref={screenRef}
-        className={'screen' + (captured ? ' captured' : '')}
-        tabIndex={0}
-        style={{ display: hasPages ? '' : 'none' }}
-        onMouseDown={onScreenMouseDown}
-        onMouseUp={onScreenMouseUp}
-        onMouseMove={onScreenMouseMove}
-        onWheel={onScreenWheel}
-        onKeyDown={onScreenKeyDown}
-        onKeyUp={onScreenKeyUp}
-        onBlur={onScreenBlur}
-        onContextMenu={e => e.preventDefault()}
-        onMouseEnter={() => {
-          if (!capturedRef.current)
-            setHintVisible(true);
-        }}
-        onMouseLeave={() => setHintVisible(false)}
-      >
-        <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
-        <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+    <div ref={viewportWrapperRef} className='viewport-wrapper'>
+      <div className='viewport-main'>
+        <div
+          ref={screenRef}
+          className={'screen' + (captured ? ' captured' : '')}
+          tabIndex={0}
+          style={{ display: hasPages ? '' : 'none' }}
+          onMouseDown={onScreenMouseDown}
+          onMouseUp={onScreenMouseUp}
+          onMouseMove={onScreenMouseMove}
+          onWheel={onScreenWheel}
+          onKeyDown={onScreenKeyDown}
+          onKeyUp={onScreenKeyUp}
+          onBlur={onScreenBlur}
+          onContextMenu={e => e.preventDefault()}
+          onMouseEnter={() => {
+            if (!showInspector && !capturedRef.current)
+              setHintVisible(true);
+          }}
+          onMouseLeave={() => setHintVisible(false)}
+        >
+          <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
+          {toast
+            ? <div className='capture-hint visible'>Copied: <code>{toast}</code></div>
+            : picking
+              ? <div className='capture-hint visible'>Click an element to pick its locator</div>
+              : !showInspector && <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+          }
+        </div>
+        <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
       </div>
-      <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
+      {showInspector && selectedTab?.inspectorUrl && (
+        <div className='inspector-panel' style={inspectorWidth ? { width: `${inspectorWidth}px` } : undefined}>
+          <div className='inspector-grip' onPointerDown={onInspectorGripPointerDown} />
+          <iframe
+            className='inspector-frame'
+            src={selectedTab.inspectorUrl}
+            title='Chrome DevTools'
+          />
+        </div>
+      )}
     </div>
   </div>);
 };

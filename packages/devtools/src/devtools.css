@@ -255,6 +255,14 @@
   min-height: 0;
 }
 
+.viewport-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-width: 0;
+}
+
 .screen {
   position: relative;
   outline: none;
@@ -314,4 +322,59 @@
 
 .capture-hint.visible {
   opacity: 1;
+}
+
+.capture-hint code {
+  color: var(--accent);
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  margin-left: 4px;
+}
+
+.inspector-panel {
+  width: 50%;
+  min-width: 300px;
+  max-width: calc(100% - 320px);
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--bg-elevated);
+  flex: none;
+  overflow: hidden;
+  position: relative;
+}
+
+.inspector-grip {
+  position: absolute;
+  left: -4px;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  cursor: col-resize;
+  z-index: 10;
+  touch-action: none;
+}
+
+.inspector-grip::before {
+  content: '';
+  position: absolute;
+  left: 3px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--bg-elevated);
+}
+
+.inspector-grip:hover::before {
+  background: var(--accent);
+}
+
+.inspector-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background: var(--bg);
+}
+
+.nav-btn.active-toggle {
+  color: var(--accent);
+  background: rgba(138, 180, 248, 0.12);
 }

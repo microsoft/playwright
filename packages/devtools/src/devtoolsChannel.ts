@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-export type Tab = { pageId: string; title: string; url: string; selected: boolean };
+export type Tab = { pageId: string; title: string; url: string; selected: boolean; inspectorUrl?: string };
 
 export type DevToolsChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   tabs: { tabs: Tab[] };
+  elementPicked: { selector: string };
+  recorderModeChanged: { picking: boolean };
 };
 
 export interface DevToolsChannel {
@@ -36,6 +38,8 @@ export interface DevToolsChannel {
   wheel(params: { deltaX: number; deltaY: number }): Promise<void>;
   keydown(params: { key: string }): Promise<void>;
   keyup(params: { key: string }): Promise<void>;
+  pickLocator(): Promise<void>;
+  cancelPickLocator(): Promise<void>;
 
   on<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void;
   off<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void;

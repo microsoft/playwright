@@ -63,12 +63,13 @@ export class HttpServer {
     return this._port;
   }
 
-  createWebSocket(transportFactory: () => Transport, guid?: string) {
+  createWebSocket(transportFactory: (url: URL) => Transport, guid?: string) {
     assert(!this._wsGuid, 'can only create one main websocket transport per server');
     this._wsGuid = guid || createGuid();
     const wss = new wsServer({ server: this._server, path: '/' + this._wsGuid });
-    wss.on('connection', ws => {
-      const transport = transportFactory();
+    wss.on('connection', (ws, request) => {
+      const url = new URL(request.url ?? '/', 'http://localhost');
+      const transport = transportFactory(url);
       transport.sendEvent = (method, params) => ws.send(JSON.stringify({ method, params }));
       transport.close = () => ws.close();
       transport.onconnect();
