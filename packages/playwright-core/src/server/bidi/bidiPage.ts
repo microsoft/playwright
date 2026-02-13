@@ -53,6 +53,7 @@ export class BidiPage implements PageDelegate {
   readonly _networkManager: BidiNetworkManager;
   private readonly _pdf: BidiPDF;
   private _initScriptIds = new Map<InitScript, string>();
+  private readonly _fragmentNavigations = new Set<string>();
 
   constructor(browserContext: BidiBrowserContext, bidiSession: BidiSession, opener: BidiPage | null) {
     this._session = bidiSession;
@@ -220,6 +221,8 @@ export class BidiPage implements PageDelegate {
   }
 
   private _onFragmentNavigated(params: bidi.BrowsingContext.NavigationInfo) {
+    if (params.navigation)
+      this._fragmentNavigations.add(params.navigation);
     this._page.frameManager.frameCommittedSameDocumentNavigation(params.context, params.url);
   }
 
@@ -310,6 +313,10 @@ export class BidiPage implements PageDelegate {
       context: frame._id,
       url,
     });
+    if (navigation && this._fragmentNavigations.has(navigation)) {
+      this._fragmentNavigations.delete(navigation);
+      return {};
+    }
     return { newDocumentId: navigation || undefined };
   }
 
