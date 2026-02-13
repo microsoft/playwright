@@ -65,8 +65,6 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
         const canConnect = await session.canConnect();
         if (canConnect || entry.config.cli.persistent)
           sessions.push({ config: entry.config, canConnect });
-        else
-          await session.deleteSessionConfig();
       }
     }
     sendJSON(response, { sessions, clientInfo });

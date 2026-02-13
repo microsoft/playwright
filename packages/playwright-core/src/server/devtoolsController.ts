@@ -60,6 +60,8 @@ export class DevToolsController {
 }
 
 class DevToolsConnection implements Transport, DevToolsChannel {
+  readonly version = 1;
+
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
@@ -79,8 +81,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._controllerUrl = controllerUrl;
   }
 
-  // -- IDevToolsConnection: event subscription --
-
   on<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void {
     let set = this._eventListeners.get(event);
     if (!set) {
@@ -94,7 +94,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._eventListeners.get(event)?.delete(listener);
   }
 
-  /** Sends an event to the remote client and notifies local listeners. */
   private _emit<K extends keyof DevToolsChannelEvents>(event: K, params: DevToolsChannelEvents[K]): void {
     this.sendEvent?.(event, params);
     const set = this._eventListeners.get(event);
@@ -103,8 +102,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
         fn(params);
     }
   }
-
-  // -- Transport: lifecycle --
 
   onconnect() {
     const context = this._context;
@@ -145,13 +142,9 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._contextListeners = [];
   }
 
-  // -- Transport: dispatch (skeleton) --
-
   async dispatch(method: string, params: any): Promise<any> {
     return (this as any)[method]?.(params);
   }
-
-  // -- IDevToolsConnection: RPC method implementations --
 
   async selectTab(params: { pageId: string }) {
     const page = this._context.pages().find(p => p.guid === params.pageId);
@@ -242,21 +235,10 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     await ProgressController.runInternalTask(async progress => { await page.keyboard.up(progress, params.key); });
   }
 
-  async pickLocator() {
-    await this._startPicking();
-  }
-
-  async cancelPickLocator() {
-    this._cancelPicking();
-  }
-
-  // -- Internal helpers --
-
   private async _selectPage(page: Page) {
     if (this.selectedPage === page)
       return;
 
-    // Stop screencast on old page.
     if (this.selectedPage) {
       eventsHelper.removeEventListeners(this._pageListeners);
       this._pageListeners = [];
@@ -268,7 +250,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._lastViewportSize = null;
     this._sendTabList();
 
-    // Start screencast on new page.
     this._pageListeners.push(
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
     );
@@ -288,7 +269,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._lastViewportSize = null;
   }
 
-  private async _startPicking() {
+  async pickLocator() {
     this._cancelPicking();
     const recorder = await Recorder.forContext(this._context, { omitCallTracking: true });
     this._recorder = recorder;
@@ -299,6 +280,10 @@ class DevToolsConnection implements Transport, DevToolsChannel {
         }),
     );
     recorder.setMode('inspecting');
+  }
+
+  async cancelPickLocator() {
+    this._cancelPicking();
   }
 
   private _cancelPicking() {

@@ -55,8 +55,11 @@ const App: React.FC = () => {
     return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
-  if (socketPath)
-    return <DevTools wsUrl={model.wsUrls.get(socketPath)} />;
+  if (socketPath) {
+    const wsUrl = model.wsUrls.get(socketPath);
+    if (wsUrl)
+      return <DevTools wsUrl={wsUrl} />;
+  }
   return <Grid model={model} />;
 };
 
