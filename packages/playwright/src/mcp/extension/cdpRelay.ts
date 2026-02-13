@@ -248,9 +248,14 @@ export class CDPRelayServer {
     switch (method) {
       case 'forwardCDPEvent':
         const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
+        // Translate deprecated Page-level download events to Browser-level
+        // equivalents that Playwright expects.
+        const cdpMethod = params.method === 'Page.downloadWillBegin' ? 'Browser.downloadWillBegin'
+          : params.method === 'Page.downloadProgress' ? 'Browser.downloadProgress'
+            : params.method;
         this._sendToPlaywright({
           sessionId,
-          method: params.method,
+          method: cdpMethod,
           params: params.params
         });
         break;
@@ -283,7 +288,14 @@ export class CDPRelayServer {
         };
       }
       case 'Browser.setDownloadBehavior': {
-        return { };
+        // Browser-level CDP commands can't be forwarded through the tab-level
+        // chrome.debugger session. Translate to the Page-level equivalent so
+        // download events (Page.downloadWillBegin/Progress) are emitted.
+        const { behavior, downloadPath } = params ?? {};
+        return await this._forwardToExtension('Page.setDownloadBehavior', {
+          behavior: behavior === 'allowAndName' ? 'allow' : behavior,
+          downloadPath,
+        }, sessionId);
       }
       case 'Target.setAutoAttach': {
         // Forward child session handling.
