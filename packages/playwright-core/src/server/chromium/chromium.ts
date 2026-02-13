@@ -137,7 +137,7 @@ export class Chromium extends BrowserType {
     }
   }
 
-  async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
+  override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
     const closeAndWait = async () => transport.close();
     return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
   }
