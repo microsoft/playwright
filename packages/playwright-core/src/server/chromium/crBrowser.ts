@@ -50,6 +50,7 @@ export class CRBrowser extends Browser {
   _devtools?: CRDevTools;
   private _version = '';
   private _majorVersion = 0;
+  _revision = '';
 
   private _tracingRecording = false;
   private _tracingClient: CRSession | undefined;
@@ -68,6 +69,7 @@ export class CRBrowser extends Browser {
       await (options as any).__testHookOnConnectToBrowser();
 
     const version = await session.send('Browser.getVersion');
+    browser._revision = version.revision;
     browser._version = version.product.substring(version.product.indexOf('/') + 1);
     try {
       browser._majorVersion = +browser._version.split('.')[0];
