@@ -26,6 +26,7 @@ import { CRBrowserContext } from './chromium/crBrowser';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
+import type { CRBrowser } from './chromium/crBrowser';
 import type { ElementInfo } from '@recorder/recorderTypes';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 
@@ -339,7 +340,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
       return url;
     }
 
-    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/@1f7651def4096c31ade7c4e6f6737c3280b1137d/`);
+    return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/@${(this._context._browser as CRBrowser)._revision}/`);
   }
 
   private _inspectorUrl(page: Page): string | undefined {
