@@ -45,7 +45,7 @@ export class DevToolsController {
       this._httpServer.createWebSocket(url => {
         if (url.searchParams.has('cdp'))
           return new CDPConnection(this._context, url.searchParams.get('cdp')!);
-        return new DevToolsConnection(this._context, () => this._url);
+        return new DevToolsConnection(this._context, this._url!);
       }, guid);
       await this._httpServer.start({ port: options.port, host: options.host });
       this._url = (this._httpServer.urlPrefix('human-readable') + `/${guid}`).replace('http://', 'ws://');
@@ -69,11 +69,11 @@ class DevToolsConnection implements Transport, DevToolsChannel {
   private _contextListeners: RegisteredListener[] = [];
   private _recorderListeners: RegisteredListener[] = [];
   private _context: BrowserContext;
-  private _controllerUrl: () => string | undefined;
+  private _controllerUrl: string;
   private _recorder: Recorder | null = null;
   private _eventListeners = new Map<string, Set<Function>>();
 
-  constructor(context: BrowserContext, controllerUrl: () => string | undefined) {
+  constructor(context: BrowserContext, controllerUrl: string) {
     this._context = context;
     this._controllerUrl = controllerUrl;
   }
@@ -345,11 +345,8 @@ class DevToolsConnection implements Transport, DevToolsChannel {
   private _inspectorUrl(page: Page): string | undefined {
     if (!(page.delegate instanceof CRPage))
       return;
-    const controllerUrl = this._controllerUrl();
-    if (!controllerUrl)
-      return;
     const inspector = new URL('./devtools_app.html', this._devtoolsURL());
-    const cdp = new URL(controllerUrl);
+    const cdp = new URL(this._controllerUrl);
     cdp.searchParams.set('cdp', page.guid);
     inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
     return inspector.toString();
