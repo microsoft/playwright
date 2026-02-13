@@ -45,12 +45,12 @@ export class ClaudeGenerator {
     for (const agent of agents)
       await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
+    const mcpServer = process.platform === 'win32'
+        ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
+        : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
-        'playwright-test': {
-          command: 'npx',
-          args: ['playwright', 'run-test-mcp-server'],
-        }
+        'playwright-test': mcpServer,
       }
     }, null, 2), '🔧', 'mcp configuration');
 
