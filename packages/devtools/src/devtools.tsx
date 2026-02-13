@@ -17,9 +17,10 @@
 import React from 'react';
 import './devtools.css';
 import { navigate } from './index';
-import { DevToolsTransport } from './transport';
+import { DevToolsClient } from './devtoolsClient';
 
-type TabInfo = { id: string; title: string; url: string };
+import type { DevToolsClientChannel } from './devtoolsClient';
+import type { Tab } from './devtoolsChannel';
 
 function tabFavicon(url: string): string {
   try {
@@ -31,16 +32,17 @@ function tabFavicon(url: string): string {
   }
 }
 
+const BUTTONS = ['left', 'middle', 'right'] as const;
+
 export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [status, setStatus] = React.useState<{ text: string; cls: string }>({ text: 'Connecting', cls: '' });
-  const [tabs, setTabs] = React.useState<TabInfo[]>([]);
-  const [selectedPageId, setSelectedPageId] = React.useState<string | undefined>();
+  const [tabs, setTabs] = React.useState<Tab[]>([]);
   const [url, setUrl] = React.useState('');
   const [frameSrc, setFrameSrc] = React.useState('');
   const [captured, setCaptured] = React.useState(false);
   const [hintVisible, setHintVisible] = React.useState(false);
 
-  const transportRef = React.useRef<DevToolsTransport | null>(null);
+  const channelRef = React.useRef<DevToolsClientChannel | null>(null);
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
   const omniboxRef = React.useRef<HTMLInputElement>(null);
@@ -57,34 +59,30 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   React.useEffect(() => {
     if (!wsUrl)
       return;
-    const transport = new DevToolsTransport(wsUrl);
-    transportRef.current = transport;
+    const channel = DevToolsClient.create(wsUrl);
+    channelRef.current = channel;
 
-    transport.onopen = () => setStatus({ text: 'Connected', cls: 'connected' });
+    channel.onopen = () => setStatus({ text: 'Connected', cls: 'connected' });
 
-    transport.onevent = (method: string, params: any) => {
-      if (method === 'selectPage') {
-        setSelectedPageId(params.pageId);
-        if (params.pageId)
-          omniboxRef.current?.focus();
-      }
-      if (method === 'frame') {
-        setFrameSrc('data:image/jpeg;base64,' + params.data);
-        if (params.viewportWidth)
-          viewportSizeRef.current.width = params.viewportWidth;
-        if (params.viewportHeight)
-          viewportSizeRef.current.height = params.viewportHeight;
-        resizeToFit();
-      }
-      if (method === 'url')
-        setUrl(params.url);
-      if (method === 'tabs')
-        setTabs(params.tabs);
-    };
+    channel.on('tabs', params => {
+      setTabs(params.tabs);
+      const selected = params.tabs.find(t => t.selected);
+      if (selected)
+        setUrl(selected.url);
+    });
 
-    transport.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
+    channel.on('frame', params => {
+      setFrameSrc('data:image/jpeg;base64,' + params.data);
+      if (params.viewportWidth)
+        viewportSizeRef.current.width = params.viewportWidth;
+      if (params.viewportHeight)
+        viewportSizeRef.current.height = params.viewportHeight;
+      resizeToFit();
+    });
 
-    return () => transport.close();
+    channel.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
+
+    return () => channel.close();
   }, [wsUrl]);
 
   function resizeToFit() {
@@ -134,8 +132,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     };
   }
 
-  const BUTTONS: string[] = ['left', 'middle', 'right'];
-
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
@@ -145,7 +141,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       return;
     }
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mousedown', { x, y, button: BUTTONS[e.button] || 'left' });
+    channelRef.current?.mousedown({ x, y, button: BUTTONS[e.button] || 'left' });
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
@@ -153,7 +149,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       return;
     e.preventDefault();
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mouseup', { x, y, button: BUTTONS[e.button] || 'left' });
+    channelRef.current?.mouseup({ x, y, button: BUTTONS[e.button] || 'left' });
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
@@ -164,14 +160,14 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       return;
     moveThrottleRef.current = now;
     const { x, y } = imgCoords(e);
-    transportRef.current?.sendNoReply('mousemove', { x, y });
+    channelRef.current?.mousemove({ x, y });
   }
 
   function onScreenWheel(e: React.WheelEvent) {
     if (!capturedRef.current)
       return;
     e.preventDefault();
-    transportRef.current?.sendNoReply('wheel', { deltaX: e.deltaX, deltaY: e.deltaY });
+    channelRef.current?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
@@ -182,14 +178,14 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       setCaptured(false);
       return;
     }
-    transportRef.current?.sendNoReply('keydown', { key: e.key });
+    channelRef.current?.keydown({ key: e.key });
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
     if (!capturedRef.current)
       return;
     e.preventDefault();
-    transportRef.current?.sendNoReply('keyup', { key: e.key });
+    channelRef.current?.keyup({ key: e.key });
   }
 
   function onScreenBlur() {
@@ -203,12 +199,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       if (!/^https?:\/\//i.test(value))
         value = 'https://' + value;
       setUrl(value);
-      transportRef.current?.send('navigate', { url: value });
+      channelRef.current?.navigate({ url: value });
       omniboxRef.current?.blur();
     }
   }
 
-  const hasPages = !!selectedPageId;
+  const hasPages = tabs.some(t => t.selected);
 
   return (<div className='devtools-view'>
     {/* Tab bar */}
@@ -221,12 +217,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       <div id='tabstrip' className='tabstrip' role='tablist'>
         {tabs.map(tab => (
           <div
-            key={tab.id}
-            className={'tab' + (tab.id === selectedPageId ? ' active' : '')}
+            key={tab.pageId}
+            className={'tab' + (tab.selected ? ' active' : '')}
             role='tab'
-            aria-selected={tab.id === selectedPageId}
+            aria-selected={tab.selected}
             title={tab.url || ''}
-            onClick={() => transportRef.current?.sendNoReply('selectTab', { id: tab.id })}
+            onClick={() => channelRef.current?.selectTab({ pageId: tab.pageId })}
           >
             <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
             <span className='tab-label'>{tab.title || 'New Tab'}</span>
@@ -235,7 +231,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
               title='Close tab'
               onClick={e => {
                 e.stopPropagation();
-                transportRef.current?.sendNoReply('closeTab', { id: tab.id });
+                channelRef.current?.closeTab({ pageId: tab.pageId });
               }}
             >
               <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
@@ -246,7 +242,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           </div>
         ))}
       </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => transportRef.current?.sendNoReply('newTab')}>
+      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => channelRef.current?.newTab()}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round'>
           <line x1='12' y1='5' x2='12' y2='19'/>
           <line x1='5' y1='12' x2='19' y2='12'/>
@@ -257,17 +253,17 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     {/* Toolbar */}
     <div className='toolbar'>
-      <button className='nav-btn' title='Back' onClick={() => transportRef.current?.sendNoReply('back')}>
+      <button className='nav-btn' title='Back' onClick={() => channelRef.current?.back()}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='15 18 9 12 15 6'/>
         </svg>
       </button>
-      <button className='nav-btn' title='Forward' onClick={() => transportRef.current?.sendNoReply('forward')}>
+      <button className='nav-btn' title='Forward' onClick={() => channelRef.current?.forward()}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='9 18 15 12 9 6'/>
         </svg>
       </button>
-      <button className='nav-btn' title='Reload' onClick={() => transportRef.current?.sendNoReply('reload')}>
+      <button className='nav-btn' title='Reload' onClick={() => channelRef.current?.reload()}>
         <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
           <polyline points='23 4 23 10 17 10'/>
           <path d='M20.49 15a9 9 0 1 1-2.12-9.36L23 10'/>

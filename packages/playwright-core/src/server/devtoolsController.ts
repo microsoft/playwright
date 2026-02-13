@@ -22,6 +22,7 @@ import { ProgressController } from './progress';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
+import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 
 export class DevToolsController {
   private _context: BrowserContext;
@@ -48,7 +49,7 @@ export class DevToolsController {
   }
 }
 
-class DevToolsConnection implements Transport {
+class DevToolsConnection implements Transport, DevToolsChannel {
   sendEvent?: (method: string, params: any) => void;
   close?: () => void;
 
@@ -58,10 +59,38 @@ class DevToolsConnection implements Transport {
   private _pageListeners: RegisteredListener[] = [];
   private _contextListeners: RegisteredListener[] = [];
   private _context: BrowserContext;
+  private _eventListeners = new Map<string, Set<Function>>();
 
   constructor(context: BrowserContext) {
     this._context = context;
   }
+
+  // -- IDevToolsConnection: event subscription --
+
+  on<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void {
+    let set = this._eventListeners.get(event);
+    if (!set) {
+      set = new Set();
+      this._eventListeners.set(event, set);
+    }
+    set.add(listener);
+  }
+
+  off<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void {
+    this._eventListeners.get(event)?.delete(listener);
+  }
+
+  /** Sends an event to the remote client and notifies local listeners. */
+  private _emit<K extends keyof DevToolsChannelEvents>(event: K, params: DevToolsChannelEvents[K]): void {
+    this.sendEvent?.(event, params);
+    const set = this._eventListeners.get(event);
+    if (set) {
+      for (const fn of set)
+        fn(params);
+    }
+  }
+
+  // -- Transport: lifecycle --
 
   onconnect() {
     const context = this._context;
@@ -78,17 +107,12 @@ class DevToolsConnection implements Transport {
             const pages = context.pages();
             if (pages.length > 0)
               this._selectPage(pages[0]);
-            else
-              this.sendEvent?.('selectPage', { pageId: undefined });
           }
           this._sendTabList();
         }),
         eventsHelper.addEventListener(context, BrowserContext.Events.InternalFrameNavigatedToNewDocument, (frame, page) => {
-          if (frame === page.mainFrame()) {
+          if (frame === page.mainFrame())
             this._sendTabList();
-            if (page === this.selectedPage)
-              this.sendEvent?.('url', { url: frame.url() });
-          }
         }),
     );
 
@@ -106,54 +130,104 @@ class DevToolsConnection implements Transport {
     this._contextListeners = [];
   }
 
+  // -- Transport: dispatch (skeleton) --
+
   async dispatch(method: string, params: any): Promise<any> {
-    if (method === 'selectTab') {
-      const page = this._context.pages().find(p => p.guid === params.id);
-      if (page)
-        await this._selectPage(page);
-      return;
-    }
+    return (this as any)[method]?.(params);
+  }
 
-    if (method === 'closeTab') {
-      const page = this._context.pages().find(p => p.guid === params.id);
-      if (page)
-        await page.close({ reason: 'Closed from devtools' });
-      return;
-    }
+  // -- IDevToolsConnection: RPC method implementations --
 
-    if (method === 'newTab') {
-      await ProgressController.runInternalTask(async progress => {
-        const page = await this._context.newPage(progress);
-        await this._selectPage(page);
-      });
-      return;
-    }
+  async selectTab(params: { pageId: string }) {
+    const page = this._context.pages().find(p => p.guid === params.pageId);
+    if (page)
+      await this._selectPage(page);
+  }
 
+  async closeTab(params: { pageId: string }) {
+    const page = this._context.pages().find(p => p.guid === params.pageId);
+    if (page)
+      await page.close({ reason: 'Closed from devtools' });
+  }
+
+  async newTab() {
+    await ProgressController.runInternalTask(async progress => {
+      const page = await this._context.newPage(progress);
+      await this._selectPage(page);
+    });
+  }
+
+  async navigate(params: { url: string }) {
+    if (!this.selectedPage || !params.url)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.mainFrame().goto(progress, params.url); });
+  }
+
+  async back() {
     if (!this.selectedPage)
       return;
-
     const page = this.selectedPage;
-    if (method === 'navigate' && params.url)
-      await ProgressController.runInternalTask(async progress => { await page.mainFrame().goto(progress, params.url); });
-    else if (method === 'back')
-      await ProgressController.runInternalTask(async progress => { await page.goBack(progress, {}); });
-    else if (method === 'forward')
-      await ProgressController.runInternalTask(async progress => { await page.goForward(progress, {}); });
-    else if (method === 'reload')
-      await ProgressController.runInternalTask(async progress => { await page.reload(progress, {}); });
-    else if (method === 'mousemove')
-      await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); });
-    else if (method === 'mousedown')
-      await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); await page.mouse.down(progress, { button: params.button || 'left' }); });
-    else if (method === 'mouseup')
-      await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); await page.mouse.up(progress, { button: params.button || 'left' }); });
-    else if (method === 'wheel')
-      await ProgressController.runInternalTask(async progress => { await page.mouse.wheel(progress, params.deltaX, params.deltaY); });
-    else if (method === 'keydown')
-      await ProgressController.runInternalTask(async progress => { await page.keyboard.down(progress, params.key); });
-    else if (method === 'keyup')
-      await ProgressController.runInternalTask(async progress => { await page.keyboard.up(progress, params.key); });
+    await ProgressController.runInternalTask(async progress => { await page.goBack(progress, {}); });
   }
+
+  async forward() {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.goForward(progress, {}); });
+  }
+
+  async reload() {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.reload(progress, {}); });
+  }
+
+  async mousemove(params: { x: number; y: number }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); });
+  }
+
+  async mousedown(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); await page.mouse.down(progress, { button: params.button || 'left' }); });
+  }
+
+  async mouseup(params: { x: number; y: number; button?: 'left' | 'right' | 'middle' }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.mouse.move(progress, params.x, params.y); await page.mouse.up(progress, { button: params.button || 'left' }); });
+  }
+
+  async wheel(params: { deltaX: number; deltaY: number }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.mouse.wheel(progress, params.deltaX, params.deltaY); });
+  }
+
+  async keydown(params: { key: string }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.keyboard.down(progress, params.key); });
+  }
+
+  async keyup(params: { key: string }) {
+    if (!this.selectedPage)
+      return;
+    const page = this.selectedPage;
+    await ProgressController.runInternalTask(async progress => { await page.keyboard.up(progress, params.key); });
+  }
+
+  // -- Internal helpers --
 
   private async _selectPage(page: Page) {
     if (this.selectedPage === page)
@@ -169,7 +243,7 @@ class DevToolsConnection implements Transport {
     this.selectedPage = page;
     this._lastFrameData = null;
     this._lastViewportSize = null;
-    this.sendEvent?.('selectPage', { pageId: page.guid });
+    this._sendTabList();
 
     // Start screencast on new page.
     this._pageListeners.push(
@@ -177,11 +251,6 @@ class DevToolsConnection implements Transport {
     );
 
     await page.screencast.startScreencast(this, { width: 800, height: 600, quality: 90 });
-
-    // Send URL to this client.
-    const url = page.mainFrame().url();
-    if (url)
-      this.sendEvent?.('url', { url });
   }
 
   private _deselectPage() {
@@ -196,33 +265,32 @@ class DevToolsConnection implements Transport {
   }
 
   private _sendCachedState() {
-    this.sendEvent?.('selectPage', { pageId: this.selectedPage?.guid });
-    if (this._lastFrameData)
-      this.sendEvent?.('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize?.width, viewportHeight: this._lastViewportSize?.height });
-    if (this.selectedPage) {
-      const url = this.selectedPage.mainFrame().url();
-      if (url)
-        this.sendEvent?.('url', { url });
-    }
+    if (this._lastFrameData && this._lastViewportSize)
+      this._emit('frame', { data: this._lastFrameData, viewportWidth: this._lastViewportSize.width, viewportHeight: this._lastViewportSize.height });
     this._sendTabList();
   }
 
-  private async _tabList(): Promise<{ id: string, title: string, url: string }[]> {
+  async tabs(): Promise<{ tabs: Tab[] }> {
+    return { tabs: await this._tabList() };
+  }
+
+  private async _tabList(): Promise<Tab[]> {
     return await Promise.all(this._context.pages().map(async page => ({
-      id: page.guid,
+      pageId: page.guid,
       title: await page.mainFrame().title().catch(() => '') || page.mainFrame().url(),
       url: page.mainFrame().url(),
+      selected: page === this.selectedPage,
     })));
   }
 
   private _sendTabList() {
-    this._tabList().then(tabs => this.sendEvent?.('tabs', { tabs }));
+    this._tabList().then(tabs => this._emit('tabs', { tabs }));
   }
 
   private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
     const data = frame.toString('base64');
     this._lastFrameData = data;
     this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
-    this.sendEvent?.('frame', { data, viewportWidth, viewportHeight });
+    this._emit('frame', { data, viewportWidth, viewportHeight });
   }
 }

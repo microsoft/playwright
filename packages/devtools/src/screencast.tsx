@@ -15,19 +15,19 @@
  */
 
 import React from 'react';
-import { DevToolsTransport } from './transport';
 
-export const Screencast: React.FC<{ wsUrl: string }> = ({ wsUrl }) => {
+import type { DevToolsClientChannel } from './devtoolsClient';
+
+export const Screencast: React.FC<{ channel: DevToolsClientChannel }> = ({ channel }) => {
   const [frameSrc, setFrameSrc] = React.useState('');
 
   React.useEffect(() => {
-    const transport = new DevToolsTransport(wsUrl);
-    transport.onevent = (method: string, params: any) => {
-      if (method === 'frame')
-        setFrameSrc('data:image/jpeg;base64,' + params.data);
+    const listener = (params: { data: string }) => {
+      setFrameSrc('data:image/jpeg;base64,' + params.data);
     };
-    return () => transport.close();
-  }, [wsUrl]);
+    channel.on('frame', listener);
+    return () => channel.off('frame', listener);
+  }, [channel]);
 
   if (!frameSrc)
     return <div className='screencast-placeholder'>Connecting...</div>;
