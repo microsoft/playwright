@@ -219,6 +219,5 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
     if (result.defaultContext)
       await this._instrumentation.runAfterCreateBrowserContext(BrowserContext.from(result.defaultContext));
     return browser;
-  };
-
+  }
 }
