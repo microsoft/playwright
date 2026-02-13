@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import * as path from 'path';
+import { join } from 'path';
 import { test, expect } from './playwright-test-fixtures';
 
 test('should preserve source line numbers in compiled output with destructured parameters', async ({}) => {
-  const { babelTransform } = require(path.join(__dirname, '..', '..', 'packages', 'playwright', 'lib', 'transform', 'babelBundleImpl'));
+  const { babelTransform } = require(join(__dirname, '..', '..', 'packages', 'playwright', 'lib', 'transform', 'babelBundleImpl'));
 
   // TypeScript source with destructured parameters in test callbacks.
   // Lines 7, 10, 13 contain the test() calls.
