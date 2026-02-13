@@ -20,7 +20,6 @@ export type DevToolsChannelEvents = {
   frame: { data: string; viewportWidth: number; viewportHeight: number };
   tabs: { tabs: Tab[] };
   elementPicked: { selector: string };
-  recorderModeChanged: { picking: boolean };
 };
 
 export interface DevToolsChannel {

@@ -103,10 +103,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       toastTimerRef.current = setTimeout(() => setToast(null), 3000);
     });
 
-    channel.on('recorderModeChanged', params => {
-      setPicking(params.picking);
-    });
-
     channel.onclose = () => setStatus({ text: 'Disconnected', cls: 'error' });
 
     return () => {

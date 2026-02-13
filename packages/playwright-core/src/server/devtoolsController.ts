@@ -298,7 +298,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
         }),
     );
     recorder.setMode('inspecting');
-    this._emit('recorderModeChanged', { picking: true });
   }
 
   private _cancelPicking() {
@@ -307,7 +306,6 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     if (this._recorder) {
       this._recorder.setMode('none');
       this._recorder = null;
-      this._emit('recorderModeChanged', { picking: false });
     }
   }
 
