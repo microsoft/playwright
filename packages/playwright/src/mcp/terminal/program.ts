@@ -163,19 +163,45 @@ export async function program() {
       console.log(result.text);
       return;
     }
-
-    case 'close':
+    case 'close': {
       const closeEntry = registry.entry(clientInfo, sessionName);
       const session = closeEntry ? new Session(clientInfo, closeEntry.config) : undefined;
+      if (session?.isAttached()) {
+        await session.deleteSessionConfig();
+        return;
+      }
       if (!session || !await session.canConnect()) {
         console.log(`Browser '${sessionName}' is not open.`);
         return;
       }
       await session.stop();
       return;
-    case 'install':
+    }
+    case 'attach': {
+      if (sessionName === 'default') {
+        console.log(`Cannot attach 'default' session.`);
+        return;
+      }
+      const sessionConfig: SessionConfig = {
+        name: sessionName,
+        version: clientInfo.version,
+        socketPath: args._[1],
+        timestamp: Date.now(),
+        cli: { attached: true },
+        workspaceDir: clientInfo.workspaceDir,
+      };
+      const session = new Session(clientInfo, sessionConfig);
+      if (!await session.canConnect()) {
+        console.log(`Cannot connect to '${sessionConfig.socketPath}'.`);
+        return;
+      }
+      await session.writeSessionConfig();
+      return;
+    }
+    case 'install': {
       await install(args);
       return;
+    }
     case 'show': {
       const daemonScript = path.join(__dirname, 'devtoolsApp.js');
       const child = spawn(process.execPath, [daemonScript], {
@@ -289,7 +315,7 @@ function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
 }
 
-function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
+export function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
     if (!config && fs.existsSync(defaultConfigFile()))
@@ -417,6 +443,8 @@ async function renderSessionStatus(session: Session) {
   const config = session.config;
   const canConnect = await session.canConnect();
   text.push(`- ${session.name}:`);
+  if (session.isAttached())
+    text.push(`  - attached to external browser`);
   text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);
   if (canConnect && !session.isCompatible())
     text.push(`  - version: v${config.version} [incompatible please re-open]`);

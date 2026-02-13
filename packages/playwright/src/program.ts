@@ -289,6 +289,7 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
   const overrides: ConfigCLIOverrides = {
+    debug: options.debug,
     failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
@@ -309,6 +310,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     runAgents: options.runAgents,
     workers: options.workers,
     pause: process.env.PWPAUSE ? true : undefined,
+    use: {},
   };
 
   if (options.browser) {
@@ -324,16 +326,25 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     });
   }
 
-  if (options.headed || options.debug || overrides.pause)
-    overrides.use = { headless: false };
-  if (!options.ui && options.debug) {
-    overrides.debug = true;
+  if (options.headed)
+    overrides.use.headless = false;
+  if (options.trace)
+    overrides.use.trace = options.trace;
+
+  if (overrides.debug === 'inspector') {
+    overrides.use.headless = false;
     process.env.PWDEBUG = '1';
   }
-  if (!options.ui && options.trace) {
-    overrides.use = overrides.use || {};
-    overrides.use.trace = options.trace;
+  if (overrides.debug === 'cli') {
+    overrides.timeout = 0;
+    overrides.use.actionTimeout = 5000;
   }
+
+  if (options.ui || options.uiHost || options.uiPort) {
+    delete overrides.use.trace;
+    overrides.debug = undefined;
+  }
+
   if (overrides.tsconfig && !fs.existsSync(overrides.tsconfig))
     throw new Error(`--tsconfig "${options.tsconfig}" does not exist`);
 
@@ -403,7 +414,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
-  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
+  ['--debug [mode]', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`, choices: ['cli', 'inspector'], preset: 'inspector' }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],
