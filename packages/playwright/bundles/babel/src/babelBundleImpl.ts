@@ -112,6 +112,7 @@ function babelTransformOptions(isTypeScript: boolean, isModule: boolean, plugins
       ...pluginsEpilogue.map(([name, options]) => [require(name), options]),
     ],
     compact: false,
+    retainLines: true,
     sourceMaps: 'both',
   };
 }

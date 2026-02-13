@@ -14,7 +14,47 @@
  * limitations under the License.
  */
 
+import * as path from 'path';
 import { test, expect } from './playwright-test-fixtures';
+
+test('should preserve source line numbers in compiled output with destructured parameters', async ({}) => {
+  const { babelTransform } = require(path.join(__dirname, '..', '..', 'packages', 'playwright', 'lib', 'transform', 'babelBundleImpl'));
+
+  // TypeScript source with destructured parameters in test callbacks.
+  // Lines 7, 10, 13 contain the test() calls.
+  const source = [
+    `import { test as base, expect } from '@playwright/test';`,  // line 1
+    `const test = base.extend<{ foo: string; bar: string; baz: string }>({`,  // line 2
+    `  foo: async ({}, use) => await use('foo'),`,  // line 3
+    `  bar: async ({}, use) => await use('bar'),`,  // line 4
+    `  baz: async ({}, use) => await use('baz'),`,  // line 5
+    `});`,  // line 6
+    `test('first test', async ({ foo, bar, baz }) => {`,  // line 7
+    `  expect(foo).toBe('foo');`,  // line 8
+    `});`,  // line 9
+    `test('second test', async ({ foo, bar, baz }) => {`,  // line 10
+    `  expect(bar).toBe('bar');`,  // line 11
+    `});`,  // line 12
+    `test('third test', async ({ foo, bar, baz }) => {`,  // line 13
+    `  expect(baz).toBe('baz');`,  // line 14
+    `});`,  // line 15
+  ].join('\n');
+
+  const result = babelTransform(source, 'test.ts', false, [], []);
+  const compiledLines = result.code.split('\n');
+
+  // Find which compiled lines contain each test() call.
+  const testLines: number[] = [];
+  for (let i = 0; i < compiledLines.length; i++) {
+    if (compiledLines[i].match(/test\('(first|second|third) test'/))
+      testLines.push(i + 1);  // 1-indexed
+  }
+
+  // Without retainLines, babel expands `async ({ foo, bar, baz }) =>` across
+  // multiple lines, shifting each subsequent test() call further down.
+  // The compiled output must preserve the original line positions.
+  expect(testLines).toEqual([7, 10, 13]);
+});
 
 test('should succeed', async ({ runInlineTest }) => {
   const result = await runInlineTest({
