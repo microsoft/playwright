@@ -31,6 +31,7 @@ import { parseCommand } from './command';
 import type * as mcp from '../../mcp/sdk/exports';
 import type { BrowserContextFactory } from '../../mcp/browser/browserContextFactory';
 import type { FullConfig } from '../../mcp/browser/config';
+import type { ServerInfo, SessionConfig } from '../client/registry';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -45,11 +46,11 @@ async function socketExists(socketPath: string): Promise<boolean> {
 }
 
 export async function startMcpDaemonServer(
-  config: FullConfig,
+  mcpConfig: FullConfig,
+  sessionConfig: SessionConfig,
   contextFactory: BrowserContextFactory,
 ): Promise<string> {
-  const sessionConfig = config.sessionConfig!;
-  const { socketPath, version } = sessionConfig;
+  const { socketPath } = sessionConfig;
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
     daemonDebug(`Socket already exists, removing: ${socketPath}`);
@@ -81,7 +82,7 @@ export async function startMcpDaemonServer(
   const existingContextFactory = {
     createContext: () => Promise.resolve({ browserContext, close }),
   };
-  const backend = new BrowserServerBackend(config, existingContextFactory, { allTools: true });
+  const backend = new BrowserServerBackend(mcpConfig, existingContextFactory, { allTools: true });
   await backend.initialize?.(clientInfo);
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
@@ -94,7 +95,7 @@ export async function startMcpDaemonServer(
 
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
-    const connection = new SocketConnection(socket, version);
+    const connection = new SocketConnection(socket);
     connection.onclose = () => {
       daemonDebug('client disconnected');
     };
@@ -114,6 +115,9 @@ export async function startMcpDaemonServer(
             toolParams._meta = { cwd: params.cwd };
           const response = await backend.callTool(toolName, toolParams);
           await connection.send({ id, result: formatResult(response) });
+        } else if (method === 'info') {
+          const info: ServerInfo = { version: sessionConfig.version };
+          await connection.send({ id, result: info });
         } else {
           throw new Error(`Unknown method: ${method}`);
         }

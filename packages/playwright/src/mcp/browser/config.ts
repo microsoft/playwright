@@ -28,7 +28,6 @@ import { firstRootPath } from '../sdk/server';
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
-import type { SessionConfig } from '../../cli/client/registry';
 
 type ViewportSize = { width: number; height: number };
 
@@ -134,7 +133,6 @@ export type FullConfig = Config & {
   },
   skillMode?: boolean;
   configFile?: string;
-  sessionConfig?: SessionConfig;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
