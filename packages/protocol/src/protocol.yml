@@ -1923,6 +1923,9 @@ Page:
     clearPageErrors:
       title: Clear page errors
 
+    clearRequests:
+      title: Clear network requests
+
     pageErrors:
       title: Get page errors
       group: getter

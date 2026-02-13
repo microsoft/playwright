@@ -2099,6 +2099,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
   clearPageErrors(params?: PageClearPageErrorsParams, progress?: Progress): Promise<PageClearPageErrorsResult>;
+  clearRequests(params?: PageClearRequestsParams, progress?: Progress): Promise<PageClearRequestsResult>;
   pageErrors(params?: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
   requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
@@ -2499,6 +2500,9 @@ export type PageTouchscreenTapResult = void;
 export type PageClearPageErrorsParams = {};
 export type PageClearPageErrorsOptions = {};
 export type PageClearPageErrorsResult = void;
+export type PageClearRequestsParams = {};
+export type PageClearRequestsOptions = {};
+export type PageClearRequestsResult = void;
 export type PagePageErrorsParams = {};
 export type PagePageErrorsOptions = {};
 export type PagePageErrorsResult = {

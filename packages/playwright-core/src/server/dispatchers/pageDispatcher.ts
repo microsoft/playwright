@@ -328,6 +328,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { pdf: buffer };
   }
 
+  async clearRequests(params: channels.PageClearRequestsParams, progress: Progress): Promise<channels.PageClearRequestsResult> {
+    this._page.clearRequests();
+  }
+
   async requests(params: channels.PageRequestsParams, progress: Progress): Promise<channels.PageRequestsResult> {
     // Send all future requests to the client, so that it can reliably receive all of them.
     // Otherwise, if subscription is added in a different task from this call (either before or after),

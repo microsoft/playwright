@@ -797,6 +797,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.waitForFunction(pageFunction, arg, options);
   }
 
+  async clearRequests(): Promise<void> {
+    await this._channel.clearRequests();
+  }
+
   async requests() {
     const { requests } = await this._channel.requests();
     return requests.map(request => Request.from(request));

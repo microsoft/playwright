@@ -1429,6 +1429,8 @@ scheme.PageTouchscreenTapParams = tObject({
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
 scheme.PageClearPageErrorsParams = tOptional(tObject({}));
 scheme.PageClearPageErrorsResult = tOptional(tObject({}));
+scheme.PageClearRequestsParams = tOptional(tObject({}));
+scheme.PageClearRequestsResult = tOptional(tObject({}));
 scheme.PagePageErrorsParams = tOptional(tObject({}));
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
