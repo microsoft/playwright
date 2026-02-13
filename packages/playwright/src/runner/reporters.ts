@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+import fs from 'fs';
 import { calculateSha1 } from 'playwright-core/lib/utils';
 
 import { loadReporter } from './loadUtils';
@@ -127,6 +127,10 @@ function computeCommandHash(config: FullConfigInternal) {
     command.cliOnlyChanged = config.cliOnlyChanged;
   if (config.config.tags.length)
     command.tags = config.config.tags.join(' ');
+  if (config.cliTestList)
+    command.cliTestList = calculateSha1(fs.readFileSync(config.cliTestList));
+  if (config.cliTestListInvert)
+    command.cliTestListInvert = calculateSha1(fs.readFileSync(config.cliTestListInvert));
   if (Object.keys(command).length)
     parts.push(calculateSha1(JSON.stringify(command)).substring(0, 7));
   return parts.join('-');
