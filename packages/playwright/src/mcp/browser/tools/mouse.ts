@@ -55,8 +55,16 @@ const mouseDown = defineTabTool({
 
   handle: async (tab, params, response) => {
     response.addCode(`// Press mouse down`);
-    response.addCode(`await page.mouse.down({ button: '${params.button}' });`);
-    await tab.page.mouse.down({ button: params.button });
+    if (params.button !== undefined)
+      response.addCode(`await page.mouse.down({ button: '${params.button}' });`);
+    else
+      response.addCode(`await page.mouse.down();`);
+
+    // Avoid passing { button: undefined } - it creates invalid code and is unnecessary.
+    if (params.button !== undefined)
+      await tab.page.mouse.down({ button: params.button });
+    else
+      await tab.page.mouse.down();
   },
 });
 
@@ -75,8 +83,15 @@ const mouseUp = defineTabTool({
 
   handle: async (tab, params, response) => {
     response.addCode(`// Press mouse up`);
-    response.addCode(`await page.mouse.up({ button: '${params.button}' });`);
-    await tab.page.mouse.up({ button: params.button });
+    if (params.button !== undefined)
+      response.addCode(`await page.mouse.up({ button: '${params.button}' });`);
+    else
+      response.addCode(`await page.mouse.up();`);
+
+    if (params.button !== undefined)
+      await tab.page.mouse.up({ button: params.button });
+    else
+      await tab.page.mouse.up();
   },
 });
 
@@ -105,10 +120,13 @@ const mouseClick = defineTabTool({
   schema: {
     name: 'browser_mouse_click_xy',
     title: 'Click',
-    description: 'Click left mouse button at a given position',
+    description: 'Click mouse button at a given position',
     inputSchema: z.object({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
+      button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
+      clickCount: z.number().int().optional().describe('Number of clicks'),
+      delay: z.number().optional().describe('Delay between down and up in milliseconds'),
     }),
     type: 'input',
   },
@@ -117,14 +135,25 @@ const mouseClick = defineTabTool({
     response.setIncludeSnapshot();
 
     response.addCode(`// Click mouse at coordinates (${params.x}, ${params.y})`);
-    response.addCode(`await page.mouse.move(${params.x}, ${params.y});`);
-    response.addCode(`await page.mouse.down();`);
-    response.addCode(`await page.mouse.up();`);
+    if (params.button !== undefined || params.clickCount !== undefined || params.delay !== undefined) {
+      const parts: string[] = [];
+      if (params.button !== undefined)
+        parts.push(`button: '${params.button}'`);
+      if (params.clickCount !== undefined)
+        parts.push(`clickCount: ${params.clickCount}`);
+      if (params.delay !== undefined)
+        parts.push(`delay: ${params.delay}`);
+      response.addCode(`await page.mouse.click(${params.x}, ${params.y}, { ${parts.join(', ')} });`);
+    } else {
+      response.addCode(`await page.mouse.click(${params.x}, ${params.y});`);
+    }
 
     await tab.waitForCompletion(async () => {
-      await tab.page.mouse.move(params.x, params.y);
-      await tab.page.mouse.down();
-      await tab.page.mouse.up();
+      await tab.page.mouse.click(params.x, params.y, {
+        ...(params.button !== undefined ? { button: params.button } : {}),
+        ...(params.clickCount !== undefined ? { clickCount: params.clickCount } : {}),
+        ...(params.delay !== undefined ? { delay: params.delay } : {}),
+      });
     });
   },
 });
