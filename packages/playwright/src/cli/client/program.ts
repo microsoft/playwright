@@ -157,6 +157,10 @@ async function program() {
       if (entry)
         await new Session(clientInfo, entry.config).stop(true);
       const session = new Session(clientInfo, sessionConfigFromArgs(clientInfo, sessionName, args));
+      // Stale session.
+      if (await session.canConnect())
+        await session.stop(true);
+
       for (const globalOption of globalOptions)
         delete args[globalOption];
       const result = await session.run(args);

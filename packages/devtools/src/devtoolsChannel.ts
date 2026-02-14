@@ -23,6 +23,7 @@ export type DevToolsChannelEvents = {
 };
 
 export interface DevToolsChannel {
+  version: 1;
   tabs(): Promise<{ tabs: Tab[] }>;
   selectTab(params: { pageId: string }): Promise<void>;
   closeTab(params: { pageId: string }): Promise<void>;

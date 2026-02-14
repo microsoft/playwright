@@ -19,6 +19,7 @@ export class Transport {
   private _lastId = 0;
   private _pending = new Map<number, { resolve: (result: any) => void; reject: (error: Error) => void }>();
   private _sendQueue: string[] | undefined = [];
+  private _closed = false;
 
   onopen?: () => void;
   onevent?: (method: string, params: any) => void;
@@ -56,6 +57,8 @@ export class Transport {
       }
     };
     this._ws.onclose = (event: CloseEvent) => {
+      this._closed = true;
+      this._sendQueue = undefined;
       for (const { reject } of this._pending.values())
         reject(new Error('Connection closed'));
       this._pending.clear();
@@ -70,6 +73,8 @@ export class Transport {
   }
 
   send(method: string, params?: any): Promise<any> {
+    if (this._closed)
+      return Promise.reject(new Error('Connection closed'));
     const id = ++this._lastId;
     const message = JSON.stringify({ id, method, params });
     if (this._sendQueue)

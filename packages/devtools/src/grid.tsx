@@ -43,7 +43,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
     for (const session of sessions) {
-      const key = session.config.workspaceDir || 'Unknown';
+      const key = session.config.workspaceDir || 'Global';
       let list = groups.get(key);
       if (!list) {
         list = [];
@@ -67,16 +67,16 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
     {!model.loading && !model.error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
 
     <div className='workspace-list'>
-      {workspaceGroups.map(([workspace, entries]) => {
-        const isCurrent = workspace === clientInfo?.workspaceDir;
-        const isExpanded = isCurrent || expandedWorkspaces.has(workspace);
+      {workspaceGroups.map(([workspace, entries], index) => {
+        const isFirst = index === 0;
+        const isExpanded = isFirst || expandedWorkspaces.has(workspace);
         return (
           <div key={workspace} className='workspace-group'>
             <div
-              className={'workspace-header' + (isCurrent ? '' : ' collapsible')}
-              onClick={isCurrent ? undefined : () => toggleWorkspace(workspace)}
+              className={'workspace-header' + (isFirst ? '' : ' collapsible')}
+              onClick={isFirst ? undefined : () => toggleWorkspace(workspace)}
             >
-              {!isCurrent && (
+              {!isFirst && (
                 <svg className={'workspace-chevron' + (isExpanded ? ' expanded' : '')} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
                   <polyline points='9 18 15 12 9 6'/>
                 </svg>
@@ -123,11 +123,12 @@ const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visibl
   }, [channel]);
 
   const chipTitle = selectedTab ? `[${config.name}] ${selectedTab.url} \u2014 ${selectedTab.title}` : config.name;
+  const clickable = canConnect && wsUrl !== null;
 
   return (
-    <a className={'session-chip' + (canConnect ? '' : ' disconnected')} href={canConnect ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (canConnect ? '' : ' disconnected') + (wsUrl === null ? ' not-supported' : '')} href={clickable ? href : undefined} title={chipTitle} onClick={e => {
       e.preventDefault();
-      if (canConnect)
+      if (clickable)
         navigate(href);
     }}>
       <div className='session-chip-header'>
@@ -172,6 +173,8 @@ const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visibl
       <div className='screencast-container'>
         {channel && <Screencast channel={channel} />}
         {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
+        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>Not supported &mdash; v{config.version}</div>}
+        {canConnect && !channel && wsUrl === undefined && <div className='screencast-placeholder'>Connecting</div>}
       </div>
     </a>
   );

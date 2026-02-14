@@ -144,7 +144,8 @@
   color: var(--fg-muted);
 }
 
-.session-chip.disconnected {
+.session-chip.disconnected,
+.session-chip.not-supported {
   opacity: 0.6;
   cursor: default;
 }

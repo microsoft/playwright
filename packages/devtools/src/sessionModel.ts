@@ -25,7 +25,7 @@ type Listener = () => void;
 
 export class SessionModel {
   sessions: SessionStatus[] = [];
-  readonly wsUrls: Map<string, string> = new Map();
+  readonly wsUrls: Map<string, string | null> = new Map();
   clientInfo: ClientInfo | undefined;
   error: string | undefined;
   loading = true;
@@ -132,8 +132,10 @@ export class SessionModel {
       if (resp.ok) {
         const { url } = await resp.json();
         this.wsUrls.set(config.socketPath, url);
-        this._notify();
+      } else {
+        this.wsUrls.set(config.socketPath, null);
       }
+      this._notify();
     }).catch(() => {
       this._knownTimestamps.delete(config.socketPath);
     });
