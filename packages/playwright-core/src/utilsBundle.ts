@@ -18,7 +18,7 @@ export const colors: typeof import('../bundles/utils/node_modules/colors/safe') 
 export const debug: typeof import('../bundles/utils/node_modules/@types/debug') = require('./utilsBundleImpl').debug;
 export const diff: typeof import('../bundles/utils/node_modules/@types/diff') = require('./utilsBundleImpl').diff;
 export const dotenv: typeof import('../bundles/utils/node_modules/dotenv') = require('./utilsBundleImpl').dotenv;
-export const getProxyForUrl: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
+const getProxyForUrlFromEnv: typeof import('../bundles/utils/node_modules/@types/proxy-from-env').getProxyForUrl = require('./utilsBundleImpl').getProxyForUrl;
 export const HttpsProxyAgent: typeof import('../bundles/utils/node_modules/https-proxy-agent').HttpsProxyAgent = require('./utilsBundleImpl').HttpsProxyAgent;
 export const jpegjs: typeof import('../bundles/utils/node_modules/jpeg-js') = require('./utilsBundleImpl').jpegjs;
 export const lockfile: typeof import('../bundles/utils/node_modules/@types/proper-lockfile') = require('./utilsBundleImpl').lockfile;
@@ -38,6 +38,18 @@ export const yaml: typeof import('../bundles/utils/node_modules/yaml') = require
 export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAMLSeq } from '../bundles/utils/node_modules/yaml';
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
+
+// Wraps proxy-from-env's getProxyForUrl to accept a modern URL instance,
+// avoiding the deprecated url.parse() call inside the library.
+// It only reads a couple of fields.
+export function getProxyForUrl(url: URL): string {
+  return getProxyForUrlFromEnv({
+    protocol: url.protocol,
+    // WHATWG URL strips default ports from hostname, which node:url doesn't, but this doesnt matter for proxy-from-env.
+    host: url.host,
+    port: url.port,
+  } as import('node:url').Url);
+}
 
 export function ms(ms: number): string {
   if (!isFinite(ms))

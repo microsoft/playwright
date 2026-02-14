@@ -47,7 +47,7 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
   if (params.rejectUnauthorized !== undefined)
     options.rejectUnauthorized = params.rejectUnauthorized;
 
-  const proxyURL = getProxyForUrl(params.url);
+  const proxyURL = getProxyForUrl(url);
   if (proxyURL) {
     const parsedProxyURL = normalizeProxyURL(proxyURL);
     if (params.url.startsWith('http:')) {
