@@ -254,7 +254,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
         eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
     );
 
-    await page.screencast.startScreencast(this, { width: 800, height: 600, quality: 90 });
+    await page.screencast.startScreencast(this, { width: 1280, height: 800, quality: 90 });
   }
 
   private _deselectPage() {
