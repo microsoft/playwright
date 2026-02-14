@@ -22,6 +22,7 @@ import { registry } from 'playwright-core/lib/server';
 import { devices } from 'playwright-core';
 import { dotenv, debug } from 'playwright-core/lib/utilsBundle';
 
+import { configFromIniFile } from './configIni';
 import { fileExistsAsync } from '../../util';
 import { firstRootPath } from '../sdk/server';
 
@@ -359,10 +360,13 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (!configFile)
     return {};
 
+  if (configFile.endsWith('.ini'))
+    return configFromIniFile(configFile);
+
   try {
     return JSON.parse(await fs.promises.readFile(configFile, 'utf8'));
-  } catch (error) {
-    throw new Error(`Failed to load config file: ${configFile}, ${error}`);
+  } catch {
+    return configFromIniFile(configFile);
   }
 }
 

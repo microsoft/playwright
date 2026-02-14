@@ -54,7 +54,7 @@ export type StartClient = (options?: {
   args?: string[],
   omitArgs?: string[],
   cwd?: string,
-  config?: Config,
+  config?: Config | string,
   roots?: { name: string, uri: string }[],
   rootsResponseDelay?: number,
   env?: NodeJS.ProcessEnv,
@@ -110,7 +110,10 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
           args.push(`--browser=${mcpBrowser}`);
         if (options?.config) {
           const configFile = testInfo.outputPath('config.json');
-          await fs.promises.writeFile(configFile, JSON.stringify(options.config, null, 2));
+          if (typeof options.config === 'object')
+            await fs.promises.writeFile(configFile, JSON.stringify(options.config, null, 2));
+          else if (typeof options.config === 'string')
+            await fs.promises.writeFile(configFile, options.config.trim());
           args.push(`--config=${path.relative(configDir, configFile)}`);
         }
         if (!options?.noTimeoutForTest)

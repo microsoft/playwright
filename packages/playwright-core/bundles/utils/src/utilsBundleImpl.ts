@@ -22,6 +22,9 @@ export const colors = colorsLibrary;
 import debugLibrary from 'debug';
 export const debug = debugLibrary;
 
+import * as iniLibrary from 'ini';
+export const ini = iniLibrary;
+
 import * as diffLibrary from 'diff';
 export const diff = diffLibrary;
 
