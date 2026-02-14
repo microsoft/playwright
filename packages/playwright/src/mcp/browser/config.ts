@@ -44,7 +44,6 @@ export type CLIOptions = {
   cdpEndpoint?: string;
   cdpHeader?: Record<string, string>;
   cdpTimeout?: number;
-  chromiumSandbox?: boolean;
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
@@ -59,6 +58,7 @@ export type CLIOptions = {
   initPage?: string[];
   isolated?: boolean;
   imageResponses?: 'allow' | 'omit';
+  sandbox?: boolean;
   outputDir?: string;
   outputMode?: 'file' | 'stdout';
   port?: number;
@@ -223,10 +223,10 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     headless: cliOptions.headless,
   };
 
-  // --chromium-sandbox was passed, enable the chromium sandbox
-  // --no-chromium-sandbox was passed, disable the chromium sandbox
-  if (cliOptions.chromiumSandbox !== undefined)
-    launchOptions.chromiumSandbox = cliOptions.chromiumSandbox;
+  // --sandbox was passed, enable the sandbox
+  // --no-sandbox was passed, disable the sandbox
+  if (cliOptions.sandbox !== undefined)
+    launchOptions.chromiumSandbox = cliOptions.sandbox;
 
   if (cliOptions.proxyServer) {
     launchOptions.proxy = {
@@ -338,7 +338,7 @@ export function configFromEnv(): Config & { configFile?: string } {
   options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
   if (process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
     options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
-  options.chromiumSandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_CHROMIUM_SANDBOX);
+  options.sandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_SANDBOX);
   options.outputDir = envToString(process.env.PLAYWRIGHT_MCP_OUTPUT_DIR);
   options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
