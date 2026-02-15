@@ -30,7 +30,11 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
     }),
     new Promise<{ timedOut: true }>(resolve => {
       const kMaxDeadline = 2147483647; // 2^31-1
-      const timeout = (deadline || kMaxDeadline) - monotonicTime();
+      const rawTimeout = (deadline || kMaxDeadline) - monotonicTime();
+      // Clamp to [0, kMaxDeadline] to avoid negative values (which Node.js
+      // coerces to 1ms) when the process uptime exceeds the deadline, and to
+      // stay within the valid range for setTimeout.
+      const timeout = Math.min(Math.max(rawTimeout, 0), kMaxDeadline);
       timer = setTimeout(() => resolve({ timedOut: true }), timeout);
     }),
   ]).finally(() => {
