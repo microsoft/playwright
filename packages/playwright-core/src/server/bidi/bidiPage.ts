@@ -373,6 +373,10 @@ export class BidiPage implements PageDelegate {
     ]);
   }
 
+  async setZoom(zoomFactor: number): Promise<void> {
+    throw new Error('Zoom is not supported in BiDi mode');
+  }
+
   async updateRequestInterception(): Promise<void> {
     await this._networkManager.setRequestInterception(this._page.requestInterceptors.length > 0);
   }

@@ -688,6 +688,11 @@ export class WKPage implements PageDelegate {
     await this._updateViewport();
   }
 
+  async setZoom(zoomFactor: number): Promise<void> {
+    const pageProxyId = this._pageProxySession.sessionId;
+    await this._pageProxySession.connection.browserSession.send('Playwright.setPageZoomFactor', { pageProxyId, zoomFactor });
+  }
+
   async updateUserAgent(): Promise<void> {
     const contextOptions = this._browserContext._options;
     this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });

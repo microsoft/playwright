@@ -65,6 +65,7 @@ export interface PageDelegate {
 
   updateExtraHTTPHeaders(): Promise<void>;
   updateEmulatedViewportSize(preserveWindowBoundaries?: boolean): Promise<void>;
+  setZoom(zoomFactor: number): Promise<void>;
   updateEmulateMedia(): Promise<void>;
   updateRequestInterception(): Promise<void>;
   updateFileChooserInterception(): Promise<void>;
@@ -605,6 +606,10 @@ export class Page extends SdkObject<PageEventMap> {
       this.delegate.updateEmulatedViewportSize().catch(() => {});
       throw error;
     }
+  }
+
+  async setZoom(progress: Progress, zoomFactor: number) {
+    await progress.race(this.delegate.setZoom(zoomFactor));
   }
 
   setEmulatedSizeFromWindowOpen(emulatedSize: EmulatedSize) {
