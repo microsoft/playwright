@@ -1378,6 +1378,10 @@ scheme.PageSetViewportSizeParams = tObject({
   }),
 });
 scheme.PageSetViewportSizeResult = tOptional(tObject({}));
+scheme.PageSetZoomParams = tObject({
+  zoomFactor: tFloat,
+});
+scheme.PageSetZoomResult = tOptional(tObject({}));
 scheme.PageKeyboardDownParams = tObject({
   key: tString,
 });

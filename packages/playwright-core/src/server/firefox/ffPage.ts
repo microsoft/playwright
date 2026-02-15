@@ -335,6 +335,10 @@ export class FFPage implements PageDelegate {
     await this._session.send('Page.setViewportSize', { viewportSize });
   }
 
+  async setZoom(zoomFactor: number): Promise<void> {
+    await this._session.send('Page.setZoom', { zoom: zoomFactor });
+  }
+
   async bringToFront(): Promise<void> {
     await this._session.send('Page.bringToFront', {});
   }

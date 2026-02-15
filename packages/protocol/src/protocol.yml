@@ -1802,6 +1802,14 @@ Page:
         snapshot: true
         pausesBeforeAction: true
 
+    setZoom:
+      title: Set zoom level
+      parameters:
+        zoomFactor: float
+      flags:
+        snapshot: true
+        pausesBeforeAction: true
+
     keyboardDown:
       title: Key down "{key}"
       parameters:

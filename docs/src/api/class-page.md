@@ -4198,6 +4198,51 @@ Page width in pixels.
 
 Page height in pixels.
 
+## async method: Page.setZoom
+* since: v1.59
+
+Sets the browser zoom level for the page. A zoom factor of `1` represents 100% (default). Values greater
+than `1` zoom in, and values less than `1` zoom out.
+
+This is useful for testing zoom-dependent layouts and accessibility scenarios, such as verifying that
+content remains usable at 200% zoom per WCAG guidelines.
+
+**Usage**
+
+```js
+// Set zoom to 150%
+await page.setZoom(1.5);
+
+// Reset zoom to 100%
+await page.setZoom(1);
+```
+
+```java
+// Set zoom to 150%
+page.setZoom(1.5);
+```
+
+```python async
+# Set zoom to 150%
+await page.set_zoom(1.5)
+```
+
+```python sync
+# Set zoom to 150%
+page.set_zoom(1.5)
+```
+
+```csharp
+// Set zoom to 150%
+await page.SetZoomAsync(1.5);
+```
+
+### param: Page.setZoom.zoomFactor
+* since: v1.59
+- `zoomFactor` <[float]>
+
+Zoom factor, where `1` is 100%. Must be a positive number.
+
 ## async method: Page.tap
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).

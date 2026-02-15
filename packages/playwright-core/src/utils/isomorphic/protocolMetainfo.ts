@@ -123,6 +123,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.setNetworkInterceptionPatterns', { title: 'Route requests', group: 'route', }],
   ['Page.setWebSocketInterceptionPatterns', { title: 'Route WebSockets', group: 'route', }],
   ['Page.setViewportSize', { title: 'Set viewport size', snapshot: true, pausesBeforeAction: true, }],
+  ['Page.setZoom', { title: 'Set zoom level', snapshot: true, pausesBeforeAction: true, }],
   ['Page.keyboardDown', { title: 'Key down "{key}"', slowMo: true, snapshot: true, pausesBeforeAction: true, }],
   ['Page.keyboardUp', { title: 'Key up "{key}"', slowMo: true, snapshot: true, pausesBeforeAction: true, }],
   ['Page.keyboardInsertText', { title: 'Insert "{text}"', slowMo: true, snapshot: true, pausesBeforeAction: true, }],

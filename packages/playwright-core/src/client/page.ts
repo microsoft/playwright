@@ -485,6 +485,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.setViewportSize({ viewportSize });
   }
 
+  async setZoom(zoomFactor: number) {
+    await this._channel.setZoom({ zoomFactor });
+  }
+
   viewportSize(): Size | null {
     return this._viewportSize || null;
   }

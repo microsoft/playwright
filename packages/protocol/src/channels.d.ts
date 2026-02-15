@@ -2098,6 +2098,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   setNetworkInterceptionPatterns(params: PageSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<PageSetNetworkInterceptionPatternsResult>;
   setWebSocketInterceptionPatterns(params: PageSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<PageSetWebSocketInterceptionPatternsResult>;
   setViewportSize(params: PageSetViewportSizeParams, progress?: Progress): Promise<PageSetViewportSizeResult>;
+  setZoom(params: PageSetZoomParams, progress?: Progress): Promise<PageSetZoomResult>;
   keyboardDown(params: PageKeyboardDownParams, progress?: Progress): Promise<PageKeyboardDownResult>;
   keyboardUp(params: PageKeyboardUpParams, progress?: Progress): Promise<PageKeyboardUpResult>;
   keyboardInsertText(params: PageKeyboardInsertTextParams, progress?: Progress): Promise<PageKeyboardInsertTextResult>;
@@ -2414,6 +2415,13 @@ export type PageSetViewportSizeOptions = {
 
 };
 export type PageSetViewportSizeResult = void;
+export type PageSetZoomParams = {
+  zoomFactor: number,
+};
+export type PageSetZoomOptions = {
+
+};
+export type PageSetZoomResult = void;
 export type PageKeyboardDownParams = {
   key: string,
 };

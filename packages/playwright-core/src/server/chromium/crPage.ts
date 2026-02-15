@@ -177,6 +177,10 @@ export class CRPage implements PageDelegate {
     await this._mainFrameSession._updateViewport(preserveWindowBoundaries);
   }
 
+  async setZoom(zoomFactor: number): Promise<void> {
+    await this._mainFrameSession._client.send('Emulation.setPageScaleFactor', { pageScaleFactor: zoomFactor });
+  }
+
   async bringToFront(): Promise<void> {
     await this._mainFrameSession._client.send('Page.bringToFront');
   }

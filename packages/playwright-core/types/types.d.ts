@@ -4565,6 +4565,28 @@ export interface Page {
     height: number;
   }): Promise<void>;
 
+
+  /**
+   * Sets the browser zoom level. A zoom factor of `1` represents 100% (default). Values greater
+   * than `1` zoom in, and values less than `1` zoom out. For example, a value of `1.5` represents
+   * 150% zoom.
+   *
+   * This is useful for testing zoom-dependent layouts and accessibility scenarios, such as
+   * verifying that content remains usable at 200% zoom per WCAG guidelines.
+   *
+   * **Usage**
+   *
+   * ```js
+   * // Set zoom to 150%
+   * await page.setZoom(1.5);
+   *
+   * // Reset zoom to 100%
+   * await page.setZoom(1);
+   * ```
+   *
+   * @param zoomFactor Zoom factor, where `1` is 100%. Must be a positive number.
+   */
+  setZoom(zoomFactor: number): Promise<void>;
   /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
    * more about [locators](https://playwright.dev/docs/locators).
