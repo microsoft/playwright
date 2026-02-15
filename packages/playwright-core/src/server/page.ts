@@ -372,6 +372,10 @@ export class Page extends SdkObject<PageEventMap> {
     ensureArrayLimit(this._networkRequests, 100);
   }
 
+  clearRequests() {
+    this._networkRequests.length = 0;
+  }
+
   networkRequests() {
     return this._networkRequests;
   }

@@ -409,3 +409,26 @@ it('should return last requests', async ({ page, server }) => {
   }
   expect(received).toEqual(expected);
 });
+
+it('clearRequests should work', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/title.html');
+  server.setRoute('/fetch1', (req, res) => res.end('ok'));
+  server.setRoute('/fetch2', (req, res) => res.end('ok'));
+  server.setRoute('/fetch3', (req, res) => res.end('ok'));
+
+  await page.evaluate(url => fetch(url), server.PREFIX + '/fetch1');
+  await page.evaluate(url => fetch(url), server.PREFIX + '/fetch2');
+
+  let requests = await page.requests();
+  expect(requests.map(r => new URL(r.url()).pathname).sort()).toEqual(['/fetch1', '/fetch2', '/title.html']);
+
+  await page.clearRequests();
+
+  requests = await page.requests();
+  expect(requests).toEqual([]);
+
+  await page.evaluate(url => fetch(url), server.PREFIX + '/fetch3');
+  requests = await page.requests();
+  expect(requests.map(r => new URL(r.url()).pathname).sort()).toEqual(['/fetch3']);
+
+});
