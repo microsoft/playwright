@@ -28,6 +28,10 @@ export type ClientInfo = {
   workspaceDir: string | undefined;
 };
 
+export type ServerInfo = {
+  version: string;
+};
+
 export type SessionConfig = {
   name: string;
   version: string;

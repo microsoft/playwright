@@ -37,16 +37,17 @@ export function decorateCLICommand(command: Command, version: string) {
         options.chromiumSandbox = options.chromiumSandbox === true ? undefined : false;
         setupExitWatchdog();
 
-        const config = await resolveCLIConfig(options.daemonSession);
-        const browserContextFactory = contextFactory(config);
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
+        const sessionConfig = await fs.promises.readFile(options.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
+        const mcpConfig = await resolveCLIConfig(sessionConfig);
+        const browserContextFactory = contextFactory(mcpConfig);
+        const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
 
-        const cf = config.extension ? extensionContextFactory : browserContextFactory;
+        const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
         try {
-          const socketPath = await startMcpDaemonServer(config, cf);
+          const socketPath = await startMcpDaemonServer(mcpConfig, sessionConfig, cf);
           console.log(`### Config`);
           console.log('```json');
-          console.log(JSON.stringify(config, null, 2));
+          console.log(JSON.stringify(mcpConfig, null, 2));
           console.log('```');
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
@@ -58,8 +59,7 @@ export function decorateCLICommand(command: Command, version: string) {
       });
 }
 
-export async function resolveCLIConfig(daemonSession: string): Promise<FullConfig> {
-  const sessionConfig = await fs.promises.readFile(daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
+async function resolveCLIConfig(sessionConfig: SessionConfig): Promise<FullConfig> {
   const daemonOverrides = configFromCLIOptions({
     config: sessionConfig.cli.config,
     browser: sessionConfig.cli.browser,
@@ -96,9 +96,8 @@ export async function resolveCLIConfig(daemonSession: string): Promise<FullConfi
   }
 
   result.configFile = configFile;
-  result.sessionConfig = sessionConfig;
   result.skillMode = true;
-  if (result.sessionConfig && result.browser.launchOptions.headless !== false)
+  if (result.browser.launchOptions.headless !== false)
     result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
 
   await validateConfig(result);
