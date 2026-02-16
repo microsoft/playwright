@@ -181,12 +181,22 @@ async function program() {
       await install(args);
       return;
     case 'show': {
-      const daemonScript = path.join(__dirname, 'devtoolsApp.js');
-      const child = spawn(process.execPath, [daemonScript], {
-        detached: true,
-        stdio: 'ignore',
+      const daemonScript = path.join(__dirname, 'devtoolsDaemon.js');
+      if (!args.host && !args.port) {
+        const child = spawn(process.execPath, [daemonScript], {
+          detached: true,
+          stdio: 'ignore',
+        });
+        child.unref();
+        return;
+      }
+
+      const { startDevToolsServer } = await import('./devtoolsApp.js');
+      const httpServer = await startDevToolsServer({
+        host: args.host || undefined,
+        port: args.port
       });
-      child.unref();
+      console.log('Listening on ' + httpServer.urlPrefix('human-readable'));
       return;
     }
     default: {

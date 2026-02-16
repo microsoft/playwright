@@ -104,3 +104,33 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
   expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
 });
+
+test('show with --port is blocking and does not use singleton', async ({ childProcess, mcpBrowser, mcpHeadless }) => {
+  const outputPath = test.info().outputPath();
+  const env = {
+    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
+    PLAYWRIGHT_MCP_BROWSER: mcpBrowser,
+    PLAYWRIGHT_MCP_HEADLESS: String(mcpHeadless),
+  };
+
+  const startShow = () => childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/program.js'), 'show', '--port=0'],
+    cwd: outputPath,
+    env,
+  });
+
+  const show1 = startShow();
+  await show1.waitForOutput('Listening on ');
+
+  const show2 = startShow();
+  await show2.waitForOutput('Listening on ');
+
+  const stillRunning = await Promise.race([
+    show2.exitCode.then(() => false),
+    new Promise<boolean>(resolve => setTimeout(() => resolve(true), 300)),
+  ]);
+  expect(stillRunning).toBeTruthy();
+
+  await Promise.all([show1.kill('SIGINT'), show2.kill('SIGINT')]);
+});
