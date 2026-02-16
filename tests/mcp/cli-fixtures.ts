@@ -20,7 +20,7 @@ import path from 'path';
 import { test as baseTest } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 
-import type { CommonFixtures } from '../config/commonFixtures';
+import type { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
@@ -31,6 +31,7 @@ export const test = baseTest.extend<{
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
   }>;
+  startCli: (...args: any[]) => Promise<TestChildProcess>;
 }>({
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
@@ -55,9 +56,16 @@ export const test = baseTest.extend<{
     for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
+  startCli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
+    await use((...args: string[]) => {
+      const cliArgs = args.filter(arg => typeof arg === 'string');
+      const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
+      return startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+    });
+  },
 });
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+async function startCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
@@ -74,27 +82,33 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
         ...cliOptions.env,
       },
     });
-    await cli.exited.finally(async () => {
+    void cli.exited.finally(async () => {
       await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
     });
-
-    let snapshot: string | undefined;
-    if (cli.stdout.includes('### Snapshot'))
-      snapshot = await loadSnapshot(cli.stdout);
-    const attachments = loadAttachments(cli.stdout);
-
-    const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-    const [, sessionName, pid] = matches ?? [];
-    if (sessionName && pid)
-      sessions.push({ name: sessionName, pid: +pid });
-    return {
-      exitCode: await cli.exitCode,
-      output: cli.stdout.trim(),
-      error: cli.stderr.trim(),
-      snapshot,
-      attachments
-    };
+    return cli;
   });
+}
+
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
+  const cli = await startCli(childProcess, args, cliOptions, options);
+  await cli.exited;
+
+  let snapshot: string | undefined;
+  if (cli.stdout.includes('### Snapshot'))
+    snapshot = await loadSnapshot(cli.stdout);
+  const attachments = loadAttachments(cli.stdout);
+
+  const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
+  const [, sessionName, pid] = matches ?? [];
+  if (sessionName && pid)
+    sessions.push({ name: sessionName, pid: +pid });
+  return {
+    exitCode: await cli.exitCode,
+    output: cli.stdout.trim(),
+    error: cli.stderr.trim(),
+    snapshot,
+    attachments
+  };
 }
 
 function loadAttachments(output: string) {

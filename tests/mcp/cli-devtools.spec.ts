@@ -105,25 +105,11 @@ test('video-start-stop', async ({ cli, server }) => {
   expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
 });
 
-test('show with --port is blocking and does not use singleton', async ({ childProcess, mcpBrowser, mcpHeadless }) => {
-  const outputPath = test.info().outputPath();
-  const env = {
-    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
-    PLAYWRIGHT_MCP_BROWSER: mcpBrowser,
-    PLAYWRIGHT_MCP_HEADLESS: String(mcpHeadless),
-  };
-
-  const startShow = () => childProcess({
-    command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/program.js'), 'show', '--port=0'],
-    cwd: outputPath,
-    env,
-  });
-
-  const show1 = startShow();
+test('show with --port is blocking and does not use singleton', async ({ startCli }) => {
+  const show1 = await startCli('show', '--port=0');
   await show1.waitForOutput('Listening on ');
 
-  const show2 = startShow();
+  const show2 = await startCli('show', '--port=0');
   await show2.waitForOutput('Listening on ');
 
   const stillRunning = await Promise.race([
