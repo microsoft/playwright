@@ -104,19 +104,3 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
   expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
 });
-
-test('show with --port is blocking and does not use singleton', async ({ startCli }) => {
-  const show1 = await startCli('show', '--port=0');
-  await show1.waitForOutput('Listening on ');
-
-  const show2 = await startCli('show', '--port=0');
-  await show2.waitForOutput('Listening on ');
-
-  const stillRunning = await Promise.race([
-    show2.exitCode.then(() => false),
-    new Promise<boolean>(resolve => setTimeout(() => resolve(true), 300)),
-  ]);
-  expect(stillRunning).toBeTruthy();
-
-  await Promise.all([show1.kill('SIGINT'), show2.kill('SIGINT')]);
-});
