@@ -742,7 +742,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 
       await page.goto(server.PREFIX + '/input/folderupload.html');
       const input = await page.$('input');
-      const folderName = 'folder-upload-test'
+      const folderName = 'folder-upload-test';
       const dir = testInfo.outputPath(folderName);
       {
         await fs.promises.mkdir(dir, { recursive: true });
@@ -753,22 +753,22 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
       await input.setInputFiles(dir);
 
-      const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input)
+      const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input);
       expect(new Set(webkitRelativePaths)).toEqual(new Set([
-          `${folderName}/file1.txt`,
-          `${folderName}/file2`,
-          `${folderName}/sub-dir/really.txt`,
-        ]));
+        `${folderName}/file1.txt`,
+        `${folderName}/file2`,
+        `${folderName}/sub-dir/really.txt`,
+      ]));
 
-        for (let i = 0; i < webkitRelativePaths.length; i++) {
-          const content = await input.evaluate((e, i) => {
-            const reader = new FileReader();
-            const promise = new Promise(fulfill => reader.onload = fulfill);
-            reader.readAsText(e.files[i]);
-            return promise.then(() => reader.result);
-          }, i);
-          expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
-        }
+      for (let i = 0; i < webkitRelativePaths.length; i++) {
+        const content = await input.evaluate((e, i) => {
+          const reader = new FileReader();
+          const promise = new Promise(fulfill => reader.onload = fulfill);
+          reader.readAsText(e.files[i]);
+          return promise.then(() => reader.result);
+        }, i);
+        expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
+      }
     });
 
     test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
