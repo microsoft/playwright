@@ -57,11 +57,16 @@ export const test = baseTest.extend<{
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
   startCli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
-    await use((...args: string[]) => {
+    const processes: TestChildProcess[] = [];
+    await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      return startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      const cp = await startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+      processes.push(cp);
+      return cp;
     });
+    for (const cp of processes)
+      await cp.kill('SIGINT');
   },
 });
 

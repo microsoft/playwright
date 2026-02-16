@@ -231,6 +231,4 @@ test('show with --port is blocking and does not use singleton', async ({ startCl
 
   const show2 = await startCli('show', '--port=0');
   await show2.waitForOutput('Listening on ');
-
-  await Promise.all([show1.kill('SIGINT'), show2.kill('SIGINT')]);
 });
