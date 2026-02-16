@@ -35,12 +35,29 @@ test('grid', async ({ cli, page, server }) => {
   `);
 });
 
-test('show connected status', async ({ cli, page }) => {
+test('show interaction toggle', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
-  await expect(page.locator('#status')).toHaveClass(/connected/);
+  await expect(page.locator('#interaction-toggle')).toHaveText(/Interaction/);
+  await expect(page.locator('#interaction-toggle')).not.toHaveClass(/active/);
+
+  await page.locator('#interaction-toggle').click();
+  await expect(page.locator('#interaction-toggle')).toHaveClass(/active/);
+});
+
+test('screencast interaction is blocked until consent is enabled', async ({ cli, page }) => {
+  await cli('open');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.locator('.screen').click();
+  await expect(page.getByText('Enable Interaction to control the page')).toBeVisible();
+
+  await page.locator('#interaction-toggle').click();
+  await page.locator('.screen').hover();
+  await expect(page.getByText('Enable Interaction to control the page')).toBeHidden();
+  await expect(page.getByText('Click to interact · Esc to release')).toBeVisible();
 });
 
 test('show tab title after navigation', async ({ cli, page, server }) => {
@@ -175,6 +192,12 @@ test('pick locator disable paths', async ({ cli, page, server }) => {
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
 
+  await page.getByTitle('Pick locator').click();
+  await expect(page.getByText('Enable Interaction to control the page')).toBeVisible();
+  await expect(page.getByTitle('Cancel pick locator')).toBeHidden();
+
+  await page.locator('#interaction-toggle').click();
+
   // Disable via toolbar toggle.
   await page.getByTitle('Pick locator').click();
   await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
@@ -204,6 +227,7 @@ test('pick locator copies locator to clipboard', async ({ cli, page, server }) =
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByRole('link', { name: /default/ }).click();
 
+  await page.locator('#interaction-toggle').click();
   await page.getByTitle('Pick locator').click();
   await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
   await page.locator('.screen').click();
