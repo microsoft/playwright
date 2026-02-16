@@ -19,6 +19,7 @@ import './devtools.css';
 import { navigate } from './index';
 import { DevToolsClient } from './devtoolsClient';
 import { asLocator } from '@isomorphic/locatorGenerators';
+import { SplitView } from '@web/components/splitView';
 
 import type { DevToolsClientChannel } from './devtoolsClient';
 import type { Tab } from './devtoolsChannel';
@@ -52,7 +53,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const channelRef = React.useRef<DevToolsClientChannel | null>(null);
   const displayRef = React.useRef<HTMLImageElement>(null);
   const screenRef = React.useRef<HTMLDivElement>(null);
-  const viewportWrapperRef = React.useRef<HTMLDivElement>(null);
   const omniboxRef = React.useRef<HTMLInputElement>(null);
   const viewportSizeRef = React.useRef<{ width: number; height: number }>({ width: 0, height: 0 });
   const resizedRef = React.useRef(false);
@@ -61,7 +61,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const pickingRef = React.useRef(false);
   const toastTimerRef = React.useRef<ReturnType<typeof setTimeout>>(0 as any);
   const consentFlowTimerRef = React.useRef<ReturnType<typeof setTimeout>>(0 as any);
-  const [inspectorWidth, setInspectorWidth] = React.useState<number | undefined>();
 
   // Keep capturedRef in sync with state.
   React.useEffect(() => {
@@ -290,38 +289,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     setCaptured(false);
   }
 
-  function onInspectorGripPointerDown(e: React.PointerEvent<HTMLDivElement>) {
-    if (e.button !== 0)
-      return;
-    const wrapperRect = viewportWrapperRef.current?.getBoundingClientRect();
-    if (!wrapperRect)
-      return;
-    e.preventDefault();
-    const grip = e.currentTarget;
-    grip.setPointerCapture(e.pointerId);
-    const minWidth = 300;
-    const maxWidth = Math.max(minWidth, wrapperRect.width - 320);
-    const startX = e.clientX;
-    const startWidth = inspectorWidth ?? wrapperRect.width * 0.5;
-    const onPointerMove = (event: PointerEvent) => {
-      const delta = startX - event.clientX;
-      const nextWidth = Math.max(minWidth, Math.min(maxWidth, startWidth + delta));
-      setInspectorWidth(nextWidth);
-    };
-    const onPointerUp = () => {
-      grip.removeEventListener('pointermove', onPointerMove);
-      grip.removeEventListener('pointerup', onPointerUp);
-      grip.removeEventListener('lostpointercapture', onPointerUp);
-      document.body.style.cursor = '';
-      document.body.style.userSelect = '';
-    };
-    document.body.style.cursor = 'col-resize';
-    document.body.style.userSelect = 'none';
-    grip.addEventListener('pointermove', onPointerMove);
-    grip.addEventListener('pointerup', onPointerUp);
-    grip.addEventListener('lostpointercapture', onPointerUp);
-  }
-
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key === 'Enter') {
       let value = (e.target as HTMLInputElement).value.trim();
@@ -459,52 +426,54 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     </div>
 
     {/* Viewport */}
-    <div ref={viewportWrapperRef} className='viewport-wrapper'>
-      <div className='viewport-main'>
-        <div
-          ref={screenRef}
-          className={'screen' + (captured ? ' captured' : '')}
-          tabIndex={0}
-          style={{ display: hasPages ? '' : 'none' }}
-          onMouseDown={onScreenMouseDown}
-          onMouseUp={onScreenMouseUp}
-          onMouseMove={onScreenMouseMove}
-          onWheel={onScreenWheel}
-          onKeyDown={onScreenKeyDown}
-          onKeyUp={onScreenKeyUp}
-          onBlur={onScreenBlur}
-          onContextMenu={e => e.preventDefault()}
-          onMouseEnter={() => {
-            if (!showInspector && !capturedRef.current)
-              setHintVisible(true);
-          }}
-          onMouseLeave={() => {
-            setHintVisible(false);
-            clearConsentHint();
-          }}
-        >
-          <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
-          {toast
-            ? <div className='capture-hint visible'>Copied: <code>{toast}</code></div>
-            : picking
-              ? <div className='capture-hint visible'>Click an element to pick its locator</div>
-              : consentHintVisible
-                ? <div className='capture-hint visible'>Enable Interaction to control the page</div>
-                : !showInspector && interactionConsent && <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
-          }
-        </div>
-        <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
-      </div>
-      {showInspector && selectedTab?.inspectorUrl && (
-        <div className='inspector-panel' style={inspectorWidth ? { width: `${inspectorWidth}px` } : undefined}>
-          <div className='inspector-grip' onPointerDown={onInspectorGripPointerDown} />
-          <iframe
-            className='inspector-frame'
-            src={selectedTab.inspectorUrl}
-            title='Chrome DevTools'
-          />
-        </div>
-      )}
+    <div className='viewport-wrapper'>
+      <SplitView
+        orientation='horizontal'
+        sidebarSize={500}
+        minSidebarSize={300}
+        settingName='devtoolsInspector'
+        sidebarHidden={!showInspector || !selectedTab?.inspectorUrl}
+        main={<div className='viewport-main'>
+          <div
+            ref={screenRef}
+            className={'screen' + (captured ? ' captured' : '')}
+            tabIndex={0}
+            style={{ display: hasPages ? '' : 'none' }}
+            onMouseDown={onScreenMouseDown}
+            onMouseUp={onScreenMouseUp}
+            onMouseMove={onScreenMouseMove}
+            onWheel={onScreenWheel}
+            onKeyDown={onScreenKeyDown}
+            onKeyUp={onScreenKeyUp}
+            onBlur={onScreenBlur}
+            onContextMenu={e => e.preventDefault()}
+            onMouseEnter={() => {
+              if (!showInspector && !capturedRef.current)
+                setHintVisible(true);
+            }}
+            onMouseLeave={() => {
+              setHintVisible(false);
+              clearConsentHint();
+            }}
+          >
+            <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
+            {toast
+              ? <div className='capture-hint visible'>Copied: <code>{toast}</code></div>
+              : picking
+                ? <div className='capture-hint visible'>Click an element to pick its locator</div>
+                : consentHintVisible
+                  ? <div className='capture-hint visible'>Enable Interaction to control the page</div>
+                  : !showInspector && interactionConsent && <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+            }
+          </div>
+          <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
+        </div>}
+        sidebar={<iframe
+          className='inspector-frame'
+          src={selectedTab?.inspectorUrl || ''}
+          title='Chrome DevTools'
+        />}
+      />
     </div>
   </div>);
 };
