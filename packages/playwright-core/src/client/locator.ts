@@ -82,7 +82,7 @@ export class Locator implements api.Locator {
       if (!handle)
         throw new Error(`Could not resolve ${this._selector} to DOM Element`);
       try {
-        return await task(handle, deadline ? deadline - monotonicTime() : 0);
+        return await task(handle, deadline ? Math.max(deadline - monotonicTime(), 0) : 0);
       } finally {
         await handle.dispose();
       }

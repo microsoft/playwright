@@ -107,7 +107,7 @@ export class ProgressController {
           this._forceAbortPromise.reject(timeoutError);
           this._controller.abort(timeoutError);
         }
-      }, deadline - monotonicTime());
+      }, Math.max(deadline - monotonicTime(), 0));
     }
 
     try {
