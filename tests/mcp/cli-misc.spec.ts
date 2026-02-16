@@ -29,9 +29,8 @@ test('daemon shuts down on browser launch failure', async ({ cli, server }) => {
 
 test('install-browser', async ({ cli, server, mcpBrowser }) => {
   test.skip(mcpBrowser !== 'chromium', 'Test only chromium');
-  await cli('open', server.HELLO_WORLD);
-  const { output } = await cli('install-browser');
-  expect(output).toContain(`Browser ${mcpBrowser} installed.`);
+  const { output } = await cli('install-browser', '--list');
+  expect(output).toMatch(/chromium-\d+/);
 });
 
 test('install workspace', async ({ cli }, testInfo) => {

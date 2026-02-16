@@ -844,8 +844,16 @@ const installBrowser = declareCommand({
   name: 'install-browser',
   description: 'Install browser',
   category: 'install',
+  args: z.object({
+    browser: z.string().optional().describe('Browser to install'),
+  }),
   options: z.object({
-    browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge'),
+    ['with-deps']: z.boolean().optional().describe('Install system dependencies for browsers'),
+    ['dry-run']: z.boolean().optional().describe('Do not execute installation, only print information'),
+    list: z.boolean().optional().describe('Prints list of browsers from all Playwright installations'),
+    force: z.boolean().optional().describe('Force reinstall of already installed browsers'),
+    ['only-shell']: z.boolean().optional().describe('Only install headless shell when installing Chromium'),
+    ['no-shell']: z.boolean().optional().describe('Do not install Chromium headless shell'),
   }),
   toolName: 'browser_install',
   toolParams: () => ({}),
