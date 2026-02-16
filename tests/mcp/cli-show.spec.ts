@@ -39,11 +39,12 @@ test('show interaction toggle', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#interaction-toggle')).toHaveText(/Interaction/);
-  await expect(page.locator('#interaction-toggle')).not.toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: 'Interactive' })).not.toHaveClass(/active/);
 
-  await page.locator('#interaction-toggle').click();
-  await expect(page.locator('#interaction-toggle')).toHaveClass(/active/);
+  await page.getByRole('button', { name: 'Interactive' }).click();
+  await expect(page.getByRole('button', { name: 'Read-only' })).not.toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveClass(/active/);
 });
 
 test('screencast interaction is blocked until consent is enabled', async ({ cli, page }) => {
@@ -52,11 +53,11 @@ test('screencast interaction is blocked until consent is enabled', async ({ cli,
   await page.getByRole('link', { name: /default/ }).click();
 
   await page.locator('.screen').click();
-  await expect(page.getByText('Enable Interaction to control the page')).toBeVisible();
+  await expect(page.getByText('Switch to Interactive mode to control the page')).toBeVisible();
 
-  await page.locator('#interaction-toggle').click();
+  await page.getByRole('button', { name: 'Interactive' }).click();
   await page.locator('.screen').hover();
-  await expect(page.getByText('Enable Interaction to control the page')).toBeHidden();
+  await expect(page.getByText('Switch to Interactive mode to control the page')).toBeHidden();
   await expect(page.getByText('Click to interact · Esc to release')).toBeVisible();
 });
 
@@ -167,6 +168,66 @@ test('update omnibox on navigation', async ({ cli, page, server }) => {
   `);
 });
 
+test('omnibox navigates on Enter', async ({ cli, page, server }) => {
+  server.setContent('/omnibox-target.html', `<title>Omnibox Target</title><h1>target</h1>`, 'text/html');
+
+  await cli('open');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).fill(server.PREFIX + '/omnibox-target.html');
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).press('Enter');
+
+  await expect(page.getByRole('tab', { name: 'Omnibox Target' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Search or enter URL' })).toHaveValue(server.PREFIX + '/omnibox-target.html');
+});
+
+test('omnibox prefixes URL without scheme', async ({ cli, page }) => {
+  await cli('open');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).fill('example.com');
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).press('Enter');
+
+  await expect(page.getByRole('textbox', { name: 'Search or enter URL' })).toHaveValue(/https:\/\/example\.com/);
+});
+
+test('toolbar back/forward/reload', async ({ cli, page, server }) => {
+  server.setContent('/history-first.html', `<title>History First</title><h1>first</h1>`, 'text/html');
+  server.setContent('/history-second.html', `<title>History Second</title><h1>second</h1>`, 'text/html');
+  server.setContent('/reload-counter.html', `
+    <title>Reload Counter</title>
+    <script>
+      const next = (Number(sessionStorage.getItem('reload-count') || '0') + 1);
+      sessionStorage.setItem('reload-count', String(next));
+      document.title = 'Reload Counter ' + next;
+    </script>
+  `, 'text/html');
+
+  await cli('open', server.PREFIX + '/history-first.html');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  const omnibox = page.getByRole('textbox', { name: 'Search or enter URL' });
+  await omnibox.fill(server.PREFIX + '/history-second.html');
+  await omnibox.press('Enter');
+  await expect(page.getByRole('tab', { name: 'History Second' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByRole('tab', { name: 'History First' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Forward' }).click();
+  await expect(page.getByRole('tab', { name: 'History Second' })).toBeVisible();
+
+  await omnibox.fill(server.PREFIX + '/reload-counter.html');
+  await omnibox.press('Enter');
+  await expect(page.getByRole('tab', { name: 'Reload Counter 1' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Reload' }).click();
+  await expect(page.getByRole('tab', { name: 'Reload Counter 2' })).toBeVisible();
+});
+
 test('display screencast image', async ({ cli, page }) => {
   await cli('open', 'data:text/html,<body style="background:red"></body>');
   await page.goto('/');
@@ -228,13 +289,51 @@ test('pick locator copies locator to clipboard', async ({ cli, page, server }) =
   await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
   await page.getByRole('link', { name: /default/ }).click();
 
-  await page.locator('#interaction-toggle').click();
+  await page.getByRole('button', { name: 'Interactive' }).click();
   await page.getByTitle('Pick locator').click();
   await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
   await page.locator('.screen').click();
   await expect(page.getByText(/^Copied:/)).toBeVisible();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
   expect(copied).toContain('#picker-target');
+});
+
+test('locator picking is disabled when switching back to Read-only', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX + '/title.html');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByRole('button', { name: 'Interactive' }).click();
+  await page.getByTitle('Pick locator').click();
+  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Read-only' }).click();
+  await expect(page.getByTitle('Pick locator')).toBeDisabled();
+  await expect(page.getByTitle('Cancel pick locator')).toBeHidden();
+  await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
+});
+
+test('copied locator toast clears on page change', async ({ cli, page, server }) => {
+  server.setContent('/pick-locator-target.html', `<div id='picker-target' style='position:fixed; inset:0; background:red;'></div>`, 'text/html');
+  server.setContent('/toast-next.html', `<title>Toast Next</title><h1>next</h1>`, 'text/html');
+
+  await cli('open', server.PREFIX + '/pick-locator-target.html');
+  await page.goto('/');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByRole('button', { name: 'Interactive' }).click();
+  await page.getByTitle('Pick locator').click();
+  await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
+  await page.locator('.screen').click();
+  await expect(page.getByText(/^Copied:/)).toBeVisible();
+
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).fill(server.PREFIX + '/toast-next.html');
+  await page.getByRole('textbox', { name: 'Search or enter URL' }).press('Enter');
+
+  await expect(page.getByRole('tab', { name: 'Toast Next' })).toBeVisible();
+  await expect(page.getByText(/^Copied:/)).toBeHidden();
 });
 
 test('show with --port is blocking and does not use singleton', async ({ startCli }) => {
