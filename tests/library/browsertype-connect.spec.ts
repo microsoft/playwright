@@ -733,7 +733,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
-    test('should set input folder', async ({ connect, startRemoteServer, server }, testInfo) => {
+    test('should upload a folder', async ({ connect, startRemoteServer, server }, testInfo) => {
       test.slow();
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
@@ -753,7 +753,19 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
       await input.setInputFiles(dir);
 
-      expect(new Set(await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input))).toEqual(new Set([
+      const serverFilesPromise = new Promise<formidable.File[]>(fulfill => {
+        server.setRoute('/upload', async (req, res) => {
+          const form = new formidable.IncomingForm({ multiples: true, uploadDir: dir });
+          form.parse(req, function(err, fields, f) {
+            res.end();
+            fulfill(f.file1 as formidable.File[]);
+          });
+        });
+      });
+
+      await page.click('input[type=submit]')
+
+      expect(new Set((await serverFilesPromise).map(f => f.originalFilename))).toEqual(new Set([
           `${folderName}/file1.txt`,
           `${folderName}/file2`,
           `${folderName}/sub-dir/really.txt`,
