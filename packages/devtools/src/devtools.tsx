@@ -404,6 +404,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       <button
         className={'nav-btn' + (picking ? ' active-toggle' : '')}
         title={picking ? 'Cancel pick locator' : 'Pick locator'}
+        disabled={!interactionConsent}
         onClick={() => {
           if (!interactionConsent) {
             showConsentHint();
@@ -426,6 +427,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         <button
           className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
           title={showInspector ? 'Hide Chrome DevTools' : 'Show Chrome DevTools'}
+          disabled={!interactionConsent}
           onClick={() => setShowInspector(!showInspector)}
         >
           <svg viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>

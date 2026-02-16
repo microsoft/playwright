@@ -179,6 +179,7 @@ test('chrome devtools', async ({ cli, page, server }) => {
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
 
+  await page.getByRole('button', { name: 'Interactive' }).click();
   await page.getByTitle('Show Chrome DevTools').click();
   const devtools = page.frameLocator('iframe[title="Chrome DevTools"]');
   await devtools.getByRole('tab', { name: 'Console' }).click();
@@ -192,11 +193,11 @@ test('pick locator disable paths', async ({ cli, page, server }) => {
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
 
-  await page.getByTitle('Pick locator').click();
-  await expect(page.getByText('Enable Interaction to control the page')).toBeVisible();
+  await expect(page.getByTitle('Pick locator')).toBeDisabled();
+  await expect(page.getByTitle('Show Chrome DevTools')).toBeDisabled();
   await expect(page.getByTitle('Cancel pick locator')).toBeHidden();
 
-  await page.locator('#interaction-toggle').click();
+  await page.getByRole('button', { name: 'Interactive' }).click();
 
   // Disable via toolbar toggle.
   await page.getByTitle('Pick locator').click();
