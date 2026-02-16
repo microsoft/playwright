@@ -190,7 +190,7 @@ export class Response {
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
-      addSection('Page', renderTabMarkdown(tabHeaders[0]));
+      addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
     }
 
     // Handle modal states.
