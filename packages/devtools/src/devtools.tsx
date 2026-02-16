@@ -302,6 +302,9 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
   const selectedTab = tabs.find(t => t.selected);
   const hasPages = !!selectedTab;
+  const interactionModeTitle = interactionConsent
+    ? 'Interactive mode: page input is forwarded'
+    : 'Read-only mode: page input is blocked';
 
   return (<div className={'devtools-view' + (interactionConsent ? ' consent-active' : '') + (consentFlowActive ? ' consent-flow-active' : '')}>
     {/* Tab bar */}
@@ -345,18 +348,26 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           <line x1='5' y1='12' x2='19' y2='12'/>
         </svg>
       </button>
-      <button
-        id='interaction-toggle'
-        className={'consent-toggle' + (interactionConsent ? ' active' : '')}
-        disabled={!connected}
-        title={interactionConsent ? 'Interaction enabled: recording interactions' : 'Interaction disabled: interaction blocked'}
-        onClick={() => toggleInteractionConsent()}
-      >
-        <span className='consent-toggle-label'>Interaction</span>
-        <span className='consent-toggle-track'>
-          <span className='consent-toggle-thumb' />
-        </span>
-      </button>
+      <div className='consent-controls'>
+        <div className={'consent-segmented' + (interactionConsent ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactionModeTitle}>
+          <button
+            className={'consent-segment' + (!interactionConsent ? ' active' : '')}
+            disabled={!connected}
+            title='Read-only mode'
+            onClick={() => toggleInteractionConsent(false)}
+          >
+            Read-only
+          </button>
+          <button
+            className={'consent-segment' + (interactionConsent ? ' active' : '')}
+            disabled={!connected}
+            title='Interactive mode'
+            onClick={() => toggleInteractionConsent(true)}
+          >
+            Interactive
+          </button>
+        </div>
+      </div>
     </div>
 
     {/* Toolbar */}
@@ -456,13 +467,19 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
               clearConsentHint();
             }}
           >
-            <img ref={displayRef} id='display' className='display' alt='screencast' src={frameSrc}/>
+            <img
+              ref={displayRef}
+              id='display'
+              className='display'
+              alt='screencast'
+              src={frameSrc}
+            />
             {toast
               ? <div className='capture-hint visible'>Copied: <code>{toast}</code></div>
               : picking
                 ? <div className='capture-hint visible'>Click an element to pick its locator</div>
                 : consentHintVisible
-                  ? <div className='capture-hint visible'>Enable Interaction to control the page</div>
+                  ? <div className='capture-hint visible'>Switch to Interactive mode to control the page</div>
                   : !showInspector && interactionConsent && <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
             }
           </div>
