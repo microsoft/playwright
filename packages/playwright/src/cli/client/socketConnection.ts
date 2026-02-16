@@ -89,15 +89,34 @@ export class SocketConnection {
 }
 
 export function compareSemver(a: string, b: string): number {
-  a = a.replace(/-.*$/, '');
-  b = b.replace(/-.*$/, '');
-  const aParts = a.split('.').map(Number);
-  const bParts = b.split('.').map(Number);
+  const aBase = a.replace(/-.*$/, '');
+  const bBase = b.replace(/-.*$/, '');
+  const aParts = aBase.split('.').map(Number);
+  const bParts = bBase.split('.').map(Number);
   for (let i = 0; i < 3; i++) {
     if (aParts[i] > bParts[i])
       return 1;
     if (aParts[i] < bParts[i])
       return -1;
   }
+  const aTimestamp = parseSuffixTimestamp(a);
+  const bTimestamp = parseSuffixTimestamp(b);
+  if (aTimestamp > bTimestamp)
+    return 1;
+  if (aTimestamp < bTimestamp)
+    return -1;
   return 0;
+}
+
+function parseSuffixTimestamp(version: string): number {
+  // Stable release (no suffix) is greater than any pre-release.
+  const match = version.match(/^\d+\.\d+\.\d+-(?:alpha|beta)-(.+)$/);
+  if (!match)
+    return Infinity;
+  const suffix = match[1];
+  // Daily alpha: 1.59.0-alpha-2026-02-16
+  if (/^\d{4}-\d{2}-\d{2}$/.test(suffix))
+    return new Date(suffix).getTime();
+  // Nightly/per-commit: 1.59.0-alpha-1771260841000
+  return Number(suffix);
 }
