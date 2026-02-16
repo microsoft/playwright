@@ -46,7 +46,7 @@ export class BidiPage implements PageDelegate {
   readonly _page: Page;
   readonly _session: BidiSession;
   readonly _opener: BidiPage | null;
-  readonly _realmToContext: Map<string, dom.FrameExecutionContext>;
+  readonly _contextIdToContext: Map<string, dom.FrameExecutionContext>;
   private _realmToWorkerContext = new Map<string, js.ExecutionContext>();
   private _sessionListeners: RegisteredListener[] = [];
   readonly _browserContext: BidiBrowserContext;
@@ -61,7 +61,7 @@ export class BidiPage implements PageDelegate {
     this.rawKeyboard = new RawKeyboardImpl(bidiSession);
     this.rawMouse = new RawMouseImpl(bidiSession);
     this.rawTouchscreen = new RawTouchscreenImpl(bidiSession);
-    this._realmToContext = new Map();
+    this._contextIdToContext = new Map();
     this._page = new Page(this, browserContext);
     this._browserContext = browserContext;
     this._networkManager = new BidiNetworkManager(this._session, this._page);
@@ -114,9 +114,9 @@ export class BidiPage implements PageDelegate {
   }
 
   private _removeContextsForFrame(frame: frames.Frame, notifyFrame: boolean) {
-    for (const [contextId, context] of this._realmToContext) {
+    for (const [contextId, context] of this._contextIdToContext) {
       if (context.frame === frame) {
-        this._realmToContext.delete(contextId);
+        this._contextIdToContext.delete(contextId);
         if (notifyFrame)
           frame._contextDestroyed(context);
       }
@@ -132,7 +132,7 @@ export class BidiPage implements PageDelegate {
       this._page.addWorker(realmInfo.realm, worker);
       return;
     }
-    if (this._realmToContext.has(realmInfo.realm))
+    if (this._contextIdToContext.has(realmInfo.realm))
       return;
     if (realmInfo.type !== 'window')
       return;
@@ -152,7 +152,7 @@ export class BidiPage implements PageDelegate {
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     frame._contextCreated(worldName, context);
-    this._realmToContext.set(realmInfo.realm, context);
+    this._contextIdToContext.set(realmInfo.realm, context);
   }
 
   private async _touchUtilityWorld(context: bidi.BrowsingContext.BrowsingContext) {
@@ -172,9 +172,9 @@ export class BidiPage implements PageDelegate {
   }
 
   _onRealmDestroyed(params: bidi.Script.RealmDestroyedParameters): boolean {
-    const context = this._realmToContext.get(params.realm);
+    const context = this._contextIdToContext.get(params.realm);
     if (context) {
-      this._realmToContext.delete(params.realm);
+      this._contextIdToContext.delete(params.realm);
       context.frame._contextDestroyed(context);
       return true;
     }
@@ -286,7 +286,7 @@ export class BidiPage implements PageDelegate {
     if (params.type !== 'console')
       return;
     const entry: bidi.Log.ConsoleLogEntry = params as bidi.Log.ConsoleLogEntry;
-    const context = this._realmToContext.get(params.source.realm) ?? this._realmToWorkerContext.get(params.source.realm);
+    const context = this._contextIdToContext.get(params.source.realm) ?? this._realmToWorkerContext.get(params.source.realm);
     if (!context)
       return;
 
@@ -425,7 +425,7 @@ export class BidiPage implements PageDelegate {
     const pageOrError = await this._page.waitForInitializedOrError();
     if (pageOrError instanceof Error)
       return;
-    const context = this._realmToContext.get(event.source.realm);
+    const context = this._contextIdToContext.get(event.source.realm);
     if (!context)
       return;
     if (event.data.type !== 'string')
