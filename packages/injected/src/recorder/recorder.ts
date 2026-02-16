@@ -1390,7 +1390,7 @@ export class Recorder {
   readonly document: Document;
   private _delegate: RecorderDelegate = {};
 
-  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api' }) {
+  constructor(injectedScript: InjectedScript, options?: { recorderMode?: 'default' | 'api', hideToolbar?: boolean }) {
     this.document = injectedScript.document;
     this.injectedScript = injectedScript;
     this.highlight = injectedScript.createHighlight();
@@ -1407,7 +1407,7 @@ export class Recorder {
     };
     this._currentTool = this._tools.none;
     this._currentTool.install?.();
-    if (injectedScript.window.top === injectedScript.window) {
+    if (injectedScript.window.top === injectedScript.window && !options?.hideToolbar) {
       this.overlay = new Overlay(this);
       this.overlay.setUIState(this.state);
     }
