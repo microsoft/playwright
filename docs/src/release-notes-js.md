@@ -2464,8 +2464,8 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
 - Components Testing (preview)
 
-  Playwright Test can now test your [React](https://reactjs.org/),
-  [Vue.js](https://vuejs.org/) or [Svelte](https://svelte.dev/) components.
+  Playwright Test can now test your [React](https://reactjs.org/)
+  or [Vue.js](https://vuejs.org/) components.
   You can use all the features
   of Playwright Test (such as parallelization, emulation & debugging) while running components
   in real browsers.
