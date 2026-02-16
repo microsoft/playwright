@@ -753,23 +753,22 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       }
       await input.setInputFiles(dir);
 
-      const serverFilesPromise = new Promise<formidable.File[]>(fulfill => {
-        server.setRoute('/upload', async (req, res) => {
-          const form = new formidable.IncomingForm({ multiples: true, uploadDir: dir });
-          form.parse(req, function(err, fields, f) {
-            res.end();
-            fulfill(f.file1 as formidable.File[]);
-          });
-        });
-      });
-
-      await page.click('input[type=submit]')
-
-      expect(new Set((await serverFilesPromise).map(f => f.originalFilename))).toEqual(new Set([
+      const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input)
+      expect(new Set(webkitRelativePaths)).toEqual(new Set([
           `${folderName}/file1.txt`,
           `${folderName}/file2`,
           `${folderName}/sub-dir/really.txt`,
         ]));
+
+        for (let i = 0; i < webkitRelativePaths.length; i++) {
+          const content = await input.evaluate((e, i) => {
+            const reader = new FileReader();
+            const promise = new Promise(fulfill => reader.onload = fulfill);
+            reader.readAsText(e.files[i]);
+            return promise.then(() => reader.result);
+          }, i);
+          expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
+        }
     });
 
     test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
