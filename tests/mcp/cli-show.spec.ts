@@ -157,7 +157,9 @@ test('display screencast image', async ({ cli, page }) => {
   await expect(page.getByRole('img', { name: 'screencast' })).toHaveAttribute('src', /^data:image\/jpeg;base64,/, { timeout: 15000 });
 });
 
-test('chrome devtools', async ({ cli, page, server }) => {
+test('chrome devtools', async ({ cli, page, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'firefox' || mcpBrowser === 'webkit');
+
   await cli('open', server.PREFIX);
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
@@ -168,6 +170,17 @@ test('chrome devtools', async ({ cli, page, server }) => {
 
   await cli('eval', 'console.log("hello-from-cli-show")');
   await expect(devtools.getByText('hello-from-cli-show')).toBeVisible();
+});
+
+test('chrome devtools on unsupported browsers', async ({ cli, page, server, mcpBrowser }) => {
+  test.skip(mcpBrowser !== 'firefox' && mcpBrowser !== 'webkit');
+
+  await cli('open', server.PREFIX);
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await expect(page.getByTitle('Pick locator')).toBeVisible();
+  await expect(page.getByTitle('Show Chrome DevTools')).not.toBeVisible();
 });
 
 test('pick locator disable paths', async ({ cli, page, server }) => {
