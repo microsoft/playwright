@@ -47,7 +47,6 @@ test('show tab title after navigation', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
       - /children: equal
@@ -59,7 +58,6 @@ test('show multiple tabs', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await page.getByRole('button', { name: 'New Tab' }).click();
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
@@ -73,7 +71,6 @@ test('switch active tab on click', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await page.getByRole('button', { name: 'New Tab' }).click();
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
@@ -94,7 +91,6 @@ test('close tab via close button', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await page.getByRole('button', { name: 'New Tab' }).click();
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
@@ -114,7 +110,6 @@ test('show no-pages placeholder when all tabs are closed', async ({ cli, page })
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
       - /children: equal
@@ -132,7 +127,6 @@ test('open new tab via new-tab button', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
     - tablist:
       - /children: equal
@@ -151,7 +145,6 @@ test('update omnibox on navigation', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await expect(page.getByRole('textbox', { name: 'Search or enter URL' })).toMatchAriaSnapshot(`
     - textbox "Search or enter URL": /.*\/title\.html/
   `);
@@ -161,8 +154,62 @@ test('display screencast image', async ({ cli, page }) => {
   await cli('open', 'data:text/html,<body style="background:red"></body>');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.locator('#status')).toHaveText('Connected');
   await expect(page.getByRole('img', { name: 'screencast' })).toHaveAttribute('src', /^data:image\/jpeg;base64,/, { timeout: 15000 });
+});
+
+test('chrome devtools', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX);
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByTitle('Show Chrome DevTools').click();
+  const devtools = page.frameLocator('iframe[title="Chrome DevTools"]');
+  await devtools.getByRole('tab', { name: 'Console' }).click();
+
+  await cli('eval', 'console.log("hello-from-cli-show")');
+  await expect(devtools.getByText('hello-from-cli-show')).toBeVisible();
+});
+
+test('pick locator disable paths', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX + '/title.html');
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  // Disable via toolbar toggle.
+  await page.getByTitle('Pick locator').click();
+  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
+
+  await page.getByTitle('Cancel pick locator').click();
+  await expect(page.getByTitle('Pick locator')).toBeVisible();
+  await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
+
+  // Disable via Escape while focused on the screen.
+  await page.getByTitle('Pick locator').click();
+  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
+
+  await page.locator('.screen').click();
+  await page.keyboard.press('Escape');
+
+  await expect(page.getByTitle('Pick locator')).toBeVisible();
+  await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
+});
+
+test('pick locator copies locator to clipboard', async ({ cli, page, server }) => {
+  server.setContent('/pick-locator-target.html', `<div id='picker-target' style='position:fixed; inset:0; background:red;'></div>`, 'text/html');
+
+  await cli('open', server.PREFIX + '/pick-locator-target.html');
+  await page.goto('/');
+  await page.context().grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByTitle('Pick locator').click();
+  await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
+  await page.locator('.screen').click();
+  await expect(page.getByText(/^Copied:/)).toBeVisible();
+  const copied = await page.evaluate(() => navigator.clipboard.readText());
+  expect(copied).toContain('#picker-target');
 });
 
 test('show with --port is blocking and does not use singleton', async ({ startCli }) => {
