@@ -638,10 +638,6 @@
   animation: action-log-fade 2s forwards;
 }
 
-.action-log-entry.error {
-  color: #f87171;
-}
-
 @keyframes action-log-fade {
   0%, 60% { opacity: 1; }
   100% { opacity: 0; }

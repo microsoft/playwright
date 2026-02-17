@@ -148,7 +148,23 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     this._contextListeners = [];
   }
 
+  private _reportedSymbol = Symbol('devtoolsReported');
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (metadata.internal)
+      return;
+    if (metadata.pageId && metadata.pageId !== this.selectedPage?.guid)
+      return;
+    if (getActionGroup(metadata) === 'getter')
+      return;
+    (metadata as any)[this._reportedSymbol] = true;
+    const title = renderTitleForCall(metadata);
+    this._emit('log', { title, point: metadata.point });
+  }
+
   async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if ((metadata as any)[this._reportedSymbol])
+      return;
     if (metadata.internal)
       return;
     if (metadata.pageId && metadata.pageId !== this.selectedPage?.guid)
@@ -156,7 +172,7 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     if (getActionGroup(metadata) === 'getter')
       return;
     const title = renderTitleForCall(metadata);
-    this._emit('log', { title, error: metadata.error?.error?.message, point: metadata.point });
+    this._emit('log', { title, point: metadata.point });
   }
 
   async dispatch(method: string, params: any): Promise<any> {

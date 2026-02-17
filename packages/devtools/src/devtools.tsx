@@ -45,7 +45,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [showInspector, setShowInspector] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
-  const [actionLog, setActionLog] = React.useState<Array<{ title: string; error?: string; point?: { x: number; y: number }; id: number }>>([]);
+  const [actionLog, setActionLog] = React.useState<Array<{ title: string; point?: { x: number; y: number }; id: number }>>([]);
   const [actionPoint, setActionPoint] = React.useState<{ x: number; y: number; timer: ReturnType<typeof setTimeout> }>();
 
   const [channel, setChannel] = React.useState<DevToolsClientChannel | undefined>();
@@ -431,8 +431,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             }
             <div className='action-log'>
               {actionLog.map(entry => (
-                <div key={entry.id} className={'action-log-entry' + (entry.error ? ' error' : '')}>
-                  {entry.title}{entry.error ? ': ' + entry.error : ''}
+                <div key={entry.id} className='action-log-entry'>
+                  {entry.title}
                 </div>
               ))}
             </div>
