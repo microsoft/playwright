@@ -38,7 +38,6 @@ function tabFavicon(url: string): string {
 const BUTTONS = ['left', 'middle', 'right'] as const;
 
 export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
-  const [connected, setConnected] = React.useState(false);
   const [interactive, setInteractive] = React.useState(false);
   const [tabs, setTabs] = React.useState<Tab[]>([]);
   const [url, setUrl] = React.useState('');
@@ -61,7 +60,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     channel.onopen = () => {
       setChannel(channel);
-      setConnected(true);
       setInteractive(false);
       setPicking(false);
     };
@@ -102,9 +100,9 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     channel.onclose = () => {
       setChannel(undefined);
-      setConnected(false);
       setInteractive(false);
       setPicking(false);
+      setShowInspector(false);
     };
 
     return () => {
@@ -151,6 +149,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
+    if (!channel)
+      return;
     if (!interactive) {
       setInteractive(true);
       return;
@@ -217,6 +217,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const selectedTab = tabs.find(t => t.selected);
   const hasPages = !!selectedTab;
 
+  let overlayText: string | undefined;
+  if (!channel)
+    overlayText = 'Disconnected';
+  if (channel && !hasPages)
+    overlayText = 'No tabs open';
+
   return (<div className={'devtools-view' + (interactive ? ' interactive' : '')}
   >
     {/* Tab bar */}
@@ -256,7 +262,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         <div className={'segmented-control' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactive ? 'Interactive mode: page input is forwarded' : 'Read-only mode: page input is blocked'}>
           <button
             className={'segmented-control-option' + (!interactive ? ' active' : '')}
-            disabled={!connected}
+            disabled={!channel}
             aria-pressed={!interactive}
             title='Read-only mode'
             onClick={() => {
@@ -269,7 +275,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           </button>
           <button
             className={'segmented-control-option' + (interactive ? ' active' : '')}
-            disabled={!connected}
+            disabled={!channel}
             aria-pressed={interactive}
             title='Interactive mode'
             onClick={() => setInteractive(true)}
@@ -307,7 +313,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         className={'nav-btn' + (picking ? ' active-toggle' : '')}
         title='Pick locator'
         aria-pressed={picking}
-        disabled={!connected}
+        disabled={!channel}
         onClick={async () => {
           if (picking) {
             await channel?.cancelPickLocator();
@@ -327,7 +333,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
           title='Chrome DevTools'
           aria-pressed={showInspector}
-          disabled={!connected}
+          disabled={!channel}
           onClick={() => {
             setInteractive(true);
             setShowInspector(!showInspector);
@@ -351,7 +357,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             ref={screenRef}
             className='screen'
             tabIndex={0}
-            style={{ display: hasPages ? '' : 'none' }}
+            style={{ display: frame ? '' : 'none' }}
             onMouseDown={onScreenMouseDown}
             onMouseUp={onScreenMouseUp}
             onMouseMove={onScreenMouseMove}
@@ -374,7 +380,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 : null
             }
           </div>
-          <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
+          {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
         </div>}
         sidebar={<iframe
           className='inspector-frame'

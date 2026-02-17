@@ -57,8 +57,7 @@ const App: React.FC = () => {
 
   if (socketPath) {
     const wsUrl = model.wsUrls.get(socketPath);
-    if (wsUrl)
-      return <DevTools wsUrl={wsUrl} />;
+    return <DevTools wsUrl={wsUrl || undefined} />;
   }
   return <Grid model={model} />;
 };

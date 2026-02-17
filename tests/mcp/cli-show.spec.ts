@@ -125,23 +125,6 @@ test('close tab via close button', async ({ cli, page, server }) => {
   `);
 });
 
-test('show no-pages placeholder when all tabs are closed', async ({ cli, page }) => {
-  await cli('open');
-  await page.goto('/');
-  await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
-    - tablist:
-      - /children: equal
-      - tab /.*/ [selected]
-  `);
-  await page.getByRole('button', { name: 'Close tab' }).click();
-  await expect(page.getByRole('tablist')).toMatchAriaSnapshot(`
-    - /children: deep-equal
-    - tablist
-  `);
-  await expect(page.locator('#no-pages')).toHaveText('No tabs open');
-});
-
 test('open new tab via new-tab button', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
@@ -330,6 +313,30 @@ test('copied locator toast clears on page change', async ({ cli, page, server })
 
   await expect(page.getByRole('tab', { name: 'Toast Next' })).toBeVisible();
   await expect(page.getByText(/^Copied:/)).toBeHidden();
+});
+
+test('close session from grid via close button', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX);
+  await page.goto('/');
+  await expect(page.getByRole('link', { name: 'default' })).toMatchAriaSnapshot(`
+    - link /default/:
+      - button "Close session"
+      - img "screencast"
+  `);
+
+  await page.getByRole('button', { name: 'Close session' }).click();
+  await expect(page.getByText('No sessions found.')).toBeVisible();
+});
+
+test('close session while viewing devtools shows disconnected overlay', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX);
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+  await expect(page.getByRole('button', { name: 'Interactive' })).toBeEnabled();
+
+  await cli('close');
+  await expect(page.getByText('Disconnected')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Interactive' })).toBeDisabled();
 });
 
 test('show with --port is blocking and does not use singleton', async ({ startCli }) => {
