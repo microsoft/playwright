@@ -39,26 +39,27 @@ test('show interaction toggle', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
-  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveClass(/active/);
-  await expect(page.getByRole('button', { name: 'Interactive' })).not.toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveAttribute('aria-pressed', 'false');
 
   await page.getByRole('button', { name: 'Interactive' }).click();
-  await expect(page.getByRole('button', { name: 'Read-only' })).not.toHaveClass(/active/);
-  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveClass(/active/);
+  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveAttribute('aria-pressed', 'true');
 });
 
-test('screencast interaction is blocked until consent is enabled', async ({ cli, page }) => {
+test('clicking screen auto-engages interactive mode', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
 
-  await page.locator('.screen').click();
-  await expect(page.getByText('Switch to Interactive mode to control the page')).toBeVisible();
+  // Starts in Read-only mode.
+  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveAttribute('aria-pressed', 'false');
 
-  await page.getByRole('button', { name: 'Interactive' }).click();
-  await page.locator('.screen').hover();
-  await expect(page.getByText('Switch to Interactive mode to control the page')).toBeHidden();
-  await expect(page.getByText('Click to interact · Esc to release')).toBeVisible();
+  // Clicking the screen engages interactive mode.
+  await page.locator('.screen').click();
+  await expect(page.getByRole('button', { name: 'Interactive' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.getByRole('button', { name: 'Read-only' })).toHaveAttribute('aria-pressed', 'false');
 });
 
 test('show tab title after navigation', async ({ cli, page, server }) => {
@@ -241,7 +242,7 @@ test('chrome devtools', async ({ cli, page, server }) => {
   await page.getByRole('link', { name: /default/ }).click();
 
   await page.getByRole('button', { name: 'Interactive' }).click();
-  await page.getByTitle('Show Chrome DevTools').click();
+  await page.getByRole('button', { name: 'Chrome DevTools' }).click();
   const devtools = page.frameLocator('iframe[title="Chrome DevTools"]');
   await devtools.getByRole('tab', { name: 'Console' }).click();
 
@@ -254,30 +255,26 @@ test('pick locator disable paths', async ({ cli, page, server }) => {
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
 
-  await expect(page.getByTitle('Pick locator')).toBeDisabled();
-  await expect(page.getByTitle('Show Chrome DevTools')).toBeDisabled();
-  await expect(page.getByTitle('Cancel pick locator')).toBeHidden();
-
-  await page.getByRole('button', { name: 'Interactive' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'false');
 
   // Disable via toolbar toggle.
-  await page.getByTitle('Pick locator').click();
-  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
 
-  await page.getByTitle('Cancel pick locator').click();
-  await expect(page.getByTitle('Pick locator')).toBeVisible();
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
 
   // Disable via Escape while focused on the screen.
-  await page.getByTitle('Pick locator').click();
-  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
 
   await page.locator('.screen').click();
   await page.keyboard.press('Escape');
 
-  await expect(page.getByTitle('Pick locator')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
 });
 
@@ -290,8 +287,8 @@ test('pick locator copies locator to clipboard', async ({ cli, page, server }) =
   await page.getByRole('link', { name: /default/ }).click();
 
   await page.getByRole('button', { name: 'Interactive' }).click();
-  await page.getByTitle('Pick locator').click();
-  await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'true');
   await page.locator('.screen').click();
   await expect(page.getByText(/^Copied:/)).toBeVisible();
   const copied = await page.evaluate(() => navigator.clipboard.readText());
@@ -304,13 +301,12 @@ test('locator picking is disabled when switching back to Read-only', async ({ cl
   await page.getByRole('link', { name: /default/ }).click();
 
   await page.getByRole('button', { name: 'Interactive' }).click();
-  await page.getByTitle('Pick locator').click();
-  await expect(page.getByTitle('Cancel pick locator')).toBeVisible();
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'true');
   await expect(page.getByText('Click an element to pick its locator')).toBeVisible();
 
   await page.getByRole('button', { name: 'Read-only' }).click();
-  await expect(page.getByTitle('Pick locator')).toBeDisabled();
-  await expect(page.getByTitle('Cancel pick locator')).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'false');
   await expect(page.getByText('Click an element to pick its locator')).toBeHidden();
 });
 
@@ -324,8 +320,8 @@ test('copied locator toast clears on page change', async ({ cli, page, server })
   await page.getByRole('link', { name: /default/ }).click();
 
   await page.getByRole('button', { name: 'Interactive' }).click();
-  await page.getByTitle('Pick locator').click();
-  await page.waitForTimeout(500); // TODO: replace this with a more robust wait, e.g. on the button being enabled.
+  await page.getByRole('button', { name: 'Pick locator' }).click();
+  await expect(page.getByRole('button', { name: 'Pick locator' })).toHaveAttribute('aria-pressed', 'true');
   await page.locator('.screen').click();
   await expect(page.getByText(/^Copied:/)).toBeVisible();
 
