@@ -40,6 +40,8 @@ jobs:
       contents: read    # This is required for actions/checkout to succeed
     steps:
     - uses: actions/checkout@v6
+    - name: Setup tmate session
+      uses: mxschmitt/action-tmate@v3
     - uses: ./.github/actions/run-test
       with:
         node-version: "20"
