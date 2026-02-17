@@ -34,6 +34,12 @@
   z-index: 0;
 }
 
+@media (prefers-color-scheme: light) {
+  .tabbar {
+    background: var(--bg-elevated);
+  }
+}
+
 .devtools-view.interactive .tab.active {
   background: rgb(var(--interactive-orange));
   color: #fff;
@@ -172,6 +178,18 @@
   color: var(--fg);
 }
 
+@media (prefers-color-scheme: light) {
+  .tab {
+    background: transparent;
+  }
+  .tab:hover {
+    background: var(--bg);
+  }
+  .tab.active {
+    background: var(--bg);
+  }
+}
+
 .tab-label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -210,7 +228,7 @@
 }
 
 .tab-close:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--overlay-active);
 }
 
 .new-tab-btn {
@@ -248,7 +266,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0;
-  background: rgb(255 255 255 / 0.1);
+  background: var(--segmented-bg);
 }
 
 .segmented-control::before {
@@ -259,7 +277,7 @@
   left: 2px;
   width: calc(50% - 2px);
   border-radius: 999px;
-  background: rgb(255 255 255 / 0.2);
+  background: var(--segmented-knob);
   transform: translateX(0);
   transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms ease;
 }
@@ -272,9 +290,10 @@
 .segmented-control-option {
   position: relative;
   z-index: 1;
+  width: 96px;
   height: 24px;
   border-radius: 999px;
-  padding: 0 10px;
+  padding: 0;
   border: none;
   background: transparent;
   color: var(--fg-dim);
@@ -283,6 +302,10 @@
   letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
 }
 
 .segmented-control-option:hover:not(:disabled) {
@@ -306,6 +329,21 @@
   background: rgb(255 255 255 / 0.32);
 }
 
+@media (prefers-color-scheme: light) {
+  .devtools-view.interactive .segmented-control {
+    background: rgb(0 0 0 / 0.1);
+  }
+  .devtools-view.interactive .segmented-control::before {
+    background: rgb(0 0 0 / 0.12);
+  }
+  .devtools-view.interactive .toolbar .nav-btn:hover {
+    background: rgba(255, 255, 255, 0.18);
+  }
+  .devtools-view.interactive .toolbar .nav-btn:active {
+    background: rgba(255, 255, 255, 0.25);
+  }
+}
+
 .devtools-view.interactive .segmented-control.interactive::before {
   background: rgb(var(--interactive-orange) / 0.95);
 }
@@ -316,6 +354,15 @@
 
 .devtools-view.interactive .segmented-control-option.active {
   color: #fff;
+}
+
+@media (prefers-color-scheme: light) {
+  .devtools-view.interactive .segmented-control-option {
+    color: var(--fg-dim);
+  }
+  .devtools-view.interactive .segmented-control-option.active {
+    color: #fff;
+  }
 }
 
 /* -- Toolbar -- */
@@ -331,6 +378,12 @@
   z-index: 0;
 }
 
+@media (prefers-color-scheme: light) {
+  .toolbar {
+    background: var(--bg);
+  }
+}
+
 .devtools-view.interactive .toolbar {
   background: rgb(var(--interactive-orange));
   color: #fff;
@@ -341,6 +394,19 @@
   color: #fff;
 }
 
+@media (prefers-color-scheme: light) {
+  .devtools-view.interactive .toolbar {
+    color: #fff;
+  }
+  .devtools-view.interactive .toolbar .omnibox {
+    background: rgb(0 0 0 / 0.15);
+    color: #fff;
+  }
+  .devtools-view.interactive .toolbar .omnibox::placeholder {
+    color: rgb(255 255 255 / 0.6);
+  }
+}
+
 .nav-btn {
   width: 32px;
   height: 32px;
@@ -348,11 +414,11 @@
 }
 
 .nav-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--overlay-hover);
 }
 
 .nav-btn:active {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--overlay-active);
 }
 
 .nav-btn:disabled {
@@ -383,6 +449,12 @@
   min-width: 0;
 }
 
+@media (prefers-color-scheme: light) {
+  .omnibox {
+    background: var(--bg-elevated);
+  }
+}
+
 .omnibox:focus {
   border-color: var(--accent);
   background: var(--bg-tab);
@@ -393,7 +465,7 @@
 }
 
 .omnibox::selection {
-  background: #394457;
+  background: var(--selection-bg);
 }
 
 /* -- Viewport -- */
@@ -463,7 +535,7 @@
   bottom: 16px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(32, 33, 36, 0.85);
+  background: var(--toast-bg);
   backdrop-filter: blur(8px);
   color: var(--fg);
   font-size: 12px;
@@ -473,7 +545,7 @@
   opacity: 0;
   transition: opacity 0.2s;
   white-space: nowrap;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--toast-border);
 }
 
 .screen-toast.visible {
@@ -497,4 +569,10 @@
 .nav-btn.active-toggle {
   color: var(--accent);
   background: rgba(138, 180, 248, 0.12);
+}
+
+@media (prefers-color-scheme: light) {
+  .nav-btn.active-toggle {
+    background: rgba(26, 115, 232, 0.12);
+  }
 }
