@@ -45,6 +45,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [showInspector, setShowInspector] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
+  const [actionLog, setActionLog] = React.useState<Array<{ title: string; error?: string; id: number }>>([]);
 
   const [channel, setChannel] = React.useState<DevToolsClientChannel | undefined>();
   const displayRef = React.useRef<HTMLImageElement>(null);
@@ -96,6 +97,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         clearTimeout(old?.timer);
         return { text: locator, timer: setTimeout(() => setLocatorToast(undefined), 3000) };
       });
+    });
+
+    let logId = 0;
+    channel.on('log', params => {
+      const id = ++logId;
+      setActionLog(prev => [...prev.slice(-9), { ...params, id }]);
     });
 
     channel.onclose = () => {
@@ -379,6 +386,13 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 ? <div className='screen-toast visible'>Click an element to pick its locator</div>
                 : null
             }
+            <div className='action-log'>
+              {actionLog.map(entry => (
+                <div key={entry.id} className={'action-log-entry' + (entry.error ? ' error' : '')}>
+                  {entry.title}{entry.error ? ': ' + entry.error : ''}
+                </div>
+              ))}
+            </div>
           </div>
           {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
         </div>}

@@ -591,4 +591,41 @@
   }
 }
 
+/* -- Action log overlay -- */
+.action-log {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-end;
+}
+
+.action-log-entry {
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.85);
+  font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  font-size: 11px;
+  line-height: 1.2;
+  padding: 4px 10px;
+  white-space: nowrap;
+  animation: action-log-fade 2s forwards;
+}
+
+.action-log-entry.error {
+  color: #f87171;
+}
+
+@keyframes action-log-fade {
+  0%, 60% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 

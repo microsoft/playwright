@@ -23,12 +23,15 @@ import { Recorder, RecorderEvent } from './recorder';
 import { CRPage } from './chromium/crPage';
 import { CDPSession } from './chromium/crConnection';
 import { CRBrowserContext } from './chromium/crBrowser';
+import { renderTitleForCall, getActionGroup } from '../utils/isomorphic/protocolFormatter';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
 import type { CRBrowser } from './chromium/crBrowser';
 import type { ElementInfo } from '@recorder/recorderTypes';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
+import type { InstrumentationListener, SdkObject } from './instrumentation';
+import type { CallMetadata } from '@protocol/callMetadata';
 
 export class DevToolsController {
   private _context: BrowserContext;
@@ -59,7 +62,7 @@ export class DevToolsController {
   }
 }
 
-class DevToolsConnection implements Transport, DevToolsChannel {
+class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationListener {
   readonly version = 1;
 
   sendEvent?: (method: string, params: any) => void;
@@ -106,6 +109,8 @@ class DevToolsConnection implements Transport, DevToolsChannel {
   onconnect() {
     const context = this._context;
 
+    this._context.instrumentation.addListener(this, this._context);
+
     this._contextListeners.push(
         eventsHelper.addEventListener(context, BrowserContext.Events.Page, (page: Page) => {
           this._sendTabList();
@@ -138,8 +143,20 @@ class DevToolsConnection implements Transport, DevToolsChannel {
   onclose() {
     this._cancelPicking();
     this._deselectPage();
+    this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._contextListeners);
     this._contextListeners = [];
+  }
+
+  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (metadata.internal)
+      return;
+    if (metadata.pageId && metadata.pageId !== this.selectedPage?.guid)
+      return;
+    if (getActionGroup(metadata) === 'getter')
+      return;
+    const title = renderTitleForCall(metadata);
+    this._emit('log', { title, error: metadata.error?.error?.message });
   }
 
   async dispatch(method: string, params: any): Promise<any> {
