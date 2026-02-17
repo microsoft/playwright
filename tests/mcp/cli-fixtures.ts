@@ -57,63 +57,56 @@ export const test = baseTest.extend<{
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
   startCli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
-    const processes: TestChildProcess[] = [];
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      const cp = await startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
-      processes.push(cp);
-      return cp;
+      return await startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
     });
-    for (const cp of processes)
-      await cp.kill('SIGINT');
   },
 });
 
 async function startCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
-  const stepTitle = `cli ${args.join(' ')}`;
-  return await test.step(stepTitle, async () => {
-    const testInfo = test.info();
-    const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/program.js'), ...args],
-      cwd: cliOptions.cwd ?? testInfo.outputPath(),
-      env: {
-        ...process.env,
-        ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
-        PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
-        PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-        ...cliOptions.env,
-      },
-    });
-    void cli.exited.finally(async () => {
-      await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
-    });
-    return cli;
+  const testInfo = test.info();
+  return childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/program.js'), ...args],
+    cwd: cliOptions.cwd ?? testInfo.outputPath(),
+    env: {
+      ...process.env,
+      ...cliOptions.env,
+      PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
+      PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+      ...cliOptions.env,
+    },
   });
 }
 
 async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
-  const cli = await startCli(childProcess, args, cliOptions, options);
-  await cli.exited;
+  const stepTitle = `cli ${args.join(' ')}`;
+  return await test.step(stepTitle, async stepInfo => {
+    const cli = await startCli(childProcess, args, cliOptions, options);
+    await cli.exited.finally(async () => {
+      await stepInfo.attach('output', { body: cli.output, contentType: 'text/plain' });
+    });
 
-  let snapshot: string | undefined;
-  if (cli.stdout.includes('### Snapshot'))
-    snapshot = await loadSnapshot(cli.stdout);
-  const attachments = loadAttachments(cli.stdout);
+    let snapshot: string | undefined;
+    if (cli.stdout.includes('### Snapshot'))
+      snapshot = await loadSnapshot(cli.stdout);
+    const attachments = loadAttachments(cli.stdout);
 
-  const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
-  const [, sessionName, pid] = matches ?? [];
-  if (sessionName && pid)
-    sessions.push({ name: sessionName, pid: +pid });
-  return {
-    exitCode: await cli.exitCode,
-    output: cli.stdout.trim(),
-    error: cli.stderr.trim(),
-    snapshot,
-    attachments
-  };
+    const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
+    const [, sessionName, pid] = matches ?? [];
+    if (sessionName && pid)
+      sessions.push({ name: sessionName, pid: +pid });
+    return {
+      exitCode: await cli.exitCode,
+      output: cli.stdout.trim(),
+      error: cli.stderr.trim(),
+      snapshot,
+      attachments
+    };
+  });
 }
 
 function loadAttachments(output: string) {
