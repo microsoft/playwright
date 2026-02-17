@@ -233,6 +233,21 @@ test('chrome devtools', async ({ cli, page, server }) => {
   await expect(devtools.getByText('hello-from-cli-show')).toBeVisible();
 });
 
+test('read-only closes chrome devtools', async ({ cli, page, server }) => {
+  await cli('open', server.PREFIX);
+  await page.goto('/');
+  await page.getByRole('link', { name: /default/ }).click();
+
+  await page.getByRole('button', { name: 'Interactive' }).click();
+  await page.getByRole('button', { name: 'Chrome DevTools' }).click();
+  await expect(page.getByRole('button', { name: 'Chrome DevTools' })).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('iframe[title="Chrome DevTools"]')).toHaveCount(1);
+
+  await page.getByRole('button', { name: 'Read-only' }).click();
+  await expect(page.getByRole('button', { name: 'Chrome DevTools' })).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('iframe[title="Chrome DevTools"]')).toHaveCount(0);
+});
+
 test('pick locator disable paths', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');

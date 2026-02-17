@@ -309,6 +309,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             onClick={() => {
               channel?.cancelPickLocator();
               setPicking(false);
+              setShowInspector(false);
               setInteractive(false);
             }}
           >
