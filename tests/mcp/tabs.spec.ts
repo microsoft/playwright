@@ -74,6 +74,12 @@ test('create new tab', async ({ client }) => {
 - generic [active] [ref=e1]: Body two
 \`\`\``,
   });
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {},
+  })).toHaveResponse({
+    page: expect.stringContaining('Page URL: data:text/html,<title>Tab two</title><body>Body two</body>'),
+  });
 });
 
 test('select tab', async ({ client }) => {
