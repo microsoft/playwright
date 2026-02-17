@@ -598,16 +598,32 @@
   height: 16px;
   margin: -8px 0 0 -8px;
   border-radius: 50%;
-  background: rgba(244, 67, 54, 0.8);
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 12px rgba(244, 67, 54, 0.5);
+  background: rgba(244, 67, 54, 0.85);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7), 0 0 12px rgba(244, 67, 54, 0.5);
   z-index: 6;
   pointer-events: none;
   animation: action-point-fade 2s forwards;
 }
 
+.action-point::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(244, 67, 54, 0.7);
+  animation: action-point-ripple 0.8s ease-out forwards;
+}
+
 @keyframes action-point-fade {
-  0%, 50% { opacity: 1; transform: scale(1); }
+  0% { opacity: 1; transform: scale(1.6); }
+  15% { opacity: 1; transform: scale(1); }
+  60% { opacity: 1; transform: scale(1); }
   100% { opacity: 0; transform: scale(0.5); }
+}
+
+@keyframes action-point-ripple {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(4); opacity: 0; }
 }
 
 /* -- Action log overlay -- */

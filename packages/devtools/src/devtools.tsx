@@ -427,7 +427,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 : null
             }
             {actionPointPosition &&
-              <div className='action-point' style={actionPointPosition} />
+              <div key={actionPoint!.timer as unknown as number} className='action-point' style={actionPointPosition} />
             }
             <div className='action-log'>
               {actionLog.map(entry => (
