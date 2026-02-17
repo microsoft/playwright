@@ -39,13 +39,10 @@ const BUTTONS = ['left', 'middle', 'right'] as const;
 
 export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [connected, setConnected] = React.useState(false);
-  const [interactionConsent, setInteractionConsent] = React.useState(false);
-  const [consentFlowActive, setConsentFlowActive] = React.useState(false);
+  const [interactive, setInteractive] = React.useState(false);
   const [tabs, setTabs] = React.useState<Tab[]>([]);
   const [url, setUrl] = React.useState('');
   const [frameSrc, setFrameSrc] = React.useState('');
-  const [captured, setCaptured] = React.useState(false);
-  const [hintVisible, setHintVisible] = React.useState(false);
   const [consentHintVisible, setConsentHintVisible] = React.useState(false);
   const [showInspector, setShowInspector] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
@@ -57,20 +54,9 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const omniboxRef = React.useRef<HTMLInputElement>(null);
   const viewportSizeRef = React.useRef<{ width: number; height: number }>({ width: 0, height: 0 });
   const resizedRef = React.useRef(false);
-  const capturedRef = React.useRef(false);
   const moveThrottleRef = React.useRef(0);
-  const pickingRef = React.useRef(false);
   const toastTimerRef = React.useRef<ReturnType<typeof setTimeout>>(0 as any);
-  const consentFlowTimerRef = React.useRef<ReturnType<typeof setTimeout>>(0 as any);
-
-  // Keep capturedRef in sync with state.
-  React.useEffect(() => {
-    capturedRef.current = captured;
-  }, [captured]);
-
-  React.useEffect(() => {
-    pickingRef.current = picking;
-  }, [picking]);
+  const rootRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!wsUrl)
@@ -80,8 +66,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     channel.onopen = () => {
       setConnected(true);
-      setInteractionConsent(false);
-      setCaptured(false);
+      setInteractive(false);
       setPicking(false);
       setConsentHintVisible(false);
     };
@@ -115,14 +100,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     channel.onclose = () => {
       setConnected(false);
-      setInteractionConsent(false);
-      setCaptured(false);
+      setInteractive(false);
       setPicking(false);
     };
 
     return () => {
       clearTimeout(toastTimerRef.current);
-      clearTimeout(consentFlowTimerRef.current);
       channel.close();
     };
   }, [wsUrl]);
@@ -135,26 +118,26 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     setConsentHintVisible(false);
   }
 
-  function toggleInteractionConsent(nextValue?: boolean) {
-    const nextConsent = nextValue ?? !interactionConsent;
+  function toggleInteractive(nextValue?: boolean) {
+    const nextConsent = nextValue ?? !interactive;
     if (!connected)
       return;
-    if (!nextConsent && pickingRef.current) {
+    if (!nextConsent && picking) {
       channelRef.current?.cancelPickLocator();
       setPicking(false);
     }
-    if (!nextConsent)
-      setCaptured(false);
-    setInteractionConsent(nextConsent);
+    setInteractive(nextConsent);
     clearConsentHint();
     if (nextConsent) {
-      setConsentFlowActive(false);
-      clearTimeout(consentFlowTimerRef.current);
-      setConsentFlowActive(true);
-      consentFlowTimerRef.current = setTimeout(() => setConsentFlowActive(false), 700);
+      const el = rootRef.current;
+      if (el) {
+        el.classList.remove('consent-flow-active');
+        // Force reflow so re-adding the class restarts animations.
+        void el.offsetWidth;
+        el.classList.add('consent-flow-active');
+      }
     } else {
-      setConsentFlowActive(false);
-      clearTimeout(consentFlowTimerRef.current);
+      rootRef.current?.classList.remove('consent-flow-active');
     }
   }
 
@@ -205,8 +188,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     };
   }
 
-  const isForwardingInput = () => interactionConsent && (showInspector || capturedRef.current);
-
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
     const { x, y } = imgCoords(e);
     channelRef.current?.[method]({ x, y, button: BUTTONS[e.button] || 'left' });
@@ -215,27 +196,22 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   function onScreenMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     screenRef.current?.focus();
-    if (!interactionConsent) {
+    if (!interactive) {
       showConsentHint();
-      return;
-    }
-    if (!pickingRef.current && !isForwardingInput()) {
-      setCaptured(true);
-      setHintVisible(false);
       return;
     }
     sendMouseEvent('mousedown', e);
   }
 
   function onScreenMouseUp(e: React.MouseEvent) {
-    if (!pickingRef.current && !isForwardingInput())
+    if (!interactive)
       return;
     e.preventDefault();
     sendMouseEvent('mouseup', e);
   }
 
   function onScreenMouseMove(e: React.MouseEvent) {
-    if (!pickingRef.current && !isForwardingInput())
+    if (!interactive)
       return;
     const now = Date.now();
     if (now - moveThrottleRef.current < 32)
@@ -246,48 +222,36 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   }
 
   function onScreenWheel(e: React.WheelEvent) {
-    if (!interactionConsent) {
+    if (!interactive) {
       showConsentHint();
       return;
     }
-    if (!isForwardingInput())
+    if (!interactive)
       return;
     e.preventDefault();
     channelRef.current?.wheel({ deltaX: e.deltaX, deltaY: e.deltaY });
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (pickingRef.current && e.key === 'Escape') {
+    if (picking && e.key === 'Escape') {
       e.preventDefault();
       channelRef.current?.cancelPickLocator();
       setPicking(false);
       return;
     }
-    if (!interactionConsent) {
+    if (!interactive) {
       showConsentHint();
       return;
     }
-    if (!isForwardingInput())
-      return;
     e.preventDefault();
-    if (e.key === 'Escape' && !(e.metaKey || e.ctrlKey)) {
-      setCaptured(false);
-      return;
-    }
     channelRef.current?.keydown({ key: e.key });
   }
 
   function onScreenKeyUp(e: React.KeyboardEvent) {
-    if (!interactionConsent)
-      return;
-    if (!isForwardingInput())
+    if (!interactive)
       return;
     e.preventDefault();
     channelRef.current?.keyup({ key: e.key });
-  }
-
-  function onScreenBlur() {
-    setCaptured(false);
   }
 
   function onOmniboxKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -303,11 +267,13 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
   const selectedTab = tabs.find(t => t.selected);
   const hasPages = !!selectedTab;
-  const interactionModeTitle = interactionConsent
+  const interactionModeTitle = interactive
     ? 'Interactive mode: page input is forwarded'
     : 'Read-only mode: page input is blocked';
 
-  return (<div className={'devtools-view' + (interactionConsent ? ' consent-active' : '') + (consentFlowActive ? ' consent-flow-active' : '')}>
+  return (<div ref={rootRef} className={'devtools-view' + (interactive ? ' consent-active' : '')}
+    onAnimationEnd={() => rootRef.current?.classList.remove('consent-flow-active')}
+  >
     {/* Tab bar */}
     <div className='tabbar'>
       <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
@@ -342,20 +308,20 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         <PlusIcon />
       </button>
       <div className='consent-controls'>
-        <div className={'consent-segmented' + (interactionConsent ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactionModeTitle}>
+        <div className={'consent-segmented' + (interactive ? ' interactive' : '')} role='group' aria-label='Interaction mode' title={interactionModeTitle}>
           <button
-            className={'consent-segment' + (!interactionConsent ? ' active' : '')}
+            className={'consent-segment' + (!interactive ? ' active' : '')}
             disabled={!connected}
             title='Read-only mode'
-            onClick={() => toggleInteractionConsent(false)}
+            onClick={() => toggleInteractive(false)}
           >
             Read-only
           </button>
           <button
-            className={'consent-segment' + (interactionConsent ? ' active' : '')}
+            className={'consent-segment' + (interactive ? ' active' : '')}
             disabled={!connected}
             title='Interactive mode'
-            onClick={() => toggleInteractionConsent(true)}
+            onClick={() => toggleInteractive(true)}
           >
             Interactive
           </button>
@@ -390,16 +356,14 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       <button
         className={'nav-btn' + (picking ? ' active-toggle' : '')}
         title={picking ? 'Cancel pick locator' : 'Pick locator'}
-        disabled={!interactionConsent}
+        disabled={!connected}
         onClick={() => {
-          if (!interactionConsent) {
-            showConsentHint();
-            return;
-          }
           if (picking) {
             channelRef.current?.cancelPickLocator();
             setPicking(false);
           } else {
+            if (!interactive)
+              toggleInteractive(true);
             channelRef.current?.pickLocator();
             setPicking(true);
           }
@@ -411,8 +375,12 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         <button
           className={'nav-btn' + (showInspector ? ' active-toggle' : '')}
           title={showInspector ? 'Hide Chrome DevTools' : 'Show Chrome DevTools'}
-          disabled={!interactionConsent}
-          onClick={() => setShowInspector(!showInspector)}
+          disabled={!connected}
+          onClick={() => {
+            if (!showInspector && !interactive)
+              toggleInteractive(true);
+            setShowInspector(!showInspector);
+          }}
         >
           <InspectorPanelIcon />
         </button>
@@ -430,7 +398,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         main={<div className='viewport-main'>
           <div
             ref={screenRef}
-            className={'screen' + (captured ? ' captured' : '')}
+            className='screen'
             tabIndex={0}
             style={{ display: hasPages ? '' : 'none' }}
             onMouseDown={onScreenMouseDown}
@@ -439,14 +407,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             onWheel={onScreenWheel}
             onKeyDown={onScreenKeyDown}
             onKeyUp={onScreenKeyUp}
-            onBlur={onScreenBlur}
             onContextMenu={e => e.preventDefault()}
-            onMouseEnter={() => {
-              if (!showInspector && !capturedRef.current)
-                setHintVisible(true);
-            }}
             onMouseLeave={() => {
-              setHintVisible(false);
               clearConsentHint();
             }}
           >
@@ -463,7 +425,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 ? <div className='capture-hint visible'>Click an element to pick its locator</div>
                 : consentHintVisible
                   ? <div className='capture-hint visible'>Switch to Interactive mode to control the page</div>
-                  : !showInspector && interactionConsent && <div className={'capture-hint' + (hintVisible ? ' visible' : '')}>Click to interact &middot; Esc to release</div>
+                  : null
             }
           </div>
           <div id='no-pages' className={'no-pages' + (!hasPages ? ' visible' : '')}>No tabs open</div>
