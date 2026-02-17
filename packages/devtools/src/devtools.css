@@ -591,6 +591,25 @@
   }
 }
 
+/* -- Action point indicator -- */
+.action-point {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  margin: -8px 0 0 -8px;
+  border-radius: 50%;
+  background: rgba(244, 67, 54, 0.8);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.6), 0 0 12px rgba(244, 67, 54, 0.5);
+  z-index: 6;
+  pointer-events: none;
+  animation: action-point-fade 2s forwards;
+}
+
+@keyframes action-point-fade {
+  0%, 50% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(0.5); }
+}
+
 /* -- Action log overlay -- */
 .action-log {
   position: absolute;

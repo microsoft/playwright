@@ -156,7 +156,7 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     if (getActionGroup(metadata) === 'getter')
       return;
     const title = renderTitleForCall(metadata);
-    this._emit('log', { title, error: metadata.error?.error?.message });
+    this._emit('log', { title, error: metadata.error?.error?.message, point: metadata.point });
   }
 
   async dispatch(method: string, params: any): Promise<any> {
