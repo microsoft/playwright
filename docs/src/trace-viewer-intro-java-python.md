@@ -62,7 +62,7 @@ context.tracing.stop(path = "trace.zip")
 
 ## Recording a trace
 * langs: java
-  
+
 Traces can be recorded using the [`property: BrowserContext.tracing`] API as follows:
 
 ```java
@@ -101,7 +101,7 @@ playwright show-trace trace.zip
 ######
 * langs: python, java
 
-![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
+<img src="https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274" alt="playwright trace viewer" width="3598" height="2218" />
 
 
 To learn more check out our detailed guide on [Trace Viewer](/trace-viewer.md).
