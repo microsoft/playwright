@@ -45,8 +45,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [showInspector, setShowInspector] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
-  const [actionLog, setActionLog] = React.useState<Array<{ title: string; point?: { x: number; y: number }; id: number }>>([]);
-  const [actionPoint, setActionPoint] = React.useState<{ x: number; y: number; timer: ReturnType<typeof setTimeout> }>();
+  const [actionLog, setActionLog] = React.useState<Array<DevToolsChannelEvents['log'] & { id: number }>>([]);
 
   const [channel, setChannel] = React.useState<DevToolsClientChannel | undefined>();
   const displayRef = React.useRef<HTMLImageElement>(null);
@@ -104,12 +103,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     channel.on('log', params => {
       const id = ++logId;
       setActionLog(prev => [...prev.slice(-9), { ...params, id }]);
-      if (params.point) {
-        setActionPoint(old => {
-          clearTimeout(old?.timer);
-          return { ...params.point!, timer: setTimeout(() => setActionPoint(undefined), 2000) };
-        });
-      }
     });
 
     channel.onclose = () => {
@@ -268,7 +261,8 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   if (channel && !hasPages)
     overlayText = 'No tabs open';
 
-  const actionPointPosition = actionPoint ? viewportToImgPosition(actionPoint) : null;
+  const actionPointEntry = actionLog.findLast(e => e.point);
+  const actionPointPosition = actionPointEntry?.point ? viewportToImgPosition(actionPointEntry.point) : null;
 
   return (<div className={'devtools-view' + (interactive ? ' interactive' : '')}
   >
@@ -427,7 +421,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 : null
             }
             {actionPointPosition &&
-              <div key={actionPoint!.timer as unknown as number} className='action-point' style={actionPointPosition} />
+              <div key={actionPointEntry!.id} className='action-point' style={actionPointPosition} />
             }
             <div className='action-log'>
               {actionLog.map(entry => (
