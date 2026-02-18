@@ -5,10 +5,11 @@ on:
     branches:
       - main
       - release-*
-  pull_request:
-    branches:
-      - main
-      - release-*
+  # pull_request disabled for bisect
+  # pull_request:
+  #   branches:
+  #     - main
+  #     - release-*
 
 env:
   ELECTRON_SKIP_BINARY_DOWNLOAD: 1

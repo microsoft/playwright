@@ -5,15 +5,16 @@ on:
     branches:
       - main
       - release-*
-  pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/playwright/src/mcp/**'
-      - 'tests/mcp/**'
-    branches:
-      - main
-      - release-*
+  # pull_request disabled for bisect
+  # pull_request:
+  #   paths-ignore:
+  #     - 'browser_patches/**'
+  #     - 'docs/**'
+  #     - 'packages/playwright/src/mcp/**'
+  #     - 'tests/mcp/**'
+  #   branches:
+  #     - main
+  #     - release-*
 
 concurrency:
   # For pull requests, cancel all currently-running jobs for this workflow

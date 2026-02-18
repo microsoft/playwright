@@ -7,13 +7,14 @@ on:
         description: Playwright SHA / ref to test. Use 'refs/pull/PULL_REQUEST_ID/head' to test a PR. Defaults to the current branch.
         required: false
         default: ''
-  pull_request:
-    branches:
-      - main
-    paths:
-      - .github/workflows/tests_bidi.yml
-      - packages/playwright-core/src/server/bidi/**
-      - tests/bidi/**
+  # pull_request disabled for bisect
+  # pull_request:
+  #   branches:
+  #     - main
+  #   paths:
+  #     - .github/workflows/tests_bidi.yml
+  #     - packages/playwright-core/src/server/bidi/**
+  #     - tests/bidi/**
   schedule:
     # Run every day at midnight
     - cron: '0 0 * * *'

@@ -18,7 +18,6 @@
 /* eslint-disable no-restricted-properties */
 
 import { execSync, spawn } from 'child_process';
-import crypto from 'crypto';
 
 import fs from 'fs';
 import os from 'os';
@@ -302,11 +301,9 @@ async function findOrInstallDefaultBrowser() {
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   const socketName = `${sessionName}.sock`;
+  if (os.platform() === 'win32')
+    return `\\\\.\\pipe\\${clientInfo.workspaceDirHash}-${socketName}`;
   const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-  if (os.platform() === 'win32') {
-    const hash = crypto.createHash('sha1').update(socketsDir).update(clientInfo.workspaceDirHash).digest('hex');
-    return `\\\\.\\pipe\\${hash.substring(0, 16)}-${socketName}`;
-  }
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 

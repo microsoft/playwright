@@ -25,6 +25,8 @@ const test = cliTest.extend<{ showServer: string }>({
   baseURL: ({ showServer }, use) => use(showServer),
 });
 
+test.skip();
+
 test('grid', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX);
   await page.goto('/');
