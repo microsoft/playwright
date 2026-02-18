@@ -729,7 +729,7 @@ function fakeEvent(clock: ClockController, NativeEvent: Builtins['Event'], fakeP
     Object.defineProperty(NativeEvent.prototype, 'timeStamp', {
       get() {
         if (!this[kEventTimeStamp])
-          this[kEventTimeStamp] = fakePerformance?.now();
+          this[kEventTimeStamp] = fakePerformance.now();
         return this[kEventTimeStamp];
       },
       configurable: true,
@@ -813,9 +813,7 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
     if (method === 'AbortSignal' && (originals.AbortSignal as any).__originalTimeout) {
       clock.disposables.push(() => {
         const originalTimeout = (originals.AbortSignal as any).__originalTimeout;
-        if (originalTimeout !== undefined) {
-          (originals.AbortSignal as any).timeout = originalTimeout;
-        }
+        (originals.AbortSignal as any).timeout = originalTimeout;
       });
     }
   }

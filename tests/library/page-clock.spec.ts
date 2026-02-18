@@ -586,7 +586,7 @@ it.describe('AbortSignal.timeout', () => {
 
     await page.clock.fastForward(2000);
 
-    const result3 = await page.evaluate(async () => {
+    const result3 = await page.evaluate(() => {
       const signal = AbortSignal.timeout(1);
       // Need to advance time for the timer to fire
       return signal.aborted;
@@ -606,8 +606,8 @@ it.describe('AbortSignal.timeout', () => {
 
   it('should abort signal after timeout with runFor', async ({ page }) => {
     await page.clock.install({ time: 0 });
-    
-    const setup = await page.evaluate(async () => {
+
+    const setup = await page.evaluate(() => {
       (window as any).abortedSignals = [];
       const signal = AbortSignal.timeout(5000);
       signal.addEventListener('abort', () => {
@@ -618,7 +618,7 @@ it.describe('AbortSignal.timeout', () => {
     expect(setup.aborted).toBe(false);
 
     await page.clock.runFor(6000);
-    
+
     const result = await page.evaluate(() => {
       return (window as any).abortedSignals;
     });
@@ -627,8 +627,8 @@ it.describe('AbortSignal.timeout', () => {
 
   it('should work with fast forward', async ({ page }) => {
     await page.clock.install({ time: 0 });
-    
-    const setup = await page.evaluate(async () => {
+
+    const setup = await page.evaluate(() => {
       (window as any).abortedSignals = [];
       const signal = AbortSignal.timeout(5000);
       signal.addEventListener('abort', () => {
