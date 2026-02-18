@@ -30,6 +30,7 @@ export type Builtins = {
   Intl: typeof window['Intl'],
   Date: typeof window['Date'],
   Event: typeof window['Event'],
+  AbortSignal: typeof window['AbortSignal'],
 };
 
 export class UtilityScript {
@@ -57,6 +58,7 @@ export class UtilityScript {
         Intl: global.Intl,
         Date: global.Date,
         Event: global.Event,
+        AbortSignal: global.AbortSignal,
       } satisfies Builtins;
     }
     if (this.isUnderTest)

@@ -613,10 +613,11 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Buil
     performance: globalObject.performance,
     Intl: (globalObject as any).Intl,
     Event: (globalObject as any).Event,
+    AbortSignal: (globalObject as any).AbortSignal,
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof Builtins)[]) {
-    if (key !== 'Date' && key !== 'Event' && typeof bound[key] === 'function')
+    if (key !== 'Date' && key !== 'Event' && key !== 'AbortSignal' && typeof bound[key] === 'function')
       bound[key] = (bound[key] as any).bind(globalObject);
   }
   return { raw, bound };
@@ -634,16 +635,17 @@ function getScheduleHandler(type: TimerType) {
 
 function createApi(clock: ClockController, originals: Builtins): Builtins {
   const performance = originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']);
+  const setTimeout = (func: TimerHandler, timeout?: number | undefined, ...args: any[]) => {
+    const delay = timeout ? +timeout : timeout;
+    return clock.addTimer({
+      type: TimerType.Timeout,
+      func,
+      args,
+      delay
+    });
+  };
   return {
-    setTimeout: (func: TimerHandler, timeout?: number | undefined, ...args: any[]) => {
-      const delay = timeout ? +timeout : timeout;
-      return clock.addTimer({
-        type: TimerType.Timeout,
-        func,
-        args,
-        delay
-      });
-    },
+    setTimeout,
     clearTimeout: (timerId: number | undefined): void => {
       if (timerId)
         clock.clearTimer(timerId, TimerType.Timeout);
@@ -691,6 +693,7 @@ function createApi(clock: ClockController, originals: Builtins): Builtins {
     Date: createDate(clock, originals.Date),
     performance,
     Event: originals.Event && performance ? fakeEvent(clock, originals.Event, performance) : originals.Event,
+    AbortSignal: originals.AbortSignal ? fakeAbortSignal(clock, originals.AbortSignal, setTimeout) : originals.AbortSignal,
   };
 }
 
@@ -734,6 +737,18 @@ function fakeEvent(clock: ClockController, NativeEvent: Builtins['Event'], fakeP
   return NativeEvent;
 }
 
+function fakeAbortSignal(clock: ClockController, NativeAbortSignal: Builtins['AbortSignal'], fakeSetTimeout: Builtins['setTimeout']): Builtins['AbortSignal'] {
+  const originalTimeout = NativeAbortSignal.timeout;
+  (NativeAbortSignal as any).timeout = function(ms: number): AbortSignal {
+    const controller = new AbortController();
+    fakeSetTimeout(() => controller.abort(), ms);
+    return controller.signal;
+  };
+  // Store the original timeout function so we can restore it later
+  (NativeAbortSignal as any).__originalTimeout = originalTimeout;
+  return NativeAbortSignal;
+}
+
 export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: ClockController, api: Builtins, originals: Builtins } {
   const originals = platformOriginals(globalObject);
   const embedder: Embedder = {
@@ -769,7 +784,7 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Date = mirrorDateProperties(api.Date, (globalObject as any).Date);
     } else if (method === 'Intl') {
       (globalObject as any).Intl = api[method]!;
-    } else if (method === 'performance' || method === 'Event') {
+    } else if (method === 'performance' || method === 'Event' || method === 'AbortSignal') {
       (globalObject as any)[method] = api[method]!;
     } else {
       (globalObject as any)[method] = (...args: any[]) => {
@@ -785,6 +800,15 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
         const descriptor = (originals.Event as any).__originalTimeStampDescriptor;
         if (descriptor) {
           Object.defineProperty(originals.Event.prototype, 'timeStamp', descriptor);
+        }
+      });
+    }
+    // Special handling for AbortSignal: restore the original timeout method
+    if (method === 'AbortSignal' && (originals.AbortSignal as any).__originalTimeout) {
+      clock.disposables.push(() => {
+        const originalTimeout = (originals.AbortSignal as any).__originalTimeout;
+        if (originalTimeout !== undefined) {
+          (originals.AbortSignal as any).timeout = originalTimeout;
         }
       });
     }
