@@ -612,10 +612,11 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Buil
     Date: (globalObject as any).Date,
     performance: globalObject.performance,
     Intl: (globalObject as any).Intl,
+    AbortSignal: (globalObject as any).AbortSignal,
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof Builtins)[]) {
-    if (key !== 'Date' && typeof bound[key] === 'function')
+    if (key !== 'Date' && key !== 'AbortSignal' && typeof bound[key] === 'function')
       bound[key] = (bound[key] as any).bind(globalObject);
   }
   return { raw, bound };
@@ -688,6 +689,7 @@ function createApi(clock: ClockController, originals: Builtins): Builtins {
     Intl: originals.Intl ? createIntl(clock, originals.Intl) : (undefined as unknown as Builtins['Intl']),
     Date: createDate(clock, originals.Date),
     performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
+    AbortSignal: originals.AbortSignal ? fakeAbortSignal(clock, originals.AbortSignal) : (undefined as unknown as Builtins['AbortSignal']),
   };
 }
 
@@ -712,6 +714,22 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
     else
       result[key] = () => {};
   }
+  return result;
+}
+
+function fakeAbortSignal(clock: ClockController, abortSignal: Builtins['AbortSignal']): Builtins['AbortSignal'] {
+  const result: any = {
+    ...abortSignal,
+    timeout: (ms: number) => {
+      const controller = new AbortController();
+      clock.addTimer({
+        delay: ms,
+        type: TimerType.Timeout,
+        func: () => controller.abort(new DOMException('This operation was aborted', 'AbortError')),
+      });
+      return controller.signal;
+    },
+  };
   return result;
 }
 
@@ -750,6 +768,8 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Date = mirrorDateProperties(api.Date, (globalObject as any).Date);
     } else if (method === 'Intl') {
       (globalObject as any).Intl = api[method]!;
+    } else if (method === 'AbortSignal') {
+      (globalObject as any).AbortSignal = api[method]!;
     } else if (method === 'performance') {
       (globalObject as any).performance = api[method]!;
       const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
