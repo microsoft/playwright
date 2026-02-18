@@ -612,10 +612,11 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Buil
     Date: (globalObject as any).Date,
     performance: globalObject.performance,
     Intl: (globalObject as any).Intl,
+    Event: (globalObject as any).Event,
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof Builtins)[]) {
-    if (key !== 'Date' && typeof bound[key] === 'function')
+    if (key !== 'Date' && key !== 'Event' && typeof bound[key] === 'function')
       bound[key] = (bound[key] as any).bind(globalObject);
   }
   return { raw, bound };
@@ -632,6 +633,7 @@ function getScheduleHandler(type: TimerType) {
 }
 
 function createApi(clock: ClockController, originals: Builtins): Builtins {
+  const performance = originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']);
   return {
     setTimeout: (func: TimerHandler, timeout?: number | undefined, ...args: any[]) => {
       const delay = timeout ? +timeout : timeout;
@@ -687,7 +689,8 @@ function createApi(clock: ClockController, originals: Builtins): Builtins {
     },
     Intl: originals.Intl ? createIntl(clock, originals.Intl) : (undefined as unknown as Builtins['Intl']),
     Date: createDate(clock, originals.Date),
-    performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
+    performance,
+    Event: originals.Event && performance ? fakeEvent(clock, originals.Event, performance) : originals.Event,
   };
 }
 
@@ -713,6 +716,22 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
       result[key] = () => {};
   }
   return result;
+}
+
+function fakeEvent(clock: ClockController, NativeEvent: Builtins['Event'], fakePerformance: Builtins['performance']): Builtins['Event'] {
+  const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
+  const originalDescriptor = Object.getOwnPropertyDescriptor(NativeEvent.prototype, 'timeStamp');
+  Object.defineProperty(NativeEvent.prototype, 'timeStamp', {
+    get() {
+      if (!this[kEventTimeStamp])
+        this[kEventTimeStamp] = fakePerformance?.now();
+      return this[kEventTimeStamp];
+    },
+    configurable: true,
+  });
+  // Store the original descriptor so we can restore it later
+  (NativeEvent as any).__originalTimeStampDescriptor = originalDescriptor;
+  return NativeEvent;
 }
 
 export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: ClockController, api: Builtins, originals: Builtins } {
@@ -750,16 +769,8 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Date = mirrorDateProperties(api.Date, (globalObject as any).Date);
     } else if (method === 'Intl') {
       (globalObject as any).Intl = api[method]!;
-    } else if (method === 'performance') {
-      (globalObject as any).performance = api[method]!;
-      const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
-      Object.defineProperty(Event.prototype, 'timeStamp', {
-        get() {
-          if (!this[kEventTimeStamp])
-            this[kEventTimeStamp] = api.performance?.now();
-          return this[kEventTimeStamp];
-        }
-      });
+    } else if (method === 'performance' || method === 'Event') {
+      (globalObject as any)[method] = api[method]!;
     } else {
       (globalObject as any)[method] = (...args: any[]) => {
         return (api[method] as any).apply(api, args);
@@ -768,6 +779,15 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
     clock.disposables.push(() => {
       (globalObject as any)[method] = originals[method];
     });
+    // Special handling for Event: restore the original timeStamp descriptor
+    if (method === 'Event' && (originals.Event as any).__originalTimeStampDescriptor) {
+      clock.disposables.push(() => {
+        const descriptor = (originals.Event as any).__originalTimeStampDescriptor;
+        if (descriptor) {
+          Object.defineProperty(originals.Event.prototype, 'timeStamp', descriptor);
+        }
+      });
+    }
   }
 
   return { clock, api, originals };
