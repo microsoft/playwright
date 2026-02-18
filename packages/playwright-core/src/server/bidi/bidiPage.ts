@@ -254,7 +254,7 @@ export class BidiPage implements PageDelegate {
     if (!originPage)
       return;
 
-    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename);
+    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, true);
   }
 
   private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
