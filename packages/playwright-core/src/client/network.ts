@@ -741,6 +741,12 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   async securityDetails(): Promise<SecurityDetails|null> {
     return (await this._channel.securityDetails()).value || null;
   }
+
+  async httpVersion(): Promise<string> {
+    return this._wrapApiCall(async () => {
+      return (await this._channel.httpVersion()).value;
+    }, { internal: true });
+  }
 }
 
 export class WebSocket extends ChannelOwner<channels.WebSocketChannel> implements api.WebSocket {

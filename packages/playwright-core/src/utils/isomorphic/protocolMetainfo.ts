@@ -263,6 +263,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Response.securityDetails', { internal: true, }],
   ['Response.serverAddr', { internal: true, }],
   ['Response.rawResponseHeaders', { internal: true, }],
+  ['Response.httpVersion', { internal: true, }],
   ['Response.sizes', { internal: true, }],
   ['BindingCall.reject', { internal: true, }],
   ['BindingCall.resolve', { internal: true, }],

@@ -323,7 +323,7 @@ export class HarTracer {
       }));
     }
 
-    const httpVersion = response.httpVersion();
+    const httpVersion = await response.httpVersion();
     harEntry.request.httpVersion = httpVersion;
     harEntry.response.httpVersion = httpVersion;
 
@@ -441,7 +441,7 @@ export class HarTracer {
     }
   }
 
-  private _onResponse(response: network.Response) {
+  private async _onResponse(response: network.Response) {
     const harEntry = this._entryForRequest(response.request());
     if (!harEntry)
       return;
@@ -452,7 +452,7 @@ export class HarTracer {
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: response.httpVersion(),
+      httpVersion: await response.httpVersion(),
       // These are bad values that will be overwritten below.
       cookies: [],
       headers: [],

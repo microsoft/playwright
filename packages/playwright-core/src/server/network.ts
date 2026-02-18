@@ -508,7 +508,7 @@ export class Response extends SdkObject {
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _rawResponseHeadersPromise = new ManualPromise<HeadersArray>();
-  private _httpVersion: string | undefined;
+  private _httpVersionPromise = new ManualPromise<string | undefined>();
   private _fromServiceWorker: boolean;
   private _encodedBodySizePromise = new ManualPromise<number | null>();
   private _transferSizePromise = new ManualPromise<number | null>();
@@ -526,7 +526,8 @@ export class Response extends SdkObject {
       this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
-    this._httpVersion = httpVersion;
+    if (httpVersion)
+      this._httpVersionPromise.resolve(httpVersion);
     this._fromServiceWorker = fromServiceWorker;
   }
 
@@ -547,7 +548,7 @@ export class Response extends SdkObject {
   }
 
   _setHttpVersion(httpVersion: string) {
-    this._httpVersion = httpVersion;
+    this._httpVersionPromise.resolve(httpVersion);
   }
 
   url(): string {
@@ -631,14 +632,17 @@ export class Response extends SdkObject {
     return this._request.frame();
   }
 
-  httpVersion(): string {
-    if (!this._httpVersion)
+  async httpVersion(): Promise<string> {
+    const httpVersion = await this._httpVersionPromise || null;
+    if (!httpVersion)
       return 'HTTP/1.1';
-    if (this._httpVersion === 'http/1.1')
+    if (httpVersion === 'http/1.1')
       return 'HTTP/1.1';
-    if (this._httpVersion === 'h2')
+    if (httpVersion === 'h2')
       return 'HTTP/2.0';
-    return this._httpVersion;
+    if (httpVersion === 'h3')
+      return 'HTTP/3.0';
+    return httpVersion;
   }
 
   fromServiceWorker(): boolean {
