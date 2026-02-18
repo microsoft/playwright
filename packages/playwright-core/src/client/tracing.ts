@@ -58,7 +58,11 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
-    await this._channel.tracingGroup({ name, location: options.location });
+    await this._wrapApiCall(async zone => {
+      if (options.location)
+        zone.frames.push({ file: options.location.file, line: options.location.line ?? 0, column: options.location.column ?? 0 });
+      await this._channel.tracingGroup({ name, location: options.location });
+    });
   }
 
   async groupEnd() {

@@ -113,6 +113,10 @@ test('should open trace viewer on specific host', async ({ showTraceViewer }, te
 
 test('should show tracing.group in the action list with location', async ({ runAndTrace, page, context }) => {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36483' });
+  test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39302' });
+
+  const sourceFile = test.info().outputPath('source.js');
+  await fs.promises.writeFile(sourceFile, 'buddy beaver');
 
   const traceViewer = await test.step('create trace with groups', async () => {
     await page.context().tracing.group('ignored group');
@@ -125,15 +129,21 @@ test('should show tracing.group in the action list with location', async ({ runA
       await context.tracing.group('inner group 2');
       await expect(page.getByText('Hello')).toBeVisible();
       await context.tracing.groupEnd();
+      await context.tracing.group('inner group 3', { location: { file: sourceFile, line: 1, column: 1 } });
+      await expect(page.getByText('Hello')).toBeVisible();
+      await context.tracing.groupEnd();
       await context.tracing.groupEnd();
     });
   });
+
+  await fs.promises.rm(sourceFile);
 
   await expect(traceViewer.actionTitles).toHaveText([
     /outer group/,
     /Navigate/,
     /inner group 1 {{ eager_beaver }}/,
     /inner group 2/,
+    /inner group 3/,
     /toBeVisible/,
   ]);
 
@@ -145,12 +155,16 @@ test('should show tracing.group in the action list with location', async ({ runA
     /inner group 1 {{ eager_beaver }}/,
     /Click.*locator/,
     /inner group 2/,
+    /inner group 3/,
   ]);
   await traceViewer.showSourceTab();
   await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toHaveText(/DO NOT TOUCH THIS LINE/);
 
   await traceViewer.selectAction('inner group 2');
   await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText("await context.tracing.group('inner group 2');");
+
+  await traceViewer.selectAction('inner group 3');
+  await expect(traceViewer.sourceCodeTab.locator('.source-line-running')).toContainText('buddy beaver');
 });
 
 test('should open simple trace viewer', async ({ showTraceViewer }) => {
