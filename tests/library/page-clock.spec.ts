@@ -567,82 +567,96 @@ it('correctly increments Date.now()/performance.now() during blocking execution'
 });
 
 it.describe('AbortSignal.timeout', () => {
-  it('should work with fake timers', async ({ page }) => {
+  it('should abort signal after timeout', async ({ page }) => {
     await page.clock.install({ time: 0 });
 
-    const result = await page.evaluate(async () => {
-      const signal = AbortSignal.timeout(5000);
-      return signal.aborted;
+    const signalHandle = await page.evaluateHandle(() => {
+      return AbortSignal.timeout(5000);
     });
-    expect(result).toBe(false);
 
-    await page.clock.fastForward(4000);
+    // Check initial state
+    expect(await signalHandle.evaluate(s => s.aborted)).toBe(false);
 
-    const result2 = await page.evaluate(() => {
-      const signal = AbortSignal.timeout(5000);
-      return signal.aborted;
-    });
-    expect(result2).toBe(false);
-
-    await page.clock.fastForward(2000);
-
-    const result3 = await page.evaluate(() => {
-      const signal = AbortSignal.timeout(1);
-      // Need to advance time for the timer to fire
-      return signal.aborted;
-    });
-    // The signal hasn't been aborted yet because we need to run timers
-    expect(result3).toBe(false);
-
-    // Now run the timer
-    await page.clock.runFor(10);
-
-    const result4 = await page.evaluate(() => {
-      const signal = AbortSignal.timeout(1);
-      return signal.aborted;
-    });
-    expect(result4).toBe(false);
-  });
-
-  it('should abort signal after timeout with runFor', async ({ page }) => {
-    await page.clock.install({ time: 0 });
-
-    const setup = await page.evaluate(() => {
-      (window as any).abortedSignals = [];
-      const signal = AbortSignal.timeout(5000);
-      signal.addEventListener('abort', () => {
-        (window as any).abortedSignals.push('signal1');
-      });
-      return { aborted: signal.aborted };
-    });
-    expect(setup.aborted).toBe(false);
-
+    // Fast forward past the timeout
     await page.clock.runFor(6000);
 
-    const result = await page.evaluate(() => {
-      return (window as any).abortedSignals;
-    });
-    expect(result).toEqual(['signal1']);
+    // Check that signal is now aborted
+    expect(await signalHandle.evaluate(s => s.aborted)).toBe(true);
   });
 
-  it('should work with fast forward', async ({ page }) => {
+  it('should fire addEventListener', async ({ page }) => {
     await page.clock.install({ time: 0 });
 
-    const setup = await page.evaluate(() => {
-      (window as any).abortedSignals = [];
-      const signal = AbortSignal.timeout(5000);
-      signal.addEventListener('abort', () => {
-        (window as any).abortedSignals.push('signal1');
+    const result = await page.evaluate(() => {
+      return new Promise<boolean>(resolve => {
+        const signal = AbortSignal.timeout(5000);
+        let didAbort = false;
+        signal.addEventListener('abort', () => {
+          didAbort = true;
+          resolve(didAbort);
+        });
+        // If the signal doesn't abort, resolve after a longer time
+        setTimeout(() => resolve(didAbort), 10000);
       });
-      return { aborted: signal.aborted };
     });
-    expect(setup.aborted).toBe(false);
+
+    // Run for the timeout duration
+    await page.clock.runFor(6000);
+
+    expect(result).toBe(true);
+  });
+
+  it('should fire onabort handler', async ({ page }) => {
+    await page.clock.install({ time: 0 });
+
+    const result = await page.evaluate(() => {
+      return new Promise<boolean>(resolve => {
+        const signal = AbortSignal.timeout(5000);
+        let didAbort = false;
+        signal.onabort = () => {
+          didAbort = true;
+          resolve(didAbort);
+        };
+        // If the signal doesn't abort, resolve after a longer time
+        setTimeout(() => resolve(didAbort), 10000);
+      });
+    });
+
+    // Run for the timeout duration
+    await page.clock.runFor(6000);
+
+    expect(result).toBe(true);
+  });
+
+  it('should work with fastForward', async ({ page }) => {
+    await page.clock.install({ time: 0 });
+
+    const signalHandle = await page.evaluateHandle(() => {
+      return AbortSignal.timeout(5000);
+    });
+
+    expect(await signalHandle.evaluate(s => s.aborted)).toBe(false);
 
     await page.clock.fastForward(6000);
 
+    expect(await signalHandle.evaluate(s => s.aborted)).toBe(true);
+  });
+
+  it('should work with multiple signals', async ({ page }) => {
+    await page.clock.install({ time: 0 });
+
     const result = await page.evaluate(() => {
-      return (window as any).abortedSignals;
+      const results: number[] = [];
+      AbortSignal.timeout(1000).addEventListener('abort', () => results.push(1));
+      AbortSignal.timeout(2000).addEventListener('abort', () => results.push(2));
+      AbortSignal.timeout(3000).addEventListener('abort', () => results.push(3));
+      return new Promise<number[]>(resolve => {
+        setTimeout(() => resolve(results), 5000);
+      });
     });
-    expect(result).toEqual(['signal1']);
+
+    await page.clock.runFor(5000);
+
+    expect(result).toEqual([1, 2, 3]);
   });
 });
