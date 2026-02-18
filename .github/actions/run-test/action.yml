@@ -55,6 +55,10 @@ runs:
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
+    - name: Setup upterm session
+      uses: owenthereal/action-upterm@v1
+      with:
+        limit-access-to-actor: true # Restrict to the user who triggered the workflow
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
