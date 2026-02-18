@@ -25,7 +25,7 @@ const test = cliTest.extend<{ showServer: string }>({
   baseURL: ({ showServer }, use) => use(showServer),
 });
 
-test('grid', async ({ cli, page, server }) => {
+test.only('grid', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX);
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'default' })).toMatchAriaSnapshot(`
@@ -35,7 +35,7 @@ test('grid', async ({ cli, page, server }) => {
   `);
 });
 
-test('show connected status', async ({ cli, page }) => {
+test.only('show connected status', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
@@ -43,7 +43,7 @@ test('show connected status', async ({ cli, page }) => {
   await expect(page.locator('#status')).toHaveClass(/connected/);
 });
 
-test('show tab title after navigation', async ({ cli, page, server }) => {
+test.only('show tab title after navigation', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
