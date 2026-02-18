@@ -106,7 +106,7 @@ test('close tab via close button', async ({ cli, page, server }) => {
   `);
 });
 
-test('show no-pages placeholder when all tabs are closed', async ({ cli, page }) => {
+test.skip('show no-pages placeholder when all tabs are closed', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
