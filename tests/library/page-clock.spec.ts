@@ -577,7 +577,7 @@ it.describe('AbortSignal.timeout', () => {
     expect(result).toBe(false);
 
     await page.clock.fastForward(4000);
-    
+
     const result2 = await page.evaluate(() => {
       const signal = AbortSignal.timeout(5000);
       return signal.aborted;
@@ -585,7 +585,7 @@ it.describe('AbortSignal.timeout', () => {
     expect(result2).toBe(false);
 
     await page.clock.fastForward(2000);
-    
+
     const result3 = await page.evaluate(async () => {
       const signal = AbortSignal.timeout(1);
       // Need to advance time for the timer to fire
@@ -593,10 +593,10 @@ it.describe('AbortSignal.timeout', () => {
     });
     // The signal hasn't been aborted yet because we need to run timers
     expect(result3).toBe(false);
-    
+
     // Now run the timer
     await page.clock.runFor(10);
-    
+
     const result4 = await page.evaluate(() => {
       const signal = AbortSignal.timeout(1);
       return signal.aborted;

@@ -723,29 +723,35 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
 
 function fakeEvent(clock: ClockController, NativeEvent: Builtins['Event'], fakePerformance: Builtins['performance']): Builtins['Event'] {
   const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
-  const originalDescriptor = Object.getOwnPropertyDescriptor(NativeEvent.prototype, 'timeStamp');
-  Object.defineProperty(NativeEvent.prototype, 'timeStamp', {
-    get() {
-      if (!this[kEventTimeStamp])
-        this[kEventTimeStamp] = fakePerformance?.now();
-      return this[kEventTimeStamp];
-    },
-    configurable: true,
-  });
-  // Store the original descriptor so we can restore it later
-  (NativeEvent as any).__originalTimeStampDescriptor = originalDescriptor;
+  // Only patch if not already patched
+  if (!(NativeEvent as any).__originalTimeStampDescriptor) {
+    const originalDescriptor = Object.getOwnPropertyDescriptor(NativeEvent.prototype, 'timeStamp');
+    Object.defineProperty(NativeEvent.prototype, 'timeStamp', {
+      get() {
+        if (!this[kEventTimeStamp])
+          this[kEventTimeStamp] = fakePerformance?.now();
+        return this[kEventTimeStamp];
+      },
+      configurable: true,
+    });
+    // Store the original descriptor so we can restore it later
+    (NativeEvent as any).__originalTimeStampDescriptor = originalDescriptor;
+  }
   return NativeEvent;
 }
 
 function fakeAbortSignal(clock: ClockController, NativeAbortSignal: Builtins['AbortSignal'], fakeSetTimeout: Builtins['setTimeout']): Builtins['AbortSignal'] {
-  const originalTimeout = NativeAbortSignal.timeout;
-  (NativeAbortSignal as any).timeout = function(ms: number): AbortSignal {
-    const controller = new AbortController();
-    fakeSetTimeout(() => controller.abort(), ms);
-    return controller.signal;
-  };
-  // Store the original timeout function so we can restore it later
-  (NativeAbortSignal as any).__originalTimeout = originalTimeout;
+  // Only patch if not already patched
+  if (!(NativeAbortSignal as any).__originalTimeout) {
+    const originalTimeout = NativeAbortSignal.timeout;
+    (NativeAbortSignal as any).timeout = function(ms: number): AbortSignal {
+      const controller = new AbortController();
+      fakeSetTimeout(() => controller.abort(), ms);
+      return controller.signal;
+    };
+    // Store the original timeout function so we can restore it later
+    (NativeAbortSignal as any).__originalTimeout = originalTimeout;
+  }
   return NativeAbortSignal;
 }
 
