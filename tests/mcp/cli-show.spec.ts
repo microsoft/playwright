@@ -25,7 +25,7 @@ const test = cliTest.extend<{ showServer: string }>({
   baseURL: ({ showServer }, use) => use(showServer),
 });
 
-test.only('grid', async ({ cli, page, server }) => {
+test('grid', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX);
   await page.goto('/');
   await expect(page.getByRole('link', { name: 'default' })).toMatchAriaSnapshot(`
@@ -35,7 +35,7 @@ test.only('grid', async ({ cli, page, server }) => {
   `);
 });
 
-test.only('show connected status', async ({ cli, page }) => {
+test('show connected status', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
@@ -43,7 +43,7 @@ test.only('show connected status', async ({ cli, page }) => {
   await expect(page.locator('#status')).toHaveClass(/connected/);
 });
 
-test.only('show tab title after navigation', async ({ cli, page, server }) => {
+test('show tab title after navigation', async ({ cli, page, server }) => {
   await cli('open', server.PREFIX + '/title.html');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
@@ -123,7 +123,7 @@ test('show no-pages placeholder when all tabs are closed', async ({ cli, page })
   await expect(page.locator('#no-pages')).toHaveText('No tabs open');
 });
 
-test.only('open new tab via new-tab button', async ({ cli, page }) => {
+test('open new tab via new-tab button', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();

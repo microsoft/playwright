@@ -48,7 +48,7 @@ const metadata = {
 export default defineConfig<TestOptions>({
   testDir: rootTestDir,
   fullyParallel: true,
-  forbidOnly: false,
+  forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 1 : undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
