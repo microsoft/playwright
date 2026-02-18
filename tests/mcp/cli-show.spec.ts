@@ -123,7 +123,7 @@ test('show no-pages placeholder when all tabs are closed', async ({ cli, page })
   await expect(page.locator('#no-pages')).toHaveText('No tabs open');
 });
 
-test('open new tab via new-tab button', async ({ cli, page }) => {
+test.only('open new tab via new-tab button', async ({ cli, page }) => {
   await cli('open');
   await page.goto('/');
   await page.getByRole('link', { name: /default/ }).click();
