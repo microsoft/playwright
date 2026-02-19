@@ -360,14 +360,31 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
   if (!configFile)
     return {};
 
-  if (configFile.endsWith('.ini'))
-    return configFromIniFile(configFile);
+  const resolvedConfigFile = path.resolve(configFile);
+
+  if (resolvedConfigFile.endsWith('.ini'))
+    return resolveConfigFileRelativePaths(configFromIniFile(resolvedConfigFile), resolvedConfigFile);
 
   try {
-    return JSON.parse(await fs.promises.readFile(configFile, 'utf8'));
+    const config = JSON.parse(await fs.promises.readFile(resolvedConfigFile, 'utf8'));
+    return resolveConfigFileRelativePaths(config, resolvedConfigFile);
   } catch {
-    return configFromIniFile(configFile);
+    return resolveConfigFileRelativePaths(configFromIniFile(resolvedConfigFile), resolvedConfigFile);
   }
+}
+
+function resolveConfigFileRelativePaths(config: Config, configFile: string): Config {
+  const configDir = path.dirname(configFile);
+  const resolveFilePath = (filePath: string) => path.isAbsolute(filePath) ? filePath : path.resolve(configDir, filePath);
+
+  return {
+    ...config,
+    browser: {
+      ...config.browser,
+      initPage: config.browser?.initPage?.map(resolveFilePath),
+      initScript: config.browser?.initScript?.map(resolveFilePath),
+    },
+  };
 }
 
 // These methods should return resolved absolute file names.
