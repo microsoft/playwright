@@ -686,7 +686,9 @@ public class WithTestNameAttribute : BeforeAfterTestAttribute
 ## Trace Viewer features
 ### Actions
 
-In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
+In the Actions tab you can see what locator was used for every action and how long each one took to run. Use the **Filter actions** search field at the top of the list to filter the action hierarchy by text; only actions whose title matches the search (and their parent actions) are shown. Clear the filter to show all actions again; expanded nodes are preserved when the filter is removed.
+
+Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
 
 <img src="https://github.com/microsoft/playwright/assets/13063165/948b65cd-f0fd-4c7f-8e53-2c632b5a07f1" alt="actions tab in trace viewer" width="3598" height="2218" />
 

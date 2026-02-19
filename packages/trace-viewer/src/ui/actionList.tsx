@@ -29,19 +29,106 @@ import { testStatusIcon } from './testUtils';
 import { methodMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
+function getTitleFormat(action: ActionTraceEvent): string {
+  const metaTitle = methodMetainfo.get(`${action.class}.${action.method}`)?.title;
+  const raw = action.title ?? metaTitle ?? action.method ?? '';
+  return String(raw).replace(/\n/g, ' ');
+}
+
+function expandPlaceholders(format: string, params: Record<string, any>): string {
+  return format.replace(/\{([^}]+)\}/g, (fullMatch, paramKey) => {
+    const value = formatProtocolParam(params, paramKey);
+    return value === undefined ? fullMatch : String(value);
+  });
+}
+
+export function getActionSearchText(action: ActionTraceEvent): string {
+  try {
+    const titleFormat = getTitleFormat(action);
+    return expandPlaceholders(titleFormat, action.params ?? {});
+  } catch {
+    return String(action.title ?? action.method ?? '');
+  }
+}
+
+function computeVisibleCallIds(
+  actionFilterText: string | undefined,
+  itemMap: Map<string, ActionTreeItem>,
+): Set<string> | null {
+  const query = actionFilterText?.trim().toLowerCase();
+  if (!query)
+    return null;
+
+  const matchingCallIds = new Set<string>();
+  for (const item of itemMap.values()) {
+    const callId = item.action.callId;
+    if (!callId)
+      continue;
+
+    const searchText = getActionSearchText(item.action).toLowerCase();
+    if (searchText.includes(query))
+      matchingCallIds.add(callId);
+  }
+
+  const visibleCallIds = new Set<string>();
+
+  const addAncestors = (item: ActionTreeItem | undefined) => {
+    if (!item)
+      return;
+
+    const callId = item.action.callId;
+    if (callId && visibleCallIds.has(callId))
+      return;
+
+    if (callId)
+      visibleCallIds.add(callId);
+
+    if (item.parent)
+      addAncestors(item.parent);
+  };
+
+  for (const callId of matchingCallIds)
+    addAncestors(itemMap.get(callId));
+
+  for (const callId of matchingCallIds)
+    visibleCallIds.add(callId);
+
+  return visibleCallIds;
+}
+
+function expandTreeForCallIds(
+  callIdsToExpand: Set<string>,
+  itemMap: Map<string, ActionTreeItem>,
+  previousState: TreeState,
+): TreeState {
+  const expandedItems = new Map(previousState.expandedItems);
+
+  for (const callId of callIdsToExpand) {
+    const item = itemMap.get(callId);
+    if (!item)
+      continue;
+
+    for (let parent: ActionTreeItem | undefined = item.parent; parent && parent.action.callId; parent = parent.parent)
+      expandedItems.set(parent.action.callId, true);
+  }
+
+  return { ...previousState, expandedItems };
+}
+
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   treeState: TreeState,
-  setTreeState: (treeState: TreeState) => void,
+  setTreeState: React.Dispatch<React.SetStateAction<TreeState>>,
   sdkLanguage: Language | undefined;
   onSelected?: (action: ActionTraceEventInContext) => void,
   onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole?: () => void,
   revealActionAttachment?(callId: string): void,
   isLive?: boolean,
+  actionFilterText?: string,
 }
 
 const ActionTreeView = TreeView<ActionTreeItem>;
@@ -59,6 +146,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   revealConsole,
   revealActionAttachment,
   isLive,
+  actionFilterText,
 }) => {
   const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
@@ -66,6 +154,27 @@ export const ActionList: React.FC<ActionListProps> = ({
     const selectedItem = selectedAction ? itemMap.get(selectedAction.callId) : undefined;
     return { selectedItem };
   }, [itemMap, selectedAction]);
+
+  const visibleCallIds = React.useMemo(() => {
+    return computeVisibleCallIds(actionFilterText, itemMap);
+  }, [itemMap, actionFilterText]);
+
+  const prevVisibleCallIdsRef = React.useRef<Set<string> | null>(null);
+  React.useEffect(() => {
+    if (visibleCallIds) {
+      prevVisibleCallIdsRef.current = visibleCallIds;
+      return;
+    }
+
+    const previousVisibleCallIds = prevVisibleCallIdsRef.current;
+    if (!previousVisibleCallIds)
+      return;
+
+    prevVisibleCallIdsRef.current = null;
+    setTreeState(previousState =>
+      expandTreeForCallIds(previousVisibleCallIds, itemMap, previousState),
+    );
+  }, [visibleCallIds, itemMap, setTreeState]);
 
   const isError = React.useCallback((item: ActionTreeItem) => {
     return !!item.action.error?.message;
@@ -81,8 +190,13 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
-    return !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
-  }, [selectedTime]);
+    const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
+    if (!timeVisible)
+      return false;
+    if (!visibleCallIds || !item.action.callId)
+      return true;
+    return visibleCallIds.has(item.action.callId);
+  }, [selectedTime, visibleCallIds]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
     onSelected?.(item.action);
@@ -92,7 +206,7 @@ export const ActionList: React.FC<ActionListProps> = ({
     onHighlighted?.(item?.action);
   }, [onHighlighted]);
 
-  return <div className='vbox'>
+  return <div className='vbox action-list-container'>
     {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
     <ActionTreeView
       name='actions'
@@ -106,6 +220,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isError={isError}
       isVisible={isVisible}
       render={render}
+      autoExpandDepth={actionFilterText?.trim() ? 5 : 0}
     />
   </div>;
 };
