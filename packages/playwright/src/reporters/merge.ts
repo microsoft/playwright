@@ -62,7 +62,7 @@ export async function createMergedReport(config: FullConfigInternal, dir: string
   const pathSeparator = rootDirOverride ? path.sep : (eventData.pathSeparatorFromMetadata ?? path.sep);
   const pathPackage = pathSeparator === '/' ? path.posix : path.win32;
   const receiver = new TeleReporterReceiver(multiplexer, {
-    mergeProjects: false,
+    mergeProjects: process.env.PLAYWRIGHT_TELE_REPORTER_RECIEVER_MERGE_PROJECTS === 'true' ? true : false,
     mergeTestCases: false,
     // When merging on a different OS, an absolute path like `C:\foo\bar` from win may look like
     // a relative path on posix, and vice versa.
