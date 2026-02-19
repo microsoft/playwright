@@ -29,19 +29,43 @@ import { testStatusIcon } from './testUtils';
 import { methodMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
+export function getActionSearchText(action: ActionTraceEvent): string {
+  try {
+    let titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method ?? '';
+    titleFormat = String(titleFormat).replace(/\n/g, ' ');
+    const title: string[] = [];
+    let currentIndex = 0;
+    const regex = /\{([^}]+)\}/g;
+    let match;
+    const params = action.params ?? {};
+    while ((match = regex.exec(titleFormat)) !== null) {
+      const [fullMatch, quotedText] = match;
+      title.push(titleFormat.slice(currentIndex, match.index));
+      const param = formatProtocolParam(params, quotedText);
+      title.push(param === undefined ? fullMatch : String(param));
+      currentIndex = match.index + fullMatch.length;
+    }
+    title.push(titleFormat.slice(currentIndex));
+    return title.join('');
+  } catch {
+    return String(action.title ?? action.method ?? '');
+  }
+}
+
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   treeState: TreeState,
-  setTreeState: (treeState: TreeState) => void,
+  setTreeState: React.Dispatch<React.SetStateAction<TreeState>>,
   sdkLanguage: Language | undefined;
   onSelected?: (action: ActionTraceEventInContext) => void,
   onHighlighted?: (action: ActionTraceEventInContext | undefined) => void,
   revealConsole?: () => void,
   revealActionAttachment?(callId: string): void,
   isLive?: boolean,
+  actionFilterText?: string,
 }
 
 const ActionTreeView = TreeView<ActionTreeItem>;
@@ -59,6 +83,7 @@ export const ActionList: React.FC<ActionListProps> = ({
   revealConsole,
   revealActionAttachment,
   isLive,
+  actionFilterText,
 }) => {
   const { rootItem, itemMap } = React.useMemo(() => buildActionTree(actions), [actions]);
 
@@ -66,6 +91,52 @@ export const ActionList: React.FC<ActionListProps> = ({
     const selectedItem = selectedAction ? itemMap.get(selectedAction.callId) : undefined;
     return { selectedItem };
   }, [itemMap, selectedAction]);
+
+  const visibleCallIds = React.useMemo(() => {
+    if (!actionFilterText?.trim())
+      return null;
+    const q = actionFilterText.trim().toLowerCase();
+    const matching = new Set<string>();
+    for (const item of itemMap.values()) {
+      if (getActionSearchText(item.action).toLowerCase().includes(q))
+        matching.add(item.action.callId);
+    }
+    const visible = new Set<string>();
+    const addAncestors = (item: ActionTreeItem) => {
+      if (item.action.callId && visible.has(item.action.callId))
+        return;
+      if (item.action.callId)
+        visible.add(item.action.callId);
+      if (item.parent && item.parent.action.callId)
+        addAncestors(item.parent);
+    };
+    for (const callId of matching)
+      addAncestors(itemMap.get(callId)!);
+    for (const callId of matching)
+      visible.add(callId);
+    return visible;
+  }, [itemMap, actionFilterText]);
+
+  const prevVisibleCallIdsRef = React.useRef<Set<string> | null>(null);
+  React.useEffect(() => {
+    if (visibleCallIds) {
+      prevVisibleCallIdsRef.current = visibleCallIds;
+    } else if (prevVisibleCallIdsRef.current) {
+      const toExpand = prevVisibleCallIdsRef.current;
+      prevVisibleCallIdsRef.current = null;
+      setTreeState((prev: TreeState) => {
+        const next = new Map(prev.expandedItems);
+        for (const callId of toExpand) {
+          const item = itemMap.get(callId);
+          if (item) {
+            for (let p: ActionTreeItem | undefined = item.parent; p && p.action.callId; p = p.parent)
+              next.set(p.action.callId, true);
+          }
+        }
+        return { ...prev, expandedItems: next };
+      });
+    }
+  }, [visibleCallIds, itemMap, setTreeState]);
 
   const isError = React.useCallback((item: ActionTreeItem) => {
     return !!item.action.error?.message;
@@ -81,8 +152,15 @@ export const ActionList: React.FC<ActionListProps> = ({
   }, [isLive, revealConsole, revealActionAttachment, sdkLanguage]);
 
   const isVisible = React.useCallback((item: ActionTreeItem) => {
-    return !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
-  }, [selectedTime]);
+    const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
+    if (!timeVisible)
+      return false;
+    if (!visibleCallIds)
+      return true;
+    if (!item.action.callId)
+      return true;
+    return visibleCallIds.has(item.action.callId);
+  }, [selectedTime, visibleCallIds]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
     onSelected?.(item.action);
@@ -92,7 +170,7 @@ export const ActionList: React.FC<ActionListProps> = ({
     onHighlighted?.(item?.action);
   }, [onHighlighted]);
 
-  return <div className='vbox'>
+  return <div className='vbox action-list-container'>
     {selectedTime && <div className='action-list-show-all' onClick={() => setSelectedTime(undefined)}><span className='codicon codicon-triangle-left'></span>Show all</div>}
     <ActionTreeView
       name='actions'
@@ -106,6 +184,7 @@ export const ActionList: React.FC<ActionListProps> = ({
       isError={isError}
       isVisible={isVisible}
       render={render}
+      autoExpandDepth={actionFilterText?.trim() ? 5 : 0}
     />
   </div>;
 };

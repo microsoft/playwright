@@ -88,6 +88,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [revealedAttachmentCallId, setRevealedAttachmentCallId] = usePartitionedState<{ callId: string } | undefined>('revealedAttachmentCallId');
   const [highlightedResourceOrdinal, setHighlightedResourceOrdinal] = usePartitionedState<number | undefined>('highlightedResourceOrdinal');
   const [treeState, setTreeState] = usePartitionedState<TreeState>('treeState', { expandedItems: new Map() });
+  const [actionFilterText, setActionFilterText] = React.useState('');
 
   togglePartition(partition);
 
@@ -321,6 +322,16 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         <div className='spacer'></div>
         <div className='workbench-run-duration'>{time ? msToString(time) : ''}</div>
       </div>}
+      <div className='workbench-action-filter'>
+        <input
+          type='search'
+          placeholder='Filter actions'
+          aria-label='Filter actions'
+          spellCheck={false}
+          value={actionFilterText}
+          onChange={e => setActionFilterText(e.target.value)}
+        />
+      </div>
       <ActionList
         sdkLanguage={sdkLanguage}
         actions={actions || []}
@@ -334,6 +345,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
         revealActionAttachment={revealActionAttachment}
         revealConsole={() => selectPropertiesTab('console')}
         isLive={isLive}
+        actionFilterText={actionFilterText}
       />
     </div>
   };
