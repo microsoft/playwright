@@ -219,15 +219,17 @@ async function install(args: MinimistArgs) {
 
   if (args.skills) {
     const skillSourceDir = path.join(__dirname, '../../skill');
-    const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
 
     if (!fs.existsSync(skillSourceDir)) {
       console.error('❌ Skills source directory not found:', skillSourceDir);
       process.exit(1);
     }
 
-    await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
-    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
+    for (const baseDir of ['.claude', '.agents']) {
+      const skillDestDir = path.join(cwd, baseDir, 'skills', 'playwright-cli');
+      await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
+      console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
+    }
   }
 
   await ensureConfiguredBrowserInstalled();
