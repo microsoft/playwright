@@ -176,7 +176,6 @@ export function importInfo(importNode: T.ImportDeclaration, specifier: T.ImportS
 const artifactExtensions = new Set([
   // Frameworks
   '.vue',
-  '.svelte',
 
   // Images
   '.jpg', '.jpeg',

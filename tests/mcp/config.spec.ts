@@ -78,15 +78,15 @@ test.describe(() => {
   });
 });
 
-test('test chromiumSandbox configuration', async ({}) => {
-  async function sandboxOption(cli: any) {
-    const config: any = await resolveCLIConfig(cli);
-    return config.browser.launchOptions.chromiumSandbox;
-  }
+async function sandboxOption(cli: any) {
+  const config: any = await resolveCLIConfig(cli);
+  return config.browser.launchOptions.chromiumSandbox;
+}
 
+test('test sandbox configuration', async ({}) => {
   expect(await sandboxOption({ browser: 'chromium' })).toBe(process.platform !== 'linux');
-  expect(await sandboxOption({ browser: 'chromium', chromiumSandbox: true })).toBe(true);
-  expect(await sandboxOption({ browser: 'chrome', chromiumSandbox: false })).toBe(false);
+  expect(await sandboxOption({ browser: 'chromium', sandbox: true })).toBe(true);
+  expect(await sandboxOption({ browser: 'chrome', sandbox: false })).toBe(false);
   expect(await sandboxOption({ browser: 'chrome' })).toBe(true);
   expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
 });

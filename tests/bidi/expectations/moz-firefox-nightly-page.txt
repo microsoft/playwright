@@ -12,8 +12,6 @@ page/elementhandle-scroll-into-view.spec.ts › should wait for nested display:n
 page/elementhandle-scroll-into-view.spec.ts › should work @smoke [fail]
 page/expect-misc.spec.ts › strict mode violation error format [fail]
 page/frame-evaluate.spec.ts › should allow cross-frame element handles [fail]
-page/frame-evaluate.spec.ts › should dispose context on cross-origin navigation [fail]
-page/frame-evaluate.spec.ts › should dispose context on navigation [fail]
 page/frame-evaluate.spec.ts › should not allow cross-frame element handles when frames do not script each other [fail]
 page/frame-goto.spec.ts › should continue after client redirect [flaky]
 page/frame-hierarchy.spec.ts › should support framesets [fail]

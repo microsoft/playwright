@@ -180,6 +180,9 @@ async function program() {
     case 'install':
       await install(args);
       return;
+    case 'install-browser':
+      await installBrowser();
+      return;
     case 'show': {
       const daemonScript = path.join(__dirname, 'devtoolsApp.js');
       const child = spawn(process.execPath, [daemonScript], {
@@ -227,8 +230,7 @@ async function install(args: MinimistArgs) {
     console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
   }
 
-  if (!args.config)
-    await ensureConfiguredBrowserInstalled();
+  await ensureConfiguredBrowserInstalled();
 }
 
 async function ensureConfiguredBrowserInstalled() {
@@ -249,6 +251,12 @@ async function ensureConfiguredBrowserInstalled() {
     if (channel !== 'chrome')
       await createDefaultConfig(channel);
   }
+}
+
+async function installBrowser() {
+  const { program } = require('playwright-core/lib/cli/program');
+  const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
+  program.parse(argv);
 }
 
 async function createDefaultConfig(channel: string) {

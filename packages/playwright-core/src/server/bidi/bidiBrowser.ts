@@ -464,7 +464,7 @@ export class BidiBrowserContext extends BrowserContext {
       userContexts: [this._userContextId()],
     }));
     promises.push(...this._bidiPages().map(page => {
-      const realms = [...page._realmToContext].filter(([realm, context]) => context.world === 'main').map(([realm, context]) => realm);
+      const realms = [...page._contextIdToContext].filter(([realm, context]) => context.world === 'main').map(([realm, context]) => realm);
       return Promise.all(realms.map(realm => {
         return page._session.send('script.callFunction', {
           functionDeclaration,

@@ -40,7 +40,7 @@ test('event should work', async ({ mount }) => {
 
 ## How to get started
 
-Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React, Vue or Svelte project.
+Adding Playwright Test to an existing project is easy. Below are the steps to enable Playwright Test for a React or Vue project.
 
 ### Step 1: Install Playwright Test for components for your respective framework
 
@@ -108,7 +108,6 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -151,20 +150,6 @@ If using TypeScript and Vue make sure to add a `vue.d.ts` file to your project:
 
 ```js
 declare module '*.vue';
-```
-
-</TabItem>
-
-<TabItem value="svelte">
-
-```js title="app.spec.ts"
-import { test, expect } from '@playwright/experimental-ct-svelte';
-import App from './App.svelte';
-
-test('should work', async ({ mount }) => {
-  const component = await mount(App);
-  await expect(component).toContainText('Learn Svelte');
-});
 ```
 
 </TabItem>
@@ -297,7 +282,6 @@ Provide props to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -309,17 +293,6 @@ import { test } from '@playwright/experimental-ct-react';
 
 test('props', async ({ mount }) => {
   const component = await mount(<Component msg="greetings" />);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js title="component.spec.ts"
-import { test } from '@playwright/experimental-ct-svelte';
-
-test('props', async ({ mount }) => {
-  const component = await mount(Component, { props: { msg: 'greetings' } });
 });
 ```
 
@@ -356,7 +329,6 @@ Provide callbacks/events to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -368,17 +340,6 @@ import { test } from '@playwright/experimental-ct-react';
 
 test('callback', async ({ mount }) => {
   const component = await mount(<Component onClick={() => {}} />);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js title="component.spec.ts"
-import { test } from '@playwright/experimental-ct-svelte';
-
-test('event', async ({ mount }) => {
-  const component = await mount(Component, { on: { click() {} } });
 });
 ```
 
@@ -415,7 +376,6 @@ Provide children/slots to a component when mounted.
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -427,17 +387,6 @@ import { test } from '@playwright/experimental-ct-react';
 
 test('children', async ({ mount }) => {
   const component = await mount(<Component>Child</Component>);
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js title="component.spec.ts"
-import { test } from '@playwright/experimental-ct-svelte';
-
-test('slot', async ({ mount }) => {
-  const component = await mount(Component, { slots: { default: 'Slot' } });
 });
 ```
 
@@ -550,7 +499,6 @@ Unmount the mounted component from the DOM. This is useful for testing the compo
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -562,18 +510,6 @@ import { test } from '@playwright/experimental-ct-react';
 
 test('unmount', async ({ mount }) => {
   const component = await mount(<Component/>);
-  await component.unmount();
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js title="component.spec.ts"
-import { test } from '@playwright/experimental-ct-svelte';
-
-test('unmount', async ({ mount }) => {
-  const component = await mount(Component);
   await component.unmount();
 });
 ```
@@ -612,7 +548,6 @@ Update props, slots/children, and/or events/callbacks of a mounted component. Th
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -627,22 +562,6 @@ test('update', async ({ mount }) => {
   await component.update(
       <Component msg="greetings" onClick={() => {}}>Child</Component>
   );
-});
-```
-
-</TabItem>
-<TabItem value="svelte">
-
-```js title="component.spec.ts"
-import { test } from '@playwright/experimental-ct-svelte';
-
-test('update', async ({ mount }) => {
-  const component = await mount(Component);
-  await component.update({
-    props: { msg: 'greetings' },
-    on: { click() {} },
-    slots: { default: 'Child' }
-  });
 });
 ```
 
@@ -717,7 +636,7 @@ test('example test', async ({ mount, router }) => {
 
 ## Frequently asked questions
 
-### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,svelte,vue}`?
+### What's the difference between `@playwright/test` and `@playwright/experimental-ct-{react,vue}`?
 
 ```js
 test('…', async ({ mount, page, context }) => {
@@ -725,14 +644,13 @@ test('…', async ({ mount, page, context }) => {
 });
 ```
 
-`@playwright/experimental-ct-{react,svelte,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
+`@playwright/experimental-ct-{react,vue}` wrap `@playwright/test` to provide an additional built-in component-testing specific fixture called `mount`:
 
 <Tabs
   groupId="js-framework"
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
-    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -757,26 +675,6 @@ test('should work', async ({ mount }) => {
 ```js
 import { test, expect } from '@playwright/experimental-ct-vue';
 import HelloWorld from './HelloWorld.vue';
-
-test.use({ viewport: { width: 500, height: 500 } });
-
-test('should work', async ({ mount }) => {
-  const component = await mount(HelloWorld, {
-    props: {
-      msg: 'Greetings',
-    },
-  });
-  await expect(component).toContainText('Greetings');
-});
-```
-
-</TabItem>
-
-<TabItem value="svelte">
-
-```js
-import { test, expect } from '@playwright/experimental-ct-svelte';
-import HelloWorld from './HelloWorld.svelte';
 
 test.use({ viewport: { width: 500, height: 500 } });
 
