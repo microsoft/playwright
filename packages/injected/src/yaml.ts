@@ -21,9 +21,12 @@ export function yamlEscapeKeyIfNeeded(str: string): string {
 }
 
 export function yamlEscapeValueIfNeeded(str: string): string {
-  if (!yamlStringNeedsQuotes(str))
-    return str;
-  return '"' + str.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
+  // Sanitize lone surrogates (valid in JS, invalid in JSON per RFC 8259 §8.2).
+  // Same approach as cli/driver.ts for non-JS language bindings.
+  const sanitized = (str as any).toWellFormed ? (str as any).toWellFormed() : str;
+  if (!yamlStringNeedsQuotes(sanitized))
+    return sanitized;
+  return '"' + sanitized.replace(/[\\"\x00-\x1f\x7f-\x9f]/g, c => {
     switch (c) {
       case '\\':
         return '\\\\';
