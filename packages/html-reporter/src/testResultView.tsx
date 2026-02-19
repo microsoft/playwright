@@ -76,6 +76,7 @@ export const TestResultView: React.FC<{
   testRunMetadata: MetadataWithCommitInfo | undefined,
   options?: HTMLReportOptions,
 }> = ({ test, result, testRunMetadata, options }) => {
+  const [actionFilterText, setActionFilterText] = React.useState('');
   const { screenshots, videos, traces, otherAttachments, diffs, errors, otherAttachmentAnchors, screenshotAnchors, errorContext } = React.useMemo(() => {
     const attachments = result.attachments.filter(a => !a.name.startsWith('_'));
     const screenshots = new Set(attachments.filter(a => a.contentType.startsWith('image/')));
@@ -130,7 +131,24 @@ export const TestResultView: React.FC<{
       })}
     </AutoChip>}
     {!!result.steps.length && <AutoChip header='Test Steps'>
-      {result.steps.map((step, i) => <StepTreeItem key={`step-${i}`} step={step} result={result} test={test} depth={0}/>)}
+      <div className='subnav-search'>
+        {icons.search()}
+        <input
+          className='form-control subnav-search-input input-contrast width-full'
+          type='search'
+          placeholder='Filter steps'
+          aria-label='Filter steps'
+          spellCheck={false}
+          value={actionFilterText}
+          onChange={e => setActionFilterText(e.target.value)}
+        />
+      </div>
+      {(() => {
+        const filteredSteps = filterStepTree(result.steps, actionFilterText);
+        if (actionFilterText.trim() && !filteredSteps.length)
+          return <div className='test-actions-filter-empty'>No actions match the filter.</div>;
+        return filteredSteps.map(step => <StepTreeItem key={step.__path} step={step} result={result} test={test} depth={0}/>);
+      })()}
     </AutoChip>}
 
     {diffs.map((diff, index) =>
@@ -187,10 +205,37 @@ function pickDiffForError(error: string, diffs: ImageDiff[]): ImageDiff | undefi
   return diffs.find(diff => error.includes(diff.name));
 }
 
+type TestStepWithPath = TestStep & { __path: string };
+
+function stepsWithPath(steps: TestStep[], basePath: string = ''): TestStepWithPath[] {
+  return steps.map((step, i) => {
+    const path = basePath ? `${basePath}-${i}` : `${i}`;
+    return {
+      ...step,
+      __path: path,
+      steps: stepsWithPath(step.steps, path),
+    };
+  });
+}
+
+function filterStepTree(steps: TestStep[], search: string, basePath: string = ''): TestStepWithPath[] {
+  if (!search.trim())
+    return stepsWithPath(steps, basePath);
+  const q = search.trim().toLowerCase();
+  return steps.flatMap((step, i) => {
+    const path = basePath ? `${basePath}-${i}` : `${i}`;
+    const filteredChildren = filterStepTree(step.steps, search, path);
+    const matches = step.title.toLowerCase().includes(q);
+    if (matches || filteredChildren.length > 0)
+      return [{ ...step, __path: path, steps: filteredChildren }];
+    return [];
+  });
+}
+
 const StepTreeItem: React.FC<{
   test: TestCase;
   result: TestResult;
-  step: TestStep;
+  step: TestStepWithPath;
   depth: number,
 }> = ({ test, step, result, depth }) => {
   const searchParams = useSearchParams();
@@ -212,7 +257,7 @@ const StepTreeItem: React.FC<{
     <span className='step-duration'>{msToString(step.duration)}</span>
   </div>} loadChildren={step.steps.length || step.snippet ? () => {
     const snippet = step.snippet ? [<CodeSnippet testId='test-snippet' key='line' code={step.snippet} />] : [];
-    const steps = step.steps.map((s, i) => <StepTreeItem key={i} step={s} depth={depth + 1} result={result} test={test} />);
-    return snippet.concat(steps);
+    const childSteps = (step.steps as TestStepWithPath[]).map(s => <StepTreeItem key={s.__path} step={s} depth={depth + 1} result={result} test={test} />);
+    return snippet.concat(childSteps);
   } : undefined} depth={depth}/>;
 };

@@ -822,6 +822,45 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('should filter Test Steps by action filter', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'playwright.config.js': `
+          export default { testDir: './tests' };
+        `,
+        'tests/a.test.ts': `
+          import { test, expect } from '@playwright/test';
+
+          test('example', async ({}) => {
+            await test.step('outer step', async () => {
+              await test.step('inner step one', async () => {});
+              await test.step('inner step two', async () => {});
+            });
+            await test.step('another step', async () => {});
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'example' }).click();
+
+      const filterInput = page.getByLabel('Filter actions');
+      await expect(filterInput).toBeVisible();
+
+      await filterInput.fill('inner');
+      await expect(page.locator('.tree-item:has-text("outer step")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("inner step one")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("inner step two")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("another step")')).toBeHidden();
+
+      await filterInput.fill('');
+      await expect(page.locator('.tree-item:has-text("outer step")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("inner step one")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("inner step two")')).toBeVisible();
+      await expect(page.locator('.tree-item:has-text("another step")')).toBeVisible();
+    });
+
     test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `

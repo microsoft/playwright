@@ -242,6 +242,8 @@ Or if there is a custom folder name:
 npx playwright show-report my-report
 ```
 
+When viewing a test result, the **Test Steps** section includes a **Filter steps** search field. Type to filter the step hierarchy by text; only steps whose title matches the search (and their parent steps) are shown. Clearing the filter restores the full list and keeps the same nodes expanded.
+
 HTML report supports the following configuration options and environment variables:
 
 | Environment Variable Name | Reporter Config Option| Description | Default
