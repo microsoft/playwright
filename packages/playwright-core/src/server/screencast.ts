@@ -21,6 +21,7 @@ import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
 import { registry } from './registry';
 import { validateVideoSize } from './browserContext';
+import { Compositor } from './vfx';
 
 import type * as types from './types';
 
@@ -29,14 +30,24 @@ export class Screencast {
   private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
   private _screencastClients = new Set<unknown>();
+  readonly compositor: Compositor;
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
   private _frameListener: RegisteredListener | null = null;
+  private _rawFrameListener: RegisteredListener;
 
   constructor(page: Page) {
     this._page = page;
+    this.compositor = new Compositor(this._page);
+    this._rawFrameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this.compositor.onScreencastFrame(frame));
+  }
+
+  dispose() {
+    this.stopFrameThrottler();
+    this.compositor.dispose();
+    eventsHelper.removeEventListeners([this._rawFrameListener]);
   }
 
   stopFrameThrottler() {
@@ -80,7 +91,11 @@ export class Screencast {
     };
 
     this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
-    this._frameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000));
+    this._frameListener = eventsHelper.addEventListener(this.compositor, Compositor.Events.Frame, frame => {
+      if (!this._videoRecorder)
+        return;
+      this._videoRecorder.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000);
+    });
     this._page.waitForInitializedOrError().then(p => {
       if (p instanceof Error)
         this.stopVideoRecording().catch(() => {});

@@ -23,15 +23,14 @@ import { Recorder, RecorderEvent } from './recorder';
 import { CRPage } from './chromium/crPage';
 import { CDPSession } from './chromium/crConnection';
 import { CRBrowserContext } from './chromium/crBrowser';
-import { renderTitleForCall, getActionGroup } from '../utils/isomorphic/protocolFormatter';
+import { Compositor } from './vfx';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
 import type { CRBrowser } from './chromium/crBrowser';
 import type { ElementInfo } from '@recorder/recorderTypes';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
-import type { InstrumentationListener, SdkObject } from './instrumentation';
-import type { CallMetadata } from '@protocol/callMetadata';
+import type * as types from './types';
 
 export class DevToolsController {
   private _context: BrowserContext;
@@ -62,7 +61,7 @@ export class DevToolsController {
   }
 }
 
-class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationListener {
+class DevToolsConnection implements Transport, DevToolsChannel {
   readonly version = 1;
 
   sendEvent?: (method: string, params: any) => void;
@@ -109,8 +108,6 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
   onconnect() {
     const context = this._context;
 
-    this._context.instrumentation.addListener(this, this._context);
-
     this._contextListeners.push(
         eventsHelper.addEventListener(context, BrowserContext.Events.Page, (page: Page) => {
           this._sendTabList();
@@ -143,36 +140,8 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
   onclose() {
     this._cancelPicking();
     this._deselectPage();
-    this._context.instrumentation.removeListener(this);
     eventsHelper.removeEventListeners(this._contextListeners);
     this._contextListeners = [];
-  }
-
-  private _reportedSymbol = Symbol('devtoolsReported');
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (metadata.internal)
-      return;
-    if (metadata.pageId && metadata.pageId !== this.selectedPage?.guid)
-      return;
-    if (getActionGroup(metadata) === 'getter')
-      return;
-    (metadata as any)[this._reportedSymbol] = true;
-    const title = renderTitleForCall(metadata);
-    this._emit('log', { title, point: metadata.point });
-  }
-
-  async onAfterCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if ((metadata as any)[this._reportedSymbol])
-      return;
-    if (metadata.internal)
-      return;
-    if (metadata.pageId && metadata.pageId !== this.selectedPage?.guid)
-      return;
-    if (getActionGroup(metadata) === 'getter')
-      return;
-    const title = renderTitleForCall(metadata);
-    this._emit('log', { title, point: metadata.point });
   }
 
   async dispatch(method: string, params: any): Promise<any> {
@@ -275,6 +244,7 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     if (this.selectedPage) {
       eventsHelper.removeEventListeners(this._pageListeners);
       this._pageListeners = [];
+      this.selectedPage.screencast.compositor.setMode('recording');
       await this.selectedPage.screencast.stopScreencast(this);
     }
 
@@ -284,9 +254,10 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     this._sendTabList();
 
     this._pageListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
+        eventsHelper.addEventListener(page.screencast.compositor, Compositor.Events.Frame, frame => this._writeFrame(frame))
     );
 
+    page.screencast.compositor.setMode('supervision');
     await page.screencast.startScreencast(this, { width: 1280, height: 800, quality: 90 });
   }
 
@@ -296,6 +267,7 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     this._cancelPicking();
     eventsHelper.removeEventListeners(this._pageListeners);
     this._pageListeners = [];
+    this.selectedPage.screencast.compositor.setMode('recording');
     this.selectedPage.screencast.stopScreencast(this);
     this.selectedPage = null;
     this._lastFrameData = null;
@@ -375,11 +347,11 @@ class DevToolsConnection implements Transport, DevToolsChannel, InstrumentationL
     this._tabList().then(tabs => this._emit('tabs', { tabs }));
   }
 
-  private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
-    const data = frame.toString('base64');
+  private _writeFrame(frame: types.ScreencastFrame) {
+    this._lastViewportSize = { width: frame.width, height: frame.height };
+    const data = frame.buffer.toString('base64');
     this._lastFrameData = data;
-    this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
-    this._emit('frame', { data, viewportWidth, viewportHeight });
+    this._emit('frame', { data, viewportWidth: frame.width, viewportHeight: frame.height });
   }
 }
 

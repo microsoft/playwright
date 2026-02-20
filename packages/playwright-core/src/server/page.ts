@@ -276,7 +276,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   _didClose() {
     this.frameManager.dispose();
-    this.screencast.stopFrameThrottler();
+    this.screencast.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
@@ -288,7 +288,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   _didCrash() {
     this.frameManager.dispose();
-    this.screencast.stopFrameThrottler();
+    this.screencast.dispose();
     this.emit(Page.Events.Crash);
     this._crashed = true;
     this.instrumentation.onPageClose(this);

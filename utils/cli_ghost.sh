@@ -50,6 +50,10 @@ while true; do
   run $CLI goto https://playwright.dev
   sleep 2
 
+
+  say "video-start"
+  $CLI video-start 2>&1 || true
+
   snap; say "snapshot"
 
   REF=$(ref_for "Get started") || true
@@ -84,6 +88,10 @@ while true; do
     run $CLI click "$REF"
     sleep 2
   fi
+
+  say "video-stop"
+  $CLI video-stop 2>&1 || true
+  sleep 5
 
   snap; say "snapshot"
 
