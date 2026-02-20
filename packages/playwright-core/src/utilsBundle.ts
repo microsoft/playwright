@@ -39,7 +39,7 @@ export type { Range as YAMLRange, Scalar as YAMLScalar, YAMLError, YAMLMap, YAML
 export type { Command } from '../bundles/utils/node_modules/commander';
 export type { EventEmitter as WebSocketEventEmitter, RawData as WebSocketRawData, WebSocket, WebSocketServer } from '../bundles/utils/node_modules/@types/ws';
 
-// Wraps proxy-from-env's getProxyForUrl to accept a modern URL instance,
+// Wraps proxy-from-env's getProxyForUrl to accept a WHATWG URL instance,
 // avoiding the deprecated url.parse() call inside the library.
 // It only reads a couple of fields.
 export function getProxyForUrl(url: URL): string {
