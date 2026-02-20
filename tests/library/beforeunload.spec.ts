@@ -195,7 +195,7 @@ it('does not get stalled by beforeUnload', {
       event.preventDefault();
     });
   });
-  page.on('dialog', dialog => dialog.dismiss());
+  page.on('dialog', dialog => dialog.dismiss().catch(() => {}));
 
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.
