@@ -236,7 +236,7 @@ With the VS Code extension you can run your tests on different browsers by check
 
 To run tests on multiple projects(browsers), select each project by checking the checkboxes next to the project name.
 
-![Selecting projects to run tests on](https://github.com/microsoft/playwright/assets/13063165/6dc86ef4-6097-481c-9cab-b6e053ec7ea6)
+<img src="https://github.com/microsoft/playwright/assets/13063165/6dc86ef4-6097-481c-9cab-b6e053ec7ea6" alt="Selecting projects to run tests on" width="3978" height="2294" />
 
 ### Run tests on different browsers
 * langs: python

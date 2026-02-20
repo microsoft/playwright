@@ -187,7 +187,7 @@ Once you have your [GitHub Actions workflow](#setting-up-github-actions) setup, 
 ######
 * langs: csharp
 
-![dotnet repo on github](https://github.com/microsoft/playwright/assets/13063165/4f1b4cc3-b850-4d60-a99e-24057eaf91ad)
+<img src="https://github.com/microsoft/playwright/assets/13063165/4f1b4cc3-b850-4d60-a99e-24057eaf91ad" alt="dotnet repo on github" width="2802" height="1570" />
 
 ## Opening the Workflows
 
@@ -196,12 +196,12 @@ Click on the **Actions** tab to see the workflows. Here you see if your tests ha
 ######
 * langs: js, python, java
 
-![opening the workflow](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+<img src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png" alt="opening the workflow" width="1678" height="1207" />
 
 ######
 * langs: csharp
 
-![opening the workflow](https://github.com/microsoft/playwright/assets/13063165/71793c09-0815-4faa-866b-85684a1f87e5)
+<img src="https://github.com/microsoft/playwright/assets/13063165/71793c09-0815-4faa-866b-85684a1f87e5" alt="opening the workflow" width="2812" height="824" />
 
 On Pull Requests you can also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
 
@@ -215,12 +215,12 @@ Clicking on the workflow run shows you all the actions that GitHub performed and
 ######
 * langs: js, python, java
 
-![Viewing Test Logs](https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png)
+<img src="https://user-images.githubusercontent.com/13063165/183423783-58bf2008-514e-4f96-9c12-c9a55703960c.png" alt="Viewing Test Logs" width="1678" height="1207" />
 
 ######
 * langs: csharp
 
-![viewing the test logs](https://github.com/microsoft/playwright/assets/13063165/ba2d8d7b-ffce-42de-95e0-bcb35c421975)
+<img src="https://github.com/microsoft/playwright/assets/13063165/ba2d8d7b-ffce-42de-95e0-bcb35c421975" alt="viewing the test logs" width="2794" height="1858" />
 
 
 ## HTML Report
@@ -245,7 +245,7 @@ Locally opening the report does not work as expected as you need a web server fo
 npx playwright show-report name-of-my-extracted-playwright-report
 ```
 
-![viewing the HTML report](https://github.com/microsoft/playwright/assets/13063165/c5f60e56-fb75-4a2d-a4b6-054b8c5d69c1)
+<img src="https://github.com/microsoft/playwright/assets/13063165/c5f60e56-fb75-4a2d-a4b6-054b8c5d69c1" alt="viewing the HTML report" width="2296" height="1424" />
 
 To learn more about reports, check out our detailed guide on [HTML Reporter](/test-reporters.md#html-reporter)
 
@@ -254,7 +254,7 @@ To learn more about reports, check out our detailed guide on [HTML Reporter](/te
 
 Once you have served the report using `npx playwright show-report`, click on the trace icon next to the test's file name as seen in the image above. You can then view the trace of your tests and inspect each action to try to find out why the tests are failing.
 
-![playwright trace viewer](https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274)
+<img src="https://github.com/microsoft/playwright/assets/13063165/10fe3585-8401-4051-b1c2-b2e92ac4c274" alt="playwright trace viewer" width="3598" height="2218" />
 
 ## Viewing the Trace
 * langs: python, java

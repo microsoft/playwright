@@ -27,25 +27,25 @@ To record a test click on the **Record new** button from the Testing sidebar. Th
 
 In the browser go to the URL you wish to test and start clicking around to record your user actions.
 
-![generating user actions](https://github.com/microsoft/playwright/assets/13063165/1d4c8f37-8325-4816-a665-d0e95e63f509)
+<img src="https://github.com/microsoft/playwright/assets/13063165/1d4c8f37-8325-4816-a665-d0e95e63f509" alt="generating user actions" width="2788" height="1824" />
 
 Playwright will record your actions and generate the test code directly in VS Code. You can also generate assertions by choosing one of the icons in the toolbar and then clicking on an element on the page to assert against. The following assertions can be generated:
   * `'assert visibility'` to assert that an element is visible
   * `'assert text'` to assert that an element contains specific text
   * `'assert value'` to assert that an element has a specific value
 
-![generating assertions](https://github.com/microsoft/playwright/assets/13063165/d131eb35-b2ca-4bf4-a8ac-88b6e40dcf07)
+<img src="https://github.com/microsoft/playwright/assets/13063165/d131eb35-b2ca-4bf4-a8ac-88b6e40dcf07" alt="generating assertions" width="2788" height="1400" />
 
 Once you are done recording click the **cancel** button or close the browser window. You can then inspect your `test-1.spec.ts` file and manually improve it if needed.
 
-![code from a generated test](https://github.com/microsoft/playwright/assets/13063165/2ba4c212-4713-460a-b054-6dc6b67a9a7c)
+<img src="https://github.com/microsoft/playwright/assets/13063165/2ba4c212-4713-460a-b054-6dc6b67a9a7c" alt="code from a generated test" width="3126" height="1654" />
 
 ### Record at Cursor
 
 To record from a specific point in your test move your cursor to where you want to record more actions and then click the **Record at cursor** button from the Testing sidebar. If your browser window is not already open then first run the test with 'Show browser' checked and then click the **Record at cursor** button.
 
 
-![record at cursor in vs code](https://github.com/microsoft/playwright/assets/13063165/77948ab8-92a2-435f-9833-0944da5ae664)
+<img src="https://github.com/microsoft/playwright/assets/13063165/77948ab8-92a2-435f-9833-0944da5ae664" alt="record at cursor in vs code" width="3126" height="1756" />
 
 In the browser window start performing the actions you want to record.
 
@@ -54,7 +54,7 @@ In the browser window start performing the actions you want to record.
 
 In the test file in VS Code you will see your new generated actions added to your test at the cursor position.
 
-![code from a generated test](https://github.com/microsoft/playwright/assets/13063165/4f4bb34e-9cda-41fe-bf65-8d8016d84c7f)
+<img src="https://github.com/microsoft/playwright/assets/13063165/4f4bb34e-9cda-41fe-bf65-8d8016d84c7f" alt="code from a generated test" width="3180" height="1944" />
 
 ### Generating locators
 
@@ -103,22 +103,22 @@ With the test generator you can record:
 ######
 * langs: js
 
-![Recording a test](https://github.com/microsoft/playwright/assets/13063165/34a79ea1-639e-4cb3-8115-bfdc78e3d34d)
+<img src="https://github.com/microsoft/playwright/assets/13063165/34a79ea1-639e-4cb3-8115-bfdc78e3d34d" alt="Recording a test" width="2788" height="1824" />
 
 ######
 * langs: java
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/ec9c4071-4af8-4ae7-8b36-aebcc29bdbbb)
+<img src="https://github.com/microsoft/playwright/assets/13063165/ec9c4071-4af8-4ae7-8b36-aebcc29bdbbb" alt="recording a test" width="2788" height="1824" />
 
 ######
 * langs: python
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/9751b609-6e4c-486b-a961-f86f177b1d58)
+<img src="https://github.com/microsoft/playwright/assets/13063165/9751b609-6e4c-486b-a961-f86f177b1d58" alt="recording a test" width="2788" height="1824" />
 
 ######
 * langs: csharp
 
-![recording a test](https://github.com/microsoft/playwright/assets/13063165/53bdfb6f-d462-4ce0-ab95-0619faaebf1e)
+<img src="https://github.com/microsoft/playwright/assets/13063165/53bdfb6f-d462-4ce0-ab95-0619faaebf1e" alt="recording a test" width="2788" height="1824" />
 
 ######
 * langs: js, java, python, csharp
@@ -138,22 +138,22 @@ You can generate [locators](/locators.md) with the test generator.
 ######
 * langs: js
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/2c8a12e2-4e98-4fdd-af92-1d73ae696d86)
+<img src="https://github.com/microsoft/playwright/assets/13063165/2c8a12e2-4e98-4fdd-af92-1d73ae696d86" alt="picking a locator" width="2788" height="1824" />
 
 ######
 * langs: java
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/733b48fd-5edf-4150-93f0-018adc52b6ff)
+<img src="https://github.com/microsoft/playwright/assets/13063165/733b48fd-5edf-4150-93f0-018adc52b6ff" alt="picking a locator" width="2700" height="1736" />
 
 ######
 * langs: python
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/95d11f48-96a4-46b9-9c2a-63c3aa4fdce7)
+<img src="https://github.com/microsoft/playwright/assets/13063165/95d11f48-96a4-46b9-9c2a-63c3aa4fdce7" alt="picking a locator" width="2788" height="1824" />
 
 ######
 * langs: csharp
 
-![picking a locator](https://github.com/microsoft/playwright/assets/13063165/1478f56f-422f-4276-9696-0674041f11dc)
+<img src="https://github.com/microsoft/playwright/assets/13063165/1478f56f-422f-4276-9696-0674041f11dc" alt="picking a locator" width="2788" height="1824" />
 
 ## Emulation
 

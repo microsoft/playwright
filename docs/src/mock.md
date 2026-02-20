@@ -99,7 +99,7 @@ assertThat(page.getByText("Strawberry")).isVisible();
 ```
 
 You can see from the trace of the example test that the API was never called, it was however fulfilled with the mock data.
-![api mocking trace](https://github.com/microsoft/playwright/assets/13063165/3dc14cbf-c100-4efc-ac21-d7b52d698b53)
+<img src="https://github.com/microsoft/playwright/assets/13063165/3dc14cbf-c100-4efc-ac21-d7b52d698b53" alt="api mocking trace" width="2946" height="1902" />
 
 Read more about [advanced networking](./network.md).
 
@@ -210,10 +210,10 @@ assertThat(page.getByText("Loquat", new Page.GetByTextOptions().setExact(true)))
 ```
 
 In the trace of our test we can see that the API was called and the response was modified.
-![trace of test showing api being called and fulfilled](https://github.com/microsoft/playwright/assets/13063165/8b8dd82d-1b3e-428e-871b-840581fed439)
+<img src="https://github.com/microsoft/playwright/assets/13063165/8b8dd82d-1b3e-428e-871b-840581fed439" alt="trace of test showing api being called and fulfilled" width="2946" height="1902" />
 
 By inspecting the response we can see that our new fruit was added to the list.
-![trace of test showing the mock response](https://github.com/microsoft/playwright/assets/13063165/03e6c87c-4ecc-47e8-9ca0-30fface25e9d)
+<img src="https://github.com/microsoft/playwright/assets/13063165/03e6c87c-4ecc-47e8-9ca0-30fface25e9d" alt="trace of test showing the mock response" width="2946" height="1902" />
 
 Read more about [advanced networking](./network.md).
 
@@ -232,12 +232,12 @@ The options object can contain the URL so that only requests with the URL matchi
 
 Setting `update` option to true will create or update the HAR file with the actual network information instead of serving the requests from the HAR file. Use it when creating a test to populate the HAR with real data.
 
-#### 
+####
 * langs: js
 
 Alternatively, you can also record HAR files by using the [`option: Browser.newContext.recordHar`] option in [`method: Browser.newContext`] when creating a browser context. This allows you to capture all network traffic for the entire context until the context is closed.
 
-#### 
+####
 * langs: csharp, java, python
 
 Alternatively, you can also record HAR files by using the [`option: Browser.newContext.recordHarPath`] option in [`method: Browser.newContext`] when creating a browser context. This allows you to capture all network traffic for the entire context until the context is closed.
@@ -409,10 +409,10 @@ assertThat(page.getByText("Playwright", new Page.GetByTextOptions()
   .setExact(true))).isVisible();
 ```
 In the trace of our test we can see that the route was fulfilled from the HAR file and the API was not called.
-![trace showing the HAR file being used](https://github.com/microsoft/playwright/assets/13063165/1bd7ab66-ea4f-43c2-a4e5-ca17d4837ff1)
+<img src="https://github.com/microsoft/playwright/assets/13063165/1bd7ab66-ea4f-43c2-a4e5-ca17d4837ff1" alt="trace showing the HAR file being used" width="2946" height="1902" />
 
 If we inspect the response we can see our new fruit was added to the JSON, which was done by manually updating the hashed `.txt` file inside the `hars` folder.
-![trace showing response from HAR file](https://github.com/microsoft/playwright/assets/13063165/db3117fc-7b02-4973-9a51-29e213261a6a)
+<img src="https://github.com/microsoft/playwright/assets/13063165/db3117fc-7b02-4973-9a51-29e213261a6a" alt="trace showing response from HAR file" width="2946" height="1902" />
 
 HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
 

@@ -177,7 +177,7 @@ $env:PWDEBUG=1
 dotnet test
 ```
 
-![debugging tests with playwright inspector](https://github.com/microsoft/playwright/assets/13063165/a1e758d3-d379-414f-be0b-7339f12bb635)
+<img src="https://github.com/microsoft/playwright/assets/13063165/a1e758d3-d379-414f-be0b-7339f12bb635" alt="debugging tests with playwright inspector" width="2700" height="1736" />
 
 Check out our [debugging guide](./debug.md) to learn more about the [Playwright Inspector](./debug.md#playwright-inspector) as well as debugging with [Browser Developer tools](./debug.md#browser-developer-tools).
 

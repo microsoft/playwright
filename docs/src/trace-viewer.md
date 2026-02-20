@@ -688,7 +688,7 @@ public class WithTestNameAttribute : BeforeAfterTestAttribute
 
 In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
 
-![actions tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/948b65cd-f0fd-4c7f-8e53-2c632b5a07f1)
+<img src="https://github.com/microsoft/playwright/assets/13063165/948b65cd-f0fd-4c7f-8e53-2c632b5a07f1" alt="actions tab in trace viewer" width="3598" height="2218" />
 
 **Selecting each action reveals:**
 - Action snapshots
@@ -701,7 +701,7 @@ When tracing with the [`option: Tracing.start.screenshots`] option turned on (de
 
 Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
-![timeline view in trace viewer](https://github.com/microsoft/playwright/assets/13063165/b04a7d75-54bb-4ab2-9e30-e76f6f74a2c8)
+<img src="https://github.com/microsoft/playwright/assets/13063165/b04a7d75-54bb-4ab2-9e30-e76f6f74a2c8" alt="timeline view in trace viewer" width="3598" height="2218" />
 
 
 ### Snapshots
@@ -716,7 +716,7 @@ When tracing with the [`option: Tracing.start.snapshots`] option turned on (defa
 
 Here is what the typical Action snapshot looks like:
 
-![action tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/7168d549-eb0a-4964-9c93-483f03711fa9)
+<img src="https://github.com/microsoft/playwright/assets/13063165/7168d549-eb0a-4964-9c93-483f03711fa9" alt="action tab in trace viewer" width="3598" height="2218" />
 
 Notice how it highlights both, the DOM Node as well as the exact click position.
 
@@ -724,31 +724,31 @@ Notice how it highlights both, the DOM Node as well as the exact click position.
 
 When you click on an action in the sidebar, the line of code for that action is highlighted in the source panel.
 
-![showing source code tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/daa8845d-c250-4923-aa7a-5d040da9adc5)
+<img src="https://github.com/microsoft/playwright/assets/13063165/daa8845d-c250-4923-aa7a-5d040da9adc5" alt="showing source code tab in trace viewer" width="3598" height="2218" />
 
 ### Call
 
 The call tab shows you information about the action such as the time it took, what locator was used, if in strict mode and what key was used.
 
-![showing call tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/95498580-f9dd-4932-a123-c37fe7cfc3c2)
+<img src="https://github.com/microsoft/playwright/assets/13063165/95498580-f9dd-4932-a123-c37fe7cfc3c2" alt="showing call tab in trace viewer" width="3598" height="2218" />
 
 ### Log
 
 See a full log of your test to better understand what Playwright is doing behind the scenes such as scrolling into view, waiting for element to be visible, enabled and stable and performing actions such as click, fill, press etc.
 
-![showing log of tests in trace viewer](https://github.com/microsoft/playwright/assets/13063165/de621461-3bab-4140-b39d-9f02d6672dbf)
+<img src="https://github.com/microsoft/playwright/assets/13063165/de621461-3bab-4140-b39d-9f02d6672dbf" alt="showing log of tests in trace viewer" width="3598" height="2218" />
 
 ### Errors
 
 If your test fails you will see the error messages for each test in the Errors tab. The timeline will also show a red line highlighting where the error occurred. You can also click on the source tab to see on which line of the source code the error is.
 
-![showing errors in trace viewer](https://github.com/microsoft/playwright/assets/13063165/e9ef77b3-05d1-4df2-852c-981023723d34)
+<img src="https://github.com/microsoft/playwright/assets/13063165/e9ef77b3-05d1-4df2-852c-981023723d34" alt="showing errors in trace viewer" width="3598" height="2218" />
 
 ### Console
 
 See console logs from the browser as well as from your test. Different icons are displayed to show you if the console log came from the browser or from the test file.
 
-![showing log of tests in trace viewer](https://github.com/microsoft/playwright/assets/13063165/4107c08d-1eaf-421c-bdd4-9dd2aa641d4a)
+<img src="https://github.com/microsoft/playwright/assets/13063165/4107c08d-1eaf-421c-bdd4-9dd2aa641d4a" alt="showing log of tests in trace viewer" width="3598" height="2218" />
 
 Double click on an action from your test in the actions sidebar. This will filter the console to only show the logs that were made during that action. Click the *Show all* button to see all console logs again.
 
@@ -759,7 +759,7 @@ Use the timeline to filter actions, by clicking a start point and dragging to an
 
 The Network tab shows you all the network requests that were made during your test. You can sort by different types of requests, status code, method, request, content type, duration and size. Click on a request to see more information about it such as the request headers, response headers, request body and response body.
 
-![network requests tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/0a3d1671-8ccd-4f7a-a844-35f5eb37f236)
+<img src="https://github.com/microsoft/playwright/assets/13063165/0a3d1671-8ccd-4f7a-a844-35f5eb37f236" alt="network requests tab in trace viewer" width="3598" height="2218" />
 
 Double click on an action from your test in the actions sidebar. This will filter the network requests to only show the requests that were made during that action. Click the *Show all* button to see all network requests again.
 
@@ -769,12 +769,12 @@ Use the timeline to filter actions, by clicking a start point and dragging to an
 
 Next to the Actions tab you will find the Metadata tab which will show you more information on your test such as the Browser, viewport size, test duration and more.
 
-![meta data in trace viewer](https://github.com/microsoft/playwright/assets/13063165/82ab3d33-1ec9-4b8a-9cf2-30a6e2d59091)
+<img src="https://github.com/microsoft/playwright/assets/13063165/82ab3d33-1ec9-4b8a-9cf2-30a6e2d59091" alt="meta data in trace viewer" width="3598" height="2218" />
 
 ### Attachments
 * langs: js
 
 The "Attachments" tab allows you to explore attachments. If you're doing [visual regression testing](./test-snapshots.md), you'll be able to compare screenshots by examining the image diff, the actual image and the expected image. When you click on the expected image you can use the slider to slide one image over the other so you can easily see the differences in your screenshots.
 
-![attachments tab in trace viewer](https://github.com/microsoft/playwright/assets/13063165/4386178a-5808-4fa8-9436-315350a23b04)
+<img src="https://github.com/microsoft/playwright/assets/13063165/4386178a-5808-4fa8-9436-315350a23b04" alt="attachments tab in trace viewer" width="3598" height="2218" />
 

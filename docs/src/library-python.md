@@ -7,7 +7,7 @@ title: "Getting started - Library"
 
 ### Pip
 
-[![PyPI version](https://badge.fury.io/py/playwright.svg)](https://pypi.python.org/pypi/playwright/)
+[<img src="https://badge.fury.io/py/playwright.svg" alt="PyPI version" width="132" height="20" />](https://pypi.python.org/pypi/playwright/)
 
 ```bash
 pip install --upgrade pip
@@ -17,7 +17,7 @@ playwright install
 
 ### Conda
 
-[![Anaconda version](https://img.shields.io/conda/v/microsoft/playwright)](https://anaconda.org/Microsoft/playwright)
+[<img src="https://img.shields.io/conda/v/microsoft/playwright" alt="Anaconda version" width="160" height="20" />](https://anaconda.org/Microsoft/playwright)
 
 ```bash
 conda config --add channels conda-forge
