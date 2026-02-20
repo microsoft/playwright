@@ -48,12 +48,13 @@ configurations for common CI providers.
 ## Workers
 * langs: js
 
-If you have powerful CI machines available, enable [parallel](./test-parallel.md) tests. By default, Playwright uses a number of workers equal to 50% of available CPU cores. If you need finer control, configure the worker count explicitly via [`workers`](./api/class-testconfig.md#test-config-workers).
+If you have powerful CI machines available, enable [parallel](./test-parallel.md) tests. By default, Playwright uses a number of workers equal to 50% of available CPU cores. For finer control, configure the worker count explicitly via [`workers`](./api/class-testconfig.md#test-config-workers).
 
-In some test suites, parallel execution can lead to instability and flakiness due to hidden race conditions and shared state.
-If you can't resolve this, set [workers](./api/class-testconfig.md#test-config-workers) to `1` in CI environments to ensure each test gets the full system resources, avoiding potential conflicts.
 For wider parallelization, use [sharding](./test-parallel.md#shard-tests-between-multiple-machines) to distribute tests across multiple CI jobs.
-This comes at the cost of per-shard overhead (checkout, installing dependencies, downloading browsers, etc).
+Keep in mind this comes with per-shard overhead (checkout, installing dependencies, downloading browsers, etc).
+
+In some test suites, parallel execution can lead to instability due to hidden race conditions and shared state.
+If you cannot resolve the root cause of the instability, set [workers](./api/class-testconfig.md#test-config-workers) to `1` in CI environments to avoid potential conflicts.
 
 ```js title="playwright.config.ts"
 import { defineConfig, devices } from '@playwright/test';
