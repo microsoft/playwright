@@ -62,7 +62,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
     const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/program.js'), ...args],
+      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/cli.js'), ...args],
       cwd: cliOptions.cwd ?? testInfo.outputPath(),
       env: {
         ...process.env,

@@ -74,7 +74,7 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[
   'version',
 ];
 
-async function program() {
+export async function program(options?: { embedderVersion?: string}) {
   const clientInfo = createClientInfo();
   const help = require('./help.json');
 
@@ -104,7 +104,7 @@ async function program() {
   const commandName = args._?.[0];
 
   if (args.version || args.v) {
-    console.log(clientInfo.version);
+    console.log(options?.embedderVersion ?? clientInfo.version);
     process.exit(0);
   }
 
@@ -436,10 +436,3 @@ async function renderSessionStatus(session: Session) {
     text.push(...renderResolvedConfig(config.resolvedConfig));
   return text.join('\n');
 }
-
-program().catch(e => {
-  /* eslint-disable no-console */
-  console.error(e.message);
-  /* eslint-disable no-restricted-properties */
-  process.exit(1);
-});
