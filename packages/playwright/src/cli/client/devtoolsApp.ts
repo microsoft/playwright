@@ -116,7 +116,7 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDevToolsApp(): Promise<Page> {
+export async function startDevToolsServer(options: { host?: string, port?: number } = {}): Promise<HttpServer> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const devtoolsDir = path.join(path.dirname(libDir), 'lib/vite/devtools');
@@ -138,7 +138,12 @@ async function openDevToolsApp(): Promise<Page> {
       return false;
     return httpServer.serveFile(request, response, resolved);
   });
-  await httpServer.start();
+  await httpServer.start({ host: options.host, preferredPort: options.port });
+  return httpServer;
+}
+
+async function openDevToolsApp(options: { host?: string, port?: number } = {}): Promise<Page> {
+  const httpServer = await startDevToolsServer(options);
   const url = httpServer.urlPrefix('human-readable');
 
   const { page } = await launchApp('devtools');
@@ -240,7 +245,7 @@ async function acquireSingleton(): Promise<net.Server> {
   });
 }
 
-async function main() {
+export async function runDevToolsAppDaemon(): Promise<void> {
   let server: net.Server | undefined;
   process.on('exit', () => server?.close());
   try {
@@ -256,5 +261,3 @@ async function main() {
     });
   });
 }
-
-void main();

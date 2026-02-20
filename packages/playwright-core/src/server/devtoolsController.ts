@@ -23,12 +23,14 @@ import { Recorder, RecorderEvent } from './recorder';
 import { CRPage } from './chromium/crPage';
 import { CDPSession } from './chromium/crConnection';
 import { CRBrowserContext } from './chromium/crBrowser';
+import { Compositor } from './vfx';
 
 import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
 import type { CRBrowser } from './chromium/crBrowser';
 import type { ElementInfo } from '@recorder/recorderTypes';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
+import type * as types from './types';
 
 export class DevToolsController {
   private _context: BrowserContext;
@@ -242,6 +244,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     if (this.selectedPage) {
       eventsHelper.removeEventListeners(this._pageListeners);
       this._pageListeners = [];
+      this.selectedPage.screencast.compositor.setMode('recording');
       await this.selectedPage.screencast.stopScreencast(this);
     }
 
@@ -251,9 +254,10 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._sendTabList();
 
     this._pageListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
+        eventsHelper.addEventListener(page.screencast.compositor, Compositor.Events.Frame, frame => this._writeFrame(frame))
     );
 
+    page.screencast.compositor.setMode('supervision');
     await page.screencast.startScreencast(this, { width: 1280, height: 800, quality: 90 });
   }
 
@@ -263,6 +267,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._cancelPicking();
     eventsHelper.removeEventListeners(this._pageListeners);
     this._pageListeners = [];
+    this.selectedPage.screencast.compositor.setMode('recording');
     this.selectedPage.screencast.stopScreencast(this);
     this.selectedPage = null;
     this._lastFrameData = null;
@@ -271,7 +276,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
 
   async pickLocator() {
     this._cancelPicking();
-    const recorder = await Recorder.forContext(this._context, { omitCallTracking: true });
+    const recorder = await Recorder.forContext(this._context, { omitCallTracking: true, hideToolbar: true });
     this._recorder = recorder;
     this._recorderListeners.push(
         eventsHelper.addEventListener(recorder, RecorderEvent.ElementPicked, (elementInfo: ElementInfo) => {
@@ -342,11 +347,11 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._tabList().then(tabs => this._emit('tabs', { tabs }));
   }
 
-  private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
-    const data = frame.toString('base64');
+  private _writeFrame(frame: types.ScreencastFrame) {
+    this._lastViewportSize = { width: frame.width, height: frame.height };
+    const data = frame.buffer.toString('base64');
     this._lastFrameData = data;
-    this._lastViewportSize = { width: viewportWidth, height: viewportHeight };
-    this._emit('frame', { data, viewportWidth, viewportHeight });
+    this._emit('frame', { data, viewportWidth: frame.width, viewportHeight: frame.height });
   }
 }
 

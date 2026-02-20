@@ -90,7 +90,8 @@
   flex-direction: column;
   background: var(--bg-card);
   border-radius: 8px;
-  border: 1px solid transparent;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
   min-width: 200px;
   cursor: pointer;
   text-decoration: none;
@@ -135,7 +136,7 @@
 }
 
 .session-chip-title {
-  color: var(--fg-muted);
+  color: var(--fg-dim);
   font-weight: 400;
 }
 
@@ -168,7 +169,7 @@
 }
 
 .session-chip-action:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--overlay-active);
 }
 
 .screencast-container {
