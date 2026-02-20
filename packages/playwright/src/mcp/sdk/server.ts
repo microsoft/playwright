@@ -222,12 +222,16 @@ export function allRootPaths(clientInfo: ClientInfo): string[] {
   return paths;
 }
 
+function sanitizeForTransport(text: string): string {
+  return text.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+}
+
 function mergeTextParts(result: CallToolResult): CallToolResult {
   const content: CallToolResult['content'] = [];
   const testParts: string[] = [];
   for (const part of result.content) {
     if (part.type === 'text') {
-      testParts.push(part.text);
+      testParts.push(sanitizeForTransport(part.text));
       continue;
     }
     if (testParts.length > 0) {

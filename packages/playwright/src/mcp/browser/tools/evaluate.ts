@@ -18,6 +18,7 @@ import { z } from 'playwright-core/lib/mcpBundle';
 import { escapeWithQuotes } from 'playwright-core/lib/utils';
 
 import { defineTabTool } from './tool';
+import { jsonStringify } from './utils';
 
 import type { Tab } from '../tab';
 
@@ -51,7 +52,7 @@ const evaluate = defineTabTool({
     await tab.waitForCompletion(async () => {
       const receiver = locator?.locator ?? tab.page;
       const result = await receiver._evaluateFunction(params.function);
-      const text = JSON.stringify(result, null, 2) || 'undefined';
+      const text = jsonStringify(result, 2) || 'undefined';
       response.addTextResult(text);
     });
   },

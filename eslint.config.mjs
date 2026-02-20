@@ -424,6 +424,16 @@ export default [
     ...config,
     files: reactFiles,
   })),
+  {
+    files: ["packages/playwright/src/mcp/**/tools/**/*.ts"],
+    rules: {
+      "no-restricted-properties": [2, {
+        object: "JSON",
+        property: "stringify",
+        message: "Use jsonStringify from './tool' to handle lone surrogates.",
+      }],
+    },
+  },
   reactPackageSection("html-reporter"),
   reactPackageSection("recorder"),
   reactPackageSection("trace-viewer"),

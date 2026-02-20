@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { jsonStringify } from './utils';
 
 const configShow = defineTool({
   capability: 'config',
@@ -29,7 +30,7 @@ const configShow = defineTool({
   },
 
   handle: async (context, params, response) => {
-    response.addTextResult(JSON.stringify(context.config, null, 2));
+    response.addTextResult(jsonStringify(context.config, 2));
   },
 });
 

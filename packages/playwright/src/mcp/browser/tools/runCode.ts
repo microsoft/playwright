@@ -20,6 +20,7 @@ import { ManualPromise } from 'playwright-core/lib/utils';
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTabTool } from './tool';
+import { jsonStringify } from './utils';
 
 const codeSchema = z.object({
   code: z.string().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
@@ -41,13 +42,14 @@ const runCode = defineTabTool({
     const context = {
       page: tab.page,
       __end__,
+      __jsonStringify__: jsonStringify,
     };
     vm.createContext(context);
     await tab.waitForCompletion(async () => {
       const snippet = `(async () => {
         try {
           const result = await (${params.code})(page);
-          __end__.resolve(JSON.stringify(result));
+          __end__.resolve(__jsonStringify__(result));
         } catch (e) {
           __end__.reject(e);
         }

@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { jsonStringify } from './utils';
 
 const cookieList = defineTool({
   capability: 'storage',
@@ -117,7 +118,7 @@ const cookieSet = defineTool({
       cookie.sameSite = params.sameSite;
 
     await browserContext.addCookies([cookie]);
-    response.addCode(`await page.context().addCookies([${JSON.stringify(cookie)}]);`);
+    response.addCode(`await page.context().addCookies([${jsonStringify(cookie)}]);`);
   },
 });
 

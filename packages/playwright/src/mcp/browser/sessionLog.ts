@@ -19,6 +19,7 @@ import path from 'path';
 
 import { outputFile  } from './config';
 import { parseResponse } from './response';
+import { jsonStringify } from './tools/utils';
 
 import type { FullConfig } from './config';
 import type * as mcpServer from '../sdk/server';
@@ -51,13 +52,13 @@ export class SessionLog {
         `### Tool call: ${toolName}`,
         `- Args`,
         '```json',
-        JSON.stringify(toolArgs, null, 2),
+        jsonStringify(toolArgs, 2),
         '```',
     );
     if (parsed) {
       lines.push(`- Result`);
       lines.push('```json');
-      lines.push(JSON.stringify(parsed, null, 2));
+      lines.push(jsonStringify(parsed, 2));
       lines.push('```');
     }
 

@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { jsonStringify } from './utils';
 
 import type * as playwright from 'playwright-core';
 import type { RouteEntry } from '../context';
@@ -114,7 +115,7 @@ const routeList = defineTool({
       if (route.contentType)
         details.push(`contentType=${route.contentType}`);
       if (route.addHeaders)
-        details.push(`addHeaders=${JSON.stringify(route.addHeaders)}`);
+        details.push(`addHeaders=${jsonStringify(route.addHeaders)}`);
       if (route.removeHeaders)
         details.push(`removeHeaders=${route.removeHeaders.join(',')}`);
 

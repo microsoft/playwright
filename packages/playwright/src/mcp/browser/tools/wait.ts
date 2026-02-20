@@ -16,6 +16,7 @@
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTool } from './tool';
+import { jsonStringify } from './utils';
 
 const wait = defineTool({
   capability: 'core',
@@ -46,12 +47,12 @@ const wait = defineTool({
     const goneLocator = params.textGone ? tab.page.getByText(params.textGone).first() : undefined;
 
     if (goneLocator) {
-      response.addCode(`await page.getByText(${JSON.stringify(params.textGone)}).first().waitFor({ state: 'hidden' });`);
+      response.addCode(`await page.getByText(${jsonStringify(params.textGone)}).first().waitFor({ state: 'hidden' });`);
       await goneLocator.waitFor({ state: 'hidden' });
     }
 
     if (locator) {
-      response.addCode(`await page.getByText(${JSON.stringify(params.text)}).first().waitFor({ state: 'visible' });`);
+      response.addCode(`await page.getByText(${jsonStringify(params.text)}).first().waitFor({ state: 'visible' });`);
       await locator.waitFor({ state: 'visible' });
     }
 

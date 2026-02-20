@@ -76,6 +76,23 @@ test('browser_evaluate object', async ({ client, server }) => {
   });
 });
 
+test('browser_evaluate (lone surrogate)', async ({ client, server }) => {
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '() => String.fromCharCode(0xD800)',
+    },
+  });
+
+  expect(result.isError).toBeFalsy();
+  expect(result.content?.[0]?.text).toContain('\uFFFD');
+});
+
 test('browser_evaluate (error)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',

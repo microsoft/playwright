@@ -17,6 +17,18 @@
 import type * as playwright from 'playwright-core';
 import type { Tab } from '../tab';
 
+// Replace lone surrogates with U+FFFD replacement character.
+const jsonReplacer = (_key: string, value: unknown) => {
+  if (typeof value === 'string')
+    return value.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g, '\uFFFD');
+  return value;
+};
+
+export function jsonStringify(value: unknown, space?: number): string {
+  // eslint-disable-next-line no-restricted-properties
+  return JSON.stringify(value, jsonReplacer, space);
+}
+
 export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>): Promise<R> {
   const requests: playwright.Request[] = [];
 

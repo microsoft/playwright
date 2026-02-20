@@ -19,6 +19,7 @@ import path from 'path';
 
 import { z } from 'playwright-core/lib/mcpBundle';
 import { defineTestTool } from './testTool';
+import { jsonStringify } from '../browser/tools/utils';
 
 export const setupPage = defineTestTool({
   schema: {
@@ -68,7 +69,7 @@ export const submitTestPlan = defineTestTool({
     return {
       content: [{
         type: 'text',
-        text: JSON.stringify(params, null, 2),
+        text: jsonStringify(params, 2),
       }],
     };
   },
