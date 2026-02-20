@@ -215,6 +215,13 @@ export class BidiBrowserContext extends BrowserContext {
     const promises: Promise<any>[] = [
       super._initialize(),
     ];
+    const downloadBehavior: bidi.Browser.DownloadBehavior = this._options.acceptDownloads === 'accept' ?
+      { type: 'allowed', destinationFolder: this._browser.options.downloadsPath } :
+      { type: 'denied' };
+    promises.push(this._browser._browserSession.send('browser.setDownloadBehavior', {
+      downloadBehavior,
+      userContexts: [this._userContextId()],
+    }));
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
