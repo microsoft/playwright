@@ -18,15 +18,18 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { registry } from 'playwright-core/lib/server';
 import { devices } from 'playwright-core';
 import { dotenv, debug } from 'playwright-core/lib/utilsBundle';
+
+import { configFromIniFile } from './configIni';
 import { fileExistsAsync } from '../../util';
 import { firstRootPath } from '../sdk/server';
 
 import type * as playwright from '../../../types/test';
 import type { Config, ToolCapability } from '../config';
 import type { ClientInfo } from '../sdk/server';
-import type { SessionConfig } from '../terminal/program';
+import type { SessionConfig } from '../../cli/client/registry';
 
 type ViewportSize = { width: number; height: number };
 
@@ -44,7 +47,6 @@ export type CLIOptions = {
   codegen?: 'typescript' | 'none';
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
-  daemonSession?: string;
   device?: string;
   extension?: boolean;
   executablePath?: string;
@@ -108,15 +110,6 @@ export const defaultConfig: FullConfig = {
   },
 };
 
-const defaultDaemonConfig: FullConfig = mergeConfig(defaultConfig, {
-  browser: {
-    launchOptions: {
-      headless: true,
-    },
-    isolated: true,
-  }
-});
-
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
 export type FullConfig = Config & {
@@ -151,48 +144,38 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
 
 export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
   const envOverrides = configFromEnv();
-  const daemonOverrides = await configForDaemonSession(cliOptions);
   const cliOverrides = configFromCLIOptions(cliOptions);
-  const configFile = cliOverrides.configFile ?? envOverrides.configFile ?? daemonOverrides.configFile;
+  const configFile = cliOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
 
-  let result = cliOptions.daemonSession ? defaultDaemonConfig : defaultConfig;
+  let result = defaultConfig;
   result = mergeConfig(result, configInFile);
-  result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
-
-  if (daemonOverrides.sessionConfig) {
-    result.skillMode = true;
-
-    if (!result.extension && !result.browser.userDataDir && daemonOverrides.sessionConfig.userDataDirPrefix) {
-      // No custom value provided, use the daemon data dir.
-      const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-      const userDataDir = `${daemonOverrides.sessionConfig.userDataDirPrefix}-${browserToken}`;
-      result.browser.userDataDir = userDataDir;
-    }
-  }
-
-  if (result.browser.browserName === 'chromium' && result.browser.launchOptions.chromiumSandbox === undefined) {
-    if (process.platform === 'linux')
-      result.browser.launchOptions.chromiumSandbox = result.browser.launchOptions.channel !== 'chromium';
-    else
-      result.browser.launchOptions.chromiumSandbox = true;
-  }
-
   result.configFile = configFile;
-  result.sessionConfig = daemonOverrides.sessionConfig;
-
-  // Daemon has different defaults.
-  if (result.sessionConfig && result.browser.launchOptions.headless !== false)
-    result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
-
   await validateConfig(result);
-
   return result;
 }
 
-async function validateConfig(config: FullConfig): Promise<void> {
+export async function validateConfig(config: FullConfig): Promise<void> {
+  if (config.browser.browserName === 'chromium' && config.browser.launchOptions.chromiumSandbox === undefined) {
+    if (process.platform === 'linux')
+      config.browser.launchOptions.chromiumSandbox = config.browser.launchOptions.channel !== 'chromium';
+    else
+      config.browser.launchOptions.chromiumSandbox = true;
+  }
+
+  if (config.saveVideo && !checkFfmpeg()) {
+    // eslint-disable-next-line no-console
+    console.error(`\nError: ffmpeg required to save the video is not installed.`);
+    // eslint-disable-next-line no-console
+    console.error(`\nPlease run the command below. It will install a local copy of ffmpeg and will not change any system-wide settings.`);
+    // eslint-disable-next-line no-console
+    console.error(`\n    npx playwright install ffmpeg\n`);
+    // eslint-disable-next-line no-restricted-properties
+    process.exit(1);
+  }
+
   if (config.browser.initScript) {
     for (const script of config.browser.initScript) {
       if (!await fileExistsAsync(script))
@@ -324,7 +307,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
   return { ...config, configFile: cliOptions.config };
 }
 
-function configFromEnv(): Config & { configFile?: string } {
+export function configFromEnv(): Config & { configFile?: string } {
   const options: CLIOptions = {};
   options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
@@ -373,32 +356,17 @@ function configFromEnv(): Config & { configFile?: string } {
   return configFromCLIOptions(options);
 }
 
-async function configForDaemonSession(cliOptions: CLIOptions): Promise<Config & { configFile?: string, sessionConfig?: SessionConfig }> {
-  if (!cliOptions.daemonSession)
-    return {};
-
-  const sessionConfig = await fs.promises.readFile(cliOptions.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
-  const config = configFromCLIOptions({
-    config: sessionConfig.cli.config,
-    browser: sessionConfig.cli.browser,
-    isolated: sessionConfig.cli.persistent === true ? false : undefined,
-    headless: sessionConfig.cli.headed ? false : undefined,
-    extension: sessionConfig.cli.extension,
-    userDataDir: sessionConfig.cli.profile,
-    outputMode: 'file',
-    snapshotMode: 'full',
-  });
-  return { ...config, sessionConfig };
-}
-
-async function loadConfig(configFile: string | undefined): Promise<Config> {
+export async function loadConfig(configFile: string | undefined): Promise<Config> {
   if (!configFile)
     return {};
 
+  if (configFile.endsWith('.ini'))
+    return configFromIniFile(configFile);
+
   try {
     return JSON.parse(await fs.promises.readFile(configFile, 'utf8'));
-  } catch (error) {
-    throw new Error(`Failed to load config file: ${configFile}, ${error}`);
+  } catch {
+    return configFromIniFile(configFile);
   }
 }
 
@@ -451,7 +419,7 @@ function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
   ) as Partial<T>;
 }
 
-function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
+export function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
   const browser: FullConfig['browser'] = {
     ...pickDefined(base.browser),
     ...pickDefined(overrides.browser),
@@ -568,4 +536,13 @@ function envToBoolean(value: string | undefined): boolean | undefined {
 
 function envToString(value: string | undefined): string | undefined {
   return value ? value.trim() : undefined;
+}
+
+function checkFfmpeg(): boolean {
+  try {
+    const executable = registry.findExecutable('ffmpeg')!;
+    return fs.existsSync(executable.executablePath()!);
+  } catch (error) {
+    return false;
+  }
 }

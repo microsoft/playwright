@@ -290,11 +290,12 @@ export class FFBrowserContext extends BrowserContext {
   }
 
   async doGrantPermissions(origin: string, permissions: string[]) {
-    const webPermissionToProtocol = new Map<string, 'geo' | 'desktop-notification' | 'persistent-storage' | 'push'>([
+    const webPermissionToProtocol = new Map<string, string>([
       ['geolocation', 'geo'],
       ['persistent-storage', 'persistent-storage'],
       ['push', 'push'],
       ['notifications', 'desktop-notification'],
+      ['screen-wake-lock', 'screen-wake-lock'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);

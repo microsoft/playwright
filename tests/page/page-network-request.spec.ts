@@ -148,7 +148,7 @@ it('should get the same headers as the server CORS', async ({ page, server, brow
   expect(headers).toEqual(adjustServerHeaders(serverRequest.headers, browserName));
 });
 
-it('should not get preflight CORS requests when intercepting', async ({ page, server, browserName, isAndroid }) => {
+it('should not get preflight CORS requests when intercepting', async ({ page, server, browserName, isAndroid, isBidi }) => {
   it.fail(isAndroid, 'Playwright does not get CORS pre-flight on Android');
   await page.goto(server.PREFIX + '/empty.html');
 
@@ -200,7 +200,7 @@ it('should not get preflight CORS requests when intercepting', async ({ page, se
     expect(text).toBe('done');
     // Check that there was no preflight (OPTIONS) request.
     expect(routed).toEqual(['DELETE']);
-    if (browserName === 'firefox')
+    if (browserName === 'firefox' && !isBidi)
       expect(requests).toEqual(['OPTIONS', 'DELETE']);
     else
       expect(requests).toEqual(['DELETE']);

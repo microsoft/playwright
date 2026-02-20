@@ -25,6 +25,7 @@ import { clsx, useMeasure, useSetting } from '@web/uiUtils';
 import { InjectedScript } from '@injected/injectedScript';
 import { Recorder } from '@injected/recorder/recorder';
 import { asLocator } from '@isomorphic/locatorGenerators';
+import { blankSnapshotUrl } from '@isomorphic/trace/snapshotRenderer';
 import type { Language } from '@isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
 import { TabbedPaneTab } from '@web/components/tabbedPane';
@@ -133,7 +134,7 @@ export const SnapshotView: React.FunctionComponent<{
           iframe.addEventListener('error', loadedCallback);
 
           // Try preventing history entry from being created.
-          const snapshotUrl = snapshotUrls?.snapshotUrl || kBlankSnapshotUrl;
+          const snapshotUrl = snapshotUrls?.snapshotUrl || blankSnapshotUrl;
           if (iframe.contentWindow)
             iframe.contentWindow.location.replace(snapshotUrl);
           else
@@ -457,4 +458,3 @@ export async function fetchSnapshotInfo(snapshotInfoUrl: string | undefined) {
 }
 
 export const kDefaultViewport = { width: 1280, height: 720 };
-const kBlankSnapshotUrl = 'data:text/html,<body style="background: #ddd"></body>';

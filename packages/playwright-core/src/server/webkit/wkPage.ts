@@ -47,7 +47,7 @@ import type * as types from '../types';
 
 const UTILITY_WORLD_NAME = '__playwright_utility_world__';
 
-const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS && parseInt(registry.findExecutable('webkit').revision!, 10) >= 2245;
+const enableFrameSessions = !process.env.WK_DISABLE_FRAME_SESSIONS && parseInt(registry.findExecutable('webkit').revision!, 10) >= 2245 && parseInt(registry.findExecutable('webkit').revision!, 10) <= 2255;
 
 export class WKPage implements PageDelegate {
   readonly rawMouse: RawMouseImpl;
@@ -1213,6 +1213,7 @@ export class WKPage implements PageDelegate {
       ['geolocation', 'geolocation'],
       ['notifications', 'notifications'],
       ['clipboard-read', 'clipboard-read'],
+      ['screen-wake-lock', 'screen-wake-lock'],
     ]);
     const filtered = permissions.map(permission => {
       const protocolPermission = webPermissionToProtocol.get(permission);
@@ -1229,6 +1230,9 @@ export class WKPage implements PageDelegate {
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return true;
+  }
+
+  async setDockTile(image: Buffer): Promise<void> {
   }
 }
 

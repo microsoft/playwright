@@ -585,6 +585,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
       return;
     throw new Error(`File access denied: ${filePath} is outside allowed roots. Allowed roots: ${this._allowedDirectories.length ? this._allowedDirectories.join(', ') : 'none'}`);
   }
+
+  async _devtoolsStart(): Promise<{ url: string }> {
+    return await this._channel.devtoolsStart();
+  }
 }
 
 async function prepareStorageState(platform: Platform, storageState: string | SetStorageState): Promise<NonNullable<channels.BrowserNewContextParams['storageState']>> {

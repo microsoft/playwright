@@ -316,3 +316,12 @@ it('local network request is allowed from public origin', {
     `POST ${server.CROSS_PROCESS_PREFIX}/cors`,
   ]);
 });
+
+it('can request screen-wake-lock', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39115' }
+}, async ({ page, context }) => {
+  await context.grantPermissions(['screen-wake-lock']);
+  await page.route('**/*', route => route.fulfill({ status: 200, body: '<div>Hello there!</div>', contentType: 'text/html' }));
+  await page.goto('https://example.com');
+  await page.evaluate(() => navigator.wakeLock.request('screen'));
+});

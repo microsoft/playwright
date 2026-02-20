@@ -64,6 +64,33 @@ export class BidiNetworkManager {
       return;
     if (redirectedFrom)
       this._deleteRequest(redirectedFrom._id);
+
+    // handle CORS preflight requests
+    if (param.request.method === 'OPTIONS') {
+      // TODO: we should detect preflight requests by looking at param.initiator.type, but the Bidi spec for
+      // the initiator type is incomplete and browser implementations are inconsistent, so we check for an
+      // Access-Control-Request-Method header instead. See https://github.com/w3c/webdriver-bidi/issues/698.
+      const requestHeaders = Object.fromEntries(param.request.headers.map(h => [h.name.toLowerCase(), bidiBytesValueToString(h.value)]));
+      if (param.initiator?.type === 'preflight' || requestHeaders['access-control-request-method']) {
+        if (param.intercepts) {
+          // If interception is enabled, we accept all CORS options, assuming that this was intended when setting the route.
+          const responseHeaders: types.HeadersArray = [
+            { name: 'Access-Control-Allow-Origin', value: requestHeaders['origin'] || '*' },
+            { name: 'Access-Control-Allow-Methods', value: requestHeaders['access-control-request-method'] },
+            { name: 'Access-Control-Allow-Credentials', value: 'true' }
+          ];
+          if (requestHeaders['access-control-request-headers'])
+            responseHeaders.push({ name: 'Access-Control-Allow-Headers', value: requestHeaders['access-control-request-headers'] });
+          this._session.sendMayFail('network.provideResponse', {
+            request: param.request.request,
+            statusCode: 204,
+            headers: toBidiHeaders(responseHeaders),
+          });
+        }
+        return;
+      }
+    }
+
     let route;
     let headersOverride: types.HeadersArray | undefined;
     if (param.intercepts) {

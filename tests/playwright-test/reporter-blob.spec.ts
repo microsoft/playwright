@@ -2196,6 +2196,18 @@ test('project filter in report name', async ({ runInlineTest }) => {
     const reportFiles = await fs.promises.readdir(reportDir);
     expect(reportFiles.sort()).toEqual(['report-foo-b-r-6d9d49e-1.zip']);
   }
+
+  {
+    const result = await runInlineTest({ ...files, 'test-list.txt': `foo` }, { 'test-list': 'test-list.txt' });
+    expect(result.exitCode).toBe(0);
+    const reportFiles = await fs.promises.readdir(reportDir);
+
+    const result2 = await runInlineTest({ ...files, 'test-list.txt': `bar` }, { 'test-list': 'test-list.txt' });
+    expect(result2.exitCode).toBe(0);
+    const reportFiles2 = await fs.promises.readdir(reportDir);
+
+    expect(reportFiles2.sort()).not.toEqual(reportFiles.sort());
+  }
 });
 
 test('should report duration across all shards', async ({ runInlineTest, mergeReports }) => {
@@ -2325,4 +2337,40 @@ test('should populate projects in config when merging reports', async ({ runInli
 
   const projectNames = JSON.parse(outputLines[0]);
   expect(projectNames).toEqual(['setup', 'p1', 'setup', 'p2']);
+});
+
+test('workerIndex is rebased', async ({ runInlineTest, writeFiles, showReport, page, mergeReports }) => {
+  const reportDir = test.info().outputPath('blob-reports');
+  await writeFiles({
+    'playwright.config.ts': `
+      module.exports = {
+        fullyParallel: true,
+        reporter: [['blob', { outputDir: '${reportDir.replace(/\\/g, '/')}' }]]
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test-one', async () => {});
+      test('test-two', async () => {});
+    `,
+  });
+
+  await runInlineTest({}, { shard: '1/2', workers: '1' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+  await runInlineTest({}, { shard: '2/2', workers: '1' }, { PWTEST_BLOB_DO_NOT_REMOVE: '1' });
+
+  const { exitCode } = await mergeReports(reportDir, { 'PLAYWRIGHT_HTML_OPEN': 'never' }, { additionalArgs: ['--reporter', 'html'] });
+  expect(exitCode).toBe(0);
+  await showReport();
+
+  await page.getByRole('link', { name: 'test-two', exact: true }).click();
+
+  await page.getByRole('button', { name: 'Executed in Worker #1' }).click();
+  await expect(page.getByTestId('worker-test-list')).toMatchAriaSnapshot(`
+    - 'button "Executed in Worker #1" [expanded]'
+    - region:
+      - list:
+        - listitem:
+          - link "test-two"
+          - link "a.test.js:4"
+  `);
 });

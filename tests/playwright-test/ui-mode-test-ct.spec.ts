@@ -289,3 +289,99 @@ test('should watch component when editing util', async ({ runUITest, writeFiles 
         ❌ pass <=
   `);
 });
+
+test('should watch component when editing inline css', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    ...basicTestTree,
+    'src/button.tsx': undefined,
+    'src/button.ts': `
+      import { Button } from './buttonComponent';
+      export { Button };
+    `,
+    'src/buttonComponent.tsx': `
+      import cssText from './style.css?inline';
+      export const Button = () => <button>{cssText.trim()}</button>;
+    `,
+    'src/style.css': `
+      .button{color:red}
+    `,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { Button } from './button';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<Button></Button>);
+        await expect(component).toHaveText('.button{color:red}', { timeout: 1 });
+      });
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ button.test.tsx
+        ◯ pass
+  `);
+
+  await page.getByTitle('Watch all').click();
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ button.test.tsx
+        ✅ pass
+  `);
+
+  await writeFiles({
+    'src/style.css': `
+      .button{color:blue}
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ button.test.tsx
+        ❌ pass <=
+  `);
+});
+
+test('should watch component when editing story import chain', async ({ runUITest, writeFiles }) => {
+  const { page } = await runUITest({
+    ...basicTestTree,
+    'src/button.tsx': undefined,
+    'src/button.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { StoryButton } from './button.story';
+
+      test('pass', async ({ mount }) => {
+        const component = await mount(<StoryButton></StoryButton>);
+        await expect(component).toHaveText('Button', { timeout: 1 });
+      });
+    `,
+    'src/button.story.tsx': `
+      import { Button } from './buttonComponent';
+      export const StoryButton = () => <Button></Button>;
+    `,
+    'src/buttonComponent.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+  });
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ◯ button.test.tsx
+        ◯ pass
+  `);
+
+  await page.getByTitle('Watch all').click();
+  await page.getByTitle('Run all').click();
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ✅ button.test.tsx
+        ✅ pass
+  `);
+
+  await writeFiles({
+    'src/buttonComponent.tsx': `
+      export const Button = () => <button>Button2</button>;
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toBe(`
+    ▼ ❌ button.test.tsx
+        ❌ pass <=
+  `);
+});

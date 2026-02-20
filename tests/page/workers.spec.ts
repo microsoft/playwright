@@ -61,12 +61,12 @@ it('should report console logs', async function({ page }) {
 });
 
 it('should have timestamp on worker console messages', async function({ page }) {
-  const before = Date.now();
+  const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   const [message] = await Promise.all([
     page.waitForEvent('console'),
     page.evaluate(() => new Worker(URL.createObjectURL(new Blob(['console.log("ts")'], { type: 'application/javascript' })))),
   ]);
-  const after = Date.now();
+  const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
   expect(message.text()).toBe('ts');
   expect(message.timestamp()).toBeGreaterThanOrEqual(before);
   expect(message.timestamp()).toBeLessThanOrEqual(after);

@@ -22,7 +22,7 @@
   text-overflow: ellipsis;
 }
 
-.test-file-test:hover {
+.test-file-test-selected, .test-file-test:hover {
   background-color: var(--color-canvas-subtle);
 }
 

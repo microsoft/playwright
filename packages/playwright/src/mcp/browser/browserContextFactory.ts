@@ -23,7 +23,7 @@ import * as playwright from 'playwright-core';
 import { registryDirectory } from 'playwright-core/lib/server/registry/index';
 import { startTraceViewerServer } from 'playwright-core/lib/server';
 import { logUnhandledError, testDebug } from '../log';
-import { outputFile } from './config';
+import { outputDir, outputFile } from './config';
 import { firstRootPath } from '../sdk/server';
 
 import type { FullConfig } from './config';
@@ -140,7 +140,7 @@ class IsolatedContextFactory extends BaseContextFactory {
       handleSIGTERM: false,
     }).catch(error => {
       if (error.message.includes('Executable doesn\'t exist'))
-        throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+        throwBrowserIsNotInstalledError(this.config);
       throw error;
     });
   }
@@ -227,7 +227,7 @@ class PersistentContextFactory implements BrowserContextFactory {
         return { browserContext, close };
       } catch (error: any) {
         if (error.message.includes('Executable doesn\'t exist'))
-          throw new Error(`Browser specified in your config is not installed. Either install it (likely) or change the config.`);
+          throwBrowserIsNotInstalledError(this.config);
         if (error.message.includes('cannot open shared object file: No such file or directory')) {
           const browserName = launchOptions.channel ?? this.config.browser.browserName;
           throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
@@ -352,9 +352,7 @@ export class SharedContextFactory implements BrowserContextFactory {
 }
 
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
-  if (!config.saveTrace && !config.capabilities?.includes('devtools'))
-    return;
-  return await outputFile(config, clientInfo, `traces`, { origin: 'code' });
+  return path.resolve(outputDir(config, clientInfo), 'traces');
 }
 
 async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
@@ -367,4 +365,12 @@ async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: C
     };
   }
   return result;
+}
+
+function throwBrowserIsNotInstalledError(config: FullConfig): never {
+  const channel = config.browser.launchOptions?.channel ?? config.browser.browserName;
+  if (config.skillMode)
+    throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
+  else
+    throw new Error(`Browser "${channel}" is not installed. Either install it (likely) or change the config.`);
 }

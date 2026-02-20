@@ -9,25 +9,29 @@ allowed-tools: Bash(playwright-cli:*)
 ## Quick start
 
 ```bash
-playwright-cli open https://playwright.dev
+# open new browser
+playwright-cli open
+# navigate to a page
+playwright-cli goto https://playwright.dev
+# interact with the page using refs from the snapshot
 playwright-cli click e15
 playwright-cli type "page.click"
 playwright-cli press Enter
+# take a screenshot (rarely used, as snapshot is more common)
+playwright-cli screenshot
+# close the browser
+playwright-cli close
 ```
-
-## Core workflow
-
-1. Navigate: `playwright-cli open https://example.com`
-2. Interact using refs from the snapshot
-3. Re-snapshot after significant changes
 
 ## Commands
 
 ### Core
 
 ```bash
+playwright-cli open
+# open and navigate right away
 playwright-cli open https://example.com/
-playwright-cli close
+playwright-cli goto https://playwright.dev
 playwright-cli type "search query"
 playwright-cli click e3
 playwright-cli dblclick e7
@@ -46,6 +50,7 @@ playwright-cli dialog-accept
 playwright-cli dialog-accept "confirmation text"
 playwright-cli dialog-dismiss
 playwright-cli resize 1920 1080
+playwright-cli close
 ```
 
 ### Navigation
@@ -150,14 +155,7 @@ playwright-cli video-start
 playwright-cli video-stop video.webm
 ```
 
-### Install
-
-```bash
-playwright-cli install-browser
-playwright-cli install-skills
-```
-
-### Configuration
+## Open parameters
 ```bash
 # Use specific browser when creating session
 playwright-cli open --browser=chrome
@@ -181,19 +179,48 @@ playwright-cli close
 playwright-cli delete-data
 ```
 
-### Sessions
+## Snapshots
+
+After each command, playwright-cli provides a snapshot of the current browser state.
 
 ```bash
-playwright-cli --session=mysession open example.com
-playwright-cli --session=mysession click e6
-playwright-cli --session=mysession close  # stop a named session
-playwright-cli --session=mysession delete-data  # delete user data for named session
+> playwright-cli goto https://example.com
+### Page
+- Page URL: https://example.com/
+- Page Title: Example Domain
+### Snapshot
+[Snapshot](.playwright-cli/page-2026-02-14T19-22-42-679Z.yml)
+```
 
-playwright-cli session-list
+You can also take a snapshot on demand using `playwright-cli snapshot` command.
+
+If `--filename` is not provided, a new snapshot file is created with a timestamp. Default to automatic file naming, use `--filename=` when artifact is a part of the workflow result.
+
+## Browser Sessions
+
+```bash
+# create new browser session named "mysession" with persistent profile
+playwright-cli -s=mysession open example.com --persistent
+# same with manually specified profile directory (use when requested explicitly)
+playwright-cli -s=mysession open example.com --profile=/path/to/profile
+playwright-cli -s=mysession click e6
+playwright-cli -s=mysession close  # stop a named browser
+playwright-cli -s=mysession delete-data  # delete user data for persistent session
+
+playwright-cli list
 # Close all browsers
-playwright-cli session-close-all
+playwright-cli close-all
 # Forcefully kill all browser processes
-playwright-cli session-kill-all
+playwright-cli kill-all
+```
+
+## Local installation
+
+In some cases user might want to install playwright-cli locally. If running globally available `playwright-cli` binary fails, use `npx playwright-cli` to run the commands. For example:
+
+```bash
+npx playwright-cli open https://example.com
+npx playwright-cli click e1
 ```
 
 ## Example: Form submission
@@ -206,6 +233,7 @@ playwright-cli fill e1 "user@example.com"
 playwright-cli fill e2 "password123"
 playwright-cli click e3
 playwright-cli snapshot
+playwright-cli close
 ```
 
 ## Example: Multi-tab workflow
@@ -216,6 +244,7 @@ playwright-cli tab-new https://example.com/other
 playwright-cli tab-list
 playwright-cli tab-select 0
 playwright-cli snapshot
+playwright-cli close
 ```
 
 ## Example: Debugging with DevTools
@@ -226,6 +255,7 @@ playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli console
 playwright-cli network
+playwright-cli close
 ```
 
 ```bash
@@ -234,13 +264,14 @@ playwright-cli tracing-start
 playwright-cli click e4
 playwright-cli fill e7 "test"
 playwright-cli tracing-stop
+playwright-cli close
 ```
 
 ## Specific tasks
 
 * **Request mocking** [references/request-mocking.md](references/request-mocking.md)
 * **Running Playwright code** [references/running-code.md](references/running-code.md)
-* **Session management** [references/session-management.md](references/session-management.md)
+* **Browser session management** [references/session-management.md](references/session-management.md)
 * **Storage state (cookies, localStorage)** [references/storage-state.md](references/storage-state.md)
 * **Test generation** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)

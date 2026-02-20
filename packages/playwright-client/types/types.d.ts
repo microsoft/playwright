@@ -2257,6 +2257,20 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Clears all stored console messages from this page. Subsequent calls to
+   * [page.consoleMessages()](https://playwright.dev/docs/api/class-page#page-console-messages) will only return
+   * messages logged after the clear.
+   */
+  clearConsoleMessages(): Promise<void>;
+
+  /**
+   * Clears all stored page errors from this page. Subsequent calls to
+   * [page.pageErrors()](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors thrown
+   * after the clear.
+   */
+  clearPageErrors(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -3003,7 +3017,7 @@ export interface Page {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -3108,7 +3122,7 @@ export interface Page {
    * <button data-testid="directions">Itinéraire</button>
    * ```
    *
-   * You can locate the element by it's test id:
+   * You can locate the element by its test id:
    *
    * ```js
    * await page.getByTestId('directions').click();
@@ -4091,6 +4105,8 @@ export interface Page {
    *     await route.continue();
    * });
    * ```
+   *
+   * If a request matches multiple registered routes, the most recently registered route takes precedence.
    *
    * Page routes take precedence over browser context routes (set up with
    * [browserContext.route(url, handler[, options])](https://playwright.dev/docs/api/class-browsercontext#browser-context-route))
@@ -7022,7 +7038,7 @@ export interface Frame {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -7127,7 +7143,7 @@ export interface Frame {
    * <button data-testid="directions">Itinéraire</button>
    * ```
    *
-   * You can locate the element by it's test id:
+   * You can locate the element by its test id:
    *
    * ```js
    * await page.getByTestId('directions').click();
@@ -9339,6 +9355,7 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
+   * - `'screen-wake-lock'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {
@@ -13837,7 +13854,7 @@ export interface Locator {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -13942,7 +13959,7 @@ export interface Locator {
    * <button data-testid="directions">Itinéraire</button>
    * ```
    *
-   * You can locate the element by it's test id:
+   * You can locate the element by its test id:
    *
    * ```js
    * await page.getByTestId('directions').click();
@@ -20066,7 +20083,7 @@ export interface FrameLocator {
    * <button>Submit</button>
    * ```
    *
-   * You can locate each element by it's implicit role:
+   * You can locate each element by its implicit role:
    *
    * ```js
    * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
@@ -20172,7 +20189,7 @@ export interface FrameLocator {
    * <button data-testid="directions">Itinéraire</button>
    * ```
    *
-   * You can locate the element by it's test id:
+   * You can locate the element by its test id:
    *
    * ```js
    * await page.getByTestId('directions').click();

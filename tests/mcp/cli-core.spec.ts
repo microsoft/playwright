@@ -31,7 +31,7 @@ test('open', async ({ cli, server }) => {
 test('close', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('close');
-  expect(output).toContain(`Session 'default' stopped.`);
+  expect(output).toContain(`Browser 'default' closed`);
 });
 
 test('click button', async ({ cli, server }) => {
@@ -84,6 +84,15 @@ test('fill', async ({ cli, server }) => {
 
   const { snapshot: fillSnapshot } = await cli('fill', 'e2', 'Hello, world!', '--submit');
   expect(fillSnapshot).toBe(`- textbox [active] [ref=e2]: Hello, world!`);
+});
+
+test('fill numeric', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright-cli/issues/235' } }, async ({ cli, server }) => {
+  server.setContent('/', `<input type=text>`, 'text/html');
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- textbox [ref=e2]`);
+
+  const { snapshot: fillSnapshot } = await cli('fill', 'e2', '42', '--submit');
+  expect(fillSnapshot).toContain(`[ref=e2]: "42"`);
 });
 
 test('hover', async ({ cli, server }) => {

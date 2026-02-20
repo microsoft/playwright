@@ -35,8 +35,9 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import * as mcp from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
-import { decorateCommand } from './mcp/program';
+import { decorateMCPCommand } from './mcp/program';
 import { setupExitWatchdog } from './mcp/browser/watchdog';
+import { decorateCLICommand } from './cli/daemon/program';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
@@ -150,7 +151,13 @@ Examples:
 function addBrowserMCPServerCommand(program: Command) {
   const command = program.command('run-mcp-server', { hidden: true });
   command.description('Interact with the browser over MCP');
-  decorateCommand(command, packageJSON.version);
+  decorateMCPCommand(command, packageJSON.version);
+}
+
+function addBrowserCLIServerCommand(program: Command) {
+  const command = program.command('run-cli-server', { hidden: true });
+  command.description('Interact with the browser over CLI');
+  decorateCLICommand(command, packageJSON.version);
 }
 
 function addTestMCPServerCommand(program: Command) {
@@ -445,6 +452,7 @@ addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
 addBrowserMCPServerCommand(program);
+addBrowserCLIServerCommand(program);
 addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);

@@ -30,9 +30,18 @@ test('too many arguments', async ({ cli, server }) => {
 
 test('wrong option type', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
-  const { error, exitCode } = await cli('type', 'foo', '--submit=bar');
-  expect(exitCode).toBe(1);
-  expect(error).toContain(`error: '--submit' option: expected boolean, received string`);
+  const boolean = await cli('type', 'foo', '--submit=bar');
+  expect(boolean.exitCode).toBe(1);
+  expect(boolean.error).toContain(`boolean option '--submit' should not be passed with '=value', use '--submit' or '--no-submit' instead`);
+  const status = await cli('route', '.', '--status=OK');
+  expect(status.exitCode).toBe(1);
+  expect(status.error).toContain(`error: '--status' option: expected number, received 'OK'`);
+});
+
+test('arg after boolean option', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const boolean = await cli('type', '--submit', 'foo');
+  expect(boolean.exitCode).toBe(0);
 });
 
 test('missing argument', async ({ cli, server }) => {
@@ -46,5 +55,16 @@ test('wrong argument type', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { error, exitCode } = await cli('mousemove', '12', 'foo');
   expect(exitCode).toBe(1);
-  expect(error).toContain(`error: 'y' argument: expected number, received string`);
+  expect(error).toContain(`error: 'y' argument: expected number, received 'foo'`);
+  const press = await cli('press', '5');
+  expect(press.exitCode).toBe(0);
+});
+
+test('should preserve leading zeros in string arguments', async ({ cli, server }) => {
+  server.setContent('/', `<input type=text>`, 'text/html');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+  await cli('type', '0812345679');
+  const { snapshot } = await cli('snapshot');
+  expect(snapshot).toContain(`0812345679`);
 });

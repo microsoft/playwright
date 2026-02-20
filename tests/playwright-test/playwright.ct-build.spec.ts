@@ -736,3 +736,62 @@ test('should resolve components imported from node_modules', async ({ runInlineT
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should remove ? or # from deps in metainfo.json', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': playwrightCtConfigText,
+    'playwright/index.html': `<script type="module" src="./index.js"></script>`,
+    'playwright/index.js': ``,
+    'button.tsx': `
+      export const Button = () => <button>Button</button>;
+    `,
+    'button2.tsx': `
+      export const Button2 = () => <button>Button2</button>;
+    `,
+    'button3.tsx': `
+      export const Button3 = () => <button>Button3</button>;
+    `,
+    'button.story.tsx': `
+      import { Button as Button1 } from './button';
+      import { Button } from './button';
+      import { Button as ButtonA } from './button?a';
+      import { Button as ButtonB } from './button#b';
+      import { Button2 } from './button2?c';
+      import { Button3 } from './button3#d';
+
+      export const ButtonStory = () => (
+        <div>
+          <Button />
+          <Button2 />
+          <ButtonA />
+          <Button3 />
+          <ButtonB />
+        </div>
+      )
+    `,
+    'a.test.tsx': `
+      import { test, expect } from '@playwright/experimental-ct-react';
+      import { ButtonStory } from './button.story.tsx';
+
+      test('Button', async ({ mount }) => {
+        const component = await mount(<ButtonStory />);
+        await expect(component).toHaveText('ButtonButton2ButtonButton3Button');
+      });
+    `,
+  }, { workers: 1 });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const metainfo = JSON.parse(fs.readFileSync(testInfo.outputPath('playwright/.cache/metainfo.json'), 'utf-8'));
+
+  for (const [, value] of Object.entries(metainfo.deps))
+    (value as string[]).sort();
+
+  expect(Object.entries(metainfo.deps)).toEqual([
+    [expect.stringContaining('button.story.tsx'), [
+      expect.stringContaining('button.story.tsx'),
+      expect.stringContaining('button.tsx'),
+      expect.stringContaining('button2.tsx'),
+      expect.stringContaining('button3.tsx'),
+    ]],
+  ]);
+});

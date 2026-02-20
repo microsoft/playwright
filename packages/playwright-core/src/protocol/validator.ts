@@ -630,6 +630,13 @@ scheme.BrowserTypeConnectOverCDPResult = tObject({
   browser: tChannel(['Browser']),
   defaultContext: tOptional(tChannel(['BrowserContext'])),
 });
+scheme.BrowserTypeConnectOverCDPTransportParams = tObject({
+  transport: tBinary,
+});
+scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
+  browser: tChannel(['Browser']),
+  defaultContext: tOptional(tChannel(['BrowserContext'])),
+});
 scheme.BrowserInitializer = tObject({
   version: tString,
   name: tString,
@@ -1157,6 +1164,10 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
+scheme.BrowserContextDevtoolsStartParams = tOptional(tObject({}));
+scheme.BrowserContextDevtoolsStartResult = tObject({
+  url: tString,
+});
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({
@@ -1217,6 +1228,8 @@ scheme.PageCloseParams = tObject({
   reason: tOptional(tString),
 });
 scheme.PageCloseResult = tOptional(tObject({}));
+scheme.PageClearConsoleMessagesParams = tOptional(tObject({}));
+scheme.PageClearConsoleMessagesResult = tOptional(tObject({}));
 scheme.PageConsoleMessagesParams = tOptional(tObject({}));
 scheme.PageConsoleMessagesResult = tObject({
   messages: tArray(tObject({
@@ -1421,6 +1434,8 @@ scheme.PageTouchscreenTapParams = tObject({
   y: tFloat,
 });
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
+scheme.PageClearPageErrorsParams = tOptional(tObject({}));
+scheme.PageClearPageErrorsResult = tOptional(tObject({}));
 scheme.PagePageErrorsParams = tOptional(tObject({}));
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
@@ -1535,6 +1550,10 @@ scheme.PageAgentParams = tObject({
 scheme.PageAgentResult = tObject({
   agent: tChannel(['PageAgent']),
 });
+scheme.PageSetDockTileParams = tObject({
+  image: tBinary,
+});
+scheme.PageSetDockTileResult = tOptional(tObject({}));
 scheme.FrameInitializer = tObject({
   url: tString,
   name: tString,

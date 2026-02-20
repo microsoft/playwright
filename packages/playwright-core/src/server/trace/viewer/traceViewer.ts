@@ -112,7 +112,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
 
   const transport = options?.transport || (options?.isServer ? new StdinServer() : undefined);
   if (transport)
-    server.createWebSocket(transport);
+    server.createWebSocket(() => transport);
 
   const { host, port } = options || {};
   await server.start({ preferredPort: port, host });

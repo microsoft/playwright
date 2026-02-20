@@ -1006,6 +1006,14 @@ BrowserType:
         browser: Browser
         defaultContext: BrowserContext?
 
+    connectOverCDPTransport:
+      title: Connect over CDP transport
+      parameters:
+        transport: binary
+      returns:
+        browser: Browser
+        defaultContext: BrowserContext?
+
 Browser:
   type: interface
 
@@ -1466,6 +1474,11 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
+    devtoolsStart:
+      internal: true
+      returns:
+        url: string
+
   events:
 
     bindingCall:
@@ -1572,6 +1585,9 @@ Page:
         reason: string?
       flags:
         pausesBeforeAction: true
+
+    clearConsoleMessages:
+      title: Clear console messages
 
     consoleMessages:
       title: Get console messages
@@ -1912,6 +1928,9 @@ Page:
         snapshot: true
         pausesBeforeAction: true
 
+    clearPageErrors:
+      title: Clear page errors
+
     pageErrors:
       title: Get page errors
       group: getter
@@ -2079,6 +2098,11 @@ Page:
         systemPrompt: string?
       returns:
         agent: PageAgent
+
+    setDockTile:
+      internal: true
+      parameters:
+        image: binary
 
   events:
 

@@ -340,7 +340,7 @@ it('should not expose preflight OPTIONS request', {
 
 it('should not expose preflight OPTIONS request with network interception', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/36311' }
-}, async ({ page, server, browserName }) => {
+}, async ({ page, server, browserName, isBidi }) => {
   const serverRequests = [];
   server.setRoute('/cors', (req, res) => {
     serverRequests.push(`${req.method} ${req.url}`);
@@ -374,7 +374,7 @@ it('should not expose preflight OPTIONS request with network interception', {
   }, server.CROSS_PROCESS_PREFIX + '/cors').catch(() => {});
   expect(response).toBe('Hello there!');
   expect.soft(serverRequests).toEqual([
-    ...(browserName !== 'chromium' ? ['OPTIONS /cors'] : []),
+    ...(browserName === 'chromium' || isBidi ? [] : ['OPTIONS /cors']),
     'POST /cors',
   ]);
   expect.soft(clientRequests).toEqual([

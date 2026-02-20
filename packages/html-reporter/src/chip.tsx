@@ -28,9 +28,10 @@ export const Chip: React.FC<{
   expanded?: boolean,
   noInsets?: boolean,
   setExpanded?: (expanded: boolean) => void,
-  children?: any,
+  children?: React.ReactNode,
+  body?: () => React.ReactNode | undefined,
   dataTestId?: string,
-}> = ({ header, footer, expanded, setExpanded, children, noInsets, dataTestId }) => {
+}> = ({ header, footer, expanded, setExpanded, children, noInsets, body, dataTestId }) => {
   const id = React.useId();
   return <div className='chip' data-testid={dataTestId}>
     <div
@@ -45,6 +46,7 @@ export const Chip: React.FC<{
     </div>
     {(!setExpanded || expanded) && <div id={id} role='region' className={clsx('chip-body', noInsets && 'chip-body-no-insets')}>
       {children}
+      {body && body()}
       {footer && <div className='chip-footer'>{footer}</div>}
     </div>}
   </div>;
@@ -54,10 +56,11 @@ export const AutoChip: React.FC<{
   header: React.JSX.Element | string,
   initialExpanded?: boolean,
   noInsets?: boolean,
-  children?: any,
+  children?: React.ReactNode,
+  body?: () => React.ReactNode | undefined,
   dataTestId?: string,
   revealOnAnchorId?: AnchorID,
-}> = ({ header, initialExpanded, noInsets, children, dataTestId, revealOnAnchorId }) => {
+}> = ({ header, initialExpanded, noInsets, children, body, dataTestId, revealOnAnchorId }) => {
   const [expanded, setExpanded] = React.useState(initialExpanded ?? true);
   const onReveal = React.useCallback(() => setExpanded(true), []);
   useAnchor(revealOnAnchorId, onReveal);
@@ -66,6 +69,7 @@ export const AutoChip: React.FC<{
     expanded={expanded}
     setExpanded={setExpanded}
     noInsets={noInsets}
+    body={body}
     dataTestId={dataTestId}
   >
     {children}

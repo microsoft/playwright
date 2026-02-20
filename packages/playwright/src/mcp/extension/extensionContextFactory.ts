@@ -49,7 +49,8 @@ export class ExtensionContextFactory implements BrowserContextFactory {
 
   private async _obtainBrowser(clientInfo: ClientInfo, abortSignal: AbortSignal, toolName: string | undefined): Promise<playwright.Browser> {
     const relay = await this._startRelay(abortSignal);
-    await relay.ensureExtensionConnectionForMCPContext(clientInfo, abortSignal, toolName);
+    const forceNewTab = toolName === 'browser_navigate';
+    await relay.ensureExtensionConnectionForMCPContext(clientInfo, abortSignal, forceNewTab);
     return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
   }
 

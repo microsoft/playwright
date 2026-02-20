@@ -53,7 +53,6 @@ jobs:
     # Needed for video tests
     - run: npx playwright install ffmpeg
     - run: npx playwright install --with-deps chromium
-      if: matrix.channel == 'bidi-chromium'
     - if: matrix.channel == 'moz-firefox-nightly'
       run: |
         echo "BIDI_FFPATH=$(npx -y @puppeteer/browsers install firefox@nightly | tail -n1 | sed 's/^[^ ]* *//')" >> "$GITHUB_ENV"

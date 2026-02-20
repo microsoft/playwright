@@ -97,6 +97,7 @@ export interface PageDelegate {
   resetForReuse(progress: Progress): Promise<void>;
   // WebKit hack.
   shouldToggleStyleSheetToSyncAnimations(): boolean;
+  setDockTile(image: Buffer): Promise<void>;
 }
 
 type EmulatedSize = { screen: types.Size, viewport: types.Size };
@@ -279,6 +280,7 @@ export class Page extends SdkObject<PageEventMap> {
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
+    this.browserContext.emit(BrowserContext.Events.PageClosed, this);
     this._closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError(this.closeReason()));
@@ -398,6 +400,10 @@ export class Page extends SdkObject<PageEventMap> {
       this.emitOnContext(BrowserContext.Events.Console, message);
   }
 
+  clearConsoleMessages() {
+    this._consoleMessages.length = 0;
+  }
+
   consoleMessages() {
     return this._consoleMessages;
   }
@@ -411,6 +417,10 @@ export class Page extends SdkObject<PageEventMap> {
     // or on the "errored" Page.
     if (this._initialized)
       this.emitOnContext(BrowserContext.Events.PageError, pageError, this);
+  }
+
+  clearPageErrors() {
+    this._pageErrors.length = 0;
   }
 
   pageErrors() {
@@ -830,6 +840,7 @@ export class Page extends SdkObject<PageEventMap> {
 
   frameNavigatedToNewDocument(frame: frames.Frame) {
     this.emit(Page.Events.InternalFrameNavigatedToNewDocument, frame);
+    this.browserContext.emit(BrowserContext.Events.InternalFrameNavigatedToNewDocument, frame, this);
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);
@@ -864,6 +875,10 @@ export class Page extends SdkObject<PageEventMap> {
   async snapshotForAI(progress: Progress, options: { track?: string, doNotRenderActive?: boolean } = {}): Promise<{ full: string, incremental?: string }> {
     const snapshot = await snapshotFrameForAI(progress, this.mainFrame(), options);
     return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
+  }
+
+  async setDockTile(image: Buffer) {
+    await this.delegate.setDockTile(image);
   }
 }
 
