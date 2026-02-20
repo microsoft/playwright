@@ -187,7 +187,7 @@ it('should support closing the page via a subsequent onbeforeunload dialog', asy
 
 it('does not get stalled by beforeUnload', {
   annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/38731' },
-}, async ({ page, server }) => {
+}, async ({ page, server, browserName, isBidi }) => {
   await page.goto(server.HELLO_WORLD);
 
   await page.evaluate(() => {
@@ -195,7 +195,11 @@ it('does not get stalled by beforeUnload', {
       event.preventDefault();
     });
   });
-  page.on('dialog', dialog => dialog.dismiss());
+
+  if (browserName === 'firefox' && isBidi)
+    page.on('dialog', dialog => dialog.dismiss().catch(() => {}));
+  else
+    page.on('dialog', dialog => dialog.dismiss());
 
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.
