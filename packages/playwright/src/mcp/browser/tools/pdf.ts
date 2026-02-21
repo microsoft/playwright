@@ -43,6 +43,24 @@ const pdf = defineTabTool({
   },
 });
 
+const triggerPrint = defineTabTool({
+  capability: 'pdf',
+
+  schema: {
+    name: 'browser_trigger_print',
+    title: 'Trigger print on current page',
+    description: 'Calls window.print() on the current page. The Electron shell intercepts the print call and captures it as a PDF automatically. Use this instead of keyboard shortcuts when the page needs to be printed.',
+    inputSchema: z.object({}),
+    type: 'action',
+  },
+
+  handle: async (tab, params, response) => {
+    await tab.page.evaluate(() => window.print());
+    response.addTextResult('Print triggered on current page. The system will capture it as a PDF automatically.');
+  },
+});
+
 export default [
   pdf,
+  triggerPrint,
 ];
