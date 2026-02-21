@@ -2271,6 +2271,13 @@ export interface Page {
   clearPageErrors(): Promise<void>;
 
   /**
+   * Clears all stored network requests from this page. Subsequent calls to
+   * [page.requests()](https://playwright.dev/docs/api/class-page#page-requests) will only return requests made after
+   * the clear.
+   */
+  clearRequests(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
