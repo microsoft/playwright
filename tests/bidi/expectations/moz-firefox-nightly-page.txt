@@ -140,7 +140,6 @@ page/page-route.spec.ts › should not throw if request was cancelled by the pag
 page/page-screenshot.spec.ts › page screenshot › should allow transparency [fail]
 page/page-screenshot.spec.ts › page screenshot animations › should not capture css animations in shadow DOM [flaky]
 page/page-screenshot.spec.ts › page screenshot animations › should not capture pseudo element css animation [fail]
-page/page-screenshot.spec.ts › should throw if screenshot size is too large [fail]
 page/page-set-input-files.spec.ts › should upload a folder [fail]
 page/page-wait-for-load-state.spec.ts › should wait for load state of empty url popup [timeout]
 page/wheel.spec.ts › should dispatch wheel events after popup was opened @smoke [timeout]
