@@ -98,16 +98,26 @@ export class ProgressController {
 
     if (deadline) {
       const timeoutError = new TimeoutError(`Timeout ${timeout}ms exceeded.`);
-      timer = setTimeout(() => {
-        // TODO: migrate this to "progress.disableTimeout()".
-        if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)
-          return;
+      const remaining = deadline - monotonicTime();
+      if (remaining <= 0) {
+        // Deadline already passed, fire immediately without scheduling a timer.
         if (this._state === 'running') {
           this._state = { error: timeoutError };
           this._forceAbortPromise.reject(timeoutError);
           this._controller.abort(timeoutError);
         }
-      }, deadline - monotonicTime());
+      } else {
+        timer = setTimeout(() => {
+          // TODO: migrate this to "progress.disableTimeout()".
+          if (this.metadata.pauseStartTime && !this.metadata.pauseEndTime)
+            return;
+          if (this._state === 'running') {
+            this._state = { error: timeoutError };
+            this._forceAbortPromise.reject(timeoutError);
+            this._controller.abort(timeoutError);
+          }
+        }, remaining);
+      }
     }
 
     try {
