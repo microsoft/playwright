@@ -16,6 +16,9 @@
 
 import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 import path from 'path';
+import url from 'url';
+
+test.describe.configure({ mode: 'parallel' });
 
 test('should return the location of a syntax error', async ({ runInlineTest }) => {
   const result = await runInlineTest({
@@ -1160,4 +1163,55 @@ test('should dynamically import re-exported cjs namespace', {
   });
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
+});
+
+test('should compose with a custom ESM loader', {
+  annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39172' },
+}, async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'package.json': JSON.stringify({ type: 'module' }),
+    'custom-loader.mjs': `
+      export async function resolve(specifier, context, nextResolve) {
+        console.log('%% resolve ' + specifier);
+        return nextResolve(specifier, context);
+      }
+
+      export async function load(url, context, nextLoad) {
+        const result = await nextLoad(url, context);
+        console.log('%% load ' + url + ' source=' + result.source);
+        return result;
+      }
+    `,
+    'playwright.config.ts': `
+      import { register } from 'node:module';
+      register('./custom-loader.mjs', import.meta.url);
+
+      import { defineConfig } from '@playwright/test';
+      export default defineConfig({
+        projects: [{ name: 'foo' }],
+        build: { external: ['*'] },
+      });
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('pass', () => {
+        expect(1 + 1).toBe(2);
+      });
+    `,
+  });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  const testFile = url.pathToFileURL(testInfo.outputPath('a.test.js')).toString();
+  const expectedSequence = [
+    `resolve ${testFile}.esm.preflight`,
+    `load ${testFile}.esm.preflight source=void 0;`,
+    `resolve ${testFile}`,
+    `load ${testFile} source=`,
+    `resolve @playwright/test`,
+  ];
+  expect(result.outputLines).toEqual([
+    ...expectedSequence, // test collection
+    ...expectedSequence, // worker
+  ]);
 });

@@ -62,34 +62,39 @@ const kSupportedFormats = new Map([
 // Node < 18.6: defaultLoad takes 3 arguments.
 // Node >= 18.6: nextLoad from the chain takes 2 arguments.
 async function load(originalModuleUrl: string, context: { format?: string }, defaultLoad: Function) {
+  const isPreflight = originalModuleUrl.endsWith(esmPreflightExtension);
   const moduleUrl = originalModuleUrl.replace(esmPreflightExtension, '');
-  // Bail out for wasm, json, etc.
-  if (!kSupportedFormats.has(context.format))
-    return defaultLoad(moduleUrl, context, defaultLoad);
 
-  // Bail for built-in modules.
-  if (!moduleUrl.startsWith('file://'))
-    return defaultLoad(moduleUrl, context, defaultLoad);
+  const bail =
+    !kSupportedFormats.has(context.format) || // Bail out for wasm, json, etc.
+    !moduleUrl.startsWith('file://');         // Bail out for built-in modules
 
-  const filename = url.fileURLToPath(moduleUrl);
-  // Bail for node_modules.
-  if (!shouldTransform(filename))
-    return defaultLoad(moduleUrl, context, defaultLoad);
+  if (!bail) {
+    const filename = url.fileURLToPath(moduleUrl);
+    // Bail for node_modules.
+    if (shouldTransform(filename)) {
+      const code = fs.readFileSync(filename, 'utf-8');
+      const transformed = transformHook(code, filename, moduleUrl);
 
-  const code = fs.readFileSync(filename, 'utf-8');
-  const transformed = transformHook(code, filename, moduleUrl);
+      // Flush the source maps to the main thread, so that errors after import() are source-mapped.
+      if (transformed.serializedCache)
+        transport?.post('pushToCompilationCache', { cache: transformed.serializedCache });
 
-  // Flush the source maps to the main thread, so that errors after import() are source-mapped.
-  if (transformed.serializedCache)
-    transport?.post('pushToCompilationCache', { cache: transformed.serializedCache });
+      if (!isPreflight) {
+        // Output format is required, so we determine it manually when unknown.
+        // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
+        return {
+          format: kSupportedFormats.get(context.format) || (fileIsModule(filename) ? 'module' : 'commonjs'),
+          source: transformed.code,
+          shortCircuit: true,
+        };
+      }
+    }
+  }
 
-  // Output format is required, so we determine it manually when unknown.
-  // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
-  return {
-    format: kSupportedFormats.get(context.format) || (fileIsModule(filename) ? 'module' : 'commonjs'),
-    source: originalModuleUrl.endsWith(esmPreflightExtension) ? `void 0;` : transformed.code,
-    shortCircuit: true,
-  };
+  if (isPreflight)
+    return { format: 'module', source: 'void 0;', shortCircuit: true };
+  return defaultLoad(originalModuleUrl, context, defaultLoad);
 }
 
 let transport: PortTransport | undefined;
