@@ -43,11 +43,18 @@ export const TestCaseView: React.FC<{
   const searchParams = useSearchParams();
 
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
+  const allTestsHref = React.useMemo(() => {
+    const params = new URLSearchParams(searchParams);
+    params.delete('testId');
+    params.delete('run');
+    params.delete('anchor');
+    return '#?' + params;
+  }, [searchParams]);
 
   return <>
     <HeaderView
       title={test.title}
-      leftSuperHeader={<div className='test-case-path'>{test.path.join(' › ')}</div>}
+      leftSuperHeader={<div className='test-case-path'><Link href={allTestsHref}>{test.path.join(' › ')}</Link></div>}
       rightSuperHeader={<>
         <div className={clsx(!prev && 'hidden')}><Link href={testResultHref({ test: prev }, searchParams)}>« previous</Link></div>
         <div style={{ width: 10 }}></div>
