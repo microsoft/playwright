@@ -2942,6 +2942,63 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.test-case-path')).toHaveText('Root describe');
     });
 
+    test('should navigate back to test list when clicking test case path', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test.describe('Suite', () => {
+              test('Test A', async ({}) => {
+                expect(1).toBe(1);
+              });
+              test('Test B', async ({}) => {
+                expect(1).toBe(1);
+              });
+            });
+          `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(0);
+
+      await showReport();
+
+      await page.locator('.test-file-test', { hasText: 'Test A' }).locator('.test-file-title').click();
+      await expect(page).toHaveURL(/testId/);
+      await expect(page.locator('.test-case-path')).toHaveText('Suite');
+
+      await page.locator('.test-case-path a').click();
+      await expect(page).not.toHaveURL(/testId/);
+      await expect(page.locator('.test-file-test')).toHaveCount(2);
+    });
+
+    test('should preserve filter when navigating back via test case path', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+            const { expect, test } = require('@playwright/test');
+            test.describe('Suite', () => {
+              test('passing test', async ({}) => {
+                expect(1).toBe(1);
+              });
+              test('failing test', async ({}) => {
+                expect(1).toBe(2);
+              });
+            });
+          `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+
+      expect(result.exitCode).toBe(1);
+
+      await showReport();
+
+      await page.locator('.subnav-item', { hasText: 'Failed' }).click();
+      await expect(page).toHaveURL(/s:failed/);
+
+      await page.locator('.test-file-test', { hasText: 'failing test' }).locator('.test-file-title').click();
+      await expect(page).toHaveURL(/testId/);
+
+      await page.locator('.test-case-path a').click();
+      await expect(page).not.toHaveURL(/testId/);
+      await expect(page).toHaveURL(/s:failed/);
+    });
 
     test('should print a user-friendly warning when opening a trace via file:// protocol', async ({ runInlineTest, showReport, page }) => {
       await runInlineTest({
