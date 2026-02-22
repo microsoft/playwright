@@ -9,6 +9,10 @@ on:
       - 'packages/playwright-core/src/utils/isomorphic/**/*'
       - 'packages/playwright/src/matchers/matchers.ts'
       - 'packages/protocol/src/protocol.yml'
+
+permissions:
+  contents: read
+
 jobs:
   check:
     name: Check
