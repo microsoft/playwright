@@ -175,7 +175,7 @@ Consider a page with two buttons, first invisible and second visible.
 
 ### CSS: elements that contain other elements
 
-The `:has()` pseudo-class is an [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
+The `:has()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
 relative to the `:scope` of the given element match at least one element.
 
 Following snippet returns text content of an `<article>` element that has a `<div class=promo>` inside.
@@ -230,7 +230,7 @@ page.locator('button:has-text("Log in"), button:has-text("Sign in")').click()
 await page.Locator("button:has-text(\"Log in\"), button:has-text(\"Sign in\")").ClickAsync();
 ```
 
-The `:is()` pseudo-class is an [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
+The `:is()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
 may be useful for specifying a list of extra conditions on an element.
 
 
