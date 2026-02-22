@@ -339,11 +339,12 @@ class BidiRouteImpl implements network.RouteDelegate {
 
   async fulfill(response: types.NormalizedFulfillResponse) {
     const base64body = response.isBase64 ? response.body : Buffer.from(response.body).toString('base64');
+    const headers = response.headers.filter(h => h.name.toLowerCase() !== 'content-encoding');
     await this._session.sendMayFail('network.provideResponse', {
       request: this._requestId,
       statusCode: response.status,
       reasonPhrase: network.statusText(response.status),
-      ...toBidiResponseHeaders(response.headers),
+      ...toBidiResponseHeaders(headers),
       body: { type: 'base64', value: base64body },
     });
   }
