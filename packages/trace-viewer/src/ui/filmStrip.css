@@ -58,4 +58,5 @@
   display: flex;
   align-items: center;
   overflow: hidden;
+  line-height: 28px;
 }
