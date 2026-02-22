@@ -20,7 +20,7 @@ import path from 'path';
 import { test as baseTest } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
 
-import type { CommonFixtures } from '../config/commonFixtures';
+import type { CommonFixtures, TestChildProcess } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
@@ -31,6 +31,7 @@ export const test = baseTest.extend<{
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
   }>;
+  startCli: (...args: any[]) => Promise<TestChildProcess>;
 }>({
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
@@ -55,27 +56,38 @@ export const test = baseTest.extend<{
     for (const dir of userDataDirs.filter(f => f.startsWith('ud-')))
       await fs.promises.rm(path.join(daemonDir, dir), { recursive: true, force: true }).catch(() => {});
   },
+  startCli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
+    await use(async (...args: string[]) => {
+      const cliArgs = args.filter(arg => typeof arg === 'string');
+      const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
+      return await startCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless });
+    });
+  },
 });
+
+async function startCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }) {
+  const testInfo = test.info();
+  return childProcess({
+    command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/cli.js'), ...args],
+    cwd: cliOptions.cwd ?? testInfo.outputPath(),
+    env: {
+      ...process.env,
+      ...cliOptions.env,
+      PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
+      PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+      PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
+      PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
+      ...cliOptions.env,
+    },
+  });
+}
 
 async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
-  return await test.step(stepTitle, async () => {
-    const testInfo = test.info();
-    const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/cli.js'), ...args],
-      cwd: cliOptions.cwd ?? testInfo.outputPath(),
-      env: {
-        ...process.env,
-        ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
-        PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
-        PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
-        ...cliOptions.env,
-      },
-    });
+  return await test.step(stepTitle, async stepInfo => {
+    const cli = await startCli(childProcess, args, cliOptions, options);
     await cli.exited.finally(async () => {
-      await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });
+      await stepInfo.attach('output', { body: cli.output, contentType: 'text/plain' });
     });
 
     let snapshot: string | undefined;
