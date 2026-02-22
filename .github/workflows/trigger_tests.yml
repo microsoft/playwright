@@ -6,6 +6,8 @@ on:
       - main
       - release-*
 
+permissions: {}
+
 jobs:
   trigger:
     name: "trigger"
