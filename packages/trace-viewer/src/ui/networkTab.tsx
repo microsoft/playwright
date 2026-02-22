@@ -34,7 +34,6 @@ type NetworkTabModel = {
 };
 
 type RenderedEntry = {
-  ordinal: number,
   name: { name: string, url: string },
   method: string,
   status: { code: number, text: string },
@@ -67,7 +66,7 @@ export function useNetworkTabModel(model: TraceModel | undefined, selectedTime: 
 export const NetworkTab: React.FunctionComponent<{
   boundaries: Boundaries,
   networkModel: NetworkTabModel,
-  onResourceHovered?: (ordinal: number | undefined) => void,
+  onResourceHovered?: (key: string | undefined) => void,
   sdkLanguage: Language,
 }> = ({ boundaries, networkModel, onResourceHovered, sdkLanguage }) => {
   const [sorting, setSorting] = React.useState<Sorting | undefined>(undefined);
@@ -75,7 +74,7 @@ export const NetworkTab: React.FunctionComponent<{
   const [filterState, setFilterState] = React.useState(defaultFilterState);
 
   const { renderedEntries } = React.useMemo(() => {
-    const renderedEntries = networkModel.resources.map((entry, i) => renderEntry(entry, boundaries, networkModel.contextIdMap, i)).filter(filterEntry(filterState));
+    const renderedEntries = networkModel.resources.map(entry => renderEntry(entry, boundaries, networkModel.contextIdMap)).filter(filterEntry(filterState));
     if (sorting)
       sort(renderedEntries, sorting);
     return { renderedEntries };
@@ -101,7 +100,7 @@ export const NetworkTab: React.FunctionComponent<{
     items={renderedEntries}
     selectedItem={visibleSelectedEntry}
     onSelected={item => setSelectedResourceKey(item.resource.id)}
-    onHighlighted={item => onResourceHovered?.(item?.ordinal)}
+    onHighlighted={item => onResourceHovered?.(item?.resource.id)}
     columns={visibleColumns(!!visibleSelectedEntry, renderedEntries)}
     columnTitle={columnTitle}
     columnWidths={columnWidths}
@@ -264,7 +263,7 @@ function hasMultipleContexts(renderedEntries: RenderedEntry[]): boolean {
   return false;
 }
 
-const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdGenerator: ContextIdMap, ordinal: number): RenderedEntry => {
+const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdGenerator: ContextIdMap): RenderedEntry => {
   const routeStatus = formatRouteStatus(resource);
   let resourceName: string;
   try {
@@ -283,7 +282,6 @@ const renderEntry = (resource: ResourceEntry, boundaries: Boundaries, contextIdG
     contentType = charset[1];
 
   return {
-    ordinal,
     name: { name: resourceName, url: resource.request.url },
     method: resource.request.method,
     status: { code: resource.response.status, text: resource.response.statusText },

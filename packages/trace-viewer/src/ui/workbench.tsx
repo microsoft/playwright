@@ -86,7 +86,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [revealedErrorKey, setRevealedErrorKey] = usePartitionedState<string | undefined>('revealedErrorKey');
   const [highlightedConsoleMessageOrdinal, setHighlightedConsoleMessageOrdinal] = usePartitionedState<number | undefined>('highlightedConsoleMessageOrdinal');
   const [revealedAttachmentCallId, setRevealedAttachmentCallId] = usePartitionedState<{ callId: string } | undefined>('revealedAttachmentCallId');
-  const [highlightedResourceOrdinal, setHighlightedResourceOrdinal] = usePartitionedState<number | undefined>('highlightedResourceOrdinal');
+  const [highlightedResourceKey, setHighlightedResourceKey] = usePartitionedState<string | undefined>('highlightedResourceKey');
   const [treeState, setTreeState] = usePartitionedState<TreeState>('treeState', { expandedItems: new Map() });
 
   togglePartition(partition);
@@ -258,7 +258,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     id: 'network',
     title: 'Network',
     count: networkModel.resources.length,
-    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onResourceHovered={setHighlightedResourceOrdinal} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onResourceHovered={setHighlightedResourceKey} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
@@ -352,7 +352,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       networkResources={networkModel.resources}
       boundaries={boundaries}
       highlightedAction={highlightedAction}
-      highlightedResourceOrdinal={highlightedResourceOrdinal}
+      highlightedResourceKey={highlightedResourceKey}
       highlightedConsoleEntryOrdinal={highlightedConsoleMessageOrdinal}
       onSelected={onActionSelected}
       sdkLanguage={sdkLanguage}
