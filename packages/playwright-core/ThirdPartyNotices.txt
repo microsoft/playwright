@@ -102,7 +102,7 @@ This project incorporates components from the projects listed below. The origina
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
 -	progress@2.0.3 (https://github.com/visionmedia/node-progress)
 -	proxy-addr@2.0.7 (https://github.com/jshttp/proxy-addr)
--	proxy-from-env@1.1.0 (https://github.com/Rob--W/proxy-from-env)
+-	proxy-from-env@2.0.0 (https://github.com/Rob--W/proxy-from-env)
 -	pump@3.0.2 (https://github.com/mafintosh/pump)
 -	qs@6.14.1 (https://github.com/ljharb/qs)
 -	range-parser@1.2.1 (https://github.com/jshttp/range-parser)
@@ -3191,7 +3191,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF proxy-addr@2.0.7 AND INFORMATION
 
-%% proxy-from-env@1.1.0 NOTICES AND INFORMATION BEGIN HERE
+%% proxy-from-env@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License
 
@@ -3214,7 +3214,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF proxy-from-env@1.1.0 AND INFORMATION
+END OF proxy-from-env@2.0.0 AND INFORMATION
 
 %% pump@3.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
