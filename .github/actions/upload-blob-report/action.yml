@@ -1,5 +1,5 @@
 name: 'Upload blob report'
-description: 'Upload blob report to GitHub artifacts (for pull requests)'
+description: 'Upload blob report to GitHub artifacts'
 inputs:
   report_dir:
     description: 'Directory containing blob report'
@@ -16,7 +16,7 @@ runs:
       shell: bash
       run: find "${{ inputs.report_dir }}" -name "*.zip" -exec unzip -t {} \;
     - name: Upload blob report to GitHub
-      if: ${{ !cancelled() && github.event_name == 'pull_request' }}
+      if: ${{ !cancelled() && (github.event_name == 'pull_request' || job.status == 'failure') }}
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ inputs.job_name }}
