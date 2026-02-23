@@ -23,7 +23,6 @@ import { kBrowserCloseMessageId } from './bidiConnection';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
 import { RecentLogsCollector } from '../utils/debugLogger';
 import { waitForReadyState } from '../chromium/chromium';
-import { hasGpuMac } from '../utils/hostPlatform';
 
 import type { BrowserOptions } from '../browser';
 import type { SdkObject } from '../instrumentation';
@@ -115,7 +114,7 @@ export class BidiChromium extends BrowserType {
       throw new Error('Arguments can not specify page to be opened');
     const chromeArguments = [...chromiumSwitches(options.assistantMode)];
 
-    if (os.platform() !== 'darwin' || !hasGpuMac()) {
+    if (os.platform() === 'darwin') {
       // See https://issues.chromium.org/issues/40277080
       chromeArguments.push('--enable-unsafe-swiftshader');
     }
