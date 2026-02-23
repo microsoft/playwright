@@ -100,6 +100,9 @@ class BaseContextFactory implements BrowserContextFactory {
     const browser = await this._obtainBrowser(clientInfo, options);
     const browserContext = await this._doCreateContext(browser, clientInfo);
     await addInitScript(browserContext, this.config.browser.initScript);
+    await browserContext.addInitScript(() => {
+      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+    });
     return {
       browserContext,
       close: () => this._closeBrowserContext(browserContext, browser)
