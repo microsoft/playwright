@@ -368,6 +368,35 @@ test('should not hang if test suites in worker are inconsistent with runner', as
   expect(countTimes(result.output, expectedError)).toBe(2);  // Once per each test that was missing.
 });
 
+test('should throw in serial mode if test suites in worker are inconsistent with runner', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { name: 'project-name' };
+    `,
+    'a.spec.js': `
+      import { test, expect } from "@playwright/test";
+
+      test.describe.configure({ mode: "serial" });
+
+      const inWorker = process.env.TEST_WORKER_INDEX !== undefined;
+
+      test("first test", async () => {});
+
+      test("second test", async () => {
+        expect(false).toBeTruthy();
+      });
+
+      test("test - " + inWorker, async () => {});
+    `,
+  }, { 'workers': 1 }, { TEST_WORKER_INDEX: undefined });
+  expect.soft(result.exitCode).toBe(1);
+  expect.soft(result.passed).toBe(1);
+  expect.soft(result.failed).toBe(2);
+  expect.soft(result.skipped).toBe(0);
+  const expectedError = 'Test not found in the worker process. Make sure test title does not change.';
+  expect.soft(result.output).toContain(expectedError);
+});
+
 test('sigint should stop global setup', async ({ interactWithTestRunner }) => {
   test.skip(process.platform === 'win32', 'No sending SIGINT on Windows');
 

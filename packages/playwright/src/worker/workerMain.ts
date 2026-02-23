@@ -241,6 +241,15 @@ export class WorkerMain extends ProcessRunner {
           await this._runTest(tests[i], entry.retry, tests[i + 1]);
           debugTest(`test finished "${tests[i].title}"`);
         }
+        if (entries.size) {
+          // Collect test IDs that were not found in the worker
+          // (e.g. test titles changed between runner and worker).
+          const unknownTestIds = new Set(entries.keys());
+          for (const test of tests)
+            unknownTestIds.delete(test.id);
+          if (unknownTestIds.size)
+            fatalUnknownTestIds = [...unknownTestIds];
+        }
       } else {
         fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
         void this._stop();
