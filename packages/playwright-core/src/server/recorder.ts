@@ -43,6 +43,7 @@ import type { RegisteredListener } from '../utils';
 const recorderSymbol = Symbol('recorderSymbol');
 
 type BindingSource = { frame: Frame, page: Page };
+type RecorderParams = channels.BrowserContextEnableRecorderParams & { hideToolbar?: boolean };
 
 export const RecorderEvent = {
   PausedStateChanged: 'pausedStateChanged',
@@ -71,7 +72,7 @@ export type RecorderEventMap = {
 export class Recorder extends EventEmitter<RecorderEventMap> implements InstrumentationListener {
   readonly handleSIGINT: boolean | undefined;
   private _context: BrowserContext;
-  private _params: channels.BrowserContextEnableRecorderParams;
+  private _params: RecorderParams;
   private _mode: Mode;
   private _highlightedElement: { selector?: string, ariaTemplate?: AriaTemplateNode } = {};
   private _overlayState: OverlayState = { offsetX: 0 };
@@ -91,7 +92,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _enabled: boolean = false;
   private _callLogs: CallLog[] = [];
 
-  static forContext(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams): Promise<Recorder> {
+  static forContext(context: BrowserContext, params: RecorderParams): Promise<Recorder> {
     let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
     if (!recorderPromise) {
       recorderPromise = Recorder._create(context, params);
@@ -105,13 +106,13 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return await recorderPromise;
   }
 
-  private static async _create(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams = {}): Promise<Recorder> {
+  private static async _create(context: BrowserContext, params: RecorderParams = {}): Promise<Recorder> {
     const recorder = new Recorder(context, params);
     await recorder._install();
     return recorder;
   }
 
-  constructor(context: BrowserContext, params: channels.BrowserContextEnableRecorderParams) {
+  constructor(context: BrowserContext, params: RecorderParams) {
     super();
     this._context = context;
     this._params = params;
@@ -242,7 +243,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
           (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
 
-      await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode });
+      await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar });
     });
 
     if (this._debugger.isPaused())
