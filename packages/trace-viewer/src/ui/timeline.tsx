@@ -28,7 +28,7 @@ import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
-  resource?: ResourceEntry;
+  resourceKey?: string;
   consoleMessage?: ConsoleEntry;
   leftPosition: number;
   rightPosition: number;
@@ -89,7 +89,7 @@ export const Timeline: React.FunctionComponent<{
       const startTime = resource._monotonicTime!;
       const endTime = resource._monotonicTime! + resource.time;
       bars.push({
-        resource,
+        resourceKey: resource.id,
         leftTime: startTime,
         rightTime: endTime,
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
@@ -114,23 +114,18 @@ export const Timeline: React.FunctionComponent<{
     return bars;
   }, [model, actions, consoleEntries, boundaries, measure]);
 
-  const highlightedResource = React.useMemo(
-      () => highlightedResourceKey ? networkResources?.find(resource => resource.id === highlightedResourceKey) : undefined,
-      [networkResources, highlightedResourceKey]
-  );
-
   React.useMemo(() => {
     for (const bar of bars) {
       if (highlightedAction)
         bar.active = bar.action === highlightedAction;
-      else if (highlightedResource)
-        bar.active = bar.resource === highlightedResource;
+      else if (highlightedResourceKey)
+        bar.active = bar.resourceKey === highlightedResourceKey;
       else if (highlightedConsoleEntryOrdinal !== undefined)
         bar.active = bar.consoleMessage === consoleEntries?.[highlightedConsoleEntryOrdinal];
       else
         bar.active = false;
     }
-  }, [bars, highlightedAction, highlightedResource, highlightedConsoleEntryOrdinal, consoleEntries]);
+  }, [bars, highlightedAction, highlightedResourceKey, highlightedConsoleEntryOrdinal, consoleEntries]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
@@ -263,7 +258,7 @@ export const Timeline: React.FunctionComponent<{
               return <div key={index}
                 className={clsx('timeline-bar',
                     bar.action && 'action',
-                    bar.resource && 'network',
+                    bar.resourceKey && 'network',
                     bar.consoleMessage && 'console-message',
                     bar.active && 'active',
                     bar.error && 'error')}
@@ -332,5 +327,5 @@ function positionToTime(clientWidth: number, boundaries: Boundaries, x: number):
 }
 
 function barTop(bar: TimelineBar): number {
-  return bar.resource ? 25 : 20;
+  return bar.resourceKey ? 25 : 20;
 }
