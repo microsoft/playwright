@@ -17,7 +17,7 @@
     "open": "8.4.0",
     "pngjs": "6.0.0",
     "progress": "2.0.3",
-    "proxy-from-env": "1.1.0",
+    "proxy-from-env": "2.0.0",
     "retry": "0.12.0",
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "8.0.5",
