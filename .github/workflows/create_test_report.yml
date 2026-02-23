@@ -9,9 +9,10 @@ jobs:
     permissions:
       pull-requests: write
       checks: write
+      statuses: write
       id-token: write   # This is required for OIDC login (azure/login) to succeed
       contents: read    # This is required for actions/checkout to succeed
-    if: ${{ github.event.workflow_run.event == 'pull_request' }}
+    if: ${{ github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'push' }}
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -45,9 +46,25 @@ jobs:
         subscription-id: ${{ secrets.AZURE_BLOB_REPORTS_SUBSCRIPTION_ID }}
 
     - name: Upload HTML report to Azure
+      id: upload-report
       run: |
         REPORT_DIR='run-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}-${{ github.sha }}'
         azcopy cp --recursive "./playwright-report/*" "https://mspwblobreport.blob.core.windows.net/\$web/$REPORT_DIR"
-        echo "Report url: https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
+        REPORT_URL="https://mspwblobreport.z1.web.core.windows.net/$REPORT_DIR/index.html"
+        echo "Report url: $REPORT_URL"
+        echo "reportUrl=$REPORT_URL" >> "$GITHUB_OUTPUT"
       env:
         AZCOPY_AUTO_LOGIN_TYPE: AZCLI
+
+    - name: Publish Report URL as Commit Status
+      uses: actions/github-script@v7
+      with:
+        script: |
+          await github.rest.repos.createCommitStatus({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            sha: '${{ github.event.workflow_run.head_sha }}',
+            state: 'success',
+            target_url: '${{ steps.upload-report.outputs.reportUrl }}',
+            context: 'HTML Report',
+          });
