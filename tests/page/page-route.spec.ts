@@ -777,7 +777,7 @@ it('should not auto-intercept non-preflight OPTIONS without network interception
 });
 
 // Make sure this runs in a new context as preflight results could be cached.
-it('should not auto-intercept non-preflight OPTIONS with network interception', async ({ page, server, isAndroid, browserName }) => {
+it('should not auto-intercept non-preflight OPTIONS with network interception', async ({ page, server, isAndroid, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/20469' });
   it.fixme(isAndroid);
 
@@ -815,7 +815,7 @@ it('should not auto-intercept non-preflight OPTIONS with network interception', 
     expect.soft(text1).toBe('Hello');
     expect.soft(text2).toBe('World');
     // Preflight for OPTIONS is auto-fulfilled, then OPTIONS, then GET without preflight.
-    if (browserName === 'chromium')
+    if (browserName === 'chromium' || isBidi)
       expect.soft(requests).toEqual(['OPTIONS:/something', 'GET:/something']);
     else
       expect.soft(requests).toEqual(['OPTIONS:/something', 'OPTIONS:/something', 'GET:/something']);

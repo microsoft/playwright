@@ -104,7 +104,7 @@ export function createServer(name: string, version: string, backend: ServerBacke
           total: params.total,
           message: params.message,
         },
-      }).catch(serverDebug);
+      }).catch(e => serverDebug('notification', e));
     } : () => {};
 
     try {

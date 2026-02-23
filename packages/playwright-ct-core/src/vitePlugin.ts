@@ -289,9 +289,11 @@ function vitePlugin(registerSource: string, templateDir: string, buildInfo: Buil
 }
 
 function collectViteModuleDependencies(context: PluginContext, id: string, deps: Set<string>) {
-  if (!path.isAbsolute(id))
+  // Example: "src/Component.tsx?raw" or "src/Component.tsx?import" should resolve to the file path.
+  const cleanedId = id.split(/[?#]/)[0];
+  const normalizedId = path.normalize(cleanedId);
+  if (!path.isAbsolute(normalizedId))
     return;
-  const normalizedId = path.normalize(id);
   if (deps.has(normalizedId))
     return;
   deps.add(normalizedId);

@@ -2722,6 +2722,16 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 - type: <[Keyboard]>
 
 
+## async method: Page.clearConsoleMessages
+* since: v1.59
+
+Clears all stored console messages from this page. Subsequent calls to [`method: Page.consoleMessages`] will only return messages logged after the clear.
+
+## async method: Page.clearPageErrors
+* since: v1.59
+
+Clears all stored page errors from this page. Subsequent calls to [`method: Page.pageErrors`] will only return errors thrown after the clear.
+
 ## async method: Page.consoleMessages
 * since: v1.56
 - returns: <[Array]<[ConsoleMessage]>>

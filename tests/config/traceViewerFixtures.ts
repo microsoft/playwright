@@ -153,7 +153,7 @@ class TraceViewerPage {
 }
 
 export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixtures, BaseWorkerFixtures> = {
-  showTraceViewer: async ({ playwright, childProcess }, use) => {
+  showTraceViewer: async ({ playwright, childProcess, browserName }, use) => {
     const browsers: Browser[] = [];
     await use(async (trace: string | undefined, { host, port, stdin } = {}) => {
       const command = [
@@ -171,6 +171,7 @@ export const traceViewerFixtures: Fixtures<TraceViewerFixtures, {}, BaseTestFixt
       const cp = childProcess({ command });
       await cp.waitForOutput('Listening on');
       const browser = await playwright.chromium.launch({
+        ...(browserName === 'chromium' ? {} : { channel: 'chromium' }),
         executablePath: process.env.CRPATH, // without this, setting FFPATH makes us launch Firefox with Chromium args
       });
       browsers.push(browser);

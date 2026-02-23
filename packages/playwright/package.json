@@ -26,7 +26,7 @@
     "./lib/mcp/program": "./lib/mcp/program.js",
     "./lib/mcp/sdk/bundle": "./lib/mcp/sdk/bundle.js",
     "./lib/mcp/sdk/exports": "./lib/mcp/sdk/exports.js",
-    "./lib/mcp/terminal/program": "./lib/mcp/terminal/program.js",
+    "./lib/cli/client/program": "./lib/cli/client/program.js",
     "./lib/program": "./lib/program.js",
     "./lib/reporters/base": "./lib/reporters/base.js",
     "./lib/reporters/list": "./lib/reporters/list.js",

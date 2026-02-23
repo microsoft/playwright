@@ -283,6 +283,10 @@ export abstract class BrowserType extends SdkObject {
     throw new Error('CDP connections are only supported by Chromium');
   }
 
+  async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport): Promise<Browser> {
+    throw new Error('CDP connections are only supported by Chromium');
+  }
+
   async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<Browser> {
     throw new Error('Connecting to SELENIUM_REMOTE_URL is only supported by Chromium');
   }

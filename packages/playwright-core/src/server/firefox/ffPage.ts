@@ -559,6 +559,9 @@ export class FFPage implements PageDelegate {
   shouldToggleStyleSheetToSyncAnimations(): boolean {
     return false;
   }
+
+  async setDockTile(image: Buffer): Promise<void> {
+  }
 }
 
 function webSocketId(frameId: string, wsid: string): string {

@@ -14,7 +14,53 @@
  * limitations under the License.
  */
 
+import React from 'react';
 import * as ReactDOM from 'react-dom/client';
+import './common.css';
 import { DevTools } from './devtools';
+import { Grid } from './grid';
+import { SessionModel } from './sessionModel';
 
-ReactDOM.createRoot(document.querySelector('#root')!).render(<DevTools/>);
+export function navigate(hash: string) {
+  window.history.pushState(null, '', hash);
+  window.dispatchEvent(new PopStateEvent('popstate'));
+}
+
+function parseHash(): string | undefined {
+  const hash = window.location.hash;
+  const prefix = '#session=';
+  if (hash.startsWith(prefix))
+    return decodeURIComponent(hash.slice(prefix.length));
+  return undefined;
+}
+
+const model = new SessionModel();
+
+const App: React.FC = () => {
+  const [, setRevision] = React.useState(0);
+  const [socketPath, setSocketPath] = React.useState<string | undefined>(parseHash);
+
+  React.useEffect(() => {
+    model.startPolling();
+    const unsubscribe = model.subscribe(() => setRevision(r => r + 1));
+    return () => {
+      unsubscribe();
+      model.stopPolling();
+    };
+  }, [model]);
+
+  React.useEffect(() => {
+    const onPopState = () => setSocketPath(parseHash());
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  if (socketPath) {
+    const wsUrl = model.wsUrls.get(socketPath);
+    if (wsUrl)
+      return <DevTools wsUrl={wsUrl} />;
+  }
+  return <Grid model={model} />;
+};
+
+ReactDOM.createRoot(document.querySelector('#root')!).render(<App/>);

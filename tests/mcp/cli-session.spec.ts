@@ -208,32 +208,39 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   await cli('-s', 'session2', 'close', { cwd: workspace2 });
 });
 
-test('incompatible version - command fails with version mismatch error', async ({ cli, server }) => {
+test('newer client with older daemon is compatible', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
-  const { output, error, exitCode } = await cli('eval', '1+1', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '9.9.9' } });
+  const { exitCode } = await cli('eval', '1+1', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '9.9.9' } });
+  expect(exitCode).toBe(0);
+});
+
+test('older client with newer daemon fails with version mismatch error', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+
+  const { output, error, exitCode } = await cli('eval', '1+1', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '0.0.1' } });
   expect(exitCode).not.toBe(0);
   const fullOutput = output + error;
-  expect(fullOutput).toContain('Client is v9.9.9');
+  expect(fullOutput).toContain('Client is v0.0.1');
   expect(fullOutput).toContain('playwright-cli open');
   expect(fullOutput).toContain('to restart the browser session');
 });
 
-test('incompatible version - named session includes session name in error', async ({ cli, server }) => {
+test('older client with newer daemon - named session includes session name in error', async ({ cli, server }) => {
   await cli('-s', 'mysession', 'open', server.HELLO_WORLD);
 
-  const { output, error, exitCode } = await cli('-s', 'mysession', 'eval', '1+1', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '9.9.9' } });
+  const { output, error, exitCode } = await cli('-s', 'mysession', 'eval', '1+1', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '0.0.1' } });
   expect(exitCode).not.toBe(0);
   const fullOutput = output + error;
-  expect(fullOutput).toContain('Client is v9.9.9');
+  expect(fullOutput).toContain('Client is v0.0.1');
   expect(fullOutput).toContain(`session 'mysession'`);
   expect(fullOutput).toContain('playwright-cli -s=mysession open');
 });
 
-test('incompatible version - list shows incompatible warning', async ({ cli, server }) => {
+test('older client with newer daemon - list shows incompatible warning', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
 
-  const { output } = await cli('list', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '9.9.9' } });
+  const { output } = await cli('list', { env: { PLAYWRIGHT_CLI_VERSION_FOR_TEST: '0.0.1' } });
   expect(output).toContain('### Browsers');
   expect(output).toContain('- default:');
   expect(output).toContain('[incompatible please re-open]');

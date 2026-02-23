@@ -2257,6 +2257,20 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Clears all stored console messages from this page. Subsequent calls to
+   * [page.consoleMessages()](https://playwright.dev/docs/api/class-page#page-console-messages) will only return
+   * messages logged after the clear.
+   */
+  clearConsoleMessages(): Promise<void>;
+
+  /**
+   * Clears all stored page errors from this page. Subsequent calls to
+   * [page.pageErrors()](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors thrown
+   * after the clear.
+   */
+  clearPageErrors(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.click([options])](https://playwright.dev/docs/api/class-locator#locator-click) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -9341,6 +9355,7 @@ export interface BrowserContext {
    * - `'notifications'`
    * - `'payment-handler'`
    * - `'storage-access'`
+   * - `'screen-wake-lock'`
    * @param options
    */
   grantPermissions(permissions: ReadonlyArray<string>, options?: {

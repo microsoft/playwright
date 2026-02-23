@@ -14,15 +14,9 @@
  * limitations under the License.
  */
 
-/* eslint-disable no-console */
-
-import fs from 'fs';
-
-import { colors, ProgramOption } from 'playwright-core/lib/utilsBundle';
-import { registry } from 'playwright-core/lib/server';
+import { ProgramOption } from 'playwright-core/lib/utilsBundle';
 
 import * as mcpServer from './sdk/server';
-import { startMcpDaemonServer } from './terminal/daemon';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
 import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
@@ -31,7 +25,7 @@ import { ExtensionContextFactory } from './extension/extensionContextFactory';
 
 import type { Command } from 'playwright-core/lib/utilsBundle';
 
-export function decorateCommand(command: Command, version: string) {
+export function decorateMCPCommand(command: Command, version: string) {
   command
       .option('--allowed-hosts <hosts...>', 'comma-separated list of hosts this server is allowed to serve from. Defaults to the host the server is bound to. Pass \'*\' to disable the host check.', commaSeparatedList)
       .option('--allowed-origins <origins>', 'semicolon-separated list of TRUSTED origins to allow the browser to request. Default is to allow all.\nImportant: *does not* serve as a security boundary and *does not* affect redirects. ', semicolonSeparatedList)
@@ -78,7 +72,6 @@ export function decorateCommand(command: Command, version: string) {
       .option('--user-data-dir <path>', 'path to the user data directory. If not specified, a temporary directory will be created.')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280x720"', resolutionParser.bind(null, '--viewport-size'))
       .addOption(new ProgramOption('--vision', 'Legacy option, use --caps=vision instead').hideHelp())
-      .addOption(new ProgramOption('--daemon-session <path>', 'path to the daemon config.').hideHelp())
       .action(async options => {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
@@ -87,6 +80,7 @@ export function decorateCommand(command: Command, version: string) {
         setupExitWatchdog();
 
         if (options.vision) {
+          // eslint-disable-next-line no-console
           console.error('The --vision option is deprecated, use --caps=vision instead');
           options.caps = 'vision';
         }
@@ -95,38 +89,8 @@ export function decorateCommand(command: Command, version: string) {
           options.caps.push('devtools');
 
         const config = await resolveCLIConfig(options);
-
-        // Chromium browsers require ffmpeg to be installed to save video.
-        if (config.saveVideo && !checkFfmpeg()) {
-          console.error(colors.red(`\nError: ffmpeg required to save the video is not installed.`));
-          console.error(`\nPlease run the command below. It will install a local copy of ffmpeg and will not change any system-wide settings.`);
-          console.error(`\n    npx playwright install ffmpeg\n`);
-          // eslint-disable-next-line no-restricted-properties
-          process.exit(1);
-        }
-
         const browserContextFactory = contextFactory(config);
-        // Always force new tab in cli mode as the first command is always navigation.
-        const forceNewTab = !!config.sessionConfig;
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath, forceNewTab);
-
-        if (config.sessionConfig) {
-          const contextFactory = config.extension ? extensionContextFactory : browserContextFactory;
-          try {
-            const socketPath = await startMcpDaemonServer(config, contextFactory);
-            console.log(`### Config`);
-            console.log('```json');
-            console.log(JSON.stringify(config, null, 2));
-            console.log('```');
-            console.log(`### Success\nDaemon listening on ${socketPath}`);
-            console.log('<EOF>');
-          } catch (error) {
-            const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
-            console.log(`### Error\n${message}`);
-            console.log('<EOF>');
-          }
-          return;
-        }
+        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
 
         if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
@@ -147,13 +111,4 @@ export function decorateCommand(command: Command, version: string) {
         };
         await mcpServer.start(factory, config.server);
       });
-}
-
-function checkFfmpeg(): boolean {
-  try {
-    const executable = registry.findExecutable('ffmpeg')!;
-    return fs.existsSync(executable.executablePath()!);
-  } catch (error) {
-    return false;
-  }
 }

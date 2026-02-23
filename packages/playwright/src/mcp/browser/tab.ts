@@ -91,7 +91,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
   readonly page: Page;
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
-  private _consoleMessages: ConsoleMessage[] = [];
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
   private _onPageClose: (tab: Tab) => void;
@@ -201,7 +200,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _clearCollectedArtifacts() {
-    this._consoleMessages.length = 0;
     this._downloads.length = 0;
     this._requests.length = 0;
     this._recentEventEntries.length = 0;
@@ -236,7 +234,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
-    this._consoleMessages.push(message);
     const wallTime = message.timestamp;
     this._addLogEntry({ type: 'console', wallTime, message });
     const level = consoleLevelForMessageType(message.type);
@@ -283,6 +280,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async navigate(url: string) {
     await this._initializedPromise;
+
+    await this.clearConsoleMessages();
     this._clearCollectedArtifacts();
 
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
@@ -311,25 +310,42 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
     await this._initializedPromise;
-    let errors = 0;
+    const messages = await this.page.consoleMessages();
+    const pageErrors = await this.page.pageErrors();
+    let errors = pageErrors.length;
     let warnings = 0;
-    for (const message of this._consoleMessages) {
-      if (message.type === 'error')
+    for (const message of messages) {
+      if (message.type() === 'error')
         errors++;
-      else if (message.type === 'warning')
+      else if (message.type() === 'warning')
         warnings++;
     }
-    return { total: this._consoleMessages.length, errors, warnings };
+    return { total: messages.length + pageErrors.length, errors, warnings };
   }
 
   async consoleMessages(level: ConsoleMessageLevel): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
-    return this._consoleMessages.filter(message => shouldIncludeMessage(level, message.type));
+    const result: ConsoleMessage[] = [];
+    const messages = await this.page.consoleMessages();
+    for (const message of messages) {
+      const cm = messageToConsoleMessage(message);
+      if (shouldIncludeMessage(level, cm.type))
+        result.push(cm);
+    }
+    if (shouldIncludeMessage(level, 'error')) {
+      const errors = await this.page.pageErrors();
+      for (const error of errors)
+        result.push(pageErrorToConsoleMessage(error));
+    }
+    return result;
   }
 
   async clearConsoleMessages() {
     await this._initializedPromise;
-    this._consoleMessages.length = 0;
+    await Promise.all([
+      this.page.clearConsoleMessages(),
+      this.page.clearPageErrors()
+    ]);
   }
 
   async requests(): Promise<playwright.Request[]> {

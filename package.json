@@ -44,7 +44,7 @@
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh",
     "innerloop": "playwright run-server --reuse-browser",
-    "playwright-cli": "node packages/playwright/lib/mcp/terminal/cli.js",
+    "playwright-cli": "node packages/playwright/lib/cli/client/cli.js",
     "test-playwright-cli": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome cli-",
     "playwright-cli-readme": "node utils/generate_cli_help.js --readme"
   },
@@ -62,7 +62,6 @@
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@octokit/graphql-schema": "^15.26.0",
     "@stylistic/eslint-plugin": "^5.2.3",
-    "@trayjs/trayjs": "^0.0.9",
     "@types/codemirror": "^5.60.7",
     "@types/formidable": "^2.0.4",
     "@types/mdast": "^4.0.4",

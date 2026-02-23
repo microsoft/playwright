@@ -10,6 +10,7 @@
     "dotenv": "^16.4.5",
     "graceful-fs": "4.2.10",
     "https-proxy-agent": "7.0.6",
+    "ini": "^6.0.0",
     "jpeg-js": "0.4.4",
     "mime": "^3.0.0",
     "minimatch": "^3.1.2",
@@ -26,6 +27,7 @@
   "devDependencies": {
     "@types/debug": "^4.1.7",
     "@types/diff": "^6.0.0",
+    "@types/ini": "^4.1.1",
     "@types/mime": "^2.0.3",
     "@types/minimatch": "^3.0.5",
     "@types/pngjs": "^6.0.1",

@@ -655,9 +655,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return await this._mainFrame.fill(selector, value, options);
   }
 
+  async clearConsoleMessages(): Promise<void> {
+    await this._channel.clearConsoleMessages();
+  }
+
   async consoleMessages(): Promise<ConsoleMessage[]> {
     const { messages } = await this._channel.consoleMessages();
     return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
+  }
+
+  async clearPageErrors(): Promise<void> {
+    await this._channel.clearPageErrors();
   }
 
   async pageErrors(): Promise<Error[]> {
@@ -858,6 +866,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
     return await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track });
+  }
+
+  async _setDockTile(image: Buffer) {
+    await this._channel.setDockTile({ image });
   }
 }
 

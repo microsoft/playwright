@@ -89,6 +89,13 @@ export class Chromium extends BrowserType {
     else if (headersMap && !Object.keys(headersMap).some(key => key.toLowerCase() === 'user-agent'))
       headersMap['User-Agent'] = getUserAgent();
 
+    const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
+    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
+    const closeAndWait = async () => await chromeTransport.closeAndWait();
+    return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
+  }
+
+  private async _connectOverCDPImpl(progress: Progress, transport: ConnectionTransport, closeAndWait: () => Promise<void>, options: types.LaunchOptions & { isLocal?: boolean }, onClose?: () => Promise<void>) {
     const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
     const doCleanup = async () => {
       await removeFolders([artifactsDir]);
@@ -97,16 +104,12 @@ export class Chromium extends BrowserType {
       await cb?.();
     };
 
-    let chromeTransport: WebSocketTransport | undefined;
     const doClose = async () => {
-      await chromeTransport?.closeAndWait();
+      await closeAndWait();
       await doCleanup();
     };
 
     try {
-      const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
-      chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
-
       const browserProcess: BrowserProcess = { close: doClose, kill: doClose };
       const persistent: types.BrowserContextOptions = { noDefaultViewport: true };
       const browserOptions: BrowserOptions = {
@@ -123,7 +126,7 @@ export class Chromium extends BrowserType {
         originalLaunchOptions: {},
       };
       validateBrowserContextOptions(persistent, browserOptions);
-      const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));
+      const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, transport, browserOptions));
       if (!options.isLocal)
         browser._isCollocatedWithServer = false;
       browser.on(Browser.Events.Disconnected, doCleanup);
@@ -132,6 +135,11 @@ export class Chromium extends BrowserType {
       await doClose().catch(() => {});
       throw error;
     }
+  }
+
+  override async connectOverCDPTransport(progress: Progress, transport: ConnectionTransport) {
+    const closeAndWait = async () => transport.close();
+    return this._connectOverCDPImpl(progress, transport, closeAndWait, { isLocal: true });
   }
 
   private _createDevTools() {

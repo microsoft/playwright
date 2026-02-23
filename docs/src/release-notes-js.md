@@ -116,6 +116,10 @@ After 3 years of being deprecated, we removed `page.accessibility` from our API.
 - Network requests issued by [Service Workers](./service-workers.md#network-events-and-routing) are now reported and can be routed through the [BrowserContext](./api/class-browsercontext.md), only in Chromium. You can opt out using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK` environment variable.
 - Console messages from Service Workers are dispatched through [`event: Worker.console`]. You can opt out of this using the `PLAYWRIGHT_DISABLE_SERVICE_WORKER_CONSOLE` environment variable.
 
+### Miscellaneous
+
+- Playwright docker images switched from Node.js v22 to Node.js v24 LTS.
+
 ### Browser Versions
 
 - Chromium 143.0.7499.4
@@ -2464,8 +2468,8 @@ WebServer is now considered "ready" if request to the specified url has any of t
 
 - Components Testing (preview)
 
-  Playwright Test can now test your [React](https://reactjs.org/),
-  [Vue.js](https://vuejs.org/) or [Svelte](https://svelte.dev/) components.
+  Playwright Test can now test your [React](https://reactjs.org/)
+  or [Vue.js](https://vuejs.org/) components.
   You can use all the features
   of Playwright Test (such as parallelization, emulation & debugging) while running components
   in real browsers.

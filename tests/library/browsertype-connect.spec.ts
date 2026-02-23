@@ -733,6 +733,44 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await Promise.all([uploadFile, file1.filepath].map(fs.promises.unlink));
     });
 
+    test('should upload a folder', async ({ connect, startRemoteServer, server }, testInfo) => {
+      test.slow();
+      const remoteServer = await startRemoteServer(kind);
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext();
+      const page = await context.newPage();
+
+      await page.goto(server.PREFIX + '/input/folderupload.html');
+      const input = await page.$('input');
+      const folderName = 'folder-upload-test';
+      const dir = testInfo.outputPath(folderName);
+      {
+        await fs.promises.mkdir(dir, { recursive: true });
+        await fs.promises.writeFile(path.join(dir, 'file1.txt'), 'file1 content');
+        await fs.promises.writeFile(path.join(dir, 'file2'), 'file2 content');
+        await fs.promises.mkdir(path.join(dir, 'sub-dir'));
+        await fs.promises.writeFile(path.join(dir, 'sub-dir', 'really.txt'), 'sub-dir file content');
+      }
+      await input.setInputFiles(dir);
+
+      const webkitRelativePaths = await page.evaluate(e => [...e.files].map(f => f.webkitRelativePath), input);
+      expect(new Set(webkitRelativePaths)).toEqual(new Set([
+        `${folderName}/file1.txt`,
+        `${folderName}/file2`,
+        `${folderName}/sub-dir/really.txt`,
+      ]));
+
+      for (let i = 0; i < webkitRelativePaths.length; i++) {
+        const content = await input.evaluate((e, i) => {
+          const reader = new FileReader();
+          const promise = new Promise(fulfill => reader.onload = fulfill);
+          reader.readAsText(e.files[i]);
+          return promise.then(() => reader.result);
+        }, i);
+        expect(content).toEqual(fs.readFileSync(path.join(dir, '..', webkitRelativePaths[i])).toString());
+      }
+    });
+
     test('setInputFiles should preserve lastModified timestamp', async ({ connect, startRemoteServer, asset }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27452' });
       const remoteServer = await startRemoteServer(kind);
