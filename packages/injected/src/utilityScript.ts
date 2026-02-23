@@ -29,6 +29,7 @@ export type Builtins = {
   performance: Window['performance'],
   Intl: typeof window['Intl'],
   Date: typeof window['Date'],
+  AbortSignal: typeof window['AbortSignal'],
 };
 
 export class UtilityScript {
@@ -55,6 +56,7 @@ export class UtilityScript {
         performance: global.performance,
         Intl: global.Intl,
         Date: global.Date,
+        AbortSignal: global.AbortSignal,
       } satisfies Builtins;
     }
     if (this.isUnderTest)

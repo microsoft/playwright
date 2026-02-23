@@ -534,6 +534,53 @@ it.describe('Date.now', () => {
   });
 });
 
+it('AbortSignal.timeout', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39293' } }, async ({ page, browserName }) => {
+  await page.clock.install({ time: 0 });
+  const controller = await page.evaluateHandle(() => {
+    const signal = AbortSignal.any([
+      AbortSignal.timeout(100)
+    ]);
+    const handle = {
+      signal,
+      event: false,
+      handler: false,
+    };
+    signal.addEventListener('abort', () => handle.event = true);
+    signal.onabort = () => handle.handler = true;
+    return handle;
+  });
+  expect(await controller.evaluate(handle => ({
+    signal: handle.signal.aborted,
+    event: handle.event,
+    handler: handle.handler,
+  }))).toEqual({
+    signal: false,
+    event: false,
+    handler: false,
+  });
+  await page.clock.runFor(200);
+  expect(await controller.evaluate(handle => ({
+    signal: handle.signal.aborted,
+    event: handle.event,
+    handler: handle.handler,
+    reason: {
+      name: handle.signal.reason.name,
+      message: handle.signal.reason.message,
+      code: handle.signal.reason.code,
+    },
+  }))).toEqual({
+    signal: true,
+    event: true,
+    handler: true,
+    reason: {
+      name: 'TimeoutError',
+      message: browserName === 'chromium' ? 'signal timed out' : 'The operation timed out.',
+      code: 23,
+    },
+  });
+  expect(await page.evaluate(() => AbortSignal.abort().aborted)).toBe(true);
+});
+
 it('correctly increments Date.now()/performance.now() during blocking execution', {
   annotation: {
     type: 'issue',
