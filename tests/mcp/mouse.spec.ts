@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { test as baseTest, expect } from './fixtures';
+import { test, expect } from './fixtures';
 
-const test = baseTest.extend({ mcpCaps: [['vision'], { option: true }] });
+test.use({
+  mcpCaps: ['vision'],
+});
 
 const eventsPage = `<!DOCTYPE html>
 <html>
