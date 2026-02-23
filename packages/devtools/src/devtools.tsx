@@ -45,7 +45,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [showInspector, setShowInspector] = React.useState(false);
   const [picking, setPicking] = React.useState(false);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
-  const [actionLog, setActionLog] = React.useState<Array<DevToolsChannelEvents['log'] & { id: number }>>([]);
 
   const [channel, setChannel] = React.useState<DevToolsClientChannel | undefined>();
   const displayRef = React.useRef<HTMLImageElement>(null);
@@ -99,12 +98,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       });
     });
 
-    let logId = 0;
-    channel.on('log', params => {
-      const id = ++logId;
-      setActionLog(prev => [...prev.slice(-9), { ...params, id }]);
-    });
-
     channel.onclose = () => {
       setChannel(undefined);
       setInteractive(false);
@@ -146,37 +139,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
       x: Math.round(fracX * vw),
       y: Math.round(fracY * vh),
     };
-  }
-
-  function viewportToImgPosition(point: { x: number; y: number }): { left: string; top: string } | null {
-    const vw = frame?.viewportWidth ?? 0;
-    const vh = frame?.viewportHeight ?? 0;
-    if (!vw || !vh)
-      return null;
-    const display = displayRef.current;
-    if (!display)
-      return null;
-    const rect = display.getBoundingClientRect();
-    const screenRect = screenRef.current?.getBoundingClientRect();
-    if (!screenRect)
-      return null;
-    const imgAspect = display.naturalWidth / display.naturalHeight;
-    const elemAspect = rect.width / rect.height;
-    let renderW: number, renderH: number, offsetX: number, offsetY: number;
-    if (imgAspect > elemAspect) {
-      renderW = rect.width;
-      renderH = rect.width / imgAspect;
-      offsetX = 0;
-      offsetY = (rect.height - renderH) / 2;
-    } else {
-      renderH = rect.height;
-      renderW = rect.height * imgAspect;
-      offsetX = (rect.width - renderW) / 2;
-      offsetY = 0;
-    }
-    const left = (rect.left - screenRect.left) + offsetX + (point.x / vw) * renderW;
-    const top = (rect.top - screenRect.top) + offsetY + (point.y / vh) * renderH;
-    return { left: left + 'px', top: top + 'px' };
   }
 
   function sendMouseEvent(method: 'mousedown' | 'mouseup', e: React.MouseEvent) {
@@ -260,9 +222,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     overlayText = 'Disconnected';
   if (channel && !hasPages)
     overlayText = 'No tabs open';
-
-  const actionPointEntry = actionLog.findLast(e => e.point);
-  const actionPointPosition = actionPointEntry?.point ? viewportToImgPosition(actionPointEntry.point) : null;
 
   return (<div className={'devtools-view' + (interactive ? ' interactive' : '')}
   >
@@ -421,16 +380,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
                 ? <div className='screen-toast visible'>Click an element to pick its locator</div>
                 : null
             }
-            {actionPointPosition &&
-              <div key={actionPointEntry!.id} className='action-point' style={actionPointPosition} />
-            }
-            <div className='action-log'>
-              {actionLog.map(entry => (
-                <div key={entry.id} className='action-log-entry'>
-                  {entry.title}
-                </div>
-              ))}
-            </div>
           </div>
           {overlayText && <div className={'screen-overlay' + (frame ? ' has-frame' : '')}><span>{overlayText}</span></div>}
         </div>}
