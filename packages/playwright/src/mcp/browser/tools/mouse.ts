@@ -15,6 +15,7 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { formatObject } from 'playwright-core/lib/utils';
 import { defineTabTool } from './tool';
 
 const mouseMove = defineTabTool({
@@ -54,9 +55,13 @@ const mouseDown = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
+    const options = { button: params.button };
+    const formatted = formatObject(options, ' ', 'oneline');
+    const optionsAttr = formatted !== '{}' ? formatted : '';
+
     response.addCode(`// Press mouse down`);
-    response.addCode(`await page.mouse.down({ button: '${params.button}' });`);
-    await tab.page.mouse.down({ button: params.button });
+    response.addCode(`await page.mouse.down(${optionsAttr});`);
+    await tab.page.mouse.down(options);
   },
 });
 
@@ -74,9 +79,13 @@ const mouseUp = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
+    const options = { button: params.button };
+    const formatted = formatObject(options, ' ', 'oneline');
+    const optionsAttr = formatted !== '{}' ? formatted : '';
+
     response.addCode(`// Press mouse up`);
-    response.addCode(`await page.mouse.up({ button: '${params.button}' });`);
-    await tab.page.mouse.up({ button: params.button });
+    response.addCode(`await page.mouse.up(${optionsAttr});`);
+    await tab.page.mouse.up(options);
   },
 });
 
@@ -105,10 +114,12 @@ const mouseClick = defineTabTool({
   schema: {
     name: 'browser_mouse_click_xy',
     title: 'Click',
-    description: 'Click left mouse button at a given position',
+    description: 'Click mouse button at a given position',
     inputSchema: z.object({
       x: z.number().describe('X coordinate'),
       y: z.number().describe('Y coordinate'),
+      button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
+      clickCount: z.number().optional().describe('Number of clicks, defaults to 1'),
     }),
     type: 'input',
   },
@@ -116,15 +127,18 @@ const mouseClick = defineTabTool({
   handle: async (tab, params, response) => {
     response.setIncludeSnapshot();
 
+    const options = {
+      button: params.button,
+      clickCount: params.clickCount,
+    };
+    const formatted = formatObject(options, ' ', 'oneline');
+    const optionsAttr = formatted !== '{}' ? `, ${formatted}` : '';
+
     response.addCode(`// Click mouse at coordinates (${params.x}, ${params.y})`);
-    response.addCode(`await page.mouse.move(${params.x}, ${params.y});`);
-    response.addCode(`await page.mouse.down();`);
-    response.addCode(`await page.mouse.up();`);
+    response.addCode(`await page.mouse.click(${params.x}, ${params.y}${optionsAttr});`);
 
     await tab.waitForCompletion(async () => {
-      await tab.page.mouse.move(params.x, params.y);
-      await tab.page.mouse.down();
-      await tab.page.mouse.up();
+      await tab.page.mouse.click(params.x, params.y, options);
     });
   },
 });
