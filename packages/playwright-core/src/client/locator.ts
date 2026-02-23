@@ -262,6 +262,11 @@ export class Locator implements api.Locator {
     return await this._frame._channel.resolveSelector({ selector: this._selector });
   }
 
+  async _resolveForCode(): Promise<string> {
+    const { resolvedSelector } = await this._resolveSelector();
+    return asLocatorDescription('javascript', resolvedSelector);
+  }
+
   async getAttribute(name: string, options?: TimeoutOptions): Promise<string | null> {
     return await this._frame.getAttribute(this._selector, name, { strict: true, ...options });
   }
