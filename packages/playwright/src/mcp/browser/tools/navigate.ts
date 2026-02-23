@@ -45,7 +45,7 @@ const navigate = defineTool({
     await tab.navigate(url);
 
     response.setIncludeSnapshot();
-    response.addCode(`await page.goto('${params.url}');`);
+    response.addCode(`await page.goto('${url}');`);
   },
 });
 
