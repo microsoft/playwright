@@ -271,7 +271,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
 
   async pickLocator() {
     this._cancelPicking();
-    const recorder = await Recorder.forContext(this._context, { omitCallTracking: true });
+    const recorder = await Recorder.forContext(this._context, { omitCallTracking: true, hideToolbar: true });
     this._recorder = recorder;
     this._recorderListeners.push(
         eventsHelper.addEventListener(recorder, RecorderEvent.ElementPicked, (elementInfo: ElementInfo) => {
