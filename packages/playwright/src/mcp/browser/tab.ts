@@ -63,13 +63,7 @@ type DownloadFinishLogEntry = {
   download: Download;
 };
 
-type RequestLogEntry = {
-  type: 'request';
-  wallTime: number;
-  request: playwright.Request;
-};
-
-type EventEntry = ConsoleLogEntry | DownloadStartLogEntry | DownloadFinishLogEntry | RequestLogEntry;
+type EventEntry = ConsoleLogEntry | DownloadStartLogEntry | DownloadFinishLogEntry;
 
 
 export type TabHeader = {
@@ -92,7 +86,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   readonly page: Page;
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _downloads: Download[] = [];
-  private _requests: playwright.Request[] = [];
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
@@ -107,9 +100,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._onPageClose = onPageClose;
     page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
     page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
-    page.on('request', request => this._handleRequest(request));
-    page.on('response', response => this._handleResponse(response));
-    page.on('requestfailed', request => this._handleRequestFailed(request));
     page.on('close', () => this._onClose());
     page.on('filechooser', chooser => {
       this.setModalState({
@@ -149,9 +139,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private async _initialize() {
     for (const message of await Tab.collectConsoleMessages(this.page))
       this._handleConsoleMessage(message);
-    const requests = await this.page.requests().catch(() => []);
-    for (const request of requests.filter(r => r.existingResponse() || r.failure()))
-      this._requests.push(request);
     for (const initPage of this.context.config.browser.initPage || []) {
       try {
         const { default: func } = await requireOrImport(initPage);
@@ -201,7 +188,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   private _clearCollectedArtifacts() {
     this._downloads.length = 0;
-    this._requests.length = 0;
     this._recentEventEntries.length = 0;
     this._resetLogs();
   }
@@ -210,27 +196,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const wallTime = Date.now();
     this._consoleLog.stop();
     this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
-  }
-
-  private _handleRequest(request: playwright.Request) {
-    this._requests.push(request);
-    // TODO: request start time is not available for fetch() before the
-    // response is received, so we use Date.now() as a fallback.
-    const wallTime = request.timing().startTime || Date.now();
-    this._addLogEntry({ type: 'request', wallTime, request });
-  }
-
-  private _handleResponse(response: playwright.Response) {
-    const timing = response.request().timing();
-    const wallTime = timing.responseStart + timing.startTime;
-    this._addLogEntry({ type: 'request', wallTime, request: response.request() });
-  }
-
-  private _handleRequestFailed(request: playwright.Request) {
-    this._requests.push(request);
-    const timing = request.timing();
-    const wallTime = timing.responseEnd + timing.startTime;
-    this._addLogEntry({ type: 'request', wallTime, request });
   }
 
   private _handleConsoleMessage(message: ConsoleMessage) {
@@ -280,8 +245,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async navigate(url: string) {
     await this._initializedPromise;
-
-    await this.clearConsoleMessages();
+    await Promise.all([
+      this.clearConsoleMessages(),
+      this.clearRequests()
+    ]);
     this._clearCollectedArtifacts();
 
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
@@ -350,12 +317,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async requests(): Promise<playwright.Request[]> {
     await this._initializedPromise;
-    return this._requests;
+    return await this.page.requests();
   }
 
   async clearRequests() {
     await this._initializedPromise;
-    this._requests.length = 0;
+    await this.page.clearRequests();
   }
 
   async captureSnapshot(relativeTo: string | undefined): Promise<TabSnapshot> {
