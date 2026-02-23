@@ -323,9 +323,10 @@ export class HarTracer {
       }));
     }
 
-    const httpVersion = await response.httpVersion();
-    harEntry.request.httpVersion = httpVersion;
-    harEntry.response.httpVersion = httpVersion;
+    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+      harEntry.request.httpVersion = httpVersion;
+      harEntry.response.httpVersion = httpVersion;
+    }));
 
     const compressionCalculationBarrier = this._options.omitSizes ? undefined : {
       _encodedBodySize: -1,
@@ -452,7 +453,7 @@ export class HarTracer {
     harEntry.response = {
       status: response.status(),
       statusText: response.statusText(),
-      httpVersion: await response.httpVersion(),
+      httpVersion: FALLBACK_HTTP_VERSION,
       // These are bad values that will be overwritten below.
       cookies: [],
       headers: [],
@@ -465,6 +466,10 @@ export class HarTracer {
       redirectURL: '',
       _transferSize: this._options.omitSizes ? undefined : -1
     };
+
+    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+      harEntry.response.httpVersion = httpVersion;
+    }));
 
     if (!this._options.omitTiming) {
       const startDateTime = pageEntry ? ((pageEntry as any)[startedDateSymbol] as Date).valueOf() : 0;
