@@ -15,7 +15,7 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
-import { formatObject } from 'playwright-core/lib/utils';
+import { formatObjectOrVoid } from 'playwright-core/lib/utils';
 import { defineTabTool } from './tool';
 
 const mouseMove = defineTabTool({
@@ -56,11 +56,10 @@ const mouseDown = defineTabTool({
 
   handle: async (tab, params, response) => {
     const options = { button: params.button };
-    const formatted = formatObject(options, ' ', 'oneline');
-    const optionsAttr = formatted !== '{}' ? formatted : '';
+    const optionsArg = formatObjectOrVoid(options);
 
     response.addCode(`// Press mouse down`);
-    response.addCode(`await page.mouse.down(${optionsAttr});`);
+    response.addCode(`await page.mouse.down(${optionsArg});`);
     await tab.page.mouse.down(options);
   },
 });
@@ -80,11 +79,10 @@ const mouseUp = defineTabTool({
 
   handle: async (tab, params, response) => {
     const options = { button: params.button };
-    const formatted = formatObject(options, ' ', 'oneline');
-    const optionsAttr = formatted !== '{}' ? formatted : '';
+    const optionsArg = formatObjectOrVoid(options);
 
     response.addCode(`// Press mouse up`);
-    response.addCode(`await page.mouse.up(${optionsAttr});`);
+    response.addCode(`await page.mouse.up(${optionsArg});`);
     await tab.page.mouse.up(options);
   },
 });
@@ -131,11 +129,11 @@ const mouseClick = defineTabTool({
       button: params.button,
       clickCount: params.clickCount,
     };
-    const formatted = formatObject(options, ' ', 'oneline');
-    const optionsAttr = formatted !== '{}' ? `, ${formatted}` : '';
+    const formatted = formatObjectOrVoid(options);
+    const optionsArg = formatted ? `, ${formatted}` : '';
 
     response.addCode(`// Click mouse at coordinates (${params.x}, ${params.y})`);
-    response.addCode(`await page.mouse.click(${params.x}, ${params.y}${optionsAttr});`);
+    response.addCode(`await page.mouse.click(${params.x}, ${params.y}${optionsArg});`);
 
     await tab.waitForCompletion(async () => {
       await tab.page.mouse.click(params.x, params.y, options);

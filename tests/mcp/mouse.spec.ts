@@ -75,7 +75,7 @@ test('browser_mouse_click_xy (right button)', async ({ client }) => {
     name: 'browser_mouse_click_xy',
     arguments: { x: 100, y: 100, button: 'right' },
   })).toHaveResponse({
-    code: expect.stringContaining(`await page.mouse.click(100, 100, { button: 'right' });`),
+    code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  button: 'right'\n});`),
     snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:2.*contextmenu button:2.*mouseup button:2/s),
   });
 });
@@ -85,7 +85,7 @@ test('browser_mouse_click_xy (middle button)', async ({ client }) => {
     name: 'browser_mouse_click_xy',
     arguments: { x: 100, y: 100, button: 'middle' },
   })).toHaveResponse({
-    code: expect.stringContaining(`await page.mouse.click(100, 100, { button: 'middle' });`),
+    code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  button: 'middle'\n});`),
     snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:1.*mouseup button:1/s),
   });
 });
@@ -95,7 +95,7 @@ test('browser_mouse_click_xy (double click)', async ({ client }) => {
     name: 'browser_mouse_click_xy',
     arguments: { x: 100, y: 100, clickCount: 2 },
   })).toHaveResponse({
-    code: expect.stringContaining(`await page.mouse.click(100, 100, { clickCount: 2 });`),
+    code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  clickCount: 2\n});`),
     snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:0.*mouseup button:0.*dblclick button:0/s),
   });
 });
