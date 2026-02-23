@@ -18,6 +18,7 @@ export type ClockConfig = {
 
 export type InstallConfig = ClockConfig & {
   toFake?: (keyof Builtins)[];
+  browserName?: string;
 };
 
 enum TimerType {
@@ -612,10 +613,11 @@ function platformOriginals(globalObject: WindowOrWorkerGlobalScope): { raw: Buil
     Date: (globalObject as any).Date,
     performance: globalObject.performance,
     Intl: (globalObject as any).Intl,
+    AbortSignal: (globalObject as any).AbortSignal,
   };
   const bound = { ...raw };
   for (const key of Object.keys(bound) as (keyof Builtins)[]) {
-    if (key !== 'Date' && typeof bound[key] === 'function')
+    if (key !== 'Date' && key !== 'AbortSignal' && typeof bound[key] === 'function')
       bound[key] = (bound[key] as any).bind(globalObject);
   }
   return { raw, bound };
@@ -631,7 +633,7 @@ function getScheduleHandler(type: TimerType) {
   return `set${type}`;
 }
 
-function createApi(clock: ClockController, originals: Builtins): Builtins {
+function createApi(clock: ClockController, originals: Builtins, browserName?: string): Builtins {
   return {
     setTimeout: (func: TimerHandler, timeout?: number | undefined, ...args: any[]) => {
       const delay = timeout ? +timeout : timeout;
@@ -688,6 +690,7 @@ function createApi(clock: ClockController, originals: Builtins): Builtins {
     Intl: originals.Intl ? createIntl(clock, originals.Intl) : (undefined as unknown as Builtins['Intl']),
     Date: createDate(clock, originals.Date),
     performance: originals.performance ? fakePerformance(clock, originals.performance) : (undefined as unknown as Builtins['performance']),
+    AbortSignal: originals.AbortSignal ? fakeAbortSignal(clock, originals.AbortSignal, browserName) : (undefined as unknown as Builtins['AbortSignal']),
   };
 }
 
@@ -715,7 +718,27 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
   return result;
 }
 
-export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: ClockController, api: Builtins, originals: Builtins } {
+function fakeAbortSignal(clock: ClockController, abortSignal: Builtins['AbortSignal'], browserName?: string): Builtins['AbortSignal'] {
+  Object.defineProperty(abortSignal, 'timeout', {
+    value(ms: number) {
+      const controller = new AbortController();
+      clock.addTimer({
+        delay: ms,
+        type: TimerType.Timeout,
+        func: () => controller.abort(
+            new DOMException(
+                browserName === 'chromium' ? 'signal timed out' : 'The operation timed out.',
+                'TimeoutError'
+            )
+        ),
+      });
+      return controller.signal;
+    }
+  });
+  return abortSignal;
+}
+
+export function createClock(globalObject: WindowOrWorkerGlobalScope, config: InstallConfig = {}): { clock: ClockController, api: Builtins, originals: Builtins } {
   const originals = platformOriginals(globalObject);
   const embedder: Embedder = {
     dateNow: () => originals.raw.Date.now(),
@@ -731,7 +754,7 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope): { clock: C
   };
 
   const clock = new ClockController(embedder);
-  const api = createApi(clock, originals.bound);
+  const api = createApi(clock, originals.bound, config.browserName);
   return { clock, api, originals: originals.raw };
 }
 
@@ -742,7 +765,7 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
     throw new TypeError(`Can't install fake timers twice on the same global object.`);
   }
 
-  const { clock, api, originals } = createClock(globalObject);
+  const { clock, api, originals } = createClock(globalObject, config);
   const toFake = config.toFake?.length ? config.toFake : Object.keys(originals) as (keyof Builtins)[];
 
   for (const method of toFake) {
@@ -750,6 +773,8 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
       (globalObject as any).Date = mirrorDateProperties(api.Date, (globalObject as any).Date);
     } else if (method === 'Intl') {
       (globalObject as any).Intl = api[method]!;
+    } else if (method === 'AbortSignal') {
+      (globalObject as any).AbortSignal = api[method]!;
     } else if (method === 'performance') {
       (globalObject as any).performance = api[method]!;
       const kEventTimeStamp = Symbol('playwrightEventTimeStamp');
@@ -773,9 +798,9 @@ export function install(globalObject: WindowOrWorkerGlobalScope, config: Install
   return { clock, api, originals };
 }
 
-export function inject(globalObject: WindowOrWorkerGlobalScope) {
+export function inject(globalObject: WindowOrWorkerGlobalScope, browserName?: string) {
   const builtins = platformOriginals(globalObject).bound;
-  const { clock: controller } = install(globalObject);
+  const { clock: controller } = install(globalObject, { browserName });
   controller.resume();
   return {
     controller,

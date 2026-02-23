@@ -98,7 +98,7 @@ export class Clock {
       const module = {};
       ${rawClockSource.source}
       if (!globalThis.__pwClock)
-        globalThis.__pwClock = (module.exports.inject())(globalThis);
+        globalThis.__pwClock = (module.exports.inject())(globalThis, ${JSON.stringify(this._browserContext._browser.options.name)});
     })();`;
     const initScript = await this._browserContext.addInitScript(progress, script);
     await progress.race(this._evaluateInFrames(script));
