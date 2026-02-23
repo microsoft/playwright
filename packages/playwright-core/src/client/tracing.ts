@@ -22,6 +22,7 @@ import type * as channels from '@protocol/channels';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
+  private _additionalSources = new Set<string>();
   private _isLive = false;
   _tracesDir: string | undefined;
   private _stacksId: string | undefined;
@@ -58,11 +59,9 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
-    await this._wrapApiCall(async zone => {
-      if (options.location)
-        zone.frames.push({ file: options.location.file, line: options.location.line ?? 0, column: options.location.column ?? 0 });
-      await this._channel.tracingGroup({ name, location: options.location });
-    });
+    if (options.location)
+      this._additionalSources.add(options.location.file);
+    await this._channel.tracingGroup({ name, location: options.location });
   }
 
   async groupEnd() {
@@ -110,7 +109,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     if (isLocal) {
       const result = await this._channel.tracingStopChunk({ mode: 'entries' });
-      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources });
+      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources: [...this._additionalSources] });
       return;
     }
 
@@ -128,7 +127,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.saveAs(filePath);
     await artifact.delete();
 
-    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources });
+    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources: [...this._additionalSources] });
   }
 
   _resetStackCounter() {

@@ -477,6 +477,7 @@ export type LocalUtilsZipParams = {
   stacksId?: string,
   mode: 'write' | 'append',
   includeSources: boolean,
+  additionalSources: string[],
 };
 export type LocalUtilsZipOptions = {
   stacksId?: string,
