@@ -45,9 +45,11 @@ export class ClaudeGenerator {
     for (const agent of agents)
       await writeFile(`.claude/agents/${agent.name}.md`, ClaudeGenerator.agentSpec(agent), '🤖', 'agent definition');
 
+    // On Windows, npx resolves to npx.cmd which cannot be executed without shell: true.
+    // See: https://code.claude.com/docs/en/mcp#dynamic-tool-updates
     const mcpServer = process.platform === 'win32'
-        ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
-        : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
+      ? { command: 'cmd', args: ['/c', 'npx', 'playwright', 'run-test-mcp-server'] }
+      : { command: 'npx', args: ['playwright', 'run-test-mcp-server'] };
     await writeFile('.mcp.json', JSON.stringify({
       mcpServers: {
         'playwright-test': mcpServer,

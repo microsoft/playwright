@@ -89,4 +89,3 @@ test('claude generates correct mcp config', async ({  }) => {
     expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
   }
 });
-
