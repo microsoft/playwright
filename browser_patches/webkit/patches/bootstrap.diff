@@ -6823,10 +6823,47 @@ diff --git a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
 index 36b9854bdd1198290dcc133b1d97e8231b5d2be1..8389d6f2fcbd4f384ec0f5d7ef111b971d5b43de 100644
 --- a/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
 +++ b/Source/WebCore/platform/network/cocoa/NetworkStorageSessionCocoa.mm
-@@ -581,6 +581,27 @@ bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSi
+@@ -66,8 +66,35 @@ NetworkStorageSession::~NetworkStorageSession()
+ void NetworkStorageSession::setCookie(const Cookie& cookie)
+ {
++    if (cookie.domain == "localhost"_s || cookie.domain.endsWith(".localhost"_s)) {
++        StringBuilder header;
++        header.append(cookie.name, '=', cookie.value);
++        if (!cookie.path.isEmpty())
++            header.append("; Path="_s, cookie.path);
++        if (cookie.expires) {
++            double nowMs = WallTime::now().secondsSinceEpoch().milliseconds();
++            long long maxAge = static_cast<long long>((*cookie.expires - nowMs) / 1000);
++            header.append("; Max-Age="_s, maxAge);
++        }
++        if (cookie.httpOnly)
++            header.append("; HttpOnly"_s);
++        if (cookie.secure)
++            header.append("; Secure"_s);
++        if (cookie.sameSite == Cookie::SameSitePolicy::Lax)
++            header.append("; SameSite=Lax"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::Strict)
++            header.append("; SameSite=Strict"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::None)
++            header.append("; SameSite=None"_s);
++        URL url { makeString("http://"_s, cookie.domain, cookie.path.isEmpty() ? "/"_s : cookie.path) };
++        SameSiteInfo sameSiteInfo;
++        sameSiteInfo.isSameSite = true;
++        sameSiteInfo.isTopSite = true;
++        setCookiesFromResponse(url, sameSiteInfo, url, header.toString());
++        return;
++    }
+     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies) || m_isInMemoryCookieStore);
+
+     BEGIN_BLOCK_OBJC_EXCEPTIONS
+     [nsCookieStorage() setCookie:cookie.createNSHTTPCookie().get()];
+     END_BLOCK_OBJC_EXCEPTIONS
+ }
+
+@@ -581,6 +608,27 @@ bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSi
      return false;
  }
- 
+
 +void NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, const String& setCookieValue)
 +{
 +    auto thirdPartyCookieBlockingDecision = ThirdPartyCookieBlockingDecision::None;
@@ -6868,10 +6905,17 @@ diff --git a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp 
 index a765e8f33e07b492c5db681bdb8d0a1b560f3a89..aeecd7d3e5f2b22b039c377178ce93b2d3aee109 100644
 --- a/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
 +++ b/Source/WebCore/platform/network/curl/NetworkStorageSessionCurl.cpp
-@@ -136,6 +136,12 @@ void NetworkStorageSession::setCookieAcceptPolicy(CookieAcceptPolicy policy) con
+@@ -36,6 +36,7 @@
+ #include "HTTPCookieAcceptPolicy.h"
++#include "SameSiteInfo.h"
+ #include <optional>
+ #include <wtf/FileSystem.h>
+ #include <wtf/URL.h>
+ #include <wtf/Vector.h>
+@@ -136,6 +137,12 @@ void NetworkStorageSession::setCookieAcceptPolicy(CookieAcceptPolicy policy) con
      cookieDatabase().setAcceptPolicy(policy);
  }
- 
+
 +void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& setCookieValue)
 +{
 +    for (auto& cookieString : setCookieValue.split('\n'))
@@ -6881,14 +6925,92 @@ index a765e8f33e07b492c5db681bdb8d0a1b560f3a89..aeecd7d3e5f2b22b039c377178ce93b2
  HTTPCookieAcceptPolicy NetworkStorageSession::cookieAcceptPolicy() const
  {
      switch (cookieDatabase().acceptPolicy()) {
+@@ -173,4 +180,31 @@ void NetworkStorageSession::setCookies(const Vector<Cookie>& cookies, const URL&
+ void NetworkStorageSession::setCookie(const Cookie& cookie)
+ {
++    if (cookie.domain == "localhost"_s || cookie.domain.endsWith(".localhost"_s)) {
++        StringBuilder header;
++        header.append(cookie.name, '=', cookie.value);
++        if (!cookie.path.isEmpty())
++            header.append("; Path="_s, cookie.path);
++        if (cookie.expires) {
++            double nowMs = WallTime::now().secondsSinceEpoch().milliseconds();
++            long long maxAge = static_cast<long long>((*cookie.expires - nowMs) / 1000);
++            header.append("; Max-Age="_s, maxAge);
++        }
++        if (cookie.httpOnly)
++            header.append("; HttpOnly"_s);
++        if (cookie.secure)
++            header.append("; Secure"_s);
++        if (cookie.sameSite == Cookie::SameSitePolicy::Lax)
++            header.append("; SameSite=Lax"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::Strict)
++            header.append("; SameSite=Strict"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::None)
++            header.append("; SameSite=None"_s);
++        URL url { makeString("http://"_s, cookie.domain, cookie.path.isEmpty() ? "/"_s : cookie.path) };
++        SameSiteInfo sameSiteInfo;
++        sameSiteInfo.isSameSite = true;
++        sameSiteInfo.isTopSite = true;
++        setCookiesFromResponse(url, sameSiteInfo, url, header.toString());
++        return;
++    }
+     cookieDatabase().setCookie(cookie);
+ }
 diff --git a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 index f913d41de9dc40582c45d62145aef4f55184a9ac..59c9b7041b2e1ad36d7b92e2ccc56ab3bcc690f7 100644
 --- a/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
 +++ b/Source/WebCore/platform/network/soup/NetworkStorageSessionSoup.cpp
-@@ -531,6 +531,26 @@ void NetworkStorageSession::replaceCookies(const Vector<Cookie>& cookies)
+@@ -37,10 +37,13 @@
+ #include "HTTPCookieAcceptPolicy.h"
++#include "SameSiteInfo.h"
+ #include "SoupNetworkSession.h"
+ #include "URLSoup.h"
+ #include <libsoup/soup.h>
+ #include <optional>
+ #include <wtf/DateMath.h>
+ #include <wtf/MainThread.h>
+ #include <wtf/NeverDestroyed.h>
+ #include <wtf/Vector.h>
+ #include <wtf/glib/GUniquePtr.h>
++#include <wtf/text/MakeString.h>
++#include <wtf/text/StringBuilder.h>
+@@ -500,4 +503,31 @@ void NetworkStorageSession::setCookies(const Vector<Cookie>& cookies, const URL&
+ void NetworkStorageSession::setCookie(const Cookie& cookie)
+ {
++    if (cookie.domain == "localhost"_s || cookie.domain.endsWith(".localhost"_s)) {
++        StringBuilder header;
++        header.append(cookie.name, '=', cookie.value);
++        if (!cookie.path.isEmpty())
++            header.append("; Path="_s, cookie.path);
++        if (cookie.expires) {
++            double nowMs = WallTime::now().secondsSinceEpoch().milliseconds();
++            long long maxAge = static_cast<long long>((*cookie.expires - nowMs) / 1000);
++            header.append("; Max-Age="_s, maxAge);
++        }
++        if (cookie.httpOnly)
++            header.append("; HttpOnly"_s);
++        if (cookie.secure)
++            header.append("; Secure"_s);
++        if (cookie.sameSite == Cookie::SameSitePolicy::Lax)
++            header.append("; SameSite=Lax"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::Strict)
++            header.append("; SameSite=Strict"_s);
++        else if (cookie.sameSite == Cookie::SameSitePolicy::None)
++            header.append("; SameSite=None"_s);
++        URL url { makeString("http://"_s, cookie.domain, cookie.path.isEmpty() ? "/"_s : cookie.path) };
++        SameSiteInfo sameSiteInfo;
++        sameSiteInfo.isSameSite = true;
++        sameSiteInfo.isTopSite = true;
++        setCookiesFromResponse(url, sameSiteInfo, url, header.toString());
++        return;
++    }
+     soup_cookie_jar_add_cookie(cookieStorage(), cookie.toSoupCookie());
+ }
+@@ -531,6 +561,26 @@ void NetworkStorageSession::replaceCookies(const Vector<Cookie>& cookies)
      g_signal_emit(jar, signalId, 0, nullptr, nullptr);
  }
- 
+
 +void  NetworkStorageSession::setCookiesFromResponse(const URL& firstParty, const SameSiteInfo&, const URL& url, const String& setCookieValue)
 +{
 +    auto origin = urlToSoupURI(url);

@@ -162,6 +162,24 @@ it('should send cookie header', async ({ server, context }) => {
   expect(cookie).toBe('cookie=value');
 });
 
+it('should send cookies with localhost domain', async ({ server, context }) => {
+  let cookie = '';
+  server.setRoute('/empty.html', (req, res) => {
+    cookie = req.headers.cookie || '';
+    res.end();
+  });
+  await context.addCookies([{
+    domain: 'localhost',
+    path: '/',
+    name: 'cookie',
+    value: 'value',
+    sameSite: 'Lax',
+  }]);
+  const page = await context.newPage();
+  await page.goto(server.EMPTY_PAGE);
+  expect(cookie).toBe('cookie=value');
+});
+
 it('should isolate cookies in browser contexts', async ({ context, server, browser }) => {
   const anotherContext = await browser.newContext();
   await context.addCookies([{ url: server.EMPTY_PAGE, name: 'isolatecookie', value: 'page1value' }]);
