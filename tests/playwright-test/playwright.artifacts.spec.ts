@@ -426,6 +426,52 @@ test('should work with trace: retain-on-first-failure', async ({ runInlineTest }
   ]);
 });
 
+test('should work with trace: retain-on-failure-and-retries', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...testFiles,
+    'playwright.config.ts': `
+      module.exports = { use: { trace: 'retain-on-failure-and-retries' } };
+    `,
+  }, { workers: 1, retries: 2 }, { PLAYWRIGHT_NO_COPY_PROMPT: 'true' });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(5);
+  expect(result.failed).toBe(5);
+  expect(listFiles(testInfo.outputPath('test-results'))).toEqual([
+    '.last-run.json',
+    'artifacts-failing',
+    '  trace.zip',
+    'artifacts-failing-retry1',
+    '  trace.zip',
+    'artifacts-failing-retry2',
+    '  trace.zip',
+    'artifacts-own-context-failing',
+    '  trace.zip',
+    'artifacts-own-context-failing-retry1',
+    '  trace.zip',
+    'artifacts-own-context-failing-retry2',
+    '  trace.zip',
+    'artifacts-persistent-failing',
+    '  trace.zip',
+    'artifacts-persistent-failing-retry1',
+    '  trace.zip',
+    'artifacts-persistent-failing-retry2',
+    '  trace.zip',
+    'artifacts-shared-shared-failing',
+    '  trace.zip',
+    'artifacts-shared-shared-failing-retry1',
+    '  trace.zip',
+    'artifacts-shared-shared-failing-retry2',
+    '  trace.zip',
+    'artifacts-two-contexts-failing',
+    '  trace.zip',
+    'artifacts-two-contexts-failing-retry1',
+    '  trace.zip',
+    'artifacts-two-contexts-failing-retry2',
+    '  trace.zip',
+  ]);
+});
+
 test('should take screenshot when page is closed in afterEach', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `

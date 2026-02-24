@@ -6903,6 +6903,8 @@ export interface PlaywrightWorkerOptions {
    * - `'retain-on-failure'`: Record trace for each test. When test run passes, remove the recorded trace.
    * - `'retain-on-first-failure'`: Record trace for the first run of each test, but not for retries. When test run
    *   passes, remove the recorded trace.
+   * - `'retain-on-failure-and-retries'`: Record trace for each test run, including retries. Retains all traces when
+   *   any attempt fails. Useful for debugging flaky tests by comparing failing and passing runs side-by-side.
    *
    * For more control, pass an object that specifies `mode` and trace features to enable.
    *
@@ -6953,7 +6955,7 @@ export interface PlaywrightWorkerOptions {
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';
-export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure';
+export type TraceMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry' | 'on-all-retries' | 'retain-on-first-failure' | 'retain-on-failure-and-retries';
 export type VideoMode = 'off' | 'on' | 'retain-on-failure' | 'on-first-retry';
 export type AgentOptions = {
   provider?: {
