@@ -215,7 +215,7 @@ export class Response {
       text.push(`- New console entries: ${tabSnapshot.consoleLink}`);
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console' && this._context.config.outputMode !== 'file') {
+        if (event.type === 'console' && this._context.config.outputMode !== 'file' && this._context.config.snapshot.mode !== 'none') {
           if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {

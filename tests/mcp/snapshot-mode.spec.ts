@@ -115,6 +115,32 @@ test('should respect --snapshot-mode=none', async ({ startClient, server }) => {
   });
 });
 
+test('should not inline console messages with --snapshot-mode=none', async ({ startClient, server }) => {
+  server.setContent('/', `
+    <title>Tab one</title>
+    <body>
+      <button>Click me</button>
+      <script>
+        console.log('info message');
+        console.error('error message');
+      </script>
+    </body>
+  `, 'text/html');
+
+  const { client } = await startClient({
+    args: ['--snapshot-mode=none'],
+  });
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(response).not.toHaveResponse({
+    events: expect.stringContaining('error message'),
+  });
+});
+
 test('should respect snapshot[filename]', async ({ client, server }, testInfo) => {
   server.setContent('/', `<button>Button 1</button>`, 'text/html');
 
