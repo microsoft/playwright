@@ -109,6 +109,7 @@ component is mounted using this script. It can be either a `.js`, `.ts`, `.jsx` 
   values={[
     {label: 'React', value: 'react'},
     {label: 'Vue', value: 'vue'},
+    {label: 'Svelte', value: 'svelte'},
   ]
 }>
 <TabItem value="react">
@@ -483,6 +484,39 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
       hooksConfig: { enableRouting: true },
     });
     await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+  <TabItem value="svelte">
+
+  ```ts title="playwright/index.ts"
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-svelte/hooks';
+
+  export type HooksConfig = {
+    context?: string;
+  }
+
+  beforeMount<HooksConfig>(async ({ App, hooksConfig }) => {
+    return new App({
+      context: new Map([['context-key', hooksConfig?.context]]),
+    });
+  });
+  ```
+
+  ```ts title="src/components/context.spec.ts"
+  import { test, expect } from '@playwright/experimental-ct-svelte';
+  import type { HooksConfig } from '../playwright';
+  import Context from './context.svelte';
+
+  test('configure context through hooks config', async ({ mount }) => {
+    const component = await mount<HooksConfig>(Context, {
+      hooksConfig: {
+        context: 'context-value',
+      },
+    });
+    await expect(component).toContainText('context-value');
   });
   ```
 
