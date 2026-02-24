@@ -29,7 +29,7 @@ test('isProfileLocked detects a real browser holding the profile', async ({ mcpB
   test.skip(!['chromium', 'chrome', 'msedge'].includes(mcpBrowser!), 'Chromium-only');
   const userDataDir = testInfo.outputPath('user-data-dir');
   const context = await chromium.launchPersistentContext(userDataDir, {
-    channel: mcpBrowser === 'chromium' ? undefined : mcpBrowser,
+    channel: mcpBrowser === 'chromium' ? 'chrome-for-testing' : mcpBrowser,
     headless: true,
   });
   try {
@@ -43,7 +43,7 @@ test('isProfileLocked returns false after browser closes', async ({ mcpBrowser }
   test.skip(!['chromium', 'chrome', 'msedge'].includes(mcpBrowser!), 'Chromium-only');
   const userDataDir = testInfo.outputPath('user-data-dir');
   const context = await chromium.launchPersistentContext(userDataDir, {
-    channel: mcpBrowser === 'chromium' ? undefined : mcpBrowser,
+    channel: mcpBrowser === 'chromium' ? 'chrome-for-testing' : mcpBrowser,
     headless: true,
   });
   await context.close();

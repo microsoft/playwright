@@ -18,10 +18,10 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect, findDefaultSession, daemonFolder } from './cli-fixtures';
 
-test('should not save user data by default (in-memory mode)', async ({ cli, server, mcpBrowser }, testInfo) => {
+test('should not save user data by default (in-memory mode)', async ({ cli, server, mcpBrowserNormalized }, testInfo) => {
   await cli('open', server.HELLO_WORLD);
   const sessionOptions = await findDefaultSession();
-  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowserNormalized);
   expect(fs.existsSync(dataDir)).toBe(false);
   expect(sessionOptions).toEqual({
     name: 'default',
@@ -38,15 +38,15 @@ test('should not save user data by default (in-memory mode)', async ({ cli, serv
   expect(listOutput).toContain(`### Browsers
 - default:
   - status: open
-  - browser-type: ${mcpBrowser}
+  - browser-type: ${mcpBrowserNormalized}
   - user-data-dir: <in-memory>
   - headed: false`);
 });
 
-test('should save user data with --persistent flag', async ({ cli, server, mcpBrowser }, testInfo) => {
+test('should save user data with --persistent flag', async ({ cli, server, mcpBrowserNormalized }, testInfo) => {
   await cli('open', server.HELLO_WORLD, '--persistent');
   const sessionOptions = await findDefaultSession();
-  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowserNormalized);
   expect(fs.existsSync(dataDir)).toBe(true);
   expect(sessionOptions).toEqual({
     name: 'default',

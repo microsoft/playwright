@@ -40,6 +40,7 @@ export { parseResponse };
 export type TestOptions = {
   mcpArgs: string[] | undefined;
   mcpBrowser: string | undefined;
+  mcpBrowserNormalized: string | undefined;
   mcpCaps: string[] | undefined;
   mcpServerType: 'mcp' | 'test-mcp';
 };
@@ -200,6 +201,11 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   },
 
   mcpBrowser: ['chrome', { option: true }],
+
+  mcpBrowserNormalized: async ({ mcpBrowser }, use) => {
+    const normalized = mcpBrowser?.replace(/chromium/, 'chrome-for-testing');
+    await use(normalized);
+  },
 
   mcpServerType: ['mcp', { option: true }],
 });

@@ -79,10 +79,10 @@ test('close-all', async ({ cli, server }) => {
   expect(listAfter).not.toContain('session1');
 });
 
-test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
+test('delete-data', async ({ cli, server, mcpBrowserNormalized }) => {
   await cli('open', server.HELLO_WORLD, '--persistent');
 
-  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-default-' + mcpBrowserNormalized);
   expect(fs.existsSync(dataDir)).toBe(true);
 
   const { output } = await cli('delete-data');
@@ -91,10 +91,10 @@ test('delete-data', async ({ cli, server, mcpBrowser }, testInfo) => {
   expect(fs.existsSync(dataDir)).toBe(false);
 });
 
-test('delete-data named session', async ({ cli, server, mcpBrowser }, testInfo) => {
+test('delete-data named session', async ({ cli, server, mcpBrowserNormalized }) => {
   await cli('-s', 'mysession', 'open', server.HELLO_WORLD, '--persistent');
 
-  const dataDir = path.resolve(await daemonFolder(), 'ud-mysession-' + mcpBrowser);
+  const dataDir = path.resolve(await daemonFolder(), 'ud-mysession-' + mcpBrowserNormalized);
   expect(fs.existsSync(dataDir)).toBe(true);
 
   const { output } = await cli('-s', 'mysession', 'delete-data');

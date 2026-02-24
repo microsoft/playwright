@@ -158,7 +158,7 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
 export async function validateConfig(config: FullConfig): Promise<void> {
   if (config.browser.browserName === 'chromium' && config.browser.launchOptions.chromiumSandbox === undefined) {
     if (process.platform === 'linux')
-      config.browser.launchOptions.chromiumSandbox = config.browser.launchOptions.channel !== 'chromium';
+      config.browser.launchOptions.chromiumSandbox = config.browser.launchOptions.channel !== 'chromium' && config.browser.launchOptions.channel !== 'chrome-for-testing';
     else
       config.browser.launchOptions.chromiumSandbox = true;
   }
@@ -198,13 +198,17 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     case 'chrome-beta':
     case 'chrome-canary':
     case 'chrome-dev':
-    case 'chromium':
     case 'msedge':
     case 'msedge-beta':
     case 'msedge-canary':
     case 'msedge-dev':
       browserName = 'chromium';
       channel = cliOptions.browser;
+      break;
+    case 'chromium':
+      // Never use old headless.
+      browserName = 'chromium';
+      channel = 'chrome-for-testing';
       break;
     case 'firefox':
       browserName = 'firefox';
