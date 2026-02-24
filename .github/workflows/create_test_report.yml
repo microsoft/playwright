@@ -66,5 +66,5 @@ jobs:
             sha: '${{ github.event.workflow_run.head_sha }}',
             state: 'success',
             target_url: '${{ steps.upload-report.outputs.reportUrl }}',
-            context: 'HTML Report',
+            context: 'HTML Report (${{ github.event.workflow_run.name }})',
           });
