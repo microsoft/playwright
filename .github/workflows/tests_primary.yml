@@ -182,6 +182,7 @@ jobs:
       env:
         PW_TAG: "@vscode-extension"
     - name: Upload blob report
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: playwright-vscode/blob-report

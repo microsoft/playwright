@@ -86,6 +86,7 @@ runs:
       if: ${{ !cancelled() }}
       shell: bash
     - name: Upload blob report
+      if: ${{ !cancelled() }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report

@@ -40,5 +40,7 @@ runs:
     - name: Unzip artifacts
       shell: bash
       run: |
-        unzip -n '${{ inputs.path }}/artifacts/*.zip' -d ${{ inputs.path }}
+        if ls '${{ inputs.path }}/artifacts'/*.zip 1>/dev/null 2>&1; then
+          unzip -n '${{ inputs.path }}/artifacts/*.zip' -d ${{ inputs.path }}
+        fi
         rm -rf '${{ inputs.path }}/artifacts'
