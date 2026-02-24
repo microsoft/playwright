@@ -88,6 +88,55 @@ test('browser_verify_element_visible (not found)', async ({ client, server }) =>
   });
 });
 
+test('browser_verify_element_visible (iframe)', async ({ client, server }) => {
+  server.setContent('/', `
+    <title>Test Page</title>
+    <h1>Outer frame text</h1>
+    <iframe srcdoc="<html><body><h1>Inner iframe</h1></body></html>" width="400" height="200">
+    </iframe>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_verify_element_visible',
+    arguments: {
+      role: 'heading',
+      accessibleName: 'Inner iframe',
+    },
+  })).toHaveResponse({
+    result: 'Done',
+    code: `await expect(page.locator('iframe').contentFrame().getByRole('heading', { name: 'Inner iframe' })).toBeVisible();`,
+  });
+});
+
+test('browser_verify_text_visible (iframe)', async ({ client, server }) => {
+  server.setContent('/', `
+    <title>Test Page</title>
+    <h1>Outer frame text</h1>
+    <iframe srcdoc="<html><body><h1>Inner iframe</h1></body></html>" width="400" height="200">
+    </iframe>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_verify_text_visible',
+    arguments: {
+      text: 'Inner iframe',
+    },
+  })).toHaveResponse({
+    result: 'Done',
+    code: `await expect(page.locator('iframe').contentFrame().getByRole('heading', { name: 'Inner iframe' })).toBeVisible();`,
+  });
+});
+
 test('browser_verify_text_visible', async ({ client, server }) => {
   server.setContent('/', `
     <title>Test Page</title>

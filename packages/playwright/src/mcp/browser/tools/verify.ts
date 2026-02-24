@@ -33,14 +33,16 @@ const verifyElement = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = tab.page.getByRole(params.role as any, { name: params.accessibleName });
-    if (await locator.count() === 0) {
-      response.addError(`Element with role "${params.role}" and accessible name "${params.accessibleName}" not found`);
-      return;
+    for (const frame of tab.page.frames()) {
+      const locator = frame.getByRole(params.role as any, { name: params.accessibleName });
+      if (await locator.count() > 0) {
+        const resolved = await locator._resolveForCode();
+        response.addCode(`await expect(page.${resolved}).toBeVisible();`);
+        response.addTextResult('Done');
+        return;
+      }
     }
-
-    response.addCode(`await expect(page.getByRole(${escapeWithQuotes(params.role)}, { name: ${escapeWithQuotes(params.accessibleName)} })).toBeVisible();`);
-    response.addTextResult('Done');
+    response.addError(`Element with role "${params.role}" and accessible name "${params.accessibleName}" not found`);
   },
 });
 
@@ -57,14 +59,16 @@ const verifyText = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    const locator = tab.page.getByText(params.text).filter({ visible: true });
-    if (await locator.count() === 0) {
-      response.addError('Text not found');
-      return;
+    for (const frame of tab.page.frames()) {
+      const locator = frame.getByText(params.text).filter({ visible: true });
+      if (await locator.count() > 0) {
+        const resolved = await locator._resolveForCode();
+        response.addCode(`await expect(page.${resolved}).toBeVisible();`);
+        response.addTextResult('Done');
+        return;
+      }
     }
-
-    response.addCode(`await expect(page.getByText(${escapeWithQuotes(params.text)})).toBeVisible();`);
-    response.addTextResult('Done');
+    response.addError('Text not found');
   },
 });
 
