@@ -264,7 +264,7 @@ This version was also tested against the following stable channels:
 ### Trace Viewer and HTML Reporter Updates
 
 - New Steps in Trace Viewer and HTML reporter:
-  ![New Trace Viewer Steps](https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2)
+  <img src="https://github.com/user-attachments/assets/1963ff7d-4070-41be-a79b-4333176921a2" alt="New Trace Viewer Steps" width="1562" height="1364" />
 - New option in `'html'` reporter to set the title of a specific test run:
   ```js
   import { defineConfig } from '@playwright/test';
@@ -373,7 +373,7 @@ This version was also tested against the following stable channels:
 
 New "Copy prompt" button on errors in the HTML report, trace viewer and UI mode. Click to copy a pre-filled LLM prompt that contains the error message and useful context for fixing the error.
 
-  ![Copy prompt](https://github.com/user-attachments/assets/f3654407-dd6d-4240-9845-0d96df2bf30a)
+  <img src="https://github.com/user-attachments/assets/f3654407-dd6d-4240-9845-0d96df2bf30a" alt="Copy prompt" width="2178" height="1592" />
 
 ### Filter visible elements
 
@@ -402,7 +402,7 @@ Set option [`property: TestConfig.captureGitInfo`] to capture git information in
 
   HTML report will show this information when available:
 
-  ![Git information in the report](https://github.com/user-attachments/assets/f5b3f6f4-aa08-4a24-816c-7edf33ef0c37)
+  <img src="https://github.com/user-attachments/assets/f5b3f6f4-aa08-4a24-816c-7edf33ef0c37" alt="Git information in the report" width="2514" height="406" />
 
 ### Test Step improvements
 
@@ -657,7 +657,7 @@ The Network tab in the UI mode and trace viewer has several nice improvements:
 - better display of query string parameters
 - preview of font assets
 
-![Network tab now has filters](https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2)
+<img src="https://github.com/user-attachments/assets/4bd1b67d-90bd-438b-a227-00b9e86872e2" alt="Network tab now has filters" width="1712" height="418" />
 
 
 ### `--tsconfig` CLI option
@@ -1060,7 +1060,7 @@ This version was also tested against the following stable channels:
 
 ### UI Mode Updates
 
-![Playwright UI Mode](https://github.com/microsoft/playwright/assets/9881434/61ca7cfc-eb7a-4305-8b62-b6c9f098f300)
+<img src="https://github.com/microsoft/playwright/assets/9881434/61ca7cfc-eb7a-4305-8b62-b6c9f098f300" alt="Playwright UI Mode" width="2304" height="1492" />
 
 * See tags in the test list.
 * Filter by tags by typing `@fast` or clicking on the tag itself.
@@ -1193,7 +1193,7 @@ This version was also tested against the following stable channels:
 
 ### Test Generator Update
 
-![Playwright Test Generator](https://github.com/microsoft/playwright/assets/9881434/e8d67e2e-f36d-4301-8631-023948d3e190)
+<img src="https://github.com/microsoft/playwright/assets/9881434/e8d67e2e-f36d-4301-8631-023948d3e190" alt="Playwright Test Generator" width="2788" height="1824" />
 
 New tools to generate assertions:
 - "Assert visibility" tool generates [`method: LocatorAssertions.toBeVisible`].
@@ -1353,7 +1353,7 @@ This version was also tested against the following stable channels:
 
 ### UI Mode Updates
 
-![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369)
+<img src="https://github.com/microsoft/playwright/assets/746130/8ba27be0-58fd-4f62-8561-950480610369" alt="Playwright UI Mode" width="1230" height="722" />
 
 1. Zoom into time range.
 1. Network panel redesign.
@@ -1513,11 +1513,11 @@ This version was also tested against the following stable channels:
 
 * UI mode is now available in VSCode Playwright extension via a new "Show trace viewer" button:
 
-  ![Playwright UI Mode](https://github.com/microsoft/playwright/assets/746130/13094128-259b-477a-8bbb-c1181178e8a2)
+  <img src="https://github.com/microsoft/playwright/assets/746130/13094128-259b-477a-8bbb-c1181178e8a2" alt="Playwright UI Mode" width="1274" height="722" />
 
 * UI mode and trace viewer mark network requests handled with [`method: Page.route`] and [`method: BrowserContext.route`] handlers, as well as those issued via the [API testing](./api-testing):
 
-  ![Trace Viewer](https://github.com/microsoft/playwright/assets/746130/0df2d4b6-faa3-465c-aff3-c435b430bfe1)
+  <img src="https://github.com/microsoft/playwright/assets/746130/0df2d4b6-faa3-465c-aff3-c435b430bfe1" alt="Trace Viewer" width="1970" height="1204" />
 
 * New option `maskColor` for methods [`method: Page.screenshot`], [`method: Locator.screenshot`], [`method: PageAssertions.toHaveScreenshot#1`] and [`method: LocatorAssertions.toHaveScreenshot#1`] to change default masking color:
   ```js
@@ -1570,7 +1570,7 @@ This version was also tested against the following stable channels:
 ### Highlights
 
 * UI Mode now shows steps, fixtures and attachments:
-  ![UI Mode attachments](https://github.com/microsoft/playwright/assets/746130/1d280419-d79a-4a56-b2dc-54d631281d56)
+  <img src="https://github.com/microsoft/playwright/assets/746130/1d280419-d79a-4a56-b2dc-54d631281d56" alt="UI Mode attachments" width="2306" height="1754" />
 * New property [`property: TestProject.teardown`] to specify a project that needs to run after this
   and all dependent projects have finished. Teardown is useful to cleanup any resources acquired by this project.
 
@@ -1738,7 +1738,7 @@ This version was also tested against the following stable channels:
 
 New [UI Mode](./test-ui-mode.md) lets you explore, run and debug tests. Comes with a built-in watch mode.
 
-![Playwright UI Mode](https://user-images.githubusercontent.com/746130/227004851-3901a691-4f8e-43d6-8d6b-cbfeafaeb999.png)
+<img src="https://user-images.githubusercontent.com/746130/227004851-3901a691-4f8e-43d6-8d6b-cbfeafaeb999.png" alt="Playwright UI Mode" width="2784" height="1824" />
 
 Engage with a new flag `--ui`:
 
@@ -1993,16 +1993,16 @@ This version was also tested against the following stable channels:
 
 * **Record at Cursor in VSCode.** You can run the test, position the cursor at the end of the test and continue generating the test.
 
-![New VSCode Extension](https://user-images.githubusercontent.com/746130/202005839-aba2eeba-217b-424d-8496-8b4f5fa72f41.png)
+<img src="https://user-images.githubusercontent.com/746130/202005839-aba2eeba-217b-424d-8496-8b4f5fa72f41.png" alt="New VSCode Extension" width="2704" height="1814" />
 
 * **Live Locators in VSCode.** You can hover and edit locators in VSCode to get them  highlighted in the opened browser.
 * **Live Locators in CodeGen.** Generate a locator for any element on the page using "Explore" tool.
 
-![Locator Explorer](https://user-images.githubusercontent.com/746130/201796876-01567a0b-ca61-4a9d-b12b-04786c471671.png)
+<img src="https://user-images.githubusercontent.com/746130/201796876-01567a0b-ca61-4a9d-b12b-04786c471671.png" alt="Locator Explorer" width="1382" height="1090" />
 
 * **Codegen and Trace Viewer Dark Theme.** Automatically picked up from operating system settings.
 
-![Dark Theme](https://user-images.githubusercontent.com/746130/201797969-603f74df-d7cf-4c56-befd-798dbd269796.png)
+<img src="https://user-images.githubusercontent.com/746130/201797969-603f74df-d7cf-4c56-befd-798dbd269796.png" alt="Dark Theme" width="2418" height="1726" />
 
 
 ### Test Runner
@@ -2179,7 +2179,7 @@ This version was also tested against the following stable channels:
 * Pick selector.
 * Record new test from current page state.
 
-![vscode extension screenshot](https://user-images.githubusercontent.com/746130/183781999-1b9fdbc5-cfae-47d6-b4f7-5d4ae89716a8.jpg)
+<img src="https://user-images.githubusercontent.com/746130/183781999-1b9fdbc5-cfae-47d6-b4f7-5d4ae89716a8.jpg" alt="vscode extension screenshot" width="2560" height="1039" />
 
 ### Test Runner
 
@@ -2859,7 +2859,7 @@ This version was also tested against the following stable channels:
 
 Playwright 1.17 introduces [frame locators](./api/class-framelocator) - a locator to the iframe on the page. Frame locators capture the logic sufficient to retrieve the `iframe` and then locate elements in that iframe. Frame locators are strict by default, will wait for `iframe` to appear and can be used in Web-First assertions.
 
-![Graphics](https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png)
+<img src="https://user-images.githubusercontent.com/746130/142082759-2170db38-370d-43ec-8d41-5f9941f57d83.png" alt="Graphics" width="600" height="237" />
 
 Frame locators can be created with either [`method: Page.frameLocator`] or [`method: Locator.frameLocator`] method.
 
@@ -2881,14 +2881,14 @@ Playwright Trace Viewer is now **available online** at https://trace.playwright.
 - New trace metadata tab with browser details
 - Snapshots now have URL bar
 
-![image](https://user-images.githubusercontent.com/746130/141877831-29e37cd1-e574-4bd9-aab5-b13a463bb4ae.png)
+<img src="https://user-images.githubusercontent.com/746130/141877831-29e37cd1-e574-4bd9-aab5-b13a463bb4ae.png" alt="image" width="2230" height="1562" />
 
 ### HTML Report Update
 
 - HTML report now supports dynamic filtering
 - Report is now a **single static HTML file** that could be sent by e-mail or as a slack attachment.
 
-![image](https://user-images.githubusercontent.com/746130/141877402-e486643d-72c7-4db3-8844-ed2072c5d676.png)
+<img src="https://user-images.githubusercontent.com/746130/141877402-e486643d-72c7-4db3-8844-ed2072c5d676.png" alt="image" width="2494" height="1624" />
 
 ### Ubuntu ARM64 support + more
 
@@ -2994,7 +2994,7 @@ $ npx playwright test --reporter=html
 The HTML reporter has all the information about tests and their failures, including surfacing
 trace and image artifacts.
 
-![html reporter](https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png)
+<img src="https://user-images.githubusercontent.com/746130/138324311-94e68b39-b51a-4776-a446-f60037a77f32.png" alt="html reporter" width="720" height="1536" />
 
 Read more about [our reporters](./test-reporters#html-reporter).
 
@@ -3378,7 +3378,7 @@ npx playwright show-trace trace.zip
 
 That will open the following GUI:
 
-![image](https://user-images.githubusercontent.com/746130/121109654-d66c4480-c7c0-11eb-8d4d-eb70d2b03811.png)
+<img src="https://user-images.githubusercontent.com/746130/121109654-d66c4480-c7c0-11eb-8d4d-eb70d2b03811.png" alt="image" width="2424" height="1544" />
 
 👉 Read more in [trace viewer documentation](./trace-viewer.md).
 

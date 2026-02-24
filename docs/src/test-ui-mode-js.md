@@ -26,90 +26,90 @@ npx playwright test --ui
 
 Once you launch UI Mode you will see a list of all your test files. You can run all your tests by clicking the triangle icon in the sidebar. You can also run a single test file, a block of tests or a single test by hovering over the name and clicking on the triangle next to it.
 
-![running tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/6b87712f-64a5-4d73-a91d-6562b864712c)
+<img src="https://github.com/microsoft/playwright/assets/13063165/6b87712f-64a5-4d73-a91d-6562b864712c" alt="running tests in ui mode" width="3960" height="2326" />
 
 ## Filtering tests
 
 Filter tests by text or `@tag` or by passed, failed or skipped tests. You can also filter by [projects](./test-projects) as set in your `playwright.config` file. If you are using project dependencies make sure to run your setup tests first before running the tests that depend on them. The UI mode will not take into consideration the setup tests and therefore you will have to manually run them first.
 
-![filtering tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/6f05e589-036d-45d5-9078-38134e1261e4)
+<img src="https://github.com/microsoft/playwright/assets/13063165/6f05e589-036d-45d5-9078-38134e1261e4" alt="filtering tests in ui mode" width="3960" height="2326" />
 
 ## Timeline view
 
 At the top of the trace you can see a timeline view of your test with different colors to highlight navigation and actions. Hover back and forth to see an image snapshot for each action. Double click on an action to see the time range for that action. You can use the slider in the timeline to increase the actions selected and these will be shown in the Actions tab and all console logs and network logs will be filtered to only show the logs for the actions selected.
 
-![timeline view in ui mode](https://github.com/microsoft/playwright/assets/13063165/811a9985-32aa-4a3e-9869-de32053cf468)
+<img src="https://github.com/microsoft/playwright/assets/13063165/811a9985-32aa-4a3e-9869-de32053cf468" alt="timeline view in ui mode" width="3960" height="2326" />
 
 ## Actions
 
 In the Actions tab you can see what locator was used for every action and how long each one took to run. Hover over each action of your test and visually see the change in the DOM snapshot. Go back and forward in time and click an action to inspect and debug. Use the Before and After tabs to visually see what happened before and after the action.
-![use before and after actions in ui mode](https://github.com/microsoft/playwright/assets/13063165/7b22fab5-7346-4b98-8fdd-a78ed280647f)
+<img src="https://github.com/microsoft/playwright/assets/13063165/7b22fab5-7346-4b98-8fdd-a78ed280647f" alt="use before and after actions in ui mode" width="3960" height="2326" />
 
 ## Pop out and inspect the DOM
 
 Pop out the DOM snapshot into its own window for a better debugging experience by clicking on the pop out icon above the DOM snapshot. From there you can open the browser DevTools and inspect the HTML, CSS, Console etc. Go back to UI Mode and click on another action and pop that one out to easily compare the two side by side or debug each individually.
 
-![pop out dom snapshot in ui mode](https://github.com/microsoft/playwright/assets/13063165/f9f43a0c-78d7-4574-9a58-c69d2ec53c8f)
+<img src="https://github.com/microsoft/playwright/assets/13063165/f9f43a0c-78d7-4574-9a58-c69d2ec53c8f" alt="pop out dom snapshot in ui mode" width="3958" height="2322" />
 
 ## Pick locator
 
 Click on the pick locator button and hover over the DOM snapshot to see the locator for each element highlighted as you hover. Click on an element to add the locator playground. You can modify the locator in the playground and see if your modified locator matches any locators in the DOM snapshot. Once you are satisfied with the locator you can use the copy button to copy the locator and paste it into your test.
 
-![pick locator in ui mode](https://github.com/microsoft/playwright/assets/13063165/9e7eeb84-bd26-4010-8614-75e24b56c716)
+<img src="https://github.com/microsoft/playwright/assets/13063165/9e7eeb84-bd26-4010-8614-75e24b56c716" alt="pick locator in ui mode" width="3960" height="2326" />
 
 ## Source
 
 As you hover over each action of your test the line of code for that action is highlighted in the source panel. The button "Open in VSCode" is at the top-right of this section. Upon clicking the button, it will open your test in VS Code right at the line of code that you clicked on.
 
-![showing source code of tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/49b9fa2a-8a57-4044-acaa-0a2ea4784c5c)
+<img src="https://github.com/microsoft/playwright/assets/13063165/49b9fa2a-8a57-4044-acaa-0a2ea4784c5c" alt="showing source code of tests in ui mode" width="3958" height="2322" />
 
 ## Call
 
 The call tab shows you information about the action such as the time it took, what locator was used, if in strict mode and what key was used.
 
-![showing call tab in ui mode](https://github.com/microsoft/playwright/assets/13063165/442314c3-0b16-4400-bf25-c198f8654849)
+<img src="https://github.com/microsoft/playwright/assets/13063165/442314c3-0b16-4400-bf25-c198f8654849" alt="showing call tab in ui mode" width="3958" height="2322" />
 
 ## Log
 
 See a full log of your test to better understand what Playwright is doing behind the scenes such as scrolling into view, waiting for element to be visible, enabled and stable and performing actions such as click, fill, press etc.
 
-![showing log of tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/1d214ee5-2c07-414d-a342-f88d0864ac89)
+<img src="https://github.com/microsoft/playwright/assets/13063165/1d214ee5-2c07-414d-a342-f88d0864ac89" alt="showing log of tests in ui mode" width="3958" height="2322" />
 
 ## Errors
 
 If your test fails you will see the error messages for each test in the Errors tab. The timeline will also show a red line highlighting where the error occurred. You can also click on the source tab to see on which line of the source code the error is.
 
-![showing errors in ui mode](https://github.com/microsoft/playwright/assets/13063165/ffca2fd1-5349-41fb-ade9-ace143bb2c58)
+<img src="https://github.com/microsoft/playwright/assets/13063165/ffca2fd1-5349-41fb-ade9-ace143bb2c58" alt="showing errors in ui mode" width="3958" height="2322" />
 
 ## Console
 
 See console logs from the browser as well as from your test. Different icons are displayed to show you if the console log came from the browser or from the test file.
 
-![showing console logs from tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/b6a44763-da04-4152-bbac-3369ca4a60ac)
+<img src="https://github.com/microsoft/playwright/assets/13063165/b6a44763-da04-4152-bbac-3369ca4a60ac" alt="showing console logs from tests in ui mode" width="3958" height="2322" />
 
 ## Network
 
 The Network tab shows you all the network requests that were made during your test. You can sort by different types of requests, status code, method, request, content type, duration and size. Click on a request to see more information about it such as the request headers, response headers, request body and response body.
 
-![showing network requests from tests in ui mode](https://github.com/microsoft/playwright/assets/13063165/946c2722-447a-4005-9518-b4e9b73a8240)
+<img src="https://github.com/microsoft/playwright/assets/13063165/946c2722-447a-4005-9518-b4e9b73a8240" alt="showing network requests from tests in ui mode" width="3958" height="2322" />
 
 ## Attachments
 
 The "Attachments" tab allows you to explore attachments. If you're doing [visual regression testing](./test-snapshots.md), you'll be able to compare screenshots by examining the image diff, the actual image and the expected image. When you click on the expected image you can use the slider to slide one image over the other so you can easily see the differences in your screenshots.
 
-![ui mode with attachments](https://github.com/microsoft/playwright/assets/13063165/bb83b406-84ed-4380-a96c-0e62d1388093)
+<img src="https://github.com/microsoft/playwright/assets/13063165/bb83b406-84ed-4380-a96c-0e62d1388093" alt="ui mode with attachments" width="3606" height="2228" />
 
 ## Metadata
 
 Next to the Actions tab you will find the Metadata tab which will show you more information on your test such as the Browser, viewport size, test duration and more.
 
-![metadata tab in ui mode](https://github.com/microsoft/playwright/assets/13063165/befff46e-381a-41c2-8259-e47442add425)
+<img src="https://github.com/microsoft/playwright/assets/13063165/befff46e-381a-41c2-8259-e47442add425" alt="metadata tab in ui mode" width="3958" height="2322" />
 
 ## Watch mode
 
 Next to the name of each test in the sidebar you will find an eye icon. Clicking on the icon will activate watch mode which will re-run the test when you make changes to it. You can watch a number of tests at the same time be clicking the eye icon next to each one or all tests by clicking the eye icon at the top of the sidebar.
 
-![watch mode in ui mode](https://github.com/microsoft/playwright/assets/13063165/20d7d44c-b52d-43ff-8871-8b828671f3da)
+<img src="https://github.com/microsoft/playwright/assets/13063165/20d7d44c-b52d-43ff-8871-8b828671f3da" alt="watch mode in ui mode" width="3960" height="2326" />
 
 ## Docker & GitHub Codespaces
 
