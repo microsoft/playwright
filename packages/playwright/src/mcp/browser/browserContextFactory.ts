@@ -203,7 +203,7 @@ class PersistentContextFactory implements BrowserContextFactory {
       await startTraceServer(this.config, tracesDir);
 
     if (await isProfileLocked5Times(userDataDir))
-      throw new Error(`User data directory ${userDataDir} is already in use by another browser process. Use --isolated to run multiple instances of the same browser.`);
+      throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
     testDebug('lock user data dir', userDataDir);
 
