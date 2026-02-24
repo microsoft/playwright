@@ -15,7 +15,7 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
-import { formatObject } from 'playwright-core/lib/utils';
+import { formatObject, formatObjectOrVoid } from 'playwright-core/lib/utils';
 
 import { defineTabTool, defineTool } from './tool';
 
@@ -66,13 +66,12 @@ const click = defineTabTool({
       button: params.button,
       modifiers: params.modifiers,
     };
-    const formatted = formatObject(options, ' ', 'oneline');
-    const optionsAttr = formatted !== '{}' ? formatted : '';
+    const optionsArg = formatObjectOrVoid(options);
 
     if (params.doubleClick)
-      response.addCode(`await page.${resolved}.dblclick(${optionsAttr});`);
+      response.addCode(`await page.${resolved}.dblclick(${optionsArg});`);
     else
-      response.addCode(`await page.${resolved}.click(${optionsAttr});`);
+      response.addCode(`await page.${resolved}.click(${optionsArg});`);
 
     await tab.waitForCompletion(async () => {
       if (params.doubleClick)

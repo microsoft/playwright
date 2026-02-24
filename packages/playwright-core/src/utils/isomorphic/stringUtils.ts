@@ -60,7 +60,7 @@ export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'one
     for (const key of keys)
       tokens.push(`${key}: ${formatObject(value[key])}`);
     if (mode === 'multiline')
-      return `{\n${tokens.join(`,\n${indent}`)}\n}`;
+      return `{\n${tokens.map(t => indent + t).join(`,\n`)}\n}`;
     return `{ ${tokens.join(', ')} }`;
   }
   return String(value);

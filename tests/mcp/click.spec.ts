@@ -99,7 +99,11 @@ test('browser_click (right)', async ({ client, server }) => {
     },
   });
   expect(result).toHaveResponse({
-    code: `await page.getByRole('button', { name: 'Menu' }).click({ button: 'right' });`,
+    code: [
+      `await page.getByRole('button', { name: 'Menu' }).click({`,
+      `  button: 'right'`,
+      `});`
+    ].join('\n'),
     snapshot: expect.stringContaining(`button "Right clicked"`),
   });
 });
@@ -130,7 +134,11 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
         modifiers: ['Control'],
       },
     })).toHaveResponse({
-      code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Control'] });`,
+      code: [
+        `await page.getByRole('button', { name: 'Submit' }).click({`,
+        `  modifiers: ['Control']`,
+        `});`
+      ].join('\n'),
       snapshot: expect.stringContaining(`generic [ref=e3]: ctrlKey:true metaKey:false shiftKey:false altKey:false`),
     });
   }
@@ -143,7 +151,11 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
       modifiers: ['Shift'],
     },
   })).toHaveResponse({
-    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift'] });`,
+    code: [
+      `await page.getByRole('button', { name: 'Submit' }).click({`,
+      `  modifiers: ['Shift']`,
+      `});`
+    ].join('\n'),
     snapshot: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:false`),
   });
 
@@ -155,7 +167,11 @@ test('browser_click (modifiers)', async ({ client, server, mcpBrowser }) => {
       modifiers: ['Shift', 'Alt'],
     },
   })).toHaveResponse({
-    code: `await page.getByRole('button', { name: 'Submit' }).click({ modifiers: ['Shift', 'Alt'] });`,
+    code: [
+      `await page.getByRole('button', { name: 'Submit' }).click({`,
+      `  modifiers: ['Shift', 'Alt']`,
+      `});`
+    ].join('\n'),
     snapshot: expect.stringContaining(`generic [ref=e3]: ctrlKey:false metaKey:false shiftKey:true altKey:true`),
   });
 });
