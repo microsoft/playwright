@@ -190,8 +190,6 @@ class PersistentContextFactory implements BrowserContextFactory {
   readonly name = 'persistent';
   readonly description = 'Create a new persistent browser context';
 
-  private _userDataDirs = new Set<string>();
-
   constructor(config: FullConfig) {
     this.config = config;
   }
@@ -204,52 +202,45 @@ class PersistentContextFactory implements BrowserContextFactory {
     if (tracesDir && this.config.saveTrace)
       await startTraceServer(this.config, tracesDir);
 
-    this._userDataDirs.add(userDataDir);
+    if (await isProfileLocked5Times(userDataDir))
+      throw new Error(`User data directory ${userDataDir} is already in use by another browser process. Use --isolated to run multiple instances of the same browser.`);
+
     testDebug('lock user data dir', userDataDir);
 
     const browserType = playwright[this.config.browser.browserName];
-    for (let i = 0; i < 5; i++) {
-      const launchOptions: LaunchOptions & BrowserContextOptions = {
-        tracesDir,
-        ...this.config.browser.launchOptions,
-        ...await browserContextOptionsFromConfig(this.config, clientInfo),
-        handleSIGINT: false,
-        handleSIGTERM: false,
-        ignoreDefaultArgs: [
-          '--disable-extensions',
-        ],
-        assistantMode: true,
-      };
-      try {
-        const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
-        await addInitScript(browserContext, this.config.browser.initScript);
-        const close = () => this._closeBrowserContext(browserContext, userDataDir);
-        return { browserContext, close };
-      } catch (error: any) {
-        if (error.message.includes('Executable doesn\'t exist'))
-          throwBrowserIsNotInstalledError(this.config);
-        if (error.message.includes('cannot open shared object file: No such file or directory')) {
-          const browserName = launchOptions.channel ?? this.config.browser.browserName;
-          throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
-        }
-        if (error.message.includes('ProcessSingleton') ||
-            // On Windows the process exits silently with code 21 when the profile is in use.
-            error.message.includes('exitCode=21')) {
-          // User data directory is already in use, try again.
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          continue;
-        }
-        throw error;
+    const launchOptions: LaunchOptions & BrowserContextOptions = {
+      tracesDir,
+      ...this.config.browser.launchOptions,
+      ...await browserContextOptionsFromConfig(this.config, clientInfo),
+      handleSIGINT: false,
+      handleSIGTERM: false,
+      ignoreDefaultArgs: [
+        '--disable-extensions',
+      ],
+      assistantMode: true,
+    };
+    try {
+      const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+      await addInitScript(browserContext, this.config.browser.initScript);
+      const close = () => this._closeBrowserContext(browserContext, userDataDir);
+      return { browserContext, close };
+    } catch (error: any) {
+      if (error.message.includes('Executable doesn\'t exist'))
+        throwBrowserIsNotInstalledError(this.config);
+      if (error.message.includes('cannot open shared object file: No such file or directory')) {
+        const browserName = launchOptions.channel ?? this.config.browser.browserName;
+        throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
       }
+      if (error.message.includes('ProcessSingleton') || error.message.includes('exitCode=21'))
+        throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
+      throw error;
     }
-    throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
   }
 
   private async _closeBrowserContext(browserContext: playwright.BrowserContext, userDataDir: string) {
     testDebug('close browser context (persistent)');
     testDebug('release user data dir', userDataDir);
     await browserContext.close().catch(() => {});
-    this._userDataDirs.delete(userDataDir);
     if (process.env.PWMCP_PROFILES_DIR_FOR_TEST && userDataDir.startsWith(process.env.PWMCP_PROFILES_DIR_FOR_TEST))
       await fs.promises.rm(userDataDir, { recursive: true }).catch(logUnhandledError);
     testDebug('close browser context complete (persistent)');
@@ -365,6 +356,41 @@ async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: C
     };
   }
   return result;
+}
+
+async function isProfileLocked5Times(userDataDir: string): Promise<boolean> {
+  for (let i = 0; i < 5; i++) {
+    if (!isProfileLocked(userDataDir))
+      return false;
+    await new Promise(f => setTimeout(f, 1000));
+  }
+  return true;
+}
+
+export function isProfileLocked(userDataDir: string): boolean {
+  const lockFile = process.platform === 'win32' ? 'lockfile' : 'SingletonLock';
+  const lockPath = path.join(userDataDir, lockFile);
+
+  if (process.platform === 'win32') {
+    try {
+      const fd = fs.openSync(lockPath, 'r+');
+      fs.closeSync(fd);
+      return false;
+    } catch (e: any) {
+      return e.code !== 'ENOENT';
+    }
+  }
+
+  try {
+    const target = fs.readlinkSync(lockPath);
+    const pid = parseInt(target.split('-').pop() || '', 10);
+    if (isNaN(pid))
+      return false;
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 function throwBrowserIsNotInstalledError(config: FullConfig): never {
