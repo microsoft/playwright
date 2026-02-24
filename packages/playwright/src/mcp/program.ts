@@ -50,6 +50,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--extension', 'Connect to a running browser instance (Edge/Chrome only). Requires the "Playwright MCP Bridge" browser extension to be installed.')
       .option('--grant-permissions <permissions...>', 'List of permissions to grant to the browser context, for example "geolocation", "clipboard-read", "clipboard-write".', commaSeparatedList)
       .option('--headless', 'run browser in headless mode, headed by default')
+      .option('--allowed-tools <tools>', 'comma-separated list of tool names to expose. If specified, only these tools are visible.', commaSeparatedList)
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
       .option('--filter-internal-urls', 'filter out internal Electron tabs (file://, data:, chrome-extension://, localhost) from the tab list')
       .option('--ignore-https-errors', 'ignore https errors')

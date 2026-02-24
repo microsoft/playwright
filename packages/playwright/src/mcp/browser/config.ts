@@ -76,6 +76,7 @@ export type CLIOptions = {
   userDataDir?: string;
   viewportSize?: ViewportSize;
   filterInternalUrls?: boolean;
+  'allowed-tools'?: string[];
 };
 
 export const defaultConfig: FullConfig = {
@@ -305,6 +306,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     filterInternalUrls: cliOptions.filterInternalUrls,
+    allowedTools: cliOptions['allowed-tools'],
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
