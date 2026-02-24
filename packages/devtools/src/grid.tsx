@@ -20,7 +20,7 @@ import { DevToolsClient } from './devtoolsClient';
 import { navigate } from './index';
 import { Screencast } from './screencast';
 
-import type { SessionConfig } from '../../playwright/src/cli/client/registry';
+import type { SessionFile } from '../../playwright/src/cli/client/registry';
 import type { Tab } from './devtoolsChannel';
 import type { SessionModel, SessionStatus } from './sessionModel';
 
@@ -43,7 +43,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
     for (const session of sessions) {
-      const key = session.config.workspaceDir || 'Global';
+      const key = session.file.config.workspaceDir || 'Global';
       let list = groups.get(key);
       if (!list) {
         list = [];
@@ -52,7 +52,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
       list.push(session);
     }
     for (const list of groups.values())
-      list.sort((a, b) => a.config.name.localeCompare(b.config.name));
+      list.sort((a, b) => a.file.config.name.localeCompare(b.file.config.name));
 
     // Current workspace first, then alphabetical.
     const entries = [...groups.entries()];
@@ -86,7 +86,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
             </div>
             {isExpanded && (
               <div className='session-chips'>
-                {entries.map(({ config, canConnect }) => <SessionChip key={config.socketPath} config={config} canConnect={canConnect} visible={isExpanded} model={model} />)}
+                {entries.map(({ file, canConnect }) => <SessionChip key={file.config.socketPath} sessionFile={file} canConnect={canConnect} visible={isExpanded} model={model} />)}
               </div>
             )}
           </div>
@@ -96,7 +96,8 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visible: boolean; model: SessionModel }> = ({ config, canConnect, visible, model }) => {
+const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; visible: boolean; model: SessionModel }> = ({ sessionFile, canConnect, visible, model }) => {
+  const { config } = sessionFile;
   const href = '#session=' + encodeURIComponent(config.socketPath);
   const wsUrl = model.wsUrls.get(config.socketPath);
 
@@ -143,7 +144,7 @@ const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visibl
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              void model.closeSession(config);
+              void model.closeSession(sessionFile);
             }}
           >
             <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
@@ -159,7 +160,7 @@ const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visibl
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              void model.deleteSessionData(config);
+              void model.deleteSessionData(sessionFile);
             }}
           >
             <svg viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.2' strokeLinecap='round' strokeLinejoin='round'>
@@ -173,7 +174,7 @@ const SessionChip: React.FC<{ config: SessionConfig; canConnect: boolean; visibl
       <div className='screencast-container'>
         {channel && <Screencast channel={channel} />}
         {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
-        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>Not supported &mdash; v{config.version}</div>}
+        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>Not supported &mdash; v{sessionFile.config.version}</div>}
         {canConnect && !channel && wsUrl === undefined && <div className='screencast-placeholder'>Connecting</div>}
       </div>
     </a>

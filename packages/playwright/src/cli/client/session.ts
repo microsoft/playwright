@@ -26,7 +26,7 @@ import path from 'path';
 import { compareSemver, SocketConnection } from './socketConnection';
 
 import type { FullConfig } from '../../mcp/browser/config';
-import type { SessionConfig, ClientInfo } from './registry';
+import type { SessionConfig, ClientInfo, SessionFile } from './registry';
 
 type MinimistArgs = {
   _: string[];
@@ -36,24 +36,24 @@ type MinimistArgs = {
 export class Session {
   readonly name: string;
   readonly config: SessionConfig;
+  private _sessionFile: SessionFile;
   private _connection: SocketConnection | undefined;
   private _nextMessageId = 1;
   private _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, method: string, params: any }>();
-  private _clientInfo: ClientInfo;
 
-  constructor(clientInfo: ClientInfo, options: SessionConfig) {
-    this._clientInfo = clientInfo;
-    this.config = options;
-    this.name = options.name;
+  constructor(sessionFile: SessionFile) {
+    this.config = sessionFile.config;
+    this.name = this.config.name;
+    this._sessionFile = sessionFile;
   }
 
-  isCompatible(): boolean {
-    return compareSemver(this._clientInfo.version, this.config.version) >= 0;
+  isCompatible(clientInfo: ClientInfo): boolean {
+    return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  checkCompatible() {
-    if (!this.isCompatible()) {
-      throw new Error(`Client is v${this._clientInfo.version}, session '${this.name}' is v${this.config.version}. Run
+  checkCompatible(clientInfo: ClientInfo) {
+    if (!this.isCompatible(clientInfo)) {
+      throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run
 
   playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open
 
@@ -66,8 +66,8 @@ to restart the browser session.`);
     this.disconnect();
   }
 
-  async run(args: MinimistArgs, cwd?: string): Promise<{ text: string }> {
-    this.checkCompatible();
+  async run(clientInfo: ClientInfo, args: MinimistArgs, cwd?: string): Promise<{ text: string }> {
+    this.checkCompatible(clientInfo);
     const result = await this._send('run', { args, cwd: cwd || process.cwd() });
     this.disconnect();
     return result;
@@ -114,7 +114,7 @@ to restart the browser session.`);
   async deleteData() {
     await this.stop();
 
-    const dataDirs = await fs.promises.readdir(this._clientInfo.daemonProfilesDir).catch(() => []);
+    const dataDirs = await fs.promises.readdir(this._sessionFile.daemonDir).catch(() => []);
     const matchingEntries = dataDirs.filter(file => file === `${this.name}.session` || file.startsWith(`ud-${this.name}-`));
     if (matchingEntries.length === 0) {
       console.log(`No user data found for browser '${this.name}'.`);
@@ -122,7 +122,7 @@ to restart the browser session.`);
     }
 
     for (const entry of matchingEntries) {
-      const userDataDir = path.resolve(this._clientInfo.daemonProfilesDir, entry);
+      const userDataDir = path.resolve(this._sessionFile.daemonDir, entry);
       for (let i = 0; i < 5; i++) {
         try {
           await fs.promises.rm(userDataDir, { recursive: true });
@@ -194,26 +194,21 @@ to restart the browser session.`);
     }
   }
 
-  private _sessionFile(suffix: string) {
-    return path.resolve(this._clientInfo.daemonProfilesDir, `${this.name}${suffix}`);
-  }
-
   private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(this._clientInfo.daemonProfilesDir, { recursive: true });
+    await fs.promises.mkdir(this._sessionFile.daemonDir, { recursive: true });
     const cliPath = path.join(__dirname, '../../../cli.js');
 
-    const sessionConfigFile = this._sessionFile('.session');
-    this.config.version = this._clientInfo.version;
+    this.config.version = this.config.version;
     this.config.timestamp = Date.now();
-    await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
+    await fs.promises.writeFile(this._sessionFile.file, JSON.stringify(this.config, null, 2));
 
-    const errLog = this._sessionFile('.err');
+    const errLog = this._sessionFile.file.replace('.session', '.err');
     const err = fs.openSync(errLog, 'w');
 
     const args = [
       cliPath,
       'run-cli-server',
-      `--daemon-session=${sessionConfigFile}`,
+      `--daemon-session=${this._sessionFile.file}`,
     ];
 
     const child = spawn(process.execPath, args, {
@@ -275,7 +270,7 @@ to restart the browser session.`);
       console.log(`---`);
 
       this.config.timestamp = Date.now();
-      await fs.promises.writeFile(sessionConfigFile, JSON.stringify(this.config, null, 2));
+      await fs.promises.writeFile(this._sessionFile.file, JSON.stringify(this.config, null, 2));
       return socket;
     }
 
@@ -297,7 +292,7 @@ to restart the browser session.`);
   }
 
   async deleteSessionConfig() {
-    await fs.promises.rm(this._sessionFile('.session')).catch(() => {});
+    await fs.promises.rm(this._sessionFile.file).catch(() => {});
   }
 }
 

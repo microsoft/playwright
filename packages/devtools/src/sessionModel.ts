@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import type { ClientInfo, SessionConfig } from '../../playwright/src/cli/client/registry';
+import type { ClientInfo, SessionFile } from '../../playwright/src/cli/client/registry';
 
 export type SessionStatus = {
-  config: SessionConfig;
+  file: SessionFile;
   canConnect: boolean;
 };
 
@@ -67,7 +67,7 @@ export class SessionModel {
   }
 
   sessionBySocketPath(socketPath: string): SessionStatus | undefined {
-    return this.sessions.find(s => s.config.socketPath === socketPath);
+    return this.sessions.find(s => s.file.config.socketPath === socketPath);
   }
 
   private async _fetchSessions() {
@@ -86,7 +86,7 @@ export class SessionModel {
 
         for (const session of this.sessions) {
           if (session.canConnect)
-            this._obtainDevtoolsUrl(session.config);
+            this._obtainDevtoolsUrl(session.file);
         }
       }
       this.error = undefined;
@@ -102,32 +102,33 @@ export class SessionModel {
     await this._fetchSessions();
   }
 
-  async closeSession(config: SessionConfig) {
+  async closeSession(sessionFile: SessionFile) {
     await fetch('/api/sessions/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config }),
+      body: JSON.stringify({ sessionFile }),
     });
     await this._fetchSessions();
   }
 
-  async deleteSessionData(config: SessionConfig) {
+  async deleteSessionData(sessionFile: SessionFile) {
     await fetch('/api/sessions/delete-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config }),
+      body: JSON.stringify({ sessionFile }),
     });
     await this._fetchSessions();
   }
 
-  private _obtainDevtoolsUrl(config: SessionConfig) {
+  private _obtainDevtoolsUrl(sessionFile: SessionFile) {
+    const { config } = sessionFile;
     if (this._knownTimestamps.get(config.socketPath) === config.timestamp)
       return;
     this._knownTimestamps.set(config.socketPath, config.timestamp);
     fetch('/api/sessions/devtools-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ config }),
+      body: JSON.stringify({ sessionFile }),
     }).then(async resp => {
       if (resp.ok) {
         const { url } = await resp.json();
