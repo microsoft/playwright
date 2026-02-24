@@ -173,7 +173,7 @@ to restart the browser session.`);
     if (!socket)
       socket = await this._startDaemon();
 
-    this._connection = new SocketConnection(socket, this.config.version);
+    this._connection = new SocketConnection(socket);
     this._connection.onmessage = message => this._onMessage(message);
     this._connection.onclose = () => this.disconnect();
     return this._connection;

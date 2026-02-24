@@ -19,15 +19,12 @@ import net from 'net';
 export class SocketConnection {
   private _socket: net.Socket;
   private _pendingBuffers: Buffer[] = [];
-  private _version: string;
 
   onclose?: () => void;
   onmessage?: (message: any) => void;
-  onversionerror?: (id: number, versions: { expected: string, received: string }) => boolean;
 
-  constructor(socket: net.Socket, version: string) {
+  constructor(socket: net.Socket) {
     this._socket = socket;
-    this._version = version;
     socket.on('data', buffer => this._onData(buffer));
     socket.on('close', () => {
       this.onclose?.();
@@ -39,7 +36,7 @@ export class SocketConnection {
 
   async send(message: { id: number, error?: string, result?: any }) {
     await new Promise((resolve, reject) => {
-      this._socket.write(`${JSON.stringify({ ...message, version: this._version })}\n`, error => {
+      this._socket.write(`${JSON.stringify(message)}\n`, error => {
         if (error)
           reject(error);
         else
@@ -75,12 +72,7 @@ export class SocketConnection {
 
   private _dispatchMessage(message: string) {
     try {
-      const parsedMessage = JSON.parse(message);
-      if (parsedMessage.version !== this._version) {
-        if (this.onversionerror?.(parsedMessage.id, { expected: this._version, received: parsedMessage.version }))
-          return;
-      }
-      this.onmessage?.(parsedMessage);
+      this.onmessage?.(JSON.parse(message));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error('failed to dispatch message', e);
