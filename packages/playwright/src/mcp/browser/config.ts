@@ -75,6 +75,7 @@ export type CLIOptions = {
   userAgent?: string;
   userDataDir?: string;
   viewportSize?: ViewportSize;
+  filterInternalUrls?: boolean;
 };
 
 export const defaultConfig: FullConfig = {
@@ -105,6 +106,7 @@ export const defaultConfig: FullConfig = {
     action: 5000,
     navigation: 60000,
   },
+  filterInternalUrls: false,
 };
 
 const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
@@ -145,6 +147,7 @@ export type FullConfig = Config & {
     action: number;
     navigation: number;
   },
+  filterInternalUrls?: boolean;
   skillMode?: boolean;
 };
 
@@ -301,6 +304,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
+    filterInternalUrls: cliOptions.filterInternalUrls,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
