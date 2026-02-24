@@ -4,7 +4,7 @@
     "useDefineForClassFields": true,
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
     "allowJs": true,
-    "skipLibCheck": false,
+    "skipLibCheck": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
@@ -16,9 +16,14 @@
     "jsx": "react-jsx",
     "useUnknownInCatchVariables": false,
     "paths": {
+      "@devtools/*": ["./src/*"],
+      "@injected/*": ["../injected/src/*"],
       "@isomorphic/*": ["../playwright-core/src/utils/isomorphic/*"],
       "@protocol/*": ["../protocol/src/*"],
+      "@recorder/*": ["../recorder/src/*"],
+      "@trace/*": ["../trace/src/*"],
       "@web/*": ["../web/src/*"],
+      "playwright-core/lib/*": ["../playwright-core/src/*"],
     }
   },
   "include": ["src"],
