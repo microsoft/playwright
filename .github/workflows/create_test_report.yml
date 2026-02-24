@@ -57,7 +57,7 @@ jobs:
         AZCOPY_AUTO_LOGIN_TYPE: AZCLI
 
     - name: Publish Report URL as Commit Status
-      uses: actions/github-script@v7
+      uses: actions/github-script@v8
       with:
         script: |
           await github.rest.repos.createCommitStatus({
