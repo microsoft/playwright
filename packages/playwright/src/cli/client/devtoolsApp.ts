@@ -28,7 +28,8 @@ import { Session } from './session';
 
 import type http from 'http';
 import type { Page } from 'playwright-core';
-import type { ClientInfo, SessionConfig } from './registry';
+import type { ClientInfo, SessionFile } from './registry';
+import type { SessionStatus } from '@devtools/sessionModel';
 
 function readBody(request: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -46,6 +47,13 @@ function readBody(request: http.IncomingMessage): Promise<any> {
   });
 }
 
+async function parseRequest(request: http.IncomingMessage): Promise<{ sessionFile: SessionFile, args?: any }> {
+  const body = await readBody(request);
+  if (!body.sessionFile)
+    throw new Error('Dashboard app is too old, please close it and open again');
+  return { sessionFile: body.sessionFile };
+}
+
 function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
   response.statusCode = statusCode;
   response.setHeader('Content-Type', 'application/json');
@@ -58,13 +66,13 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
     const registry = await Registry.load();
-    const sessions: { config: SessionConfig, canConnect: boolean }[] = [];
-    for (const [, entries] of registry.entryMap()) {
-      for (const entry of entries) {
-        const session = new Session(clientInfo, entry.config);
+    const sessions: SessionStatus[] = [];
+    for (const [, files] of registry.entryMap()) {
+      for (const file of files) {
+        const session = new Session(file);
         const canConnect = await session.canConnect();
-        if (canConnect || entry.config.cli.persistent)
-          sessions.push({ config: entry.config, canConnect });
+        if (canConnect || file.config.cli.persistent)
+          sessions.push({ file: file, canConnect });
       }
     }
     sendJSON(response, { sessions, clientInfo });
@@ -72,39 +80,31 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
   }
 
   if (apiPath === '/api/sessions/close' && request.method === 'POST') {
-    const body = await readBody(request);
-    if (!body.config)
-      throw new Error('Missing "config" parameter');
-    await new Session(clientInfo, body.config).stop();
+    const { sessionFile } = await parseRequest(request);
+    await new Session(sessionFile).stop();
     sendJSON(response, { success: true });
     return;
   }
 
   if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
-    const body = await readBody(request);
-    if (!body.config)
-      throw new Error('Missing "config" parameter');
-    await new Session(clientInfo, body.config).deleteData();
+    const { sessionFile } = await parseRequest(request);
+    await new Session(sessionFile).deleteData();
     sendJSON(response, { success: true });
     return;
   }
 
   if (apiPath === '/api/sessions/run' && request.method === 'POST') {
-    const body = await readBody(request);
-    if (!body.config)
-      throw new Error('Missing "config" parameter');
-    if (!body.args)
+    const { sessionFile, args } = await parseRequest(request);
+    if (!args)
       throw new Error('Missing "args" parameter');
-    const result = await new Session(clientInfo, body.config).run(body.args);
+    const result = await new Session(sessionFile).run(clientInfo, args);
     sendJSON(response, { result });
     return;
   }
 
   if (apiPath === '/api/sessions/devtools-start' && request.method === 'POST') {
-    const body = await readBody(request);
-    if (!body.config)
-      throw new Error('Missing "config" parameter');
-    const result = await new Session(clientInfo, body.config).run({ _: ['devtools-start'] });
+    const { sessionFile } = await parseRequest(request);
+    const result = await new Session(sessionFile).run(clientInfo, { _: ['devtools-start'] });
     const match = result.text.match(/Server is listening on: (.+)/);
     if (!match)
       throw new Error('Failed to parse screencast URL from: ' + result.text);

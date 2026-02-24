@@ -26,7 +26,7 @@ import { createClientInfo, Registry } from './registry';
 import { Session, renderResolvedConfig } from './session';
 
 import type { Config } from '../../mcp/config';
-import type { SessionConfig, ClientInfo } from './registry';
+import type { SessionConfig, ClientInfo, SessionFile } from './registry';
 
 type MinimistArgs = {
   _: string[];
@@ -136,7 +136,7 @@ export async function program(options?: { embedderVersion?: string}) {
     case 'close-all': {
       const entries = registry.entries(clientInfo);
       for (const entry of entries)
-        await new Session(clientInfo, entry.config).stop(true);
+        await new Session(entry).stop(true);
       return;
     }
     case 'delete-data': {
@@ -145,7 +145,7 @@ export async function program(options?: { embedderVersion?: string}) {
         console.log(`No user data found for browser '${sessionName}'.`);
         return;
       }
-      await new Session(clientInfo, entry.config).deleteData();
+      await new Session(entry).deleteData();
       return;
     }
     case 'kill-all': {
@@ -155,22 +155,28 @@ export async function program(options?: { embedderVersion?: string}) {
     case 'open': {
       const entry = registry.entry(clientInfo, sessionName);
       if (entry)
-        await new Session(clientInfo, entry.config).stop(true);
-      const session = new Session(clientInfo, sessionConfigFromArgs(clientInfo, sessionName, args));
+        await new Session(entry).stop(true);
+      const config = sessionConfigFromArgs(clientInfo, sessionName, args);
+      const sessionFile: SessionFile = {
+        daemonDir: clientInfo.daemonProfilesDir,
+        file: path.join(clientInfo.daemonProfilesDir, `${sessionName}.session`),
+        config,
+      };
+      const session = new Session(sessionFile);
       // Stale session.
       if (await session.canConnect())
         await session.stop(true);
 
       for (const globalOption of globalOptions)
         delete args[globalOption];
-      const result = await session.run(args);
+      const result = await session.run(clientInfo, args);
       console.log(result.text);
       return;
     }
 
     case 'close':
       const closeEntry = registry.entry(clientInfo, sessionName);
-      const session = closeEntry ? new Session(clientInfo, closeEntry.config) : undefined;
+      const session = closeEntry ? new Session(closeEntry) : undefined;
       if (!session || !await session.canConnect()) {
         console.log(`Browser '${sessionName}' is not open.`);
         return;
@@ -203,7 +209,7 @@ export async function program(options?: { embedderVersion?: string}) {
 
       for (const globalOption of globalOptions)
         delete args[globalOption];
-      const result = await new Session(clientInfo, defaultEntry.config).run(args);
+      const result = await new Session(defaultEntry).run(clientInfo, args);
       console.log(result.text);
     }
   }
@@ -389,16 +395,16 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
       if (!list.length)
         continue;
       console.log(`${workspace}:`);
-      await gcAndPrintSessions(list.map(entry => new Session(clientInfo, entry.config)));
+      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)));
     }
   } else {
     console.log('### Browsers');
     const entries = registry.entries(clientInfo);
-    await gcAndPrintSessions(entries.map(entry => new Session(clientInfo, entry.config)));
+    await gcAndPrintSessions(clientInfo, entries.map(entry => new Session(entry)));
   }
 }
 
-async function gcAndPrintSessions(sessions: Session[]) {
+async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[]) {
   const running: Session[] = [];
   const stopped: Session[] = [];
 
@@ -415,22 +421,22 @@ async function gcAndPrintSessions(sessions: Session[]) {
   }
 
   for (const session of running)
-    console.log(await renderSessionStatus(session));
+    console.log(await renderSessionStatus(clientInfo, session));
   for (const session of stopped)
-    console.log(await renderSessionStatus(session));
+    console.log(await renderSessionStatus(clientInfo, session));
 
   if (running.length === 0 && stopped.length === 0)
     console.log('  (no browsers)');
 
 }
 
-async function renderSessionStatus(session: Session) {
+async function renderSessionStatus(clientInfo: ClientInfo, session: Session) {
   const text: string[] = [];
   const config = session.config;
   const canConnect = await session.canConnect();
   text.push(`- ${session.name}:`);
   text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);
-  if (canConnect && !session.isCompatible())
+  if (canConnect && !session.isCompatible(clientInfo))
     text.push(`  - version: v${config.version} [incompatible please re-open]`);
   if (config.resolvedConfig)
     text.push(...renderResolvedConfig(config.resolvedConfig));

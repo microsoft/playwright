@@ -46,63 +46,64 @@ export type SessionConfig = {
   resolvedConfig?: FullConfig
 };
 
-export type SessionEntry = {
+export type SessionFile = {
   file: string;
+  daemonDir: string;
   config: SessionConfig;
 };
 
 export class Registry {
-  private _entries: Map<string, SessionEntry[]>;
+  private _files: Map<string, SessionFile[]>;
 
-  private constructor(entries: Map<string, SessionEntry[]>) {
-    this._entries = entries;
+  private constructor(files: Map<string, SessionFile[]>) {
+    this._files = files;
   }
 
-  entry(clientInfo: ClientInfo, sessionName: string): SessionEntry | undefined {
+  entry(clientInfo: ClientInfo, sessionName: string): SessionFile | undefined {
     const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
-    const entries = this._entries.get(key) || [];
+    const entries = this._files.get(key) || [];
     return entries.find(entry => entry.config.name === sessionName);
   }
 
-  entries(clientInfo: ClientInfo): SessionEntry[] {
+  entries(clientInfo: ClientInfo): SessionFile[] {
     const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
-    return this._entries.get(key) || [];
+    return this._files.get(key) || [];
   }
 
-  entryMap(): Map<string, SessionEntry[]> {
-    return this._entries;
+  entryMap(): Map<string, SessionFile[]> {
+    return this._files;
   }
 
-  static async loadSessionEntry(file: string): Promise<SessionEntry | undefined> {
+  private static async _loadSessionEntry(daemonDir: string, file: string): Promise<SessionFile | undefined> {
     try {
-      const data = await fs.promises.readFile(file, 'utf-8');
+      const fileName = path.join(daemonDir, file);
+      const data = await fs.promises.readFile(fileName, 'utf-8');
       const config = JSON.parse(data) as SessionConfig;
       // Sessions from 0.1.0 support.
       if (!config.name)
         config.name = path.basename(file, '.session');
       if (!config.timestamp)
         config.timestamp = 0;
-      return { file, config };
+      return { file: fileName, config, daemonDir };
     } catch {
       return undefined;
     }
   }
 
   static async load(): Promise<Registry> {
-    const sessions = new Map<string, SessionEntry[]>();
+    const sessions = new Map<string, SessionFile[]>();
     const hashDirs = await fs.promises.readdir(baseDaemonDir).catch(() => []);
     for (const workspaceDirHash of hashDirs) {
-      const hashDir = path.join(baseDaemonDir, workspaceDirHash);
-      const stat = await fs.promises.stat(hashDir);
+      const daemonDir = path.join(baseDaemonDir, workspaceDirHash);
+      const stat = await fs.promises.stat(daemonDir);
       if (!stat.isDirectory())
         continue;
 
-      const files = await fs.promises.readdir(hashDir).catch(() => []);
+      const files = await fs.promises.readdir(daemonDir).catch(() => []);
       for (const file of files) {
         if (!file.endsWith('.session'))
           continue;
-        const fileName = path.join(hashDir, file);
-        const entry = await Registry.loadSessionEntry(fileName);
+        const entry = await Registry._loadSessionEntry(daemonDir, file);
         if (!entry)
           continue;
         const key = entry.config.workspaceDir || workspaceDirHash;
