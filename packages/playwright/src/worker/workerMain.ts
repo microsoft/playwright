@@ -225,34 +225,32 @@ export class WorkerMain extends ProcessRunner {
       const suite = bindFileSuiteToProject(this._project, fileSuite);
       if (this._params.repeatEachIndex)
         applyRepeatEachIndex(this._project, suite, this._params.repeatEachIndex);
-      const hasEntries = filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
-      if (hasEntries) {
-        this._poolBuilder.buildPools(suite);
-        this._activeSuites = new Map();
-        this._didRunFullCleanup = false;
-        const tests = suite.allTests();
-        for (let i = 0; i < tests.length; i++) {
-          // Do not run tests after full cleanup, because we are entirely done.
-          if (this._isStopped && this._didRunFullCleanup)
-            break;
-          const entry = entries.get(tests[i].id)!;
-          entries.delete(tests[i].id);
-          debugTest(`test started "${tests[i].title}"`);
-          await this._runTest(tests[i], entry.retry, tests[i + 1]);
-          debugTest(`test finished "${tests[i].title}"`);
-        }
-        if (entries.size) {
-          // Collect test IDs that were not found in the worker
-          // (e.g. test titles changed between runner and worker).
-          const unknownTestIds = new Set(entries.keys());
-          for (const test of tests)
-            unknownTestIds.delete(test.id);
-          if (unknownTestIds.size)
-            fatalUnknownTestIds = [...unknownTestIds];
-        }
-      } else {
-        fatalUnknownTestIds = runPayload.entries.map(e => e.testId);
+      filterTestsRemoveEmptySuites(suite, test => entries.has(test.id));
+      const tests = suite.allTests();
+
+      // Collect test IDs that were not found in the worker
+      // (e.g. test titles changed between runner and worker).
+      const unknownTestIds = new Set(entries.keys());
+      for (const test of tests)
+        unknownTestIds.delete(test.id);
+      if (unknownTestIds.size) {
+        fatalUnknownTestIds = [...unknownTestIds];
         void this._stop();
+        return;
+      }
+
+      this._poolBuilder.buildPools(suite);
+      this._activeSuites = new Map();
+      this._didRunFullCleanup = false;
+      for (let i = 0; i < tests.length; i++) {
+        // Do not run tests after full cleanup, because we are entirely done.
+        if (this._isStopped && this._didRunFullCleanup)
+          break;
+        const entry = entries.get(tests[i].id)!;
+        entries.delete(tests[i].id);
+        debugTest(`test started "${tests[i].title}"`);
+        await this._runTest(tests[i], entry.retry, tests[i + 1]);
+        debugTest(`test finished "${tests[i].title}"`);
       }
     } catch (e) {
       // In theory, we should run above code without any errors.

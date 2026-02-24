@@ -390,8 +390,8 @@ test('should throw in serial mode if test suites in worker are inconsistent with
     `,
   }, { 'workers': 1 }, { TEST_WORKER_INDEX: undefined });
   expect.soft(result.exitCode).toBe(1);
-  expect.soft(result.passed).toBe(1);
-  expect.soft(result.failed).toBe(2);
+  expect.soft(result.passed).toBe(0);
+  expect.soft(result.failed).toBe(1);
   expect.soft(result.skipped).toBe(0);
   const expectedError = 'Test not found in the worker process. Make sure test title does not change.';
   expect.soft(result.output).toContain(expectedError);
