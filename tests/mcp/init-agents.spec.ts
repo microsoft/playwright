@@ -72,3 +72,20 @@ test('create seed file with --config', async ({  }) => {
   });
   expect(fs.existsSync(path.join(baseDir, 'custom', 'bar', 'e2e', 'seed.spec.ts'))).toBe(true);
 });
+
+test('claude generates correct mcp config', async ({  }) => {
+  const baseDir = await writeFiles({
+    'playwright.config.ts': `module.exports = {};`,
+  });
+
+  await runInitAgents({ cwd: baseDir, args: ['--loop', 'claude'] });
+
+  const mcpJson = JSON.parse(fs.readFileSync(path.join(baseDir, '.mcp.json'), 'utf-8'));
+  if (process.platform === 'win32') {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('cmd');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['/c', 'npx', 'playwright', 'run-test-mcp-server']);
+  } else {
+    expect(mcpJson.mcpServers['playwright-test'].command).toBe('npx');
+    expect(mcpJson.mcpServers['playwright-test'].args).toEqual(['playwright', 'run-test-mcp-server']);
+  }
+});
