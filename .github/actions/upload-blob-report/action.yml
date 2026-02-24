@@ -16,7 +16,7 @@ runs:
       shell: bash
       run: find "${{ inputs.report_dir }}" -name "*.zip" -exec unzip -t {} \;
     - name: Upload blob report to GitHub
-      if: ${{ !cancelled() && (github.event_name == 'pull_request' || job.status == 'failure') }}
+      if: ${{ !cancelled() }}
       uses: actions/upload-artifact@v4
       with:
         name: blob-report-${{ inputs.job_name }}

@@ -182,7 +182,7 @@ jobs:
       env:
         PW_TAG: "@vscode-extension"
     - name: Upload blob report
-      if: ${{ !cancelled() }}
+      if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: playwright-vscode/blob-report
