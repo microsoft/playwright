@@ -121,6 +121,23 @@ export class Context {
     return outputFile(this.config, this._clientInfo, fileName, options);
   }
 
+  /**
+   * Check if a URL is an internal Electron application URL that should
+   * be hidden from agents. Matches: file://, data:, chrome-extension://,
+   * localhost, 127.0.0.1.
+   */
+  private _isInternalUrl(url: string): boolean {
+    if (url.startsWith('file://')) return true;
+    if (url.startsWith('data:')) return true;
+    if (url.startsWith('chrome-extension://')) return true;
+    try {
+      const parsed = new URL(url);
+      if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1')
+        return true;
+    } catch { /* invalid URL — not internal */ }
+    return false;
+  }
+
   private _onPageCreated(page: playwright.Page) {
     const tab = new Tab(this, page, tab => this._onPageClosed(tab));
     this._tabs.push(tab);
@@ -221,9 +238,16 @@ export class Context {
       (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
     }
     await this._setupRequestInterception(browserContext);
-    for (const page of browserContext.pages())
+    for (const page of browserContext.pages()) {
+      if (this.config.filterInternalUrls && this._isInternalUrl(page.url()))
+        continue;
       this._onPageCreated(page);
-    browserContext.on('page', page => this._onPageCreated(page));
+    }
+    browserContext.on('page', page => {
+      if (this.config.filterInternalUrls && this._isInternalUrl(page.url()))
+        return;
+      this._onPageCreated(page);
+    });
     browserContext.on('close', () => this.onBrowserContextClosed?.());
     if (this.config.saveTrace) {
       await (browserContext.tracing as Tracing).start({

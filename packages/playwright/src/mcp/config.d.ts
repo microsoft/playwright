@@ -228,4 +228,16 @@ export type Config = {
    * Specify the language to use for code generation.
    */
   codegen?: 'typescript' | 'none';
+
+  /**
+   * Filter out internal Electron application tabs (file://, data:, chrome-extension://,
+   * localhost, 127.0.0.1) from the tab list so agents never see them.
+   */
+  filterInternalUrls?: boolean;
+
+  /**
+   * If specified, only expose tools whose names are in this list.
+   * Applied after capability filtering.
+   */
+  allowedTools?: string[];
 };
