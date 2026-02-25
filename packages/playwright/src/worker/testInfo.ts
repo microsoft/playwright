@@ -101,7 +101,7 @@ export class TestInfoImpl implements TestInfo {
   private readonly _steps: TestStepInternal[] = [];
   private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunctionCallback?: () => Promise<void>;
-  _onCustomMessageCallback?: (data: any) => Promise<any>;
+  _onCustomMessageCallback?: (data: any) => Promise<any> = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
