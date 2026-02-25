@@ -278,6 +278,7 @@ scheme.LocalUtilsZipParams = tObject({
   stacksId: tOptional(tString),
   mode: tEnum(['write', 'append']),
   includeSources: tBoolean,
+  additionalSources: tOptional(tArray(tString)),
 });
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({

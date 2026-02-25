@@ -652,6 +652,9 @@ LocalUtils:
             - write
             - append
         includeSources: boolean
+        additionalSources:
+          type: array?
+          items: string
 
     harOpen:
       internal: true
