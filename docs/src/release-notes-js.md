@@ -62,7 +62,7 @@ Take a look at yours - maybe you'll find some tests that are spending a longer t
 
 ### Chrome for Testing
 
-Starting with this release, Playwright switches from Chromium, to using [Chrome for Testing](https://developer.chrome.com/blog/chrome-for-testing/) builds. Both headed and headless browsers are subject to this. Your tests should still be passing after upgrading to Playwright 1.57.
+Playwright now runs on [Chrome for Testing](https://googlechromelabs.github.io/chrome-for-testing/) builds rather than Chromium. Headed mode uses `chrome`; headless mode uses `chrome-headless-shell`. Existing tests should continue to pass after upgrading to v1.57.
 
 We're expecting no functional changes to come from this switch. The biggest change is the new icon and title in your toolbar.
 
