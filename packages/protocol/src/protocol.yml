@@ -653,7 +653,7 @@ LocalUtils:
             - append
         includeSources: boolean
         additionalSources:
-          type: array
+          type: array?
           items: string
 
     harOpen:

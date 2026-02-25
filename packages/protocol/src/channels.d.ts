@@ -477,10 +477,11 @@ export type LocalUtilsZipParams = {
   stacksId?: string,
   mode: 'write' | 'append',
   includeSources: boolean,
-  additionalSources: string[],
+  additionalSources?: string[],
 };
 export type LocalUtilsZipOptions = {
   stacksId?: string,
+  additionalSources?: string[],
 };
 export type LocalUtilsZipResult = void;
 export type LocalUtilsHarOpenParams = {
