@@ -663,18 +663,10 @@ if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
+    args: ['tsc', '-w', '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
     shell: true,
     concurrent: true,
   }));
-  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
-    steps.push(new ProgramStep({
-      command: 'npx',
-      args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],
-      shell: true,
-      concurrent: true,
-    }));
-  }
 }
 
 let cleanupCalled = false;

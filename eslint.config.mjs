@@ -297,14 +297,7 @@ function reactPackageSection(packageName) {
       `packages/web/src/**/*.ts`,
       `packages/web/src/**/*.tsx`,
     ],
-    languageOptions: {
-      parser: tsParser,
-      ecmaVersion: 9,
-      sourceType: "module",
-      parserOptions: {
-        project: path.join(__dirname, "packages", packageName, "tsconfig.json"),
-      },
-    },
+    languageOptions: languageOptionsWithTsConfig,
     rules: {
       ...baseRules,
       "no-console": 2,
