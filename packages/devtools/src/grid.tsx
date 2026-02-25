@@ -19,6 +19,7 @@ import './grid.css';
 import { DevToolsClient } from './devtoolsClient';
 import { navigate } from './index';
 import { Screencast } from './screencast';
+import { SettingsButton } from './settingsView';
 
 import type { SessionFile } from '../../playwright/src/cli/client/registry';
 import type { Tab } from './devtoolsChannel';
@@ -62,36 +63,41 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   }, [sessions, clientInfo?.workspaceDir]);
 
   return (<div className='grid-view'>
-    {model.loading && sessions.length === 0 && <div className='grid-loading'>Loading sessions...</div>}
-    {model.error && <div className='grid-error'>Error: {model.error}</div>}
-    {!model.loading && !model.error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
+    <div className='grid-toolbar'>
+      <SettingsButton />
+    </div>
+    <div className='grid-content'>
+      {model.loading && sessions.length === 0 && <div className='grid-loading'>Loading sessions...</div>}
+      {model.error && <div className='grid-error'>Error: {model.error}</div>}
+      {!model.loading && !model.error && sessions.length === 0 && <div className='grid-empty'>No sessions found.</div>}
 
-    <div className='workspace-list'>
-      {workspaceGroups.map(([workspace, entries], index) => {
-        const isFirst = index === 0;
-        const isExpanded = isFirst || expandedWorkspaces.has(workspace);
-        return (
-          <div key={workspace} className='workspace-group'>
-            <div
-              className={'workspace-header' + (isFirst ? '' : ' collapsible')}
-              onClick={isFirst ? undefined : () => toggleWorkspace(workspace)}
-            >
-              {!isFirst && (
-                <svg className={'workspace-chevron' + (isExpanded ? ' expanded' : '')} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
-                  <polyline points='9 18 15 12 9 6'/>
-                </svg>
-              )}
-              <span className='workspace-name'>{workspace.split('/').pop() || workspace}</span>
-              <span className='workspace-path'>&mdash; {workspace}</span>
-            </div>
-            {isExpanded && (
-              <div className='session-chips'>
-                {entries.map(({ file, canConnect }) => <SessionChip key={file.config.socketPath} sessionFile={file} canConnect={canConnect} visible={isExpanded} model={model} />)}
+      <div className='workspace-list'>
+        {workspaceGroups.map(([workspace, entries], index) => {
+          const isFirst = index === 0;
+          const isExpanded = isFirst || expandedWorkspaces.has(workspace);
+          return (
+            <div key={workspace} className='workspace-group'>
+              <div
+                className={'workspace-header' + (isFirst ? '' : ' collapsible')}
+                onClick={isFirst ? undefined : () => toggleWorkspace(workspace)}
+              >
+                {!isFirst && (
+                  <svg className={'workspace-chevron' + (isExpanded ? ' expanded' : '')} viewBox='0 0 24 24' fill='none' stroke='currentColor' strokeWidth='2' strokeLinecap='round' strokeLinejoin='round'>
+                    <polyline points='9 18 15 12 9 6'/>
+                  </svg>
+                )}
+                <span className='workspace-name'>{workspace.split('/').pop() || workspace}</span>
+                <span className='workspace-path'>&mdash; {workspace}</span>
               </div>
-            )}
-          </div>
-        );
-      })}
+              {isExpanded && (
+                <div className='session-chips'>
+                  {entries.map(({ file, canConnect }) => <SessionChip key={file.config.socketPath} sessionFile={file} canConnect={canConnect} visible={isExpanded} model={model} />)}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   </div>);
 };

@@ -21,6 +21,7 @@ import { DevToolsClient } from './devtoolsClient';
 import { asLocator } from '@isomorphic/locatorGenerators';
 import { SplitView } from '@web/components/splitView';
 import { ChevronLeftIcon, ChevronRightIcon, CloseIcon, PlusIcon, ReloadIcon, PickLocatorIcon, InspectorPanelIcon } from './icons';
+import { SettingsButton } from './settingsView';
 
 import type { DevToolsClientChannel } from './devtoolsClient';
 import type { Tab, DevToolsChannelEvents } from './devtoolsChannel';
@@ -229,6 +230,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     <div ref={tabbarRef} className='tabbar'>
       <a className='tabbar-back' href='#' title='Back to sessions' onClick={e => { e.preventDefault(); navigate('#'); }}>
         <ChevronLeftIcon />
+        Sessions
       </a>
       <div id='tabstrip' className='tabstrip' role='tablist'>
         {tabs.map(tab => (
@@ -284,6 +286,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             Interactive
           </button>
         </div>
+        <SettingsButton />
       </div>
     </div>
 

@@ -15,23 +15,41 @@
  */
 
 .grid-view {
-  overflow: auto;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
+.grid-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 4px;
+  user-select: none;
+  position: relative;
+  z-index: 110;
+}
+
+.grid-content {
+  flex: 1;
+  overflow: auto;
+  padding: 0 24px 12px;
+}
+
 .grid-loading {
-  color: var(--fg-muted);
+  color: var(--color-fg-subtle);
   font-size: 14px;
 }
 
 .grid-empty {
-  color: var(--fg-muted);
+  color: var(--color-fg-subtle);
   font-size: 14px;
 }
 
 .grid-error {
-  color: var(--err);
+  color: var(--color-danger-fg);
   font-size: 14px;
 }
 
@@ -43,7 +61,7 @@
 
 .workspace-header {
   font-size: 13px;
-  color: var(--fg-dim);
+  color: var(--color-fg-muted);
   margin-bottom: 8px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -75,7 +93,7 @@
 
 .workspace-path {
   margin-left: 6px;
-  color: var(--fg-muted);
+  color: var(--color-fg-subtle);
   font-weight: 400;
 }
 
@@ -88,10 +106,10 @@
 .session-chip {
   display: flex;
   flex-direction: column;
-  background: var(--bg-card);
+  background: var(--color-canvas-subtle);
   border-radius: 8px;
-  border: 1px solid var(--card-border);
-  box-shadow: var(--card-shadow);
+  border: 1px solid var(--color-border-default);
+  box-shadow: var(--color-shadow-small);
   min-width: 200px;
   cursor: pointer;
   text-decoration: none;
@@ -99,7 +117,7 @@
 }
 
 .session-chip:hover {
-  border-color: var(--fg-muted);
+  border-color: var(--color-fg-subtle);
 }
 
 .session-chip-header {
@@ -118,17 +136,17 @@
 }
 
 .session-status-dot.open {
-  background: var(--ok);
+  background: var(--color-success-fg);
 }
 
 .session-status-dot.closed {
-  background: var(--fg-muted);
+  background: var(--color-fg-subtle);
 }
 
 .session-chip-name {
   font-size: 13px;
   font-weight: 600;
-  color: var(--fg);
+  color: var(--color-fg-default);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -136,13 +154,13 @@
 }
 
 .session-chip-title {
-  color: var(--fg-dim);
+  color: var(--color-fg-muted);
   font-weight: 400;
 }
 
 .session-chip-detail {
   font-size: 11px;
-  color: var(--fg-muted);
+  color: var(--color-fg-subtle);
 }
 
 .session-chip.disconnected,
@@ -169,7 +187,7 @@
 }
 
 .session-chip-action:hover {
-  background: var(--overlay-active);
+  background: var(--color-neutral-muted);
 }
 
 .screencast-container {
@@ -194,6 +212,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--fg-muted);
+  color: var(--color-fg-subtle);
   font-size: 12px;
 }

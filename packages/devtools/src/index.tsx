@@ -16,10 +16,14 @@
 
 import React from 'react';
 import * as ReactDOM from 'react-dom/client';
+import './colors.css';
 import './common.css';
+import { applyTheme } from '@web/theme';
 import { DevTools } from './devtools';
 import { Grid } from './grid';
 import { SessionModel } from './sessionModel';
+
+applyTheme();
 
 export function navigate(hash: string) {
   window.history.pushState(null, '', hash);

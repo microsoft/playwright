@@ -14,53 +14,6 @@
  * limitations under the License.
  */
 
-:root {
-  --bg: #202124;
-  --bg-elevated: #35363a;
-  --bg-card: #292b2e;
-  --bg-tab: #292b2e;
-  --fg: #e8eaed;
-  --fg-dim: #9aa0a6;
-  --fg-muted: #5f6368;
-  --accent: #8ab4f8;
-  --ok: #81c995;
-  --err: #f28b82;
-  --overlay-hover: rgba(255, 255, 255, 0.08);
-  --overlay-active: rgba(255, 255, 255, 0.12);
-  --selection-bg: #394457;
-  --toast-bg: rgba(32, 33, 36, 0.85);
-  --toast-border: rgba(255, 255, 255, 0.1);
-  --segmented-bg: rgb(255 255 255 / 0.1);
-  --segmented-knob: rgb(255 255 255 / 0.2);
-  --card-border: transparent;
-  --card-shadow: none;
-  color-scheme: dark light;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #f0f2f5;
-    --bg-elevated: #ffffff;
-    --bg-card: #ffffff;
-    --bg-tab: #e4e6e9;
-    --fg: #1a1a1a;
-    --fg-dim: #444746;
-    --fg-muted: #80868b;
-    --accent: #1a73e8;
-    --ok: #1e8e3e;
-    --err: #d93025;
-    --overlay-hover: rgba(0, 0, 0, 0.06);
-    --overlay-active: rgba(0, 0, 0, 0.1);
-    --selection-bg: #b3d4fc;
-    --toast-bg: rgba(255, 255, 255, 0.92);
-    --toast-border: rgba(0, 0, 0, 0.12);
-    --segmented-bg: rgb(0 0 0 / 0.08);
-    --segmented-knob: rgb(0 0 0 / 0.12);
-    --card-border: rgba(0, 0, 0, 0.06);
-    --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  }
-}
-
 *,
 *::before,
 *::after {
@@ -75,8 +28,11 @@ body {
 }
 
 body {
-  background: var(--bg);
-  color: var(--fg);
+  background: var(--color-canvas-default);
+  color: var(--color-fg-default);
+}
+
+body * {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
@@ -87,7 +43,7 @@ body {
 button {
   background: none;
   border: none;
-  color: var(--fg-dim);
+  color: var(--color-fg-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -96,5 +52,5 @@ button {
 }
 
 button:hover {
-  color: var(--fg);
+  color: var(--color-fg-default);
 }
