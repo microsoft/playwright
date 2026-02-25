@@ -155,7 +155,6 @@ export abstract class BrowserType extends SdkObject {
     const tempDirectories: string[] = [];
     const artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
     tempDirectories.push(artifactsDir);
-    console.log('artifacts dir: ' + artifactsDir);
 
     if (userDataDir) {
       assert(path.isAbsolute(userDataDir), 'userDataDir must be an absolute path');
