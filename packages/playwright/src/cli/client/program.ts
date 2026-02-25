@@ -212,7 +212,9 @@ export async function program(options?: { embedderVersion?: string}) {
       child.stdout!.destroy();
       child.unref();
 
-      console.log(status);
+      // TODO: update check-deps to allow importing isUnderTest()
+      if (process.env.PWTEST_UNDER_TEST)
+        console.log(status);
 
       return;
     }
