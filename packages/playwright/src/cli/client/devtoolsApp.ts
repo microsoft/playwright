@@ -17,10 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
+import crypto from 'crypto';
 import net from 'net';
 
 import { chromium } from 'playwright-core';
-import { gracefullyProcessExitDoNotHang, HttpServer } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, HttpServer, isUnderTest } from 'playwright-core/lib/utils';
 import { findChromiumChannelBestEffort, registryDirectory } from 'playwright-core/lib/server/registry/index';
 
 import { createClientInfo, Registry } from './registry';
@@ -212,13 +213,15 @@ function socketsDirectory() {
 }
 
 function devtoolsSocketPath() {
+  const suffix = process.env.PLAYWRIGHT_DAEMON_SESSION_DIR ? crypto.createHash('sha256').update(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR).digest('hex').substring(0, 8) : '';
   return process.platform === 'win32'
-    ? `\\\\.\\pipe\\playwright-devtools-${process.env.USERNAME || 'default'}`
-    : path.join(socketsDirectory(), 'devtools.sock');
+    ? `\\\\.\\pipe\\playwright-devtools-${process.env.USERNAME || 'default'}${suffix}`
+    : path.join(socketsDirectory(), `devtools${suffix}.sock`);
 }
 
-async function acquireSingleton(): Promise<net.Server> {
+async function acquireSingleton(): Promise<net.Server | string> {
   const socketPath = devtoolsSocketPath();
+  await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -228,8 +231,11 @@ async function acquireSingleton(): Promise<net.Server> {
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write('bringToFront');
-        client.end();
-        reject(new Error('already running'));
+      });
+      let data = '';
+      client.on('data', chunk => { data += chunk.toString(); });
+      client.on('end', () => {
+        resolve(data);
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
@@ -241,20 +247,38 @@ async function acquireSingleton(): Promise<net.Server> {
 }
 
 async function main() {
-  let server: net.Server | undefined;
-  process.on('exit', () => server?.close());
-  try {
-    server = await acquireSingleton();
-  } catch {
-    return;
-  }
-  const page = await openDevToolsApp();
-  server.on('connection', socket => {
-    socket.on('data', data => {
-      if (data.toString() === 'bringToFront')
-        page?.bringToFront().catch(() => {});
+  const result = await acquireSingleton();
+  let status = typeof result === 'string' ? result : 'Starting';
+
+  if (typeof result !== 'string') {
+    const server = result;
+    process.on('exit', () => server.close());
+
+    let page: Page | undefined = undefined;
+    server.on('connection', socket => {
+      socket.on('data', data => {
+        if (data.toString() === 'bringToFront')
+          page?.bringToFront().catch(() => {});
+        socket.end(status);
+      });
     });
-  });
+
+    page = await openDevToolsApp();
+    status = `DevTools pid ${process.pid} listening`;
+  }
+
+
+  if (isUnderTest()) {
+    // eslint-disable-next-line no-console
+    console.log(status);
+  }
+
+  // eslint-disable-next-line no-console
+  console.log('<EOF>');
 }
 
-void main();
+void main().catch(e => {
+  // eslint-disable-next-line no-console
+  console.log(e);
+  throw e;
+});
