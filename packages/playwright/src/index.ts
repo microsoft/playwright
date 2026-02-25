@@ -231,10 +231,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   }, { box: true }],
 
-  _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+  _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, _testInfo) => {
+    const testInfo = _testInfo as TestInfoImpl;
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
+    testInfo._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
     if (debugMode() === 'inspector')
       (testInfo as TestInfoImpl)._setDebugMode();
 
