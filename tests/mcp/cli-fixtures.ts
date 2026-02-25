@@ -24,6 +24,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
+  cliEnv: Record<string, string>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -32,6 +33,9 @@ export const test = baseTest.extend<{
     attachments?: { name: string, data: Buffer | null }[],
   }>;
 }>({
+  cliEnv: async ({}, use) => {
+    await use(cliEnv());
+  },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
@@ -57,6 +61,13 @@ export const test = baseTest.extend<{
   },
 });
 
+function cliEnv() {
+  return {
+    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
+  };
+}
+
 async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
@@ -67,8 +78,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       env: {
         ...process.env,
         ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+        ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
         ...cliOptions.env,

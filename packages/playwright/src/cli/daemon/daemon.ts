@@ -21,7 +21,7 @@ import path from 'path';
 import url from 'url';
 
 import { debug } from 'playwright-core/lib/utilsBundle';
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
+import { decorateServer, gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
 import { BrowserServerBackend } from '../../mcp/browser/browserServerBackend';
 import { SocketConnection } from '../client/socketConnection';
@@ -49,7 +49,8 @@ export async function startMcpDaemonServer(
   mcpConfig: FullConfig,
   sessionConfig: SessionConfig,
   contextFactory: BrowserContextFactory,
-): Promise<string> {
+  noShutdown?: boolean,
+): Promise<() => Promise<void>> {
   const { socketPath } = sessionConfig;
   // Clean up existing socket file on Unix
   if (os.platform() !== 'win32' && await socketExists(socketPath)) {
@@ -74,16 +75,18 @@ export async function startMcpDaemonServer(
   };
 
   const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {});
-  browserContext.on('close', () => {
-    daemonDebug('browser closed, shutting down daemon');
-    shutdown(0);
-  });
+  if (!noShutdown) {
+    browserContext.on('close', () => {
+      daemonDebug('browser closed, shutting down daemon');
+      shutdown(0);
+    });
+  }
 
   const existingContextFactory = {
     createContext: () => Promise.resolve({ browserContext, close }),
   };
   const backend = new BrowserServerBackend(mcpConfig, existingContextFactory, { allTools: true });
-  await backend.initialize?.(clientInfo);
+  await backend.initialize(clientInfo);
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
 
@@ -121,10 +124,11 @@ export async function startMcpDaemonServer(
       } catch (e) {
         daemonDebug('command failed', e);
         const error = process.env.PWDEBUGIMPL ? (e as Error).stack || (e as Error).message : (e as Error).message;
-        await connection.send({ id, error });
+        connection.send({ id, error }).catch(() => {});
       }
     };
   });
+  decorateServer(server);
 
   return new Promise((resolve, reject) => {
     server.on('error', (error: NodeJS.ErrnoException) => {
@@ -134,7 +138,10 @@ export async function startMcpDaemonServer(
 
     server.listen(socketPath, () => {
       daemonDebug(`daemon server listening on ${socketPath}`);
-      resolve(socketPath);
+      resolve(async () => {
+        backend.serverClosed();
+        await new Promise(cb => server.close(cb));
+      });
     });
   });
 }
