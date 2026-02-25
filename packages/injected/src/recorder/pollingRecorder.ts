@@ -29,7 +29,6 @@ interface Embedder {
   __pw_recorderSetMode(mode: Mode): Promise<void>;
   __pw_recorderSetOverlayState(state: OverlayState): Promise<void>;
   __pw_refreshOverlay(): void;
-  __pw_recorderLog(args: any[]): Promise<void>;
 }
 
 export class PollingRecorder implements RecorderDelegate {
@@ -95,11 +94,6 @@ export class PollingRecorder implements RecorderDelegate {
 
   async setOverlayState(state: OverlayState): Promise<void> {
     await this._embedder.__pw_recorderSetOverlayState(state);
-  }
-
-  async log(...args: any[]) {
-    if (this._recorder.injectedScript.isUnderTest)
-      await this._embedder.__pw_recorderLog(args);
   }
 }
 
