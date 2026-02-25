@@ -169,7 +169,7 @@ export async function program(options?: { embedderVersion?: string}) {
 
       for (const globalOption of globalOptions)
         delete args[globalOption];
-      const result = await session.run(clientInfo, args);
+      const result = await session.open(args);
       console.log(result.text);
       return;
     }
@@ -209,7 +209,8 @@ export async function program(options?: { embedderVersion?: string}) {
 
       for (const globalOption of globalOptions)
         delete args[globalOption];
-      const result = await new Session(defaultEntry).run(clientInfo, args);
+      const session = new Session(defaultEntry);
+      const result = await session.run(clientInfo, args);
       console.log(result.text);
     }
   }
@@ -321,7 +322,7 @@ function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args
   return {
     name: sessionName,
     version: clientInfo.version,
-    timestamp: 0,
+    timestamp: Date.now(),
     socketPath: daemonSocketPath(clientInfo, sessionName),
     cli: {
       headed: args.headed,
