@@ -1,0 +1,95 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.settings-button-container {
+  position: relative;
+}
+
+.settings-gear-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+}
+
+.settings-gear-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.settings-gear-btn:hover {
+  background: var(--color-neutral-subtle);
+}
+
+.settings-gear-btn.open {
+  background: var(--color-neutral-muted);
+  color: var(--color-fg-default);
+}
+
+.settings-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: var(--color-canvas-overlay);
+  border: 1px solid var(--color-neutral-muted);
+  border-radius: 8px;
+  padding: 8px 0;
+  min-width: 160px;
+  box-shadow: var(--color-overlay-shadow);
+  z-index: 100;
+  user-select: none;
+}
+
+.settings-popup .setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 12px;
+}
+
+.settings-popup .setting-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-fg-subtle);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.settings-popup .setting-options {
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-popup .setting-option {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--color-fg-muted);
+  cursor: pointer;
+}
+
+.settings-popup .setting-option:hover {
+  background: var(--color-neutral-subtle);
+  color: var(--color-fg-default);
+}
+
+.settings-popup .setting-option.selected {
+  color: var(--color-accent-fg);
+}
