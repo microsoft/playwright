@@ -21,7 +21,7 @@ import crypto from 'crypto';
 import net from 'net';
 
 import { chromium } from 'playwright-core';
-import { gracefullyProcessExitDoNotHang, HttpServer } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, HttpServer, isUnderTest } from 'playwright-core/lib/utils';
 import { findChromiumChannelBestEffort, registryDirectory } from 'playwright-core/lib/server/registry/index';
 
 import { createClientInfo, Registry } from './registry';
@@ -117,7 +117,7 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDevToolsApp(): Promise<{ page: Page, url: string }> {
+async function openDevToolsApp(): Promise<{ page?: Page, url: string }> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const devtoolsDir = path.join(path.dirname(libDir), 'lib/vite/devtools');
@@ -141,6 +141,8 @@ async function openDevToolsApp(): Promise<{ page: Page, url: string }> {
   });
   await httpServer.start();
   const url = httpServer.urlPrefix('human-readable');
+  if (isUnderTest())
+    return { url };
 
   const { page } = await launchApp('devtools');
   await page.goto(url);
