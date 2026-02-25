@@ -15,6 +15,8 @@
  */
 
 import { z } from 'playwright-core/lib/mcpBundle';
+import { runTraceViewerApp } from 'playwright-core/lib/server';
+import { isUnderTest } from 'playwright-core/lib/utils';
 import { defineTool } from './tool';
 
 import type { Tracing } from '../../../../../playwright-core/src/client/tracing';
@@ -70,9 +72,33 @@ const tracingStop = defineTool({
   },
 });
 
+const tracingShow = defineTool({
+  capability: 'devtools',
+
+  schema: {
+    name: 'browser_show_tracing',
+    title: 'Show tracing',
+    description: 'Open trace viewer for the recorded trace',
+    inputSchema: z.object({}),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params, response) => {
+    const browserContext = await context.ensureBrowserContext();
+    const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
+    if (!traceLegend) {
+      response.addError('No trace recording found. Start tracing first with browser_start_tracing.');
+      return;
+    }
+    await runTraceViewerApp(`${traceLegend.tracesDir}/${traceLegend.name}.json`, 'chromium', { headless: isUnderTest() ? true : undefined });
+    response.addTextResult('Trace viewer opened.');
+  },
+});
+
 export default [
   tracingStart,
   tracingStop,
+  tracingShow,
 ];
 
 const traceLegendSymbol = Symbol('tracesDir');

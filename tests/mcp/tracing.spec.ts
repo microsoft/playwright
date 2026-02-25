@@ -69,6 +69,40 @@ test('check that trace is saved with browser_start_tracing', async ({ startClien
   ]);
 });
 
+test('check that browser_show_tracing returns error without tracing', async ({ startClient }) => {
+  const { client } = await startClient({ args: ['--caps=tracing'] });
+
+  expect(await client.callTool({
+    name: 'browser_show_tracing',
+  })).toHaveResponse({
+    error: expect.stringContaining('No trace recording found'),
+    isError: true,
+  });
+});
+
+test('check that browser_show_tracing opens trace viewer', async ({ startClient, server }) => {
+  const { client } = await startClient({ args: ['--caps=tracing'], env: { PWTEST_UNDER_TEST: '1' } });
+
+  expect(await client.callTool({
+    name: 'browser_start_tracing',
+  })).toHaveResponse({
+    result: expect.stringContaining('Trace recording started'),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    code: expect.stringContaining(`page.goto('http://localhost`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_show_tracing',
+  })).toHaveResponse({
+    result: 'Trace viewer opened.',
+  });
+});
+
 test('check that trace is saved with browser_start_tracing (no output dir)', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({
     args: ['--caps=tracing'],

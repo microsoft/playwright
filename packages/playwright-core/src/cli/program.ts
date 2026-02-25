@@ -344,7 +344,7 @@ program
       if (options.port !== undefined || options.host !== undefined)
         runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
       else
-        runTraceViewerApp(trace, options.browser, openOptions, true).catch(logErrorAndExit);
+        runTraceViewerApp(trace, options.browser, openOptions).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
