@@ -55,6 +55,8 @@ runs:
         npx playwright install --with-deps ${{ inputs.browsers-to-install }}
         echo "::endgroup::"
       shell: bash
+    - run: echo "PLAYWRIGHT_SETUP_COMPLETE=true" >> $GITHUB_ENV
+      shell: bash
     - name: Run tests
       if: inputs.shell == 'bash'
       run: |
@@ -74,7 +76,7 @@ runs:
         PW_TAG: "@${{ inputs.bot-name }}"
     - name: Azure Login
       uses: azure/login@v2
-      if: ${{ !cancelled() && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
+      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && github.event_name == 'push' && github.repository == 'microsoft/playwright' }}
       with:
         client-id: ${{ inputs.flakiness-client-id }}
         tenant-id: ${{ inputs.flakiness-tenant-id }}
@@ -83,10 +85,10 @@ runs:
         echo "::group::./utils/upload_flakiness_dashboard.sh"
         ./utils/upload_flakiness_dashboard.sh ./test-results/report.json
         echo "::endgroup::"
-      if: ${{ !cancelled() }}
+      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' }}
       shell: bash
     - name: Upload blob report
-      if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
+      if: ${{ !cancelled() && env.PLAYWRIGHT_SETUP_COMPLETE == 'true' && (github.event_name == 'pull_request' || failure()) }}
       uses: ./.github/actions/upload-blob-report
       with:
         report_dir: blob-report
