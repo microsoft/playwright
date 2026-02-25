@@ -20,16 +20,15 @@ import * as React from 'react';
 import type { Boundaries } from './geometry';
 import { FilmStrip } from './filmStrip';
 import type { FilmStripPreviewPoint } from './filmStrip';
-import type { ActionTraceEventInContext, TraceModel } from '@isomorphic/trace/traceModel';
+import type { ActionTraceEventInContext, ResourceEntry, TraceModel } from '@isomorphic/trace/traceModel';
 import './timeline.css';
 import type { Language } from '@isomorphic/locatorGenerators';
-import type { Entry } from '@trace/har';
 import type { ConsoleEntry } from './consoleTab';
 import type { ActionGroup } from '@isomorphic/protocolFormatter';
 
 type TimelineBar = {
   action?: ActionTraceEventInContext;
-  resource?: Entry;
+  resourceKey?: string;
   consoleMessage?: ConsoleEntry;
   leftPosition: number;
   rightPosition: number;
@@ -42,16 +41,16 @@ type TimelineBar = {
 export const Timeline: React.FunctionComponent<{
   model: TraceModel | undefined,
   consoleEntries: ConsoleEntry[] | undefined,
-  networkResources: Entry[] | undefined,
+  networkResources: ResourceEntry[] | undefined,
   boundaries: Boundaries,
   highlightedAction: ActionTraceEventInContext | undefined,
-  highlightedResourceOrdinal: number | undefined,
+  highlightedResourceKey: string | undefined,
   highlightedConsoleEntryOrdinal: number | undefined,
   onSelected: (action: ActionTraceEventInContext) => void,
   selectedTime: Boundaries | undefined,
   setSelectedTime: (time: Boundaries | undefined) => void,
   sdkLanguage: Language,
-}> = ({ model, boundaries, consoleEntries, networkResources, onSelected, highlightedAction, highlightedResourceOrdinal, highlightedConsoleEntryOrdinal, selectedTime, setSelectedTime, sdkLanguage }) => {
+}> = ({ model, boundaries, consoleEntries, networkResources, onSelected, highlightedAction, highlightedResourceKey, highlightedConsoleEntryOrdinal, selectedTime, setSelectedTime, sdkLanguage }) => {
   const [measure, ref] = useMeasure<HTMLDivElement>();
   const [dragWindow, setDragWindow] = React.useState<{ startX: number, endX: number, pivot?: number, type: 'resize' | 'move' } | undefined>();
   const [previewPoint, setPreviewPoint] = React.useState<FilmStripPreviewPoint | undefined>();
@@ -90,7 +89,7 @@ export const Timeline: React.FunctionComponent<{
       const startTime = resource._monotonicTime!;
       const endTime = resource._monotonicTime! + resource.time;
       bars.push({
-        resource,
+        resourceKey: resource.id,
         leftTime: startTime,
         rightTime: endTime,
         leftPosition: timeToPosition(measure.width, boundaries, startTime),
@@ -119,14 +118,14 @@ export const Timeline: React.FunctionComponent<{
     for (const bar of bars) {
       if (highlightedAction)
         bar.active = bar.action === highlightedAction;
-      else if (highlightedResourceOrdinal !== undefined)
-        bar.active = bar.resource === networkResources?.[highlightedResourceOrdinal];
+      else if (highlightedResourceKey)
+        bar.active = bar.resourceKey === highlightedResourceKey;
       else if (highlightedConsoleEntryOrdinal !== undefined)
         bar.active = bar.consoleMessage === consoleEntries?.[highlightedConsoleEntryOrdinal];
       else
         bar.active = false;
     }
-  }, [bars, highlightedAction, highlightedResourceOrdinal, highlightedConsoleEntryOrdinal, consoleEntries, networkResources]);
+  }, [bars, highlightedAction, highlightedResourceKey, highlightedConsoleEntryOrdinal, consoleEntries]);
 
   const onMouseDown = React.useCallback((event: React.MouseEvent) => {
     setPreviewPoint(undefined);
@@ -259,7 +258,7 @@ export const Timeline: React.FunctionComponent<{
               return <div key={index}
                 className={clsx('timeline-bar',
                     bar.action && 'action',
-                    bar.resource && 'network',
+                    bar.resourceKey && 'network',
                     bar.consoleMessage && 'console-message',
                     bar.active && 'active',
                     bar.error && 'error')}
@@ -328,5 +327,5 @@ function positionToTime(clientWidth: number, boundaries: Boundaries, x: number):
 }
 
 function barTop(bar: TimelineBar): number {
-  return bar.resource ? 25 : 20;
+  return bar.resourceKey ? 25 : 20;
 }
