@@ -91,12 +91,11 @@ export const TraceView: React.FC<{
   return <Workbench
     model={model?.model}
     key='workbench'
-    showSourcesFirst={true}
     rootDir={rootDir}
     fallbackLocation={item.testFile}
     isLive={model?.isLive}
     status={item.treeItem?.status}
-    annotations={item.testCase?.annotations ?? []}
+    annotations={item.testCase?.annotations}
     onOpenExternally={onOpenExternally}
     revealSource={revealSource}
   />;

@@ -49,7 +49,6 @@ import type { TreeState } from '@web/components/treeView';
 
 export type WorkbenchProps = {
   model: TraceModel | undefined;
-  showSourcesFirst?: boolean;
   rootDir?: string;
   fallbackLocation?: SourceLocation;
   isLive?: boolean;
@@ -70,11 +69,11 @@ export const Workbench: React.FunctionComponent<WorkbenchProps> = props => {
 };
 
 const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition: string }> = props => {
-  const { partition, model, showSourcesFirst, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata } = props;
+  const { partition, model, rootDir, fallbackLocation, isLive, hideTimeline, status, annotations, inert, onOpenExternally, revealSource, testRunMetadata } = props;
 
   // UI settings, shared for all models.
   const [selectedNavigatorTab, setSelectedNavigatorTab] = useSetting<string>('navigatorTab',  'actions');
-  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', showSourcesFirst ? 'source' : 'call');
+  const [selectedPropertiesTab, setSelectedPropertiesTab] = useSetting<string>('propertiesTab', 'source');
   const [sidebarLocation, setSidebarLocation] = useSetting<'bottom' | 'right'>('propertiesSidebarLocation', 'bottom');
   const [actionsFilter] = useSetting<ActionGroup[]>('actionsFilter', []);
 
@@ -266,33 +265,24 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     count: model?.visibleAttachments.length,
     render: () => <AttachmentsTab revealedAttachmentCallId={revealedAttachmentCallId} />
   };
+  const annotationsTab: TabbedPaneTabModel = {
+    id: 'annotations',
+    title: 'Annotations',
+    count: annotations?.length,
+    render: () => <AnnotationsTab annotations={annotations} />
+  };
 
   const tabs: TabbedPaneTabModel[] = [
     inspectorTab,
+    sourceTab,
     callTab,
     logTab,
     errorsTab,
     consoleTab,
     networkTab,
-    sourceTab,
     attachmentsTab,
+    annotationsTab
   ];
-
-  if (annotations !== undefined) {
-    const annotationsTab: TabbedPaneTabModel = {
-      id: 'annotations',
-      title: 'Annotations',
-      count: annotations.length,
-      render: () => <AnnotationsTab annotations={annotations} />
-    };
-    tabs.push(annotationsTab);
-  }
-
-  if (showSourcesFirst) {
-    const sourceTabIndex = tabs.indexOf(sourceTab);
-    tabs.splice(sourceTabIndex, 1);
-    tabs.splice(1, 0, sourceTab);
-  }
 
   const { boundaries } = React.useMemo(() => {
     const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
