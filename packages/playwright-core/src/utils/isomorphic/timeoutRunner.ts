@@ -29,9 +29,9 @@ export async function raceAgainstDeadline<T>(cb: () => Promise<T>, deadline: num
       return { result, timedOut: false };
     }),
     new Promise<{ timedOut: true }>(resolve => {
-      const kMaxDeadline = 2147483647; // 2^31-1
-      const timeout = (deadline || kMaxDeadline) - monotonicTime();
-      timer = setTimeout(() => resolve({ timedOut: true }), timeout);
+      if (!deadline)
+        return;
+      timer = setTimeout(() => resolve({ timedOut: true }), deadline - monotonicTime());
     }),
   ]).finally(() => {
     clearTimeout(timer);
