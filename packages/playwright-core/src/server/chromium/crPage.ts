@@ -517,6 +517,7 @@ class FrameSession {
         promises.push(this._client.send('Emulation.setScriptExecutionDisabled', { value: true }));
       if (options.userAgent || options.locale)
         promises.push(this._updateUserAgent());
+      promises.push(this._updateUserAgentBrands());
       if (options.locale)
         promises.push(emulateLocale(this._client, options.locale));
       if (options.timezoneId)
@@ -989,6 +990,49 @@ class FrameSession {
     });
   }
 
+  async _updateUserAgentBrands(): Promise<void> {
+    const options = this._crPage._browserContext._options;
+    if (options.userAgent)
+      return;
+    const browser = this._crPage._browserContext._browser;
+    const ua = browser.userAgent();
+    // Only for Chrome-like browsers, not Edge or headless
+    if (!ua.includes('Chrome/') || ua.includes('Edg/') || ua.includes('HeadlessChrome'))
+      return;
+    const brandInfo = buildChromeBrands(browser.version());
+    if (!brandInfo)
+      return;
+
+    const metadata: Protocol.Emulation.UserAgentMetadata = {
+      brands: brandInfo.brands,
+      fullVersionList: brandInfo.fullVersionList,
+      fullVersion: brandInfo.fullVersion,
+      platform: 'Unknown',
+      platformVersion: '',
+      architecture: 'x86',
+      model: '',
+      mobile: false,
+    };
+    // Detect platform from real UA
+    if (ua.includes('Macintosh')) {
+      metadata.platform = 'macOS';
+      const match = ua.match(/Mac OS X (\d+[_.\d]*)/);
+      if (match) metadata.platformVersion = match[1].replace(/_/g, '.');
+      if (!ua.includes('Intel')) metadata.architecture = 'arm';
+    } else if (ua.includes('Windows')) {
+      metadata.platform = 'Windows';
+      const match = ua.match(/Windows NT (\d+[.\d]*)/);
+      if (match) metadata.platformVersion = match[1];
+    } else if (ua.toLowerCase().includes('linux')) {
+      metadata.platform = 'Linux';
+    }
+
+    await this._client.send('Emulation.setUserAgentOverride', {
+      userAgent: ua,  // must be non-empty for CDP to apply userAgentMetadata
+      userAgentMetadata: metadata,
+    });
+  }
+
   private async _setDefaultFontFamilies(session: CRSession) {
     const fontFamilies = platformToFontFamilies[this._crPage._browserContext._browser._platform()];
     await session.send('Page.setFontFamilies', fontFamilies);
@@ -1196,4 +1240,27 @@ function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   if (ua.includes('ARM'))
     metadata.architecture = 'arm';
   return metadata;
+}
+
+function buildChromeBrands(fullVersion: string): {
+  brands: Protocol.Emulation.UserAgentBrandVersion[];
+  fullVersionList: Protocol.Emulation.UserAgentBrandVersion[];
+  fullVersion: string;
+} | undefined {
+  const majorVersion = fullVersion.split('.')[0];
+  if (!majorVersion)
+    return undefined;
+  return {
+    brands: [
+      { brand: 'Chromium', version: majorVersion },
+      { brand: 'Google Chrome', version: majorVersion },
+      { brand: 'Not/A)Brand', version: '99' },
+    ],
+    fullVersionList: [
+      { brand: 'Chromium', version: fullVersion },
+      { brand: 'Google Chrome', version: fullVersion },
+      { brand: 'Not/A)Brand', version: '99.0.0.0' },
+    ],
+    fullVersion,
+  };
 }
