@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { ClientInfo, SessionFile } from '../../playwright/src/cli/client/registry';
+import type { ClientInfo, SessionFile } from '../../playwright-core/src/cli/client/registry';
 
 export type SessionStatus = {
   file: SessionFile;

@@ -17,8 +17,8 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfig } from '../../packages/playwright/lib/mcp/browser/config';
-import type { Config } from '../../packages/playwright/src/mcp/config';
+import { resolveCLIConfig } from '../../packages/playwright-core/lib/mcp/browser/config';
+import type { Config } from '../../packages/playwright-core/src/mcp/config';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `

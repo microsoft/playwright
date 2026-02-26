@@ -648,15 +648,15 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/skill/**/*.md',
-  from: 'packages/playwright/src',
-  to: 'packages/playwright/lib',
+  files: 'packages/playwright-core/src/skill/**/*.md',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/cli/client/*.{png,ico}',
-  from: 'packages/playwright/src',
-  to: 'packages/playwright/lib',
+  files: 'packages/playwright-core/src/cli/client/*.{png,ico}',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 if (watchMode) {

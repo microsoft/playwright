@@ -28,6 +28,8 @@ import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/tra
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
+import { decorateMCPCommand } from '../mcp/program';
+import { decorateCLICommand } from './daemon/program';
 
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
@@ -727,6 +729,14 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--user-data-dir <directory>', 'use the specified user data directory instead of a new context')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
+
+const mcpCommand = program.command('run-mcp-server', { hidden: true });
+mcpCommand.description('Interact with the browser over MCP');
+decorateMCPCommand(mcpCommand, packageJSON.version);
+
+const cliCommand = program.command('run-cli-server', { hidden: true });
+cliCommand.description('Interact with the browser over CLI');
+decorateCLICommand(cliCommand, packageJSON.version);
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
   switch (cliTargetLang) {
