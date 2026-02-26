@@ -518,7 +518,11 @@ export function headerParser(arg: string | undefined, previous?: Record<string, 
   if (!arg)
     return previous || {};
   const result: Record<string, string> = previous || {};
-  const [name, value] = arg.split(':').map(v => v.trim());
+  const colonIndex = arg.indexOf(':');
+  if (colonIndex === -1)
+    return result;
+  const name = arg.substring(0, colonIndex).trim();
+  const value = arg.substring(colonIndex + 1).trim();
   result[name] = value;
   return result;
 }
