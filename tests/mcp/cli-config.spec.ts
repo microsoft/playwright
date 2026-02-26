@@ -114,3 +114,39 @@ test('isolated', async ({ cli, server }, testInfo) => {
   await cli('open', server.PREFIX);
   expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
 });
+
+
+test('init-page path is resolved relative to config file', async ({ cli }, testInfo) => {
+  const config = {
+    browser: {
+      initPage: ['./init-page.cjs'],
+    },
+  };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'init-page.cjs'), `
+    module.exports = {
+      default: async ({ page }) => {
+        await page.setContent('<div>relative-init-page-loaded</div>');
+      },
+    };
+  `);
+
+  await cli('open');
+  const { output } = await cli('eval', 'document.body.textContent');
+  expect(output).toContain('relative-init-page-loaded');
+});
+
+test('init-script path is resolved relative to config file', async ({ cli }, testInfo) => {
+  const config = {
+    browser: {
+      initScript: ['./init-script.js'],
+    },
+  };
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'init-script.js'), 'window.__relativeInitScriptLoaded = true;');
+
+  await cli('open');
+  await cli('goto', 'data:text/html,<body>ok</body>');
+  const { output } = await cli('eval', 'window.__relativeInitScriptLoaded === true');
+  expect(output).toContain('true');
+});
