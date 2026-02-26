@@ -74,11 +74,8 @@ async function load(moduleUrl: string, context: { format?: string }, defaultLoad
   const isPreflight = moduleUrl.endsWith(esmPreflightExtension);
 
   // Bail for node_modules.
-  if (!shouldTransform(filename)) {
-    if (isPreflight)
-      return { format: 'module', source: `void 0;`, shortCircuit: true };
+  if (!shouldTransform(filename))
     return defaultLoad(moduleUrl, context, defaultLoad);
-  }
 
   const originalModuleUrl = isPreflight ? moduleUrl.slice(0, -esmPreflightExtension.length) : moduleUrl;
   const originalFilename = isPreflight ? url.fileURLToPath(originalModuleUrl) : filename;

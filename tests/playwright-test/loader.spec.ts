@@ -1203,7 +1203,7 @@ test('should compose with a custom ESM loader before playwright', {
   const testFile = url.pathToFileURL(testInfo.outputPath('a.test.js')).toString();
   const expectedSequence = [
     `resolve ${testFile}.esm.preflight`,
-    `load ${testFile}.esm.preflight source=void 0;`,
+    // no load for preflight, it falls through to the node default loader which cannot resolve it and thus errors out
     `resolve ${testFile}`,
     `load ${testFile} source=`,
     `resolve @playwright/test`,
