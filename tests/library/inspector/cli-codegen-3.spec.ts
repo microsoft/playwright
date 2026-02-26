@@ -20,8 +20,6 @@ import { test, expect } from './inspectorTest';
 import type { Page } from '@playwright/test';
 
 test.describe('cli codegen', () => {
-  test.skip(({ mode }) => mode !== 'default');
-
   test('should click locator.first', async ({ openRecorder }) => {
     const { page, recorder } = await openRecorder();
 
@@ -803,7 +801,7 @@ await page.GetByTestId("testid").HoverAsync();`);
   });
 
   test('should assert value on disabled input', async ({ openRecorder, browserName }) => {
-    test.fixme(browserName === 'firefox', 'pointerup event is not dispatched on a disabled input');
+    test.skip(browserName === 'firefox', 'pointerup event is not dispatched on a disabled input');
 
     const { recorder } = await openRecorder();
 
