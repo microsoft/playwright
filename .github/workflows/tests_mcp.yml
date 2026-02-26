@@ -44,7 +44,7 @@ jobs:
     - uses: actions/checkout@v6
     - uses: ./.github/actions/run-test
       with:
-        node-version: "20"
+        node-version: "22"
         command: npm run test-mcp -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
         bot-name: "mcp-${{ matrix.os }}"
         shard-index: ${{ matrix.shardIndex }}
