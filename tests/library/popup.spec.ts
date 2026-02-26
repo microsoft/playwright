@@ -17,7 +17,9 @@
 import { browserTest as it, expect } from '../config/browserTest';
 import type { Page } from 'playwright-core';
 
-it('should inherit user agent from browser context @smoke', async function({ browser, server }) {
+it('should inherit user agent from browser context @smoke', async function({ browser, server, browserName, isMac, macVersion }) {
+  it.skip(browserName === 'webkit' && isMac && macVersion <= 14, 'WebKit on macOS-14 is frozen');
+
   const context = await browser.newContext({
     userAgent: 'hey'
   });

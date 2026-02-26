@@ -24,25 +24,25 @@ it('should work @smoke', async ({ browser, browserName }) => {
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'America/Jamaica' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toContain('Sat Nov 19 2016 13:12:34 GMT-0500');
+    expect.soft(await page.evaluate(func)).toContain('Sat Nov 19 2016 13:12:34 GMT-0500');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'Pacific/Honolulu' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toContain('Sat Nov 19 2016 08:12:34 GMT-1000');
+    expect.soft(await page.evaluate(func)).toContain('Sat Nov 19 2016 08:12:34 GMT-1000');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: browserName === 'firefox' ? 'America/Argentina/Buenos_Aires' : 'America/Buenos_Aires' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toContain('Sat Nov 19 2016 15:12:34 GMT-0300');
+    expect.soft(await page.evaluate(func)).toContain('Sat Nov 19 2016 15:12:34 GMT-0300');
     await context.close();
   }
   {
     const context = await browser.newContext({ locale: 'en-US', timezoneId: 'Europe/Berlin' });
     const page = await context.newPage();
-    expect(await page.evaluate(func)).toContain('Sat Nov 19 2016 19:12:34 GMT+0100');
+    expect.soft(await page.evaluate(func)).toContain('Sat Nov 19 2016 19:12:34 GMT+0100');
     await context.close();
   }
 });
