@@ -264,7 +264,8 @@ async function ensureConfiguredBrowserInstalled() {
   if (fs.existsSync(defaultConfigFile())) {
     const { registry } = await import('playwright-core/lib/server/registry/index');
     // Config exists, ensure configured browser is installed
-    const config = JSON.parse(await fs.promises.readFile(defaultConfigFile(), 'utf-8')) as Config;
+    const data = await fs.promises.readFile(defaultConfigFile(), 'utf-8');
+    const config = JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data) as Config;
     const browserName = config.browser?.browserName ?? 'chromium';
     const channel = config.browser?.launchOptions?.channel;
     if (!channel || channel.startsWith('chromium')) {

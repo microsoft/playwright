@@ -89,6 +89,21 @@ test('config-print prints merged config from file, env and cli', async ({ cli, s
   expect(config.browser.isolated).toBe(true);
 });
 
+test('context options with UTF-8 BOM', async ({ cli, server }, testInfo) => {
+  const config = {
+    browser: {
+      contextOptions: {
+        viewport: { width: 800, height: 600 },
+      },
+    },
+  };
+  // Write config with UTF-8 BOM prefix, as some Windows editors (Notepad, PowerShell) do.
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), '\uFEFF' + JSON.stringify(config, null, 2));
+  await cli('open', server.PREFIX);
+  const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
+  expect(output).toContain('800x600');
+});
+
 test('isolated', async ({ cli, server }, testInfo) => {
   const config = {
     browser: {
