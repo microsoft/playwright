@@ -22,7 +22,7 @@ import url from 'url';
 import crypto from 'crypto';
 
 import { loadTsConfig } from '../third_party/tsconfig-loader';
-import { createFileMatcher, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
+import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { sourceMapSupport } from '../utilsBundle';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
 import { addHook } from '../third_party/pirates';
@@ -276,7 +276,9 @@ export async function requireOrImport(file: string) {
 
     // For ESM imports, issue a preflight to populate the compilation cache with the
     // source maps. This allows inline test() calls to resolve wrapFunctionWithLocation.
-    await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`).finally(nextTask);
+    await eval(`import(${JSON.stringify(fileName + '.esm.preflight')})`)
+        .catch((error: any) => debugTest('Failed to load preflight for ' + file + ', source maps may be missing for errors thrown during loading.', error))
+        .finally(nextTask);
 
     // Compilation cache, which includes source maps, is populated in a post task.
     // When importing a module results in an error, the very next access to `error.stack`
