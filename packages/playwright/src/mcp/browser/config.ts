@@ -356,21 +356,24 @@ export function configFromEnv(): Config & { configFile?: string } {
   return configFromCLIOptions(options);
 }
 
+async function innerLoadConfig(configFile: string): Promise<Config> {
+  if (configFile.endsWith('.ini'))
+    return configFromIniFile(configFile);
+
+  try {
+    return JSON.parse(await fs.promises.readFile(configFile, 'utf8'));
+  } catch {
+    return configFromIniFile(configFile);
+  }
+}
+
 export async function loadConfig(configFile: string | undefined): Promise<Config> {
   if (!configFile)
     return {};
 
   const resolvedConfigFile = path.resolve(configFile);
-
-  if (resolvedConfigFile.endsWith('.ini'))
-    return resolveConfigFileRelativePaths(configFromIniFile(resolvedConfigFile), resolvedConfigFile);
-
-  try {
-    const config = JSON.parse(await fs.promises.readFile(resolvedConfigFile, 'utf8'));
-    return resolveConfigFileRelativePaths(config, resolvedConfigFile);
-  } catch {
-    return resolveConfigFileRelativePaths(configFromIniFile(resolvedConfigFile), resolvedConfigFile);
-  }
+  const config = await innerLoadConfig(resolvedConfigFile);
+  return resolveConfigFileRelativePaths(config, resolvedConfigFile);
 }
 
 function resolveConfigFileRelativePaths(config: Config, configFile: string): Config {
