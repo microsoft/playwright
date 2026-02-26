@@ -156,7 +156,6 @@ export abstract class BrowserType extends SdkObject {
     let artifactsDir: string;
     if (options.artifactsDir) {
       artifactsDir = options.artifactsDir;
-      await fs.promises.mkdir(artifactsDir, { recursive: true });
     } else {
       artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
       tempDirectories.push(artifactsDir);
