@@ -66,24 +66,29 @@ class DotReporter extends TerminalReporter {
     this._counter = 0;
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
+  async onTestPaused(test: TestCase, result: TestResult, error?: TestError): Promise<{ disposition?: 'continue' } | void> {
     // Without TTY, user cannot interrupt the pause. Let's skip it.
     if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
 
     this.screen.stdout.write('\n');
-    if (test.outcome() === 'unexpected') {
+    if (error) {
+      this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '  ' })));
+      this.writeLine('\n' + this.formatError(error, '    ').message + '\n');
+      this.writeLine(this.screen.colors.yellow(`    Paused on error. Press 'c' to continue, Ctrl+C to end.`));
+    } else if (result.errors.length) {
       this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '  ' })));
       this.writeLine(this.formatResultErrors(test, result));
       markErrorsAsReported(result);
-      this.writeLine(this.screen.colors.yellow('    Paused on error. Press Ctrl+C to end.') + '\n');
+      this.writeLine(this.screen.colors.yellow(`    Paused at test end. Press 'c' to continue, Ctrl+C to end.`));
     } else {
       this.writeLine(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '  ' })));
-      this.writeLine(this.screen.colors.yellow('    Paused at test end. Press Ctrl+C to end.') + '\n');
+      this.writeLine(this.screen.colors.yellow(`\n    Paused at test end. Press 'c' to continue, Ctrl+C to end.`));
     }
     this._counter = 0;
-
-    await new Promise<void>(() => {});
+    await this.waitForContinueKey();
+    this.screen.stdout?.write(`\u001B[1A\u001B[2K`);
+    return { disposition: 'continue' };
   }
 
   override async onEnd(result: FullResult) {

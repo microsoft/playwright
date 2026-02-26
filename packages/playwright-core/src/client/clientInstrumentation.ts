@@ -28,6 +28,11 @@ export interface ApiCallData {
   userData: any;
   stepId?: string;
   error?: Error;
+  canContinueOnError?: boolean;
+}
+
+export interface ApiCallEndResult {
+  continueOnError?: boolean;
 }
 
 export interface ClientInstrumentation {
@@ -35,7 +40,7 @@ export interface ClientInstrumentation {
   removeListener(listener: ClientInstrumentationListener): void;
   removeAllListeners(): void;
   onApiCallBegin(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any> }): void;
-  onApiCallEnd(apiCall: ApiCallData): void;
+  runOnApiCallEnd(apiCall: ApiCallData): Promise<ApiCallEndResult | void>;
   onWillPause(options: { keepTestTimeout: boolean }): void;
   onPage(page: Page): void;
 
@@ -49,7 +54,7 @@ export interface ClientInstrumentation {
 
 export interface ClientInstrumentationListener {
   onApiCallBegin?(apiCall: ApiCallData, channel: { type: string, method: string, params?: Record<string, any>  }): void;
-  onApiCallEnd?(apiCall: ApiCallData): void;
+  runOnApiCallEnd?(apiCall: ApiCallData): Promise<ApiCallEndResult | void>;
   onWillPause?(options: { keepTestTimeout: boolean }): void;
   onPage?(page: Page): void;
   runBeforeCreateBrowserContext?(options: BrowserContextOptions): Promise<void>;
@@ -74,8 +79,13 @@ export function createInstrumentation(): ClientInstrumentation {
         return () => listeners.splice(0, listeners.length);
       if (prop.startsWith('run')) {
         return async (...params: any[]) => {
-          for (const listener of listeners)
-            await (listener as any)[prop]?.(...params);
+          let result: any;
+          for (const listener of listeners) {
+            const r = await (listener as any)[prop]?.(...params);
+            if (r !== undefined)
+              result = r;
+          }
+          return result;
         };
       }
       if (prop.startsWith('on')) {

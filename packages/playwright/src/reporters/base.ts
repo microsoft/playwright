@@ -355,8 +355,8 @@ export class TerminalReporter implements ReporterV2 {
     return formatFailure(this.screen, this.config, test, index, this._options);
   }
 
-  formatError(error: TestError): ErrorDetails {
-    return formatError(this.screen, error);
+  formatError(error: TestError, indent = ''): ErrorDetails {
+    return formatError(this.screen, error, indent);
   }
 
   formatResultErrors(test: TestCase, result: TestResult): string {
@@ -366,17 +366,39 @@ export class TerminalReporter implements ReporterV2 {
   writeLine(line?: string) {
     this.screen.stdout?.write(line ? line + '\n' : '\n');
   }
+
+  protected waitForContinueKey(): Promise<void> {
+    return new Promise(resolve => {
+      const stdin = process.stdin;
+      const wasRaw = stdin.isRaw;
+      stdin.setRawMode(true);
+      stdin.resume();
+      const onData = (data: Buffer) => {
+        const char = data.toString();
+        if (char === 'c' || char === 'C') {
+          cleanup();
+          resolve();
+        } else if (char === '\x03' || char === '\x1B') {
+          cleanup();
+          process.kill(process.pid, 'SIGINT');
+        }
+      };
+      const cleanup = () => {
+        stdin.removeListener('data', onData);
+        stdin.setRawMode(wasRaw);
+      };
+      stdin.on('data', onData);
+    });
+  }
 }
 
 function formatResultErrors(screen: Screen, test: TestCase, result: TestResult): string {
   const lines: string[] = [];
-  if (test.outcome() === 'unexpected') {
-    const errorDetails = formatResultFailure(screen, test, result, '    ');
-    if (errorDetails.length > 0)
-      lines.push('');
-    for (const error of errorDetails)
-      lines.push(error.message, '');
-  }
+  const errorDetails = formatResultFailure(screen, test, result, '    ');
+  if (errorDetails.length > 0)
+    lines.push('');
+  for (const error of errorDetails)
+    lines.push(error.message, '');
   return lines.join('\n');
 }
 
@@ -486,23 +508,18 @@ export function formatResultFailure(screen: Screen, test: TestCase, result: Test
 
   if (result.status === 'passed' && test.expectedStatus === 'failed') {
     errorDetails.push({
-      message: indent(screen.colors.red(`Expected to fail, but passed.`), initialIndent),
+      message: applyIndent(screen.colors.red(`Expected to fail, but passed.`), initialIndent),
     });
   }
   if (result.status === 'interrupted') {
     errorDetails.push({
-      message: indent(screen.colors.red(`Test was interrupted.`), initialIndent),
+      message: applyIndent(screen.colors.red(`Test was interrupted.`), initialIndent),
     });
   }
 
   const reportedIndex = (result as any)[kReportedSymbol] || 0;
-  for (const error of result.errors.slice(reportedIndex)) {
-    const formattedError = formatError(screen, error);
-    errorDetails.push({
-      message: indent(formattedError.message, initialIndent),
-      location: formattedError.location,
-    });
-  }
+  for (const error of result.errors.slice(reportedIndex))
+    errorDetails.push(formatError(screen, error, initialIndent));
   return errorDetails;
 }
 
@@ -560,7 +577,7 @@ function formatTestHeader(screen: Screen, config: FullConfig, test: TestCase, op
   return separator(screen, fullHeader);
 }
 
-export function formatError(screen: Screen, error: TestError): ErrorDetails {
+export function formatError(screen: Screen, error: TestError, indent = ''): ErrorDetails {
   const message = error.message || error.value || '';
   const stack = error.stack;
   if (!stack && !error.location)
@@ -591,9 +608,10 @@ export function formatError(screen: Screen, error: TestError): ErrorDetails {
   if (error.cause)
     tokens.push(screen.colors.dim('[cause]: ') + formatError(screen, error.cause).message);
 
+  const resultingMessage = tokens.join('\n');
   return {
     location,
-    message: tokens.join('\n'),
+    message: indent ? applyIndent(resultingMessage, indent) : resultingMessage,
   };
 }
 
@@ -604,7 +622,7 @@ export function separator(screen: Screen, text: string = ''): string {
   return text + screen.colors.dim('─'.repeat(Math.max(0, columns - stripAnsiEscapes(text).length)));
 }
 
-function indent(lines: string, tab: string) {
+function applyIndent(lines: string, tab: string) {
   return lines.replace(/^(?=.+$)/gm, tab);
 }
 
