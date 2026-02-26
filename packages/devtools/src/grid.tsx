@@ -130,10 +130,10 @@ const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; vis
   }, [channel]);
 
   const chipTitle = selectedTab ? `[${config.name}] ${selectedTab.url} \u2014 ${selectedTab.title}` : config.name;
-  const clickable = canConnect && wsUrl !== null;
+  const clickable = canConnect && !!wsUrl;
 
   return (
-    <a className={'session-chip' + (canConnect ? '' : ' disconnected') + (wsUrl === null ? ' not-supported' : '')} href={clickable ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (canConnect ? '' : ' disconnected') + (wsUrl === null ? ' not-supported' : '')} href={clickable ? href : undefined} aria-disabled={!clickable} title={chipTitle} onClick={e => {
       e.preventDefault();
       if (clickable)
         navigate(href);
