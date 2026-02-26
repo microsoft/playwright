@@ -366,7 +366,8 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
     return configFromIniFile(configFile);
 
   try {
-    return JSON.parse(await fs.promises.readFile(configFile, 'utf8'));
+    const data = await fs.promises.readFile(configFile, 'utf8');
+    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
   } catch {
     return configFromIniFile(configFile);
   }

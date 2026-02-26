@@ -46,6 +46,33 @@ test('config user data dir', async ({ startClient, server }, testInfo) => {
   expect(files.length).toBeGreaterThan(0);
 });
 
+test('config with UTF-8 BOM', async ({ startClient, server }, testInfo) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <body>Hello, world!</body>
+  `, 'text/html');
+
+  const config: Config = {
+    browser: {
+      userDataDir: testInfo.outputPath('user-data-dir'),
+    },
+  };
+  const configPath = testInfo.outputPath('config.json');
+  // Write config with UTF-8 BOM prefix, as some Windows editors (Notepad, PowerShell) do.
+  await fs.promises.writeFile(configPath, '\uFEFF' + JSON.stringify(config, null, 2));
+
+  const { client } = await startClient({ args: ['--config', configPath] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  const files = await fs.promises.readdir(config.browser!.userDataDir!);
+  expect(files.length).toBeGreaterThan(0);
+});
+
 test('executable path', async ({ startClient, server }, testInfo) => {
   const { client } = await startClient({ args: ['--executable-path', testInfo.outputPath('missing-executable')] });
   expect(await client.callTool({
