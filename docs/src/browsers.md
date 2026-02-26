@@ -1090,7 +1090,7 @@ dotnet test
 Playwright keeps track of packages that need those browsers and will garbage collect them as you update Playwright to the newer versions.
 
 :::note
-Developers can opt-in in this mode via exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
+Developers can opt into this mode by exporting `PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers` in their `.bashrc`.
 :::
 
 ### Hermetic install
