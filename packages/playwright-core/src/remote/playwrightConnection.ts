@@ -24,14 +24,14 @@ import { debugLogger } from '../server/utils/debugLogger';
 import { PlaywrightDispatcherOptions } from '../server/dispatchers/playwrightDispatcher';
 
 import type { DispatcherScope, Playwright } from '../server';
-import type { WebSocket } from '../utilsBundle';
+import type { ServerTransport } from './serverTransport';
 
 export interface PlaywrightInitializeResult extends PlaywrightDispatcherOptions {
   dispose?(): Promise<void>;
 }
 
 export class PlaywrightConnection {
-  private _ws: WebSocket;
+  private _transport: ServerTransport;
   private _semaphore: Semaphore;
   private _dispatcherConnection: DispatcherConnection;
   private _cleanups: (() => Promise<void>)[] = [];
@@ -40,8 +40,8 @@ export class PlaywrightConnection {
   private _root: DispatcherScope;
   private _profileName: string;
 
-  constructor(semaphore: Semaphore, ws: WebSocket, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightInitializeResult>, id: string) {
-    this._ws = ws;
+  constructor(semaphore: Semaphore, transport: ServerTransport, controller: boolean, playwright: Playwright, initialize: () => Promise<PlaywrightInitializeResult>, id: string) {
+    this._transport = transport;
     this._semaphore = semaphore;
     this._id = id;
     this._profileName = new Date().toISOString();
@@ -51,16 +51,16 @@ export class PlaywrightConnection {
     this._dispatcherConnection = new DispatcherConnection();
     this._dispatcherConnection.onmessage = async message => {
       await lock;
-      if (ws.readyState !== ws.CLOSING) {
+      if (!transport.isClosed()) {
         const messageString = JSON.stringify(message);
         if (debugLogger.isEnabled('server:channel'))
           debugLogger.log('server:channel', `[${this._id}] ${monotonicTime() * 1000} SEND ► ${messageString}`);
         if (debugLogger.isEnabled('server:metadata'))
           this.logServerMetadata(message, messageString, 'SEND');
-        ws.send(messageString);
+        transport.send(messageString);
       }
     };
-    ws.on('message', async (message: string) => {
+    transport.on('message', async (message: string) => {
       await lock;
       const messageString = Buffer.from(message).toString();
       const jsonMessage = JSON.parse(messageString);
@@ -71,8 +71,8 @@ export class PlaywrightConnection {
       this._dispatcherConnection.dispatch(jsonMessage);
     });
 
-    ws.on('close', () => this._onDisconnect());
-    ws.on('error', (error: Error) => this._onDisconnect(error));
+    transport.on('close', () => this._onDisconnect());
+    transport.on('error', (error: Error) => this._onDisconnect(error));
 
     if (controller) {
       debugLogger.log('server', `[${this._id}] engaged reuse controller mode`);
@@ -138,7 +138,7 @@ export class PlaywrightConnection {
       return;
     debugLogger.log('server', `[${this._id}] force closing connection: ${reason?.reason || ''} (${reason?.code || 0})`);
     try {
-      this._ws.close(reason?.code, reason?.reason);
+      this._transport.close(reason);
     } catch (e) {
     }
   }

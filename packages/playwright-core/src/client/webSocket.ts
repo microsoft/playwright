@@ -88,7 +88,7 @@ class WebSocketTransport implements Transport {
   private _ws: WebSocket | undefined;
 
   async connect(params: channels.LocalUtilsConnectParams) {
-    this._ws = new window.WebSocket(params.wsEndpoint);
+    this._ws = new window.WebSocket(params.wsEndpoint!);
     return [];
   }
 

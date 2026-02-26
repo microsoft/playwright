@@ -126,6 +126,14 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return this._initializer.version;
   }
 
+  async _startServer(title: string, options: { wsPath?: string, workspaceDir?: string } = {}): Promise<{ wsEndpoint?: string, pipeName?: string }> {
+    return await this._channel.startServer({ title, ...options });
+  }
+
+  async _stopServer(): Promise<void> {
+    await this._channel.stopServer();
+  }
+
   async newPage(options: BrowserContextOptions = {}): Promise<Page> {
     return await this._wrapApiCall(async () => {
       const context = await this.newContext(options);

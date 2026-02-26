@@ -705,7 +705,8 @@ LocalUtils:
     connect:
       internal: true
       parameters:
-        wsEndpoint: string
+        wsEndpoint: string?
+        pipeName: string?
         headers: json?
         exposeNetwork: string?
         slowMo: float?
@@ -1025,6 +1026,19 @@ Browser:
     name: string
 
   commands:
+
+    startServer:
+      title: Start server
+      parameters:
+        title: string
+        wsPath: string?
+        workspaceDir: string?
+      returns:
+        wsEndpoint: string?
+        pipeName: string?
+
+    stopServer:
+      title: Stop server
 
     close:
       title: Close browser
