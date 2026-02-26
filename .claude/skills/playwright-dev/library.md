@@ -208,6 +208,8 @@ Implementations:
 
 ## Dispatcher Layer
 
+Dispathers do not implement things, they translate protocol to the server code calls.
+
 ### Dispatcher — Base Class
 
 ```
@@ -332,3 +334,85 @@ CLIENT:
 2. **Adoption**: `dispatcher.adopt(child)` sends `__adopt__` → client reparents the `ChannelOwner`
 3. **Disposal**: `dispatcher._dispose()` recursively disposes children → sends `__dispose__` → client removes `ChannelOwner` from maps
 4. **GC**: Server-side `maybeDisposeStaleDispatchers()` evicts oldest dispatchers per bucket when limits exceeded
+
+## Testing: tests/library vs tests/page
+
+Tests live in two directories under `tests/`, each with distinct scope and fixtures.
+
+### tests/library — API and Feature Tests
+
+Tests the **Playwright public API surface**, browser lifecycle, and feature-level behavior. Uses `browserTest` fixtures which provide direct access to `browser`, `browserType`, `context`, and `contextFactory`.
+
+```typescript
+import { browserTest as test, expect } from '../config/browserTest';
+
+test('should create new page', async ({ browser }) => {
+  const page = await browser.newPage();
+  expect(browser.contexts().length).toBe(1);
+  await page.close();
+});
+```
+
+**What belongs here:**
+- Browser and BrowserType API (`launch`, `connect`, `version`, `newContext`)
+- BrowserContext API (cookies, storage state, permissions, proxy, CSP, geolocation, network interception at context level)
+- Browser-specific features (`chromium/` for CDP, tracing, extensions, JS/CSS coverage, OOPIF; `firefox/` for launcher specifics)
+- Protocol and channel tests
+- Inspector, codegen, and recorder features (`inspector/`)
+- Event system tests (`events/`)
+- Unit tests for internal utilities (`unit/`)
+
+**Key fixtures** (from `browserTest`): `browser`, `browserType`, `context`, `contextFactory`, `launchPersistent`, `createUserDataDir`, `startRemoteServer`, `pageWithHar`.
+
+### tests/page — Page Interaction Tests
+
+Tests **user-facing page interactions**: clicking, typing, navigation, locators, assertions, and DOM operations. Uses `pageTest` fixtures which provide a ready-to-use `page` plus test servers.
+
+```typescript
+import { test as it, expect } from './pageTest';
+
+it('should click button', async ({ page, server }) => {
+  await page.goto(server.PREFIX + '/input/button.html');
+  await page.locator('button').click();
+  expect(await page.evaluate(() => window['result'])).toBe('Clicked');
+});
+```
+
+**What belongs here:**
+- Locator API (click, fill, type, select, query, filtering, convenience methods)
+- ElementHandle interactions (click, screenshot, selection, bounding box)
+- Expect/assertion matchers (boolean, text, value, accessibility)
+- Page navigation (`goto`, `waitForNavigation`, `waitForURL`)
+- Frame evaluation and hierarchy
+- Request/response interception at page level
+- JSHandle operations
+- Screenshot and visual comparison tests
+
+**Key fixtures** (from `pageTest`/`serverFixtures`): `page`, `server`, `httpsServer`, `proxyServer`, `asset`.
+
+### Decision Rule
+
+| Question | → Directory |
+|----------|-------------|
+| Does it test browser/context lifecycle or launch options? | `tests/library` |
+| Does it test a browser-specific protocol feature (CDP, etc.)? | `tests/library` |
+| Does it test user interaction with page content (click, type, assert)? | `tests/page` |
+| Does it test locators, selectors, or DOM queries? | `tests/page` |
+| Does the test need direct `browser` or `browserType` access? | `tests/library` |
+| Does the test just need a `page` and a test server? | `tests/page` |
+
+### Running Tests
+
+- `npm run ctest <file>` — runs on Chromium only (fast, use during development)
+- `npm run test <file>` — runs on all browsers (Chromium, Firefox, WebKit)
+
+Examples:
+```bash
+npm run ctest tests/library/browser-context-cookies.spec.ts
+npm run ctest tests/page/locator-click.spec.ts
+npm run test tests/library/browser-context-cookies.spec.ts
+```
+
+### Configuration
+
+Both directories share a single config at `tests/library/playwright.config.ts`. It creates separate projects (`{browserName}-library` and `{browserName}-page`) pointing to their respective `testDir`.

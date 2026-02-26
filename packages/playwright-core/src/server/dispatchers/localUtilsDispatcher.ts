@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
+import net from 'net';
 import { Dispatcher } from './dispatcher';
 import { SdkObject } from '../../server/instrumentation';
 import * as localUtils from '../localUtils';
 import { getUserAgent } from '../utils/userAgent';
 import { deviceDescriptors as descriptors }  from '../deviceDescriptors';
 import { JsonPipeDispatcher } from '../dispatchers/jsonPipeDispatcher';
+import { PipeTransport } from '../pipeTransport';
 import { Progress } from '../progress';
 import { SocksInterceptor } from '../socksInterceptor';
 import { WebSocketTransport } from '../transport';
@@ -82,12 +84,18 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async connect(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+    if (params.pipeName)
+      return await this._connectOverPipe(params, progress);
+    return await this._connectOverWebSocket(params, progress);
+  }
+
+  private async _connectOverWebSocket(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
     const wsHeaders = {
       'User-Agent': getUserAgent(),
       'x-playwright-proxy': params.exposeNetwork ?? '',
       ...params.headers,
     };
-    const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint);
+    const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint!);
 
     const transport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: wsHeaders, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
     const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
@@ -116,6 +124,36 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     };
     pipe.on('close', () => transport.close());
     return { pipe, headers: transport.headers };
+  }
+
+  private async _connectOverPipe(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+    const socket = await new Promise<net.Socket>((resolve, reject) => {
+      const conn = net.connect(params.pipeName!, () => resolve(conn));
+      conn.on('error', reject);
+    });
+    const transport = new PipeTransport(socket, socket);
+    const pipe = new JsonPipeDispatcher(this);
+    transport.onmessage = json => {
+      const cb = () => {
+        try {
+          pipe.dispatch(json);
+        } catch (e) {
+          transport.close();
+        }
+      };
+      if (params.slowMo)
+        setTimeout(cb, params.slowMo);
+      else
+        cb();
+    };
+    pipe.on('message', message => {
+      transport.send(message);
+    });
+    transport.onclose = (reason?: string) => {
+      pipe.wasClosed(reason);
+    };
+    pipe.on('close', () => socket.end());
+    return { pipe, headers: [] };
   }
 
   async globToRegex(params: channels.LocalUtilsGlobToRegexParams, progress: Progress): Promise<channels.LocalUtilsGlobToRegexResult> {
