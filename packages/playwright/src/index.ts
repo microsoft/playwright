@@ -84,11 +84,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   video: ['off', { scope: 'worker', option: true, box: true }],
   trace: ['off', { scope: 'worker', option: true, box: true }],
 
-  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use) => {
+  _browserOptions: [async ({ playwright, headless, channel, launchOptions }, use, testInfo) => {
+    const testInfoImpl = test.info() as TestInfoImpl;
     const options: LaunchOptions = {
       handleSIGINT: false,
       ...launchOptions,
-      tracesDir: tracing().tracesDir(),
+      tracesDir: testInfoImpl._tracing.tracesDir(),
+      artifactsDir: testInfoImpl.artifactsDir(),
     };
     if (headless !== undefined)
       options.headless = headless;
@@ -231,14 +233,14 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     });
   }, { box: true }],
 
-  _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, _testInfo) => {
-    const testInfo = _testInfo as TestInfoImpl;
+  _setupContextOptions: [async ({ playwright, actionTimeout, navigationTimeout, testIdAttribute }, use, testInfo) => {
+    const testInfoImpl = testInfo as TestInfoImpl;
     if (testIdAttribute)
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
-    testInfo.snapshotSuffix = process.platform;
-    testInfo._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
+    testInfoImpl.snapshotSuffix = process.platform;
+    testInfoImpl._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
     if (debugMode() === 'inspector')
-      (testInfo as TestInfoImpl)._setDebugMode();
+      testInfoImpl._setDebugMode();
 
     playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
@@ -253,8 +255,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     // Now that default test timeout is known, we can replace zero with an actual value.
     testInfo.setTimeout(testInfo.project.timeout);
 
-    const artifactsRecorder = new ArtifactsRecorder(playwright, tracing().artifactsDir(), screenshot);
-    await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
+    const testInfoImpl = testInfo as TestInfoImpl;
+    const artifactsRecorder = new ArtifactsRecorder(playwright, testInfoImpl, screenshot);
+    await artifactsRecorder.willStartTest();
 
     const tracingGroupSteps: TestStepInternal[] = [];
     const csiListener: ClientInstrumentationListener = {
@@ -363,7 +366,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       }
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
-          dir: tracing().artifactsDir(),
+          dir: path.join(testInfoImpl.artifactsDir(), 'videos'),
           size: typeof video === 'string' ? undefined : video.size,
         }
       } : {};
@@ -430,6 +433,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
+    const testInfoImpl = testInfo as TestInfoImpl;
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
@@ -501,10 +505,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await testInfoImpl._upstreamStorage(resolvedCacheFile, cacheOutFile);
   },
 
-  request: async ({ playwright }, use) => {
+  request: async ({ playwright }, use, testInfo) => {
     const request = await playwright.request.newContext();
     await use(request);
-    const hook = (test.info() as TestInfoImpl)._currentHookType();
+    const hook = (testInfo as TestInfoImpl)._currentHookType();
     if (hook === 'beforeAll') {
       await request.dispose({ reason: [
         `Fixture { request } from beforeAll cannot be reused in a test.`,
@@ -654,8 +658,7 @@ class SnapshotRecorder {
   }
 
   private _createTemporaryArtifact(...name: string[]) {
-    const file = path.join(this._artifactsRecorder._artifactsDir, ...name);
-    return file;
+    return path.join(this.testInfo.artifactsDir(), ...name);
   }
 
   private async _snapshotPage(page: PageImpl, temporary: boolean) {
@@ -682,17 +685,16 @@ class SnapshotRecorder {
 }
 
 class ArtifactsRecorder {
-  _testInfo!: TestInfoImpl;
-  _playwright: PlaywrightImpl;
-  _artifactsDir: string;
+  readonly _testInfo: TestInfoImpl;
+  readonly _playwright: PlaywrightImpl;
   private _startedCollectingArtifacts: symbol;
 
   private _screenshotRecorder: SnapshotRecorder;
   private _pageSnapshot: string | undefined;
 
-  constructor(playwright: PlaywrightImpl, artifactsDir: string, screenshot: ScreenshotOption) {
+  constructor(playwright: PlaywrightImpl, testInfo: TestInfoImpl, screenshot: ScreenshotOption) {
     this._playwright = playwright;
-    this._artifactsDir = artifactsDir;
+    this._testInfo = testInfo;
     const screenshotOptions = typeof screenshot === 'string' ? undefined : screenshot;
     this._startedCollectingArtifacts = Symbol('startedCollectingArtifacts');
 
@@ -703,9 +705,8 @@ class ArtifactsRecorder {
     });
   }
 
-  async willStartTest(testInfo: TestInfoImpl) {
-    this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunctionCallbacks.add(() => this.didFinishTestFunction());
+  async willStartTest() {
+    this._testInfo._onDidFinishTestFunctionCallbacks.add(() => this.didFinishTestFunction());
 
     this._screenshotRecorder.fixOrdinal();
 
@@ -832,10 +833,6 @@ function renderTitle(type: string, method: string, params: Record<string, string
   if (params?.['selector'] && typeof params.selector === 'string')
     selector = asLocatorDescription('javascript', params.selector);
   return prefix + (selector ? ` ${selector}` : '');
-}
-
-function tracing() {
-  return (test.info() as TestInfoImpl)._tracing;
 }
 
 export const test = _baseTest.extend<TestFixtures, WorkerFixtures>(playwrightFixtures);

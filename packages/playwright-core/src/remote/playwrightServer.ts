@@ -40,6 +40,7 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
+  artifactsDir?: string;
 };
 
 export class PlaywrightServer {
@@ -285,6 +286,8 @@ export class PlaywrightServer {
     } else {
       launchOptions.socksProxyPort = undefined;
     }
+    if (this._options.artifactsDir)
+      launchOptions.artifactsDir = this._options.artifactsDir;
     const browserType = this._playwright[browserName as 'chromium'];
     const controller = new ProgressController();
     const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);

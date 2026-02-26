@@ -296,6 +296,7 @@ program
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
+    .option('--artifacts-dir <artifactsDir>', 'Artifacts directory')
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,
@@ -303,6 +304,7 @@ program
         path: options.path,
         maxConnections: options.maxClients ? +options.maxClients : Infinity,
         extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
+        artifactsDir: options.artifactsDir,
       }).catch(logErrorAndExit);
     });
 
