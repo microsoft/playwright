@@ -100,6 +100,30 @@ class BaseContextFactory implements BrowserContextFactory {
     const browser = await this._obtainBrowser(clientInfo, options);
     const browserContext = await this._doCreateContext(browser, clientInfo);
     await addInitScript(browserContext, this.config.browser.initScript);
+    // Deferred print override: prevents native print dialogs from appearing when
+    // pages call window.print() synchronously in early <script> tags, before
+    // Electron's full override (with electronAPI IPC bridge) can be injected via
+    // dom-ready. This script runs first (via CDP Page.addScriptToEvaluateOnNewDocument),
+    // captures the call, waits for Electron's override to arrive, then delegates.
+    await browserContext.addInitScript(() => {
+      const DEFERRED_TIMEOUT_MS = 2000;
+      console.log('[DeferredPrint] Init script registered, replacing window.print with deferred handler');
+      const deferred = function() {
+        console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
+        setTimeout(() => {
+          if (window.print !== deferred) {
+            // Electron's real override has replaced us — delegate to it
+            console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
+            window.print();
+          } else {
+            // Still us? Electron override never arrived — suppress silently.
+            // This is safe: the alternative was a blocking native print dialog.
+            console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
+          }
+        }, DEFERRED_TIMEOUT_MS);
+      };
+      window.print = deferred;
+    });
     await browserContext.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
@@ -226,6 +250,30 @@ class PersistentContextFactory implements BrowserContextFactory {
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         await addInitScript(browserContext, this.config.browser.initScript);
+        // Deferred print override: prevents native print dialogs from appearing when
+        // pages call window.print() synchronously in early <script> tags, before
+        // Electron's full override (with electronAPI IPC bridge) can be injected via
+        // dom-ready. This script runs first (via CDP Page.addScriptToEvaluateOnNewDocument),
+        // captures the call, waits for Electron's override to arrive, then delegates.
+        await browserContext.addInitScript(() => {
+          const DEFERRED_TIMEOUT_MS = 2000;
+          console.log('[DeferredPrint] Init script registered, replacing window.print with deferred handler');
+          const deferred = function() {
+            console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
+            setTimeout(() => {
+              if (window.print !== deferred) {
+                // Electron's real override has replaced us — delegate to it
+                console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
+                window.print();
+              } else {
+                // Still us? Electron override never arrived — suppress silently.
+                // This is safe: the alternative was a blocking native print dialog.
+                console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
+              }
+            }, DEFERRED_TIMEOUT_MS);
+          };
+          window.print = deferred;
+        });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
