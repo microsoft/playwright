@@ -103,6 +103,8 @@ export class PlaywrightServer {
             launchOptions.timeout = DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT;
         } catch (e) {
         }
+        if (this._options.artifactsDir)
+          launchOptions.artifactsDir = this._options.artifactsDir;
 
         const isExtension = this._options.mode === 'extension';
         const allowFSPaths = isExtension;
@@ -286,8 +288,6 @@ export class PlaywrightServer {
     } else {
       launchOptions.socksProxyPort = undefined;
     }
-    if (this._options.artifactsDir)
-      launchOptions.artifactsDir = this._options.artifactsDir;
     const browserType = this._playwright[browserName as 'chromium'];
     const controller = new ProgressController();
     const browser = await controller.run(progress => browserType.launch(progress, launchOptions), launchOptions.timeout);
@@ -370,6 +370,7 @@ function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowFSPaths: bo
     slowMo: options.slowMo,
     executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
     downloadsPath: allowFSPaths ? options.downloadsPath : undefined,
+    artifactsDir: (isUnderTest() || allowFSPaths) ? options.artifactsDir : undefined,
   };
 }
 

@@ -156,9 +156,7 @@ export abstract class BrowserType extends SdkObject {
     let artifactsDir: string;
     if (options.artifactsDir) {
       artifactsDir = options.artifactsDir;
-      assert(path.isAbsolute(artifactsDir), 'artifactsDir must be an absolute path');
-      if (!await existsAsync(artifactsDir))
-        await fs.promises.mkdir(artifactsDir, { recursive: true });
+      await fs.promises.mkdir(artifactsDir, { recursive: true });
     } else {
       artifactsDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'playwright-artifacts-'));
       tempDirectories.push(artifactsDir);
