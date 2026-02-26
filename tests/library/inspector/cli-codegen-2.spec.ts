@@ -17,8 +17,6 @@
 import { test, expect } from './inspectorTest';
 
 test.describe('cli codegen', () => {
-  test.skip(({ mode }) => mode !== 'default');
-
   test('should contain open page', async ({ openRecorder }) => {
     const { recorder } = await openRecorder();
 
@@ -412,7 +410,7 @@ await page1.GotoAsync("about:blank?foo");`);
   });
 
   test('should update active model on action', async ({ openRecorder, browserName, headless }) => {
-    test.fixme(browserName === 'webkit');
+    test.skip(browserName === 'webkit', 'webkit does not actually focus the input after click');
 
     const { page, recorder } = await openRecorder();
     await recorder.setContentAndWait(`<input id="checkbox" type="checkbox" name="accept" onchange="checkbox.name='updated'"></input>`);
