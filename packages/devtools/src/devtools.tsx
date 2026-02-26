@@ -240,7 +240,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             role='tab'
             aria-selected={tab.selected}
             title={tab.url || ''}
-            aria-disabled={!channel}
             onClick={() => channel?.selectTab({ pageId: tab.pageId })}
           >
             <span className='tab-favicon' aria-hidden='true'>{tabFavicon(tab.url)}</span>
@@ -248,7 +247,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             <button
               className='tab-close'
               title='Close tab'
-              disabled={!channel}
               onClick={e => {
                 e.stopPropagation();
                 channel?.closeTab({ pageId: tab.pageId });
@@ -259,7 +257,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
           </div>
         ))}
       </div>
-      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' disabled={!channel} onClick={() => channel?.newTab()}>
+      <button id='new-tab-btn' className='new-tab-btn' title='New Tab' onClick={() => channel?.newTab()}>
         <PlusIcon />
       </button>
       <div className='interactive-controls'>
@@ -294,13 +292,13 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
 
     {/* Toolbar */}
     <div ref={toolbarRef} className='toolbar'>
-      <button className='nav-btn' title='Back' disabled={!channel} onClick={() => channel?.back()}>
+      <button className='nav-btn' title='Back' onClick={() => channel?.back()}>
         <ChevronLeftIcon />
       </button>
-      <button className='nav-btn' title='Forward' disabled={!channel} onClick={() => channel?.forward()}>
+      <button className='nav-btn' title='Forward' onClick={() => channel?.forward()}>
         <ChevronRightIcon />
       </button>
-      <button className='nav-btn' title='Reload' disabled={!channel} onClick={() => channel?.reload()}>
+      <button className='nav-btn' title='Reload' onClick={() => channel?.reload()}>
         <ReloadIcon />
       </button>
       <input
@@ -311,7 +309,6 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         spellCheck={false}
         autoComplete='off'
         value={url}
-        disabled={!channel}
         onChange={e => setUrl(e.target.value)}
         onKeyDown={onOmniboxKeyDown}
         onFocus={e => e.target.select()}

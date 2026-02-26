@@ -54,9 +54,9 @@ export default defineConfig<TestOptions>({
   tag: process.env.PW_TAG,
   projects: [
     { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
-    { name: 'chromium', use: { mcpBrowser: 'chromium', browserName: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
-    { name: 'firefox', use: { mcpBrowser: 'firefox', browserName: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
-    { name: 'webkit', use: { mcpBrowser: 'webkit', browserName: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
-    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge', browserName: 'chromium' as const }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
+    { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
+    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
+    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
+    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
   ],
 });
