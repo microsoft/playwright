@@ -45,6 +45,7 @@
     "build-android-driver": "./utils/build_android_driver.sh",
     "innerloop": "playwright run-server --reuse-browser",
     "test-playwright-cli": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome cli-",
+    "playwright-cli": "node packages/playwright-core/lib/cli/client/cli.js",
     "playwright-cli-readme": "node utils/generate_cli_help.js --readme"
   },
   "workspaces": [

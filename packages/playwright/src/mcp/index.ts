@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-import { BrowserServerBackend } from './browser/browserServerBackend';
-import { resolveConfig } from './browser/config';
-import { contextFactory } from './browser/browserContextFactory';
-import * as mcpServer from './sdk/server';
+import { BrowserServerBackend, resolveConfig, contextFactory, createServer } from 'playwright-core/lib/mcp/exports';
 
-import type { Config } from './config';
+import type { Config, BrowserContextFactory } from 'playwright-core/lib/mcp/exports';
 import type { BrowserContext } from 'playwright';
-import type { BrowserContextFactory } from './browser/browserContextFactory';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 
 const packageJSON = require('../../package.json');
@@ -29,7 +25,7 @@ const packageJSON = require('../../package.json');
 export async function createConnection(userConfig: Config = {}, contextGetter?: () => Promise<BrowserContext>): Promise<Server> {
   const config = await resolveConfig(userConfig);
   const factory = contextGetter ? new SimpleBrowserContextFactory(contextGetter) : contextFactory(config);
-  return mcpServer.createServer('Playwright', packageJSON.version, new BrowserServerBackend(config, factory), false);
+  return createServer('Playwright', packageJSON.version, new BrowserServerBackend(config, factory), false);
 }
 
 class SimpleBrowserContextFactory implements BrowserContextFactory {

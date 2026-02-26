@@ -21,6 +21,8 @@ import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
+import * as mcp from 'playwright-core/lib/mcp/exports';
+import { setupExitWatchdog } from 'playwright-core/lib/mcp/exports';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -33,11 +35,7 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import * as mcp from './mcp/sdk/exports';
 import { TestServerBackend } from './mcp/test/testBackend';
-import { decorateMCPCommand } from './mcp/program';
-import { setupExitWatchdog } from './mcp/browser/watchdog';
-import { decorateCLICommand } from './cli/daemon/program';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
@@ -146,18 +144,6 @@ Arguments [dir]:
 
 Examples:
   $ npx playwright merge-reports playwright-report`);
-}
-
-function addBrowserMCPServerCommand(program: Command) {
-  const command = program.command('run-mcp-server', { hidden: true });
-  command.description('Interact with the browser over MCP');
-  decorateMCPCommand(command, packageJSON.version);
-}
-
-function addBrowserCLIServerCommand(program: Command) {
-  const command = program.command('run-cli-server', { hidden: true });
-  command.description('Interact with the browser over CLI');
-  decorateCLICommand(command, packageJSON.version);
 }
 
 function addTestMCPServerCommand(program: Command) {
@@ -457,8 +443,6 @@ addTestCommand(program);
 addShowReportCommand(program);
 addMergeReportsCommand(program);
 addClearCacheCommand(program);
-addBrowserMCPServerCommand(program);
-addBrowserCLIServerCommand(program);
 addTestMCPServerCommand(program);
 addDevServerCommand(program);
 addTestServerCommand(program);

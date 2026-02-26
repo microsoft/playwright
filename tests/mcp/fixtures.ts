@@ -25,11 +25,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
-import { parseResponse } from '../../packages/playwright/lib/mcp/browser/response';
+import { parseResponse } from '../../packages/playwright-core/lib/mcp/browser/response';
 import { commonFixtures } from '../config/commonFixtures';
 
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
-import type { Config } from '../../packages/playwright/src/mcp/config';
+import type { Config } from '../../packages/playwright-core/src/mcp/config';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';

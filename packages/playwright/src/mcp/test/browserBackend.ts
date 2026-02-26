@@ -17,16 +17,10 @@
 import path from 'path';
 import fs from 'fs';
 import { createGuid } from 'playwright-core/lib/utils';
+import * as mcp from 'playwright-core/lib/mcp/exports';
+import { defaultConfig, BrowserServerBackend, Tab, identityBrowserContextFactory, startMcpDaemonServer, sessionConfigFromArgs, createClientInfo } from 'playwright-core/lib/mcp/exports';
 
-import * as mcp from '../sdk/exports';
-import { defaultConfig } from '../browser/config';
-import { BrowserServerBackend } from '../browser/browserServerBackend';
-import { Tab } from '../browser/tab';
 import { stripAnsiEscapes } from '../../util';
-import { identityBrowserContextFactory } from '../browser/browserContextFactory';
-import { startMcpDaemonServer } from '../../cli/daemon/daemon';
-import { sessionConfigFromArgs } from '../../cli/client/program';
-import { createClientInfo } from '../../cli/client/registry';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';

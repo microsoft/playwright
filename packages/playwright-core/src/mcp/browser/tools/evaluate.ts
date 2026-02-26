@@ -1,0 +1,62 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import { z } from '../../../mcpBundle';
+import { escapeWithQuotes } from '../../../utils/isomorphic/stringUtils';
+
+import { defineTabTool } from './tool';
+
+import type { Tab } from '../tab';
+
+const evaluateSchema = z.object({
+  function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
+  element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
+  ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
+});
+
+const evaluate = defineTabTool({
+  capability: 'core',
+  schema: {
+    name: 'browser_evaluate',
+    title: 'Evaluate JavaScript',
+    description: 'Evaluate JavaScript expression on page or element',
+    inputSchema: evaluateSchema,
+    type: 'action',
+  },
+
+  handle: async (tab, params, response) => {
+    let locator: Awaited<ReturnType<Tab['refLocator']>> | undefined;
+    if (!params.function.includes('=>'))
+      params.function = `() => (${params.function})`;
+    if (params.ref) {
+      locator = await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
+      response.addCode(`await page.${locator.resolved}.evaluate(${escapeWithQuotes(params.function)});`);
+    } else {
+      response.addCode(`await page.evaluate(${escapeWithQuotes(params.function)});`);
+    }
+
+    await tab.waitForCompletion(async () => {
+      const receiver = locator?.locator ?? tab.page;
+      const result = await receiver._evaluateFunction(params.function);
+      const text = JSON.stringify(result, null, 2) || 'undefined';
+      response.addTextResult(text);
+    });
+  },
+});
+
+export default [
+  evaluate,
+];

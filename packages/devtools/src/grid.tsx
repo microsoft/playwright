@@ -21,7 +21,7 @@ import { navigate } from './index';
 import { Screencast } from './screencast';
 import { SettingsButton } from './settingsView';
 
-import type { SessionFile } from '../../playwright/src/cli/client/registry';
+import type { SessionFile } from '../../playwright-core/src/cli/client/registry';
 import type { Tab } from './devtoolsChannel';
 import type { SessionModel, SessionStatus } from './sessionModel';
 

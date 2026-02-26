@@ -6,10 +6,14 @@
 ../server/utils
 ../utils
 ../utilsBundle.ts
+./client/
+./daemon/
 
 [program.ts]
 ../server/trace/viewer/traceViewer.ts
 ../server/
+../mcp/
+./daemon/
 
 [driver.ts]
 ../**
