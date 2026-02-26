@@ -17,11 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import crypto from 'crypto';
 import net from 'net';
 
 import { chromium } from 'playwright-core';
-import { gracefullyProcessExitDoNotHang, HttpServer, isUnderTest } from 'playwright-core/lib/utils';
+import { gracefullyProcessExitDoNotHang, HttpServer } from 'playwright-core/lib/utils';
 import { findChromiumChannelBestEffort, registryDirectory } from 'playwright-core/lib/server/registry/index';
 
 import { createClientInfo, Registry } from './registry';
@@ -117,7 +116,7 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDevToolsApp(): Promise<{ page?: Page, url: string }> {
+async function openDevToolsApp(): Promise<Page> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const devtoolsDir = path.join(path.dirname(libDir), 'lib/vite/devtools');
@@ -141,12 +140,10 @@ async function openDevToolsApp(): Promise<{ page?: Page, url: string }> {
   });
   await httpServer.start();
   const url = httpServer.urlPrefix('human-readable');
-  if (isUnderTest())
-    return { url };
 
   const { page } = await launchApp('devtools');
   await page.goto(url);
-  return { page, url };
+  return page;
 }
 
 async function launchApp(appName: string) {
@@ -215,15 +212,13 @@ function socketsDirectory() {
 }
 
 function devtoolsSocketPath() {
-  const suffix = process.env.PLAYWRIGHT_DAEMON_SESSION_DIR ? crypto.createHash('sha256').update(process.env.PLAYWRIGHT_DAEMON_SESSION_DIR).digest('hex').substring(0, 8) : '';
   return process.platform === 'win32'
-    ? `\\\\.\\pipe\\playwright-devtools-${process.env.USERNAME || 'default'}${suffix}`
-    : path.join(socketsDirectory(), `devtools${suffix}.sock`);
+    ? `\\\\.\\pipe\\playwright-devtools-${process.env.USERNAME || 'default'}`
+    : path.join(socketsDirectory(), 'devtools.sock');
 }
 
-async function acquireSingleton(): Promise<net.Server | string> {
+async function acquireSingleton(): Promise<net.Server> {
   const socketPath = devtoolsSocketPath();
-  await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();
@@ -233,11 +228,8 @@ async function acquireSingleton(): Promise<net.Server | string> {
         return reject(err);
       const client = net.connect(socketPath, () => {
         client.write('bringToFront');
-      });
-      let data = '';
-      client.on('data', chunk => { data += chunk.toString(); });
-      client.on('end', () => {
-        resolve(data);
+        client.end();
+        reject(new Error('already running'));
       });
       client.on('error', () => {
         if (process.platform !== 'win32')
@@ -249,36 +241,20 @@ async function acquireSingleton(): Promise<net.Server | string> {
 }
 
 async function main() {
-  const result = await acquireSingleton();
-  let status = typeof result === 'string' ? result : 'Starting';
-
-  if (typeof result !== 'string') {
-    const server = result;
-    process.on('exit', () => server.close());
-
-    let page: Page | undefined = undefined;
-    server.on('connection', socket => {
-      socket.on('data', data => {
-        if (data.toString() === 'bringToFront')
-          page?.bringToFront().catch(() => {});
-        socket.end(status);
-      });
-    });
-
-    const app = await openDevToolsApp();
-    page = app.page;
-    status = `DevTools pid ${process.pid} listening on ${app.url}`;
+  let server: net.Server | undefined;
+  process.on('exit', () => server?.close());
+  try {
+    server = await acquireSingleton();
+  } catch {
+    return;
   }
-
-
-  // eslint-disable-next-line no-console
-  console.log(status);
-  // eslint-disable-next-line no-console
-  console.log('<EOF>');
+  const page = await openDevToolsApp();
+  server.on('connection', socket => {
+    socket.on('data', data => {
+      if (data.toString() === 'bringToFront')
+        page?.bringToFront().catch(() => {});
+    });
+  });
 }
 
-void main().catch(e => {
-  // eslint-disable-next-line no-console
-  console.log(e);
-  throw e;
-});
+void main();

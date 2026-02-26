@@ -193,29 +193,9 @@ export async function program(options?: { embedderVersion?: string}) {
       const daemonScript = path.join(__dirname, 'devtoolsApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,
-        stdio: ['ignore', 'pipe', 'ignore'],
+        stdio: 'ignore',
       });
-
-      const status = await new Promise<string>((resolve, reject) => {
-        let outLog = '';
-        child.stdout!.on('data', (data: Buffer) => {
-          outLog += data.toString();
-          if (outLog.includes('<EOF>'))
-            resolve(outLog.split('<EOF>')[0]);
-        });
-        child.on('close', code => {
-          process.exitCode = code || 1;
-          reject(new Error(outLog));
-        });
-      });
-
-      child.stdout!.destroy();
       child.unref();
-
-      // TODO: update check-deps to allow importing isUnderTest()
-      if (process.env.PWTEST_UNDER_TEST)
-        console.log(status);
-
       return;
     }
     default: {
@@ -367,7 +347,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { ($_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-session*') -or $_.CommandLine -like '*devtoolsApp.js*' } `
+          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-session*' } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -381,7 +361,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if ((line.includes('-server') && line.includes('--daemon-session')) || line.includes('devtoolsApp.js')) {
+        if ((line.includes('-server')) && line.includes('--daemon-session')) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
