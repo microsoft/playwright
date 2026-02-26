@@ -14,16 +14,23 @@
  * limitations under the License.
  */
 
+import path from 'path';
+import fs from 'fs';
+import { createGuid } from 'playwright-core/lib/utils';
+
 import * as mcp from '../sdk/exports';
 import { defaultConfig } from '../browser/config';
 import { BrowserServerBackend } from '../browser/browserServerBackend';
 import { Tab } from '../browser/tab';
 import { stripAnsiEscapes } from '../../util';
 import { identityBrowserContextFactory } from '../browser/browserContextFactory';
+import { startMcpDaemonServer } from '../../cli/daemon/daemon';
+import { sessionConfigFromArgs } from '../../cli/client/program';
+import { createClientInfo } from '../../cli/client/registry';
 
 import type * as playwright from '../../../index';
 import type { Page } from '../../../../playwright-core/src/client/page';
-import type { TestInfo } from '../../../test';
+import type { TestInfoImpl } from '../../worker/testInfo';
 
 export type BrowserMCPRequest = {
   initialize?: { clientInfo: mcp.ClientInfo },
@@ -39,7 +46,7 @@ export type BrowserMCPResponse = {
   close?: {},
 };
 
-export function createCustomMessageHandler(testInfo: TestInfo, context: playwright.BrowserContext) {
+export function createCustomMessageHandler(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   let backend: BrowserServerBackend | undefined;
   return async (data: BrowserMCPRequest): Promise<BrowserMCPResponse> => {
     if (data.initialize) {
@@ -73,7 +80,7 @@ export function createCustomMessageHandler(testInfo: TestInfo, context: playwrig
   };
 }
 
-async function generatePausedMessage(testInfo: TestInfo, context: playwright.BrowserContext) {
+async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   const lines: string[] = [];
 
   if (testInfo.errors.length) {
@@ -114,4 +121,42 @@ async function generatePausedMessage(testInfo: TestInfo, context: playwright.Bro
     lines.push(`### Task`, `Try recovering from the error prior to continuing`);
 
   return lines.join('\n');
+}
+
+export async function runDaemonForContext(testInfo: TestInfoImpl, context: playwright.BrowserContext): Promise<void> {
+  if (process.env.PWPAUSE !== 'cli')
+    return;
+
+  const outputDir = path.join(testInfo.artifactsDir(), '.playwright-mcp');
+  const sessionName = `test-worker-${createGuid().slice(0, 6)}`;
+  const clientInfo = createClientInfo();
+  const sessionConfig = sessionConfigFromArgs(clientInfo, sessionName, { _: [] });
+  const sessionConfigFile = path.resolve(clientInfo.daemonProfilesDir, `${sessionName}.session`);
+  await fs.promises.mkdir(path.dirname(sessionConfigFile), { recursive: true });
+  await fs.promises.writeFile(sessionConfigFile, JSON.stringify(sessionConfig, null, 2));
+  await startMcpDaemonServer({
+    ...defaultConfig,
+    outputMode: 'file',
+    snapshot: { mode: 'full', output: 'file' },
+    outputDir,
+  }, sessionConfig, identityBrowserContextFactory(context), true /* noShutdown */);
+
+  const lines = [''];
+  if (testInfo.errors.length) {
+    lines.push(`### Paused on test error`);
+    for (const error of testInfo.errors)
+      lines.push(stripAnsiEscapes(error.message || ''));
+  } else {
+    lines.push(`### Paused at the end of the test`);
+  }
+  lines.push(
+      `### Debugging Instructions`,
+      `- Use "playwright-cli --session=${sessionName}" to explore the page and fix the problem.`,
+      `- Stop this test run when finished. Restart if needed.`,
+      ``,
+  );
+
+  /* eslint-disable-next-line no-console */
+  console.log(lines.join('\n'));
+  await new Promise(() => {});
 }

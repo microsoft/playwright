@@ -309,7 +309,7 @@ function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
 }
 
-function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
+export function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
   let config = args.config ? path.resolve(args.config) : undefined;
   try {
     if (!config && fs.existsSync(defaultConfigFile()))

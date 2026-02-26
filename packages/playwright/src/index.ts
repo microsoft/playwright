@@ -22,7 +22,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
-import { createCustomMessageHandler } from './mcp/test/browserBackend';
+import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -426,19 +426,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfo) => {
+  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
+    const testInfo = testInfoPublic as TestInfoImpl;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
+      testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
+      testInfo._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfo, context));
       await use(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    (testInfo as TestInfoImpl)._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
+    testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
+    testInfo._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfo, context));
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -702,7 +705,7 @@ class ArtifactsRecorder {
 
   async willStartTest(testInfo: TestInfoImpl) {
     this._testInfo = testInfo;
-    testInfo._onDidFinishTestFunctionCallback = () => this.didFinishTestFunction();
+    testInfo._onDidFinishTestFunctionCallbacks.add(() => this.didFinishTestFunction());
 
     this._screenshotRecorder.fixOrdinal();
 

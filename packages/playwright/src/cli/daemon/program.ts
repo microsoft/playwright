@@ -44,12 +44,12 @@ export function decorateCLICommand(command: Command, version: string) {
 
         const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
         try {
-          const socketPath = await startMcpDaemonServer(mcpConfig, sessionConfig, cf);
+          await startMcpDaemonServer(mcpConfig, sessionConfig, cf);
           console.log(`### Config`);
           console.log('```json');
           console.log(JSON.stringify(mcpConfig, null, 2));
           console.log('```');
-          console.log(`### Success\nDaemon listening on ${socketPath}`);
+          console.log(`### Success\nDaemon listening on ${sessionConfig.socketPath}`);
           console.log('<EOF>');
         } catch (error) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;

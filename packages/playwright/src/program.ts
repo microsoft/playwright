@@ -315,7 +315,6 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     updateSourceMethod: options.updateSourceMethod,
     runAgents: options.runAgents,
     workers: options.workers,
-    pause: process.env.PWPAUSE ? true : undefined,
   };
 
   if (options.browser) {
@@ -331,7 +330,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     });
   }
 
-  if (options.headed || options.debug || overrides.pause)
+  if (options.headed || options.debug)
     overrides.use = { headless: false };
   if (!options.ui && options.debug) {
     overrides.debug = true;
@@ -340,6 +339,13 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
   if (!options.ui && options.trace) {
     overrides.use = overrides.use || {};
     overrides.use.trace = options.trace;
+  }
+  if (process.env.PWPAUSE === 'cli') {
+    overrides.timeout = 0;
+    overrides.use = overrides.use || {};
+    overrides.use.actionTimeout = 5000;
+  } else if (process.env.PWPAUSE) {
+    overrides.pause = true;
   }
   if (overrides.tsconfig && !fs.existsSync(overrides.tsconfig))
     throw new Error(`--tsconfig "${options.tsconfig}" does not exist`);

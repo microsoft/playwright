@@ -17,3 +17,6 @@
 
 [backend.ts]
 ../browser/tools.ts
+
+[browserBackend.ts]
+../../cli/**
