@@ -53,7 +53,7 @@ const App: React.FC = () => {
     };
   }, [model]);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     const onPopState = () => setSocketPath(parseHash());
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
