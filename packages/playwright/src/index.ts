@@ -429,23 +429,22 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfoPublic) => {
+  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfo) => {
     const browserImpl = browser as BrowserImpl;
-    const testInfo = testInfoPublic as TestInfoImpl;
-    attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     const testInfoImpl = testInfo as TestInfoImpl;
+    attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
-      testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
-      testInfo._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfo, context));
+      testInfoImpl._onCustomMessageCallback = createCustomMessageHandler(testInfoImpl, context);
+      testInfoImpl._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfoImpl, context));
       await use(context);
       await close();
       return;
     }
 
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
-    testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
-    testInfo._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfo, context));
+    testInfoImpl._onCustomMessageCallback = createCustomMessageHandler(testInfoImpl, context);
+    testInfoImpl._onDidFinishTestFunctionCallbacks.add(() => runDaemonForContext(testInfoImpl, context));
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
