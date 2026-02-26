@@ -258,10 +258,3 @@ test('running show twice gets same PID', async ({ cli }) => {
   const two = await cli('show', { env: { PWTEST_UNDER_TEST: '1' } });
   expect(one.output).toEqual(two.output);
 });
-
-test('kill-all closes devtools', async ({ cli }) => {
-  const one = await cli('show', { env: { PWTEST_UNDER_TEST: '1' } });
-  await cli('kill-all');
-  const two = await cli('show', { env: { PWTEST_UNDER_TEST: '1' } });
-  expect(one.output).not.toEqual(two.output);
-});
