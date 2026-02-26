@@ -247,7 +247,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
-    test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server }) => {
+    test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server, isMac, macVersion }) => {
+      test.skip(browserName === 'webkit' && isMac && macVersion <= 14, 'WebKit on macOS-14 is frozen');
+
       const [request] = await Promise.all([
         server.waitForWebSocketConnectionRequest(),
         connect(`ws://localhost:${server.PORT}/ws`, {
