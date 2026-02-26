@@ -127,6 +127,84 @@ class BaseContextFactory implements BrowserContextFactory {
     await browserContext.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
+    // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
+    // navigator.languages, and Notification.permission overrides to prevent
+    // bot detection by Akamai and similar fingerprinting services.
+    // Uses addInitScript (CDP Page.addScriptToEvaluateOnNewDocument) so stubs
+    // are present before any page script runs.
+    await browserContext.addInitScript(() => {
+      if ((window as any).__chromeStealth) return;
+      (window as any).__chromeStealth = true;
+
+      // Native function masking
+      const _toString = Function.prototype.toString;
+      const _nativeMap = new WeakMap<Function, string>();
+      function _markNative(fn: Function, name: string) {
+        _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
+        return fn;
+      }
+      Function.prototype.toString = function() {
+        if (_nativeMap.has(this)) return _nativeMap.get(this)!;
+        return _toString.call(this);
+      };
+      _markNative(Function.prototype.toString, 'toString');
+
+      // chrome.app stub
+      if (typeof chrome === 'undefined') (window as any).chrome = {};
+      if (!(chrome as any).app) {
+        const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
+        const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
+        const app = {
+          isInstalled: false,
+          getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
+          getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
+          installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
+          runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
+          InstallState,
+          RunningState,
+        };
+        Object.defineProperty(chrome, 'app', { value: app, writable: false, configurable: false, enumerable: true });
+      }
+
+      // chrome.csi stub
+      if (!(chrome as any).csi) {
+        (chrome as any).csi = _markNative(function csi() {
+          return { startE: Date.now(), onloadT: Date.now(), pageT: performance.now(), tran: 15 };
+        }, 'csi');
+      }
+
+      // chrome.loadTimes stub
+      if (!(chrome as any).loadTimes) {
+        (chrome as any).loadTimes = _markNative(function loadTimes() {
+          const nav: any = performance.getEntriesByType('navigation')[0] || {};
+          return {
+            commitLoadTime: (nav.responseStart || Date.now()) / 1000,
+            connectionInfo: 'h2',
+            finishDocumentLoadTime: (nav.domContentLoadedEventEnd || Date.now()) / 1000,
+            finishLoadTime: (nav.loadEventEnd || Date.now()) / 1000,
+            firstPaintAfterLoadTime: 0,
+            firstPaintTime: (nav.responseEnd || Date.now()) / 1000,
+            navigationType: 'Other',
+            npnNegotiatedProtocol: 'h2',
+            requestTime: (nav.fetchStart || Date.now()) / 1000,
+            startLoadTime: (nav.fetchStart || Date.now()) / 1000,
+            wasAlternateProtocolAvailable: false,
+            wasFetchedViaSpdy: true,
+            wasNpnNegotiated: true,
+          };
+        }, 'loadTimes');
+      }
+
+      // navigator.languages fix
+      if (navigator.languages && navigator.languages.length === 1) {
+        Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
+      }
+
+      // Notification.permission fix
+      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+        Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+      }
+    });
     return {
       browserContext,
       close: () => this._closeBrowserContext(browserContext, browser)
@@ -273,6 +351,76 @@ class PersistentContextFactory implements BrowserContextFactory {
             }, DEFERRED_TIMEOUT_MS);
           };
           window.print = deferred;
+        });
+        // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
+        // navigator.languages, and Notification.permission overrides to prevent
+        // bot detection by Akamai and similar fingerprinting services.
+        await browserContext.addInitScript(() => {
+          if ((window as any).__chromeStealth) return;
+          (window as any).__chromeStealth = true;
+
+          const _toString = Function.prototype.toString;
+          const _nativeMap = new WeakMap<Function, string>();
+          function _markNative(fn: Function, name: string) {
+            _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
+            return fn;
+          }
+          Function.prototype.toString = function() {
+            if (_nativeMap.has(this)) return _nativeMap.get(this)!;
+            return _toString.call(this);
+          };
+          _markNative(Function.prototype.toString, 'toString');
+
+          if (typeof chrome === 'undefined') (window as any).chrome = {};
+          if (!(chrome as any).app) {
+            const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
+            const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
+            const app = {
+              isInstalled: false,
+              getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
+              getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
+              installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
+              runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
+              InstallState,
+              RunningState,
+            };
+            Object.defineProperty(chrome, 'app', { value: app, writable: false, configurable: false, enumerable: true });
+          }
+
+          if (!(chrome as any).csi) {
+            (chrome as any).csi = _markNative(function csi() {
+              return { startE: Date.now(), onloadT: Date.now(), pageT: performance.now(), tran: 15 };
+            }, 'csi');
+          }
+
+          if (!(chrome as any).loadTimes) {
+            (chrome as any).loadTimes = _markNative(function loadTimes() {
+              const nav: any = performance.getEntriesByType('navigation')[0] || {};
+              return {
+                commitLoadTime: (nav.responseStart || Date.now()) / 1000,
+                connectionInfo: 'h2',
+                finishDocumentLoadTime: (nav.domContentLoadedEventEnd || Date.now()) / 1000,
+                finishLoadTime: (nav.loadEventEnd || Date.now()) / 1000,
+                firstPaintAfterLoadTime: 0,
+                firstPaintTime: (nav.responseEnd || Date.now()) / 1000,
+                navigationType: 'Other',
+                npnNegotiatedProtocol: 'h2',
+                requestTime: (nav.fetchStart || Date.now()) / 1000,
+                startLoadTime: (nav.fetchStart || Date.now()) / 1000,
+                wasAlternateProtocolAvailable: false,
+                wasFetchedViaSpdy: true,
+                wasNpnNegotiated: true,
+              };
+            }, 'loadTimes');
+          }
+
+          if (navigator.languages && navigator.languages.length === 1) {
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
+          }
+
+          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+            Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+          }
         });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
