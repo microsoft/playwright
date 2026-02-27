@@ -62,6 +62,7 @@ export const androidTest = baseTest.extend<PageTestFixtures & AndroidTestFixture
   isElectron: [false, { scope: 'worker' }],
   electronMajorVersion: [0, { scope: 'worker' }],
   isHeadlessShell: [false, { scope: 'worker' }],
+  isFrozenWebkit: [false, { scope: 'worker' }],
 
   androidDevice: async ({ androidDeviceWorker }, use) => {
     await closeAllActivities(androidDeviceWorker);

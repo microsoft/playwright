@@ -21,7 +21,7 @@ import { PlaywrightConnection } from './playwrightConnection';
 import { SocketServerTransport } from './serverTransport';
 import { debugLogger } from '../server/utils/debugLogger';
 import { Browser } from '../server/browser';
-import { Semaphore } from '../utils';
+import { decorateServer, Semaphore } from '../utils';
 
 import type { PlaywrightInitializeResult } from './playwrightConnection';
 
@@ -60,6 +60,7 @@ export class PlaywrightPipeServer {
       this._connections.add(connection);
       transport.on('close', () => this._connections.delete(connection));
     });
+    decorateServer(this._server);
 
     await new Promise<void>((resolve, reject) => {
       this._server!.listen(pipeName, () => resolve());

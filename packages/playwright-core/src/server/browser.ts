@@ -278,10 +278,10 @@ export class BrowserServer {
   }
 
   private async _socketPath() {
-    const socketName = `${this._browser.guid}.sock`;
+    const socketName = `${this._browser.guid.slice(0, 14)}.sock`;
     if (process.platform === 'win32')
       return `\\\\.\\pipe\\${socketName}`;
-    const socketsDir = process.env.PLAYWRIGHT_BROWSER_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-browsers');
+    const socketsDir = process.env.PLAYWRIGHT_BROWSER_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright');
     await fs.promises.mkdir(socketsDir, { recursive: true });
     return path.join(socketsDir, socketName);
   }
