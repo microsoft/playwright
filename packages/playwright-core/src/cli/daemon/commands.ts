@@ -667,25 +667,24 @@ const unroute = declareCommand({
   toolParams: ({ pattern }) => ({ pattern }),
 });
 
-const networkStatus = declareCommand({
-  name: 'network-status',
+const networkState = declareCommand({
+  name: 'network-state',
   description: 'Get the current network state (online or offline)',
   category: 'network',
   args: z.object({}),
-  toolName: 'browser_network_status',
+  toolName: 'browser_network_state',
   toolParams: () => ({}),
 });
 
-const networkSetOffline = declareCommand({
-  name: 'network-set-offline',
+const setNetworkState = declareCommand({
+  name: 'set-network-state',
   description: 'Set the browser network state to online or offline',
   category: 'network',
-  args: z.object({}),
-  options: z.object({
-    offline: z.preprocess(val => val === 'true' || val === true, z.boolean()).describe('Set to true to simulate offline mode, false to restore network connectivity'),
+  args: z.object({
+    state: z.enum(['online', 'offline']).describe('Set to "offline" to simulate offline mode, "online" to restore network connectivity'),
   }),
-  toolName: 'browser_network_set_offline',
-  toolParams: ({ offline }) => ({ offline }),
+  toolName: 'browser_set_network_state',
+  toolParams: ({ state }) => ({ state }),
 });
 
 // Export
@@ -971,8 +970,8 @@ const commandsArray: AnyCommandSchema[] = [
   routeMock,
   routeList,
   unroute,
-  networkStatus,
-  networkSetOffline,
+  networkState,
+  setNetworkState,
 
   // config category
   configPrint,

@@ -83,12 +83,12 @@ export async function renderRequest(request: playwright.Request): Promise<string
   return result.join(' ');
 }
 
-const networkStatus = defineTool({
+const networkState = defineTool({
   capability: 'network',
 
   schema: {
-    name: 'browser_network_status',
-    title: 'Get network status',
+    name: 'browser_network_state',
+    title: 'Get network state',
     description: 'Returns the current network state (online or offline)',
     inputSchema: z.object({}),
     type: 'readOnly',
@@ -97,36 +97,36 @@ const networkStatus = defineTool({
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
     const offline = await browserContext.isOffline();
-    const status = offline ? 'offline' : 'online';
-    response.addTextResult(`Network is currently ${status}`);
+    const state = offline ? 'offline' : 'online';
+    response.addTextResult(`Network is currently ${state}`);
   },
 });
 
-const networkSetOffline = defineTool({
+const setNetworkState = defineTool({
   capability: 'network',
 
   schema: {
-    name: 'browser_network_set_offline',
-    title: 'Set network offline state',
+    name: 'browser_set_network_state',
+    title: 'Set network state',
     description: 'Sets the browser network state to online or offline. When offline, all network requests will fail.',
     inputSchema: z.object({
-      offline: z.boolean().describe('Set to true to simulate offline mode, false to restore network connectivity'),
+      state: z.enum(['online', 'offline']).describe('Set to "offline" to simulate offline mode, "online" to restore network connectivity'),
     }),
     type: 'action',
   },
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    await browserContext.setOffline(params.offline);
-    const status = params.offline ? 'offline' : 'online';
-    response.addTextResult(`Network is now ${status}`);
-    response.addCode(`await page.context().setOffline(${params.offline});`);
+    const offline = params.state === 'offline';
+    await browserContext.setOffline(offline);
+    response.addTextResult(`Network is now ${params.state}`);
+    response.addCode(`await page.context().setOffline(${offline});`);
   },
 });
 
 export default [
   requests,
   networkClear,
-  networkStatus,
-  networkSetOffline,
+  networkState,
+  setNetworkState,
 ];
