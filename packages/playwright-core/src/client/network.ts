@@ -743,9 +743,7 @@ export class Response extends ChannelOwner<channels.ResponseChannel> implements 
   }
 
   async httpVersion(): Promise<string> {
-    return this._wrapApiCall(async () => {
-      return (await this._channel.httpVersion()).value;
-    }, { internal: true });
+    return (await this._channel.httpVersion()).value;
   }
 }
 

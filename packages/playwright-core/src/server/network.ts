@@ -508,13 +508,13 @@ export class Response extends SdkObject {
   private _serverAddrPromise = new ManualPromise<RemoteAddr | undefined>();
   private _securityDetailsPromise = new ManualPromise<SecurityDetails | undefined>();
   private _rawResponseHeadersPromise = new ManualPromise<HeadersArray>();
-  private _httpVersionPromise = new ManualPromise<string | undefined>();
+  private _httpVersionPromise = new ManualPromise<string | null>();
   private _fromServiceWorker: boolean;
   private _encodedBodySizePromise = new ManualPromise<number | null>();
   private _transferSizePromise = new ManualPromise<number | null>();
   private _responseHeadersSizePromise = new ManualPromise<number | null>();
 
-  constructor(request: Request, status: number, statusText: string, headers: HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean, httpVersion?: string) {
+  constructor(request: Request, status: number, statusText: string, headers: HeadersArray, timing: ResourceTiming, getResponseBodyCallback: GetResponseBodyCallback, fromServiceWorker: boolean) {
     super(request.frame() || request._context, 'response');
     this._request = request;
     this._timing = timing;
@@ -526,8 +526,6 @@ export class Response extends SdkObject {
       this._headersMap.set(name.toLowerCase(), value);
     this._getResponseBodyCallback = getResponseBodyCallback;
     this._request._setResponse(this);
-    if (httpVersion)
-      this._httpVersionPromise.resolve(httpVersion);
     this._fromServiceWorker = fromServiceWorker;
   }
 
@@ -547,7 +545,7 @@ export class Response extends SdkObject {
     this._finishedPromise.resolve();
   }
 
-  _setHttpVersion(httpVersion: string) {
+  _setHttpVersion(httpVersion: string | null) {
     this._httpVersionPromise.resolve(httpVersion);
   }
 
@@ -640,8 +638,6 @@ export class Response extends SdkObject {
       return 'HTTP/1.1';
     if (httpVersion === 'h2')
       return 'HTTP/2.0';
-    if (httpVersion === 'h3')
-      return 'HTTP/3.0';
     return httpVersion;
   }
 

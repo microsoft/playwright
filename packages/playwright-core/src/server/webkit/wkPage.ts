@@ -1161,8 +1161,7 @@ export class WKPage implements PageDelegate {
         validFrom: responseReceivedPayload?.response.security?.certificate?.validFrom,
         validTo: responseReceivedPayload?.response.security?.certificate?.validUntil,
       });
-      if (event.metrics?.protocol)
-        response._setHttpVersion(event.metrics.protocol);
+      response._setHttpVersion(event.metrics?.protocol ?? null);
       response.setEncodedBodySize(event.metrics?.responseBodyBytesReceived ?? null);
       response.setResponseHeadersSize(event.metrics?.responseHeaderBytesReceived ?? null);
 

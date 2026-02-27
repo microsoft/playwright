@@ -442,7 +442,7 @@ export class HarTracer {
     }
   }
 
-  private async _onResponse(response: network.Response) {
+  private _onResponse(response: network.Response) {
     const harEntry = this._entryForRequest(response.request());
     if (!harEntry)
       return;
