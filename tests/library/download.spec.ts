@@ -375,7 +375,7 @@ it.describe('download event', () => {
   });
 
   it('should delete downloads on browser gone', async ({ server, browserType }) => {
-    const browser = await browserType.launch();
+    const browser = await browserType.launch({ artifactsDir: undefined });
     const page = await browser.newPage();
     await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
     const [download1] = await Promise.all([
@@ -394,6 +394,23 @@ it.describe('download event', () => {
     expect(fs.existsSync(path1)).toBeFalsy();
     expect(fs.existsSync(path2)).toBeFalsy();
     expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
+  });
+
+  it('should save downloads to artifactsDir', async ({ server, browserType }, testInfo) => {
+    const artifactsDir = testInfo.outputPath('artifacts');
+    const browser = await browserType.launch({ artifactsDir });
+    const page = await browser.newPage();
+    await page.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a')
+    ]);
+    const downloadPath = await download.path();
+    expect(downloadPath.startsWith(artifactsDir)).toBeTruthy();
+    expect(fs.existsSync(downloadPath)).toBeTruthy();
+    await browser.close();
+    // User-provided artifactsDir should not be cleaned up.
+    expect(fs.existsSync(artifactsDir)).toBeTruthy();
   });
 
   it('should close the context without awaiting the failed download', async ({ browser, server, httpsServer, browserName, headless }, testInfo) => {

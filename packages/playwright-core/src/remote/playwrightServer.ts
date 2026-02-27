@@ -386,4 +386,5 @@ const optionsThatAllowBrowserReuse: (keyof LaunchOptionsWithTimeout)[] = [
   'headless',
   'timeout',
   'tracesDir',
+  'artifactsDir',
 ];
