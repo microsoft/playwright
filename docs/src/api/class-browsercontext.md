@@ -1474,6 +1474,13 @@ its geolocation.
 Whether to emulate network being offline for the browser context.
 
 
+## async method: BrowserContext.isOffline
+* since: v1.52
+- returns: <[boolean]>
+
+Returns whether the browser context is currently in offline mode.
+
+
 ## async method: BrowserContext.storageState
 * since: v1.8
 - returns: <[Object]>

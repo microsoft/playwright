@@ -9366,6 +9366,11 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
+   * Returns whether the browser context is currently in offline mode.
+   */
+  isOffline(): Promise<boolean>;
+
+  /**
    * **NOTE** CDP sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created session.

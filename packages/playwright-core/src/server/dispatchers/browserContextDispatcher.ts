@@ -289,6 +289,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await this._context.setOffline(progress, params.offline);
   }
 
+  async isOffline(): Promise<{ offline: boolean }> {
+    return { offline: !!this._context._options.offline };
+  }
+
   async setHTTPCredentials(params: channels.BrowserContextSetHTTPCredentialsParams, progress: Progress): Promise<void> {
     // Note: this operation is deprecated, so we do not properly cleanup.
     await progress.race(this._context.setHTTPCredentials(params.httpCredentials));

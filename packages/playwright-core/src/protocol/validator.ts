@@ -1076,6 +1076,10 @@ scheme.BrowserContextSetOfflineParams = tObject({
   offline: tBoolean,
 });
 scheme.BrowserContextSetOfflineResult = tOptional(tObject({}));
+scheme.BrowserContextIsOfflineParams = tOptional(tObject({}));
+scheme.BrowserContextIsOfflineResult = tObject({
+  offline: tBoolean,
+});
 scheme.BrowserContextStorageStateParams = tObject({
   indexedDB: tOptional(tBoolean),
 });
