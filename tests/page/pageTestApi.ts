@@ -37,4 +37,5 @@ export type PageWorkerFixtures = {
   isAndroid: boolean;
   isElectron: boolean;
   isHeadlessShell: boolean;
+  isFrozenWebkit: boolean;
 };

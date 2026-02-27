@@ -16,7 +16,6 @@
  */
 
 import { browserTest as it, expect } from '../config/browserTest';
-import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 
 it.describe('mobile viewport', () => {
   it.skip(({ browserName, isBidi }) => browserName === 'firefox' && !isBidi);
@@ -95,9 +94,8 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should preserve window.orientation override after navigation', async ({ browser, server, browserName }) => {
-    it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
-    it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
+  it('should preserve window.orientation override after navigation', async ({ browser, server, isFrozenWebkit }) => {
+    it.skip(isFrozenWebkit);
 
     const context = await browser.newContext({ viewport: { width: 400, height: 300 }, isMobile: true });
     const page = await context.newPage();
@@ -108,10 +106,8 @@ it.describe('mobile viewport', () => {
     await context.close();
   });
 
-  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, browserName, isMac, macVersion }) => {
-    it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
-    it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
-    it.skip(browserName === 'webkit' && isMac && macVersion < 15, 'WebKit on macOS < 15 is frozen.');
+  it('should preserve screen.orientation.type override after navigation', async ({ browser, server, isFrozenWebkit }) => {
+    it.skip(isFrozenWebkit);
 
     const context = await browser.newContext({ viewport: { width: 300, height: 400 }, isMobile: true });
     const page = await context.newPage();

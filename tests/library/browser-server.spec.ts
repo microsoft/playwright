@@ -36,6 +36,7 @@ it('should start and stop pipe server', async ({ browserType, browser }) => {
   const page = await browser2.newPage();
   await page.goto('data:text/html,<h1>Hello via pipe</h1>');
   expect(await page.locator('h1').textContent()).toBe('Hello via pipe');
+  await page.close();
   await browser2.close();
   await (browser as any)._stopServer();
 });
@@ -51,6 +52,7 @@ it('should start and stop ws server', async ({ browserType, browser }) => {
   const page = await browser2.newPage();
   await page.goto('data:text/html,<h1>Hello</h1>');
   expect(await page.locator('h1').textContent()).toBe('Hello');
+  await page.close();
   await browser2.close();
   await (browser as any)._stopServer();
 });

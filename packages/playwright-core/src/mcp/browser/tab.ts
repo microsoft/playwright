@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import url from 'url';
+
 import { EventEmitter } from 'events';
 import * as playwright from '../../..';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
@@ -153,7 +155,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._requests.push(request);
     for (const initPage of this.context.config.browser.initPage || []) {
       try {
-        const { default: func } = await import(initPage);
+        const { default: func } = await import(url.pathToFileURL(initPage).href);
         await func({ page: this.page });
       } catch (e) {
         logUnhandledError(e);

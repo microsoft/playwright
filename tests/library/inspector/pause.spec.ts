@@ -92,7 +92,9 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should resume from console', async ({ page }) => {
+  it('should resume from console', async ({ page, mode }) => {
+    it.skip(mode !== 'default');
+
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });

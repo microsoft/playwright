@@ -40,6 +40,7 @@ export const electronTest = baseTest.extend<TraceViewerFixtures>(traceViewerFixt
   isAndroid: [false, { scope: 'worker' }],
   isElectron: [true, { scope: 'worker' }],
   isHeadlessShell: [false, { scope: 'worker' }],
+  isFrozenWebkit: [false, { scope: 'worker' }],
 
   createUserDataDir: async ({ mode }, run) => {
     const dirs: string[] = [];

@@ -22,6 +22,7 @@ import { RunServer, RemoteServer } from './remoteServer';
 import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
 import { isBidiChannel, parseHar } from '../config/utils';
 import { createSkipTestPredicate } from '../bidi/expectationUtil';
+import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { RemoteServerOptions, PlaywrightServer } from './remoteServer';
@@ -38,6 +39,7 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
   isAndroid: boolean;
   isElectron: boolean;
   isHeadlessShell: boolean;
+  isFrozenWebkit: boolean;
   nodeVersion: { major: number, minor: number, patch: number };
   isBidi: boolean;
   bidiTestSkipPredicate: (info: TestInfo) => boolean;
@@ -108,6 +110,10 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
     const isShell = channel === 'chromium-headless-shell' || (!channel && headless);
     const isToTShell = channel === 'chromium-tip-of-tree-headless-shell' || (channel === 'chromium-tip-of-tree' && headless);
     await use(browserName === 'chromium' && (isShell || isToTShell));
+  }, { scope: 'worker' }],
+
+  isFrozenWebkit: [async ({ browserName, isMac, macVersion }, use) => {
+    await use(browserName === 'webkit' && (hostPlatform.startsWith('debian11') || hostPlatform.startsWith('ubuntu20.04') || (isMac && macVersion < 15)));
   }, { scope: 'worker' }],
 
   contextFactory: async ({ _contextFactory }: any, run) => {

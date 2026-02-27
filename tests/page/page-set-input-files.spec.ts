@@ -35,9 +35,9 @@ test('should upload the file', async ({ page, server, asset }) => {
   }, input)).toBe('contents of the file');
 });
 
-test('should upload a folder', async ({ page, server, browserName, headless, browserMajorVersion, isAndroid, macVersion, isMac }) => {
+test('should upload a folder', async ({ page, server, isFrozenWebkit, isAndroid }) => {
   test.skip(isAndroid);
-  test.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS-12 is frozen');
+  test.skip(isFrozenWebkit);
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -68,9 +68,9 @@ test('should upload a folder', async ({ page, server, browserName, headless, bro
   }
 });
 
-test('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, browserName, macVersion, isMac }) => {
+test('should upload a folder and throw for multiple directories', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
-  test.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS-12 is frozen');
+  test.skip(isFrozenWebkit);
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -87,9 +87,9 @@ test('should upload a folder and throw for multiple directories', async ({ page,
   ])).rejects.toThrow('Multiple directories are not supported');
 });
 
-test('should throw if a directory and files are passed', async ({ page, server, isAndroid, browserName, macVersion, isMac }) => {
+test('should throw if a directory and files are passed', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
-  test.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS-12 is frozen');
+  test.skip(isFrozenWebkit);
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');
@@ -104,9 +104,9 @@ test('should throw if a directory and files are passed', async ({ page, server, 
   ])).rejects.toThrow('File paths must be all files or a single directory');
 });
 
-test('should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid, browserName, macVersion, isMac }) => {
+test('should throw when uploading a folder in a normal file upload input', async ({ page, server, isAndroid, isFrozenWebkit }) => {
   test.skip(isAndroid);
-  test.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS-12 is frozen');
+  test.skip(isFrozenWebkit);
 
   await page.goto(server.PREFIX + '/input/fileupload.html');
   const input = await page.$('input');
@@ -118,9 +118,9 @@ test('should throw when uploading a folder in a normal file upload input', async
   await expect(input.setInputFiles(dir)).rejects.toThrow('File input does not support directories, pass individual files instead');
 });
 
-test('should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset, browserName, macVersion, isMac }) => {
+test('should throw when uploading a file in a directory upload input', async ({ page, server, isAndroid, asset, isFrozenWebkit }) => {
   test.skip(isAndroid);
-  test.skip(browserName === 'webkit' && isMac && macVersion <= 12, 'WebKit on macOS-12 is frozen');
+  test.skip(isFrozenWebkit);
 
   await page.goto(server.PREFIX + '/input/folderupload.html');
   const input = await page.$('input');

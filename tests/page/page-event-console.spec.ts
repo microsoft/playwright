@@ -223,7 +223,9 @@ it('do not update console count on unhandled rejections', async ({ page }) => {
   await expect.poll(() => messages).toEqual(['begin', 'end']);
 });
 
-it('should have timestamp', async ({ page }) => {
+it('should have timestamp', async ({ page, isAndroid }) => {
+  it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
+
   const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   const [message] = await Promise.all([
     page.waitForEvent('console'),
@@ -247,7 +249,9 @@ it('should have increasing timestamps', async ({ page }) => {
     expect(messages[i].timestamp()).toBeGreaterThanOrEqual(messages[i - 1].timestamp());
 });
 
-it('should have timestamp in consoleMessages', async ({ page }) => {
+it('should have timestamp in consoleMessages', async ({ page, isAndroid }) => {
+  it.skip(isAndroid, 'there is a time difference between android emulator and host machine');
+
   const before = Date.now() - 1;  // Account for the rounding of fractional timestamps.
   await page.evaluate(() => console.log('stored message'));
   const after = Date.now() + 1;  // Account for the rounding of fractional timestamps.
