@@ -31,6 +31,7 @@ export const test = baseTest.extend<{
     exitCode: number | undefined,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
+    pid?: number,
   }>;
 }>({
   cliEnv: async ({}, use) => {
@@ -102,7 +103,8 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       output: cli.stdout.trim(),
       error: cli.stderr.trim(),
       snapshot,
-      attachments
+      attachments,
+      pid: pid ? +pid : undefined,
     };
   });
 }
