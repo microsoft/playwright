@@ -140,8 +140,8 @@ export abstract class Browser extends SdkObject {
     return this._contextForReuse?.context;
   }
 
-  _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string) {
-    const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename);
+  _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string, downloadFilename?: string) {
+    const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename, downloadFilename);
     this._downloads.set(uuid, download);
   }
 
