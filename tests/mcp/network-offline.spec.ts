@@ -78,12 +78,16 @@ test('network requests fail when offline', async ({ client, server }) => {
   });
 
   // Try to navigate - should fail
+  // Error messages vary by browser:
+  // - Chrome: net::ERR_INTERNET_DISCONNECTED
+  // - Firefox: NS_ERROR_OFFLINE
+  // - WebKit: WebKit encountered an internal error
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: server.PREFIX + '/one-style.html' },
   })).toHaveResponse({
     isError: true,
-    error: expect.stringContaining('net::ERR_INTERNET_DISCONNECTED'),
+    error: expect.stringMatching(/net::ERR_INTERNET_DISCONNECTED|NS_ERROR_OFFLINE|WebKit encountered an internal error/),
   });
 });
 
