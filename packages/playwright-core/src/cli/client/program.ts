@@ -393,12 +393,8 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
       console.log('No browsers found.');
       return;
     }
-    for (const [workspace, list] of entries) {
-      if (!list.length)
-        continue;
-      console.log(`${workspace}:`);
-      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)));
-    }
+    for (const [workspace, list] of entries)
+      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), `${workspace}:`);
   } else {
     console.log('### Browsers');
     const entries = registry.entries(clientInfo);
@@ -406,7 +402,7 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   }
 }
 
-async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[]) {
+async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string) {
   const running: Session[] = [];
   const stopped: Session[] = [];
 
@@ -422,6 +418,9 @@ async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[]) {
     }
   }
 
+  if (header && (running.length || stopped.length))
+    console.log(header);
+
   for (const session of running)
     console.log(await renderSessionStatus(clientInfo, session));
   for (const session of stopped)
@@ -429,7 +428,6 @@ async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[]) {
 
   if (running.length === 0 && stopped.length === 0)
     console.log('  (no browsers)');
-
 }
 
 async function renderSessionStatus(clientInfo: ClientInfo, session: Session) {
