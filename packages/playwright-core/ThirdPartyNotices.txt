@@ -85,7 +85,7 @@ This project incorporates components from the projects listed below. The origina
 -	mime-db@1.54.0 (https://github.com/jshttp/mime-db)
 -	mime-types@3.0.2 (https://github.com/jshttp/mime-types)
 -	mime@3.0.0 (https://github.com/broofa/mime)
--	minimatch@3.1.3 (https://github.com/isaacs/minimatch)
+-	minimatch@3.1.4 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	ms@2.1.3 (https://github.com/vercel/ms)
 -	negotiator@1.0.0 (https://github.com/jshttp/negotiator)
@@ -2775,7 +2775,7 @@ THE SOFTWARE.
 =========================================
 END OF mime@3.0.0 AND INFORMATION
 
-%% minimatch@3.1.3 NOTICES AND INFORMATION BEGIN HERE
+%% minimatch@3.1.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
 
@@ -2793,7 +2793,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
-END OF minimatch@3.1.3 AND INFORMATION
+END OF minimatch@3.1.4 AND INFORMATION
 
 %% ms@2.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
