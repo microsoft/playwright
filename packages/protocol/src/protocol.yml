@@ -488,6 +488,7 @@ LaunchOptions:
         password: string?
     downloadsPath: string?
     tracesDir: string?
+    artifactsDir: string?
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
     cdpPort: int?

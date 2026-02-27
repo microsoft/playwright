@@ -44,7 +44,7 @@ export type BrowserTestWorkerFixtures = PageWorkerFixtures & {
 };
 
 interface StartRemoteServer {
-  (kind: 'run-server' | 'launchServer'): Promise<PlaywrightServer>;
+  (kind: 'run-server' | 'launchServer', options?: RemoteServerOptions): Promise<PlaywrightServer>;
   (kind: 'launchServer', options?: RemoteServerOptions): Promise<RemoteServer>;
 }
 
@@ -163,7 +163,7 @@ const test = baseTest.extend<BrowserTestTestFixtures, BrowserTestWorkerFixtures>
         server = remoteServer;
       } else {
         const runServer = new RunServer();
-        await runServer.start(childProcess);
+        await runServer.start(childProcess, { artifactsDir: options?.artifactsDir });
         server = runServer;
       }
       return server;

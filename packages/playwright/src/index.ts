@@ -89,6 +89,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       handleSIGINT: false,
       ...launchOptions,
       tracesDir: tracing().tracesDir(),
+      artifactsDir: tracing().artifactsDir(),
     };
     if (headless !== undefined)
       options.headless = headless;

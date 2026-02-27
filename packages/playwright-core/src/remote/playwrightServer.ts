@@ -40,6 +40,7 @@ type ServerOptions = {
   preLaunchedBrowser?: Browser;
   preLaunchedAndroidDevice?: AndroidDevice;
   preLaunchedSocksProxy?: SocksProxy;
+  artifactsDir?: string;
 };
 
 export class PlaywrightServer {
@@ -102,6 +103,8 @@ export class PlaywrightServer {
             launchOptions.timeout = DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT;
         } catch (e) {
         }
+        if (this._options.artifactsDir)
+          launchOptions.artifactsDir = this._options.artifactsDir;
 
         const isExtension = this._options.mode === 'extension';
         const allowFSPaths = isExtension;
@@ -367,6 +370,7 @@ function filterLaunchOptions(options: LaunchOptionsWithTimeout, allowFSPaths: bo
     slowMo: options.slowMo,
     executablePath: (isUnderTest() || allowFSPaths) ? options.executablePath : undefined,
     downloadsPath: allowFSPaths ? options.downloadsPath : undefined,
+    artifactsDir: (isUnderTest() || allowFSPaths) ? options.artifactsDir : undefined,
   };
 }
 
@@ -382,4 +386,5 @@ const optionsThatAllowBrowserReuse: (keyof LaunchOptionsWithTimeout)[] = [
   'headless',
   'timeout',
   'tracesDir',
+  'artifactsDir',
 ];
