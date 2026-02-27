@@ -181,7 +181,7 @@ Once you have your [GitHub Actions workflow](#setting-up-github-actions) setup, 
 ######
 * langs: js, java, python
 
-<img width="861" alt="Create a Repo and Push to GitHub" src="https://user-images.githubusercontent.com/13063165/183423254-d2735278-a2ab-4d63-bb99-48d8e5e447bc.png"/>
+<img height="745" width="1721" alt="Create a Repo and Push to GitHub" src="https://user-images.githubusercontent.com/13063165/183423254-d2735278-a2ab-4d63-bb99-48d8e5e447bc.png"/>
 
 
 ######
@@ -205,7 +205,7 @@ Click on the **Actions** tab to see the workflows. Here you see if your tests ha
 
 On Pull Requests you can also click on the **Details** link in the [PR status check](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks).
 
-<img width="645" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
+<img height="404" width="1290" alt="pr status checked" src="https://user-images.githubusercontent.com/13063165/183722462-17a985db-0e10-4205-b16c-8aaac36117b9.png" />
 
 
 ## Viewing Test Logs
@@ -233,7 +233,7 @@ The HTML Report shows you a full report of your tests. You can filter the report
 
 In the Artifacts section, click on the **playwright-report** to download your report in the format of a zip file.
 
-<img width="972" alt="Downloading the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437023-524f1803-84e4-4862-9ce3-1d55af0e023e.png" />
+<img height="1245" width="1943" alt="Downloading the HTML Report" src="https://user-images.githubusercontent.com/13063165/183437023-524f1803-84e4-4862-9ce3-1d55af0e023e.png" />
 
 ### Viewing the HTML Report
 * langs: js

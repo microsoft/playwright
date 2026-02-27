@@ -161,7 +161,7 @@ jobs:
 
 You can now see the reports have been merged and a combined HTML report is available in the GitHub Actions Artifacts tab.
 
-<img width="875" alt="image" src="https://github.com/microsoft/playwright/assets/9798949/b69dac59-fc19-4b98-8f49-814b1c29ca02" />
+<img height="1610" width="1750" alt="image" src="https://github.com/microsoft/playwright/assets/9798949/b69dac59-fc19-4b98-8f49-814b1c29ca02" />
 
 
 ## Merging reports from multiple environments
