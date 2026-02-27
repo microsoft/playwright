@@ -1028,7 +1028,7 @@ $Env:PLAYWRIGHT_BROWSERS_PATH="$Env:USERPROFILE\pw-browsers"
 pwsh bin/Debug/netX/playwright.ps1 install
 ```
 
-When running Playwright scripts, ask it to search for browsers in a shared location.
+When running Playwright scripts, ask Playwright to search for browsers in a shared location.
 
 ```bash tab=bash-bash lang=js
 PLAYWRIGHT_BROWSERS_PATH=$HOME/pw-browsers npx playwright test
