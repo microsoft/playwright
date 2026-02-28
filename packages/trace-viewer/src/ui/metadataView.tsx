@@ -31,6 +31,7 @@ export const MetadataView: React.FunctionComponent<{
     <div className='call-section' style={{ paddingTop: 2 }}>Time</div>
     {!!wallTime && <div className='call-line'>start time:<span className='call-value datetime' title={wallTime}>{wallTime}</span></div>}
     <div className='call-line'>duration:<span className='call-value number' title={msToString(model.endTime - model.startTime)}>{msToString(model.endTime - model.startTime)}</span></div>
+    {model.timeout !== undefined && <div className='call-line'>timeout:<span className='call-value number' title={msToString(model.timeout)}>{msToString(model.timeout)}</span></div>}
     <div className='call-section'>Browser</div>
     <div className='call-line'>engine:<span className='call-value string' title={model.browserName}>{model.browserName}</span></div>
     {model.channel && <div className='call-line'>channel:<span className='call-value string' title={model.channel}>{model.channel}</span></div>}
