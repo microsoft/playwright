@@ -307,6 +307,25 @@ Following snapshot will fail due to Feature C not being in the template:
   - listitem: Feature B
 ```
 
+#### Setting `children` mode globally
+
+Instead of adding a `/children` property to every snapshot, you can set the default children matching mode for all
+`toMatchAriaSnapshot` calls in the configuration file:
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  expect: {
+    toMatchAriaSnapshot: {
+      children: 'equal',
+    },
+  },
+});
+```
+
+Individual snapshots can still override the global setting by including an explicit `/children` property in the template.
+
 ### Matching with regular expressions
 
 Regular expressions allow flexible matching for elements with dynamic or variable text. Accessible names and text can
