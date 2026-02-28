@@ -633,5 +633,87 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(time).toBe(result.report.stats.duration / 1000);
       expect(time).toBeGreaterThan(1);
     });
+
+    test('should include all retries as separate testcases when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 2,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(2);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Test passes on retry #2, so we get 3 testcases (attempt #0, retry #1, retry #2).
+      expect(xml['testsuites']['$']['tests']).toBe('3');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('3');
+      const testcases = xml['testsuites']['testsuite'][0]['testcase'];
+      expect(testcases.length).toBe(3);
+      // First attempt: name without suffix, should have failure.
+      expect(testcases[0]['$']['name']).toBe('one');
+      expect(testcases[0]['failure']).toBeTruthy();
+      // Retry #1: name with suffix, should have failure.
+      expect(testcases[1]['$']['name']).toBe('one (retry #1)');
+      expect(testcases[1]['failure']).toBeTruthy();
+      // Retry #2: name with suffix, should pass (no failure element).
+      expect(testcases[2]['$']['name']).toBe('one (retry #2)');
+      expect(testcases[2]['failure']).toBeFalsy();
+      expect(testcases[2]['error']).toBeFalsy();
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should not include retries by default', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `,
+      }, { retries: 1, reporter: 'junit' });
+      const xml = parseXML(result.output);
+      // Default behavior: single testcase regardless of retries.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      const testcases = xml['testsuites']['testsuite'][0]['testcase'];
+      expect(testcases.length).toBe(1);
+      expect(testcases[0]['$']['name']).toBe('one');
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should count failures per retry attempt when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 1,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Both attempts fail, so tests=2, failures=2.
+      expect(xml['testsuites']['$']['tests']).toBe('2');
+      expect(xml['testsuites']['$']['failures']).toBe('2');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('2');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('2');
+      const testcases = xml['testsuites']['testsuite'][0]['testcase'];
+      expect(testcases.length).toBe(2);
+      expect(testcases[0]['$']['name']).toBe('one');
+      expect(testcases[0]['failure']).toBeTruthy();
+      expect(testcases[1]['$']['name']).toBe('one (retry #1)');
+      expect(testcases[1]['failure']).toBeTruthy();
+      expect(result.exitCode).toBe(1);
+    });
   });
 }
