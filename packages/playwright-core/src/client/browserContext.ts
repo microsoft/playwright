@@ -345,10 +345,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.setOffline({ offline });
   }
 
-  async isOffline(): Promise<boolean> {
-    return (await this._channel.isOffline()).offline;
-  }
-
   async setHTTPCredentials(httpCredentials: { username: string, password: string } | null): Promise<void> {
     await this._channel.setHTTPCredentials({ httpCredentials: httpCredentials || undefined });
   }

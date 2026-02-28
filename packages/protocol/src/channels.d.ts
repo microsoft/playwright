@@ -1644,7 +1644,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   setNetworkInterceptionPatterns(params: BrowserContextSetNetworkInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetNetworkInterceptionPatternsResult>;
   setWebSocketInterceptionPatterns(params: BrowserContextSetWebSocketInterceptionPatternsParams, progress?: Progress): Promise<BrowserContextSetWebSocketInterceptionPatternsResult>;
   setOffline(params: BrowserContextSetOfflineParams, progress?: Progress): Promise<BrowserContextSetOfflineResult>;
-  isOffline(params?: BrowserContextIsOfflineParams, progress?: Progress): Promise<BrowserContextIsOfflineResult>;
   storageState(params: BrowserContextStorageStateParams, progress?: Progress): Promise<BrowserContextStorageStateResult>;
   setStorageState(params: BrowserContextSetStorageStateParams, progress?: Progress): Promise<BrowserContextSetStorageStateResult>;
   pause(params?: BrowserContextPauseParams, progress?: Progress): Promise<BrowserContextPauseResult>;
@@ -1886,11 +1885,6 @@ export type BrowserContextSetOfflineOptions = {
 
 };
 export type BrowserContextSetOfflineResult = void;
-export type BrowserContextIsOfflineParams = {};
-export type BrowserContextIsOfflineOptions = {};
-export type BrowserContextIsOfflineResult = {
-  offline: boolean,
-};
 export type BrowserContextStorageStateParams = {
   indexedDB?: boolean,
 };

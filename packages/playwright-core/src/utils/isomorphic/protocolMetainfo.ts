@@ -87,7 +87,6 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserContext.setNetworkInterceptionPatterns', { title: 'Route requests', group: 'route', }],
   ['BrowserContext.setWebSocketInterceptionPatterns', { title: 'Route WebSockets', group: 'route', }],
   ['BrowserContext.setOffline', { title: 'Set offline mode', }],
-  ['BrowserContext.isOffline', { title: 'Get offline mode', }],
   ['BrowserContext.storageState', { title: 'Get storage state', group: 'configuration', }],
   ['BrowserContext.setStorageState', { title: 'Set storage state', group: 'configuration', }],
   ['BrowserContext.pause', { title: 'Pause', }],

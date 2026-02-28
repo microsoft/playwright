@@ -1338,11 +1338,6 @@ BrowserContext:
       parameters:
         offline: boolean
 
-    isOffline:
-      title: Get offline mode
-      returns:
-        offline: boolean
-
     storageState:
       title: Get storage state
       group: configuration
