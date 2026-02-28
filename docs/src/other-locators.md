@@ -175,7 +175,7 @@ Consider a page with two buttons, first invisible and second visible.
 
 ### CSS: elements that contain other elements
 
-The `:has()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
+The `:has()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:has). It returns an element if any of the selectors passed as parameters
 relative to the `:scope` of the given element match at least one element.
 
 Following snippet returns text content of an `<article>` element that has a `<div class=promo>` inside.
@@ -230,7 +230,7 @@ page.locator('button:has-text("Log in"), button:has-text("Sign in")').click()
 await page.Locator("button:has-text(\"Log in\"), button:has-text(\"Sign in\")").ClickAsync();
 ```
 
-The `:is()` pseudo-class is an [experimental CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
+The `:is()` pseudo-class is a [CSS pseudo-class](https://developer.mozilla.org/en-US/docs/Web/CSS/:is) that
 may be useful for specifying a list of extra conditions on an element.
 
 
@@ -325,9 +325,19 @@ It is usually possible to distinguish elements by some attribute or text content
 Sometimes page contains a number of similar elements, and it is hard to select a particular one. For example:
 
 ```html
-<section> <button>Buy</button> </section>
-<article><div> <button>Buy</button> </div></article>
-<div><div> <button>Buy</button> </div></div>
+<section>
+  <button>Buy</button>
+</section>
+<article>
+  <div>
+    <button>Buy</button>
+  </div>
+</article>
+<div>
+  <div>
+    <button>Buy</button>
+  </div>
+</div>
 ```
 
 In this case, `:nth-match(:text("Buy"), 3)` will select the third button from the snippet above. Note that index is one-based.
