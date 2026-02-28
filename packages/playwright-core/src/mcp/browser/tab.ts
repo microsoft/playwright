@@ -21,12 +21,14 @@ import * as playwright from '../../..';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
+import { eventsHelper } from '../../client/eventEmitter';
 import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './tools/utils';
 import { logUnhandledError } from '../log';
 import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
+import type { RegisteredListener } from '../../client/eventEmitter';
 import type { Context } from './context';
 import type { Page } from '../../client/page';
 import type { Locator } from '../../client/locator';
@@ -100,36 +102,45 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile;
+  private _listeners: RegisteredListener[];
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
     this.context = context;
     this.page = page as Page;
     this._onPageClose = onPageClose;
-    page.on('console', event => this._handleConsoleMessage(messageToConsoleMessage(event)));
-    page.on('pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error)));
-    page.on('request', request => this._handleRequest(request));
-    page.on('response', response => this._handleResponse(response));
-    page.on('requestfailed', request => this._handleRequestFailed(request));
-    page.on('close', () => this._onClose());
-    page.on('filechooser', chooser => {
-      this.setModalState({
-        type: 'fileChooser',
-        description: 'File chooser',
-        fileChooser: chooser,
-        clearedBy: { tool: uploadFile.schema.name, skill: 'upload' }
-      });
-    });
-    page.on('dialog', dialog => this._dialogShown(dialog));
-    page.on('download', download => {
-      void this._downloadStarted(download);
-    });
+    const p = page as Page;
+    this._listeners = [
+      eventsHelper.addEventListener(p, 'console', event => this._handleConsoleMessage(messageToConsoleMessage(event))),
+      eventsHelper.addEventListener(p, 'pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error))),
+      eventsHelper.addEventListener(p, 'request', request => this._handleRequest(request)),
+      eventsHelper.addEventListener(p, 'response', response => this._handleResponse(response)),
+      eventsHelper.addEventListener(p, 'requestfailed', request => this._handleRequestFailed(request)),
+      eventsHelper.addEventListener(p, 'close', () => this._onClose()),
+      eventsHelper.addEventListener(p, 'filechooser', chooser => {
+        this.setModalState({
+          type: 'fileChooser',
+          description: 'File chooser',
+          fileChooser: chooser,
+          clearedBy: { tool: uploadFile.schema.name, skill: 'upload' }
+        });
+      }),
+      eventsHelper.addEventListener(p, 'dialog', dialog => this._dialogShown(dialog)),
+      eventsHelper.addEventListener(p, 'download', download => {
+        void this._downloadStarted(download);
+      }),
+    ];
     page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
     page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
     const wallTime = Date.now();
     this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
     this._initializedPromise = this._initialize();
+  }
+
+  dispose() {
+    eventsHelper.removeEventListeners(this._listeners);
+    this._consoleLog.stop();
   }
 
   static forPage(page: playwright.Page): Tab | undefined {

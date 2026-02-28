@@ -21,7 +21,7 @@ import dns from 'dns';
 import { ChildProcess, spawn } from 'child_process';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { test as baseTest, expect, mcpServerPath } from './fixtures';
+import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
 
 import type { Config } from '../../packages/playwright-core/src/mcp/config';
 import { ListRootsRequestSchema } from 'playwright-core/lib/mcpBundle';
@@ -48,6 +48,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
         },
+        cwd: testInfo.outputPath(),
       });
       let stderr = '';
       const url = await new Promise<string>(resolve => cp!.stderr?.on('data', data => {
@@ -130,20 +131,36 @@ test('http transport browser lifecycle (isolated)', async ({ serverEndpoint, ser
   await transport2.terminateSession();
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create http session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete http session/)).length).toBe(2);
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create http session': 2,
+    'delete http session': 2,
+    'create browser context \(isolated\)': 2,
+    'create context': 2,
+    'obtain browser \(isolated\)': 2,
+    'close browser': 2,
+  });
+});
 
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
+test('http transport browser sigint', async ({ serverEndpoint, server }) => {
+  const { url, stderr } = await serverEndpoint({ args: ['--isolated'] });
 
-    expect(lines.filter(line => line.match(/create browser context \(isolated\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser context \(isolated\)/)).length).toBe(2);
+  const transport = new StreamableHTTPClientTransport(new URL('/mcp', url));
+  const client = new Client({ name: 'test', version: '1.0.0' });
+  await client.connect(transport);
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  });
 
-    expect(lines.filter(line => line.match(/obtain browser \(isolated\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser \(isolated\)/)).length).toBe(2);
-  }).toPass();
+  await fetch(new URL('/killkillkill', url).href).catch(() => {});
+
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser context (isolated)': 1,
+    'create context': 1,
+    'create http session': 1,
+    'obtain browser (isolated)': 1,
+    'gracefully closing 1': 1,
+  });
 });
 
 test('http transport browser lifecycle (isolated, multiclient)', async ({ serverEndpoint, server }) => {
@@ -180,20 +197,14 @@ test('http transport browser lifecycle (isolated, multiclient)', async ({ server
   await transport3.terminateSession();
   await client3.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create http session/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/delete http session/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/create browser context \(isolated\)/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/close browser context \(isolated\)/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/obtain browser \(isolated\)/)).length).toBe(1);
-    expect(lines.filter(line => line.match(/close browser \(isolated\)/)).length).toBe(1);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create http session': 3,
+    'delete http session': 3,
+    'create context': 3,
+    'create browser context (isolated)': 3,
+    'obtain browser (isolated)': 3,
+    'close browser': 3,
+  });
 });
 
 test('http transport browser lifecycle (persistent)', async ({ serverEndpoint, server }) => {
@@ -219,20 +230,14 @@ test('http transport browser lifecycle (persistent)', async ({ serverEndpoint, s
   await transport2.terminateSession();
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create http session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete http session/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create browser context \(persistent\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser context \(persistent\)/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/lock user data dir/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/release user data dir/)).length).toBe(2);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create http session': 2,
+    'delete http session': 2,
+    'create context': 2,
+    'close browser': 2,
+    'obtain browser (persistent)': 2,
+    'create browser context (persistent)': 2,
+  });
 });
 
 test('http transport browser lifecycle (persistent, multiclient)', async ({ serverEndpoint, server }) => {
@@ -298,33 +303,14 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   await transport2.terminateSession();
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create http session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete http session/)).length).toBe(2);
-
-    // Should have only one context creation since it's shared
-    expect(lines.filter(line => line.match(/create shared browser context/)).length).toBe(1);
-
-    // Should see client connect/disconnect messages
-    expect(lines.filter(line => line.match(/shared context client connected/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/shared context client disconnected/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
-
-    // Context should only close when the server shuts down.
-    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(0);
-  }).toPass();
-
-  // Simulate Ctrl+C in a way that works on Windows too.
-  await fetch(new URL('/killkillkill', url).href).catch(() => {});
-
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    // Context should only close when the server shuts down.
-    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
-  }).toPass();
-
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create browser context (persistent)': 1,
+    'create http session': 2,
+    'delete http session': 2,
+    'obtain browser (persistent)': 1,
+    'create context': 2,
+    'close browser': 1,
+  });
 });
 
 test('http transport (default)', async ({ serverEndpoint }) => {
@@ -365,10 +351,9 @@ test('client should receive list roots request', async ({ serverEndpoint, server
 });
 
 test('should not allow rebinding to localhost', async ({ serverEndpoint }) => {
-  const { url, stderr } = await serverEndpoint();
+  const { url } = await serverEndpoint();
   const ip = await resolveToIp('localhost');
   const response = await fetch(url.href.replace('localhost', ip));
-  console.log('logs:', stderr());
   expect.soft(response.status).toBe(403);
   expect.soft(await response.text()).toContain('Access is only allowed at localhost');
 });

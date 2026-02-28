@@ -19,7 +19,7 @@ import fs from 'fs';
 import { ChildProcess, spawn } from 'child_process';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import { test as baseTest, expect, mcpServerPath } from './fixtures';
+import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
 
 import type { Config } from '../../packages/playwright-core/src/mcp/config';
 
@@ -45,6 +45,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
         },
+        cwd: testInfo.outputPath(),
       });
       let stderr = '';
       const url = await new Promise<string>(resolve => cp!.stderr?.on('data', data => {
@@ -105,20 +106,14 @@ test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, serv
   });
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create SSE session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete SSE session/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create browser context \(isolated\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser context \(isolated\)/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/obtain browser \(isolated\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser \(isolated\)/)).length).toBe(2);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create SSE session': 2,
+    'delete SSE session': 2,
+    'create context': 2,
+    'create browser context (isolated)': 2,
+    'obtain browser (isolated)': 2,
+    'close browser': 2,
+  });
 });
 
 test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverEndpoint, server }) => {
@@ -152,20 +147,14 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
   await client2.close();
   await client3.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create SSE session/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/delete SSE session/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/create browser context \(isolated\)/)).length).toBe(3);
-    expect(lines.filter(line => line.match(/close browser context \(isolated\)/)).length).toBe(3);
-
-    expect(lines.filter(line => line.match(/obtain browser \(isolated\)/)).length).toBe(1);
-    expect(lines.filter(line => line.match(/close browser \(isolated\)/)).length).toBe(1);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create SSE session': 3,
+    'delete SSE session': 3,
+    'create context': 3,
+    'obtain browser (isolated)': 3,
+    'create browser context (isolated)': 3,
+    'close browser': 3,
+  });
 });
 
 test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, server }) => {
@@ -189,20 +178,14 @@ test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, se
   });
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create SSE session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete SSE session/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/create browser context \(persistent\)/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close browser context \(persistent\)/)).length).toBe(2);
-
-    expect(lines.filter(line => line.match(/lock user data dir/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/release user data dir/)).length).toBe(2);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create SSE session': 2,
+    'delete SSE session': 2,
+    'obtain browser (persistent)': 2,
+    'create context': 2,
+    'create browser context (persistent)': 2,
+    'close browser': 2,
+  });
 });
 
 test('sse transport browser lifecycle (persistent, multiclient)', async ({ serverEndpoint, server }) => {
@@ -266,29 +249,12 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
 
   await client2.close();
 
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    expect(lines.filter(line => line.match(/create SSE session/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/delete SSE session/)).length).toBe(2);
-
-    // Should have only one context creation since it's shared
-    expect(lines.filter(line => line.match(/create shared browser context/)).length).toBe(1);
-
-    // Should see client connect/disconnect messages
-    expect(lines.filter(line => line.match(/shared context client connected/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/shared context client disconnected/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/create context/)).length).toBe(2);
-    expect(lines.filter(line => line.match(/close context/)).length).toBe(2);
-
-    // Context should only close when the server shuts down.
-    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(0);
-  }).toPass();
-
-  await fetch(new URL('/killkillkill', url).href).catch(() => {});
-
-  await expect(async () => {
-    const lines = stderr().split('\n');
-    // Context should only close when the server shuts down.
-    expect(lines.filter(line => line.match(/close browser context complete \(persistent\)/)).length).toBe(1);
-  }).toPass();
+  await expect.poll(() => formatLog(stderr())).toEqual({
+    'create SSE session': 2,
+    'delete SSE session': 2,
+    'obtain browser (persistent)': 1,
+    'create browser context (persistent)': 1,
+    'create context': 2,
+    'close browser': 1,
+  });
 });

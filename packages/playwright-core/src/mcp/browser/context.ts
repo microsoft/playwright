@@ -15,28 +15,29 @@
  */
 
 import os from 'os';
+import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { eventsHelper } from '../../client/eventEmitter';
 import { debug } from '../../utilsBundle';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import { selectors } from '../../..';
 
-import { logUnhandledError } from '../log';
 import { Tab } from './tab';
 import { outputFile, workspaceFile } from './config';
 
 import type * as playwright from '../../..';
 import type { FullConfig } from './config';
-import type { BrowserContextFactory, BrowserContextFactoryResult } from './browserContextFactory';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../client/tracing';
+import type { RegisteredListener } from '../../client/eventEmitter';
 import type { ClientInfo } from '../sdk/server';
+import type { BrowserContext } from '../../client/browserContext';
 
 const testDebug = debug('pw:mcp:test');
 
 type ContextOptions = {
   config: FullConfig;
-  browserContextFactory: BrowserContextFactory;
   sessionLog: SessionLog | undefined;
   clientInfo: ClientInfo;
 };
@@ -64,34 +65,36 @@ export class Context {
   readonly config: FullConfig;
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
-  private _browserContextPromise: Promise<BrowserContextFactoryResult> | undefined;
-  private _browserContextFactory: BrowserContextFactory;
+  private _rawBrowserContext: playwright.BrowserContext;
+  private _browserContextPromise: Promise<playwright.BrowserContext> | undefined;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
   private _clientInfo: ClientInfo;
   private _routes: RouteEntry[] = [];
   private _video: {
     allVideos: Set<playwright.Video>;
-    listener: (page: playwright.Page) => void;
+    params: VideoParams;
   } | undefined;
+  private _listeners: RegisteredListener[] = [];
 
-  private static _allContexts: Set<Context> = new Set();
-  private _closeBrowserContextPromise: Promise<void> | undefined;
   private _runningToolName: string | undefined;
-  private _abortController = new AbortController();
 
-  constructor(options: ContextOptions) {
+  constructor(browserContext: playwright.BrowserContext, options: ContextOptions) {
     this.config = options.config;
     this.sessionLog = options.sessionLog;
     this.options = options;
-    this._browserContextFactory = options.browserContextFactory;
+    this._rawBrowserContext = browserContext;
     this._clientInfo = options.clientInfo;
     testDebug('create context');
-    Context._allContexts.add(this);
   }
 
-  static async disposeAll() {
-    await Promise.all([...Context._allContexts].map(context => context.dispose()));
+  dispose() {
+    eventsHelper.removeEventListeners(this._listeners);
+    for (const tab of this._tabs)
+      tab.dispose();
+    this._tabs.length = 0;
+    this._currentTab = undefined;
+    this._video = undefined;
   }
 
   tabs(): Tab[] {
@@ -109,7 +112,7 @@ export class Context {
   }
 
   async newTab(): Promise<Tab> {
-    const { browserContext } = await this._ensureBrowserContext();
+    const browserContext = await this.ensureBrowserContext();
     const page = await browserContext.newPage();
     this._currentTab = this._tabs.find(t => t.page === page)!;
     return this._currentTab;
@@ -125,7 +128,7 @@ export class Context {
   }
 
   async ensureTab(): Promise<Tab> {
-    const { browserContext } = await this._ensureBrowserContext();
+    const browserContext = await this.ensureBrowserContext();
     if (!this._currentTab)
       await browserContext.newPage();
     return this._currentTab!;
@@ -152,28 +155,27 @@ export class Context {
   async startVideoRecording(params: VideoParams) {
     if (this._video)
       throw new Error('Video recording has already been started.');
-    const listener = (page: playwright.Page) => {
-      this._video?.allVideos.add(page.video());
-      page.video().start(params).catch(() => {});
-    };
-    this._video = { allVideos: new Set(), listener };
+    this._video = { allVideos: new Set(), params };
     const browserContext = await this.ensureBrowserContext();
-    browserContext.pages().forEach(listener);
-    browserContext.on('page', listener);
+    for (const page of browserContext.pages())
+      this._startPageVideo(page);
   }
 
   async stopVideoRecording() {
     if (!this._video)
       throw new Error('Video recording has not been started.');
     const video = this._video;
-    if (this._browserContextPromise) {
-      const { browserContext } = await this._browserContextPromise;
-      browserContext.off('page', video.listener);
-      for (const page of browserContext.pages())
-        await page.video().stop().catch(() => {});
-    }
+    for (const page of this._rawBrowserContext.pages())
+      await page.video().stop().catch(() => {});
     this._video = undefined;
     return video.allVideos;
+  }
+
+  private _startPageVideo(page: playwright.Page) {
+    if (!this._video)
+      return;
+    this._video.allVideos.add(page.video());
+    page.video().start(this._video.params).catch(() => {});
   }
 
   private _onPageCreated(page: playwright.Page) {
@@ -181,6 +183,7 @@ export class Context {
     this._tabs.push(tab);
     if (!this._currentTab)
       this._currentTab = tab;
+    this._startPageVideo(page);
   }
 
   private _onPageClosed(tab: Tab) {
@@ -191,15 +194,6 @@ export class Context {
 
     if (this._currentTab === tab)
       this._currentTab = this._tabs[Math.min(index, this._tabs.length - 1)];
-    if (!this._tabs.length)
-      void this.closeBrowserContext();
-  }
-
-  async closeBrowserContext() {
-    if (!this._closeBrowserContextPromise)
-      this._closeBrowserContextPromise = this._closeBrowserContextImpl().catch(logUnhandledError);
-    await this._closeBrowserContextPromise;
-    this._closeBrowserContextPromise = undefined;
   }
 
   routes(): RouteEntry[] {
@@ -207,25 +201,22 @@ export class Context {
   }
 
   async addRoute(entry: RouteEntry): Promise<void> {
-    const { browserContext } = await this._ensureBrowserContext();
+    const browserContext = await this.ensureBrowserContext();
     await browserContext.route(entry.pattern, entry.handler);
     this._routes.push(entry);
   }
 
   async removeRoute(pattern?: string): Promise<number> {
-    if (!this._browserContextPromise)
-      return 0;
-    const { browserContext } = await this._browserContextPromise;
     let removed = 0;
     if (pattern) {
       const toRemove = this._routes.filter(r => r.pattern === pattern);
       for (const route of toRemove)
-        await browserContext.unroute(route.pattern, route.handler);
+        await this._rawBrowserContext.unroute(route.pattern, route.handler);
       this._routes = this._routes.filter(r => r.pattern !== pattern);
       removed = toRemove.length;
     } else {
       for (const route of this._routes)
-        await browserContext.unroute(route.pattern, route.handler);
+        await this._rawBrowserContext.unroute(route.pattern, route.handler);
       removed = this._routes.length;
       this._routes = [];
     }
@@ -238,28 +229,6 @@ export class Context {
 
   setRunningTool(name: string | undefined) {
     this._runningToolName = name;
-  }
-
-  private async _closeBrowserContextImpl() {
-    if (!this._browserContextPromise)
-      return;
-
-    testDebug('close context');
-
-    const promise = this._browserContextPromise;
-    this._browserContextPromise = undefined;
-
-    await promise.then(async ({ browserContext, close }) => {
-      if (this.config.saveTrace)
-        await browserContext.tracing.stop();
-      await close();
-    });
-  }
-
-  async dispose() {
-    this._abortController.abort('MCP context disposed');
-    await this.closeBrowserContext();
-    Context._allContexts.delete(this);
   }
 
   private async _setupRequestInterception(context: playwright.BrowserContext) {
@@ -277,30 +246,16 @@ export class Context {
   }
 
   async ensureBrowserContext(): Promise<playwright.BrowserContext> {
-    const { browserContext } = await this._ensureBrowserContext();
-    return browserContext;
-  }
-
-  private _ensureBrowserContext() {
     if (this._browserContextPromise)
       return this._browserContextPromise;
-
-    this._browserContextPromise = this._setupBrowserContext();
-    this._browserContextPromise.catch(() => {
-      this._browserContextPromise = undefined;
-    });
+    this._browserContextPromise = this._initializeBrowserContext();
     return this._browserContextPromise;
   }
 
-  private async _setupBrowserContext(): Promise<BrowserContextFactoryResult> {
-    if (this._closeBrowserContextPromise)
-      throw new Error('Another browser context is being closed.');
-    // TODO: move to the browser context factory to make it based on isolation mode.
-
+  private async _initializeBrowserContext() {
     if (this.config.testIdAttribute)
       selectors.setTestIdAttribute(this.config.testIdAttribute);
-    const result = await this._browserContextFactory.createContext(this._clientInfo, this._abortController.signal, { toolName: this._runningToolName });
-    const { browserContext } = result;
+    const browserContext = this._rawBrowserContext;
     if (!this.config.allowUnrestrictedFileAccess) {
       (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
       (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
@@ -308,7 +263,7 @@ export class Context {
     await this._setupRequestInterception(browserContext);
     for (const page of browserContext.pages())
       this._onPageCreated(page);
-    browserContext.on('page', page => this._onPageCreated(page));
+    this._listeners.push(eventsHelper.addEventListener(browserContext as BrowserContext, 'page', page => this._onPageCreated(page)));
     if (this.config.saveTrace) {
       await (browserContext.tracing as Tracing).start({
         name: 'trace-' + Date.now(),
@@ -317,7 +272,10 @@ export class Context {
         _live: true,
       });
     }
-    return result;
+    const rootPath = this.firstRootPath();
+    for (const initScript of this.config.browser.initScript || [])
+      await browserContext.addInitScript({ path: rootPath ? path.resolve(rootPath, initScript) : initScript });
+    return browserContext;
   }
 
   lookupSecret(secretName: string): { value: string, code: string } {
