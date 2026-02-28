@@ -21,47 +21,28 @@ test.use({
   mcpCaps: ['network'],
 });
 
-test('browser_network_state returns online by default', async ({ client }) => {
-  const response = parseResponse(await client.callTool({
-    name: 'browser_network_state',
-  }));
-  expect(response.result).toContain('Network is currently online');
-});
-
-test('browser_set_network_state sets network to offline', async ({ client }) => {
+test('browser_network_state_set sets network to offline', async ({ client }) => {
   // Set offline
   const setResponse = parseResponse(await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'offline' },
   }));
   expect(setResponse.result).toContain('Network is now offline');
-
-  // Verify status
-  const statusResponse = parseResponse(await client.callTool({
-    name: 'browser_network_state',
-  }));
-  expect(statusResponse.result).toContain('Network is currently offline');
 });
 
-test('browser_set_network_state restores network to online', async ({ client }) => {
+test('browser_network_state_set restores network to online', async ({ client }) => {
   // Set offline first
   await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'offline' },
   });
 
   // Restore online
   const setResponse = parseResponse(await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'online' },
   }));
   expect(setResponse.result).toContain('Network is now online');
-
-  // Verify status
-  const statusResponse = parseResponse(await client.callTool({
-    name: 'browser_network_state',
-  }));
-  expect(statusResponse.result).toContain('Network is currently online');
 });
 
 test('network requests fail when offline', async ({ client, server }) => {
@@ -73,7 +54,7 @@ test('network requests fail when offline', async ({ client, server }) => {
 
   // Set offline
   await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'offline' },
   });
 
@@ -100,11 +81,11 @@ test('network requests succeed after restoring online', async ({ client, server 
 
   // Set offline then back online
   await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'offline' },
   });
   await client.callTool({
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     arguments: { state: 'online' },
   });
 

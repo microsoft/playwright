@@ -83,30 +83,11 @@ export async function renderRequest(request: playwright.Request): Promise<string
   return result.join(' ');
 }
 
-const networkState = defineTool({
+const networkStateSet = defineTool({
   capability: 'network',
 
   schema: {
-    name: 'browser_network_state',
-    title: 'Get network state',
-    description: 'Returns the current network state (online or offline)',
-    inputSchema: z.object({}),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params, response) => {
-    const browserContext = await context.ensureBrowserContext();
-    const offline = await browserContext.isOffline();
-    const state = offline ? 'offline' : 'online';
-    response.addTextResult(`Network is currently ${state}`);
-  },
-});
-
-const setNetworkState = defineTool({
-  capability: 'network',
-
-  schema: {
-    name: 'browser_set_network_state',
+    name: 'browser_network_state_set',
     title: 'Set network state',
     description: 'Sets the browser network state to online or offline. When offline, all network requests will fail.',
     inputSchema: z.object({
@@ -127,6 +108,5 @@ const setNetworkState = defineTool({
 export default [
   requests,
   networkClear,
-  networkState,
-  setNetworkState,
+  networkStateSet,
 ];

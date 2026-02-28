@@ -16,24 +16,14 @@
 
 import { test, expect } from './cli-fixtures';
 
-test('network-state shows online by default', async ({ cli, server }) => {
-  await cli('open', server.EMPTY_PAGE);
-  const { output } = await cli('network-state');
-  expect(output).toContain('online');
-});
-
-test('set-network-state toggles offline state', async ({ cli, server }) => {
+test('network-state-set toggles offline state', async ({ cli, server }) => {
   await cli('open', server.EMPTY_PAGE);
 
   // Set offline
-  const { output: offlineOutput } = await cli('set-network-state', 'offline');
+  const { output: offlineOutput } = await cli('network-state-set', 'offline');
   expect(offlineOutput).toContain('offline');
 
-  // Check status
-  const { output: statusOutput } = await cli('network-state');
-  expect(statusOutput).toContain('offline');
-
   // Restore online
-  const { output: onlineOutput } = await cli('set-network-state', 'online');
+  const { output: onlineOutput } = await cli('network-state-set', 'online');
   expect(onlineOutput).toContain('online');
 });
