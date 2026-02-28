@@ -396,7 +396,8 @@ it.describe('download event', () => {
     expect(fs.existsSync(path.join(path1, '..'))).toBeFalsy();
   });
 
-  it('should save downloads to artifactsDir', async ({ server, browserType }, testInfo) => {
+  it('should save downloads to artifactsDir', async ({ server, browserType, browserName, isMac, macVersion }, testInfo) => {
+    it.skip(browserName === 'webkit' && isMac && macVersion <= 14, 'WebKit on macOS-14 is frozen');
     const artifactsDir = testInfo.outputPath('artifacts');
     const browser = await browserType.launch({ artifactsDir });
     const page = await browser.newPage();
