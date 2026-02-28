@@ -69,6 +69,7 @@ export type RunServerOptions = {
   maxConnections?: number,
   browserProxyMode?: 'client' | 'tether',
   ownedByTetherClient?: boolean,
+  artifactsDir?: string,
 };
 
 export async function runServer(options: RunServerOptions) {
@@ -78,8 +79,9 @@ export async function runServer(options: RunServerOptions) {
     path = '/',
     maxConnections = Infinity,
     extension,
+    artifactsDir,
   } = options;
-  const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections });
+  const server = new PlaywrightServer({ mode: extension ? 'extension' : 'default', path, maxConnections, artifactsDir });
   const wsEndpoint = await server.listen(port, host);
   process.on('exit', () => server.close().catch(console.error));
   console.log('Listening on ' + wsEndpoint);

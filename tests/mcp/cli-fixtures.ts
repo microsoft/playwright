@@ -24,14 +24,19 @@ import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
+  cliEnv: Record<string, string>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
     exitCode: number | undefined,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
+    pid?: number,
   }>;
 }>({
+  cliEnv: async ({}, use) => {
+    await use(cliEnv());
+  },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
     const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
@@ -57,18 +62,24 @@ export const test = baseTest.extend<{
   },
 });
 
+function cliEnv() {
+  return {
+    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
+  };
+}
+
 async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
     const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/cli.js'), ...args],
+      command: [process.execPath, require.resolve('../../packages/playwright-core/lib/cli/client/cli.js'), ...args],
       cwd: cliOptions.cwd ?? testInfo.outputPath(),
       env: {
         ...process.env,
         ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+        ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
         ...cliOptions.env,
@@ -92,7 +103,8 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       output: cli.stdout.trim(),
       error: cli.stderr.trim(),
       snapshot,
-      attachments
+      attachments,
+      pid: pid ? +pid : undefined,
     };
   });
 }

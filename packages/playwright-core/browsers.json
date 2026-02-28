@@ -17,16 +17,16 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1406",
+      "revision": "1408",
       "installByDefault": false,
-      "browserVersion": "147.0.7692.0",
+      "browserVersion": "147.0.7701.0",
       "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1406",
+      "revision": "1408",
       "installByDefault": false,
-      "browserVersion": "147.0.7692.0",
+      "browserVersion": "147.0.7701.0",
       "title": "Chrome Canary Headless Shell"
     },
     {
@@ -45,7 +45,7 @@
     },
     {
       "name": "webkit",
-      "revision": "2261",
+      "revision": "2265",
       "installByDefault": true,
       "revisionOverrides": {
         "mac14": "2251",

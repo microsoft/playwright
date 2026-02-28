@@ -51,6 +51,8 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['BrowserType.launchPersistentContext', { title: 'Launch persistent context', }],
   ['BrowserType.connectOverCDP', { title: 'Connect over CDP', }],
   ['BrowserType.connectOverCDPTransport', { title: 'Connect over CDP transport', }],
+  ['Browser.startServer', { title: 'Start server', }],
+  ['Browser.stopServer', { title: 'Stop server', }],
   ['Browser.close', { title: 'Close browser', pausesBeforeAction: true, }],
   ['Browser.killForTests', { internal: true, }],
   ['Browser.defaultUserAgentForTest', { internal: true, }],

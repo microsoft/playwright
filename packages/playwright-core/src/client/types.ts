@@ -96,7 +96,8 @@ export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDe
 export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {
-  wsEndpoint: string,
+  wsEndpoint?: string,
+  pipeName?: string,
   headers?: { [key: string]: string; };
   exposeNetwork?: string,
   _exposeNetwork?: string,

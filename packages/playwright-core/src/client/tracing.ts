@@ -22,6 +22,7 @@ import type * as channels from '@protocol/channels';
 
 export class Tracing extends ChannelOwner<channels.TracingChannel> implements api.Tracing {
   private _includeSources = false;
+  private _additionalSources = new Set<string>();
   private _isLive = false;
   _tracesDir: string | undefined;
   private _stacksId: string | undefined;
@@ -58,6 +59,8 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   }
 
   async group(name: string, options: { location?: { file: string, line?: number, column?: number } } = {}) {
+    if (options.location)
+      this._additionalSources.add(options.location.file);
     await this._channel.tracingGroup({ name, location: options.location });
   }
 
@@ -90,6 +93,9 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
   private async _doStopChunk(filePath: string | undefined) {
     this._resetStackCounter();
 
+    const additionalSources = [...this._additionalSources];
+    this._additionalSources.clear();
+
     if (!filePath) {
       // Not interested in artifacts.
       await this._channel.tracingStopChunk({ mode: 'discard' });
@@ -106,7 +112,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
 
     if (isLocal) {
       const result = await this._channel.tracingStopChunk({ mode: 'entries' });
-      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources });
+      await localUtils.zip({ zipFile: filePath, entries: result.entries!, mode: 'write', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources });
       return;
     }
 
@@ -124,7 +130,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     await artifact.saveAs(filePath);
     await artifact.delete();
 
-    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources });
+    await localUtils.zip({ zipFile: filePath, entries: [], mode: 'append', stacksId: this._stacksId, includeSources: this._includeSources, additionalSources });
   }
 
   _resetStackCounter() {

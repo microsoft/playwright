@@ -24,3 +24,6 @@
 ./electron/
 ./firefox/
 ./webkit/
+
+[browser.ts]
+../remote/

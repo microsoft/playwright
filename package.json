@@ -30,7 +30,7 @@
     "test-mcp": "playwright test --config=tests/mcp/playwright.config.ts",
     "ctest-mcp": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome",
     "eslint": "eslint --cache",
-    "tsc": "tsc -p . && tsc -p packages/html-reporter/",
+    "tsc": "tsc -p .",
     "doc": "node utils/doclint/cli.js",
     "lint": "npm run eslint && npm run tsc && npm run doc && npm run check-deps && node utils/generate_channels.js && node utils/generate_types/ && npm run lint-tests && npm run test-types && npm run lint-packages",
     "lint-packages": "node utils/workspace.js --ensure-consistent",
@@ -44,8 +44,8 @@
     "check-deps": "node utils/check_deps.js",
     "build-android-driver": "./utils/build_android_driver.sh",
     "innerloop": "playwright run-server --reuse-browser",
-    "playwright-cli": "node packages/playwright/lib/cli/client/cli.js",
     "test-playwright-cli": "playwright test --config=tests/mcp/playwright.config.ts --project=chrome cli-",
+    "playwright-cli": "node packages/playwright-core/lib/cli/client/cli.js",
     "playwright-cli-readme": "node utils/generate_cli_help.js --readme"
   },
   "workspaces": [

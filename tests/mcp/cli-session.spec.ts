@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 import { test, expect, daemonFolder } from './cli-fixtures';
+import { killProcessGroup } from '../config/commonFixtures';
 
 test('list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('list');
@@ -185,27 +186,68 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   // Create two separate workspaces with their own daemon dirs
   const workspace1 = testInfo.outputPath('workspace1');
   const workspace2 = testInfo.outputPath('workspace2');
+  const workspace3 = testInfo.outputPath('workspace3');
   await fs.promises.mkdir(workspace1, { recursive: true });
   await fs.promises.mkdir(workspace2, { recursive: true });
+  await fs.promises.mkdir(workspace3, { recursive: true });
 
   await cli('install', { cwd: workspace1 });
   await cli('install', { cwd: workspace2 });
+  await cli('install', { cwd: workspace3 });
 
-  // Open sessions in both workspaces
   await cli('-s', 'session1', 'open', server.HELLO_WORLD, { cwd: workspace1 });
   await cli('-s', 'session2', 'open', server.HELLO_WORLD, { cwd: workspace2 });
+  const session3 = await cli('-s', 'session3', 'open', server.HELLO_WORLD, { cwd: workspace3 });
 
   // List all sessions from workspace1
   const { output: allList } = await cli('list', '--all', { cwd: workspace1 });
 
   // Should include both workspace folders and sessions
   expect(allList).toContain(workspace1);
-  expect(allList).toContain(workspace2);
   expect(allList).toContain('session1');
+  expect(allList).toContain(workspace2);
   expect(allList).toContain('session2');
+  expect(allList).toContain(workspace3);
+  expect(allList).toContain('session3');
+
+  const rootDir = test.info().outputPath('daemon');
+  const dirs = await fs.promises.readdir(rootDir);
+  const getSessionFiles = async () => (await Promise.all(dirs.map(dir => fs.promises.readdir(path.join(rootDir, dir))))).flat();
+
+  const sessionFilesBefore = await getSessionFiles();
+  expect(sessionFilesBefore).toContain('session1.session');
+  expect(sessionFilesBefore).toContain('session2.session');
+  expect(sessionFilesBefore).toContain('session3.session');
 
   await cli('-s', 'session1', 'close', { cwd: workspace1 });
-  await cli('-s', 'session2', 'close', { cwd: workspace2 });
+
+  const { output: listTwo } = await cli('list', '--all', { cwd: workspace2 });
+  expect(listTwo).not.toContain(workspace1);
+  expect(listTwo).not.toContain('session1');
+  expect(listTwo).toContain(workspace2);
+  expect(listTwo).toContain('session2');
+  expect(listTwo).toContain(workspace3);
+  expect(listTwo).toContain('session3');
+
+  const sessionFilesAfterClose = await getSessionFiles();
+  expect(sessionFilesAfterClose).not.toContain('session1.session');
+  expect(sessionFilesAfterClose).toContain('session2.session');
+  expect(sessionFilesAfterClose).toContain('session3.session');
+
+  killProcessGroup(session3.pid);
+
+  const { output: listOne } = await cli('list', '--all', { cwd: workspace2 });
+  expect(listOne).not.toContain(workspace1);
+  expect(listOne).not.toContain('session1');
+  expect(listOne).toContain(workspace2);
+  expect(listOne).toContain('session2');
+  expect(listOne).not.toContain(workspace3);
+  expect(listOne).not.toContain('session3');
+
+  const sessionFilesAfterList = await getSessionFiles();
+  expect(sessionFilesAfterList).not.toContain('session1.session');
+  expect(sessionFilesAfterList).toContain('session2.session');
+  expect(sessionFilesAfterList).not.toContain('session3.session');
 });
 
 test('newer client with older daemon is compatible', async ({ cli, server }) => {

@@ -134,6 +134,14 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     return { artifact: ArtifactDispatcher.from(this, await crBrowser.stopTracing()) };
   }
 
+  async startServer(params: channels.BrowserStartServerParams, progress: Progress): Promise<channels.BrowserStartServerResult> {
+    return await this._object.startServer(params.title, params);
+  }
+
+  async stopServer(params: channels.BrowserStopServerParams, progress: Progress): Promise<void> {
+    await this._object.stopServer();
+  }
+
   async cleanupContexts() {
     await Promise.all(Array.from(this._isolatedContexts).map(context => context.close({ reason: 'Global context cleanup (connection terminated)' })));
   }

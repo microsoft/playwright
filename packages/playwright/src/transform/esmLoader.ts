@@ -61,8 +61,7 @@ const kSupportedFormats = new Map([
 
 // Node < 18.6: defaultLoad takes 3 arguments.
 // Node >= 18.6: nextLoad from the chain takes 2 arguments.
-async function load(originalModuleUrl: string, context: { format?: string }, defaultLoad: Function) {
-  const moduleUrl = originalModuleUrl.replace(esmPreflightExtension, '');
+async function load(moduleUrl: string, context: { format?: string }, defaultLoad: Function) {
   // Bail out for wasm, json, etc.
   if (!kSupportedFormats.has(context.format))
     return defaultLoad(moduleUrl, context, defaultLoad);
@@ -72,12 +71,17 @@ async function load(originalModuleUrl: string, context: { format?: string }, def
     return defaultLoad(moduleUrl, context, defaultLoad);
 
   const filename = url.fileURLToPath(moduleUrl);
+  const isPreflight = moduleUrl.endsWith(esmPreflightExtension);
+
   // Bail for node_modules.
   if (!shouldTransform(filename))
     return defaultLoad(moduleUrl, context, defaultLoad);
 
-  const code = fs.readFileSync(filename, 'utf-8');
-  const transformed = transformHook(code, filename, moduleUrl);
+  const originalModuleUrl = isPreflight ? moduleUrl.slice(0, -esmPreflightExtension.length) : moduleUrl;
+  const originalFilename = isPreflight ? url.fileURLToPath(originalModuleUrl) : filename;
+
+  const code = fs.readFileSync(originalFilename, 'utf-8');
+  const transformed = transformHook(code, originalFilename, originalModuleUrl);
 
   // Flush the source maps to the main thread, so that errors after import() are source-mapped.
   if (transformed.serializedCache)
@@ -86,8 +90,8 @@ async function load(originalModuleUrl: string, context: { format?: string }, def
   // Output format is required, so we determine it manually when unknown.
   // shortCircuit is required by Node >= 18.6 to designate no more loaders should be called.
   return {
-    format: kSupportedFormats.get(context.format) || (fileIsModule(filename) ? 'module' : 'commonjs'),
-    source: originalModuleUrl.endsWith(esmPreflightExtension) ? `void 0;` : transformed.code,
+    format: kSupportedFormats.get(context.format) || (fileIsModule(originalFilename) ? 'module' : 'commonjs'),
+    source: isPreflight ? `void 0;` : transformed.code,
     shortCircuit: true,
   };
 }

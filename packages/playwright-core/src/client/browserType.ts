@@ -122,11 +122,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<Browser>;
+  connect(options: api.ConnectOptions & { pipeName: string }): Promise<Browser>;
   connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<Browser>;
-  async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint: string }), options?: api.ConnectOptions): Promise<Browser>{
+  async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint?: string, pipeName?: string }), options?: api.ConnectOptions): Promise<Browser>{
     if (typeof optionsOrWsEndpoint === 'string')
       return await this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
-    assert(optionsOrWsEndpoint.wsEndpoint, 'options.wsEndpoint is required');
+    assert(optionsOrWsEndpoint.wsEndpoint || optionsOrWsEndpoint.pipeName, 'Either options.wsEndpoint or options.pipeName is required');
     return await this._connect(optionsOrWsEndpoint);
   }
 
@@ -137,6 +138,7 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const connectParams: channels.LocalUtilsConnectParams = {
         wsEndpoint: params.wsEndpoint,
+        pipeName: params.pipeName,
         headers,
         exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
         slowMo: params.slowMo,

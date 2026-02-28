@@ -66,7 +66,8 @@ export class WebServerPlugin implements TestRunnerPlugin {
 
   public async setup(config: FullConfig, configDir: string, reporter: ReporterV2) {
     this._reporter = reporter;
-    this._isAvailableCallback = this._options.url ? getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter)) : undefined;
+    if (this._options.url)
+      this._isAvailableCallback = getIsAvailableFunction(this._options.url, this._checkPortOnly, !!this._options.ignoreHTTPSErrors, this._reporter.onStdErr?.bind(this._reporter));
     this._options.cwd = this._options.cwd ? path.resolve(configDir, this._options.cwd) : configDir;
     try {
       await this._startProcess();

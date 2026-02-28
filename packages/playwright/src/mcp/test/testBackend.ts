@@ -15,16 +15,16 @@
  */
 
 import { z as zod } from 'playwright-core/lib/mcpBundle';
+import * as mcp from 'playwright-core/lib/mcp/exports';
+import { browserTools } from 'playwright-core/lib/mcp/exports';
 
-import * as mcp from '../sdk/exports';
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
 import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
-import { browserTools } from '../browser/tools';
 
 import type { TestTool } from './testTool';
-import type { Tool as BrowserTool } from '../browser/tools/tool';
+import type { BrowserTool } from 'playwright-core/lib/mcp/exports';
 
 export class TestServerBackend implements mcp.ServerBackend {
   readonly name = 'Playwright';

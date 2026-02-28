@@ -67,7 +67,7 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
 
   // Collect sources from stacks.
   if (params.includeSources) {
-    const sourceFiles = new Set<string>();
+    const sourceFiles = new Set<string>(params.additionalSources);
     for (const { stack } of stackSession?.callStacks || []) {
       if (!stack)
         continue;
@@ -75,7 +75,7 @@ export async function zip(progress: Progress, stackSessions: Map<string, StackSe
         sourceFiles.add(file);
     }
     for (const sourceFile of sourceFiles)
-      addFile(sourceFile, 'resources/src@' + await calculateSha1(sourceFile) + '.txt');
+      addFile(sourceFile, 'resources/src@' + calculateSha1(sourceFile) + '.txt');
   }
 
   if (params.mode === 'write') {

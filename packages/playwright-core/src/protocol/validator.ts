@@ -278,6 +278,7 @@ scheme.LocalUtilsZipParams = tObject({
   stacksId: tOptional(tString),
   mode: tEnum(['write', 'append']),
   includeSources: tBoolean,
+  additionalSources: tOptional(tArray(tString)),
 });
 scheme.LocalUtilsZipResult = tOptional(tObject({}));
 scheme.LocalUtilsHarOpenParams = tObject({
@@ -313,7 +314,8 @@ scheme.LocalUtilsHarUnzipParams = tObject({
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
-  wsEndpoint: tString,
+  wsEndpoint: tOptional(tString),
+  pipeName: tOptional(tString),
   headers: tOptional(tAny),
   exposeNetwork: tOptional(tString),
   slowMo: tOptional(tFloat),
@@ -524,6 +526,7 @@ scheme.BrowserTypeLaunchParams = tObject({
   })),
   downloadsPath: tOptional(tString),
   tracesDir: tOptional(tString),
+  artifactsDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
   cdpPort: tOptional(tInt),
@@ -553,6 +556,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   })),
   downloadsPath: tOptional(tString),
   tracesDir: tOptional(tString),
+  artifactsDir: tOptional(tString),
   chromiumSandbox: tOptional(tBoolean),
   firefoxUserPrefs: tOptional(tAny),
   cdpPort: tOptional(tInt),
@@ -645,6 +649,17 @@ scheme.BrowserContextEvent = tObject({
   context: tChannel(['BrowserContext']),
 });
 scheme.BrowserCloseEvent = tOptional(tObject({}));
+scheme.BrowserStartServerParams = tObject({
+  title: tString,
+  wsPath: tOptional(tString),
+  workspaceDir: tOptional(tString),
+});
+scheme.BrowserStartServerResult = tObject({
+  wsEndpoint: tOptional(tString),
+  pipeName: tOptional(tString),
+});
+scheme.BrowserStopServerParams = tOptional(tObject({}));
+scheme.BrowserStopServerResult = tOptional(tObject({}));
 scheme.BrowserCloseParams = tObject({
   reason: tOptional(tString),
 });

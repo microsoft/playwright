@@ -452,26 +452,28 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
   },
 };
 
+export const defaultCacheDirectory = (() => {
+  if (process.platform === 'linux')
+    return process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
+  if (process.platform === 'darwin')
+    return path.join(os.homedir(), 'Library', 'Caches');
+  if (process.platform === 'win32')
+    return process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
+  throw new Error('Unsupported platform: ' + process.platform);
+})();
+
+export const defaultRegistryDirectory = path.join(defaultCacheDirectory, 'ms-playwright');
+
 export const registryDirectory = (() => {
   let result: string;
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
-  if (envDefined === '0') {
+  if (envDefined === '0')
     result = path.join(__dirname, '..', '..', '..', '.local-browsers');
-  } else if (envDefined) {
+  else if (envDefined)
     result = envDefined;
-  } else {
-    let cacheDirectory: string;
-    if (process.platform === 'linux')
-      cacheDirectory = process.env.XDG_CACHE_HOME || path.join(os.homedir(), '.cache');
-    else if (process.platform === 'darwin')
-      cacheDirectory = path.join(os.homedir(), 'Library', 'Caches');
-    else if (process.platform === 'win32')
-      cacheDirectory = process.env.LOCALAPPDATA || path.join(os.homedir(), 'AppData', 'Local');
-    else
-      throw new Error('Unsupported platform: ' + process.platform);
-    result = path.join(cacheDirectory, 'ms-playwright');
-  }
+  else
+    result = defaultRegistryDirectory;
 
   if (!path.isAbsolute(result)) {
     // It is important to resolve to the absolute path:

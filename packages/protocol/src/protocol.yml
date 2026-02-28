@@ -488,6 +488,7 @@ LaunchOptions:
         password: string?
     downloadsPath: string?
     tracesDir: string?
+    artifactsDir: string?
     chromiumSandbox: boolean?
     firefoxUserPrefs: json?
     cdpPort: int?
@@ -652,6 +653,9 @@ LocalUtils:
             - write
             - append
         includeSources: boolean
+        additionalSources:
+          type: array?
+          items: string
 
     harOpen:
       internal: true
@@ -702,7 +706,8 @@ LocalUtils:
     connect:
       internal: true
       parameters:
-        wsEndpoint: string
+        wsEndpoint: string?
+        pipeName: string?
         headers: json?
         exposeNetwork: string?
         slowMo: float?
@@ -1022,6 +1027,19 @@ Browser:
     name: string
 
   commands:
+
+    startServer:
+      title: Start server
+      parameters:
+        title: string
+        wsPath: string?
+        workspaceDir: string?
+      returns:
+        wsEndpoint: string?
+        pipeName: string?
+
+    stopServer:
+      title: Stop server
 
     close:
       title: Close browser

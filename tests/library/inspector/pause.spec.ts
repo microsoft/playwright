@@ -21,8 +21,6 @@ import type { BoundingBox } from '../../config/utils';
 import { pauseHelper } from './pause-helper';
 
 it('should resume when closing inspector', async ({ page, recorderPageGetter, closeRecorder, mode }) => {
-  it.skip(mode !== 'default');
-
   const scriptPromise = (async () => {
     // @ts-ignore
     await page.pause({ __testHookKeepTestTimeout: true });
@@ -62,8 +60,6 @@ world`);
 });
 
 it.describe('pause', () => {
-  it.skip(({ mode }) => mode !== 'default');
-
   it.afterEach(async ({ recorderPageGetter }, testInfo) => {
     if (testInfo.status === 'skipped')
       return;
@@ -96,7 +92,9 @@ it.describe('pause', () => {
     await scriptPromise;
   });
 
-  it('should resume from console', async ({ page }) => {
+  it('should resume from console', async ({ page, mode }) => {
+    it.skip(mode !== 'default');
+
     const scriptPromise = (async () => {
       // @ts-ignore
       await page.pause({ __testHookKeepTestTimeout: true });

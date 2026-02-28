@@ -15,7 +15,7 @@
  */
 
 import { test, expect } from '@playwright/test';
-import { compareSemver } from '../../packages/playwright/lib/cli/client/socketConnection';
+import { compareSemver } from '../../packages/playwright-core/lib/cli/client/socketConnection';
 
 test('compareSemver', () => {
   // Stable versions.

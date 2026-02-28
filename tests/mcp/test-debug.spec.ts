@@ -438,3 +438,18 @@ Error: expect(locator).toBeVisible() failed`));
     page: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}\n- Page Title: Title2`),
   });
 });
+
+test('test_debug (no default page fixture)', async ({ startClient }) => {
+  const { client, id } = await prepareDebugTest(startClient, `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({}) => {
+        throw new Error('failure');
+      });
+  `);
+  expect(await client.callTool({
+    name: 'test_debug',
+    arguments: {
+      test: { id, title: 'fail' },
+    },
+  })).toHaveTextResponse(expect.stringContaining(`Only tests that use default Playwright context or page fixture support test_debug`));
+});

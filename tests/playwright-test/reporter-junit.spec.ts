@@ -62,11 +62,51 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       const xml = parseXML(result.output);
       expect(xml['testsuites']['$']['tests']).toBe('1');
       expect(xml['testsuites']['$']['failures']).toBe('1');
+      expect(xml['testsuites']['$']['errors']).toBe('0');
       const failure = xml['testsuites']['testsuite'][0]['testcase'][0]['failure'][0];
-      expect(failure['$']['message']).toContain('a.test.js');
-      expect(failure['$']['message']).toContain('one');
-      expect(failure['$']['type']).toBe('FAILURE');
+      expect(failure['$']['message']).toContain('expect(received).toBe(expected)');
+      expect(failure['$']['type']).toBe('expect.toBe');
       expect(failure['_']).toContain('expect(1).toBe(0)');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render thrown error as <error> element', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            throw new Error('Boom');
+          });
+        `,
+      }, { reporter: 'junit' });
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      expect(xml['testsuites']['$']['errors']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+      expect(xml['testsuites']['testsuite'][0]['$']['errors']).toBe('1');
+      const error = xml['testsuites']['testsuite'][0]['testcase'][0]['error'][0];
+      expect(error['$']['message']).toBe('Boom');
+      expect(error['$']['type']).toBe('Error');
+      expect(error['_']).toContain('Boom');
+      expect(result.exitCode).toBe(1);
+    });
+
+    test('should render TypeError as <error> element with correct type', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            const obj = null;
+            obj.foo();
+          });
+        `,
+      }, { reporter: 'junit' });
+      const xml = parseXML(result.output);
+      expect(xml['testsuites']['$']['errors']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      const error = xml['testsuites']['testsuite'][0]['testcase'][0]['error'][0];
+      expect(error['$']['type']).toBe('TypeError');
       expect(result.exitCode).toBe(1);
     });
 

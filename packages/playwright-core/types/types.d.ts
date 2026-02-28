@@ -15303,6 +15303,13 @@ export interface BrowserType<Unused = {}> {
     args?: Array<string>;
 
     /**
+     * If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+     * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+     * browser closes.
+     */
+    artifactsDir?: string;
+
+    /**
      * When using [page.goto(url[, options])](https://playwright.dev/docs/api/class-page#page-goto),
      * [page.route(url, handler[, options])](https://playwright.dev/docs/api/class-page#page-route),
      * [page.waitForURL(url[, options])](https://playwright.dev/docs/api/class-page#page-wait-for-url),
@@ -15825,6 +15832,13 @@ export interface BrowserType<Unused = {}> {
      * [here](https://peter.sh/experiments/chromium-command-line-switches/).
      */
     args?: Array<string>;
+
+    /**
+     * If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+     * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+     * browser closes.
+     */
+    artifactsDir?: string;
 
     /**
      * Browser distribution channel.
@@ -22227,6 +22241,13 @@ export interface LaunchOptions {
    * [here](https://peter.sh/experiments/chromium-command-line-switches/).
    */
   args?: Array<string>;
+
+  /**
+   * If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory
+   * is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the
+   * browser closes.
+   */
+  artifactsDir?: string;
 
   /**
    * Browser distribution channel.
