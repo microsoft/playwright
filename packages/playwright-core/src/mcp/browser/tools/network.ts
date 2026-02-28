@@ -15,7 +15,7 @@
  */
 
 import { z } from '../../../mcpBundle';
-import { defineTabTool } from './tool';
+import { defineTool, defineTabTool } from './tool';
 
 import type * as playwright from '../../../..';
 
@@ -83,7 +83,30 @@ export async function renderRequest(request: playwright.Request): Promise<string
   return result.join(' ');
 }
 
+const networkStateSet = defineTool({
+  capability: 'network',
+
+  schema: {
+    name: 'browser_network_state_set',
+    title: 'Set network state',
+    description: 'Sets the browser network state to online or offline. When offline, all network requests will fail.',
+    inputSchema: z.object({
+      state: z.enum(['online', 'offline']).describe('Set to "offline" to simulate offline mode, "online" to restore network connectivity'),
+    }),
+    type: 'action',
+  },
+
+  handle: async (context, params, response) => {
+    const browserContext = await context.ensureBrowserContext();
+    const offline = params.state === 'offline';
+    await browserContext.setOffline(offline);
+    response.addTextResult(`Network is now ${params.state}`);
+    response.addCode(`await page.context().setOffline(${offline});`);
+  },
+});
+
 export default [
   requests,
   networkClear,
+  networkStateSet,
 ];
