@@ -44,3 +44,32 @@
   user-select: none;
   color: var(--vscode-editorCodeLens-foreground);
 }
+
+.workbench-action-filter {
+  flex: none;
+  padding: 4px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.workbench-action-filter input[type=search] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 8px;
+  line-height: 20px;
+  outline: none;
+  border: 1px solid var(--vscode-input-border);
+  border-radius: 2px;
+  color: var(--vscode-input-foreground);
+  background-color: var(--vscode-input-background);
+}
+
+.workbench-action-filter input[type=search]:focus {
+  border-color: var(--vscode-focusBorder);
+}
+
+.action-list-container {
+  min-height: 0;
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+}
