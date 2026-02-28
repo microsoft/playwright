@@ -20,14 +20,14 @@ import { debug } from '../../utilsBundle';
 import * as mcpBundle from '../../mcpBundle';
 
 import { startMcpHttpServer } from './http';
-import { InProcessTransport } from './inProcessTransport';
+import { toMcpTool } from './tool';
 
-import type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
+import type { CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 export type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 export type { Tool, CallToolResult, CallToolRequest, Root } from '@modelcontextprotocol/sdk/types.js';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { ToolSchema } from './tool';
 
 const serverDebug = debug('pw:mcp:server');
 const serverDebugResponse = debug('pw:mcp:server:response');
@@ -42,40 +42,49 @@ export type ClientInfo = {
 export type ProgressParams = { message?: string, progress?: number, total?: number };
 export type ProgressCallback = (params: ProgressParams) => void;
 
+class BackendManager {
+  private _backends = new Map<ServerBackend, ServerBackendFactory>();
+
+  async createBackend(factory: ServerBackendFactory, clientInfo: ClientInfo): Promise<ServerBackend> {
+    const backend = await factory.create(clientInfo);
+    await backend.initialize?.(clientInfo);
+    this._backends.set(backend, factory);
+    return backend;
+  }
+
+  async disposeBackend(backend: ServerBackend) {
+    const factory = this._backends.get(backend);
+    if (!factory)
+      return;
+    await backend.dispose?.();
+    await factory.disposed(backend).catch(serverDebug);
+    this._backends.delete(backend);
+  }
+}
+
+const backendManager = new BackendManager();
+
 export interface ServerBackend {
   initialize?(clientInfo: ClientInfo): Promise<void>;
-  listTools(): Promise<Tool[]>;
-  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult>;
-  serverClosed?(server: Server): void;
+  callTool(name: string, args: CallToolRequest['params']['arguments'], progress: ProgressCallback): Promise<CallToolResult & { isClose?: boolean }>;
+  dispose?(): Promise<void>;
 }
 
 export type ServerBackendFactory = {
   name: string;
   nameInConfig: string;
   version: string;
-  create: () => ServerBackend;
+  toolSchemas: ToolSchema<any>[];
+  create: (clientInfo: ClientInfo) => Promise<ServerBackend>;
+  disposed: (backend: ServerBackend) => Promise<void>;
 };
 
 export async function connect(factory: ServerBackendFactory, transport: Transport, runHeartbeat: boolean) {
-  const server = createServer(factory.name, factory.version, factory.create(), runHeartbeat);
+  const server = createServer(factory.name, factory.version, factory, runHeartbeat);
   await server.connect(transport);
 }
 
-export function wrapInProcess(backend: ServerBackend): Transport {
-  const server = createServer('Internal', '0.0.0', backend, false);
-  return new InProcessTransport(server);
-}
-
-export async function wrapInClient(backend: ServerBackend, options: { name: string, version: string }): Promise<Client> {
-  const server = createServer('Internal', '0.0.0', backend, false);
-  const transport = new InProcessTransport(server);
-  const client = new mcpBundle.Client({ name: options.name, version: options.version });
-  await client.connect(transport);
-  await client.ping();
-  return client;
-}
-
-export function createServer(name: string, version: string, backend: ServerBackend, runHeartbeat: boolean): Server {
+export function createServer(name: string, version: string, factory: ServerBackendFactory, runHeartbeat: boolean): Server {
   const server = new mcpBundle.Server({ name, version }, {
     capabilities: {
       tools: {},
@@ -84,11 +93,14 @@ export function createServer(name: string, version: string, backend: ServerBacke
 
   server.setRequestHandler(mcpBundle.ListToolsRequestSchema, async () => {
     serverDebug('listTools');
-    const tools = await backend.listTools();
-    return { tools };
+    return { tools: factory.toolSchemas.map(s => toMcpTool(s)) };
   });
 
-  let initializePromise: Promise<void> | undefined;
+  let backendPromise: Promise<ServerBackend> | undefined;
+
+  const onClose = () => backendPromise?.then(b => backendManager.disposeBackend(b)).catch(serverDebug);
+  addServerListener(server, 'close', onClose);
+
   server.setRequestHandler(mcpBundle.CallToolRequestSchema, async (request, extra) => {
     serverDebug('callTool', request);
 
@@ -108,25 +120,35 @@ export function createServer(name: string, version: string, backend: ServerBacke
     } : () => {};
 
     try {
-      if (!initializePromise)
-        initializePromise = initializeServer(server, backend, runHeartbeat);
-      await initializePromise;
+      if (!backendPromise) {
+        backendPromise = initializeServer(server, factory, runHeartbeat).catch(e => {
+          backendPromise = undefined;
+          throw e;
+        });
+      }
+
+      const backend = await backendPromise;
       const toolResult = await backend.callTool(request.params.name, request.params.arguments || {}, progress);
+      if (toolResult.isClose) {
+        await backendManager.disposeBackend(backend).catch(serverDebug);
+        backendPromise = undefined;
+        delete toolResult.isClose;
+      }
+
       const mergedResult = mergeTextParts(toolResult);
       serverDebugResponse('callResult', mergedResult);
       return mergedResult;
     } catch (error) {
       return {
-        content: [{ type: 'text', text: '### Result\n' + String(error) }],
+        content: [{ type: 'text', text: '### Error\n' + String(error) }],
         isError: true,
       };
     }
   });
-  addServerListener(server, 'close', () => backend.serverClosed?.(server));
   return server;
 }
 
-const initializeServer = async (server: Server, backend: ServerBackend, runHeartbeat: boolean) => {
+const initializeServer = async (server: Server, factory: ServerBackendFactory, runHeartbeat: boolean): Promise<ServerBackend> => {
   const capabilities = server.getClientCapabilities();
   let clientRoots: Root[] = [];
   if (capabilities?.roots) {
@@ -144,9 +166,10 @@ const initializeServer = async (server: Server, backend: ServerBackend, runHeart
     timestamp: Date.now(),
   };
 
-  await backend.initialize?.(clientInfo);
+  const backend = await backendManager.createBackend(factory, clientInfo);
   if (runHeartbeat)
     startHeartbeat(server);
+  return backend;
 };
 
 const startHeartbeat = (server: Server) => {

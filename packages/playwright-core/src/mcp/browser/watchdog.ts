@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-import { SharedContextFactory } from './browserContextFactory';
-import { Context } from './context';
+import { gracefullyCloseAll, gracefullyCloseSet } from '../../utils';
+import { testDebug } from '../log';
 
 export function setupExitWatchdog() {
   let isExiting = false;
-  const handleExit = async () => {
+  const handleExit = async (signal: string) => {
     if (isExiting)
       return;
     isExiting = true;
     // eslint-disable-next-line no-restricted-properties
     setTimeout(() => process.exit(0), 15000);
-    await Context.disposeAll();
-    await SharedContextFactory.dispose();
+    testDebug('gracefully closing ' + gracefullyCloseSet.size);
+    await gracefullyCloseAll();
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   };
 
-  process.stdin.on('close', handleExit);
-  process.on('SIGINT', handleExit);
-  process.on('SIGTERM', handleExit);
+  process.stdin.on('close', () => handleExit('close'));
+  process.on('SIGINT', () => handleExit('SIGINT'));
+  process.on('SIGTERM', () => handleExit('SIGTERM'));
 }

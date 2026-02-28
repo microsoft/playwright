@@ -47,6 +47,7 @@ export class Response {
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeSnapshotFileName: string | undefined;
+  private _isClose: boolean = false;
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
@@ -107,6 +108,10 @@ export class Response {
     this._imageResults.push({ data, imageType });
   }
 
+  setClose() {
+    this._isClose = true;
+  }
+
   addError(error: string) {
     this._errors.push(error);
   }
@@ -162,6 +167,7 @@ export class Response {
 
     return {
       content,
+      ...(this._isClose ? { isClose: true } : {}),
       ...(sections.some(section => section.isError) ? { isError: true } : {}),
     };
   }
@@ -192,6 +198,8 @@ export class Response {
         addSection('Open tabs', renderTabsMarkdown(tabHeaders));
       addSection('Page', renderTabMarkdown(tabHeaders.find(h => h.current) ?? tabHeaders[0]));
     }
+    if (this._context.tabs().length === 0)
+      this._isClose = true;
 
     // Handle modal states.
     if (tabSnapshot?.modalStates.length)

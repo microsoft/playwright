@@ -3,6 +3,7 @@
 ./tools/
 ../sdk/
 ../log.ts
+../../utils/
 ../../utils/isomorphic/
 ../../utilsBundle.ts
 ../../mcpBundle.ts

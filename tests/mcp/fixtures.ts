@@ -292,11 +292,7 @@ export const expect = baseExpect.extend({
   },
 });
 
-export function formatOutput(output: string): string[] {
-  return output.split('\n').map(line => line.replace(/^pw:mcp:test /, '').replace(/user data dir.*/, 'user data dir').trim()).filter(Boolean);
-}
-
-export const mcpServerPath = [path.join(__dirname, '../../packages/playwright/cli.js'), 'run-mcp-server'];
+export const mcpServerPath = [path.join(__dirname, '../../packages/playwright-core/cli.js'), 'run-mcp-server'];
 export const testMcpServerPath = [path.join(__dirname, '../../packages/playwright-test/cli.js'), 'run-test-mcp-server'];
 
 type Files = { [key: string]: string | Buffer };
@@ -346,4 +342,12 @@ export async function prepareDebugTest(startClient: StartClient, testFile?: stri
   });
   const [, id] = listResult.content[0].text.match(/\[id=([^\]]+)\]/);
   return { client, id };
+}
+
+export function formatLog(stderr: string) {
+  const lines = stderr.split('\n').filter(l => l.startsWith('pw:mcp:test')).map(l => l.replace(/^pw:mcp:test\s+/, ''));
+  const object = {};
+  for (const line of lines)
+    object[line] = (object[line] || 0) + 1;
+  return object;
 }
