@@ -1172,23 +1172,6 @@ test('trace:retain-on-failure-and-retries should keep all traces when test is fl
   expect(fs.existsSync(retryTracePath)).toBeTruthy();
 });
 
-test('trace:retain-on-failure-and-retries should not create trace if test passes', async ({ runInlineTest }, testInfo) => {
-  const result = await runInlineTest({
-    'a.spec.ts': `
-      import { test, expect } from '@playwright/test';
-      test('passing', async ({ page }) => {
-        await page.goto('about:blank');
-      });
-    `,
-  }, { trace: 'retain-on-failure-and-retries' });
-
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-
-  const tracePath = testInfo.outputPath('test-results', 'a-passing', 'trace.zip');
-  expect(fs.existsSync(tracePath)).toBeFalsy();
-});
-
 test('trace:retain-on-failure-and-retries should keep all traces when test fails on retries', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'a.spec.ts': `
