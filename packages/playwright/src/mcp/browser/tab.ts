@@ -42,6 +42,7 @@ type Download = {
   download: playwright.Download;
   finished: boolean;
   outputFile: string;
+  savePromise?: Promise<void>;
 };
 
 type ConsoleLogEntry = {
@@ -179,16 +180,19 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   private async _downloadStarted(download: playwright.Download) {
-    const entry = {
+    const entry: Download = {
       download,
       finished: false,
       outputFile: await this.context.outputFile(download.suggestedFilename(), { origin: 'web', title: 'Saving download' })
     };
     this._downloads.push(entry);
     this._addLogEntry({ type: 'download-start', wallTime: Date.now(), download: entry });
-    await download.saveAs(entry.outputFile);
-    entry.finished = true;
-    this._addLogEntry({ type: 'download-finish', wallTime: Date.now(), download: entry });
+    // Capture the save promise so waitForCompletion can await it
+    entry.savePromise = download.saveAs(entry.outputFile).then(() => {
+      entry.finished = true;
+      this._addLogEntry({ type: 'download-finish', wallTime: Date.now(), download: entry });
+    });
+    await entry.savePromise;
   }
 
   private _clearCollectedArtifacts() {
@@ -340,7 +344,27 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async waitForCompletion(callback: () => Promise<void>) {
     await this._initializedPromise;
+    const beforeCount = this._downloads.length;
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
+    await this._waitForPendingDownloads(beforeCount);
+  }
+
+  /**
+   * Wait for downloads that started after beforeCount to finish,
+   * with a configurable timeout ceiling.
+   */
+  private async _waitForPendingDownloads(beforeCount: number): Promise<void> {
+    const newDownloads = this._downloads.slice(beforeCount);
+    const pending = newDownloads.filter(d => !d.finished && d.savePromise);
+    if (pending.length === 0)
+      return;
+
+    const downloadTimeout = this.context.config.timeouts.download ?? 30_000;
+    const timeout = new Promise<void>(resolve => setTimeout(resolve, downloadTimeout));
+    await Promise.race([
+      Promise.all(pending.map(d => d.savePromise!.catch(() => {}))),
+      timeout,
+    ]);
   }
 
   async refLocator(params: { element?: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {

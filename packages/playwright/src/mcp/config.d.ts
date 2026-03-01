@@ -201,6 +201,11 @@ export type Config = {
     action?: number;
 
     /*
+     * Configures download completion timeout in waitForCompletion. Defaults to 30000ms.
+     */
+    download?: number;
+
+    /*
      * Configures default navigation timeout: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout. Defaults to 60000ms.
      */
     navigation?: number;

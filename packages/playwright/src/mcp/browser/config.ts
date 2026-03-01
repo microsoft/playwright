@@ -71,6 +71,7 @@ export type CLIOptions = {
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;
+  timeoutDownload?: number;
   timeoutNavigation?: number;
   userAgent?: string;
   userDataDir?: string;
@@ -105,6 +106,7 @@ export const defaultConfig: FullConfig = {
   },
   timeouts: {
     action: 5000,
+    download: 30000,
     navigation: 60000,
   },
   filterInternalUrls: false,
@@ -146,6 +148,7 @@ export type FullConfig = Config & {
   },
   timeouts: {
     action: number;
+    download: number;
     navigation: number;
   },
   filterInternalUrls?: boolean;
@@ -311,6 +314,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     testIdAttribute: cliOptions.testIdAttribute,
     timeouts: {
       action: cliOptions.timeoutAction,
+      download: cliOptions.timeoutDownload,
       navigation: cliOptions.timeoutNavigation,
     },
   };
@@ -359,6 +363,7 @@ function configFromEnv(): Config {
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.testIdAttribute = envToString(process.env.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
   options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
+  options.timeoutDownload = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_DOWNLOAD);
   options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
