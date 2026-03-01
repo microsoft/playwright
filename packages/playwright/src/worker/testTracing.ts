@@ -83,6 +83,9 @@ export class TestTracing {
     if (this._options?.mode === 'retain-on-first-failure' && this._testInfo.retry === 0)
       return true;
 
+    if (this._options?.mode === 'retain-on-failure-and-retries')
+      return true;
+
     return false;
   }
 
@@ -159,6 +162,8 @@ export class TestTracing {
     if (!this._options)
       return true;
     const testFailed = this._testInfo.status !== this._testInfo.expectedStatus;
+    if (this._options.mode === 'retain-on-failure-and-retries')
+      return !testFailed && this._testInfo.retry === 0;
     return !testFailed && (this._options.mode === 'retain-on-failure' || this._options.mode === 'retain-on-first-failure');
   }
 
