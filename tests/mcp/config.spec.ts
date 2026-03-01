@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfig } from '../../packages/playwright-core/lib/mcp/browser/config';
+import { resolveCLIConfig, headerParser } from '../../packages/playwright-core/lib/mcp/browser/config';
 import type { Config } from '../../packages/playwright-core/src/mcp/config';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -155,4 +155,35 @@ test('browser_get_config returns merged config from file, env and cli', async ({
 
   // From CLI arg (--isolated).
   expect(config.browser.isolated).toBe(true);
+});
+
+test('headerParser should parse header with value containing colons', async ({}) => {
+  // Regression test for https://github.com/microsoft/playwright-mcp/issues/1417
+  // Standard header without colon in value
+  expect(headerParser('Authorization: Bearer token123')).toEqual({ Authorization: 'Bearer token123' });
+
+  // Header with URL in value (contains ://)
+  expect(headerParser('X-Custom: http://example.com/api')).toEqual({ 'X-Custom': 'http://example.com/api' });
+
+  // Header with multiple colons in value
+  expect(headerParser('X-Auth: token:secret:data')).toEqual({ 'X-Auth': 'token:secret:data' });
+
+  // Header with port number in value
+  expect(headerParser('X-Host: localhost:8080')).toEqual({ 'X-Host': 'localhost:8080' });
+
+  // Multiple headers via previous parameter
+  expect(headerParser('X-Second: value2', headerParser('X-First: value1'))).toEqual({
+    'X-First': 'value1',
+    'X-Second': 'value2',
+  });
+
+  // Header with whitespace
+  expect(headerParser('  X-Spaced  :  value with spaces  ')).toEqual({ 'X-Spaced': 'value with spaces' });
+
+  // Empty or undefined input
+  expect(headerParser(undefined)).toEqual({});
+  expect(headerParser(undefined, { Existing: 'header' })).toEqual({ Existing: 'header' });
+
+  // Header without colon returns empty result
+  expect(headerParser('NoColonHere')).toEqual({});
 });
