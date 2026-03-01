@@ -51,9 +51,8 @@ it.describe('MV3', () => {
     const extensionPath = asset('extension-mv3-sw-lifecycle');
     const context = await launchPersistentContext(extensionPath);
 
-    const sw1 = context.serviceWorkers().length
-        ? context.serviceWorkers()[0]
-        : await context.waitForEvent('serviceworker');
+    const serviceWorkers = context.serviceWorkers();
+    const sw1 = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     const startTime1 = await sw1.evaluate(() => (globalThis as any).startTime);
 
     // Use a CDP session to force a stop/start cycle (no Playwright API for this).
