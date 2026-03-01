@@ -78,7 +78,7 @@ test('browser_mouse_click_xy (right button)', async ({ client }) => {
     arguments: { x: 100, y: 100, button: 'right' },
   })).toHaveResponse({
     code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  button: 'right'\n});`),
-    snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:2.*contextmenu button:2.*mouseup button:2/s),
+    snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:2(?=.*mouseup button:2)(?=.*contextmenu button:2)/s),
   });
 });
 

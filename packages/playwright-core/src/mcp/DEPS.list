@@ -1,0 +1,7 @@
+[*]
+../../
+./sdk/
+./browser/
+./extension/
+../cli/
+../utilsBundle.ts

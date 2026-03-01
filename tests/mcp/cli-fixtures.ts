@@ -24,32 +24,35 @@ import type { CommonFixtures } from '../config/commonFixtures';
 
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
+  cliEnv: Record<string, string>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
     exitCode: number | undefined,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
+    pid?: number,
   }>;
 }>({
+  cliEnv: async ({}, use) => {
+    await use(cliEnv());
+  },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
-    const daemons: { session?: string, pid: number }[] = [];
+    const sessions: { name: string, pid: number }[] = [];
     await fs.promises.mkdir(test.info().outputPath('.playwright'), { recursive: true });
 
     await use(async (...args: string[]) => {
       const cliArgs = args.filter(arg => typeof arg === 'string');
       const cliOptions = args.findLast(arg => typeof arg === 'object') || {};
-      return await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, daemons);
+      return await runCli(childProcess, cliArgs, cliOptions, { mcpBrowser, mcpHeadless }, sessions);
     });
 
-    for (const daemon of daemons) {
-      if (daemon.session) {
-        await runCli(childProcess, ['--session=' + daemon.session, 'close'], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
-          if (!e.message.includes('is not running'))
-            throw e;
-        });
-      }
-      killProcessGroup(daemon.pid);
+    for (const session of sessions) {
+      await runCli(childProcess, ['--session=' + session.name, 'close'], {}, { mcpBrowser, mcpHeadless }, []).catch(e => {
+        if (!e.message.includes('is not running'))
+          throw e;
+      });
+      killProcessGroup(session.pid);
     }
 
     const daemonDir = path.join(test.info().outputDir, 'daemon');
@@ -59,18 +62,24 @@ export const test = baseTest.extend<{
   },
 });
 
-async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, daemons: { session?: string, pid: number }[]) {
+function cliEnv() {
+  return {
+    PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
+    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
+  };
+}
+
+async function runCli(childProcess: CommonFixtures['childProcess'], args: string[], cliOptions: { cwd?: string, env?: Record<string, string> }, options: { mcpBrowser: string, mcpHeadless: boolean }, sessions: { name: string, pid: number }[]) {
   const stepTitle = `cli ${args.join(' ')}`;
   return await test.step(stepTitle, async () => {
     const testInfo = test.info();
     const cli = childProcess({
-      command: [process.execPath, require.resolve('../../packages/playwright/lib/cli/client/cli.js'), ...args],
+      command: [process.execPath, require.resolve('../../packages/playwright-core/lib/cli/client/cli.js'), ...args],
       cwd: cliOptions.cwd ?? testInfo.outputPath(),
       env: {
         ...process.env,
         ...cliOptions.env,
-        PLAYWRIGHT_DAEMON_SESSION_DIR: testInfo.outputPath('daemon'),
-        PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(testInfo.project.outputDir, 'daemon-sockets'),
+        ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
         ...cliOptions.env,
@@ -88,18 +97,14 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
     const [, sessionName, pid] = matches ?? [];
     if (sessionName && pid)
-      daemons.push({ session: sessionName, pid: +pid });
-
-    const devtoolsMatch = cli.stdout.match(/DevTools pid (\d+) listening/);
-    if (devtoolsMatch)
-      daemons.push({ pid: +devtoolsMatch[1] });
-
+      sessions.push({ name: sessionName, pid: +pid });
     return {
       exitCode: await cli.exitCode,
       output: cli.stdout.trim(),
       error: cli.stderr.trim(),
       snapshot,
-      attachments
+      attachments,
+      pid: pid ? +pid : undefined,
     };
   });
 }

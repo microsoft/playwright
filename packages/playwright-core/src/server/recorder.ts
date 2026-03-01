@@ -462,7 +462,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this._filePrimaryURLChanged();
     });
     frame.on(Frame.Events.InternalNavigation, event => {
-      if (event.isPublic) {
+      if (event.isPublic && !event.error) {
         this._onFrameNavigated(frame, page);
         this._filePrimaryURLChanged();
       }

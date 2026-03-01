@@ -61,7 +61,7 @@ This project incorporates components from the projects listed below. The origina
 -	graceful-fs@4.2.10 (https://github.com/isaacs/node-graceful-fs)
 -	has-symbols@1.1.0 (https://github.com/inspect-js/has-symbols)
 -	hasown@2.0.2 (https://github.com/inspect-js/hasOwn)
--	hono@4.11.8 (https://github.com/honojs/hono)
+-	hono@4.12.2 (https://github.com/honojs/hono)
 -	http-errors@2.0.1 (https://github.com/jshttp/http-errors)
 -	https-proxy-agent@7.0.6 (https://github.com/TooTallNate/proxy-agents)
 -	iconv-lite@0.7.2 (https://github.com/pillarjs/iconv-lite)
@@ -85,7 +85,7 @@ This project incorporates components from the projects listed below. The origina
 -	mime-db@1.54.0 (https://github.com/jshttp/mime-db)
 -	mime-types@3.0.2 (https://github.com/jshttp/mime-types)
 -	mime@3.0.0 (https://github.com/broofa/mime)
--	minimatch@3.1.3 (https://github.com/isaacs/minimatch)
+-	minimatch@3.1.4 (https://github.com/isaacs/minimatch)
 -	ms@2.1.2 (https://github.com/zeit/ms)
 -	ms@2.1.3 (https://github.com/vercel/ms)
 -	negotiator@1.0.0 (https://github.com/jshttp/negotiator)
@@ -2146,7 +2146,7 @@ SOFTWARE.
 =========================================
 END OF hasown@2.0.2 AND INFORMATION
 
-%% hono@4.11.8 NOTICES AND INFORMATION BEGIN HERE
+%% hono@4.12.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -2170,7 +2170,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF hono@4.11.8 AND INFORMATION
+END OF hono@4.12.2 AND INFORMATION
 
 %% http-errors@2.0.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2775,7 +2775,7 @@ THE SOFTWARE.
 =========================================
 END OF mime@3.0.0 AND INFORMATION
 
-%% minimatch@3.1.3 NOTICES AND INFORMATION BEGIN HERE
+%% minimatch@3.1.4 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The ISC License
 
@@ -2793,7 +2793,7 @@ WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
 ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR
 IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
-END OF minimatch@3.1.3 AND INFORMATION
+END OF minimatch@3.1.4 AND INFORMATION
 
 %% ms@2.1.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================

@@ -73,7 +73,7 @@ test('should throw connection error and allow re-connecting', async ({ cdpServer
     name: 'browser_navigate',
     arguments: { url: server.PREFIX },
   })).toHaveResponse({
-    error: expect.stringContaining(`Error: browserType.connectOverCDP: connect ECONNREFUSED`),
+    error: expect.stringContaining(`Error: connect ECONNREFUSED`),
     isError: true,
   });
   await cdpServer.start();

@@ -33,6 +33,7 @@ class JUnitReporter implements ReporterV2 {
   private timestamp!: Date;
   private totalTests = 0;
   private totalFailures = 0;
+  private totalErrors = 0;
   private totalSkipped = 0;
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
@@ -79,7 +80,7 @@ class JUnitReporter implements ReporterV2 {
         tests: self.totalTests,
         failures: self.totalFailures,
         skipped: self.totalSkipped,
-        errors: 0,
+        errors: self.totalErrors,
         time: result.duration / 1000
       },
       children
@@ -100,6 +101,7 @@ class JUnitReporter implements ReporterV2 {
     let tests = 0;
     let skipped = 0;
     let failures = 0;
+    let errors = 0;
     let duration = 0;
     const children: XMLEntry[] = [];
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
@@ -108,16 +110,19 @@ class JUnitReporter implements ReporterV2 {
       ++tests;
       if (test.outcome() === 'skipped')
         ++skipped;
-      if (!test.ok())
-        ++failures;
       for (const result of test.results)
         duration += result.duration;
-      await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
+      const classification = await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
+      if (classification === 'error')
+        ++errors;
+      else if (classification === 'failure')
+        ++failures;
     }
 
     this.totalTests += tests;
     this.totalSkipped += skipped;
     this.totalFailures += failures;
+    this.totalErrors += errors;
 
     const entry: XMLEntry = {
       name: 'testsuite',
@@ -129,7 +134,7 @@ class JUnitReporter implements ReporterV2 {
         failures,
         skipped,
         time: duration / 1000,
-        errors: 0,
+        errors,
       },
       children
     };
@@ -137,7 +142,7 @@ class JUnitReporter implements ReporterV2 {
     return entry;
   }
 
-  private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]) {
+  private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]): Promise<'failure' | 'error' | null> {
     const entry = {
       name: 'testcase',
       attributes: {
@@ -176,18 +181,33 @@ class JUnitReporter implements ReporterV2 {
 
     if (test.outcome() === 'skipped') {
       entry.children.push({ name: 'skipped' });
-      return;
+      return null;
     }
 
+    let classification: 'failure' | 'error' | null = null;
     if (!test.ok()) {
-      entry.children.push({
-        name: 'failure',
-        attributes: {
-          message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-          type: 'FAILURE',
-        },
-        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-      });
+      const errorInfo = classifyError(test);
+      if (errorInfo) {
+        classification = errorInfo.elementName;
+        entry.children.push({
+          name: errorInfo.elementName,
+          attributes: {
+            message: errorInfo.message,
+            type: errorInfo.type,
+          },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      } else {
+        classification = 'failure';
+        entry.children.push({
+          name: 'failure',
+          attributes: {
+            message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+            type: 'FAILURE',
+          },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      }
     }
 
     const systemOut: string[] = [];
@@ -223,7 +243,43 @@ class JUnitReporter implements ReporterV2 {
       entry.children.push({ name: 'system-out', text: systemOut.join('') });
     if (systemErr.length)
       entry.children.push({ name: 'system-err', text: systemErr.join('') });
+    return classification;
   }
+}
+
+function classifyError(test: TestCase): { elementName: 'failure' | 'error'; type: string; message: string } | null {
+  for (const result of test.results) {
+    const error = result.error;
+    if (!error)
+      continue;
+
+    const rawMessage = stripAnsiEscapes(error.message || error.value || '');
+
+    // Parse "ErrorName: message" format from serialized error.
+    const nameMatch = rawMessage.match(/^(\w+): /);
+    const errorName = nameMatch ? nameMatch[1] : '';
+    const messageBody = nameMatch ? rawMessage.slice(nameMatch[0].length) : rawMessage;
+    const firstLine = messageBody.split('\n')[0].trim();
+
+    // Check for expect/assertion failure pattern.
+    const matcherMatch = rawMessage.match(/expect\(.*?\)\.(not\.)?(\w+)/);
+    if (matcherMatch) {
+      const matcherName = `expect.${matcherMatch[1] || ''}${matcherMatch[2]}`;
+      return {
+        elementName: 'failure',
+        type: matcherName,
+        message: firstLine,
+      };
+    }
+
+    // Thrown error.
+    return {
+      elementName: 'error',
+      type: errorName || 'Error',
+      message: firstLine,
+    };
+  }
+  return null;
 }
 
 type XMLEntry = {

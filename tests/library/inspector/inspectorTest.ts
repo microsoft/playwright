@@ -50,8 +50,9 @@ const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, lan
 const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inProcessFactory').createInProcessPlaywright(nodePlatform);
 
 export const test = contextTest.extend<CLITestArgs>({
-  recorderPageGetter: async ({ context, toImpl, mode }, run, testInfo) => {
-    testInfo.skip(mode.startsWith('service'));
+  recorderPageGetter: async ({ context, toImpl, mode, headless }, run, testInfo) => {
+    testInfo.skip(mode !== 'default');
+    testInfo.skip(!headless, 'real mouse moves mess up with recording');
     await run(async () => {
       while (!toImpl(context).recorderAppForTest)
         await new Promise(f => setTimeout(f, 100));

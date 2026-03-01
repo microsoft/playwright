@@ -17,7 +17,7 @@
 import type { z } from 'zod';
 import type { TestContext } from './testContext.js';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
-import type { ToolSchema } from '../sdk/tool.js';
+import type { ToolSchema } from 'playwright-core/lib/mcp/exports';
 
 export type TestTool<Input extends z.Schema = z.Schema> = {
   schema: ToolSchema<Input>;

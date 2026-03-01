@@ -28,6 +28,8 @@ import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/tra
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
+import { decorateMCPCommand } from '../mcp/program';
+import { decorateCLICommand } from './daemon/program';
 
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
@@ -296,6 +298,7 @@ program
     .option('--path <path>', 'Endpoint Path', '/')
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
+    .option('--artifacts-dir <artifactsDir>', 'Artifacts directory')
     .action(function(options) {
       runServer({
         port: options.port ? +options.port : undefined,
@@ -303,6 +306,7 @@ program
         path: options.path,
         maxConnections: options.maxClients ? +options.maxClients : Infinity,
         extension: options.mode === 'extension' || !!process.env.PW_EXTENSION_MODE,
+        artifactsDir: options.artifactsDir,
       }).catch(logErrorAndExit);
     });
 
@@ -344,7 +348,7 @@ program
       if (options.port !== undefined || options.host !== undefined)
         runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
       else
-        runTraceViewerApp(trace, options.browser, openOptions, true).catch(logErrorAndExit);
+        runTraceViewerApp(trace, options.browser, openOptions).catch(logErrorAndExit);
     }).addHelpText('afterAll', `
 Examples:
 
@@ -727,6 +731,14 @@ function commandWithOpenOptions(command: string, description: string, options: a
       .option('--user-data-dir <directory>', 'use the specified user data directory instead of a new context')
       .option('--viewport-size <size>', 'specify browser viewport size in pixels, for example "1280, 720"');
 }
+
+const mcpCommand = program.command('run-mcp-server', { hidden: true });
+mcpCommand.description('Interact with the browser over MCP');
+decorateMCPCommand(mcpCommand, packageJSON.version);
+
+const cliCommand = program.command('run-cli-server', { hidden: true });
+cliCommand.description('Interact with the browser over CLI');
+decorateCLICommand(cliCommand, packageJSON.version);
 
 function buildBasePlaywrightCLICommand(cliTargetLang: string | undefined): string {
   switch (cliTargetLang) {

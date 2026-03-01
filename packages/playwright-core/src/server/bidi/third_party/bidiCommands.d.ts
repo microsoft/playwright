@@ -50,6 +50,10 @@ export interface Commands {
     };
     returnType: Bidi.Browser.RemoveUserContext;
   };
+  'browser.setDownloadBehavior': {
+    params: Bidi.Browser.SetDownloadBehaviorParameters;
+    returnType: Bidi.Browser.SetDownloadBehaviorResult;
+  }
 
   'browsingContext.activate': {
     params: Bidi.BrowsingContext.ActivateParameters;

@@ -1,8 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ES2019",
-    "module": "commonjs",
-    "lib": ["esnext", "dom", "DOM.Iterable"],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "paths": {
       /*
         The following two serve different purposes:
@@ -20,21 +21,24 @@
       "@web/*": ["./packages/web/src/*"],
       "playwright-core/lib/*": ["./packages/playwright-core/src/*"],
       "playwright/lib/*": ["./packages/playwright/src/*"],
+      "@playwright/*": ["./packages/playwright/src/*"],
     },
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "allowJs": false,
     "jsx": "react-jsx",
     "resolveJsonModule": true,
+    "isolatedModules": true,
     "noEmit": true,
     "noImplicitOverride": true,
     "useUnknownInCatchVariables": false,
+    "useDefineForClassFields": false,
     "skipLibCheck": true,
   },
   "compileOnSave": true,
   "include": ["packages"],
   "exclude": [
     "packages/*/lib",
-    "packages/html-reporter/",
   ]
 }

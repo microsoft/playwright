@@ -17,8 +17,8 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfig } from '../../packages/playwright/lib/mcp/browser/config';
-import type { Config } from '../../packages/playwright/src/mcp/config';
+import { resolveCLIConfig } from '../../packages/playwright-core/lib/mcp/browser/config';
+import type { Config } from '../../packages/playwright-core/src/mcp/config';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
   server.setContent('/', `
@@ -33,6 +33,33 @@ test('config user data dir', async ({ startClient, server }, testInfo) => {
   };
   const configPath = testInfo.outputPath('config.json');
   await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+
+  const { client } = await startClient({ args: ['--config', configPath] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  })).toHaveResponse({
+    snapshot: expect.stringContaining(`Hello, world!`),
+  });
+
+  const files = await fs.promises.readdir(config.browser!.userDataDir!);
+  expect(files.length).toBeGreaterThan(0);
+});
+
+test('config with UTF-8 BOM', async ({ startClient, server }, testInfo) => {
+  server.setContent('/', `
+    <title>Title</title>
+    <body>Hello, world!</body>
+  `, 'text/html');
+
+  const config: Config = {
+    browser: {
+      userDataDir: testInfo.outputPath('user-data-dir'),
+    },
+  };
+  const configPath = testInfo.outputPath('config.json');
+  // Write config with UTF-8 BOM prefix, as some Windows editors (Notepad, PowerShell) do.
+  await fs.promises.writeFile(configPath, '\uFEFF' + JSON.stringify(config, null, 2));
 
   const { client } = await startClient({ args: ['--config', configPath] });
   expect(await client.callTool({

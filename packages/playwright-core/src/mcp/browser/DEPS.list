@@ -1,0 +1,12 @@
+[*]
+../../../
+./tools/
+../sdk/
+../log.ts
+../../utils/isomorphic/
+../../utilsBundle.ts
+../../mcpBundle.ts
+../../server/
+../../server/registry/
+../../server/utils/
+../../client/

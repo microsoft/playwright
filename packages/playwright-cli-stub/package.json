@@ -1,0 +1,8 @@
+{
+  "name": "playwright-cli-stub",
+  "version": "0.0.0",
+  "private": true,
+  "bin": {
+    "playwright-cli": "playwright-cli-stub.js"
+  }
+}

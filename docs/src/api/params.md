@@ -1152,6 +1152,11 @@ Logger sink for Playwright logging.
 Maximum time in milliseconds to wait for the browser instance to start. Defaults to `30000` (30 seconds). Pass `0` to
 disable timeout.
 
+## browser-option-artifactsdir
+- `artifactsDir` <[path]>
+
+If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory is not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the browser closes.
+
 ## browser-option-tracesdir
 - `tracesDir` <[path]>
 
@@ -1164,6 +1169,7 @@ Slows down Playwright operations by the specified amount of milliseconds. Useful
 
 ## shared-browser-options-list-v1.8
 - %%-browser-option-args-%%
+- %%-browser-option-artifactsdir-%%
 - %%-browser-option-channel-%%
 - %%-browser-option-chromiumsandbox-%%
 - %%-browser-option-downloadspath-%%

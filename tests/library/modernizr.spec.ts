@@ -16,7 +16,6 @@
 
 import type { BrowserContext } from 'playwright-core';
 import type { TestServer } from '../config/testserver';
-import { hostPlatform } from '../../packages/playwright-core/src/server/utils/hostPlatform';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 import os from 'os';
@@ -33,10 +32,10 @@ async function checkFeatures(name: string, context: BrowserContext, server: Test
   }
 }
 
-it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headless, channel }) => {
+it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headless, channel, isFrozenWebkit }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
-  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
+  it.skip(isFrozenWebkit);
   const context = await browser.newContext({
     deviceScaleFactor: 2,
     ignoreHTTPSErrors: true,
@@ -91,11 +90,10 @@ it('Safari Desktop', async ({ browser, browserName, platform, httpsServer, headl
   expect(actual).toEqual(expected);
 });
 
-it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, headless, channel }) => {
+it('Mobile Safari', async ({ playwright, browser, browserName, platform, httpsServer, headless, channel, isFrozenWebkit }) => {
   it.skip(browserName !== 'webkit');
   it.skip(browserName === 'webkit' && platform === 'darwin' && os.arch() === 'x64', 'Modernizr uses WebGL which is not available on Intel macOS - https://bugs.webkit.org/show_bug.cgi?id=278277');
-  it.skip(browserName === 'webkit' && hostPlatform.startsWith('ubuntu20.04'), 'Ubuntu 20.04 is frozen');
-  it.skip(browserName === 'webkit' && hostPlatform.startsWith('debian11'), 'Debian 11 is frozen');
+  it.skip(isFrozenWebkit);
   const iPhone = playwright.devices['iPhone 12'];
   const context = await browser.newContext({
     ...iPhone,

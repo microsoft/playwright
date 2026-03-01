@@ -1,7 +1,0 @@
-[*]
-./tools/
-../sdk/
-../log.ts
-../package.ts
-../../transform/transform.ts
-../../util.ts

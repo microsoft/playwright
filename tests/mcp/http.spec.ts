@@ -23,7 +23,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath } from './fixtures';
 
-import type { Config } from '../../packages/playwright/src/mcp/config';
+import type { Config } from '../../packages/playwright-core/src/mcp/config';
 import { ListRootsRequestSchema } from 'playwright-core/lib/mcpBundle';
 
 const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noPort?: boolean }) => Promise<{ url: URL, stderr: () => string }> }>({

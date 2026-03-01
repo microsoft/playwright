@@ -247,7 +247,9 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(request.headers['foo']).toBe('bar');
     });
 
-    test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server }) => {
+    test('should send default User-Agent and X-Playwright-Browser headers with connect request', async ({ connect, browserName, server, isFrozenWebkit }) => {
+      test.skip(isFrozenWebkit);
+
       const [request] = await Promise.all([
         server.waitForWebSocketConnectionRequest(),
         connect(`ws://localhost:${server.PORT}/ws`, {
@@ -508,6 +510,27 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(fs.existsSync(savedAsPath)).toBeTruthy();
       const error = await page.video().path().catch(e => e);
       expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
+    });
+
+    test('should save videos to artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
+      const artifactsDir = testInfo.outputPath('artifacts');
+      const remoteServer = await startRemoteServer(kind, { artifactsDir });
+      const browser = await connect(remoteServer.wsEndpoint());
+      const localDir = testInfo.outputPath('random-dir');
+      const context = await browser.newContext({
+        recordVideo: { dir: localDir, size: { width: 320, height: 240 } },
+      });
+      const page = await context.newPage();
+      await page.evaluate(() => document.body.style.backgroundColor = 'red');
+      await rafraf(page, 100);
+      await context.close();
+
+      const savedAsPath = testInfo.outputPath('my-video.webm');
+      await page.video().saveAs(savedAsPath);
+      expect(fs.existsSync(savedAsPath)).toBeTruthy();
+      expect(fs.existsSync(localDir)).toBeFalsy();
+
+      await browser.close();
     });
 
     test('should be able to connect 20 times to a single server without warnings', async ({ connect, startRemoteServer, platform }) => {
@@ -1083,7 +1106,7 @@ test.describe('launchServer only', () => {
 
 test('should refuse connecting when versions do not match', async ({ connect, childProcess }) => {
   const server = new RunServer();
-  await server.start(childProcess, 'default', { PW_VERSION_OVERRIDE: '1.2.3' });
+  await server.start(childProcess, { mode: 'default', env: { PW_VERSION_OVERRIDE: '1.2.3' } });
   const error = await connect(server.wsEndpoint()).catch(e => e);
   await server.close();
   expect(error.message).toContain('Playwright version mismatch');

@@ -91,6 +91,16 @@ test('tracing-start-stop', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('.playwright-cli', 'traces', `trace-${timestamp}.network`))).toBeTruthy();
 });
 
+test('tracing-show', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD, { env: { PWTEST_UNDER_TEST: '1' } });
+  const { output } = await cli('tracing-start');
+  expect(output).toContain('Trace recording started');
+  await cli('eval', '() => fetch("/hello-world")');
+
+  const { output: tracingShowOutput } = await cli('tracing-show');
+  expect(tracingShowOutput).toContain('Trace viewer opened.');
+});
+
 test('video-start-stop', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output: videoStartOutput } = await cli('video-start');

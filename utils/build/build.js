@@ -648,33 +648,25 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/skill/**/*.md',
-  from: 'packages/playwright/src',
-  to: 'packages/playwright/lib',
+  files: 'packages/playwright-core/src/skill/**/*.md',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 copyFiles.push({
-  files: 'packages/playwright/src/cli/client/*.{png,ico}',
-  from: 'packages/playwright/src',
-  to: 'packages/playwright/lib',
+  files: 'packages/playwright-core/src/cli/client/*.{png,ico}',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
 });
 
 if (watchMode) {
   // Run TypeScript for type checking.
   steps.push(new ProgramStep({
     command: 'npx',
-    args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
+    args: ['tsc', '-w', '--preserveWatchOutput', '-p', quotePath(filePath('.'))],
     shell: true,
     concurrent: true,
   }));
-  for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools']) {
-    steps.push(new ProgramStep({
-      command: 'npx',
-      args: ['tsc', ...(watchMode ? ['-w'] : []), '--preserveWatchOutput', '-p', quotePath(filePath(`packages/${webPackage}`))],
-      shell: true,
-      concurrent: true,
-    }));
-  }
 }
 
 let cleanupCalled = false;

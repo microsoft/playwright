@@ -27,15 +27,17 @@ export class RunServer implements PlaywrightServer {
   private _process!: TestChildProcess;
   _wsEndpoint!: string;
 
-  async start(childProcess: CommonFixtures['childProcess'], mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv) {
+  async start(childProcess: CommonFixtures['childProcess'], options?: { mode?: 'extension' | 'default', env?: NodeJS.ProcessEnv, artifactsDir?: string }) {
     const command = ['node', path.join(__dirname, '..', '..', 'packages', 'playwright-core', 'cli.js'), 'run-server'];
-    if (mode === 'extension')
+    if (options?.mode === 'extension')
       command.push('--mode=extension');
+    if (options?.artifactsDir)
+      command.push(`--artifacts-dir=${options.artifactsDir}`);
     this._process = childProcess({
       command,
       env: {
         ...process.env,
-        ...env,
+        ...options?.env,
       },
     });
 
@@ -69,6 +71,7 @@ export type RemoteServerOptions = {
   url?: string;
   startStopAndRunHttp?: boolean;
   sharedBrowser?: boolean;
+  artifactsDir?: string;
 };
 
 export class RemoteServer implements PlaywrightServer {
@@ -97,6 +100,8 @@ export class RemoteServer implements PlaywrightServer {
     };
     if (remoteServerOptions.sharedBrowser)
       (launchOptions as any)._sharedBrowser = true;
+    if (remoteServerOptions.artifactsDir)
+      launchOptions.artifactsDir = remoteServerOptions.artifactsDir;
     const options = {
       browserTypeName: browserType.name(),
       channel,

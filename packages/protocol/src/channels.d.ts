@@ -529,7 +529,8 @@ export type LocalUtilsHarUnzipOptions = {
 };
 export type LocalUtilsHarUnzipResult = void;
 export type LocalUtilsConnectParams = {
-  wsEndpoint: string,
+  wsEndpoint?: string,
+  pipeName?: string,
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
@@ -537,6 +538,8 @@ export type LocalUtilsConnectParams = {
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
+  wsEndpoint?: string,
+  pipeName?: string,
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
@@ -912,6 +915,7 @@ export type BrowserTypeLaunchParams = {
   },
   downloadsPath?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
@@ -937,6 +941,7 @@ export type BrowserTypeLaunchOptions = {
   },
   downloadsPath?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
@@ -966,6 +971,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   },
   downloadsPath?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
@@ -1048,6 +1054,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   },
   downloadsPath?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   chromiumSandbox?: boolean,
   firefoxUserPrefs?: any,
   cdpPort?: number,
@@ -1154,6 +1161,8 @@ export interface BrowserEventTarget {
 }
 export interface BrowserChannel extends BrowserEventTarget, Channel {
   _type_Browser: boolean;
+  startServer(params: BrowserStartServerParams, progress?: Progress): Promise<BrowserStartServerResult>;
+  stopServer(params?: BrowserStopServerParams, progress?: Progress): Promise<BrowserStopServerResult>;
   close(params: BrowserCloseParams, progress?: Progress): Promise<BrowserCloseResult>;
   killForTests(params?: BrowserKillForTestsParams, progress?: Progress): Promise<BrowserKillForTestsResult>;
   defaultUserAgentForTest(params?: BrowserDefaultUserAgentForTestParams, progress?: Progress): Promise<BrowserDefaultUserAgentForTestResult>;
@@ -1168,6 +1177,22 @@ export type BrowserContextEvent = {
   context: BrowserContextChannel,
 };
 export type BrowserCloseEvent = {};
+export type BrowserStartServerParams = {
+  title: string,
+  wsPath?: string,
+  workspaceDir?: string,
+};
+export type BrowserStartServerOptions = {
+  wsPath?: string,
+  workspaceDir?: string,
+};
+export type BrowserStartServerResult = {
+  wsEndpoint?: string,
+  pipeName?: string,
+};
+export type BrowserStopServerParams = {};
+export type BrowserStopServerOptions = {};
+export type BrowserStopServerResult = void;
 export type BrowserCloseParams = {
   reason?: string,
 };
