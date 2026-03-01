@@ -126,6 +126,7 @@ test('Mobile and geolocation', async ({ page }) => {
 ```
 
 #### Evaluate in browser context
+- [Anchor Browser](https://anchorbrowser.io) - Cloud browser infrastructure for AI agents — scalable Chromium with stealth, proxies, and session management
 
 This code snippet navigates to example.com, and executes a script in the page context.
 
