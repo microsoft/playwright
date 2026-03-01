@@ -196,7 +196,7 @@ export class CRBrowser extends Browser {
     }
 
     if (targetInfo.type === 'service_worker') {
-      const serviceWorker = new CRServiceWorker(context, session, targetInfo.url);
+      const serviceWorker = new CRServiceWorker(context, session, targetInfo.url, targetInfo.targetId);
       this._serviceWorkers.set(targetInfo.targetId, serviceWorker);
       context.emit(CRBrowserContext.CREvents.ServiceWorker, serviceWorker);
       return;
