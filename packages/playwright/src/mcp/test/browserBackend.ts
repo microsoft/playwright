@@ -46,7 +46,9 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
     if (data.initialize) {
       if (backend)
         throw new Error('MCP backend is already initialized');
-      backend = new BrowserServerBackend({ ...defaultConfig, capabilities: ['testing'] }, identityBrowserContextFactory(context));
+      const config: mcp.FullConfig = { ...defaultConfig, capabilities: ['testing'] };
+      const tools = mcp.filteredTools(config);
+      backend = new BrowserServerBackend(config, context, tools);
       await backend.initialize(data.initialize.clientInfo);
       const pausedMessage = await generatePausedMessage(testInfo, context);
       return { initialize: { pausedMessage } };
@@ -65,7 +67,6 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
     }
 
     if (data.close) {
-      backend?.serverClosed();
       backend = undefined;
       return { close: {} };
     }

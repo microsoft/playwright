@@ -15,12 +15,9 @@
  */
 
 // SDK
-export * from './sdk/inProcessTransport';
 export * from './sdk/server';
 export * from './sdk/tool';
 export * from './sdk/http';
-
-// Browser
 export { browserTools } from './browser/tools';
 export { BrowserServerBackend } from './browser/browserServerBackend';
 export { contextFactory, identityBrowserContextFactory } from './browser/browserContextFactory';
@@ -31,12 +28,9 @@ export { setupExitWatchdog } from './browser/watchdog';
 export type { BrowserContextFactory } from './browser/browserContextFactory';
 export type { FullConfig } from './browser/config';
 export type { Tool as BrowserTool } from './browser/tools/tool';
-
-// Root
 export { logUnhandledError } from './log';
 export type { Config, ToolCapability } from './config';
-
-// CLI
 export { startMcpDaemonServer } from '../cli/daemon/daemon';
 export { sessionConfigFromArgs } from '../cli/client/program';
 export { createClientInfo } from '../cli/client/registry';
+export { filteredTools } from './browser/tools';

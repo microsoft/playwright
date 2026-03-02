@@ -25,13 +25,14 @@ import { decorateServer } from '../../server/utils/network';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 
 import { BrowserServerBackend } from '../../mcp/browser/browserServerBackend';
+import { browserTools } from '../../mcp/browser/tools';
 import { SocketConnection } from '../client/socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
 
 import type * as mcp from '../../mcp/exports';
-import type { BrowserContextFactory } from '../../mcp/browser/browserContextFactory';
 import type { FullConfig } from '../../mcp/browser/config';
+import type { BrowserContextFactory } from '../../mcp/browser/browserContextFactory';
 import type { SessionConfig } from '../client/registry';
 
 const daemonDebug = debug('pw:daemon');
@@ -75,7 +76,7 @@ export async function startMcpDaemonServer(
     timestamp: Date.now(),
   };
 
-  const { browserContext, close } = await contextFactory.createContext(clientInfo, new AbortController().signal, {});
+  const browserContext = mcpConfig.browser.isolated ? await contextFactory.createContext(clientInfo) : (await contextFactory.contexts(clientInfo))[0];
   if (!noShutdown) {
     browserContext.on('close', () => {
       daemonDebug('browser closed, shutting down daemon');
@@ -83,10 +84,7 @@ export async function startMcpDaemonServer(
     });
   }
 
-  const existingContextFactory = {
-    createContext: () => Promise.resolve({ browserContext, close }),
-  };
-  const backend = new BrowserServerBackend(mcpConfig, existingContextFactory, { allTools: true });
+  const backend = new BrowserServerBackend(mcpConfig, browserContext, browserTools);
   await backend.initialize(clientInfo);
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
@@ -140,7 +138,6 @@ export async function startMcpDaemonServer(
     server.listen(socketPath, () => {
       daemonDebug(`daemon server listening on ${socketPath}`);
       resolve(async () => {
-        backend.serverClosed();
         await new Promise(cb => server.close(cb));
       });
     });

@@ -16,14 +16,12 @@
 
 import { FullConfig } from './config';
 import { Context } from './context';
-import { logUnhandledError } from '../log';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
-import { browserTools, filteredTools } from './tools';
 import { toMcpTool } from '../sdk/tool';
 
+import type * as playwright from '../../..';
 import type { Tool } from './tools/tool';
-import type { BrowserContextFactory } from './browserContextFactory';
 import type * as mcpServer from '../sdk/server';
 import type { ServerBackend } from '../sdk/server';
 
@@ -32,22 +30,25 @@ export class BrowserServerBackend implements ServerBackend {
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
   private _config: FullConfig;
-  private _browserContextFactory: BrowserContextFactory;
+  readonly browserContext: playwright.BrowserContext;
 
-  constructor(config: FullConfig, factory: BrowserContextFactory, options: { allTools?: boolean, structuredOutput?: boolean } = {}) {
+  constructor(config: FullConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
     this._config = config;
-    this._browserContextFactory = factory;
-    this._tools = options.allTools ? browserTools : filteredTools(config);
+    this._tools = tools;
+    this.browserContext = browserContext;
   }
 
   async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {
     this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo) : undefined;
-    this._context = new Context({
+    this._context = new Context(this.browserContext, {
       config: this._config,
-      browserContextFactory: this._browserContextFactory,
       sessionLog: this._sessionLog,
       clientInfo,
     });
+  }
+
+  async dispose() {
+    this._context?.dispose();
   }
 
   async listTools(): Promise<mcpServer.Tool[]> {
@@ -81,9 +82,5 @@ export class BrowserServerBackend implements ServerBackend {
       context.setRunningTool(undefined);
     }
     return responseObject;
-  }
-
-  serverClosed() {
-    void this._context?.dispose().catch(logUnhandledError);
   }
 }

@@ -30,10 +30,10 @@ const close = defineTool({
   },
 
   handle: async (context, params, response) => {
-    await context.closeBrowserContext();
     const result = renderTabsMarkdown([]);
     response.addTextResult(result.join('\n'));
     response.addCode(`await page.close()`);
+    response.setClose();
   },
 });
 

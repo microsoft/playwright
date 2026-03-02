@@ -22,8 +22,11 @@ import { setupExitWatchdog } from './browser/watchdog';
 import { contextFactory } from './browser/browserContextFactory';
 import { BrowserServerBackend } from './browser/browserServerBackend';
 import { ExtensionContextFactory } from './extension/extensionContextFactory';
+import { filteredTools } from './browser/tools';
+import { testDebug } from './log';
 
 import type { Command } from '../utilsBundle';
+import type { ClientInfo } from './sdk/server';
 
 export function decorateMCPCommand(command: Command, version: string) {
   command
@@ -89,25 +92,52 @@ export function decorateMCPCommand(command: Command, version: string) {
           options.caps.push('devtools');
 
         const config = await resolveCLIConfig(options);
-        const browserContextFactory = contextFactory(config);
-        const extensionContextFactory = new ExtensionContextFactory(config.browser.launchOptions.channel || 'chrome', config.browser.userDataDir, config.browser.launchOptions.executablePath);
-
+        const tools = filteredTools(config);
         if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {
             name: 'Playwright w/ extension',
             nameInConfig: 'playwright-extension',
             version,
-            create: () => new BrowserServerBackend(config, extensionContextFactory)
+            toolSchemas: tools.map(tool => tool.schema),
+            create: async (clientInfo: ClientInfo) => {
+              const extensionContextFactory = new ExtensionContextFactory(
+                  config.browser.launchOptions.channel || 'chrome',
+                  config.browser.userDataDir,
+                  config.browser.launchOptions.executablePath);
+              const browserContext = await extensionContextFactory.createContext(clientInfo);
+              return new BrowserServerBackend(config, browserContext, tools);
+            },
+            disposed: async () => { }
           };
           await mcpServer.start(serverBackendFactory, config.server);
           return;
         }
 
+        require('fs').appendFileSync('mcp-server.log', `INIT STUFF\n`);
+
+        const sharedContextFactory = config.sharedBrowserContext ? contextFactory(config) : undefined;
+        let clientCount = 0;
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
           nameInConfig: 'playwright',
           version,
-          create: () => new BrowserServerBackend(config, browserContextFactory)
+          toolSchemas: tools.map(tool => tool.schema),
+          create: async (clientInfo: ClientInfo) => {
+            clientCount++;
+            const browserContextFactory = sharedContextFactory || contextFactory(config);
+            const browserContext = config.browser.isolated ? await browserContextFactory.createContext(clientInfo) : (await browserContextFactory.contexts(clientInfo))[0];
+            return new BrowserServerBackend(config, browserContext, tools);
+          },
+          disposed: async backend => {
+            clientCount--;
+            if (sharedContextFactory && clientCount > 0)
+              return;
+
+            testDebug('close browser');
+            const browserContext = (backend as BrowserServerBackend).browserContext;
+            await browserContext.close().catch(() => { });
+            await browserContext.browser()!.close().catch(() => { });
+          }
         };
         await mcpServer.start(factory, config.server);
       });

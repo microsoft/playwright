@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 
-import { test, expect, formatOutput } from './fixtures';
+import { test, expect, formatLog } from './fixtures';
 
 test('test reopen browser', async ({ startClient, server }) => {
   const { client, stderr } = await startClient({
@@ -42,26 +42,12 @@ test('test reopen browser', async ({ startClient, server }) => {
     snapshot: expect.stringContaining(`- generic [active] [ref=e1]: Hello, world!`),
   });
 
-  await client.close();
-
-  if (process.platform === 'win32')
-    return;
-
-  await expect.poll(() => formatOutput(stderr()), { timeout: 0 }).toEqual([
-    'create context',
-    'create browser context (persistent)',
-    'lock user data dir',
-    'close context',
-    'close browser context (persistent)',
-    'release user data dir',
-    'close browser context complete (persistent)',
-    'create browser context (persistent)',
-    'lock user data dir',
-    'close context',
-    'close browser context (persistent)',
-    'release user data dir',
-    'close browser context complete (persistent)',
-  ]);
+  await expect.poll(() => formatLog(stderr()), { timeout: 0 }).toEqual({
+    'obtain browser (persistent)': 2,
+    'create context': 2,
+    'create browser context (persistent)': 2,
+    'close browser': 1,
+  });
 });
 
 test('executable path', async ({ startClient, server }) => {
