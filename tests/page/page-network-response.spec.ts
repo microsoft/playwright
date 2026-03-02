@@ -17,7 +17,11 @@
 
 import fs from 'fs';
 import url from 'url';
+import type { AddressInfo } from 'net';
 import { expect, test as it } from './pageTest';
+import { TestServer } from '../config/testserver';
+
+const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 it('should work @smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {
@@ -420,4 +424,9 @@ it('request.existingResponse should return the response after it is received', a
   const response = await page.goto(server.EMPTY_PAGE);
   const request = response.request();
   expect(request.existingResponse()).toBe(response);
+});
+
+it('should return http version', async ({ page, server }) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(await response.httpVersion()).toBe('HTTP/1.1');
 });

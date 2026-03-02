@@ -4163,6 +4163,7 @@ export interface ResponseChannel extends ResponseEventTarget, Channel {
   securityDetails(params?: ResponseSecurityDetailsParams, progress?: Progress): Promise<ResponseSecurityDetailsResult>;
   serverAddr(params?: ResponseServerAddrParams, progress?: Progress): Promise<ResponseServerAddrResult>;
   rawResponseHeaders(params?: ResponseRawResponseHeadersParams, progress?: Progress): Promise<ResponseRawResponseHeadersResult>;
+  httpVersion(params?: ResponseHttpVersionParams, progress?: Progress): Promise<ResponseHttpVersionResult>;
   sizes(params?: ResponseSizesParams, progress?: Progress): Promise<ResponseSizesResult>;
 }
 export type ResponseBodyParams = {};
@@ -4184,6 +4185,11 @@ export type ResponseRawResponseHeadersParams = {};
 export type ResponseRawResponseHeadersOptions = {};
 export type ResponseRawResponseHeadersResult = {
   headers: NameValue[],
+};
+export type ResponseHttpVersionParams = {};
+export type ResponseHttpVersionOptions = {};
+export type ResponseHttpVersionResult = {
+  value: string,
 };
 export type ResponseSizesParams = {};
 export type ResponseSizesOptions = {};

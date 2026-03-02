@@ -117,6 +117,10 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
     return { headers: await progress.race(this._object.rawResponseHeaders()) };
   }
 
+  async httpVersion(params: channels.ResponseHttpVersionParams, progress: Progress): Promise<channels.ResponseHttpVersionResult> {
+    return { value: await progress.race(this._object.httpVersion()) };
+  }
+
   async sizes(params: channels.ResponseSizesParams, progress: Progress): Promise<channels.ResponseSizesResult> {
     return { sizes: await progress.race(this._object.sizes()) };
   }

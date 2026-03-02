@@ -3674,6 +3674,11 @@ Response:
           type: array
           items: NameValue
 
+    httpVersion:
+      internal: true
+      returns:
+        value: string
+
     sizes:
       internal: true
       returns:

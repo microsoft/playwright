@@ -21170,6 +21170,11 @@ export interface Response {
   headerValues(name: string): Promise<Array<string>>;
 
   /**
+   * Returns the http version used by the response.
+   */
+  httpVersion(): Promise<string>;
+
+  /**
    * Returns the JSON representation of response body.
    *
    * This method will throw if the response body is not parsable via `JSON.parse`.
