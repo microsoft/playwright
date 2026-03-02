@@ -3,16 +3,16 @@
   "browsers": [
     {
       "name": "chromium",
-      "revision": "1212",
+      "revision": "1214",
       "installByDefault": true,
-      "browserVersion": "146.0.7680.0",
+      "browserVersion": "146.0.7680.31",
       "title": "Chrome for Testing"
     },
     {
       "name": "chromium-headless-shell",
-      "revision": "1212",
+      "revision": "1214",
       "installByDefault": true,
-      "browserVersion": "146.0.7680.0",
+      "browserVersion": "146.0.7680.31",
       "title": "Chrome Headless Shell"
     },
     {
