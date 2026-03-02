@@ -101,6 +101,34 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+## Testing extension reload
+
+When an extension reloads (via `chrome.runtime.reload()`, the Extensions page, or any other trigger),
+its service worker is replaced by a new one. To observe the new service worker you must register the
+`'serviceworker'` listener **before** triggering the reload — otherwise the event fires before your
+code starts listening and is missed.
+
+```js
+const swPromise = context.waitForEvent('serviceworker');
+await extensionPage.getByRole('button', { name: 'Reload extension' }).click();
+const newServiceWorker = await swPromise;
+```
+
+```python async
+async with context.expect_event('serviceworker') as worker_info:
+    await extension_page.get_by_role('button', name='Reload extension').click()
+new_service_worker = await worker_info.value
+```
+
+```python sync
+with context.expect_event('serviceworker') as worker_info:
+    extension_page.get_by_role('button', name='Reload extension').click()
+new_service_worker = worker_info.value
+```
+
+After the event resolves, `context.serviceWorkers()` contains only the new worker and the old
+[Worker] reference is closed.
+
 ## Testing
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.

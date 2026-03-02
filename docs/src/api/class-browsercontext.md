@@ -292,7 +292,27 @@ from a particular page, use [`event: Page.response`].
 Service workers are only supported on Chromium-based browsers.
 :::
 
-Emitted when new service worker is created in the context.
+Emitted when new service worker is created in the context. This includes the initial service worker
+for an extension and any replacement worker created after an extension reload. To capture a worker
+created by a reload, register the listener **before** triggering the reload:
+
+```js
+const swPromise = context.waitForEvent('serviceworker');
+await triggerExtensionReload();
+const newServiceWorker = await swPromise;
+```
+
+```python async
+async with context.expect_event('serviceworker') as worker_info:
+    await trigger_extension_reload()
+new_service_worker = await worker_info.value
+```
+
+```python sync
+with context.expect_event('serviceworker') as worker_info:
+    trigger_extension_reload()
+new_service_worker = worker_info.value
+```
 
 ## async method: BrowserContext.addCookies
 * since: v1.8
