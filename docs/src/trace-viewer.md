@@ -43,7 +43,7 @@ pwsh bin/Debug/netX/playwright.ps1 show-trace trace.zip
 
 Trace Viewer loads the trace entirely in your browser and does not transmit any data externally.
 
-<img width="1119" alt="Drop Playwright Trace to load" src="https://user-images.githubusercontent.com/13063165/194577918-b4d45726-2692-4093-8a28-9e73552617ef.png" />
+<img height="1684" width="2238" alt="Drop Playwright Trace to load" src="https://user-images.githubusercontent.com/13063165/194577918-b4d45726-2692-4093-8a28-9e73552617ef.png" />
 
 ### Viewing remote traces
 

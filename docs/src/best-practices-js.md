@@ -151,13 +151,13 @@ This will open a new browser window as well as the Playwright inspector. To pick
 
 You can then hover over any element on your page in the browser window and see the locator highlighted below your cursor. Clicking on an element will add the locator into the Playwright inspector. You can either copy the locator and paste into your test file or continue to explore the locator by editing it in the Playwright Inspector, for example by modifying the text, and seeing the results in the browser window.
 
-<img width="1394" alt="generating locators with codegen" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212103268-e7d8ee8b-d307-4cba-be13-831f3fbb1f40.png" />
+<img height="1274" width="2788" alt="generating locators with codegen" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212103268-e7d8ee8b-d307-4cba-be13-831f3fbb1f40.png" />
 
 #### Use the VS Code extension to generate locators
 
 You can also use the [VS Code Extension](./getting-started-vscode.md) to generate locators as well as record a test. The VS Code extension also gives you a great developer experience when writing, running, and debugging tests.
 
-<img width="1394" alt="generating locators in vs code with codegen" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212269873-aca04043-16ce-4627-906f-7351d09740ab.png" />
+<img height="1684" width="2788" alt="generating locators in vs code with codegen" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212269873-aca04043-16ce-4627-906f-7351d09740ab.png" />
 
 ### Use web first assertions
 
@@ -193,11 +193,11 @@ await expect(page.getByText('welcome')).toBeVisible();
 
 For local debugging we recommend you [debug your tests live in VSCode.](./getting-started-vscode.md#debugging-your-tests) by installing the [VS Code extension](./getting-started-vscode.md). You can run tests in debug mode by right-clicking on the line next to the test you want to run which will open a browser window and pause at where the breakpoint is set.
 
-<img width="1338" alt="debugging tests in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212274675-5c6e1647-2aab-40fd-9804-8680c1ac2d16.png" />
+<img height="1240" width="2676" alt="debugging tests in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212274675-5c6e1647-2aab-40fd-9804-8680c1ac2d16.png" />
 
 You can live debug your test by clicking or editing the locators in your test in VS Code which will highlight this locator in the browser window as well as show you any other matching locators found on the page.
 
-<img width="1394" alt="live debugging locators in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212273189-da271dc4-0f59-4138-92a8-10e719066cbe.png" />
+<img height="1404" width="2788" alt="live debugging locators in vscode" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212273189-da271dc4-0f59-4138-92a8-10e719066cbe.png" />
 
 You can also debug your tests with the Playwright inspector by running your tests with the `--debug` flag.
 
@@ -238,7 +238,7 @@ pnpm exec playwright test --debug
 
 You can then step through your test, view actionability logs and edit the locator live and see it highlighted in the browser window. This will show you which locators match, how many of them there are.
 
-<img width="1350" alt="debugging with the playwright inspector" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212276296-4f5b18e7-2bd7-4766-9aa5-783517bd4aa2.png" />
+<img height="1736" width="2700" alt="debugging with the playwright inspector" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212276296-4f5b18e7-2bd7-4766-9aa5-783517bd4aa2.png" />
 
 
 
@@ -282,7 +282,7 @@ pnpm exec playwright test example.spec.ts:9 --debug
 
 For CI failures, use the Playwright [trace viewer](./trace-viewer.md) instead of videos and screenshots. The trace viewer gives you a full trace of your tests as a local Progressive Web App (PWA) that can easily be shared. With the trace viewer you can view the timeline, inspect DOM snapshots for each action using dev tools, view network requests and more.
 
-<img width="1516" alt="playwrights trace viewer" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212277895-c63d94c2-bd06-4881-864e-62790a072ca3.png" />
+<img height="1920" width="3032" alt="playwrights trace viewer" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212277895-c63d94c2-bd06-4881-864e-62790a072ca3.png" />
 
 Traces are configured in the Playwright config file and are set to run on CI on the first retry of a failed test. We don't recommend setting this to `on` so that traces are run on every test as it's very performance heavy. However you can run a trace locally when developing with the `--trace` flag.
 
@@ -358,11 +358,11 @@ pnpm exec playwright show-report
 
 </Tabs>
 
-<img width="1516" alt="Playwrights HTML report" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279022-d929d4c0-2271-486a-a75f-166ac231d25f.png" />
+<img height="1920" width="3032" alt="Playwrights HTML report" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279022-d929d4c0-2271-486a-a75f-166ac231d25f.png" />
 
 Traces can be opened by clicking on the icon next to the test file name or by opening each of the test reports and scrolling down to the traces section.
 
-<img width="1516" alt="Screenshot 2023-01-13 at 09 58 34" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279699-c9eb134f-4f4e-4f19-805c-37596d3272a6.png" />
+<img height="2242" width="3032" alt="Screenshot 2023-01-13 at 09 58 34" loading="lazy" src="https://user-images.githubusercontent.com/13063165/212279699-c9eb134f-4f4e-4f19-805c-37596d3272a6.png" />
 
 ### Use Playwright's Tooling
 
