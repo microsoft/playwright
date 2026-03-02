@@ -24,7 +24,7 @@ import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { JUnitReporterOptions } from '../../types/test';
-import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../types/testReporter';
 
 class JUnitReporter implements ReporterV2 {
   private config!: FullConfig;
@@ -38,10 +38,12 @@ class JUnitReporter implements ReporterV2 {
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
+  private includeRetries = false;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
+    this.includeRetries = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
@@ -107,16 +109,30 @@ class JUnitReporter implements ReporterV2 {
     const testCaseNamePrefix = projectName && this.includeProjectInTestName ? `[${projectName}] ` : '';
 
     for (const test of suite.allTests()){
-      ++tests;
-      if (test.outcome() === 'skipped')
-        ++skipped;
-      for (const result of test.results)
-        duration += result.duration;
-      const classification = await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
-      if (classification === 'error')
-        ++errors;
-      else if (classification === 'failure')
-        ++failures;
+      if (this.includeRetries && test.results.length > 0) {
+        for (const result of test.results) {
+          ++tests;
+          if (result.status === 'skipped')
+            ++skipped;
+          duration += result.duration;
+          const classification = await this._addTestCaseForResult(suite.title, testCaseNamePrefix, test, result, children);
+          if (classification === 'error')
+            ++errors;
+          else if (classification === 'failure')
+            ++failures;
+        }
+      } else {
+        ++tests;
+        if (test.outcome() === 'skipped')
+          ++skipped;
+        for (const result of test.results)
+          duration += result.duration;
+        const classification = await this._addTestCase(suite.title, testCaseNamePrefix, test, children);
+        if (classification === 'error')
+          ++errors;
+        else if (classification === 'failure')
+          ++failures;
+      }
     }
 
     this.totalTests += tests;
@@ -245,39 +261,144 @@ class JUnitReporter implements ReporterV2 {
       entry.children.push({ name: 'system-err', text: systemErr.join('') });
     return classification;
   }
+
+  private async _addTestCaseForResult(suiteName: string, namePrefix: string, test: TestCase, result: TestResult, entries: XMLEntry[]): Promise<'failure' | 'error' | null> {
+    const testName = namePrefix + test.titlePath().slice(3).join(' › ');
+    const entry = {
+      name: 'testcase',
+      attributes: {
+        // Skip root, project, file
+        name: result.retry > 0 ? `${testName} (retry #${result.retry})` : testName,
+        // filename
+        classname: suiteName,
+        time: result.duration / 1000
+      },
+      children: [] as XMLEntry[]
+    };
+    entries.push(entry);
+
+    const properties: XMLEntry = {
+      name: 'properties',
+      children: [] as XMLEntry[]
+    };
+
+    for (const annotation of test.annotations) {
+      const property: XMLEntry = {
+        name: 'property',
+        attributes: {
+          name: annotation.type,
+          value: (annotation?.description ? annotation.description : '')
+        }
+      };
+      properties.children?.push(property);
+    }
+
+    if (properties.children?.length)
+      entry.children.push(properties);
+
+    if (result.status === 'skipped') {
+      entry.children.push({ name: 'skipped' });
+      return null;
+    }
+
+    let classification: 'failure' | 'error' | null = null;
+    if (result.status !== 'passed') {
+      const errorInfo = classifyResultError(result);
+      if (errorInfo) {
+        classification = errorInfo.elementName;
+        entry.children.push({
+          name: errorInfo.elementName,
+          attributes: {
+            message: errorInfo.message,
+            type: errorInfo.type,
+          },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      } else {
+        classification = 'failure';
+        entry.children.push({
+          name: 'failure',
+          attributes: {
+            message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+            type: 'FAILURE',
+          },
+          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+        });
+      }
+    }
+
+    const systemOut: string[] = [];
+    const systemErr: string[] = [];
+    for (const item of result.stdout)
+      systemOut.push(item.toString());
+    for (const item of result.stderr)
+      systemErr.push(item.toString());
+    for (const attachment of result.attachments) {
+      if (!attachment.path)
+        continue;
+
+      let attachmentPath = path.relative(this.configDir, attachment.path);
+      try {
+        if (this.resolvedOutputFile)
+          attachmentPath = path.relative(path.dirname(this.resolvedOutputFile), attachment.path);
+      } catch {
+        systemOut.push(`\nWarning: Unable to make attachment path ${attachment.path} relative to report output file ${this.resolvedOutputFile}`);
+      }
+
+      try {
+        await fs.promises.access(attachment.path);
+        systemOut.push(`\n[[ATTACHMENT|${attachmentPath}]]\n`);
+      } catch {
+        systemErr.push(`\nWarning: attachment ${attachmentPath} is missing`);
+      }
+    }
+    // Note: it is important to only produce a single system-out/system-err entry
+    // so that parsers in the wild understand it.
+    if (systemOut.length)
+      entry.children.push({ name: 'system-out', text: systemOut.join('') });
+    if (systemErr.length)
+      entry.children.push({ name: 'system-err', text: systemErr.join('') });
+    return classification;
+  }
+}
+
+function classifyResultError(result: TestResult): { elementName: 'failure' | 'error'; type: string; message: string } | null {
+  const error = result.error;
+  if (!error)
+    return null;
+
+  const rawMessage = stripAnsiEscapes(error.message || error.value || '');
+
+  // Parse "ErrorName: message" format from serialized error.
+  const nameMatch = rawMessage.match(/^(\w+): /);
+  const errorName = nameMatch ? nameMatch[1] : '';
+  const messageBody = nameMatch ? rawMessage.slice(nameMatch[0].length) : rawMessage;
+  const firstLine = messageBody.split('\n')[0].trim();
+
+  // Check for expect/assertion failure pattern.
+  const matcherMatch = rawMessage.match(/expect\(.*?\)\.(not\.)?(\w+)/);
+  if (matcherMatch) {
+    const matcherName = `expect.${matcherMatch[1] || ''}${matcherMatch[2]}`;
+    return {
+      elementName: 'failure',
+      type: matcherName,
+      message: firstLine,
+    };
+  }
+
+  // Thrown error.
+  return {
+    elementName: 'error',
+    type: errorName || 'Error',
+    message: firstLine,
+  };
 }
 
 function classifyError(test: TestCase): { elementName: 'failure' | 'error'; type: string; message: string } | null {
   for (const result of test.results) {
-    const error = result.error;
-    if (!error)
-      continue;
-
-    const rawMessage = stripAnsiEscapes(error.message || error.value || '');
-
-    // Parse "ErrorName: message" format from serialized error.
-    const nameMatch = rawMessage.match(/^(\w+): /);
-    const errorName = nameMatch ? nameMatch[1] : '';
-    const messageBody = nameMatch ? rawMessage.slice(nameMatch[0].length) : rawMessage;
-    const firstLine = messageBody.split('\n')[0].trim();
-
-    // Check for expect/assertion failure pattern.
-    const matcherMatch = rawMessage.match(/expect\(.*?\)\.(not\.)?(\w+)/);
-    if (matcherMatch) {
-      const matcherName = `expect.${matcherMatch[1] || ''}${matcherMatch[2]}`;
-      return {
-        elementName: 'failure',
-        type: matcherName,
-        message: firstLine,
-      };
-    }
-
-    // Thrown error.
-    return {
-      elementName: 'error',
-      type: errorName || 'Error',
-      message: firstLine,
-    };
+    const info = classifyResultError(result);
+    if (info)
+      return info;
   }
   return null;
 }
