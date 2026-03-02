@@ -251,3 +251,152 @@ test('should respect config.expect.toMatchAriaSnapshot.pathTemplate', async ({ r
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
 });
+
+test('should fail with config.expect.toMatchAriaSnapshot.children=equal when root children mismatch', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<h1>Title</h1><p>Paragraph</p>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - heading "Title" [level=1]
+        \`, { timeout: 1000 });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('+ - paragraph: Paragraph');
+});
+
+test('should respect config.expect.toMatchAriaSnapshot.children=equal with file snapshot', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts-snapshots/test.aria.yml': `
+      - list:
+        - listitem: "One"
+        - listitem: "Two"
+        - listitem: "Three"
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul><li>One</li><li>Two</li><li>Three</li></ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
+});
+
+test('should respect config.expect.toMatchAriaSnapshot.children=deep-equal', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'deep-equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul><li><ul><li>1.1</li><li>1.2</li></ul></li></ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - list:
+            - listitem:
+              - list:
+                - listitem: "1.1"
+        \`, { timeout: 1000 });
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.output).toContain('+       - listitem: "1.2"');
+});
+
+test('inline /children: directive should override global children config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async ({ page }) => {
+        await page.setContent(\`<ul><li>One</li><li>Two</li><li>Three</li></ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - list:
+            - /children: contain
+            - listitem: "One"
+            - listitem: "Three"
+        \`);
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+});
+
+test('should respect project-level expect.toMatchAriaSnapshot.children=equal', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        projects: [
+          {
+            name: 'strict',
+            expect: {
+              toMatchAriaSnapshot: {
+                children: 'equal',
+              },
+            },
+          },
+        ],
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('matching passes', async ({ page }) => {
+        await page.setContent(\`<h1>Title</h1>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - heading "Title" [level=1]
+        \`);
+      });
+      test('extra root child fails', async ({ page }) => {
+        await page.setContent(\`<h1>Title</h1><p>Paragraph</p>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - heading "Title" [level=1]
+        \`, { timeout: 1000 });
+      });
+    `
+  });
+  expect(result.exitCode).toBe(1);
+  expect(result.passed).toBe(1);
+  expect(result.failed).toBe(1);
+  expect(result.output).toContain('+ - paragraph: Paragraph');
+});
