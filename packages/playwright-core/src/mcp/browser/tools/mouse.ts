@@ -118,6 +118,7 @@ const mouseClick = defineTabTool({
       y: z.number().describe('Y coordinate'),
       button: z.enum(['left', 'right', 'middle']).optional().describe('Button to click, defaults to left'),
       clickCount: z.number().optional().describe('Number of clicks, defaults to 1'),
+      delay: z.number().optional().describe('Time to wait between mouse down and mouse up in milliseconds, defaults to 0'),
     }),
     type: 'input',
   },
@@ -128,6 +129,7 @@ const mouseClick = defineTabTool({
     const options = {
       button: params.button,
       clickCount: params.clickCount,
+      delay: params.delay,
     };
     const formatted = formatObjectOrVoid(options);
     const optionsArg = formatted ? `, ${formatted}` : '';
