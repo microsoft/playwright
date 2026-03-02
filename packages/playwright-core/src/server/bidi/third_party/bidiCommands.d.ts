@@ -142,6 +142,10 @@ export interface Commands {
     params: Bidi.Emulation.SetLocaleOverrideParameters;
     returnType: Bidi.EmptyResult;
   };
+  'emulation.setNetworkConditions': {
+    params: Bidi.Emulation.SetNetworkConditionsParameters;
+    returnType: Bidi.Emulation.SetNetworkConditionsResult;
+  };
 
   'permissions.setPermission': {
     params: Bidi.Permissions.SetPermissionParameters;
