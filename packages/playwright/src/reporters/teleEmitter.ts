@@ -72,7 +72,7 @@ export class TeleReporterEmitter implements ReporterV2 {
     });
   }
 
-  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult) {
+  async onTestPaused(test: reporterTypes.TestCase, result: reporterTypes.TestResult, error?: reporterTypes.TestError): Promise<{ disposition?: 'continue' } | void> {
     const resultId = (result as any)[this._idSymbol];
     this._resultKnownErrorCounts.set(resultId, result.errors.length);
     this._messageSink({
@@ -80,6 +80,7 @@ export class TeleReporterEmitter implements ReporterV2 {
       params: {
         testId: test.id,
         resultId,
+        error,
         errors: result.errors,
       }
     });

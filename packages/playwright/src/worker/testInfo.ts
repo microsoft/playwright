@@ -105,6 +105,7 @@ export class TestInfoImpl implements TestInfo {
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;
+  private _hasPausedOnError = false;
 
   // ------------ Main methods ------------
   skip: (arg?: any, description?: string) => void;
@@ -470,11 +471,23 @@ export class TestInfoImpl implements TestInfo {
     this._timeoutManager.setIgnoreTimeouts();
   }
 
+  async _pauseOnError(error: ipc.TestInfoErrorImpl): Promise<ipc.ResumePayload> {
+    if (!this._workerParams.pauseOnError)
+      return {};
+    this._hasPausedOnError = true;
+    this._setDebugMode();
+    return await Promise.race([
+      this._callbacks.onTestPaused({ testId: this.testId, error }),
+      this._interruptedPromise.then(() => ({})),
+    ]);
+  }
+
   async _didFinishTestFunction() {
     const shouldPause = (this._workerParams.pauseAtEnd && !this._isFailure()) || (this._workerParams.pauseOnError && this._isFailure());
-    if (shouldPause) {
+    if (shouldPause && !this._interruptedPromise.isDone()) {
+      const endErrors = this._isFailure() && !this._hasPausedOnError ? this.errors : [];
       await Promise.race([
-        this._callbacks.onTestPaused({ testId: this.testId, errors: this._isFailure() ? this.errors : [], status: this.status }),
+        this._callbacks.onTestPaused({ testId: this.testId, endErrors }),
         this._interruptedPromise,
       ]);
     }

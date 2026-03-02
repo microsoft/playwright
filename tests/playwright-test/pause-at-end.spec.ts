@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { TestCase, TestResult, TestStep } from 'packages/playwright-test/reporter';
+import { TestCase, TestResult, TestStep, TestError } from 'packages/playwright-test/reporter';
 import { ReporterV2 } from 'packages/playwright/src/reporters/reporterV2';
 import { test, expect } from './playwright-test-fixtures';
 
@@ -31,9 +31,11 @@ class LocationReporter implements ReporterV2 {
       this._printErrors(result);
     }
   }
-  async onTestPaused(test: TestCase, result: TestResult) {
-    if (result.error)
-      console.log(`%%onTestPaused on error at :${result.error.location?.line}:${result.error.location?.column}`);
+  async onTestPaused(test: TestCase, result: TestResult, error?: TestError) {
+    if (error)
+      console.log(`%%onTestPaused on error at :${error.location?.line}:${error.location?.column}`);
+    else if (result.errors.length)
+      console.log(`%%onTestPaused at end with error at :${result.errors[0].location?.line}:${result.errors[0].location?.column}`);
     else
       console.log(`%%onTestPaused at end`);
     this._printErrors(result);
@@ -42,6 +44,8 @@ class LocationReporter implements ReporterV2 {
       process.kill(process.pid, 'SIGINT');
       await new Promise(() => {});
     }
+    if (process.env.CONTINUE_ON_PAUSE)
+      return { disposition: 'continue' as const };
   }
   onStepEnd(test: TestCase, result: TestResult, step: TestStep): void {
     if (step.title === 'Paused') {
@@ -130,7 +134,7 @@ test('--pause should pause on error', async ({ runInlineTest, mergeReports }) =>
     `
   }, {}, { PWPAUSE: '1' });
   expect(result.outputLines).toEqual([
-    'onTestPaused on error at :4:24',
+    'onTestPaused at end with error at :4:24',
     'result.errors[0] at :4:24',
     'result.errors[1] at :5:19',
     'onTestEnd',
@@ -187,10 +191,56 @@ test('SIGINT after pause on error should still run teardown', async ({ runInline
     `
   }, {}, { PWPAUSE: '1', SIGINT_AFTER_PAUSE: '1' });
   expect(result.outputLines).toEqual([
-    'onTestPaused on error at :4:19',
+    'onTestPaused at end with error at :4:19',
     'result.errors[0] at :4:19',
     'SIGINT',
     'teardown',
     'onTestEnd',
   ]);
+});
+
+test('--pause should continue past async expect failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js', expect: { timeout: 1000 } };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('expect failure', async ({ page }) => {
+        await expect(page.locator('#missing')).toBeVisible();
+        console.log('%%after expect');
+      });
+    `
+  }, {}, { PWPAUSE: '1', CONTINUE_ON_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused on error at :4:48',
+    'after expect',
+    'onTestPaused at end',
+    'onTestEnd',
+  ]);
+  expect(result.exitCode).toBe(0);
+});
+
+test('--pause should continue past API call failure', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'location-reporter.js': `export default ${LocationReporter}`,
+    'playwright.config.js': `
+      module.exports = { reporter: './location-reporter.js', use: { actionTimeout: 1000 } };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('api failure', async ({ page }) => {
+        await page.click('#missing');
+        console.log('%%after click');
+      });
+    `
+  }, {}, { PWPAUSE: '1', CONTINUE_ON_PAUSE: '1' });
+  expect(result.outputLines).toEqual([
+    'onTestPaused on error at :4:20',
+    'after click',
+    'onTestPaused at end',
+    'onTestEnd',
+  ]);
+  expect(result.exitCode).toBe(0);
 });

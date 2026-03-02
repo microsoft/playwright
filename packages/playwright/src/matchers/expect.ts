@@ -61,7 +61,7 @@ import {
   expect as expectLibrary,
 } from '../common/expectBundle';
 import { currentTestInfo } from '../common/globals';
-import { filteredStackTrace } from '../util';
+import { filteredStackTrace, serializeError } from '../util';
 import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
@@ -345,6 +345,29 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
           throw error;
       };
 
+      const asyncReportStepError = async (e: Error | unknown) => {
+        const jestError = isJestError(e) ? e : null;
+        const expectError = jestError ? new ExpectError(jestError, customMessage, stackFrames) : undefined;
+        if (jestError?.matcherResult.suggestedRebaseline) {
+          step.complete({ suggestedRebaseline: jestError?.matcherResult.suggestedRebaseline });
+          return;
+        }
+
+        const error = expectError ?? e;
+        step.complete({ error });
+
+        if (!this._info.isSoft) {
+          const resumePayload = await testInfo._pauseOnError(serializeError(error));
+          if (resumePayload.disposition === 'continue')
+            return;
+        }
+
+        if (this._info.isSoft)
+          testInfo._failWithError(error);
+        else
+          throw error;
+      };
+
       const finalizer = () => {
         step.complete({});
       };
@@ -354,7 +377,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
         const callback = () => matcher.call(target, ...args);
         const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
-          return result.then(finalizer).catch(reportStepError);
+          return result.then(finalizer).catch(asyncReportStepError);
         finalizer();
         return result;
       } catch (e) {
