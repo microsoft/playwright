@@ -320,9 +320,9 @@ index 39a832eccf7e7c0b64b2deb1214f82e7533b249a..6bbb911f00d86340a912fe030ee87382
  #  include <unistd.h>  // for getpid()
  #endif
  
-+#if JS_HAS_INTL_API && !MOZ_SYSTEM_ICU
++#if JS_HAS_INTL_API
 +#  include "unicode/locid.h"
-+#endif /* JS_HAS_INTL_API && !MOZ_SYSTEM_ICU */
++#endif /* JS_HAS_INTL_API */
 +
 +#include "js/LocaleSensitive.h"
 +
