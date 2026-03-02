@@ -17,16 +17,16 @@
     },
     {
       "name": "chromium-tip-of-tree",
-      "revision": "1408",
+      "revision": "1409",
       "installByDefault": false,
-      "browserVersion": "147.0.7701.0",
+      "browserVersion": "147.0.7705.0",
       "title": "Chrome Canary for Testing"
     },
     {
       "name": "chromium-tip-of-tree-headless-shell",
-      "revision": "1408",
+      "revision": "1409",
       "installByDefault": false,
-      "browserVersion": "147.0.7701.0",
+      "browserVersion": "147.0.7705.0",
       "title": "Chrome Canary Headless Shell"
     },
     {
