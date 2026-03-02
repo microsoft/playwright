@@ -247,6 +247,8 @@ export class BidiBrowserContext extends BrowserContext {
       promises.push(this.doUpdateExtraHTTPHeaders());
     if (this._options.permissions)
       promises.push(this.doGrantPermissions('*', this._options.permissions));
+    if (this._options.offline)
+      promises.push(this.doUpdateOffline());
     await Promise.all(promises);
   }
 
@@ -380,6 +382,10 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateOffline(): Promise<void> {
+    await this._browser._browserSession.send('emulation.setNetworkConditions', {
+      networkConditions: this._options.offline ? { type: 'offline' } : null,
+      userContexts: [this._userContextId()],
+    });
   }
 
   async doSetHTTPCredentials(httpCredentials?: types.Credentials): Promise<void> {
