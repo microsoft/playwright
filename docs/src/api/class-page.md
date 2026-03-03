@@ -2849,8 +2849,8 @@ This method requires Playwright to be started in a headed mode, with a falsy [`o
 * since: v1.59
 - returns: <[Locator]>
 
-Launches the Playwright Inspector in pick locator mode, waits for the user to pick an element on the page, and returns
-a [Locator] for that element. Once the user clicks an element, the inspector closes and the [Locator] is returned.
+Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+Once the user clicks an element, the mode is deactivated and the [Locator] for the picked element is returned.
 
 :::note
 This method requires Playwright to be started in a headed mode.

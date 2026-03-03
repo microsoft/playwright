@@ -354,7 +354,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
     if (!this._page.browserContext._browser.options.headful && !isUnderTest())
       throw new Error('pickLocator() is only available in headed mode');
-    const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true });
+    const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
     const selectorPromise = new ManualPromise<string>();
     let recorderChangedState = false;
     const onElementPicked = (elementInfo: ElementInfo) => {

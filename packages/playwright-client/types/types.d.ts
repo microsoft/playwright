@@ -3905,9 +3905,9 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
-   * Launches the Playwright Inspector in pick locator mode, waits for the user to pick an element on the page, and
-   * returns a [Locator](https://playwright.dev/docs/api/class-locator) for that element. Once the user clicks an
-   * element, the inspector closes and the [Locator](https://playwright.dev/docs/api/class-locator) is returned.
+   * Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+   * Once the user clicks an element, the mode is deactivated and the
+   * [Locator](https://playwright.dev/docs/api/class-locator) for the picked element is returned.
    *
    * **NOTE** This method requires Playwright to be started in a headed mode.
    *
