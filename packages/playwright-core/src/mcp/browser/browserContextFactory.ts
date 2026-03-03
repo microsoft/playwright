@@ -216,9 +216,8 @@ class PersistentContextFactory extends BaseContextFactory {
     const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
     const browserToken = this.config.browser.launchOptions?.channel ?? this.config.browser?.browserName;
     // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
-    const rootPath = firstRootPath(clientInfo);
-    const rootPathToken = rootPath ? `-${createHash(rootPath)}` : '';
-    const result = path.join(dir, `mcp-${browserToken}${rootPathToken}`);
+    const rootPathToken = createHash(firstRootPath(clientInfo));
+    const result = path.join(dir, `mcp-${browserToken}-${rootPathToken}`);
     await fs.promises.mkdir(result, { recursive: true });
     return result;
   }

@@ -379,7 +379,7 @@ export async function loadConfig(configFile: string | undefined): Promise<Config
 // These methods should return resolved absolute file names.
 
 export function workspaceDir(clientInfo: ClientInfo): string {
-  return path.resolve(firstRootPath(clientInfo) ?? process.cwd());
+  return path.resolve(firstRootPath(clientInfo));
 }
 
 export async function workspaceFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, perCallWorkspaceDir?: string): Promise<string> {
@@ -392,11 +392,7 @@ export async function workspaceFile(config: FullConfig, clientInfo: ClientInfo, 
 export function outputDir(config: FullConfig, clientInfo: ClientInfo): string {
   if (config.outputDir)
     return path.resolve(config.outputDir);
-  const rootPath = firstRootPath(clientInfo);
-  if (rootPath)
-    return path.resolve(rootPath, config.skillMode ? '.playwright-cli' : '.playwright-mcp');
-  const tmpDir = process.env.PW_TMPDIR_FOR_TEST ?? os.tmpdir();
-  return path.resolve(tmpDir, 'playwright-mcp-output', String(clientInfo.timestamp));
+  return path.resolve(firstRootPath(clientInfo), config.skillMode ? '.playwright-cli' : '.playwright-mcp');
 }
 
 export async function outputFile(config: FullConfig, clientInfo: ClientInfo, fileName: string, options: { origin: 'code' | 'llm' }): Promise<string> {
