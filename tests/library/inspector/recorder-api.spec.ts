@@ -173,7 +173,8 @@ test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }
   const pickPromise = page.pickLocator();
   await scriptReady;
 
-  await page.cancelPickLocator();
-
-  await expect(pickPromise).rejects.toThrow('Locator picking was cancelled');
+  await Promise.all([
+    page.cancelPickLocator(),
+    expect(pickPromise).rejects.toThrow('Locator picking was cancelled'),
+  ]);
 });

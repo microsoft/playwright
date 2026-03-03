@@ -353,7 +353,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async cancelPickLocator(params: channels.PageCancelPickLocatorParams, progress: Progress): Promise<void> {
     const recorder = await Recorder.existingForContext(this._page.browserContext);
-    recorder?.setMode('none');
+    await recorder?.setMode('none');
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
