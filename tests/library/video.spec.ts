@@ -897,6 +897,30 @@ it.describe('screencast', () => {
     await context.close();
     expectFrames(videoPath, size, isAlmostWhite);
   });
+
+  it('video.start with frames option emits frame events', async ({ browser, browserName, server }) => {
+    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+
+    const frames: Buffer[] = [];
+    page.video().on('frame', (data: Buffer) => frames.push(data));
+
+    await page.video().start({ size, mode: 'screencast' });
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    await page.video().stop();
+
+    expect(frames.length).toBeGreaterThan(0);
+    // Each frame must be a valid JPEG (starts with FF D8)
+    for (const frame of frames) {
+      expect(frame[0]).toBe(0xff);
+      expect(frame[1]).toBe(0xd8);
+    }
+
+    await context.close();
+  });
 });
 
 it('should saveAs video', async ({ browser }, testInfo) => {

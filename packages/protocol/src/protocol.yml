@@ -2083,8 +2083,13 @@ Page:
           properties:
             width: int
             height: int
+        mode:
+          type: enum?
+          literals:
+          - video
+          - screencast
       returns:
-        artifact: Artifact
+        artifact: Artifact?
 
     videoStop:
       title: Stop video recording
@@ -2184,6 +2189,10 @@ Page:
     webSocket:
       parameters:
         webSocket: WebSocket
+
+    videoFrame:
+      parameters:
+        data: binary
 
     worker:
       parameters:

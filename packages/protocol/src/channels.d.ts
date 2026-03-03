@@ -2102,6 +2102,7 @@ export interface PageEventTarget {
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
+  on(event: 'videoFrame', callback: (params: PageVideoFrameEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
 }
 export interface PageChannel extends PageEventTarget, EventTargetChannel {
@@ -2191,6 +2192,9 @@ export type PageWebSocketRouteEvent = {
 };
 export type PageWebSocketEvent = {
   webSocket: WebSocketChannel,
+};
+export type PageVideoFrameEvent = {
+  data: Binary,
 };
 export type PageWorkerEvent = {
   worker: WorkerChannel,
@@ -2667,15 +2671,17 @@ export type PageVideoStartParams = {
     width: number,
     height: number,
   },
+  mode?: 'video' | 'screencast',
 };
 export type PageVideoStartOptions = {
   size?: {
     width: number,
     height: number,
   },
+  mode?: 'video' | 'screencast',
 };
 export type PageVideoStartResult = {
-  artifact: ArtifactChannel,
+  artifact?: ArtifactChannel,
 };
 export type PageVideoStopParams = {};
 export type PageVideoStopOptions = {};
@@ -2744,6 +2750,7 @@ export interface PageEvents {
   'route': PageRouteEvent;
   'webSocketRoute': PageWebSocketRouteEvent;
   'webSocket': PageWebSocketEvent;
+  'videoFrame': PageVideoFrameEvent;
   'worker': PageWorkerEvent;
 }
 

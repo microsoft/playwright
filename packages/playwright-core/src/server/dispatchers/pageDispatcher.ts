@@ -17,6 +17,7 @@
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
 import { parseError, serializeError } from '../errors';
+import { validateVideoSize } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -27,6 +28,7 @@ import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
+import { eventsHelper } from '../../utils';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
 
@@ -38,11 +40,13 @@ import type { FileChooser } from '../fileChooser';
 import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
+import type { RegisteredListener } from '../../utils';
 import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
+import type * as types from '../types';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -58,6 +62,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
+  private _videoFrameListener: RegisteredListener | null = null;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -357,11 +362,25 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
+    if (params.mode === 'screencast') {
+      const size = validateVideoSize(params.size, this._page.emulatedSize()?.viewport);
+      this._videoFrameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: types.ScreencastFrame) => {
+        this._dispatchEvent('videoFrame', { data: frame.buffer });
+      });
+      await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
+      return {};
+    }
     const artifact = await this._page.screencast.startExplicitVideoRecording(params);
-    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
+    return { artifact: createVideoDispatcher(this.parentScope(), artifact!) };
   }
 
   async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
+    if (this._videoFrameListener) {
+      await this._page.screencast.stopScreencast(this);
+      eventsHelper.removeEventListeners([this._videoFrameListener]);
+      this._videoFrameListener = null;
+      return;
+    }
     await this._page.screencast.stopExplicitVideoRecording();
   }
 

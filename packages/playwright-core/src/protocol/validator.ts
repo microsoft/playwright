@@ -1231,6 +1231,9 @@ scheme.PageWebSocketRouteEvent = tObject({
 scheme.PageWebSocketEvent = tObject({
   webSocket: tChannel(['WebSocket']),
 });
+scheme.PageVideoFrameEvent = tObject({
+  data: tBinary,
+});
 scheme.PageWorkerEvent = tObject({
   worker: tChannel(['Worker']),
 });
@@ -1541,9 +1544,10 @@ scheme.PageVideoStartParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  mode: tOptional(tEnum(['video', 'screencast'])),
 });
 scheme.PageVideoStartResult = tObject({
-  artifact: tChannel(['Artifact']),
+  artifact: tOptional(tChannel(['Artifact'])),
 });
 scheme.PageVideoStopParams = tOptional(tObject({}));
 scheme.PageVideoStopResult = tOptional(tObject({}));

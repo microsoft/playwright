@@ -21921,6 +21921,69 @@ export interface Tracing {
  */
 export interface Video {
   /**
+   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const video = page.video();
+   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
+   * await video.start({ mode: 'screencast' });
+   * // ... perform actions ...
+   * await video.stop();
+   * ```
+   *
+   */
+  on(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const video = page.video();
+   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
+   * await video.start({ mode: 'screencast' });
+   * // ... perform actions ...
+   * await video.stop();
+   * ```
+   *
+   */
+  addListener(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const video = page.video();
+   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
+   * await video.start({ mode: 'screencast' });
+   * // ... perform actions ...
+   * await video.stop();
+   * ```
+   *
+   */
+  prependListener(event: 'frame', listener: (buffer: Buffer) => any): this;
+
+  /**
    * Deletes the video file. Will wait for the video to finish if necessary.
    */
   delete(): Promise<void>;
@@ -21952,6 +22015,13 @@ export interface Video {
    * @param options
    */
   start(options?: {
+    /**
+     * Recording mode. When set to `'screencast'`, JPEG frames are emitted as
+     * [video.on('frame')](https://playwright.dev/docs/api/class-video#video-event-frame) events on the
+     * [Video](https://playwright.dev/docs/api/class-video) object instead of writing a video file. Defaults to `'video'`.
+     */
+    mode?: "video"|"screencast";
+
     /**
      * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
      * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
