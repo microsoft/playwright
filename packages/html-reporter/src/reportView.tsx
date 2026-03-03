@@ -52,6 +52,7 @@ export const ReportView: React.FC<{
   const [expandedFiles, setExpandedFiles] = React.useState<Map<string, boolean>>(new Map());
   const [filterText, setFilterText] = React.useState(searchParams.get('q') || '');
   const [metadataVisible, setMetadataVisible] = React.useState(false);
+  const [errorsVisible, setErrorsVisible] = React.useState(true);
   const speedboard = searchParams.has('speedboard');
   const [mergeFiles] = useSetting('mergeFiles', false);
   const testId = searchParams.get('testId');
@@ -140,7 +141,13 @@ export const ReportView: React.FC<{
     <main>
       {report && <GlobalFilterView stats={report.json().stats} filterText={filterText} setFilterText={setFilterText} />}
       <Route predicate={testFilesRoutePredicate}>
-        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
+        <TestFilesHeader
+          report={report?.json()}
+          filteredStats={filteredStats}
+          metadataVisible={metadataVisible}
+          toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}
+          errorsVisible={errorsVisible}
+          setErrorsVisible={setErrorsVisible}/>
         <TestFilesView
           files={testModel.files}
           expandedFiles={expandedFiles}
@@ -149,7 +156,13 @@ export const ReportView: React.FC<{
         />
       </Route>
       <Route predicate={speedboardRoutePredicate}>
-        <TestFilesHeader report={report?.json()} filteredStats={filteredStats} metadataVisible={metadataVisible} toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}/>
+        <TestFilesHeader
+          report={report?.json()}
+          filteredStats={filteredStats}
+          metadataVisible={metadataVisible}
+          toggleMetadataVisible={() => setMetadataVisible(visible => !visible)}
+          errorsVisible={errorsVisible}
+          setErrorsVisible={setErrorsVisible}/>
         {report && <Speedboard report={report} tests={testModel.tests} />}
       </Route>
       <Route predicate={testCaseRoutePredicate}>
