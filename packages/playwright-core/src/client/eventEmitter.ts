@@ -396,3 +396,21 @@ function unwrapListeners(arr: Listener[]): Listener[] {
 function wrappedListener(l: Listener): Listener {
   return (l as any).listener;
 }
+
+export type Disposable = {
+  dispose: () => void;
+};
+
+class EventsHelper {
+  static addEventListener(
+    emitter: EventEmitterType,
+    eventName: (string | symbol),
+    handler: (...args: any[]) => void): Disposable {
+    emitter.on(eventName, handler);
+    return {
+      dispose: () => emitter.removeListener(eventName, handler)
+    };
+  }
+}
+
+export const eventsHelper = EventsHelper;

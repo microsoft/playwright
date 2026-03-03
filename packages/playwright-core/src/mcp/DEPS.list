@@ -2,6 +2,7 @@
 ../../
 ./sdk/
 ./browser/
+./browser/tools/
 ./extension/
 ../cli/
 ../utilsBundle.ts

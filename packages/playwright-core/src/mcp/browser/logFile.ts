@@ -52,7 +52,7 @@ export class LogFile {
     this._title = title;
   }
 
-  appendLine(wallTime: number, text: () => string | Promise<string>) {
+  appendLine(wallTime: number, text: () => string) {
     this._writeChain = this._writeChain.then(() => this._write(wallTime, text)).catch(logUnhandledError);
   }
 
@@ -87,13 +87,12 @@ export class LogFile {
     return chunk;
   }
 
-  private async _write(wallTime: number, text: () => string | Promise<string>) {
+  private async _write(wallTime: number, text: () => string) {
     if (this._stopped)
       return;
     this._file ??= await this._context.outputFile({ prefix: this._filePrefix, ext: 'log', date: new Date(this._startTime) }, { origin: 'code' });
     const relativeTime = Math.round(wallTime - this._startTime);
-    const renderedText = await text();
-    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${renderedText}\n`;
+    const logLine = `[${String(relativeTime).padStart(8, ' ')}ms] ${text()}\n`;
     await fs.promises.appendFile(this._file, logLine);
 
     const lineCount = logLine.split('\n').length - 1;

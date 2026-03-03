@@ -35,7 +35,7 @@ import * as testServer from './runner/testServer';
 import { runWatchModeLoop } from './runner/watchMode';
 import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
-import { TestServerBackend } from './mcp/test/testBackend';
+import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
 
 import type { ConfigCLIOverrides } from './common/ipc';
@@ -159,7 +159,9 @@ function addTestMCPServerCommand(program: Command) {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
-      create: () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
+      toolSchemas: testServerBackendTools.map(tool => tool.schema),
+      create: async () => new TestServerBackend(options.config, { muteConsole: options.port === undefined, headless: options.headless }),
+      disposed: async () => { }
     };
     // TODO: add all options from mcp.startHttpServer.
     await mcp.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });

@@ -14,18 +14,35 @@
  * limitations under the License.
  */
 
-import { BrowserServerBackend, resolveConfig, contextFactory, createServer } from 'playwright-core/lib/mcp/exports';
+import { resolveConfig } from './browser/config';
+import { filteredTools } from './browser/tools';
+import { contextFactory } from './browser/browserContextFactory';
+import { BrowserServerBackend } from './browser/browserServerBackend';
+import { createServer } from './sdk/server';
 
-import type { Config, BrowserContextFactory } from 'playwright-core/lib/mcp/exports';
+import type { BrowserContextFactory } from './browser/browserContextFactory';
 import type { BrowserContext } from 'playwright';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import type { ClientInfo, ServerBackendFactory } from './sdk/server';
+import type { Config } from './config';
 
 const packageJSON = require('../../package.json');
 
 export async function createConnection(userConfig: Config = {}, contextGetter?: () => Promise<BrowserContext>): Promise<Server> {
   const config = await resolveConfig(userConfig);
-  const factory = contextGetter ? new SimpleBrowserContextFactory(contextGetter) : contextFactory(config);
-  return createServer('Playwright', packageJSON.version, new BrowserServerBackend(config, factory), false);
+  const tools = filteredTools(config);
+  const backendFactory: ServerBackendFactory = {
+    name: 'api',
+    nameInConfig: 'api',
+    version: packageJSON.version,
+    toolSchemas: tools.map(tool => tool.schema),
+    create: async (clientInfo: ClientInfo) => {
+      const factory = contextGetter ? new SimpleBrowserContextFactory(contextGetter) : contextFactory(config);
+      return new BrowserServerBackend(config, await factory.createContext(clientInfo), tools);
+    },
+    disposed: async () => { }
+  };
+  return createServer('api', packageJSON.version, backendFactory, false);
 }
 
 class SimpleBrowserContextFactory implements BrowserContextFactory {
@@ -38,11 +55,12 @@ class SimpleBrowserContextFactory implements BrowserContextFactory {
     this._contextGetter = contextGetter;
   }
 
-  async createContext(): Promise<{ browserContext: BrowserContext, close: () => Promise<void> }> {
+  async contexts(): Promise<BrowserContext[]> {
     const browserContext = await this._contextGetter();
-    return {
-      browserContext,
-      close: () => browserContext.close()
-    };
+    return [browserContext];
+  }
+
+  async createContext(): Promise<BrowserContext> {
+    throw new Error('Creating a new context is not supported in SimpleBrowserContextFactory.');
   }
 }

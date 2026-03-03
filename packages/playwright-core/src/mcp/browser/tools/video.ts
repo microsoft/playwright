@@ -55,11 +55,11 @@ const stopVideo = defineTool({
 
   handle: async (context, params, response) => {
     const videos = await context.stopVideoRecording();
-    if (!videos.size) {
+    if (!videos.length) {
       response.addTextResult('No videos were recorded.');
       return;
     }
-    for (const [index, video] of [...videos].entries()) {
+    for (const [index, video] of videos.entries()) {
       const suffix = index ? `-${index}` : '';
       let suggestedFilename = params.filename;
       if (suggestedFilename && suffix) {
