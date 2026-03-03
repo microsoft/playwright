@@ -287,7 +287,13 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       eventsHelper.addEventListener(this, RecorderEvent.ContextClosed, onContextClosed),
     ];
     try {
-      return await progress.race((async () => (await Promise.all([selectorPromise, this.setMode('inspecting')]))[0])());
+      const doPickLocator = async () => {
+        // Prevent unhandled rejection in case of cancellation during setMode
+        selectorPromise.catch(() => {});
+        await this.setMode('inspecting');
+        return await selectorPromise;
+      };
+      return await progress.race(doPickLocator());
     } finally {
       eventsHelper.removeEventListeners(listeners);
       if (!recorderChangedState)
@@ -385,12 +391,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   private async _refreshOverlay() {
-    const promises = [];
-    for (const page of this._context.pages()) {
-      for (const frame of page.frames())
-        promises.push(frame.evaluateExpression('window.__pw_refreshOverlay()').catch(() => {}));
-    }
-    await Promise.all(promises);
+    await Promise.all(this._context.pages().map(
+        page => page.safeNonStallingEvaluateInAllFrames('window.__pw_refreshOverlay()', 'main')));
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {
