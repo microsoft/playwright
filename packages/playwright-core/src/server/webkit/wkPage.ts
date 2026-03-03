@@ -1094,6 +1094,7 @@ export class WKPage implements PageDelegate {
 
   private _handleRequestRedirect(request: WKInterceptableRequest, requestId: string, responsePayload: Protocol.Network.Response, timestamp: number) {
     const response = request.createResponse(responsePayload);
+    response._setHttpVersion(null);
     response._securityDetailsFinished();
     response._serverAddrFinished();
     response.setResponseHeadersSize(null);
