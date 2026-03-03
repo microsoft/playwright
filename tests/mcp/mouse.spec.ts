@@ -34,11 +34,15 @@ const eventsPage = `<!DOCTYPE html>
       document.body.addEventListener('mousemove', (event) => {
         log('mousemove', event.clientX, event.clientY);
       });
+      let downPressTime = undefined;
       document.body.addEventListener('mousedown', (event) => {
+        downPressTime = performance.now();
         log('mousedown', 'button:' + event.button);
       });
       document.body.addEventListener('mouseup', (event) => {
         log('mouseup', 'button:' + event.button);
+        if (downPressTime !== undefined)
+          log('delta', Math.round(performance.now() - downPressTime));
       });
       document.body.addEventListener('click', (event) => {
         log('click', 'button:' + event.button);
@@ -99,5 +103,15 @@ test('browser_mouse_click_xy (double click)', async ({ client }) => {
   })).toHaveResponse({
     code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  clickCount: 2\n});`),
     snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:0.*mouseup button:0.*dblclick button:0/s),
+  });
+});
+
+test('browser_mouse_click_xy (delay)', async ({ client }) => {
+  expect(await client.callTool({
+    name: 'browser_mouse_click_xy',
+    arguments: { x: 100, y: 100, delay: 20 },
+  })).toHaveResponse({
+    code: expect.stringContaining(`await page.mouse.click(100, 100, {\n  delay: 20\n});`),
+    snapshot: expect.stringMatching(/mousemove 100 100.*mousedown button:0.*mouseup button:0.*delta (?:[2-9]\d|\d{3,})/s),
   });
 });
