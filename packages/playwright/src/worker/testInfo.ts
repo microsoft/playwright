@@ -645,7 +645,6 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
-    this._tracing.updateTimeout(timeout);
   }
 
   async _cloneStorage(storageFile: string): Promise<string> {

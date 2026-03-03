@@ -63,7 +63,6 @@ export class TestTracing {
       wallTime: Date.now(),
       monotonicTime: monotonicTime(),
       sdkLanguage: 'javascript',
-      timeout: testInfo.timeout,
     };
     this._appendTraceEvent(this._contextCreatedEvent);
   }
@@ -117,10 +116,6 @@ export class TestTracing {
     this._didFinishTestFunctionAndAfterEachHooks = true;
   }
 
-  updateTimeout(timeout: number) {
-    this._contextCreatedEvent.timeout = timeout;
-  }
-
   artifactsDir() {
     return this._artifactsDir;
   }
@@ -168,6 +163,8 @@ export class TestTracing {
   }
 
   async stopIfNeeded() {
+    this._contextCreatedEvent.testTimeout = this._testInfo.timeout;
+
     if (!this._options)
       return;
 

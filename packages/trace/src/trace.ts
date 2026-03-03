@@ -46,7 +46,7 @@ export type ContextCreatedTraceEvent = {
   sdkLanguage?: Language,
   testIdAttributeName?: string,
   contextId?: string,
-  timeout?: number,
+  testTimeout?: number,
 };
 
 export type ScreencastFrameTraceEvent = {
