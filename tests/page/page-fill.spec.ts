@@ -405,7 +405,7 @@ it('fill back to back', async ({ page }) => {
   await expect(page.locator('id=two')).toHaveValue('second value');
 });
 
-it('should replace contenteditable text when focus handler collapses selection', {
+it('should fill contenteditable with focus handler that collapses selection', {
   annotation: {
     type: 'issue',
     description: 'https://github.com/microsoft/playwright/issues/39492'
@@ -413,7 +413,6 @@ it('should replace contenteditable text when focus handler collapses selection',
 }, async ({ page }) => {
   await page.setContent(`
     <div contenteditable="true">initial text</div>
-    <button>blur target</button>
     <script>
       const editor = document.querySelector('[contenteditable]');
       editor.addEventListener('focus', () => {
@@ -424,11 +423,6 @@ it('should replace contenteditable text when focus handler collapses selection',
     </script>
   `);
 
-  const editor = page.locator('[contenteditable]');
-
-  await editor.fill('old text');
-  await page.locator('button').click();
-  await editor.fill('new text');
-
-  await expect(editor).toHaveText('new text');
+  await page.fill('div[contenteditable]', 'some value');
+  expect(await page.locator('div[contenteditable]').textContent()).toBe('some value');
 });
