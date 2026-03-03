@@ -901,7 +901,7 @@ it.describe('screencast', () => {
   it('inspector.startScreencast emits screencastframe events', async ({ browser, server }) => {
     const size = { width: 500, height: 400 };
     const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage(); 
+    const page = await context.newPage();
 
     const frames: Buffer[] = [];
     page.inspector().on('screencastframe', (data: Buffer) => frames.push(data));
@@ -919,6 +919,43 @@ it.describe('screencast', () => {
       expect(frame[1]).toBe(0xd8);
     }
 
+    await context.close();
+  });
+
+  it('startScreencast throws when called with different options while running', async ({ browser }) => {
+    const size = { width: 500, height: 400 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+
+    await page.inspector().startScreencast({ size });
+    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
+
+    await page.inspector().stopScreencast();
+    await context.close();
+  });
+
+  it('startScreencast allows restart with different options after stop', async ({ browser }) => {
+    const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
+    const page = await context.newPage();
+
+    await page.inspector().startScreencast({ size: { width: 500, height: 400 } });
+    await page.inspector().stopScreencast();
+    // Different options should succeed once the previous screencast is stopped.
+    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).resolves.toBeUndefined();
+
+    await page.inspector().stopScreencast();
+    await context.close();
+  });
+
+  it('startScreencast throws when video recording is running with different params', async ({ browser }) => {
+    const videoSize = { width: 500, height: 400 };
+    const context = await browser.newContext({ viewport: videoSize });
+    const page = await context.newPage();
+
+    await page.video().start({ size: videoSize });
+    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
+
+    await page.video().stop();
     await context.close();
   });
 });

@@ -2,7 +2,7 @@
 * since: v1.59
 * langs: js
 
-The `Inspector` object provides access to the Playwright inspector's screencast capabilities, allowing you to capture live JPEG frames from the page as it renders.
+The `Inspector` object provides access to the Playwright inspector's capabilities.
 
 **Usage**
 
