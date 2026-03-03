@@ -92,23 +92,6 @@ Saves the video to a user-specified path. If using the sync API, this must be ca
 Path where the video should be saved.
 
 
-## event: Video.frame
-* since: v1.59
-* langs: js
-- argument: <[Buffer]>
-
-Emitted for each screencast frame when video was started with `mode: 'screencast'`.
-
-**Usage**
-
-```js
-const video = page.video();
-video.on('frame', data => console.log('received frame, jpeg size:', data.length));
-await video.start({ mode: 'screencast' });
-// ... perform actions ...
-await video.stop();
-```
-
 ## async method: Video.start
 * since: v1.59
 
@@ -145,13 +128,6 @@ await page.Video.StartAsync();
 // ... perform actions ...
 await page.Video.StopAsync(new() { Path = "video.webm" });
 ```
-
-### option: Video.start.mode
-* since: v1.59
-* langs: js
-- `mode` ?<[VideoMode]<"video"|"screencast">>
-
-Recording mode. When set to `'screencast'`, JPEG frames are emitted as [`event: Video.frame`] events on the [Video] object instead of writing a video file. Defaults to `'video'`.
 
 ### option: Video.start.size
 * since: v1.59

@@ -1225,14 +1225,14 @@ scheme.PageLocatorHandlerTriggeredEvent = tObject({
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
 });
+scheme.PageScreencastFrameEvent = tObject({
+  data: tBinary,
+});
 scheme.PageWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
 });
 scheme.PageWebSocketEvent = tObject({
   webSocket: tChannel(['WebSocket']),
-});
-scheme.PageVideoFrameEvent = tObject({
-  data: tBinary,
 });
 scheme.PageWorkerEvent = tObject({
   worker: tChannel(['Worker']),
@@ -1539,15 +1539,23 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
+scheme.PageStartScreencastParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+});
+scheme.PageStartScreencastResult = tOptional(tObject({}));
+scheme.PageStopScreencastParams = tOptional(tObject({}));
+scheme.PageStopScreencastResult = tOptional(tObject({}));
 scheme.PageVideoStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
-  mode: tOptional(tEnum(['video', 'screencast'])),
 });
 scheme.PageVideoStartResult = tObject({
-  artifact: tOptional(tChannel(['Artifact'])),
+  artifact: tChannel(['Artifact']),
 });
 scheme.PageVideoStopParams = tOptional(tObject({}));
 scheme.PageVideoStopResult = tOptional(tObject({}));

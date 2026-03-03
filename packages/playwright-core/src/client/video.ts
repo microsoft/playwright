@@ -33,10 +33,9 @@ export class Video extends EventEmitter implements api.Video {
     this._artifact = artifact;
   }
 
-  async start(options: { size?: { width: number, height: number }, mode?: 'video' | 'screencast' } = {}): Promise<void> {
+  async start(options: { size?: { width: number, height: number } } = {}): Promise<void> {
     const result = await this._page._channel.videoStart(options);
-    if (result.artifact)
-      this._artifact = Artifact.from(result.artifact);
+    this._artifact = Artifact.from(result.artifact);
   }
 
   async stop(options: { path?: string } = {}): Promise<void> {

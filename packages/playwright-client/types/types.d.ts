@@ -3509,6 +3509,24 @@ export interface Page {
   }): Promise<string>;
 
   /**
+   * Returns the [Inspector](https://playwright.dev/docs/api/class-inspector) object associated with this page.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const inspector = page.inspector();
+   * inspector.on('screencastFrame', data => {
+   *   console.log('received frame, jpeg size:', data.length);
+   * });
+   * await inspector.startScreencast();
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   */
+  inspector(): Inspector;
+
+  /**
    * **NOTE** Use locator-based [locator.isChecked([options])](https://playwright.dev/docs/api/class-locator#locator-is-checked)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -20419,6 +20437,143 @@ export interface FrameLocator {
 }
 
 /**
+ * The `Inspector` object provides access to the Playwright inspector's screencast capabilities, allowing you to
+ * capture live JPEG frames from the page as it renders.
+ *
+ * **Usage**
+ *
+ * ```js
+ * const inspector = page.inspector();
+ * inspector.on('screencastFrame', data => {
+ *   console.log('received frame, jpeg size:', data.length);
+ * });
+ * await inspector.startScreencast();
+ * // ... perform actions ...
+ * await inspector.stopScreencast();
+ * ```
+ *
+ */
+export interface Inspector {
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const inspector = page.inspector();
+   * inspector.on('screencastFrame', data => {
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   */
+  on(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const inspector = page.inspector();
+   * inspector.on('screencastFrame', data => {
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   */
+  addListener(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const inspector = page.inspector();
+   * inspector.on('screencastFrame', data => {
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   */
+  prependListener(event: 'screencastframe', listener: (buffer: Buffer) => any): this;
+
+  /**
+   * Starts capturing screencast frames. Frames are emitted as
+   * [inspector.on('screencastframe')](https://playwright.dev/docs/api/class-inspector#inspector-event-screencast-frame)
+   * events.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const inspector = page.inspector();
+   * inspector.on('screencastFrame', data => console.log('frame size:', data.length));
+   * await inspector.startScreencast({ size: { width: 800, height: 600 } });
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   * @param options
+   */
+  startScreencast(options?: {
+    /**
+     * Optional dimensions for the screencast frames. If not specified, the page viewport size is used.
+     */
+    size?: {
+      /**
+       * Frame width in pixels.
+       */
+      width: number;
+
+      /**
+       * Frame height in pixels.
+       */
+      height: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Stops the screencast started with
+   * [inspector.startScreencast([options])](https://playwright.dev/docs/api/class-inspector#inspector-start-screencast).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await inspector.startScreencast();
+   * // ... perform actions ...
+   * await inspector.stopScreencast();
+   * ```
+   *
+   */
+  stopScreencast(): Promise<void>;
+}
+
+/**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
@@ -21921,69 +22076,6 @@ export interface Tracing {
  */
 export interface Video {
   /**
-   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const video = page.video();
-   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
-   * await video.start({ mode: 'screencast' });
-   * // ... perform actions ...
-   * await video.stop();
-   * ```
-   *
-   */
-  on(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const video = page.video();
-   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
-   * await video.start({ mode: 'screencast' });
-   * // ... perform actions ...
-   * await video.stop();
-   * ```
-   *
-   */
-  addListener(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
-   * Emitted for each screencast frame when video was started with `mode: 'screencast'`.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const video = page.video();
-   * video.on('frame', data => console.log('received frame, jpeg size:', data.length));
-   * await video.start({ mode: 'screencast' });
-   * // ... perform actions ...
-   * await video.stop();
-   * ```
-   *
-   */
-  prependListener(event: 'frame', listener: (buffer: Buffer) => any): this;
-
-  /**
    * Deletes the video file. Will wait for the video to finish if necessary.
    */
   delete(): Promise<void>;
@@ -22015,13 +22107,6 @@ export interface Video {
    * @param options
    */
   start(options?: {
-    /**
-     * Recording mode. When set to `'screencast'`, JPEG frames are emitted as
-     * [video.on('frame')](https://playwright.dev/docs/api/class-video#video-event-frame) events on the
-     * [Video](https://playwright.dev/docs/api/class-video) object instead of writing a video file. Defaults to `'video'`.
-     */
-    mode?: "video"|"screencast";
-
     /**
      * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
      * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.

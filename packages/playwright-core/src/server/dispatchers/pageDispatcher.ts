@@ -39,13 +39,12 @@ import type { FileChooser } from '../fileChooser';
 import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
-import type { RegisteredListener } from '../../utils';
 import type { RouteHandler } from '../network';
 import type { InitScript, PageBinding } from '../page';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
-import type * as types from '../types';
+import type { ScreencastFrame } from '../types';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -85,7 +84,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       viewportSize: page.emulatedSize()?.viewport,
       isClosed: page.isClosed(),
       opener: PageDispatcher.fromNullable(parentScope, page.opener()),
-      video: page.video ? createVideoDispatcher(parentScope, page.video) : undefined,
+      video: page.video ? createVideoDispatcher(parentScope, page.video) : undefined
     });
 
     this.adopt(mainFrame);
@@ -109,7 +108,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });
     });
-    this.addObjectListener(Page.Events.ScreencastFrame, (frame: types.ScreencastFrame) => this._dispatchEvent('videoFrame', { data: frame.buffer }));
+    this.addObjectListener(Page.Events.ScreencastFrame, (frame: ScreencastFrame) => this._dispatchEvent('screencastFrame', { data: frame.buffer }));
     this.addObjectListener(Page.Events.EmulatedSizeChanged, () => this._dispatchEvent('viewportSizeChanged', { viewportSize: page.emulatedSize()?.viewport }));
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(mainFrame, fileChooser.element()),
@@ -360,18 +359,21 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await recorder?.setMode('none');
   }
 
+  async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
+    const size = validateVideoSize(params.size, this._page.emulatedSize()?.viewport);
+    await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
+  }
+
+  async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
+    return this._page.screencast.stopScreencast(this);
+  }
+
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
-    if (params.mode === 'screencast') {
-      const size = validateVideoSize(params.size, this._page.emulatedSize()?.viewport);
-      await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
-      return {};
-    }
     const artifact = await this._page.screencast.startExplicitVideoRecording(params);
     return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
   }
 
   async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
-    await this._page.screencast.stopScreencast(this);
     await this._page.screencast.stopExplicitVideoRecording();
   }
 

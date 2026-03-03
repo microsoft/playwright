@@ -30,6 +30,7 @@ import { Keyboard, Mouse, Touchscreen } from './input';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
+import { Inspector } from './inspector';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { TimeoutSettings } from './timeoutSettings';
@@ -100,6 +101,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video;
+  private _inspector: Inspector;
   readonly _opener: Page | null;
   private _closeReason: string | undefined;
   _closeWasCalled: boolean = false;
@@ -134,6 +136,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
     this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
+    this._inspector = new Inspector(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -142,7 +145,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const artifactObject = Artifact.from(artifact);
       this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
-    this._channel.on('videoFrame', ({ data }) => this._video.emit('frame', data));
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
@@ -282,6 +284,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   video(): Video {
     return this._video;
+  }
+
+  inspector(): Inspector {
+    return this._inspector;
   }
 
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {

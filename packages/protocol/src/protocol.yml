@@ -2074,6 +2074,20 @@ Page:
       title: Cancel pick locator
       group: configuration
 
+    startScreencast:
+      title: Start screencast
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+
+    stopScreencast:
+      title: Stop screencast
+      group: configuration
+
     videoStart:
       title: Start video recording
       group: configuration
@@ -2083,13 +2097,8 @@ Page:
           properties:
             width: int
             height: int
-        mode:
-          type: enum?
-          literals:
-          - video
-          - screencast
       returns:
-        artifact: Artifact?
+        artifact: Artifact
 
     videoStop:
       title: Stop video recording
@@ -2182,6 +2191,10 @@ Page:
       parameters:
         route: Route
 
+    screencastFrame:
+      parameters:
+        data: binary
+
     webSocketRoute:
       parameters:
         webSocketRoute: WebSocketRoute
@@ -2189,10 +2202,6 @@ Page:
     webSocket:
       parameters:
         webSocket: WebSocket
-
-    videoFrame:
-      parameters:
-        data: binary
 
     worker:
       parameters:

@@ -898,19 +898,19 @@ it.describe('screencast', () => {
     expectFrames(videoPath, size, isAlmostWhite);
   });
 
-  it('video.start with frames option emits frame events', async ({ browser, browserName, server }) => {
-    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+  it('inspector.startScreencast emits screencastframe events', async ({ browser, server }) => {
+    const size = { width: 500, height: 400 };
     const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
+    const page = await context.newPage(); 
 
     const frames: Buffer[] = [];
-    page.video().on('frame', (data: Buffer) => frames.push(data));
+    page.inspector().on('screencastframe', (data: Buffer) => frames.push(data));
 
-    await page.video().start({ size, mode: 'screencast' });
+    await page.inspector().startScreencast({ size });
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
-    await page.video().stop();
+    await page.inspector().stopScreencast();
 
     expect(frames.length).toBeGreaterThan(0);
     // Each frame must be a valid JPEG (starts with FF D8)
