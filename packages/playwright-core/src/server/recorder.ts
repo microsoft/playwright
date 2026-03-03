@@ -24,6 +24,8 @@ import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './r
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import { ProgressController } from './progress';
+import { ManualPromise } from '../utils/isomorphic/manualPromise';
+
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
 import * as rawRecorderSource from './../generated/pollingRecorderSource';
 import { eventsHelper, monotonicTime } from './../utils';
@@ -35,6 +37,7 @@ import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 import type { Point } from '../utils/isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
+import type { Progress } from './progress';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
@@ -260,6 +263,38 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
     this._refreshOverlay();
+  }
+
+  async pickLocator(progress: Progress): Promise<string> {
+    const selectorPromise = new ManualPromise<string>();
+    let recorderChangedState = false;
+    const onElementPicked = (elementInfo: ElementInfo) => {
+      selectorPromise.resolve(elementInfo.selector);
+    };
+    const onModeChanged = () => {
+      recorderChangedState = true;
+      selectorPromise.reject(new Error('Locator picking was cancelled'));
+    };
+    const onContextClosed = () => {
+      recorderChangedState = true;
+      selectorPromise.reject(new Error('Context was closed'));
+    };
+    // Register listeners after setMode() to avoid consuming the ModeChanged
+    // event that fires synchronously from our own setMode('inspecting') call.
+    this.setMode('inspecting');
+    const listeners: RegisteredListener[] = [
+      eventsHelper.addEventListener(this, RecorderEvent.ElementPicked, onElementPicked),
+      eventsHelper.addEventListener(this, RecorderEvent.ModeChanged, onModeChanged),
+      eventsHelper.addEventListener(this, RecorderEvent.ContextClosed, onContextClosed),
+    ];
+    try {
+      return await progress.race(selectorPromise);
+    } finally {
+      // Remove listeners before setMode('none') to avoid triggering onModeChanged.
+      eventsHelper.removeEventListeners(listeners);
+      if (!recorderChangedState)
+        this.setMode('none');
+    }
   }
 
   url(): string | undefined {

@@ -28,13 +28,8 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
-import { Recorder, RecorderEvent } from '../recorder';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { eventsHelper } from '../utils/eventsHelper';
+import { Recorder } from '../recorder';
 import { isUnderTest } from '../utils/debug';
-
-import type { ElementInfo } from '@recorder/recorderTypes';
-import type { RegisteredListener } from '../utils/eventsHelper';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -355,33 +350,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (!this._page.browserContext._browser.options.headful && !isUnderTest())
       throw new Error('pickLocator() is only available in headed mode');
     const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
-    const selectorPromise = new ManualPromise<string>();
-    let recorderChangedState = false;
-    const onElementPicked = (elementInfo: ElementInfo) => {
-      selectorPromise.resolve(elementInfo.selector);
-    };
-    const onModeChanged = () => {
-      recorderChangedState = true;
-      selectorPromise.reject(new Error('Locator picking was cancelled'));
-    };
-    const onContextClosed = () => {
-      recorderChangedState = true;
-      selectorPromise.reject(new Error('Context was closed'));
-    };
-    recorder.setMode('inspecting');
-    const listeners: RegisteredListener[] = [
-      eventsHelper.addEventListener(recorder, RecorderEvent.ElementPicked, onElementPicked),
-      eventsHelper.addEventListener(recorder, RecorderEvent.ModeChanged, onModeChanged),
-      eventsHelper.addEventListener(recorder, RecorderEvent.ContextClosed, onContextClosed),
-    ];
-    try {
-      const selector = await progress.race(selectorPromise);
-      return { selector };
-    } finally {
-      eventsHelper.removeEventListeners(listeners);
-      if (!recorderChangedState)
-        recorder.setMode('none');
-    }
+    const selector = await recorder.pickLocator(progress);
+    return { selector };
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
