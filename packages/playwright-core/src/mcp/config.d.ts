@@ -214,6 +214,11 @@ export type Config = {
      * Configures default navigation timeout: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout. Defaults to 60000ms.
      */
     navigation?: number;
+
+    /**
+     * Configures default expect timeout: https://playwright.dev/docs/test-timeouts#expect-timeout. Defaults to 5000ms.
+     */
+    expect?: number;
   };
 
   /**

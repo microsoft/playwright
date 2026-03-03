@@ -109,6 +109,7 @@ export const defaultConfig: FullConfig = {
   timeouts: {
     action: 5000,
     navigation: 60000,
+    expect: 5000,
   },
 };
 
@@ -134,6 +135,7 @@ export type FullConfig = Config & {
   timeouts: {
     action: number;
     navigation: number;
+    expect: number;
   },
   skillMode?: boolean;
   configFile?: string;

@@ -43,13 +43,13 @@ const fillForm = defineTabTool({
       const locatorSource = `await page.${resolved}`;
       if (field.type === 'textbox' || field.type === 'slider') {
         const secret = tab.context.lookupSecret(field.value);
-        await locator.fill(secret.value);
+        await locator.fill(secret.value, tab.actionTimeoutOptions);
         response.addCode(`${locatorSource}.fill(${secret.code});`);
       } else if (field.type === 'checkbox' || field.type === 'radio') {
-        await locator.setChecked(field.value === 'true');
+        await locator.setChecked(field.value === 'true', tab.actionTimeoutOptions);
         response.addCode(`${locatorSource}.setChecked(${field.value});`);
       } else if (field.type === 'combobox') {
-        await locator.selectOption({ label: field.value });
+        await locator.selectOption({ label: field.value }, tab.actionTimeoutOptions);
         response.addCode(`${locatorSource}.selectOption(${escapeWithQuotes(field.value)});`);
       }
     }

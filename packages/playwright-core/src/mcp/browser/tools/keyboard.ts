@@ -98,16 +98,16 @@ const type = defineTabTool({
       if (params.slowly) {
         response.setIncludeSnapshot();
         response.addCode(`await page.${resolved}.pressSequentially(${secret.code});`);
-        await locator.pressSequentially(secret.value);
+        await locator.pressSequentially(secret.value, tab.actionTimeoutOptions);
       } else {
         response.addCode(`await page.${resolved}.fill(${secret.code});`);
-        await locator.fill(secret.value);
+        await locator.fill(secret.value, tab.actionTimeoutOptions);
       }
 
       if (params.submit) {
         response.setIncludeSnapshot();
         response.addCode(`await page.${resolved}.press('Enter');`);
-        await locator.press('Enter');
+        await locator.press('Enter', tab.actionTimeoutOptions);
       }
     });
   },

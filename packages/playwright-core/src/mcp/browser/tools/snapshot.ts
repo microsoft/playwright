@@ -65,6 +65,7 @@ const click = defineTabTool({
     const options = {
       button: params.button,
       modifiers: params.modifiers,
+      ...tab.actionTimeoutOptions,
     };
     const optionsArg = formatObjectOrVoid(options);
 
@@ -106,7 +107,7 @@ const drag = defineTabTool({
     ]);
 
     await tab.waitForCompletion(async () => {
-      await start.locator.dragTo(end.locator);
+      await start.locator.dragTo(end.locator, tab.actionTimeoutOptions);
     });
 
     response.addCode(`await page.${start.resolved}.dragTo(page.${end.resolved});`);
@@ -130,7 +131,7 @@ const hover = defineTabTool({
     response.addCode(`await page.${resolved}.hover();`);
 
     await tab.waitForCompletion(async () => {
-      await locator.hover();
+      await locator.hover(tab.actionTimeoutOptions);
     });
   },
 });
@@ -156,7 +157,7 @@ const selectOption = defineTabTool({
     response.addCode(`await page.${resolved}.selectOption(${formatObject(params.values)});`);
 
     await tab.waitForCompletion(async () => {
-      await locator.selectOption(params.values);
+      await locator.selectOption(params.values, tab.actionTimeoutOptions);
     });
   },
 });
@@ -192,7 +193,7 @@ const check = defineTabTool({
   handle: async (tab, params, response) => {
     const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.check();`);
-    await locator.check();
+    await locator.check(tab.actionTimeoutOptions);
   },
 });
 
@@ -210,7 +211,7 @@ const uncheck = defineTabTool({
   handle: async (tab, params, response) => {
     const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.uncheck();`);
-    await locator.uncheck();
+    await locator.uncheck(tab.actionTimeoutOptions);
   },
 });
 

@@ -95,7 +95,7 @@ const verifyList = defineTabTool({
         response.addError(`Item "${item}" not found`);
         return;
       }
-      itemTexts.push((await itemLocator.textContent())!);
+      itemTexts.push((await itemLocator.textContent(tab.expectTimeoutOptions))!);
     }
     const ariaSnapshot = `\`
 - list:
@@ -125,14 +125,14 @@ const verifyValue = defineTabTool({
     const { locator, resolved } = await tab.refLocator({ ref: params.ref, element: params.element });
     const locatorSource = `page.${resolved}`;
     if (params.type === 'textbox' || params.type === 'slider' || params.type === 'combobox') {
-      const value = await locator.inputValue();
+      const value = await locator.inputValue(tab.expectTimeoutOptions);
       if (value !== params.value) {
         response.addError(`Expected value "${params.value}", but got "${value}"`);
         return;
       }
       response.addCode(`await expect(${locatorSource}).toHaveValue(${escapeWithQuotes(params.value)});`);
     } else if (params.type === 'checkbox' || params.type === 'radio') {
-      const value = await locator.isChecked();
+      const value = await locator.isChecked(tab.expectTimeoutOptions);
       if (value !== (params.value === 'true')) {
         response.addError(`Expected value "${params.value}", but got "${value}"`);
         return;
