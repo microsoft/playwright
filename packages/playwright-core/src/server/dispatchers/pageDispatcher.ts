@@ -29,7 +29,6 @@ import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
-import { isUnderTest } from '../utils/debug';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -347,11 +346,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
-    if (!this._page.browserContext._browser.options.headful && !isUnderTest())
-      throw new Error('pickLocator() is only available in headed mode');
     const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
     const selector = await recorder.pickLocator(progress);
     return { selector };
+  }
+
+  async cancelPickLocator(params: channels.PageCancelPickLocatorParams, progress: Progress): Promise<void> {
+    const recorder = await Recorder.existingForContext(this._page.browserContext);
+    recorder?.setMode('none');
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {

@@ -1534,6 +1534,8 @@ scheme.PagePickLocatorParams = tOptional(tObject({}));
 scheme.PagePickLocatorResult = tObject({
   selector: tString,
 });
+scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
+scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
 scheme.PageVideoStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,

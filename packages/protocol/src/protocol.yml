@@ -2069,6 +2069,9 @@ Page:
       returns:
         selector: string
 
+    cancelPickLocator:
+      title: Cancel pick locator
+
     videoStart:
       title: Start video recording
       group: configuration

@@ -2147,6 +2147,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   stopCSSCoverage(params?: PageStopCSSCoverageParams, progress?: Progress): Promise<PageStopCSSCoverageResult>;
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
+  cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
   videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
   videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
@@ -2658,6 +2659,9 @@ export type PagePickLocatorOptions = {};
 export type PagePickLocatorResult = {
   selector: string,
 };
+export type PageCancelPickLocatorParams = {};
+export type PageCancelPickLocatorOptions = {};
+export type PageCancelPickLocatorResult = void;
 export type PageVideoStartParams = {
   size?: {
     width: number,

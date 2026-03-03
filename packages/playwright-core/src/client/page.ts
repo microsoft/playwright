@@ -824,6 +824,10 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this.locator(selector);
   }
 
+  async cancelPickLocator(): Promise<void> {
+    await this._channel.cancelPickLocator({});
+  }
+
   async pdf(options: PDFOptions = {}): Promise<Buffer> {
     const transportOptions: channels.PagePdfParams = { ...options } as channels.PagePdfParams;
     if (transportOptions.margin)

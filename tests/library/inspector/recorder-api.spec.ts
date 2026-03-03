@@ -165,3 +165,15 @@ test('page.pickLocator should return locator for picked element', async ({ page 
   const locator = await pickPromise;
   await expect(locator).toHaveText('Submit');
 });
+
+test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
+  await page.setContent(`<button>Submit</button>`);
+
+  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
+  const pickPromise = page.pickLocator();
+  await scriptReady;
+
+  await page.cancelPickLocator();
+
+  await expect(pickPromise).rejects.toThrow('Locator picking was cancelled');
+});
