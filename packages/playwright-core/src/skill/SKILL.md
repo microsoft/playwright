@@ -219,7 +219,7 @@ playwright-cli kill-all
 If global `playwright-cli` command is not available, try a local version via `npx playwright-cli`:
 
 ```bash
-npx playwright-cli --version
+npx --no-install playwright-cli --version
 ```
 
 When local version is available, use `npx playwright-cli` in all commands. Otherwise, install `playwright-cli` as a global command:
