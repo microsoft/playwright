@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-import os from 'os';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import { eventsHelper } from '../../client/eventEmitter';
 import { debug } from '../../utilsBundle';
@@ -25,14 +23,15 @@ import { selectors } from '../../..';
 
 import { Tab } from './tab';
 import { outputFile, workspaceFile } from './config';
+import { allRootPaths, firstRootPath } from '../sdk/server';
 
 import type * as playwright from '../../..';
 import type { FullConfig } from './config';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../client/tracing';
 import type { Disposable } from '../../client/eventEmitter';
-import type { ClientInfo } from '../sdk/server';
 import type { BrowserContext } from '../../client/browserContext';
+import type { ClientInfo } from '../sdk/server';
 
 const testDebug = debug('pw:mcp:test');
 
@@ -280,9 +279,9 @@ export class Context {
         },
       });
     }
-    const rootPath = this.firstRootPath();
+    const rootPath = firstRootPath(this._clientInfo);
     for (const initScript of this.config.browser.initScript || [])
-      await browserContext.addInitScript({ path: rootPath ? path.resolve(rootPath, initScript) : initScript });
+      await browserContext.addInitScript({ path: path.resolve(rootPath, initScript) });
     return browserContext;
   }
 
@@ -294,33 +293,7 @@ export class Context {
       code: `process.env['${secretName}']`,
     };
   }
-
-  firstRootPath(): string | undefined {
-    return allRootPaths(this._clientInfo)[0];
-  }
 }
-
-function allRootPaths(clientInfo: ClientInfo): string[] {
-  const paths: string[] = [];
-  for (const root of clientInfo.roots) {
-    const url = new URL(root.uri);
-    let rootPath;
-    try {
-      rootPath = fileURLToPath(url);
-    } catch (e) {
-      // Support WSL paths on Windows.
-      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && os.platform() === 'win32')
-        rootPath = decodeURIComponent(url.pathname);
-    }
-    if (!rootPath)
-      continue;
-    paths.push(rootPath);
-  }
-  if (paths.length === 0)
-    paths.push(process.cwd());
-  return paths;
-}
-
 
 function originOrHostGlob(originOrHost: string) {
   // Support wildcard port patterns like "http://localhost:*" or "https://example.com:*"

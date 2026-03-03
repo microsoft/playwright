@@ -20,6 +20,7 @@ import path from 'path';
 import { debug } from '../../utilsBundle';
 import { renderModalStates, shouldIncludeMessage } from './tab';
 import { scaleImageToFitMessage } from './tools/screenshot';
+import { firstRootPath } from '../sdk/server';
 
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
@@ -51,20 +52,18 @@ export class Response {
 
   readonly toolName: string;
   readonly toolArgs: Record<string, any>;
-  private _clientWorkspace: string | undefined;
+  private _clientWorkspace: string;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
 
   constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
-    this._clientWorkspace = relativeTo ?? context.firstRootPath();
+    this._clientWorkspace = relativeTo ?? firstRootPath(context.options.clientInfo);
   }
 
   private _computRelativeTo(fileName: string): string {
-    if (this._clientWorkspace)
-      return path.relative(this._clientWorkspace, fileName);
-    return fileName;
+    return path.relative(this._clientWorkspace, fileName);
   }
 
   async resolveClientFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {

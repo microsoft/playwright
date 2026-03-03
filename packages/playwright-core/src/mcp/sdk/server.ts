@@ -217,31 +217,28 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
   console.error(message);
 }
 
-export function firstRootPath(clientInfo: ClientInfo): string | undefined {
-  if (clientInfo.roots.length === 0)
-    return undefined;
-  const firstRootUri = clientInfo.roots[0]?.uri;
-  const url = firstRootUri ? new URL(firstRootUri) : undefined;
-  try {
-    return url ? fileURLToPath(url) : undefined;
-  } catch (error) {
-    serverDebug(error);
-    return undefined;
-  }
+export function firstRootPath(clientInfo: ClientInfo): string {
+  return allRootPaths(clientInfo)[0];
 }
 
 export function allRootPaths(clientInfo: ClientInfo): string[] {
   const paths: string[] = [];
   for (const root of clientInfo.roots) {
+    const url = new URL(root.uri);
+    let rootPath;
     try {
-      const url = new URL(root.uri);
-      const path = fileURLToPath(url);
-      if (path)
-        paths.push(path);
-    } catch (error) {
-      serverDebug(error);
+      rootPath = fileURLToPath(url);
+    } catch (e) {
+      // Support WSL paths on Windows.
+      if (e.code === 'ERR_INVALID_FILE_URL_PATH' && process.platform === 'win32')
+        rootPath = decodeURIComponent(url.pathname);
     }
+    if (!rootPath)
+      continue;
+    paths.push(rootPath);
   }
+  if (paths.length === 0)
+    paths.push(process.cwd());
   return paths;
 }
 

@@ -108,7 +108,6 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
     args: ['--caps=tracing'],
   });
 
-  const tmpDir = testInfo.outputPath('tmp');
   expect(await client.callTool({
     name: 'browser_start_tracing',
   })).toHaveResponse({
@@ -128,10 +127,7 @@ test('check that trace is saved with browser_start_tracing (no output dir)', asy
     result: expect.stringMatching(/trace-\d+.trace/)
   });
 
-  const folders = await fs.promises.readdir(path.join(tmpDir, 'playwright-mcp-output'));
-  expect(folders.length).toBe(1);
-  expect(folders[0]).toMatch(/\d+/);
-  const files = await fs.promises.readdir(path.join(tmpDir, 'playwright-mcp-output', folders[0], 'traces'));
+  const files = await fs.promises.readdir(testInfo.outputPath('.playwright-mcp', 'traces'));
   expect(files).toEqual([
     'resources',
     expect.stringMatching(/trace-\d+\.network/),
