@@ -21,9 +21,9 @@ import pixelmatch from '../../third_party/pixelmatch';
 import { jpegjs } from '../../utilsBundle';
 import { colors, diff } from '../../utilsBundle';
 import { PNG } from '../../utilsBundle';
-import { padImageToSize } from './imageUtils';
+import { padImageToSize } from '../../utils/isomorphic/imageUtils';
 
-import type { ImageData } from './imageUtils';
+import type { ImageData } from '../../utils/isomorphic/imageUtils';
 
 export type ImageComparatorOptions = { threshold?: number, maxDiffPixels?: number, maxDiffPixelRatio?: number, comparator?: string };
 export type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;
