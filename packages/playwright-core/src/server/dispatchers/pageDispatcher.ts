@@ -28,6 +28,8 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
+import { Recorder } from '../recorder';
+import { isUnderTest } from '../utils/debug';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -342,6 +344,14 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {
     await progress.race(this._page.bringToFront());
+  }
+
+  async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
+    if (!this._page.browserContext._browser.options.headful && !isUnderTest())
+      throw new Error('pickLocator() is only available in headed mode');
+    const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
+    const selector = await recorder.pickLocator(progress);
+    return { selector };
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {

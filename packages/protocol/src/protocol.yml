@@ -2064,6 +2064,11 @@ Page:
     bringToFront:
       title: Bring to front
 
+    pickLocator:
+      title: Pick locator
+      returns:
+        selector: string
+
     videoStart:
       title: Start video recording
       group: configuration

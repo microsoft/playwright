@@ -146,6 +146,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.startCSSCoverage', { title: 'Start CSS coverage', group: 'configuration', }],
   ['Page.stopCSSCoverage', { title: 'Stop CSS coverage', group: 'configuration', }],
   ['Page.bringToFront', { title: 'Bring to front', }],
+  ['Page.pickLocator', { title: 'Pick locator', }],
   ['Page.videoStart', { title: 'Start video recording', group: 'configuration', }],
   ['Page.videoStop', { title: 'Stop video recording', group: 'configuration', }],
   ['Page.updateSubscription', { internal: true, }],

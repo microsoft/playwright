@@ -2845,6 +2845,24 @@ the place it was paused.
 This method requires Playwright to be started in a headed mode, with a falsy [`option: BrowserType.launch.headless`] option.
 :::
 
+## async method: Page.pickLocator
+* since: v1.59
+- returns: <[Locator]>
+
+Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+Once the user clicks an element, the mode is deactivated and the [Locator] for the picked element is returned.
+
+:::note
+This method requires Playwright to be started in a headed mode.
+:::
+
+**Usage**
+
+```js
+const locator = await page.pickLocator();
+console.log(locator);
+```
+
 ## async method: Page.pdf
 * since: v1.8
 - returns: <[Buffer]>

@@ -151,3 +151,17 @@ test('should disable recorder', async ({ context }) => {
   await page.getByRole('button', { name: 'Submit' }).click();
   expect(log.action('click')).toHaveLength(2);
 });
+
+test('page.pickLocator should return locator for picked element', async ({ page }) => {
+  await page.setContent(`<button>Submit</button>`);
+
+  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
+  const pickPromise = page.pickLocator();
+  await scriptReady;
+
+  const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
+  await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const locator = await pickPromise;
+  await expect(locator).toHaveText('Submit');
+});
