@@ -20,13 +20,11 @@ import { EventEmitter } from './eventEmitter';
 import type { Connection } from './connection';
 import type { Page } from './page';
 import type * as api from '../../types/types';
-import type * as channels from '@protocol/channels';
 
 export class Video extends EventEmitter implements api.Video {
   private _artifact: Artifact | undefined;
   private _isRemote = false;
   private _page: Page;
-  private _stopFrameEvents: (() => void) | null = null;
 
   constructor(page: Page, connection: Connection, artifact: Artifact | undefined) {
     super(page._platform);
@@ -39,22 +37,11 @@ export class Video extends EventEmitter implements api.Video {
     const result = await this._page._channel.videoStart(options);
     if (result.artifact)
       this._artifact = Artifact.from(result.artifact);
-    if (options.mode === 'screencast') {
-      const listener = ({ data }: channels.PageVideoFrameEvent) => {
-        this.emit('frame', data);
-      };
-      this._page._channel.on('videoFrame', listener);
-      this._stopFrameEvents = () => (this._page._channel as unknown as EventEmitter).removeListener('videoFrame', listener);
-    }
   }
 
   async stop(options: { path?: string } = {}): Promise<void> {
     await this._page._wrapApiCall(async () => {
       await this._page._channel.videoStop();
-      if (this._stopFrameEvents) {
-        this._stopFrameEvents();
-        this._stopFrameEvents = null;
-      }
       if (options.path)
         await this.saveAs(options.path);
     });

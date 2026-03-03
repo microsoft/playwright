@@ -28,7 +28,6 @@ export class Screencast {
   private _page: Page;
   private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
-  private _framesMode = false;
   private _screencastClients = new Set<unknown>();
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.

@@ -142,6 +142,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       const artifactObject = Artifact.from(artifact);
       this.emit(Events.Page.Download, new Download(this, url, suggestedFilename, artifactObject));
     });
+    this._channel.on('videoFrame', ({ data }) => this._video.emit('frame', data));
     this._channel.on('fileChooser', ({ element, isMultiple }) => this.emit(Events.Page.FileChooser, new FileChooser(this, ElementHandle.from(element), isMultiple)));
     this._channel.on('frameAttached', ({ frame }) => this._onFrameAttached(Frame.from(frame)));
     this._channel.on('frameDetached', ({ frame }) => this._onFrameDetached(Frame.from(frame)));
