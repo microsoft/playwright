@@ -198,7 +198,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       await this._context.exposeBinding(progress, '__pw_recorderSetMode', false, async ({ frame }, mode: Mode) => {
         if (frame.parentFrame())
           return;
-        this.setMode(mode);
+        await this.setMode(mode);
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderSetOverlayState', false, async ({ frame }, state: OverlayState) => {
@@ -252,7 +252,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return this._mode;
   }
 
-  setMode(mode: Mode) {
+  async setMode(mode: Mode) {
     if (this._mode === mode)
       return;
     this._highlightedElement = {};
@@ -262,7 +262,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._debugger.setMuted(this._isRecording());
     if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
       this._context.pages()[0].bringToFront().catch(() => {});
-    this._refreshOverlay();
+    await this._refreshOverlay();
   }
 
   async pickLocator(progress: Progress): Promise<string> {
@@ -272,6 +272,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       selectorPromise.resolve(elementInfo.selector);
     };
     const onModeChanged = () => {
+      if (this._mode === 'inspecting')
+        return;
       recorderChangedState = true;
       selectorPromise.reject(new Error('Locator picking was cancelled'));
     };
@@ -279,21 +281,23 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       recorderChangedState = true;
       selectorPromise.reject(new Error('Context was closed'));
     };
-    // Register listeners after setMode() to avoid consuming the ModeChanged
-    // event that fires synchronously from our own setMode('inspecting') call.
-    this.setMode('inspecting');
     const listeners: RegisteredListener[] = [
       eventsHelper.addEventListener(this, RecorderEvent.ElementPicked, onElementPicked),
       eventsHelper.addEventListener(this, RecorderEvent.ModeChanged, onModeChanged),
       eventsHelper.addEventListener(this, RecorderEvent.ContextClosed, onContextClosed),
     ];
     try {
-      return await progress.race(selectorPromise);
+      const doPickLocator = async () => {
+        // Prevent unhandled rejection in case of cancellation during setMode
+        selectorPromise.catch(() => {});
+        await this.setMode('inspecting');
+        return await selectorPromise;
+      };
+      return await progress.race(doPickLocator());
     } finally {
-      // Remove listeners before setMode('none') to avoid triggering onModeChanged.
       eventsHelper.removeEventListeners(listeners);
       if (!recorderChangedState)
-        this.setMode('none');
+        await this.setMode('none');
     }
   }
 
@@ -302,23 +306,23 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return page?.mainFrame().url();
   }
 
-  setHighlightedSelector(selector: string) {
+  async setHighlightedSelector(selector: string) {
     this._highlightedElement = { selector: locatorOrSelectorAsSelector(this._currentLanguage, selector, this._context.selectors().testIdAttributeName()) };
-    this._refreshOverlay();
+    await this._refreshOverlay();
   }
 
-  setHighlightedAriaTemplate(ariaTemplate: AriaTemplateNode) {
+  async setHighlightedAriaTemplate(ariaTemplate: AriaTemplateNode) {
     this._highlightedElement = { ariaTemplate };
-    this._refreshOverlay();
+    await this._refreshOverlay();
   }
 
   step() {
     this._debugger.resume(true);
   }
 
-  setLanguage(language: Language) {
+  async setLanguage(language: Language) {
     this._currentLanguage = language;
-    this._refreshOverlay();
+    await this._refreshOverlay();
   }
 
   resume() {
@@ -337,9 +341,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this._debugger.resume(false);
   }
 
-  hideHighlightedSelector() {
+  async hideHighlightedSelector() {
     this._highlightedElement = {};
-    this._refreshOverlay();
+    await this._refreshOverlay();
   }
 
   pausedSourceId() {
@@ -386,11 +390,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     }
   }
 
-  private _refreshOverlay() {
-    for (const page of this._context.pages()) {
-      for (const frame of page.frames())
-        frame.evaluateExpression('window.__pw_refreshOverlay()').catch(() => {});
-    }
+  private async _refreshOverlay() {
+    await Promise.all(this._context.pages().map(
+        page => page.safeNonStallingEvaluateInAllFrames('window.__pw_refreshOverlay()', 'main')));
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata) {

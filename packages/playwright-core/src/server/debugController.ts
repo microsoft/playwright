@@ -79,10 +79,12 @@ export class DebugController extends SdkObject {
     this._generateAutoExpect = !!params.generateAutoExpect;
 
     if (params.mode === 'none') {
+      const promises = [];
       for (const recorder of await progress.race(this._allRecorders())) {
-        recorder.hideHighlightedSelector();
-        recorder.setMode('none');
+        promises.push(recorder.hideHighlightedSelector());
+        promises.push(recorder.setMode('none'));
       }
+      await Promise.all(promises);
       return;
     }
 
@@ -112,20 +114,24 @@ export class DebugController extends SdkObject {
     if (params.selector)
       unsafeLocatorOrSelectorAsSelector(this._sdkLanguage, params.selector, 'data-testid');
     const ariaTemplate = params.ariaTemplate ? parseAriaSnapshotUnsafe(yaml, params.ariaTemplate) : undefined;
+    const promises = [];
     for (const recorder of await progress.race(this._allRecorders())) {
       if (ariaTemplate)
-        recorder.setHighlightedAriaTemplate(ariaTemplate);
+        promises.push(recorder.setHighlightedAriaTemplate(ariaTemplate));
       else if (params.selector)
-        recorder.setHighlightedSelector(params.selector);
+        promises.push(recorder.setHighlightedSelector(params.selector));
     }
+    await Promise.all(promises);
   }
 
   async hideHighlight(progress: Progress) {
+    const promises = [];
     // Hide all active recorder highlights.
     for (const recorder of await progress.race(this._allRecorders()))
-      recorder.hideHighlightedSelector();
+      promises.push(recorder.hideHighlightedSelector());
     // Hide all locator.highlight highlights.
-    await Promise.all(this._playwright.allPages().map(p => p.hideHighlight().catch(() => {})));
+    promises.push(...this._playwright.allPages().map(p => p.hideHighlight().catch(() => {})));
+    await Promise.all(promises);
   }
 
   async resume(progress: Progress) {

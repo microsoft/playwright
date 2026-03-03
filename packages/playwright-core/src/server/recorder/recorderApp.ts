@@ -142,7 +142,7 @@ export class RecorderApp {
         if (source) {
           if (source.isRecorded)
             this._selectedGeneratorId = source.id;
-          this._recorder.setLanguage(source.language);
+          await this._recorder.setLanguage(source.language);
         }
       },
       setAutoExpect: async (params: { autoExpect: boolean }) => {
@@ -150,7 +150,7 @@ export class RecorderApp {
         this._updateActions();
       },
       setMode: async (params: { mode: Mode }) => {
-        this._recorder.setMode(params.mode);
+        await this._recorder.setMode(params.mode);
       },
       resume: async () => {
         this._recorder.resume();
@@ -163,9 +163,9 @@ export class RecorderApp {
       },
       highlightRequested: async (params: { selector?: string; ariaTemplate?: AriaTemplateNode }) => {
         if (params.selector)
-          this._recorder.setHighlightedSelector(params.selector);
+          await this._recorder.setHighlightedSelector(params.selector);
         if (params.ariaTemplate)
-          this._recorder.setHighlightedAriaTemplate(params.ariaTemplate);
+          await this._recorder.setHighlightedAriaTemplate(params.ariaTemplate);
       },
     };
 

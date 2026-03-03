@@ -2188,6 +2188,12 @@ export interface Page {
   bringToFront(): Promise<void>;
 
   /**
+   * Cancels an ongoing [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) call by
+   * deactivating pick locator mode. If no pick locator mode is active, this method is a no-op.
+   */
+  cancelPickLocator(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *

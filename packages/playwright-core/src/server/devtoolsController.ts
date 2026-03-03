@@ -257,20 +257,22 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     await page.screencast.startScreencast(this, { width: 1280, height: 800, quality: 90 });
   }
 
-  private _deselectPage() {
+  private async _deselectPage() {
     if (!this.selectedPage)
       return;
-    this._cancelPicking();
+    const promises = [];
+    promises.push(this._cancelPicking());
     eventsHelper.removeEventListeners(this._pageListeners);
     this._pageListeners = [];
-    this.selectedPage.screencast.stopScreencast(this);
+    promises.push(this.selectedPage.screencast.stopScreencast(this));
     this.selectedPage = null;
     this._lastFrameData = null;
     this._lastViewportSize = null;
+    await Promise.all(promises);
   }
 
   async pickLocator() {
-    this._cancelPicking();
+    await this._cancelPicking();
     const recorder = await Recorder.forContext(this._context, { omitCallTracking: true, hideToolbar: true });
     this._recorder = recorder;
     this._recorderListeners.push(
@@ -279,18 +281,18 @@ class DevToolsConnection implements Transport, DevToolsChannel {
           this._cancelPicking();
         }),
     );
-    recorder.setMode('inspecting');
+    await recorder.setMode('inspecting');
   }
 
   async cancelPickLocator() {
-    this._cancelPicking();
+    await this._cancelPicking();
   }
 
-  private _cancelPicking() {
+  private async _cancelPicking() {
     eventsHelper.removeEventListeners(this._recorderListeners);
     this._recorderListeners = [];
     if (this._recorder) {
-      this._recorder.setMode('none');
+      await this._recorder.setMode('none');
       this._recorder = null;
     }
   }
