@@ -2435,6 +2435,10 @@ scheme.ResponseRawResponseHeadersParams = tOptional(tObject({}));
 scheme.ResponseRawResponseHeadersResult = tObject({
   headers: tArray(tType('NameValue')),
 });
+scheme.ResponseHttpVersionParams = tOptional(tObject({}));
+scheme.ResponseHttpVersionResult = tObject({
+  value: tString,
+});
 scheme.ResponseSizesParams = tOptional(tObject({}));
 scheme.ResponseSizesResult = tObject({
   sizes: tType('RequestSizes'),

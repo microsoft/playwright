@@ -80,6 +80,12 @@ Returns all values of the headers matching the name, for example `set-cookie`. T
 
 Name of the header.
 
+## async method: Response.httpVersion
+* since: v1.59
+- returns: <[string]>
+
+Returns the http version used by the response.
+
 ## async method: Response.json
 * since: v1.8
 * langs: js, python

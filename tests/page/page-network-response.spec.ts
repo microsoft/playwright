@@ -421,3 +421,8 @@ it('request.existingResponse should return the response after it is received', a
   const request = response.request();
   expect(request.existingResponse()).toBe(response);
 });
+
+it('should return http version', async ({ page, server }) => {
+  const response = await page.goto(server.EMPTY_PAGE);
+  expect(await response.httpVersion()).toBe('HTTP/1.1');
+});
