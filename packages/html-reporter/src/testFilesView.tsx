@@ -20,7 +20,7 @@ import { TestFileView } from './testFileView';
 import './testFileView.css';
 import './chip.css';
 import { msToString } from './utils';
-import { AutoChip } from './chip';
+import { Chip } from './chip';
 import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';
 import { isMetadataEmpty, MetadataView } from './metadataView';
@@ -71,7 +71,9 @@ export const TestFilesHeader: React.FC<{
   filteredStats?: FilteredStats,
   metadataVisible: boolean,
   toggleMetadataVisible: () => void,
-}> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible }) => {
+  errorsVisible: boolean,
+  setErrorsVisible: (visible: boolean) => void,
+}> = ({ report, filteredStats, metadataVisible, toggleMetadataVisible, errorsVisible, setErrorsVisible }) => {
   if (!report)
     return null;
 
@@ -99,8 +101,8 @@ export const TestFilesHeader: React.FC<{
     <HeaderView title={report.options.title} leftSuperHeader={leftSuperHeader} rightSuperHeader={rightSuperHeader} />
     {!isMetadataInTopLine && metadataToggleButton}
     {metadataVisible && <MetadataView metadata={report.metadata}/>}
-    {!!report.errors.length && <AutoChip header='Errors' dataTestId='report-errors'>
+    {!!report.errors.length && <Chip header='Errors' dataTestId='report-errors' expanded={errorsVisible} setExpanded={setErrorsVisible}>
       {report.errors.map((error, index) => <CodeSnippet key={'test-report-error-message-' + index} code={error}/>)}
-    </AutoChip>}
+    </Chip>}
   </>;
 };
