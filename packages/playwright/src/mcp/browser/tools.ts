@@ -23,6 +23,7 @@ import form from './tools/form';
 import install from './tools/install';
 import keyboard from './tools/keyboard';
 import mouse from './tools/mouse';
+import initiateReplay from './tools/initiateReplay';
 import navigate from './tools/navigate';
 import network from './tools/network';
 import pdf from './tools/pdf';
@@ -49,6 +50,7 @@ export const browserTools: Tool<any>[] = [
   ...install,
   ...keyboard,
   ...mouse,
+  ...initiateReplay,
   ...navigate,
   ...network,
   ...pdf,
