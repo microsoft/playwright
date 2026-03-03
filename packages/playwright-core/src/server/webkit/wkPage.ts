@@ -1195,6 +1195,7 @@ export class WKPage implements PageDelegate {
     if (response) {
       response._serverAddrFinished();
       response._securityDetailsFinished();
+      response._setHttpVersion(null);
       response.setResponseHeadersSize(null);
       response.setEncodedBodySize(null);
       response._requestFinished(helper.secondsToRoundishMillis(event.timestamp - request._timestamp));

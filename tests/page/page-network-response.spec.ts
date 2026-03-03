@@ -17,11 +17,7 @@
 
 import fs from 'fs';
 import url from 'url';
-import type { AddressInfo } from 'net';
 import { expect, test as it } from './pageTest';
-import { TestServer } from '../config/testserver';
-
-const { createHttp2Server } = require('../../packages/playwright-core/lib/utils');
 
 it('should work @smoke', async ({ page, server }) => {
   server.setRoute('/empty.html', (req, res) => {

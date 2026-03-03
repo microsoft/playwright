@@ -158,6 +158,7 @@ export class FFNetworkManager {
       response.setTransferSize(null);
       response.setEncodedBodySize(null);
       response._requestFinished(-1);
+      response._setHttpVersion(null);
     }
     request.request._setFailureText(event.errorCode);
     this._page.frameManager.requestFailed(request.request, event.errorCode === 'NS_BINDING_ABORTED');

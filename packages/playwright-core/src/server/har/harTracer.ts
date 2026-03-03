@@ -323,11 +323,6 @@ export class HarTracer {
       }));
     }
 
-    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
-      harEntry.request.httpVersion = httpVersion;
-      harEntry.response.httpVersion = httpVersion;
-    }));
-
     const compressionCalculationBarrier = this._options.omitSizes ? undefined : {
       _encodedBodySize: -1,
       _decodedBodySize: -1,
@@ -468,6 +463,7 @@ export class HarTracer {
     };
 
     this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+      harEntry.request.httpVersion = httpVersion;
       harEntry.response.httpVersion = httpVersion;
     }));
 
