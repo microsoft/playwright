@@ -875,6 +875,7 @@ export class InjectedScript {
       textarea.focus();
       return 'done';
     }
+    (element as HTMLElement | SVGElement).focus();
     const range = element.ownerDocument.createRange();
     range.selectNodeContents(element);
     const selection = element.ownerDocument.defaultView!.getSelection();
@@ -882,7 +883,6 @@ export class InjectedScript {
       selection.removeAllRanges();
       selection.addRange(range);
     }
-    (element as HTMLElement | SVGElement).focus();
     return 'done';
   }
 

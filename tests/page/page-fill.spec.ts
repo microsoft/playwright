@@ -404,3 +404,25 @@ it('fill back to back', async ({ page }) => {
   await expect(page.locator('id=one')).toHaveValue('first value');
   await expect(page.locator('id=two')).toHaveValue('second value');
 });
+
+it('should fill contenteditable with focus handler that collapses selection', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/39492'
+  }
+}, async ({ page }) => {
+  await page.setContent(`
+    <div contenteditable="true">initial text</div>
+    <script>
+      const editor = document.querySelector('[contenteditable]');
+      editor.addEventListener('focus', () => {
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0)
+          selection.collapseToEnd();
+      });
+    </script>
+  `);
+
+  await page.fill('div[contenteditable]', 'some value');
+  expect(await page.locator('div[contenteditable]').textContent()).toBe('some value');
+});
