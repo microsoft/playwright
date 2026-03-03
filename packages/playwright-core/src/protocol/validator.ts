@@ -1530,6 +1530,10 @@ scheme.PageStopCSSCoverageResult = tObject({
 });
 scheme.PageBringToFrontParams = tOptional(tObject({}));
 scheme.PageBringToFrontResult = tOptional(tObject({}));
+scheme.PagePickLocatorParams = tOptional(tObject({}));
+scheme.PagePickLocatorResult = tObject({
+  selector: tString,
+});
 scheme.PageVideoStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,

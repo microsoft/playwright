@@ -3905,6 +3905,23 @@ export interface Page {
   }): Promise<Buffer>;
 
   /**
+   * Launches the Playwright Inspector in pick locator mode, waits for the user to pick an element on the page, and
+   * returns a [Locator](https://playwright.dev/docs/api/class-locator) for that element. Once the user clicks an
+   * element, the inspector closes and the [Locator](https://playwright.dev/docs/api/class-locator) is returned.
+   *
+   * **NOTE** This method requires Playwright to be started in a headed mode.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = await page.pickLocator();
+   * console.log(locator);
+   * ```
+   *
+   */
+  pickLocator(): Promise<Locator>;
+
+  /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
