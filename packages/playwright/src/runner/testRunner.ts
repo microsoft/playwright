@@ -56,6 +56,7 @@ export type ListTestsParams = {
   locations?: string[];
   grep?: string;
   grepInvert?: string;
+  onlyChanged?: string;
 };
 
 export type RunTestsParams = {
@@ -271,6 +272,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     config.cliGrep = params.grep;
     config.cliGrepInvert = params.grepInvert;
     config.cliProjectFilter = params.projects?.length ? params.projects : undefined;
+    config.cliOnlyChanged = params.onlyChanged;
     config.cliListOnly = true;
 
     const status = await runTasks(new TestRun(config, reporter), [
