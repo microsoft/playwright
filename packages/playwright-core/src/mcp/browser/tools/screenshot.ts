@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { scaleImageToSize } from '../../../server/utils/imageUtils';
+import { scaleImageToSize } from '../../../utils/isomorphic/imageUtils';
 import { jpegjs, PNG } from '../../../utilsBundle';
 import { formatObject } from '../../../utils/isomorphic/stringUtils';
 
