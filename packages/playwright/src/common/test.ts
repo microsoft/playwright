@@ -35,11 +35,19 @@ class Base {
   }
 }
 
-export type Modifier = {
+type Modifier = {
   type: 'slow' | 'fixme' | 'skip' | 'fail',
   fn: Function,
   location: Location,
-  description: string | undefined
+  description: string | undefined,
+  testType: TestTypeImpl,
+};
+
+export type SuiteHook = {
+  type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll';
+  fn: Function;
+  title: string;
+  location: Location;
 };
 
 export class Suite extends Base {
@@ -47,13 +55,14 @@ export class Suite extends Base {
   parent?: Suite;
   _use: FixturesWithLocation[] = [];
   _entries: (Suite | TestCase)[] = [];
-  _hooks: { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll', fn: Function, title: string, location: Location }[] = [];
+  _hooks: SuiteHook[] = [];
   _timeout: number | undefined;
   _retries: number | undefined;
   // Annotations known statically before running the test, e.g. `test.describe.skip()` or `test.describe({ annotation }, body)`.
   _staticAnnotations: TestAnnotation[] = [];
   // Explicitly declared tags that are not a part of the title.
   _tags: string[] = [];
+  // Modifiers are converted into hooks after the fixture pool is built.
   _modifiers: Modifier[] = [];
   _parallelMode: 'none' | 'default' | 'serial' | 'parallel' = 'none';
   _fullProject: FullProjectInternal | undefined;
@@ -205,6 +214,14 @@ export class Suite extends Base {
     }
   }
 
+  forEachSuite(visitor: (suite: Suite) => void) {
+    visitor(this);
+    for (const entry of this._entries) {
+      if (entry instanceof Suite)
+        entry.forEachSuite(visitor);
+    }
+  }
+
   _serialize(): any {
     return {
       kind: 'suite',
@@ -217,9 +234,9 @@ export class Suite extends Base {
       retries: this._retries,
       staticAnnotations: this._staticAnnotations.slice(),
       tags: this._tags.slice(),
-      modifiers: this._modifiers.slice(),
+      modifiers: this._modifiers.map(m => ({ ...m, fn: undefined, testType: undefined })),
       parallelMode: this._parallelMode,
-      hooks: this._hooks.map(h => ({ type: h.type, location: h.location, title: h.title })),
+      hooks: this._hooks.map(h => ({ ...h, fn: undefined })),
       fileId: this._fileId,
     };
   }
@@ -233,9 +250,9 @@ export class Suite extends Base {
     suite._retries = data.retries;
     suite._staticAnnotations = data.staticAnnotations;
     suite._tags = data.tags;
-    suite._modifiers = data.modifiers;
+    suite._modifiers = data.modifiers.map((m: any) => ({ ...m, fn: () => { }, testType: rootTestType }));
     suite._parallelMode = data.parallelMode;
-    suite._hooks = data.hooks.map((h: any) => ({ type: h.type, location: h.location, title: h.title, fn: () => { } }));
+    suite._hooks = data.hooks.map((h: any) => ({ ...h, fn: () => { } }));
     suite._fileId = data.fileId;
     return suite;
   }
@@ -245,6 +262,7 @@ export class Suite extends Base {
     const suite = Suite._parse(data);
     suite._use = this._use.slice();
     suite._hooks = this._hooks.slice();
+    suite._modifiers = this._modifiers.slice();
     suite._fullProject = this._fullProject;
     return suite;
   }

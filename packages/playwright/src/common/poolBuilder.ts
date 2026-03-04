@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-import { FixturePool } from './fixtures';
+import { FixturePool, inheritFixtureNames } from './fixtures';
 import { formatLocation } from '../util';
+import { currentTestInfo } from './globals';
 
 import type { FullProjectInternal } from './config';
 import type { LoadError } from './fixtures';
@@ -41,8 +42,32 @@ export class PoolBuilder {
     this._project = project;
   }
 
-  buildPools(suite: Suite, testErrors?: TestError[]) {
-    suite.forEachTest(test => {
+  buildPools(topSuite: Suite, testErrors?: TestError[]) {
+    topSuite.forEachSuite(suite => {
+      const modifiers = suite._modifiers.slice();
+      suite._modifiers = [];
+
+      for (const modifier of modifiers.reverse()) {
+        let pool = this._buildTestTypePool(modifier.testType, testErrors);
+        pool = this._buildPoolForSuite(pool, suite, testErrors);
+        const scope = pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
+
+        const fn = async (fixtures: any) => {
+          const result = await modifier.fn(fixtures);
+          currentTestInfo()?._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
+        };
+        inheritFixtureNames(modifier.fn, fn);
+
+        suite._hooks.unshift({
+          type: scope === 'worker' ? 'beforeAll' : 'beforeEach',
+          fn,
+          title: `${modifier.type} modifier`,
+          location: modifier.location,
+        });
+      }
+    });
+
+    topSuite.forEachTest(test => {
       const pool = this._buildPoolForTest(test, testErrors);
       if (this._type === 'loader')
         test._poolDigest = pool.digest;
@@ -53,22 +78,18 @@ export class PoolBuilder {
 
   private _buildPoolForTest(test: TestCase, testErrors?: TestError[]): FixturePool {
     let pool = this._buildTestTypePool(test._testType, testErrors);
-
-    const parents: Suite[] = [];
-    for (let parent: Suite | undefined = test.parent; parent; parent = parent.parent)
-      parents.push(parent);
-    parents.reverse();
-
-    for (const parent of parents) {
-      if (parent._use.length)
-        pool = new FixturePool(parent._use, e => this._handleLoadError(e, testErrors), pool, parent._type === 'describe');
-      for (const hook of parent._hooks)
-        pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
-      for (const modifier of parent._modifiers)
-        pool.validateFunction(modifier.fn, modifier.type + ' modifier', modifier.location);
-    }
-
+    pool = this._buildPoolForSuite(pool, test.parent, testErrors);
     pool.validateFunction(test.fn, 'Test', test.location);
+    return pool;
+  }
+
+  private _buildPoolForSuite(pool: FixturePool, suite: Suite, testErrors?: TestError[]): FixturePool {
+    if (suite.parent)
+      pool = this._buildPoolForSuite(pool, suite.parent, testErrors);
+    if (suite._use.length)
+      pool = new FixturePool(suite._use, e => this._handleLoadError(e, testErrors), pool, suite._type === 'describe');
+    for (const hook of suite._hooks)
+      pool.validateFunction(hook.fn, hook.type + ' hook', hook.location);
     return pool;
   }
 
