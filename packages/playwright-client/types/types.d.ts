@@ -20580,7 +20580,7 @@ export interface Inspector {
   startScreencast(options?: {
     /**
      * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
-     * the current page viewport size, or 800×800 if no viewport is configured.
+     * 800×800.
      */
     maxSize?: {
       /**

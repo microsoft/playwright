@@ -30,6 +30,7 @@ import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
+import { eventsHelper } from '../utils/eventsHelper';
 import { disposeAll } from '../disposable';
 
 import type { Artifact } from '../artifact';
