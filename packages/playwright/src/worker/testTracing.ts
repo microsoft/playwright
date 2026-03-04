@@ -168,6 +168,8 @@ export class TestTracing {
   }
 
   async stopIfNeeded() {
+    this._contextCreatedEvent.testTimeout = this._testInfo.timeout;
+
     if (!this._options)
       return;
 

@@ -41,6 +41,7 @@ export type ContextEntry = {
   errors: trace.ErrorTraceEvent[];
   hasSource: boolean;
   contextId: string;
+  testTimeout?: number;
 };
 
 export type PageEntry = {

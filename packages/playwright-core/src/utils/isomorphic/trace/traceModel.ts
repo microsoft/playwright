@@ -89,6 +89,7 @@ export class TraceModel {
   resources: ResourceEntry[];
   readonly actionCounters: Map<string, number>;
   readonly traceUri: string;
+  readonly testTimeout?: number;
 
 
   constructor(traceUri: string, contexts: ContextEntry[]) {
@@ -104,6 +105,7 @@ export class TraceModel {
     this.playwrightVersion = contexts.find(c => c.playwrightVersion)?.playwrightVersion;
     this.title = libraryContext?.title || '';
     this.options = libraryContext?.options || {};
+    this.testTimeout = contexts.find(c => c.origin === 'testRunner')?.testTimeout;
     // Next call updates all timestamps for all events in library contexts, so it must be done first.
     this.actions = mergeActionsAndUpdateTiming(contexts);
     this.pages = ([] as PageEntry[]).concat(...contexts.map(c => c.pages));
