@@ -6932,7 +6932,7 @@ export interface PlaywrightWorkerOptions {
    *
    * To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be
    * equal to [testOptions.viewport](https://playwright.dev/docs/api/class-testoptions#test-options-viewport) scaled
-   * down to fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual
+   * down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual
    * picture of each page will be scaled down if necessary to fit the specified size.
    *
    * **Usage**

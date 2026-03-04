@@ -498,7 +498,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should use viewport scaled down to fit into 800x600 as default size', async ({ browser }, testInfo) => {
+  it('should use viewport scaled down to fit into 800x800 as default size', async ({ browser }, testInfo) => {
     const size = { width: 1600, height: 1200 };
     const context = await browser.newContext({
       recordVideo: {
@@ -925,7 +925,7 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('startScreencast throws when called with different options while running', async ({ browser, trace }) => {
+  it('startScreencast throws if already running', async ({ browser, trace }) => {
     it.skip(trace === 'on', 'trace=on enables screencast with different options');
 
     const size = { width: 500, height: 400 };
@@ -933,7 +933,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.inspector().startScreencast({ size });
-    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
+    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running');
 
     await page.inspector().stopScreencast();
     await context.close();

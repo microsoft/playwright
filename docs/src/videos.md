@@ -36,7 +36,7 @@ const context = await browser.newContext({ recordVideo: { dir: 'videos/' } });
 await context.close();
 ```
 
-You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x600. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
+You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
 
 ```js tab=js-test title="playwright.config.ts"
 import { defineConfig } from '@playwright/test';
@@ -109,7 +109,7 @@ var context = await browser.NewContextAsync(new()
 await context.CloseAsync();
 ```
 
-You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x600. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
+You can also specify video size. The video size defaults to the viewport size scaled down to fit 800x800. The video of the viewport is placed in the top-left corner of the output video, scaled down to fit if necessary. You may need to set the viewport size to match your desired video size.
 
 ```js
 const context = await browser.newContext({
