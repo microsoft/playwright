@@ -1,0 +1,24 @@
+git bisect start
+# status: waiting for both good and bad commits
+# bad: [0c45dfc773fef0aa9e13016052bc4f3cd86ba288] fix(windows): hide console window when spawning browser processes (#38776)
+git bisect bad 0c45dfc773fef0aa9e13016052bc4f3cd86ba288
+# status: waiting for good commit(s), bad commit known
+# good: [e4498b29eababe5ab0345f7dd8ea0bf62932841e] chore: freeze webkit version on macos 14 (#38996)
+git bisect good e4498b29eababe5ab0345f7dd8ea0bf62932841e
+# good: [7b3b57ab4cf11065477fabb169f8f5d403ef2729] chore: follow up to args parsing (#39178)
+git bisect good 7b3b57ab4cf11065477fabb169f8f5d403ef2729
+# bad: [65576628e6440c4fe05c88dda4a396ce4576baaa] feat(chromium): roll to r1212 (#39240)
+git bisect bad 65576628e6440c4fe05c88dda4a396ce4576baaa
+# good: [19b4dcd33d4a5b64c942c535d840ac491a88f63a] chore(cli): tray icon (#39218)
+git bisect good 19b4dcd33d4a5b64c942c535d840ac491a88f63a
+# good: [529f767c666b092e70525b9bcdc30c0e8335457b] fix(chromium): use actual device scale factor for css-scale screenshots (#39233)
+git bisect good 529f767c666b092e70525b9bcdc30c0e8335457b
+# bad: [951911cefedb1dd5a2a15f854a51bd7c34504a5f] chore: split daemon and client folders (#39245)
+git bisect bad 951911cefedb1dd5a2a15f854a51bd7c34504a5f
+# bad: [63f13454dedaa8f12a487df62cf42d9d89192b5b] chore: roll driver/Dockerfile to recent Node.js LTS version (#39238)
+git bisect bad 63f13454dedaa8f12a487df62cf42d9d89192b5b
+# bad: [8946b03f6f7c53e4bca0e9a2f1ab346133bdd25d] test(bidi): set channel option in showTraceViewer() fixture (#39222)
+git bisect bad 8946b03f6f7c53e4bca0e9a2f1ab346133bdd25d
+# bad: [6d35c8b168768a1f6dbc19eb414b2373bd6de8a9] chore: prep devtools app (#39231)
+git bisect bad 6d35c8b168768a1f6dbc19eb414b2373bd6de8a9
+# first bad commit: [6d35c8b168768a1f6dbc19eb414b2373bd6de8a9] chore: prep devtools app (#39231)
