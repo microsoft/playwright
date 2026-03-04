@@ -956,8 +956,8 @@ export class WKPage implements PageDelegate {
         // version that did not send timestamp.
         // TODO: remove this fallback when Debian 11 and Ubuntu 20.04 are EOL.
         : Date.now(),
-      deviceWidth: event.deviceWidth,
-      deviceHeight: event.deviceHeight,
+      viewportWidth: event.deviceWidth,
+      viewportHeight: event.deviceHeight,
     });
   }
 

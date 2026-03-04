@@ -493,8 +493,8 @@ export class FFPage implements PageDelegate {
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
       frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
-      deviceWidth: event.deviceWidth,
-      deviceHeight: event.deviceHeight,
+      viewportWidth: event.deviceWidth,
+      viewportHeight: event.deviceHeight,
     });
   }
 

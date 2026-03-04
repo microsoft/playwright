@@ -370,8 +370,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     const size = params.maxSize || { width: 800, height: 800 };
     // TODO: move to screencast and make startScrencast accept a listener.
     this._screencastFrameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: ScreencastFrame) => {
-      const { width, height } = jpegDimensions(frame.buffer);
-      this._dispatchEvent('screencastFrame', { data: frame.buffer, width, height });
+      this._dispatchEvent('screencastFrame', { data: frame.buffer });
     });
     await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
   }

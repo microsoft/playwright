@@ -230,22 +230,3 @@ class FrameThrottler {
     }
   }
 }
-
-export function jpegDimensions(buffer: Buffer): { width: number, height: number } {
-  let i = 2; // skip SOI marker (FF D8)
-  while (i < buffer.length - 8) {
-    if (buffer[i] !== 0xFF)
-      break;
-    const marker = buffer[i + 1];
-    const segmentLength = buffer.readUInt16BE(i + 2);
-    // SOF markers: C0 (baseline), C2 (progressive), C1, C3, C5-C7, C9-CB, CD-CF
-    if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) ||
-        (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
-      const height = buffer.readUInt16BE(i + 5);
-      const width = buffer.readUInt16BE(i + 7);
-      return { width, height };
-    }
-    i += 2 + segmentLength;
-  }
-  throw new Error('Could not parse JPEG dimensions');
-}

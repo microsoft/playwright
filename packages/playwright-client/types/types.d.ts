@@ -20456,16 +20456,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**
@@ -20476,16 +20466,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**
@@ -20510,16 +20490,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**
@@ -20530,16 +20500,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**
@@ -20550,16 +20510,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**
@@ -20584,16 +20534,6 @@ export interface Inspector {
      * JPEG-encoded frame data.
      */
     data: Buffer;
-
-    /**
-     * Frame width in pixels.
-     */
-    width: number;
-
-    /**
-     * Frame height in pixels.
-     */
-    height: number;
   }) => any): this;
 
   /**

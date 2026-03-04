@@ -901,13 +901,11 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
     const page = await context.newPage();
 
-    const frames: { data: Buffer, width: number, height: number }[] = [];
+    const frames: { data: Buffer }[] = [];
     page.inspector().on('screencastframe', frame => frames.push(frame));
 
     const maxSize = { width: 500, height: 400 };
     await page.inspector().startScreencast({ maxSize });
-    // Frame should be scaled down to fit the maximum size.
-    const expectedSize = { width: 500, height: 200 };
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
@@ -918,8 +916,10 @@ it.describe('screencast', () => {
       // Each frame must be a valid JPEG (starts with FF D8)
       expect(frame.data[0]).toBe(0xff);
       expect(frame.data[1]).toBe(0xd8);
-      expect(frame.width).toBe(expectedSize.width);
-      expect(frame.height).toBe(expectedSize.height);
+      const { width, height } = jpegDimensions(frame.data);
+      // Frame should be scaled down to fit the maximum size.
+      expect(width).toBe(500);
+      expect(height).toBe(200);
     }
 
     await context.close();
@@ -1004,3 +1004,22 @@ it('should saveAs video', async ({ browser }, testInfo) => {
   await page.video().saveAs(saveAsPath);
   expect(fs.existsSync(saveAsPath)).toBeTruthy();
 });
+
+function jpegDimensions(buffer: Buffer): { width: number, height: number } {
+  let i = 2; // skip SOI marker (FF D8)
+  while (i < buffer.length - 8) {
+    if (buffer[i] !== 0xFF)
+      break;
+    const marker = buffer[i + 1];
+    const segmentLength = buffer.readUInt16BE(i + 2);
+    // SOF markers: C0 (baseline), C2 (progressive), C1, C3, C5-C7, C9-CB, CD-CF
+    if ((marker >= 0xC0 && marker <= 0xC3) || (marker >= 0xC5 && marker <= 0xC7) ||
+        (marker >= 0xC9 && marker <= 0xCB) || (marker >= 0xCD && marker <= 0xCF)) {
+      const height = buffer.readUInt16BE(i + 5);
+      const width = buffer.readUInt16BE(i + 7);
+      return { width, height };
+    }
+    i += 2 + segmentLength;
+  }
+  throw new Error('Could not parse JPEG dimensions');
+}

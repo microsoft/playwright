@@ -603,8 +603,8 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
             type: 'screencast-frame',
             pageId: page.guid,
             sha1,
-            width: params.deviceWidth,
-            height: params.deviceHeight,
+            width: params.viewportWidth,
+            height: params.viewportHeight,
             timestamp: monotonicTime(),
             frameSwapWallTime: params.frameSwapWallTime,
           };

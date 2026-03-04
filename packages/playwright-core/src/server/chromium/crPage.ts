@@ -889,8 +889,8 @@ class FrameSession {
     this._page.emit(Page.Events.ScreencastFrame, {
       buffer,
       frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : Date.now(),
-      deviceWidth: payload.metadata.deviceWidth,
-      deviceHeight: payload.metadata.deviceHeight,
+      viewportWidth: payload.metadata.deviceWidth,
+      viewportHeight: payload.metadata.deviceHeight,
     });
   }
 

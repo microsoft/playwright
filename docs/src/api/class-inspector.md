@@ -28,8 +28,6 @@ console.log(locator);
 * since: v1.59
 - argument: <[Object]>
   - `data` <[Buffer]> JPEG-encoded frame data.
-  - `width` <[int]> Frame width in pixels.
-  - `height` <[int]> Frame height in pixels.
 
 Emitted for each captured JPEG screencast frame while the screencast is running.
 
