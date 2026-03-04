@@ -16,6 +16,7 @@
 
 import path from 'path';
 
+import { disposeAll } from '../../client/disposable';
 import { eventsHelper } from '../../client/eventEmitter';
 import { debug } from '../../utilsBundle';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
@@ -29,7 +30,7 @@ import type * as playwright from '../../..';
 import type { FullConfig } from './config';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../client/tracing';
-import type { Disposable } from '../../client/eventEmitter';
+import type { Disposable } from '../../client/disposable';
 import type { BrowserContext } from '../../client/browserContext';
 import type { ClientInfo } from '../sdk/server';
 
@@ -88,14 +89,12 @@ export class Context {
   }
 
   async dispose() {
-    for (const disposable of this._disposables)
-      disposable.dispose();
-    this._disposables = [];
+    disposeAll(this._disposables);
     for (const tab of this._tabs)
-      tab.dispose();
+      await tab.dispose();
     this._tabs.length = 0;
     this._currentTab = undefined;
-    this.stopVideoRecording();
+    await this.stopVideoRecording();
   }
 
   tabs(): Tab[] {
@@ -235,15 +234,17 @@ export class Context {
 
   private async _setupRequestInterception(context: playwright.BrowserContext) {
     if (this.config.network?.allowedOrigins?.length) {
-      await context.route('**', route => route.abort('blockedbyclient'));
+      this._disposables.push(await context.route('**', route => route.abort('blockedbyclient')));
 
-      for (const origin of this.config.network.allowedOrigins)
-        await context.route(originOrHostGlob(origin), route => route.continue());
+      for (const origin of this.config.network.allowedOrigins) {
+        const glob = originOrHostGlob(origin);
+        this._disposables.push(await context.route(glob, route => route.continue()));
+      }
     }
 
     if (this.config.network?.blockedOrigins?.length) {
       for (const origin of this.config.network.blockedOrigins)
-        await context.route(originOrHostGlob(origin), route => route.abort('blockedbyclient'));
+        this._disposables.push(await context.route(originOrHostGlob(origin), route => route.abort('blockedbyclient')));
     }
   }
 
@@ -263,9 +264,7 @@ export class Context {
       (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
     }
     await this._setupRequestInterception(browserContext);
-    for (const page of browserContext.pages())
-      this._onPageCreated(page);
-    this._disposables.push(eventsHelper.addEventListener(browserContext as BrowserContext, 'page', page => this._onPageCreated(page)));
+
     if (this.config.saveTrace) {
       await (browserContext.tracing as Tracing).start({
         name: 'trace-' + Date.now(),
@@ -281,7 +280,12 @@ export class Context {
     }
     const rootPath = firstRootPath(this._clientInfo);
     for (const initScript of this.config.browser.initScript || [])
-      await browserContext.addInitScript({ path: path.resolve(rootPath, initScript) });
+      this._disposables.push(await browserContext.addInitScript({ path: path.resolve(rootPath, initScript) }));
+
+    for (const page of browserContext.pages())
+      this._onPageCreated(page);
+    this._disposables.push(eventsHelper.addEventListener(browserContext as BrowserContext, 'page', page => this._onPageCreated(page)));
+
     return browserContext;
   }
 

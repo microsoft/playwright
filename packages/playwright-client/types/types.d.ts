@@ -4147,7 +4147,7 @@ export interface Page {
      * How often a route should be used. By default it will be used every time.
      */
     times?: number;
-  }): Promise<void>;
+  }): Promise<Disposable>;
 
   /**
    * If specified the network requests that are made in the page will be served from the HAR file. Read more about
@@ -9469,7 +9469,7 @@ export interface BrowserContext {
      * How often a route should be used. By default it will be used every time.
      */
     times?: number;
-  }): Promise<void>;
+  }): Promise<Disposable>;
 
   /**
    * If specified the network requests that are made in the context will be served from the HAR file. Read more about

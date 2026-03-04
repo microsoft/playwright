@@ -19,7 +19,7 @@ import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Coverage } from './coverage';
-import { Disposable } from './disposable';
+import { DisposableObject, DisposableStub } from './disposable';
 import { Download } from './download';
 import { ElementHandle, determineScreenshotType } from './elementHandle';
 import { TargetClosedError, isTargetClosedError, parseError, serializeError } from './errors';
@@ -336,13 +336,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const result = await this._channel.exposeBinding({ name });
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
-    return Disposable.from(result.disposable);
+    return DisposableObject.from(result.disposable);
   }
 
   async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}) {
     const result = await this._channel.exposeBinding({ name, needsHandle: options.handle });
     this._bindings.set(name, callback);
-    return Disposable.from(result.disposable);
+    return DisposableObject.from(result.disposable);
   }
 
   async setExtraHTTPHeaders(headers: Headers) {
@@ -510,12 +510,13 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(this._platform, script, arg);
-    return Disposable.from((await this._channel.addInitScript({ source })).disposable);
+    return DisposableObject.from((await this._channel.addInitScript({ source })).disposable);
   }
 
-  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
+  async route(url: URLMatch, handler: RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
     this._routes.unshift(new RouteHandler(this._platform, this._browserContext._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns({ title: 'Route requests' });
+    return new DisposableStub(() => this.unroute(url, handler));
   }
 
   async routeFromHAR(har: string, options: { url?: string | RegExp, notFound?: 'abort' | 'fallback', update?: boolean, updateContent?: 'attach' | 'embed', updateMode?: 'minimal' | 'full'} = {}): Promise<void> {

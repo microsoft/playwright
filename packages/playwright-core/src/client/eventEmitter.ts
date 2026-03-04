@@ -24,6 +24,7 @@
 
 import type { EventEmitter as EventEmitterType } from 'events';
 import type { Platform } from './platform';
+import type { Disposable } from './disposable';
 
 type EventType = string | symbol;
 type Listener = (...args: any[]) => any;
@@ -397,10 +398,6 @@ function wrappedListener(l: Listener): Listener {
   return (l as any).listener;
 }
 
-export type Disposable = {
-  dispose: () => void;
-};
-
 class EventsHelper {
   static addEventListener(
     emitter: EventEmitterType,
@@ -408,7 +405,7 @@ class EventsHelper {
     handler: (...args: any[]) => void): Disposable {
     emitter.on(eventName, handler);
     return {
-      dispose: () => emitter.removeListener(eventName, handler)
+      dispose: async () => { emitter.removeListener(eventName, handler); }
     };
   }
 }

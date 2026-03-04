@@ -23,7 +23,7 @@ import { evaluationScript } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
 import { Dialog } from './dialog';
-import { Disposable } from './disposable';
+import { DisposableObject, DisposableStub } from './disposable';
 import { TargetClosedError, parseError } from './errors';
 import { Events } from './events';
 import { APIRequestContext } from './fetch';
@@ -352,25 +352,26 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
     const source = await evaluationScript(this._platform, script, arg);
-    return Disposable.from((await this._channel.addInitScript({ source })).disposable);
+    return DisposableObject.from((await this._channel.addInitScript({ source })).disposable);
   }
 
-  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<Disposable> {
+  async exposeBinding(name: string, callback: (source: structs.BindingSource, ...args: any[]) => any, options: { handle?: boolean } = {}): Promise<DisposableObject> {
     const result = await this._channel.exposeBinding({ name, needsHandle: options.handle });
     this._bindings.set(name, callback);
-    return Disposable.from(result.disposable);
+    return DisposableObject.from(result.disposable);
   }
 
-  async exposeFunction(name: string, callback: Function): Promise<Disposable> {
+  async exposeFunction(name: string, callback: Function): Promise<DisposableObject> {
     const result = await this._channel.exposeBinding({ name });
     const binding = (source: structs.BindingSource, ...args: any[]) => callback(...args);
     this._bindings.set(name, binding);
-    return Disposable.from(result.disposable);
+    return DisposableObject.from(result.disposable);
   }
 
-  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<void> {
+  async route(url: URLMatch, handler: network.RouteHandlerCallback, options: { times?: number } = {}): Promise<DisposableStub> {
     this._routes.unshift(new network.RouteHandler(this._platform, this._options.baseURL, url, handler, options.times));
     await this._updateInterceptionPatterns({ title: 'Route requests' });
+    return new DisposableStub(() => this.unroute(url, handler));
   }
 
   async routeWebSocket(url: URLMatch, handler: network.WebSocketRouteHandlerCallback): Promise<void> {

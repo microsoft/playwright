@@ -24,7 +24,7 @@ import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
 import { createInstrumentation } from './clientInstrumentation';
 import { Dialog } from './dialog';
-import { Disposable } from './disposable';
+import { DisposableObject } from './disposable';
 import { Electron, ElectronApplication } from './electron';
 import { ElementHandle } from './elementHandle';
 import { TargetClosedError, parseError } from './errors';
@@ -272,7 +272,7 @@ export class Connection extends EventEmitter {
         result = new Dialog(parent, type, guid, initializer);
         break;
       case 'Disposable':
-        result = new Disposable(parent, type, guid, initializer);
+        result = new DisposableObject(parent, type, guid, initializer);
         break;
       case 'Electron':
         result = new Electron(parent, type, guid, initializer);
