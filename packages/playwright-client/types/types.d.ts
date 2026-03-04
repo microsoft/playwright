@@ -2188,12 +2188,6 @@ export interface Page {
   bringToFront(): Promise<void>;
 
   /**
-   * Cancels an ongoing [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) call by
-   * deactivating pick locator mode. If no pick locator mode is active, this method is a no-op.
-   */
-  cancelPickLocator(): Promise<void>;
-
-  /**
    * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -3927,23 +3921,6 @@ export interface Page {
      */
     width?: string|number;
   }): Promise<Buffer>;
-
-  /**
-   * Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
-   * Once the user clicks an element, the mode is deactivated and the
-   * [Locator](https://playwright.dev/docs/api/class-locator) for the picked element is returned.
-   *
-   * **NOTE** This method requires Playwright to be started in a headed mode.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = await page.pickLocator();
-   * console.log(locator);
-   * ```
-   *
-   */
-  pickLocator(): Promise<Locator>;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -20438,19 +20415,6 @@ export interface FrameLocator {
 
 /**
  * Interface to the Playwright inspector.
- *
- * **Usage**
- *
- * ```js
- * const inspector = page.inspector();
- * inspector.on('screencastframe', ({ data, width, height }) => {
- *   console.log(`received frame ${width}x${height}, jpeg size: ${data.length}`);
- * });
- * await inspector.startScreencast();
- * // ... perform actions ...
- * await inspector.stopScreencast();
- * ```
- *
  */
 export interface Inspector {
   /**
@@ -20614,6 +20578,28 @@ export interface Inspector {
      */
     height: number;
   }) => any): this;
+
+  /**
+   * Cancels an ongoing
+   * [inspector.pickLocator()](https://playwright.dev/docs/api/class-inspector#inspector-pick-locator) call by
+   * deactivating pick locator mode. If no pick locator mode is active, this method is a no-op.
+   */
+  cancelPickLocator(): Promise<void>;
+
+  /**
+   * Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+   * Once the user clicks an element, the mode is deactivated and the
+   * [Locator](https://playwright.dev/docs/api/class-locator) for the picked element is returned.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = await page.inspector().pickLocator();
+   * console.log(locator);
+   * ```
+   *
+   */
+  pickLocator(): Promise<Locator>;
 
   /**
    * Starts capturing screencast frames. Frames are emitted as
