@@ -152,11 +152,11 @@ test('should disable recorder', async ({ context }) => {
   expect(log.action('click')).toHaveLength(2);
 });
 
-test('page.pickLocator should return locator for picked element', async ({ page }) => {
+test('inspector.pickLocator should return locator for picked element', async ({ page }) => {
   await page.setContent(`<button>Submit</button>`);
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = page.pickLocator();
+  const pickPromise = page.inspector().pickLocator();
   await scriptReady;
 
   const box = await page.getByRole('button', { name: 'Submit' }).boundingBox();
@@ -166,15 +166,15 @@ test('page.pickLocator should return locator for picked element', async ({ page 
   await expect(locator).toHaveText('Submit');
 });
 
-test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
+test('inspector.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
   await page.setContent(`<button>Submit</button>`);
 
   const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
-  const pickPromise = page.pickLocator();
+  const pickPromise = page.inspector().pickLocator();
   await scriptReady;
 
   await Promise.all([
-    page.cancelPickLocator(),
+    page.inspector().cancelPickLocator(),
     expect(pickPromise).rejects.toThrow('Locator picking was cancelled'),
   ]);
 });
