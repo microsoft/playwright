@@ -2,14 +2,14 @@
 * since: v1.59
 * langs: js
 
-The `Inspector` object provides access to the Playwright inspector's capabilities.
+Interface to the Playwright inspector.
 
 **Usage**
 
 ```js
 const inspector = page.inspector();
-inspector.on('screencastFrame', data => {
-  console.log('received frame, jpeg size:', data.length);
+inspector.on('screencastframe', ({ data, width, height }) => {
+  console.log(`received frame ${width}x${height}, jpeg size: ${data.length}`);
 });
 await inspector.startScreencast();
 // ... perform actions ...
@@ -18,7 +18,10 @@ await inspector.stopScreencast();
 
 ## event: Inspector.screencastFrame
 * since: v1.59
-- argument: <[Buffer]>
+- argument: <[Object]>
+  - `data` <[Buffer]> JPEG-encoded frame data.
+  - `width` <[int]> Frame width in pixels.
+  - `height` <[int]> Frame height in pixels.
 
 Emitted for each captured JPEG screencast frame while the screencast is running.
 
@@ -26,7 +29,8 @@ Emitted for each captured JPEG screencast frame while the screencast is running.
 
 ```js
 const inspector = page.inspector();
-inspector.on('screencastFrame', data => {
+inspector.on('screencastframe', ({ data, width, height }) => {
+  console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
   require('fs').writeFileSync('frame.jpg', data);
 });
 await inspector.startScreencast({ size: { width: 1280, height: 720 } });
@@ -43,7 +47,7 @@ Starts capturing screencast frames. Frames are emitted as [`event: Inspector.scr
 
 ```js
 const inspector = page.inspector();
-inspector.on('screencastFrame', data => console.log('frame size:', data.length));
+inspector.on('screencastframe', ({ data, width, height }) => console.log(`frame ${width}x${height}, size: ${data.length}`));
 await inspector.startScreencast({ size: { width: 800, height: 600 } });
 // ... perform actions ...
 await inspector.stopScreencast();
@@ -55,7 +59,7 @@ await inspector.stopScreencast();
   - `width` <[int]> Frame width in pixels.
   - `height` <[int]> Frame height in pixels.
 
-Optional dimensions for the screencast frames. If not specified, the page viewport size is used.
+Optional dimensions for the screencast frames. If not specified, the current page viewport size is used.
 
 ## async method: Inspector.stopScreencast
 * since: v1.59

@@ -108,7 +108,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });
     });
-    this.addObjectListener(Page.Events.ScreencastFrame, (frame: ScreencastFrame) => this._dispatchEvent('screencastFrame', { data: frame.buffer }));
+    this.addObjectListener(Page.Events.ScreencastFrame, (frame: ScreencastFrame) => this._dispatchEvent('screencastFrame', { data: frame.buffer, width: frame.width, height: frame.height }));
     this.addObjectListener(Page.Events.EmulatedSizeChanged, () => this._dispatchEvent('viewportSizeChanged', { viewportSize: page.emulatedSize()?.viewport }));
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(mainFrame, fileChooser.element()),

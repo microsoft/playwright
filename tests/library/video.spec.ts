@@ -903,8 +903,8 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
-    const frames: Buffer[] = [];
-    page.inspector().on('screencastframe', (data: Buffer) => frames.push(data));
+    const frames: { data: Buffer, width: number, height: number }[] = [];
+    page.inspector().on('screencastframe', frame => frames.push(frame));
 
     await page.inspector().startScreencast({ size });
     await page.goto(server.EMPTY_PAGE);
@@ -913,10 +913,12 @@ it.describe('screencast', () => {
     await page.inspector().stopScreencast();
 
     expect(frames.length).toBeGreaterThan(0);
-    // Each frame must be a valid JPEG (starts with FF D8)
     for (const frame of frames) {
-      expect(frame[0]).toBe(0xff);
-      expect(frame[1]).toBe(0xd8);
+      // Each frame must be a valid JPEG (starts with FF D8)
+      expect(frame.data[0]).toBe(0xff);
+      expect(frame.data[1]).toBe(0xd8);
+      expect(frame.width).toBe(size.width);
+      expect(frame.height).toBe(size.height);
     }
 
     await context.close();

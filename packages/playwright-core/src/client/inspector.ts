@@ -25,7 +25,7 @@ export class Inspector extends EventEmitter implements api.Inspector {
   constructor(page: Page) {
     super(page._platform);
     this._page = page;
-    this._page._channel.on('screencastFrame', ({ data }) => this.emit('screencastframe', data));
+    this._page._channel.on('screencastFrame', ({ data, width, height }) => this.emit('screencastframe', { data, width, height }));
   }
 
   async startScreencast(options: { size?: { width: number, height: number } } = {}): Promise<void> {

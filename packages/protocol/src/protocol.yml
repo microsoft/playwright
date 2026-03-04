@@ -2194,6 +2194,8 @@ Page:
     screencastFrame:
       parameters:
         data: binary
+        width: int
+        height: int
 
     webSocketRoute:
       parameters:
