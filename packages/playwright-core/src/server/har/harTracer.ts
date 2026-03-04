@@ -362,10 +362,11 @@ export class HarTracer {
     });
     this._addBarrier(page || request.serviceWorker(), promise);
 
-    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+    // Update httpVersion but don't wait on hanging requests
+    response.httpVersion().then(httpVersion => {
       harEntry.request.httpVersion = httpVersion;
       harEntry.response.httpVersion = httpVersion;
-    }));
+    }).catch(() => {});
 
     // Response end timing is only available after the response event was received.
     const timing = response.timing();
