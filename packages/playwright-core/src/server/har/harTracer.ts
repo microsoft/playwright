@@ -362,6 +362,11 @@ export class HarTracer {
     });
     this._addBarrier(page || request.serviceWorker(), promise);
 
+    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+      harEntry.request.httpVersion = httpVersion;
+      harEntry.response.httpVersion = httpVersion;
+    }));
+
     // Response end timing is only available after the response event was received.
     const timing = response.timing();
     harEntry.timings.receive = response.request()._responseEndTiming !== -1 ? helper.millisToRoundishMillis(response.request()._responseEndTiming - timing.responseStart) : -1;
@@ -461,11 +466,6 @@ export class HarTracer {
       redirectURL: '',
       _transferSize: this._options.omitSizes ? undefined : -1
     };
-
-    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
-      harEntry.request.httpVersion = httpVersion;
-      harEntry.response.httpVersion = httpVersion;
-    }));
 
     if (!this._options.omitTiming) {
       const startDateTime = pageEntry ? ((pageEntry as any)[startedDateSymbol] as Date).valueOf() : 0;
