@@ -987,7 +987,9 @@ scheme.BrowserContextAddCookiesResult = tOptional(tObject({}));
 scheme.BrowserContextAddInitScriptParams = tObject({
   source: tString,
 });
-scheme.BrowserContextAddInitScriptResult = tOptional(tObject({}));
+scheme.BrowserContextAddInitScriptResult = tObject({
+  disposable: tChannel(['Disposable']),
+});
 scheme.BrowserContextClearCookiesParams = tObject({
   name: tOptional(tString),
   nameRegexSource: tOptional(tString),
@@ -1016,7 +1018,9 @@ scheme.BrowserContextExposeBindingParams = tObject({
   name: tString,
   needsHandle: tOptional(tBoolean),
 });
-scheme.BrowserContextExposeBindingResult = tOptional(tObject({}));
+scheme.BrowserContextExposeBindingResult = tObject({
+  disposable: tChannel(['Disposable']),
+});
 scheme.BrowserContextGrantPermissionsParams = tObject({
   permissions: tArray(tString),
   origin: tOptional(tString),
@@ -1242,7 +1246,9 @@ scheme.PageWorkerEvent = tObject({
 scheme.PageAddInitScriptParams = tObject({
   source: tString,
 });
-scheme.PageAddInitScriptResult = tOptional(tObject({}));
+scheme.PageAddInitScriptResult = tObject({
+  disposable: tChannel(['Disposable']),
+});
 scheme.PageCloseParams = tObject({
   runBeforeUnload: tOptional(tBoolean),
   reason: tOptional(tString),
@@ -1276,7 +1282,9 @@ scheme.PageExposeBindingParams = tObject({
   name: tString,
   needsHandle: tOptional(tBoolean),
 });
-scheme.PageExposeBindingResult = tOptional(tObject({}));
+scheme.PageExposeBindingResult = tObject({
+  disposable: tChannel(['Disposable']),
+});
 scheme.PageGoBackParams = tObject({
   timeout: tFloat,
   waitUntil: tOptional(tType('LifecycleEvent')),
@@ -2028,6 +2036,9 @@ scheme.WorkerUpdateSubscriptionParams = tObject({
   enabled: tBoolean,
 });
 scheme.WorkerUpdateSubscriptionResult = tOptional(tObject({}));
+scheme.DisposableInitializer = tOptional(tObject({}));
+scheme.DisposableDisposeParams = tOptional(tObject({}));
+scheme.DisposableDisposeResult = tOptional(tObject({}));
 scheme.JSHandleInitializer = tObject({
   preview: tString,
 });

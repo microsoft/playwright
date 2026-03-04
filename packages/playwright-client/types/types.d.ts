@@ -315,7 +315,7 @@ export interface Page {
    * [`script`](https://playwright.dev/docs/api/class-page#page-add-init-script-option-script) (only supported when
    * passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<Disposable>;
 
   /**
    * **NOTE** Use locator-based [page.locator(selector[, options])](https://playwright.dev/docs/api/class-page#page-locator)
@@ -920,7 +920,7 @@ export interface Page {
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
   /**
    * The method adds a function called
    * [`name`](https://playwright.dev/docs/api/class-page#page-expose-binding-option-name) on the `window` object of
@@ -972,7 +972,7 @@ export interface Page {
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
 
   /**
    * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
@@ -2758,7 +2758,7 @@ export interface Page {
    * @param name Name of the function on the window object
    * @param callback Callback function which will be called in Playwright's context.
    */
-  exposeFunction(name: string, callback: Function): Promise<void>;
+  exposeFunction(name: string, callback: Function): Promise<Disposable>;
 
   /**
    * **NOTE** Use locator-based [locator.fill(value[, options])](https://playwright.dev/docs/api/class-locator#locator-fill)
@@ -8471,7 +8471,7 @@ export interface BrowserContext {
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, arg: JSHandle) => any, options: { handle: true }): Promise<Disposable>;
   /**
    * The method adds a function called
    * [`name`](https://playwright.dev/docs/api/class-browsercontext#browser-context-expose-binding-option-name) on the
@@ -8519,7 +8519,7 @@ export interface BrowserContext {
    * @param callback Callback function that will be called in the Playwright's context.
    * @param options
    */
-  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<void>;
+  exposeBinding(name: string, playwrightBinding: (source: BindingSource, ...args: any[]) => any, options?: { handle?: boolean }): Promise<Disposable>;
 
   /**
    * Adds a script which would be evaluated in one of the following scenarios:
@@ -8556,7 +8556,7 @@ export interface BrowserContext {
    * [`script`](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script-option-script)
    * (only supported when passing a function).
    */
-  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<void>;
+  addInitScript<Arg>(script: PageFunction<Arg, any> | { path?: string, content?: string }, arg?: Arg): Promise<Disposable>;
 
   /**
    * Removes all the listeners of the given type (or all registered listeners if no type given). Allows to wait for
@@ -9345,7 +9345,7 @@ export interface BrowserContext {
    * @param name Name of the function on the window object.
    * @param callback Callback function that will be called in the Playwright's context.
    */
-  exposeFunction(name: string, callback: Function): Promise<void>;
+  exposeFunction(name: string, callback: Function): Promise<Disposable>;
 
   /**
    * Grants specified permissions to the browser context. Only grants corresponding permissions to the given origin if
@@ -19529,6 +19529,23 @@ export interface Dialog {
    * Returns dialog's type, can be one of `alert`, `beforeunload`, `confirm` or `prompt`.
    */
   type(): string;
+}
+
+/**
+ * [Disposable](https://playwright.dev/docs/api/class-disposable) is returned from various methods to allow undoing
+ * the corresponding action. For example,
+ * [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) returns a
+ * [Disposable](https://playwright.dev/docs/api/class-disposable) that can be used to remove the init script.
+ */
+export interface Disposable {
+  /**
+   * Removes the associated resource. For example, removes the init script installed via
+   * [page.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-page#page-add-init-script) or
+   * [browserContext.addInitScript(script[, arg])](https://playwright.dev/docs/api/class-browsercontext#browser-context-add-init-script).
+   */
+  dispose(): Promise<void>;
+
+  [Symbol.asyncDispose](): Promise<void>;
 }
 
 /**

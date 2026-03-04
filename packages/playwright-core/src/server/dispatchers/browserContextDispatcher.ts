@@ -27,6 +27,7 @@ import { APIRequestContextDispatcher, RequestDispatcher, ResponseDispatcher, Rou
 import { BindingCallDispatcher, PageDispatcher, WorkerDispatcher } from './pageDispatcher';
 import { CRBrowser, CRBrowserContext } from '../chromium/crBrowser';
 import { serializeError } from '../errors';
+import { DisposableDispatcher } from './disposableDispatcher';
 import { TracingDispatcher } from './tracingDispatcher';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
@@ -227,7 +228,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     };
   }
 
-  async exposeBinding(params: channels.BrowserContextExposeBindingParams, progress: Progress): Promise<void> {
+  async exposeBinding(params: channels.BrowserContextExposeBindingParams, progress: Progress): Promise<channels.BrowserContextExposeBindingResult> {
     const binding = await this._context.exposeBinding(progress, params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
@@ -239,6 +240,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       return binding.promise();
     });
     this._bindings.push(binding);
+    return { disposable: new DisposableDispatcher(this, binding) };
   }
 
   async newPage(params: channels.BrowserContextNewPageParams, progress: Progress): Promise<channels.BrowserContextNewPageResult> {
@@ -294,8 +296,10 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     await progress.race(this._context.setHTTPCredentials(params.httpCredentials));
   }
 
-  async addInitScript(params: channels.BrowserContextAddInitScriptParams, progress: Progress): Promise<void> {
-    this._initScripts.push(await this._context.addInitScript(progress, params.source));
+  async addInitScript(params: channels.BrowserContextAddInitScriptParams, progress: Progress): Promise<channels.BrowserContextAddInitScriptResult> {
+    const initScript = await this._context.addInitScript(params.source);
+    this._initScripts.push(initScript);
+    return { disposable: new DisposableDispatcher(this, initScript) };
   }
 
   async setNetworkInterceptionPatterns(params: channels.BrowserContextSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
@@ -371,15 +375,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockFastForward(params: channels.BrowserContextClockFastForwardParams, progress: Progress): Promise<channels.BrowserContextClockFastForwardResult> {
-    await this._context.clock.fastForward(progress, params.ticksString ?? params.ticksNumber ?? 0);
+    await this._context.clock.fastForward(params.ticksString ?? params.ticksNumber ?? 0);
   }
 
   async clockInstall(params: channels.BrowserContextClockInstallParams, progress: Progress): Promise<channels.BrowserContextClockInstallResult> {
-    await this._context.clock.install(progress, params.timeString ?? params.timeNumber ?? undefined);
+    await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined);
   }
 
   async clockPauseAt(params: channels.BrowserContextClockPauseAtParams, progress: Progress): Promise<channels.BrowserContextClockPauseAtResult> {
-    await this._context.clock.pauseAt(progress, params.timeString ?? params.timeNumber ?? 0);
+    await this._context.clock.pauseAt(params.timeString ?? params.timeNumber ?? 0);
     this._clockPaused = true;
   }
 
@@ -389,15 +393,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockRunFor(params: channels.BrowserContextClockRunForParams, progress: Progress): Promise<channels.BrowserContextClockRunForResult> {
-    await this._context.clock.runFor(progress, params.ticksString ?? params.ticksNumber ?? 0);
+    await this._context.clock.runFor(params.ticksString ?? params.ticksNumber ?? 0);
   }
 
   async clockSetFixedTime(params: channels.BrowserContextClockSetFixedTimeParams, progress: Progress): Promise<channels.BrowserContextClockSetFixedTimeResult> {
-    await this._context.clock.setFixedTime(progress, params.timeString ?? params.timeNumber ?? 0);
+    await this._context.clock.setFixedTime(params.timeString ?? params.timeNumber ?? 0);
   }
 
   async clockSetSystemTime(params: channels.BrowserContextClockSetSystemTimeParams, progress: Progress): Promise<channels.BrowserContextClockSetSystemTimeResult> {
-    await this._context.clock.setSystemTime(progress, params.timeString ?? params.timeNumber ?? 0);
+    await this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0);
   }
 
   async devtoolsStart(params: channels.BrowserContextDevtoolsStartParams, progress: Progress): Promise<channels.BrowserContextDevtoolsStartResult> {
@@ -429,9 +433,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.dialogManager.removeDialogHandler(this._dialogHandler);
     this._interceptionUrlMatchers = [];
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    this._context.removeExposedBindings(this._bindings).catch(() => {});
+    for (const binding of this._bindings)
+      binding.dispose().catch(() => {});
     this._bindings = [];
-    this._context.removeInitScripts(this._initScripts).catch(() => {});
+    for (const initScript of this._initScripts)
+      initScript.dispose().catch(() => {});
     this._initScripts = [];
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._context, this._routeWebSocketInitScript).catch(() => {});

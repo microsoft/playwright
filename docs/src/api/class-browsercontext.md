@@ -338,6 +338,7 @@ await context.AddCookiesAsync(new[] { cookie1, cookie2 });
 
 ## async method: BrowserContext.addInitScript
 * since: v1.8
+- returns: <[Disposable]>
 
 Adds a script which would be evaluated in one of the following scenarios:
 * Whenever a page is created in the browser context or is navigated.
@@ -584,6 +585,7 @@ Optional list of URLs.
 
 ## async method: BrowserContext.exposeBinding
 * since: v1.8
+- returns: <[Disposable]>
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
 When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of
@@ -735,6 +737,7 @@ supported. When passing by value, multiple arguments are supported.
 
 ## async method: BrowserContext.exposeFunction
 * since: v1.8
+- returns: <[Disposable]>
 
 The method adds a function called [`param: name`] on the `window` object of every frame in every page in the context.
 When called, the function executes [`param: callback`] and returns a [Promise] which resolves to the return value of

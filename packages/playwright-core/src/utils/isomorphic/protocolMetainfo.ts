@@ -205,6 +205,7 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Worker.evaluateExpression', { title: 'Evaluate', }],
   ['Worker.evaluateExpressionHandle', { title: 'Evaluate', }],
   ['Worker.updateSubscription', { internal: true, }],
+  ['Disposable.dispose', { internal: true, }],
   ['JSHandle.dispose', { internal: true, }],
   ['ElementHandle.dispose', { internal: true, }],
   ['JSHandle.evaluateExpression', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],

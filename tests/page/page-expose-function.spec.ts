@@ -43,6 +43,22 @@ it('should work', async ({ page, server }) => {
   expect(result).toBe(36);
 });
 
+it('should dispose', async ({ page, server }) => {
+  const binding = await page.exposeFunction('compute', function(a, b) {
+    return a * b;
+  });
+  const result = await page.evaluate(async function() {
+    return await window['compute'](9, 4);
+  });
+  expect(result).toBe(36);
+  await binding.dispose();
+
+  const e = await page.evaluate(async function() {
+    return await window['compute'](9, 4);
+  }).catch(e => e);
+  expect(e.message).toContain('is not a function');
+});
+
 it('should work with handles and complex objects', async ({ page, server }) => {
   const fooHandle = await page.evaluateHandle(() => {
     window['fooValue'] = { bar: 2 };

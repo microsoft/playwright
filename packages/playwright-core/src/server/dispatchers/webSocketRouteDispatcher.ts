@@ -97,7 +97,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     }
     ++data.counter;
 
-    return await target.addInitScript(progress, `
+    return await target.addInitScript(`
       (() => {
         const module = {};
         ${rawWebSocketMockSource.source}
@@ -112,8 +112,8 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     if (!data || data.connection !== connection)
       return;
     if (--data.counter <= 0)
-      await context.removeExposedBindings([data.binding]);
-    await target.removeInitScripts([initScript]);
+      await data.binding.dispose();
+    await initScript.dispose();
   }
 
   async connect(params: channels.WebSocketRouteConnectParams, progress: Progress) {

@@ -67,6 +67,25 @@ it('should work with browser context scripts for already created pages', async (
   expect(await page.evaluate(() => (window as any)['result'])).toBe(123);
 });
 
+it('should remove context init script after dispose', async ({ context, server }) => {
+  const disposable = await context.addInitScript(() => (window as any)['temp'] = 123);
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => (window as any)['temp'])).toBe(123);
+
+  await disposable.dispose();
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => (window as any)['temp'])).toBe(undefined);
+});
+
+it('should remove context init script and keep working in new pages', async ({ context, server }) => {
+  const disposable = await context.addInitScript(() => (window as any)['temp'] = 123);
+  await disposable.dispose();
+  const page = await context.newPage();
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => (window as any)['temp'])).toBe(undefined);
+});
+
 it('init script should run only once in popup', async ({ context }) => {
   await context.addInitScript(() => {
     window['callCount'] = (window['callCount'] || 0) + 1;

@@ -84,6 +84,35 @@ it('should work after a cross origin navigation', async ({ page, server }) => {
   expect(await page.evaluate(() => window['result'])).toBe(123);
 });
 
+it('should remove init script after dispose', async ({ page, server }) => {
+  const disposable = await page.addInitScript(function() {
+    window['injected'] = 123;
+  });
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => window['result'])).toBe(123);
+
+  await disposable.dispose();
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => window['result'])).toBe(undefined);
+});
+
+it('should remove one of multiple init scripts after dispose', async ({ page, server }) => {
+  const disposable1 = await page.addInitScript(function() {
+    window['script1'] = 1;
+  });
+  await page.addInitScript(function() {
+    window['script2'] = 2;
+  });
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => window['script1'])).toBe(1);
+  expect(await page.evaluate(() => window['script2'])).toBe(2);
+
+  await disposable1.dispose();
+  await page.goto(server.PREFIX + '/tamperable.html');
+  expect(await page.evaluate(() => window['script1'])).toBe(undefined);
+  expect(await page.evaluate(() => window['script2'])).toBe(2);
+});
+
 it('init script should run only once in iframe', async ({ page, server, browserName, isBidi }) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/26992' });
   const messages = [];
