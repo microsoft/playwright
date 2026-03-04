@@ -20445,7 +20445,7 @@ export interface Inspector {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
    * });
-   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
    * // ... perform actions ...
    * await inspector.stopScreencast();
    * ```
@@ -20499,7 +20499,7 @@ export interface Inspector {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
    * });
-   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
    * // ... perform actions ...
    * await inspector.stopScreencast();
    * ```
@@ -20573,7 +20573,7 @@ export interface Inspector {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
    * });
-   * await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
    * // ... perform actions ...
    * await inspector.stopScreencast();
    * ```
@@ -20630,7 +20630,7 @@ export interface Inspector {
    * inspector.on('screencastframe', ({ data, width, height }) => {
    *   console.log(`frame ${width}x${height}, size: ${data.length}`);
    * });
-   * await inspector.startScreencast({ size: { width: 800, height: 600 } });
+   * await inspector.startScreencast({ maxSize: { width: 800, height: 600 } });
    * // ... perform actions ...
    * await inspector.stopScreencast();
    * ```
@@ -20642,7 +20642,7 @@ export interface Inspector {
      * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
      * the current page viewport size, or 800×800 if no viewport is configured.
      */
-    size?: {
+    maxSize?: {
       /**
        * Max frame width in pixels.
        */

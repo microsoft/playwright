@@ -41,7 +41,7 @@ inspector.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
   require('fs').writeFileSync('frame.jpg', data);
 });
-await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
 // ... perform actions ...
 await inspector.stopScreencast();
 ```
@@ -58,14 +58,14 @@ const inspector = page.inspector();
 inspector.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, size: ${data.length}`);
 });
-await inspector.startScreencast({ size: { width: 800, height: 600 } });
+await inspector.startScreencast({ maxSize: { width: 800, height: 600 } });
 // ... perform actions ...
 await inspector.stopScreencast();
 ```
 
-### option: Inspector.startScreencast.size
+### option: Inspector.startScreencast.maxSize
 * since: v1.59
-- `size` ?<[Object]>
+- `maxSize` ?<[Object]>
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 

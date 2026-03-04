@@ -38,7 +38,7 @@ export class Inspector extends EventEmitter implements api.Inspector {
     await this._page._channel.cancelPickLocator({});
   }
 
-  async startScreencast(options: { size?: { width: number, height: number } } = {}): Promise<void> {
+  async startScreencast(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
     await this._page._channel.startScreencast(options);
   }
 

@@ -2086,7 +2086,7 @@ Page:
       title: Start screencast
       group: configuration
       parameters:
-        size:
+        maxSize:
           type: object?
           properties:
             width: int

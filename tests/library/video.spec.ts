@@ -904,8 +904,8 @@ it.describe('screencast', () => {
     const frames: { data: Buffer, width: number, height: number }[] = [];
     page.inspector().on('screencastframe', frame => frames.push(frame));
 
-    const size = { width: 500, height: 400 };
-    await page.inspector().startScreencast({ size });
+    const maxSize = { width: 500, height: 400 };
+    await page.inspector().startScreencast({ maxSize });
     // Frame should be scaled down to fit the maximum size.
     const expectedSize = { width: 500, height: 200 };
     await page.goto(server.EMPTY_PAGE);
@@ -932,8 +932,8 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
-    await page.inspector().startScreencast({ size });
-    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running');
+    await page.inspector().startScreencast({ maxSize: size });
+    await expect(page.inspector().startScreencast({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running');
 
     await page.inspector().stopScreencast();
     await context.close();
@@ -945,11 +945,10 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
     const page = await context.newPage();
 
-    await page.inspector().startScreencast({ size: { width: 500, height: 400 } });
+    await page.inspector().startScreencast({ maxSize: { width: 500, height: 400 } });
     await page.inspector().stopScreencast();
     // Different options should succeed once the previous screencast is stopped.
-    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).resolves.toBeUndefined();
-
+    await page.inspector().startScreencast({ maxSize: { width: 320, height: 240 } });
     await page.inspector().stopScreencast();
     await context.close();
   });
@@ -962,7 +961,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
 
     await page.video().start({ size: videoSize });
-    await expect(page.inspector().startScreencast({ size: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
+    await expect(page.inspector().startScreencast({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
 
     await page.video().stop();
     await context.close();
