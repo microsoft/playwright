@@ -17,7 +17,6 @@
 import { Page, Worker } from '../page';
 import { Dispatcher } from './dispatcher';
 import { parseError, serializeError } from '../errors';
-import { validateVideoSize } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -48,6 +47,7 @@ import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
+import type { RegisteredListener } from '../utils/eventsHelper';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -62,6 +62,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
+  private _screencastFrameListener: RegisteredListener | null = null;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -110,7 +111,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       // Artifact can outlive the page, so bind to the context scope.
       this._dispatchEvent('download', { url: download.url, suggestedFilename: download.suggestedFilename(), artifact: ArtifactDispatcher.from(parentScope, download.artifact) });
     });
-    this.addObjectListener(Page.Events.ScreencastFrame, (frame: ScreencastFrame) => this._dispatchEvent('screencastFrame', { data: frame.buffer, width: frame.width, height: frame.height }));
     this.addObjectListener(Page.Events.EmulatedSizeChanged, () => this._dispatchEvent('viewportSizeChanged', { viewportSize: page.emulatedSize()?.viewport }));
     this.addObjectListener(Page.Events.FileChooser, (fileChooser: FileChooser) => this._dispatchEvent('fileChooser', {
       element: ElementHandleDispatcher.from(mainFrame, fileChooser.element()),
@@ -365,11 +365,21 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
-    const size = validateVideoSize(params.size, this._page.emulatedSize()?.viewport);
+    if (this._screencastFrameListener)
+      throw new Error('Screencast is already running');
+    const size = params.size || this._page.emulatedSize()?.viewport || { width: 800, height: 600 };
+    // TODO: move to screencast and make startScrencast accept a listener.
+    this._screencastFrameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: ScreencastFrame) => {
+      const { width, height } = jpegDimensions(frame.buffer);
+      this._dispatchEvent('screencastFrame', { data: frame.buffer, width, height });
+    });
     await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
+    if (this._screencastFrameListener)
+      eventsHelper.removeEventListeners([this._screencastFrameListener]);
+    this._screencastFrameListener = null;
     return this._page.screencast.stopScreencast(this);
   }
 
@@ -440,6 +450,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (this._cssCoverageActive)
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
+    if (this._screencastFrameListener)
+      eventsHelper.removeEventListeners([this._screencastFrameListener]);
+    this._screencastFrameListener = null;
   }
 
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {

@@ -135,7 +135,7 @@ await page.Video.StopAsync(new() { Path = "video.webm" });
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
-Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800x600. Actual picture of the page will be scaled down if necessary to fit the specified size.
 
 ## async method: Video.stop
 * since: v1.59

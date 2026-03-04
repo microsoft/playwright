@@ -498,7 +498,7 @@ it.describe('screencast', () => {
     }
   });
 
-  it('should use viewport scaled down to fit into 800x800 as default size', async ({ browser }, testInfo) => {
+  it('should use viewport scaled down to fit into 800x600 as default size', async ({ browser }, testInfo) => {
     const size = { width: 1600, height: 1200 };
     const context = await browser.newContext({
       recordVideo: {
@@ -811,8 +811,8 @@ it.describe('screencast', () => {
     expect(isAlmostRed(pixel)).toBe(true);
   });
 
-  it('video.start/stop twice', async ({ browser, browserName }, testInfo) => {
-    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+  it('video.start/stop twice', async ({ browser }, testInfo) => {
+    const size = { width: 800, height: 600 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
@@ -853,13 +853,11 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('video.start should fail when another recording is in progress', async ({ browser }, testInfo) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
+  it('video.start should fail when another recording is in progress', async ({ page, trace }) => {
+    it.skip(trace === 'on', 'trace=on has different screencast image configuration');
     await page.video().start();
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
-    await context.close();
   });
 
   it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
@@ -873,7 +871,7 @@ it.describe('screencast', () => {
   it('video.start should finish when page is closed', async ({ browser, browserName }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.video().start();
+    await page.video().start({ size: { width: 800, height: 600 } });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
     const videoPath = await page.video().path();
@@ -887,8 +885,8 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('empty video', async ({ browser, browserName }, testInfo) => {
-    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
+  it('empty video', async ({ browser }, testInfo) => {
+    const size = { width: 800, height: 600 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
     await page.video().start({ size });
@@ -898,15 +896,18 @@ it.describe('screencast', () => {
     expectFrames(videoPath, size, isAlmostWhite);
   });
 
-  it('inspector.startScreencast emits screencastframe events', async ({ browser, server }) => {
-    const size = { width: 500, height: 400 };
-    const context = await browser.newContext({ viewport: size });
+  it('inspector.startScreencast emits screencastframe events', async ({ browser, server, trace }) => {
+    it.skip(trace === 'on', 'trace=on has different screencast image configuration');
+    const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
     const page = await context.newPage();
 
     const frames: { data: Buffer, width: number, height: number }[] = [];
     page.inspector().on('screencastframe', frame => frames.push(frame));
 
+    const size = { width: 500, height: 400 };
     await page.inspector().startScreencast({ size });
+    // Frame should be scaled down to fit the maximum size.
+    const expectedSize = { width: 500, height: 200 };
     await page.goto(server.EMPTY_PAGE);
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
@@ -917,14 +918,16 @@ it.describe('screencast', () => {
       // Each frame must be a valid JPEG (starts with FF D8)
       expect(frame.data[0]).toBe(0xff);
       expect(frame.data[1]).toBe(0xd8);
-      expect(frame.width).toBe(size.width);
-      expect(frame.height).toBe(size.height);
+      expect(frame.width).toBe(expectedSize.width);
+      expect(frame.height).toBe(expectedSize.height);
     }
 
     await context.close();
   });
 
-  it('startScreencast throws when called with different options while running', async ({ browser }) => {
+  it('startScreencast throws when called with different options while running', async ({ browser, trace }) => {
+    it.skip(trace === 'on', 'trace=on enables screencast with different options');
+
     const size = { width: 500, height: 400 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
@@ -936,7 +939,9 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('startScreencast allows restart with different options after stop', async ({ browser }) => {
+  it('startScreencast allows restart with different options after stop', async ({ browser, trace }) => {
+    it.skip(trace === 'on', 'trace=on enables screencast with different options');
+
     const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
     const page = await context.newPage();
 
@@ -949,7 +954,9 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('startScreencast throws when video recording is running with different params', async ({ browser }) => {
+  it('startScreencast throws when video recording is running with different params', async ({ browser, trace }) => {
+    it.skip(trace === 'on', 'trace=on enables screencast with different options');
+
     const videoSize = { width: 500, height: 400 };
     const context = await browser.newContext({ viewport: videoSize });
     const page = await context.newPage();
@@ -959,6 +966,21 @@ it.describe('screencast', () => {
 
     await page.video().stop();
     await context.close();
+  });
+
+  it('video.start does not emit screencastframe events', async ({ page, server, trace }) => {
+    it.skip(trace === 'on', 'trace=on enables screencast frame events');
+
+    const frames = [];
+    page.inspector().on('screencastframe', frame => frames.push(frame));
+
+    await page.video().start({ size: { width: 320, height: 240 } });
+    await page.goto(server.EMPTY_PAGE);
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    await page.video().stop();
+
+    expect(frames).toHaveLength(0);
   });
 });
 

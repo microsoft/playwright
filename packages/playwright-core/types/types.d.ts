@@ -10432,7 +10432,7 @@ export interface Browser {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
        * each page will be scaled down if necessary to fit the specified size.
        */
       size?: {
@@ -15687,7 +15687,7 @@ export interface BrowserType<Unused = {}> {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
        * each page will be scaled down if necessary to fit the specified size.
        */
       size?: {
@@ -17367,7 +17367,7 @@ export interface AndroidDevice {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
        * each page will be scaled down if necessary to fit the specified size.
        */
       size?: {
@@ -19858,7 +19858,7 @@ export interface Electron {
 
       /**
        * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-       * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+       * fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
        * each page will be scaled down if necessary to fit the specified size.
        */
       size?: {
@@ -20639,16 +20639,17 @@ export interface Inspector {
    */
   startScreencast(options?: {
     /**
-     * Optional dimensions for the screencast frames. If not specified, the current page viewport size is used.
+     * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
+     * the current page viewport size, or 800×600 if no viewport is configured.
      */
     size?: {
       /**
-       * Frame width in pixels.
+       * Max frame width in pixels.
        */
       width: number;
 
       /**
-       * Frame height in pixels.
+       * Max frame height in pixels.
        */
       height: number;
     };
@@ -22206,7 +22207,7 @@ export interface Video {
   start(options?: {
     /**
      * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
-     * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+     * fit into 800x600. Actual picture of the page will be scaled down if necessary to fit the specified size.
      */
     size?: {
       /**
@@ -23096,7 +23097,7 @@ export interface BrowserContextOptions {
 
     /**
      * Optional dimensions of the recorded videos. If not specified the size will be equal to `viewport` scaled down to
-     * fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
+     * fit into 800x600. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of
      * each page will be scaled down if necessary to fit the specified size.
      */
     size?: {

@@ -66,10 +66,10 @@ await inspector.stopScreencast();
 ### option: Inspector.startScreencast.size
 * since: v1.59
 - `size` ?<[Object]>
-  - `width` <[int]> Frame width in pixels.
-  - `height` <[int]> Frame height in pixels.
+  - `width` <[int]> Max frame width in pixels.
+  - `height` <[int]> Max frame height in pixels.
 
-Optional dimensions for the screencast frames. If not specified, the current page viewport size is used.
+Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to the current page viewport size, or 800×600 if no viewport is configured.
 
 ## async method: Inspector.stopScreencast
 * since: v1.59

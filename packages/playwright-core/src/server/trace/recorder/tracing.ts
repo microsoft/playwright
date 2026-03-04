@@ -49,6 +49,7 @@ import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { Progress } from '@protocol/progress';
+import type * as types from '../../types';
 
 const version: trace.VERSION = 8;
 
@@ -595,15 +596,15 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     page.screencast.setOptions(kScreencastOptions);
     const prefix = page.guid;
     this._screencastListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, params => {
-          const suffix = params.timestamp || Date.now();
+        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, (params: types.ScreencastFrame) => {
+          const suffix = Date.now();
           const sha1 = `${prefix}-${suffix}.jpeg`;
           const event: trace.ScreencastFrameTraceEvent = {
             type: 'screencast-frame',
             pageId: page.guid,
             sha1,
-            width: params.width,
-            height: params.height,
+            width: params.deviceWidth,
+            height: params.deviceHeight,
             timestamp: monotonicTime(),
             frameSwapWallTime: params.frameSwapWallTime,
           };

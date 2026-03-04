@@ -52,8 +52,8 @@ export type VideoOptions = {
 export type ScreencastFrame = {
   buffer: Buffer,
   frameSwapWallTime: number,
-  width: number,
-  height: number,
+  deviceWidth: number,
+  deviceHeight: number,
 };
 
 export type Credentials = {
