@@ -41,7 +41,8 @@ import type { JSHandle } from '../javascript';
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { Frame } from '../frames';
 import type { RouteHandler } from '../network';
-import type { InitScript, PageBinding } from '../page';
+import type { InitScript } from '../page';
+import type { Disposable } from '../disposable';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
@@ -53,8 +54,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _page: Page;
   _subscriptions = new Set<channels.PageUpdateSubscriptionParams['event']>();
   _webSocketInterceptionPatterns: channels.PageSetWebSocketInterceptionPatternsParams['patterns'] = [];
-  private _bindings: PageBinding[] = [];
-  private _initScripts: InitScript[] = [];
+  private _disposables: Disposable[] = [];
   private _requestInterceptor: RouteHandler;
   private _interceptionUrlMatchers: URLMatch[] = [];
   private _routeWebSocketInitScript: InitScript | undefined;
@@ -140,7 +140,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       this._dispatchEvent('bindingCall', { binding });
       return binding.promise();
     });
-    this._bindings.push(binding);
+    this._disposables.push(binding);
     return { disposable: new DisposableDispatcher(this, binding) };
   }
 
@@ -195,7 +195,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async addInitScript(params: channels.PageAddInitScriptParams, progress: Progress): Promise<channels.PageAddInitScriptResult> {
     const initScript = await this._page.addInitScript(params.source);
-    this._initScripts.push(initScript);
+    this._disposables.push(initScript);
     return { disposable: new DisposableDispatcher(this, initScript) };
   }
 
@@ -425,12 +425,9 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Cleanup properly and leave the page in a good state. Other clients may still connect and use it.
     this._interceptionUrlMatchers = [];
     this._page.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    for (const binding of this._bindings)
-      this._page.removeExposedBinding(binding).catch(() => {});
-    this._bindings = [];
-    for (const initScript of this._initScripts)
-      initScript.dispose().catch(() => {});
-    this._initScripts = [];
+    for (const disposable of this._disposables)
+      disposable.dispose().catch(() => {});
+    this._disposables = [];
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._page, this._routeWebSocketInitScript).catch(() => {});
     this._routeWebSocketInitScript = undefined;

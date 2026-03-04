@@ -16,7 +16,7 @@
  */
 
 import { BrowserContext } from './browserContext';
-import { Disposable } from './disposable';
+import { DisposableObject } from './disposable';
 import { ConsoleMessage } from './console';
 import { TargetClosedError, TimeoutError } from './errors';
 import { FileChooser } from './fileChooser';
@@ -933,7 +933,7 @@ export class Worker extends SdkObject<WorkerEventMap> {
   }
 }
 
-export class PageBinding extends Disposable {
+export class PageBinding extends DisposableObject {
   private static kController = '__playwright__binding__controller__';
   static kBindingName = '__playwright__binding__';
 
@@ -993,7 +993,7 @@ export class PageBinding extends Disposable {
   }
 }
 
-export class InitScript extends Disposable {
+export class InitScript extends DisposableObject {
   readonly source: string;
 
   constructor(owner: BrowserContext | Page, source: string) {

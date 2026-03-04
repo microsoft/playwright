@@ -19,7 +19,11 @@ import { SdkObject } from './instrumentation';
 import type { Page } from './page';
 import type { BrowserContext } from './browserContext';
 
-export abstract class Disposable extends SdkObject {
+export interface Disposable {
+  dispose(): Promise<void>;
+}
+
+export abstract class DisposableObject extends SdkObject implements Disposable {
   readonly parent: Page | BrowserContext;
 
   constructor(parent: Page | BrowserContext) {

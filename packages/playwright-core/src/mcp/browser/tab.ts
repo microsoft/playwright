@@ -28,7 +28,7 @@ import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
-import type { Disposable } from '../../client/eventEmitter';
+import type { Disposable } from '../../client/disposable';
 import type { Context } from './context';
 import type { Page } from '../../client/page';
 import type { Locator } from '../../client/locator';
@@ -142,9 +142,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this.expectTimeoutOptions = { timeout: context.config.timeouts.expect };
   }
 
-  dispose() {
+  async dispose() {
     for (const disposable of this._disposables)
-      disposable.dispose();
+      await disposable.dispose();
     this._disposables = [];
     this._consoleLog.stop();
   }

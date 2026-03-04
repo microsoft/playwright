@@ -39,7 +39,7 @@ interface RequestHandler {
 }
 
 export interface RouterFixture {
-  route(...args: Parameters<BrowserContext['route']>): Promise<void>;
+  route(...args: Parameters<BrowserContext['route']>): Promise<any>;
   use(...handlers: RequestHandler[]): Promise<void>;
 }
 
