@@ -19,6 +19,7 @@
 
 import { execSync, spawn } from 'child_process';
 
+import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
@@ -298,7 +299,8 @@ async function findOrInstallDefaultBrowser() {
 }
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
-  const socketName = `${sessionName}.sock`;
+  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
+  const socketName = `${sessionName}-${userNameHash}.sock`;
   if (os.platform() === 'win32')
     return `\\\\.\\pipe\\${clientInfo.workspaceDirHash}-${socketName}`;
   const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
@@ -441,4 +443,10 @@ async function renderSessionStatus(clientInfo: ClientInfo, session: Session) {
   if (config.resolvedConfig)
     text.push(...renderResolvedConfig(config.resolvedConfig));
   return text.join('\n');
+}
+
+export function calculateSha1(buffer: Buffer | string): string {
+  const hash = crypto.createHash('sha1');
+  hash.update(buffer);
+  return hash.digest('hex');
 }

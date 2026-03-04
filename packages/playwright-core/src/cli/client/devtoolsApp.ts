@@ -19,11 +19,12 @@ import path from 'path';
 import os from 'os';
 import net from 'net';
 
+
 import { chromium } from '../../..';
 import { HttpServer } from '../../server/utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
-
+import { calculateSha1 } from '../../utils';
 import { createClientInfo, Registry } from './registry';
 import { Session } from './session';
 
@@ -213,9 +214,10 @@ function socketsDirectory() {
 }
 
 function devtoolsSocketPath() {
+  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
   return process.platform === 'win32'
-    ? `\\\\.\\pipe\\playwright-devtools-${process.env.USERNAME || 'default'}`
-    : path.join(socketsDirectory(), 'devtools.sock');
+    ? `\\\\.\\pipe\\playwright-devtools-${userNameHash}`
+    : path.join(socketsDirectory(), `devtools-${userNameHash}.sock`);
 }
 
 async function acquireSingleton(): Promise<net.Server> {
