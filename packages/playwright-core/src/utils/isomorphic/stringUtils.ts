@@ -53,7 +53,7 @@ export function formatObject(value: any, indent = '  ', mode: 'multiline' | 'one
   if (Array.isArray(value))
     return `[${value.map(o => formatObject(o)).join(', ')}]`;
   if (typeof value === 'object') {
-    const keys = Object.keys(value).filter(key => value[key] !== undefined).sort();
+    const keys = Object.keys(value).filter(key => key !== 'timeout' && value[key] !== undefined).sort();
     if (!keys.length)
       return '{}';
     const tokens: string[] = [];

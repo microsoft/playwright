@@ -103,6 +103,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
+  readonly actionTimeoutOptions: { timeout: number; };
+  readonly navigationTimeoutOptions: { timeout: number; };
+  readonly expectTimeoutOptions: { timeout: number; };
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -130,12 +133,13 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         void this._downloadStarted(download);
       }),
     ];
-    page.setDefaultNavigationTimeout(this.context.config.timeouts.navigation);
-    page.setDefaultTimeout(this.context.config.timeouts.action);
     (page as any)[tabSymbol] = this;
     const wallTime = Date.now();
     this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
     this._initializedPromise = this._initialize();
+    this.actionTimeoutOptions = { timeout: context.config.timeouts.action };
+    this.navigationTimeoutOptions = { timeout: context.config.timeouts.navigation };
+    this.expectTimeoutOptions = { timeout: context.config.timeouts.expect };
   }
 
   dispose() {
@@ -300,7 +304,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
     try {
-      await this.page.goto(url, { waitUntil: 'domcontentloaded' });
+      await this.page.goto(url, { waitUntil: 'domcontentloaded', ...this.navigationTimeoutOptions });
       abortDownloadEvent();
     } catch (_e: unknown) {
       const e = _e as Error;

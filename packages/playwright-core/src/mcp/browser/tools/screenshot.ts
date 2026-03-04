@@ -50,6 +50,7 @@ const screenshot = defineTabTool({
       type: fileType,
       quality: fileType === 'png' ? undefined : 90,
       scale: 'css',
+      ...tab.actionTimeoutOptions,
       ...(params.fullPage !== undefined && { fullPage: params.fullPage })
     };
 
