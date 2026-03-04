@@ -47,7 +47,9 @@ Starts capturing screencast frames. Frames are emitted as [`event: Inspector.scr
 
 ```js
 const inspector = page.inspector();
-inspector.on('screencastframe', ({ data, width, height }) => console.log(`frame ${width}x${height}, size: ${data.length}`));
+inspector.on('screencastframe', ({ data, width, height }) => {
+  console.log(`frame ${width}x${height}, size: ${data.length}`);
+});
 await inspector.startScreencast({ size: { width: 800, height: 600 } });
 // ... perform actions ...
 await inspector.stopScreencast();
