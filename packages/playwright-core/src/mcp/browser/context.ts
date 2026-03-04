@@ -89,7 +89,7 @@ export class Context {
   }
 
   async dispose() {
-    disposeAll(this._disposables);
+    await disposeAll(this._disposables);
     for (const tab of this._tabs)
       await tab.dispose();
     this._tabs.length = 0;

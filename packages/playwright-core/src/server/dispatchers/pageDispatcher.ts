@@ -31,6 +31,7 @@ import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
+import { disposeAll } from '../disposable';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -425,9 +426,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Cleanup properly and leave the page in a good state. Other clients may still connect and use it.
     this._interceptionUrlMatchers = [];
     this._page.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    for (const disposable of this._disposables)
-      disposable.dispose().catch(() => {});
-    this._disposables = [];
+    disposeAll(this._disposables).catch(() => {});
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._page, this._routeWebSocketInitScript).catch(() => {});
     this._routeWebSocketInitScript = undefined;

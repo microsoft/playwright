@@ -33,3 +33,9 @@ export abstract class DisposableObject extends SdkObject implements Disposable {
 
   abstract dispose(): Promise<void>;
 }
+
+export async function disposeAll(disposables: Disposable[]) {
+  const copy = [...disposables];
+  disposables.length = 0;
+  await Promise.all(copy.map(d => d.dispose()));
+}

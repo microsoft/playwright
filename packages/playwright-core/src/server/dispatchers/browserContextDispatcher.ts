@@ -37,6 +37,7 @@ import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
 import { JSHandleDispatcher } from './jsHandleDispatcher';
+import { disposeAll } from '../disposable';
 
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
@@ -433,9 +434,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context.dialogManager.removeDialogHandler(this._dialogHandler);
     this._interceptionUrlMatchers = [];
     this._context.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    for (const disposable of this._disposables)
-      disposable.dispose().catch(() => {});
-    this._disposables = [];
+    disposeAll(this._disposables).catch(() => {});
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._context, this._routeWebSocketInitScript).catch(() => {});
     this._routeWebSocketInitScript = undefined;
