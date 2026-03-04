@@ -1225,6 +1225,11 @@ scheme.PageLocatorHandlerTriggeredEvent = tObject({
 scheme.PageRouteEvent = tObject({
   route: tChannel(['Route']),
 });
+scheme.PageScreencastFrameEvent = tObject({
+  data: tBinary,
+  width: tInt,
+  height: tInt,
+});
 scheme.PageWebSocketRouteEvent = tObject({
   webSocketRoute: tChannel(['WebSocketRoute']),
 });
@@ -1536,6 +1541,15 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
+scheme.PageStartScreencastParams = tObject({
+  size: tOptional(tObject({
+    width: tInt,
+    height: tInt,
+  })),
+});
+scheme.PageStartScreencastResult = tOptional(tObject({}));
+scheme.PageStopScreencastParams = tOptional(tObject({}));
+scheme.PageStopScreencastResult = tOptional(tObject({}));
 scheme.PageVideoStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,

@@ -2597,6 +2597,25 @@ Throws for non-input elements. However, if the element is inside the `<label>` e
 ### option: Page.inputValue.timeout = %%-input-timeout-js-%%
 * since: v1.13
 
+## method: Page.inspector
+* since: v1.59
+* langs: js
+- returns: <[Inspector]>
+
+Returns the [Inspector] object associated with this page.
+
+**Usage**
+
+```js
+const inspector = page.inspector();
+inspector.on('screencastFrame', data => {
+  console.log('received frame, jpeg size:', data.length);
+});
+await inspector.startScreencast();
+// ... perform actions ...
+await inspector.stopScreencast();
+```
+
 ## async method: Page.isChecked
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.isChecked`] instead. Read more about [locators](../locators.md).

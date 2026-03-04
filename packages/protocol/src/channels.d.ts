@@ -2100,6 +2100,7 @@ export interface PageEventTarget {
   on(event: 'frameDetached', callback: (params: PageFrameDetachedEvent) => void): this;
   on(event: 'locatorHandlerTriggered', callback: (params: PageLocatorHandlerTriggeredEvent) => void): this;
   on(event: 'route', callback: (params: PageRouteEvent) => void): this;
+  on(event: 'screencastFrame', callback: (params: PageScreencastFrameEvent) => void): this;
   on(event: 'webSocketRoute', callback: (params: PageWebSocketRouteEvent) => void): this;
   on(event: 'webSocket', callback: (params: PageWebSocketEvent) => void): this;
   on(event: 'worker', callback: (params: PageWorkerEvent) => void): this;
@@ -2148,6 +2149,8 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  startScreencast(params: PageStartScreencastParams, progress?: Progress): Promise<PageStartScreencastResult>;
+  stopScreencast(params?: PageStopScreencastParams, progress?: Progress): Promise<PageStopScreencastResult>;
   videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
   videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
@@ -2185,6 +2188,11 @@ export type PageLocatorHandlerTriggeredEvent = {
 };
 export type PageRouteEvent = {
   route: RouteChannel,
+};
+export type PageScreencastFrameEvent = {
+  data: Binary,
+  width: number,
+  height: number,
 };
 export type PageWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
@@ -2662,6 +2670,22 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
+export type PageStartScreencastParams = {
+  size?: {
+    width: number,
+    height: number,
+  },
+};
+export type PageStartScreencastOptions = {
+  size?: {
+    width: number,
+    height: number,
+  },
+};
+export type PageStartScreencastResult = void;
+export type PageStopScreencastParams = {};
+export type PageStopScreencastOptions = {};
+export type PageStopScreencastResult = void;
 export type PageVideoStartParams = {
   size?: {
     width: number,
@@ -2742,6 +2766,7 @@ export interface PageEvents {
   'frameDetached': PageFrameDetachedEvent;
   'locatorHandlerTriggered': PageLocatorHandlerTriggeredEvent;
   'route': PageRouteEvent;
+  'screencastFrame': PageScreencastFrameEvent;
   'webSocketRoute': PageWebSocketRouteEvent;
   'webSocket': PageWebSocketEvent;
   'worker': PageWorkerEvent;

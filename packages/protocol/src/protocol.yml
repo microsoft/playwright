@@ -2074,6 +2074,20 @@ Page:
       title: Cancel pick locator
       group: configuration
 
+    startScreencast:
+      title: Start screencast
+      group: configuration
+      parameters:
+        size:
+          type: object?
+          properties:
+            width: int
+            height: int
+
+    stopScreencast:
+      title: Stop screencast
+      group: configuration
+
     videoStart:
       title: Start video recording
       group: configuration
@@ -2176,6 +2190,12 @@ Page:
     route:
       parameters:
         route: Route
+
+    screencastFrame:
+      parameters:
+        data: binary
+        width: int
+        height: int
 
     webSocketRoute:
       parameters:

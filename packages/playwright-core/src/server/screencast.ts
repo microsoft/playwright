@@ -29,6 +29,7 @@ export class Screencast {
   private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
   private _screencastClients = new Set<unknown>();
+  private _screencastOptions: { width: number, height: number, quality: number } | null = null;
 
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
@@ -140,8 +141,13 @@ export class Screencast {
   }
 
   async startScreencast(client: unknown, options: { width: number, height: number, quality: number }) {
+    if (this._screencastOptions) {
+      if (options.width !== this._screencastOptions.width || options.height !== this._screencastOptions.height || options.quality !== this._screencastOptions.quality)
+        throw new Error(`Screencast is already running with different options (${this._screencastOptions.width}x${this._screencastOptions.height} quality=${this._screencastOptions.quality})`);
+    }
     this._screencastClients.add(client);
     if (this._screencastClients.size === 1) {
+      this._screencastOptions = options;
       await this._page.delegate.startScreencast({
         width: options.width,
         height: options.height,
@@ -152,8 +158,10 @@ export class Screencast {
 
   async stopScreencast(client: unknown) {
     this._screencastClients.delete(client);
-    if (!this._screencastClients.size)
+    if (!this._screencastClients.size) {
+      this._screencastOptions = null;
       await this._page.delegate.stopScreencast();
+    }
   }
 }
 

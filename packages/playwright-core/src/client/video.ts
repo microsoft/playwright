@@ -15,17 +15,19 @@
  */
 
 import { Artifact } from './artifact';
+import { EventEmitter } from './eventEmitter';
 
 import type { Connection } from './connection';
 import type { Page } from './page';
 import type * as api from '../../types/types';
 
-export class Video implements api.Video {
+export class Video extends EventEmitter implements api.Video {
   private _artifact: Artifact | undefined;
   private _isRemote = false;
   private _page: Page;
 
   constructor(page: Page, connection: Connection, artifact: Artifact | undefined) {
+    super(page._platform);
     this._page = page;
     this._isRemote = connection.isRemote();
     this._artifact = artifact;
