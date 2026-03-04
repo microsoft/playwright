@@ -23,6 +23,7 @@ export { Clock } from './clock';
 export { ConsoleMessage } from './consoleMessage';
 export { Coverage } from './coverage';
 export { Dialog } from './dialog';
+export { Disposable } from './disposable';
 export { Download } from './download';
 export { Electron, ElectronApplication } from './electron';
 export { FrameLocator, Locator } from './locator';

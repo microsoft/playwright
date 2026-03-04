@@ -1206,6 +1206,8 @@ BrowserContext:
       group: configuration
       parameters:
         source: string
+      returns:
+        disposable: Disposable
 
     clearCookies:
       title: Clear cookies
@@ -1250,6 +1252,8 @@ BrowserContext:
       parameters:
         name: string
         needsHandle: boolean?
+      returns:
+        disposable: Disposable
 
     grantPermissions:
       title: Grant permissions
@@ -1595,6 +1599,8 @@ Page:
       group: configuration
       parameters:
         source: string
+      returns:
+        disposable: Disposable
 
     close:
       title: Close page
@@ -1662,6 +1668,8 @@ Page:
       parameters:
         name: string
         needsHandle: boolean?
+      returns:
+        disposable: Disposable
 
     goBack:
       title: Go back
@@ -2957,6 +2965,15 @@ Worker:
   events:
 
     close:
+
+
+Disposable:
+  type: interface
+
+  commands:
+
+    dispose:
+      internal: true
 
 
 JSHandle:

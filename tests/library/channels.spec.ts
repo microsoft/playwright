@@ -284,6 +284,10 @@ it('exposeFunction should not leak', async ({ page, expectScopeState, server }) 
                     '_guid': 'page',
                     'objects': [
                       {
+                        '_guid': 'disposable',
+                        'objects': [],
+                      },
+                      {
                         '_guid': 'frame',
                         'objects': [],
                       },

@@ -16,6 +16,7 @@
  */
 
 import { BrowserContext } from './browserContext';
+import { Disposable } from './disposable';
 import { ConsoleMessage } from './console';
 import { TargetClosedError, TimeoutError } from './errors';
 import { FileChooser } from './fileChooser';
@@ -329,7 +330,7 @@ export class Page extends SdkObject<PageEventMap> {
     if (this.browserContext._pageBindings.has(name))
       throw new Error(`Function "${name}" has been already registered in the browser context`);
     await progress.race(this.browserContext.exposePlaywrightBindingIfNeeded());
-    const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    const binding = new PageBinding(this, name, playwrightBinding, needsHandle);
     this._pageBindings.set(name, binding);
     try {
       await progress.race(this.delegate.addInitScript(binding.initScript));
@@ -341,12 +342,12 @@ export class Page extends SdkObject<PageEventMap> {
     }
   }
 
-  async removeExposedBindings(bindings: PageBinding[]) {
-    bindings = bindings.filter(binding => this._pageBindings.get(binding.name) === binding);
-    for (const binding of bindings)
-      this._pageBindings.delete(binding.name);
-    await this.delegate.removeInitScripts(bindings.map(binding => binding.initScript));
-    const cleanup = bindings.map(binding => `{ ${binding.cleanupScript} };\n`).join('');
+  async removeExposedBinding(binding: PageBinding) {
+    if (this._pageBindings.get(binding.name) !== binding)
+      return;
+    this._pageBindings.delete(binding.name);
+    await this.delegate.removeInitScripts([binding.initScript]);
+    const cleanup = `{ ${binding.cleanupScript} };`;
     await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
@@ -627,23 +628,22 @@ export class Page extends SdkObject<PageEventMap> {
     await this.delegate.bringToFront();
   }
 
-  async addInitScript(progress: Progress, source: string) {
-    const initScript = new InitScript(source);
+  async addInitScript(source: string) {
+    const initScript = new InitScript(this, source);
     this.initScripts.push(initScript);
     try {
-      await progress.race(this.delegate.addInitScript(initScript));
+      await this.delegate.addInitScript(initScript);
     } catch (error) {
       // Note: no await, script will be removed in the background as soon as possible.
-      this.removeInitScripts([initScript]).catch(() => {});
+      initScript.dispose().catch(() => {});
       throw error;
     }
     return initScript;
   }
 
-  async removeInitScripts(initScripts: InitScript[]) {
-    const set = new Set(initScripts);
-    this.initScripts = this.initScripts.filter(script => !set.has(script));
-    await this.delegate.removeInitScripts(initScripts);
+  async removeInitScript(initScript: InitScript) {
+    this.initScripts = this.initScripts.filter(script => initScript !== script);
+    await this.delegate.removeInitScripts([initScript]);
   }
 
   needsRequestInterception(): boolean {
@@ -933,12 +933,12 @@ export class Worker extends SdkObject<WorkerEventMap> {
   }
 }
 
-export class PageBinding {
+export class PageBinding extends Disposable {
   private static kController = '__playwright__binding__controller__';
   static kBindingName = '__playwright__binding__';
 
-  static createInitScript() {
-    return new InitScript(`
+  static createInitScript(browserContext: BrowserContext): InitScript {
+    return new InitScript(browserContext, `
       (() => {
         const module = {};
         ${rawBindingsControllerSource.source}
@@ -956,10 +956,11 @@ export class PageBinding {
   readonly cleanupScript: string;
   forClient?: unknown;
 
-  constructor(name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
+  constructor(parent: BrowserContext | Page, name: string, playwrightFunction: frames.FunctionWithSource, needsHandle: boolean) {
+    super(parent);
     this.name = name;
     this.playwrightFunction = playwrightFunction;
-    this.initScript = new InitScript(`globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`);
+    this.initScript = new InitScript(parent, `globalThis['${PageBinding.kController}'].addBinding(${JSON.stringify(name)}, ${needsHandle})`);
     this.needsHandle = needsHandle;
     this.cleanupScript = `globalThis['${PageBinding.kController}'].removeBinding(${JSON.stringify(name)})`;
   }
@@ -986,18 +987,26 @@ export class PageBinding {
       context.evaluateExpressionHandle(`arg => globalThis['${PageBinding.kController}'].deliverBindingResult(arg)`, { isFunction: true }, { name, seq, error }).catch(e => debugLogger.log('error', e));
     }
   }
+
+  override async dispose(): Promise<void> {
+    await this.parent.removeExposedBinding(this);
+  }
 }
 
-export class InitScript {
+export class InitScript extends Disposable {
   readonly source: string;
 
-  constructor(source: string) {
+  constructor(owner: BrowserContext | Page, source: string) {
+    super(owner);
     this.source = `(() => {
       ${source}
     })();`;
   }
-}
 
+  async dispose() {
+    await this.parent.removeInitScript(this);
+  }
+}
 
 async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, doNotRenderActive?: boolean } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.

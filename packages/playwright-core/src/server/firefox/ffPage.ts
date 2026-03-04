@@ -106,7 +106,7 @@ export class FFPage implements PageDelegate {
     // Ideally, we somehow ensure that utility world is created before Page.ready arrives, but currently it is racy.
     // Even worse, sometimes this protocol call never returns, for example when popup opens a dialog synchronously.
     // Therefore, we can end up with an initialized page without utility world, although very unlikely.
-    this.addInitScript(new InitScript(''), UTILITY_WORLD_NAME).catch(e => this._reportAsNew(e));
+    this.addInitScript(new InitScript(this._page, ''), UTILITY_WORLD_NAME).catch(e => this._reportAsNew(e));
   }
 
   _reportAsNew(error?: Error) {

@@ -26,6 +26,7 @@ import { RequestDispatcher } from './networkDispatchers';
 import { ResponseDispatcher } from './networkDispatchers';
 import { RouteDispatcher, WebSocketDispatcher } from './networkDispatchers';
 import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
+import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
@@ -129,7 +130,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return this._page;
   }
 
-  async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<void> {
+  async exposeBinding(params: channels.PageExposeBindingParams, progress: Progress): Promise<channels.PageExposeBindingResult> {
     const binding = await this._page.exposeBinding(progress, params.name, !!params.needsHandle, (source, ...args) => {
       // When reusing the context, we might have some bindings called late enough,
       // after context and page dispatchers have been disposed.
@@ -140,6 +141,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       return binding.promise();
     });
     this._bindings.push(binding);
+    return { disposable: new DisposableDispatcher(this, binding) };
   }
 
   async setExtraHTTPHeaders(params: channels.PageSetExtraHTTPHeadersParams, progress: Progress): Promise<void> {
@@ -191,8 +193,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.setViewportSize(progress, params.viewportSize);
   }
 
-  async addInitScript(params: channels.PageAddInitScriptParams, progress: Progress): Promise<void> {
-    this._initScripts.push(await this._page.addInitScript(progress, params.source));
+  async addInitScript(params: channels.PageAddInitScriptParams, progress: Progress): Promise<channels.PageAddInitScriptResult> {
+    const initScript = await this._page.addInitScript(params.source);
+    this._initScripts.push(initScript);
+    return { disposable: new DisposableDispatcher(this, initScript) };
   }
 
   async setNetworkInterceptionPatterns(params: channels.PageSetNetworkInterceptionPatternsParams, progress: Progress): Promise<void> {
@@ -421,9 +425,11 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Cleanup properly and leave the page in a good state. Other clients may still connect and use it.
     this._interceptionUrlMatchers = [];
     this._page.removeRequestInterceptor(this._requestInterceptor).catch(() => {});
-    this._page.removeExposedBindings(this._bindings).catch(() => {});
+    for (const binding of this._bindings)
+      this._page.removeExposedBinding(binding).catch(() => {});
     this._bindings = [];
-    this._page.removeInitScripts(this._initScripts).catch(() => {});
+    for (const initScript of this._initScripts)
+      initScript.dispose().catch(() => {});
     this._initScripts = [];
     if (this._routeWebSocketInitScript)
       WebSocketRouteDispatcher.uninstall(this.connection, this._page, this._routeWebSocketInitScript).catch(() => {});

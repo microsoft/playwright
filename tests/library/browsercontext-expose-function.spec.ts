@@ -45,6 +45,23 @@ it('should work', async ({ context, server }) => {
   expect(result).toEqual({ mul: 36, add: 13, sub: 5, addHandle: 11 });
 });
 
+it('should dispose', async ({ context, server }) => {
+  const binding = await context.exposeFunction('compute', function(a, b) {
+    return a * b;
+  });
+  const page = await context.newPage();
+  const result = await page.evaluate(async function() {
+    return await window['compute'](9, 4);
+  });
+  expect(result).toBe(36);
+  await binding.dispose();
+
+  const e = await page.evaluate(async function() {
+    return await window['compute'](9, 4);
+  }).catch(e => e);
+  expect(e.message).toContain('is not a function');
+});
+
 it('should throw for duplicate registrations', async ({ context, server }) => {
   await context.exposeFunction('foo', () => {});
   await context.exposeFunction('bar', () => {});

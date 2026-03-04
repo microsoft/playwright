@@ -169,7 +169,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       await this.exposeConsoleApi();
 
     if (this._options.serviceWorkers === 'block')
-      await this.addInitScript(undefined, `\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
+      await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
@@ -340,7 +340,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._playwrightBindingExposed ??= (async () => {
       await this.doExposePlaywrightBinding();
 
-      this.bindingsInitScript = PageBinding.createInitScript();
+      this.bindingsInitScript = PageBinding.createInitScript(this);
       this.initScripts.push(this.bindingsInitScript);
       await this.doAddInitScript(this.bindingsInitScript);
       await this.safeNonStallingEvaluateInAllFrames(this.bindingsInitScript.source, 'main');
@@ -360,7 +360,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         throw new Error(`Function "${name}" has been already registered in one of the pages`);
     }
     await progress.race(this.exposePlaywrightBindingIfNeeded());
-    const binding = new PageBinding(name, playwrightBinding, needsHandle);
+    const binding = new PageBinding(this, name, playwrightBinding, needsHandle);
     binding.forClient = forClient;
     this._pageBindings.set(name, binding);
     try {
@@ -373,12 +373,12 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
   }
 
-  async removeExposedBindings(bindings: PageBinding[]) {
-    bindings = bindings.filter(binding => this._pageBindings.get(binding.name) === binding);
-    for (const binding of bindings)
-      this._pageBindings.delete(binding.name);
-    await this.doRemoveInitScripts(bindings.map(binding => binding.initScript));
-    const cleanup = bindings.map(binding => `{ ${binding.cleanupScript} };\n`).join('');
+  async removeExposedBinding(binding: PageBinding) {
+    if (this._pageBindings.get(binding.name) !== binding)
+      return;
+    this._pageBindings.delete(binding.name);
+    await this.doRemoveInitScripts([binding.initScript]);
+    const cleanup = `{ ${binding.cleanupScript} };`;
     await this.safeNonStallingEvaluateInAllFrames(cleanup, 'main');
   }
 
@@ -478,27 +478,22 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this._options.httpCredentials = { username, password: password || '' };
   }
 
-  async addInitScript(progress: Progress | undefined, source: string) {
-    const initScript = new InitScript(source);
+  async addInitScript(source: string) {
+    const initScript = new InitScript(this, source);
     this.initScripts.push(initScript);
     try {
-      const promise = this.doAddInitScript(initScript);
-      if (progress)
-        await progress.race(promise);
-      else
-        await promise;
+      await this.doAddInitScript(initScript);
       return initScript;
     } catch (error) {
       // Note: no await, init script will be removed in the background as soon as possible.
-      this.removeInitScripts([initScript]).catch(() => {});
+      initScript.dispose().catch(() => {});
       throw error;
     }
   }
 
-  async removeInitScripts(initScripts: InitScript[]) {
-    const set = new Set(initScripts);
-    this.initScripts = this.initScripts.filter(script => !set.has(script));
-    await this.doRemoveInitScripts(initScripts);
+  async removeInitScript(initScript: InitScript) {
+    this.initScripts = this.initScripts.filter(script => initScript !== script);
+    await this.doRemoveInitScripts([initScript]);
   }
 
   async addRequestInterceptor(progress: Progress, handler: network.RouteHandler): Promise<void> {
