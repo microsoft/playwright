@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import path from 'path';
 
 import { disposeAll } from '../../client/disposable';
@@ -23,23 +24,42 @@ import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import { selectors } from '../../..';
 
 import { Tab } from './tab';
-import { outputFile, workspaceFile } from './config';
-import { allRootPaths, firstRootPath } from '../sdk/server';
 
 import type * as playwright from '../../..';
-import type { FullConfig } from './config';
 import type { SessionLog } from './sessionLog';
 import type { Tracing } from '../../client/tracing';
 import type { Disposable } from '../../client/disposable';
 import type { BrowserContext } from '../../client/browserContext';
-import type { ClientInfo } from '../sdk/server';
+import type { Config } from '../config.d.ts';
 
 const testDebug = debug('pw:mcp:test');
 
+export type ContextConfig = Pick<Config,
+  'allowUnrestrictedFileAccess' |
+  'capabilities' |
+  'codegen' |
+  'console' |
+  'imageResponses' |
+  'network' |
+  'outputDir' |
+  'outputMode' |
+  'saveSession' |
+  'saveTrace' |
+  'secrets' |
+  'snapshot' |
+  'testIdAttribute' |
+  'timeouts'> & {
+    browser?: {
+      initScript?: string[];
+      initPage?: string[];
+    };
+    skillMode?: boolean;
+  };
+
 type ContextOptions = {
-  config: FullConfig;
-  sessionLog: SessionLog | undefined;
-  clientInfo: ClientInfo;
+  config: ContextConfig;
+  sessionLog?: SessionLog;
+  cwd: string;
 };
 
 export type RouteEntry = {
@@ -62,14 +82,13 @@ export type FilenameTemplate = {
 type VideoParams = NonNullable<Parameters<playwright.Video['start']>[0]>;
 
 export class Context {
-  readonly config: FullConfig;
+  readonly config: ContextConfig;
   readonly sessionLog: SessionLog | undefined;
   readonly options: ContextOptions;
   private _rawBrowserContext: playwright.BrowserContext;
   private _browserContextPromise: Promise<playwright.BrowserContext> | undefined;
   private _tabs: Tab[] = [];
   private _currentTab: Tab | undefined;
-  private _clientInfo: ClientInfo;
   private _routes: RouteEntry[] = [];
   private _video: {
     allVideos: Set<playwright.Video>;
@@ -84,7 +103,6 @@ export class Context {
     this.sessionLog = options.sessionLog;
     this.options = options;
     this._rawBrowserContext = browserContext;
-    this._clientInfo = options.clientInfo;
     testDebug('create context');
   }
 
@@ -144,12 +162,12 @@ export class Context {
   }
 
   async workspaceFile(fileName: string, perCallWorkspaceDir: string | undefined): Promise<string> {
-    return await workspaceFile(this.config, this._clientInfo, fileName, perCallWorkspaceDir);
+    return await workspaceFile(this.options, fileName, perCallWorkspaceDir);
   }
 
   async outputFile(template: FilenameTemplate, options: { origin: 'code' | 'llm' }): Promise<string> {
     const baseName = template.suggestedFilename || `${template.prefix}-${(template.date ?? new Date()).toISOString().replace(/[:.]/g, '-')}${template.ext ? '.' + template.ext : ''}`;
-    return await outputFile(this.config, this._clientInfo, baseName, options);
+    return await outputFile(this.options, baseName, options);
   }
 
   async startVideoRecording(params: VideoParams) {
@@ -261,7 +279,7 @@ export class Context {
     const browserContext = this._rawBrowserContext;
     if (!this.config.allowUnrestrictedFileAccess) {
       (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
-      (browserContext as any)._setAllowedDirectories(allRootPaths(this._clientInfo));
+      (browserContext as any)._setAllowedDirectories([this.options.cwd]);
     }
     await this._setupRequestInterception(browserContext);
 
@@ -278,9 +296,8 @@ export class Context {
         },
       });
     }
-    const rootPath = firstRootPath(this._clientInfo);
-    for (const initScript of this.config.browser.initScript || [])
-      this._disposables.push(await browserContext.addInitScript({ path: path.resolve(rootPath, initScript) }));
+    for (const initScript of this.config.browser?.initScript || [])
+      this._disposables.push(await browserContext.addInitScript({ path: path.resolve(this.options.cwd, initScript) }));
 
     for (const page of browserContext.pages())
       this._onPageCreated(page);
@@ -314,4 +331,37 @@ function originOrHostGlob(originOrHost: string) {
   }
   // Support for legacy host-only mode.
   return `*://${originOrHost}/**`;
+}
+
+export async function workspaceFile(options: ContextOptions, fileName: string, perCallWorkspaceDir?: string): Promise<string> {
+  const workspace = perCallWorkspaceDir ?? options.cwd;
+  const resolvedName = path.resolve(workspace, fileName);
+  await checkFile(options, resolvedName, { origin: 'code' });
+  return resolvedName;
+}
+
+export function outputDir(options: ContextOptions): string {
+  if (options.config.outputDir)
+    return path.resolve(options.config.outputDir);
+  return path.resolve(options.cwd, options.config.skillMode ? '.playwright-cli' : '.playwright-mcp');
+}
+
+export async function outputFile(options: ContextOptions, fileName: string, flags: { origin: 'code' | 'llm' }): Promise<string> {
+  const resolvedFile = path.resolve(outputDir(options), fileName);
+  await checkFile(options, resolvedFile, flags);
+  await fs.promises.mkdir(path.dirname(resolvedFile), { recursive: true });
+  debug('pw:mcp:file')(resolvedFile);
+  return resolvedFile;
+}
+
+async function checkFile(options: ContextOptions, resolvedFilename: string, flags: { origin: 'code' | 'llm' }) {
+  // Trust code.
+  if (flags.origin === 'code')
+    return;
+
+  // Trust llm to use valid characters in file names.
+  const output = outputDir(options);
+  const workspace = options.cwd;
+  if (!resolvedFilename.startsWith(output) && !resolvedFilename.startsWith(workspace))
+    throw new Error(`Resolved file path ${resolvedFilename} is outside of the output directory ${output} and workspace directory ${workspace}. Use relative file names to stay within the output directory.`);
 }

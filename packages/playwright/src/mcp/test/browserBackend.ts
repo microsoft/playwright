@@ -18,7 +18,7 @@ import path from 'path';
 import fs from 'fs';
 import { createGuid } from 'playwright-core/lib/utils';
 import * as mcp from 'playwright-core/lib/mcp/exports';
-import { defaultConfig, BrowserServerBackend, Tab, identityBrowserContextFactory, startMcpDaemonServer, sessionConfigFromArgs, createClientInfo } from 'playwright-core/lib/mcp/exports';
+import { BrowserServerBackend } from 'playwright-core/lib/mcp/exports';
 
 import { stripAnsiEscapes } from '../../util';
 
@@ -46,7 +46,7 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
     if (data.initialize) {
       if (backend)
         throw new Error('MCP backend is already initialized');
-      const config: mcp.FullConfig = { ...defaultConfig, capabilities: ['testing'] };
+      const config: mcp.ContextConfig = { capabilities: ['testing'] };
       const tools = mcp.filteredTools(config);
       backend = new BrowserServerBackend(config, context, tools);
       await backend.initialize(data.initialize.clientInfo);
@@ -97,7 +97,7 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
         `- Page Title: ${await page.title()}`.trim()
     );
     // Only print console errors when pausing on error, not when everything works as expected.
-    let console = testInfo.errors.length ? await Tab.collectConsoleMessages(page) : [];
+    let console = testInfo.errors.length ? await mcp.Tab.collectConsoleMessages(page) : [];
     console = console.filter(msg => msg.type === 'error');
     if (console.length) {
       lines.push('- Console Messages:');
@@ -125,17 +125,17 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
 
   const outputDir = path.join(testInfo.artifactsDir(), '.playwright-mcp');
   const sessionName = `test-worker-${createGuid().slice(0, 6)}`;
-  const clientInfo = createClientInfo();
-  const sessionConfig = sessionConfigFromArgs(clientInfo, sessionName, { _: [] });
+  const clientInfo = mcp.createClientInfo();
+  const sessionConfig = mcp.sessionConfigFromArgs(clientInfo, sessionName, { _: [] });
   const sessionConfigFile = path.resolve(clientInfo.daemonProfilesDir, `${sessionName}.session`);
   await fs.promises.mkdir(path.dirname(sessionConfigFile), { recursive: true });
   await fs.promises.writeFile(sessionConfigFile, JSON.stringify(sessionConfig, null, 2));
-  await startMcpDaemonServer({
-    ...defaultConfig,
+
+  await mcp.startMcpDaemonServer({
     outputMode: 'file',
-    snapshot: { mode: 'full', output: 'file' },
+    snapshot: { mode: 'full' },
     outputDir,
-  }, sessionConfig, identityBrowserContextFactory(context), true /* noShutdown */);
+  }, sessionConfig, context, true /* noShutdown */);
 
   const lines = [''];
   if (testInfo.errors.length) {

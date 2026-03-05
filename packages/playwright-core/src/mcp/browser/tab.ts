@@ -30,11 +30,10 @@ import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
 import { disposeAll } from '../../client/disposable';
 
-import type { Context } from './context';
+import type { Disposable } from '../../client/disposable';
+import type { Context, ContextConfig } from './context';
 import type { Page } from '../../client/page';
 import type { Locator } from '../../client/locator';
-import type { FullConfig } from './config';
-import type { Disposable } from '../../client/disposable';
 
 const TabEvents = {
   modalState: 'modalState'
@@ -105,9 +104,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
-  readonly actionTimeoutOptions: { timeout: number; };
-  readonly navigationTimeoutOptions: { timeout: number; };
-  readonly expectTimeoutOptions: { timeout: number; };
+  readonly actionTimeoutOptions: { timeout?: number; };
+  readonly navigationTimeoutOptions: { timeout?: number; };
+  readonly expectTimeoutOptions: { timeout?: number; };
 
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
@@ -139,9 +138,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const wallTime = Date.now();
     this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
     this._initializedPromise = this._initialize();
-    this.actionTimeoutOptions = { timeout: context.config.timeouts.action };
-    this.navigationTimeoutOptions = { timeout: context.config.timeouts.navigation };
-    this.expectTimeoutOptions = { timeout: context.config.timeouts.expect };
+    this.actionTimeoutOptions = { timeout: context.config.timeouts?.action };
+    this.navigationTimeoutOptions = { timeout: context.config.timeouts?.navigation };
+    this.expectTimeoutOptions = { timeout: context.config.timeouts?.expect };
   }
 
   async dispose() {
@@ -170,7 +169,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     const requests = await this.page.requests().catch(() => []);
     for (const request of requests.filter(r => r.existingResponse() || r.failure()))
       this._requests.push(request);
-    for (const initPage of this.context.config.browser.initPage || []) {
+    for (const initPage of this.context.config.browser?.initPage || []) {
       try {
         const { default: func } = await import(url.pathToFileURL(initPage).href);
         await func({ page: this.page });
@@ -496,7 +495,7 @@ function pageErrorToConsoleMessage(errorOrValue: Error | any): ConsoleMessage {
   };
 }
 
-export function renderModalStates(config: FullConfig, modalStates: ModalState[]): string[] {
+export function renderModalStates(config: ContextConfig, modalStates: ModalState[]): string[] {
   const result: string[] = [];
   if (modalStates.length === 0)
     result.push('- There is no modal state present');
@@ -509,9 +508,9 @@ type ConsoleMessageType = ReturnType<playwright.ConsoleMessage['type']>;
 type ConsoleMessageLevel = 'error' | 'warning' | 'info' | 'debug';
 const consoleMessageLevels: ConsoleMessageLevel[] = ['error', 'warning', 'info', 'debug'];
 
-export function shouldIncludeMessage(thresholdLevel: ConsoleMessageLevel, type: ConsoleMessageType): boolean {
+export function shouldIncludeMessage(thresholdLevel: ConsoleMessageLevel | undefined, type: ConsoleMessageType): boolean {
   const messageLevel = consoleLevelForMessageType(type);
-  return consoleMessageLevels.indexOf(messageLevel) <= consoleMessageLevels.indexOf(thresholdLevel);
+  return consoleMessageLevels.indexOf(messageLevel) <= consoleMessageLevels.indexOf(thresholdLevel || 'info');
 }
 
 function consoleLevelForMessageType(type: ConsoleMessageType): ConsoleMessageLevel {

@@ -17,19 +17,14 @@
 // SDK
 export * from './sdk/server';
 export * from './sdk/tool';
-export * from './sdk/http';
 export { browserTools } from './browser/tools';
 export { BrowserServerBackend } from './browser/browserServerBackend';
-export { contextFactory, identityBrowserContextFactory } from './browser/browserContextFactory';
-export { defaultConfig, resolveConfig } from './browser/config';
 export { parseResponse } from './browser/response';
 export { Tab } from './browser/tab';
 export { setupExitWatchdog } from './browser/watchdog';
-export type { BrowserContextFactory } from './browser/browserContextFactory';
-export type { FullConfig } from './browser/config';
 export type { Tool as BrowserTool } from './browser/tools/tool';
 export { logUnhandledError } from './log';
-export type { Config, ToolCapability } from './config';
+export type { ContextConfig } from './browser/context';
 export { startMcpDaemonServer } from '../cli/daemon/daemon';
 export { sessionConfigFromArgs } from '../cli/client/program';
 export { createClientInfo } from '../cli/client/registry';

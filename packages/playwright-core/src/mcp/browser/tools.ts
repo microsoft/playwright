@@ -23,7 +23,6 @@ import dialogs from './tools/dialogs';
 import evaluate from './tools/evaluate';
 import files from './tools/files';
 import form from './tools/form';
-import install from './tools/install';
 import keyboard from './tools/keyboard';
 import mouse from './tools/mouse';
 import navigate from './tools/navigate';
@@ -42,7 +41,7 @@ import wait from './tools/wait';
 import webstorage from './tools/webstorage';
 
 import type { Tool } from './tools/tool';
-import type { FullConfig } from './config';
+import type { ContextConfig } from './context';
 
 export const browserTools: Tool<any>[] = [
   ...common,
@@ -54,7 +53,6 @@ export const browserTools: Tool<any>[] = [
   ...evaluate,
   ...files,
   ...form,
-  ...install,
   ...keyboard,
   ...mouse,
   ...navigate,
@@ -73,6 +71,6 @@ export const browserTools: Tool<any>[] = [
   ...webstorage,
 ];
 
-export function filteredTools(config: FullConfig) {
+export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
   return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly);
 }

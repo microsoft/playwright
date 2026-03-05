@@ -20,7 +20,6 @@ import path from 'path';
 import { debug } from '../../utilsBundle';
 import { renderModalStates, shouldIncludeMessage } from './tab';
 import { scaleImageToFitMessage } from './tools/screenshot';
-import { firstRootPath } from '../sdk/server';
 
 import type { TabHeader } from './tab';
 import type { CallToolResult, ImageContent, TextContent } from '@modelcontextprotocol/sdk/types.js';
@@ -59,7 +58,7 @@ export class Response {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
-    this._clientWorkspace = relativeTo ?? firstRootPath(context.options.clientInfo);
+    this._clientWorkspace = relativeTo ?? context.options.cwd;
   }
 
   private _computRelativeTo(fileName: string): string {
@@ -120,7 +119,7 @@ export class Response {
   }
 
   setIncludeSnapshot() {
-    this._includeSnapshot = this._context.config.snapshot.mode;
+    this._includeSnapshot = this._context.config.snapshot?.mode || 'incremental';
   }
 
   setIncludeFullSnapshot(includeSnapshotFileName?: string) {
@@ -222,8 +221,8 @@ export class Response {
       text.push(`- New console entries: ${tabSnapshot.consoleLink}`);
     if (tabSnapshot?.events.filter(event => event.type !== 'request').length) {
       for (const event of tabSnapshot.events) {
-        if (event.type === 'console' && this._context.config.outputMode !== 'file' && this._context.config.snapshot.mode !== 'none') {
-          if (shouldIncludeMessage(this._context.config.console.level, event.message.type))
+        if (event.type === 'console' && this._context.config.outputMode !== 'file' && this._context.config.snapshot?.mode !== 'none') {
+          if (shouldIncludeMessage(this._context.config.console?.level, event.message.type))
             text.push(`- ${trimMiddle(event.message.toString(), 100)}`);
         } else if (event.type === 'download-start') {
           text.push(`- Downloading file ${event.download.download.suggestedFilename()} ...`);

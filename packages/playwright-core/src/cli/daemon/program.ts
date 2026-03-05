@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
+import url from 'url';
 
 import { startMcpDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../../mcp/browser/watchdog';
@@ -38,13 +39,26 @@ export function decorateCLICommand(command: Command, version: string) {
         setupExitWatchdog();
 
         const sessionConfig = await fs.promises.readFile(options.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
-        const mcpConfig = await resolveCLIConfig(sessionConfig);
-        const browserContextFactory = contextFactory(mcpConfig);
-        const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
 
+        const cwd = url.pathToFileURL(process.cwd()).href;
+        const clientInfo = {
+          name: 'playwright-cli',
+          version: sessionConfig.version,
+          roots: [{
+            uri: cwd,
+            name: 'cwd'
+          }],
+          timestamp: Date.now(),
+        };
+
+        const mcpConfig = await resolveCLIConfig(sessionConfig);
+        const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
+        const browserContextFactory = contextFactory(mcpConfig);
         const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
+
         try {
-          await startMcpDaemonServer(mcpConfig, sessionConfig, cf);
+          const browserContext = mcpConfig.browser.isolated ? await cf.createContext(clientInfo) : (await cf.contexts(clientInfo))[0];
+          await startMcpDaemonServer(mcpConfig, sessionConfig, browserContext);
           console.log(`### Config`);
           console.log('```json');
           console.log(JSON.stringify(mcpConfig, null, 2));
