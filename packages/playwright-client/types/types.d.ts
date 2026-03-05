@@ -6964,7 +6964,7 @@ export interface Frame {
    * ```
    *
    * ```js
-   * await page.getByAltText('Playwright logo').click();
+   * await frame.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -6993,8 +6993,8 @@ export interface Frame {
    * ```
    *
    * ```js
-   * await page.getByLabel('Username').fill('john');
-   * await page.getByLabel('Password').fill('secret');
+   * await frame.getByLabel('Username').fill('john');
+   * await frame.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -7022,7 +7022,7 @@ export interface Frame {
    * You can fill the input after locating it by the placeholder text:
    *
    * ```js
-   * await page
+   * await frame
    *     .getByPlaceholder('name@example.com')
    *     .fill('playwright@microsoft.com');
    * ```
@@ -7059,11 +7059,11 @@ export interface Frame {
    * You can locate each element by its implicit role:
    *
    * ```js
-   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   * await expect(frame.getByRole('heading', { name: 'Sign up' })).toBeVisible();
    *
-   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   * await frame.getByRole('checkbox', { name: 'Subscribe' }).check();
    *
-   * await page.getByRole('button', { name: /submit/i }).click();
+   * await frame.getByRole('button', { name: /submit/i }).click();
    * ```
    *
    * **Details**
@@ -7164,7 +7164,7 @@ export interface Frame {
    * You can locate the element by its test id:
    *
    * ```js
-   * await page.getByTestId('directions').click();
+   * await frame.getByTestId('directions').click();
    * ```
    *
    * **Details**
@@ -7207,19 +7207,19 @@ export interface Frame {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world');
+   * frame.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world');
+   * frame.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true });
+   * frame.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/);
+   * frame.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i);
+   * frame.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -7254,7 +7254,7 @@ export interface Frame {
    * You can check the issues count after locating it by the title text:
    *
    * ```js
-   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
+   * await expect(frame.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
@@ -13780,7 +13780,7 @@ export interface Locator {
    * ```
    *
    * ```js
-   * await page.getByAltText('Playwright logo').click();
+   * await locator.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -13809,8 +13809,8 @@ export interface Locator {
    * ```
    *
    * ```js
-   * await page.getByLabel('Username').fill('john');
-   * await page.getByLabel('Password').fill('secret');
+   * await locator.getByLabel('Username').fill('john');
+   * await locator.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -13838,7 +13838,7 @@ export interface Locator {
    * You can fill the input after locating it by the placeholder text:
    *
    * ```js
-   * await page
+   * await locator
    *     .getByPlaceholder('name@example.com')
    *     .fill('playwright@microsoft.com');
    * ```
@@ -13875,11 +13875,11 @@ export interface Locator {
    * You can locate each element by its implicit role:
    *
    * ```js
-   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   * await expect(locator.getByRole('heading', { name: 'Sign up' })).toBeVisible();
    *
-   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   * await locator.getByRole('checkbox', { name: 'Subscribe' }).check();
    *
-   * await page.getByRole('button', { name: /submit/i }).click();
+   * await locator.getByRole('button', { name: /submit/i }).click();
    * ```
    *
    * **Details**
@@ -13980,7 +13980,7 @@ export interface Locator {
    * You can locate the element by its test id:
    *
    * ```js
-   * await page.getByTestId('directions').click();
+   * await locator.getByTestId('directions').click();
    * ```
    *
    * **Details**
@@ -14023,19 +14023,19 @@ export interface Locator {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world');
+   * locator.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world');
+   * locator.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true });
+   * locator.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/);
+   * locator.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i);
+   * locator.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -14070,7 +14070,7 @@ export interface Locator {
    * You can check the issues count after locating it by the title text:
    *
    * ```js
-   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
+   * await expect(locator.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.
@@ -19998,7 +19998,7 @@ export interface FileChooser {
  * await page.locator('.result-frame').contentFrame().getByRole('button').click();
  *
  * // Works because we explicitly tell locator to pick the first frame:
- * await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
+ * await page.locator('.result-frame').first().contentFrame().getByRole('button').click();
  * ```
  *
  * **Converting Locator to FrameLocator**
@@ -20040,7 +20040,7 @@ export interface FrameLocator {
    * ```
    *
    * ```js
-   * await page.getByAltText('Playwright logo').click();
+   * await frameLocator.getByAltText('Playwright logo').click();
    * ```
    *
    * @param text Text to locate the element for.
@@ -20069,8 +20069,8 @@ export interface FrameLocator {
    * ```
    *
    * ```js
-   * await page.getByLabel('Username').fill('john');
-   * await page.getByLabel('Password').fill('secret');
+   * await frameLocator.getByLabel('Username').fill('john');
+   * await frameLocator.getByLabel('Password').fill('secret');
    * ```
    *
    * @param text Text to locate the element for.
@@ -20098,7 +20098,7 @@ export interface FrameLocator {
    * You can fill the input after locating it by the placeholder text:
    *
    * ```js
-   * await page
+   * await frameLocator
    *     .getByPlaceholder('name@example.com')
    *     .fill('playwright@microsoft.com');
    * ```
@@ -20135,11 +20135,11 @@ export interface FrameLocator {
    * You can locate each element by its implicit role:
    *
    * ```js
-   * await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+   * await expect(frameLocator.getByRole('heading', { name: 'Sign up' })).toBeVisible();
    *
-   * await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+   * await frameLocator.getByRole('checkbox', { name: 'Subscribe' }).check();
    *
-   * await page.getByRole('button', { name: /submit/i }).click();
+   * await frameLocator.getByRole('button', { name: /submit/i }).click();
    * ```
    *
    * **Details**
@@ -20241,7 +20241,7 @@ export interface FrameLocator {
    * You can locate the element by its test id:
    *
    * ```js
-   * await page.getByTestId('directions').click();
+   * await frameLocator.getByTestId('directions').click();
    * ```
    *
    * **Details**
@@ -20284,19 +20284,19 @@ export interface FrameLocator {
    *
    * ```js
    * // Matches <span>
-   * page.getByText('world');
+   * frameLocator.getByText('world');
    *
    * // Matches first <div>
-   * page.getByText('Hello world');
+   * frameLocator.getByText('Hello world');
    *
    * // Matches second <div>
-   * page.getByText('Hello', { exact: true });
+   * frameLocator.getByText('Hello', { exact: true });
    *
    * // Matches both <div>s
-   * page.getByText(/Hello/);
+   * frameLocator.getByText(/Hello/);
    *
    * // Matches second <div>
-   * page.getByText(/^hello$/i);
+   * frameLocator.getByText(/^hello$/i);
    * ```
    *
    * **Details**
@@ -20331,7 +20331,7 @@ export interface FrameLocator {
    * You can check the issues count after locating it by the title text:
    *
    * ```js
-   * await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
+   * await expect(frameLocator.getByTitle('Issues count')).toHaveText('25 issues');
    * ```
    *
    * @param text Text to locate the element for.

@@ -2288,7 +2288,35 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-alt-text-%%
+Allows locating elements by their alt text.
+
+**Usage**
+
+For example, this method will find the image by alt text "Playwright logo":
+
+```html
+<img alt='Playwright logo'>
+```
+
+```js
+await page.getByAltText('Playwright logo').click();
+```
+
+```java
+page.getByAltText("Playwright logo").click();
+```
+
+```python async
+await page.get_by_alt_text("Playwright logo").click()
+```
+
+```python sync
+page.get_by_alt_text("Playwright logo").click()
+```
+
+```csharp
+await page.GetByAltText("Playwright logo").ClickAsync();
+```
 
 ### param: Page.getByAltText.text = %%-locator-get-by-text-text-%%
 
@@ -2298,7 +2326,42 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-label-text-%%
+Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the `aria-label` attribute.
+
+**Usage**
+
+For example, this method will find inputs by label "Username" and "Password" in the following DOM:
+
+```html
+<input aria-label="Username">
+<label for="password-input">Password:</label>
+<input id="password-input">
+```
+
+```js
+await page.getByLabel('Username').fill('john');
+await page.getByLabel('Password').fill('secret');
+```
+
+```java
+page.getByLabel("Username").fill("john");
+page.getByLabel("Password").fill("secret");
+```
+
+```python async
+await page.get_by_label("Username").fill("john")
+await page.get_by_label("Password").fill("secret")
+```
+
+```python sync
+page.get_by_label("Username").fill("john")
+page.get_by_label("Password").fill("secret")
+```
+
+```csharp
+await page.GetByLabel("Username").FillAsync("john");
+await page.GetByLabel("Password").FillAsync("secret");
+```
 
 ### param: Page.getByLabel.text = %%-locator-get-by-text-text-%%
 
@@ -2308,7 +2371,41 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-placeholder-text-%%
+Allows locating input elements by the placeholder text.
+
+**Usage**
+
+For example, consider the following DOM structure.
+
+```html
+<input type="email" placeholder="name@example.com" />
+```
+
+You can fill the input after locating it by the placeholder text:
+
+```js
+await page
+    .getByPlaceholder('name@example.com')
+    .fill('playwright@microsoft.com');
+```
+
+```java
+page.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
+```
+
+```python async
+await page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```python sync
+page.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```csharp
+await page
+    .GetByPlaceholder("name@example.com")
+    .FillAsync("playwright@microsoft.com");
+```
 
 ### param: Page.getByPlaceholder.text = %%-locator-get-by-text-text-%%
 
@@ -2318,7 +2415,84 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-role-%%
+Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<h3>Sign up</h3>
+<label>
+  <input type="checkbox" /> Subscribe
+</label>
+<br/>
+<button>Submit</button>
+```
+
+You can locate each element by its implicit role:
+
+```js
+await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+
+await page.getByRole('checkbox', { name: 'Subscribe' }).check();
+
+await page.getByRole('button', { name: /submit/i }).click();
+```
+
+```python async
+await expect(page.get_by_role("heading", name="Sign up")).to_be_visible()
+
+await page.get_by_role("checkbox", name="Subscribe").check()
+
+await page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+```
+
+```python sync
+expect(page.get_by_role("heading", name="Sign up")).to_be_visible()
+
+page.get_by_role("checkbox", name="Subscribe").check()
+
+page.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+```
+
+```java
+assertThat(page
+    .getByRole(AriaRole.HEADING,
+               new Page.GetByRoleOptions().setName("Sign up")))
+    .isVisible();
+
+page.getByRole(AriaRole.CHECKBOX,
+               new Page.GetByRoleOptions().setName("Subscribe"))
+    .check();
+
+page.getByRole(AriaRole.BUTTON,
+               new Page.GetByRoleOptions().setName(
+                   Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
+    .click();
+```
+
+```csharp
+await Expect(page
+    .GetByRole(AriaRole.Heading, new() { Name = "Sign up" }))
+    .ToBeVisibleAsync();
+
+await page
+    .GetByRole(AriaRole.Checkbox, new() { Name = "Subscribe" })
+    .CheckAsync();
+
+await page
+    .GetByRole(AriaRole.Button, new() {
+        NameRegex = new Regex("submit", RegexOptions.IgnoreCase)
+    })
+    .ClickAsync();
+```
+
+**Details**
+
+Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
 
 ### param: Page.getByRole.role = %%-get-by-role-to-have-role-role-%%
 * since: v1.27
@@ -2332,7 +2506,52 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-test-id-%%
+Locate element by the test id.
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<button data-testid="directions">Itinéraire</button>
+```
+
+You can locate the element by its test id:
+
+```js
+await page.getByTestId('directions').click();
+```
+
+```java
+page.getByTestId("directions").click();
+```
+
+```python async
+await page.get_by_test_id("directions").click()
+```
+
+```python sync
+page.get_by_test_id("directions").click()
+```
+
+```csharp
+await page.GetByTestId("directions").ClickAsync();
+```
+
+**Details**
+
+By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
+
+```js
+// Set custom test id attribute from @playwright/test config:
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    testIdAttribute: 'data-pw'
+  },
+});
+```
 
 ### param: Page.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
@@ -2341,7 +2560,112 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-text-%%
+Allows locating elements that contain given text.
+
+See also [`method: Locator.filter`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
+
+
+**Usage**
+
+Consider the following DOM structure:
+
+```html
+<div>Hello <span>world</span></div>
+<div>Hello</div>
+```
+
+You can locate by text substring, exact string, or a regular expression:
+
+```js
+// Matches <span>
+page.getByText('world');
+
+// Matches first <div>
+page.getByText('Hello world');
+
+// Matches second <div>
+page.getByText('Hello', { exact: true });
+
+// Matches both <div>s
+page.getByText(/Hello/);
+
+// Matches second <div>
+page.getByText(/^hello$/i);
+```
+
+```python async
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```python sync
+# Matches <span>
+page.get_by_text("world")
+
+# Matches first <div>
+page.get_by_text("Hello world")
+
+# Matches second <div>
+page.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+page.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+page.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```java
+// Matches <span>
+page.getByText("world");
+
+// Matches first <div>
+page.getByText("Hello world");
+
+// Matches second <div>
+page.getByText("Hello", new Page.GetByTextOptions().setExact(true));
+
+// Matches both <div>s
+page.getByText(Pattern.compile("Hello"));
+
+// Matches second <div>
+page.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE));
+```
+
+```csharp
+// Matches <span>
+page.GetByText("world");
+
+// Matches first <div>
+page.GetByText("Hello world");
+
+// Matches second <div>
+page.GetByText("Hello", new() { Exact = true });
+
+// Matches both <div>s
+page.GetByText(new Regex("Hello"));
+
+// Matches second <div>
+page.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase));
+```
+
+**Details**
+
+Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+
+Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
 
 ### param: Page.getByText.text = %%-locator-get-by-text-text-%%
 
@@ -2351,7 +2675,37 @@ Attribute name to get the value for.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-title-%%
+Allows locating elements by their title attribute.
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<span title='Issues count'>25 issues</span>
+```
+
+You can check the issues count after locating it by the title text:
+
+```js
+await expect(page.getByTitle('Issues count')).toHaveText('25 issues');
+```
+
+```java
+assertThat(page.getByTitle("Issues count")).hasText("25 issues");
+```
+
+```python async
+await expect(page.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```python sync
+expect(page.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```csharp
+await Expect(Page.GetByTitle("Issues count")).toHaveText("25 issues");
+```
 
 ### param: Page.getByTitle.text = %%-locator-get-by-text-text-%%
 

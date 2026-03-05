@@ -37,7 +37,7 @@ Frame locators are strict. This means that all operations on frame locators will
 await page.locator('.result-frame').contentFrame().getByRole('button').click();
 
 // Works because we explicitly tell locator to pick the first frame:
-await page.locator('.result-frame').contentFrame().first().getByRole('button').click();
+await page.locator('.result-frame').first().contentFrame().getByRole('button').click();
 ```
 
 ```python async
@@ -102,7 +102,35 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-alt-text-%%
+Allows locating elements by their alt text.
+
+**Usage**
+
+For example, this method will find the image by alt text "Playwright logo":
+
+```html
+<img alt='Playwright logo'>
+```
+
+```js
+await frameLocator.getByAltText('Playwright logo').click();
+```
+
+```java
+frameLocator.getByAltText("Playwright logo").click();
+```
+
+```python async
+await frame_locator.get_by_alt_text("Playwright logo").click()
+```
+
+```python sync
+frame_locator.get_by_alt_text("Playwright logo").click()
+```
+
+```csharp
+await frameLocator.GetByAltText("Playwright logo").ClickAsync();
+```
 
 ### param: FrameLocator.getByAltText.text = %%-locator-get-by-text-text-%%
 
@@ -112,7 +140,42 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-label-text-%%
+Allows locating input elements by the text of the associated `<label>` or `aria-labelledby` element, or by the `aria-label` attribute.
+
+**Usage**
+
+For example, this method will find inputs by label "Username" and "Password" in the following DOM:
+
+```html
+<input aria-label="Username">
+<label for="password-input">Password:</label>
+<input id="password-input">
+```
+
+```js
+await frameLocator.getByLabel('Username').fill('john');
+await frameLocator.getByLabel('Password').fill('secret');
+```
+
+```java
+frameLocator.getByLabel("Username").fill("john");
+frameLocator.getByLabel("Password").fill("secret");
+```
+
+```python async
+await frame_locator.get_by_label("Username").fill("john")
+await frame_locator.get_by_label("Password").fill("secret")
+```
+
+```python sync
+frame_locator.get_by_label("Username").fill("john")
+frame_locator.get_by_label("Password").fill("secret")
+```
+
+```csharp
+await frameLocator.GetByLabel("Username").FillAsync("john");
+await frameLocator.GetByLabel("Password").FillAsync("secret");
+```
 
 ### param: FrameLocator.getByLabel.text = %%-locator-get-by-text-text-%%
 
@@ -122,7 +185,41 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-placeholder-text-%%
+Allows locating input elements by the placeholder text.
+
+**Usage**
+
+For example, consider the following DOM structure.
+
+```html
+<input type="email" placeholder="name@example.com" />
+```
+
+You can fill the input after locating it by the placeholder text:
+
+```js
+await frameLocator
+    .getByPlaceholder('name@example.com')
+    .fill('playwright@microsoft.com');
+```
+
+```java
+frameLocator.getByPlaceholder("name@example.com").fill("playwright@microsoft.com");
+```
+
+```python async
+await frame_locator.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```python sync
+frame_locator.get_by_placeholder("name@example.com").fill("playwright@microsoft.com")
+```
+
+```csharp
+await frameLocator
+    .GetByPlaceholder("name@example.com")
+    .FillAsync("playwright@microsoft.com");
+```
 
 ### param: FrameLocator.getByPlaceholder.text = %%-locator-get-by-text-text-%%
 
@@ -132,7 +229,84 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-role-%%
+Allows locating elements by their [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles), [ARIA attributes](https://www.w3.org/TR/wai-aria-1.2/#aria-attributes) and [accessible name](https://w3c.github.io/accname/#dfn-accessible-name).
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<h3>Sign up</h3>
+<label>
+  <input type="checkbox" /> Subscribe
+</label>
+<br/>
+<button>Submit</button>
+```
+
+You can locate each element by its implicit role:
+
+```js
+await expect(frameLocator.getByRole('heading', { name: 'Sign up' })).toBeVisible();
+
+await frameLocator.getByRole('checkbox', { name: 'Subscribe' }).check();
+
+await frameLocator.getByRole('button', { name: /submit/i }).click();
+```
+
+```python async
+await expect(frame_locator.get_by_role("heading", name="Sign up")).to_be_visible()
+
+await frame_locator.get_by_role("checkbox", name="Subscribe").check()
+
+await frame_locator.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+```
+
+```python sync
+expect(frame_locator.get_by_role("heading", name="Sign up")).to_be_visible()
+
+frame_locator.get_by_role("checkbox", name="Subscribe").check()
+
+frame_locator.get_by_role("button", name=re.compile("submit", re.IGNORECASE)).click()
+```
+
+```java
+assertThat(frameLocator
+    .getByRole(AriaRole.HEADING,
+               new FrameLocator.GetByRoleOptions().setName("Sign up")))
+    .isVisible();
+
+frameLocator.getByRole(AriaRole.CHECKBOX,
+               new FrameLocator.GetByRoleOptions().setName("Subscribe"))
+    .check();
+
+frameLocator.getByRole(AriaRole.BUTTON,
+               new FrameLocator.GetByRoleOptions().setName(
+                   Pattern.compile("submit", Pattern.CASE_INSENSITIVE)))
+    .click();
+```
+
+```csharp
+await Expect(frameLocator
+    .GetByRole(AriaRole.Heading, new() { Name = "Sign up" }))
+    .ToBeVisibleAsync();
+
+await frameLocator
+    .GetByRole(AriaRole.Checkbox, new() { Name = "Subscribe" })
+    .CheckAsync();
+
+await frameLocator
+    .GetByRole(AriaRole.Button, new() {
+        NameRegex = new Regex("submit", RegexOptions.IgnoreCase)
+    })
+    .ClickAsync();
+```
+
+**Details**
+
+Role selector **does not replace** accessibility audits and conformance tests, but rather gives early feedback about the ARIA guidelines.
+
+Many html elements have an implicitly [defined role](https://w3c.github.io/html-aam/#html-element-role-mappings) that is recognized by the role selector. You can find all the [supported roles here](https://www.w3.org/TR/wai-aria-1.2/#role_definitions). ARIA guidelines **do not recommend** duplicating implicit roles and attributes by setting `role` and/or `aria-*` attributes to default values.
 
 ### param: FrameLocator.getByRole.role = %%-get-by-role-to-have-role-role-%%
 * since: v1.27
@@ -146,7 +320,52 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-test-id-%%
+Locate element by the test id.
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<button data-testid="directions">Itinéraire</button>
+```
+
+You can locate the element by its test id:
+
+```js
+await frameLocator.getByTestId('directions').click();
+```
+
+```java
+frameLocator.getByTestId("directions").click();
+```
+
+```python async
+await frame_locator.get_by_test_id("directions").click()
+```
+
+```python sync
+frame_locator.get_by_test_id("directions").click()
+```
+
+```csharp
+await frameLocator.GetByTestId("directions").ClickAsync();
+```
+
+**Details**
+
+By default, the `data-testid` attribute is used as a test id. Use [`method: Selectors.setTestIdAttribute`] to configure a different test id attribute if necessary.
+
+```js
+// Set custom test id attribute from @playwright/test config:
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    testIdAttribute: 'data-pw'
+  },
+});
+```
 
 ### param: FrameLocator.getByTestId.testId = %%-locator-get-by-test-id-test-id-%%
 * since: v1.27
@@ -155,7 +374,112 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-text-%%
+Allows locating elements that contain given text.
+
+See also [`method: Locator.filter`] that allows to match by another criteria, like an accessible role, and then filter by the text content.
+
+
+**Usage**
+
+Consider the following DOM structure:
+
+```html
+<div>Hello <span>world</span></div>
+<div>Hello</div>
+```
+
+You can locate by text substring, exact string, or a regular expression:
+
+```js
+// Matches <span>
+frameLocator.getByText('world');
+
+// Matches first <div>
+frameLocator.getByText('Hello world');
+
+// Matches second <div>
+frameLocator.getByText('Hello', { exact: true });
+
+// Matches both <div>s
+frameLocator.getByText(/Hello/);
+
+// Matches second <div>
+frameLocator.getByText(/^hello$/i);
+```
+
+```python async
+# Matches <span>
+frame_locator.get_by_text("world")
+
+# Matches first <div>
+frame_locator.get_by_text("Hello world")
+
+# Matches second <div>
+frame_locator.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+frame_locator.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+frame_locator.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```python sync
+# Matches <span>
+frame_locator.get_by_text("world")
+
+# Matches first <div>
+frame_locator.get_by_text("Hello world")
+
+# Matches second <div>
+frame_locator.get_by_text("Hello", exact=True)
+
+# Matches both <div>s
+frame_locator.get_by_text(re.compile("Hello"))
+
+# Matches second <div>
+frame_locator.get_by_text(re.compile("^hello$", re.IGNORECASE))
+```
+
+```java
+// Matches <span>
+frameLocator.getByText("world");
+
+// Matches first <div>
+frameLocator.getByText("Hello world");
+
+// Matches second <div>
+frameLocator.getByText("Hello", new FrameLocator.GetByTextOptions().setExact(true));
+
+// Matches both <div>s
+frameLocator.getByText(Pattern.compile("Hello"));
+
+// Matches second <div>
+frameLocator.getByText(Pattern.compile("^hello$", Pattern.CASE_INSENSITIVE));
+```
+
+```csharp
+// Matches <span>
+frameLocator.GetByText("world");
+
+// Matches first <div>
+frameLocator.GetByText("Hello world");
+
+// Matches second <div>
+frameLocator.GetByText("Hello", new() { Exact = true });
+
+// Matches both <div>s
+frameLocator.GetByText(new Regex("Hello"));
+
+// Matches second <div>
+frameLocator.GetByText(new Regex("^hello$", RegexOptions.IgnoreCase));
+```
+
+**Details**
+
+Matching by text always normalizes whitespace, even with exact match. For example, it turns multiple spaces into one, turns line breaks into spaces and ignores leading and trailing whitespace.
+
+Input elements of the type `button` and `submit` are matched by their `value` instead of the text content. For example, locating by text `"Log in"` matches `<input type=button value="Log in">`.
 
 ### param: FrameLocator.getByText.text = %%-locator-get-by-text-text-%%
 
@@ -165,7 +489,37 @@ in that iframe.
 * since: v1.27
 - returns: <[Locator]>
 
-%%-template-locator-get-by-title-%%
+Allows locating elements by their title attribute.
+
+**Usage**
+
+Consider the following DOM structure.
+
+```html
+<span title='Issues count'>25 issues</span>
+```
+
+You can check the issues count after locating it by the title text:
+
+```js
+await expect(frameLocator.getByTitle('Issues count')).toHaveText('25 issues');
+```
+
+```java
+assertThat(frameLocator.getByTitle("Issues count")).hasText("25 issues");
+```
+
+```python async
+await expect(frame_locator.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```python sync
+expect(frame_locator.get_by_title("Issues count")).to_have_text("25 issues")
+```
+
+```csharp
+await Expect(frameLocator.GetByTitle("Issues count")).toHaveText("25 issues");
+```
 
 ### param: FrameLocator.getByTitle.text = %%-locator-get-by-text-text-%%
 
