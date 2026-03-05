@@ -104,9 +104,9 @@ with sync_playwright() as playwright:
 ## Testing extension reload
 
 When an extension reloads (via `chrome.runtime.reload()`, the Extensions page, or any other trigger),
-its service worker is replaced by a new one. To observe the new service worker you must register the
-`'serviceworker'` listener **before** triggering the reload — otherwise the event fires before your
-code starts listening and is missed.
+its service worker is replaced by a new one. A new `'serviceworker'` event is emitted and the old
+[Worker] reference is closed. To capture the new worker, register the listener **before** triggering
+the reload — otherwise the event fires before your code starts listening and is missed.
 
 ```js
 const swPromise = context.waitForEvent('serviceworker');
@@ -126,8 +126,44 @@ with context.expect_event('serviceworker') as worker_info:
 new_service_worker = worker_info.value
 ```
 
-After the event resolves, `context.serviceWorkers()` contains only the new worker and the old
-[Worker] reference is closed.
+## Service worker idle suspension (MV3)
+
+Chrome MV3 service workers are automatically suspended after ~30 seconds of inactivity and restarted
+on demand. When this happens, Playwright keeps the **same [Worker] object alive** — no new
+`'serviceworker'` event is emitted. New `evaluate()` calls issued during the restart window are
+stalled until the new context is ready and then resume automatically:
+
+```js
+const sw = await context.waitForEvent('serviceworker');
+
+// ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+// The existing handle is transparent across the restart.
+await sw.evaluate(() => sendMessage({ type: 'ping' })); // just works
+```
+
+```python async
+sw = await context.wait_for_event('serviceworker')
+
+# ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+# The existing handle is transparent across the restart.
+await sw.evaluate("sendMessage({ type: 'ping' })")  # just works
+```
+
+```python sync
+sw = context.wait_for_event('serviceworker')
+
+# ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+# The existing handle is transparent across the restart.
+sw.evaluate("sendMessage({ type: 'ping' })")  # just works
+```
+
+:::note
+`evaluate()` calls that were already in-flight at the exact moment of suspension will throw
+with `"Service worker restarted"`, matching the behaviour of page navigations mid-flight.
+:::
 
 ## Testing
 

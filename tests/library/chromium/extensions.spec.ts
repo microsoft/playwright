@@ -42,11 +42,8 @@ it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support
 it.describe('MV3', () => {
   it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
 
-  // After a CDP stop+start cycle, Playwright should emit a new 'serviceworker'
-  // event with a fresh execution context. Chrome reuses the same CDP target ID
-  // on restart, so this exercises the restart detection in CRServiceWorker.
   it('should support service worker stop and restart lifecycle', {
-    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27015' }
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39475' }
   }, async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-sw-lifecycle');
     const context = await launchPersistentContext(extensionPath);
@@ -55,8 +52,7 @@ it.describe('MV3', () => {
     const sw1 = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
     const startTime1 = await sw1.evaluate(() => (globalThis as any).startTime);
 
-    // ServiceWorker.stopWorker keeps the same CDP target alive (no Target.attachedToTarget
-    // on restart), matching Chrome's natural idle suspension behavior.
+    // stopWorker keeps the same CDP target alive, matching Chrome's natural idle suspension behavior.
     const page = await context.newPage();
     const cdp = await context.newCDPSession(page);
 
@@ -76,17 +72,27 @@ it.describe('MV3', () => {
     await cdp.send('ServiceWorker.enable');
     await expect.poll(() => versionId && scopeURL, { timeout: 5000 }).toBeTruthy();
 
-    // Register the listener BEFORE triggering stop/start to avoid a race.
-    const sw2Promise = context.waitForEvent('serviceworker', { timeout: 10000 });
     await cdp.send('ServiceWorker.stopWorker', { versionId });
+    // Wait for full stop so Chrome fires executionContextsCleared before the new context arrives.
+    await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('stopped');
     await cdp.send('ServiceWorker.startWorker', { scopeURL });
     await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('running');
 
-    const sw2 = await sw2Promise;
-    const startTime2 = await sw2.evaluate(() => (globalThis as any).startTime);
+    // ServiceWorker.workerVersionUpdated and Runtime.executionContextCreated are on independent CDP
+    // domains, so 'running' status may be observed before _handleRestart() has run. evaluate() may
+    // therefore throw transiently; poll retries until the new context is ready.
+    let startTime2!: number;
+    await expect.poll(async () => {
+      try {
+        startTime2 = await sw1.evaluate(() => (globalThis as any).startTime);
+      } catch {
+        return startTime1; // transient restart error — returning startTime1 triggers retry
+      }
+      return startTime2;
+    }, { timeout: 10_000 }).not.toBe(startTime1);
+
     expect(startTime2).toBeGreaterThan(startTime1);
-    expect(context.serviceWorkers()).toContain(sw2);
-    expect(context.serviceWorkers()).not.toContain(sw1);
+    expect(context.serviceWorkers()).toStrictEqual([sw1]); // same object, no new event
 
     await context.close();
   });

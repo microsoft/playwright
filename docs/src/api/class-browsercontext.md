@@ -292,9 +292,10 @@ from a particular page, use [`event: Page.response`].
 Service workers are only supported on Chromium-based browsers.
 :::
 
-Emitted when new service worker is created in the context. This includes the initial service worker
-for an extension and any replacement worker created after an extension reload. To capture a worker
-created by a reload, register the listener **before** triggering the reload:
+Emitted when a new service worker is created in the context. This covers the initial service worker
+for an extension and any replacement worker created after an explicit extension reload
+(`chrome.runtime.reload()` or via the Extensions page). To capture a worker created by a reload,
+register the listener **before** triggering the reload:
 
 ```js
 const swPromise = context.waitForEvent('serviceworker');
@@ -312,6 +313,29 @@ new_service_worker = await worker_info.value
 with context.expect_event('serviceworker') as worker_info:
     trigger_extension_reload()
 new_service_worker = worker_info.value
+```
+
+**Service worker idle suspension (MV3):** When a service worker is suspended and restarted by Chrome after
+inactivity (~30 s), the same [Worker] object remains valid — no new event is emitted. New
+`evaluate()` calls issued during the restart window are stalled until the new context is ready;
+calls already in-flight at the moment of restart will throw.
+
+```js
+const sw = await context.waitForEvent('serviceworker');
+// The same handle stays valid across idle suspension and restart.
+await sw.evaluate(() => sendMessage({ type: 'ping' })); // just works
+```
+
+```python async
+sw = await context.wait_for_event('serviceworker')
+# The same handle stays valid across idle suspension and restart.
+await sw.evaluate("sendMessage({ type: 'ping' })")  # just works
+```
+
+```python sync
+sw = context.wait_for_event('serviceworker')
+# The same handle stays valid across idle suspension and restart.
+sw.evaluate("sendMessage({ type: 'ping' })")  # just works
 ```
 
 ## async method: BrowserContext.addCookies

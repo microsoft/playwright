@@ -31,6 +31,7 @@ export class CRServiceWorker extends Worker {
   private _session: CRSession;
   private readonly _targetId: string;
   private _currentContextId: number | undefined;
+  private _currentContextUniqueId: string | undefined;
   private _currentContextDestroyed = false;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string, targetId: string) {
@@ -41,31 +42,30 @@ export class CRServiceWorker extends Worker {
     if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
 
-    // Track execution context destruction so we can detect service worker
-    // restarts. Chrome reuses the same target ID and may reuse context ID=1
-    // in the fresh V8 isolate.
     session.on('Runtime.executionContextDestroyed', (event: Protocol.Runtime.executionContextDestroyedPayload) => {
       if (event.executionContextId === this._currentContextId)
         this._currentContextDestroyed = true;
     });
     session.on('Runtime.executionContextsCleared', () => {
-      if (this._currentContextId !== undefined)
+      if (this._currentContextId !== undefined) {
         this._currentContextDestroyed = true;
+        this._currentContextUniqueId = undefined;
+      }
     });
 
     const onExecutionContextCreated = (event: Protocol.Runtime.executionContextCreatedPayload) => {
-      // Ignore duplicate notifications for the same live context (e.g. from Runtime.enable).
-      if (!this._currentContextDestroyed && event.context.id === this._currentContextId)
+      // Ignore duplicate notifications (e.g. buffered by Runtime.enable); use uniqueId since Chrome reuses the numeric id across restarts.
+      if (!this._currentContextDestroyed && event.context.uniqueId === this._currentContextUniqueId)
         return;
 
-      // A new context arriving after we already have one means the SW restarted.
+      // SW restarted — same target, new V8 context.
       if (this.existingExecutionContext !== null || this._currentContextDestroyed) {
-        session.off('Runtime.executionContextCreated', onExecutionContextCreated);
         this._handleRestart(event);
         return;
       }
 
       this._currentContextId = event.context.id;
+      this._currentContextUniqueId = event.context.uniqueId;
       this.createExecutionContext(new CRExecutionContext(session, event.context));
     };
     session.on('Runtime.executionContextCreated', onExecutionContextCreated);
@@ -99,22 +99,17 @@ export class CRServiceWorker extends Worker {
   }
 
   private _handleRestart(contextEvent: Protocol.Runtime.executionContextCreatedPayload) {
-    const browser = this.browserContext._browser;
-    browser._serviceWorkers.delete(this._targetId);
+    this._prepareContextForRestart();
 
-    // Close this Worker WITHOUT disposing the session — the new worker reuses it.
-    this._networkManager?.removeSession(this._session);
-    if (this.existingExecutionContext)
-      this.existingExecutionContext.contextDestroyed('Service worker restarted');
-    this.existingExecutionContext = null;
-    this.emit(Worker.Events.Close, this);
-    this.openScope.close(new Error('Service worker restarted'));
+    this._currentContextId = contextEvent.context.id;
+    this._currentContextUniqueId = contextEvent.context.uniqueId;
+    this._currentContextDestroyed = false;
 
-    const newWorker = new CRServiceWorker(this.browserContext, this._session, this.url, this._targetId);
-    newWorker._currentContextId = contextEvent.context.id;
-    browser._serviceWorkers.set(this._targetId, newWorker);
-    this.browserContext.emit('serviceworker' as any, newWorker);
-    newWorker.createExecutionContext(new CRExecutionContext(this._session, contextEvent.context));
+    this.createExecutionContext(new CRExecutionContext(this._session, contextEvent.context));
+
+    // Chrome < 143 has no Inspector.workerScriptLoaded; resolve immediately to unblock evaluations.
+    if (this.browserContext._browser.majorVersion() < 143)
+      this.workerScriptLoaded();
   }
 
   override didClose() {

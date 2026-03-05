@@ -917,6 +917,16 @@ export class Worker extends SdkObject<WorkerEventMap> {
       this._executionContextPromise.resolve(this.existingExecutionContext);
   }
 
+  protected _prepareContextForRestart() {
+    if (this.existingExecutionContext)
+      this.existingExecutionContext.contextDestroyed('Service worker restarted');
+    this.existingExecutionContext = null;
+    // Reset so createExecutionContext() waits for workerScriptLoaded() before resolving —
+    // mirroring initial startup and ensuring the script has run before evaluations proceed.
+    this._workerScriptLoaded = false;
+    this._executionContextPromise = new ManualPromise<js.ExecutionContext>();
+  }
+
   didClose() {
     if (this.existingExecutionContext)
       this.existingExecutionContext.contextDestroyed('Worker was closed');
