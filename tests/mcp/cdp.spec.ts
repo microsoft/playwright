@@ -110,3 +110,29 @@ test('cdp server with headers', async ({ startClient, server }) => {
   });
   expect(authHeader).toBe('Bearer 1234567890');
 });
+
+test('cdp server with empty and complex headers', async ({ startClient, server }) => {
+  let customHeader = '';
+  let emptyHeader = '';
+  server.setRoute('/json/version/', (req, res) => {
+    customHeader = req.headers['x-forwarded-proto'] as string;
+    emptyHeader = req.headers['x-empty'] as string;
+    res.end();
+  });
+
+  const { client } = await startClient({
+    args: [
+      `--cdp-endpoint=${server.PREFIX}`,
+      '--cdp-header', 'X-Forwarded-Proto: value:with:colons',
+      '--cdp-header', 'X-Empty'
+    ]
+  });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    isError: true,
+  });
+  expect(customHeader).toBe('value:with:colons');
+  expect(emptyHeader).toBe('');
+});
