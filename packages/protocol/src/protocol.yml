@@ -2086,7 +2086,7 @@ Page:
       title: Start screencast
       group: configuration
       parameters:
-        size:
+        maxSize:
           type: object?
           properties:
             width: int
@@ -2202,8 +2202,6 @@ Page:
     screencastFrame:
       parameters:
         data: binary
-        width: int
-        height: int
 
     webSocketRoute:
       parameters:

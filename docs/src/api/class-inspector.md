@@ -28,8 +28,6 @@ console.log(locator);
 * since: v1.59
 - argument: <[Object]>
   - `data` <[Buffer]> JPEG-encoded frame data.
-  - `width` <[int]> Frame width in pixels.
-  - `height` <[int]> Frame height in pixels.
 
 Emitted for each captured JPEG screencast frame while the screencast is running.
 
@@ -41,7 +39,7 @@ inspector.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
   require('fs').writeFileSync('frame.jpg', data);
 });
-await inspector.startScreencast({ size: { width: 1280, height: 720 } });
+await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
 // ... perform actions ...
 await inspector.stopScreencast();
 ```
@@ -58,18 +56,18 @@ const inspector = page.inspector();
 inspector.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, size: ${data.length}`);
 });
-await inspector.startScreencast({ size: { width: 800, height: 600 } });
+await inspector.startScreencast({ maxSize: { width: 800, height: 600 } });
 // ... perform actions ...
 await inspector.stopScreencast();
 ```
 
-### option: Inspector.startScreencast.size
+### option: Inspector.startScreencast.maxSize
 * since: v1.59
-- `size` ?<[Object]>
-  - `width` <[int]> Frame width in pixels.
-  - `height` <[int]> Frame height in pixels.
+- `maxSize` ?<[Object]>
+  - `width` <[int]> Max frame width in pixels.
+  - `height` <[int]> Max frame height in pixels.
 
-Optional dimensions for the screencast frames. If not specified, the current page viewport size is used.
+Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to 800×800.
 
 ## async method: Inspector.stopScreencast
 * since: v1.59

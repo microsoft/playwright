@@ -2198,8 +2198,6 @@ export type PageRouteEvent = {
 };
 export type PageScreencastFrameEvent = {
   data: Binary,
-  width: number,
-  height: number,
 };
 export type PageWebSocketRouteEvent = {
   webSocketRoute: WebSocketRouteChannel,
@@ -2682,13 +2680,13 @@ export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
 export type PageStartScreencastParams = {
-  size?: {
+  maxSize?: {
     width: number,
     height: number,
   },
 };
 export type PageStartScreencastOptions = {
-  size?: {
+  maxSize?: {
     width: number,
     height: number,
   },

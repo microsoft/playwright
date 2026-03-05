@@ -1,0 +1,10 @@
+{
+  "browser": {
+    "userDataDir": "/tmp/extension-user-data-dir",
+    "browserName": "chromium",
+    "launchOptions": {
+      "channel": "chrome-beta",
+      "headless": false
+    }
+  }
+}

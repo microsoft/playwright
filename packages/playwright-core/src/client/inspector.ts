@@ -26,7 +26,7 @@ export class Inspector extends EventEmitter implements api.Inspector {
   constructor(page: Page) {
     super(page._platform);
     this._page = page;
-    this._page._channel.on('screencastFrame', ({ data, width, height }) => this.emit('screencastframe', { data, width, height }));
+    this._page._channel.on('screencastFrame', ({ data }) => this.emit('screencastframe', { data }));
   }
 
   async pickLocator(): Promise<Locator> {
@@ -38,7 +38,7 @@ export class Inspector extends EventEmitter implements api.Inspector {
     await this._page._channel.cancelPickLocator({});
   }
 
-  async startScreencast(options: { size?: { width: number, height: number } } = {}): Promise<void> {
+  async startScreencast(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
     await this._page._channel.startScreencast(options);
   }
 
