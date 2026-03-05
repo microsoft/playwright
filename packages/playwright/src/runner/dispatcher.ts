@@ -71,7 +71,7 @@ export class Dispatcher {
       const projectIdWorkerLimit = this._workerLimitPerProjectId.get(job.projectId);
       if (!projectIdWorkerLimit)
         return index;
-      const runningWorkersWithSameProjectId = this._workerSlots.filter(w => w.busy && w.worker && w.worker.projectId() === job.projectId).length;
+      const runningWorkersWithSameProjectId = this._workerSlots.filter(w => w.busy && (w.jobDispatcher?.job.projectId === job.projectId || w.worker?.projectId() === job.projectId)).length;
       if (runningWorkersWithSameProjectId < projectIdWorkerLimit)
         return index;
     }
