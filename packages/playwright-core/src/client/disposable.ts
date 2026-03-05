@@ -69,6 +69,8 @@ export class DisposableStub implements Disposable {
   }
 }
 
-export function disposeAll(disposables: Disposable[]) {
-  return Promise.all(disposables.map(d => d.dispose()));
+export async function disposeAll(disposables: Disposable[]) {
+  const copy = [...disposables];
+  disposables.length = 0;
+  await Promise.all(copy.map(d => d.dispose()));
 }

@@ -28,11 +28,13 @@ import { LogFile } from './logFile';
 import { ModalState } from './tools/tool';
 import { handleDialog } from './tools/dialogs';
 import { uploadFile } from './tools/files';
-import type { Disposable } from '../../client/disposable';
+import { disposeAll } from '../../client/disposable';
+
 import type { Context } from './context';
 import type { Page } from '../../client/page';
 import type { Locator } from '../../client/locator';
 import type { FullConfig } from './config';
+import type { Disposable } from '../../client/disposable';
 
 const TabEvents = {
   modalState: 'modalState'
@@ -143,9 +145,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   async dispose() {
-    for (const disposable of this._disposables)
-      await disposable.dispose();
-    this._disposables = [];
+    await disposeAll(this._disposables);
     this._consoleLog.stop();
   }
 
