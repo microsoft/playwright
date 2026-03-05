@@ -1,8 +1,13 @@
 [*]
 ../../
 ./sdk/
-./browser/
-./browser/tools/
-./extension/
-../cli/
+../tools/
+../utils/
+../utils/isomorphic/
 ../utilsBundle.ts
+../mcpBundle.ts
+../server/
+../server/registry/
+../server/utils/
+../client/
+../cli/

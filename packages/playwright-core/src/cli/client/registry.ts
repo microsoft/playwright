@@ -19,7 +19,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import type { FullConfig } from '../../mcp/browser/config';
+import type * as playwright from '../../..';
 
 export type ClientInfo = {
   version: string;
@@ -37,7 +37,11 @@ export type SessionConfig = {
     persistent?: boolean;
   };
   workspaceDir?: string;
-  resolvedConfig?: FullConfig;
+  browser: {
+    browserName: string;
+    launchOptions: playwright.LaunchOptions;
+    userDataDir?: string;
+  };
 };
 
 export type SessionFile = {

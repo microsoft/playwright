@@ -18,7 +18,7 @@ import EventEmitter from 'events';
 
 import { z as zod } from 'playwright-core/lib/mcpBundle';
 import * as mcp from 'playwright-core/lib/mcp/exports';
-import { browserTools } from 'playwright-core/lib/mcp/exports';
+import { browserTools } from 'playwright-core/lib/tools/exports';
 
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
@@ -26,7 +26,7 @@ import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
 
 import type { TestTool } from './testTool';
-import type { BrowserTool } from 'playwright-core/lib/mcp/exports';
+import type { BrowserTool } from 'playwright-core/lib/tools/exports';
 
 const typesWithIntent = ['action', 'assertion', 'input'];
 

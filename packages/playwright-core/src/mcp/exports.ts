@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-// SDK
+export { createClientInfo } from '../cli/client/registry';
+export { logUnhandledError } from './log';
+export { setupExitWatchdog } from './watchdog';
+export { startMcpDaemonServer } from '../cli/daemon/daemon';
 export * from './sdk/server';
 export * from './sdk/tool';
-export { browserTools } from './browser/tools';
-export { BrowserServerBackend } from './browser/browserServerBackend';
-export { parseResponse } from './browser/response';
-export { Tab } from './browser/tab';
-export { setupExitWatchdog } from './browser/watchdog';
-export type { Tool as BrowserTool } from './browser/tools/tool';
-export { logUnhandledError } from './log';
-export type { ContextConfig } from './browser/context';
-export type { FullConfig } from './browser/config';
-export { startMcpDaemonServer } from '../cli/daemon/daemon';
-export { createClientInfo } from '../cli/client/registry';
-export { filteredTools } from './browser/tools';
+
+export type { FullConfig } from './config';

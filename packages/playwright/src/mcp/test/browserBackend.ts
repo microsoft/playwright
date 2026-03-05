@@ -17,7 +17,7 @@
 import path from 'path';
 import { createGuid } from 'playwright-core/lib/utils';
 import * as mcp from 'playwright-core/lib/mcp/exports';
-import { BrowserServerBackend } from 'playwright-core/lib/mcp/exports';
+import * as tools from 'playwright-core/lib/tools/exports';
 
 import { stripAnsiEscapes } from '../../util';
 
@@ -40,14 +40,15 @@ export type BrowserMCPResponse = {
 };
 
 export function createCustomMessageHandler(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
-  let backend: BrowserServerBackend | undefined;
+  let backend: tools.BrowserServerBackend | undefined;
+  const config: tools.ContextConfig = { capabilities: ['testing'] };
+  const toolList = tools.filteredTools(config);
+
   return async (data: BrowserMCPRequest): Promise<BrowserMCPResponse> => {
     if (data.initialize) {
       if (backend)
         throw new Error('MCP backend is already initialized');
-      const config: mcp.ContextConfig = { capabilities: ['testing'] };
-      const tools = mcp.filteredTools(config);
-      backend = new BrowserServerBackend(config, context, tools);
+      backend = new tools.BrowserServerBackend(config, context, toolList);
       await backend.initialize(data.initialize.clientInfo);
       const pausedMessage = await generatePausedMessage(testInfo, context);
       return { initialize: { pausedMessage } };
@@ -56,7 +57,7 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
     if (data.listTools) {
       if (!backend)
         throw new Error('MCP backend is not initialized');
-      return { listTools: await backend.listTools() };
+      return { listTools: toolList.map(t => mcp.toMcpTool(t.schema)) };
     }
 
     if (data.callTool) {
@@ -96,7 +97,7 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
         `- Page Title: ${await page.title()}`.trim()
     );
     // Only print console errors when pausing on error, not when everything works as expected.
-    let console = testInfo.errors.length ? await mcp.Tab.collectConsoleMessages(page) : [];
+    let console = testInfo.errors.length ? await tools.Tab.collectConsoleMessages(page) : [];
     console = console.filter(msg => msg.type === 'error');
     if (console.length) {
       lines.push('- Console Messages:');
@@ -125,11 +126,6 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
   const outputDir = path.join(testInfo.artifactsDir(), '.playwright-mcp');
   const sessionName = `test-worker-${createGuid().slice(0, 6)}`;
   await mcp.startMcpDaemonServer(sessionName, context, {
-    browser: {
-      browserName: 'chromium',
-      launchOptions: {},
-      contextOptions: {},
-    },
     outputMode: 'file',
     snapshot: { mode: 'full' },
     outputDir,

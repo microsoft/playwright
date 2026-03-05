@@ -554,8 +554,8 @@ for (const webPackage of ['html-reporter', 'recorder', 'trace-viewer', 'devtools
 // Generate CLI help.
 onChanges.push({
   inputs: [
-    'packages/playwright/src/mcp/terminal/commands.ts',
-    'packages/playwright/src/mcp/terminal/helpGenerator.ts',
+    'packages/playwright-core/src/cli/daemon/commands.ts',
+    'packages/playwright-core/src/cli/daemon/helpGenerator.ts',
     'utils/generate_cli_help.js',
   ],
   script: 'utils/generate_cli_help.js',
@@ -654,7 +654,7 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright-core/src/cli/client/*.{png,ico}',
+  files: 'packages/playwright-core/src/devtools/*.{png,ico}',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
 });

@@ -14,17 +14,17 @@
  * limitations under the License.
  */
 
-import { resolveConfig } from './browser/config';
-import { filteredTools } from './browser/tools';
-import { contextFactory } from './browser/browserContextFactory';
-import { BrowserServerBackend } from './browser/browserServerBackend';
+import { resolveConfig } from './config';
+import { filteredTools } from '../tools/tools';
+import { contextFactory } from './browserContextFactory';
+import { BrowserServerBackend } from '../tools/browserServerBackend';
 import { createServer } from './sdk/server';
 
-import type { BrowserContextFactory } from './browser/browserContextFactory';
+import type { BrowserContextFactory } from './browserContextFactory';
 import type { BrowserContext } from 'playwright';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { ClientInfo, ServerBackendFactory } from './sdk/server';
-import type { Config } from './config';
+import type { Config } from './config.d';
 
 const packageJSON = require('../../package.json');
 

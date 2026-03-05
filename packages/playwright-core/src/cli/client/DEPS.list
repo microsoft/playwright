@@ -13,9 +13,3 @@
 
 [registry.ts]
 "strict"
-
-[devtoolsApp.ts]
-../../../
-../../server/registry/index.ts
-../../server/utils/
-../../utils/
