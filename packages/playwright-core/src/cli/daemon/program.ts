@@ -18,52 +18,52 @@
 
 import fs from 'fs';
 import url from 'url';
+import path from 'path';
 
 import { startMcpDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../../mcp/browser/watchdog';
 import { contextFactory } from '../../mcp/browser/browserContextFactory';
 import { ExtensionContextFactory } from '../../mcp/extension/extensionContextFactory';
-import { configFromCLIOptions, configFromEnv, defaultConfig, loadConfig, mergeConfig, validateConfig } from '../../mcp/browser/config';
+import * as configUtils from '../../mcp/browser/config';
+import { gracefullyProcessExitDoNotHang } from '../../utils';
+import { ClientInfo, createClientInfo } from '../client/registry';
 
 import type { Command } from '../../utilsBundle';
-import type { SessionConfig } from '../client/registry';
 import type { FullConfig } from '../../mcp/browser/config';
 
 export function decorateCLICommand(command: Command, version: string) {
   command
       .version(version)
-      .option('--daemon-session <path>', 'path to the daemon config.')
-      .action(async options => {
-        // normalize the --no-chromium-sandbox option: chromiumSandbox = true => nothing was passed, chromiumSandbox = false => --no-chromium-sandbox was passed.
-        options.chromiumSandbox = options.chromiumSandbox === true ? undefined : false;
+      .argument('[session-name]', 'name of the session to create or connect to', 'default')
+      .option('--headed', 'run in headed mode (non-headless)')
+      .option('--extension', 'run with the extension')
+      .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
+      .option('--persistent', 'use a persistent browser context')
+      .option('--profile <path>', 'path to the user data dir')
+      .option('--config <path>', 'path to the config file')
+
+      .action(async (sessionName: string, options: any) => {
         setupExitWatchdog();
-
-        const sessionConfig = await fs.promises.readFile(options.daemonSession, 'utf-8').then(data => JSON.parse(data) as SessionConfig);
-
-        const cwd = url.pathToFileURL(process.cwd()).href;
-        const clientInfo = {
+        const clientInfo = createClientInfo();
+        const mcpConfig = await resolveCLIConfig(clientInfo, sessionName, options);
+        const mcpClientInfo = {
           name: 'playwright-cli',
-          version: sessionConfig.version,
+          version: require('../../../package.json').version,
           roots: [{
-            uri: cwd,
+            uri: url.pathToFileURL(process.cwd()).href,
             name: 'cwd'
           }],
           timestamp: Date.now(),
         };
 
-        const mcpConfig = await resolveCLIConfig(sessionConfig);
-        const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
-        const browserContextFactory = contextFactory(mcpConfig);
-        const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
-
         try {
-          const browserContext = mcpConfig.browser.isolated ? await cf.createContext(clientInfo) : (await cf.contexts(clientInfo))[0];
-          await startMcpDaemonServer(mcpConfig, sessionConfig, browserContext);
-          console.log(`### Config`);
-          console.log('```json');
-          console.log(JSON.stringify(mcpConfig, null, 2));
-          console.log('```');
-          console.log(`### Success\nDaemon listening on ${sessionConfig.socketPath}`);
+          const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
+          const browserContextFactory = contextFactory(mcpConfig);
+          const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
+          const browserContext = mcpConfig.browser.isolated ? await cf.createContext(mcpClientInfo) : (await cf.contexts(mcpClientInfo))[0];
+          browserContext.on('close', () => gracefullyProcessExitDoNotHang(0));
+          const socketPath = await startMcpDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, options.persistent);
+          console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
         } catch (error) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
@@ -73,23 +73,37 @@ export function decorateCLICommand(command: Command, version: string) {
       });
 }
 
-export async function resolveCLIConfig(sessionConfig: SessionConfig): Promise<FullConfig> {
-  const daemonOverrides = configFromCLIOptions({
-    config: sessionConfig.cli.config,
-    browser: sessionConfig.cli.browser,
-    isolated: sessionConfig.cli.persistent === true ? false : undefined,
-    headless: sessionConfig.cli.headed ? false : undefined,
-    extension: sessionConfig.cli.extension,
-    userDataDir: sessionConfig.cli.profile,
+function defaultConfigFile(): string {
+  return path.resolve('.playwright', 'cli.config.json');
+}
+
+export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {
+  const config = options.config ? path.resolve(options.config) : undefined;
+  try {
+    if (!config && fs.existsSync(defaultConfigFile()))
+      options.config = defaultConfigFile();
+  } catch {
+  }
+
+  if (!options.persistent && options.profile)
+    options.persistent = true;
+
+  const daemonOverrides = configUtils.configFromCLIOptions({
+    config: options.config,
+    browser: options.browser,
+    isolated: options.persistent === true ? false : undefined,
+    headless: options.headed ? false : undefined,
+    extension: options.extension,
+    userDataDir: options.profile,
     outputMode: 'file',
     snapshotMode: 'full',
   });
 
-  const envOverrides = configFromEnv();
+  const envOverrides = configUtils.configFromEnv();
   const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
-  const configInFile = await loadConfig(configFile);
+  const configInFile = await configUtils.loadConfig(configFile);
 
-  let result = mergeConfig(defaultConfig, {
+  let result = configUtils.mergeConfig(configUtils.defaultConfig, {
     browser: {
       launchOptions: {
         headless: true,
@@ -98,14 +112,14 @@ export async function resolveCLIConfig(sessionConfig: SessionConfig): Promise<Fu
     }
   });
 
-  result = mergeConfig(result, configInFile);
-  result = mergeConfig(result, daemonOverrides);
-  result = mergeConfig(result, envOverrides);
+  result = configUtils.mergeConfig(result, configInFile);
+  result = configUtils.mergeConfig(result, daemonOverrides);
+  result = configUtils.mergeConfig(result, envOverrides);
 
-  if (!result.extension && !result.browser.userDataDir && sessionConfig.userDataDirPrefix) {
+  if (!result.extension && !result.browser.userDataDir) {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    const userDataDir = `${sessionConfig.userDataDirPrefix}-${browserToken}`;
+    const userDataDir = path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
     result.browser.userDataDir = userDataDir;
   }
 
@@ -114,7 +128,7 @@ export async function resolveCLIConfig(sessionConfig: SessionConfig): Promise<Fu
   if (result.browser.launchOptions.headless !== false)
     result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
 
-  await validateConfig(result);
+  await configUtils.validateConfig(result);
 
   return result;
 }

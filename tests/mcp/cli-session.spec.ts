@@ -140,16 +140,6 @@ test('session reopen with different config', async ({ cli, server }, testInfo) =
   }
 });
 
-test('session start should print browser config', async ({ cli, server }, testInfo) => {
-  const configPath = testInfo.outputPath('my-config.json');
-  await fs.promises.writeFile(configPath, JSON.stringify({}, null, 2));
-
-  const { output } = await cli('open', '--headed', '--config=' + configPath, server.HELLO_WORLD);
-  expect(output).toContain('### Browser `default` opened');
-  expect(output).toContain('- default:');
-  expect(output).toContain('- headed:');
-});
-
 test('workspace isolation - sessions in different workspaces are isolated', async ({ cli, server }, testInfo) => {
   // Create two separate workspaces with their own daemon dirs
   const workspace1 = testInfo.outputPath('workspace1');

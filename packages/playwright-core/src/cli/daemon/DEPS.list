@@ -2,6 +2,7 @@
 ../../mcp/browser/**
 ../../mcp/extension/**
 ../client/socketConnection.ts
+../client/registry.ts
 ../../utilsBundle.ts
 ../../utils/
 ../../mcpBundle.ts

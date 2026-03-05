@@ -25,7 +25,7 @@ export { setupExitWatchdog } from './browser/watchdog';
 export type { Tool as BrowserTool } from './browser/tools/tool';
 export { logUnhandledError } from './log';
 export type { ContextConfig } from './browser/context';
+export type { FullConfig } from './browser/config';
 export { startMcpDaemonServer } from '../cli/daemon/daemon';
-export { sessionConfigFromArgs } from '../cli/client/program';
 export { createClientInfo } from '../cli/client/registry';
 export { filteredTools } from './browser/tools';
