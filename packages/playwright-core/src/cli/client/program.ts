@@ -23,24 +23,16 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { createClientInfo, Registry } from './registry';
+import { createClientInfo, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 
 import type { Config } from '../../mcp/config';
-import type { SessionConfig, ClientInfo, SessionFile } from './registry';
+import type { ClientInfo, SessionFile } from './registry';
 
 type MinimistArgs = {
   _: string[];
   [key: string]: any;
 };
-
-function resolveSessionName(sessionName?: string): string {
-  if (sessionName)
-    return sessionName;
-  if (process.env.PLAYWRIGHT_CLI_SESSION)
-    return process.env.PLAYWRIGHT_CLI_SESSION;
-  return 'default';
-}
 
 type GlobalOptions = {
   help?: boolean;
@@ -157,24 +149,12 @@ export async function program(options?: { embedderVersion?: string}) {
       const entry = registry.entry(clientInfo, sessionName);
       if (entry)
         await new Session(entry).stop(true);
-      const config = sessionConfigFromArgs(clientInfo, sessionName, args);
-      const sessionFile: SessionFile = {
-        daemonDir: clientInfo.daemonProfilesDir,
-        file: path.join(clientInfo.daemonProfilesDir, `${sessionName}.session`),
-        config,
-      };
-      const session = new Session(sessionFile);
-      // Stale session.
-      if (await session.canConnect())
-        await session.stop(true);
 
-      for (const globalOption of globalOptions)
-        delete args[globalOption];
-      const result = await session.open(args);
-      console.log(result.text);
+      await Session.startDaemon(clientInfo, args);
+      const newEntry = await registry.loadEntry(clientInfo, sessionName);
+      await runInSession(newEntry, clientInfo, args);
       return;
     }
-
     case 'close':
       const closeEntry = registry.entry(clientInfo, sessionName);
       const session = closeEntry ? new Session(closeEntry) : undefined;
@@ -200,21 +180,24 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     default: {
-      const defaultEntry = registry.entry(clientInfo, sessionName);
-      if (!defaultEntry) {
+      const entry = registry.entry(clientInfo, sessionName);
+      if (!entry) {
         console.log(`The browser '${sessionName}' is not open, please run open first`);
         console.log('');
         console.log(`  playwright-cli${sessionName !== 'default' ? ` -s=${sessionName}` : ''} open [params]`);
         process.exit(1);
       }
-
-      for (const globalOption of globalOptions)
-        delete args[globalOption];
-      const session = new Session(defaultEntry);
-      const result = await session.run(clientInfo, args);
-      console.log(result.text);
+      await runInSession(entry, clientInfo, args);
     }
   }
+}
+
+async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: MinimistArgs) {
+  for (const globalOption of globalOptions)
+    delete args[globalOption];
+  const session = new Session(entry);
+  const result = await session.run(clientInfo, args);
+  console.log(result.text);
 }
 
 async function install(args: MinimistArgs) {
@@ -298,46 +281,8 @@ async function findOrInstallDefaultBrowser() {
   return 'chromium';
 }
 
-function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
-  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
-  const socketName = `${sessionName}-${userNameHash}.sock`;
-  if (os.platform() === 'win32')
-    return `\\\\.\\pipe\\${clientInfo.workspaceDirHash}-${socketName}`;
-  const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-  return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
-}
-
 function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
-}
-
-export function sessionConfigFromArgs(clientInfo: ClientInfo, sessionName: string, args: MinimistArgs): SessionConfig {
-  let config = args.config ? path.resolve(args.config) : undefined;
-  try {
-    if (!config && fs.existsSync(defaultConfigFile()))
-      config = defaultConfigFile();
-  } catch {
-  }
-
-  if (!args.persistent && args.profile)
-    args.persistent = true;
-
-  return {
-    name: sessionName,
-    version: clientInfo.version,
-    timestamp: Date.now(),
-    socketPath: daemonSocketPath(clientInfo, sessionName),
-    cli: {
-      headed: args.headed,
-      extension: args.extension,
-      browser: args.browser,
-      persistent: args.persistent,
-      profile: args.profile,
-      config,
-    },
-    userDataDirPrefix: path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}`),
-    workspaceDir: clientInfo.workspaceDir,
-  };
 }
 
 async function killAllDaemons(): Promise<void> {
@@ -349,7 +294,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-session*' } `
+          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-dir*' } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -363,7 +308,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if ((line.includes('-server')) && line.includes('--daemon-session')) {
+        if ((line.includes('-server')) && line.includes('--daemon-dir')) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {

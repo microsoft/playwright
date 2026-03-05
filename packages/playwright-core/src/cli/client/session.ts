@@ -15,7 +15,6 @@
  */
 
 /* eslint-disable no-console */
-/* eslint-disable no-restricted-properties */
 
 import { spawn } from 'child_process';
 
@@ -24,6 +23,7 @@ import net from 'net';
 import os from 'os';
 import path from 'path';
 import { compareSemver, SocketConnection } from './socketConnection';
+import { resolveSessionName } from './registry';
 
 import type { FullConfig } from '../../mcp/browser/config';
 import type { SessionConfig, ClientInfo, SessionFile } from './registry';
@@ -48,11 +48,6 @@ export class Session {
     return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  async open(args: MinimistArgs, cwd?: string): Promise<{ text: string }> {
-    const socket = await this._startDaemon();
-    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: cwd || process.cwd() });
-  }
-
   async run(clientInfo: ClientInfo, args: MinimistArgs, cwd?: string): Promise<{ text: string }> {
     if (!this.isCompatible(clientInfo))
       throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto restart the browser session.`);
@@ -60,7 +55,7 @@ export class Session {
     const { socket } = await this._connect();
     if (!socket)
       throw new Error(`Browser '${this.name}' is not open. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto start the browser session.`);
-    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: cwd || process.cwd() });
+    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd() });
   }
 
   async stop(quiet: boolean = false): Promise<void> {
@@ -129,19 +124,32 @@ export class Session {
     return false;
   }
 
-  private async _startDaemon(): Promise<net.Socket> {
-    await fs.promises.mkdir(this._sessionFile.daemonDir, { recursive: true });
-    const cliPath = path.join(__dirname, '../../../cli.js');
-    await fs.promises.writeFile(this._sessionFile.file, JSON.stringify(this.config, null, 2));
+  static async startDaemon(clientInfo: ClientInfo, cliArgs: MinimistArgs) {
+    await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
 
-    const errLog = this._sessionFile.file.replace(/\.session$/, '.err');
+    const cliPath = path.join(__dirname, '../../../cli.js');
+
+    const sessionName = resolveSessionName(cliArgs.session);
+    const errLog = path.join(clientInfo.daemonProfilesDir, sessionName + '.err');
     const err = fs.openSync(errLog, 'w');
 
     const args = [
       cliPath,
       'run-cli-server',
-      `--daemon-session=${this._sessionFile.file}`,
+      sessionName,
     ];
+    if (cliArgs.headed)
+      args.push('--headed');
+    if (cliArgs.extension)
+      args.push('--extension');
+    if (cliArgs.browser)
+      args.push(`--browser=${cliArgs.browser}`);
+    if (cliArgs.persistent)
+      args.push('--persistent');
+    if (cliArgs.profile)
+      args.push(`--profile=${cliArgs.profile}`);
+    if (cliArgs.config)
+      args.push(`--config=${cliArgs.config}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
@@ -190,24 +198,7 @@ export class Session {
     child.stdout!.destroy();
     child.unref();
 
-    const { socket } = await this._connect();
-    if (socket) {
-      console.log(`### Browser \`${this.name}\` opened with pid ${child.pid}.`);
-      const resolvedConfig = await parseResolvedConfig(outLog);
-      if (resolvedConfig) {
-        this.config.resolvedConfig = resolvedConfig;
-        console.log(`- ${this.name}:`);
-        console.log(renderResolvedConfig(resolvedConfig).join('\n'));
-      }
-      console.log(`---`);
-
-      this.config.timestamp = Date.now();
-      await fs.promises.writeFile(this._sessionFile.file, JSON.stringify(this.config, null, 2));
-      return socket;
-    }
-
-    console.error(`Failed to connect to daemon at ${this.config.socketPath}`);
-    process.exit(1);
+    console.log(`### Browser \`${sessionName}\` opened with pid ${child.pid}.`);
   }
 
   private async _stopDaemon(): Promise<void> {
@@ -219,10 +210,6 @@ export class Session {
 
     let error: Error | undefined;
     await SocketConnectionClient.sendAndClose(socket, 'stop', {}).catch(e => error = e);
-    if (os.platform() !== 'win32')
-      await fs.promises.unlink(this.config.socketPath).catch(() => {});
-    if (!this.config.cli.persistent)
-      await this.deleteSessionConfig();
     if (error && !error?.message?.includes('Session closed'))
       throw error;
   }
@@ -243,23 +230,6 @@ export function renderResolvedConfig(resolvedConfig: FullConfig) {
     lines.push(`  - user-data-dir: ${resolvedConfig.browser.userDataDir}`);
   lines.push(`  - headed: ${!resolvedConfig.browser.launchOptions.headless}`);
   return lines;
-}
-
-async function parseResolvedConfig(errLog: string): Promise<FullConfig | null> {
-  const marker = '### Config\n```json\n';
-  const markerIndex = errLog.indexOf(marker);
-  if (markerIndex === -1)
-    return null;
-  const jsonStart = markerIndex + marker.length;
-  const jsonEnd = errLog.indexOf('\n```', jsonStart);
-  if (jsonEnd === -1)
-    throw null;
-  const jsonString = errLog.substring(jsonStart, jsonEnd).trim();
-  try {
-    return JSON.parse(jsonString) as FullConfig;
-  } catch {
-    return null;
-  }
 }
 
 class SocketConnectionClient {

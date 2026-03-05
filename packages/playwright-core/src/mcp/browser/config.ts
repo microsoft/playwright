@@ -105,9 +105,8 @@ export type FullConfig = Config & {
     browserName: 'chromium' | 'firefox' | 'webkit';
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
-    isolated: boolean;
   },
-  server: NonNullable<Config['server']>,
+  server?: Config['server'],
   skillMode?: boolean;
   configFile?: string;
 };

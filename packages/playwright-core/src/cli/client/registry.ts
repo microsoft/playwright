@@ -34,16 +34,10 @@ export type SessionConfig = {
   timestamp: number;
   socketPath: string;
   cli: {
-    headed?: boolean;
-    extension?: boolean;
-    browser?: string;
     persistent?: boolean;
-    profile?: string;
-    config?: string;
   };
-  userDataDirPrefix?: string;
   workspaceDir?: string;
-  resolvedConfig?: FullConfig
+  resolvedConfig?: FullConfig;
 };
 
 export type SessionFile = {
@@ -72,6 +66,24 @@ export class Registry {
 
   entryMap(): Map<string, SessionFile[]> {
     return this._files;
+  }
+
+  async loadEntry(clientInfo: ClientInfo, sessionName: string): Promise<SessionFile> {
+    const entry = await Registry._loadSessionEntry(clientInfo.daemonProfilesDir, sessionName + '.session');
+    if (!entry)
+      throw new Error(`Could not start the session "${sessionName}"`);
+
+    const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
+    let list = this._files.get(key);
+    if (!list) {
+      list = [];
+      this._files.set(key, list);
+    }
+    const oldIndex = list.findIndex(e => e.config.name === sessionName);
+    if (oldIndex !== -1)
+      list.splice(oldIndex, 1);
+    list.push(entry);
+    return entry;
   }
 
   private static async _loadSessionEntry(daemonDir: string, file: string): Promise<SessionFile | undefined> {
@@ -169,3 +181,11 @@ function findWorkspaceDir(startDir: string): string | undefined {
 const daemonProfilesDir = (workspaceDirHash: string) => {
   return path.join(baseDaemonDir, workspaceDirHash);
 };
+
+export function resolveSessionName(sessionName?: string): string {
+  if (sessionName)
+    return sessionName;
+  if (process.env.PLAYWRIGHT_CLI_SESSION)
+    return process.env.PLAYWRIGHT_CLI_SESSION;
+  return 'default';
+}

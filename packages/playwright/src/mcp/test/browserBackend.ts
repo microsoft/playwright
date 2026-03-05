@@ -15,7 +15,6 @@
  */
 
 import path from 'path';
-import fs from 'fs';
 import { createGuid } from 'playwright-core/lib/utils';
 import * as mcp from 'playwright-core/lib/mcp/exports';
 import { BrowserServerBackend } from 'playwright-core/lib/mcp/exports';
@@ -125,17 +124,16 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
 
   const outputDir = path.join(testInfo.artifactsDir(), '.playwright-mcp');
   const sessionName = `test-worker-${createGuid().slice(0, 6)}`;
-  const clientInfo = mcp.createClientInfo();
-  const sessionConfig = mcp.sessionConfigFromArgs(clientInfo, sessionName, { _: [] });
-  const sessionConfigFile = path.resolve(clientInfo.daemonProfilesDir, `${sessionName}.session`);
-  await fs.promises.mkdir(path.dirname(sessionConfigFile), { recursive: true });
-  await fs.promises.writeFile(sessionConfigFile, JSON.stringify(sessionConfig, null, 2));
-
-  await mcp.startMcpDaemonServer({
+  await mcp.startMcpDaemonServer(sessionName, context, {
+    browser: {
+      browserName: 'chromium',
+      launchOptions: {},
+      contextOptions: {},
+    },
     outputMode: 'file',
     snapshot: { mode: 'full' },
     outputDir,
-  }, sessionConfig, context, true /* noShutdown */);
+  });
 
   const lines = [''];
   if (testInfo.errors.length) {

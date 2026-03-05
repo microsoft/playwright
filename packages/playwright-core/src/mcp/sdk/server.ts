@@ -195,7 +195,7 @@ function addServerListener(server: Server, event: 'close' | 'initialized', liste
   };
 }
 
-export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], socketPath?: string }) {
+export async function start(serverBackendFactory: ServerBackendFactory, options: { host?: string; port?: number, allowedHosts?: string[], socketPath?: string } = {}) {
   if (options.port === undefined) {
     await connect(serverBackendFactory, new mcpBundle.StdioServerTransport(), false);
     return;
