@@ -28,6 +28,7 @@ import type { RegisteredListener } from '../utils';
 import type { Transport } from './utils/httpServer';
 import type { CRBrowser } from './chromium/crBrowser';
 import type { ElementInfo } from '@recorder/recorderTypes';
+import type { ScreencastListener } from './screencast';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 
 export class DevToolsController {
@@ -68,7 +69,7 @@ class DevToolsConnection implements Transport, DevToolsChannel {
   selectedPage: Page | null = null;
   private _lastFrameData: string | null = null;
   private _lastViewportSize: { width: number, height: number } | null = null;
-  private _pageListeners: RegisteredListener[] = [];
+  private _screencastFrameListener: ScreencastListener | null = null;
   private _contextListeners: RegisteredListener[] = [];
   private _recorderListeners: RegisteredListener[] = [];
   private _context: BrowserContext;
@@ -240,9 +241,8 @@ class DevToolsConnection implements Transport, DevToolsChannel {
       return;
 
     if (this.selectedPage) {
-      eventsHelper.removeEventListeners(this._pageListeners);
-      this._pageListeners = [];
-      await this.selectedPage.screencast.stopScreencast(this);
+      await this.selectedPage.screencast.stopScreencast(this._screencastFrameListener!);
+      this._screencastFrameListener = null;
     }
 
     this.selectedPage = page;
@@ -250,11 +250,8 @@ class DevToolsConnection implements Transport, DevToolsChannel {
     this._lastViewportSize = null;
     this._sendTabList();
 
-    this._pageListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, frame => this._writeFrame(frame.buffer, frame.width, frame.height))
-    );
-
-    await page.screencast.startScreencast(this, { width: 1280, height: 800, quality: 90 });
+    this._screencastFrameListener = frame => this._writeFrame(frame.buffer, frame.viewportWidth, frame.viewportHeight);
+    await page.screencast.startScreencast(this._screencastFrameListener, { width: 1280, height: 800, quality: 90 });
   }
 
   private async _deselectPage() {
@@ -262,9 +259,9 @@ class DevToolsConnection implements Transport, DevToolsChannel {
       return;
     const promises = [];
     promises.push(this._cancelPicking());
-    eventsHelper.removeEventListeners(this._pageListeners);
-    this._pageListeners = [];
-    promises.push(this.selectedPage.screencast.stopScreencast(this));
+    const screencastFrameListener = this._screencastFrameListener!;
+    this._screencastFrameListener = null;
+    promises.push(this.selectedPage.screencast.stopScreencast(screencastFrameListener));
     this.selectedPage = null;
     this._lastFrameData = null;
     this._lastViewportSize = null;

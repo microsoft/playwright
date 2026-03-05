@@ -947,7 +947,7 @@ export class WKPage implements PageDelegate {
       this._pageProxySession.sendMayFail('Screencast.screencastFrameAck', { generation });
     });
     const buffer = Buffer.from(event.data, 'base64');
-    this._page.emit(Page.Events.ScreencastFrame, {
+    this._page.screencast.onScreencastFrame({
       buffer,
       frameSwapWallTime: event.timestamp
         // timestamp is in seconds, we need to convert to milliseconds.

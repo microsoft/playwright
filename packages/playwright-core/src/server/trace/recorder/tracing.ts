@@ -50,6 +50,7 @@ import type { FrameSnapshot } from '@trace/snapshot';
 import type * as trace from '@trace/trace';
 import type { Progress } from '@protocol/progress';
 import type * as types from '../../types';
+import type { ScreencastListener } from '../../screencast';
 
 const version: trace.VERSION = 8;
 
@@ -75,13 +76,12 @@ type RecordingState = {
   groupStack: string[];
 };
 
-const kScreencastOptions = { width: 800, height: 600, quality: 90 };
-
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
   private _fs = new SerializedFS();
   private _snapshotter?: Snapshotter;
   private _harTracer: HarTracer;
   private _screencastListeners: RegisteredListener[] = [];
+  private _pageScreencastListeners = new Map<Page, ScreencastListener>();
   private _eventListeners: RegisteredListener[] = [];
   private _context: BrowserContext | APIRequestContext;
   // Note: state should only be touched inside API methods, but not inside trace operations.
@@ -281,8 +281,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     eventsHelper.removeEventListeners(this._screencastListeners);
     if (!(this._context instanceof BrowserContext))
       return;
-    for (const page of this._context.pages())
-      page.screencast.setOptions(null);
+    for (const page of this._context.pages()) {
+      const listener = this._pageScreencastListeners.get(page);
+      if (listener) {
+        page.screencast.stopForTracing(listener);
+        this._pageScreencastListeners.delete(page);
+      }
+    }
   }
 
   private _allocateNewTraceFile(state: RecordingState) {
@@ -593,26 +598,25 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   }
 
   private _startScreencastInPage(page: Page) {
-    page.screencast.setOptions(kScreencastOptions);
     const prefix = page.guid;
-    this._screencastListeners.push(
-        eventsHelper.addEventListener(page, Page.Events.ScreencastFrame, (params: types.ScreencastFrame) => {
-          const suffix = Date.now();
-          const sha1 = `${prefix}-${suffix}.jpeg`;
-          const event: trace.ScreencastFrameTraceEvent = {
-            type: 'screencast-frame',
-            pageId: page.guid,
-            sha1,
-            width: params.viewportWidth,
-            height: params.viewportHeight,
-            timestamp: monotonicTime(),
-            frameSwapWallTime: params.frameSwapWallTime,
-          };
-          // Make sure to write the screencast frame before adding a reference to it.
-          this._appendResource(sha1, params.buffer);
-          this._appendTraceEvent(event);
-        }),
-    );
+    const listener = (params: types.ScreencastFrame) => {
+      const suffix = Date.now();
+      const sha1 = `${prefix}-${suffix}.jpeg`;
+      const event: trace.ScreencastFrameTraceEvent = {
+        type: 'screencast-frame',
+        pageId: page.guid,
+        sha1,
+        width: params.viewportWidth,
+        height: params.viewportHeight,
+        timestamp: monotonicTime(),
+        frameSwapWallTime: params.frameSwapWallTime,
+      };
+      // Make sure to write the screencast frame before adding a reference to it.
+      this._appendResource(sha1, params.buffer);
+      this._appendTraceEvent(event);
+    };
+    this._pageScreencastListeners.set(page, listener);
+    page.screencast.startForTracing(listener);
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {

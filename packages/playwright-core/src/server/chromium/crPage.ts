@@ -886,7 +886,7 @@ class FrameSession {
       this._client._sendMayFail('Page.screencastFrameAck', { sessionId: payload.sessionId });
     });
     const buffer = Buffer.from(payload.data, 'base64');
-    this._page.emit(Page.Events.ScreencastFrame, {
+    this._page.screencast.onScreencastFrame({
       buffer,
       frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : Date.now(),
       viewportWidth: payload.metadata.deviceWidth,
