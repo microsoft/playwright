@@ -62,7 +62,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
-  private _screencastFrameListener: ScreencastListener | null = null;
+  private _screencastListener: ScreencastListener | null = null;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -365,18 +365,22 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
-    if (this._screencastFrameListener)
+    if (this._screencastListener)
       throw new Error('Screencast is already running');
     const size = params.maxSize || { width: 800, height: 800 };
-    this._screencastFrameListener = (frame: ScreencastFrame) => {
+    this._screencastListener = (frame: ScreencastFrame) => {
       this._dispatchEvent('screencastFrame', { data: frame.buffer });
     };
-    await this._page.screencast.startScreencast(this._screencastFrameListener, { quality: 90, width: size.width, height: size.height });
+    await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height });
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
-    const listener = this._screencastFrameListener;
-    this._screencastFrameListener = null;
+    await this._stopScreencast();
+  }
+
+  private async _stopScreencast() {
+    const listener = this._screencastListener;
+    this._screencastListener = null;
     if (listener)
       await this._page.screencast.stopScreencast(listener);
   }
@@ -448,7 +452,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (this._cssCoverageActive)
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
-    this._screencastFrameListener = null;
+    this._stopScreencast().catch(() => {});
   }
 
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {
