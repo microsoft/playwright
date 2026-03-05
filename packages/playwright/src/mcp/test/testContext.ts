@@ -19,7 +19,8 @@ import os from 'os';
 import path from 'path';
 
 import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-core/lib/utils';
-import { firstRootPath, parseResponse, logUnhandledError } from 'playwright-core/lib/mcp/exports';
+import { parseResponse } from 'playwright-core/lib/tools/exports';
+import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
@@ -97,9 +98,8 @@ export class TestContext {
   constructor(clientInfo: ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._clientInfo = clientInfo;
 
-    const rootPath = firstRootPath(clientInfo);
-    this._configLocation = resolveConfigLocation(configPath || rootPath);
-    this.rootPath = rootPath || this._configLocation.configDir;
+    this._configLocation = resolveConfigLocation(configPath || clientInfo.cwd);
+    this.rootPath = clientInfo.cwd || this._configLocation.configDir;
 
     if (options?.headless !== undefined)
       this.computedHeaded = !options.headless;
@@ -250,7 +250,7 @@ export class TestContext {
   }
 
   async close() {
-    await this._cleanupTestRunner().catch(logUnhandledError);
+    await this._cleanupTestRunner().catch(e => debug('pw:mcp:error')(e));
   }
 
   async sendMessageToPausedTest(request: BrowserMCPRequest): Promise<BrowserMCPResponse> {

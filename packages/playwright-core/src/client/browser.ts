@@ -35,6 +35,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _shouldCloseConnectionOnClose = false;
   _browserType!: BrowserType;
   _options: LaunchOptions = {};
+  _userDataDir: string | undefined;
   readonly _name: string;
   private _path: string | undefined;
   _closeReason: string | undefined;
@@ -89,12 +90,13 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return context;
   }
 
-  _connectToBrowserType(browserType: BrowserType, browserOptions: LaunchOptions, logger: Logger | undefined) {
+  _connectToBrowserType(browserType: BrowserType, browserOptions: LaunchOptions, logger: Logger | undefined, userDataDir?: string) {
     // Note: when using connect(), `browserType` is different from `this._parent`.
     // This is why browser type is not wired up in the constructor,
     // and instead this separate method is called later on.
     this._browserType = browserType;
     this._options = browserOptions;
+    this._userDataDir = userDataDir;
     this._logger = logger;
     for (const context of this._contexts)
       this._setupBrowserContext(context);

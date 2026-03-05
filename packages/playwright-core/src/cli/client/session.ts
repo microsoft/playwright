@@ -25,7 +25,6 @@ import path from 'path';
 import { compareSemver, SocketConnection } from './socketConnection';
 import { resolveSessionName } from './registry';
 
-import type { FullConfig } from '../../mcp/browser/config';
 import type { SessionConfig, ClientInfo, SessionFile } from './registry';
 
 type MinimistArgs = {
@@ -219,16 +218,16 @@ export class Session {
   }
 }
 
-export function renderResolvedConfig(resolvedConfig: FullConfig) {
-  const channel = resolvedConfig.browser.launchOptions.channel ?? resolvedConfig.browser.browserName;
+export function renderResolvedConfig(config: SessionConfig) {
+  const channel = config.browser.launchOptions.channel ?? config.browser.browserName;
   const lines = [];
   if (channel)
     lines.push(`  - browser-type: ${channel}`);
-  if (resolvedConfig.browser.isolated)
+  if (!config.cli.persistent)
     lines.push(`  - user-data-dir: <in-memory>`);
   else
-    lines.push(`  - user-data-dir: ${resolvedConfig.browser.userDataDir}`);
-  lines.push(`  - headed: ${!resolvedConfig.browser.launchOptions.headless}`);
+    lines.push(`  - user-data-dir: ${config.browser.userDataDir}`);
+  lines.push(`  - headed: ${!config.browser.launchOptions.headless}`);
   return lines;
 }
 

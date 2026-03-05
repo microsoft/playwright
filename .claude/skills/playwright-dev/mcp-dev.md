@@ -4,7 +4,7 @@
 
 ### Step 1: Create the Tool File
 
-Create `packages/playwright/src/mcp/browser/tools/<your-tool>.ts`.
+Create `packages/playwright/src/tools/<your-tool>.ts`.
 
 Import zod from the MCP bundle and use `defineTool` or `defineTabTool`:
 
@@ -115,7 +115,7 @@ export type ToolCapability =
 
 ### Step 3: Register the Tool
 
-In `packages/playwright/src/mcp/browser/tools.ts`:
+In `packages/playwright/src/tools/tools.ts`:
 
 ```typescript
 import myTool from './tools/myTool';
@@ -331,7 +331,7 @@ export type Config = {
 };
 ```
 
-### 2. CLI options type: `packages/playwright/src/mcp/browser/config.ts`
+### 2. CLI options type: `packages/playwright/src/mcp/config.ts`
 
 Add to `CLIOptions` type:
 

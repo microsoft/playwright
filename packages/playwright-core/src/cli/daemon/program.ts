@@ -17,19 +17,18 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
-import url from 'url';
 import path from 'path';
 
 import { startMcpDaemonServer } from './daemon';
-import { setupExitWatchdog } from '../../mcp/browser/watchdog';
-import { contextFactory } from '../../mcp/browser/browserContextFactory';
-import { ExtensionContextFactory } from '../../mcp/extension/extensionContextFactory';
-import * as configUtils from '../../mcp/browser/config';
+import { setupExitWatchdog } from '../../mcp/watchdog';
+import { contextFactory } from '../../mcp/browserContextFactory';
+import { ExtensionContextFactory } from '../../mcp/extensionContextFactory';
+import * as configUtils from '../../mcp/config';
 import { gracefullyProcessExitDoNotHang } from '../../utils';
 import { ClientInfo, createClientInfo } from '../client/registry';
 
 import type { Command } from '../../utilsBundle';
-import type { FullConfig } from '../../mcp/browser/config';
+import type { FullConfig } from '../../mcp/config';
 
 export function decorateCLICommand(command: Command, version: string) {
   command
@@ -46,15 +45,7 @@ export function decorateCLICommand(command: Command, version: string) {
         setupExitWatchdog();
         const clientInfo = createClientInfo();
         const mcpConfig = await resolveCLIConfig(clientInfo, sessionName, options);
-        const mcpClientInfo = {
-          name: 'playwright-cli',
-          version: require('../../../package.json').version,
-          roots: [{
-            uri: url.pathToFileURL(process.cwd()).href,
-            name: 'cwd'
-          }],
-          timestamp: Date.now(),
-        };
+        const mcpClientInfo = { cwd: process.cwd() };
 
         try {
           const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);

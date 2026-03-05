@@ -33,10 +33,7 @@ const serverDebug = debug('pw:mcp:server');
 const serverDebugResponse = debug('pw:mcp:server:response');
 
 export type ClientInfo = {
-  name: string;
-  version: string;
-  roots: Root[];
-  timestamp: number;
+  cwd: string;
 };
 
 export type ProgressParams = { message?: string, progress?: number, total?: number };
@@ -160,10 +157,7 @@ const initializeServer = async (server: Server, factory: ServerBackendFactory, r
   }
 
   const clientInfo: ClientInfo = {
-    name: server.getClientVersion()?.name ?? 'unknown',
-    version: server.getClientVersion()?.version ?? 'unknown',
-    roots: clientRoots,
-    timestamp: Date.now(),
+    cwd: firstRootPath(clientRoots),
   };
 
   const backend = await backendManager.createBackend(factory, clientInfo);
@@ -217,13 +211,13 @@ export async function start(serverBackendFactory: ServerBackendFactory, options:
   console.error(message);
 }
 
-export function firstRootPath(clientInfo: ClientInfo): string {
-  return allRootPaths(clientInfo)[0];
+export function firstRootPath(roots: Root[]): string {
+  return allRootPaths(roots)[0];
 }
 
-export function allRootPaths(clientInfo: ClientInfo): string[] {
+export function allRootPaths(roots: Root[]): string[] {
   const paths: string[] = [];
-  for (const root of clientInfo.roots) {
+  for (const root of roots) {
     const url = new URL(root.uri);
     let rootPath;
     try {

@@ -1,0 +1,7 @@
+[*]
+../../
+../server/registry/index.ts
+../server/utils/
+../utils/
+../cli/client/registry.ts
+../cli/client/session.ts

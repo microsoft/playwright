@@ -17,12 +17,12 @@
 import { ProgramOption } from '../utilsBundle';
 
 import * as mcpServer from './sdk/server';
-import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './browser/config';
-import { setupExitWatchdog } from './browser/watchdog';
-import { contextFactory } from './browser/browserContextFactory';
-import { BrowserServerBackend } from './browser/browserServerBackend';
-import { ExtensionContextFactory } from './extension/extensionContextFactory';
-import { filteredTools } from './browser/tools';
+import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './config';
+import { setupExitWatchdog } from './watchdog';
+import { contextFactory } from './browserContextFactory';
+import { BrowserServerBackend } from '../tools/browserServerBackend';
+import { ExtensionContextFactory } from './extensionContextFactory';
+import { filteredTools } from '../tools/tools';
 import { testDebug } from './log';
 
 import type { Command } from '../utilsBundle';

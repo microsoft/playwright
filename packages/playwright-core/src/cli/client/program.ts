@@ -26,7 +26,7 @@ import path from 'path';
 import { createClientInfo, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 
-import type { Config } from '../../mcp/config';
+import type { Config } from '../../mcp/config.d';
 import type { ClientInfo, SessionFile } from './registry';
 
 type MinimistArgs = {
@@ -171,7 +171,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
-      const daemonScript = path.join(__dirname, 'devtoolsApp.js');
+      const daemonScript = require.resolve('../../devtools/devtoolsApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,
         stdio: 'ignore',
@@ -294,7 +294,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-dir*' } `
+          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-*' } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -308,7 +308,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if ((line.includes('-server')) && line.includes('--daemon-dir')) {
+        if ((line.includes('-server')) && line.includes('--daemon-')) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
@@ -385,8 +385,8 @@ async function renderSessionStatus(clientInfo: ClientInfo, session: Session) {
   text.push(`  - status: ${canConnect ? 'open' : 'closed'}`);
   if (canConnect && !session.isCompatible(clientInfo))
     text.push(`  - version: v${config.version} [incompatible please re-open]`);
-  if (config.resolvedConfig)
-    text.push(...renderResolvedConfig(config.resolvedConfig));
+  if (config.browser)
+    text.push(...renderResolvedConfig(config));
   return text.join('\n');
 }
 
