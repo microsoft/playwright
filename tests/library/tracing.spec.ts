@@ -436,7 +436,7 @@ for (const params of [
     browserTest.fixme(params.id === 'fit' && browserName === 'webkit' && platform === 'linux', 'Image size is flaky');
     browserTest.fixme(browserName === 'firefox' && !headless, 'Image size is different');
 
-    const scale = Math.min(800 / params.width, 600 / params.height, 1);
+    const scale = Math.min(800 / params.width, 800 / params.height, 1);
     const previewWidth = params.width * scale;
     const previewHeight = params.height * scale;
 
