@@ -812,7 +812,7 @@ it.describe('screencast', () => {
   });
 
   it('video.start/stop twice', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 600 };
+    const size = { width: 800, height: 800 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
@@ -868,10 +868,10 @@ it.describe('screencast', () => {
     await context.close();
   });
 
-  it('video.start should finish when page is closed', async ({ browser, browserName }, testInfo) => {
+  it('video.start should finish when page is closed', async ({ browser }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.video().start({ size: { width: 800, height: 600 } });
+    await page.video().start({ size: { width: 800, height: 800 } });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
     const videoPath = await page.video().path();
@@ -886,7 +886,7 @@ it.describe('screencast', () => {
   });
 
   it('empty video', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 600 };
+    const size = { width: 800, height: 800 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
     await page.video().start({ size });

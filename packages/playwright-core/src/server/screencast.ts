@@ -46,7 +46,9 @@ export class Screencast {
     this._frameThrottler.dispose();
   }
 
-  startForTracing(listener: ScreencastListener, options: { width: number, height: number, quality: number }) {
+  startForTracing(listener: ScreencastListener) {
+    // If screencast is already running, use the same options, it's ok for tracing.
+    const options = this._screencastOptions || { width: 800, height: 800, quality: 90 };
     this.startScreencast(listener, options).catch(e => debugLogger.log('error', e));
     this._frameThrottler.setThrottlingEnabled(true);
   }

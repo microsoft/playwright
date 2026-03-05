@@ -76,8 +76,6 @@ type RecordingState = {
   groupStack: string[];
 };
 
-const kScreencastOptions = { width: 800, height: 600, quality: 90 };
-
 export class Tracing extends SdkObject implements InstrumentationListener, SnapshotterDelegate, HarTracerDelegate {
   private _fs = new SerializedFS();
   private _snapshotter?: Snapshotter;
@@ -618,7 +616,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._appendTraceEvent(event);
     };
     this._pageScreencastListeners.set(page, listener);
-    page.screencast.startForTracing(listener, kScreencastOptions);
+    page.screencast.startForTracing(listener);
   }
 
   private _appendTraceEvent(event: trace.TraceEvent) {
