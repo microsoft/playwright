@@ -110,3 +110,21 @@ test('cdp server with headers', async ({ startClient, server }) => {
   });
   expect(authHeader).toBe('Bearer 1234567890');
 });
+
+test('cdp server with headers containing colons', async ({ startClient, server }) => {
+  // Regression test for https://github.com/microsoft/playwright-mcp/issues/1417
+  let customHeader = '';
+  server.setRoute('/json/version/', (req, res) => {
+    customHeader = req.headers['x-custom'];
+    res.end();
+  });
+
+  const { client } = await startClient({ args: [`--cdp-endpoint=${server.PREFIX}`, '--cdp-header', 'X-Custom: http://example.com:8080/path'] });
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    isError: true,
+  });
+  expect(customHeader).toBe('http://example.com:8080/path');
+});
