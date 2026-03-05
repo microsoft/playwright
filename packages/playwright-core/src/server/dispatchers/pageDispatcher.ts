@@ -30,7 +30,6 @@ import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
-import { eventsHelper } from '../utils/eventsHelper';
 import { disposeAll } from '../disposable';
 
 import type { Artifact } from '../artifact';
@@ -48,7 +47,7 @@ import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { ScreencastListener } from '../screencast';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -63,7 +62,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
-  private _screencastFrameListener: RegisteredListener | null = null;
+  private _screencastFrameListener: ScreencastListener | null = null;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -369,18 +368,17 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (this._screencastFrameListener)
       throw new Error('Screencast is already running');
     const size = params.maxSize || { width: 800, height: 800 };
-    // TODO: move to screencast and make startScrencast accept a listener.
-    this._screencastFrameListener = eventsHelper.addEventListener(this._page, Page.Events.ScreencastFrame, (frame: ScreencastFrame) => {
+    this._screencastFrameListener = (frame: ScreencastFrame) => {
       this._dispatchEvent('screencastFrame', { data: frame.buffer });
-    });
-    await this._page.screencast.startScreencast(this, { quality: 90, width: size.width, height: size.height });
+    };
+    await this._page.screencast.startScreencast(this._screencastFrameListener, { quality: 90, width: size.width, height: size.height });
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
-    if (this._screencastFrameListener)
-      eventsHelper.removeEventListeners([this._screencastFrameListener]);
+    const listener = this._screencastFrameListener;
     this._screencastFrameListener = null;
-    return this._page.screencast.stopScreencast(this);
+    if (listener)
+      await this._page.screencast.stopScreencast(listener);
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
@@ -450,8 +448,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (this._cssCoverageActive)
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
-    if (this._screencastFrameListener)
-      eventsHelper.removeEventListeners([this._screencastFrameListener]);
     this._screencastFrameListener = null;
   }
 
