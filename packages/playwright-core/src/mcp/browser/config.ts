@@ -316,7 +316,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
 
 export function configFromEnv(): Config & { configFile?: string } {
   const options: CLIOptions = {};
-  options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTNAMES);
+  options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
   options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
   options.allowUnrestrictedFileAccess = envToBoolean(process.env.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
   options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
