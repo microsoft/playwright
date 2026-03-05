@@ -417,7 +417,7 @@ async function checkFile(config: FullConfig, clientInfo: ClientInfo, resolvedFil
 
 function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
   return Object.fromEntries(
-      Object.entries(obj ?? {}).filter(([_, v]) => v !== undefined)
+    Object.entries(obj ?? {}).filter(([_, v]) => v !== undefined)
   ) as Partial<T>;
 }
 
@@ -518,10 +518,10 @@ export function headerParser(arg: string | undefined, previous?: Record<string, 
     return previous || {};
   const result: Record<string, string> = previous || {};
   const colonIndex = arg.indexOf(':');
-  if (colonIndex === -1)
-    return result;
-  const name = arg.substring(0, colonIndex).trim();
-  const value = arg.substring(colonIndex + 1).trim();
+
+  const name = colonIndex === -1 ? arg.trim() : arg.substring(0, colonIndex).trim();
+  const value = colonIndex === -1 ? '' : arg.substring(colonIndex + 1).trim();
+
   result[name] = value;
   return result;
 }
