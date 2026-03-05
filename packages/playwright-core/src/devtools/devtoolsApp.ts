@@ -18,20 +18,20 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import net from 'net';
-
+import http from 'http';
+import { pathToFileURL } from 'url';
 
 import { chromium } from '../..';
 import { HttpServer } from '../server/utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../server/registry/index';
 import { calculateSha1 } from '../utils';
-import { createClientInfo, Registry } from '../cli/client/registry';
-import { Session } from '../cli/client/session';
+import { CDPConnection, DevToolsConnection } from '../cli/client/devtoolsController';
+import { serverRegistry } from '../serverRegistry';
 
-import type http from 'http';
-import type { Page } from '../../types/types';
-import type { ClientInfo, SessionFile } from '../cli/client/registry';
+import type * as api from '../..';
 import type { SessionStatus } from '@devtools/sessionModel';
+import type { BrowserDescriptor } from '../serverRegistry';
 
 function readBody(request: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -49,11 +49,11 @@ function readBody(request: http.IncomingMessage): Promise<any> {
   });
 }
 
-async function parseRequest(request: http.IncomingMessage): Promise<{ sessionFile: SessionFile, args?: any }> {
+async function parseRequest(request: http.IncomingMessage): Promise<{ browserDescriptor: BrowserDescriptor }> {
   const body = await readBody(request);
-  if (!body.sessionFile)
+  if (!body.browserDescriptor)
     throw new Error('Dashboard app is too old, please close it and open again');
-  return { sessionFile: body.sessionFile };
+  return { browserDescriptor: body.browserDescriptor };
 }
 
 function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
@@ -62,55 +62,83 @@ function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
   response.end(JSON.stringify(data));
 }
 
-async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMessage, response: http.ServerResponse) {
+async function loadBrowserDescriptorSessions(): Promise<SessionStatus[]> {
+  const servers = await serverRegistry.list();
+  const sessions: SessionStatus[] = [];
+  for (const [, browsers] of servers) {
+    for (const browser of browsers) {
+      sessions.push({
+        browserDescriptor: browser,
+        // TODO: do not gc descriptors in registry list().
+        canConnect: true,
+      });
+    }
+  }
+  return sessions;
+}
+
+type ConnectionInfo = {
+  browserDescriptor: BrowserDescriptor;
+  browser: api.Browser;
+  connection?: DevToolsConnection;
+};
+
+const socketPathToConnectionInfo = new Map<string, ConnectionInfo>();
+
+async function handleApiRequest(request: http.IncomingMessage, response: http.ServerResponse) {
   const url = new URL(request.url!, `http://${request.headers.host}`);
   const apiPath = url.pathname;
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
-    const registry = await Registry.load();
-    const sessions: SessionStatus[] = [];
-    for (const [, files] of registry.entryMap()) {
-      for (const file of files) {
-        const session = new Session(file);
-        const canConnect = await session.canConnect();
-        if (canConnect || file.config.cli.persistent)
-          sessions.push({ file: file, canConnect });
-      }
-    }
-    sendJSON(response, { sessions, clientInfo });
+    const sessions = await loadBrowserDescriptorSessions();
+    sendJSON(response, { sessions });
     return;
   }
 
   if (apiPath === '/api/sessions/close' && request.method === 'POST') {
-    const { sessionFile } = await parseRequest(request);
-    await new Session(sessionFile).stop();
-    sendJSON(response, { success: true });
-    return;
+    const { browserDescriptor } = await parseRequest(request);
+    const socketPath = browserDescriptor.pipeName!;
+    let browser = socketPathToConnectionInfo.get(socketPath)?.browser;
+    if (!browser) {
+      try {
+        browser = await connectToBrowserSocket(socketPath, browserDescriptor.playwrightLib);
+        socketPathToConnectionInfo.set(socketPath, { browserDescriptor, browser });
+      } catch (e) {
+        sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
+        return;
+      }
+    }
+    try {
+      await Promise.all(browser.contexts().map(context => context.close()));
+      await browser.close();
+      socketPathToConnectionInfo.delete(socketPath);
+      sendJSON(response, { success: true });
+      return;
+    } catch (e) {
+      sendJSON(response, { error: 'Failed to close browser: ' + e.message }, 500);
+      return;
+    }
   }
 
   if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
-    const { sessionFile } = await parseRequest(request);
-    await new Session(sessionFile).deleteData();
     sendJSON(response, { success: true });
-    return;
-  }
-
-  if (apiPath === '/api/sessions/run' && request.method === 'POST') {
-    const { sessionFile, args } = await parseRequest(request);
-    if (!args)
-      throw new Error('Missing "args" parameter');
-    const result = await new Session(sessionFile).run(clientInfo, args);
-    sendJSON(response, { result });
     return;
   }
 
   if (apiPath === '/api/sessions/devtools-start' && request.method === 'POST') {
-    const { sessionFile } = await parseRequest(request);
-    const result = await new Session(sessionFile).run(clientInfo, { _: ['devtools-start'] });
-    const match = result.text.match(/Server is listening on: (.+)/);
-    if (!match)
-      throw new Error('Failed to parse screencast URL from: ' + result.text);
-    sendJSON(response, { url: match[1] });
+    const { browserDescriptor } = await parseRequest(request);
+    const socketPath = browserDescriptor.pipeName!;
+    let browser = socketPathToConnectionInfo.get(socketPath)?.browser;
+    if (!browser) {
+      try {
+        browser = await connectToBrowserSocket(socketPath, browserDescriptor.playwrightLib);
+        socketPathToConnectionInfo.set(socketPath, { browserDescriptor, browser });
+      } catch (e) {
+        sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
+        return;
+      }
+    }
+    sendJSON(response, { url: '/browser-channel?socketPath=' + encodeURIComponent(socketPath) });
     return;
   }
 
@@ -118,19 +146,50 @@ async function handleApiRequest(clientInfo: ClientInfo, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDevToolsApp(): Promise<Page> {
+async function connectToBrowserSocket(socketPath: string, playwrightLib: string): Promise<api.Browser> {
+  const otherPlaywright = (await import(pathToFileURL(playwrightLib).toString())).default as typeof import('../..');
+  return await otherPlaywright.chromium.connect(socketPath);
+}
+
+async function openDevToolsApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const devtoolsDir = path.join(path.dirname(libDir), 'lib/vite/devtools');
-  const clientInfo = createClientInfo();
 
   httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    handleApiRequest(clientInfo, request, response).catch(e => {
+    handleApiRequest(request, response).catch(e => {
       response.statusCode = 500;
       response.end(JSON.stringify({ error: e.message }));
     });
     return true;
   });
+
+  httpServer.createWebSocket(url => {
+    const socketPath = url.searchParams.get('socketPath');
+    const cdpPageId = url.searchParams.get('cdpPageId');
+    if (cdpPageId && socketPath) {
+      const connection = socketPathToConnectionInfo.get(socketPath)?.connection;
+      if (!connection)
+        throw new Error('CDP connection not found for socket path: ' + socketPath);
+      const page = connection.pageForId(cdpPageId);
+      if (!page)
+        throw new Error('Page not found for page ID: ' + cdpPageId);
+      return new CDPConnection(page);
+    }
+    if (socketPath) {
+      const connectionInfo = socketPathToConnectionInfo.get(socketPath)!;
+      if (connectionInfo.connection)
+        return connectionInfo.connection;
+      const context = connectionInfo.browser.contexts()[0];
+      const serverUrl = httpServer.urlPrefix('human-readable');
+      const url = new URL(serverUrl);
+      url.pathname = '/browser-channel';
+      url.searchParams.set('socketPath', socketPath);
+      connectionInfo.connection = new DevToolsConnection(context, url, connectionInfo.browserDescriptor.browser.launchOptions.cdpPort);
+      return connectionInfo.connection;
+    }
+    throw new Error('Unsupported URL: ' + url.toString());
+  }, 'browser-channel');
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
@@ -185,7 +244,7 @@ async function launchApp(appName: string) {
   return { context, page };
 }
 
-export async function syncLocalStorageWithSettings(page: Page, appName: string) {
+export async function syncLocalStorageWithSettings(page: api.Page, appName: string) {
   const settingsFile = path.join(registryDirectory, '.settings', `${appName}.json`);
 
   await page.exposeBinding('_saveSerializedSettings', (_, settings) => {
@@ -222,6 +281,8 @@ function devtoolsSocketPath() {
 
 async function acquireSingleton(): Promise<net.Server> {
   const socketPath = devtoolsSocketPath();
+  if (process.platform !== 'win32')
+    await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
   return await new Promise((resolve, reject) => {
     const server = net.createServer();

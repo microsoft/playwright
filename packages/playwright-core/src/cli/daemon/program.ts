@@ -52,6 +52,9 @@ export function decorateCLICommand(command: Command, version: string) {
           const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { ...options, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
+          // TODO: pass workspaceDir.
+          await (browser as any)._startServer(sessionName);
+          browserContext.on('close', () => (browser as any)._stopServer().catch(() => {}));
         } catch (error) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
           console.log(`### Error\n${message}`);

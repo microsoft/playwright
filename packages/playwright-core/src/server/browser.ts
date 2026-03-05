@@ -26,7 +26,6 @@ import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
-import { createGuid } from './utils/crypto';
 import { serverRegistry } from '../serverRegistry';
 
 import type * as types from './types';
@@ -229,9 +228,9 @@ export class BrowserServer {
     result.pipeName = this._pipeSocketPath;
 
     if (options.wsPath) {
-      const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
+      const path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
       this._wsServer = new PlaywrightWebSocketServer(this._browser, path);
-      result.wsEndpoint = await this._wsServer.listen(0);
+      result.wsEndpoint = await this._wsServer.listen(0, 'localhost', path);
     }
 
     await serverRegistry.create(this._browser, {

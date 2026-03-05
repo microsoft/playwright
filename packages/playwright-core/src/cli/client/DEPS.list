@@ -14,3 +14,6 @@
 
 [registry.ts]
 "strict"
+
+[devtoolsController.ts]
+../../client/eventEmitter.ts

@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import type { ClientInfo, SessionFile } from '../../playwright-core/src/cli/client/registry';
+import type { ClientInfo } from '../../playwright-core/src/cli/client/registry';
+import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
 export type SessionStatus = {
-  file: SessionFile;
+  browserDescriptor: BrowserDescriptor;
   canConnect: boolean;
 };
+
 
 type Listener = () => void;
 
@@ -30,7 +32,7 @@ export class SessionModel {
   error: string | undefined;
   loading = true;
 
-  private _knownTimestamps = new Map<string, number>();
+  private _knownPipes = new Set<string>();
   private _pollActive = false;
   private _pollTimeout: ReturnType<typeof setTimeout> | undefined;
   private _lastJson = '';
@@ -67,7 +69,7 @@ export class SessionModel {
   }
 
   sessionBySocketPath(socketPath: string): SessionStatus | undefined {
-    return this.sessions.find(s => s.file.config.socketPath === socketPath);
+    return this.sessions.find(s => s.browserDescriptor.pipeName === socketPath);
   }
 
   private async _fetchSessions() {
@@ -86,7 +88,7 @@ export class SessionModel {
 
         for (const session of this.sessions) {
           if (session.canConnect)
-            this._obtainDevtoolsUrl(session.file);
+            this._obtainDevtoolsUrl(session.browserDescriptor);
         }
       }
       this.error = undefined;
@@ -102,43 +104,44 @@ export class SessionModel {
     await this._fetchSessions();
   }
 
-  async closeSession(sessionFile: SessionFile) {
+  async closeSession(descriptor: BrowserDescriptor) {
     await fetch('/api/sessions/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionFile }),
+      body: JSON.stringify({ browserDescriptor: descriptor }),
     });
     await this._fetchSessions();
   }
 
-  async deleteSessionData(sessionFile: SessionFile) {
+  async deleteSessionData(descriptor: BrowserDescriptor) {
     await fetch('/api/sessions/delete-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionFile }),
+      body: JSON.stringify({ browserDescriptor: descriptor }),
     });
     await this._fetchSessions();
   }
 
-  private _obtainDevtoolsUrl(sessionFile: SessionFile) {
-    const { config } = sessionFile;
-    if (this._knownTimestamps.get(config.socketPath) === config.timestamp)
+  private _obtainDevtoolsUrl(descriptor: BrowserDescriptor) {
+    const pipeName = descriptor.pipeName!;
+    if (this._knownPipes.has(pipeName))
       return;
-    this._knownTimestamps.set(config.socketPath, config.timestamp);
+    this._knownPipes.add(pipeName);
+
     fetch('/api/sessions/devtools-start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionFile }),
+      body: JSON.stringify({ browserDescriptor: descriptor }),
     }).then(async resp => {
       if (resp.ok) {
         const { url } = await resp.json();
-        this.wsUrls.set(config.socketPath, url);
+        this.wsUrls.set(pipeName, url);
       } else {
-        this.wsUrls.set(config.socketPath, null);
+        this.wsUrls.set(pipeName, null);
       }
       this._notify();
     }).catch(() => {
-      this._knownTimestamps.delete(config.socketPath);
+      this._knownPipes.delete(pipeName);
     });
   }
 
