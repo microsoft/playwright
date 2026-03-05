@@ -14,37 +14,39 @@
  * limitations under the License.
  */
 
-import { FullConfig } from './config';
 import { Context } from './context';
 import { Response } from './response';
 import { SessionLog } from './sessionLog';
 import { toMcpTool } from '../sdk/tool';
 import { logUnhandledError } from '../log';
+import { firstRootPath } from '../sdk/server';
 
+import type { ContextConfig } from './context';
 import type * as playwright from '../../..';
 import type { Tool } from './tools/tool';
 import type * as mcpServer from '../sdk/server';
-import type { ServerBackend } from '../sdk/server';
+import type { ClientInfo, ServerBackend } from '../sdk/server';
 
 export class BrowserServerBackend implements ServerBackend {
   private _tools: Tool[];
   private _context: Context | undefined;
   private _sessionLog: SessionLog | undefined;
-  private _config: FullConfig;
+  private _config: ContextConfig;
   readonly browserContext: playwright.BrowserContext;
 
-  constructor(config: FullConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
+  constructor(config: ContextConfig, browserContext: playwright.BrowserContext, tools: Tool[]) {
     this._config = config;
     this._tools = tools;
     this.browserContext = browserContext;
   }
 
-  async initialize(clientInfo: mcpServer.ClientInfo): Promise<void> {
-    this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, clientInfo) : undefined;
+  async initialize(clientInfo: ClientInfo): Promise<void> {
+    const cwd = firstRootPath(clientInfo);
+    this._sessionLog = this._config.saveSession ? await SessionLog.create(this._config, cwd) : undefined;
     this._context = new Context(this.browserContext, {
       config: this._config,
       sessionLog: this._sessionLog,
-      clientInfo,
+      cwd,
     });
   }
 

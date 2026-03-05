@@ -23,7 +23,7 @@ import * as playwright from '../../..';
 import { registryDirectory } from '../../server/registry/index';
 import { startTraceViewerServer } from '../../server';
 import { testDebug } from '../log';
-import { outputDir, outputFile } from './config';
+import { outputDir, outputFile } from './context';
 import { firstRootPath } from '../sdk/server';
 
 import type { FullConfig } from './config';
@@ -255,13 +255,15 @@ function createHash(data: string): string {
 }
 
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
-  return path.resolve(outputDir(config, clientInfo), 'traces');
+  const cwd = firstRootPath(clientInfo);
+  return path.resolve(outputDir({ config, cwd }), 'traces');
 }
 
 async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
   const result = { ...config.browser.contextOptions };
   if (config.saveVideo) {
-    const dir = await outputFile(config, clientInfo, `videos`, { origin: 'code' });
+    const cwd = firstRootPath(clientInfo);
+    const dir = await outputFile({ config, cwd }, `videos`, { origin: 'code' });
     result.recordVideo = {
       dir,
       size: config.saveVideo,
@@ -310,5 +312,5 @@ function throwBrowserIsNotInstalledError(config: FullConfig): never {
   if (config.skillMode)
     throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
   else
-    throw new Error(`Browser "${channel}" is not installed. Either install it (likely) or change the config.`);
+    throw new Error(`Browser "${channel}" is not installed. Run \`npx @playwright/mcp install-browser ${channel}\` to install`);
 }

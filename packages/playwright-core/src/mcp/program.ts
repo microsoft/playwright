@@ -140,3 +140,19 @@ export function decorateMCPCommand(command: Command, version: string) {
         await mcpServer.start(factory, config.server);
       });
 }
+
+export function decorateMCPInstallBrowserCommand(command: Command, version: string) {
+  command
+      .description('ensure browsers necessary for this version of Playwright are installed')
+      .option('--with-deps', 'install system dependencies for browsers')
+      .option('--dry-run', 'do not execute installation, only print information')
+      .option('--list', 'prints list of browsers from all playwright installations')
+      .option('--force', 'force reinstall of already installed browsers')
+      .option('--only-shell', 'only install headless shell when installing chromium')
+      .option('--no-shell', 'do not install chromium headless shell')
+      .action(async options => {
+        const { program } = require('../program');
+        const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
+        program.parse(argv);
+      });
+}

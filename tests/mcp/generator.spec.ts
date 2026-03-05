@@ -38,7 +38,6 @@ test('generator tools intent', async ({ startClient }) => {
   expect(toolsWithIntent).toContain('browser_fill_form');
   expect(toolsWithIntent).toContain('browser_handle_dialog');
   expect(toolsWithIntent).toContain('browser_hover');
-  expect(toolsWithIntent).toContain('browser_install');
   expect(toolsWithIntent).toContain('browser_mouse_click_xy');
   expect(toolsWithIntent).toContain('browser_mouse_drag_xy');
   expect(toolsWithIntent).toContain('browser_mouse_move_xy');

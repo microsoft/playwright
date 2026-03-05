@@ -30,9 +30,8 @@ import { SocketConnection } from '../client/socketConnection';
 import { commands } from './commands';
 import { parseCommand } from './command';
 
+import type * as playwright from '../../..';
 import type * as mcp from '../../mcp/exports';
-import type { FullConfig } from '../../mcp/browser/config';
-import type { BrowserContextFactory } from '../../mcp/browser/browserContextFactory';
 import type { SessionConfig } from '../client/registry';
 
 const daemonDebug = debug('pw:daemon');
@@ -48,9 +47,9 @@ async function socketExists(socketPath: string): Promise<boolean> {
 }
 
 export async function startMcpDaemonServer(
-  mcpConfig: FullConfig,
+  config: mcp.ContextConfig,
   sessionConfig: SessionConfig,
-  contextFactory: BrowserContextFactory,
+  browserContext: playwright.BrowserContext,
   noShutdown?: boolean,
 ): Promise<() => Promise<void>> {
   const { socketPath } = sessionConfig;
@@ -65,18 +64,6 @@ export async function startMcpDaemonServer(
     }
   }
 
-  const cwd = url.pathToFileURL(process.cwd()).href;
-  const clientInfo = {
-    name: 'playwright-cli',
-    version: sessionConfig.version,
-    roots: [{
-      uri: cwd,
-      name: 'cwd'
-    }],
-    timestamp: Date.now(),
-  };
-
-  const browserContext = mcpConfig.browser.isolated ? await contextFactory.createContext(clientInfo) : (await contextFactory.contexts(clientInfo))[0];
   if (!noShutdown) {
     browserContext.on('close', () => {
       daemonDebug('browser closed, shutting down daemon');
@@ -84,8 +71,16 @@ export async function startMcpDaemonServer(
     });
   }
 
-  const backend = new BrowserServerBackend(mcpConfig, browserContext, browserTools);
-  await backend.initialize(clientInfo);
+  const backend = new BrowserServerBackend(config, browserContext, browserTools);
+  await backend.initialize({
+    name: 'playwright-cli',
+    version: sessionConfig.version,
+    roots: [{
+      uri: url.pathToFileURL(process.cwd()).href,
+      name: 'cwd',
+    }],
+    timestamp: Date.now(),
+  });
 
   await fs.mkdir(path.dirname(socketPath), { recursive: true });
 

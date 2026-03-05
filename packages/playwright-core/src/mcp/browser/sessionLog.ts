@@ -17,11 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { outputFile  } from './config';
+import { outputFile  } from './context';
 import { parseResponse } from './response';
 
-import type { FullConfig } from './config';
-import type * as mcpServer from '../sdk/server';
+import type { ContextConfig } from './context';
 
 export class SessionLog {
   private _folder: string;
@@ -33,8 +32,8 @@ export class SessionLog {
     this._file = path.join(this._folder, 'session.md');
   }
 
-  static async create(config: FullConfig, clientInfo: mcpServer.ClientInfo): Promise<SessionLog> {
-    const sessionFolder = await outputFile(config, clientInfo, `session-${Date.now()}`, { origin: 'code' });
+  static async create(config: ContextConfig, cwd: string): Promise<SessionLog> {
+    const sessionFolder = await outputFile({ config, cwd }, `session-${Date.now()}`, { origin: 'code' });
     await fs.promises.mkdir(sessionFolder, { recursive: true });
     // eslint-disable-next-line no-console
     console.error(`Session: ${sessionFolder}`);

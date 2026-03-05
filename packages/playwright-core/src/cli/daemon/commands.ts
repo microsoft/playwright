@@ -875,7 +875,7 @@ const installBrowser = declareCommand({
     ['only-shell']: z.boolean().optional().describe('Only install headless shell when installing Chromium'),
     ['no-shell']: z.boolean().optional().describe('Do not install Chromium headless shell'),
   }),
-  toolName: 'browser_install',
+  toolName: '',
   toolParams: () => ({}),
 });
 
