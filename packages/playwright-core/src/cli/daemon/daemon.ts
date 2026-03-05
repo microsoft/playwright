@@ -21,19 +21,20 @@ import path from 'path';
 
 import { calculateSha1 } from '../../utils';
 import { debug } from '../../utilsBundle';
+
 import { decorateServer } from '../../server/utils/network';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 
 import { BrowserServerBackend } from '../../tools/browserServerBackend';
 import { browserTools } from '../../tools/tools';
-import { SocketConnection } from '../client/socketConnection';
-import { commands } from './commands';
 import { parseCommand } from './command';
+import { commands } from './commands';
+
+import { SocketConnection } from '../client/socketConnection';
 import { createClientInfo } from '../client/registry';
 
 import type * as playwright from '../../..';
 import type * as tools from '../../tools/exports';
-import type * as mcp from '../../mcp/exports';
 import type { SessionConfig, ClientInfo } from '../client/registry';
 import type { BrowserContext } from '../../client/browserContext';
 
@@ -49,14 +50,17 @@ async function socketExists(socketPath: string): Promise<boolean> {
   return false;
 }
 
-export async function startMcpDaemonServer(
+export async function startCliDaemonServer(
   sessionName: string,
   browserContext: playwright.BrowserContext,
-  mcpConfig: tools.ContextConfig,
+  contextConfig: tools.ContextConfig = {},
   clientInfo = createClientInfo(),
-  persistent?: boolean,
+  options?: {
+    persistent?: boolean,
+    exitOnClose?: boolean,
+  }
 ): Promise<string> {
-  const sessionConfig = createSessionConfig(clientInfo, sessionName, browserContext, persistent);
+  const sessionConfig = createSessionConfig(clientInfo, sessionName, browserContext, options);
   const { socketPath } = sessionConfig;
 
   // Clean up existing socket file on Unix
@@ -70,10 +74,13 @@ export async function startMcpDaemonServer(
     }
   }
 
-  const backend = new BrowserServerBackend(mcpConfig, browserContext, browserTools);
+  const backend = new BrowserServerBackend(contextConfig, browserContext, browserTools);
   await backend.initialize({ cwd: process.cwd() });
 
   await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
+
+  if ((browserContext as BrowserContext)._closingStatus !== 'none')
+    throw new Error('Browser context was closed before the daemon could start');
 
   const server = net.createServer(socket => {
     daemonDebug('new client connection');
@@ -87,15 +94,12 @@ export async function startMcpDaemonServer(
         daemonDebug('received command', method);
         if (method === 'stop') {
           daemonDebug('stop command received, shutting down');
-          if (process.platform !== 'win32')
-            await fs.promises.unlink(sessionConfig.socketPath).catch(() => {});
-          if (!sessionConfig.cli.persistent)
-            await deleteSessionFile(clientInfo, sessionConfig);
-
-          gracefullyProcessExitDoNotHang(0, async () => {
-            await connection.send({ id, result: 'ok' }).catch(() => {});
-            server.close();
-          });
+          await deleteSessionFile(clientInfo, sessionConfig);
+          const sendAck = async () => connection.send({ id, result: 'ok' }).catch(() => {});
+          if (options?.exitOnClose)
+            gracefullyProcessExitDoNotHang(0, () => sendAck());
+          else
+            await sendAck();
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           if (params.cwd)
@@ -112,7 +116,13 @@ export async function startMcpDaemonServer(
       }
     };
   });
+
   decorateServer(server);
+  browserContext.on('close', () => Promise.resolve().then(async () => {
+    await deleteSessionFile(clientInfo, sessionConfig);
+    if (options?.exitOnClose)
+      gracefullyProcessExitDoNotHang(0);
+  }));
 
   await new Promise<void>((resolve, reject) => {
     server.on('error', (error: NodeJS.ErrnoException) => {
@@ -133,17 +143,20 @@ async function saveSessionFile(clientInfo: ClientInfo, sessionConfig: SessionCon
 }
 
 async function deleteSessionFile(clientInfo: ClientInfo, sessionConfig: SessionConfig) {
-  const sessionFile = path.join(clientInfo.daemonProfilesDir, `${sessionConfig.name}.session`);
-  await fs.promises.rm(sessionFile).catch(() => {});
+  await fs.promises.unlink(sessionConfig.socketPath).catch(() => {});
+  if (!sessionConfig.cli.persistent) {
+    const sessionFile = path.join(clientInfo.daemonProfilesDir, `${sessionConfig.name}.session`);
+    await fs.promises.rm(sessionFile).catch(() => {});
+  }
 }
 
-function formatResult(result: mcp.CallToolResult) {
+function formatResult(result: tools.CallToolResult) {
   const isError = result.isError;
   const text = result.content[0].type === 'text' ? result.content[0].text : undefined;
   return { isError, text };
 }
 
-function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: NonNullable<mcp.CallToolRequest['params']['arguments']> } {
+function parseCliCommand(args: Record<string, string> & { _: string[] }): { toolName: string, toolParams: NonNullable<tools.CallToolRequest['params']['arguments']> } {
   const command = commands[args._[0]];
   if (!command)
     throw new Error('Command is required');
@@ -159,7 +172,10 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 
-function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserContext: playwright.BrowserContext, persistent?: boolean): SessionConfig {
+function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserContext: playwright.BrowserContext, options: {
+  persistent?: boolean,
+  exitOnStop?: boolean,
+} = {}): SessionConfig {
   const bc = browserContext as BrowserContext;
   return {
     name: sessionName,
@@ -167,7 +183,7 @@ function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browse
     timestamp: Date.now(),
     socketPath: daemonSocketPath(clientInfo, sessionName),
     workspaceDir: clientInfo.workspaceDir,
-    cli: { persistent },
+    cli: { persistent: options.persistent },
     browser: {
       browserName: bc.browser()!.browserType().name(),
       launchOptions: bc.browser()!._options,

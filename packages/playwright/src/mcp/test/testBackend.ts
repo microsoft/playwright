@@ -26,7 +26,7 @@ import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
 
 import type { TestTool } from './testTool';
-import type { BrowserTool } from 'playwright-core/lib/tools/exports';
+import type { Tool } from 'playwright-core/lib/tools/exports';
 
 const typesWithIntent = ['action', 'assertion', 'input'];
 
@@ -76,7 +76,7 @@ export class TestServerBackend extends EventEmitter implements mcp.ServerBackend
   }
 }
 
-function wrapBrowserTool(tool: BrowserTool): TestTool {
+function wrapBrowserTool(tool: Tool): TestTool {
   const inputSchema = typesWithIntent.includes(tool.schema.type) ? (tool.schema.inputSchema as any).extend({
     intent: zod.string().describe('The intent of the call, for example the test step description plan idea')
   }) : tool.schema.inputSchema;

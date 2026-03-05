@@ -19,12 +19,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { startMcpDaemonServer } from './daemon';
+import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../../mcp/watchdog';
 import { contextFactory } from '../../mcp/browserContextFactory';
 import { ExtensionContextFactory } from '../../mcp/extensionContextFactory';
 import * as configUtils from '../../mcp/config';
-import { gracefullyProcessExitDoNotHang } from '../../utils';
 import { ClientInfo, createClientInfo } from '../client/registry';
 
 import type { Command } from '../../utilsBundle';
@@ -52,8 +51,7 @@ export function decorateCLICommand(command: Command, version: string) {
           const browserContextFactory = contextFactory(mcpConfig);
           const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
           const browserContext = mcpConfig.browser.isolated ? await cf.createContext(mcpClientInfo) : (await cf.contexts(mcpClientInfo))[0];
-          browserContext.on('close', () => gracefullyProcessExitDoNotHang(0));
-          const socketPath = await startMcpDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, options.persistent);
+          const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { ...options, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
         } catch (error) {
