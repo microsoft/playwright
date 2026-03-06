@@ -280,6 +280,47 @@ test('should respect project.workers=1', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should respect project.workers=1 on startup', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        workers: 2,
+        projects: [
+          { name: 'project1' },
+          { name: 'project2', workers: 1 },
+        ],
+      };
+    `,
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test1', async ({}, testInfo) => {
+        console.log('%%test1-begin:' + testInfo.project.name);
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('%%test1-end:' + testInfo.project.name);
+      });
+    `,
+    'b.test.js': `
+      import { test, expect } from '@playwright/test';
+      test('test2', async ({}, testInfo) => {
+        console.log('%%test2-begin:' + testInfo.project.name);
+        await new Promise(f => setTimeout(f, 2000));
+        console.log('%%test2-end:' + testInfo.project.name);
+      });
+    `,
+  }, { workers: 2 });
+  expect(result.passed).toBe(4);
+  expect(result.exitCode).toBe(0);
+
+  // Once both tests from the first project finish apporximately at the same time,
+  // tests from the second project should run sequentially.
+  expect(result.outputLines.slice(4, 8)).toEqual([
+    'test1-begin:project2',
+    'test1-end:project2',
+    'test2-begin:project2',
+    'test2-end:project2',
+  ]);
+});
+
 test('should respect project.workers>1', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
