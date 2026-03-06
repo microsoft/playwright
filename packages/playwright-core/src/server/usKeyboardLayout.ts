@@ -134,6 +134,14 @@ export const USKeyboardLayout: KeyboardLayout = {
   'ArrowRight': { 'keyCode': 39, 'key': 'ArrowRight' },
   'ArrowDown': { 'keyCode': 40, 'key': 'ArrowDown' },
 
+  // Media keys
+  'AudioVolumeMute': { 'keyCode': 173, 'key': 'AudioVolumeMute' },
+  'AudioVolumeDown': { 'keyCode': 174, 'key': 'AudioVolumeDown' },
+  'AudioVolumeUp': { 'keyCode': 175, 'key': 'AudioVolumeUp' },
+  'MediaTrackNext': { 'keyCode': 176, 'key': 'MediaTrackNext' },
+  'MediaTrackPrevious': { 'keyCode': 177, 'key': 'MediaTrackPrevious' },
+  'MediaPlayPause': { 'keyCode': 179, 'key': 'MediaPlayPause' },
+
   // Numpad
   'NumLock': { 'keyCode': 144, 'key': 'NumLock' },
   'NumpadDivide': { 'keyCode': 111, 'key': '/', 'location': 3 },
