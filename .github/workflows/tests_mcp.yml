@@ -27,7 +27,7 @@ env:
 
 jobs:
   test_mcp:
-    name: ${{ matrix.os }}
+    name: ${{ matrix.os }} - ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
     # Used for authentication of flakiness upload
     environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
     strategy:

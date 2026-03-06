@@ -18,12 +18,15 @@ import fs from 'fs';
 import path from 'path';
 
 import { browserTest as it, expect } from '../config/browserTest';
-import { defaultRegistryDirectory } from '../../packages/playwright-core/lib/server/registry';
 
 it.skip(({ mode }) => mode !== 'default');
 
+it.beforeEach(({}, testInfo) => {
+  process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
+});
+
 function descriptorPath(browser: any) {
-  return path.join(defaultRegistryDirectory, 'browsers', browser._guid);
+  return path.join(it.info().outputPath('registry'), browser._guid);
 }
 
 it('should start and stop pipe server', async ({ browserType, browser }) => {
@@ -65,8 +68,9 @@ it('should write descriptor on start and remove on stop', async ({ browser }) =>
 
   const descriptor = JSON.parse(fs.readFileSync(file, 'utf-8'));
   expect(descriptor.title).toBe('my-title');
-  expect(descriptor.version).toBeTruthy();
-  expect(descriptor.browser.name).toBeTruthy();
+  expect(descriptor.playwrightVersion).toBeTruthy();
+  expect(descriptor.playwrightLib).toBeTruthy();
+  expect(descriptor.browser.browserName).toBeTruthy();
   expect(descriptor.wsEndpoint).toBe(serverInfo.wsEndpoint);
   expect(descriptor.pipeName).toBe(serverInfo.pipeName);
 

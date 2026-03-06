@@ -25,6 +25,7 @@
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/cli/program": "./lib/cli/program.js",
     "./lib/cli/client/program": "./lib/cli/client/program.js",
+    "./lib/client/connect": "./lib/client/connect.js",
     "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/mcp/exports": "./lib/mcp/exports.js",
     "./lib/tools/exports": "./lib/tools/exports.js",

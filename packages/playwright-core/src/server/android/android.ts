@@ -337,7 +337,7 @@ export class AndroidDevice extends SdkObject {
       });
       const browserOptions: BrowserOptions = {
         name: 'clank',
-        isChromium: true,
+        browserType: 'chromium',
         slowMo: 0,
         persistent: { ...options, noDefaultViewport: true },
         artifactsDir,

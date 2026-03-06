@@ -38,6 +38,7 @@ export function decorateCLICommand(command: Command, version: string) {
       .option('--persistent', 'use a persistent browser context')
       .option('--profile <path>', 'path to the user data dir')
       .option('--config <path>', 'path to the config file')
+      .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
 
       .action(async (sessionName: string, options: any) => {
         setupExitWatchdog();
@@ -84,6 +85,7 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     outputMode: 'file',
     snapshotMode: 'full',
   });
+  daemonOverrides.browser!.remoteEndpoint = options.attach;
 
   const envOverrides = configUtils.configFromEnv();
   const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
