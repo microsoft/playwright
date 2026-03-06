@@ -96,14 +96,12 @@ export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDe
 export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {
-  wsEndpoint?: string,
-  pipeName?: string,
+  endpoint?: string;
   headers?: { [key: string]: string; };
-  exposeNetwork?: string,
-  _exposeNetwork?: string,
-  slowMo?: number,
-  timeout?: number,
-  logger?: Logger,
+  exposeNetwork?: string;
+  slowMo?: number;
+  timeout?: number;
+  logger?: Logger;
 };
 export type LaunchServerOptions = LaunchOptions & {
   host?: string,

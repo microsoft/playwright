@@ -532,8 +532,7 @@ export type LocalUtilsHarUnzipOptions = {
 };
 export type LocalUtilsHarUnzipResult = void;
 export type LocalUtilsConnectParams = {
-  wsEndpoint?: string,
-  pipeName?: string,
+  endpoint: string,
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,
@@ -541,8 +540,6 @@ export type LocalUtilsConnectParams = {
   socksProxyRedirectPortForTest?: number,
 };
 export type LocalUtilsConnectOptions = {
-  wsEndpoint?: string,
-  pipeName?: string,
   headers?: any,
   exposeNetwork?: string,
   slowMo?: number,

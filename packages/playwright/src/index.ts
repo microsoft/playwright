@@ -106,9 +106,9 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
     if (connectOptions) {
-      const browser = await playwright[browserName].connect({
+      const browser = await playwright[browserName].connect(connectOptions.wsEndpoint, {
         ...connectOptions,
-        exposeNetwork: connectOptions.exposeNetwork ?? (connectOptions as any)._exposeNetwork,
+        exposeNetwork: connectOptions.exposeNetwork,
         headers: {
           // HTTP headers are ASCII only (not UTF-8).
           'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),

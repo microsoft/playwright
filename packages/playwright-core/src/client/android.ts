@@ -66,11 +66,11 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return await this._serverLauncher.launchServer(options);
   }
 
-  async connect(wsEndpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
+  async connect(endpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
     return await this._wrapApiCall(async () => {
       const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
-      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout || 0 };
+      const connectParams: channels.LocalUtilsConnectParams = { endpoint, headers, slowMo: options.slowMo, timeout: options.timeout || 0 };
       const connection = await connectOverWebSocket(this._connection, connectParams);
 
       let device: AndroidDevice;
