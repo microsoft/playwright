@@ -24,7 +24,7 @@ import { stripAnsiEscapes } from '../util';
 
 import type { ReporterV2 } from './reporterV2';
 import type { JUnitReporterOptions } from '../../types/test';
-import type { FullConfig, FullResult, Suite, TestCase } from '../../types/testReporter';
+import type { FullConfig, FullResult, Suite, TestCase, TestResult } from '../../types/testReporter';
 
 class JUnitReporter implements ReporterV2 {
   private config!: FullConfig;
@@ -38,10 +38,12 @@ class JUnitReporter implements ReporterV2 {
   private resolvedOutputFile: string | undefined;
   private stripANSIControlSequences = false;
   private includeProjectInTestName = false;
+  private includeRetries = false;
 
   constructor(options: JUnitReporterOptions & CommonReporterOptions) {
     this.stripANSIControlSequences = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_STRIP_ANSI', !!options.stripANSIControlSequences);
     this.includeProjectInTestName = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_PROJECT_IN_TEST_NAME', !!options.includeProjectInTestName);
+    this.includeRetries = getAsBooleanFromENV('PLAYWRIGHT_JUNIT_INCLUDE_RETRIES', !!options.includeRetries);
     this.configDir = options.configDir;
     this.resolvedOutputFile = resolveOutputFile('JUNIT', options)?.outputFile;
   }
@@ -143,6 +145,9 @@ class JUnitReporter implements ReporterV2 {
   }
 
   private async _addTestCase(suiteName: string, namePrefix: string, test: TestCase, entries: XMLEntry[]): Promise<'failure' | 'error' | null> {
+    const isRetried = this.includeRetries && test.results.length > 1;
+    const isFlaky = isRetried && test.ok();
+
     const entry = {
       name: 'testcase',
       attributes: {
@@ -150,7 +155,14 @@ class JUnitReporter implements ReporterV2 {
         name: namePrefix + test.titlePath().slice(3).join(' › '),
         // filename
         classname: suiteName,
-        time: (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
+        // For flaky tests, use the last (successful) result's duration.
+        // For permanent failures with retries, use the first result's duration.
+        // Otherwise, use total duration across all results.
+        time: isFlaky
+          ? test.results[test.results.length - 1].duration / 1000
+          : isRetried
+            ? test.results[0].duration / 1000
+            : (test.results.reduce((acc, value) => acc + value.duration, 0)) / 1000
 
       },
       children: [] as XMLEntry[]
@@ -185,34 +197,40 @@ class JUnitReporter implements ReporterV2 {
     }
 
     let classification: 'failure' | 'error' | null = null;
-    if (!test.ok()) {
-      const errorInfo = classifyError(test);
-      if (errorInfo) {
-        classification = errorInfo.elementName;
-        entry.children.push({
-          name: errorInfo.elementName,
-          attributes: {
-            message: errorInfo.message,
-            type: errorInfo.type,
-          },
-          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-        });
-      } else {
-        classification = 'failure';
-        entry.children.push({
-          name: 'failure',
-          attributes: {
-            message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
-            type: 'FAILURE',
-          },
-          text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
-        });
+
+    if (isFlaky) {
+      // Flaky test (eventually passed): use Maven Surefire <flakyFailure>/<flakyError>.
+      // No <failure> element — flaky tests count as passed.
+      for (const result of test.results) {
+        if (result.status === 'passed' || result.status === 'skipped')
+          continue;
+        entry.children.push(buildSurefireRetryEntry(result, 'flaky'));
       }
+      // classification stays null — flaky tests are not counted as failures.
+    } else if (isRetried) {
+      // Permanent failure (failed all retries): use <failure> + Maven Surefire <rerunFailure>/<rerunError>.
+      classification = this._addFailureEntry(test, entry);
+      // Add <rerunFailure>/<rerunError> for each subsequent retry.
+      for (let i = 1; i < test.results.length; i++) {
+        const result = test.results[i];
+        if (result.status === 'passed' || result.status === 'skipped')
+          continue;
+        entry.children.push(buildSurefireRetryEntry(result, 'rerun'));
+      }
+    } else if (!test.ok()) {
+      // Standard failure (no retries, or includeRetries is false).
+      classification = this._addFailureEntry(test, entry);
     }
 
     const systemOut: string[] = [];
     const systemErr: string[] = [];
-    for (const result of test.results) {
+    // When retries are included, top-level output comes from the primary result only:
+    // flaky → last (successful) result; permanent failure → first result.
+    // Without retries: all results (original behavior).
+    const outputResults = isRetried
+      ? [isFlaky ? test.results[test.results.length - 1] : test.results[0]]
+      : test.results;
+    for (const result of outputResults) {
       for (const item of result.stdout)
         systemOut.push(item.toString());
       for (const item of result.stderr)
@@ -245,39 +263,91 @@ class JUnitReporter implements ReporterV2 {
       entry.children.push({ name: 'system-err', text: systemErr.join('') });
     return classification;
   }
+
+  private _addFailureEntry(test: TestCase, entry: XMLEntry): 'failure' | 'error' {
+    const errorInfo = classifyError(test);
+    if (errorInfo) {
+      entry.children.push({
+        name: errorInfo.elementName,
+        attributes: { message: errorInfo.message, type: errorInfo.type },
+        text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+      });
+      return errorInfo.elementName;
+    }
+    entry.children.push({
+      name: 'failure',
+      attributes: {
+        message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
+        type: 'FAILURE',
+      },
+      text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
+    });
+    return 'failure';
+  }
+
+}
+
+/**
+ * Builds a Maven Surefire retry entry (<flakyFailure>/<flakyError> or <rerunFailure>/<rerunError>)
+ * with per-result stackTrace, system-out, and system-err as children.
+ */
+function buildSurefireRetryEntry(result: TestResult, prefix: 'flaky' | 'rerun'): XMLEntry {
+  const errorInfo = classifyResultError(result);
+  const baseName = errorInfo?.elementName === 'error' ? 'Error' : 'Failure';
+  const elementName = `${prefix}${baseName}`;
+  const children: XMLEntry[] = [];
+  const stackTrace = result.error?.stack || result.error?.message || result.error?.value || '';
+  children.push({ name: 'stackTrace', text: stripAnsiEscapes(stackTrace) });
+  const resultOut = result.stdout.map(s => s.toString()).join('');
+  const resultErr = result.stderr.map(s => s.toString()).join('');
+  if (resultOut)
+    children.push({ name: 'system-out', text: resultOut });
+  if (resultErr)
+    children.push({ name: 'system-err', text: resultErr });
+  return {
+    name: elementName,
+    attributes: { message: errorInfo?.message || '', type: errorInfo?.type || 'FAILURE', time: result.duration / 1000 },
+    children,
+  };
+}
+
+function classifyResultError(result: TestResult): { elementName: 'failure' | 'error'; type: string; message: string } | null {
+  const error = result.error;
+  if (!error)
+    return null;
+
+  const rawMessage = stripAnsiEscapes(error.message || error.value || '');
+
+  // Parse "ErrorName: message" format from serialized error.
+  const nameMatch = rawMessage.match(/^(\w+): /);
+  const errorName = nameMatch ? nameMatch[1] : '';
+  const messageBody = nameMatch ? rawMessage.slice(nameMatch[0].length) : rawMessage;
+  const firstLine = messageBody.split('\n')[0].trim();
+
+  // Check for expect/assertion failure pattern.
+  const matcherMatch = rawMessage.match(/expect\(.*?\)\.(not\.)?(\w+)/);
+  if (matcherMatch) {
+    const matcherName = `expect.${matcherMatch[1] || ''}${matcherMatch[2]}`;
+    return {
+      elementName: 'failure',
+      type: matcherName,
+      message: firstLine,
+    };
+  }
+
+  // Thrown error.
+  return {
+    elementName: 'error',
+    type: errorName || 'Error',
+    message: firstLine,
+  };
 }
 
 function classifyError(test: TestCase): { elementName: 'failure' | 'error'; type: string; message: string } | null {
   for (const result of test.results) {
-    const error = result.error;
-    if (!error)
-      continue;
-
-    const rawMessage = stripAnsiEscapes(error.message || error.value || '');
-
-    // Parse "ErrorName: message" format from serialized error.
-    const nameMatch = rawMessage.match(/^(\w+): /);
-    const errorName = nameMatch ? nameMatch[1] : '';
-    const messageBody = nameMatch ? rawMessage.slice(nameMatch[0].length) : rawMessage;
-    const firstLine = messageBody.split('\n')[0].trim();
-
-    // Check for expect/assertion failure pattern.
-    const matcherMatch = rawMessage.match(/expect\(.*?\)\.(not\.)?(\w+)/);
-    if (matcherMatch) {
-      const matcherName = `expect.${matcherMatch[1] || ''}${matcherMatch[2]}`;
-      return {
-        elementName: 'failure',
-        type: matcherName,
-        message: firstLine,
-      };
-    }
-
-    // Thrown error.
-    return {
-      elementName: 'error',
-      type: errorName || 'Error',
-      message: firstLine,
-    };
+    const info = classifyResultError(result);
+    if (info)
+      return info;
   }
   return null;
 }
