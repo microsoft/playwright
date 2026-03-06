@@ -125,7 +125,7 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
 
   const outputDir = path.join(testInfo.artifactsDir(), '.playwright-mcp');
   const sessionName = `test-worker-${createGuid().slice(0, 6)}`;
-  await mcp.startMcpDaemonServer(sessionName, context, {
+  await mcp.startCliDaemonServer(sessionName, context, {
     outputMode: 'file',
     snapshot: { mode: 'full' },
     outputDir,

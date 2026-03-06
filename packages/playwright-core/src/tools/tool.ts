@@ -20,6 +20,8 @@ import type * as playwright from '../../types/types';
 import type { Tab } from './tab';
 import type { Response } from './response';
 
+export type { CallToolResult, CallToolRequest } from '@modelcontextprotocol/sdk/types.js';
+
 type ToolSchema<Input extends z.Schema> = {
   name: string;
   title: string;

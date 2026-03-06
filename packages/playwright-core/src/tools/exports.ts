@@ -21,4 +21,4 @@ export { parseResponse } from './response';
 export { Tab } from './tab';
 
 export type { ContextConfig } from './context';
-export type { Tool as BrowserTool } from './tool';
+export type { Tool, CallToolResult, CallToolRequest } from './tool';
