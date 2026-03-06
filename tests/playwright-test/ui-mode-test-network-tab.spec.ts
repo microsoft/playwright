@@ -80,7 +80,7 @@ test('should filter network requests by multiple resource types', async ({ runUI
   await page.getByText('Network', { exact: true }).click();
 
   const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
-  await expect(networkItems).toHaveCount(9);
+  await expect(networkItems).toHaveCount(10);
 
   await page.getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
@@ -101,7 +101,7 @@ test('should filter network requests by multiple resource types', async ({ runUI
   await expect(networkItems.getByText('image.png')).toBeVisible();
 
   await page.getByText('All', { exact: true }).click();
-  await expect(networkItems).toHaveCount(9);
+  await expect(networkItems).toHaveCount(10);
 });
 
 test('should filter network requests by url', async ({ runUITest, server }) => {
