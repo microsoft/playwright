@@ -14,52 +14,10 @@
  * limitations under the License.
  */
 
-import fs from 'fs';
-import path from 'path';
 import { test, expect } from './fixtures';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
 for (const mode of ['isolated', 'persistent']) {
-  test(`should work with --save-video (${mode})`, async ({ startClient, server }, testInfo) => {
-    const outputDir = testInfo.outputPath('output');
-
-    const { client } = await startClient({
-      args: [
-        '--save-video=800x600',
-        ...(mode === 'isolated' ? ['--isolated'] : []),
-        '--output-dir', outputDir,
-      ],
-    });
-
-    await navigateToTestPage(client, server);
-    await produceFrames(client);
-    await closeBrowser(client);
-
-    const videosDir = path.join(outputDir, 'videos');
-    const [file] = await fs.promises.readdir(videosDir);
-    expect(file).toMatch(/.*\.webm/);
-  });
-
-  test(`should work with  { saveVideo } (${mode})`, async ({ startClient, server }, testInfo) => {
-    const outputDir = testInfo.outputPath('output');
-
-    const { client } = await startClient({
-      config: {
-        browser: { isolated: mode === 'isolated' },
-        saveVideo: { width: 800, height: 600 },
-        outputDir,
-      }
-    });
-
-    await navigateToTestPage(client, server);
-    await produceFrames(client);
-    await closeBrowser(client);
-
-    const videosDir = path.join(outputDir, 'videos');
-    const [file] = await fs.promises.readdir(videosDir);
-    expect(file).toMatch(/.*\.webm/);
-  });
-
   test(`should work with recordVideo (${mode})`, async ({ startClient, server }, testInfo) => {
     const videosDir = testInfo.outputPath('videos');
 

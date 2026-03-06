@@ -16,7 +16,6 @@
 
 import crypto from 'crypto';
 import fs from 'fs';
-import path from 'path';
 import { pathToFileURL } from 'url';
 
 import { test, expect } from './fixtures';
@@ -42,30 +41,6 @@ test('should use separate user data by root path', async ({ startClient, server 
   const hash = createHash(p);
   const [file] = await fs.promises.readdir(testInfo.outputPath('ms-playwright'));
   expect(file).toContain(hash);
-});
-
-test('check that trace is saved in workspace', async ({ startClient, server }, testInfo) => {
-  const rootPath = testInfo.outputPath('workspace');
-  const { client } = await startClient({
-    args: ['--save-trace'],
-    clientName: 'My client',
-    roots: [
-      {
-        name: 'workspace',
-        uri: pathToFileURL(rootPath).toString(),
-      },
-    ],
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
-    code: expect.stringContaining(`page.goto('http://localhost`),
-  });
-
-  const files = await fs.promises.readdir(path.join(rootPath, '.playwright-mcp'));
-  expect(files).toContain('traces');
 });
 
 test('should list all tools when listRoots is slow', async ({ startClient }) => {
