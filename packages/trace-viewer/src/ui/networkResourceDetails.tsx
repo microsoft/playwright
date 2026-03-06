@@ -263,15 +263,9 @@ function statusClass(statusCode: number): string {
 const kInlineTagPattern = /<[^>]+>[^<]*<\//;
 
 function formatXml(xml: string, indent = '  ') {
-  const doc = new DOMParser().parseFromString(xml, 'application/xml');
-  if (doc.querySelector('parsererror'))
-    throw new Error('Invalid XML');
-
   let depth = 0;
   const lines: string[] = [];
-
-  const raw = new XMLSerializer().serializeToString(doc);
-  const tokens = raw.replace(/>\s*</g, '>\n<').split('\n');
+  const tokens = xml.replace(/>\s*</g, '>\n<').split('\n');
 
   for (const token of tokens) {
     const trimmed = token.trim();
@@ -279,7 +273,7 @@ function formatXml(xml: string, indent = '  ') {
       continue;
 
     if (trimmed.startsWith('</')) {
-      depth--;
+      depth = Math.max(depth - 1, 0);
       lines.push(indent.repeat(depth) + trimmed);
     } else if (trimmed.endsWith('/>') || trimmed.startsWith('<?') || kInlineTagPattern.test(trimmed)) {
       lines.push(indent.repeat(depth) + trimmed);
