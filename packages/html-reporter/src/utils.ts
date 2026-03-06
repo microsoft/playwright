@@ -59,7 +59,7 @@ export function formatUrl(url: string | undefined): string | undefined {
     const parsed = new URL(url, window.location.href);
     if (parsed.origin === window.location.origin) {
       for (const [key, value] of new URLSearchParams(window.location.search))
-        parsed.searchParams.append(key, value);
+        parsed.searchParams.set(key, value);
       return parsed.toString();
     }
     return url;
