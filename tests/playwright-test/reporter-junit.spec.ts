@@ -633,5 +633,87 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(time).toBe(result.report.stats.duration / 1000);
       expect(time).toBeGreaterThan(1);
     });
+
+    test('should emit flakyFailure for flaky tests when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 2,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(2);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Single testcase for the test; flaky tests count as passed.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('0');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('0');
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['name']).toBe('one');
+      // No <failure> element — test eventually passed.
+      expect(testcase['failure']).toBeFalsy();
+      // Two <flakyFailure> elements for the two failed attempts.
+      expect(testcase['flakyFailure'].length).toBe(2);
+      expect(testcase['flakyFailure'][0]['stackTrace']).toBeTruthy();
+      expect(testcase['flakyFailure'][1]['stackTrace']).toBeTruthy();
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should not include retries by default', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}, testInfo) => {
+            expect(testInfo.retry).toBe(1);
+          });
+        `,
+      }, { retries: 1, reporter: 'junit' });
+      const xml = parseXML(result.output);
+      // Default behavior: single testcase, no flakyFailure elements.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      const testcases = xml['testsuites']['testsuite'][0]['testcase'];
+      expect(testcases.length).toBe(1);
+      expect(testcases[0]['$']['name']).toBe('one');
+      expect(testcases[0]['flakyFailure']).toBeFalsy();
+      expect(result.exitCode).toBe(0);
+    });
+
+    test('should emit rerunFailure for permanent failures when includeRetries is enabled', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'playwright.config.ts': `
+          module.exports = {
+            retries: 1,
+            reporter: [['junit', { includeRetries: true }]]
+          };
+        `,
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('one', async ({}) => {
+            expect(1).toBe(0);
+          });
+        `,
+      }, { reporter: '' });
+      const xml = parseXML(result.output);
+      // Single testcase; permanent failure counts as 1 test with 1 failure.
+      expect(xml['testsuites']['$']['tests']).toBe('1');
+      expect(xml['testsuites']['$']['failures']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['tests']).toBe('1');
+      expect(xml['testsuites']['testsuite'][0]['$']['failures']).toBe('1');
+      const testcase = xml['testsuites']['testsuite'][0]['testcase'][0];
+      expect(testcase['$']['name']).toBe('one');
+      // <failure> for the first attempt.
+      expect(testcase['failure']).toBeTruthy();
+      // <rerunFailure> for the retry.
+      expect(testcase['rerunFailure'].length).toBe(1);
+      expect(testcase['rerunFailure'][0]['stackTrace']).toBeTruthy();
+      expect(result.exitCode).toBe(1);
+    });
   });
 }
