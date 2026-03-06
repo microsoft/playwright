@@ -32,7 +32,7 @@ export interface ReporterV2 {
   onTestBegin?(test: TestCase, result: TestResult): void;
   onStdOut?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
   onStdErr?(chunk: string | Buffer, test?: TestCase, result?: TestResult): void;
-  onTestPaused?(test: TestCase, result: TestResult): Promise<void>;
+  onTestPaused?(test: TestCase, result: TestResult, error?: TestError): Promise<{ disposition?: 'continue' } | void>;
   onTestEnd?(test: TestCase, result: TestResult): void;
   onReportConfigure?(params: ReportConfigureParams): void;
   onReportEnd?(params: ReportEndParams): void;

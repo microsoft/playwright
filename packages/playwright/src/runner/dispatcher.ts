@@ -614,14 +614,20 @@ class JobDispatcher {
       }
     };
 
-    result.status = params.status;
-    result.errors = params.errors;
-    result.error = result.errors[0];
+    if (params.endErrors) {
+      result.errors = params.endErrors;
+      result.error = result.errors[0];
+    }
+    if (params.error)
+      addLocationAndSnippetToError(this._config.config, params.error);
 
-    void this._reporter.onTestPaused?.(test, result).then(() => {
-      worker.sendResume({});
+    void this._reporter.onTestPaused?.(test, result, params.error).then(reporterResult => {
+      const disposition = reporterResult?.disposition;
+      worker.sendResume({ disposition });
     });
-    this._failureTracker.onTestPaused?.({ ...params, sendMessage });
+
+    // TODO: figure out the test runner API for pausing on a single error.
+    this._failureTracker.onTestPaused?.({ errors: params.endErrors || [], sendMessage });
   }
 
   skipWholeJob(): boolean {

@@ -91,11 +91,14 @@ export type TestInfoErrorImpl = TestInfoError;
 
 export type TestPausedPayload = {
   testId: string;
-  errors: TestInfoErrorImpl[];
-  status: TestStatus;
+  error?: TestInfoErrorImpl; // paused on intermediate error
+  endErrors?: TestInfoErrorImpl[]; // paused at the end, with errors
+  // otherwise paused at the end with no errors
 };
 
-export type ResumePayload = {};
+export type ResumePayload = {
+  disposition?: 'continue';
+};
 
 export type CloneStoragePayload = {
   storageFile: string;

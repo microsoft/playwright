@@ -67,9 +67,9 @@ export class InternalReporter implements ReporterV2 {
     this._reporter.onStdErr?.(chunk, test, result);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
+  async onTestPaused(test: TestCase, result: TestResult, error?: TestError): Promise<{ disposition?: 'continue' } | void> {
     this._addSnippetToTestErrors(test, result);
-    return await this._reporter.onTestPaused?.(test, result);
+    return await this._reporter.onTestPaused?.(test, result, error);
   }
 
   onTestEnd(test: TestCase, result: TestResult) {

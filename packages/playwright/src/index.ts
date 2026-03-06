@@ -23,6 +23,7 @@ import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringif
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler, runDaemonForContext } from './mcp/test/browserBackend';
+import { serializeError } from './util';
 
 import type { Fixtures, PlaywrightTestArgs, PlaywrightTestOptions, PlaywrightWorkerArgs, PlaywrightWorkerOptions, ScreenshotMode, TestInfo, TestType, VideoMode } from '../types/test';
 import type { ContextReuseMode } from './common/config';
@@ -291,7 +292,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         if (data.apiName === 'tracing.group')
           tracingGroupSteps.push(step);
       },
-      onApiCallEnd: data => {
+      runOnApiCallEnd: async data => {
 
         // "tracing.group" step will end later, when "tracing.groupEnd" finishes.
         if (data.apiName === 'tracing.group')
@@ -303,6 +304,15 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
         const step = data.userData;
         step?.complete({ error: data.error });
+
+        if (data.error) {
+          const testInfo = currentTestInfo();
+          if (testInfo) {
+            const resumePayload = await testInfo._pauseOnError(serializeError(data.error));
+            if (resumePayload.disposition === 'continue')
+              return { continueOnError: true };
+          }
+        }
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
