@@ -19,9 +19,8 @@ import { ProgramOption } from '../utilsBundle';
 import * as mcpServer from './sdk/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { contextFactory } from './browserContextFactory';
+import { createBrowser } from './browserFactory';
 import { BrowserServerBackend } from '../tools/browserServerBackend';
-import { ExtensionContextFactory } from './extensionContextFactory';
 import { filteredTools } from '../tools/tools';
 import { testDebug } from './log';
 
@@ -62,8 +61,6 @@ export function decorateMCPCommand(command: Command, version: string) {
       .option('--proxy-server <proxy>', 'specify proxy server, for example "http://myproxy:3128" or "socks5://myproxy:8080"')
       .option('--sandbox', 'enable the sandbox for all process types that are normally not sandboxed.')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
-      .option('--save-trace', 'Whether to save the Playwright Trace of the session into the output directory.')
-      .option('--save-video <size>', 'Whether to save the video of the session into the output directory. For example "--save-video=800x600"', resolutionParser.bind(null, '--save-video'))
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
       .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
       .option('--snapshot-mode <mode>', 'when taking snapshots for responses, specifies the mode to use. Can be "incremental", "full", or "none". Default is incremental.')
@@ -100,11 +97,8 @@ export function decorateMCPCommand(command: Command, version: string) {
             version,
             toolSchemas: tools.map(tool => tool.schema),
             create: async (clientInfo: ClientInfo) => {
-              const extensionContextFactory = new ExtensionContextFactory(
-                  config.browser.launchOptions.channel || 'chrome',
-                  config.browser.userDataDir,
-                  config.browser.launchOptions.executablePath);
-              const browserContext = await extensionContextFactory.createContext(clientInfo);
+              const browser = await createBrowser(config, clientInfo);
+              const browserContext = browser.contexts()[0];
               return new BrowserServerBackend(config, browserContext, tools);
             },
             disposed: async () => { }
@@ -113,7 +107,7 @@ export function decorateMCPCommand(command: Command, version: string) {
           return;
         }
 
-        const sharedContextFactory = config.sharedBrowserContext ? contextFactory(config) : undefined;
+        const sharedBrowser = config.sharedBrowserContext ? await createBrowser(config, { cwd: process.cwd() }) : undefined;
         let clientCount = 0;
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
@@ -122,13 +116,13 @@ export function decorateMCPCommand(command: Command, version: string) {
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
             clientCount++;
-            const browserContextFactory = sharedContextFactory || contextFactory(config);
-            const browserContext = config.browser.isolated ? await browserContextFactory.createContext(clientInfo) : (await browserContextFactory.contexts(clientInfo))[0];
+            const browser = sharedBrowser || await createBrowser(config, clientInfo);
+            const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
             return new BrowserServerBackend(config, browserContext, tools);
           },
           disposed: async backend => {
             clientCount--;
-            if (sharedContextFactory && clientCount > 0)
+            if (sharedBrowser && clientCount > 0)
               return;
 
             testDebug('close browser');

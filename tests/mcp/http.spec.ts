@@ -134,9 +134,8 @@ test('http transport browser lifecycle (isolated)', async ({ serverEndpoint, ser
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create http session': 2,
     'delete http session': 2,
-    'create browser context \(isolated\)': 2,
+    'create browser \(isolated\)': 2,
     'create context': 2,
-    'obtain browser \(isolated\)': 2,
     'close browser': 2,
   });
 });
@@ -155,10 +154,9 @@ test('http transport browser sigint', async ({ serverEndpoint, server }) => {
   await fetch(new URL('/killkillkill', url).href).catch(() => {});
 
   await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser context (isolated)': 1,
+    'create browser (isolated)': 1,
     'create context': 1,
     'create http session': 1,
-    'obtain browser (isolated)': 1,
     'gracefully closing 1': 1,
   });
 });
@@ -201,8 +199,7 @@ test('http transport browser lifecycle (isolated, multiclient)', async ({ server
     'create http session': 3,
     'delete http session': 3,
     'create context': 3,
-    'create browser context (isolated)': 3,
-    'obtain browser (isolated)': 3,
+    'create browser (isolated)': 3,
     'close browser': 3,
   });
 });
@@ -235,8 +232,7 @@ test('http transport browser lifecycle (persistent)', async ({ serverEndpoint, s
     'delete http session': 2,
     'create context': 2,
     'close browser': 2,
-    'obtain browser (persistent)': 2,
-    'create browser context (persistent)': 2,
+    'create browser (persistent)': 2,
   });
 });
 
@@ -304,10 +300,9 @@ test('http transport shared context', async ({ serverEndpoint, server }) => {
   await client2.close();
 
   await expect.poll(() => formatLog(stderr())).toEqual({
-    'create browser context (persistent)': 1,
+    'create browser (persistent)': 1,
     'create http session': 2,
     'delete http session': 2,
-    'obtain browser (persistent)': 1,
     'create context': 2,
     'close browser': 1,
   });

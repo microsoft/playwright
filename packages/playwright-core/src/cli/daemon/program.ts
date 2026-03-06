@@ -21,8 +21,7 @@ import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../../mcp/watchdog';
-import { contextFactory } from '../../mcp/browserContextFactory';
-import { ExtensionContextFactory } from '../../mcp/extensionContextFactory';
+import { createBrowser } from '../../mcp/browserFactory';
 import * as configUtils from '../../mcp/config';
 import { ClientInfo, createClientInfo } from '../client/registry';
 
@@ -47,10 +46,8 @@ export function decorateCLICommand(command: Command, version: string) {
         const mcpClientInfo = { cwd: process.cwd() };
 
         try {
-          const extensionContextFactory = new ExtensionContextFactory(mcpConfig.browser.launchOptions.channel || 'chrome', mcpConfig.browser.userDataDir, mcpConfig.browser.launchOptions.executablePath);
-          const browserContextFactory = contextFactory(mcpConfig);
-          const cf = mcpConfig.extension ? extensionContextFactory : browserContextFactory;
-          const browserContext = mcpConfig.browser.isolated ? await cf.createContext(mcpClientInfo) : (await cf.contexts(mcpClientInfo))[0];
+          const browser = await createBrowser(mcpConfig, mcpClientInfo);
+          const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
           const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { ...options, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');

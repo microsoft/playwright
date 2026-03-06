@@ -110,8 +110,7 @@ test('sse transport browser lifecycle (isolated)', async ({ serverEndpoint, serv
     'create SSE session': 2,
     'delete SSE session': 2,
     'create context': 2,
-    'create browser context (isolated)': 2,
-    'obtain browser (isolated)': 2,
+    'create browser (isolated)': 2,
     'close browser': 2,
   });
 });
@@ -151,8 +150,7 @@ test('sse transport browser lifecycle (isolated, multiclient)', async ({ serverE
     'create SSE session': 3,
     'delete SSE session': 3,
     'create context': 3,
-    'obtain browser (isolated)': 3,
-    'create browser context (isolated)': 3,
+    'create browser (isolated)': 3,
     'close browser': 3,
   });
 });
@@ -181,9 +179,8 @@ test('sse transport browser lifecycle (persistent)', async ({ serverEndpoint, se
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create SSE session': 2,
     'delete SSE session': 2,
-    'obtain browser (persistent)': 2,
     'create context': 2,
-    'create browser context (persistent)': 2,
+    'create browser (persistent)': 2,
     'close browser': 2,
   });
 });
@@ -252,8 +249,7 @@ test('sse transport shared context', async ({ serverEndpoint, server }) => {
   await expect.poll(() => formatLog(stderr())).toEqual({
     'create SSE session': 2,
     'delete SSE session': 2,
-    'obtain browser (persistent)': 1,
-    'create browser context (persistent)': 1,
+    'create browser (persistent)': 1,
     'create context': 2,
     'close browser': 1,
   });

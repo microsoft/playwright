@@ -17,47 +17,23 @@
 import * as playwright from '../..';
 import { debug } from '../utilsBundle';
 import { createHttpServer, startHttpServer } from '../server/utils/network';
-
 import { CDPRelayServer } from './cdpRelay';
 
-import type { BrowserContextFactory } from './browserContextFactory';
 import type { ClientInfo } from './sdk/server';
+import type { FullConfig } from './config';
 
 const debugLogger = debug('pw:mcp:relay');
 
-export class ExtensionContextFactory implements BrowserContextFactory {
-  private _browserChannel: string;
-  private _userDataDir?: string;
-  private _executablePath?: string;
+export async function createExtensionBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+  const httpServer = createHttpServer();
+  await startHttpServer(httpServer, {});
+  const relay = new CDPRelayServer(
+      httpServer,
+      config.browser.launchOptions.channel || 'chrome',
+      config.browser.userDataDir,
+      config.browser.launchOptions.executablePath);
+  debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
-  constructor(browserChannel: string, userDataDir: string | undefined, executablePath: string | undefined) {
-    this._browserChannel = browserChannel;
-    this._userDataDir = userDataDir;
-    this._executablePath = executablePath;
-  }
-
-  async contexts(clientInfo: ClientInfo): Promise<playwright.BrowserContext[]> {
-    const browser = await this._obtainBrowser(clientInfo);
-    return browser.contexts();
-  }
-
-  async createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
-    throw new Error('Creating a new context is not supported in extension mode. Please use the shared context instead.');
-  }
-
-  private async _obtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
-    const relay = await this._startRelay();
-    await relay.ensureExtensionConnectionForMCPContext(clientInfo, /* forceNewTab */ false);
-    return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
-  }
-
-  private async _startRelay() {
-    const httpServer = createHttpServer();
-    // Listen to the loopback interface only. The extension will disallow
-    // connections to other hosts anyway.
-    await startHttpServer(httpServer, {});
-    const cdpRelayServer = new CDPRelayServer(httpServer, this._browserChannel, this._userDataDir, this._executablePath);
-    debugLogger(`CDP relay server started, extension endpoint: ${cdpRelayServer.extensionEndpoint()}.`);
-    return cdpRelayServer;
-  }
+  await relay.ensureExtensionConnectionForMCPContext(clientInfo, /* forceNewTab */ false);
+  return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
 }
