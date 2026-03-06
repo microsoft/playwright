@@ -24,12 +24,14 @@ import { debugTest, relativeFilePath } from '../util';
 import { FixtureRunner } from './fixtureRunner';
 import { TestSkipError, TestInfoImpl, emtpyTestInfoCallbacks } from './testInfo';
 import { testInfoError } from './util';
+import { inheritFixtureNames } from '../common/fixtures';
 import { PoolBuilder } from '../common/poolBuilder';
 import { ProcessRunner } from '../common/process';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { loadTestFile } from '../common/testLoader';
 
 import type { TimeSlot } from './timeoutManager';
+import type { Location } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type * as ipc from '../common/ipc';
 import type { Suite, TestCase } from '../common/test';
@@ -525,6 +527,30 @@ export class WorkerMain extends ProcessRunner {
       await removeFolders([testInfo.outputDir]);
   }
 
+  private _collectHooksAndModifiers(suite: Suite, type: 'beforeAll' | 'beforeEach' | 'afterAll' | 'afterEach', testInfo: TestInfoImpl) {
+    type Runnable = { type: 'beforeEach' | 'afterEach' | 'beforeAll' | 'afterAll' | 'fixme' | 'skip' | 'slow' | 'fail', fn: Function, title: string, location: Location };
+    const runnables: Runnable[] = [];
+    for (const modifier of suite._modifiers) {
+      const modifierType = this._fixtureRunner.dependsOnWorkerFixturesOnly(modifier.fn, modifier.location) ? 'beforeAll' : 'beforeEach';
+      if (modifierType !== type)
+        continue;
+      const fn = async (fixtures: any) => {
+        const result = await modifier.fn(fixtures);
+        testInfo._modifier(modifier.type, modifier.location, [!!result, modifier.description]);
+      };
+      inheritFixtureNames(modifier.fn, fn);
+      runnables.push({
+        title: `${modifier.type} modifier`,
+        location: modifier.location,
+        type: modifier.type,
+        fn,
+      });
+    }
+    // Modifiers first, then hooks.
+    runnables.push(...suite._hooks.filter(hook => hook.type === type));
+    return runnables;
+  }
+
   private async _runBeforeAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl) {
     if (this._activeSuites.has(suite))
       return;
@@ -536,7 +562,7 @@ export class WorkerMain extends ProcessRunner {
   private async _runAllHooksForSuite(suite: Suite, testInfo: TestInfoImpl, type: 'beforeAll' | 'afterAll', extraAnnotations?: TestAnnotation[]) {
     // Always run all the hooks, and capture the first error.
     let firstError: Error | undefined;
-    for (const hook of suite._hooks.filter(hook => hook.type === type)) {
+    for (const hook of this._collectHooksAndModifiers(suite, type, testInfo)) {
       try {
         await testInfo._runAsStep({ title: hook.title, category: 'hook', location: hook.location }, async () => {
           // Separate time slot for each beforeAll/afterAll hook.
@@ -583,7 +609,7 @@ export class WorkerMain extends ProcessRunner {
   private async _runEachHooksForSuites(suites: Suite[], type: 'beforeEach' | 'afterEach', testInfo: TestInfoImpl, slot?: TimeSlot) {
     // Always run all the hooks, unless one of the times out, and capture the first error.
     let firstError: Error | undefined;
-    const hooks = suites.map(suite => suite._hooks.filter(hook => hook.type === type)).flat();
+    const hooks = suites.map(suite => this._collectHooksAndModifiers(suite, type, testInfo)).flat();
     for (const hook of hooks) {
       const runnable = { type: hook.type, location: hook.location, slot };
       if (testInfo._timeoutManager.isTimeExhaustedFor(runnable)) {
