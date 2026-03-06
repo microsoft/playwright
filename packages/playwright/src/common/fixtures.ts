@@ -228,16 +228,12 @@ export class FixturePool {
     return hash.digest('hex');
   }
 
-  validateFunction(fn: Function, prefix: string, location: Location): 'worker' | 'test' {
-    let scope: 'worker' | 'test' = 'worker';
+  validateFunction(fn: Function, prefix: string, location: Location) {
     for (const name of fixtureParameterNames(fn, location, e => this._onLoadError(e))) {
       const registration = this._registrations.get(name);
       if (!registration)
         this._addLoadError(`${prefix} has unknown parameter "${name}".`, location);
-      if (registration?.scope === 'test')
-        scope = 'test';
     }
-    return scope;
   }
 
   resolve(name: string, forFixture?: FixtureRegistration): FixtureRegistration | undefined {

@@ -223,7 +223,7 @@ export class TestTypeImpl {
       }
 
       if (typeof modifierArgs[0] === 'function') {
-        suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1], testType: this });
+        suite._modifiers.push({ type, fn: modifierArgs[0], location, description: modifierArgs[1] });
       } else {
         if (modifierArgs.length >= 1 && !modifierArgs[0])
           return;

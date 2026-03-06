@@ -283,13 +283,13 @@ test.describe('test modifier annotations', () => {
     const result = await runInlineTest({
       'a.test.ts': `
         import { test, expect } from '@playwright/test';
-
+  
         test.describe.only("suite", () => {
           test.skip('focused skip by suite', () => {});
           test.fixme('focused fixme by suite', () => {});
           test.fail.only('focused fail by suite', () => { expect(1).toBe(2); });
         });
-
+  
         test.describe.skip('not focused', () => {
           test('no marker', () => {});
         });
@@ -527,7 +527,7 @@ test('modifier timeout should be reported', async ({ runInlineTest }) => {
   }, { timeout: 2000 });
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
-  expect(result.output).toContain('"beforeAll" hook timeout of 2000ms exceeded.');
+  expect(result.output).toContain('"skip" modifier timeout of 2000ms exceeded.');
   expect(result.output).toContain('3 |       test.skip(async () => new Promise(() => {}));');
 });
 
