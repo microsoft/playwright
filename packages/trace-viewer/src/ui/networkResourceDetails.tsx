@@ -24,7 +24,7 @@ import { generateCurlCommand, generateFetchCall } from '../third_party/devtools'
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { getAPIRequestCodeGen } from './codegen';
 import type { Language } from '@isomorphic/locatorGenerators';
-import { isJsonMimeType } from '@isomorphic/mimeType';
+import { isJsonMimeType, isXmlMimeType } from '@isomorphic/mimeType';
 import { msToString, useAsyncMemo, useSetting } from '@web/uiUtils';
 import type { Entry } from '@trace/har';
 import { useTraceModel } from './traceModelContext';
@@ -260,6 +260,34 @@ function statusClass(statusCode: number): string {
   return 'red-circle';
 }
 
+const kInlineTagPattern = /<[^>]+>[^<]*<\//;
+
+function formatXml(xml: string, indent = '  ') {
+  let depth = 0;
+  const lines: string[] = [];
+  const tokens = xml.replace(/>\s*</g, '>\n<').split('\n');
+
+  for (const token of tokens) {
+    const trimmed = token.trim();
+    if (!trimmed)
+      continue;
+
+    if (trimmed.startsWith('</')) {
+      depth = Math.max(depth - 1, 0);
+      lines.push(indent.repeat(depth) + trimmed);
+    } else if (trimmed.endsWith('/>') || trimmed.startsWith('<?') || kInlineTagPattern.test(trimmed)) {
+      lines.push(indent.repeat(depth) + trimmed);
+    } else if (trimmed.startsWith('<')) {
+      lines.push(indent.repeat(depth) + trimmed);
+      depth++;
+    } else {
+      lines.push(indent.repeat(depth) + trimmed);
+    }
+  }
+
+  return lines.join('\n');
+}
+
 function formatBody(body: string | null, contentType: string): string {
   if (body === null)
     return 'Loading...';
@@ -272,6 +300,14 @@ function formatBody(body: string | null, contentType: string): string {
     try {
       return JSON.stringify(JSON.parse(bodyStr), null, 2);
     } catch (err) {
+      return bodyStr;
+    }
+  }
+
+  if (isXmlMimeType(contentType)) {
+    try {
+      return formatXml(bodyStr);
+    } catch {
       return bodyStr;
     }
   }

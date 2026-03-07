@@ -478,7 +478,7 @@ test('should filter network requests by multiple resource types', async ({ page,
   await expect(networkRequests.getByText('image.png')).toBeVisible();
 
   await traceViewer.page.getByText('All', { exact: true }).click();
-  await expect(networkRequests).toHaveCount(9);
+  await expect(networkRequests).toHaveCount(10);
 });
 
 test('should show font preview', async ({ page, runAndTrace, server }) => {
