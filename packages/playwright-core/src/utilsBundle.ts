@@ -31,7 +31,10 @@ export const program: typeof import('../bundles/utils/node_modules/commander').p
 export const ProgramOption: typeof import('../bundles/utils/node_modules/commander').Option = require('./utilsBundleImpl').ProgramOption;
 export const progress: typeof import('../bundles/utils/node_modules/@types/progress') = require('./utilsBundleImpl').progress;
 export const SocksProxyAgent: typeof import('../bundles/utils/node_modules/socks-proxy-agent').SocksProxyAgent = require('./utilsBundleImpl').SocksProxyAgent;
-export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = require('./utilsBundleImpl').ws;
+// Use Bun's native ws when available — Bun's HTTP client doesn't support protocol
+// upgrades, so the bundled ws (which relies on Node's http 'upgrade' event) fails.
+// See https://github.com/oven-sh/bun/issues/9911 (open since April 2024).
+export const ws: typeof import('../bundles/utils/node_modules/@types/ws') = 'Bun' in globalThis ? require('ws') : require('./utilsBundleImpl').ws;
 export const wsServer: typeof import('../bundles/utils/node_modules/@types/ws').WebSocketServer = require('./utilsBundleImpl').wsServer;
 export const wsReceiver = require('./utilsBundleImpl').wsReceiver;
 export const wsSender = require('./utilsBundleImpl').wsSender;
