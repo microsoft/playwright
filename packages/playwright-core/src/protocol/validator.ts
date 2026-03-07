@@ -314,8 +314,7 @@ scheme.LocalUtilsHarUnzipParams = tObject({
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
-  wsEndpoint: tOptional(tString),
-  pipeName: tOptional(tString),
+  endpoint: tString,
   headers: tOptional(tAny),
   exposeNetwork: tOptional(tString),
   slowMo: tOptional(tFloat),

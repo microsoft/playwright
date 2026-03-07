@@ -95,9 +95,9 @@ This method attaches Playwright to an existing browser instance created via `Bro
 The major and minor version of the Playwright instance that connects needs to match the version of Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
 :::
 
-### param: BrowserType.connect.wsEndpoint
+### param: BrowserType.connect.endpoint
 * since: v1.10
-- `wsEndpoint` <[string]>
+- `endpoint` <[string]>
 
 A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
 

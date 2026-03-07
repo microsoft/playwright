@@ -706,8 +706,7 @@ LocalUtils:
     connect:
       internal: true
       parameters:
-        wsEndpoint: string?
-        pipeName: string?
+        endpoint: string
         headers: json?
         exposeNetwork: string?
         slowMo: float?

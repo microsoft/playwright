@@ -126,7 +126,7 @@ export class RemoteServer implements PlaywrightServer {
     this._wsEndpoint = await this.out('wsEndpoint');
 
     if (remoteServerOptions.url) {
-      this._browser = await this._browserType.connect({ wsEndpoint: this._wsEndpoint });
+      this._browser = await this._browserType.connect(this._wsEndpoint);
       const page = await this._browser.newPage();
       await page.goto(remoteServerOptions.url);
     }

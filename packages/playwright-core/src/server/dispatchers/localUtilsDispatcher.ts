@@ -84,9 +84,9 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
   }
 
   async connect(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
-    if (params.pipeName)
-      return await this._connectOverPipe(params, progress);
-    return await this._connectOverWebSocket(params, progress);
+    if (URL.canParse(params.endpoint))
+      return await this._connectOverWebSocket(params, progress);
+    return await this._connectOverPipe(params, progress);
   }
 
   private async _connectOverWebSocket(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
@@ -95,7 +95,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
       'x-playwright-proxy': params.exposeNetwork ?? '',
       ...params.headers,
     };
-    const wsEndpoint = await urlToWSEndpoint(progress, params.wsEndpoint!);
+    const wsEndpoint = await urlToWSEndpoint(progress, params.endpoint);
 
     const transport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: wsHeaders, followRedirects: true, debugLogHeader: 'x-playwright-debug-log' });
     const socksInterceptor = new SocksInterceptor(transport, params.exposeNetwork, params.socksProxyRedirectPortForTest);
@@ -128,7 +128,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
 
   private async _connectOverPipe(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
     const socket = await new Promise<net.Socket>((resolve, reject) => {
-      const conn = net.connect(params.pipeName!, () => resolve(conn));
+      const conn = net.connect(params.endpoint, () => resolve(conn));
       conn.on('error', reject);
     });
     const transport = new PipeTransport(socket, socket);

@@ -122,13 +122,12 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
   }
 
   connect(options: api.ConnectOptions & { wsEndpoint: string }): Promise<Browser>;
-  connect(options: api.ConnectOptions & { pipeName: string }): Promise<Browser>;
-  connect(wsEndpoint: string, options?: api.ConnectOptions): Promise<Browser>;
-  async connect(optionsOrWsEndpoint: string | (api.ConnectOptions & { wsEndpoint?: string, pipeName?: string }), options?: api.ConnectOptions): Promise<Browser>{
-    if (typeof optionsOrWsEndpoint === 'string')
-      return await this._connect({ ...options, wsEndpoint: optionsOrWsEndpoint });
-    assert(optionsOrWsEndpoint.wsEndpoint || optionsOrWsEndpoint.pipeName, 'Either options.wsEndpoint or options.pipeName is required');
-    return await this._connect(optionsOrWsEndpoint);
+  connect(endpoint: string, options?: api.ConnectOptions): Promise<Browser>;
+  async connect(optionsOrEndpoint: string | (api.ConnectOptions & { wsEndpoint?: string, pipeName?: string }), options?: api.ConnectOptions): Promise<Browser>{
+    if (typeof optionsOrEndpoint === 'string')
+      return await this._connect({ ...options, endpoint: optionsOrEndpoint });
+    assert(optionsOrEndpoint.wsEndpoint, 'options.wsEndpoint is required');
+    return await this._connect(optionsOrEndpoint);
   }
 
   async _connect(params: ConnectOptions): Promise<Browser> {
@@ -137,10 +136,9 @@ export class BrowserType extends ChannelOwner<channels.BrowserTypeChannel> imple
       const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
       const headers = { 'x-playwright-browser': this.name(), ...params.headers };
       const connectParams: channels.LocalUtilsConnectParams = {
-        wsEndpoint: params.wsEndpoint,
-        pipeName: params.pipeName,
+        endpoint: params.endpoint!,
         headers,
-        exposeNetwork: params.exposeNetwork ?? params._exposeNetwork,
+        exposeNetwork: params.exposeNetwork,
         slowMo: params.slowMo,
         timeout: params.timeout || 0,
       };
