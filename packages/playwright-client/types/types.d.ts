@@ -8689,21 +8689,8 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. This covers the initial service worker for an
-   * extension and any replacement worker created after an explicit extension reload (`chrome.runtime.reload()` or via
-   * the Extensions page). To capture a worker created by a reload, register the listener **before** triggering the
-   * reload:
-   *
-   * ```js
-   * const swPromise = context.waitForEvent('serviceworker');
-   * await triggerExtensionReload();
-   * const newServiceWorker = await swPromise;
-   * ```
-   *
-   * **Chrome MV3 idle suspension:** When a service worker is suspended and restarted by Chrome after inactivity (~30
-   * s), the same [Worker](https://playwright.dev/docs/api/class-worker) object remains valid — no new event is emitted.
-   * New `evaluate()` calls issued during the restart window are stalled until the new context is ready; calls already
-   * in-flight at the moment of restart will throw.
+   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
+   * guide for usage patterns.
    */
   on(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -8895,21 +8882,8 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. This covers the initial service worker for an
-   * extension and any replacement worker created after an explicit extension reload (`chrome.runtime.reload()` or via
-   * the Extensions page). To capture a worker created by a reload, register the listener **before** triggering the
-   * reload:
-   *
-   * ```js
-   * const swPromise = context.waitForEvent('serviceworker');
-   * await triggerExtensionReload();
-   * const newServiceWorker = await swPromise;
-   * ```
-   *
-   * **Chrome MV3 idle suspension:** When a service worker is suspended and restarted by Chrome after inactivity (~30
-   * s), the same [Worker](https://playwright.dev/docs/api/class-worker) object remains valid — no new event is emitted.
-   * New `evaluate()` calls issued during the restart window are stalled until the new context is ready; calls already
-   * in-flight at the moment of restart will throw.
+   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
+   * guide for usage patterns.
    */
   addListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -9156,21 +9130,8 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. This covers the initial service worker for an
-   * extension and any replacement worker created after an explicit extension reload (`chrome.runtime.reload()` or via
-   * the Extensions page). To capture a worker created by a reload, register the listener **before** triggering the
-   * reload:
-   *
-   * ```js
-   * const swPromise = context.waitForEvent('serviceworker');
-   * await triggerExtensionReload();
-   * const newServiceWorker = await swPromise;
-   * ```
-   *
-   * **Chrome MV3 idle suspension:** When a service worker is suspended and restarted by Chrome after inactivity (~30
-   * s), the same [Worker](https://playwright.dev/docs/api/class-worker) object remains valid — no new event is emitted.
-   * New `evaluate()` calls issued during the restart window are stalled until the new context is ready; calls already
-   * in-flight at the moment of restart will throw.
+   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
+   * guide for usage patterns.
    */
   prependListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -9954,21 +9915,8 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. This covers the initial service worker for an
-   * extension and any replacement worker created after an explicit extension reload (`chrome.runtime.reload()` or via
-   * the Extensions page). To capture a worker created by a reload, register the listener **before** triggering the
-   * reload:
-   *
-   * ```js
-   * const swPromise = context.waitForEvent('serviceworker');
-   * await triggerExtensionReload();
-   * const newServiceWorker = await swPromise;
-   * ```
-   *
-   * **Chrome MV3 idle suspension:** When a service worker is suspended and restarted by Chrome after inactivity (~30
-   * s), the same [Worker](https://playwright.dev/docs/api/class-worker) object remains valid — no new event is emitted.
-   * New `evaluate()` calls issued during the restart window are stalled until the new context is ready; calls already
-   * in-flight at the moment of restart will throw.
+   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
+   * guide for usage patterns.
    */
   waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
 

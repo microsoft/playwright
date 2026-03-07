@@ -30,9 +30,7 @@ export class CRServiceWorker extends Worker {
   private readonly _networkManager?: CRNetworkManager;
   private _session: CRSession;
   private readonly _targetId: string;
-  private _currentContextId: number | undefined;
   private _currentContextUniqueId: string | undefined;
-  private _currentContextDestroyed = false;
 
   constructor(browserContext: CRBrowserContext, session: CRSession, url: string, targetId: string) {
     super(browserContext, url);
@@ -42,37 +40,22 @@ export class CRServiceWorker extends Worker {
     if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
 
-    session.on('Runtime.executionContextDestroyed', (event: Protocol.Runtime.executionContextDestroyedPayload) => {
-      if (event.executionContextId === this._currentContextId)
-        this._currentContextDestroyed = true;
-    });
-    session.on('Runtime.executionContextsCleared', () => {
-      if (this._currentContextId !== undefined) {
-        this._currentContextDestroyed = true;
-        this._currentContextUniqueId = undefined;
-      }
+    session.on('Inspector.targetCrashed', () => {
+      this._currentContextUniqueId = undefined;
+      this._prepareContextForRestart();
     });
 
-    const onExecutionContextCreated = (event: Protocol.Runtime.executionContextCreatedPayload) => {
-      // Ignore duplicate notifications (e.g. buffered by Runtime.enable); use uniqueId since Chrome reuses the numeric id across restarts.
-      if (!this._currentContextDestroyed && event.context.uniqueId === this._currentContextUniqueId)
-        return;
-
-      // SW restarted — same target, new V8 context.
-      if (this.existingExecutionContext !== null || this._currentContextDestroyed) {
-        this._handleRestart(event);
-        return;
-      }
-
-      this._currentContextId = event.context.id;
+    session.on('Runtime.executionContextCreated', (event: Protocol.Runtime.executionContextCreatedPayload) => {
+      if (event.context.uniqueId === this._currentContextUniqueId)
+        return; // ignore buffered duplicate from Runtime.enable
       this._currentContextUniqueId = event.context.uniqueId;
       this.createExecutionContext(new CRExecutionContext(session, event.context));
-    };
-    session.on('Runtime.executionContextCreated', onExecutionContextCreated);
+      if (this.browserContext._browser.majorVersion() < 143)
+        this.workerScriptLoaded();
+    });
+
     if (this.browserContext._browser.majorVersion() >= 143)
       session.on('Inspector.workerScriptLoaded', () => this.workerScriptLoaded());
-    else
-      this.workerScriptLoaded();
 
     if (this._networkManager && this._isNetworkInspectionEnabled()) {
       this.updateRequestInterception();
@@ -96,20 +79,6 @@ export class CRServiceWorker extends Worker {
       // Resume service worker after restart.
       session._sendMayFail('Runtime.runIfWaitingForDebugger', {});
     });
-  }
-
-  private _handleRestart(contextEvent: Protocol.Runtime.executionContextCreatedPayload) {
-    this._prepareContextForRestart();
-
-    this._currentContextId = contextEvent.context.id;
-    this._currentContextUniqueId = contextEvent.context.uniqueId;
-    this._currentContextDestroyed = false;
-
-    this.createExecutionContext(new CRExecutionContext(this._session, contextEvent.context));
-
-    // Chrome < 143 has no Inspector.workerScriptLoaded; resolve immediately to unblock evaluations.
-    if (this.browserContext._browser.majorVersion() < 143)
-      this.workerScriptLoaded();
   }
 
   override didClose() {
