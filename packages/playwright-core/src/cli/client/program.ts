@@ -294,7 +294,8 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*cli.js*' -and $_.CommandLine -like '*run-cli-server*' } `
+          + `| Where-Object { ($_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-*') `
+          + `-or ($_.CommandLine -like '*cli.js*' -and $_.CommandLine -like '*run-cli-server*') } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -308,7 +309,8 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if (line.includes('cli.js') && line.includes('run-cli-server')) {
+        if ((line.includes('-server') && line.includes('--daemon-')) ||
+            (line.includes('cli.js') && line.includes('run-cli-server'))) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
