@@ -522,6 +522,10 @@ export function headerParser(arg: string | undefined, previous?: Record<string, 
   const name = colonIndex === -1 ? arg.trim() : arg.substring(0, colonIndex).trim();
   const value = colonIndex === -1 ? '' : arg.substring(colonIndex + 1).trim();
 
+  // Guard: Skip headers with empty names (e.g. ":" or ":value")
+  if (!name)
+    return result;
+
   result[name] = value;
   return result;
 }
