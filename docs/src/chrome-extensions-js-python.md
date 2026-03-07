@@ -101,6 +101,45 @@ with sync_playwright() as playwright:
     run(playwright)
 ```
 
+## Service worker idle suspension (MV3)
+
+Chrome MV3 service workers are automatically suspended after ~30 seconds of inactivity and restarted
+on demand. When this happens, Playwright keeps the **same [Worker] object alive** — no new
+`'serviceworker'` event is emitted. New `evaluate()` calls issued during the restart window are
+stalled until the new context is ready and then resume automatically:
+
+```js
+const sw = await context.waitForEvent('serviceworker');
+
+// ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+// The existing handle is transparent across the restart.
+await sw.evaluate(() => sendMessage({ type: 'ping' })); // just works
+```
+
+```python async
+sw = await context.wait_for_event('serviceworker')
+
+# ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+# The existing handle is transparent across the restart.
+await sw.evaluate("sendMessage({ type: 'ping' })")  # just works
+```
+
+```python sync
+sw = context.wait_for_event('serviceworker')
+
+# ... SW suspends after 30 s of inactivity and is restarted by the browser ...
+
+# The existing handle is transparent across the restart.
+sw.evaluate("sendMessage({ type: 'ping' })")  # just works
+```
+
+:::note
+`evaluate()` calls that were already in-flight at the exact moment of suspension will throw
+with `"Service worker restarted"`, matching the behaviour of page navigations mid-flight.
+:::
+
 ## Testing
 
 To have the extension loaded when running tests you can use a test fixture to set the context. You can also dynamically retrieve the extension id and use it to load and test the popup page for example.

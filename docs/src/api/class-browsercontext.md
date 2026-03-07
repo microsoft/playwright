@@ -292,7 +292,8 @@ from a particular page, use [`event: Page.response`].
 Service workers are only supported on Chromium-based browsers.
 :::
 
-Emitted when new service worker is created in the context.
+Emitted when a new service worker is created in the context. See the
+[Chrome extensions](./chrome-extensions.md) guide for usage patterns.
 
 ## async method: BrowserContext.addCookies
 * since: v1.8
