@@ -30,7 +30,7 @@ Description of the option.
 ```
 
 **Key syntax rules:**
-- `* since: v1.XX` — version from package.json (without -next)
+- `* since: v1.XX` — always take the version from package.json (without -next)
 - `* langs: js, python` — language filter (optional)
 - `* langs: alias-java: navigate` — language-specific method name
 - `* deprecated: v1.XX` — deprecation marker
@@ -59,6 +59,8 @@ Description.
 
 Description.
 ```
+
+Keep methods, events and property definitions sorted alphabetically within the file.
 
 Watch will kick in and auto-generate:
 - `packages/playwright-core/types/types.d.ts` — public API types
