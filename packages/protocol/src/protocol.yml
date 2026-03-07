@@ -3984,6 +3984,8 @@ CDPSession:
         method: string
         params: json?
 
+    close:
+
 
 Electron:
   type: interface
