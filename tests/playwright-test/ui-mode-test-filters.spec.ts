@@ -245,3 +245,33 @@ test('should not show tests filtered with --grep-invert', async ({ runUITest }) 
   await expect.poll(dumpTestTree(page)).toContain('passes');
   await expect.poll(dumpTestTree(page)).not.toContain('fails');
 });
+
+test('should filter by only changed files', async ({ runUITest, git, writeFiles }) => {
+  const committedFiles = {
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('committed test', () => {});
+    `,
+  };
+
+  await writeFiles(committedFiles);
+  git(`add .`);
+  git(`commit -m init`);
+
+  const { page } = await runUITest({
+    ...committedFiles,
+    'b.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('new untracked test', () => {});
+    `,
+  });
+
+  await expect.poll(dumpTestTree(page)).toContain('a.test.ts');
+  await expect.poll(dumpTestTree(page)).toContain('b.test.ts');
+
+  await page.getByText('Status:').click();
+  await page.getByLabel('Show only changed files').setChecked(true);
+
+  await expect.poll(dumpTestTree(page)).toContain('b.test.ts');
+  await expect.poll(dumpTestTree(page)).not.toContain('a.test.ts');
+});
