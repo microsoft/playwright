@@ -37,7 +37,7 @@ const basicTestTree = {
 
 test('should filter by title', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await page.getByPlaceholder('Filter').fill('inner');
+  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('inner');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ suite
@@ -48,7 +48,7 @@ test('should filter by title', async ({ runUITest }) => {
 
 test('should filter by explicit tags', async ({ runUITest }) => {
   const { page } = await runUITest(basicTestTree);
-  await page.getByPlaceholder('Filter').fill('@smoke inner');
+  await page.getByPlaceholder('Filter (e.g. text, @tag)').fill('@smoke inner');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
       ▼ ◯ suite
@@ -65,7 +65,7 @@ test('should display native tags and filter by them on click', async ({ runUITes
   `,
   });
   await page.locator('.ui-mode-tree-item-title').getByText('smoke').click();
-  await expect(page.getByPlaceholder('Filter')).toHaveValue('@smoke');
+  await expect(page.getByPlaceholder('Filter (e.g. text, @tag)')).toHaveValue('@smoke');
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
         ◯ pwt
