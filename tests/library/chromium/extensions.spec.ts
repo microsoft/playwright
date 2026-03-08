@@ -73,24 +73,12 @@ it.describe('MV3', () => {
     await expect.poll(() => versionId && scopeURL, { timeout: 5000 }).toBeTruthy();
 
     await cdp.send('ServiceWorker.stopWorker', { versionId });
-    // Wait for full stop so Chrome fires executionContextsCleared before the new context arrives.
+    // Wait for full stop before triggering restart.
     await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('stopped');
     await cdp.send('ServiceWorker.startWorker', { scopeURL });
     await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('running');
 
-    // ServiceWorker.workerVersionUpdated and Runtime.executionContextCreated are on independent CDP
-    // domains, so 'running' status may be observed before _handleRestart() has run. evaluate() may
-    // therefore throw transiently; poll retries until the new context is ready.
-    let startTime2!: number;
-    await expect.poll(async () => {
-      try {
-        startTime2 = await sw1.evaluate(() => (globalThis as any).startTime);
-      } catch {
-        return startTime1; // transient restart error — returning startTime1 triggers retry
-      }
-      return startTime2;
-    }, { timeout: 10_000 }).not.toBe(startTime1);
-
+    const startTime2 = await sw1.evaluate(() => (globalThis as any).startTime);
     expect(startTime2).toBeGreaterThan(startTime1);
     expect(context.serviceWorkers()).toStrictEqual([sw1]); // same object, no new event
 

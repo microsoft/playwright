@@ -8689,8 +8689,7 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
-   * guide for usage patterns.
+   * Emitted when new service worker is created in the context.
    */
   on(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -8882,8 +8881,7 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
-   * guide for usage patterns.
+   * Emitted when new service worker is created in the context.
    */
   addListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -9130,8 +9128,7 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
-   * guide for usage patterns.
+   * Emitted when new service worker is created in the context.
    */
   prependListener(event: 'serviceworker', listener: (worker: Worker) => any): this;
 
@@ -9915,8 +9912,7 @@ export interface BrowserContext {
   /**
    * **NOTE** Service workers are only supported on Chromium-based browsers.
    *
-   * Emitted when a new service worker is created in the context. See the [Chrome extensions](https://playwright.dev/docs/api/chrome-extensions)
-   * guide for usage patterns.
+   * Emitted when new service worker is created in the context.
    */
   waitForEvent(event: 'serviceworker', optionsOrPredicate?: { predicate?: (worker: Worker) => boolean | Promise<boolean>, timeout?: number } | ((worker: Worker) => boolean | Promise<boolean>)): Promise<Worker>;
 

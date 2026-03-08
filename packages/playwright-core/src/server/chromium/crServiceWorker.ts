@@ -29,26 +29,17 @@ export class CRServiceWorker extends Worker {
   readonly browserContext: CRBrowserContext;
   private readonly _networkManager?: CRNetworkManager;
   private _session: CRSession;
-  private readonly _targetId: string;
-  private _currentContextUniqueId: string | undefined;
 
-  constructor(browserContext: CRBrowserContext, session: CRSession, url: string, targetId: string) {
+  constructor(browserContext: CRBrowserContext, session: CRSession, url: string) {
     super(browserContext, url);
     this._session = session;
-    this._targetId = targetId;
     this.browserContext = browserContext;
     if (!process.env.PLAYWRIGHT_DISABLE_SERVICE_WORKER_NETWORK)
       this._networkManager = new CRNetworkManager(null, this);
 
-    session.on('Inspector.targetCrashed', () => {
-      this._currentContextUniqueId = undefined;
-      this._prepareContextForRestart();
-    });
+    session.on('Inspector.targetCrashed', () => this._prepareContextForRestart());
 
     session.on('Runtime.executionContextCreated', (event: Protocol.Runtime.executionContextCreatedPayload) => {
-      if (event.context.uniqueId === this._currentContextUniqueId)
-        return; // ignore buffered duplicate from Runtime.enable
-      this._currentContextUniqueId = event.context.uniqueId;
       this.createExecutionContext(new CRExecutionContext(session, event.context));
       if (this.browserContext._browser.majorVersion() < 143)
         this.workerScriptLoaded();
