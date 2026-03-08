@@ -336,7 +336,7 @@ test('should respect config.expect.toMatchAriaSnapshot.children=deep-equal', asy
   expect(result.output).toContain('+       - listitem: "1.2"');
 });
 
-test('inline /children: directive should override global children config', async ({ runInlineTest }) => {
+test('inline /children property should override global children config', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
       export default {
@@ -360,6 +360,7 @@ test('inline /children: directive should override global children config', async
       });
     `
   });
+
   expect(result.exitCode).toBe(0);
 });
 
@@ -395,8 +396,37 @@ test('should respect project-level expect.toMatchAriaSnapshot.children=equal', a
       });
     `
   });
+
   expect(result.exitCode).toBe(1);
   expect(result.passed).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('+ - paragraph: Paragraph');
+});
+
+
+test('top-level equal should overwrite deep-equal children config', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      export default {
+        expect: {
+          toMatchAriaSnapshot: {
+            children: 'deep-equal',
+          },
+        },
+      };
+    `,
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('equal matches part of tree', async ({ page }) => {
+        await page.setContent(\`<ul><li>One</li><li>Two</li></ul>\`);
+        await expect(page.locator('body')).toMatchAriaSnapshot(\`
+          - /children: equal
+          - list:
+            - listitem: "One"
+        \`);
+      });
+    `
+  });
+
+  expect(result.exitCode).toBe(0);
 });

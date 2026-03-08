@@ -82,7 +82,7 @@ export async function toMatchAriaSnapshot(
   expected = unshift(expected);
 
   const globalChildren = testInfo._projectInternal.expect?.toMatchAriaSnapshot?.children;
-  if (globalChildren)
+  if (globalChildren && !expected.match(/^- \/children:\s/m))
     expected = `- /children: ${globalChildren}\n` + expected;
 
   const { matches: pass, received, log, timedOut, errorMessage } = await locator._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
