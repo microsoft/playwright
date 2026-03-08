@@ -267,14 +267,14 @@ class JUnitReporter implements ReporterV2 {
   private _addFailureEntry(test: TestCase, entry: XMLEntry): 'failure' | 'error' {
     const errorInfo = classifyError(test);
     if (errorInfo) {
-      entry.children.push({
+      entry.children!.push({
         name: errorInfo.elementName,
         attributes: { message: errorInfo.message, type: errorInfo.type },
         text: stripAnsiEscapes(formatFailure(nonTerminalScreen, this.config, test))
       });
       return errorInfo.elementName;
     }
-    entry.children.push({
+    entry.children!.push({
       name: 'failure',
       attributes: {
         message: `${path.basename(test.location.file)}:${test.location.line}:${test.location.column} ${test.title}`,
