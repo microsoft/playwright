@@ -37,6 +37,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   _options: LaunchOptions = {};
   _userDataDir: string | undefined;
   readonly _name: string;
+  readonly _browserName: 'chromium' | 'webkit' | 'firefox';
   private _path: string | undefined;
   _closeReason: string | undefined;
 
@@ -47,6 +48,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.BrowserInitializer) {
     super(parent, type, guid, initializer);
     this._name = initializer.name;
+    this._browserName = initializer.browserName;
     this._channel.on('context', ({ context }) => this._didCreateContext(BrowserContext.from(context)));
     this._channel.on('close', () => this._didClose());
     this._closedPromise = new Promise(f => this.once(Events.Browser.Disconnected, f));

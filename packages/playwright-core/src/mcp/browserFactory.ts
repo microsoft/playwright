@@ -24,10 +24,13 @@ import { registryDirectory } from '../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../tools/context';
 import { createExtensionBrowser } from './extensionContextFactory';
+import { connectToBrowser, connectToBrowserAcrossVersions } from '../client/connect';
+import { serverRegistry } from '../serverRegistry';
 
 import type { FullConfig } from './config';
-import type { LaunchOptions, BrowserContextOptions } from '../client/types';
+import type { LaunchOptions, BrowserContextOptions, ConnectOptions } from '../client/types';
 import type { ClientInfo } from './sdk/server';
+import type { Playwright } from '../client/playwright';
 
 export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
   if (config.browser.remoteEndpoint)
@@ -73,11 +76,16 @@ async function createCDPBrowser(config: FullConfig): Promise<playwright.Browser>
 
 async function createRemoteBrowser(config: FullConfig): Promise<playwright.Browser> {
   testDebug('create browser (remote)');
-  const url = new URL(config.browser.remoteEndpoint!);
-  url.searchParams.set('browser', config.browser.browserName);
-  if (config.browser.launchOptions)
-    url.searchParams.set('launch-options', JSON.stringify(config.browser.launchOptions));
-  return playwright[config.browser.browserName].connect(String(url));
+  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
+  if (descriptor)
+    return await connectToBrowserAcrossVersions(descriptor);
+
+  const endpoint = config.browser.remoteEndpoint!;
+  const params: ConnectOptions = { endpoint };
+  const playwrightObject = playwright as Playwright;
+  const browser = await connectToBrowser(playwrightObject, params);
+  browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
+  return browser;
 }
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {

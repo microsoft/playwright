@@ -267,7 +267,7 @@ export class Electron extends SdkObject {
       };
       const browserOptions: BrowserOptions = {
         name: 'electron',
-        isChromium: true,
+        browserType: 'chromium',
         headful: true,
         persistent: contextOptions,
         browserProcess,

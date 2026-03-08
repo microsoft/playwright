@@ -96,7 +96,8 @@ export type LaunchOptions = Omit<channels.BrowserTypeLaunchOptions, 'ignoreAllDe
 export type LaunchPersistentContextOptions = Omit<LaunchOptions & BrowserContextOptions, 'storageState'>;
 
 export type ConnectOptions = {
-  endpoint?: string;
+  endpoint: string;
+  browserName?: string;
   headers?: { [key: string]: string; };
   exposeNetwork?: string;
   slowMo?: number;
