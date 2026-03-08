@@ -7,3 +7,4 @@
 ../../mcpBundle.ts
 ../../mcp/
 ../../server/utils/
+../../serverRegistry.ts

@@ -28,6 +28,10 @@ try {
     stdio: ['ignore', 'ignore', 'inherit'],
     cwd: path.join(__dirname, '..'),
   });
+  execSync('npm run test-mcp -- --list --forbid-only', {
+    stdio: ['ignore', 'ignore', 'inherit'],
+    cwd: path.join(__dirname, '..'),
+  });
 } catch (e) {
   process.exit(1);
 }

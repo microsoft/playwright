@@ -27,7 +27,7 @@ import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { createGuid } from './utils/crypto';
-import { defaultRegistryDirectory } from './registry';
+import { serverRegistry } from '../serverRegistry';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
@@ -46,7 +46,7 @@ export interface BrowserProcess {
 
 export type BrowserOptions = {
   name: string,
-  isChromium: boolean,
+  browserType: 'chromium' | 'firefox' | 'webkit',
   channel?: string,
   artifactsDir: string;
   downloadsPath: string,
@@ -207,8 +207,6 @@ export abstract class Browser extends SdkObject {
   }
 }
 
-const packageVersion = require('../../package.json').version;
-
 export class BrowserServer {
   private _browser: Browser;
   private _pipeServer?: PlaywrightPipeServer;
@@ -236,45 +234,23 @@ export class BrowserServer {
       result.wsEndpoint = await this._wsServer.listen(0);
     }
 
-    await this._createDescriptor(title, result);
+    await serverRegistry.create(this._browser, {
+      title,
+      wsEndpoint: result.wsEndpoint,
+      pipeName: result.pipeName,
+      workspaceDir: options.workspaceDir,
+    });
     return result;
   }
 
   async stop() {
-    await this._deleteDescriptor();
+    await serverRegistry.delete(this._browser);
+    if (this._pipeSocketPath && process.platform !== 'win32')
+      await fs.promises.unlink(this._pipeSocketPath).catch(() => {});
     await this._pipeServer?.close();
     await this._wsServer?.close();
     this._pipeServer = undefined;
     this._wsServer = undefined;
-  }
-
-  private async _createDescriptor(title: string, result: { wsEndpoint?: string, pipeName?: string, workspaceDir?: string }) {
-    const file = this._descriptorPath();
-    await fs.promises.mkdir(path.dirname(file), { recursive: true });
-    const descriptor = {
-      version: packageVersion,
-      title,
-      browser: {
-        name: this._browser.options.name,
-        channel: this._browser.options.channel,
-        version: this._browser.version(),
-      },
-      wsEndpoint: result.wsEndpoint ? result.wsEndpoint : undefined,
-      pipeName: result.pipeName ? result.pipeName : undefined,
-      workspaceDir: result.workspaceDir,
-    };
-    await fs.promises.writeFile(file, JSON.stringify(descriptor), 'utf-8');
-  }
-
-  private async _deleteDescriptor() {
-    const file = this._descriptorPath();
-    await fs.promises.unlink(file).catch(() => {});
-    if (this._pipeSocketPath && process.platform !== 'win32')
-      await fs.promises.unlink(this._pipeSocketPath).catch(() => {});
-  }
-
-  private _descriptorPath() {
-    return path.join(defaultRegistryDirectory, 'browsers', this._browser.guid);
   }
 
   private async _socketPath() {

@@ -1154,6 +1154,7 @@ export interface BrowserTypeEvents {
 export type BrowserInitializer = {
   version: string,
   name: string,
+  browserName: 'chromium' | 'firefox' | 'webkit',
 };
 export interface BrowserEventTarget {
   on(event: 'context', callback: (params: BrowserContextEvent) => void): this;
@@ -1547,7 +1548,6 @@ export interface EventTargetEvents {
 
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
-  isChromium: boolean,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
   options: {

@@ -2,6 +2,7 @@
 "strict"
 ./session.ts
 ./registry.ts
+../../serverRegistry.ts
 
 [session.ts]
 "strict"

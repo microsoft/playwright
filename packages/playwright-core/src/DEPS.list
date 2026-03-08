@@ -27,3 +27,6 @@ protocol/
 utils/
 utils/isomorphic
 server/utils
+
+[serverRegistry.ts]
+"strict"
