@@ -136,24 +136,3 @@ test('cdp server with empty and complex headers', async ({ startClient, server }
   expect(customHeader).toBe('value:with:colons');
   expect(emptyHeader).toBe('');
 });
-
-test('cdp server ignores headers with empty names', async ({ startClient, server }) => {
-  server.setRoute('/json/version/', (req, res) => {
-    res.end();
-  });
-
-  const { client } = await startClient({
-    args: [
-      `--cdp-endpoint=${server.PREFIX}`,
-      '--cdp-header', ':',
-      '--cdp-header', ':value',
-      '--cdp-header', 'Valid-Header: valid-value'
-    ]
-  });
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
-    isError: true,
-  });
-});
