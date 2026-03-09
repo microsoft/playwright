@@ -22,11 +22,7 @@ import type * as api from '../../types/types';
 import type { Transport } from '../server/utils/httpServer';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 import type { BrowserDescriptor } from '../serverRegistry';
-
-export async function connectToBrowserSocket(socketPath: string, playwrightLib: string): Promise<api.Browser> {
-  const otherPlaywright = (await import(pathToFileURL(playwrightLib).toString())).default as typeof import('../..');
-  return await otherPlaywright.chromium.connect(socketPath);
-}
+import { connectToBrowserAcrossVersions } from '../client/connect';
 
 export class DevToolsConnection implements Transport, DevToolsChannel {
   readonly version = 1;
@@ -42,16 +38,16 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   private _eventListeners = new Map<string, Set<Function>>();
 
   private _browserDescriptor: BrowserDescriptor;
-  private _controllerUrl: URL;
+  private _cdpUrl: URL;
   private _onclose: () => void;
 
   private _initPromise?: Promise<void>;
   private _context!: api.BrowserContext;
   private _browser?: api.Browser;
 
-  constructor(browserDescriptor: BrowserDescriptor, controllerUrl: URL, onclose: () => void) {
+  constructor(browserDescriptor: BrowserDescriptor, cdpUrl: URL, onclose: () => void) {
     this._browserDescriptor = browserDescriptor;
-    this._controllerUrl = controllerUrl;
+    this._cdpUrl = cdpUrl;
     this._onclose = onclose;
   }
 
@@ -83,7 +79,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   private async _init() {
-    this._browser = await connectToBrowserSocket(this._browserDescriptor.pipeName!, this._browserDescriptor.playwrightLib);
+    this._browser = await connectToBrowserAcrossVersions(this._browserDescriptor);
     this._context = this._browser.contexts()[0];
 
     this._contextListeners.push(
@@ -277,7 +273,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
 
   private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
     const inspector = new URL('./devtools_app.html', devtoolsUrl);
-    const cdp = new URL(this._controllerUrl);
+    const cdp = new URL(this._cdpUrl);
     cdp.searchParams.set('cdpPageId', this._pageId(page));
     inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
     const url = inspector.toString();

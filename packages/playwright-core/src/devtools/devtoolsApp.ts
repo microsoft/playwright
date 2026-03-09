@@ -19,19 +19,19 @@ import path from 'path';
 import os from 'os';
 import net from 'net';
 import http from 'http';
-import { pathToFileURL } from 'url';
 
 import { chromium } from '../..';
 import { HttpServer } from '../server/utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../server/registry/index';
-import { calculateSha1, createGuid } from '../utils';
-import { CDPConnection, connectToBrowserSocket, DevToolsConnection } from './devtoolsController';
+import { calculateSha1 } from '../utils';
+import { CDPConnection, DevToolsConnection } from './devtoolsController';
 import { serverRegistry } from '../serverRegistry';
 
 import type * as api from '../..';
 import type { SessionStatus } from '@devtools/sessionModel';
 import type { BrowserDescriptor } from '../serverRegistry';
+import { connectToBrowserAcrossVersions } from '../client/connect';
 
 function readBody(request: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -96,7 +96,7 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
     const { browserDescriptor } = await parseRequest(request);
     let browser: api.Browser;
     try {
-      browser = await connectToBrowserSocket(browserDescriptor.pipeName!, browserDescriptor.playwrightLib);
+      browser = await connectToBrowserAcrossVersions(browserDescriptor);
     } catch (e) {
       sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
       return;
