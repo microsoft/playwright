@@ -49,7 +49,8 @@ export function decorateCLICommand(command: Command, version: string) {
         try {
           const browser = await createBrowser(mcpConfig, mcpClientInfo);
           const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
-          const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { ...options, exitOnClose: true });
+          const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
+          const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { persistent, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
           try {
@@ -79,13 +80,9 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   } catch {
   }
 
-  if (!options.persistent && options.profile)
-    options.persistent = true;
-
   const daemonOverrides = configUtils.configFromCLIOptions({
     config: options.config,
     browser: options.browser,
-    isolated: options.persistent === true ? false : undefined,
     headless: options.headed ? false : undefined,
     extension: options.extension,
     userDataDir: options.profile,
@@ -102,8 +99,7 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     browser: {
       launchOptions: {
         headless: true,
-      },
-      isolated: true,
+      }
     }
   });
 
@@ -111,7 +107,10 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   result = configUtils.mergeConfig(result, daemonOverrides);
   result = configUtils.mergeConfig(result, envOverrides);
 
-  if (!result.extension && !result.browser.userDataDir) {
+  if (result.browser.isolated === undefined)
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir;
+
+  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir) {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     const userDataDir = path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}-${browserToken}`);

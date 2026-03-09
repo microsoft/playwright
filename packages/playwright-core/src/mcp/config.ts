@@ -85,7 +85,6 @@ export const defaultConfig: FullConfig = {
     contextOptions: {
       viewport: null,
     },
-    isolated: false,
   },
   server: {},
   timeouts: {
@@ -134,6 +133,9 @@ export async function validateConfig(config: FullConfig): Promise<void> {
     else
       config.browser.launchOptions.chromiumSandbox = true;
   }
+
+  if (config.browser.isolated && config.browser.userDataDir)
+    throw new Error('Browser userDataDir is not supported in isolated mode.');
 
   if (config.browser.initScript) {
     for (const script of config.browser.initScript) {
@@ -339,7 +341,7 @@ export function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
     ...pickDefined(base.browser),
     ...pickDefined(overrides.browser),
     browserName: overrides.browser?.browserName ?? base.browser?.browserName ?? 'chromium',
-    isolated: overrides.browser?.isolated ?? base.browser?.isolated ?? false,
+    isolated: overrides.browser?.isolated ?? base.browser?.isolated,
     launchOptions: {
       ...pickDefined(base.browser?.launchOptions),
       ...pickDefined(overrides.browser?.launchOptions),

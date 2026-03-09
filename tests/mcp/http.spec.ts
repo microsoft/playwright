@@ -37,7 +37,7 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
       cp = spawn('node', [
         ...mcpServerPath,
         ...(options?.noPort ? [] : ['--port=0']),
-        '--user-data-dir=' + userDataDir,
+        ...(!options?.args?.includes('--isolated') ? ['--user-data-dir=' + userDataDir] : []),
         ...(mcpHeadless ? ['--headless'] : []),
         ...(options?.args || []),
       ], {
