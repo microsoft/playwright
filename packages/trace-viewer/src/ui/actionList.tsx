@@ -29,92 +29,6 @@ import { testStatusIcon } from './testUtils';
 import { methodMetainfo } from '@isomorphic/protocolMetainfo';
 import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
-function getTitleFormat(action: ActionTraceEvent): string {
-  const metaTitle = methodMetainfo.get(`${action.class}.${action.method}`)?.title;
-  const raw = action.title ?? metaTitle ?? action.method ?? '';
-  return String(raw).replace(/\n/g, ' ');
-}
-
-function expandPlaceholders(format: string, params: Record<string, any>): string {
-  return format.replace(/\{([^}]+)\}/g, (fullMatch, paramKey) => {
-    const value = formatProtocolParam(params, paramKey);
-    return value === undefined ? fullMatch : String(value);
-  });
-}
-
-export function getActionSearchText(action: ActionTraceEvent): string {
-  try {
-    const titleFormat = getTitleFormat(action);
-    return expandPlaceholders(titleFormat, action.params ?? {});
-  } catch {
-    return String(action.title ?? action.method ?? '');
-  }
-}
-
-function computeVisibleCallIds(
-  actionFilterText: string | undefined,
-  itemMap: Map<string, ActionTreeItem>,
-): Set<string> | null {
-  const query = actionFilterText?.trim().toLowerCase();
-  if (!query)
-    return null;
-
-  const matchingCallIds = new Set<string>();
-  for (const item of itemMap.values()) {
-    const callId = item.action.callId;
-    if (!callId)
-      continue;
-
-    const searchText = getActionSearchText(item.action).toLowerCase();
-    if (searchText.includes(query))
-      matchingCallIds.add(callId);
-  }
-
-  const visibleCallIds = new Set<string>();
-
-  const addAncestors = (item: ActionTreeItem | undefined) => {
-    if (!item)
-      return;
-
-    const callId = item.action.callId;
-    if (callId && visibleCallIds.has(callId))
-      return;
-
-    if (callId)
-      visibleCallIds.add(callId);
-
-    if (item.parent)
-      addAncestors(item.parent);
-  };
-
-  for (const callId of matchingCallIds)
-    addAncestors(itemMap.get(callId));
-
-  for (const callId of matchingCallIds)
-    visibleCallIds.add(callId);
-
-  return visibleCallIds;
-}
-
-function expandTreeForCallIds(
-  callIdsToExpand: Set<string>,
-  itemMap: Map<string, ActionTreeItem>,
-  previousState: TreeState,
-): TreeState {
-  const expandedItems = new Map(previousState.expandedItems);
-
-  for (const callId of callIdsToExpand) {
-    const item = itemMap.get(callId);
-    if (!item)
-      continue;
-
-    for (let parent: ActionTreeItem | undefined = item.parent; parent && parent.action.callId; parent = parent.parent)
-      expandedItems.set(parent.action.callId, true);
-  }
-
-  return { ...previousState, expandedItems };
-}
-
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
   selectedAction: ActionTraceEventInContext | undefined,
@@ -155,27 +69,6 @@ export const ActionList: React.FC<ActionListProps> = ({
     return { selectedItem };
   }, [itemMap, selectedAction]);
 
-  const visibleCallIds = React.useMemo(() => {
-    return computeVisibleCallIds(actionFilterText, itemMap);
-  }, [itemMap, actionFilterText]);
-
-  const prevVisibleCallIdsRef = React.useRef<Set<string> | null>(null);
-  React.useEffect(() => {
-    if (visibleCallIds) {
-      prevVisibleCallIdsRef.current = visibleCallIds;
-      return;
-    }
-
-    const previousVisibleCallIds = prevVisibleCallIdsRef.current;
-    if (!previousVisibleCallIds)
-      return;
-
-    prevVisibleCallIdsRef.current = null;
-    setTreeState(previousState =>
-      expandTreeForCallIds(previousVisibleCallIds, itemMap, previousState),
-    );
-  }, [visibleCallIds, itemMap, setTreeState]);
-
   const isError = React.useCallback((item: ActionTreeItem) => {
     return !!item.action.error?.message;
   }, []);
@@ -193,10 +86,12 @@ export const ActionList: React.FC<ActionListProps> = ({
     const timeVisible = !selectedTime || !item.action || (item.action.startTime <= selectedTime.maximum && item.action.endTime >= selectedTime.minimum);
     if (!timeVisible)
       return false;
-    if (!visibleCallIds || !item.action.callId)
+    const title = renderTitleForCall(item.action).title;
+    if (!actionFilterText)
       return true;
-    return visibleCallIds.has(item.action.callId);
-  }, [selectedTime, visibleCallIds]);
+    const isIncluded = title.toLowerCase().includes(actionFilterText.toLowerCase());
+    return isIncluded ? true : 'if-needed';
+  }, [selectedTime, actionFilterText]);
 
   const onSelectedAction = React.useCallback((item: ActionTreeItem) => {
     onSelected?.(item.action);
@@ -266,7 +161,7 @@ export const renderAction = (
   </div>;
 };
 
-export function renderTitleForCall(action: ActionTraceEvent): { elements: React.ReactNode[], title: string } {
+export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string } {
   let titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
   titleFormat = titleFormat.replace(/\n/g, ' ');
 
@@ -303,5 +198,10 @@ export function renderTitleForCall(action: ActionTraceEvent): { elements: React.
     title.push(chunk);
   }
 
+  const locator = action.params.selector ? asLocatorDescription(sdkLanguage || 'javascript', action.params.selector) : undefined;
+  if (locator) {
+    title.push(' ');
+    title.push(locator);
+  }
   return { elements, title: title.join('') };
 }

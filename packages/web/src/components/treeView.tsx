@@ -35,7 +35,7 @@ export type TreeViewProps<T> = {
   title?: (item: T) => string,
   icon?: (item: T) => string | undefined,
   isError?: (item: T) => boolean,
-  isVisible?: (item: T) => boolean,
+  isVisible?: (item: T) => boolean | 'if-needed',
   selectedItem?: T,
   onAccepted?: (item: T) => void,
   onSelected?: (item: T) => void,
@@ -336,13 +336,27 @@ type TreeItemData = {
   prev: TreeItem | null;
 };
 
+function isEffectivelyVisible<T extends TreeItem>(
+  item: T,
+  isVisible: (item: T) => boolean | 'if-needed',
+  cache: Map<string, boolean>): boolean {
+  const cached = cache.get(item.id);
+  if (cached !== undefined)
+    return cached;
+  const v = isVisible(item);
+  const result = v === 'if-needed' ? item.children.some(child => isEffectivelyVisible(child as T, isVisible, cache)) : v;
+  cache.set(item.id, result);
+  return result;
+}
+
 function indexTree<T extends TreeItem>(
   rootItem: T,
   selectedItem: T | undefined,
   expandedItems: Map<string, boolean | undefined>,
   autoExpandDepth: number,
-  isVisible: (item: T) => boolean = () => true): Map<T, TreeItemData> {
-  if (!isVisible(rootItem))
+  isVisible: (item: T) => boolean | 'if-needed' = () => true): Map<T, TreeItemData> {
+  const visibilityCache = new Map<string, boolean>();
+  if (!isEffectivelyVisible(rootItem, isVisible, visibilityCache))
     return new Map();
 
   const result = new Map<T, TreeItemData>();
@@ -353,7 +367,7 @@ function indexTree<T extends TreeItem>(
 
   const appendChildren = (parent: T, depth: number) => {
     for (const item of parent.children as T[]) {
-      if (!isVisible(item))
+      if (!isEffectivelyVisible(item, isVisible, visibilityCache))
         continue;
       const expandState = temporaryExpanded.has(item.id) || expandedItems.get(item.id);
       const autoExpandMatches = autoExpandDepth > depth && result.size < 25 && expandState !== false;
