@@ -21,6 +21,7 @@ import { eventsHelper } from '../client/eventEmitter';
 import type * as api from '../../types/types';
 import type { Transport } from '../server/utils/httpServer';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
+import type { BrowserDescriptor } from '../serverRegistry';
 
 export async function connectToBrowserSocket(socketPath: string, playwrightLib: string): Promise<api.Browser> {
   const otherPlaywright = (await import(pathToFileURL(playwrightLib).toString())).default as typeof import('../..');
@@ -40,21 +41,17 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   private _contextListeners: { dispose: () => Promise<void> }[] = [];
   private _eventListeners = new Map<string, Set<Function>>();
 
-  private _socketPath: string;
-  private _playwrightLib: string;
+  private _browserDescriptor: BrowserDescriptor;
   private _controllerUrl: URL;
-  private _browserCdpPort?: number;
   private _onclose: () => void;
 
   private _initPromise?: Promise<void>;
   private _context!: api.BrowserContext;
   private _browser?: api.Browser;
 
-  constructor(socketPath: string, playwrightLib: string, controllerUrl: URL, cdpPort: number | undefined, onclose: () => void) {
-    this._socketPath = socketPath;
-    this._playwrightLib = playwrightLib;
+  constructor(browserDescriptor: BrowserDescriptor, controllerUrl: URL, onclose: () => void) {
+    this._browserDescriptor = browserDescriptor;
     this._controllerUrl = controllerUrl;
-    this._browserCdpPort = cdpPort;
     this._onclose = onclose;
   }
 
@@ -86,7 +83,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   private async _init() {
-    this._browser = await connectToBrowserSocket(this._socketPath, this._playwrightLib);
+    this._browser = await connectToBrowserSocket(this._browserDescriptor.pipeName!, this._browserDescriptor.playwrightLib);
     this._context = this._browser.contexts()[0];
 
     this._contextListeners.push(
@@ -268,8 +265,9 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   private async _devtoolsUrl(page: api.Page) {
-    if (this._browserCdpPort)
-      return new URL(`http://localhost:${this._browserCdpPort}/devtools/`);
+    const cdpPort = this._browserDescriptor.browser.launchOptions.cdpPort;
+    if (cdpPort)
+      return new URL(`http://localhost:${cdpPort}/devtools/`);
 
     const browserRevision = await getBrowserRevision(page);
     if (!browserRevision)

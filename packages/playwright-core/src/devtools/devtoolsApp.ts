@@ -68,10 +68,7 @@ async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionSta
   for (const [, browsers] of servers) {
     for (const browser of browsers) {
       const wsUrl = new URL(wsPath, 'http://localhost');
-      wsUrl.searchParams.set('socketPath', browser.pipeName!);
-      wsUrl.searchParams.set('playwrightLib', browser.playwrightLib);
-      if (browser.browser.launchOptions.cdpPort)
-        wsUrl.searchParams.set('cdpPort', String(browser.browser.launchOptions.cdpPort));
+      wsUrl.searchParams.set('browserDescriptor', JSON.stringify(browser));
       sessions.push({
         browserDescriptor: browser,
         // TODO: do not gc descriptors in registry list().
@@ -138,9 +135,14 @@ async function openDevToolsApp(): Promise<api.Page> {
   });
 
   httpServer.createWebSocket(url => {
-    const socketPath = url.searchParams.get('socketPath');
+    const descriptorJson = url.searchParams.get('browserDescriptor');
+    if (!descriptorJson)
+      throw new Error('Unsupported WebSocket URL: ' + url.toString());
+    const browserDescriptor = JSON.parse(descriptorJson) as BrowserDescriptor;
+
     const cdpPageId = url.searchParams.get('cdpPageId');
-    if (cdpPageId && socketPath) {
+    if (cdpPageId) {
+      const socketPath = browserDescriptor.pipeName!;
       const connection = socketPathToDevToolsConnection.get(socketPath);
       if (!connection)
         throw new Error('CDP connection not found for socket path: ' + socketPath);
@@ -149,17 +151,14 @@ async function openDevToolsApp(): Promise<api.Page> {
         throw new Error('Page not found for page ID: ' + cdpPageId);
       return new CDPConnection(page);
     }
-    if (socketPath) {
-      const playwrightLib = url.searchParams.get('playwrightLib')!;
-      const cdpPort = url.searchParams.get('cdpPort') ? Number(url.searchParams.get('cdpPort')) : undefined;
-      const controllerUrl = new URL(httpServer.urlPrefix('human-readable'));
-      controllerUrl.pathname = httpServer.wsGuid()!;
-      controllerUrl.searchParams.set('socketPath', socketPath);
-      const connection = new DevToolsConnection(socketPath, playwrightLib, controllerUrl, cdpPort, () => socketPathToDevToolsConnection.delete(socketPath));
-      socketPathToDevToolsConnection.set(socketPath, connection);
-      return connection;
-    }
-    throw new Error('Unsupported URL: ' + url.toString());
+
+    const socketPath = browserDescriptor.pipeName!;
+    const cdpUrl = new URL(httpServer.urlPrefix('human-readable'));
+    cdpUrl.pathname = httpServer.wsGuid()!;
+    cdpUrl.searchParams.set('browserDescriptor', descriptorJson);
+    const connection = new DevToolsConnection(browserDescriptor, cdpUrl, () => socketPathToDevToolsConnection.delete(socketPath));
+    socketPathToDevToolsConnection.set(socketPath, connection);
+    return connection;
   });
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
