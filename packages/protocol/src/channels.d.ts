@@ -4550,6 +4550,7 @@ export interface WritableStreamEvents {
 export type CDPSessionInitializer = {};
 export interface CDPSessionEventTarget {
   on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
+  on(event: 'close', callback: (params: CDPSessionCloseEvent) => void): this;
 }
 export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
   _type_CDPSession: boolean;
@@ -4560,6 +4561,7 @@ export type CDPSessionEventEvent = {
   method: string,
   params?: any,
 };
+export type CDPSessionCloseEvent = {};
 export type CDPSessionSendParams = {
   method: string,
   params?: any,
@@ -4576,6 +4578,7 @@ export type CDPSessionDetachResult = void;
 
 export interface CDPSessionEvents {
   'event': CDPSessionEventEvent;
+  'close': CDPSessionCloseEvent;
 }
 
 // ----------- Electron -----------

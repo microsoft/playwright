@@ -2609,6 +2609,7 @@ scheme.CDPSessionEventEvent = tObject({
   method: tString,
   params: tOptional(tAny),
 });
+scheme.CDPSessionCloseEvent = tOptional(tObject({}));
 scheme.CDPSessionSendParams = tObject({
   method: tString,
   params: tOptional(tAny),
