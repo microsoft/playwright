@@ -25,8 +25,8 @@ import { chromium } from '../..';
 import { HttpServer } from '../server/utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../server/registry/index';
-import { calculateSha1 } from '../utils';
-import { CDPConnection, DevToolsConnection } from './devtoolsController';
+import { calculateSha1, createGuid } from '../utils';
+import { CDPConnection, connectToBrowserSocket, DevToolsConnection } from './devtoolsController';
 import { serverRegistry } from '../serverRegistry';
 
 import type * as api from '../..';
@@ -67,23 +67,23 @@ async function loadBrowserDescriptorSessions(): Promise<SessionStatus[]> {
   const sessions: SessionStatus[] = [];
   for (const [, browsers] of servers) {
     for (const browser of browsers) {
+      const wsUrl = new URL('/browser-channel', 'http://placeholder');
+      wsUrl.searchParams.set('socketPath', browser.pipeName!);
+      wsUrl.searchParams.set('playwrightLib', browser.playwrightLib);
+      if (browser.browser.launchOptions.cdpPort)
+        wsUrl.searchParams.set('cdpPort', String(browser.browser.launchOptions.cdpPort));
       sessions.push({
         browserDescriptor: browser,
         // TODO: do not gc descriptors in registry list().
         canConnect: true,
+        wsUrl: wsUrl.pathname + wsUrl.search,
       });
     }
   }
   return sessions;
 }
 
-type ConnectionInfo = {
-  browserDescriptor: BrowserDescriptor;
-  browser: api.Browser;
-  connection?: DevToolsConnection;
-};
-
-const socketPathToConnectionInfo = new Map<string, ConnectionInfo>();
+const socketPathToDevToolsConnection = new Map<string, DevToolsConnection>();
 
 async function handleApiRequest(request: http.IncomingMessage, response: http.ServerResponse) {
   const url = new URL(request.url!, `http://${request.headers.host}`);
@@ -97,21 +97,16 @@ async function handleApiRequest(request: http.IncomingMessage, response: http.Se
 
   if (apiPath === '/api/sessions/close' && request.method === 'POST') {
     const { browserDescriptor } = await parseRequest(request);
-    const socketPath = browserDescriptor.pipeName!;
-    let browser = socketPathToConnectionInfo.get(socketPath)?.browser;
-    if (!browser) {
-      try {
-        browser = await connectToBrowserSocket(socketPath, browserDescriptor.playwrightLib);
-        socketPathToConnectionInfo.set(socketPath, { browserDescriptor, browser });
-      } catch (e) {
-        sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
-        return;
-      }
+    let browser: api.Browser;
+    try {
+      browser = await connectToBrowserSocket(browserDescriptor.pipeName!, browserDescriptor.playwrightLib);
+    } catch (e) {
+      sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
+      return;
     }
     try {
       await Promise.all(browser.contexts().map(context => context.close()));
       await browser.close();
-      socketPathToConnectionInfo.delete(socketPath);
       sendJSON(response, { success: true });
       return;
     } catch (e) {
@@ -125,30 +120,8 @@ async function handleApiRequest(request: http.IncomingMessage, response: http.Se
     return;
   }
 
-  if (apiPath === '/api/sessions/devtools-start' && request.method === 'POST') {
-    const { browserDescriptor } = await parseRequest(request);
-    const socketPath = browserDescriptor.pipeName!;
-    let browser = socketPathToConnectionInfo.get(socketPath)?.browser;
-    if (!browser) {
-      try {
-        browser = await connectToBrowserSocket(socketPath, browserDescriptor.playwrightLib);
-        socketPathToConnectionInfo.set(socketPath, { browserDescriptor, browser });
-      } catch (e) {
-        sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
-        return;
-      }
-    }
-    sendJSON(response, { url: '/browser-channel?socketPath=' + encodeURIComponent(socketPath) });
-    return;
-  }
-
   response.statusCode = 404;
   response.end(JSON.stringify({ error: 'Not found' }));
-}
-
-async function connectToBrowserSocket(socketPath: string, playwrightLib: string): Promise<api.Browser> {
-  const otherPlaywright = (await import(pathToFileURL(playwrightLib).toString())).default as typeof import('../..');
-  return await otherPlaywright.chromium.connect(socketPath);
 }
 
 async function openDevToolsApp(): Promise<api.Page> {
@@ -168,7 +141,7 @@ async function openDevToolsApp(): Promise<api.Page> {
     const socketPath = url.searchParams.get('socketPath');
     const cdpPageId = url.searchParams.get('cdpPageId');
     if (cdpPageId && socketPath) {
-      const connection = socketPathToConnectionInfo.get(socketPath)?.connection;
+      const connection = socketPathToDevToolsConnection.get(socketPath);
       if (!connection)
         throw new Error('CDP connection not found for socket path: ' + socketPath);
       const page = connection.pageForId(cdpPageId);
@@ -177,16 +150,14 @@ async function openDevToolsApp(): Promise<api.Page> {
       return new CDPConnection(page);
     }
     if (socketPath) {
-      const connectionInfo = socketPathToConnectionInfo.get(socketPath)!;
-      if (connectionInfo.connection)
-        return connectionInfo.connection;
-      const context = connectionInfo.browser.contexts()[0];
-      const serverUrl = httpServer.urlPrefix('human-readable');
-      const url = new URL(serverUrl);
-      url.pathname = '/browser-channel';
-      url.searchParams.set('socketPath', socketPath);
-      connectionInfo.connection = new DevToolsConnection(context, url, connectionInfo.browserDescriptor.browser.launchOptions.cdpPort);
-      return connectionInfo.connection;
+      const playwrightLib = url.searchParams.get('playwrightLib')!;
+      const cdpPort = url.searchParams.get('cdpPort') ? Number(url.searchParams.get('cdpPort')) : undefined;
+      const controllerUrl = new URL(httpServer.urlPrefix('human-readable'));
+      controllerUrl.pathname = '/browser-channel';
+      controllerUrl.searchParams.set('socketPath', socketPath);
+      const connection = new DevToolsConnection(socketPath, playwrightLib, controllerUrl, cdpPort, () => socketPathToDevToolsConnection.delete(socketPath));
+      socketPathToDevToolsConnection.set(socketPath, connection);
+      return connection;
     }
     throw new Error('Unsupported URL: ' + url.toString());
   }, 'browser-channel');

@@ -14,13 +14,18 @@
  * limitations under the License.
  */
 
+import { pathToFileURL } from 'url';
+
 import { eventsHelper } from '../client/eventEmitter';
 
 import type * as api from '../../types/types';
 import type { Transport } from '../server/utils/httpServer';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 
-const pageIdSymbol = Symbol('pageId');
+export async function connectToBrowserSocket(socketPath: string, playwrightLib: string): Promise<api.Browser> {
+  const otherPlaywright = (await import(pathToFileURL(playwrightLib).toString())).default as typeof import('../..');
+  return await otherPlaywright.chromium.connect(socketPath);
+}
 
 export class DevToolsConnection implements Transport, DevToolsChannel {
   readonly version = 1;
@@ -34,16 +39,23 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   private _pageListeners: { dispose: () => Promise<void> }[] = [];
   private _contextListeners: { dispose: () => Promise<void> }[] = [];
   private _eventListeners = new Map<string, Set<Function>>();
-  private _context: api.BrowserContext;
+
+  private _socketPath: string;
+  private _playwrightLib: string;
   private _controllerUrl: URL;
   private _browserCdpPort?: number;
+  private _onclose: () => void;
 
-  private _nextPageId = 1;
+  private _initPromise?: Promise<void>;
+  private _context!: api.BrowserContext;
+  private _browser?: api.Browser;
 
-  constructor(context: api.BrowserContext, controllerUrl: URL, cdpPort?: number) {
-    this._context = context;
+  constructor(socketPath: string, playwrightLib: string, controllerUrl: URL, cdpPort: number | undefined, onclose: () => void) {
+    this._socketPath = socketPath;
+    this._playwrightLib = playwrightLib;
     this._controllerUrl = controllerUrl;
     this._browserCdpPort = cdpPort;
+    this._onclose = onclose;
   }
 
   on<K extends keyof DevToolsChannelEvents>(event: K, listener: (params: DevToolsChannelEvents[K]) => void): void {
@@ -69,10 +81,16 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   onconnect() {
-    const context = this._context;
+    this._initPromise = this._init();
+    this._initPromise.catch(() => this.close?.());
+  }
+
+  private async _init() {
+    this._browser = await connectToBrowserSocket(this._socketPath, this._playwrightLib);
+    this._context = this._browser.contexts()[0];
 
     this._contextListeners.push(
-        eventsHelper.addEventListener(context, 'page', page => {
+        eventsHelper.addEventListener(this._context, 'page', page => {
           this._sendTabList();
           if (!this.selectedPage)
             this._selectPage(page);
@@ -80,7 +98,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
     );
 
     // Auto-select first page.
-    const pages = context.pages();
+    const pages = this._context.pages();
     if (pages.length > 0)
       this._selectPage(pages[0]);
 
@@ -91,9 +109,11 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
     this._deselectPage();
     this._contextListeners.forEach(d => d.dispose());
     this._contextListeners = [];
+    this._onclose();
   }
 
   async dispatch(method: string, params: any): Promise<any> {
+    await this._initPromise;
     return (this as any)[method]?.(params);
   }
 
@@ -240,14 +260,11 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   pageForId(pageId: string) {
-    return this._context.pages().find(p => this._pageId(p) === pageId);
+    return this._context?.pages().find(p => this._pageId(p) === pageId);
   }
 
   private _pageId(p: api.Page): string {
-    const page = p as any;
-    if (!page[pageIdSymbol])
-      page[pageIdSymbol] = 'page_' + this._nextPageId++;
-    return page[pageIdSymbol];
+    return (p as any)._guid;
   }
 
   private async _devtoolsUrl(page: api.Page) {

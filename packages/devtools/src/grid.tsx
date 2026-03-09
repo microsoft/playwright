@@ -91,7 +91,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(session => <SessionChip key={session.browserDescriptor.pipeName} descriptor={session.browserDescriptor} canConnect={session.canConnect} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browserDescriptor.pipeName} descriptor={session.browserDescriptor} canConnect={session.canConnect} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
                 </div>
               )}
             </div>
@@ -102,9 +102,8 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean; visible: boolean; model: SessionModel }> = ({ descriptor, canConnect, visible, model }) => {
+const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean; wsUrl: string | null | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, canConnect, wsUrl, visible, model }) => {
   const href = '#session=' + encodeURIComponent(descriptor.pipeName!);
-  const wsUrl = model.wsUrls.get(descriptor.pipeName!);
 
   const channel = React.useMemo(() => {
     if (!canConnect || !visible || !wsUrl)

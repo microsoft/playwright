@@ -20,6 +20,7 @@ import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry
 export type SessionStatus = {
   browserDescriptor: BrowserDescriptor;
   canConnect: boolean;
+  wsUrl?: string | null;
 };
 
 
@@ -27,12 +28,10 @@ type Listener = () => void;
 
 export class SessionModel {
   sessions: SessionStatus[] = [];
-  readonly wsUrls: Map<string, string | null> = new Map();
   clientInfo: ClientInfo | undefined;
   error: string | undefined;
   loading = true;
 
-  private _knownPipes = new Set<string>();
   private _pollActive = false;
   private _pollTimeout: ReturnType<typeof setTimeout> | undefined;
   private _lastJson = '';
@@ -86,10 +85,7 @@ export class SessionModel {
         this.clientInfo = data.clientInfo;
         this._notify();
 
-        for (const session of this.sessions) {
-          if (session.canConnect)
-            this._obtainDevtoolsUrl(session.browserDescriptor);
-        }
+
       }
       this.error = undefined;
     } catch (e: any) {
@@ -120,29 +116,6 @@ export class SessionModel {
       body: JSON.stringify({ browserDescriptor: descriptor }),
     });
     await this._fetchSessions();
-  }
-
-  private _obtainDevtoolsUrl(descriptor: BrowserDescriptor) {
-    const pipeName = descriptor.pipeName!;
-    if (this._knownPipes.has(pipeName))
-      return;
-    this._knownPipes.add(pipeName);
-
-    fetch('/api/sessions/devtools-start', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ browserDescriptor: descriptor }),
-    }).then(async resp => {
-      if (resp.ok) {
-        const { url } = await resp.json();
-        this.wsUrls.set(pipeName, url);
-      } else {
-        this.wsUrls.set(pipeName, null);
-      }
-      this._notify();
-    }).catch(() => {
-      this._knownPipes.delete(pipeName);
-    });
   }
 
   dispose() {
