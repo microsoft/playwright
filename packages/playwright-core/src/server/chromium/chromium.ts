@@ -20,7 +20,7 @@ import os from 'os';
 import path from 'path';
 
 import { chromiumSwitches } from './chromiumSwitches';
-import { CRBrowser } from './crBrowser';
+import { shouldProxyLoopback, CRBrowser } from './crBrowser';
 import { kBrowserCloseMessageId } from './crConnection';
 import { debugMode, headersArrayToObject, headersObjectToArray, } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
@@ -345,12 +345,9 @@ export class Chromium extends BrowserType {
       chromeArguments.push(`--proxy-server=${proxy.server}`);
       const proxyBypassRules = [];
       // https://source.chromium.org/chromium/chromium/src/+/master:net/docs/proxy.md;l=548;drc=71698e610121078e0d1a811054dcf9fd89b49578
-      if (options.socksProxyPort)
-        proxyBypassRules.push('<-loopback>');
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      const bypassesLoopback = proxyBypassRules.some(rule => rule === '<-loopback>' || rule === 'localhost' || rule === '127.0.0.1' || rule === '::1');
-      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !bypassesLoopback)
+      if (options.socksProxyPort || shouldProxyLoopback(proxy.bypass))
         proxyBypassRules.push('<-loopback>');
       if (proxyBypassRules.length > 0)
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);

@@ -29,7 +29,7 @@ import { debug } from '../../utilsBundle';
 import { wsReceiver, wsSender } from '../../utilsBundle';
 import { validateBrowserContextOptions } from '../browserContext';
 import { chromiumSwitches } from '../chromium/chromiumSwitches';
-import { CRBrowser } from '../chromium/crBrowser';
+import { shouldProxyLoopback, CRBrowser } from '../chromium/crBrowser';
 import { removeFolders } from '../utils/fileUtils';
 import { helper } from '../helper';
 import { SdkObject } from '../instrumentation';
@@ -301,7 +301,7 @@ export class AndroidDevice extends SdkObject {
       const proxyBypassRules = [];
       if (proxy.bypass)
         proxyBypassRules.push(...proxy.bypass.split(',').map(t => t.trim()).map(t => t.startsWith('.') ? '*' + t : t));
-      if (!process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK && !proxyBypassRules.includes('<-loopback>'))
+      if (shouldProxyLoopback(proxy.bypass))
         proxyBypassRules.push('<-loopback>');
       if (proxyBypassRules.length > 0)
         chromeArguments.push(`--proxy-bypass-list=${proxyBypassRules.join(';')}`);

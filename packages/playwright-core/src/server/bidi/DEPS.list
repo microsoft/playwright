@@ -12,3 +12,4 @@
 [bidiChromium.ts]
 ../chromium/chromiumSwitches.ts
 ../chromium/chromium.ts
+../chromium/crBrowser.ts
