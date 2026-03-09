@@ -62,12 +62,12 @@ function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
   response.end(JSON.stringify(data));
 }
 
-async function loadBrowserDescriptorSessions(): Promise<SessionStatus[]> {
+async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionStatus[]> {
   const servers = await serverRegistry.list();
   const sessions: SessionStatus[] = [];
   for (const [, browsers] of servers) {
     for (const browser of browsers) {
-      const wsUrl = new URL('/browser-channel', 'http://placeholder');
+      const wsUrl = new URL(wsPath, 'http://localhost');
       wsUrl.searchParams.set('socketPath', browser.pipeName!);
       wsUrl.searchParams.set('playwrightLib', browser.playwrightLib);
       if (browser.browser.launchOptions.cdpPort)
@@ -85,12 +85,12 @@ async function loadBrowserDescriptorSessions(): Promise<SessionStatus[]> {
 
 const socketPathToDevToolsConnection = new Map<string, DevToolsConnection>();
 
-async function handleApiRequest(request: http.IncomingMessage, response: http.ServerResponse) {
-  const url = new URL(request.url!, `http://${request.headers.host}`);
+async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMessage, response: http.ServerResponse) {
+  const url = new URL(request.url!,  httpServer.urlPrefix('human-readable'));
   const apiPath = url.pathname;
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
-    const sessions = await loadBrowserDescriptorSessions();
+    const sessions = await loadBrowserDescriptorSessions(httpServer.wsGuid()!);
     sendJSON(response, { sessions });
     return;
   }
@@ -130,7 +130,7 @@ async function openDevToolsApp(): Promise<api.Page> {
   const devtoolsDir = path.join(path.dirname(libDir), 'lib/vite/devtools');
 
   httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
-    handleApiRequest(request, response).catch(e => {
+    handleApiRequest(httpServer, request, response).catch(e => {
       response.statusCode = 500;
       response.end(JSON.stringify({ error: e.message }));
     });
@@ -153,14 +153,14 @@ async function openDevToolsApp(): Promise<api.Page> {
       const playwrightLib = url.searchParams.get('playwrightLib')!;
       const cdpPort = url.searchParams.get('cdpPort') ? Number(url.searchParams.get('cdpPort')) : undefined;
       const controllerUrl = new URL(httpServer.urlPrefix('human-readable'));
-      controllerUrl.pathname = '/browser-channel';
+      controllerUrl.pathname = httpServer.wsGuid()!;
       controllerUrl.searchParams.set('socketPath', socketPath);
       const connection = new DevToolsConnection(socketPath, playwrightLib, controllerUrl, cdpPort, () => socketPathToDevToolsConnection.delete(socketPath));
       socketPathToDevToolsConnection.set(socketPath, connection);
       return connection;
     }
     throw new Error('Unsupported URL: ' + url.toString());
-  }, 'browser-channel');
+  });
 
   httpServer.routePrefix('/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     const pathname = new URL(request.url!, `http://${request.headers.host}`).pathname;
