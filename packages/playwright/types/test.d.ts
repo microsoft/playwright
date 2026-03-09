@@ -250,6 +250,13 @@ interface TestProject<TestArgs = {}, WorkerArgs = {}> {
        * for details.
        */
       pathTemplate?: string;
+
+      /**
+       * Controls how children of the snapshot root are matched against the actual accessibility tree. This is equivalent to
+       * adding a `/children` property at the top of every aria snapshot template. Individual snapshots can override this by
+       * including an explicit `/children` property.
+       */
+      children?: "contain"|"equal"|"deep-equal";
     };
 
     /**
@@ -1181,6 +1188,13 @@ interface TestConfig<TestArgs = {}, WorkerArgs = {}> {
        * for details.
        */
       pathTemplate?: string;
+
+      /**
+       * Controls how children of the snapshot root are matched against the actual accessibility tree. This is equivalent to
+       * adding a `/children` property at the top of every aria snapshot template. Individual snapshots can override this by
+       * including an explicit `/children` property.
+       */
+      children?: "contain"|"equal"|"deep-equal";
     };
 
     /**
