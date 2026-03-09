@@ -36,7 +36,7 @@ export class SocketConnection {
 
   async send(message: { id: number, error?: string, result?: any }) {
     await new Promise((resolve, reject) => {
-      this._socket.write(`${JSON.stringify(message)}\0`, error => {
+      this._socket.write(`${JSON.stringify(message)}\n`, error => {
         if (error)
           reject(error);
         else
@@ -50,7 +50,7 @@ export class SocketConnection {
   }
 
   private _onData(buffer: Buffer) {
-    let end = buffer.indexOf('\0');
+    let end = buffer.indexOf('\n');
     if (end === -1) {
       this._pendingBuffers.push(buffer);
       return;
@@ -60,12 +60,12 @@ export class SocketConnection {
     this._dispatchMessage(message);
 
     let start = end + 1;
-    end = buffer.indexOf('\0', start);
+    end = buffer.indexOf('\n', start);
     while (end !== -1) {
       const message = buffer.toString(undefined, start, end);
       this._dispatchMessage(message);
       start = end + 1;
-      end = buffer.indexOf('\0', start);
+      end = buffer.indexOf('\n', start);
     }
     this._pendingBuffers = [buffer.slice(start)];
   }

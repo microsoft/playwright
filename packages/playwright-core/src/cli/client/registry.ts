@@ -33,7 +33,6 @@ export type SessionConfig = {
   version: string;
   timestamp: number;
   socketPath: string;
-  wsEndpoint?: string;
   cli: {
     persistent?: boolean;
   };
