@@ -4,4 +4,6 @@
 ../server/utils/
 ../serverRegistry.ts
 ../utils/
-../cli/client/devtoolsController.ts
+
+[devtoolsController.ts]
+../client/eventEmitter.ts

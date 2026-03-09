@@ -26,7 +26,7 @@ import { HttpServer } from '../server/utils/httpServer';
 import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../server/registry/index';
 import { calculateSha1 } from '../utils';
-import { CDPConnection, DevToolsConnection } from '../cli/client/devtoolsController';
+import { CDPConnection, DevToolsConnection } from './devtoolsController';
 import { serverRegistry } from '../serverRegistry';
 
 import type * as api from '../..';

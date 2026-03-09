@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../client/eventEmitter';
+import { eventsHelper } from '../client/eventEmitter';
 
-import type * as api from '../../..';
-import type { Transport } from '../../server/utils/httpServer';
+import type * as api from '../../types/types';
+import type { Transport } from '../server/utils/httpServer';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 
 const pageIdSymbol = Symbol('pageId');
