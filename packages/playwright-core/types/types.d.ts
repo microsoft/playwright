@@ -16058,7 +16058,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.
@@ -16078,7 +16078,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.
@@ -16108,7 +16108,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.
@@ -16128,7 +16128,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.
@@ -16148,7 +16148,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.
@@ -16178,7 +16178,7 @@ export interface CDPSession {
     /**
      * CDP event name.
      */
-    name: string;
+    method: string;
 
     /**
      * CDP event parameters.

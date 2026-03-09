@@ -153,7 +153,7 @@ it('should emit event for each CDP event', async function({ page, server }) {
   client.on('event', event => events.push(event));
   await page.goto(server.EMPTY_PAGE);
   expect(events.length).toBeGreaterThan(0);
-  const requestEvent = events.find(e => e.name === 'Network.requestWillBeSent');
+  const requestEvent = events.find(e => e.method === 'Network.requestWillBeSent');
   expect(requestEvent).toBeTruthy();
   expect(requestEvent.params.request.url).toBe(server.EMPTY_PAGE);
 });
