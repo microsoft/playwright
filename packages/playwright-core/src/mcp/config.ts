@@ -8,6 +8,7 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
+ * 
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -204,14 +205,29 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
   // --no-sandbox was passed, disable the sandbox
   if (cliOptions.sandbox !== undefined)
     launchOptions.chromiumSandbox = cliOptions.sandbox;
-
+// === 修改部分：支持从 proxyServer 中解析账号密码 ===
   if (cliOptions.proxyServer) {
-    launchOptions.proxy = {
-      server: cliOptions.proxyServer
-    };
+    try {
+      const proxyUrl = new URL(cliOptions.proxyServer);
+      const username = decodeURIComponent(proxyUrl.username);
+      const password = decodeURIComponent(proxyUrl.password);
+
+      launchOptions.proxy = {
+        server: `${proxyUrl.protocol}//${proxyUrl.host}`
+      };
+
+      if (username || password) {
+        launchOptions.proxy.username = username;
+        launchOptions.proxy.password = password;
+      }
+    } catch (e) {
+      launchOptions.proxy = { server: cliOptions.proxyServer };
+    }
+
     if (cliOptions.proxyBypass)
       launchOptions.proxy.bypass = cliOptions.proxyBypass;
   }
+  // === 修改部分结束 ===
 
   if (cliOptions.device && cliOptions.cdpEndpoint)
     throw new Error('Device emulation is not supported with cdpEndpoint.');

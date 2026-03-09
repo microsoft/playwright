@@ -101,6 +101,43 @@ class BaseContextFactory implements BrowserContextFactory {
   }
 }
 
+// 拦截代理认证的助手函数
+async function setupProxyAuthentication(context: playwright.BrowserContext, proxyConfig?: { username?: string, password?: string }) {
+  if (!proxyConfig?.username && !proxyConfig?.password) return;
+
+  const enableAuthForPage = async (page: playwright.Page) => {
+    try {
+      const client = await page.context().newCDPSession(page);
+      await client.send('Fetch.enable', { handleAuthRequests: true });
+
+      client.on('Fetch.authRequired', async (event) => {
+        if (event.authChallenge.source === 'Proxy') {
+          await client.send('Fetch.continueWithAuth', {
+            requestId: event.requestId,
+            authChallengeResponse: {
+              response: 'ProvideCredentials',
+              username: proxyConfig.username || '',
+              password: proxyConfig.password || '',
+            }
+          });
+        } else {
+          await client.send('Fetch.continueWithAuth', {
+            requestId: event.requestId,
+            authChallengeResponse: { response: 'Default' }
+          });
+        }
+      });
+    } catch (e) {
+      // 忽略 CDP Session 创建失败的情况（如页面已被销毁）
+    }
+  };
+
+  context.on('page', enableAuthForPage);
+  for (const page of context.pages()) {
+    await enableAuthForPage(page);
+  }
+}
+
 class IsolatedContextFactory extends BaseContextFactory {
   constructor(config: FullConfig) {
     super('isolated', config);
@@ -125,7 +162,9 @@ class IsolatedContextFactory extends BaseContextFactory {
   }
 
   protected override async _doCreateContext(browser: playwright.Browser, clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
-    return browser.newContext(await browserContextOptionsFromConfig(this.config, clientInfo));
+    const context = await browser.newContext(await browserContextOptionsFromConfig(this.config, clientInfo));
+    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
+    return context;
   }
 }
 
@@ -142,7 +181,9 @@ class CdpContextFactory extends BaseContextFactory {
   }
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    return this.config.browser.isolated ? await browser.newContext() : browser.contexts()[0];
+    const context = this.config.browser.isolated ? await browser.newContext() : browser.contexts()[0];
+    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
+    return context;
   }
 }
 
@@ -160,7 +201,9 @@ class RemoteContextFactory extends BaseContextFactory {
   }
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    return browser.newContext();
+    const context = await browser.newContext();
+    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
+    return context;
   }
 }
 
@@ -197,6 +240,7 @@ class PersistentContextFactory extends BaseContextFactory {
     };
     try {
       const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+      await setupProxyAuthentication(browserContext, this.config.browser.launchOptions?.proxy as any);
       return browserContext.browser()!;
     } catch (error: any) {
       if (error.message.includes('Executable doesn\'t exist'))
