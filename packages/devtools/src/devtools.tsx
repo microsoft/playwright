@@ -40,7 +40,7 @@ const BUTTONS = ['left', 'middle', 'right'] as const;
 
 export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [interactive, setInteractive] = React.useState(false);
-  const [tabs, setTabs] = React.useState<Tab[]>([]);
+  const [tabs, setTabs] = React.useState<Tab[] | null>(null);
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DevToolsChannelEvents['frame']>();
   const [showInspector, setShowInspector] = React.useState(false);
@@ -215,13 +215,14 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     }
   }
 
-  const selectedTab = tabs.find(t => t.selected);
-  const hasPages = !!selectedTab;
+  const selectedTab = tabs?.find(t => t.selected);
 
   let overlayText: string | undefined;
   if (!channel)
     overlayText = 'Disconnected';
-  if (channel && !hasPages)
+  else if (tabs === null)
+    overlayText = 'Loading...';
+  else if (tabs.length === 0)
     overlayText = 'No tabs open';
 
   return (<div className={'devtools-view' + (interactive ? ' interactive' : '')}
@@ -233,7 +234,7 @@ export const DevTools: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         Sessions
       </a>
       <div id='tabstrip' className='tabstrip' role='tablist'>
-        {tabs.map(tab => (
+        {tabs?.map(tab => (
           <div
             key={tab.pageId}
             className={'tab' + (tab.selected ? ' active' : '')}
