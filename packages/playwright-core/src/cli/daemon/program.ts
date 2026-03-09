@@ -21,7 +21,7 @@ import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../../mcp/watchdog';
-import { createBrowser } from '../../mcp/browserFactory';
+import { createBrowser, isRemoteBrowser } from '../../mcp/browserFactory';
 import * as configUtils from '../../mcp/config';
 import { ClientInfo, createClientInfo } from '../client/registry';
 
@@ -52,9 +52,10 @@ export function decorateCLICommand(command: Command, version: string) {
           const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { ...options, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
-          // TODO: pass workspaceDir.
-          await (browser as any)._startServer(sessionName);
-          browserContext.on('close', () => (browser as any)._stopServer().catch(() => {}));
+          if (!isRemoteBrowser(mcpConfig)) {
+            await (browser as any)._startServer(sessionName, { workspaceDir: clientInfo.workspaceDir });
+            browserContext.on('close', () => (browser as any)._stopServer().catch(() => {}));
+          }
         } catch (error) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
           console.log(`### Error\n${message}`);

@@ -220,6 +220,7 @@ export class BrowserServer {
   async start(title: string, options: { workspaceDir?: string, wsPath?: string }): Promise<{ wsEndpoint?: string, pipeName?: string }> {
     if (this._isStarted)
       throw new Error(`Server is already started.`);
+    this._isStarted = true;
 
     const result: { wsEndpoint?: string, pipeName?: string } = {};
     this._pipeServer = new PlaywrightPipeServer(this._browser);
@@ -250,6 +251,7 @@ export class BrowserServer {
     await this._wsServer?.close();
     this._pipeServer = undefined;
     this._wsServer = undefined;
+    this._isStarted = false;
   }
 
   private async _socketPath() {
