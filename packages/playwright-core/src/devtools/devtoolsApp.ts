@@ -27,11 +27,11 @@ import { findChromiumChannelBestEffort, registryDirectory } from '../server/regi
 import { calculateSha1 } from '../utils';
 import { CDPConnection, DevToolsConnection } from './devtoolsController';
 import { serverRegistry } from '../serverRegistry';
+import { connectToBrowserAcrossVersions } from '../client/connect';
 
 import type * as api from '../..';
 import type { SessionStatus } from '@devtools/sessionModel';
 import type { BrowserDescriptor } from '../serverRegistry';
-import { connectToBrowserAcrossVersions } from '../client/connect';
 
 function readBody(request: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -63,18 +63,17 @@ function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
 }
 
 async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionStatus[]> {
-  const servers = await serverRegistry.list();
+  const servers = await serverRegistry.list({ includeDisconnected: true });
   const sessions: SessionStatus[] = [];
   for (const [, browsers] of servers) {
     for (const browser of browsers) {
-      const wsUrl = new URL(wsPath, 'http://localhost');
-      wsUrl.searchParams.set('browserDescriptor', JSON.stringify(browser));
-      sessions.push({
-        browserDescriptor: browser,
-        // TODO: do not gc descriptors in registry list().
-        canConnect: true,
-        wsUrl: wsUrl.pathname + wsUrl.search,
-      });
+      let wsUrl: string | undefined;
+      if (browser.canConnect) {
+        const url = new URL(wsPath, 'http://localhost');
+        url.searchParams.set('browserDescriptor', JSON.stringify(browser));
+        wsUrl = url.pathname + url.search;
+      }
+      sessions.push({ browserDescriptor: browser, wsUrl });
     }
   }
   return sessions;

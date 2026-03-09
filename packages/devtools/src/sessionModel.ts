@@ -19,8 +19,7 @@ import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry
 
 export type SessionStatus = {
   browserDescriptor: BrowserDescriptor;
-  canConnect: boolean;
-  wsUrl?: string | null;
+  wsUrl?: string;
 };
 
 

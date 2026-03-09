@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-import { pathToFileURL } from 'url';
-
 import { eventsHelper } from '../client/eventEmitter';
+import { connectToBrowserAcrossVersions } from '../client/connect';
 
 import type * as api from '../../types/types';
 import type { Transport } from '../server/utils/httpServer';
 import type { DevToolsChannel, DevToolsChannelEvents, Tab } from '@devtools/devtoolsChannel';
 import type { BrowserDescriptor } from '../serverRegistry';
-import { connectToBrowserAcrossVersions } from '../client/connect';
 
 export class DevToolsConnection implements Transport, DevToolsChannel {
   readonly version = 1;

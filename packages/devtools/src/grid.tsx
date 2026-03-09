@@ -91,7 +91,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(session => <SessionChip key={session.browserDescriptor.pipeName} descriptor={session.browserDescriptor} canConnect={session.canConnect} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browserDescriptor.pipeName} descriptor={session.browserDescriptor} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
                 </div>
               )}
             </div>
@@ -102,14 +102,14 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean; wsUrl: string | null | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, canConnect, wsUrl, visible, model }) => {
+const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, wsUrl, visible, model }) => {
   const href = '#session=' + encodeURIComponent(descriptor.pipeName!);
 
   const channel = React.useMemo(() => {
-    if (!canConnect || !visible || !wsUrl)
+    if (!wsUrl || !visible)
       return undefined;
     return DevToolsClient.create(wsUrl);
-  }, [canConnect, visible, wsUrl]);
+  }, [wsUrl, visible]);
 
   const [selectedTab, setSelectedTab] = React.useState<Tab | undefined>();
 
@@ -128,20 +128,19 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean
   }, [channel]);
 
   const chipTitle = selectedTab ? `[${descriptor.title}] ${selectedTab.url} \u2014 ${selectedTab.title}` : descriptor.title;
-  const clickable = canConnect && wsUrl !== null;
 
   return (
-    <a className={'session-chip' + (canConnect ? '' : ' disconnected') + (wsUrl === null ? ' not-supported' : '')} href={clickable ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (wsUrl ? '' : ' disconnected')} href={wsUrl ? href : undefined} title={chipTitle} onClick={e => {
       e.preventDefault();
-      if (clickable)
+      if (wsUrl)
         navigate(href);
     }}>
       <div className='session-chip-header'>
-        <div className={'session-status-dot ' + (canConnect ? 'open' : 'closed')} />
+        <div className={'session-status-dot ' + (wsUrl ? 'open' : 'closed')} />
         <span className='session-chip-name'>
           {selectedTab ? <>[{descriptor.title}] {selectedTab.url} <span className='session-chip-title'>&mdash; {selectedTab.title}</span></> : descriptor.title}
         </span>
-        {canConnect && (
+        {wsUrl && (
           <button
             className='session-chip-action'
             title='Close session'
@@ -157,7 +156,7 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean
             </svg>
           </button>
         )}
-        {!canConnect && (
+        {!wsUrl && (
           <button
             className='session-chip-action'
             title='Delete session data'
@@ -177,13 +176,7 @@ const SessionChip: React.FC<{ descriptor: BrowserDescriptor; canConnect: boolean
       </div>
       <div className='screencast-container'>
         {channel && <Screencast channel={channel} />}
-        {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
-        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>
-          Session v{descriptor.playwrightVersion} is not compatible with this viewer{model.clientInfo ? ` v${model.clientInfo.version}` : ''}.
-          <br />
-          Please update playwright-cli and restart this with "playwright-cli show".
-        </div>}
-        {canConnect && !channel && wsUrl === undefined && <div className='screencast-placeholder'>Connecting</div>}
+        {!wsUrl && <div className='screencast-placeholder'>Session closed</div>}
       </div>
     </a>
   );

@@ -4,5 +4,5 @@
 ../server/utils/
 ../serverRegistry.ts
 ../utils/
-../client/connect
+../client/connect.ts
 ../client/eventEmitter.ts
