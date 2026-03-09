@@ -44,10 +44,6 @@ export async function createBrowser(config: FullConfig, clientInfo: ClientInfo):
   return await createPersistentBrowser(config, clientInfo);
 }
 
-export async function isRemoteBrowser(config: FullConfig) {
-  return config.browser.remoteEndpoint || config.browser.cdpEndpoint || config.extension;
-}
-
 export interface BrowserContextFactory {
   contexts(clientInfo: ClientInfo): Promise<playwright.BrowserContext[]>;
   createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext>;
