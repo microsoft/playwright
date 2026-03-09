@@ -24,7 +24,7 @@ import { TimeoutSettings } from './timeoutSettings';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { monotonicTime } from '../utils/isomorphic/time';
 import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
-import { connectOverWebSocket } from './webSocket';
+import { connectToEndpoint } from './connect';
 
 import type { Page } from './page';
 import type * as types from './types';
@@ -66,12 +66,12 @@ export class Android extends ChannelOwner<channels.AndroidChannel> implements ap
     return await this._serverLauncher.launchServer(options);
   }
 
-  async connect(wsEndpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
+  async connect(endpoint: string, options: Parameters<api.Android['connect']>[1] = {}): Promise<api.AndroidDevice> {
     return await this._wrapApiCall(async () => {
       const deadline = options.timeout ? monotonicTime() + options.timeout : 0;
       const headers = { 'x-playwright-browser': 'android', ...options.headers };
-      const connectParams: channels.LocalUtilsConnectParams = { wsEndpoint, headers, slowMo: options.slowMo, timeout: options.timeout || 0 };
-      const connection = await connectOverWebSocket(this._connection, connectParams);
+      const connectParams: channels.LocalUtilsConnectParams = { endpoint, headers, slowMo: options.slowMo, timeout: options.timeout || 0 };
+      const connection = await connectToEndpoint(this._connection, connectParams);
 
       let device: AndroidDevice;
       connection.on('close', () => {

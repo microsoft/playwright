@@ -43,9 +43,8 @@ test('test reopen browser', async ({ startClient, server }) => {
   });
 
   await expect.poll(() => formatLog(stderr()), { timeout: 0 }).toEqual({
-    'obtain browser (persistent)': 2,
+    'create browser (persistent)': 2,
     'create context': 2,
-    'create browser context (persistent)': 2,
     'close browser': 1,
   });
 });

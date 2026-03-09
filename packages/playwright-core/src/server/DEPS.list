@@ -27,3 +27,4 @@
 
 [browser.ts]
 ../remote/
+../serverRegistry.ts

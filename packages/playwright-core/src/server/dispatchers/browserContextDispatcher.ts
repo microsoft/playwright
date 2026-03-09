@@ -73,7 +73,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
-      isChromium: context._browser.options.isChromium,
       requestContext,
       tracing,
       options: context._options,
@@ -355,7 +354,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async newCDPSession(params: channels.BrowserContextNewCDPSessionParams, progress: Progress): Promise<channels.BrowserContextNewCDPSessionResult> {
-    if (!this._object._browser.options.isChromium)
+    if (this._object._browser.options.browserType !== 'chromium')
       throw new Error(`CDP session is only available in Chromium`);
     if (!params.page && !params.frame || params.page && params.frame)
       throw new Error(`CDP session must be initiated with either Page or Frame, not none or both`);

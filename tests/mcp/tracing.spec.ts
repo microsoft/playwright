@@ -18,24 +18,6 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect } from './fixtures';
 
-test('check that trace is saved with --save-trace', async ({ startClient, server }, testInfo) => {
-  const outputDir = testInfo.outputPath('output');
-
-  const { client } = await startClient({
-    args: ['--save-trace', `--output-dir=${outputDir}`],
-  });
-
-  expect(await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  })).toHaveResponse({
-    code: expect.stringContaining(`page.goto('http://localhost`),
-  });
-
-  const files = await fs.promises.readdir(outputDir);
-  expect(files).toContain('traces');
-});
-
 test('check that trace is saved with browser_start_tracing', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
 

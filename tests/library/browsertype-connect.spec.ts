@@ -620,8 +620,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
 
     test('should be able to connect when the wsEndpoint is passed as an option', async ({ browserType, startRemoteServer }) => {
       const remoteServer = await startRemoteServer(kind);
-      const browser = await browserType.connect({
-        wsEndpoint: remoteServer.wsEndpoint(),
+      const browser = await browserType.connect(remoteServer.wsEndpoint(), {
         headers: {
           'x-playwright-launch-options': JSON.stringify((browserType as any)._playwright._defaultLaunchOptions || {}),
         },
@@ -850,7 +849,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         });
         const examplePort = 20_000 + testInfo.workerIndex * 3;
         const remoteServer = await startRemoteServer(kind);
-        const browser = await connect(remoteServer.wsEndpoint(), { _exposeNetwork: '*' } as any, dummyServerPort);
+        const browser = await connect(remoteServer.wsEndpoint(), { exposeNetwork: '*' } as any, dummyServerPort);
         const page = await browser.newPage();
         {
           await page.setContent('empty');

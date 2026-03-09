@@ -11,3 +11,4 @@
 ../server/utils/
 ../client/
 ../cli/
+../serverRegistry.ts

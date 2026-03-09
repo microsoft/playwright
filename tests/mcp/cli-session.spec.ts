@@ -18,6 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { test, expect, daemonFolder } from './cli-fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
+import playwright from '../../packages/playwright-core';
 
 test('list', async ({ cli, server }) => {
   const { output: emptyOutput } = await cli('list');
@@ -193,11 +194,11 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   const { output: allList } = await cli('list', '--all', { cwd: workspace1 });
 
   // Should include both workspace folders and sessions
-  expect(allList).toContain(workspace1);
+  expect(allList).toContain('/:');
   expect(allList).toContain('session1');
-  expect(allList).toContain(workspace2);
+  expect(allList).toContain('..' + path.sep + 'workspace2:');
   expect(allList).toContain('session2');
-  expect(allList).toContain(workspace3);
+  expect(allList).toContain('..' + path.sep + 'workspace3:');
   expect(allList).toContain('session3');
 
   const rootDir = test.info().outputPath('daemon');
@@ -212,11 +213,11 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   await cli('-s', 'session1', 'close', { cwd: workspace1 });
 
   const { output: listTwo } = await cli('list', '--all', { cwd: workspace2 });
-  expect(listTwo).not.toContain(workspace1);
+  expect(listTwo).not.toContain('workspace1');
   expect(listTwo).not.toContain('session1');
-  expect(listTwo).toContain(workspace2);
+  expect(listTwo).toContain('/:');
   expect(listTwo).toContain('session2');
-  expect(listTwo).toContain(workspace3);
+  expect(listTwo).toContain('workspace3');
   expect(listTwo).toContain('session3');
 
   const sessionFilesAfterClose = await getSessionFiles();
@@ -227,11 +228,11 @@ test('list --all lists sessions from all workspaces', async ({ cli, server }, te
   killProcessGroup(session3.pid);
 
   const { output: listOne } = await cli('list', '--all', { cwd: workspace2 });
-  expect(listOne).not.toContain(workspace1);
+  expect(listOne).not.toContain('workspace1');
   expect(listOne).not.toContain('session1');
-  expect(listOne).toContain(workspace2);
+  expect(listOne).toContain('/:');
   expect(listOne).toContain('session2');
-  expect(listOne).not.toContain(workspace3);
+  expect(listOne).not.toContain('workspace3');
   expect(listOne).not.toContain('session3');
 
   const sessionFilesAfterList = await getSessionFiles();
@@ -277,3 +278,64 @@ test('older client with newer daemon - list shows incompatible warning', async (
   expect(output).toContain('- default:');
   expect(output).toContain('[incompatible please re-open]');
 });
+
+test.describe('browser server', () => {
+  test.beforeEach(async ({ mcpBrowser }, testInfo) => {
+    test.skip(!['chrome', 'chromium', 'webkit', 'firefox'].includes(mcpBrowser));
+    process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
+  });
+
+  test('list browser servers', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    const { output } = await cli('list', '--all');
+    expect(output).toBe(`### Browser servers available for attach
+workspace1:
+- browser "foobar":
+  - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
+  - version: ${version}
+  - run \`playwright-cli open --attach "foobar"\` to attach`);
+  });
+
+  test('attach to browser server', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    const { output: openOutput } = await cli('open', '--attach=foobar');
+    expect(openOutput).toContain('### Browser `default` opened with pid');
+    const { output: listOutput } = await cli('list', '--all');
+    expect(listOutput).toBe(`### Browsers
+/:
+- default:
+  - status: open
+  - browser-type: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
+  - user-data-dir: <in-memory>
+  - headed: true
+
+### Browser servers available for attach
+workspace1:
+- browser "foobar":
+  - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
+  - version: ${version}
+  - run \`playwright-cli open --attach "foobar"\` to attach`);
+  });
+
+  test('detach from browser server', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    const { output: openOutput } = await cli('open', '--attach=foobar');
+    expect(openOutput).toContain('### Browser `default` opened with pid');
+    await cli('close');
+    const { output: listOutput } = await cli('list', '--all');
+    expect(listOutput).toBe(`### Browser servers available for attach
+workspace1:
+- browser \"foobar\":
+  - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
+  - version: ${version}
+  - run \`playwright-cli open --attach \"foobar\"\` to attach`);
+  });
+});
+
+const version = 'v' + require('../../packages/playwright-core/package.json').version;

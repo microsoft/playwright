@@ -15169,9 +15169,9 @@ export interface BrowserType<Unused = {}> {
    * **NOTE** Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    *
    * **NOTE** This connection is significantly lower fidelity than the Playwright protocol connection via
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    *
    * **Usage**
    *
@@ -15199,9 +15199,9 @@ export interface BrowserType<Unused = {}> {
    * **NOTE** Connecting over the Chrome DevTools Protocol is only supported for Chromium-based browsers.
    *
    * **NOTE** This connection is significantly lower fidelity than the Playwright protocol connection via
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    * If you are experiencing issues or attempting to use advanced functionality, you probably want to use
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect).
    *
    * **Usage**
    *
@@ -15222,7 +15222,7 @@ export interface BrowserType<Unused = {}> {
    * **NOTE** The major and minor version of the Playwright instance that connects needs to match the version of
    * Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
    *
-   * @param wsEndpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
+   * @param endpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
    */
   connect(wsEndpoint: string, options?: ConnectOptions): Promise<Browser>;
@@ -15238,7 +15238,7 @@ export interface BrowserType<Unused = {}> {
    * **NOTE** The major and minor version of the Playwright instance that connects needs to match the version of
    * Playwright that launches the browser (1.2.3 → is compatible with 1.2.x).
    *
-   * @param wsEndpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
+   * @param endpoint A Playwright browser websocket endpoint to connect to. You obtain this endpoint via `BrowserServer.wsEndpoint`.
    * @param options
    */
   connect(options: ConnectOptions & { wsEndpoint?: string }): Promise<Browser>;
@@ -15819,7 +15819,7 @@ export interface BrowserType<Unused = {}> {
 
   /**
    * Returns the browser app instance. You can connect to it via
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect),
    * which requires the major/minor client/server version to match (1.2.3 → is compatible with 1.2.x).
    *
    * **Usage**
@@ -16818,10 +16818,10 @@ export interface Android {
    * This methods attaches Playwright to an existing Android device. Use
    * [android.launchServer([options])](https://playwright.dev/docs/api/class-android#android-launch-server) to launch a
    * new Android server instance.
-   * @param wsEndpoint A browser websocket endpoint to connect to.
+   * @param endpoint A browser websocket endpoint to connect to.
    * @param options
    */
-  connect(wsEndpoint: string, options?: {
+  connect(endpoint: string, options?: {
     /**
      * Additional HTTP headers to be sent with web socket connect request. Optional.
      */
@@ -19103,7 +19103,7 @@ export interface BrowserServer {
    * Browser websocket url.
    *
    * Browser websocket endpoint which can be used as an argument to
-   * [browserType.connect(wsEndpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect)
+   * [browserType.connect(endpoint[, options])](https://playwright.dev/docs/api/class-browsertype#browser-type-connect)
    * to establish connection to the browser.
    *
    * Note that if the listen `host` option in `launchServer` options is not specified, localhost will be output anyway,

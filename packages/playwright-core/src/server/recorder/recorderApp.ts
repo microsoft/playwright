@@ -202,6 +202,7 @@ export class RecorderApp {
       return;
     (inspectedContext as any)[recorderAppSymbol] = true;
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
+    const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
     const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const { context: appContext, page } = await launchApp(recorderPlaywright.chromium, {
@@ -213,9 +214,9 @@ export class RecorderApp {
         headless: !!process.env.PWTEST_CLI_HEADLESS || (isUnderTest() && !headed),
         cdpPort: isUnderTest() ? 0 : undefined,
         handleSIGINT: params.handleSIGINT,
-        executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
+        executablePath: isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
         // Use the same channel as the inspected context to guarantee that the browser is installed.
-        channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
+        channel: isChromium ? inspectedContext._browser.options.channel : undefined,
       }
     });
     const controller = new ProgressController();
@@ -228,8 +229,8 @@ export class RecorderApp {
       sdkLanguage: inspectedContext._browser.sdkLanguage(),
       wsEndpointForTest: inspectedContext._browser.options.wsEndpoint,
       headed: !!inspectedContext._browser.options.headful,
-      executablePath: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
-      channel: inspectedContext._browser.options.isChromium ? inspectedContext._browser.options.channel : undefined,
+      executablePath: isChromium ? inspectedContext._browser.options.customExecutablePath : undefined,
+      channel: isChromium ? inspectedContext._browser.options.channel : undefined,
       ...params,
     };
 

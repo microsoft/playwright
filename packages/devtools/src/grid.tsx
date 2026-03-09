@@ -180,7 +180,11 @@ const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; vis
       <div className='screencast-container'>
         {channel && <Screencast channel={channel} />}
         {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
-        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>Not supported &mdash; v{sessionFile.config.version}</div>}
+        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>
+          Session v{sessionFile.config.version} is not compatible with this viewer{model.clientInfo ? ` v${model.clientInfo.version}` : ''}.
+          <br />
+          Please update playwright-cli and restart this with "playwright-cli show".
+        </div>}
         {canConnect && !channel && wsUrl === undefined && <div className='screencast-placeholder'>Connecting</div>}
       </div>
     </a>

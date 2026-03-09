@@ -114,7 +114,7 @@ export abstract class BrowserType extends SdkObject {
         await progress.race((options as any).__testHookBeforeCreateBrowser());
       const browserOptions: BrowserOptions = {
         name: this._name,
-        isChromium: this._name === 'chromium',
+        browserType: this._name,
         channel: options.channel,
         slowMo: options.slowMo,
         persistent,

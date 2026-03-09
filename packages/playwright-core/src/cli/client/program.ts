@@ -25,9 +25,11 @@ import os from 'os';
 import path from 'path';
 import { createClientInfo, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
+import { serverRegistry } from '../../serverRegistry';
 
 import type { Config } from '../../mcp/config.d';
 import type { ClientInfo, SessionFile } from './registry';
+import type { BrowserDescriptor } from '../../serverRegistry';
 
 type MinimistArgs = {
   _: string[];
@@ -294,7 +296,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync(
           `powershell -NoProfile -NonInteractive -Command `
           + `"Get-CimInstance Win32_Process `
-          + `| Where-Object { $_.CommandLine -like '*-server*' -and $_.CommandLine -like '*--daemon-*' } `
+          + `| Where-Object { $_.CommandLine -like '*run-mcp-server*' -or $_.CommandLine -like '*run-cli-server*' } `
           + `| ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue; $_.ProcessId }"`,
           { encoding: 'utf-8' }
       );
@@ -308,7 +310,7 @@ async function killAllDaemons(): Promise<void> {
       const result = execSync('ps aux', { encoding: 'utf-8' });
       const lines = result.split('\n');
       for (const line of lines) {
-        if ((line.includes('-server')) && line.includes('--daemon-')) {
+        if (line.includes('run-mcp-server') || line.includes('run-cli-server')) {
           const parts = line.trim().split(/\s+/);
           const pid = parts[1];
           if (pid && /^\d+$/.test(pid)) {
@@ -336,12 +338,24 @@ async function killAllDaemons(): Promise<void> {
 async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<void> {
   if (all) {
     const entries = registry.entryMap();
-    if (entries.size === 0) {
+    const serverEntries = await serverRegistry.list({ gc: true });
+    if (entries.size === 0 && serverEntries.size === 0) {
       console.log('No browsers found.');
       return;
     }
+
+    if (entries.size)
+      console.log('### Browsers');
     for (const [workspace, list] of entries)
-      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), `${workspace}:`);
+      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), `${path.relative(process.cwd(), workspace) || '/'}:`);
+
+    if (serverEntries.size) {
+      if (entries.size)
+        console.log('');
+      console.log('### Browser servers available for attach');
+    }
+    for (const [workspace, list] of serverEntries)
+      await gcAndPrintBrowserSessions(workspace, list);
   } else {
     console.log('### Browsers');
     const entries = registry.entries(clientInfo);
@@ -374,6 +388,26 @@ async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], h
     console.log(await renderSessionStatus(clientInfo, session));
 
   if (running.length === 0 && stopped.length === 0)
+    console.log('  (no browsers)');
+}
+
+async function gcAndPrintBrowserSessions(workspace: string, list: BrowserDescriptor[]) {
+  if (!list.length)
+    return;
+
+  if (workspace)
+    console.log(`${path.relative(process.cwd(), workspace) || '/'}:`);
+
+  for (const descriptor of list) {
+    const text: string[] = [];
+    text.push(`- browser "${descriptor.title}":`);
+    text.push(`  - browser: ${descriptor.browser.browserName}`);
+    text.push(`  - version: v${descriptor.playwrightVersion}`);
+    text.push(`  - run \`playwright-cli open --attach "${descriptor.title}"\` to attach`);
+    console.log(text.join('\n'));
+  }
+
+  if (!list.length)
     console.log('  (no browsers)');
 }
 

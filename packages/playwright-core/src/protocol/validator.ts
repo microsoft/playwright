@@ -314,8 +314,7 @@ scheme.LocalUtilsHarUnzipParams = tObject({
 });
 scheme.LocalUtilsHarUnzipResult = tOptional(tObject({}));
 scheme.LocalUtilsConnectParams = tObject({
-  wsEndpoint: tOptional(tString),
-  pipeName: tOptional(tString),
+  endpoint: tString,
   headers: tOptional(tAny),
   exposeNetwork: tOptional(tString),
   slowMo: tOptional(tFloat),
@@ -644,6 +643,7 @@ scheme.BrowserTypeConnectOverCDPTransportResult = tObject({
 scheme.BrowserInitializer = tObject({
   version: tString,
   name: tString,
+  browserName: tEnum(['chromium', 'firefox', 'webkit']),
 });
 scheme.BrowserContextEvent = tObject({
   context: tChannel(['BrowserContext']),
@@ -856,7 +856,6 @@ scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEven
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.PageAgentWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
-  isChromium: tBoolean,
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
   options: tObject({

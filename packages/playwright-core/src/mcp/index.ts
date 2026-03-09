@@ -16,11 +16,10 @@
 
 import { resolveConfig } from './config';
 import { filteredTools } from '../tools/tools';
-import { contextFactory } from './browserContextFactory';
+import { createBrowser } from './browserFactory';
 import { BrowserServerBackend } from '../tools/browserServerBackend';
 import { createServer } from './sdk/server';
 
-import type { BrowserContextFactory } from './browserContextFactory';
 import type { BrowserContext } from 'playwright';
 import type { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import type { ClientInfo, ServerBackendFactory } from './sdk/server';
@@ -37,30 +36,27 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     version: packageJSON.version,
     toolSchemas: tools.map(tool => tool.schema),
     create: async (clientInfo: ClientInfo) => {
-      const factory = contextGetter ? new SimpleBrowserContextFactory(contextGetter) : contextFactory(config);
-      return new BrowserServerBackend(config, await factory.createContext(clientInfo), tools);
+      const browser = contextGetter ? new SimpleBrowser(await contextGetter()) : await createBrowser(config, clientInfo);
+      const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+      return new BrowserServerBackend(config, context, tools);
     },
     disposed: async () => { }
   };
   return createServer('api', packageJSON.version, backendFactory, false);
 }
 
-class SimpleBrowserContextFactory implements BrowserContextFactory {
-  name = 'custom';
-  description = 'Connect to a browser using a custom context getter';
+class SimpleBrowser {
+  private _context: BrowserContext;
 
-  private readonly _contextGetter: () => Promise<BrowserContext>;
-
-  constructor(contextGetter: () => Promise<BrowserContext>) {
-    this._contextGetter = contextGetter;
+  constructor(context: BrowserContext) {
+    this._context = context;
   }
 
-  async contexts(): Promise<BrowserContext[]> {
-    const browserContext = await this._contextGetter();
-    return [browserContext];
+  contexts(): BrowserContext[] {
+    return [this._context];
   }
 
-  async createContext(): Promise<BrowserContext> {
+  async newContext(): Promise<BrowserContext> {
     throw new Error('Creating a new context is not supported in SimpleBrowserContextFactory.');
   }
 }

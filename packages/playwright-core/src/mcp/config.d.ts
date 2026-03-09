@@ -138,19 +138,6 @@ export type Config = {
   saveSession?: boolean;
 
   /**
-   * Whether to save the Playwright trace of the session into the output directory.
-   */
-  saveTrace?: boolean;
-
-  /**
-   * If specified, saves the Playwright video of the session into the output directory.
-   */
-  saveVideo?: {
-    width: number;
-    height: number;
-  };
-
-  /**
    * Reuse the same browser context between all connected HTTP clients.
    */
   sharedBrowserContext?: boolean;

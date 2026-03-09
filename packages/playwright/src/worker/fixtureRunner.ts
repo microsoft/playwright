@@ -289,6 +289,16 @@ export class FixtureRunner {
     await fixture.setup(testInfo, runnable);
     return fixture;
   }
+
+  dependsOnWorkerFixturesOnly(fn: Function, location: Location): boolean {
+    const names = getRequiredFixtureNames(fn, location);
+    for (const name of names) {
+      const registration = this.pool!.resolve(name)!;
+      if (registration.scope !== 'worker')
+        return false;
+    }
+    return true;
+  }
 }
 
 function getRequiredFixtureNames(fn: Function, location?: Location) {

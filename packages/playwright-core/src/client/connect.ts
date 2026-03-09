@@ -14,13 +14,69 @@
  * limitations under the License.
  */
 
+import { monotonicTime } from '../utils/isomorphic/time';
+import { raceAgainstDeadline } from '../utils/isomorphic/timeoutRunner';
+import { Browser } from './browser';
 import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';
+import { Events } from './events';
 
-import type { HeadersArray } from './types';
+import type * as playwright from '../..';
+import type { Playwright } from './playwright';
+import type { ConnectOptions, HeadersArray } from './types';
 import type * as channels from '@protocol/channels';
+import type { BrowserDescriptor } from '../serverRegistry';
 
-export async function connectOverWebSocket(parentConnection: Connection, params: channels.LocalUtilsConnectParams): Promise<Connection> {
+export async function connectToBrowser(playwright: Playwright, params: ConnectOptions): Promise<Browser> {
+  const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
+  const nameParam = params.browserName ? { 'x-playwright-browser': params.browserName } : {};
+  const headers = { ...nameParam, ...params.headers };
+  const connectParams: channels.LocalUtilsConnectParams = {
+    endpoint: params.endpoint!,
+    headers,
+    exposeNetwork: params.exposeNetwork,
+    slowMo: params.slowMo,
+    timeout: params.timeout || 0,
+  };
+  if ((params as any).__testHookRedirectPortForwarding)
+    connectParams.socksProxyRedirectPortForTest = (params as any).__testHookRedirectPortForwarding;
+  const connection = await connectToEndpoint(playwright._connection, connectParams);
+  let browser: Browser;
+  connection.on('close', () => {
+    // Emulate all pages, contexts and the browser closing upon disconnect.
+    for (const context of browser?.contexts() || []) {
+      for (const page of context.pages())
+        page._onClose();
+      context._onClose();
+    }
+    setTimeout(() => browser?._didClose(), 0);
+  });
+
+  const result = await raceAgainstDeadline(async () => {
+    // For tests.
+    if ((params as any).__testHookBeforeCreateBrowser)
+      await (params as any).__testHookBeforeCreateBrowser();
+
+    const playwright = await connection!.initializePlaywright();
+    if (!playwright._initializer.preLaunchedBrowser) {
+      connection.close();
+      throw new Error('Malformed endpoint. Did you use BrowserType.launchServer method?');
+    }
+    playwright.selectors = playwright.selectors;
+    browser = Browser.from(playwright._initializer.preLaunchedBrowser!);
+    browser._shouldCloseConnectionOnClose = true;
+    browser.on(Events.Browser.Disconnected, () => connection.close());
+    return browser;
+  }, deadline);
+  if (!result.timedOut) {
+    return result.result;
+  } else {
+    connection.close();
+    throw new Error(`Timeout ${params.timeout}ms exceeded`);
+  }
+}
+
+export async function connectToEndpoint(parentConnection: Connection, params: channels.LocalUtilsConnectParams): Promise<Connection> {
   const localUtils = parentConnection.localUtils();
   const transport = localUtils ? new JsonPipeTransport(localUtils) : new WebSocketTransport();
   const connectHeaders = await transport.connect(params);
@@ -43,6 +99,14 @@ export async function connectOverWebSocket(parentConnection: Connection, params:
     }
   });
   return connection;
+}
+
+export async function connectToBrowserAcrossVersions(descriptor: BrowserDescriptor): Promise<playwright.Browser> {
+  const pw = require(descriptor.playwrightLib);
+  const params: ConnectOptions = { endpoint: descriptor.pipeName! };
+  const browser = await connectToBrowser(pw, params);
+  browser._connectToBrowserType(pw[descriptor.browser.browserName], {}, undefined);
+  return browser;
 }
 
 interface Transport {
@@ -88,7 +152,7 @@ class WebSocketTransport implements Transport {
   private _ws: WebSocket | undefined;
 
   async connect(params: channels.LocalUtilsConnectParams) {
-    this._ws = new window.WebSocket(params.wsEndpoint!);
+    this._ws = new window.WebSocket(params.endpoint);
     return [];
   }
 

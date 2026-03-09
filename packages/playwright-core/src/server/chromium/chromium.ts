@@ -115,7 +115,7 @@ export class Chromium extends BrowserType {
       const browserOptions: BrowserOptions = {
         slowMo: options.slowMo,
         name: 'chromium',
-        isChromium: true,
+        browserType: 'chromium',
         persistent,
         browserProcess,
         protocolLogger: helper.debugProtocolLogger(),

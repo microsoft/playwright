@@ -188,6 +188,12 @@ export class TimeoutManager {
           message = `Worker teardown timeout of ${timeout}ms exceeded.`;
         break;
       }
+      case 'skip':
+      case 'slow':
+      case 'fixme':
+      case 'fail':
+        message = `"${runnable.type}" modifier timeout of ${timeout}ms exceeded.`;
+        break;
     }
     const fixtureWithSlot = runnable.fixture?.slot ? runnable.fixture : undefined;
     if (fixtureWithSlot)

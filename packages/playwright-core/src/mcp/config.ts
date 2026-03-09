@@ -18,7 +18,6 @@
 import fs from 'fs';
 import os from 'os';
 
-import { registry } from '../server';
 import { devices } from '../..';
 import { dotenv } from '../utilsBundle';
 
@@ -65,8 +64,6 @@ export type CLIOptions = {
   proxyBypass?: string;
   proxyServer?: string;
   saveSession?: boolean;
-  saveTrace?: boolean;
-  saveVideo?: ViewportSize;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
   snapshotMode?: 'incremental' | 'full' | 'none';
@@ -139,17 +136,6 @@ export async function validateConfig(config: FullConfig): Promise<void> {
       config.browser.launchOptions.chromiumSandbox = true;
   }
 
-  if (config.saveVideo && !checkFfmpeg()) {
-    // eslint-disable-next-line no-console
-    console.error(`\nError: ffmpeg required to save the video is not installed.`);
-    // eslint-disable-next-line no-console
-    console.error(`\nPlease run the command below. It will install a local copy of ffmpeg and will not change any system-wide settings.`);
-    // eslint-disable-next-line no-console
-    console.error(`\n    npx playwright install ffmpeg\n`);
-    // eslint-disable-next-line no-restricted-properties
-    process.exit(1);
-  }
-
   if (config.browser.initScript) {
     for (const script of config.browser.initScript) {
       if (!await fileExistsAsync(script))
@@ -162,8 +148,6 @@ export async function validateConfig(config: FullConfig): Promise<void> {
         throw new Error(`Init page file does not exist: ${page}`);
     }
   }
-  if (config.sharedBrowserContext && config.saveVideo)
-    throw new Error('saveVideo is not supported when sharedBrowserContext is true');
 }
 
 export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
@@ -282,8 +266,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
-    saveTrace: cliOptions.saveTrace,
-    saveVideo: cliOptions.saveVideo,
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
@@ -336,8 +318,6 @@ export function configFromEnv(): Config & { configFile?: string } {
   options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
   options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
   options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
-  options.saveTrace = envToBoolean(process.env.PLAYWRIGHT_MCP_SAVE_TRACE);
-  options.saveVideo = resolutionParser('--save-video', process.env.PLAYWRIGHT_MCP_SAVE_VIDEO);
   options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
   options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
   options.testIdAttribute = envToString(process.env.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
@@ -487,13 +467,4 @@ function envToBoolean(value: string | undefined): boolean | undefined {
 
 function envToString(value: string | undefined): string | undefined {
   return value ? value.trim() : undefined;
-}
-
-function checkFfmpeg(): boolean {
-  try {
-    const executable = registry.findExecutable('ffmpeg')!;
-    return fs.existsSync(executable.executablePath()!);
-  } catch (error) {
-    return false;
-  }
 }

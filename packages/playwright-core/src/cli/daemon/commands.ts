@@ -47,6 +47,7 @@ const open = declareCommand({
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
+    attach: z.string().optional().describe('Attach to a running Playwright browser by name or endpoint'),
   }),
   toolName: ({ url }) => url ? 'browser_navigate' : 'browser_snapshot',
   toolParams: ({ url }) => ({ url: url || 'about:blank' }),
