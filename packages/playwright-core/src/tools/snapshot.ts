@@ -39,7 +39,8 @@ const snapshot = defineTool({
 
 export const elementSchema = z.object({
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: z.string().describe('Exact target element reference from the page snapshot'),
+  ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
+  selector: z.string().optional().describe('CSS or role selector for the target element. Either "selector" or "ref" is required.'),
 });
 
 const clickSchema = elementSchema.extend({
@@ -91,9 +92,11 @@ const drag = defineTabTool({
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
-      startRef: z.string().describe('Exact source element reference from the page snapshot'),
+      startRef: z.string().describe('Exact source element reference from the page snapshot. Prefer this over "startSelector" when available.'),
+      startSelector: z.string().optional().describe('CSS or role selector for the source element. Either "startSelector" or "startRef" is required.'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
-      endRef: z.string().describe('Exact target element reference from the page snapshot'),
+      endRef: z.string().describe('Exact target element reference from the page snapshot. Prefer this over "endSelector" when available.'),
+      endSelector: z.string().optional().describe('CSS or role selector for the target element. Either "endSelector" or "endRef" is required.'),
     }),
     type: 'input',
   },
@@ -102,8 +105,8 @@ const drag = defineTabTool({
     response.setIncludeSnapshot();
 
     const [start, end] = await tab.refLocators([
-      { ref: params.startRef, element: params.startElement },
-      { ref: params.endRef, element: params.endElement },
+      { ref: params.startRef, selector: params.startSelector, element: params.startElement },
+      { ref: params.endRef, selector: params.endSelector, element: params.endElement },
     ]);
 
     await tab.waitForCompletion(async () => {

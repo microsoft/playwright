@@ -155,13 +155,23 @@ export class Context {
     };
   }
 
-  async refSelectors(progress: Progress, params: { element: string, ref: string }[]): Promise<string[]> {
+  async refSelectors(progress: Progress, params: { element: string, ref?: string, selector?: string }[]): Promise<string[]> {
     return Promise.all(params.map(async param => {
-      try {
-        const { resolvedSelector } = await this.page.mainFrame().resolveSelector(progress, `aria-ref=${param.ref}`);
-        return resolvedSelector;
-      } catch (e) {
-        throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
+      if (param.ref) {
+        try {
+          const { resolvedSelector } = await this.page.mainFrame().resolveSelector(progress, `aria-ref=${param.ref}`);
+          return resolvedSelector;
+        } catch (e) {
+          throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
+        }
+      } else if (param.selector) {
+        const element = await progress.race(this.page.mainFrame().selectors.query(param.selector));
+        if (!element)
+          throw new Error(`Selector ${param.selector} does not match any elements.`);
+        element.dispose();
+        return param.selector;
+      } else {
+        throw new Error(`Either "ref" or "selector" must be specified.`);
       }
     }));
   }

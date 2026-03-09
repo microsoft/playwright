@@ -80,14 +80,15 @@ const verifyList = defineTabTool({
     description: 'Verify list is visible on the page',
     inputSchema: z.object({
       element: z.string().describe('Human-readable list description'),
-      ref: z.string().describe('Exact target element reference that points to the list'),
+      ref: z.string().optional().describe('Exact target element reference that points to the list. Prefer this over "selector" when available.'),
+      selector: z.string().optional().describe('CSS or role selector for the target list. Either "selector" or "ref" is required.'),
       items: z.array(z.string()).describe('Items to verify'),
     }),
     type: 'assertion',
   },
 
   handle: async (tab, params, response) => {
-    const { locator } = await tab.refLocator({ ref: params.ref, element: params.element });
+    const { locator } = await tab.refLocator({ ref: params.ref, selector: params.selector, element: params.element });
     const itemTexts: string[] = [];
     for (const item of params.items) {
       const itemLocator = locator.getByText(item);
@@ -115,14 +116,15 @@ const verifyValue = defineTabTool({
     inputSchema: z.object({
       type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the element'),
       element: z.string().describe('Human-readable element description'),
-      ref: z.string().describe('Exact target element reference that points to the element'),
+      ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
+      selector: z.string().optional().describe('CSS or role selector for the target element. Either "selector" or "ref" is required.'),
       value: z.string().describe('Value to verify. For checkbox, use "true" or "false".'),
     }),
     type: 'assertion',
   },
 
   handle: async (tab, params, response) => {
-    const { locator, resolved } = await tab.refLocator({ ref: params.ref, element: params.element });
+    const { locator, resolved } = await tab.refLocator({ ref: params.ref, selector: params.selector, element: params.element });
     const locatorSource = `page.${resolved}`;
     if (params.type === 'textbox' || params.type === 'slider' || params.type === 'combobox') {
       const value = await locator.inputValue(tab.expectTimeoutOptions);

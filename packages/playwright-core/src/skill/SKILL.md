@@ -196,6 +196,31 @@ You can also take a snapshot on demand using `playwright-cli snapshot` command.
 
 If `--filename` is not provided, a new snapshot file is created with a timestamp. Default to automatic file naming, use `--filename=` when artifact is a part of the workflow result.
 
+## Targeting elements
+
+By default, use refs from the snapshot to interact with page elements.
+
+```bash
+# get snapshot with refs
+playwright-cli snapshot
+
+# interact using a ref
+playwright-cli click e15
+```
+
+You can also use css or role selectors, for example when explicitly asked for it.
+
+```bash
+# css selector
+playwright-cli click "#main > button.submit"
+
+# role selector
+playwright-cli click "role=button[name=Submit]"
+
+# chaining css and role selectors
+playwright-cli click "#footer >> role=button[name=Submit]"
+```
+
 ## Browser Sessions
 
 ```bash

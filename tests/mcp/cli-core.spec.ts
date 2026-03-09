@@ -197,3 +197,45 @@ test('snapshot', async ({ cli, server }, testInfo) => {
     expect(output).toContain('..' + path.sep + '.playwright-cli' + path.sep + 'page-');
   }
 });
+
+test('click in iframe', async ({ cli, server }) => {
+  server.setContent('/', `<h1>Hello</h1><iframe src="data:text/html,<button>World</button><main><iframe src='data:text/html,<p>Nested</p>'></iframe></main>"></iframe><iframe src="data:text/html,<h1>Should be invisible</h1>" style="display: none;"></iframe>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "World" [ref=f1e2]`);
+
+  const { output, snapshot: clickSnapshot } = await cli('click', 'f1e2');
+  expect(clickSnapshot).toBeTruthy();
+  expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.locator('iframe').first().contentFrame().getByRole('button', { name: 'World' }).click();
+\`\`\``);
+});
+
+test('click button with CSS selector', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
+
+  const { output, snapshot: clickSnapshot } = await cli('click', 'button');
+  expect(clickSnapshot).toBeTruthy();
+  expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.locator('button').click();
+\`\`\``);
+});
+
+test('click button with role selector', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
+
+  const { output, snapshot: clickSnapshot } = await cli('click', 'role=button');
+  expect(clickSnapshot).toBeTruthy();
+  expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.locator('role=button').click();
+\`\`\``);
+});

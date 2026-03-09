@@ -28,6 +28,7 @@ const screenshotSchema = z.object({
   filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified. Prefer relative file names to stay within the output directory.'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to screenshot the element. If not provided, the screenshot will be taken of viewport. If element is provided, ref must be provided too.'),
   ref: z.string().optional().describe('Exact target element reference from the page snapshot. If not provided, the screenshot will be taken of viewport. If ref is provided, element must be provided too.'),
+  selector: z.string().optional().describe('CSS or role selector for the target element. Prefer "ref" when available.'),
   fullPage: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport. Cannot be used with element screenshots.'),
 });
 
@@ -55,7 +56,7 @@ const screenshot = defineTabTool({
     };
 
     const screenshotTarget = params.ref ? params.element || 'element' : (params.fullPage ? 'full page' : 'viewport');
-    const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref }) : null;
+    const ref = params.ref ? await tab.refLocator({ element: params.element || '', ref: params.ref, selector: params.selector }) : null;
     const data = ref ? await ref.locator.screenshot(options) : await tab.page.screenshot(options);
 
     const resolvedFile = await response.resolveClientFile({ prefix: ref ? 'element' : 'page', ext: fileType, suggestedFilename: params.filename }, `Screenshot of ${screenshotTarget}`);

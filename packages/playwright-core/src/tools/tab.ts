@@ -430,22 +430,34 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
   }
 
-  async refLocator(params: { element?: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {
+  async refLocator(params: { element?: string, ref?: string, selector?: string }): Promise<{ locator: Locator, resolved: string }> {
     await this._initializedPromise;
     return (await this.refLocators([params]))[0];
   }
 
-  async refLocators(params: { element?: string, ref: string }[]): Promise<{ locator: Locator, resolved: string }[]> {
+  async refLocators(params: { element?: string, ref?: string, selector?: string }[]): Promise<{ locator: Locator, resolved: string }[]> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
-      try {
-        let locator = this.page.locator(`aria-ref=${param.ref}`);
-        if (param.element)
-          locator = locator.describe(param.element);
-        const { resolvedSelector } = await locator._resolveSelector();
-        return { locator, resolved: asLocator('javascript', resolvedSelector) };
-      } catch (e) {
-        throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
+      if (param.ref) {
+        try {
+          let locator = this.page.locator(`aria-ref=${param.ref}`);
+          if (param.element)
+            locator = locator.describe(param.element);
+          const { resolvedSelector } = await locator._resolveSelector();
+          return { locator, resolved: asLocator('javascript', resolvedSelector) };
+        } catch (e) {
+          throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
+        }
+      } else if (param.selector) {
+        const locator = this.page.locator(param.selector);
+        try {
+          await locator._resolveSelector();
+        } catch {
+          throw new Error(`Selector ${param.selector} does not match any elements.`);
+        }
+        return { locator, resolved: asLocator('javascript', param.selector) };
+      } else {
+        throw new Error(`Either "ref" or "selector" must be specified.`);
       }
     }));
   }
