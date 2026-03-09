@@ -77,7 +77,7 @@ Emitted when the session is closed, either because the target was closed or `ses
 * since: v1.59
 * langs: js
 - argument: <[Object]>
-  - `name` <[string]> CDP event name.
+  - `method` <[string]> CDP event name.
   - `params` ?<[Object]> CDP event parameters.
 
 Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
