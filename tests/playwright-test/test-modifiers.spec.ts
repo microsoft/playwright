@@ -756,3 +756,18 @@ test('should skip beforeEach hooks upon modifiers', async ({ runInlineTest }) =>
   expect(result.passed).toBe(1);
   expect(result.skipped).toBe(1);
 });
+
+test('test.slow should be idempotent', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('slow test', async ({}) => {
+        test.slow();
+        test.slow();
+        expect(test.info().timeout).toBe(90000);
+      });
+    `,
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});

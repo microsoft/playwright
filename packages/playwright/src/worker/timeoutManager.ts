@@ -56,6 +56,7 @@ export class TimeoutManager {
   private _defaultSlot: TimeSlot;
   private _running?: Running;
   private _ignoreTimeouts = false;
+  private _slow = false;
 
   constructor(timeout: number) {
     this._defaultSlot = { timeout, elapsed: 0 };
@@ -136,6 +137,9 @@ export class TimeoutManager {
   }
 
   slow() {
+    if (this._slow)
+      return;
+    this._slow = true;
     const slot = this._running ? this._running.slot : this._defaultSlot;
     slot.timeout = slot.timeout * 3;
     if (this._running)
