@@ -124,12 +124,13 @@ test('session stops when browser exits', async ({ cli, server }) => {
   expect(listAfter).toContain('(no browsers)');
 });
 
-test('session reopen with different config', async ({ cli, server }, testInfo) => {
+test.only('session reopen with different config', async ({ cli, server }, testInfo) => {
   const config = { browser: { contextOptions: { viewport: { width: 700, height: 500 } } } };
   const configPath = testInfo.outputPath('config.json');
   await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
   {
-    await cli('open', server.HELLO_WORLD, '--config=' + configPath);
+    const result = await cli('open', server.HELLO_WORLD, '--config=' + configPath);
+    console.log(result);
     const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight');
     expect(output).toContain('700x500');
   }

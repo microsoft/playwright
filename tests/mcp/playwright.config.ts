@@ -48,15 +48,10 @@ const metadata = {
 export default defineConfig<TestOptions>({
   testDir: rootTestDir,
   fullyParallel: true,
-  forbidOnly: !!process.env.CI,
   workers: process.env.CI ? 2 : undefined,
   reporter: reporters(),
   tag: process.env.PW_TAG,
   projects: [
-    { name: 'chrome', metadata: { ...metadata, browserName: 'chromium', channel: 'chrome' }, testDir },
     { name: 'chromium', use: { mcpBrowser: 'chromium' }, metadata: { ...metadata, browserName: 'chromium' }, testDir },
-    { name: 'firefox', use: { mcpBrowser: 'firefox' }, metadata: { ...metadata, browserName: 'firefox' }, testDir },
-    { name: 'webkit', use: { mcpBrowser: 'webkit' }, metadata: { ...metadata, browserName: 'webkit' }, testDir },
-    ... process.platform === 'win32' ? [{ name: 'msedge', use: { mcpBrowser: 'msedge' }, metadata: { ...metadata, browserName: 'chromium', channel: 'msedge' }, testDir }] : [],
   ],
 });

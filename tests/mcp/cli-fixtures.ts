@@ -65,7 +65,7 @@ export const test = baseTest.extend<{
 function cliEnv() {
   return {
     PLAYWRIGHT_DAEMON_SESSION_DIR: test.info().outputPath('daemon'),
-    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'daemon-sockets'),
+    PLAYWRIGHT_DAEMON_SOCKETS_DIR: path.join(test.info().project.outputDir, 'ds'),
   };
 }
 
