@@ -63,7 +63,7 @@ function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
 }
 
 async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionStatus[]> {
-  const servers = await serverRegistry.list({ includeDisconnected: true });
+  const servers = await serverRegistry.list();
   const sessions: SessionStatus[] = [];
   for (const [, browsers] of servers) {
     for (const browser of browsers) {
@@ -112,6 +112,13 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   }
 
   if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
+    const { browserDescriptor } = await parseRequest(request);
+    try {
+      await serverRegistry.deleteUserData(browserDescriptor.guid);
+    } catch (e) {
+      sendJSON(response, { error: 'Failed to delete session data: ' + e.message }, 500);
+      return;
+    }
     sendJSON(response, { success: true });
     return;
   }

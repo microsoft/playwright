@@ -338,7 +338,7 @@ async function killAllDaemons(): Promise<void> {
 async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boolean): Promise<void> {
   if (all) {
     const entries = registry.entryMap();
-    const serverEntries = await serverRegistry.list({ gc: true });
+    const serverEntries = await serverRegistry.list();
     if (entries.size === 0 && serverEntries.size === 0) {
       console.log('No browsers found.');
       return;
