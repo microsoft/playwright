@@ -123,3 +123,10 @@
   height: 28px;
   align-items: center;
 }
+
+.action-list-container {
+  min-height: 0;
+  flex: auto;
+  display: flex;
+  flex-direction: column;
+}
