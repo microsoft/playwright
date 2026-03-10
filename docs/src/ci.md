@@ -440,7 +440,7 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run changed Playwright tests
-      run: npx playwright test --only-changed=$GITHUB_BASE_REF
+      run: npx playwright test --only-changed=origin/$GITHUB_BASE_REF
       if: github.event_name == 'pull_request'
     - name: Run Playwright tests
       run: npx playwright test
