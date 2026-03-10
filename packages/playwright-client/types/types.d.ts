@@ -16023,11 +16023,11 @@ export interface BrowserType<Unused = {}> {
  *
  */
 export interface CDPSession {
-  on: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  addListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  off: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  removeListener: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
-  once: <T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void) => this;
+  on<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
+  addListener<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
+  off<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
+  removeListener<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
+  once<T extends keyof Protocol.Events | symbol>(event: T, listener: (payload: T extends symbol ? any : Protocol.Events[T extends keyof Protocol.Events ? T : never]) => void): this;
   /**
    * @param method Protocol method name.
    * @param params Optional method parameters.
@@ -16036,6 +16036,156 @@ export interface CDPSession {
     method: T,
     params?: Protocol.CommandParameters[T]
   ): Promise<Protocol.CommandReturnValues[T]>;
+  /**
+   * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
+   */
+  on(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
+   * their names ahead of time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * session.on('event', ({ name, params }) => {
+   *   console.log(`CDP event: ${name}`, params);
+   * });
+   * ```
+   *
+   */
+  on(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'close', listener: () => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
+  /**
+   * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
+   */
+  addListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
+   * their names ahead of time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * session.on('event', ({ name, params }) => {
+   *   console.log(`CDP event: ${name}`, params);
+   * });
+   * ```
+   *
+   */
+  addListener(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'close', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
+  /**
+   * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
+   */
+  prependListener(event: 'close', listener: () => any): this;
+
+  /**
+   * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
+   * their names ahead of time.
+   *
+   * **Usage**
+   *
+   * ```js
+   * session.on('event', ({ name, params }) => {
+   *   console.log(`CDP event: ${name}`, params);
+   * });
+   * ```
+   *
+   */
+  prependListener(event: 'event', listener: (data: {
+    /**
+     * CDP event name.
+     */
+    method: string;
+
+    /**
+     * CDP event parameters.
+     */
+    params?: Object;
+  }) => any): this;
+
   /**
    * Detaches the CDPSession from the target. Once detached, the CDPSession object won't emit any events and can't be
    * used to send messages.

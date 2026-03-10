@@ -28,8 +28,13 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
   constructor(parent: ChannelOwner, type: string, guid: string, initializer: channels.CDPSessionInitializer) {
     super(parent, type, guid, initializer);
 
-    this._channel.on('event', ({ method, params }) => {
-      this.emit(method, params);
+    this._channel.on('event', event => {
+      this.emit(event.method, event.params);
+      this.emit('event', event);
+    });
+
+    this._channel.on('close', () => {
+      this.emit('close');
     });
 
     this.on = super.on;

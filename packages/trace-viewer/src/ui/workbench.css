@@ -44,3 +44,14 @@
   user-select: none;
   color: var(--vscode-editorCodeLens-foreground);
 }
+
+.workbench-action-filter {
+  margin-top: 3px;
+  border-bottom: 1px solid var(--vscode-panel-border);
+}
+
+.workbench-action-filter input[type=search] {
+  width: 100%;
+  padding: 4px 8px;
+  line-height: 20px;
+}

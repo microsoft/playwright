@@ -1500,11 +1500,6 @@ BrowserContext:
         timeNumber: float?
         timeString: string?
 
-    devtoolsStart:
-      internal: true
-      returns:
-        url: string
-
   events:
 
     bindingCall:
@@ -3988,6 +3983,8 @@ CDPSession:
       parameters:
         method: string
         params: json?
+
+    close:
 
 
 Electron:

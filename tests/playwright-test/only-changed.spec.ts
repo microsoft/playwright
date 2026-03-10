@@ -14,23 +14,7 @@
  * limitations under the License.
  */
 
-import { test as baseTest, expect, playwrightCtConfigText } from './playwright-test-fixtures';
-import { execSync } from 'node:child_process';
-
-const test = baseTest.extend<{ git(command: string): void }>({
-  git: async ({}, use, testInfo) => {
-    const baseDir = testInfo.outputPath();
-
-    const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir, stdio: process.env.PWTEST_DEBUG ? 'inherit' : 'ignore' });
-
-    git(`init --initial-branch=main`);
-    git(`config --local user.name "Robert Botman"`);
-    git(`config --local user.email "botty@mcbotface.com"`);
-    git(`config --local core.autocrlf false`);
-
-    await use((command: string) => git(command));
-  },
-});
+import { test, expect, playwrightCtConfigText } from './playwright-test-fixtures';
 
 test.slow();
 

@@ -1662,7 +1662,6 @@ export interface BrowserContextChannel extends BrowserContextEventTarget, EventT
   clockRunFor(params: BrowserContextClockRunForParams, progress?: Progress): Promise<BrowserContextClockRunForResult>;
   clockSetFixedTime(params: BrowserContextClockSetFixedTimeParams, progress?: Progress): Promise<BrowserContextClockSetFixedTimeResult>;
   clockSetSystemTime(params: BrowserContextClockSetSystemTimeParams, progress?: Progress): Promise<BrowserContextClockSetSystemTimeResult>;
-  devtoolsStart(params?: BrowserContextDevtoolsStartParams, progress?: Progress): Promise<BrowserContextDevtoolsStartResult>;
 }
 export type BrowserContextBindingCallEvent = {
   binding: BindingCallChannel,
@@ -2059,11 +2058,6 @@ export type BrowserContextClockSetSystemTimeOptions = {
   timeString?: string,
 };
 export type BrowserContextClockSetSystemTimeResult = void;
-export type BrowserContextDevtoolsStartParams = {};
-export type BrowserContextDevtoolsStartOptions = {};
-export type BrowserContextDevtoolsStartResult = {
-  url: string,
-};
 
 export interface BrowserContextEvents {
   'bindingCall': BrowserContextBindingCallEvent;
@@ -4550,6 +4544,7 @@ export interface WritableStreamEvents {
 export type CDPSessionInitializer = {};
 export interface CDPSessionEventTarget {
   on(event: 'event', callback: (params: CDPSessionEventEvent) => void): this;
+  on(event: 'close', callback: (params: CDPSessionCloseEvent) => void): this;
 }
 export interface CDPSessionChannel extends CDPSessionEventTarget, Channel {
   _type_CDPSession: boolean;
@@ -4560,6 +4555,7 @@ export type CDPSessionEventEvent = {
   method: string,
   params?: any,
 };
+export type CDPSessionCloseEvent = {};
 export type CDPSessionSendParams = {
   method: string,
   params?: any,
@@ -4576,6 +4572,7 @@ export type CDPSessionDetachResult = void;
 
 export interface CDPSessionEvents {
   'event': CDPSessionEventEvent;
+  'close': CDPSessionCloseEvent;
 }
 
 // ----------- Electron -----------

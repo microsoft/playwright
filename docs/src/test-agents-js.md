@@ -206,7 +206,7 @@ When the test fails, the healer agent:
 
 **Output**
 
-* A passing test, or a skipped test if the healer believes the that functionality is broken.
+* A passing test, or a skipped test if the healer believes that functionality is broken.
 
 ## Artifacts and Conventions
 

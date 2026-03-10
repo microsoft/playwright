@@ -228,6 +228,22 @@ it('should exclude patterns', async ({ browserType, server, channel }) => {
   await browser.close();
 });
 
+it('should bypass proxy for localhost when localhost is in bypass list', async ({ browserType, server, proxyServer }) => {
+  proxyServer.forwardTo(server.PORT);
+  server.setRoute('/target.html', async (req, res) => {
+    res.end('<html><title>Served by the proxy</title></html>');
+  });
+  const browser = await browserType.launch({
+    proxy: { server: `localhost:${proxyServer.PORT}`, bypass: 'localhost' }
+  });
+  const page = await browser.newPage();
+  // Navigate to localhost - should bypass the proxy and hit the server directly.
+  await page.goto(`http://localhost:${server.PORT}/target.html`);
+  expect(proxyServer.requestUrls).not.toContain(`http://localhost:${server.PORT}/target.html`);
+  expect(await page.title()).toBe('Served by the proxy');
+  await browser.close();
+});
+
 it('should use socks proxy', async ({ browserType, socksPort }) => {
   const browser = await browserType.launch({
     proxy: { server: `socks5://localhost:${socksPort}` }

@@ -109,6 +109,7 @@ export const UIModeView: React.FC<{}> = ({
 
   const [singleWorker, setSingleWorker] = useSetting<boolean>('single-worker', false);
   const [updateSnapshots, setUpdateSnapshots] = useSetting<reporterTypes.FullConfig['updateSnapshots']>('updateSnapshots', 'missing');
+  const [onlyChanged, setOnlyChanged] = useSetting<boolean>('only-changed', false);
   const [mergeFiles] = useSetting('mergeFiles', false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -197,7 +198,7 @@ export const UIModeView: React.FC<{}> = ({
         if (status !== 'passed')
           return;
 
-        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+        const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, onlyChanged: onlyChanged ? 'HEAD' : undefined });
         teleSuiteUpdater.processListReport(result.report);
 
         testServerConnection.onReport(params => {
@@ -213,7 +214,7 @@ export const UIModeView: React.FC<{}> = ({
     return () => {
       clearTimeout(throttleTimer);
     };
-  }, [testServerConnection]);
+  }, [onlyChanged, testServerConnection]);
 
   // Update project filter default values.
   React.useEffect(() => {
@@ -321,7 +322,7 @@ export const UIModeView: React.FC<{}> = ({
       commandQueue.current = commandQueue.current.then(async () => {
         setIsLoading(true);
         try {
-          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert });
+          const result = await testServerConnection.listTests({ projects: queryParams.projects, locations: queryParams.args, grep: queryParams.grep, grepInvert: queryParams.grepInvert, onlyChanged: onlyChanged ? 'HEAD' : undefined });
           teleSuiteUpdater.processListReport(result.report);
         } catch (e) {
           // eslint-disable-next-line no-console
@@ -375,7 +376,7 @@ export const UIModeView: React.FC<{}> = ({
       runTests('queue-if-busy', { locations, testIds });
     });
     return () => disposable.dispose();
-  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles]);
+  }, [runTests, testServerConnection, watchAll, watchedTreeIds, teleSuiteUpdater, projectFilters, mergeFiles, onlyChanged]);
 
   // Shortcuts.
   React.useEffect(() => {
@@ -480,6 +481,8 @@ export const UIModeView: React.FC<{}> = ({
           setStatusFilters={setStatusFilters}
           projectFilters={projectFilters}
           setProjectFilters={setProjectFilters}
+          onlyChanged={onlyChanged}
+          setOnlyChanged={setOnlyChanged}
           testModel={testModel}
           runTests={runVisibleTests} />
         <Toolbar className='section-toolbar' noMinHeight={true}>

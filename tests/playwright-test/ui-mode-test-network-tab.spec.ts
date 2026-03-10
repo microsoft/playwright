@@ -80,7 +80,7 @@ test('should filter network requests by multiple resource types', async ({ runUI
   await page.getByText('Network', { exact: true }).click();
 
   const networkItems = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
-  await expect(networkItems).toHaveCount(9);
+  await expect(networkItems).toHaveCount(10);
 
   await page.getByText('JS', { exact: true }).click();
   await expect(networkItems).toHaveCount(1);
@@ -101,7 +101,7 @@ test('should filter network requests by multiple resource types', async ({ runUI
   await expect(networkItems.getByText('image.png')).toBeVisible();
 
   await page.getByText('All', { exact: true }).click();
-  await expect(networkItems).toHaveCount(9);
+  await expect(networkItems).toHaveCount(10);
 });
 
 test('should filter network requests by url', async ({ runUITest, server }) => {
@@ -186,6 +186,32 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '    ]',
     '  }',
     '}',
+  ], { useInnerText: true });
+});
+
+test('should format XML request body', async ({ runUITest, server }) => {
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('network tab test', async ({ page }) => {
+        await page.goto('${server.PREFIX}/network-tab/network.html');
+        await page.evaluate(() => (window as any).donePromise);
+      });
+    `,
+  });
+
+  await page.getByText('network tab test').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+
+  await page.getByText('Network', { exact: true }).click();
+  await page.getByText('post-xml-data').click();
+  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Payload' }).click();
+  const payloadPanel = page.getByRole('tabpanel', { name: 'Payload' });
+  await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '<?xml version="1.0"?>',
+    '<note to="Alice" from="Bob">',
+    '    <body>Hello &amp; welcome!</body>',
+    '</note>'
   ], { useInnerText: true });
 });
 

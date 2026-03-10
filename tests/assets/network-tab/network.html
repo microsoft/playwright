@@ -32,6 +32,11 @@
           headers: { 'Content-Type': 'application/json' },
           body,
         }),
+        fetch('/post-xml-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/xml' },
+          body: `<?xml version="1.0"?><note to="Alice" from="Bob"><body>Hello &amp; welcome!</body></note>`,
+        }),
       ];
       window.donePromise = Promise.all(fetches.map(f => f.then(r => r.body()).then(() => null).catch(e => {})));
     </script>

@@ -21,7 +21,7 @@ import { navigate } from './index';
 import { Screencast } from './screencast';
 import { SettingsButton } from './settingsView';
 
-import type { SessionFile } from '../../playwright-core/src/cli/client/registry';
+import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 import type { Tab } from './devtoolsChannel';
 import type { SessionModel, SessionStatus } from './sessionModel';
 
@@ -44,7 +44,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
     for (const session of sessions) {
-      const key = session.file.config.workspaceDir || 'Global';
+      const key = session.browserDescriptor.workspaceDir || 'Global';
       let list = groups.get(key);
       if (!list) {
         list = [];
@@ -53,7 +53,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
       list.push(session);
     }
     for (const list of groups.values())
-      list.sort((a, b) => a.file.config.name.localeCompare(b.file.config.name));
+      list.sort((a, b) => a.browserDescriptor.title.localeCompare(b.browserDescriptor.title));
 
     // Current workspace first, then alphabetical.
     const entries = [...groups.entries()];
@@ -91,7 +91,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(({ file, canConnect }) => <SessionChip key={file.config.socketPath} sessionFile={file} canConnect={canConnect} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browserDescriptor.pipeName} descriptor={session.browserDescriptor} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
                 </div>
               )}
             </div>
@@ -102,16 +102,14 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   </div>);
 };
 
-const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; visible: boolean; model: SessionModel }> = ({ sessionFile, canConnect, visible, model }) => {
-  const { config } = sessionFile;
-  const href = '#session=' + encodeURIComponent(config.socketPath);
-  const wsUrl = model.wsUrls.get(config.socketPath);
+const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, wsUrl, visible, model }) => {
+  const href = '#session=' + encodeURIComponent(descriptor.pipeName!);
 
   const channel = React.useMemo(() => {
-    if (!canConnect || !visible || !wsUrl)
+    if (!wsUrl || !visible)
       return undefined;
     return DevToolsClient.create(wsUrl);
-  }, [canConnect, visible, wsUrl]);
+  }, [wsUrl, visible]);
 
   const [selectedTab, setSelectedTab] = React.useState<Tab | undefined>();
 
@@ -129,28 +127,27 @@ const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; vis
     };
   }, [channel]);
 
-  const chipTitle = selectedTab ? `[${config.name}] ${selectedTab.url} \u2014 ${selectedTab.title}` : config.name;
-  const clickable = canConnect && wsUrl !== null;
+  const chipTitle = selectedTab ? `[${descriptor.title}] ${selectedTab.url} \u2014 ${selectedTab.title}` : descriptor.title;
 
   return (
-    <a className={'session-chip' + (canConnect ? '' : ' disconnected') + (wsUrl === null ? ' not-supported' : '')} href={clickable ? href : undefined} title={chipTitle} onClick={e => {
+    <a className={'session-chip' + (wsUrl ? '' : ' disconnected')} href={wsUrl ? href : undefined} title={chipTitle} onClick={e => {
       e.preventDefault();
-      if (clickable)
+      if (wsUrl)
         navigate(href);
     }}>
       <div className='session-chip-header'>
-        <div className={'session-status-dot ' + (canConnect ? 'open' : 'closed')} />
+        <div className={'session-status-dot ' + (wsUrl ? 'open' : 'closed')} />
         <span className='session-chip-name'>
-          {selectedTab ? <>[{config.name}] {selectedTab.url} <span className='session-chip-title'>&mdash; {selectedTab.title}</span></> : config.name}
+          {selectedTab ? <>[{descriptor.title}] {selectedTab.url} <span className='session-chip-title'>&mdash; {selectedTab.title}</span></> : descriptor.title}
         </span>
-        {canConnect && (
+        {wsUrl && (
           <button
             className='session-chip-action'
             title='Close session'
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              void model.closeSession(sessionFile);
+              void model.closeSession(descriptor);
             }}
           >
             <svg viewBox='0 0 12 12' fill='none' stroke='currentColor' strokeWidth='1.5' strokeLinecap='round'>
@@ -159,14 +156,14 @@ const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; vis
             </svg>
           </button>
         )}
-        {!canConnect && (
+        {!wsUrl && (
           <button
             className='session-chip-action'
             title='Delete session data'
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
-              void model.deleteSessionData(sessionFile);
+              void model.deleteSessionData(descriptor);
             }}
           >
             <svg viewBox='0 0 16 16' fill='none' stroke='currentColor' strokeWidth='1.2' strokeLinecap='round' strokeLinejoin='round'>
@@ -179,13 +176,7 @@ const SessionChip: React.FC<{ sessionFile: SessionFile; canConnect: boolean; vis
       </div>
       <div className='screencast-container'>
         {channel && <Screencast channel={channel} />}
-        {!canConnect && <div className='screencast-placeholder'>Session closed</div>}
-        {canConnect && !channel && wsUrl === null && <div className='screencast-placeholder'>
-          Session v{sessionFile.config.version} is not compatible with this viewer{model.clientInfo ? ` v${model.clientInfo.version}` : ''}.
-          <br />
-          Please update playwright-cli and restart this with "playwright-cli show".
-        </div>}
-        {canConnect && !channel && wsUrl === undefined && <div className='screencast-placeholder'>Connecting</div>}
+        {!wsUrl && <div className='screencast-placeholder'>Session closed</div>}
       </div>
     </a>
   );

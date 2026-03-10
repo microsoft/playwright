@@ -191,6 +191,20 @@ test('should open simple trace viewer', async ({ showTraceViewer }) => {
   ]);
 });
 
+test('should filter actions by text', async ({ showTraceViewer }) => {
+  const traceViewer = await showTraceViewer(traceFile);
+  const filterInput = traceViewer.page.getByRole('searchbox', { name: 'Filter actions' });
+  await expect(filterInput).toBeVisible();
+
+  const fullCount = await traceViewer.actionTitles.count();
+  await filterInput.fill('Click');
+  await expect(traceViewer.actionTitles.filter({ hasText: 'Click' }).first()).toBeVisible();
+  expect(await traceViewer.actionTitles.count()).toBeLessThan(fullCount);
+
+  await filterInput.fill('');
+  await expect(traceViewer.actionTitles).toHaveCount(fullCount);
+});
+
 test('should open uncompressed trace directory', async ({ showTraceViewer }) => {
   const traceDir = test.info().outputPath('unzipped-trace');
   await extractZip(traceFile, { dir: traceDir });
@@ -478,7 +492,7 @@ test('should filter network requests by multiple resource types', async ({ page,
   await expect(networkRequests.getByText('image.png')).toBeVisible();
 
   await traceViewer.page.getByText('All', { exact: true }).click();
-  await expect(networkRequests).toHaveCount(9);
+  await expect(networkRequests).toHaveCount(10);
 });
 
 test('should show font preview', async ({ page, runAndTrace, server }) => {

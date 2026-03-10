@@ -146,6 +146,36 @@ browserTest('should reject protocol calls when page closes', async function({ br
   await context.close();
 });
 
+it('should emit event for each CDP event', async function({ page, server }) {
+  const client = await page.context().newCDPSession(page);
+  await client.send('Network.enable');
+  const events = [];
+  client.on('event', event => events.push(event));
+  await page.goto(server.EMPTY_PAGE);
+  expect(events.length).toBeGreaterThan(0);
+  const requestEvent = events.find(e => e.method === 'Network.requestWillBeSent');
+  expect(requestEvent).toBeTruthy();
+  expect(requestEvent.params.request.url).toBe(server.EMPTY_PAGE);
+});
+
+it('should emit close event when session is detached', async function({ page }) {
+  const client = await page.context().newCDPSession(page);
+  let closeFired = false;
+  client.on('close', () => closeFired = true);
+  await client.detach();
+  expect(closeFired).toBe(true);
+});
+
+browserTest('should emit close event when page closes', async function({ browser }) {
+  const context = await browser.newContext();
+  const page = await context.newPage();
+  const session = await context.newCDPSession(page);
+  const closePromise = new Promise<void>(f => session.on('close', f));
+  await page.close();
+  await closePromise;
+  await context.close();
+});
+
 browserTest('should work with newBrowserCDPSession', async function({ browser }) {
   const session = await browser.newBrowserCDPSession();
 

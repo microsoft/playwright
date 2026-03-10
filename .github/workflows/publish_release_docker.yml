@@ -24,7 +24,7 @@ jobs:
         node-version: 20
         registry-url: 'https://registry.npmjs.org'
     - name: Set up Docker QEMU for arm64 docker builds
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
       with:
         platforms: arm64
     - run: npm ci

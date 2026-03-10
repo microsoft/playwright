@@ -18,6 +18,7 @@ import type { JSONReport, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONR
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { execSync } from 'node:child_process';
 import { PNG } from 'playwright-core/lib/utilsBundle';
 import type { CommonFixtures, CommonWorkerFixtures, TestChildProcess } from '../config/commonFixtures';
 import { commonFixtures } from '../config/commonFixtures';
@@ -252,6 +253,7 @@ export type RunOptions = {
 type Fixtures = {
   writeFiles: (files: Files) => Promise<string>;
   deleteFile: (file: string) => Promise<void>;
+  git: (command: string) => void;
   runInlineTest: (files: Files, params?: Params, env?: NodeJS.ProcessEnv, options?: RunOptions) => Promise<RunResult>;
   runCLICommand: (files: Files, command: string, args?: string[]) => Promise<{ stdout: string, stderr: string, exitCode: number }>;
   startCLICommand: (files: Files, command: string, args?: string[], options?: RunOptions, env?: NodeJS.ProcessEnv) => Promise<TestChildProcess>;
@@ -276,6 +278,16 @@ export const test = base
           const baseDir = testInfo.outputPath();
           await fs.promises.unlink(path.join(baseDir, file));
         });
+      },
+
+      git: async ({}, use, testInfo) => {
+        const baseDir = testInfo.outputPath();
+        const git = (command: string) => execSync(`git ${command}`, { cwd: baseDir, stdio: process.env.PWTEST_DEBUG ? 'inherit' : 'ignore' });
+        git(`init --initial-branch=main`);
+        git(`config --local user.name "Robert Botman"`);
+        git(`config --local user.email "botty@mcbotface.com"`);
+        git(`config --local core.autocrlf false`);
+        await use((command: string) => git(command));
       },
 
       runInlineTest: async ({ childProcess, mergeReports, useIntermediateMergeReport }, use, testInfo: TestInfo) => {
