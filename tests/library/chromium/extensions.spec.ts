@@ -61,7 +61,8 @@ it.describe('MV3', () => {
     let runningStatus: string | undefined;
     cdp.on('ServiceWorker.workerVersionUpdated', ({ versions }: any) => {
       const v = versions[0];
-      if (!v) return;
+      if (!v)
+        return;
       versionId = v.versionId;
       runningStatus = v.runningStatus;
     });
