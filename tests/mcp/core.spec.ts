@@ -37,7 +37,7 @@ test('browser_navigate blocks file:// URLs by default', async ({ client }) => {
     name: 'browser_navigate',
     arguments: { url: 'file:///etc/passwd' },
   })).toHaveResponse({
-    error: expect.stringContaining('Error: Access to "file:" URL is blocked. Allowed protocols: http:, https:, about:, data:. Attempted URL: file:///etc/passwd'),
+    error: expect.stringContaining('Error: Access to "file:" protocol is blocked. Attempted URL: "file:///etc/passwd"'),
     isError: true,
   });
 });

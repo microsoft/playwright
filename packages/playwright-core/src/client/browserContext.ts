@@ -79,7 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
   private _onRecorderEventSink: RecorderEventSink | undefined;
-  private _allowedProtocols: string[] | undefined;
+  private _disallowedProtocols: string[] | undefined;
   private _allowedDirectories: string[] | undefined;
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
@@ -555,12 +555,12 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.exposeConsoleApi();
   }
 
-  _setAllowedProtocols(protocols: string[]) {
-    this._allowedProtocols = protocols;
+  _setDisallowedProtocols(protocols: string[]) {
+    this._disallowedProtocols = protocols;
   }
 
   _checkUrlAllowed(url: string) {
-    if (!this._allowedProtocols)
+    if (!this._disallowedProtocols)
       return;
     let parsedURL;
     try {
@@ -568,8 +568,8 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     } catch (e) {
       throw new Error(`Access to ${url} is blocked. Invalid URL: ${e.message}`);
     }
-    if (!this._allowedProtocols.includes(parsedURL.protocol))
-      throw new Error(`Access to "${parsedURL.protocol}" URL is blocked. Allowed protocols: ${this._allowedProtocols.join(', ')}. Attempted URL: ${url}`);
+    if (this._disallowedProtocols.includes(parsedURL.protocol))
+      throw new Error(`Access to "${parsedURL.protocol}" protocol is blocked. Attempted URL: "${url}"`);
   }
 
   _setAllowedDirectories(rootDirectories: string[]) {

@@ -287,7 +287,7 @@ export class Context {
       selectors.setTestIdAttribute(this.config.testIdAttribute);
     const browserContext = this._rawBrowserContext;
     if (!this.config.allowUnrestrictedFileAccess) {
-      (browserContext as any)._setAllowedProtocols(['http:', 'https:', 'about:', 'data:']);
+      (browserContext as any)._setDisallowedProtocols(['file:']);
       (browserContext as any)._setAllowedDirectories([this.options.cwd]);
     }
     await this._setupRequestInterception(browserContext);
