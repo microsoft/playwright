@@ -5,17 +5,11 @@ description: Explains how to develop Playwright - add APIs, MCP tools, CLI comma
 
 # Playwright Development Guide
 
-## Table of Contents
+See [CLAUDE.md](../../../CLAUDE.md) for monorepo structure, build/test/lint commands, and coding conventions.
+
+## Detailed Guides
 
 - [Library Architecture](library.md) — client/server/dispatcher structure, protocol layer, DEPS rules
 - [Adding and Modifying APIs](api.md) — define API docs, implement client/server, add tests
 - [MCP Tools and CLI Commands](mcp-dev.md) — add MCP tools, CLI commands, config options
 - [Vendoring Dependencies](vendor.md) — bundle third-party npm packages into playwright-core or playwright
-- [Uploading Fixes to GitHub](github.md) — branch naming, commit format, pushing fixes for issues
-
-## Build
-- Assume watch is running and everything is up to date.
-- If not, run `npm run build`.
-
-## Lint
-- Run `npm run flint` to lint everything before commit.
