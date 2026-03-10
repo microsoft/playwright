@@ -101,6 +101,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
     this._contextListeners.forEach(d => d.dispose());
     this._contextListeners = [];
     this._onclose();
+    this._browser?.close().catch(() => {});
   }
 
   async dispatch(method: string, params: any): Promise<any> {
@@ -259,7 +260,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   private async _devtoolsUrl(page: api.Page) {
-    const cdpPort = this._browserDescriptor.browser.launchOptions.cdpPort;
+    const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
     if (cdpPort)
       return new URL(`http://localhost:${cdpPort}/devtools/`);
 

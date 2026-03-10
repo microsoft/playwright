@@ -18,30 +18,30 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import os from 'os';
-import crypto from 'crypto';
 
-import type { Browser } from './server/browser';
-import type { LaunchOptions } from './server/types';
-import type { BrowserName } from './server/registry/index';
+// Only client depenencies with backward compatibility guarantees should be imported here.
+import type { LaunchOptions } from '../types/types';
 
 const packageVersion = require('../package.json').version;
 
 export type BrowserInfo = {
+  guid: string;
+  browserName: 'chromium' | 'firefox' | 'webkit';
+  userDataDir?: string;
+  launchOptions: LaunchOptions;
+};
+
+export type EndpointInfo = {
   title: string;
   wsEndpoint?: string;
   pipeName?: string;
   workspaceDir?: string;
 };
 
-export type BrowserDescriptor = BrowserInfo & {
-  guid: string;
+export type BrowserDescriptor = EndpointInfo & {
   playwrightVersion: string;
   playwrightLib: string;
-  browser: {
-    browserName: BrowserName;
-    launchOptions: LaunchOptions;
-    userDataDir?: string;
-  };
+  browser: BrowserInfo;
 };
 
 export type BrowserStatus = BrowserDescriptor & { canConnect: boolean };
@@ -85,37 +85,28 @@ class ServerRegistry {
     return resolvedResult;
   }
 
-  async create(browser: Browser, info: BrowserInfo): Promise<string> {
-    const guid = createGuid();
-    const file = path.join(this._browsersDir(), guid);
+  async create(browser: BrowserInfo, endpoint: EndpointInfo) {
+    const file = path.join(this._browsersDir(), browser.guid);
     await fs.promises.mkdir(this._browsersDir(), { recursive: true });
     const descriptor: BrowserDescriptor = {
-      guid,
       playwrightVersion: packageVersion,
       playwrightLib: require.resolve('..'),
-      title: info.title,
-      browser: {
-        browserName: browser.options.browserType,
-        launchOptions: browser.options.originalLaunchOptions,
-        userDataDir: browser.options.userDataDir,
-      },
-      wsEndpoint: info.wsEndpoint,
-      pipeName: info.pipeName,
-      workspaceDir: info.workspaceDir,
+      title: endpoint.title,
+      browser,
+      wsEndpoint: endpoint.wsEndpoint,
+      pipeName: endpoint.pipeName,
+      workspaceDir: endpoint.workspaceDir,
     };
     await fs.promises.writeFile(file, JSON.stringify(descriptor), 'utf-8');
-    return guid;
   }
 
-  async delete(browser: Browser, sessionGuid: string): Promise<void> {
-    if (browser.options.userDataDir)
-      return;
-    const file = path.join(this._browsersDir(), sessionGuid);
+  async delete(guid: string): Promise<void> {
+    const file = path.join(this._browsersDir(), guid);
     await fs.promises.unlink(file).catch(() => {});
   }
 
-  async deleteUserData(sessionGuid: string): Promise<void> {
-    const filePath = path.join(this._browsersDir(), sessionGuid);
+  async deleteUserData(guid: string): Promise<void> {
+    const filePath = path.join(this._browsersDir(), guid);
     const content = await fs.promises.readFile(filePath, 'utf-8');
     const descriptor: BrowserDescriptor = JSON.parse(content);
     if (descriptor.browser.userDataDir)
@@ -123,8 +114,8 @@ class ServerRegistry {
     await fs.promises.unlink(filePath);
   }
 
-  readDescriptor(sessionGuid: string): BrowserDescriptor {
-    const filePath = path.join(this._browsersDir(), sessionGuid);
+  readDescriptor(guid: string): BrowserDescriptor {
+    const filePath = path.join(this._browsersDir(), guid);
     const content = fs.readFileSync(filePath, 'utf-8');
     const descriptor: BrowserDescriptor = JSON.parse(content);
     return descriptor;
@@ -144,10 +135,6 @@ class ServerRegistry {
   private _browsersDir() {
     return process.env.PLAYWRIGHT_SERVER_REGISTRY || registryDirectory;
   }
-}
-
-function createGuid(): string {
-  return crypto.randomBytes(16).toString('hex');
 }
 
 async function canConnect(descriptor: BrowserDescriptor): Promise<boolean> {
