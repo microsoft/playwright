@@ -296,6 +296,27 @@ it('should press Enter', async ({ page, server }) => {
   }
 });
 
+it('should press audio and media control keys', async ({ page, browserName }) => {
+  await page.setContent('<input autofocus>');
+  await page.focus('input');
+  const lastEvent = await captureLastKeydown(page);
+  const mediaKeys = [
+    { key: 'AudioVolumeMute', code: browserName === 'firefox' ? 'VolumeMute' : 'AudioVolumeMute' },
+    { key: 'AudioVolumeDown', code: browserName === 'firefox' ? 'VolumeDown' : 'AudioVolumeDown' },
+    { key: 'AudioVolumeUp', code: browserName === 'firefox' ? 'VolumeUp' : 'AudioVolumeUp' },
+    { key: 'MediaTrackNext', code: 'MediaTrackNext' },
+    { key: 'MediaTrackPrevious', code: 'MediaTrackPrevious' },
+    { key: 'MediaPlayPause', code: 'MediaPlayPause' },
+  ];
+
+  for (const mediaKey of mediaKeys) {
+    await page.keyboard.press(mediaKey.key);
+    expect.soft(await lastEvent.evaluate(e => e.key)).toBe(mediaKey.key);
+    expect.soft(await lastEvent.evaluate(e => e.code)).toBe(mediaKey.code);
+    expect.soft(await lastEvent.evaluate(e => e.location)).toBe(0);
+  }
+});
+
 it('should throw on unknown keys', async ({ page, server }) => {
   let error = await page.keyboard.press('NotARealKey').catch(e => e);
   expect(error.message).toContain('Unknown key: "NotARealKey"');
