@@ -25,10 +25,6 @@ it.beforeEach(({}, testInfo) => {
   process.env.PLAYWRIGHT_SERVER_REGISTRY = testInfo.outputPath('registry');
 });
 
-function descriptorPath(browser: any) {
-  return path.join(it.info().outputPath('registry'), browser._guid);
-}
-
 it('should start and stop pipe server', async ({ browserType, browser }) => {
   const serverInfo = await (browser as any)._startServer('default', {});
   expect(serverInfo).toEqual(expect.objectContaining({
@@ -61,10 +57,11 @@ it('should start and stop ws server', async ({ browserType, browser }) => {
 });
 
 it('should write descriptor on start and remove on stop', async ({ browser }) => {
-  const file = descriptorPath(browser);
-  expect(fs.existsSync(file)).toBe(false);
-
   const serverInfo = await (browser as any)._startServer('my-title', { wsPath: 'test' });
+
+  const registryDir = it.info().outputPath('registry');
+  const fileName = fs.readdirSync(registryDir)[0];
+  const file = path.join(registryDir, fileName);
 
   const descriptor = JSON.parse(fs.readFileSync(file, 'utf-8'));
   expect(descriptor.title).toBe('my-title');

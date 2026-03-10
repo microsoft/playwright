@@ -18,6 +18,7 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import os from 'os';
+import crypto from 'crypto';
 
 import type { Browser } from './server/browser';
 import type { LaunchOptions } from './server/types';
@@ -33,11 +34,13 @@ export type BrowserInfo = {
 };
 
 export type BrowserDescriptor = BrowserInfo & {
+  guid: string;
   playwrightVersion: string;
   playwrightLib: string;
   browser: {
     browserName: BrowserName;
     launchOptions: LaunchOptions;
+    userDataDir?: string;
   };
 };
 
@@ -46,7 +49,7 @@ export type BrowserStatus = BrowserDescriptor & { canConnect: boolean };
 type BrowserEntry = BrowserStatus & { file: string };
 
 class ServerRegistry {
-  async list(options?: { gc?: boolean, includeDisconnected?: boolean }): Promise<Map<string, BrowserStatus[]>> {
+  async list(): Promise<Map<string, BrowserStatus[]>> {
     const files = await fs.promises.readdir(this._browsersDir()).catch(() => []);
     const result = new Map<string, Promise<BrowserEntry>[]>();
     for (const file of files) {
@@ -68,40 +71,63 @@ class ServerRegistry {
     const resolvedResult = new Map<string, BrowserStatus[]>();
     for (const [key, promises] of result) {
       const entries = await Promise.all(promises);
-      if (options?.gc) {
-        for (const entry of entries) {
-          if (!entry.canConnect)
-            await fs.promises.unlink(entry.file).catch(() => {});
+      const descriptors = [];
+      for (const entry of entries) {
+        if (!entry.canConnect && !entry.browser.userDataDir) {
+          await fs.promises.unlink(entry.file).catch(() => {});
+          continue;
         }
+        descriptors.push(entry);
       }
-      const list = options?.includeDisconnected ? entries : entries.filter(entry => entry.canConnect);
-      if (list.length)
-        resolvedResult.set(key, list);
+      if (descriptors.length)
+        resolvedResult.set(key, descriptors);
     }
     return resolvedResult;
   }
 
-  async create(browser: Browser, info: BrowserInfo): Promise<void> {
-    const file = path.join(this._browsersDir(), browser.guid);
+  async create(browser: Browser, info: BrowserInfo): Promise<string> {
+    const guid = createGuid();
+    const file = path.join(this._browsersDir(), guid);
     await fs.promises.mkdir(this._browsersDir(), { recursive: true });
     const descriptor: BrowserDescriptor = {
+      guid,
       playwrightVersion: packageVersion,
       playwrightLib: require.resolve('..'),
       title: info.title,
       browser: {
         browserName: browser.options.browserType,
         launchOptions: browser.options.originalLaunchOptions,
+        userDataDir: browser.options.userDataDir,
       },
       wsEndpoint: info.wsEndpoint,
       pipeName: info.pipeName,
       workspaceDir: info.workspaceDir,
     };
     await fs.promises.writeFile(file, JSON.stringify(descriptor), 'utf-8');
+    return guid;
   }
 
-  async delete(browser: Browser): Promise<void> {
-    const file = path.join(this._browsersDir(), browser.guid);
+  async delete(browser: Browser, sessionGuid: string): Promise<void> {
+    if (browser.options.userDataDir)
+      return;
+    const file = path.join(this._browsersDir(), sessionGuid);
     await fs.promises.unlink(file).catch(() => {});
+  }
+
+  async deleteUserData(sessionGuid: string): Promise<void> {
+    const filePath = path.join(this._browsersDir(), sessionGuid);
+    const content = await fs.promises.readFile(filePath, 'utf-8');
+    const descriptor: BrowserDescriptor = JSON.parse(content);
+    if (descriptor.browser.userDataDir)
+      await fs.promises.rm(descriptor.browser.userDataDir, { recursive: true, force: true });
+    await fs.promises.unlink(filePath);
+  }
+
+  readDescriptor(sessionGuid: string): BrowserDescriptor {
+    const filePath = path.join(this._browsersDir(), sessionGuid);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const descriptor: BrowserDescriptor = JSON.parse(content);
+    return descriptor;
   }
 
   async find(name: string): Promise<BrowserDescriptor | null> {
@@ -118,6 +144,10 @@ class ServerRegistry {
   private _browsersDir() {
     return process.env.PLAYWRIGHT_SERVER_REGISTRY || registryDirectory;
   }
+}
+
+function createGuid(): string {
+  return crypto.randomBytes(16).toString('hex');
 }
 
 async function canConnect(descriptor: BrowserDescriptor): Promise<boolean> {

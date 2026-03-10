@@ -61,6 +61,7 @@ export type BrowserOptions = {
   wsEndpoint?: string;  // Only there when connected over web socket.
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
+  userDataDir?: string;
 };
 
 export abstract class Browser extends SdkObject {
@@ -212,6 +213,7 @@ export class BrowserServer {
   private _wsServer?: PlaywrightWebSocketServer;
   private _pipeSocketPath?: string;
   private _isStarted = false;
+  private _sessionGuid?: string;
 
   constructor(browser: Browser) {
     this._browser = browser;
@@ -234,7 +236,7 @@ export class BrowserServer {
       result.wsEndpoint = await this._wsServer.listen(0, 'localhost', path);
     }
 
-    await serverRegistry.create(this._browser, {
+    this._sessionGuid = await serverRegistry.create(this._browser, {
       title,
       wsEndpoint: result.wsEndpoint,
       pipeName: result.pipeName,
@@ -244,7 +246,9 @@ export class BrowserServer {
   }
 
   async stop() {
-    await serverRegistry.delete(this._browser);
+    if (this._sessionGuid)
+      await serverRegistry.delete(this._browser, this._sessionGuid);
+    this._sessionGuid = undefined;
     if (this._pipeSocketPath && process.platform !== 'win32')
       await fs.promises.unlink(this._pipeSocketPath).catch(() => {});
     await this._pipeServer?.close();
