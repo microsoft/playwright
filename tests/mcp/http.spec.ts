@@ -236,33 +236,8 @@ test('http transport browser lifecycle (persistent)', async ({ serverEndpoint, s
   });
 });
 
-test('http transport browser lifecycle (persistent, multiclient)', async ({ serverEndpoint, server }) => {
-  const { url } = await serverEndpoint();
-
-  const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));
-  const client1 = new Client({ name: 'test', version: '1.0.0' });
-  await client1.connect(transport1);
-  await client1.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-
-  const transport2 = new StreamableHTTPClientTransport(new URL('/mcp', url));
-  const client2 = new Client({ name: 'test', version: '1.0.0' });
-  await client2.connect(transport2);
-  const response = await client2.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.HELLO_WORLD },
-  });
-  expect(response.isError).toBe(true);
-  expect(response.content?.[0].text).toContain('use --isolated to run multiple instances of the same browser');
-
-  await client1.close();
-  await client2.close();
-});
-
 test('http transport shared context', async ({ serverEndpoint, server }) => {
-  const { url, stderr } = await serverEndpoint({ args: ['--shared-browser-context'] });
+  const { url, stderr } = await serverEndpoint();
 
   // Create first client and navigate
   const transport1 = new StreamableHTTPClientTransport(new URL('/mcp', url));

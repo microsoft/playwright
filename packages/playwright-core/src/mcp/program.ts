@@ -26,6 +26,7 @@ import { testDebug } from './log';
 
 import type { Command } from '../utilsBundle';
 import type { ClientInfo } from './sdk/server';
+import type * as playwright from '../..';
 
 export function decorateMCPCommand(command: Command, version: string) {
   command
@@ -62,7 +63,6 @@ export function decorateMCPCommand(command: Command, version: string) {
       .option('--sandbox', 'enable the sandbox for all process types that are normally not sandboxed.')
       .option('--save-session', 'Whether to save the Playwright MCP session into the output directory.')
       .option('--secrets <path>', 'path to a file containing secrets in the dotenv format', dotenvFileLoader)
-      .option('--shared-browser-context', 'reuse the same browser context between all connected HTTP clients.')
       .option('--snapshot-mode <mode>', 'when taking snapshots for responses, specifies the mode to use. Can be "incremental", "full", or "none". Default is incremental.')
       .option('--storage-state <path>', 'path to the storage state file for isolated sessions.')
       .option('--test-id-attribute <attribute>', 'specify the attribute to use for test ids, defaults to "data-testid"')
@@ -107,14 +107,18 @@ export function decorateMCPCommand(command: Command, version: string) {
           return;
         }
 
-        const sharedBrowser = config.sharedBrowserContext ? await createBrowser(config, { cwd: process.cwd() }) : undefined;
+        const useSharedBrowser = !!config.browser.userDataDir;
+        let sharedBrowser: playwright.Browser | undefined;
         let clientCount = 0;
+
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
           nameInConfig: 'playwright',
           version,
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
+            if (useSharedBrowser && clientCount === 0)
+              sharedBrowser = await createBrowser(config, clientInfo);
             clientCount++;
             const browser = sharedBrowser || await createBrowser(config, clientInfo);
             const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
@@ -126,6 +130,7 @@ export function decorateMCPCommand(command: Command, version: string) {
               return;
 
             testDebug('close browser');
+            sharedBrowser = undefined;
             const browserContext = (backend as BrowserServerBackend).browserContext;
             await browserContext.close().catch(() => { });
             await browserContext.browser()!.close().catch(() => { });
