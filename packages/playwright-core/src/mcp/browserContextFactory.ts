@@ -21,22 +21,27 @@ import path from 'path';
 
 import * as playwright from '../..';
 import { registryDirectory } from '../server/registry/index';
-import { startTraceViewerServer } from '../server';
 import { testDebug } from './log';
-import { outputDir, outputFile } from '../tools/context';
+import { outputDir } from '../tools/context';
+import { createExtensionBrowser } from './extensionContextFactory';
+import { connectToBrowser, connectToBrowserAcrossVersions } from '../client/connect';
+import { serverRegistry } from '../serverRegistry';
 
 import type { FullConfig } from './config';
-import type { LaunchOptions, BrowserContextOptions } from '../client/types';
+import type { LaunchOptions, BrowserContextOptions, ConnectOptions } from '../client/types';
 import type { ClientInfo } from './sdk/server';
+import type { Playwright } from '../client/playwright';
 
-export function contextFactory(config: FullConfig): BrowserContextFactory {
+export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
   if (config.browser.remoteEndpoint)
-    return new RemoteContextFactory(config);
+    return await createRemoteBrowser(config);
   if (config.browser.cdpEndpoint)
-    return new CdpContextFactory(config);
+    return await createCDPBrowser(config);
   if (config.browser.isolated)
-    return new IsolatedContextFactory(config);
-  return new PersistentContextFactory(config);
+    return await createIsolatedBrowser(config, clientInfo);
+  if (config.extension)
+    return await createExtensionBrowser(config, clientInfo);
+  return await createPersistentBrowser(config, clientInfo);
 }
 
 export interface BrowserContextFactory {
@@ -44,226 +49,123 @@ export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext>;
 }
 
-export function identityBrowserContextFactory(browserContext: playwright.BrowserContext): BrowserContextFactory {
-  return {
-    contexts: async (clientInfo: ClientInfo) => {
-      return [browserContext];
-    },
+export async function setupProxyAuthentication(context: playwright.BrowserContext, proxyConfig?: { username?: string, password?: string }) {
+  if (!proxyConfig?.username && !proxyConfig?.password)
+    return;
 
-    createContext: async (clientInfo: ClientInfo) => {
-      return browserContext;
-    }
-  };
-}
-
-class BaseContextFactory implements BrowserContextFactory {
-  readonly config: FullConfig;
-  private _logName: string;
-  protected _browserPromise: Promise<playwright.Browser> | undefined;
-
-  constructor(name: string, config: FullConfig) {
-    this._logName = name;
-    this.config = config;
-  }
-
-  protected async _obtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
-    if (this._browserPromise)
-      return this._browserPromise;
-    testDebug(`obtain browser (${this._logName})`);
-    this._browserPromise = this._doObtainBrowser(clientInfo);
-    void this._browserPromise.then(browser => {
-      browser.on('disconnected', () => {
-        this._browserPromise = undefined;
-      });
-    }).catch(() => {
-      this._browserPromise = undefined;
-    });
-    return this._browserPromise;
-  }
-
-  protected async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
-    throw new Error('Not implemented');
-  }
-
-  async contexts(clientInfo: ClientInfo): Promise<playwright.BrowserContext[]> {
-    const browser = await this._obtainBrowser(clientInfo);
-    return browser.contexts();
-  }
-
-  async createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
-    testDebug(`create browser context (${this._logName})`);
-    const browser = await this._obtainBrowser(clientInfo);
-    return await this._doCreateContext(browser, clientInfo);
-  }
-
-  protected async _doCreateContext(browser: playwright.Browser, clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
-    throw new Error('Not implemented');
-  }
-}
-
-// 拦截代理认证的助手函数
-async function setupProxyAuthentication(context: playwright.BrowserContext, proxyConfig?: { username?: string, password?: string }) {
-  if (!proxyConfig?.username && !proxyConfig?.password) return;
-
-  const enableAuthForPage = async (page: playwright.Page) => {
+  const attachAuthInterceptor = async (page: playwright.Page) => {
     try {
-      const client = await page.context().newCDPSession(page);
-      await client.send('Fetch.enable', { handleAuthRequests: true });
+      const cdpSession = await context.newCDPSession(page);
+      await cdpSession.send('Fetch.enable', { handleAuthRequests: true });
 
-      client.on('Fetch.authRequired', async (event) => {
-        if (event.authChallenge.source === 'Proxy') {
-          await client.send('Fetch.continueWithAuth', {
-            requestId: event.requestId,
-            authChallengeResponse: {
-              response: 'ProvideCredentials',
-              username: proxyConfig.username || '',
-              password: proxyConfig.password || '',
-            }
-          });
-        } else {
-          await client.send('Fetch.continueWithAuth', {
-            requestId: event.requestId,
-            authChallengeResponse: { response: 'Default' }
-          });
-        }
+      cdpSession.on('Fetch.authRequired', async event => {
+        const isProxy = event.authChallenge.source === 'Proxy';
+        await cdpSession.send('Fetch.continueWithAuth', {
+          requestId: event.requestId,
+          authChallengeResponse: isProxy ? {
+            response: 'ProvideCredentials',
+            username: proxyConfig?.username || '',
+            password: proxyConfig?.password || '',
+          } : {
+            response: 'Default'
+          }
+        }).catch(() => {});
       });
-    } catch (e) {
-      // 忽略 CDP Session 创建失败的情况（如页面已被销毁）
+    } catch {
+      // Ignore session creation failures on detached pages
     }
   };
 
-  context.on('page', enableAuthForPage);
-  for (const page of context.pages()) {
-    await enableAuthForPage(page);
-  }
+  context.on('page', attachAuthInterceptor);
+  await Promise.all(context.pages().map(attachAuthInterceptor));
 }
 
-class IsolatedContextFactory extends BaseContextFactory {
-  constructor(config: FullConfig) {
-    super('isolated', config);
-  }
-
-  protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
-    await injectCdpPort(this.config.browser);
-    const browserType = playwright[this.config.browser.browserName];
-    const tracesDir = await computeTracesDir(this.config, clientInfo);
-    if (tracesDir && this.config.saveTrace)
-      await startTraceServer(this.config, tracesDir);
-    return browserType.launch({
-      tracesDir,
-      ...this.config.browser.launchOptions,
-      handleSIGINT: false,
-      handleSIGTERM: false,
-    }).catch(error => {
-      if (error.message.includes('Executable doesn\'t exist'))
-        throwBrowserIsNotInstalledError(this.config);
-      throw error;
-    });
-  }
-
-  protected override async _doCreateContext(browser: playwright.Browser, clientInfo: ClientInfo): Promise<playwright.BrowserContext> {
-    const context = await browser.newContext(await browserContextOptionsFromConfig(this.config, clientInfo));
-    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
-    return context;
-  }
+async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+  testDebug('create browser (isolated)');
+  await injectCdpPort(config.browser);
+  const browserType = playwright[config.browser.browserName];
+  const tracesDir = await computeTracesDir(config, clientInfo);
+  return await browserType.launch({
+    tracesDir,
+    ...config.browser.launchOptions,
+    handleSIGINT: false,
+    handleSIGTERM: false,
+  }).catch(error => {
+    if (error.message.includes('Executable doesn\'t exist'))
+      throwBrowserIsNotInstalledError(config);
+    throw error;
+  });
 }
 
-class CdpContextFactory extends BaseContextFactory {
-  constructor(config: FullConfig) {
-    super('cdp', config);
-  }
-
-  protected override async _doObtainBrowser(): Promise<playwright.Browser> {
-    return playwright.chromium.connectOverCDP(this.config.browser.cdpEndpoint!, {
-      headers: this.config.browser.cdpHeaders,
-      timeout: this.config.browser.cdpTimeout
-    });
-  }
-
-  protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    const context = this.config.browser.isolated ? await browser.newContext() : browser.contexts()[0];
-    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
-    return context;
-  }
+async function createCDPBrowser(config: FullConfig): Promise<playwright.Browser> {
+  testDebug('create browser (cdp)');
+  return playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
+    headers: config.browser.cdpHeaders,
+    timeout: config.browser.cdpTimeout
+  });
 }
 
-class RemoteContextFactory extends BaseContextFactory {
-  constructor(config: FullConfig) {
-    super('remote', config);
-  }
+async function createRemoteBrowser(config: FullConfig): Promise<playwright.Browser> {
+  testDebug('create browser (remote)');
+  const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
+  if (descriptor)
+    return await connectToBrowserAcrossVersions(descriptor);
 
-  protected override async _doObtainBrowser(): Promise<playwright.Browser> {
-    const url = new URL(this.config.browser.remoteEndpoint!);
-    url.searchParams.set('browser', this.config.browser.browserName);
-    if (this.config.browser.launchOptions)
-      url.searchParams.set('launch-options', JSON.stringify(this.config.browser.launchOptions));
-    return playwright[this.config.browser.browserName].connect(String(url));
-  }
-
-  protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
-    const context = await browser.newContext();
-    await setupProxyAuthentication(context, this.config.browser.launchOptions?.proxy as any);
-    return context;
-  }
+  const endpoint = config.browser.remoteEndpoint!;
+  const params: ConnectOptions = { endpoint };
+  const playwrightObject = playwright as Playwright;
+  const browser = await connectToBrowser(playwrightObject, params);
+  browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
+  return browser;
 }
 
-class PersistentContextFactory extends BaseContextFactory {
-  readonly name = 'persistent';
-  readonly description = 'Create a new persistent browser context';
+async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+  testDebug('create browser (persistent)');
+  await injectCdpPort(config.browser);
+  const userDataDir = config.browser.userDataDir ?? await createUserDataDir(config, clientInfo);
+  const tracesDir = await computeTracesDir(config, clientInfo);
 
-  constructor(config: FullConfig) {
-    super('persistent', config);
-  }
+  if (await isProfileLocked5Times(userDataDir))
+    throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
-  protected override async _doObtainBrowser(clientInfo: ClientInfo): Promise<playwright.Browser> {
-    await injectCdpPort(this.config.browser);
-    testDebug('create browser context (persistent)');
-    const userDataDir = this.config.browser.userDataDir ?? await this._createUserDataDir(clientInfo);
-    const tracesDir = await computeTracesDir(this.config, clientInfo);
-    if (tracesDir && this.config.saveTrace)
-      await startTraceServer(this.config, tracesDir);
-
-    if (await isProfileLocked5Times(userDataDir))
+  const browserType = playwright[config.browser.browserName];
+  const launchOptions: LaunchOptions & BrowserContextOptions = {
+    tracesDir,
+    ...config.browser.launchOptions,
+    ...config.browser.contextOptions,
+    handleSIGINT: false,
+    handleSIGTERM: false,
+    ignoreDefaultArgs: [
+      '--disable-extensions',
+    ],
+    assistantMode: true,
+  };
+  try {
+    const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
+    
+    await setupProxyAuthentication(browserContext, config.browser.launchOptions?.proxy as any);
+    
+    return browserContext.browser()!;
+  } catch (error: any) {
+    if (error.message.includes('Executable doesn\'t exist'))
+      throwBrowserIsNotInstalledError(config);
+    if (error.message.includes('cannot open shared object file: No such file or directory')) {
+      const browserName = launchOptions.channel ?? config.browser.browserName;
+      throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
+    }
+    if (error.message.includes('ProcessSingleton') || error.message.includes('exitCode=21'))
       throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
-
-    const browserType = playwright[this.config.browser.browserName];
-    const launchOptions: LaunchOptions & BrowserContextOptions = {
-      tracesDir,
-      ...this.config.browser.launchOptions,
-      ...await browserContextOptionsFromConfig(this.config, clientInfo),
-      handleSIGINT: false,
-      handleSIGTERM: false,
-      ignoreDefaultArgs: [
-        '--disable-extensions',
-      ],
-      assistantMode: true,
-    };
-    try {
-      const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
-      await setupProxyAuthentication(browserContext, this.config.browser.launchOptions?.proxy as any);
-      return browserContext.browser()!;
-    } catch (error: any) {
-      if (error.message.includes('Executable doesn\'t exist'))
-        throwBrowserIsNotInstalledError(this.config);
-      if (error.message.includes('cannot open shared object file: No such file or directory')) {
-        const browserName = launchOptions.channel ?? this.config.browser.browserName;
-        throw new Error(`Missing system dependencies required to run browser ${browserName}. Install them with: sudo npx playwright install-deps ${browserName}`);
-      }
-      if (error.message.includes('ProcessSingleton') || error.message.includes('exitCode=21'))
-        throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
-      throw error;
-    }
+    throw error;
   }
+}
 
-  private async _createUserDataDir(clientInfo: ClientInfo) {
-    const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
-    const browserToken = this.config.browser.launchOptions?.channel ?? this.config.browser?.browserName;
-    // Hesitant putting hundreds of files into the user's workspace, so using it for hashing instead.
-    const rootPathToken = createHash(clientInfo.cwd);
-    const result = path.join(dir, `mcp-${browserToken}-${rootPathToken}`);
-    await fs.promises.mkdir(result, { recursive: true });
-    return result;
-  }
+async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
+  const dir = process.env.PWMCP_PROFILES_DIR_FOR_TEST ?? registryDirectory;
+  const browserToken = config.browser.launchOptions?.channel ?? config.browser?.browserName;
+  const rootPathToken = createHash(clientInfo.cwd);
+  const result = path.join(dir, `mcp-${browserToken}-${rootPathToken}`);
+  await fs.promises.mkdir(result, { recursive: true });
+  return result;
 }
 
 async function injectCdpPort(browserConfig: FullConfig['browser']) {
@@ -282,35 +184,12 @@ async function findFreePort(): Promise<number> {
   });
 }
 
-async function startTraceServer(config: FullConfig, tracesDir: string): Promise<string | undefined> {
-  if (!config.saveTrace)
-    return;
-
-  const server = await startTraceViewerServer();
-  const urlPrefix = server.urlPrefix('human-readable');
-  const url = urlPrefix + '/trace/index.html?trace=' + tracesDir + '/trace.json';
-  // eslint-disable-next-line no-console
-  console.error('\nTrace viewer listening on ' + url);
-}
-
 function createHash(data: string): string {
   return crypto.createHash('sha256').update(data).digest('hex').slice(0, 7);
 }
 
 async function computeTracesDir(config: FullConfig, clientInfo: ClientInfo): Promise<string | undefined> {
   return path.resolve(outputDir({ config, cwd: clientInfo.cwd }), 'traces');
-}
-
-async function browserContextOptionsFromConfig(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.BrowserContextOptions> {
-  const result = { ...config.browser.contextOptions };
-  if (config.saveVideo) {
-    const dir = await outputFile({ config, cwd: clientInfo.cwd }, `videos`, { origin: 'code' });
-    result.recordVideo = {
-      dir,
-      size: config.saveVideo,
-    };
-  }
-  return result;
 }
 
 async function isProfileLocked5Times(userDataDir: string): Promise<boolean> {

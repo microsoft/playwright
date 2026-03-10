@@ -8,7 +8,6 @@
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * 
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
@@ -166,7 +165,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
       channel = cliOptions.browser;
       break;
     case 'chromium':
-      // Never use old headless.
       browserName = 'chromium';
       channel = 'chrome-for-testing';
       break;
@@ -178,45 +176,35 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
       break;
   }
 
-  // Launch options
   const launchOptions: playwright.LaunchOptions = {
     channel,
     executablePath: cliOptions.executablePath,
     headless: cliOptions.headless,
   };
 
-  // --sandbox was passed, enable the sandbox
-  // --no-sandbox was passed, disable the sandbox
   if (cliOptions.sandbox !== undefined)
     launchOptions.chromiumSandbox = cliOptions.sandbox;
-// === 修改部分：支持从 proxyServer 中解析账号密码 ===
+
   if (cliOptions.proxyServer) {
+    launchOptions.proxy = { server: cliOptions.proxyServer };
     try {
       const proxyUrl = new URL(cliOptions.proxyServer);
-      const username = decodeURIComponent(proxyUrl.username);
-      const password = decodeURIComponent(proxyUrl.password);
-
-      launchOptions.proxy = {
-        server: `${proxyUrl.protocol}//${proxyUrl.host}`
-      };
-
-      if (username || password) {
-        launchOptions.proxy.username = username;
-        launchOptions.proxy.password = password;
+      if (proxyUrl.username || proxyUrl.password) {
+        launchOptions.proxy.server = `${proxyUrl.protocol}//${proxyUrl.host}`;
+        launchOptions.proxy.username = decodeURIComponent(proxyUrl.username);
+        launchOptions.proxy.password = decodeURIComponent(proxyUrl.password);
       }
-    } catch (e) {
-      launchOptions.proxy = { server: cliOptions.proxyServer };
+    } catch {
+      // Fallback to raw string if invalid URL format
     }
 
     if (cliOptions.proxyBypass)
       launchOptions.proxy.bypass = cliOptions.proxyBypass;
   }
-  // === 修改部分结束 ===
 
   if (cliOptions.device && cliOptions.cdpEndpoint)
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
-  // Context options
   const contextOptions: playwright.BrowserContextOptions = cliOptions.device ? devices[cliOptions.device] : {};
   if (cliOptions.storageState)
     contextOptions.storageState = cliOptions.storageState;
@@ -431,7 +419,6 @@ export function resolutionParser(name: string, value: string | undefined): Viewp
     return { width, height };
   }
 
-  // Legacy format
   if (value.includes(',')) {
     const [width, height] = value.split(',').map(v => +v);
     if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0)
