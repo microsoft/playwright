@@ -31,7 +31,6 @@ import { connectToBrowserAcrossVersions } from '../client/connect';
 
 import type * as api from '../..';
 import type { SessionStatus } from '@devtools/sessionModel';
-import type { BrowserDescriptor } from '../serverRegistry';
 
 function readBody(request: http.IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -49,11 +48,11 @@ function readBody(request: http.IncomingMessage): Promise<any> {
   });
 }
 
-async function parseRequest(request: http.IncomingMessage): Promise<{ browserDescriptor: BrowserDescriptor }> {
+async function parseRequest(request: http.IncomingMessage): Promise<{ sessionGuid: string }> {
   const body = await readBody(request);
-  if (!body.browserDescriptor)
+  if (!body.sessionGuid)
     throw new Error('Dashboard app is too old, please close it and open again');
-  return { browserDescriptor: body.browserDescriptor };
+  return { sessionGuid: body.sessionGuid };
 }
 
 function sendJSON(response: http.ServerResponse, data: any, statusCode = 200) {
@@ -70,7 +69,7 @@ async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionSta
       let wsUrl: string | undefined;
       if (browser.canConnect) {
         const url = new URL(wsPath, 'http://localhost');
-        url.searchParams.set('browserDescriptor', JSON.stringify(browser));
+        url.searchParams.set('sessionGuid', browser.guid);
         wsUrl = url.pathname + url.search;
       }
       sessions.push({ browserDescriptor: browser, wsUrl });
@@ -79,7 +78,7 @@ async function loadBrowserDescriptorSessions(wsPath: string): Promise<SessionSta
   return sessions;
 }
 
-const socketPathToDevToolsConnection = new Map<string, DevToolsConnection>();
+const browserGuidToDevToolsConnection = new Map<string, DevToolsConnection>();
 
 async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMessage, response: http.ServerResponse) {
   const url = new URL(request.url!,  httpServer.urlPrefix('human-readable'));
@@ -92,9 +91,10 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   }
 
   if (apiPath === '/api/sessions/close' && request.method === 'POST') {
-    const { browserDescriptor } = await parseRequest(request);
+    const { sessionGuid } = await parseRequest(request);
     let browser: api.Browser;
     try {
+      const browserDescriptor = serverRegistry.readDescriptor(sessionGuid);
       browser = await connectToBrowserAcrossVersions(browserDescriptor);
     } catch (e) {
       sendJSON(response, { error: 'Failed to connect to browser socket: ' + e.message }, 500);
@@ -112,9 +112,9 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   }
 
   if (apiPath === '/api/sessions/delete-data' && request.method === 'POST') {
-    const { browserDescriptor } = await parseRequest(request);
+    const { sessionGuid } = await parseRequest(request);
     try {
-      await serverRegistry.deleteUserData(browserDescriptor.guid);
+      await serverRegistry.deleteUserData(sessionGuid);
     } catch (e) {
       sendJSON(response, { error: 'Failed to delete session data: ' + e.message }, 500);
       return;
@@ -141,29 +141,27 @@ async function openDevToolsApp(): Promise<api.Page> {
   });
 
   httpServer.createWebSocket(url => {
-    const descriptorJson = url.searchParams.get('browserDescriptor');
-    if (!descriptorJson)
+    const sessionGuid = url.searchParams.get('sessionGuid');
+    if (!sessionGuid)
       throw new Error('Unsupported WebSocket URL: ' + url.toString());
-    const browserDescriptor = JSON.parse(descriptorJson) as BrowserDescriptor;
+    const browserDescriptor = serverRegistry.readDescriptor(sessionGuid);
 
     const cdpPageId = url.searchParams.get('cdpPageId');
     if (cdpPageId) {
-      const socketPath = browserDescriptor.pipeName!;
-      const connection = socketPathToDevToolsConnection.get(socketPath);
+      const connection = browserGuidToDevToolsConnection.get(sessionGuid);
       if (!connection)
-        throw new Error('CDP connection not found for socket path: ' + socketPath);
+        throw new Error('CDP connection not found for session: ' + sessionGuid);
       const page = connection.pageForId(cdpPageId);
       if (!page)
         throw new Error('Page not found for page ID: ' + cdpPageId);
       return new CDPConnection(page);
     }
 
-    const socketPath = browserDescriptor.pipeName!;
     const cdpUrl = new URL(httpServer.urlPrefix('human-readable'));
     cdpUrl.pathname = httpServer.wsGuid()!;
-    cdpUrl.searchParams.set('browserDescriptor', descriptorJson);
-    const connection = new DevToolsConnection(browserDescriptor, cdpUrl, () => socketPathToDevToolsConnection.delete(socketPath));
-    socketPathToDevToolsConnection.set(socketPath, connection);
+    cdpUrl.searchParams.set('sessionGuid', sessionGuid);
+    const connection = new DevToolsConnection(browserDescriptor, cdpUrl, () => browserGuidToDevToolsConnection.delete(sessionGuid));
+    browserGuidToDevToolsConnection.set(sessionGuid, connection);
     return connection;
   });
 

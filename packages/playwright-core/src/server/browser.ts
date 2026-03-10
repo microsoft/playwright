@@ -246,8 +246,8 @@ export class BrowserServer {
   }
 
   async stop() {
-    if (this._sessionGuid && !this._browser.options.originalLaunchOptions.userDataDir)
-      await serverRegistry.delete(this._sessionGuid);
+    if (this._sessionGuid)
+      await serverRegistry.delete(this._browser, this._sessionGuid);
     this._sessionGuid = undefined;
     if (this._pipeSocketPath && process.platform !== 'win32')
       await fs.promises.unlink(this._pipeSocketPath).catch(() => {});

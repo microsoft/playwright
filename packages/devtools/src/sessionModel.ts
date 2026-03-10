@@ -66,8 +66,8 @@ export class SessionModel {
     }
   }
 
-  sessionBySocketPath(socketPath: string): SessionStatus | undefined {
-    return this.sessions.find(s => s.browserDescriptor.pipeName === socketPath);
+  sessionByGuid(guid: string): SessionStatus | undefined {
+    return this.sessions.find(s => s.browserDescriptor.guid === guid);
   }
 
   private async _fetchSessions() {
@@ -103,7 +103,7 @@ export class SessionModel {
     await fetch('/api/sessions/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ browserDescriptor: descriptor }),
+      body: JSON.stringify({ sessionGuid: descriptor.guid }),
     });
     await this._fetchSessions();
   }
@@ -112,7 +112,7 @@ export class SessionModel {
     await fetch('/api/sessions/delete-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ browserDescriptor: descriptor }),
+      body: JSON.stringify({ sessionGuid: descriptor.guid }),
     });
     await this._fetchSessions();
   }

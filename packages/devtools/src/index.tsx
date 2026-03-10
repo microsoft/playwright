@@ -60,7 +60,7 @@ const App: React.FC = () => {
   }, []);
 
   if (socketPath) {
-    const wsUrl = model.sessionBySocketPath(socketPath)?.wsUrl;
+    const wsUrl = model.sessionByGuid(socketPath)?.wsUrl;
     return <DevTools wsUrl={wsUrl || undefined} />;
   }
   return <Grid model={model} />;

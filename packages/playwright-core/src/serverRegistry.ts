@@ -18,8 +18,7 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 import os from 'os';
-
-import { createGuid } from './utils';
+import crypto from 'crypto';
 
 import type { Browser } from './server/browser';
 import type { LaunchOptions } from './server/types';
@@ -74,11 +73,9 @@ class ServerRegistry {
       const entries = await Promise.all(promises);
       const descriptors = [];
       for (const entry of entries) {
-        if (!entry.canConnect && !entry.browser.launchOptions.userDataDir) {
-          try {
-            await fs.promises.unlink(entry.file);
-            continue;
-          } catch { }
+        if (!entry.canConnect && !entry.browser.userDataDir) {
+          await fs.promises.unlink(entry.file).catch(() => {});
+          continue;
         }
         descriptors.push(entry);
       }
@@ -110,7 +107,9 @@ class ServerRegistry {
     return guid;
   }
 
-  async delete(sessionGuid: string): Promise<void> {
+  async delete(browser: Browser, sessionGuid: string): Promise<void> {
+    if (browser.options.userDataDir)
+      return;
     const file = path.join(this._browsersDir(), sessionGuid);
     await fs.promises.unlink(file).catch(() => {});
   }
@@ -122,6 +121,13 @@ class ServerRegistry {
     if (descriptor.browser.userDataDir)
       await fs.promises.rm(descriptor.browser.userDataDir, { recursive: true, force: true });
     await fs.promises.unlink(filePath);
+  }
+
+  readDescriptor(sessionGuid: string): BrowserDescriptor {
+    const filePath = path.join(this._browsersDir(), sessionGuid);
+    const content = fs.readFileSync(filePath, 'utf-8');
+    const descriptor: BrowserDescriptor = JSON.parse(content);
+    return descriptor;
   }
 
   async find(name: string): Promise<BrowserDescriptor | null> {
@@ -138,6 +144,10 @@ class ServerRegistry {
   private _browsersDir() {
     return process.env.PLAYWRIGHT_SERVER_REGISTRY || registryDirectory;
   }
+}
+
+function createGuid(): string {
+  return crypto.randomBytes(16).toString('hex');
 }
 
 async function canConnect(descriptor: BrowserDescriptor): Promise<boolean> {
