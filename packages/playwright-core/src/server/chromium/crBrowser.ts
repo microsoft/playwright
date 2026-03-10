@@ -112,10 +112,10 @@ export class CRBrowser extends Browser {
     const proxy = options.proxyOverride || options.proxy;
     let proxyBypassList = undefined;
     if (proxy) {
-      if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
-        proxyBypassList = proxy.bypass;
-      else
+      if (shouldProxyLoopback(proxy.bypass))
         proxyBypassList = '<-loopback>' + (proxy.bypass ? `,${proxy.bypass}` : '');
+      else
+        proxyBypassList = proxy.bypass;
     }
 
     const { browserContextId } = await this._session.send('Target.createBrowserContext', {
@@ -616,4 +616,12 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
     const rootSession = await this._browser._clientRootSession();
     return rootSession.attachToTarget(targetId);
   }
+}
+
+export function shouldProxyLoopback(bypass: string | undefined) {
+  if (process.env.PLAYWRIGHT_DISABLE_FORCED_CHROMIUM_PROXIED_LOOPBACK)
+    return false;
+  const hosts = (bypass || '').split(',').map(s => s.trim());
+  const shouldBypassSomeLoopback = ['localhost', '127.0.0.1', '::1', '[::]', '[::1]', '<loopback>', '<-loopback>'].some(host => hosts.includes(host));
+  return !shouldBypassSomeLoopback;
 }

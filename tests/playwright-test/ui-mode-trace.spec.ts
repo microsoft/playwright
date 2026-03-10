@@ -443,7 +443,7 @@ test('should work behind reverse proxy', { annotation: { type: 'issue', descript
   });
 
   const uiModeUrl = new URL(page.url());
-  reverseProxy.forwardTo(+uiModeUrl.port, { prefix: '/subdir', preserveHostname: true });
+  reverseProxy.forwardTo(+uiModeUrl.port, { removePrefix: '/subdir', preserveHostname: true });
   await page.goto(`${reverseProxy.URL}/subdir${uiModeUrl.pathname}?${uiModeUrl.searchParams}`);
 
   await page.getByText('trace test').dblclick();

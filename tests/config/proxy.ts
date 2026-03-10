@@ -62,7 +62,7 @@ export class TestProxy {
     await new Promise(x => this._server.close(x));
   }
 
-  forwardTo(port: number, options?: { allowConnectRequests?: boolean, prefix?: string, preserveHostname?: boolean }) {
+  forwardTo(port: number, options?: { allowConnectRequests?: boolean, removePrefix?: string, preserveHostname?: boolean }) {
     this._prependHandler('request', (req: IncomingMessage) => {
       this.requestUrls.push(req.url);
       const url = new URL(req.url, `http://${req.headers.host}`);
@@ -70,8 +70,8 @@ export class TestProxy {
         url.port = '' + port;
       else
         url.host = `127.0.0.1:${port}`;
-      if (options?.prefix)
-        url.pathname = url.pathname.replace(options.prefix, '');
+      if (options?.removePrefix)
+        url.pathname = url.pathname.replace(options.removePrefix, '');
       req.url = url.toString();
     });
     this._prependHandler('connect', (req: IncomingMessage) => {
@@ -89,8 +89,8 @@ export class TestProxy {
         url.port = '' + port;
       else
         url.host = `127.0.0.1:${port}`;
-      if (options?.prefix)
-        url.pathname = url.pathname.replace(options.prefix, '');
+      if (options?.removePrefix)
+        url.pathname = url.pathname.replace(options.removePrefix, '');
       if (url.protocol === 'ws:')
         url.protocol = 'http:';
       else if (url.protocol === 'wss:')
