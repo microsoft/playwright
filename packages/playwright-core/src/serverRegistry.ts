@@ -41,13 +41,12 @@ export type BrowserDescriptor = BrowserInfo & {
   };
 };
 
-type BrowserEntry = BrowserDescriptor & {
-  canConnect: boolean;
-  file: string;
-};
+export type BrowserStatus = BrowserDescriptor & { canConnect: boolean };
+
+type BrowserEntry = BrowserStatus & { file: string };
 
 class ServerRegistry {
-  async list(options?: { gc?: boolean }): Promise<Map<string, BrowserDescriptor[]>> {
+  async list(options?: { gc?: boolean, includeDisconnected?: boolean }): Promise<Map<string, BrowserStatus[]>> {
     const files = await fs.promises.readdir(this._browsersDir()).catch(() => []);
     const result = new Map<string, Promise<BrowserEntry>[]>();
     for (const file of files) {
@@ -66,7 +65,7 @@ class ServerRegistry {
       }
     }
 
-    const resolvedResult = new Map<string, BrowserEntry[]>();
+    const resolvedResult = new Map<string, BrowserStatus[]>();
     for (const [key, promises] of result) {
       const entries = await Promise.all(promises);
       if (options?.gc) {
@@ -75,7 +74,7 @@ class ServerRegistry {
             await fs.promises.unlink(entry.file).catch(() => {});
         }
       }
-      const list = entries.filter(entry => entry.canConnect);
+      const list = options?.includeDisconnected ? entries : entries.filter(entry => entry.canConnect);
       if (list.length)
         resolvedResult.set(key, list);
     }

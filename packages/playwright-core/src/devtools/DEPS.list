@@ -2,6 +2,7 @@
 ../../
 ../server/registry/index.ts
 ../server/utils/
+../serverRegistry.ts
 ../utils/
-../cli/client/registry.ts
-../cli/client/session.ts
+../client/connect.ts
+../client/eventEmitter.ts

@@ -26,7 +26,6 @@ import { Page } from './page';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
-import { createGuid } from './utils/crypto';
 import { serverRegistry } from '../serverRegistry';
 
 import type * as types from './types';
@@ -221,6 +220,7 @@ export class BrowserServer {
   async start(title: string, options: { workspaceDir?: string, wsPath?: string }): Promise<{ wsEndpoint?: string, pipeName?: string }> {
     if (this._isStarted)
       throw new Error(`Server is already started.`);
+    this._isStarted = true;
 
     const result: { wsEndpoint?: string, pipeName?: string } = {};
     this._pipeServer = new PlaywrightPipeServer(this._browser);
@@ -229,9 +229,9 @@ export class BrowserServer {
     result.pipeName = this._pipeSocketPath;
 
     if (options.wsPath) {
-      const path = options.wsPath ? (options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`) : `/${createGuid()}`;
+      const path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
       this._wsServer = new PlaywrightWebSocketServer(this._browser, path);
-      result.wsEndpoint = await this._wsServer.listen(0);
+      result.wsEndpoint = await this._wsServer.listen(0, 'localhost', path);
     }
 
     await serverRegistry.create(this._browser, {
@@ -251,6 +251,7 @@ export class BrowserServer {
     await this._wsServer?.close();
     this._pipeServer = undefined;
     this._wsServer = undefined;
+    this._isStarted = false;
   }
 
   private async _socketPath() {

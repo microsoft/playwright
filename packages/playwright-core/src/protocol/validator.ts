@@ -1182,10 +1182,6 @@ scheme.BrowserContextClockSetSystemTimeParams = tObject({
   timeString: tOptional(tString),
 });
 scheme.BrowserContextClockSetSystemTimeResult = tOptional(tObject({}));
-scheme.BrowserContextDevtoolsStartParams = tOptional(tObject({}));
-scheme.BrowserContextDevtoolsStartResult = tObject({
-  url: tString,
-});
 scheme.PageInitializer = tObject({
   mainFrame: tChannel(['Frame']),
   viewportSize: tOptional(tObject({
