@@ -259,7 +259,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   }
 
   private async _devtoolsUrl(page: api.Page) {
-    const cdpPort = this._browserDescriptor.browser.launchOptions.cdpPort;
+    const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
     if (cdpPort)
       return new URL(`http://localhost:${cdpPort}/devtools/`);
 

@@ -18,10 +18,10 @@ import type { ClientInfo } from '../../playwright-core/src/cli/client/registry';
 import type { BrowserDescriptor } from '../../playwright-core/src/serverRegistry';
 
 export type SessionStatus = {
+  guid: string;
   browserDescriptor: BrowserDescriptor;
   wsUrl?: string;
 };
-
 
 type Listener = () => void;
 
@@ -67,7 +67,7 @@ export class SessionModel {
   }
 
   sessionByGuid(guid: string): SessionStatus | undefined {
-    return this.sessions.find(s => s.browserDescriptor.guid === guid);
+    return this.sessions.find(s => s.browserDescriptor.browser.guid === guid);
   }
 
   private async _fetchSessions() {
@@ -103,7 +103,7 @@ export class SessionModel {
     await fetch('/api/sessions/close', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionGuid: descriptor.guid }),
+      body: JSON.stringify({ guid: descriptor.browser.guid }),
     });
     await this._fetchSessions();
   }
@@ -112,7 +112,7 @@ export class SessionModel {
     await fetch('/api/sessions/delete-data', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sessionGuid: descriptor.guid }),
+      body: JSON.stringify({ guid: descriptor.browser.guid }),
     });
     await this._fetchSessions();
   }
