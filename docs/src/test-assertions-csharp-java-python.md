@@ -24,7 +24,7 @@ title: "Assertions"
 | [`method: LocatorAssertions.toHaveAttribute`] | Element has a DOM attribute |
 | [`method: LocatorAssertions.toHaveClass`] | Element has a class property |
 | [`method: LocatorAssertions.toHaveCount`] | List has exact number of children |
-| [`method: LocatorAssertions.toHaveCSS#1`] | Element has CSS property |
+| [`method: LocatorAssertions.toHaveCSS`] | Element has CSS property |
 | [`method: LocatorAssertions.toHaveId`] | Element has an ID |
 | [`method: LocatorAssertions.toHaveJSProperty`] | Element has a JavaScript property |
 | [`method: LocatorAssertions.toHaveRole`] | Element has a specific [ARIA role](https://www.w3.org/TR/wai-aria-1.2/#roles) |

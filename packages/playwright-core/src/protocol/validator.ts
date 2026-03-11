@@ -1989,7 +1989,7 @@ scheme.FrameWaitForSelectorResult = tObject({
 scheme.FrameExpectParams = tObject({
   selector: tOptional(tString),
   expression: tString,
-  expressionArg: tOptional(tString),
+  expressionArg: tOptional(tAny),
   expectedText: tOptional(tArray(tType('ExpectedTextValue'))),
   expectedNumber: tOptional(tFloat),
   expectedValue: tOptional(tType('SerializedArgument')),
