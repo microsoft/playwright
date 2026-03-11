@@ -34,7 +34,7 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git add .
             git commit -m "chore: update generated files after dependency update"
-            git push
+            git push origin HEAD:${{ github.head_ref }}
           else
             echo "No generated files changed, nothing to commit."
           fi
