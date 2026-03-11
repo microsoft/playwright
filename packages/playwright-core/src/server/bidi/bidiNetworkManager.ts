@@ -149,6 +149,7 @@ export class BidiNetworkManager {
     const response = new network.Response(request.request, params.response.status, params.response.statusText, fromBidiHeaders(params.response.headers), timing, getResponseBody, false);
     response._serverAddrFinished();
     response._securityDetailsFinished();
+    response._setHttpVersion(params.response.protocol);
     // "raw" headers are the same as "provisional" headers in Bidi.
     response.setRawResponseHeaders(null);
     response.setResponseHeadersSize(params.response.headersSize);
@@ -173,7 +174,6 @@ export class BidiNetworkManager {
       this._deleteRequest(request._id);
       response._requestFinished(responseEndTime);
     }
-    response._setHttpVersion(params.response.protocol);
     this._page.frameManager.reportRequestFinished(request.request, response);
 
   }
