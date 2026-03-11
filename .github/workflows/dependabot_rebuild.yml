@@ -1,0 +1,38 @@
+name: "Dependabot: rebuild generated files"
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  rebuild:
+    name: Rebuild generated files
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v6
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit generated files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add .
+            git commit -m "chore: update generated files after dependency update"
+            git push
+          else
+            echo "No generated files changed, nothing to commit."
+          fi
