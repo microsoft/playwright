@@ -1,4 +1,4 @@
-name: "Dependabot: rebuild generated files"
+name: "dependabot"
 on:
   pull_request:
     branches:
@@ -6,7 +6,7 @@ on:
 
 jobs:
   rebuild:
-    name: Rebuild generated files
+    name: update generated files
     runs-on: ubuntu-latest
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
     permissions:
@@ -27,7 +27,7 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Commit generated files
+      - name: Add generated files to the PR
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
