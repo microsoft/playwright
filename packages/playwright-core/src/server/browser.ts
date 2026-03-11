@@ -174,7 +174,7 @@ export abstract class Browser extends SdkObject {
     return video?.artifact;
   }
 
-  async startServer(title: string, options: { workspaceDir?: string, wsPath?: string, pipeName?: string }): Promise<{ wsEndpoint?: string, pipeName?: string }> {
+  async startServer(title: string, options: channels.BrowserStartServerOptions): Promise<{ wsEndpoint?: string, pipeName?: string }> {
     return await this._server.start(title, options);
   }
 
@@ -219,7 +219,7 @@ export class BrowserServer {
     this._browser = browser;
   }
 
-  async start(title: string, options: { workspaceDir?: string, wsPath?: string }): Promise<{ wsEndpoint?: string, pipeName?: string }> {
+  async start(title: string, options: channels.BrowserStartServerOptions): Promise<{ wsEndpoint?: string, pipeName?: string }> {
     if (this._isStarted)
       throw new Error(`Server is already started.`);
     this._isStarted = true;
@@ -233,7 +233,7 @@ export class BrowserServer {
     if (options.wsPath) {
       const path = options.wsPath.startsWith('/') ? options.wsPath : `/${options.wsPath}`;
       this._wsServer = new PlaywrightWebSocketServer(this._browser, path);
-      result.wsEndpoint = await this._wsServer.listen(0, 'localhost', path);
+      result.wsEndpoint = await this._wsServer.listen(options.port ?? 0, options.host ?? 'localhost', path);
     }
 
     const browserInfo: BrowserInfo = {
@@ -247,6 +247,7 @@ export class BrowserServer {
       wsEndpoint: result.wsEndpoint,
       pipeName: result.pipeName,
       workspaceDir: options.workspaceDir,
+      metadata: options.metadata,
     });
     return result;
   }
