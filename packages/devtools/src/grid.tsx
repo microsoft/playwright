@@ -44,7 +44,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
   const workspaceGroups = React.useMemo(() => {
     const groups = new Map<string, SessionStatus[]>();
     for (const session of sessions) {
-      const key = session.browserDescriptor.workspaceDir || 'Global';
+      const key = session.workspaceDir || 'Global';
       let list = groups.get(key);
       if (!list) {
         list = [];
@@ -53,7 +53,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
       list.push(session);
     }
     for (const list of groups.values())
-      list.sort((a, b) => a.browserDescriptor.title.localeCompare(b.browserDescriptor.title));
+      list.sort((a, b) => a.title.localeCompare(b.title));
 
     // Current workspace first, then alphabetical.
     const entries = [...groups.entries()];
@@ -91,7 +91,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
               </div>
               {isExpanded && (
                 <div className='session-chips'>
-                  {entries.map(session => <SessionChip key={session.browserDescriptor.guid} descriptor={session.browserDescriptor} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
+                  {entries.map(session => <SessionChip key={session.browser.guid} descriptor={session} wsUrl={session.wsUrl} visible={isExpanded} model={model} />)}
                 </div>
               )}
             </div>
@@ -103,7 +103,7 @@ export const Grid: React.FC<{ model: SessionModel }> = ({ model }) => {
 };
 
 const SessionChip: React.FC<{ descriptor: BrowserDescriptor; wsUrl: string | undefined; visible: boolean; model: SessionModel }> = ({ descriptor, wsUrl, visible, model }) => {
-  const href = '#session=' + encodeURIComponent(descriptor.guid);
+  const href = '#session=' + encodeURIComponent(descriptor.browser.guid);
 
   const channel = React.useMemo(() => {
     if (!wsUrl || !visible)
