@@ -404,8 +404,6 @@ it('should click button', async ({ page, server }) => {
 ### Running Tests
 
 - `npm run ctest <file>` — runs on Chromium only (fast, use during development)
-- `npm run wtest <file>` — runs on WebKit only
-- `npm run ftest <file>` — runs on Firefox only
 - `npm run test <file>` — runs on all browsers (Chromium, Firefox, WebKit)
 
 Examples:
