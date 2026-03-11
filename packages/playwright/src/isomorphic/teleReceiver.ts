@@ -786,7 +786,6 @@ export const baseFullConfig: reporterTypes.FullConfig = {
   tags: [],
   updateSnapshots: 'missing',
   updateSourceMethod: 'patch',
-  runAgents: 'none',
   version: '',
   workers: 0,
   webServer: null,

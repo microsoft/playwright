@@ -28,7 +28,6 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { DisposableDispatcher } from './disposableDispatcher';
 import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
-import { PageAgentDispatcher } from './pageAgentDispatcher';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
 
@@ -416,10 +415,6 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._cssCoverageActive = false;
     const coverage = this._page.coverage as CRCoverage;
     return await coverage.stopCSSCoverage();
-  }
-
-  async agent(params: channels.PageAgentParams, progress: Progress): Promise<channels.PageAgentResult> {
-    return { agent: new PageAgentDispatcher(this, params) };
   }
 
   _onFrameAttached(frame: Frame) {

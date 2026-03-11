@@ -13,7 +13,6 @@ common/
 ./mcp/sdk/
 ./mcp/test/
 ./transform/babelBundle.ts
-./agents/
 
 [internalsForTest.ts]
 **

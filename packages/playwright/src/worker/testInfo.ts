@@ -70,8 +70,6 @@ type TestInfoCallbacks = {
   onStepEnd: (payload: ipc.StepEndPayload) => void;
   onAttach: (payload: ipc.AttachmentPayload) => void;
   onTestPaused: (payload: ipc.TestPausedPayload) => Promise<ipc.ResumePayload>;
-  onCloneStorage: (payload: ipc.CloneStoragePayload) => Promise<string>;
-  onUpstreamStorage: (payload: ipc.UpstreamStoragePayload) => Promise<void>;
 };
 
 export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
@@ -79,8 +77,6 @@ export const emtpyTestInfoCallbacks: TestInfoCallbacks = {
   onStepEnd: () => {},
   onAttach: () => {},
   onTestPaused: () => Promise.reject(new Error('TestInfoImpl not initialized')),
-  onCloneStorage: () => Promise.reject(new Error('TestInfoImpl not initialized')),
-  onUpstreamStorage: () => Promise.resolve(),
 };
 
 export class TestInfoImpl implements TestInfo {
@@ -645,14 +641,6 @@ export class TestInfoImpl implements TestInfo {
 
   setTimeout(timeout: number) {
     this._timeoutManager.setTimeout(timeout);
-  }
-
-  async _cloneStorage(storageFile: string): Promise<string> {
-    return await this._callbacks.onCloneStorage!({ storageFile });
-  }
-
-  async _upstreamStorage(storageFile: string, storageOutFile: string) {
-    await this._callbacks.onUpstreamStorage!({ storageFile, storageOutFile });
   }
 
   artifactsDir(): string {
