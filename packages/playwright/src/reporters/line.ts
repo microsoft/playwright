@@ -78,7 +78,7 @@ class LineReporter extends TerminalReporter {
       this._updateLine(test, result, step.parent);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
+  async onTestPaused(test: TestCase, result: TestResult, error?: TestError): Promise<{ disposition?: 'continue' } | void> {
     // without TTY, user cannot interrupt the pause. let's skip it.
     if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
@@ -86,19 +86,23 @@ class LineReporter extends TerminalReporter {
     if (!process.env.PW_TEST_DEBUG_REPORTERS)
       this.screen.stdout.write(`\u001B[1A\u001B[2K`);
 
-    if (test.outcome() === 'unexpected') {
-      this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '  ', index: ++this._failures })));
+    if (error) {
+      this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '    ' })));
+      this.writeLine('\n' + this.formatError(error, '    ').message + '\n');
+      this.writeLine(this.screen.colors.yellow(`    Paused on error. Press 'c' to continue, Ctrl+C to end.\n\n`));
+    } else if (result.errors.length) {
+      this.writeLine(this.screen.colors.red(this.formatTestHeader(test, { indent: '    ' })));
       this.writeLine(this.formatResultErrors(test, result));
       markErrorsAsReported(result);
-      this.writeLine(this.screen.colors.yellow(`    Paused on error. Press Ctrl+C to end.`) + '\n\n');
+      this.writeLine(this.screen.colors.yellow(`    Paused at test end. Press 'c' to continue, Ctrl+C to end.\n\n`));
     } else {
-      this.writeLine(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '  ' })));
-      this.writeLine(this.screen.colors.yellow(`    Paused at test end. Press Ctrl+C to end.`) + '\n\n');
+      this.writeLine(this.screen.colors.yellow(this.formatTestHeader(test, { indent: '    ' })));
+      this.writeLine(this.screen.colors.yellow(`\n    Paused at test end. Press 'c' to continue, Ctrl+C to end.\n\n`));
     }
-
+    await this.waitForContinueKey();
+    this.screen.stdout?.write(`\u001B[1A\u001B[2K\u001B[1A\u001B[2K\u001B[1A\u001B[2K\n`);
     this._updateLine(test, result, undefined);
-
-    await new Promise<void>(() => {});
+    return { disposition: 'continue' };
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {

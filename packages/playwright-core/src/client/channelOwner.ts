@@ -147,10 +147,12 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       get: (obj: any, prop: string | symbol) => {
         if (typeof prop === 'string') {
           const validator = maybeFindValidator(this._type, prop, 'Params');
-          const { internal } = methodMetainfo.get(this._type + '.' + prop) || {};
+          const metainfo = methodMetainfo.get(this._type + '.' + prop) || {};
+          const { internal } = metainfo;
           if (validator) {
             return async (params: any) => {
               return await this._wrapApiCall(async apiZone => {
+                apiZone.canContinueOnError = !!metainfo.snapshot;  // TODO: figure this one out
                 const validatedParams = validator(params, '', this._validatorToWireContext());
                 if (!apiZone.internal && !apiZone.reported) {
                   // Reporting/tracing/logging this api call for the first time.
@@ -186,7 +188,7 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       const result = await this._platform.zones.current().push(apiZone).run(async () => await func(apiZone));
       if (!options?.internal) {
         logApiCall(this._platform, logger, `<= ${apiZone.apiName} succeeded`);
-        this._instrumentation.onApiCallEnd(apiZone);
+        await this._instrumentation.runOnApiCallEnd(apiZone);
       }
       return result;
     } catch (e) {
@@ -201,7 +203,9 @@ export abstract class ChannelOwner<T extends channels.Channel = channels.Channel
       if (!options?.internal) {
         apiZone.error = e;
         logApiCall(this._platform, logger, `<= ${apiZone.apiName} failed`);
-        this._instrumentation.onApiCallEnd(apiZone);
+        const endResult = await this._instrumentation.runOnApiCallEnd(apiZone);
+        if (apiZone.canContinueOnError && endResult?.continueOnError)
+          return undefined as R;
       }
       throw e;
     }
@@ -240,4 +244,5 @@ type ApiZone = {
   userData: any;
   stepId?: string;
   error?: Error;
+  canContinueOnError?: boolean;
 };

@@ -166,7 +166,7 @@ class ListReporter extends TerminalReporter {
     stream.write(chunk);
   }
 
-  async onTestPaused(test: TestCase, result: TestResult) {
+  async onTestPaused(test: TestCase, result: TestResult, error?: TestError): Promise<{ disposition?: 'continue' } | void> {
     // Without TTY, user cannot interrupt the pause. Let's skip it.
     if (!process.stdin.isTTY && !process.env.PW_TEST_DEBUG_REPORTERS)
       return;
@@ -175,25 +175,33 @@ class ListReporter extends TerminalReporter {
 
     this._updateTestLine(test, result);
     this._maybeWriteNewLine();
-    if (test.outcome() === 'unexpected') {
-      const errors = this.formatResultErrors(test, result);
-      this.writeLine(errors);
-      this._updateLineCountAndNewLineFlagForOutput(errors);
-      markErrorsAsReported(result);
-    }
-    this._appendLine(this.screen.colors.yellow(`Paused ${test.outcome() === 'unexpected' ? 'on error' : 'at test end'}. Press Ctrl+C to end.`), this._testPrefix('', ''));
 
-    await new Promise<void>(() => {});
+    const indent = this._testPrefix('', '');
+    if (error) {
+      const errorsText = '\n' + this.formatError(error, indent).message + '\n\n';
+      this.screen.stdout?.write(errorsText);
+      this._updateLineCountAndNewLineFlagForOutput(errorsText);
+      this._appendLine(this.screen.colors.yellow(`Paused on error. Press 'c' to continue, Ctrl+C to end.`), indent);
+    } else if (result.errors.length) {
+      const errorsText = this.formatResultErrors(test, result);
+      markErrorsAsReported(result);
+      this.screen.stdout?.write(errorsText);
+      this._updateLineCountAndNewLineFlagForOutput(errorsText);
+      this._appendLine(this.screen.colors.yellow(`Paused at test end. Press 'c' to continue, Ctrl+C to end.`), indent);
+    } else {
+      this._appendLine(this.screen.colors.yellow(`Paused at test end. Press 'c' to continue, Ctrl+C to end.`), indent);
+    }
+    await this.waitForContinueKey();
+    this.screen.stdout?.write(`\u001B[1A\u001B[2K`);
+    return { disposition: 'continue' };
   }
 
   override onTestEnd(test: TestCase, result: TestResult) {
     super.onTestEnd(test, result);
-    const wasPaused = this._paused.delete(result);
-    if (!wasPaused)
-      this._updateTestLine(test, result);
+    this._updateTestLine(test, result, this._paused.has(result));
   }
 
-  private _updateTestLine(test: TestCase, result: TestResult) {
+  private _updateTestLine(test: TestCase, result: TestResult, noAppend?: boolean) {
     const title = this.formatTestTitle(test);
     let prefix = '';
     let text = '';
@@ -222,15 +230,15 @@ class ListReporter extends TerminalReporter {
       text += this._retrySuffix(result) + this.screen.colors.dim(` (${milliseconds(result.duration)})`);
     }
 
-    this._updateOrAppendLine(this._testRows, test, text, prefix);
+    this._updateOrAppendLine(this._testRows, test, text, prefix, noAppend);
   }
 
-  private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string) {
+  private _updateOrAppendLine<T>(entityRowNumbers: Map<T, number>, entity: T, text: string, prefix: string, noAppend?: boolean) {
     const row = entityRowNumbers.get(entity);
     // Only update the line if we assume that the line is still on the screen
     if (row !== undefined && this.screen.isTTY && this._lastRow - row < this.screen.ttyHeight) {
       this._updateLine(row, text, prefix);
-    } else {
+    } else if (!noAppend) {
       this._maybeWriteNewLine();
       entityRowNumbers.set(entity, this._lastRow);
       this._appendLine(text, prefix);
