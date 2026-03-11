@@ -1,0 +1,8 @@
+{
+  "name": "SW Lifecycle Test Extension",
+  "version": "0.1",
+  "background": {
+    "service_worker": "background.js"
+  },
+  "manifest_version": 3
+}

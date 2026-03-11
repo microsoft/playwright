@@ -42,6 +42,50 @@ it.skip(({ isHeadlessShell }) => isHeadlessShell, 'Headless Shell has no support
 it.describe('MV3', () => {
   it.skip(({ channel }) => channel?.startsWith('chrome'), '--load-extension is not supported in Chrome anymore. https://groups.google.com/a/chromium.org/g/chromium-extensions/c/1-g8EFx2BBY/m/S0ET5wPjCAAJ');
 
+  it('should support service worker stop and restart lifecycle', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39475' }
+  }, async ({ launchPersistentContext, asset }) => {
+    const extensionPath = asset('extension-mv3-sw-lifecycle');
+    const context = await launchPersistentContext(extensionPath);
+
+    const serviceWorkers = context.serviceWorkers();
+    const sw1 = serviceWorkers.length ? serviceWorkers[0] : await context.waitForEvent('serviceworker');
+    const startTime1 = await sw1.evaluate(() => (globalThis as any).startTime);
+
+    // stopWorker keeps the same CDP target alive, matching Chrome's natural idle suspension behavior.
+    const page = await context.newPage();
+    const cdp = await context.newCDPSession(page);
+
+    let versionId: string | undefined;
+    let scopeURL: string | undefined;
+    let runningStatus: string | undefined;
+    cdp.on('ServiceWorker.workerVersionUpdated', ({ versions }: any) => {
+      const v = versions[0];
+      if (!v)
+        return;
+      versionId = v.versionId;
+      runningStatus = v.runningStatus;
+    });
+    cdp.on('ServiceWorker.workerRegistrationUpdated', ({ registrations }: any) => {
+      if (registrations.length)
+        scopeURL = registrations[0].scopeURL;
+    });
+    await cdp.send('ServiceWorker.enable');
+    await expect.poll(() => versionId && scopeURL, { timeout: 5000 }).toBeTruthy();
+
+    await cdp.send('ServiceWorker.stopWorker', { versionId });
+    // Wait for full stop before triggering restart.
+    await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('stopped');
+    await cdp.send('ServiceWorker.startWorker', { scopeURL });
+    await expect.poll(() => runningStatus, { timeout: 5000 }).toBe('running');
+
+    const startTime2 = await sw1.evaluate(() => (globalThis as any).startTime);
+    expect(startTime2).toBeGreaterThan(startTime1);
+    expect(context.serviceWorkers()).toStrictEqual([sw1]); // same object, no new event
+
+    await context.close();
+  });
+
   it('should give access to the service worker', async ({ launchPersistentContext, asset }) => {
     const extensionPath = asset('extension-mv3-simple');
     const context = await launchPersistentContext(extensionPath);
