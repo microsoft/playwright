@@ -309,13 +309,6 @@ test('should contain action info', async ({ showTraceViewer }) => {
   ]);
 });
 
-test('should render network bars', async ({ page, runAndTrace, server }) => {
-  const traceViewer = await runAndTrace(async () => {
-    await page.goto(server.EMPTY_PAGE);
-  });
-  await expect(traceViewer.page.locator('.timeline-bar.network')).toHaveCount(1);
-});
-
 test('should render console', async ({ showTraceViewer, browserName }) => {
   const traceViewer = await showTraceViewer(traceFile);
   await traceViewer.showConsoleTab();

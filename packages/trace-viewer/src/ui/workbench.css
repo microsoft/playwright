@@ -48,6 +48,7 @@
 .workbench-action-filter {
   margin-top: 3px;
   border-bottom: 1px solid var(--vscode-panel-border);
+  flex: none;
 }
 
 .workbench-action-filter input[type=search] {

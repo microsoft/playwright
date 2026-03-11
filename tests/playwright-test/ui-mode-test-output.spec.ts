@@ -236,7 +236,7 @@ test('should stream console messages live', async ({ runUITest }) => {
     'I was logged',
     'I was clicked',
   ]);
-  await page.getByTitle('Stop').click();
+  await page.getByTestId('stop-button').click();
 });
 
 test('should print beforeAll console messages once', async ({ runUITest }, testInfo) => {
