@@ -1,1 +1,0 @@
-- Generic MCP utils, no dependencies on anything.

@@ -19,7 +19,7 @@ import { deviceDescriptors } from '../deviceDescriptors';
 import { JavaScriptFormatter } from './javascript';
 import { asLocator, escapeWithQuotes } from '../../utils';
 
-import type { BrowserContextOptions } from '../../../types/types';
+import type { BrowserContextOptions } from '../../..';
 import type * as types from '../types';
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
 import type * as actions from '@recorder/actions';

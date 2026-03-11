@@ -1,0 +1,8 @@
+[*]
+../../..
+../..
+../../mcpBundle.ts
+../../utils/
+../../utils/isomorphic/
+../../utilsBundle.ts
+../../client/

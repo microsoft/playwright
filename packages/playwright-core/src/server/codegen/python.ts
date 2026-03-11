@@ -19,7 +19,7 @@ import { asLocator, escapeWithQuotes, toSnakeCase } from '../../utils';
 import { deviceDescriptors } from '../deviceDescriptors';
 
 import type { Language, LanguageGenerator, LanguageGeneratorOptions } from './types';
-import type { BrowserContextOptions } from '../../../types/types';
+import type { BrowserContextOptions } from '../../..';
 import type * as actions from '@recorder/actions';
 
 export class PythonLanguageGenerator implements LanguageGenerator {

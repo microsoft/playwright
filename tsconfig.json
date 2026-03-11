@@ -10,7 +10,7 @@
          - @foo/* is for importing types only,
          - .../lib/* means require dependency
       */
-      "@devtools/*": ["./packages/devtools/src/*"],
+      "@dashboard/*": ["./packages/dashboard/src/*"],
       "@html-reporter/*": ["./packages/html-reporter/src/*"],
       "@injected/*": ["./packages/injected/src/*"],
       "@isomorphic/*": ["./packages/playwright-core/src/utils/isomorphic/*"],

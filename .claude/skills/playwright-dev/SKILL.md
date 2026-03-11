@@ -11,5 +11,5 @@ See [CLAUDE.md](../../../CLAUDE.md) for monorepo structure, build/test/lint comm
 
 - [Library Architecture](library.md) — client/server/dispatcher structure, protocol layer, DEPS rules
 - [Adding and Modifying APIs](api.md) — define API docs, implement client/server, add tests
-- [MCP Tools and CLI Commands](mcp-dev.md) — add MCP tools, CLI commands, config options
+- [MCP Tools and CLI Commands](tools.md) — add MCP tools, CLI commands, config options
 - [Vendoring Dependencies](vendor.md) — bundle third-party npm packages into playwright-core or playwright

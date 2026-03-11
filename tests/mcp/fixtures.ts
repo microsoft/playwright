@@ -24,11 +24,11 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
-import { parseResponse } from '../../packages/playwright-core/lib/tools/response';
+import { parseResponse } from '../../packages/playwright-core/lib/tools/backend/response';
 import { commonFixtures } from '../config/commonFixtures';
 
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
-import type { Config } from '../../packages/playwright-core/src/mcp/config.d';
+import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 import type { BrowserContext } from 'playwright';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';
@@ -290,8 +290,8 @@ export const expect = baseExpect.extend({
   },
 });
 
-export const mcpServerPath = [path.join(__dirname, '../../packages/playwright-core/cli.js'), 'run-mcp-server'];
-export const testMcpServerPath = [path.join(__dirname, '../../packages/playwright-test/cli.js'), 'run-test-mcp-server'];
+export const mcpServerPath = [require.resolve('../../packages/playwright-core/lib/tools/mcp/cli-stub.js')];
+export const testMcpServerPath = [require.resolve('../../packages/playwright-test/cli.js'), 'run-test-mcp-server'];
 
 type Files = { [key: string]: string | Buffer };
 
