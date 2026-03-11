@@ -3509,24 +3509,6 @@ export interface Page {
   }): Promise<string>;
 
   /**
-   * Returns the [Inspector](https://playwright.dev/docs/api/class-inspector) object associated with this page.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const inspector = page.inspector();
-   * inspector.on('screencastFrame', data => {
-   *   console.log('received frame, jpeg size:', data.length);
-   * });
-   * await inspector.startScreencast();
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   */
-  inspector(): Inspector;
-
-  /**
    * **NOTE** Use locator-based [locator.isChecked([options])](https://playwright.dev/docs/api/class-locator#locator-is-checked)
    * instead. Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -4245,6 +4227,24 @@ export interface Page {
    * @param handler Handler function to route the WebSocket.
    */
   routeWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
+
+  /**
+   * Returns the [Screencast](https://playwright.dev/docs/api/class-screencast) object associated with this page.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const screencast = page.screencast();
+   * screencast.on('screencastFrame', data => {
+   *   console.log('received frame, jpeg size:', data.length);
+   * });
+   * await screencast.start();
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   */
+  screencast(): Screencast;
 
   /**
    * Returns the buffer with the captured screenshot.
@@ -20602,165 +20602,6 @@ export interface FrameLocator {
 }
 
 /**
- * Interface to the Playwright inspector.
- */
-export interface Inspector {
-  /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const inspector = page.inspector();
-   * inspector.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   */
-  on(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const inspector = page.inspector();
-   * inspector.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   */
-  addListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const inspector = page.inspector();
-   * inspector.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await inspector.startScreencast({ maxSize: { width: 1200, height: 800 } });
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   */
-  prependListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Starts capturing screencast frames. Frames are emitted as
-   * [inspector.on('screencastframe')](https://playwright.dev/docs/api/class-inspector#inspector-event-screencast-frame)
-   * events.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const inspector = page.inspector();
-   * inspector.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, size: ${data.length}`);
-   * });
-   * await inspector.startScreencast({ maxSize: { width: 800, height: 600 } });
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   * @param options
-   */
-  startScreencast(options?: {
-    /**
-     * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
-     * 800×800.
-     */
-    maxSize?: {
-      /**
-       * Max frame width in pixels.
-       */
-      width: number;
-
-      /**
-       * Max frame height in pixels.
-       */
-      height: number;
-    };
-  }): Promise<void>;
-
-  /**
-   * Stops the screencast started with
-   * [inspector.startScreencast([options])](https://playwright.dev/docs/api/class-inspector#inspector-start-screencast).
-   *
-   * **Usage**
-   *
-   * ```js
-   * await inspector.startScreencast();
-   * // ... perform actions ...
-   * await inspector.stopScreencast();
-   * ```
-   *
-   */
-  stopScreencast(): Promise<void>;
-}
-
-/**
  * Keyboard provides an api for managing a virtual keyboard. The high level api is
  * [keyboard.type(text[, options])](https://playwright.dev/docs/api/class-keyboard#keyboard-type), which takes raw
  * characters and generates proper `keydown`, `keypress`/`input`, and `keyup` events on your page.
@@ -21942,6 +21783,165 @@ export interface Route {
    * A request to be routed.
    */
   request(): Request;
+}
+
+/**
+ * Interface for capturing screencast frames from a page.
+ */
+export interface Screencast {
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const screencast = page.screencast();
+   * screencast.on('screencastframe', ({ data, width, height }) => {
+   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   */
+  on(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const screencast = page.screencast();
+   * screencast.on('screencastframe', ({ data, width, height }) => {
+   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   */
+  addListener(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const screencast = page.screencast();
+   * screencast.on('screencastframe', ({ data, width, height }) => {
+   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
+   *   require('fs').writeFileSync('frame.jpg', data);
+   * });
+   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   */
+  prependListener(event: 'screencastframe', listener: (data: {
+    /**
+     * JPEG-encoded frame data.
+     */
+    data: Buffer;
+  }) => any): this;
+
+  /**
+   * Starts capturing screencast frames. Frames are emitted as
+   * [screencast.on('screencastframe')](https://playwright.dev/docs/api/class-screencast#screencast-event-screencast-frame)
+   * events.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const screencast = page.screencast();
+   * screencast.on('screencastframe', ({ data, width, height }) => {
+   *   console.log(`frame ${width}x${height}, size: ${data.length}`);
+   * });
+   * await screencast.start({ maxSize: { width: 800, height: 600 } });
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   * @param options
+   */
+  start(options?: {
+    /**
+     * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
+     * 800×800.
+     */
+    maxSize?: {
+      /**
+       * Max frame width in pixels.
+       */
+      width: number;
+
+      /**
+       * Max frame height in pixels.
+       */
+      height: number;
+    };
+  }): Promise<void>;
+
+  /**
+   * Stops the screencast started with
+   * [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await screencast.start();
+   * // ... perform actions ...
+   * await screencast.stop();
+   * ```
+   *
+   */
+  stop(): Promise<void>;
 }
 
 /**

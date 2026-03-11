@@ -19,7 +19,7 @@ import { EventEmitter } from './eventEmitter';
 import type * as api from '../../types/types';
 import type { Page } from './page';
 
-export class Inspector extends EventEmitter implements api.Inspector {
+export class Screencast extends EventEmitter implements api.Screencast {
   private readonly _page: Page;
 
   constructor(page: Page) {
@@ -28,11 +28,11 @@ export class Inspector extends EventEmitter implements api.Inspector {
     this._page._channel.on('screencastFrame', ({ data }) => this.emit('screencastframe', { data }));
   }
 
-  async startScreencast(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
+  async start(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
     await this._page._channel.startScreencast(options);
   }
 
-  async stopScreencast(): Promise<void> {
+  async stop(): Promise<void> {
     await this._page._channel.stopScreencast();
   }
 }
