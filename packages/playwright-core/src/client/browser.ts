@@ -24,7 +24,7 @@ import { mkdirIfNeeded } from './fileUtils';
 
 import type { BrowserType } from './browserType';
 import type { Page } from './page';
-import type { BrowserContextOptions, LaunchOptions, Logger } from './types';
+import type { BrowserContextOptions, LaunchOptions, Logger, StartServerOptions } from './types';
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
 
@@ -130,7 +130,7 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return this._initializer.version;
   }
 
-  async _startServer(title: string, options: { wsPath?: string, workspaceDir?: string } = {}): Promise<{ wsEndpoint?: string, pipeName?: string }> {
+  async _startServer(title: string, options: StartServerOptions = {}): Promise<{ wsEndpoint?: string, pipeName?: string }> {
     return await this._channel.startServer({ title, ...options });
   }
 

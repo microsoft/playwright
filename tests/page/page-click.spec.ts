@@ -460,7 +460,8 @@ it('should click the button behind position:absolute header', {
   expect(await page.evaluate(() => window['__clicked'])).toBe(true);
 });
 
-it('should click the button with px border with offset', async ({ page, server, browserName }) => {
+it('should click the button with px border with offset', async ({ page, server, isFrozenWebkit }) => {
+  it.skip(isFrozenWebkit, 'needs recent webkit');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.click('button', { position: { x: 20, y: 10 } });
@@ -470,7 +471,8 @@ it('should click the button with px border with offset', async ({ page, server, 
   expect(await page.evaluate('offsetY')).toBe(10);
 });
 
-it('should click the button with em border with offset', async ({ page, server, browserName }) => {
+it('should click the button with em border with offset', async ({ page, server, isFrozenWebkit }) => {
+  it.skip(isFrozenWebkit, 'needs recent webkit');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '2em');
   await page.$eval('button', button => button.style.fontSize = '12px');
@@ -481,8 +483,9 @@ it('should click the button with em border with offset', async ({ page, server, 
   expect(await page.evaluate('offsetY')).toBe(10);
 });
 
-it('should click a very large button with offset', async ({ page, server, browserName, isAndroid }) => {
+it('should click a very large button with offset', async ({ page, server, isFrozenWebkit, isAndroid }) => {
   it.fixme(isAndroid, 'Failed to scroll to a particular point');
+  it.skip(isFrozenWebkit, 'needs recent webkit');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => button.style.borderWidth = '8px');
   await page.$eval('button', button => button.style.height = button.style.width = '2000px');
@@ -493,8 +496,9 @@ it('should click a very large button with offset', async ({ page, server, browse
   expect(await page.evaluate('offsetY')).toBe(1910);
 });
 
-it('should click a button in scrolling container with offset', async ({ page, server, browserName, isAndroid }) => {
+it('should click a button in scrolling container with offset', async ({ page, server, isFrozenWebkit, isAndroid }) => {
   it.fixme(isAndroid, 'Failed to scroll to a particular point');
+  it.skip(isFrozenWebkit, 'needs recent webkit');
   await page.goto(server.PREFIX + '/input/button.html');
   await page.$eval('button', button => {
     const container = document.createElement('div');

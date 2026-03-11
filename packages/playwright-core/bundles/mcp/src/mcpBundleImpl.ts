@@ -23,6 +23,5 @@ export { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 export { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 export { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 export { CallToolRequestSchema, ListRootsRequestSchema, ListToolsRequestSchema, PingRequestSchema, ProgressNotificationSchema } from '@modelcontextprotocol/sdk/types.js';
-export { Loop } from '@lowire/loop';
 export * as z from 'zod';
 export { zodToJsonSchema } from 'zod-to-json-schema';

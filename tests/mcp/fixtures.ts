@@ -17,7 +17,6 @@
 import fs from 'fs';
 import path from 'path';
 import { chromium } from 'playwright';
-import { Loop } from '@lowire/loop';
 
 import { test as baseTest, expect as baseExpect } from '@playwright/test';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
@@ -71,7 +70,6 @@ type TestFixtures = {
   server: TestServer;
   httpsServer: TestServer;
   mcpHeadless: boolean;
-  loop: Loop;
 };
 
 type WorkerFixtures = {

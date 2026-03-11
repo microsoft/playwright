@@ -301,8 +301,6 @@ export class WorkerMain extends ProcessRunner {
         this.dispatchEvent('testPaused', payload);
         return this._resumePromise;
       },
-      onCloneStorage: async payload => this.sendRequest('cloneStorage', payload),
-      onUpstreamStorage: payload => this.sendRequest('upstreamStorage', payload),
     });
     const processAnnotation = (annotation: TestAnnotation) => {
       testInfo.annotations.push(annotation);

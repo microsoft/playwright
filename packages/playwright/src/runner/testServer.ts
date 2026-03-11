@@ -78,7 +78,6 @@ export type RunTestsParams = {
   workers?: number | string;
   updateSnapshots?: 'all' | 'changed' | 'missing' | 'none';
   updateSourceMethod?: 'overwrite' | 'patch' | '3way';
-  runAgents?: boolean;
   reporters?: string[],
   trace?: 'on' | 'off';
   video?: 'on' | 'off';

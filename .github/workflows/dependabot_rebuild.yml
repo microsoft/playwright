@@ -1,0 +1,40 @@
+name: "dependabot"
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  rebuild:
+    name: update generated files
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Add generated files to the PR
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --porcelain)" ]]; then
+            git add .
+            git commit -m "chore: update generated files after dependency update"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            echo "No generated files changed, nothing to commit."
+          fi

@@ -69,7 +69,6 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['WebSocket.waitForEventInfo', { title: 'Wait for event "{info.event}"', snapshot: true, }],
   ['ElectronApplication.waitForEventInfo', { title: 'Wait for event "{info.event}"', snapshot: true, }],
   ['AndroidDevice.waitForEventInfo', { title: 'Wait for event "{info.event}"', snapshot: true, }],
-  ['PageAgent.waitForEventInfo', { title: 'Wait for event "{info.event}"', snapshot: true, }],
   ['BrowserContext.addCookies', { title: 'Add cookies', group: 'configuration', }],
   ['BrowserContext.addInitScript', { title: 'Add init script', group: 'configuration', }],
   ['BrowserContext.clearCookies', { title: 'Clear cookies', group: 'configuration', }],
@@ -152,7 +151,6 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['Page.videoStart', { title: 'Start video recording', group: 'configuration', }],
   ['Page.videoStop', { title: 'Stop video recording', group: 'configuration', }],
   ['Page.updateSubscription', { internal: true, }],
-  ['Page.agent', { internal: true, }],
   ['Page.setDockTile', { internal: true, }],
   ['Frame.evalOnSelector', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],
   ['Frame.evalOnSelectorAll', { title: 'Evaluate', snapshot: true, pausesBeforeAction: true, }],
@@ -327,10 +325,5 @@ export const methodMetainfo = new Map<string, { internal?: boolean, title?: stri
   ['AndroidDevice.connectToWebView', { title: 'Connect to Web View', }],
   ['AndroidDevice.close', { internal: true, }],
   ['JsonPipe.send', { internal: true, }],
-  ['JsonPipe.close', { internal: true, }],
-  ['PageAgent.perform', { title: 'Perform "{task}"', }],
-  ['PageAgent.expect', { title: 'Expect "{expectation}"', }],
-  ['PageAgent.extract', { title: 'Extract "{query}"', }],
-  ['PageAgent.dispose', { internal: true, }],
-  ['PageAgent.usage', { title: 'Get agent usage', group: 'configuration', }]
+  ['JsonPipe.close', { internal: true, }]
 ]);
