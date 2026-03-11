@@ -36,7 +36,7 @@ function asRef(refOrSelector: string | undefined): { ref?: string, selector?: st
     return {};
   if (refOrSelector.match(/^(f\d+)?e\d+$/))
     return { ref: refOrSelector };
-  return { selector: refOrSelector };
+  return { ref: '', selector: refOrSelector };
 }
 
 // Navigation commands

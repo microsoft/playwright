@@ -55,8 +55,7 @@ const snapshot = defineTool({
 
 const elementSchema = z.object({
   element: z.string().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
-  selector: z.string().optional().describe('CSS or role selector for the target element. Either "selector" or "ref" is required.'),
+  ref: z.string().describe('Exact target element reference from the page snapshot'),
 });
 
 const clickSchema = elementSchema.extend({
@@ -92,18 +91,16 @@ const drag = defineTool({
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
-      startRef: z.string().describe('Exact source element reference from the page snapshot. Prefer this over "startSelector" when available.'),
-      startSelector: z.string().optional().describe('CSS or role selector for the source element. Either "startSelector" or "startRef" is required.'),
+      startRef: z.string().describe('Exact source element reference from the page snapshot'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
-      endRef: z.string().describe('Exact target element reference from the page snapshot. Prefer this over "endSelector" when available.'),
-      endSelector: z.string().optional().describe('CSS or role selector for the target element. Either "endSelector" or "endRef" is required.'),
+      endRef: z.string().describe('Exact target element reference from the page snapshot'),
     }),
   },
 
   handle: async (progress, context, params) => {
     const [sourceSelector, targetSelector] = await context.refSelectors(progress, [
-      { ref: params.startRef, selector: params.startSelector, element: params.startElement },
-      { ref: params.endRef, selector: params.endSelector, element: params.endElement },
+      { ref: params.startRef, element: params.startElement },
+      { ref: params.endRef, element: params.endElement },
     ]);
 
     return await context.runActionAndWait(progress, {
@@ -220,8 +217,7 @@ const fillForm = defineTool({
       fields: z.array(z.object({
         name: z.string().describe('Human-readable field name'),
         type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),
-        ref: z.string().optional().describe('Exact target field reference from the page snapshot. Prefer this over "selector" when available.'),
-        selector: z.string().optional().describe('CSS or role selector for the target field.'),
+        ref: z.string().describe('Exact target field reference from the page snapshot'),
         value: z.string().describe('Value to fill in the field. If the field is a checkbox, the value should be `true` or `false`. If the field is a combobox, the value should be the text of the option.'),
       })).describe('Fields to fill in'),
     }),
@@ -230,7 +226,7 @@ const fillForm = defineTool({
   handle: async (progress, context, params) => {
     const actions: actions.Action[] = [];
     for (const field of params.fields) {
-      const [selector] = await context.refSelectors(progress, [{ ref: field.ref, selector: field.selector, element: field.name }]);
+      const [selector] = await context.refSelectors(progress, [{ ref: field.ref, element: field.name }]);
       if (field.type === 'textbox' || field.type === 'slider') {
         actions.push({
           method: 'fill',

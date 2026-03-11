@@ -239,3 +239,27 @@ test('click button with role selector', async ({ cli, server }) => {
 await page.locator('role=button').click();
 \`\`\``);
 });
+
+test('click button with mixed css + role selector', async ({ cli, server }) => {
+  server.setContent('/', `<div id=main><button>Submit</button></div>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "Submit" [ref=e3]`);
+
+  const { output, snapshot: clickSnapshot } = await cli('click', '#main >> role=button');
+  expect(clickSnapshot).toBeTruthy();
+  expect(output).toContain(`### Ran Playwright code
+\`\`\`js
+await page.locator('#main').locator('role=button').click();
+\`\`\``);
+});
+
+test('click button with wrong css selector', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
+
+  const { output } = await cli('click', '#target');
+  expect(output).toContain(`Error: Selector #target does not match any elements.`);
+});

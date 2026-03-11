@@ -30,8 +30,8 @@ const fillForm = defineTabTool({
       fields: z.array(z.object({
         name: z.string().describe('Human-readable field name'),
         type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),
-        ref: z.string().optional().describe('Exact target field reference from the page snapshot. Prefer this over "selector" when available.'),
-        selector: z.string().optional().describe('CSS or role selector for the field element. Either "selector" or "ref" is required.'),
+        ref: z.string().describe('Exact target field reference from the page snapshot'),
+        selector: z.string().optional().describe('CSS or role selector for the field element, when "ref" is not available. Either "selector" or "ref" is required.'),
         value: z.string().describe('Value to fill in the field. If the field is a checkbox, the value should be `true` or `false`. If the field is a combobox, the value should be the text of the option.'),
       })).describe('Fields to fill in'),
     }),

@@ -24,8 +24,8 @@ import type { Tab } from './tab';
 const evaluateSchema = z.object({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
-  selector: z.string().optional().describe('CSS or role selector for the target element.'),
+  ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
+  selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available.'),
 });
 
 const evaluate = defineTabTool({

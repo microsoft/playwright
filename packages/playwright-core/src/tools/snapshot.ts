@@ -39,8 +39,8 @@ const snapshot = defineTool({
 
 export const elementSchema = z.object({
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
-  ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
-  selector: z.string().optional().describe('CSS or role selector for the target element. Either "selector" or "ref" is required.'),
+  ref: z.string().describe('Exact target element reference from the page snapshot'),
+  selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available'),
 });
 
 const clickSchema = elementSchema.extend({
@@ -92,11 +92,11 @@ const drag = defineTabTool({
     description: 'Perform drag and drop between two elements',
     inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
-      startRef: z.string().describe('Exact source element reference from the page snapshot. Prefer this over "startSelector" when available.'),
-      startSelector: z.string().optional().describe('CSS or role selector for the source element. Either "startSelector" or "startRef" is required.'),
+      startRef: z.string().describe('Exact source element reference from the page snapshot'),
+      startSelector: z.string().optional().describe('CSS or role selector for the source element, when ref is not available'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
-      endRef: z.string().describe('Exact target element reference from the page snapshot. Prefer this over "endSelector" when available.'),
-      endSelector: z.string().optional().describe('CSS or role selector for the target element. Either "endSelector" or "endRef" is required.'),
+      endRef: z.string().describe('Exact target element reference from the page snapshot'),
+      endSelector: z.string().optional().describe('CSS or role selector for the target element, when ref is not available'),
     }),
     type: 'input',
   },

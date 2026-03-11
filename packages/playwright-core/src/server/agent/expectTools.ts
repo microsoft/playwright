@@ -70,15 +70,14 @@ const expectValue = defineTool({
     inputSchema: z.object({
       type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the element'),
       element: z.string().describe('Human-readable element description'),
-      ref: z.string().optional().describe('Exact target element reference from the page snapshot. Prefer this over "selector" when available.'),
-      selector: z.string().optional().describe('CSS or role selector for the target element. Either "selector" or "ref" is required.'),
+      ref: z.string().describe('Exact target element reference from the page snapshot'),
       value: z.string().describe('Value to expect. For checkbox, use "true" or "false".'),
       isNot: z.boolean().optional().describe('Expect the opposite'),
     }),
   },
 
   handle: async (progress, context, params) => {
-    const [selector] = await context.refSelectors(progress, [{ ref: params.ref, selector: params.selector, element: params.element }]);
+    const [selector] = await context.refSelectors(progress, [{ ref: params.ref, element: params.element }]);
     return await context.runActionAndWait(progress, {
       method: 'expectValue',
       selector,
