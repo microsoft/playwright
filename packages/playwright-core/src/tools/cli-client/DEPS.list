@@ -1,0 +1,16 @@
+[program.ts]
+"strict"
+./session.ts
+./registry.ts
+../../serverRegistry.ts
+
+[session.ts]
+"strict"
+../utils/socketConnection.ts
+./registry.ts
+
+[socketConnection.ts]
+"strict"
+
+[registry.ts]
+"strict"

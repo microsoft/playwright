@@ -21,8 +21,8 @@ import path from 'path';
 
 import { program } from 'playwright-core/lib/cli/program';
 import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
-import * as mcp from 'playwright-core/lib/mcp/exports';
-import { setupExitWatchdog } from 'playwright-core/lib/mcp/exports';
+import * as tools from 'playwright-core/lib/tools/exports';
+import { setupExitWatchdog } from 'playwright-core/lib/tools/exports';
 
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports, resolveConfigLocation } from './common/configLoader';
@@ -155,7 +155,7 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
     setupExitWatchdog();
-    const factory: mcp.ServerBackendFactory = {
+    const factory: tools.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
@@ -164,7 +164,7 @@ function addTestMCPServerCommand(program: Command) {
       disposed: async () => { }
     };
     // TODO: add all options from mcp.startHttpServer.
-    await mcp.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    await tools.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
   });
 }
 

@@ -14,11 +14,23 @@
  * limitations under the License.
  */
 
-export { BrowserServerBackend } from './browserServerBackend';
-export { browserTools } from './tools';
-export { filteredTools } from './tools';
-export { parseResponse } from './response';
-export { Tab } from './tab';
+export { createClientInfo } from './cli-client/registry';
+export { startCliDaemonServer } from './cli-daemon/daemon';
+export { logUnhandledError } from './mcp/log';
+export { setupExitWatchdog } from './mcp/watchdog';
+export { toMcpTool } from './utils/mcp/tool';
 
-export type { ContextConfig } from './context';
-export type { Tool, CallToolResult, CallToolRequest } from './tool';
+export { BrowserBackend } from './backend/browserBackend';
+export { parseResponse } from './backend/response';
+export { Tab } from './backend/tab';
+export { browserTools, filteredTools } from './backend/tools';
+export { start } from './utils/mcp/server';
+
+export type { ContextConfig } from './backend/context';
+export type { CallToolRequest, CallToolResult, Tool } from './backend/tool';
+export type { ClientInfo } from './utils/mcp/server';
+export type { FullConfig } from './mcp/config';
+export type { ServerBackend } from './utils/mcp/server';
+export type { ToolSchema } from './utils/mcp/tool';
+export type { ServerBackendFactory } from './utils/mcp/server';
+export { createConnection } from './mcp/index';
