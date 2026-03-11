@@ -158,6 +158,8 @@ function expectFrames(videoFile: string, size: { width: number, height: number }
   }
 }
 
+it.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
+
 it.describe('screencast', () => {
   it.slow();
   it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');

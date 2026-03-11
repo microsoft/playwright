@@ -18,6 +18,7 @@ import { expect, browserTest as test } from '../config/browserTest';
 import { rafraf } from '../config/utils';
 
 test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remote mode');
+test.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
 
 test('screencast.start emits screencastframe events', async ({ browser, server, trace }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');

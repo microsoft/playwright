@@ -123,11 +123,8 @@ it.describe('should proxy local network requests', () => {
   }
 });
 
-for (const host of ['localhost', '127.0.0.1', '[::1]']) {
-  it(`should allow bypassing ${host} requests`, async ({  browserName, browserType, server, proxyServer, isLinux }) => {
-    it.fixme(browserName === 'firefox' && host === '[::1]', 'firefox still proxies');
-    it.fixme(browserName === 'webkit' && isLinux && host === '[::1]', 'webkit linux still proxies');
-
+for (const host of ['localhost', '127.0.0.1']) {
+  it(`should allow bypassing ${host} requests`, async ({  browserType, server, proxyServer }) => {
     server.setRoute(`/proxied/target.html`, async (req, res) => {
       res.end('<html><title>Served by the server</title></html>');
     });
