@@ -149,6 +149,8 @@ export type PageEventMap = {
   [PageEvent.Worker]: [worker: Worker];
 };
 
+const navigationMarkSymbol = Symbol('navigationMark');
+
 export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
@@ -403,8 +405,11 @@ export class Page extends SdkObject<PageEventMap> {
     this._consoleMessages.length = 0;
   }
 
-  consoleMessages() {
-    return this._consoleMessages;
+  consoleMessages(filter?: 'all' | 'sinceNavigation') {
+    if (filter !== 'sinceNavigation')
+      return this._consoleMessages;
+    const marked = this._consoleMessages.findLastIndex(m => (m as any)[navigationMarkSymbol]);
+    return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
   }
 
   addPageError(pageError: Error) {
@@ -842,6 +847,8 @@ export class Page extends SdkObject<PageEventMap> {
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);
+    if (frame === this.mainFrame() && this._consoleMessages.length > 0)
+      (this._consoleMessages[this._consoleMessages.length - 1] as any)[navigationMarkSymbol] = true;
   }
 
   allInitScripts() {

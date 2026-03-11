@@ -300,3 +300,17 @@ it('clearConsoleMessages should work', async ({ page }) => {
   expect(messages.length).toBe(1);
   expect(messages[0].text()).toBe('message3');
 });
+
+it('consoleMessages sinceNavigation filter should work', async ({ page, server }) => {
+  await page.evaluate(() => console.log('before navigation'));
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => console.log('after navigation'));
+
+  const all = await page.consoleMessages();
+  expect(all.map(m => m.text())).toContain('before navigation');
+  expect(all.map(m => m.text())).toContain('after navigation');
+
+  const sinceNav = await page.consoleMessages({ filter: 'sinceNavigation' });
+  expect(sinceNav.map(m => m.text())).not.toContain('before navigation');
+  expect(sinceNav.map(m => m.text())).toContain('after navigation');
+});

@@ -2760,6 +2760,14 @@ Clears all stored page errors from this page. Subsequent calls to [`method: Page
 
 Returns up to (currently) 200 last console messages from this page. See [`event: Page.console`] for more details.
 
+### option: Page.consoleMessages.filter
+* since: v1.59
+- `filter` <[ConsoleMessagesFilter]<"all"|"sinceNavigation">>
+
+Controls which messages are returned:
+- `'all'` (default) — returns all stored console messages.
+- `'sinceNavigation'` — returns only messages logged after the last committed main-frame navigation.
+
 
 ## async method: Page.pageErrors
 * since: v1.56

@@ -2258,8 +2258,8 @@ export interface Page {
 
   /**
    * Clears all stored console messages from this page. Subsequent calls to
-   * [page.consoleMessages()](https://playwright.dev/docs/api/class-page#page-console-messages) will only return
-   * messages logged after the clear.
+   * [page.consoleMessages([options])](https://playwright.dev/docs/api/class-page#page-console-messages) will only
+   * return messages logged after the clear.
    */
   clearConsoleMessages(): Promise<void>;
 
@@ -2395,8 +2395,14 @@ export interface Page {
   /**
    * Returns up to (currently) 200 last console messages from this page. See
    * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
+   * @param options
    */
-  consoleMessages(): Promise<Array<ConsoleMessage>>;
+  consoleMessages(options?: {
+    /**
+     * Controls which messages are returned:
+     */
+    filter?: "all"|"sinceNavigation";
+  }): Promise<Array<ConsoleMessage>>;
 
   /**
    * Gets the full HTML contents of the page, including the doctype.

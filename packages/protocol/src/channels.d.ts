@@ -438,6 +438,7 @@ export type APIResponse = {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+export type ConsoleMessagesFilter = 'all' | 'sinceNavigation';
 // ----------- LocalUtils -----------
 export type LocalUtilsInitializer = {
   deviceDescriptors: {
@@ -2108,7 +2109,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
   clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
-  consoleMessages(params?: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
+  consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
   exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, progress?: Progress): Promise<PageGoBackResult>;
@@ -2220,8 +2221,12 @@ export type PageCloseResult = void;
 export type PageClearConsoleMessagesParams = {};
 export type PageClearConsoleMessagesOptions = {};
 export type PageClearConsoleMessagesResult = void;
-export type PageConsoleMessagesParams = {};
-export type PageConsoleMessagesOptions = {};
+export type PageConsoleMessagesParams = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PageConsoleMessagesOptions = {
+  filter?: ConsoleMessagesFilter,
+};
 export type PageConsoleMessagesResult = {
   messages: {
     type: string,

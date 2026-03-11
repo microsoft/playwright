@@ -670,8 +670,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearConsoleMessages();
   }
 
-  async consoleMessages(): Promise<ConsoleMessage[]> {
-    const { messages } = await this._channel.consoleMessages();
+  async consoleMessages(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<ConsoleMessage[]> {
+    const { messages } = await this._channel.consoleMessages({ filter: options?.filter });
     return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
   }
 

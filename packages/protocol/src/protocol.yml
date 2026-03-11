@@ -429,6 +429,12 @@ LifecycleEvent:
   - networkidle
   - commit
 
+ConsoleMessagesFilter:
+  type: enum
+  literals:
+  - all
+  - sinceNavigation
+
 CommonScreenshotOptions:
   type: mixin
   properties:
@@ -1615,6 +1621,8 @@ Page:
     consoleMessages:
       title: Get console messages
       group: getter
+      parameters:
+        filter: ConsoleMessagesFilter?
       returns:
         messages:
           type: array
