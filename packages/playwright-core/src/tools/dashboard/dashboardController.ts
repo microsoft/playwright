@@ -241,7 +241,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
     const pages = this._context.pages();
     if (pages.length === 0)
       return [];
-    const dashboardUrl = await this._dashboardUrl(pages[0]);
+    const devtoolsUrl = await this._devtoolsUrl(pages[0]);
     return await Promise.all(pages.map(async page => {
       // page.title() throws on navigation.
       const title = await page.title().catch(() => undefined) || `Loading ${page.url()}`;
@@ -250,7 +250,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
         title,
         url: page.url(),
         selected: page === this.selectedPage,
-        inspectorUrl: dashboardUrl ? await this._pageInspectorUrl(page, dashboardUrl) : 'data:text/plain,DevTools only supported in Chromium based browsers',
+        inspectorUrl: devtoolsUrl ? await this._pageInspectorUrl(page, devtoolsUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
       };
     }));
   }
@@ -263,10 +263,10 @@ export class DashboardConnection implements Transport, DashboardChannel {
     return (p as any)._guid;
   }
 
-  private async _dashboardUrl(page: api.Page) {
+  private async _devtoolsUrl(page: api.Page) {
     const cdpPort = (this._browserDescriptor.browser.launchOptions as any).cdpPort;
     if (cdpPort)
-      return new URL(`http://localhost:${cdpPort}/dashboard/`);
+      return new URL(`http://localhost:${cdpPort}/devtools/`);
 
     const browserRevision = await getBrowserRevision(page);
     if (!browserRevision)
@@ -274,8 +274,8 @@ export class DashboardConnection implements Transport, DashboardChannel {
     return new URL(`https://chrome-devtools-frontend.appspot.com/serve_rev/${browserRevision}/`);
   }
 
-  private async _pageInspectorUrl(page: api.Page, dashboardUrl: URL): Promise<string | undefined> {
-    const inspector = new URL('./devtools_app.html', dashboardUrl);
+  private async _pageInspectorUrl(page: api.Page, devtoolsUrl: URL): Promise<string | undefined> {
+    const inspector = new URL('./devtools_app.html', devtoolsUrl);
     const cdp = new URL(this._cdpUrl);
     cdp.searchParams.set('cdpPageId', this._pageId(page));
     inspector.searchParams.set('ws', `${cdp.host}${cdp.pathname}${cdp.search}`);
@@ -284,7 +284,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
   }
 
   private _sendTabList() {
-    this._tabList().then(tabs => this._emit('tabs', { tabs }), () => {});
+    this._tabList().then(tabs => this._emit('tabs', { tabs }));
   }
 
   private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
