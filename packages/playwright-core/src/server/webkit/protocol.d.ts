@@ -407,7 +407,7 @@ export namespace Protocol {
     /**
      * Pseudo-style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>).
      */
-    export type PseudoId = "first-line"|"first-letter"|"grammar-error"|"highlight"|"marker"|"before"|"after"|"selection"|"backdrop"|"spelling-error"|"target-text"|"checkmark"|"picker-icon"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"-webkit-scrollbar"|"-webkit-resizer"|"-webkit-scrollbar-thumb"|"-webkit-scrollbar-button"|"-webkit-scrollbar-track"|"-webkit-scrollbar-track-piece"|"-webkit-scrollbar-corner";
+    export type PseudoId = "first-line"|"first-letter"|"grammar-error"|"highlight"|"marker"|"before"|"after"|"selection"|"backdrop"|"spelling-error"|"target-text"|"checkmark"|"picker-icon"|"slider-fill"|"slider-thumb"|"slider-track"|"view-transition"|"view-transition-group"|"view-transition-image-pair"|"view-transition-old"|"view-transition-new"|"-webkit-scrollbar"|"-webkit-resizer"|"-webkit-scrollbar-thumb"|"-webkit-scrollbar-button"|"-webkit-scrollbar-track"|"-webkit-scrollbar-track-piece"|"-webkit-scrollbar-corner";
     /**
      * Pseudo-style identifier (see <code>enum PseudoId</code> in <code>RenderStyleConstants.h</code>).
      */
@@ -6101,6 +6101,17 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     export type setResourceCachingDisabledReturnValue = {
     }
     /**
+     * Toggles whether resource data is cleared on page navigations / reloads.
+     */
+    export type setClearResourceDataOnNavigateParameters = {
+      /**
+       * Whether to clear resource data on navigations.
+       */
+      clearResourceDataOnNavigate: boolean;
+    }
+    export type setClearResourceDataOnNavigateReturnValue = {
+    }
+    /**
      * Loads a resource in the context of a frame on the inspected page without cross origin checks.
      */
     export type loadResourceParameters = {
@@ -9366,6 +9377,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersParameters;
     "Network.getResponseBody": Network.getResponseBodyParameters;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledParameters;
+    "Network.setClearResourceDataOnNavigate": Network.setClearResourceDataOnNavigateParameters;
     "Network.loadResource": Network.loadResourceParameters;
     "Network.getSerializedCertificate": Network.getSerializedCertificateParameters;
     "Network.resolveWebSocket": Network.resolveWebSocketParameters;
@@ -9670,6 +9682,7 @@ the top of the viewport and Y increases as it proceeds towards the bottom of the
     "Network.setExtraHTTPHeaders": Network.setExtraHTTPHeadersReturnValue;
     "Network.getResponseBody": Network.getResponseBodyReturnValue;
     "Network.setResourceCachingDisabled": Network.setResourceCachingDisabledReturnValue;
+    "Network.setClearResourceDataOnNavigate": Network.setClearResourceDataOnNavigateReturnValue;
     "Network.loadResource": Network.loadResourceReturnValue;
     "Network.getSerializedCertificate": Network.getSerializedCertificateReturnValue;
     "Network.resolveWebSocket": Network.resolveWebSocketReturnValue;
