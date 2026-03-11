@@ -822,6 +822,47 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       ]);
     });
 
+    test('should filter steps', async ({ runInlineTest, page, showReport }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          import { test, expect } from '@playwright/test';
+          test('has steps', async ({}) => {
+            await test.step('click button', async () => {});
+            await test.step('fill form', async () => {
+              await test.step('fill username', async () => {});
+              await test.step('fill password', async () => {});
+            });
+            await test.step('submit form', async () => {});
+          });
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      expect(result.passed).toBe(1);
+
+      await showReport();
+      await page.getByRole('link', { name: 'has steps' }).click();
+
+      const filterInput = page.getByLabel('Filter steps');
+      await expect(filterInput).toBeVisible();
+
+      // filter matching a subset of steps
+      await filterInput.fill('fill');
+      await expect(page.locator('.tree-item-title', { hasText: 'fill form' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeHidden();
+      // matching parent is auto-expanded to show matching children (like trace viewer)
+      await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeVisible();
+
+      // clear filter restores all steps collapsed
+      await filterInput.clear();
+      await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeVisible();
+      await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeVisible();
+      // children of fill form are collapsed again after clearing the filter
+      await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeHidden();
+    });
+
     test('should show step snippets from non-root', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'playwright.config.js': `
