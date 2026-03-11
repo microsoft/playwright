@@ -33,7 +33,7 @@ import { resolveConfigLocation } from '../../common/configLoader';
 import type { TerminalScreen } from '../../reporters/base';
 import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
-import type { ClientInfo } from 'playwright-core/lib/mcp/exports';
+import type { ClientInfo } from 'playwright-core/lib/tools/exports';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {

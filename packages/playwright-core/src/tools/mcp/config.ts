@@ -1,0 +1,459 @@
+/**
+ * Copyright (c) Microsoft Corporation.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import fs from 'fs';
+import os from 'os';
+
+import { devices } from '../../..';
+import { dotenv } from '../../utilsBundle';
+
+import { configFromIniFile } from './configIni';
+
+import type * as playwright from '../../..';
+import type { Config, ToolCapability } from './config.d';
+
+async function fileExistsAsync(resolved: string) {
+  try { return (await fs.promises.stat(resolved)).isFile(); } catch { return false; }
+}
+
+type ViewportSize = { width: number; height: number };
+
+export type CLIOptions = {
+  allowedHosts?: string[];
+  allowedOrigins?: string[];
+  allowUnrestrictedFileAccess?: boolean;
+  blockedOrigins?: string[];
+  blockServiceWorkers?: boolean;
+  browser?: string;
+  caps?: string[];
+  cdpEndpoint?: string;
+  cdpHeader?: Record<string, string>;
+  cdpTimeout?: number;
+  codegen?: 'typescript' | 'none';
+  config?: string;
+  consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
+  device?: string;
+  extension?: boolean;
+  executablePath?: string;
+  grantPermissions?: string[];
+  headless?: boolean;
+  host?: string;
+  ignoreHttpsErrors?: boolean;
+  initScript?: string[];
+  initPage?: string[];
+  isolated?: boolean;
+  imageResponses?: 'allow' | 'omit';
+  sandbox?: boolean;
+  outputDir?: string;
+  outputMode?: 'file' | 'stdout';
+  port?: number;
+  proxyBypass?: string;
+  proxyServer?: string;
+  saveSession?: boolean;
+  secrets?: Record<string, string>;
+  sharedBrowserContext?: boolean;
+  snapshotMode?: 'incremental' | 'full' | 'none';
+  storageState?: string;
+  testIdAttribute?: string;
+  timeoutAction?: number;
+  timeoutNavigation?: number;
+  userAgent?: string;
+  userDataDir?: string;
+  viewportSize?: ViewportSize;
+};
+
+export const defaultConfig: FullConfig = {
+  browser: {
+    browserName: 'chromium',
+    launchOptions: {
+      channel: 'chrome',
+      headless: os.platform() === 'linux' && !process.env.DISPLAY,
+    },
+    contextOptions: {
+      viewport: null,
+    },
+  },
+  server: {},
+  timeouts: {
+    action: 5000,
+    navigation: 60000,
+    expect: 5000,
+  },
+};
+
+type BrowserUserConfig = NonNullable<Config['browser']>;
+
+export type FullConfig = Config & {
+  browser: Omit<BrowserUserConfig, 'browserName' | 'launchOptions' | 'contextOptions'> & {
+    browserName: 'chromium' | 'firefox' | 'webkit';
+    launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
+    contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+  },
+  server?: Config['server'],
+  skillMode?: boolean;
+  configFile?: string;
+};
+
+export async function resolveConfig(config: Config): Promise<FullConfig> {
+  return mergeConfig(defaultConfig, config);
+}
+
+export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
+  const envOverrides = configFromEnv();
+  const cliOverrides = configFromCLIOptions(cliOptions);
+  const configFile = cliOverrides.configFile ?? envOverrides.configFile;
+  const configInFile = await loadConfig(configFile);
+
+  let result = defaultConfig;
+  result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, envOverrides);
+  result = mergeConfig(result, cliOverrides);
+  result.configFile = configFile;
+  await validateConfig(result);
+  return result;
+}
+
+export async function validateConfig(config: FullConfig): Promise<void> {
+  if (config.browser.browserName === 'chromium' && config.browser.launchOptions.chromiumSandbox === undefined) {
+    if (process.platform === 'linux')
+      config.browser.launchOptions.chromiumSandbox = config.browser.launchOptions.channel !== 'chromium' && config.browser.launchOptions.channel !== 'chrome-for-testing';
+    else
+      config.browser.launchOptions.chromiumSandbox = true;
+  }
+
+  if (config.browser.isolated && config.browser.userDataDir)
+    throw new Error('Browser userDataDir is not supported in isolated mode.');
+
+  if (config.browser.initScript) {
+    for (const script of config.browser.initScript) {
+      if (!await fileExistsAsync(script))
+        throw new Error(`Init script file does not exist: ${script}`);
+    }
+  }
+  if (config.browser.initPage) {
+    for (const page of config.browser.initPage) {
+      if (!await fileExistsAsync(page))
+        throw new Error(`Init page file does not exist: ${page}`);
+    }
+  }
+}
+
+export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
+  let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
+  let channel: string | undefined;
+  switch (cliOptions.browser) {
+    case 'chrome':
+    case 'chrome-beta':
+    case 'chrome-canary':
+    case 'chrome-dev':
+    case 'msedge':
+    case 'msedge-beta':
+    case 'msedge-canary':
+    case 'msedge-dev':
+      browserName = 'chromium';
+      channel = cliOptions.browser;
+      break;
+    case 'chromium':
+      // Never use old headless.
+      browserName = 'chromium';
+      channel = 'chrome-for-testing';
+      break;
+    case 'firefox':
+      browserName = 'firefox';
+      break;
+    case 'webkit':
+      browserName = 'webkit';
+      break;
+  }
+
+  // Launch options
+  const launchOptions: playwright.LaunchOptions = {
+    channel,
+    executablePath: cliOptions.executablePath,
+    headless: cliOptions.headless,
+  };
+
+  // --sandbox was passed, enable the sandbox
+  // --no-sandbox was passed, disable the sandbox
+  if (cliOptions.sandbox !== undefined)
+    launchOptions.chromiumSandbox = cliOptions.sandbox;
+
+  if (cliOptions.proxyServer) {
+    launchOptions.proxy = {
+      server: cliOptions.proxyServer
+    };
+    if (cliOptions.proxyBypass)
+      launchOptions.proxy.bypass = cliOptions.proxyBypass;
+  }
+
+  if (cliOptions.device && cliOptions.cdpEndpoint)
+    throw new Error('Device emulation is not supported with cdpEndpoint.');
+
+  // Context options
+  const contextOptions: playwright.BrowserContextOptions = cliOptions.device ? devices[cliOptions.device] : {};
+  if (cliOptions.storageState)
+    contextOptions.storageState = cliOptions.storageState;
+
+  if (cliOptions.userAgent)
+    contextOptions.userAgent = cliOptions.userAgent;
+
+  if (cliOptions.viewportSize)
+    contextOptions.viewport = cliOptions.viewportSize;
+
+  if (cliOptions.ignoreHttpsErrors)
+    contextOptions.ignoreHTTPSErrors = true;
+
+  if (cliOptions.blockServiceWorkers)
+    contextOptions.serviceWorkers = 'block';
+
+  if (cliOptions.grantPermissions)
+    contextOptions.permissions = cliOptions.grantPermissions;
+
+  const config: Config = {
+    browser: {
+      browserName,
+      isolated: cliOptions.isolated,
+      userDataDir: cliOptions.userDataDir,
+      launchOptions,
+      contextOptions,
+      cdpEndpoint: cliOptions.cdpEndpoint,
+      cdpHeaders: cliOptions.cdpHeader,
+      cdpTimeout: cliOptions.cdpTimeout,
+      initPage: cliOptions.initPage,
+      initScript: cliOptions.initScript,
+    },
+    extension: cliOptions.extension,
+    server: {
+      port: cliOptions.port,
+      host: cliOptions.host,
+      allowedHosts: cliOptions.allowedHosts,
+    },
+    capabilities: cliOptions.caps as ToolCapability[],
+    console: {
+      level: cliOptions.consoleLevel,
+    },
+    network: {
+      allowedOrigins: cliOptions.allowedOrigins,
+      blockedOrigins: cliOptions.blockedOrigins,
+    },
+    allowUnrestrictedFileAccess: cliOptions.allowUnrestrictedFileAccess,
+    codegen: cliOptions.codegen,
+    saveSession: cliOptions.saveSession,
+    secrets: cliOptions.secrets,
+    sharedBrowserContext: cliOptions.sharedBrowserContext,
+    snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
+    outputMode: cliOptions.outputMode,
+    outputDir: cliOptions.outputDir,
+    imageResponses: cliOptions.imageResponses,
+    testIdAttribute: cliOptions.testIdAttribute,
+    timeouts: {
+      action: cliOptions.timeoutAction,
+      navigation: cliOptions.timeoutNavigation,
+    },
+  };
+
+  return { ...config, configFile: cliOptions.config };
+}
+
+export function configFromEnv(): Config & { configFile?: string } {
+  const options: CLIOptions = {};
+  options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
+  options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.allowUnrestrictedFileAccess = envToBoolean(process.env.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
+  options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
+  options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
+  options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
+  options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
+  options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
+  options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
+  options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
+  options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
+  if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
+    options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
+  options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
+  options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.extension = envToBoolean(process.env.PLAYWRIGHT_MCP_EXTENSION);
+  options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
+  options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
+  options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
+  options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  const initPage = envToString(process.env.PLAYWRIGHT_MCP_INIT_PAGE);
+  if (initPage)
+    options.initPage = [initPage];
+  const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
+  if (initScript)
+    options.initScript = [initScript];
+  options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
+  if (process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
+    options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
+  options.sandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_SANDBOX);
+  options.outputDir = envToString(process.env.PLAYWRIGHT_MCP_OUTPUT_DIR);
+  options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
+  options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
+  options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
+  options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
+  options.testIdAttribute = envToString(process.env.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
+  options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
+  options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
+  options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
+  options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
+  options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  return configFromCLIOptions(options);
+}
+
+export async function loadConfig(configFile: string | undefined): Promise<Config> {
+  if (!configFile)
+    return {};
+
+  if (configFile.endsWith('.ini'))
+    return configFromIniFile(configFile);
+
+  try {
+    const data = await fs.promises.readFile(configFile, 'utf8');
+    return JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data);
+  } catch {
+    return configFromIniFile(configFile);
+  }
+}
+
+function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
+  return Object.fromEntries(
+      Object.entries(obj ?? {}).filter(([_, v]) => v !== undefined)
+  ) as Partial<T>;
+}
+
+export function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
+  const browser: FullConfig['browser'] = {
+    ...pickDefined(base.browser),
+    ...pickDefined(overrides.browser),
+    browserName: overrides.browser?.browserName ?? base.browser?.browserName ?? 'chromium',
+    isolated: overrides.browser?.isolated ?? base.browser?.isolated,
+    launchOptions: {
+      ...pickDefined(base.browser?.launchOptions),
+      ...pickDefined(overrides.browser?.launchOptions),
+      ...{ assistantMode: true },
+    },
+    contextOptions: {
+      ...pickDefined(base.browser?.contextOptions),
+      ...pickDefined(overrides.browser?.contextOptions),
+    },
+  };
+
+  if (browser.browserName !== 'chromium' && browser.launchOptions)
+    delete browser.launchOptions.channel;
+
+  return {
+    ...pickDefined(base),
+    ...pickDefined(overrides),
+    browser,
+    console: {
+      ...pickDefined(base.console),
+      ...pickDefined(overrides.console),
+    },
+    network: {
+      ...pickDefined(base.network),
+      ...pickDefined(overrides.network),
+    },
+    server: {
+      ...pickDefined(base.server),
+      ...pickDefined(overrides.server),
+    },
+    snapshot: {
+      ...pickDefined(base.snapshot),
+      ...pickDefined(overrides.snapshot),
+    },
+    timeouts: {
+      ...pickDefined(base.timeouts),
+      ...pickDefined(overrides.timeouts),
+    },
+  } as FullConfig;
+}
+
+export function semicolonSeparatedList(value: string | undefined): string[] | undefined {
+  if (!value)
+    return undefined;
+  return value.split(';').map(v => v.trim());
+}
+
+export function commaSeparatedList(value: string | undefined): string[] | undefined {
+  if (!value)
+    return undefined;
+  return value.split(',').map(v => v.trim());
+}
+
+export function dotenvFileLoader(value: string | undefined): Record<string, string> | undefined {
+  if (!value)
+    return undefined;
+  return dotenv.parse(fs.readFileSync(value, 'utf8'));
+}
+
+export function numberParser(value: string | undefined): number | undefined {
+  if (!value)
+    return undefined;
+  return +value;
+}
+
+export function resolutionParser(name: string, value: string | undefined): ViewportSize | undefined {
+  if (!value)
+    return undefined;
+  if (value.includes('x')) {
+    const [width, height] = value.split('x').map(v => +v);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0)
+      throw new Error(`Invalid resolution format: use ${name}="800x600"`);
+    return { width, height };
+  }
+
+  // Legacy format
+  if (value.includes(',')) {
+    const [width, height] = value.split(',').map(v => +v);
+    if (isNaN(width) || isNaN(height) || width <= 0 || height <= 0)
+      throw new Error(`Invalid resolution format: use ${name}="800x600"`);
+    return { width, height };
+  }
+
+  throw new Error(`Invalid resolution format: use ${name}="800x600"`);
+}
+
+export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> {
+  if (!arg)
+    return previous || {};
+  const result: Record<string, string> = previous || {};
+  const colonIndex = arg.indexOf(':');
+
+  const name = colonIndex === -1 ? arg.trim() : arg.substring(0, colonIndex).trim();
+  const value = colonIndex === -1 ? '' : arg.substring(colonIndex + 1).trim();
+  result[name] = value;
+  return result;
+}
+
+export function enumParser<T extends string>(name: string, options: T[], value: string): T {
+  if (!options.includes(value as T))
+    throw new Error(`Invalid ${name}: ${value}. Valid values are: ${options.join(', ')}`);
+  return value as T;
+}
+
+function envToBoolean(value: string | undefined): boolean | undefined {
+  if (value === 'true' || value === '1')
+    return true;
+  if (value === 'false' || value === '0')
+    return false;
+  return undefined;
+}
+
+function envToString(value: string | undefined): string | undefined {
+  return value ? value.trim() : undefined;
+}

@@ -17,7 +17,7 @@
 import EventEmitter from 'events';
 
 import { z as zod } from 'playwright-core/lib/mcpBundle';
-import * as mcp from 'playwright-core/lib/mcp/exports';
+import * as mcp from 'playwright-core/lib/tools/exports';
 import { browserTools } from 'playwright-core/lib/tools/exports';
 
 import { TestContext } from './testContext';
