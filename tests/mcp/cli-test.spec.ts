@@ -22,39 +22,42 @@ const testEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.
 
 test('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
   await writeFiles({
-    'a.test.ts': `
+    'subdir/a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('example test', async ({ page }) => {
-        await page.setContent('<button>Submit</button>');
+        await page.setContent('<title>My Page</title><body><button>Submit</button></body>');
         await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
       });
     `,
   });
 
-  const cwd = test.info().outputDir;
-
   const testProcess = childProcess({
     command: [process.argv[0], testEntrypoint, 'test'],
-    cwd,
+    cwd: test.info().outputPath('subdir'),
     env: { PWPAUSE: 'cli', ...cliEnv },
   });
 
-  await testProcess.waitForOutput('playwright-cli --session=test-worker');
+  await testProcess.waitForOutput('playwright-cli --session=<name> open --attach=test-worker');
 
-  const listResult1 = await cli('list', { cwd });
+  const match = testProcess.output.match(/--attach=([a-zA-Z0-9-_]+)/);
+  const browserName = match[1];
+
+  const { output: openOutput } = await cli('open', `--session=test-session`, `--attach=${browserName}`);
+  expect(openOutput).toContain('My Page');
+
+  const listResult1 = await cli('list', '--all');
   expect(listResult1.exitCode).toBe(0);
-  expect(listResult1.output).toContain('test-worker');
+  expect(listResult1.output).toContain('test-session');
+  expect(listResult1.output).toContain('subdir');
+  expect(listResult1.output).toContain(`browser "${browserName}"`);
 
-  const match = testProcess.output.match(/--session=([a-zA-Z0-9-_]+)/);
-  const sessionName = match[1];
-
-  const snapshotResult = await cli(`--session=${sessionName}`, 'snapshot', { cwd });
+  const snapshotResult = await cli(`--session=test-session`, 'snapshot');
   expect(snapshotResult.exitCode).toBe(0);
   expect(snapshotResult.snapshot).toContain('button "Submit"');
 
   await testProcess.kill('SIGINT');
 
-  const listResult2 = await cli('list', { cwd });
+  const listResult2 = await cli('list');
   expect(listResult2.exitCode).toBe(0);
   expect(listResult2.output).toContain('(no browsers)');
 });
