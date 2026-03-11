@@ -18,6 +18,8 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - uses: actions/setup-node@v6
+        with:
+          node-version: 20
 
       - name: Install dependencies
         run: npm ci
