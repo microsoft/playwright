@@ -10110,11 +10110,6 @@ export interface Browser {
   isConnected(): boolean;
 
   /**
-   * Indicates that the browser is remote, i.e. connected over a WebSocket.
-   */
-  isRemote(): boolean;
-
-  /**
    * **NOTE** CDP Sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created browser session.

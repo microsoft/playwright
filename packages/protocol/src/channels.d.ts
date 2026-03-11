@@ -1180,18 +1180,12 @@ export type BrowserContextEvent = {
 export type BrowserCloseEvent = {};
 export type BrowserStartServerParams = {
   title: string,
-  host?: string,
-  port?: number,
   wsPath?: string,
   workspaceDir?: string,
-  metadata?: any,
 };
 export type BrowserStartServerOptions = {
-  host?: string,
-  port?: number,
   wsPath?: string,
   workspaceDir?: string,
-  metadata?: any,
 };
 export type BrowserStartServerResult = {
   wsEndpoint?: string,

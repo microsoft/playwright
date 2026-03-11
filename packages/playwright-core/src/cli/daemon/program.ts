@@ -53,10 +53,12 @@ export function decorateCLICommand(command: Command, version: string) {
           const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { persistent, exitOnClose: true });
           console.log(`### Success\nDaemon listening on ${socketPath}`);
           console.log('<EOF>');
-
-          if (!browser.isRemote()) {
+          try {
             await (browser as any)._startServer(sessionName, { workspaceDir: clientInfo.workspaceDir });
             browserContext.on('close', () => (browser as any)._stopServer().catch(() => {}));
+          } catch (error) {
+            if (!error.message.includes('Server is already running'))
+              throw error;
           }
         } catch (error) {
           const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;

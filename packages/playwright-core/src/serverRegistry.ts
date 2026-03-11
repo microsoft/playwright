@@ -36,7 +36,6 @@ export type EndpointInfo = {
   wsEndpoint?: string;
   pipeName?: string;
   workspaceDir?: string;
-  metadata?: Record<string, any>;
 };
 
 export type BrowserDescriptor = EndpointInfo & {

@@ -651,11 +651,8 @@ scheme.BrowserContextEvent = tObject({
 scheme.BrowserCloseEvent = tOptional(tObject({}));
 scheme.BrowserStartServerParams = tObject({
   title: tString,
-  host: tOptional(tString),
-  port: tOptional(tInt),
   wsPath: tOptional(tString),
   workspaceDir: tOptional(tString),
-  metadata: tOptional(tAny),
 });
 scheme.BrowserStartServerResult = tObject({
   wsEndpoint: tOptional(tString),
