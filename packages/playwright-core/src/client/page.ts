@@ -43,8 +43,6 @@ import { urlMatches, urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 import { isObject, isRegExp, isString } from '../utils/isomorphic/rtti';
 import { ConsoleMessage } from './consoleMessage';
-import { PageAgent } from './pageAgent';
-
 import type { BrowserContext } from './browserContext';
 import type { Clock } from './clock';
 import type { APIRequestContext } from './fetch';
@@ -859,29 +857,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
       await platform.fs().promises.writeFile(options.path, result.pdf);
     }
     return result.pdf;
-  }
-
-  async agent(options: Parameters<api.Page['agent']>[0] = {}) {
-    const params: channels.PageAgentParams = {
-      api: options.provider?.api,
-      apiEndpoint: options.provider?.apiEndpoint,
-      apiKey: options.provider?.apiKey,
-      apiTimeout: options.provider?.apiTimeout,
-      apiCacheFile: (options.provider as any)?._apiCacheFile,
-      doNotRenderActive: (options as any)._doNotRenderActive,
-      model: options.provider?.model,
-      cacheFile: options.cache?.cacheFile,
-      cacheOutFile: options.cache?.cacheOutFile,
-      maxTokens: options.limits?.maxTokens,
-      maxActions: options.limits?.maxActions,
-      maxActionRetries: options.limits?.maxActionRetries,
-      secrets: options.secrets ? Object.entries(options.secrets).map(([name, value]) => ({ name, value })) : undefined,
-      systemPrompt: options.systemPrompt,
-    };
-    const { agent } = await this._channel.agent(params);
-    const pageAgent = PageAgent.from(agent);
-    pageAgent._expectTimeout = options?.expect?.timeout;
-    return pageAgent;
   }
 
   async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
