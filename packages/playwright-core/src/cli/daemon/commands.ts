@@ -31,6 +31,14 @@ const numberArg = z.preprocess((val, ctx) => {
   return number;
 }, z.number());
 
+function asRef(refOrSelector: string | undefined): { ref?: string, selector?: string } {
+  if (refOrSelector === undefined)
+    return {};
+  if (refOrSelector.match(/^(f\d+)?e\d+$/))
+    return { ref: refOrSelector };
+  return { ref: '', selector: refOrSelector };
+}
+
 // Navigation commands
 
 const open = declareCommand({
@@ -204,14 +212,14 @@ const click = declareCommand({
   description: 'Perform click on a web page',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
   toolName: 'browser_click',
-  toolParams: ({ ref, button, modifiers }) => ({ ref, button, modifiers }),
+  toolParams: ({ target, button, modifiers }) => ({ ...asRef(target), button, modifiers }),
 });
 
 const doubleClick = declareCommand({
@@ -219,14 +227,14 @@ const doubleClick = declareCommand({
   description: 'Perform double click on a web page',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
     button: z.string().optional().describe('Button to click, defaults to left'),
   }),
   options: z.object({
     modifiers: z.array(z.string()).optional().describe('Modifier keys to press'),
   }),
   toolName: 'browser_click',
-  toolParams: ({ ref, button, modifiers }) => ({ ref, button, modifiers, doubleClick: true }),
+  toolParams: ({ target, button, modifiers }) => ({ ...asRef(target), button, modifiers, doubleClick: true }),
 });
 
 const drag = declareCommand({
@@ -234,11 +242,15 @@ const drag = declareCommand({
   description: 'Perform drag and drop between two elements',
   category: 'core',
   args: z.object({
-    startRef: z.string().describe('Exact source element reference from the page snapshot'),
-    endRef: z.string().describe('Exact target element reference from the page snapshot'),
+    startElement: z.string().describe('Exact source element reference from the page snapshot, or a unique element selector'),
+    endElement: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   toolName: 'browser_drag',
-  toolParams: ({ startRef, endRef }) => ({ startRef, endRef }),
+  toolParams: ({ startElement, endElement }) => {
+    const start = asRef(startElement);
+    const end = asRef(endElement);
+    return { startRef: start.ref, startSelector: start.selector, endRef: end.ref, endSelector: end.selector };
+  },
 });
 
 const fill = declareCommand({
@@ -246,14 +258,14 @@ const fill = declareCommand({
   description: 'Fill text into editable element',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
     text: z.string().describe('Text to fill into the element'),
   }),
   options: z.object({
     submit: z.boolean().optional().describe('Whether to submit entered text (press Enter after)'),
   }),
   toolName: 'browser_type',
-  toolParams: ({ ref, text, submit }) => ({ ref, text, submit }),
+  toolParams: ({ target, text, submit }) => ({ ...asRef(target), text, submit }),
 });
 
 const hover = declareCommand({
@@ -261,10 +273,10 @@ const hover = declareCommand({
   description: 'Hover over element on page',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   toolName: 'browser_hover',
-  toolParams: ({ ref }) => ({ ref }),
+  toolParams: ({ target }) => ({ ...asRef(target) }),
 });
 
 const select = declareCommand({
@@ -272,11 +284,11 @@ const select = declareCommand({
   description: 'Select an option in a dropdown',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
     val: z.string().describe('Value to select in the dropdown'),
   }),
   toolName: 'browser_select_option',
-  toolParams: ({ ref, val: value }) => ({ ref, values: [value] }),
+  toolParams: ({ target, val: value }) => ({ ...asRef(target), values: [value] }),
 });
 
 const fileUpload = declareCommand({
@@ -295,10 +307,10 @@ const check = declareCommand({
   description: 'Check a checkbox or radio button',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   toolName: 'browser_check',
-  toolParams: ({ ref }) => ({ ref }),
+  toolParams: ({ target }) => ({ ...asRef(target) }),
 });
 
 const uncheck = declareCommand({
@@ -306,10 +318,10 @@ const uncheck = declareCommand({
   description: 'Uncheck a checkbox or radio button',
   category: 'core',
   args: z.object({
-    ref: z.string().describe('Exact target element reference from the page snapshot'),
+    target: z.string().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   toolName: 'browser_uncheck',
-  toolParams: ({ ref }) => ({ ref }),
+  toolParams: ({ target }) => ({ ...asRef(target) }),
 });
 
 const snapshot = declareCommand({
@@ -330,10 +342,10 @@ const evaluate = declareCommand({
   category: 'core',
   args: z.object({
     func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
-    ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
+    element: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func, ref }) => ({ function: func, ref }),
+  toolParams: ({ func, element }) => ({ function: func, ...asRef(element) }),
 });
 
 const dialogAccept = declareCommand({
@@ -686,14 +698,14 @@ const screenshot = declareCommand({
   description: 'screenshot of the current page or element',
   category: 'export',
   args: z.object({
-    ref: z.string().optional().describe('Exact target element reference from the page snapshot.'),
+    target: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector.'),
   }),
   options: z.object({
     filename: z.string().optional().describe('File name to save the screenshot to. Defaults to `page-{timestamp}.{png|jpeg}` if not specified.'),
     ['full-page']: z.boolean().optional().describe('When true, takes a screenshot of the full scrollable page, instead of the currently visible viewport.'),
   }),
   toolName: 'browser_take_screenshot',
-  toolParams: ({ ref, filename, ['full-page']: fullPage }) => ({ filename, ref, fullPage }),
+  toolParams: ({ target, filename, ['full-page']: fullPage }) => ({ filename, ...asRef(target), fullPage }),
 });
 
 const pdfSave = declareCommand({

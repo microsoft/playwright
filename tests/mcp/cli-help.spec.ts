@@ -23,5 +23,5 @@ test('prints help by default', async ({ cli }) => {
 
 test('prints command help', async ({ cli }) => {
   const { output } = await cli('click', '--help');
-  expect(output).toContain('playwright-cli click <ref> [button]');
+  expect(output).toContain('playwright-cli click <target> [button]');
 });

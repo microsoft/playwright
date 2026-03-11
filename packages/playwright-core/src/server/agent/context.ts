@@ -165,7 +165,6 @@ export class Context {
       }
     }));
   }
-
 }
 
 export function redactSecrets(text: string, secrets: channels.NameValue[] | undefined): string {

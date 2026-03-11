@@ -31,6 +31,7 @@ const fillForm = defineTabTool({
         name: z.string().describe('Human-readable field name'),
         type: z.enum(['textbox', 'checkbox', 'radio', 'combobox', 'slider']).describe('Type of the field'),
         ref: z.string().describe('Exact target field reference from the page snapshot'),
+        selector: z.string().optional().describe('CSS or role selector for the field element, when "ref" is not available. Either "selector" or "ref" is required.'),
         value: z.string().describe('Value to fill in the field. If the field is a checkbox, the value should be `true` or `false`. If the field is a combobox, the value should be the text of the option.'),
       })).describe('Fields to fill in'),
     }),
@@ -39,7 +40,7 @@ const fillForm = defineTabTool({
 
   handle: async (tab, params, response) => {
     for (const field of params.fields) {
-      const { locator, resolved } = await tab.refLocator({ element: field.name, ref: field.ref });
+      const { locator, resolved } = await tab.refLocator({ element: field.name, ref: field.ref, selector: field.selector });
       const locatorSource = `await page.${resolved}`;
       if (field.type === 'textbox' || field.type === 'slider') {
         const secret = tab.context.lookupSecret(field.value);

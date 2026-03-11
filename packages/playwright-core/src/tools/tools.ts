@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import { z } from '../mcpBundle';
+
 import common from './common';
 import config from './config';
 import console from './console';
@@ -72,5 +74,14 @@ export const browserTools: Tool<any>[] = [
 ];
 
 export function filteredTools(config: Pick<ContextConfig, 'capabilities'>) {
-  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly);
+  return browserTools.filter(tool => tool.capability.startsWith('core') || config.capabilities?.includes(tool.capability)).filter(tool => !tool.skillOnly).map(tool => ({
+    ...tool,
+    schema: {
+      ...tool.schema,
+      // Note: we first ensure that "selector" property is present, so that we can omit() it without an error.
+      inputSchema: tool.schema.inputSchema
+          .extend({ selector: z.string(), startSelector: z.string(), endSelector: z.string() })
+          .omit({ selector: true, startSelector: true, endSelector: true }),
+    },
+  }));
 }

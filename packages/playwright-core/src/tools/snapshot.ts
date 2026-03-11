@@ -40,6 +40,7 @@ const snapshot = defineTool({
 export const elementSchema = z.object({
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().describe('Exact target element reference from the page snapshot'),
+  selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available'),
 });
 
 const clickSchema = elementSchema.extend({
@@ -92,8 +93,10 @@ const drag = defineTabTool({
     inputSchema: z.object({
       startElement: z.string().describe('Human-readable source element description used to obtain the permission to interact with the element'),
       startRef: z.string().describe('Exact source element reference from the page snapshot'),
+      startSelector: z.string().optional().describe('CSS or role selector for the source element, when ref is not available'),
       endElement: z.string().describe('Human-readable target element description used to obtain the permission to interact with the element'),
       endRef: z.string().describe('Exact target element reference from the page snapshot'),
+      endSelector: z.string().optional().describe('CSS or role selector for the target element, when ref is not available'),
     }),
     type: 'input',
   },
@@ -102,8 +105,8 @@ const drag = defineTabTool({
     response.setIncludeSnapshot();
 
     const [start, end] = await tab.refLocators([
-      { ref: params.startRef, element: params.startElement },
-      { ref: params.endRef, element: params.endElement },
+      { ref: params.startRef, selector: params.startSelector, element: params.startElement },
+      { ref: params.endRef, selector: params.endSelector, element: params.endElement },
     ]);
 
     await tab.waitForCompletion(async () => {

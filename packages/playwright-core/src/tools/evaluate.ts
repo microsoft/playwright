@@ -25,6 +25,7 @@ const evaluateSchema = z.object({
   function: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
   element: z.string().optional().describe('Human-readable element description used to obtain permission to interact with the element'),
   ref: z.string().optional().describe('Exact target element reference from the page snapshot'),
+  selector: z.string().optional().describe('CSS or role selector for the target element, when "ref" is not available.'),
 });
 
 const evaluate = defineTabTool({
@@ -42,7 +43,7 @@ const evaluate = defineTabTool({
     if (!params.function.includes('=>'))
       params.function = `() => (${params.function})`;
     if (params.ref) {
-      locator = await tab.refLocator({ ref: params.ref, element: params.element || 'element' });
+      locator = await tab.refLocator({ ref: params.ref, selector: params.selector, element: params.element || 'element' });
       response.addCode(`await page.${locator.resolved}.evaluate(${escapeWithQuotes(params.function)});`);
     } else {
       response.addCode(`await page.evaluate(${escapeWithQuotes(params.function)});`);
