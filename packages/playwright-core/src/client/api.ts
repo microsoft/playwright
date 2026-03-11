@@ -29,7 +29,7 @@ export { Electron, ElectronApplication } from './electron';
 export { FrameLocator, Locator } from './locator';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';
-export type { Inspector } from './inspector';
+export type { Screencast } from './screencast';
 export type { Logger } from './types';
 export { TimeoutError } from './errors';
 export { Frame } from './frame';

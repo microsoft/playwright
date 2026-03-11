@@ -178,7 +178,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
     if (this.selectedPage) {
       this._pageListeners.forEach(d => d.dispose());
       this._pageListeners = [];
-      await this.selectedPage.inspector().stopScreencast();
+      await this.selectedPage.screencast().stop();
     }
 
     this.selectedPage = page;
@@ -198,11 +198,11 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
           if (frame === page.mainFrame())
             this._sendTabList();
         }),
-        eventsHelper.addEventListener(page.inspector(), 'screencastframe', ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0))
+        eventsHelper.addEventListener(page.screencast(), 'screencastframe', ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0))
     );
 
     const maxSize = { width: 1280, height: 800 };
-    await page.inspector().startScreencast({ maxSize });
+    await page.screencast().start({ maxSize });
   }
 
   private _deselectPage() {
@@ -210,7 +210,7 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
       return;
     this._pageListeners.forEach(d => d.dispose());
     this._pageListeners = [];
-    this.selectedPage.inspector().stopScreencast().catch(() => {});
+    this.selectedPage.screencast().stop().catch(() => {});
     this.selectedPage = null;
     this._lastFrameData = null;
     this._lastViewportSize = null;
