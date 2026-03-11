@@ -417,6 +417,11 @@ export class WorkerMain extends ProcessRunner {
     // Update duration, so it is available in fixture teardown and afterEach hooks.
     testInfo.duration = testInfo._timeoutManager.defaultSlot().elapsed | 0;
 
+    // If the test was dynamically skipped (e.g. test.skip() called inside the test body),
+    // do not run afterEach hooks.
+    if (testInfo.status === 'skipped')
+      shouldRunAfterEachHooks = false;
+
     // No skips in after hooks.
     testInfo._allowSkips = true;
 

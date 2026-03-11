@@ -863,7 +863,22 @@ test('afterAll should run if last test was skipped 2', async ({ runInlineTest })
   expect(result.output).toContain('after-all');
 });
 
-test('afterEach timeout after skipped test should be reported', async ({ runInlineTest }) => {
+test('afterEach should not run after dynamically skipped test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.js': `
+      import { test, expect } from '@playwright/test';
+      test.afterEach(() => {
+        console.log('\\n%%afterEach');
+      });
+      test('skipped', () => { test.skip(); });
+    `,
+  }, { timeout: 2000 });
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).not.toContain('afterEach');
+});
+
+test('afterEach timeout after dynamically skipped test should not be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -873,12 +888,12 @@ test('afterEach timeout after skipped test should be reported', async ({ runInli
       test('skipped', () => { test.skip(); });
     `,
   }, { timeout: 2000 });
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('Test timeout of 2000ms exceeded while running "afterEach" hook.');
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).not.toContain('afterEach');
 });
 
-test('afterEach exception after skipped test should be reported', async ({ runInlineTest }) => {
+test('afterEach exception after dynamically skipped test should not be reported', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'a.test.js': `
       import { test, expect } from '@playwright/test';
@@ -888,9 +903,9 @@ test('afterEach exception after skipped test should be reported', async ({ runIn
       test('skipped', () => { test.skip(); });
     `,
   }, { timeout: 2000 });
-  expect(result.exitCode).toBe(1);
-  expect(result.failed).toBe(1);
-  expect(result.output).toContain('Error: oh my!');
+  expect(result.exitCode).toBe(0);
+  expect(result.skipped).toBe(1);
+  expect(result.output).not.toContain('Error: oh my!');
 });
 
 test('afterAll should be run for test.skip', async ({ runInlineTest }) => {
