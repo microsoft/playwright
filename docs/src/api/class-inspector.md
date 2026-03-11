@@ -4,26 +4,6 @@
 
 Interface to the Playwright inspector.
 
-## async method: Inspector.cancelPickLocator
-* since: v1.59
-
-Cancels an ongoing [`method: Inspector.pickLocator`] call by deactivating pick locator mode.
-If no pick locator mode is active, this method is a no-op.
-
-## async method: Inspector.pickLocator
-* since: v1.59
-- returns: <[Locator]>
-
-Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
-Once the user clicks an element, the mode is deactivated and the [Locator] for the picked element is returned.
-
-**Usage**
-
-```js
-const locator = await page.inspector().pickLocator();
-console.log(locator);
-```
-
 ## event: Inspector.screencastFrame
 * since: v1.59
 - argument: <[Object]>

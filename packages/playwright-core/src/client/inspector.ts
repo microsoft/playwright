@@ -17,7 +17,6 @@
 import { EventEmitter } from './eventEmitter';
 
 import type * as api from '../../types/types';
-import type { Locator } from './locator';
 import type { Page } from './page';
 
 export class Inspector extends EventEmitter implements api.Inspector {
@@ -27,15 +26,6 @@ export class Inspector extends EventEmitter implements api.Inspector {
     super(page._platform);
     this._page = page;
     this._page._channel.on('screencastFrame', ({ data }) => this.emit('screencastframe', { data }));
-  }
-
-  async pickLocator(): Promise<Locator> {
-    const { selector } = await this._page._channel.pickLocator({});
-    return this._page.locator(selector);
-  }
-
-  async cancelPickLocator(): Promise<void> {
-    await this._page._channel.cancelPickLocator({});
   }
 
   async startScreencast(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
