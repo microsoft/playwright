@@ -158,6 +158,12 @@ System.Console.WriteLine(browser.Contexts.Count); // prints "1"
 
 Indicates that the browser is connected.
 
+## method: Browser.isRemote
+* since: v1.59
+- returns: <[boolean]>
+
+Indicates that the browser is remote, i.e. connected over a WebSocket.
+
 ## async method: Browser.newBrowserCDPSession
 * since: v1.11
 - returns: <[CDPSession]>
