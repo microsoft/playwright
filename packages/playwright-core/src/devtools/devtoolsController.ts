@@ -218,12 +218,12 @@ export class DevToolsConnection implements Transport, DevToolsChannel {
   async pickLocator() {
     if (!this.selectedPage)
       return;
-    const locator = await this.selectedPage.inspector().pickLocator();
+    const locator = await this.selectedPage.pickLocator();
     this._emit('elementPicked', { selector: locator.toString() });
   }
 
   async cancelPickLocator() {
-    await this.selectedPage?.inspector().cancelPickLocator();
+    await this.selectedPage?.cancelPickLocator();
   }
 
   private _sendCachedState() {

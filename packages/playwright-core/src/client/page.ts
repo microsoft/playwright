@@ -291,6 +291,15 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return this._inspector;
   }
 
+  async pickLocator(): Promise<Locator> {
+    const { selector } = await this._channel.pickLocator({});
+    return this.locator(selector);
+  }
+
+  async cancelPickLocator(): Promise<void> {
+    await this._channel.cancelPickLocator({});
+  }
+
   async $(selector: string, options?: { strict?: boolean }): Promise<ElementHandle<SVGElement | HTMLElement> | null> {
     return await this._mainFrame.$(selector, options);
   }

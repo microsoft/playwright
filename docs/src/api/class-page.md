@@ -763,6 +763,13 @@ System prompt for the agent's loop.
 
 Brings page to front (activates tab).
 
+## async method: Page.cancelPickLocator
+* since: v1.59
+* langs: js
+
+Cancels an ongoing [`method: Page.pickLocator`] call by deactivating pick locator mode.
+If no pick locator mode is active, this method is a no-op.
+
 ## async method: Page.check
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.check`] instead. Read more about [locators](../locators.md).
@@ -3077,6 +3084,20 @@ Whether or not to generate tagged (accessible) PDF. Defaults to `false`.
 
 Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
+## async method: Page.pickLocator
+* since: v1.59
+* langs: js
+- returns: <[Locator]>
+
+Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+Once the user clicks an element, the mode is deactivated and the [Locator] for the picked element is returned.
+
+**Usage**
+
+```js
+const locator = await page.pickLocator();
+console.log(locator);
+```
 
 ## async method: Page.press
 * since: v1.8

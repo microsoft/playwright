@@ -2188,6 +2188,12 @@ export interface Page {
   bringToFront(): Promise<void>;
 
   /**
+   * Cancels an ongoing [page.pickLocator()](https://playwright.dev/docs/api/class-page#page-pick-locator) call by
+   * deactivating pick locator mode. If no pick locator mode is active, this method is a no-op.
+   */
+  cancelPickLocator(): Promise<void>;
+
+  /**
    * **NOTE** Use locator-based [locator.check([options])](https://playwright.dev/docs/api/class-locator#locator-check) instead.
    * Read more about [locators](https://playwright.dev/docs/locators).
    *
@@ -3921,6 +3927,21 @@ export interface Page {
      */
     width?: string|number;
   }): Promise<Buffer>;
+
+  /**
+   * Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
+   * Once the user clicks an element, the mode is deactivated and the
+   * [Locator](https://playwright.dev/docs/api/class-locator) for the picked element is returned.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const locator = await page.pickLocator();
+   * console.log(locator);
+   * ```
+   *
+   */
+  pickLocator(): Promise<Locator>;
 
   /**
    * **NOTE** Use locator-based [locator.press(key[, options])](https://playwright.dev/docs/api/class-locator#locator-press)
@@ -20685,28 +20706,6 @@ export interface Inspector {
      */
     data: Buffer;
   }) => any): this;
-
-  /**
-   * Cancels an ongoing
-   * [inspector.pickLocator()](https://playwright.dev/docs/api/class-inspector#inspector-pick-locator) call by
-   * deactivating pick locator mode. If no pick locator mode is active, this method is a no-op.
-   */
-  cancelPickLocator(): Promise<void>;
-
-  /**
-   * Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
-   * Once the user clicks an element, the mode is deactivated and the
-   * [Locator](https://playwright.dev/docs/api/class-locator) for the picked element is returned.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const locator = await page.inspector().pickLocator();
-   * console.log(locator);
-   * ```
-   *
-   */
-  pickLocator(): Promise<Locator>;
 
   /**
    * Starts capturing screencast frames. Frames are emitted as
