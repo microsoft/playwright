@@ -64,6 +64,7 @@ export type CLIOptions = {
   proxyServer?: string;
   saveSession?: boolean;
   secrets?: Record<string, string>;
+  sharedBrowserContext?: boolean;
   snapshotMode?: 'incremental' | 'full' | 'none';
   storageState?: string;
   testIdAttribute?: string;
@@ -252,6 +253,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     codegen: cliOptions.codegen,
     saveSession: cliOptions.saveSession,
     secrets: cliOptions.secrets,
+    sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
