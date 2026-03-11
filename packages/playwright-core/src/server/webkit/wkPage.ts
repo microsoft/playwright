@@ -694,7 +694,7 @@ export class WKPage implements PageDelegate {
   }
 
   async bringToFront(): Promise<void> {
-    this._pageProxySession.send('Target.activate', {
+    await this._pageProxySession.send('Target.activate', {
       targetId: this._session.sessionId
     });
   }

@@ -167,14 +167,32 @@ test('page.pickLocator should return locator for picked element', async ({ page 
 });
 
 test('page.cancelPickLocator should cancel ongoing pickLocator', async ({ page }) => {
-  await page.setContent(`<button>Submit</button>`);
-
-  const scriptReady = page.waitForEvent('console', msg => msg.text() === 'Recorder script ready for test');
   const pickPromise = page.pickLocator();
-  await scriptReady;
-
   await Promise.all([
     page.cancelPickLocator(),
-    expect(pickPromise).rejects.toThrow('Locator picking was cancelled'),
+    expect(pickPromise).rejects.toThrow('Locator picking was cancelled')
   ]);
+});
+
+test('closing page should cancel ongoing pickLocator', async ({ page }) => {
+  await page.setContent(`<button>Click me</button>`);
+  const pickPromise = page.pickLocator().catch(e => e.message);
+  await page.close();
+  expect(await pickPromise).toContain('Target page, context or browser has been closed');
+});
+
+test('page2.pickLocator() should cancel page1.pickLocator()', async ({ page, context }) => {
+  const pick1Promise = page.pickLocator().catch(e => e.message);
+
+  const page2 = await context.newPage();
+  await page2.setContent(`<button>Click me</button>`);
+  const pick2Promise = page2.pickLocator().catch(e => e.message);
+
+  expect(await pick1Promise).toContain('Locator picking was cancelled');
+
+  const box = await page2.getByRole('button', { name: 'Click me' }).boundingBox();
+  await page2.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
+
+  const locator = await pick2Promise;
+  await expect(locator).toHaveText('Click me');
 });

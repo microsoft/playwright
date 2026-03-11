@@ -242,13 +242,17 @@ export class DashboardConnection implements Transport, DashboardChannel {
     if (pages.length === 0)
       return [];
     const dashboardUrl = await this._dashboardUrl(pages[0]);
-    return await Promise.all(pages.map(async page => ({
-      pageId: this._pageId(page),
-      title: await page.title() || page.url(),
-      url: page.url(),
-      selected: page === this.selectedPage,
-      inspectorUrl: dashboardUrl ? await this._pageInspectorUrl(page, dashboardUrl) : 'data:text/plain,Dashboard only supported in Chromium based browsers',
-    })));
+    return await Promise.all(pages.map(async page => {
+      // page.title() throws on navigation.
+      const title = await page.title().catch(() => undefined) || `Loading ${page.url()}`;
+      return {
+        pageId: this._pageId(page),
+        title,
+        url: page.url(),
+        selected: page === this.selectedPage,
+        inspectorUrl: dashboardUrl ? await this._pageInspectorUrl(page, dashboardUrl) : 'data:text/plain,DevTools only supported in Chromium based browsers',
+      };
+    }));
   }
 
   pageForId(pageId: string) {
@@ -280,7 +284,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
   }
 
   private _sendTabList() {
-    this._tabList().then(tabs => this._emit('tabs', { tabs }));
+    this._tabList().then(tabs => this._emit('tabs', { tabs }), () => {});
   }
 
   private _writeFrame(frame: Buffer, viewportWidth: number, viewportHeight: number) {
