@@ -300,3 +300,35 @@ it('clearConsoleMessages should work', async ({ page }) => {
   expect(messages.length).toBe(1);
   expect(messages[0].text()).toBe('message3');
 });
+
+it('consoleMessages sinceNavigation filter should work', async ({ page, server }) => {
+  await page.evaluate(() => console.log('before navigation'));
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => console.log('after navigation'));
+
+  const all = await page.consoleMessages({ filter: 'all' });
+  expect(all.map(m => m.text())).toContain('before navigation');
+  expect(all.map(m => m.text())).toContain('after navigation');
+
+  // sinceNavigation is the default
+  const sinceNav = await page.consoleMessages();
+  expect(sinceNav.map(m => m.text())).not.toContain('before navigation');
+  expect(sinceNav.map(m => m.text())).toContain('after navigation');
+});
+
+it('pageErrors sinceNavigation filter should work', async ({ page, server }) => {
+  server.setContent('/page1', `<script>throw new Error('page1 error');</script>`, 'text/html');
+  server.setContent('/page2', `<script>throw new Error('page2 error');</script>`, 'text/html');
+
+  await page.goto(server.PREFIX + '/page1');
+  await page.goto(server.PREFIX + '/page2');
+
+  const all = await page.pageErrors({ filter: 'all' });
+  expect(all.map(e => e.message)).toContain('page1 error');
+  expect(all.map(e => e.message)).toContain('page2 error');
+
+  // sinceNavigation is the default
+  const sinceNav = await page.pageErrors();
+  expect(sinceNav.map(e => e.message)).not.toContain('page1 error');
+  expect(sinceNav.map(e => e.message)).toContain('page2 error');
+});

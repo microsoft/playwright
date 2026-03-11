@@ -252,6 +252,7 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
+scheme.ConsoleMessagesFilter = tEnum(['all', 'sinceNavigation']);
 scheme.LocalUtilsInitializer = tObject({
   deviceDescriptors: tArray(tObject({
     name: tString,
@@ -1252,7 +1253,9 @@ scheme.PageCloseParams = tObject({
 scheme.PageCloseResult = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesParams = tOptional(tObject({}));
 scheme.PageClearConsoleMessagesResult = tOptional(tObject({}));
-scheme.PageConsoleMessagesParams = tOptional(tObject({}));
+scheme.PageConsoleMessagesParams = tObject({
+  filter: tOptional(tType('ConsoleMessagesFilter')),
+});
 scheme.PageConsoleMessagesResult = tObject({
   messages: tArray(tObject({
     type: tString,
@@ -1460,7 +1463,9 @@ scheme.PageTouchscreenTapParams = tObject({
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
 scheme.PageClearPageErrorsParams = tOptional(tObject({}));
 scheme.PageClearPageErrorsResult = tOptional(tObject({}));
-scheme.PagePageErrorsParams = tOptional(tObject({}));
+scheme.PagePageErrorsParams = tObject({
+  filter: tOptional(tType('ConsoleMessagesFilter')),
+});
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
 });

@@ -2264,15 +2264,15 @@ export interface Page {
 
   /**
    * Clears all stored console messages from this page. Subsequent calls to
-   * [page.consoleMessages()](https://playwright.dev/docs/api/class-page#page-console-messages) will only return
-   * messages logged after the clear.
+   * [page.consoleMessages([options])](https://playwright.dev/docs/api/class-page#page-console-messages) will only
+   * return messages logged after the clear.
    */
   clearConsoleMessages(): Promise<void>;
 
   /**
    * Clears all stored page errors from this page. Subsequent calls to
-   * [page.pageErrors()](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors thrown
-   * after the clear.
+   * [page.pageErrors([options])](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors
+   * thrown after the clear.
    */
   clearPageErrors(): Promise<void>;
 
@@ -2401,8 +2401,14 @@ export interface Page {
   /**
    * Returns up to (currently) 200 last console messages from this page. See
    * [page.on('console')](https://playwright.dev/docs/api/class-page#page-event-console) for more details.
+   * @param options
    */
-  consoleMessages(): Promise<Array<ConsoleMessage>>;
+  consoleMessages(options?: {
+    /**
+     * Controls which messages are returned:
+     */
+    filter?: "all"|"sinceNavigation";
+  }): Promise<Array<ConsoleMessage>>;
 
   /**
    * Gets the full HTML contents of the page, including the doctype.
@@ -3727,8 +3733,14 @@ export interface Page {
   /**
    * Returns up to (currently) 200 last page errors from this page. See
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
+   * @param options
    */
-  pageErrors(): Promise<Array<Error>>;
+  pageErrors(options?: {
+    /**
+     * Controls which errors are returned:
+     */
+    filter?: "all"|"sinceNavigation";
+  }): Promise<Array<Error>>;
 
   /**
    * Pauses script execution. Playwright will stop executing the script and wait for the user to either press the

@@ -19,7 +19,7 @@ import fs from 'fs';
 
 
 for (const context of ['isolated', 'persistent']) {
-  test(`--init-script option loads and executes script (${context})`, async ({ startClient, server }, testInfo) => {
+  test(`--init-script option loads and executes script (${context})`, async ({ startClient, server, mcpBrowser }, testInfo) => {
     // Create a temporary init script
     const initScriptPath = testInfo.outputPath('init-script1.js');
     const initScriptContent1 = `window.testInitScriptExecuted = true;`;
@@ -55,6 +55,9 @@ for (const context of ['isolated', 'persistent']) {
 
     expect(await client.callTool({
       name: 'browser_console_messages',
+      // FIXME: in firefox commit event comes after console messages from the init script.
+      // See https://github.com/microsoft/playwright/issues/39624.
+      arguments: { all: mcpBrowser === 'firefox' }
     })).toHaveResponse({
       result: expect.stringMatching(/Init script executed successfully.*Custom log/ms),
     });

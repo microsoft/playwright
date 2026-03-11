@@ -679,8 +679,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearConsoleMessages();
   }
 
-  async consoleMessages(): Promise<ConsoleMessage[]> {
-    const { messages } = await this._channel.consoleMessages();
+  async consoleMessages(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<ConsoleMessage[]> {
+    const { messages } = await this._channel.consoleMessages({ filter: options?.filter });
     return messages.map(message => new ConsoleMessage(this._platform, message, this, null));
   }
 
@@ -688,8 +688,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearPageErrors();
   }
 
-  async pageErrors(): Promise<Error[]> {
-    const { errors } = await this._channel.pageErrors();
+  async pageErrors(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<Error[]> {
+    const { errors } = await this._channel.pageErrors({ filter: options?.filter });
     return errors.map(error => parseError(error));
   }
 

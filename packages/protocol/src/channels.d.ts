@@ -438,6 +438,7 @@ export type APIResponse = {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+export type ConsoleMessagesFilter = 'all' | 'sinceNavigation';
 // ----------- LocalUtils -----------
 export type LocalUtilsInitializer = {
   deviceDescriptors: {
@@ -2114,7 +2115,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   addInitScript(params: PageAddInitScriptParams, progress?: Progress): Promise<PageAddInitScriptResult>;
   close(params: PageCloseParams, progress?: Progress): Promise<PageCloseResult>;
   clearConsoleMessages(params?: PageClearConsoleMessagesParams, progress?: Progress): Promise<PageClearConsoleMessagesResult>;
-  consoleMessages(params?: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
+  consoleMessages(params: PageConsoleMessagesParams, progress?: Progress): Promise<PageConsoleMessagesResult>;
   emulateMedia(params: PageEmulateMediaParams, progress?: Progress): Promise<PageEmulateMediaResult>;
   exposeBinding(params: PageExposeBindingParams, progress?: Progress): Promise<PageExposeBindingResult>;
   goBack(params: PageGoBackParams, progress?: Progress): Promise<PageGoBackResult>;
@@ -2142,7 +2143,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   mouseWheel(params: PageMouseWheelParams, progress?: Progress): Promise<PageMouseWheelResult>;
   touchscreenTap(params: PageTouchscreenTapParams, progress?: Progress): Promise<PageTouchscreenTapResult>;
   clearPageErrors(params?: PageClearPageErrorsParams, progress?: Progress): Promise<PageClearPageErrorsResult>;
-  pageErrors(params?: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
+  pageErrors(params: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
   requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
   snapshotForAI(params: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
@@ -2226,8 +2227,12 @@ export type PageCloseResult = void;
 export type PageClearConsoleMessagesParams = {};
 export type PageClearConsoleMessagesOptions = {};
 export type PageClearConsoleMessagesResult = void;
-export type PageConsoleMessagesParams = {};
-export type PageConsoleMessagesOptions = {};
+export type PageConsoleMessagesParams = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PageConsoleMessagesOptions = {
+  filter?: ConsoleMessagesFilter,
+};
 export type PageConsoleMessagesResult = {
   messages: {
     type: string,
@@ -2553,8 +2558,12 @@ export type PageTouchscreenTapResult = void;
 export type PageClearPageErrorsParams = {};
 export type PageClearPageErrorsOptions = {};
 export type PageClearPageErrorsResult = void;
-export type PagePageErrorsParams = {};
-export type PagePageErrorsOptions = {};
+export type PagePageErrorsParams = {
+  filter?: ConsoleMessagesFilter,
+};
+export type PagePageErrorsOptions = {
+  filter?: ConsoleMessagesFilter,
+};
 export type PagePageErrorsResult = {
   errors: SerializedError[],
 };

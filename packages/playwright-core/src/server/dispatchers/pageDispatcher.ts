@@ -290,7 +290,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     // Otherwise, if subscription is added in a different task from this call (either before or after),
     // there is a chance for a duplicate or a lost console message.
     this._subscriptions.add('console');
-    return { messages: this._page.consoleMessages().map(message => this.parentScope().serializeConsoleMessage(message, this)) };
+    return { messages: this._page.consoleMessages(params.filter).map(message => this.parentScope().serializeConsoleMessage(message, this)) };
   }
 
   async clearPageErrors(params: channels.PageClearPageErrorsParams, progress: Progress): Promise<channels.PageClearPageErrorsResult> {
@@ -298,7 +298,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async pageErrors(params: channels.PagePageErrorsParams, progress: Progress): Promise<channels.PagePageErrorsResult> {
-    return { errors: this._page.pageErrors().map(error => serializeError(error)) };
+    return { errors: this._page.pageErrors(params.filter).map(error => serializeError(error)) };
   }
 
   async mouseMove(params: channels.PageMouseMoveParams, progress: Progress): Promise<void> {

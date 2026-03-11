@@ -149,6 +149,8 @@ export type PageEventMap = {
   [PageEvent.Worker]: [worker: Worker];
 };
 
+const navigationMarkSymbol = Symbol('navigationMark');
+
 export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
@@ -403,8 +405,11 @@ export class Page extends SdkObject<PageEventMap> {
     this._consoleMessages.length = 0;
   }
 
-  consoleMessages() {
-    return this._consoleMessages;
+  consoleMessages(filter?: 'all' | 'sinceNavigation') {
+    if (filter === 'all')
+      return this._consoleMessages;
+    const marked = this._consoleMessages.findLastIndex(m => (m as any)[navigationMarkSymbol]);
+    return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
   }
 
   addPageError(pageError: Error) {
@@ -422,8 +427,11 @@ export class Page extends SdkObject<PageEventMap> {
     this._pageErrors.length = 0;
   }
 
-  pageErrors() {
-    return this._pageErrors;
+  pageErrors(filter?: 'all' | 'sinceNavigation') {
+    if (filter === 'all')
+      return this._pageErrors;
+    const marked = this._pageErrors.findLastIndex(e => (e as any)[navigationMarkSymbol]);
+    return marked === -1 ? this._pageErrors : this._pageErrors.slice(marked + 1);
   }
 
   async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -842,6 +850,12 @@ export class Page extends SdkObject<PageEventMap> {
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);
+    if (frame === this.mainFrame()) {
+      if (this._consoleMessages.length > 0)
+        (this._consoleMessages[this._consoleMessages.length - 1] as any)[navigationMarkSymbol] = true;
+      if (this._pageErrors.length > 0)
+        (this._pageErrors[this._pageErrors.length - 1] as any)[navigationMarkSymbol] = true;
+    }
   }
 
   allInitScripts() {
