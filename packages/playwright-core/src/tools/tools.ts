@@ -21,6 +21,7 @@ import cookies from './cookies';
 import devtools from './devtools';
 import dialogs from './dialogs';
 import evaluate from './evaluate';
+import getContent from './getContent';
 import files from './files';
 import form from './form';
 import keyboard from './keyboard';
@@ -51,6 +52,7 @@ export const browserTools: Tool<any>[] = [
   ...devtools,
   ...dialogs,
   ...evaluate,
+  ...getContent,
   ...files,
   ...form,
   ...keyboard,
