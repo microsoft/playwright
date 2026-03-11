@@ -298,7 +298,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async navigate(url: string) {
     await this._initializedPromise;
 
-    await this.clearConsoleMessages();
+    await this.page.clearPageErrors();
     this._clearCollectedArtifacts();
 
     const { promise: downloadEvent, abort: abortDownloadEvent } = eventWaiter<playwright.Download>(this.page, 'download', 3000);
@@ -327,7 +327,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async consoleMessageCount(): Promise<{ total: number, errors: number, warnings: number }> {
     await this._initializedPromise;
-    const messages = await this.page.consoleMessages();
+    const messages = await this.page.consoleMessages({ filter: 'sinceNavigation' });
     const pageErrors = await this.page.pageErrors();
     let errors = pageErrors.length;
     let warnings = 0;
@@ -343,7 +343,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async consoleMessages(level: ConsoleMessageLevel): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
     const result: ConsoleMessage[] = [];
-    const messages = await this.page.consoleMessages();
+    const messages = await this.page.consoleMessages({ filter: 'sinceNavigation' });
     for (const message of messages) {
       const cm = messageToConsoleMessage(message);
       if (shouldIncludeMessage(level, cm.type))
