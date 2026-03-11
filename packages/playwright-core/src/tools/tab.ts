@@ -340,10 +340,10 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return { total: messages.length + pageErrors.length, errors, warnings };
   }
 
-  async consoleMessages(level: ConsoleMessageLevel): Promise<ConsoleMessage[]> {
+  async consoleMessages(level: ConsoleMessageLevel, all?: boolean): Promise<ConsoleMessage[]> {
     await this._initializedPromise;
     const result: ConsoleMessage[] = [];
-    const messages = await this.page.consoleMessages({ filter: 'sinceNavigation' });
+    const messages = await this.page.consoleMessages({ filter: all ? 'all' : 'sinceNavigation' });
     for (const message of messages) {
       const cm = messageToConsoleMessage(message);
       if (shouldIncludeMessage(level, cm.type))
