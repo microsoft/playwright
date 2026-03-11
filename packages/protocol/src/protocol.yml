@@ -1043,11 +1043,8 @@ Browser:
       title: Start server
       parameters:
         title: string
-        host: string?
-        port: int?
         wsPath: string?
         workspaceDir: string?
-        metadata: json?
       returns:
         wsEndpoint: string?
         pipeName: string?
