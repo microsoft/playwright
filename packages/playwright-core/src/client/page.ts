@@ -679,8 +679,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     await this._channel.clearPageErrors();
   }
 
-  async pageErrors(): Promise<Error[]> {
-    const { errors } = await this._channel.pageErrors();
+  async pageErrors(options?: { filter?: 'all' | 'sinceNavigation' }): Promise<Error[]> {
+    const { errors } = await this._channel.pageErrors({ filter: options?.filter });
     return errors.map(error => parseError(error));
   }
 

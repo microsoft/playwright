@@ -1460,7 +1460,9 @@ scheme.PageTouchscreenTapParams = tObject({
 scheme.PageTouchscreenTapResult = tOptional(tObject({}));
 scheme.PageClearPageErrorsParams = tOptional(tObject({}));
 scheme.PageClearPageErrorsResult = tOptional(tObject({}));
-scheme.PagePageErrorsParams = tOptional(tObject({}));
+scheme.PagePageErrorsParams = tObject({
+  filter: tOptional(tType('ConsoleMessagesFilter')),
+});
 scheme.PagePageErrorsResult = tObject({
   errors: tArray(tType('SerializedError')),
 });

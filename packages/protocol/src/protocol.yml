@@ -1967,6 +1967,8 @@ Page:
     pageErrors:
       title: Get page errors
       group: getter
+      parameters:
+        filter: ConsoleMessagesFilter?
       returns:
         errors:
           type: array

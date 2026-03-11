@@ -427,8 +427,11 @@ export class Page extends SdkObject<PageEventMap> {
     this._pageErrors.length = 0;
   }
 
-  pageErrors() {
-    return this._pageErrors;
+  pageErrors(filter?: 'all' | 'sinceNavigation') {
+    if (filter === 'all')
+      return this._pageErrors;
+    const marked = this._pageErrors.findLastIndex(e => (e as any)[navigationMarkSymbol]);
+    return marked === -1 ? this._pageErrors : this._pageErrors.slice(marked + 1);
   }
 
   async reload(progress: Progress, options: types.NavigateOptions): Promise<network.Response | null> {
@@ -847,8 +850,12 @@ export class Page extends SdkObject<PageEventMap> {
     const origin = frame.origin();
     if (origin)
       this.browserContext.addVisitedOrigin(origin);
-    if (frame === this.mainFrame() && this._consoleMessages.length > 0)
-      (this._consoleMessages[this._consoleMessages.length - 1] as any)[navigationMarkSymbol] = true;
+    if (frame === this.mainFrame()) {
+      if (this._consoleMessages.length > 0)
+        (this._consoleMessages[this._consoleMessages.length - 1] as any)[navigationMarkSymbol] = true;
+      if (this._pageErrors.length > 0)
+        (this._pageErrors[this._pageErrors.length - 1] as any)[navigationMarkSymbol] = true;
+    }
   }
 
   allInitScripts() {

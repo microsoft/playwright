@@ -430,6 +430,25 @@ test('browser_console_messages all option', async ({ client, server }) => {
   expect(allResponse.result).toContain('page2 message');
 });
 
+test('browser_console_messages all option for page errors', async ({ client, server }) => {
+  server.setContent('/page1', `<html><script>throw new Error('page1 error');</script></html>`, 'text/html');
+  server.setContent('/page2', `<html><script>throw new Error('page2 error');</script></html>`, 'text/html');
+
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/page1' } });
+  await client.callTool({ name: 'browser_navigate', arguments: { url: server.PREFIX + '/page2' } });
+
+  const defaultResponse = parseResponse(await client.callTool({ name: 'browser_console_messages' }));
+  expect(defaultResponse.result).toContain('page2 error');
+  expect(defaultResponse.result).not.toContain('page1 error');
+
+  const allResponse = parseResponse(await client.callTool({
+    name: 'browser_console_messages',
+    arguments: { all: true },
+  }));
+  expect(allResponse.result).toContain('page1 error');
+  expect(allResponse.result).toContain('page2 error');
+});
+
 test('console log is updated without taking snapshots', async ({ startClient, server }, testInfo) => {
   const outputDir = testInfo.outputPath('output');
   const { client } = await startClient({

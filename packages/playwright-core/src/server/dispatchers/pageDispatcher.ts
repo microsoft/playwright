@@ -298,7 +298,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async pageErrors(params: channels.PagePageErrorsParams, progress: Progress): Promise<channels.PagePageErrorsResult> {
-    return { errors: this._page.pageErrors().map(error => serializeError(error)) };
+    return { errors: this._page.pageErrors(params.filter).map(error => serializeError(error)) };
   }
 
   async mouseMove(params: channels.PageMouseMoveParams, progress: Progress): Promise<void> {

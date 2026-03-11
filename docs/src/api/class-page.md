@@ -2783,6 +2783,15 @@ Returns up to (currently) 200 last page errors from this page. See [`event: Page
 
 Returns up to (currently) 200 last page errors from this page. See [`event: Page.pageError`] for more details.
 
+### option: Page.pageErrors.filter
+* since: v1.59
+* langs: js
+- `filter` <[PageErrorsFilter]<"all"|"sinceNavigation">>
+
+Controls which errors are returned:
+- `'sinceNavigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
+- `'all'` — returns all stored page errors.
+
 
 ## method: Page.locator
 * since: v1.14

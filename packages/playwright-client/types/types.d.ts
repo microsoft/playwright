@@ -2265,8 +2265,8 @@ export interface Page {
 
   /**
    * Clears all stored page errors from this page. Subsequent calls to
-   * [page.pageErrors()](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors thrown
-   * after the clear.
+   * [page.pageErrors([options])](https://playwright.dev/docs/api/class-page#page-page-errors) will only return errors
+   * thrown after the clear.
    */
   clearPageErrors(): Promise<void>;
 
@@ -3745,8 +3745,14 @@ export interface Page {
   /**
    * Returns up to (currently) 200 last page errors from this page. See
    * [page.on('pageerror')](https://playwright.dev/docs/api/class-page#page-event-page-error) for more details.
+   * @param options
    */
-  pageErrors(): Promise<Array<Error>>;
+  pageErrors(options?: {
+    /**
+     * Controls which errors are returned:
+     */
+    filter?: "all"|"sinceNavigation";
+  }): Promise<Array<Error>>;
 
   /**
    * Pauses script execution. Playwright will stop executing the script and wait for the user to either press the
