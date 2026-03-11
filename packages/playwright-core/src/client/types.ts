@@ -120,6 +120,14 @@ export type LaunchAndroidServerOptions = {
   wsPath?: string,
 };
 
+export type StartServerOptions = {
+  host?: string,
+  port?: number,
+  wsPath?: string,
+  workspaceDir?: string,
+  metadata?: Record<string, any>,
+};
+
 export type SelectorEngine = {
   /**
    * Returns the first element matching given selector in the root's subtree.
