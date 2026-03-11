@@ -2765,8 +2765,8 @@ Returns up to (currently) 200 last console messages from this page. See [`event:
 - `filter` <[ConsoleMessagesFilter]<"all"|"sinceNavigation">>
 
 Controls which messages are returned:
-- `'all'` (default) — returns all stored console messages.
-- `'sinceNavigation'` — returns only messages logged after the last committed main-frame navigation.
+- `'sinceNavigation'` (default) — returns only messages logged after the last committed main-frame navigation.
+- `'all'` — returns all stored console messages.
 
 
 ## async method: Page.pageErrors

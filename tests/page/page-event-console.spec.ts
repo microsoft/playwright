@@ -306,11 +306,12 @@ it('consoleMessages sinceNavigation filter should work', async ({ page, server }
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => console.log('after navigation'));
 
-  const all = await page.consoleMessages();
+  const all = await page.consoleMessages({ filter: 'all' });
   expect(all.map(m => m.text())).toContain('before navigation');
   expect(all.map(m => m.text())).toContain('after navigation');
 
-  const sinceNav = await page.consoleMessages({ filter: 'sinceNavigation' });
+  // sinceNavigation is the default
+  const sinceNav = await page.consoleMessages();
   expect(sinceNav.map(m => m.text())).not.toContain('before navigation');
   expect(sinceNav.map(m => m.text())).toContain('after navigation');
 });

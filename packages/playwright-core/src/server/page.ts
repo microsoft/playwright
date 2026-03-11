@@ -406,7 +406,7 @@ export class Page extends SdkObject<PageEventMap> {
   }
 
   consoleMessages(filter?: 'all' | 'sinceNavigation') {
-    if (filter !== 'sinceNavigation')
+    if (filter === 'all')
       return this._consoleMessages;
     const marked = this._consoleMessages.findLastIndex(m => (m as any)[navigationMarkSymbol]);
     return marked === -1 ? this._consoleMessages : this._consoleMessages.slice(marked + 1);
