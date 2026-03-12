@@ -2608,10 +2608,12 @@ export type PageRequestsResult = {
 };
 export type PageSnapshotForAIParams = {
   track?: string,
+  selector?: string,
   timeout: number,
 };
 export type PageSnapshotForAIOptions = {
   track?: string,
+  selector?: string,
 };
 export type PageSnapshotForAIResult = {
   full: string,

@@ -4223,6 +4223,9 @@ Returns an accessibility snapshot of the page optimized for AI consumption.
 ### option: Page.snapshotForAI.timeout = %%-input-timeout-%%
 * since: v1.59
 
+### option: Page.snapshotForAI.timeout = %%-input-timeout-js-%%
+* since: v1.59
+
 ### option: Page.snapshotForAI.track
 * since: v1.59
 - `track` <[string]>

@@ -4539,6 +4539,14 @@ export interface Page {
    */
   snapshotForAI(options?: {
     /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
      * When specified, enables incremental snapshots. Subsequent calls with the same track name will return an incremental
      * snapshot containing only changes since the last call.
      */
@@ -14665,6 +14673,25 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<void>;
+
+  /**
+   * Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
+   * @param options
+   */
+  snapshotForAI(options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<{
+    /**
+     * Accessibility snapshot of the element matching this locator.
+     */
+    full: string;
+  }>;
 
   /**
    * Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually
