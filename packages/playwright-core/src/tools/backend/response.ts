@@ -267,40 +267,10 @@ function trimMiddle(text: string, maxLength: number) {
 
 /**
  * Sanitizes a string to ensure it only contains well-formed Unicode.
- * Replaces lone surrogates (high/low surrogates without their pair) with U+FFFD.
- * Uses String.prototype.toWellFormed() when available (Node 20+), otherwise
- * falls back to manual surrogate replacement for Node 18 compatibility.
+ * Replaces lone surrogates with U+FFFD using String.prototype.toWellFormed().
  */
 function sanitizeUnicode(text: string): string {
-  // Use native toWellFormed() when available (Node 20+)
-  if (typeof text.toWellFormed === 'function') {
-    return text.toWellFormed();
-  }
-
-  // Fallback for Node 18: replace lone surrogates with U+FFFD
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-    // Check for high surrogate (0xD800-0xDBFF)
-    if (code >= 0xD800 && code <= 0xDBFF) {
-      const next = text.charCodeAt(i + 1);
-      // If followed by low surrogate, keep both; otherwise replace with U+FFFD
-      if (next >= 0xDC00 && next <= 0xDFFF) {
-        result += text[i] + text[i + 1];
-        i++;
-      } else {
-        result += '\uFFFD';
-      }
-    }
-    // Check for lone low surrogate (0xDC00-0xDFFF)
-    else if (code >= 0xDC00 && code <= 0xDFFF) {
-      result += '\uFFFD';
-    }
-    else {
-      result += text[i];
-    }
-  }
-  return result;
+  return text.toWellFormed();
 }
 
 function parseSections(text: string): Map<string, string> {
