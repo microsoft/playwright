@@ -147,8 +147,8 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
-    if (cliArgs.attach)
-      args.push(`--attach=${cliArgs.attach}`);
+    if (cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION)
+      args.push(`--attach=${cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
