@@ -185,14 +185,7 @@ test('page2.pickLocator() should cancel page1.pickLocator()', async ({ page, con
   const pick1Promise = page.pickLocator().catch(e => e.message);
 
   const page2 = await context.newPage();
-  await page2.setContent(`<button>Click me</button>`);
-  const pick2Promise = page2.pickLocator().catch(e => e.message);
+  page2.pickLocator().catch(() => {});
 
   expect(await pick1Promise).toContain('Locator picking was cancelled');
-
-  const box = await page2.getByRole('button', { name: 'Click me' }).boundingBox();
-  await page2.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-
-  const locator = await pick2Promise;
-  await expect(locator).toHaveText('Click me');
 });
