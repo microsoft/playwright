@@ -4534,6 +4534,29 @@ export interface Page {
   }): Promise<void>;
 
   /**
+   * Returns an accessibility snapshot of the page optimized for AI consumption.
+   * @param options
+   */
+  snapshotForAI(options?: {
+    /**
+     * When specified, enables incremental snapshots. Subsequent calls with the same track name will return an incremental
+     * snapshot containing only changes since the last call.
+     */
+    track?: string;
+  }): Promise<{
+    /**
+     * Full accessibility snapshot of the page.
+     */
+    full: string;
+
+    /**
+     * Incremental snapshot containing only changes since the last tracked snapshot, when using the
+     * [`track`](https://playwright.dev/docs/api/class-page#page-snapshot-for-ai-option-track) option.
+     */
+    incremental?: string;
+  }>;
+
+  /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
    * more about [locators](https://playwright.dev/docs/locators).
    *
@@ -9097,6 +9120,11 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
+   * Indicates that the browser context is in the process of closing or has already been closed.
+   */
+  isClosedOrClosing(): boolean;
+
+  /**
    * **NOTE** CDP sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created session.
@@ -9802,6 +9830,12 @@ export interface Browser {
   isConnected(): boolean;
 
   /**
+   * Returns the launch options that were used to launch this browser. The return type matches the options accepted by
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+   */
+  launchOptions(): Object;
+
+  /**
    * **NOTE** CDP Sessions are only supported on Chromium-based browsers.
    *
    * Returns the newly created browser session.
@@ -10357,6 +10391,12 @@ export interface Browser {
    * Returns the buffer with trace data.
    */
   stopTracing(): Promise<Buffer>;
+
+  /**
+   * Returns the user data directory that the browser was launched with, or `null` if the browser was launched without a
+   * persistent context.
+   */
+  userDataDir(): null|string;
 
   /**
    * Returns the browser version.
@@ -14149,6 +14189,13 @@ export interface Locator {
      */
     hasText?: string|RegExp;
   }): Locator;
+
+  /**
+   * Returns a new locator that uses best practices for referencing the matched element, prioritizing test ids, aria
+   * roles, and other user-facing attributes over CSS selectors. This is useful for converting implementation-detail
+   * selectors into more resilient, human-readable locators.
+   */
+  normalize(): Promise<Locator>;
 
   /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
@@ -21830,6 +21877,13 @@ export interface Tracing {
    * @param options
    */
   start(options?: {
+    /**
+     * When enabled, the trace is written to an unarchived file that is updated in real time as actions occur, instead of
+     * caching changes and archiving them into a zip file at the end. This is useful for live trace viewing during test
+     * execution.
+     */
+    live?: boolean;
+
     /**
      * If specified, intermediate trace files are going to be saved into the files with the given name prefix inside the
      * [`tracesDir`](https://playwright.dev/docs/api/class-browsertype#browser-type-launch-option-traces-dir) directory

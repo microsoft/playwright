@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-import { eventsHelper } from '../../client/eventEmitter';
+import { eventsHelper } from '../../server/utils/eventsHelper';
 import { connectToBrowserAcrossVersions } from '../../client/connect';
 
 import type * as api from '../../..';
 import type { Transport } from '../../server/utils/httpServer';
-import type { DashboardChannel, DashboardChannelEvents, Tab } from '../../../../dashboard/src/dashboardChannel';
+import type { DashboardChannel, DashboardChannelEvents, Tab } from '@dashboard/dashboardChannel';
 import type { BrowserDescriptor } from '../../serverRegistry';
 
 export class DashboardConnection implements Transport, DashboardChannel {

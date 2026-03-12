@@ -24,12 +24,6 @@
 
 import type { EventEmitter as EventEmitterType } from 'events';
 import type { Platform } from './platform';
-import type { Disposable } from './disposable';
-
-type EventEmitterLike = {
-  on(eventName: string | symbol, handler: (...args: any[]) => unknown): unknown;
-  removeListener(eventName: string | symbol, handler: (...args: any[]) => unknown): unknown;
-};
 
 type EventType = string | symbol;
 type Listener = (...args: any[]) => any;
@@ -402,17 +396,3 @@ function unwrapListeners(arr: Listener[]): Listener[] {
 function wrappedListener(l: Listener): Listener {
   return (l as any).listener;
 }
-
-class EventsHelper {
-  static addEventListener(
-    emitter: EventEmitterLike,
-    eventName: (string | symbol),
-    handler: (...args: any[]) => any): Disposable {
-    emitter.on(eventName, handler);
-    return {
-      dispose: async () => { emitter.removeListener(eventName, handler); }
-    };
-  }
-}
-
-export const eventsHelper = EventsHelper;

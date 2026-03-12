@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-// @ts-ignore
-import { asLocator } from 'playwright-core/lib/utils';
 
 import { test as it, expect } from './pageTest';
 import { unshift } from '../config/utils';
 
 async function snapshotForAI(page: any, options?: { timeout?: number, mode?: 'full' | 'incremental', track?: string }): Promise<string> {
-  const snapshot = await page._snapshotForAI(options);
+  const snapshot = await page.snapshotForAI(options);
   return options?.mode === 'incremental' ? snapshot.incremental : snapshot.full;
 }
 
@@ -94,23 +92,20 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
 
   {
-    const { resolvedSelector } = await (page.locator('aria-ref=e1') as any)._resolveSelector();
-    const sourceCode = asLocator('javascript', resolvedSelector);
-    expect(sourceCode).toBe(`locator('body')`);
+    const resolved = await page.locator('aria-ref=e1').normalize();
+    expect(resolved.toString()).toBe(`locator('body')`);
   }
   {
-    const { resolvedSelector } = await (page.locator('aria-ref=f4e2') as any)._resolveSelector();
-    const sourceCode = asLocator('javascript', resolvedSelector);
-    expect(sourceCode).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const resolved = await page.locator('aria-ref=f4e2').normalize();
+    expect(resolved.toString()).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
     // Should tolerate .describe().
-    const { resolvedSelector } = await (page.locator('aria-ref=f3e2').describe('foo bar') as any)._resolveSelector();
-    const sourceCode = asLocator('javascript', resolvedSelector);
-    expect(sourceCode).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const resolved = await page.locator('aria-ref=f3e2').describe('foo bar').normalize();
+    expect(resolved.toString()).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
-    const error = await (page.locator('aria-ref=e1000') as any)._resolveSelector().catch(e => e);
+    const error = await page.locator('aria-ref=e1000').normalize().catch(e => e);
     expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
 });

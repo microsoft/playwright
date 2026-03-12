@@ -50,8 +50,9 @@ const evaluate = defineTabTool({
     }
 
     await tab.waitForCompletion(async () => {
-      const receiver = locator?.locator ?? tab.page;
-      const result = await receiver._evaluateFunction(params.function);
+      const func = new Function() as any;
+      func.toString = () => params.function;
+      const result = locator?.locator ? await locator?.locator.evaluate(func) : await tab.page.evaluate(func);
       const text = JSON.stringify(result, null, 2) || 'undefined';
       response.addTextResult(text);
     });

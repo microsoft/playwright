@@ -15,25 +15,29 @@
  * limitations under the License.
  */
 
-import type { EventEmitter } from 'events';
+type EventEmitterLike = {
+  on(eventName: string | symbol, handler: (...args: any[]) => unknown): unknown;
+  removeListener(eventName: string | symbol, handler: (...args: any[]) => unknown): unknown;
+};
 
 export type RegisteredListener = {
-  emitter: EventEmitter;
+  emitter: EventEmitterLike;
   eventName: (string | symbol);
   handler: (...args: any[]) => void;
+  dispose: () => Promise<void>;
 };
 
 class EventsHelper {
   static addEventListener(
-    emitter: EventEmitter,
+    emitter: EventEmitterLike,
     eventName: (string | symbol),
     handler: (...args: any[]) => void): RegisteredListener {
     emitter.on(eventName, handler);
-    return { emitter, eventName, handler };
+    return { emitter, eventName, handler, dispose: async () => { emitter.removeListener(eventName, handler); } };
   }
 
   static removeEventListeners(listeners: Array<{
-    emitter: EventEmitter;
+    emitter: EventEmitterLike;
     eventName: (string | symbol);
     handler: (...args: any[]) => void;
   }>) {

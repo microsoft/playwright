@@ -16,7 +16,7 @@ To debug a failing test, run it with Playwright as usual, but set `PWPAUSE=cli` 
 
 **IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed.
 
-Once instructions are printed, use `playwright-cli` to explore the page. Debugging instructions include a session name that should be used in `playwright-cli` to connect to the page under test. Do not create a new `playwright-cli` session, make sure to connect to the test session instead.
+Once instructions are printed, use `playwright-cli` to explore the page. Debugging instructions include a browser name that should be used in `playwright-cli` to attach to the page under test.
 
 ```bash
 # Run the test
@@ -24,8 +24,9 @@ PLAYWRIGHT_HTML_OPEN=never PWPAUSE=cli npx playwright test
 # ...
 
 # Explore the page and interact if needed
-playwright-cli --session=test-worker-abcdef snapshot
-playwright-cli --session=test-worker-abcdef click e14
+playwright-cli --session=test open --attach=test-worker-abcdef
+playwright-cli --session=test snapshot
+playwright-cli --session=test click e14
 ```
 
 Keep the test running in the background while you explore and look for a fix. After fixing the test, stop the background test run.

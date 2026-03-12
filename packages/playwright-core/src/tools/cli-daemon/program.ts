@@ -46,6 +46,8 @@ program.argument('[session-name]', 'name of the session to create or connect to'
       try {
         const browser = await createBrowser(mcpConfig, mcpClientInfo);
         const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
+        if (!browserContext)
+          throw new Error('Error: unable to connect to a browser that does not have any contexts');
         const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
         const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { persistent, exitOnClose: true });
         console.log(`### Success\nDaemon listening on ${socketPath}`);
@@ -104,9 +106,9 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   result = configUtils.mergeConfig(result, envOverrides);
 
   if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir;
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
 
-  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir) {
+  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     const userDataDir = path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}-${browserToken}`);

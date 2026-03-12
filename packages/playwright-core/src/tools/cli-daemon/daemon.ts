@@ -35,7 +35,6 @@ import { createClientInfo } from '../cli-client/registry';
 
 import type * as playwright from '../../..';
 import type { SessionConfig, ClientInfo } from '../cli-client/registry';
-import type { BrowserContext } from '../../client/browserContext';
 import type { CallToolRequest, CallToolResult } from '../backend/tool';
 import type { ContextConfig } from '../backend/context';
 
@@ -80,7 +79,7 @@ export async function startCliDaemonServer(
 
   await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
-  if ((browserContext as BrowserContext)._closingStatus !== 'none')
+  if (browserContext.isClosedOrClosing())
     throw new Error('Browser context was closed before the daemon could start');
 
   const server = net.createServer(socket => {
@@ -177,7 +176,7 @@ function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browse
   persistent?: boolean,
   exitOnStop?: boolean,
 } = {}): SessionConfig {
-  const bc = browserContext as BrowserContext;
+  const browser = browserContext.browser()!;
   return {
     name: sessionName,
     version: clientInfo.version,
@@ -186,9 +185,9 @@ function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browse
     workspaceDir: clientInfo.workspaceDir,
     cli: { persistent: options.persistent },
     browser: {
-      browserName: bc.browser()!.browserType().name(),
-      launchOptions: bc.browser()!._options,
-      userDataDir: bc.browser()?._userDataDir,
+      browserName: browser.browserType().name(),
+      launchOptions: browser.launchOptions(),
+      userDataDir: browser.userDataDir() ?? undefined,
     },
   };
 }

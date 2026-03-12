@@ -17,19 +17,17 @@
 import fs from 'fs';
 import path from 'path';
 
-import { disposeAll } from '../../client/disposable';
-import { eventsHelper } from '../../client/eventEmitter';
 import { debug } from '../../utilsBundle';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 import { selectors } from '../../..';
 
 import { Tab } from './tab';
+import { disposeAll } from '../../server/utils/disposable';
+import { eventsHelper } from '../../server/utils/eventsHelper';
 
 import type * as playwright from '../../..';
 import type { SessionLog } from './sessionLog';
-import type { Tracing } from '../../client/tracing';
-import type { Disposable } from '../../client/disposable';
-import type { BrowserContext } from '../../client/browserContext';
+import type { Disposable } from '../../server/utils/disposable';
 import type { ToolCapability } from './tool';
 
 const testDebug = debug('pw:mcp:test');
@@ -293,15 +291,15 @@ export class Context {
     await this._setupRequestInterception(browserContext);
 
     if (this.config.saveTrace) {
-      await (browserContext.tracing as Tracing).start({
+      await browserContext.tracing.start({
         name: 'trace-' + Date.now(),
         screenshots: true,
         snapshots: true,
-        _live: true,
+        live: true,
       });
       this._disposables.push({
         dispose: async () => {
-          await (browserContext.tracing as Tracing).stop();
+          await browserContext.tracing.stop();
         },
       });
     }
@@ -310,7 +308,7 @@ export class Context {
 
     for (const page of browserContext.pages())
       this._onPageCreated(page);
-    this._disposables.push(eventsHelper.addEventListener(browserContext as BrowserContext, 'page', page => this._onPageCreated(page)));
+    this._disposables.push(eventsHelper.addEventListener(browserContext, 'page', page => this._onPageCreated(page)));
 
     return browserContext;
   }

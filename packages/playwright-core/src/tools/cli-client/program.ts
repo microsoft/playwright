@@ -173,7 +173,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
-      const daemonScript = require.resolve('../../devtools/devtoolsApp.js');
+      const daemonScript = require.resolve('../dashboard/dashboardApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,
         stdio: 'ignore',
@@ -248,7 +248,7 @@ async function ensureConfiguredBrowserInstalled() {
 }
 
 async function installBrowser() {
-  const { program } = require('../program');
+  const { program } = require('../../cli/program');
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
   program.parse(argv);
 }
