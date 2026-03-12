@@ -59,6 +59,8 @@ function innerParseSerializedValue(value: SerializedValue, handles: any[] | unde
     return new RegExp(value.r.p, value.r.f);
   if (value.ta !== undefined) {
     const ctor = typedArrayKindToConstructor[value.ta.k] as any;
+    if (!ctor || typeof ctor !== 'function' || typeof ctor.BYTES_PER_ELEMENT !== 'number' || ctor.BYTES_PER_ELEMENT <= 0)
+      throw new Error(`Attempting to deserialize unexpected typed array kind${accessChainToDisplayString(accessChain)}: ${String(value.ta.k)}`);
     return new ctor(value.ta.b.buffer, value.ta.b.byteOffset, value.ta.b.length / ctor.BYTES_PER_ELEMENT);
   }
 
