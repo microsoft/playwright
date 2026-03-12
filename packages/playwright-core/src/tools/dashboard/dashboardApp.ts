@@ -300,5 +300,4 @@ async function main() {
   });
 }
 
-if (require.main === module)
-  void main();
+void main();
