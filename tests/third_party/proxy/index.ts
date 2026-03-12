@@ -8,6 +8,49 @@ const pkg = { version: '1.0.0' }
 
 import createDebug from 'debug';
 
+// Disallow proxying to internal/private IP ranges to mitigate SSRF.
+function isAllowedHostname(hostname: string | null, port: string | number | null): boolean {
+	if (!hostname) return false;
+
+	// Block common loopback names explicitly.
+	const lowered = hostname.toLowerCase();
+	if (lowered === 'localhost' || lowered === 'ip6-localhost' || lowered === 'ip6-loopback') {
+		return false;
+	}
+
+	const ipVersion = net.isIP(hostname);
+	if (ipVersion) {
+		// Basic checks for private/reserved IPv4 ranges.
+		if (ipVersion === 4) {
+			const parts = hostname.split('.').map((p) => parseInt(p, 10));
+			if (parts.length === 4 && parts.every((p) => !Number.isNaN(p) && p >= 0 && p <= 255)) {
+				const [a, b] = parts;
+				// 10.0.0.0/8
+				if (a === 10) return false;
+				// 172.16.0.0/12
+				if (a === 172 && b >= 16 && b <= 31) return false;
+				// 192.168.0.0/16
+				if (a === 192 && b === 168) return false;
+				// 127.0.0.0/8 loopback
+				if (a === 127) return false;
+				// 169.254.0.0/16 link-local
+				if (a === 169 && b === 254) return false;
+			}
+		}
+		// For IPv6, block loopback and unique-local (fc00::/7) in a simple way.
+		if (ipVersion === 6) {
+			const h = lowered;
+			if (h === '::1') return false;
+			if (h.startsWith('fc') || h.startsWith('fd')) return false;
+		}
+	}
+
+	// Optionally, enforce allowed ports if desired. For now, allow default HTTP/HTTPS ports and others.
+	void port;
+
+	return true;
+}
+
 // log levels
 const debug = {
 	request: createDebug('proxy ← ← ←'),
@@ -102,6 +145,21 @@ async function onrequest(
 	socket.resume();
 	const parsed = new URL(req.url, 'http://localhost');
 
+	if (parsed.protocol !== 'http:') {
+		// only "http://" is supported, "https://" should use CONNECT method
+		res.writeHead(400);
+		res.end(
+			`Only "http:" protocol prefix is supported (got: "${parsed.protocol}")\n`
+		);
+		return;
+	}
+
+	if (!isAllowedHostname(parsed.hostname, parsed.port || null)) {
+		res.writeHead(400);
+		res.end('Target host is not allowed\n');
+		return;
+	}
+
 	// setup outbound proxy request HTTP headers
 	const headers: http.OutgoingHttpHeaders = {};
 	let hasXForwardedFor = false;
@@ -186,14 +244,6 @@ async function onrequest(
 	//	parsed.port = 80;
 	//}
 
-	if (parsed.protocol !== 'http:') {
-		// only "http://" is supported, "https://" should use CONNECT method
-		res.writeHead(400);
-		res.end(
-			`Only "http:" protocol prefix is supported (got: "${parsed.protocol}")\n`
-		);
-		return;
-	}
 
 	let gotResponse = false;
 	const proxyReq = http.request(parsed, {
