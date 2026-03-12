@@ -69,8 +69,12 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
     });
   }).catch(e => `Exception in eval: ${e}`);
 
-  await dashboard.locator('img#display').click({ position: { x: 50, y: 25 } });
-
-  const text = await copyPromise;
-  expect(text).toContain('Submit');
+  await expect(async () => {
+    await dashboard.locator('img#display').click({ position: { x: 50, y: 25 } });
+    const text = await Promise.race([
+      copyPromise,
+      new Promise<string>(f => setTimeout(() => f('timeout'), 1000))
+    ]);
+    expect(text).toContain('Submit');
+  }).toPass();
 });
