@@ -94,6 +94,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   private _listeners: RegisteredListener[] = [];
   private _enabled: boolean = false;
   private _callLogs: CallLog[] = [];
+  private _pickLocatorPage: Page | undefined;
 
   static forContext(context: BrowserContext, params: RecorderParams): Promise<Recorder> {
     let recorderPromise = (context as any)[recorderSymbol] as Promise<Recorder>;
@@ -178,8 +179,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
             }
           }
         }
+        let mode = this._mode;
+        if (this._pickLocatorPage && source.page !== this._pickLocatorPage)
+          mode = 'none';
         const uiState: UIState = {
-          mode: this._mode,
+          mode,
           actionPoint,
           actionSelector,
           ariaTemplate: this._highlightedElement.ariaTemplate,
@@ -260,12 +264,19 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this.emit(RecorderEvent.ModeChanged, this._mode);
     this._setEnabled(this._isRecording());
     this._debugger.setMuted(this._isRecording());
-    if (this._mode !== 'none' && this._mode !== 'standby' && this._context.pages().length === 1)
-      this._context.pages()[0].bringToFront().catch(() => {});
+    if (this._mode !== 'none' && this._mode !== 'standby') {
+      let pageToFocus = this._pickLocatorPage;
+      if (!pageToFocus && this._context.pages().length === 1)
+        pageToFocus = this._context.pages()[0];
+      pageToFocus?.bringToFront().catch(() => {});
+    }
     await this._refreshOverlay();
   }
 
-  async pickLocator(progress: Progress): Promise<string> {
+  async pickLocator(progress: Progress, page: Page): Promise<string> {
+    if (this._mode !== 'none')
+      await this.setMode('none');
+
     const selectorPromise = new ManualPromise<string>();
     let recorderChangedState = false;
     const onElementPicked = (elementInfo: ElementInfo) => {
@@ -277,25 +288,22 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       recorderChangedState = true;
       selectorPromise.reject(new Error('Locator picking was cancelled'));
     };
-    const onContextClosed = () => {
-      recorderChangedState = true;
-      selectorPromise.reject(new Error('Context was closed'));
-    };
     const listeners: RegisteredListener[] = [
       eventsHelper.addEventListener(this, RecorderEvent.ElementPicked, onElementPicked),
       eventsHelper.addEventListener(this, RecorderEvent.ModeChanged, onModeChanged),
-      eventsHelper.addEventListener(this, RecorderEvent.ContextClosed, onContextClosed),
     ];
     try {
       const doPickLocator = async () => {
         // Prevent unhandled rejection in case of cancellation during setMode
         selectorPromise.catch(() => {});
+        this._pickLocatorPage = page;
         await this.setMode('inspecting');
         return await selectorPromise;
       };
       return await progress.race(doPickLocator());
     } finally {
       eventsHelper.removeEventListeners(listeners);
+      this._pickLocatorPage = undefined;
       if (!recorderChangedState)
         await this.setMode('none');
     }

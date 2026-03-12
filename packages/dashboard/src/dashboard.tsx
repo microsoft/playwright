@@ -44,7 +44,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   const [url, setUrl] = React.useState('');
   const [frame, setFrame] = React.useState<DashboardChannelEvents['frame']>();
   const [showInspector, setShowInspector] = React.useState(false);
-  const [picking, setPicking] = React.useState(false);
+  const [pickingTabId, setPickingTabId] = React.useState<string | null>(null);
   const [locatorToast, setLocatorToast] = React.useState<{ text: string; timer: ReturnType<typeof setTimeout> }>();
 
   const [channel, setChannel] = React.useState<DashboardClientChannel | undefined>();
@@ -62,7 +62,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     channel.onopen = () => {
       setChannel(channel);
       setInteractive(false);
-      setPicking(false);
+      setPickingTabId(null);
     };
 
     channel.on('tabs', params => {
@@ -92,7 +92,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     channel.on('elementPicked', params => {
       const locator = asLocator('javascript', params.selector);
       navigator.clipboard?.writeText(locator).catch(() => {});
-      setPicking(false);
+      setPickingTabId(null);
       setLocatorToast(old => {
         clearTimeout(old?.timer);
         return { text: locator, timer: setTimeout(() => setLocatorToast(undefined), 3000) };
@@ -102,7 +102,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
     channel.onclose = () => {
       setChannel(undefined);
       setInteractive(false);
-      setPicking(false);
+      setPickingTabId(null);
       setShowInspector(false);
     };
 
@@ -185,10 +185,10 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   }
 
   function onScreenKeyDown(e: React.KeyboardEvent) {
-    if (picking && e.key === 'Escape') {
+    if (pickingTabId !== null && e.key === 'Escape') {
       e.preventDefault();
       channel?.cancelPickLocator();
-      setPicking(false);
+      setPickingTabId(null);
       return;
     }
     if (!interactive)
@@ -216,6 +216,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
   }
 
   const selectedTab = tabs?.find(t => t.selected);
+  const picking = selectedTab?.pageId === pickingTabId;
 
   let overlayText: string | undefined;
   if (!channel)
@@ -270,7 +271,7 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
             title='Read-only mode'
             onClick={() => {
               channel?.cancelPickLocator();
-              setPicking(false);
+              setPickingTabId(null);
               setShowInspector(false);
               setInteractive(false);
             }}
@@ -319,15 +320,15 @@ export const Dashboard: React.FC<{ wsUrl?: string }> = ({ wsUrl }) => {
         title='Pick locator'
         aria-pressed={picking}
         disabled={!channel}
-        onClick={async () => {
+        onClick={() => {
           if (picking) {
-            await channel?.cancelPickLocator();
-            setPicking(false);
+            channel?.cancelPickLocator();
+            setPickingTabId(null);
           } else {
             setInteractive(true);
-            await channel?.pickLocator();
-            setPicking(true);
+            setPickingTabId(selectedTab?.pageId ?? null);
             screenRef.current?.focus();
+            channel?.pickLocator();
           }
         }}
       >
