@@ -54,7 +54,7 @@ export const test = baseTest.extend<{
     });
     for (const { dashboard, browser } of dashboards) {
       await Promise.all([
-        // Cloing the page should close the browser.
+        // Closing the page should close the browser.
         new Promise(r => browser.on('disconnected', r)),
         dashboard.close()
       ]);
