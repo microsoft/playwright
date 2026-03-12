@@ -399,9 +399,6 @@ export abstract class APIRequestContext extends SdkObject {
             ...getMatchingTLSOptionsForOrigin(this._defaultOptions().clientCertificates, url.origin),
             __testHookLookup: options.__testHookLookup,
           };
-          // rejectUnauthorized = undefined is treated as true in node 12.
-          if (options.rejectUnauthorized === false)
-            redirectOptions.rejectUnauthorized = false;
 
           // HTTP-redirect fetch step 4: If locationURL is null, then return response.
           // Best-effort UTF-8 decoding, per spec it's US-ASCII only, but browsers are more lenient.
