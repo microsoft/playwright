@@ -127,7 +127,7 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDashboardApp(): Promise<api.Page> {
+export async function startDashboardHttpServer(): Promise<HttpServer> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const dashboardDir = path.join(path.dirname(libDir), 'lib/vite/dashboard');
@@ -174,6 +174,11 @@ async function openDashboardApp(): Promise<api.Page> {
     return httpServer.serveFile(request, response, resolved);
   });
   await httpServer.start();
+  return httpServer;
+}
+
+async function openDashboardApp(): Promise<api.Page> {
+  const httpServer = await startDashboardHttpServer();
   const url = httpServer.urlPrefix('human-readable');
 
   const { page } = await launchApp('dashboard');
@@ -295,4 +300,5 @@ async function main() {
   });
 }
 
-void main();
+if (require.main === module)
+  void main();
