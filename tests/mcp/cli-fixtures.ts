@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import net from 'net';
 import path from 'path';
 
 import { chromium } from 'playwright-core';

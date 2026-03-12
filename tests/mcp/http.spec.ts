@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import net from 'net';
 import dns from 'dns';
 
 import { ChildProcess, spawn } from 'child_process';

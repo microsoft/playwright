@@ -55,7 +55,7 @@ test('should pick locator from browser', async ({ cli, server, openDashboard }) 
 
   await expect(dashboard.locator('div.dashboard-view')).toContainClass('interactive');
 
-   // Intercept clipboard writes before clicking pick.
+  // Intercept clipboard writes before clicking pick.
   const copyPromise = dashboard.evaluate(() => {
     if (!navigator.clipboard)
       return 'no clipboard';
