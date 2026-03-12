@@ -354,7 +354,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
 
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
     const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
-    const selector = await recorder.pickLocator(progress);
+    const selector = await recorder.pickLocator(progress, this._page);
     return { selector };
   }
 
