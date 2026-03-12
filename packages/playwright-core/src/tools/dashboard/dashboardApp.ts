@@ -127,7 +127,7 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-export async function startDashboardHttpServer(): Promise<HttpServer> {
+async function openDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
   const libDir = require.resolve('playwright-core/package.json');
   const dashboardDir = path.join(path.dirname(libDir), 'lib/vite/dashboard');
@@ -174,11 +174,6 @@ export async function startDashboardHttpServer(): Promise<HttpServer> {
     return httpServer.serveFile(request, response, resolved);
   });
   await httpServer.start();
-  return httpServer;
-}
-
-async function openDashboardApp(): Promise<api.Page> {
-  const httpServer = await startDashboardHttpServer();
   const url = httpServer.urlPrefix('human-readable');
 
   const { page } = await launchApp('dashboard');
@@ -188,15 +183,17 @@ async function openDashboardApp(): Promise<api.Page> {
 
 async function launchApp(appName: string) {
   const channel = findChromiumChannelBestEffort('javascript');
+  const debugPort = parseInt(process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT!, 10) || undefined;
   const context = await chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
-    headless: false,
+    headless: debugPort !== undefined,
     args: [
       '--app=data:text/html,',
       '--test-type=',
       `--window-size=1280,800`,
       `--window-position=100,100`,
+      ...(debugPort !== undefined ? [`--remote-debugging-port=${debugPort}`] : []),
     ],
     viewport: null,
   });
@@ -286,13 +283,16 @@ async function acquireSingleton(): Promise<net.Server> {
 async function main() {
   let server: net.Server | undefined;
   process.on('exit', () => server?.close());
-  try {
-    server = await acquireSingleton();
-  } catch {
-    return;
+  const underTest = !!process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT;
+  if (!underTest) {
+    try {
+      server = await acquireSingleton();
+    } catch {
+      return;
+    }
   }
   const page = await openDashboardApp();
-  server.on('connection', socket => {
+  server?.on('connection', socket => {
     socket.on('data', data => {
       if (data.toString() === 'bringToFront')
         page?.bringToFront().catch(() => {});
