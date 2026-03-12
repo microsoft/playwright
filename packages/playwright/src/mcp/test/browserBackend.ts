@@ -20,9 +20,8 @@ import * as tools from 'playwright-core/lib/tools/exports';
 import { stripAnsiEscapes } from '../../util';
 
 import type * as playwright from '../../../index';
-import type { Page } from '../../../../playwright-core/src/client/page';
-import type { Browser } from '../../../../playwright-core/src/client/browser';
 import type { TestInfoImpl } from '../../worker/testInfo';
+import type { Browser } from '../../../../playwright-core/src/client/browser';
 
 export type BrowserMCPRequest = {
   initialize?: { clientInfo: tools.ClientInfo },
@@ -99,7 +98,7 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
     lines.push(
         `- Page Snapshot:`,
         '```yaml',
-        (await (page as Page).snapshotForAI()).full,
+        (await page.snapshotForAI()).full,
         '```',
     );
   }
@@ -116,7 +115,7 @@ export async function runDaemonForBrowser(testInfo: TestInfoImpl, browser: playw
     return;
 
   const browserTitle = `test-worker-${createGuid().slice(0, 6)}`;
-  await (browser as Browser)._startServer(browserTitle, { workspaceDir: testInfo.project.testDir });
+  await (browser as Browser)._register(browserTitle, { workspaceDir: testInfo.project.testDir });
 
   const lines = [''];
   if (testInfo.errors.length) {

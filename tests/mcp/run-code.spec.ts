@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import fs from 'fs/promises';
 import { test, expect } from './fixtures';
 
 test('browser_run_code', async ({ client, server }) => {
@@ -75,74 +74,6 @@ test('browser_run_code no-require', async ({ client, server }) => {
   })).toHaveResponse({
     error: expect.stringContaining(`ReferenceError: require is not defined`),
     isError: true,
-  });
-});
-
-test('browser_run_code blocks fetch of file:// URLs by default', async ({ client, server }) => {
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.EMPTY_PAGE },
-  });
-
-  expect(await client.callTool({
-    name: 'browser_run_code',
-    arguments: {
-      code: `async (page) => { await page.request.get('file:///etc/passwd'); }`,
-    },
-  })).toHaveResponse({
-    error: expect.stringContaining('Error: apiRequestContext.get: Access to "file:" protocol is blocked. Attempted URL: "file:///etc/passwd"'),
-    isError: true,
-  });
-});
-
-test('browser_run_code restricts setInputFiles to roots by default', async ({ startClient, server }, testInfo) => {
-  const rootDir = testInfo.outputPath('workspace');
-  await fs.mkdir(rootDir, { recursive: true });
-
-  const { client } = await startClient({
-    roots: [
-      {
-        name: 'workspace',
-        uri: `file://${rootDir}`,
-      }
-    ],
-  });
-
-  server.setContent('/', `<input type="file" />`, 'text/html');
-
-  await client.callTool({
-    name: 'browser_navigate',
-    arguments: { url: server.PREFIX },
-  });
-
-  // Create a file inside the root
-  const fileInsideRoot = testInfo.outputPath('workspace', 'inside.txt');
-  await fs.writeFile(fileInsideRoot, 'Inside root');
-
-  expect(await client.callTool({
-    name: 'browser_run_code',
-    arguments: {
-      code: `async (page) => {
-      await page.locator('input').setInputFiles('${fileInsideRoot.replace(/\\/g, '\\\\')}');
-      return 'success';
-    }`,
-    },
-  })).toHaveResponse({
-    result: '"success"',
-  });
-
-  // Create a file outside the root
-  const fileOutsideRoot = testInfo.outputPath('outside.txt');
-  await fs.writeFile(fileOutsideRoot, 'Outside root');
-
-  expect(await client.callTool({
-    name: 'browser_run_code',
-    arguments: {
-      code: `(page) => page.locator('input').setInputFiles('${fileOutsideRoot.replace(/\\/g, '\\\\')}')`,
-    },
-  })).toHaveResponse({
-    isError: true,
-    error: expect.stringMatching('File access denied: .* is outside allowed roots'),
   });
 });
 

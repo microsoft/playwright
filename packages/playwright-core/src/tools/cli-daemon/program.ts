@@ -41,10 +41,14 @@ program.argument('[session-name]', 'name of the session to create or connect to'
       setupExitWatchdog();
       const clientInfo = createClientInfo();
       const mcpConfig = await resolveCLIConfig(clientInfo, sessionName, options);
-      const mcpClientInfo = { cwd: process.cwd() };
+      const clientInfoEx = {
+        cwd: process.cwd(),
+        sessionName,
+        workspaceDir: clientInfo.workspaceDir,
+      };
 
       try {
-        const browser = await createBrowser(mcpConfig, mcpClientInfo);
+        const browser = await createBrowser(mcpConfig, clientInfoEx);
         const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
         if (!browserContext)
           throw new Error('Error: unable to connect to a browser that does not have any contexts');
@@ -52,11 +56,6 @@ program.argument('[session-name]', 'name of the session to create or connect to'
         const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { persistent, exitOnClose: true });
         console.log(`### Success\nDaemon listening on ${socketPath}`);
         console.log('<EOF>');
-
-        if (!(browser as any)._connection.isRemote()) {
-          await (browser as any)._startServer(sessionName, { workspaceDir: clientInfo.workspaceDir });
-          browserContext.on('close', () => (browser as any)._stopServer().catch(() => {}));
-        }
       } catch (error) {
         const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
         console.log(`### Error\n${message}`);

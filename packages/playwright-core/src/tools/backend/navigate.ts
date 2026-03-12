@@ -42,6 +42,7 @@ const navigate = defineTool({
         url = 'https://' + url;
     }
 
+    context.checkUrlAllowed(url);
     await tab.navigate(url);
 
     response.setIncludeSnapshot();

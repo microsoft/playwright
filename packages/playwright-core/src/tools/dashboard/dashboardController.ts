@@ -15,7 +15,7 @@
  */
 
 import { eventsHelper } from '../../server/utils/eventsHelper';
-import { connectToBrowserAcrossVersions } from '../../client/connect';
+import { connectToBrowserAcrossVersions } from '../utils/connect';
 
 import type * as api from '../../..';
 import type { Transport } from '../../server/utils/httpServer';
