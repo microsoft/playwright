@@ -302,8 +302,11 @@ workspace1:
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
     await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    const page = await browser.newPage();
+    await page.setContent('<title>My Page</title>');
     const { output: openOutput } = await cli('open', '--attach=foobar');
     expect(openOutput).toContain('### Browser `default` opened with pid');
+    expect(openOutput).toContain('My Page');
     const { output: listOutput } = await cli('list', '--all');
     expect(listOutput).toBe(`### Browsers
 /:
@@ -321,9 +324,18 @@ workspace1:
   - run \`playwright-cli open --attach "foobar"\` to attach`);
   });
 
+  test('fail to attach to browser server without contexts', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    const { error } = await cli('open', '--attach=foobar');
+    expect(error).toContain('Error: unable to connect to a browser that does not have any contexts');
+  });
+
   test('detach from browser server', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
+    await browser.newPage();
     await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
     const { output: openOutput } = await cli('open', '--attach=foobar');
     expect(openOutput).toContain('### Browser `default` opened with pid');

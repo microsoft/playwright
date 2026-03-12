@@ -248,7 +248,7 @@ async function ensureConfiguredBrowserInstalled() {
 }
 
 async function installBrowser() {
-  const { program } = require('../program');
+  const { program } = require('../../cli/program');
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
   program.parse(argv);
 }
