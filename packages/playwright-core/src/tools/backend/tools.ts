@@ -20,7 +20,6 @@ import common from './common';
 import config from './config';
 import console from './console';
 import cookies from './cookies';
-import devtools from './devtools';
 import dialogs from './dialogs';
 import evaluate from './evaluate';
 import files from './files';
@@ -50,7 +49,6 @@ export const browserTools: Tool<any>[] = [
   ...config,
   ...console,
   ...cookies,
-  ...devtools,
   ...dialogs,
   ...evaluate,
   ...files,

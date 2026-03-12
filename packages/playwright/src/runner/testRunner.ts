@@ -323,7 +323,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       reporter: params.reporters ? params.reporters.map(r => [r]) : undefined,
       use: {
         ...this._configCLIOverrides.use,
-        ...(params.trace === 'on' ? { trace: { mode: 'on', sources: false, _live: true } } : {}),
+        ...(params.trace === 'on' ? { trace: { mode: 'on', sources: false, live: true } } : {}),
         ...(params.trace === 'off' ? { trace: 'off' } : {}),
         ...(params.video === 'on' || params.video === 'off' ? { video: params.video } : {}),
         ...(params.headed !== undefined ? { headless: !params.headed } : {}),

@@ -2,7 +2,8 @@
 ../../..
 ../..
 ../../mcpBundle.ts
+../../server/utils/
 ../../utils/
 ../../utils/isomorphic/
 ../../utilsBundle.ts
-../../client/
+../utils/

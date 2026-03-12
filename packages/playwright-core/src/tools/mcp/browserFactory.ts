@@ -28,7 +28,7 @@ import { connectToBrowser, connectToBrowserAcrossVersions } from '../../client/c
 import { serverRegistry } from '../../serverRegistry';
 
 import type { FullConfig } from './config';
-import type { LaunchOptions, BrowserContextOptions, ConnectOptions } from '../../client/types';
+import type { ConnectOptions } from '../../client/types';
 import type { ClientInfo } from '../utils/mcp/server';
 import type { Playwright } from '../../client/playwright';
 
@@ -98,7 +98,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
   const browserType = playwright[config.browser.browserName];
-  const launchOptions: LaunchOptions & BrowserContextOptions = {
+  const launchOptions: playwright.LaunchOptions & playwright.BrowserContextOptions = {
     tracesDir,
     ...config.browser.launchOptions,
     ...config.browser.contextOptions,
@@ -108,7 +108,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
       '--disable-extensions',
     ],
     assistantMode: true,
-  };
+  } as any;
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
     return browserContext.browser()!;

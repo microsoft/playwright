@@ -75,7 +75,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   readonly _serviceWorkers = new Set<Worker>();
   private _harRecorders = new Map<string, { path: string, content: 'embed' | 'attach' | 'omit' | undefined }>();
-  _closingStatus: 'none' | 'closing' | 'closed' = 'none';
+  private _closingStatus: 'none' | 'closing' | 'closed' = 'none';
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
   private _onRecorderEventSink: RecorderEventSink | undefined;
@@ -231,7 +231,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page or the context was closed we stall all requests right away.
-      if (page?._closeWasCalled || this._closingStatus !== 'none')
+      if (page?._closeWasCalled || this.isClosedOrClosing())
         return;
       if (!routeHandler.matches(route.request().url()))
         continue;
@@ -291,6 +291,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   pages(): Page[] {
     return [...this._pages];
+  }
+
+  isClosedOrClosing(): boolean {
+    return this._closingStatus !== 'none';
   }
 
   async newPage(): Promise<Page> {
@@ -511,7 +515,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
-    if (this._closingStatus !== 'none')
+    if (this.isClosedOrClosing())
       return;
     this._closeReason = options.reason;
     this._closingStatus = 'closing';

@@ -697,7 +697,7 @@ class ArtifactsRecorder {
     try {
       // TODO: maybe capture snapshot when the error is created, so it's from the right page and right time
       await page._wrapApiCall(async () => {
-        this._pageSnapshot = (await page._snapshotForAI({ timeout: 5000 })).full;
+        this._pageSnapshot = (await page.snapshotForAI({ timeout: 5000 })).full;
       }, { internal: true });
     } catch {}
   }
