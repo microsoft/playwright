@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import net from 'net';
 import dns from 'dns';
 
 import { ChildProcess, spawn } from 'child_process';
@@ -360,7 +359,7 @@ test('should respect allowed hosts (negative)', async ({ serverEndpoint }) => {
   expect(await response.text()).toContain('Access is only allowed at example.com');
 });
 
-test('should respect allowed hosts (positive)', async ({ serverEndpoint }) => {
+test('should respect allowed hosts (positive)', async ({ serverEndpoint, findFreePort }) => {
   const port = await findFreePort();
   await serverEndpoint({
     args: [
@@ -381,14 +380,3 @@ test('should be able to allow any host', async ({ serverEndpoint }) => {
   expect(response.status).toBe(400);
   expect(await response.text()).toBe('Invalid request');
 });
-
-async function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = net.createServer();
-    server.listen(0, () => {
-      const { port } = server.address() as net.AddressInfo;
-      server.close(() => resolve(port));
-    });
-    server.on('error', reject);
-  });
-}

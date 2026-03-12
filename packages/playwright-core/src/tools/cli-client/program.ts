@@ -173,7 +173,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
-      const daemonScript = require.resolve('../../devtools/devtoolsApp.js');
+      const daemonScript = require.resolve('../dashboard/dashboardApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,
         stdio: 'ignore',

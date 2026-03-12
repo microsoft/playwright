@@ -183,15 +183,17 @@ async function openDashboardApp(): Promise<api.Page> {
 
 async function launchApp(appName: string) {
   const channel = findChromiumChannelBestEffort('javascript');
+  const debugPort = parseInt(process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT!, 10) || undefined;
   const context = await chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
-    headless: false,
+    headless: debugPort !== undefined,
     args: [
       '--app=data:text/html,',
       '--test-type=',
       `--window-size=1280,800`,
       `--window-position=100,100`,
+      ...(debugPort !== undefined ? [`--remote-debugging-port=${debugPort}`] : []),
     ],
     viewport: null,
   });
@@ -281,13 +283,16 @@ async function acquireSingleton(): Promise<net.Server> {
 async function main() {
   let server: net.Server | undefined;
   process.on('exit', () => server?.close());
-  try {
-    server = await acquireSingleton();
-  } catch {
-    return;
+  const underTest = !!process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT;
+  if (!underTest) {
+    try {
+      server = await acquireSingleton();
+    } catch {
+      return;
+    }
   }
   const page = await openDashboardApp();
-  server.on('connection', socket => {
+  server?.on('connection', socket => {
     socket.on('data', data => {
       if (data.toString() === 'bringToFront')
         page?.bringToFront().catch(() => {});
