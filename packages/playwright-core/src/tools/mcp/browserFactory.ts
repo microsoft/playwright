@@ -24,19 +24,28 @@ import { registryDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
 import { createExtensionBrowser } from './extensionContextFactory';
-import { connectToBrowser, connectToBrowserAcrossVersions } from '../../client/connect';
+import { connectToBrowserAcrossVersions } from '../utils/connect';
 import { serverRegistry } from '../../serverRegistry';
+// eslint-disable-next-line no-restricted-imports
+import { connectToBrowser } from '../../client/connect';
 
 import type { FullConfig } from './config';
-import type { ConnectOptions } from '../../client/types';
 import type { ClientInfo } from '../utils/mcp/server';
+// eslint-disable-next-line no-restricted-imports
 import type { Playwright } from '../../client/playwright';
+// eslint-disable-next-line no-restricted-imports
+import type { Browser } from '../../client/browser';
 
-export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+type ClientInfoEx = ClientInfo & {
+  sessionName?: string;
+  workspaceDir?: string;
+};
+
+export async function createBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
   if (config.browser.cdpEndpoint)
-    return await createCDPBrowser(config);
+    return await createCDPBrowser(config, clientInfo);
   if (config.browser.isolated)
     return await createIsolatedBrowser(config, clientInfo);
   if (config.extension)
@@ -49,12 +58,12 @@ export interface BrowserContextFactory {
   createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext>;
 }
 
-async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
   testDebug('create browser (isolated)');
   await injectCdpPort(config.browser);
   const browserType = playwright[config.browser.browserName];
   const tracesDir = await computeTracesDir(config, clientInfo);
-  return await browserType.launch({
+  const browser = await browserType.launch({
     tracesDir,
     ...config.browser.launchOptions,
     handleSIGINT: false,
@@ -64,14 +73,18 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
       throwBrowserIsNotInstalledError(config);
     throw error;
   });
+  await startServer(browser, clientInfo);
+  return browser;
 }
 
-async function createCDPBrowser(config: FullConfig): Promise<playwright.Browser> {
+async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
   testDebug('create browser (cdp)');
-  return playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
+  const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
     timeout: config.browser.cdpTimeout
   });
+  await startServer(browser, clientInfo);
+  return browser;
 }
 
 async function createRemoteBrowser(config: FullConfig): Promise<playwright.Browser> {
@@ -81,14 +94,14 @@ async function createRemoteBrowser(config: FullConfig): Promise<playwright.Brows
     return await connectToBrowserAcrossVersions(descriptor);
 
   const endpoint = config.browser.remoteEndpoint!;
-  const params: ConnectOptions = { endpoint };
   const playwrightObject = playwright as Playwright;
-  const browser = await connectToBrowser(playwrightObject, params);
+  // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
+  const browser = await connectToBrowser(playwrightObject, { endpoint });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
   return browser;
 }
 
-async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
   testDebug('create browser (persistent)');
   await injectCdpPort(config.browser);
   const userDataDir = config.browser.userDataDir ?? await createUserDataDir(config, clientInfo);
@@ -107,11 +120,12 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     ignoreDefaultArgs: [
       '--disable-extensions',
     ],
-    assistantMode: true,
-  } as any;
+  };
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
-    return browserContext.browser()!;
+    const browser = browserContext.browser()!;
+    await startServer(browser, clientInfo);
+    return browser;
   } catch (error: any) {
     if (error.message.includes('Executable doesn\'t exist'))
       throwBrowserIsNotInstalledError(config);
@@ -200,4 +214,9 @@ function throwBrowserIsNotInstalledError(config: FullConfig): never {
     throw new Error(`Browser "${channel}" is not installed. Run \`playwright-cli install-browser ${channel}\` to install`);
   else
     throw new Error(`Browser "${channel}" is not installed. Run \`npx @playwright/mcp install-browser ${channel}\` to install`);
+}
+
+async function startServer(browser: playwright.Browser, clientInfo: ClientInfoEx) {
+  if (clientInfo.sessionName)
+    await (browser as Browser)._register(clientInfo.sessionName, { workspaceDir: clientInfo.workspaceDir });
 }

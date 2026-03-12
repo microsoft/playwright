@@ -1,7 +1,6 @@
 [*]
 ../../..
 ../../
-../../client/connect.ts
 ../utils/mcp/
 ../backend/
 ../../utils/
@@ -12,3 +11,7 @@
 ../../server/registry/
 ../../server/utils/
 ../../serverRegistry.ts
+
+[browserFactory.ts]
+../../client/connect.ts
+../utils/connect.ts

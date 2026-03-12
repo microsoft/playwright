@@ -1,2 +1,5 @@
 [socketConnection.ts]
 "strict"
+
+[connect.ts]
+"strict"

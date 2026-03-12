@@ -21,11 +21,9 @@ import { ChannelOwner } from './channelOwner';
 import { Connection } from './connection';
 import { Events } from './events';
 
-import type * as playwright from '../..';
 import type { Playwright } from './playwright';
 import type { ConnectOptions, HeadersArray } from './types';
 import type * as channels from '@protocol/channels';
-import type { BrowserDescriptor } from '../serverRegistry';
 
 export async function connectToBrowser(playwright: Playwright, params: ConnectOptions): Promise<Browser> {
   const deadline = params.timeout ? monotonicTime() + params.timeout : 0;
@@ -99,14 +97,6 @@ export async function connectToEndpoint(parentConnection: Connection, params: ch
     }
   });
   return connection;
-}
-
-export async function connectToBrowserAcrossVersions(descriptor: BrowserDescriptor): Promise<playwright.Browser> {
-  const pw = require(descriptor.playwrightLib);
-  const params: ConnectOptions = { endpoint: descriptor.pipeName! };
-  const browser = await connectToBrowser(pw, params);
-  browser._connectToBrowserType(pw[descriptor.browser.browserName], {}, undefined);
-  return browser;
 }
 
 interface Transport {

@@ -92,20 +92,20 @@ it('should stitch all frame snapshots', async ({ page, server }) => {
   expect(href3).toBe(server.PREFIX + '/frames/frame.html');
 
   {
-    const resolved = await page.locator('aria-ref=e1').normalize();
-    expect(resolved.toString()).toBe(`locator('body')`);
+    const resolved = await page.locator('aria-ref=e1').toCode();
+    expect(resolved).toBe(`locator('body')`);
   }
   {
-    const resolved = await page.locator('aria-ref=f4e2').normalize();
-    expect(resolved.toString()).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const resolved = await page.locator('aria-ref=f4e2').toCode();
+    expect(resolved).toBe(`locator('iframe[name="2frames"]').contentFrame().locator('iframe[name="dos"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
     // Should tolerate .describe().
-    const resolved = await page.locator('aria-ref=f3e2').describe('foo bar').normalize();
-    expect(resolved.toString()).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
+    const resolved = await page.locator('aria-ref=f3e2').describe('foo bar').toCode();
+    expect(resolved).toBe(`locator('iframe[name=\"2frames\"]').contentFrame().locator('iframe[name=\"uno\"]').contentFrame().getByText('Hi, I\\'m frame')`);
   }
   {
-    const error = await page.locator('aria-ref=e1000').normalize().catch(e => e);
+    const error = await page.locator('aria-ref=e1000').toCode().catch(e => e);
     expect(error.message).toContain(`No element matching aria-ref=e1000`);
   }
 });
