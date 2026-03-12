@@ -79,10 +79,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
     test('should connect over wss', async ({ connect, startRemoteServer, httpsServer }) => {
       const remoteServer = await startRemoteServer(kind);
 
-      const oldValue = process.env['NODE_TLS_REJECT_UNAUTHORIZED'];
-      // https://stackoverflow.com/a/21961005/552185
-      process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-      suppressCertificateWarning();
       try {
         httpsServer.onceWebSocketConnection((ws, request) => {
           const headers = Object.fromEntries(Object.entries(request.headers).filter(entry => entry[0].startsWith('x-playwright')));
@@ -109,7 +105,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
         expect(browser.version()).toBeTruthy();
         await browser.close();
       } finally {
-        process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = oldValue;
+        // No TLS verification settings are modified here; nothing to restore.
       }
     });
 
