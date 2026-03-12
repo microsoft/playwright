@@ -181,7 +181,8 @@ test('closing page should cancel ongoing pickLocator', async ({ page }) => {
   expect(await pickPromise).toContain('Target page, context or browser has been closed');
 });
 
-test('page2.pickLocator() should cancel page1.pickLocator()', async ({ page, context }) => {
+test('page2.pickLocator() should cancel page1.pickLocator()', async ({ page, context, browserName, headless, isMac, macVersion }) => {
+  test.fixme(browserName === 'chromium' && !headless && isMac && macVersion === 14, 'times out on chromium headed on macOS 14');
   const pick1Promise = page.pickLocator().catch(e => e.message);
 
   const page2 = await context.newPage();
