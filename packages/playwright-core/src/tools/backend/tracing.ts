@@ -17,7 +17,6 @@
 import { z } from '../../mcpBundle';
 import { defineTool } from './tool';
 
-import type { Tracing } from '../../client/tracing';
 
 const tracingStart = defineTool({
   capability: 'devtools',
@@ -34,11 +33,11 @@ const tracingStart = defineTool({
     const browserContext = await context.ensureBrowserContext();
     const tracesDir = await context.outputFile({ prefix: '', suggestedFilename: `traces`, ext: '' }, { origin: 'code' });
     const name = 'trace-' + Date.now();
-    await (browserContext.tracing as Tracing).start({
+    await browserContext.tracing.start({
       name,
       screenshots: true,
       snapshots: true,
-      _live: true,
+      live: true,
     });
     response.addTextResult(`Trace recording started`);
     response.addFileLink('Action log', `${tracesDir}/${name}.trace`);

@@ -34,8 +34,8 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
   private _closedPromise: Promise<void>;
   _shouldCloseConnectionOnClose = false;
   _browserType!: BrowserType;
-  _options: LaunchOptions = {};
-  _userDataDir: string | undefined;
+  private _options: LaunchOptions = {};
+  private _userDataDir: string | undefined;
   readonly _name: string;
   readonly _browserName: 'chromium' | 'webkit' | 'firefox';
   private _path: string | undefined;
@@ -150,6 +150,14 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
 
   isConnected(): boolean {
     return this._isConnected;
+  }
+
+  launchOptions(): LaunchOptions {
+    return this._options;
+  }
+
+  userDataDir(): string | null {
+    return this._userDataDir ?? null;
   }
 
   async newBrowserCDPSession(): Promise<api.CDPSession> {

@@ -99,7 +99,7 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
     lines.push(
         `- Page Snapshot:`,
         '```yaml',
-        (await (page as Page)._snapshotForAI()).full,
+        (await (page as Page).snapshotForAI()).full,
         '```',
     );
   }

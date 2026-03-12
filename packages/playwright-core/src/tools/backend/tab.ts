@@ -21,18 +21,16 @@ import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { debug } from '../../utilsBundle';
 
-import { eventsHelper } from '../../client/eventEmitter';
+import { eventsHelper } from '../../server/utils/eventsHelper';
+import { disposeAll } from '../../server/utils/disposable';
 import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
 import { uploadFile } from './files';
-import { disposeAll } from '../../client/disposable';
 
-import type { Disposable } from '../../client/disposable';
+import type { Disposable } from '../../server/utils/disposable';
 import type { Context, ContextConfig } from './context';
-import type { Page } from '../../client/page';
-import type { Locator } from '../../client/locator';
 import type * as playwright from '../../..';
 
 const TabEvents = {
@@ -93,7 +91,7 @@ type TabSnapshot = {
 
 export class Tab extends EventEmitter<TabEventsInterface> {
   readonly context: Context;
-  readonly page: Page;
+  readonly page: playwright.Page;
   private _lastHeader: TabHeader = { title: 'about:blank', url: 'about:blank', current: false, console: { total: 0, warnings: 0, errors: 0 } };
   private _downloads: Download[] = [];
   private _requests: playwright.Request[] = [];
@@ -111,9 +109,9 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   constructor(context: Context, page: playwright.Page, onPageClose: (tab: Tab) => void) {
     super();
     this.context = context;
-    this.page = page as Page;
+    this.page = page;
     this._onPageClose = onPageClose;
-    const p = page as Page;
+    const p = page;
     this._disposables = [
       eventsHelper.addEventListener(p, 'console', event => this._handleConsoleMessage(messageToConsoleMessage(event))),
       eventsHelper.addEventListener(p, 'pageerror', error => this._handleConsoleMessage(pageErrorToConsoleMessage(error))),
@@ -378,7 +376,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot = await this.page._snapshotForAI({ track: 'response' });
+      const snapshot = await this.page.snapshotForAI({ track: 'response' });
       tabSnapshot = {
         ariaSnapshot: snapshot.full,
         ariaSnapshotDiff: this._needsFullSnapshot ? undefined : snapshot.incremental,
@@ -429,18 +427,18 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._raceAgainstModalStates(() => waitForCompletion(this, callback));
   }
 
-  async refLocator(params: { element?: string, ref: string, selector?: string }): Promise<{ locator: Locator, resolved: string }> {
+  async refLocator(params: { element?: string, ref: string, selector?: string }): Promise<{ locator: playwright.Locator, resolved: string }> {
     await this._initializedPromise;
     return (await this.refLocators([params]))[0];
   }
 
-  async refLocators(params: { element?: string, ref: string, selector?: string }[]): Promise<{ locator: Locator, resolved: string }[]> {
+  async refLocators(params: { element?: string, ref: string, selector?: string }[]): Promise<{ locator: playwright.Locator, resolved: string }[]> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
       if (param.selector) {
         const locator = this.page.locator(param.selector);
         try {
-          await locator._resolveSelector();
+          await locator.normalize();
         } catch {
           throw new Error(`Selector ${param.selector} does not match any elements.`);
         }
@@ -450,8 +448,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
           let locator = this.page.locator(`aria-ref=${param.ref}`);
           if (param.element)
             locator = locator.describe(param.element);
-          const { resolvedSelector } = await locator._resolveSelector();
-          return { locator, resolved: asLocator('javascript', resolvedSelector) };
+          const resolved = await locator.normalize();
+          return { locator, resolved: resolved.toString() };
         } catch (e) {
           throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
         }

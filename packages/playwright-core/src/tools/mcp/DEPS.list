@@ -1,6 +1,7 @@
 [*]
 ../../..
 ../../
+../../client/connect.ts
 ../utils/mcp/
 ../backend/
 ../../utils/
@@ -10,5 +11,4 @@
 ../../server/
 ../../server/registry/
 ../../server/utils/
-../../client/
 ../../serverRegistry.ts

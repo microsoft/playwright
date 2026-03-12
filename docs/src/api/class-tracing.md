@@ -176,6 +176,14 @@ and by ':' on other platforms).
 
 Trace name to be shown in the Trace Viewer.
 
+### option: Tracing.start.live
+* since: v1.59
+- `live` <[boolean]>
+
+When enabled, the trace is written to an unarchived file that is updated in real time as actions occur,
+instead of caching changes and archiving them into a zip file at the end. This is useful for live trace
+viewing during test execution.
+
 ## async method: Tracing.startChunk
 * since: v1.15
 

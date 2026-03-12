@@ -858,8 +858,3 @@ it('should ignore dangerous object keys', async ({ page }) => {
   const result = await page.evaluate(arg => arg, input);
   expect(result).toEqual({ safeKey: 'safeValue' });
 });
-
-it('should allow calling _evaluateFunction', async ({ page }) => {
-  const result = await (page as any)._evaluateFunction('() => 7 * 3');
-  expect(result).toBe(21);
-});

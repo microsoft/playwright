@@ -191,7 +191,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page was closed we stall all requests right away.
-      if (this._closeWasCalled || this._browserContext._closingStatus !== 'none')
+      if (this._closeWasCalled || this._browserContext.isClosedOrClosing())
         return;
       if (!routeHandler.matches(route.request().url()))
         continue;
@@ -509,10 +509,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   async evaluate<R, Arg>(pageFunction: structs.PageFunction<Arg, R>, arg?: Arg): Promise<R> {
     assertMaxArguments(arguments.length, 2);
     return await this._mainFrame.evaluate(pageFunction, arg);
-  }
-
-  async _evaluateFunction(functionDeclaration: string) {
-    return this._mainFrame._evaluateFunction(functionDeclaration);
   }
 
   async addInitScript(script: Function | string | { path?: string, content?: string }, arg?: any) {
@@ -859,7 +855,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async _snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
+  async snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
     return await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track });
   }
 

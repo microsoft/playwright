@@ -35,7 +35,7 @@ const version: trace.VERSION = 8;
 let traceOrdinal = 0;
 
 type TraceFixtureValue =  PlaywrightWorkerOptions['trace'] | undefined;
-type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, _live: boolean, mode: TraceMode };
+type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean, attachments: boolean, live: boolean, mode: TraceMode };
 
 export class TestTracing {
   private _testInfo: TestInfoImpl;
@@ -90,7 +90,7 @@ export class TestTracing {
   }
 
   async startIfNeeded(value: TraceFixtureValue) {
-    const defaultTraceOptions: TraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, _live: false, mode: 'off' };
+    const defaultTraceOptions: TraceOptions = { screenshots: true, snapshots: true, sources: true, attachments: true, live: false, mode: 'off' };
 
     if (!value) {
       this._options = defaultTraceOptions;
@@ -106,7 +106,7 @@ export class TestTracing {
       return;
     }
 
-    if (!this._liveTraceFile && this._options._live) {
+    if (!this._liveTraceFile && this._options.live) {
       // Note that trace name must start with testId for live tracing to work.
       this._liveTraceFile = { file: path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`), fs: new SerializedFS() };
       this._liveTraceFile.fs.mkdir(path.dirname(this._liveTraceFile.file));
