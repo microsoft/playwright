@@ -236,6 +236,7 @@ export function killProcessGroup(pid: number, signal: 'SIGINT' | 'SIGKILL' = 'SI
 export type CommonFixtures = {
   childProcess: (params: TestChildParams) => TestChildProcess;
   waitForPort: (port: number) => Promise<void>;
+  findFreePort: () => Promise<number>;
 };
 
 export type CommonWorkerFixtures = {
@@ -288,6 +289,20 @@ export const commonFixtures: Fixtures<CommonFixtures, CommonWorkerFixtures> = {
       }
     });
     token.canceled = true;
+  },
+
+  findFreePort: async ({}, use) => {
+    await use(async () => {
+      return new Promise((resolve, reject) => {
+        const server = net.createServer();
+        server.listen(0, '127.0.0.1', () => {
+          const { port } = server.address() as net.AddressInfo;
+          server.close(() => resolve(port));
+        });
+        server.on('error', reject);
+
+      });
+    });
   },
 };
 

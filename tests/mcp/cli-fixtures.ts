@@ -26,16 +26,6 @@ import { killProcessGroup } from '../config/commonFixtures';
 import type { Page } from 'playwright-core';
 import type { CommonFixtures } from '../config/commonFixtures';
 
-function findFreePort(): Promise<number> {
-  return new Promise(resolve => {
-    const server = net.createServer();
-    server.listen(0, '127.0.0.1', () => {
-      const port = (server.address() as net.AddressInfo).port;
-      server.close(() => resolve(port));
-    });
-  });
-}
-
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
   cliEnv: Record<string, string>,
@@ -52,7 +42,7 @@ export const test = baseTest.extend<{
   cliEnv: async ({}, use) => {
     await use(cliEnv());
   },
-  openDashboard: async ({ cli, waitForPort }, use) => {
+  openDashboard: async ({ cli, waitForPort, findFreePort }, use) => {
     const dashboards = [];
     await use(async () => {
       const debugPort = await findFreePort();

@@ -143,7 +143,7 @@ async function injectCdpPort(browserConfig: FullConfig['browser']) {
 async function findFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
     const server = net.createServer();
-    server.listen(0, () => {
+    server.listen(0, '127.0.0.1', () => {
       const { port } = server.address() as net.AddressInfo;
       server.close(() => resolve(port));
     });
