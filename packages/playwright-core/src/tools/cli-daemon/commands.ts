@@ -743,10 +743,11 @@ const networkRequests = declareCommand({
   args: z.object({}),
   options: z.object({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+    body: z.boolean().optional().describe('Whether to include request body. Defaults to false.'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
-  toolParams: ({ static: includeStatic, clear }) => clear ? ({}) : ({ includeStatic }),
+  toolParams: ({ static: includeStatic, body: includeBody, clear }) => clear ? ({}) : ({ includeStatic, includeBody }),
 });
 
 const tracingStart = declareCommand({

@@ -64,6 +64,26 @@ test('network --static', async ({ cli, server }) => {
   expect(attachments[0].data.toString()).toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
 });
 
+test('network --body', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
+  `, 'text/html');
+  server.setContent('/api', '{}', 'application/json');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  {
+    const { attachments } = await cli('network');
+    expect(attachments[0].data.toString()).not.toContain('Request body:');
+  }
+
+  {
+    const { attachments } = await cli('network', '--body');
+    expect(attachments[0].data.toString()).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
+    expect(attachments[0].data.toString()).toContain('Request body: {"key":"value"}');
+  }
+});
+
 test('network --clear', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   await cli('eval', '() => fetch("/hello-world")');

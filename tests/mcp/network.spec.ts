@@ -60,3 +60,43 @@ test('browser_network_requests', async ({ client, server }) => {
     expect(response.result).toContain(`[GET] ${`${server.PREFIX}/image.png`} => [404]`);
   }
 });
+
+test('browser_network_requests includes request payload', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
+  `, 'text/html');
+
+  server.setContent('/api', '{}', 'application/json');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: {
+      url: server.PREFIX,
+    },
+  });
+
+  await client.callTool({
+    name: 'browser_click',
+    arguments: {
+      element: 'Click me button',
+      ref: 'e2',
+    },
+  });
+
+  {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+    }));
+    expect(response.result).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
+    expect(response.result).not.toContain(`Request body:`);
+  }
+
+  {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+      arguments: { includeBody: true },
+    }));
+    expect(response.result).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
+    expect(response.result).toContain(`Request body: {"key":"value"}`);
+  }
+});

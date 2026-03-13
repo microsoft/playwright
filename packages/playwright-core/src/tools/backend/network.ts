@@ -28,6 +28,7 @@ const requests = defineTabTool({
     description: 'Returns all network requests since loading the page',
     inputSchema: z.object({
       includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+      includeBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',
@@ -39,7 +40,7 @@ const requests = defineTabTool({
     for (const request of requests) {
       if (!params.includeStatic && !isFetch(request) && isSuccessfulResponse(request))
         continue;
-      text.push(await renderRequest(request));
+      text.push(await renderRequest(request, params.includeBody));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -71,7 +72,7 @@ export function isFetch(request: playwright.Request): boolean {
   return ['fetch', 'xhr'].includes(request.resourceType());
 }
 
-export async function renderRequest(request: playwright.Request): Promise<string> {
+export async function renderRequest(request: playwright.Request, includeBody = false): Promise<string> {
   const response = request.existingResponse();
 
   const result: string[] = [];
@@ -80,6 +81,11 @@ export async function renderRequest(request: playwright.Request): Promise<string
     result.push(`=> [${response.status()}] ${response.statusText()}`);
   else if (request.failure())
     result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
+  if (includeBody) {
+    const postData = request.postData();
+    if (postData)
+      result.push(`\n  Request body: ${postData}`);
+  }
   return result.join(' ');
 }
 
