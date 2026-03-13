@@ -155,7 +155,7 @@ export class Page extends SdkObject<PageEventMap> {
   static Events = PageEvent;
 
   private _closedState: 'open' | 'closing' | 'closed' = 'open';
-  private _closedPromise = new ManualPromise<void>();
+  readonly closedPromise = new ManualPromise<void>();
   private _initialized: Page | Error | undefined;
   private _initializedPromise = new ManualPromise<Page | Error>();
   private _consoleMessages: ConsoleMessage[] = [];
@@ -282,7 +282,7 @@ export class Page extends SdkObject<PageEventMap> {
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
     this.browserContext.emit(BrowserContext.Events.PageClosed, this);
-    this._closedPromise.resolve();
+    this.closedPromise.resolve();
     this.instrumentation.onPageClose(this);
     this.openScope.close(new TargetClosedError(this.closeReason()));
   }
@@ -795,7 +795,7 @@ export class Page extends SdkObject<PageEventMap> {
       await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
     }
     if (!runBeforeUnload)
-      await this._closedPromise;
+      await this.closedPromise;
   }
 
   isClosed(): boolean {
