@@ -1567,7 +1567,10 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async title(): Promise<string> {
     try {
-      return await this.nonStallingEvaluateInExistingContext('document.title', 'utility');
+      return await this.raceAgainstEvaluationStallingEvents(async () => {
+        const context = await this._utilityContext();
+        return await context.evaluate(() => document.title);
+      });
     } catch {
       const url = this.pendingDocument()?.request?.url();
       if (url)
