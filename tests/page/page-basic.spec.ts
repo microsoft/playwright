@@ -93,7 +93,7 @@ it('page.title should not throw during navigation', async ({ page, server }) => 
     promise,
   ]);
   expect(typeof titleOrError).toBe('string');
-  expect(titleOrError).toMatch(/^|hello|Woof-Woof$/);
+  expect(titleOrError).toMatch(/^(Loading http.*title.html|hello|Woof-Woof)$/);
   await expect(page).toHaveTitle('Woof-Woof');
 });
 

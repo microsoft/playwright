@@ -1567,11 +1567,11 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async title(): Promise<string> {
     try {
-      const context = await this._utilityContext();
-      return await context.evaluate(() => document.title);
-    } catch (e) {
-      if (this.isNonRetriableError(e))
-        throw e;
+      return await this.nonStallingEvaluateInExistingContext('document.title', 'utility');
+    } catch {
+      const url = this.pendingDocument()?.request?.url();
+      if (url)
+        return `Loading ${url}`;
       return '';
     }
   }
