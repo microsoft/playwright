@@ -1566,8 +1566,14 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async title(): Promise<string> {
-    const context = await this._utilityContext();
-    return context.evaluate(() => document.title);
+    try {
+      const context = await this._utilityContext();
+      return await context.evaluate(() => document.title);
+    } catch (e) {
+      if (this.isNonRetriableError(e))
+        throw e;
+      return '';
+    }
   }
 
   async rafrafTimeout(progress: Progress, timeout: number): Promise<void> {
