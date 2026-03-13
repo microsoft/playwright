@@ -288,7 +288,7 @@ test.describe('browser server', () => {
   test('list browser servers', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
-    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
     const { output } = await cli('list', '--all');
     expect(output).toBe(`### Browser servers available for attach
 workspace1:
@@ -301,7 +301,7 @@ workspace1:
   test('attach to browser server', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
-    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
     const page = await browser.newPage();
     await page.setContent('<title>My Page</title>');
     const { output: openOutput } = await cli('open', '--attach=foobar');
@@ -327,16 +327,36 @@ workspace1:
   test('fail to attach to browser server without contexts', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
-    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
     const { error } = await cli('open', '--attach=foobar');
     expect(error).toContain('Error: unable to connect to a browser that does not have any contexts');
+  });
+
+  test('attach via PLAYWRIGHT_CLI_SESSION env', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    const page = await browser.newPage();
+    await page.setContent('<title>Env Page</title><h1>Hello from env</h1>');
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
+    const { output: openOutput, snapshot } = await cli('open', { env: { PLAYWRIGHT_CLI_SESSION: 'foobar' } });
+    expect(openOutput).toContain('### Browser `foobar` opened with pid');
+    expect(openOutput).toContain('Env Page');
+    expect(snapshot).toContain('Hello from env');
+    const { output: listOutput } = await cli('list', '--all');
+    expect(listOutput).toBe(`### Browsers
+/:
+- foobar:
+  - status: open
+  - browser-type: ${mcpBrowser.replace('chrome', 'chromium')}
+  - user-data-dir: <in-memory>
+  - headed: true`);
   });
 
   test('detach from browser server', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
     await browser.newPage();
-    await (browser as any)._startServer('foobar', { workspaceDir: 'workspace1' });
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
     const { output: openOutput } = await cli('open', '--attach=foobar');
     expect(openOutput).toContain('### Browser `default` opened with pid');
     await cli('close');

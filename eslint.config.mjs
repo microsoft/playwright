@@ -356,6 +356,20 @@ export default [
     },
   },
   {
+    files: ["packages/playwright-core/src/tools/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [{
+            group: ["**/client", "**/client/**"],
+            message: "tools/ must not import from client/",
+          }],
+        },
+      ],
+    },
+  },
+  {
     files: [
       "packages/playwright-core/src/utils/**/*.ts",
     ],

@@ -55,10 +55,6 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   return result;
 }
 
-export async function callOnPageNoTrace<T>(page: playwright.Page, callback: (page: playwright.Page) => Promise<T>): Promise<T> {
-  return await (page as any)._wrapApiCall(() => callback(page), { internal: true });
-}
-
 export function eventWaiter<T>(page: playwright.Page, event: string, timeout: number): { promise: Promise<T | undefined>, abort: () => void } {
   const disposables: (() => void)[] = [];
 

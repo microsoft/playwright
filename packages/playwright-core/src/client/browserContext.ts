@@ -79,8 +79,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closeReason: string | undefined;
   private _harRouters: HarRouter[] = [];
   private _onRecorderEventSink: RecorderEventSink | undefined;
-  private _disallowedProtocols: string[] | undefined;
-  private _allowedDirectories: string[] | undefined;
+
 
   static from(context: channels.BrowserContextChannel): BrowserContext {
     return (context as any)._object;
@@ -97,7 +96,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
     this.request._timeoutSettings = this._timeoutSettings;
-    this.request._checkUrlAllowed = (url: string) => this._checkUrlAllowed(url);
     this.clock = new Clock(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
@@ -559,40 +557,6 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     await this._channel.exposeConsoleApi();
   }
 
-  _setDisallowedProtocols(protocols: string[]) {
-    this._disallowedProtocols = protocols;
-  }
-
-  _checkUrlAllowed(url: string) {
-    if (!this._disallowedProtocols)
-      return;
-    let parsedURL;
-    try {
-      parsedURL = new URL(url);
-    } catch (e) {
-      throw new Error(`Access to ${url} is blocked. Invalid URL: ${e.message}`);
-    }
-    if (this._disallowedProtocols.includes(parsedURL.protocol))
-      throw new Error(`Access to "${parsedURL.protocol}" protocol is blocked. Attempted URL: "${url}"`);
-  }
-
-  _setAllowedDirectories(rootDirectories: string[]) {
-    this._allowedDirectories = rootDirectories;
-  }
-
-  _checkFileAccess(filePath: string) {
-    if (!this._allowedDirectories)
-      return;
-    const path = this._platform.path().resolve(filePath);
-    const isInsideDir = (container: string, child: string): boolean => {
-      const path = this._platform.path();
-      const rel = path.relative(container, child);
-      return !!rel && !rel.startsWith('..') && !path.isAbsolute(rel);
-    };
-    if (this._allowedDirectories.some(root => isInsideDir(root, path)))
-      return;
-    throw new Error(`File access denied: ${filePath} is outside allowed roots. Allowed roots: ${this._allowedDirectories.length ? this._allowedDirectories.join(', ') : 'none'}`);
-  }
 }
 
 async function prepareStorageState(platform: Platform, storageState: string | SetStorageState): Promise<NonNullable<channels.BrowserNewContextParams['storageState']>> {

@@ -1803,13 +1803,6 @@ var banana = await page.GetByRole(AriaRole.Listitem).Last(1);
 ### option: Locator.locator.hasNotText = %%-locator-option-has-not-text-%%
 * since: v1.33
 
-## async method: Locator.normalize
-* since: v1.59
-- returns: <[Locator]>
-
-Returns a new locator that uses best practices for referencing the matched element, prioritizing test ids,
-aria roles, and other user-facing attributes over CSS selectors. This is useful for converting implementation-detail selectors into more resilient, human-readable locators.
-
 ## method: Locator.nth
 * since: v1.14
 - returns: <[Locator]>
@@ -2549,6 +2542,12 @@ If you need to assert text on the page, prefer [`method: LocatorAssertions.toHav
 
 ### option: Locator.textContent.timeout = %%-input-timeout-js-%%
 * since: v1.14
+
+## async method: Locator.toCode
+* since: v1.59
+- returns: <[string]>
+
+Returns a code string for a locator that uses best practices for referencing the matched element, prioritizing test ids, aria roles, and other user-facing attributes over CSS selectors.
 
 ## method: Locator.toString
 * since: v1.57

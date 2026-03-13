@@ -344,17 +344,26 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
       return;
     }
 
+    const runningSessions = new Set<string>();
     if (entries.size)
       console.log('### Browsers');
     for (const [workspace, list] of entries)
-      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), `${path.relative(process.cwd(), workspace) || '/'}:`);
+      await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), `${path.relative(process.cwd(), workspace) || '/'}:`, runningSessions);
 
-    if (serverEntries.size) {
+    // Filter out server entries that already have an attached session.
+    const filteredServerEntries = new Map<string, BrowserDescriptor[]>();
+    for (const [workspace, list] of serverEntries) {
+      const unattached = list.filter(d => !runningSessions.has(d.title));
+      if (unattached.length)
+        filteredServerEntries.set(workspace, unattached);
+    }
+
+    if (filteredServerEntries.size) {
       if (entries.size)
         console.log('');
       console.log('### Browser servers available for attach');
     }
-    for (const [workspace, list] of serverEntries)
+    for (const [workspace, list] of filteredServerEntries)
       await gcAndPrintBrowserSessions(workspace, list);
   } else {
     console.log('### Browsers');
@@ -363,7 +372,7 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   }
 }
 
-async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string) {
+async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], header?: string, runningSessions?: Set<string>) {
   const running: Session[] = [];
   const stopped: Session[] = [];
 
@@ -371,6 +380,7 @@ async function gcAndPrintSessions(clientInfo: ClientInfo, sessions: Session[], h
     const canConnect = await session.canConnect();
     if (canConnect) {
       running.push(session);
+      runningSessions?.add(session.name);
     } else {
       if (session.config.cli.persistent)
         stopped.push(session);

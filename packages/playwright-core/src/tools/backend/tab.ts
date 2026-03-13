@@ -23,7 +23,7 @@ import { debug } from '../../utilsBundle';
 
 import { eventsHelper } from '../../server/utils/eventsHelper';
 import { disposeAll } from '../../server/utils/disposable';
-import { callOnPageNoTrace, waitForCompletion, eventWaiter } from './utils';
+import { waitForCompletion, eventWaiter } from './utils';
 import { LogFile } from './logFile';
 import { ModalState } from './tool';
 import { handleDialog } from './dialogs';
@@ -268,7 +268,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   async headerSnapshot(): Promise<TabHeader & { changed: boolean }> {
     let title: string | undefined;
     await this._raceAgainstModalStates(async () => {
-      title = await callOnPageNoTrace(this.page, page => page.title());
+      title = await this.page.title();
     });
     const newHeader: TabHeader = {
       title: title ?? '',
@@ -290,7 +290,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
 
   async waitForLoadState(state: 'load', options?: { timeout?: number }): Promise<void> {
     await this._initializedPromise;
-    await callOnPageNoTrace(this.page, page => page.waitForLoadState(state, options).catch(e => debug('pw:tools:error')(e)));
+    await this.page.waitForLoadState(state, options).catch(e => debug('pw:tools:error')(e));
   }
 
   async navigate(url: string) {
@@ -437,19 +437,16 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     return Promise.all(params.map(async param => {
       if (param.selector) {
         const locator = this.page.locator(param.selector);
-        try {
-          await locator.normalize();
-        } catch {
+        if (!await locator.isVisible())
           throw new Error(`Selector ${param.selector} does not match any elements.`);
-        }
         return { locator, resolved: asLocator('javascript', param.selector) };
       } else {
         try {
           let locator = this.page.locator(`aria-ref=${param.ref}`);
           if (param.element)
             locator = locator.describe(param.element);
-          const resolved = await locator.normalize();
-          return { locator, resolved: resolved.toString() };
+          const resolved = await locator.toCode();
+          return { locator, resolved };
         } catch (e) {
           throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
         }
@@ -463,9 +460,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
     }
 
-    await callOnPageNoTrace(this.page, page => {
-      return page.evaluate(() => new Promise(f => setTimeout(f, 1000))).catch(() => {});
-    });
+    await this.page.evaluate(() => new Promise(f => setTimeout(f, 1000))).catch(() => {});
   }
 }
 

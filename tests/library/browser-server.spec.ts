@@ -26,7 +26,7 @@ it.beforeEach(({}, testInfo) => {
 });
 
 it('should start and stop pipe server', async ({ browserType, browser }) => {
-  const serverInfo = await (browser as any)._startServer('default', {});
+  const serverInfo = await (browser as any)._register('default', {});
   expect(serverInfo).toEqual(expect.objectContaining({
     pipeName: expect.stringMatching(/browser@.*\.sock/),
   }));
@@ -37,27 +37,11 @@ it('should start and stop pipe server', async ({ browserType, browser }) => {
   expect(await page.locator('h1').textContent()).toBe('Hello via pipe');
   await page.close();
   await browser2.close();
-  await (browser as any)._stopServer();
-});
-
-it('should start and stop ws server', async ({ browserType, browser }) => {
-  const serverInfo = await (browser as any)._startServer('default', { wsPath: 'test' });
-  expect(serverInfo).toEqual(expect.objectContaining({
-    pipeName: expect.stringMatching(/browser@.*\.sock/),
-    wsEndpoint: expect.stringMatching(/^ws:\/\//),
-  }));
-
-  const browser2 = await browserType.connect(serverInfo.wsEndpoint);
-  const page = await browser2.newPage();
-  await page.goto('data:text/html,<h1>Hello</h1>');
-  expect(await page.locator('h1').textContent()).toBe('Hello');
-  await page.close();
-  await browser2.close();
-  await (browser as any)._stopServer();
+  await (browser as any)._unregister();
 });
 
 it('should write descriptor on start and remove on stop', async ({ browser }) => {
-  const serverInfo = await (browser as any)._startServer('my-title', { wsPath: 'test' });
+  const serverInfo = await (browser as any)._register('my-title', { wsPath: 'test' } as any);
 
   const registryDir = it.info().outputPath('registry');
   const fileName = fs.readdirSync(registryDir)[0];
@@ -68,13 +52,12 @@ it('should write descriptor on start and remove on stop', async ({ browser }) =>
   expect(descriptor.playwrightVersion).toBeTruthy();
   expect(descriptor.playwrightLib).toBeTruthy();
   expect(descriptor.browser.browserName).toBeTruthy();
-  expect(descriptor.wsEndpoint).toBe(serverInfo.wsEndpoint);
   expect(descriptor.pipeName).toBe(serverInfo.pipeName);
 
   if (process.platform !== 'win32')
     expect(fs.existsSync(serverInfo.pipeName)).toBe(true);
 
-  await (browser as any)._stopServer();
+  await (browser as any)._unregister();
   expect(fs.existsSync(file)).toBe(false);
   if (process.platform !== 'win32')
     expect(fs.existsSync(serverInfo.pipeName)).toBe(false);

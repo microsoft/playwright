@@ -27,7 +27,7 @@ import { findChromiumChannelBestEffort, registryDirectory } from '../../server/r
 import { calculateSha1 } from '../../utils';
 import { CDPConnection, DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';
-import { connectToBrowserAcrossVersions } from '../../client/connect';
+import { connectToBrowserAcrossVersions } from '../utils/connect';
 
 import type * as api from '../../..';
 import type { SessionStatus } from '../../../../dashboard/src/sessionModel';
@@ -215,6 +215,7 @@ async function launchApp(appName: string) {
   });
 
   const image = await fs.promises.readFile(path.join(__dirname, 'appIcon.png'));
+  // This is local Playwright, so I can access private methods.
   await (page as any)._setDockTile(image);
   await syncLocalStorageWithSettings(page, appName);
   return { context, page };
