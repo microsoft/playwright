@@ -76,7 +76,7 @@ test('network --filter', async ({ cli, server }) => {
   expect(attachments[0].data.toString()).not.toContain(`${server.PREFIX}/static/image.png`);
 });
 
-test('network --body', async ({ cli, server }) => {
+test('network --request-body', async ({ cli, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
   `, 'text/html');
@@ -90,9 +90,30 @@ test('network --body', async ({ cli, server }) => {
   }
 
   {
-    const { attachments } = await cli('network', '--body');
+    const { attachments } = await cli('network', '--request-body');
     expect(attachments[0].data.toString()).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
     expect(attachments[0].data.toString()).toContain('Request body: {"key":"value"}');
+  }
+});
+
+test('network --request-headers', async ({ cli, server }) => {
+  server.setContent('/', `
+    <button onclick="fetch('/api', { headers: { 'X-Custom-Header': 'test-value' } })">Click me</button>
+  `, 'text/html');
+  server.setContent('/api', '{}', 'application/json');
+  await cli('open', server.PREFIX);
+  await cli('click', 'e2');
+
+  {
+    const { attachments } = await cli('network');
+    expect(attachments[0].data.toString()).not.toContain('Request headers:');
+  }
+
+  {
+    const { attachments } = await cli('network', '--request-headers');
+    expect(attachments[0].data.toString()).toContain(`[GET] ${server.PREFIX}/api => [200] OK`);
+    expect(attachments[0].data.toString()).toContain('Request headers:');
+    expect(attachments[0].data.toString()).toContain('x-custom-header: test-value');
   }
 });
 
