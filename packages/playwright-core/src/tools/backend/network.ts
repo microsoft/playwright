@@ -27,9 +27,9 @@ const requests = defineTabTool({
     title: 'List network requests',
     description: 'Returns all network requests since loading the page',
     inputSchema: z.object({
-      includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-      includeRequestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
-      includeRequestHeaders: z.boolean().default(false).describe('Whether to include request headers. Defaults to false.'),
+      static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+      requestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
+      requestHeaders: z.boolean().default(false).describe('Whether to include request headers. Defaults to false.'),
       filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
@@ -41,14 +41,14 @@ const requests = defineTabTool({
     const filter = params.filter ? new RegExp(params.filter) : undefined;
     const text: string[] = [];
     for (const request of requests) {
-      if (!params.includeStatic && !isFetch(request) && isSuccessfulResponse(request))
+      if (!params.static && !isFetch(request) && isSuccessfulResponse(request))
         continue;
       if (filter) {
         filter.lastIndex = 0;
         if (!filter.test(request.url()))
           continue;
       }
-      text.push(await renderRequest(request, params.includeRequestBody, params.includeRequestHeaders));
+      text.push(await renderRequest(request, params.requestBody, params.requestHeaders));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },

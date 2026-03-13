@@ -749,7 +749,7 @@ const networkRequests = declareCommand({
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
-  toolParams: ({ static: includeStatic, 'request-body': includeRequestBody, 'request-headers': includeRequestHeaders, filter, clear }) => clear ? ({}) : ({ includeStatic, includeRequestBody, includeRequestHeaders, filter }),
+  toolParams: ({ static: s, 'request-body': requestBody, 'request-headers': requestHeaders, filter, clear }) => clear ? ({}) : ({ static: s, requestBody, requestHeaders, filter }),
 });
 
 const tracingStart = declareCommand({

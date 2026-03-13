@@ -52,7 +52,7 @@ test('browser_network_requests', async ({ client, server }) => {
     const response = parseResponse(await client.callTool({
       name: 'browser_network_requests',
       arguments: {
-        includeStatic: true,
+        static: true,
       },
     }));
     expect(response.result).toContain(`[GET] ${`${server.PREFIX}/`} => [200] OK`);
@@ -74,7 +74,7 @@ test('browser_network_requests filter', async ({ client, server }) => {
   {
     const response = parseResponse(await client.callTool({
       name: 'browser_network_requests',
-      arguments: { filter: '/api/', includeStatic: true },
+      arguments: { filter: '/api/', static: true },
     }));
     expect(response.result).toContain(`${server.PREFIX}/api/users`);
     expect(response.result).toContain(`${server.PREFIX}/api/orders`);
@@ -108,7 +108,7 @@ test('browser_network_requests includes request headers', async ({ client, serve
   {
     const response = parseResponse(await client.callTool({
       name: 'browser_network_requests',
-      arguments: { includeRequestHeaders: true },
+      arguments: { requestHeaders: true },
     }));
     expect(response.result).toContain(`[GET] ${server.PREFIX}/api => [200] OK`);
     expect(response.result).toContain('Request headers:');
@@ -149,7 +149,7 @@ test('browser_network_requests includes request payload', async ({ client, serve
   {
     const response = parseResponse(await client.callTool({
       name: 'browser_network_requests',
-      arguments: { includeRequestBody: true },
+      arguments: { requestBody: true },
     }));
     expect(response.result).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
     expect(response.result).toContain(`Request body: {"key":"value"}`);
