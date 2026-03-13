@@ -54,8 +54,8 @@ export async function installFedoraWebKitCompat(): Promise<void> {
 async function installLibjpeg8Compat(): Promise<void> {
   const targetLib = path.join(COMPAT_DIR, 'lib64', 'libjpeg.so.8');
   if (fs.existsSync(targetLib)) {
-    const { stdout } = await spawnAsync('objdump', ['-p', targetLib]);
-    if (stdout.includes('LIBJPEG_8.0')) {
+    const result = await spawnAsync('objdump', ['-p', targetLib]);
+    if (!result.error && result.stdout.includes('LIBJPEG_8.0')) {
       console.log('Compat libjpeg (LIBJPEG_8.0) already installed.');  // eslint-disable-line no-console
       return;
     }
@@ -128,7 +128,6 @@ async function installICU74Compat(): Promise<void> {
     const downloaded = await downloadDebPackage(
         [
           ...debVersions.map(ver => `https://archive.ubuntu.com/ubuntu/pool/main/i/icu/libicu74_${ver}_${arch}.deb`),
-          `https://launchpadlibrarian.net/723802542/libicu74_74.2-1ubuntu3_${arch}.deb`,
         ],
         path.join(tmpDir, 'libicu74.deb'),
     );

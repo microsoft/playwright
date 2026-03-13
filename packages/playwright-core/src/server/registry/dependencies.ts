@@ -138,16 +138,12 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   });
 
   // On Fedora, install WebKit compatibility libraries (libjpeg, ICU, libjxl).
-  if (packageManager === 'dnf' && targets.has('webkit')) {
-    if (dryRun) {
-      console.log('# Would build/download Fedora WebKit compat libraries');  // eslint-disable-line no-console
-    } else {
-      try {
-        await installFedoraWebKitCompat();
-      } catch (e) {
-        console.warn(`Warning: Failed to install Fedora WebKit compat libraries: ${e}`);  // eslint-disable-line no-console
-        console.warn('WebKit may not work. Chromium and Firefox should work fine.');  // eslint-disable-line no-console
-      }
+  if (packageManager === 'dnf' && targets.has('webkit') && !dryRun) {
+    try {
+      await installFedoraWebKitCompat();
+    } catch (e) {
+      console.warn(`Warning: Failed to install Fedora WebKit compat libraries: ${e}`);  // eslint-disable-line no-console
+      console.warn('WebKit may not work. Chromium and Firefox should work fine.');  // eslint-disable-line no-console
     }
   }
 }
