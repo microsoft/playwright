@@ -157,7 +157,7 @@ export class Response {
     const content: (TextContent | ImageContent)[] = [
       {
         type: 'text',
-        text: redactText(text.join('\n')),
+        text: sanitizeUnicode(redactText(text.join('\n'))),
       }
     ];
 
@@ -269,6 +269,14 @@ function trimMiddle(text: string, maxLength: number) {
   if (text.length <= maxLength)
     return text;
   return text.slice(0, Math.floor(maxLength / 2)) + '...' + text.slice(- 3 - Math.floor(maxLength / 2));
+}
+
+/**
+ * Sanitizes a string to ensure it only contains well-formed Unicode.
+ * Replaces lone surrogates with U+FFFD using String.prototype.toWellFormed().
+ */
+function sanitizeUnicode(text: string): string {
+  return text.toWellFormed();
 }
 
 function parseSections(text: string): Map<string, string> {
