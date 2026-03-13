@@ -14,19 +14,18 @@
  * limitations under the License.
  */
 
-import { EventEmitter } from 'events';
-
+import { SdkObject } from './instrumentation';
 import { debugMode, isUnderTest, monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
-import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
+import type { CallMetadata, InstrumentationListener } from './instrumentation';
 
 const symbol = Symbol('Debugger');
 
 type PauseAt = { next?: boolean, location?: { file: string, line?: number, column?: number } };
 
-export class Debugger extends EventEmitter implements InstrumentationListener {
+export class Debugger extends SdkObject implements InstrumentationListener {
   private _pauseAt: PauseAt = {};
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
@@ -38,12 +37,12 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   private _muted = false;
 
   constructor(context: BrowserContext) {
-    super();
+    super(context, 'debugger');
     this._context = context;
     (this._context as any)[symbol] = this;
     this._enabled = !context.attribution.playwright.options.isServer && (isUnderTest() || !!context._browser.options.headful);
     if (debugMode() === 'inspector')
-      this.setPauseAt();
+      this.setPauseAt({ next: true });
     context.instrumentation.addListener(this, context);
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);

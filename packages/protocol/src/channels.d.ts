@@ -38,6 +38,7 @@ export type InitializerTraits<T> =
     T extends ArtifactChannel ? ArtifactInitializer :
     T extends TracingChannel ? TracingInitializer :
     T extends DialogChannel ? DialogInitializer :
+    T extends DebuggerChannel ? DebuggerInitializer :
     T extends BindingCallChannel ? BindingCallInitializer :
     T extends WebSocketChannel ? WebSocketInitializer :
     T extends ResponseChannel ? ResponseInitializer :
@@ -76,6 +77,7 @@ export type EventsTraits<T> =
     T extends ArtifactChannel ? ArtifactEvents :
     T extends TracingChannel ? TracingEvents :
     T extends DialogChannel ? DialogEvents :
+    T extends DebuggerChannel ? DebuggerEvents :
     T extends BindingCallChannel ? BindingCallEvents :
     T extends WebSocketChannel ? WebSocketEvents :
     T extends ResponseChannel ? ResponseEvents :
@@ -114,6 +116,7 @@ export type EventTargetTraits<T> =
     T extends ArtifactChannel ? ArtifactEventTarget :
     T extends TracingChannel ? TracingEventTarget :
     T extends DialogChannel ? DialogEventTarget :
+    T extends DebuggerChannel ? DebuggerEventTarget :
     T extends BindingCallChannel ? BindingCallEventTarget :
     T extends WebSocketChannel ? WebSocketEventTarget :
     T extends ResponseChannel ? ResponseEventTarget :
@@ -1545,6 +1548,7 @@ export interface EventTargetEvents {
 
 // ----------- BrowserContext -----------
 export type BrowserContextInitializer = {
+  debugger: DebuggerChannel,
   requestContext: APIRequestContextChannel,
   tracing: TracingChannel,
   options: {
@@ -4305,6 +4309,51 @@ export type BindingCallResolveOptions = {
 export type BindingCallResolveResult = void;
 
 export interface BindingCallEvents {
+}
+
+// ----------- Debugger -----------
+export type DebuggerInitializer = {};
+export interface DebuggerEventTarget {
+  on(event: 'pausedStateChanged', callback: (params: DebuggerPausedStateChangedEvent) => void): this;
+}
+export interface DebuggerChannel extends DebuggerEventTarget, EventTargetChannel {
+  _type_Debugger: boolean;
+  setPauseAt(params: DebuggerSetPauseAtParams, progress?: Progress): Promise<DebuggerSetPauseAtResult>;
+  resume(params?: DebuggerResumeParams, progress?: Progress): Promise<DebuggerResumeResult>;
+}
+export type DebuggerPausedStateChangedEvent = {
+  pausedDetails: {
+    location: {
+      file: string,
+      line?: number,
+      column?: number,
+    },
+    title: string,
+  }[],
+};
+export type DebuggerSetPauseAtParams = {
+  next?: boolean,
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
+};
+export type DebuggerSetPauseAtOptions = {
+  next?: boolean,
+  location?: {
+    file: string,
+    line?: number,
+    column?: number,
+  },
+};
+export type DebuggerSetPauseAtResult = void;
+export type DebuggerResumeParams = {};
+export type DebuggerResumeOptions = {};
+export type DebuggerResumeResult = void;
+
+export interface DebuggerEvents {
+  'pausedStateChanged': DebuggerPausedStateChangedEvent;
 }
 
 // ----------- Dialog -----------

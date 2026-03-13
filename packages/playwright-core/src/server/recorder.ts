@@ -339,7 +339,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   pause() {
-    this._debugger.setPauseAt();
+    this._debugger.setPauseAt({ next: true });
   }
 
   paused() {

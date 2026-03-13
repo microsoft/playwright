@@ -23,6 +23,7 @@ import { BrowserType } from './browserType';
 import { CDPSession } from './cdpSession';
 import { ChannelOwner } from './channelOwner';
 import { createInstrumentation } from './clientInstrumentation';
+import { Debugger } from './debugger';
 import { Dialog } from './dialog';
 import { DisposableObject } from './disposable';
 import { Electron, ElectronApplication } from './electron';
@@ -265,6 +266,9 @@ export class Connection extends EventEmitter {
         break;
       case 'CDPSession':
         result = new CDPSession(parent, type, guid, initializer);
+        break;
+      case 'Debugger':
+        result = new Debugger(parent, type, guid, initializer);
         break;
       case 'Dialog':
         result = new Dialog(parent, type, guid, initializer);

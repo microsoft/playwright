@@ -20,6 +20,7 @@ import path from 'path';
 import { BrowserContext } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
 import { CDPSessionDispatcher } from './cdpSessionDispatcher';
+import { DebuggerDispatcher } from './debuggerDispatcher';
 import { DialogDispatcher } from './dialogDispatcher';
 import { Dispatcher } from './dispatcher';
 import { FrameDispatcher } from './frameDispatcher';
@@ -69,15 +70,18 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   private constructor(parentScope: DispatcherScope, context: BrowserContext) {
     // We will reparent these to the context below.
+    const debugger_ = DebuggerDispatcher.from(parentScope as BrowserContextDispatcher, context.debugger());
     const requestContext = APIRequestContextDispatcher.from(parentScope as BrowserContextDispatcher, context.fetchRequest);
     const tracing = TracingDispatcher.from(parentScope as BrowserContextDispatcher, context.tracing);
 
     super(parentScope, context, 'BrowserContext', {
+      debugger: debugger_,
       requestContext,
       tracing,
       options: context._options,
     });
 
+    this.adopt(debugger_);
     this.adopt(requestContext);
     this.adopt(tracing);
 

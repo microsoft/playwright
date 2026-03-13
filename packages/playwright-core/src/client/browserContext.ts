@@ -22,6 +22,7 @@ import { ChannelOwner } from './channelOwner';
 import { evaluationScript } from './clientHelper';
 import { Clock } from './clock';
 import { ConsoleMessage } from './consoleMessage';
+import { Debugger } from './debugger';
 import { Dialog } from './dialog';
 import { DisposableObject, DisposableStub } from './disposable';
 import { TargetClosedError, parseError } from './errors';
@@ -69,6 +70,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   private _closedPromise: Promise<void>;
   readonly _options: channels.BrowserNewContextParams;
 
+  readonly debugger: Debugger;
   readonly request: APIRequestContext;
   readonly tracing: Tracing;
   readonly clock: Clock;
@@ -93,6 +95,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     super(parent, type, guid, initializer);
     this._options = initializer.options;
     this._timeoutSettings = new TimeoutSettings(this._platform);
+    this.debugger = Debugger.from(initializer.debugger);
     this.tracing = Tracing.from(initializer.tracing);
     this.request = APIRequestContext.from(initializer.requestContext);
     this.request._timeoutSettings = this._timeoutSettings;

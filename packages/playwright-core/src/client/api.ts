@@ -22,6 +22,7 @@ export { BrowserType } from './browserType';
 export { Clock } from './clock';
 export { ConsoleMessage } from './consoleMessage';
 export { Coverage } from './coverage';
+export { Debugger } from './debugger';
 export { Dialog } from './dialog';
 export type { Disposable } from './disposable';
 export { Download } from './download';
