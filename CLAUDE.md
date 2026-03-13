@@ -115,7 +115,7 @@ gh pr create --repo microsoft/playwright --head username:fix-39562 \
   --title "fix(proxy): handle SOCKS proxy authentication" \
   --body "$(cat <<'EOF'
 ## Summary
-- <describe the change>
+- <describe the change very! briefly>
 
 Fixes https://github.com/microsoft/playwright/issues/39562
 EOF
