@@ -21,9 +21,10 @@ let didFailToReadOSRelease = false;
 let osRelease: {
   id: string,
   version: string,
+  id_like: string,
 } | undefined;
 
-export function getLinuxDistributionInfoSync(): { id: string, version: string } | undefined {
+export function getLinuxDistributionInfoSync(): { id: string, version: string, id_like: string } | undefined {
   if (process.platform !== 'linux')
     return undefined;
   if (!osRelease && !didFailToReadOSRelease) {
@@ -35,6 +36,7 @@ export function getLinuxDistributionInfoSync(): { id: string, version: string } 
       osRelease = {
         id: fields.get('id') ?? '',
         version: fields.get('version_id') ?? '',
+        id_like: fields.get('id_like') ?? '',
       };
     } catch (e) {
       didFailToReadOSRelease = true;
