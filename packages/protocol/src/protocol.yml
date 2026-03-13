@@ -2012,6 +2012,7 @@ Page:
       parameters:
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
+        selector: string?
         timeout: float
       returns:
         full: string

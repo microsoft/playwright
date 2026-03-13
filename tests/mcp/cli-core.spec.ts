@@ -263,3 +263,19 @@ test('click button with wrong css selector', async ({ cli, server }) => {
   const { output } = await cli('click', '#target');
   expect(output).toContain(`Error: Selector #target does not match any elements.`);
 });
+
+test('partial snapshot', async ({ cli, server }) => {
+  server.setContent('/', `<button id=one>Submit</button><button id=two>Cancel</button>`, 'text/html');
+  const { snapshot } = await cli('open', server.PREFIX);
+  expect(snapshot).toContain('- button "Submit" [ref=e2]');
+  expect(snapshot).toContain('- button "Cancel" [ref=e3]');
+
+  const { snapshot: partialSnapshot } = await cli('snapshot', '#two');
+  expect(partialSnapshot).toBe(`- button "Cancel" [ref=e3]`);
+
+  const { output: strictError } = await cli('snapshot', 'button');
+  expect(strictError).toContain(`strict mode violation`);
+
+  const { output: noMatchError } = await cli('snapshot', '#target');
+  expect(noMatchError).toContain(`Selector "#target" does not match any element`);
+});

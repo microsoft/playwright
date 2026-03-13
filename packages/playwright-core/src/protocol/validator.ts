@@ -1493,6 +1493,7 @@ scheme.PageRequestsResult = tObject({
 });
 scheme.PageSnapshotForAIParams = tObject({
   track: tOptional(tString),
+  selector: tOptional(tString),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({

@@ -47,6 +47,7 @@ export class Response {
   private _context: Context;
   private _includeSnapshot: 'none' | 'full' | 'incremental' = 'none';
   private _includeSnapshotFileName: string | undefined;
+  private _includeSnapshotSelector: string | undefined;
   private _isClose: boolean = false;
 
   readonly toolName: string;
@@ -126,9 +127,10 @@ export class Response {
     this._includeSnapshot = this._context.config.snapshot?.mode || 'incremental';
   }
 
-  setIncludeFullSnapshot(includeSnapshotFileName?: string) {
+  setIncludeFullSnapshot(includeSnapshotFileName?: string, selector?: string) {
     this._includeSnapshot = 'full';
     this._includeSnapshotFileName = includeSnapshotFileName;
+    this._includeSnapshotSelector = selector;
   }
 
   async serialize(): Promise<CallToolResult> {
@@ -193,7 +195,7 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._clientWorkspace) : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotSelector, this._clientWorkspace) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)
