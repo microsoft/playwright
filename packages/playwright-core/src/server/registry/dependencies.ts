@@ -414,6 +414,12 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
 
 const MANUAL_LIBRARY_TO_PACKAGE_NAME_FEDORA: { [s: string]: string} = {
   'libx264.so': 'gstreamer1-libav',
+  // WebKit compat libs — provided by `npx playwright install-deps` compat layer,
+  // not by Fedora RPMs. Mapping them here ensures validation suggests install-deps.
+  'libjpeg.so.8': 'libjpeg-turbo',
+  'libicudata.so.74': 'icu',
+  'libicui18n.so.74': 'icu',
+  'libicuuc.so.74': 'icu',
 };
 
 function quoteProcessArgs(args: string[]): string[] {

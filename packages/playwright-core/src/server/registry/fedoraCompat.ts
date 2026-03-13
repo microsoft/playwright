@@ -169,9 +169,12 @@ async function createLibjxlSymlink(): Promise<void> {
     return;
 
   // Find system libjxl. Fedora uses /usr/lib64 for both x86_64 and aarch64.
-  const libSearchDir = '/usr/lib64';
-  const { stdout } = await spawnAsync('find', [libSearchDir, '-name', 'libjxl.so.0.*', '-not', '-type', 'l'], {});
-  const systemLib = stdout.trim().split('\n')[0];
+  const result = await spawnAsync('find', ['/usr/lib64', '-name', 'libjxl.so.0.*', '-not', '-type', 'l'], {});
+  if (result.error || result.code !== 0) {
+    console.warn('Could not search for system libjxl. WebKit may not work.');  // eslint-disable-line no-console
+    return;
+  }
+  const systemLib = result.stdout.trim().split('\n')[0];
   if (systemLib && fs.existsSync(systemLib)) {
     await fs.promises.symlink(systemLib, symlinkPath);
     console.log(`Created compat symlink: libjxl.so.0.8 -> ${path.basename(systemLib)}`);  // eslint-disable-line no-console
@@ -199,13 +202,13 @@ export async function patchWebKitWrappers(browserDir: string): Promise<void> {
       const content = await fs.promises.readFile(wrapperPath, 'utf8');
       if (content.includes('playwright-compat'))
         continue;
-      if (!content.includes('export LD_LIBRARY_PATH='))
-        continue;
 
       const patchedContent = content.replace(
           'export LD_LIBRARY_PATH="',
           `export LD_LIBRARY_PATH="${compatLibDir}:${compatIcuDir}:${COMPAT_DIR}:`
       );
+      if (patchedContent === content)
+        continue;
       await fs.promises.writeFile(wrapperPath, patchedContent, 'utf8');
       patched++;
     }
