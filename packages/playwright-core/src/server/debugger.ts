@@ -24,8 +24,10 @@ import type { CallMetadata, InstrumentationListener, SdkObject } from './instrum
 
 const symbol = Symbol('Debugger');
 
+type PauseAt = { next?: boolean, location?: { file: string, line?: number, column?: number } };
+
 export class Debugger extends EventEmitter implements InstrumentationListener {
-  private _pauseOnNextStatement = false;
+  private _pauseAt: PauseAt = {};
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled: boolean;
   private _context: BrowserContext;
@@ -39,9 +41,9 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     super();
     this._context = context;
     (this._context as any)[symbol] = this;
-    this._enabled = debugMode() === 'inspector';
-    if (this._enabled)
-      this.pauseOnNextStatement();
+    this._enabled = !context.attribution.playwright.options.isServer && (isUnderTest() || !!context._browser.options.headful);
+    if (debugMode() === 'inspector')
+      this.setPauseAt();
     context.instrumentation.addListener(this, context);
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
@@ -55,21 +57,26 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted)
       return;
-    if (shouldPauseOnCall(sdkObject, metadata) || (this._pauseOnNextStatement && shouldPauseBeforeStep(metadata)))
-      await this.pause(sdkObject, metadata);
+    const pauseOnPauseCall = this._enabled && metadata.method === 'pause';
+    const pauseOnNextStep = !!this._pauseAt.next && shouldPauseBeforeStep(metadata);
+    const pauseOnLocation = !!this._pauseAt.location && matchesLocation(metadata, this._pauseAt.location);
+    if (pauseOnPauseCall || pauseOnNextStep || pauseOnLocation)
+      await this._pause(sdkObject, metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted)
       return;
-    if (this._enabled && this._pauseOnNextStatement)
-      await this.pause(sdkObject, metadata);
+    const pauseOnNextStep = !!this._pauseAt.next;
+    const pauseOnLocation = !!this._pauseAt.location && matchesLocation(metadata, this._pauseAt.location);
+    if (pauseOnNextStep || pauseOnLocation)
+      await this._pause(sdkObject, metadata);
   }
 
-  async pause(sdkObject: SdkObject, metadata: CallMetadata) {
+  private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._muted)
       return;
-    this._enabled = true;
+    this._pauseAt = {};
     metadata.pauseStartTime = monotonicTime();
     const result = new Promise<void>(resolve => {
       this._pausedCallsMetadata.set(metadata, { resolve, sdkObject });
@@ -78,11 +85,10 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     return result;
   }
 
-  resume(step: boolean) {
+  resume() {
     if (!this.isPaused())
       return;
 
-    this._pauseOnNextStatement = step;
     const endTime = monotonicTime();
     for (const [metadata, { resolve }] of this._pausedCallsMetadata) {
       metadata.pauseEndTime = endTime;
@@ -92,8 +98,9 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
     this.emit(Debugger.Events.PausedStateChanged);
   }
 
-  pauseOnNextStatement() {
-    this._pauseOnNextStatement = true;
+  setPauseAt(at: { next?: boolean, location?: { file: string, line?: number, column?: number } } = {}) {
+    this._enabled = true;
+    this._pauseAt = at;
   }
 
   isPaused(metadata?: CallMetadata): boolean {
@@ -110,12 +117,10 @@ export class Debugger extends EventEmitter implements InstrumentationListener {
   }
 }
 
-function shouldPauseOnCall(sdkObject: SdkObject, metadata: CallMetadata): boolean {
-  if (sdkObject.attribution.playwright.options.isServer)
-    return false;
-  if (!sdkObject.attribution.browser?.options.headful && !isUnderTest())
-    return false;
-  return metadata.method === 'pause';
+function matchesLocation(metadata: CallMetadata, location: { file: string, line?: number, column?: number }): boolean {
+  return metadata.location?.file === location.file &&
+      (location.line === undefined || metadata.location.line === location.line) &&
+      (location.column === undefined || metadata.location.column === location.column);
 }
 
 function shouldPauseBeforeStep(metadata: CallMetadata): boolean {
