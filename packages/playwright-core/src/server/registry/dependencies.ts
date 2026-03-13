@@ -20,12 +20,19 @@ import os from 'os';
 import path from 'path';
 
 import { deps } from './nativeDeps';
+import { installFedoraWebKitCompat } from './fedoraCompat';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
 import { spawnAsync } from '../utils/spawnAsync';
 import { getPlaywrightVersion } from '../utils/userAgent';
 
 import { buildPlaywrightCLICommand, registry } from '.';
+
+function getLinuxPackageManager(platform: string): 'apt' | 'dnf' {
+  if (platform.startsWith('fedora'))
+    return 'dnf';
+  return 'apt';
+}
 
 const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
 const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;
@@ -106,10 +113,17 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
   if (!dryRun)
     console.log(`Installing dependencies...`);  // eslint-disable-line no-console
   const commands: string[] = [];
-  commands.push('apt-get update');
-  commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
-    ...uniqueLibraries,
-  ].join(' '));
+  const packageManager = getLinuxPackageManager(platform);
+  if (packageManager === 'dnf') {
+    commands.push(['dnf', 'install', '-y', '--skip-unavailable',
+      ...uniqueLibraries,
+    ].join(' '));
+  } else {
+    commands.push('apt-get update');
+    commands.push(['apt-get', 'install', '-y', '--no-install-recommends',
+      ...uniqueLibraries,
+    ].join(' '));
+  }
   const { command, args, elevatedPermissions } = await transformCommandsForRoot(commands);
   if (dryRun) {
     console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
@@ -122,6 +136,16 @@ export async function installDependenciesLinux(targets: Set<DependencyGroup>, dr
     child.on('exit', (code: number) => code === 0 ? resolve() : reject(new Error(`Installation process exited with code: ${code}`)));
     child.on('error', reject);
   });
+
+  // On Fedora, install WebKit compatibility libraries (libjpeg, ICU, libjxl).
+  if (packageManager === 'dnf' && targets.has('webkit') && !dryRun) {
+    try {
+      await installFedoraWebKitCompat();
+    } catch (e) {
+      console.warn(`Warning: Failed to install Fedora WebKit compat libraries: ${e}`);  // eslint-disable-line no-console
+      console.warn('WebKit may not work. Chromium and Firefox should work fine.');  // eslint-disable-line no-console
+    }
+  }
 }
 
 export async function validateDependenciesWindows(sdkLanguage: string, windowsExeAndDllDirectories: string[]) {
@@ -192,25 +216,46 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
   const lddPaths: string[] = [];
   for (const directoryPath of directoryPaths)
     lddPaths.push(...(await executablesOrSharedLibraries(directoryPath)));
-  const missingDepsPerFile = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, directoryPaths)));
+
+  // On Fedora, include compat library directories in the LD_LIBRARY_PATH search
+  // so that ldd can find ICU 74, libjpeg.so.8, etc.
+  const isFedora = getLinuxPackageManager(hostPlatform) === 'dnf';
+  const compatDirs: string[] = [];
+  if (isFedora) {
+    const compatDir = process.env.PLAYWRIGHT_COMPAT_DIR || path.join(os.homedir(), '.local', 'lib', 'playwright-compat');
+    for (const subdir of ['lib64', 'icu', '']) {
+      const dir = subdir ? path.join(compatDir, subdir) : compatDir;
+      if (fs.existsSync(dir))
+        compatDirs.push(dir);
+    }
+  }
+
+  const missingDepsPerFile = await Promise.all(lddPaths.map(lddPath => missingFileDependencies(lddPath, [...directoryPaths, ...compatDirs])));
   const missingDeps: Set<string> = new Set();
   for (const deps of missingDepsPerFile) {
     for (const dep of deps)
       missingDeps.add(dep);
   }
-  for (const dep of (await missingDLOPENLibraries(dlOpenLibraries)))
+  for (const dep of (await missingDLOPENLibraries(dlOpenLibraries))) {
+    // On Fedora, skip dlopen libraries that exist in the compat directory.
+    if (isFedora && compatDirs.some(dir => fs.existsSync(path.join(dir, dep))))
+      continue;
     missingDeps.add(dep);
+  }
   if (!missingDeps.size)
     return;
   const allMissingDeps = new Set(missingDeps);
   // Check Ubuntu version.
   const missingPackages = new Set();
 
+  const manualMapping = isFedora ? MANUAL_LIBRARY_TO_PACKAGE_NAME_FEDORA : MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU;
   const libraryToPackageNameMapping = deps[hostPlatform] ? {
     ...(deps[hostPlatform]?.lib2package || {}),
-    ...MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU,
+    ...manualMapping,
   } : {};
-  // Translate missing dependencies to package names to install with apt.
+  const pkgInstallCmd = isFedora ? 'dnf install' : 'apt-get install';
+  const pkgManagerName = isFedora ? 'dnf' : 'apt';
+  // Translate missing dependencies to package names to install.
   for (const missingDep of missingDeps) {
     const packageName = libraryToPackageNameMapping[missingDep];
     if (packageName) {
@@ -242,9 +287,9 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `- (alternative 2) use apt inside Docker:`,
+      `- (alternative 2) use ${pkgManagerName} inside Docker:`,
       ``,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `    ${maybeSudo}${pkgInstallCmd} ${[...missingPackages].join('\\\n        ')}`,
       ``,
       `<3 Playwright Team`,
     ]);
@@ -256,8 +301,8 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
       ``,
       `    ${maybeSudo}${buildPlaywrightCLICommand(sdkLanguage, 'install-deps')}`,
       ``,
-      `Alternatively, use apt:`,
-      `    ${maybeSudo}apt-get install ${[...missingPackages].join('\\\n        ')}`,
+      `Alternatively, use ${pkgManagerName}:`,
+      `    ${maybeSudo}${pkgInstallCmd} ${[...missingPackages].join('\\\n        ')}`,
       ``,
       `<3 Playwright Team`,
     ]);
@@ -271,6 +316,14 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     ]);
   }
 
+  // On Fedora, if all missing deps have known package mappings, warn instead of
+  // throwing. This allows the browser to attempt launching — e.g. libx264.so
+  // requires RPM Fusion on Fedora and is non-critical for most browser functionality.
+  if (isFedora && missingPackages.size && !missingDeps.size) {
+    // eslint-disable-next-line no-console
+    console.warn('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
+    return;
+  }
   throw new Error('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
 }
 
@@ -357,6 +410,16 @@ const MANUAL_LIBRARY_TO_PACKAGE_NAME_UBUNTU: { [s: string]: string} = {
   // and if it's missing recommend installing missing gstreamer lib.
   // gstreamer1.0-libav -> libavcodec57 -> libx264-152
   'libx264.so': 'gstreamer1.0-libav',
+};
+
+const MANUAL_LIBRARY_TO_PACKAGE_NAME_FEDORA: { [s: string]: string} = {
+  'libx264.so': 'gstreamer1-libav',
+  // WebKit compat libs — provided by `npx playwright install-deps` compat layer,
+  // not by Fedora RPMs. Mapping them here ensures validation suggests install-deps.
+  'libjpeg.so.8': 'libjpeg-turbo',
+  'libicudata.so.74': 'icu',
+  'libicui18n.so.74': 'icu',
+  'libicuuc.so.74': 'icu',
 };
 
 function quoteProcessArgs(args: string[]): string[] {

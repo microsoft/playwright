@@ -23,6 +23,7 @@ import * as util from 'util';
 import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
 import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { patchWebKitWrappers } from './fedoraCompat';
 import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { debugLogger } from '../utils/debugLogger';
@@ -156,6 +157,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'debian13-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian13-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
+    'fedora-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'fedora-arm64': 'builds/chromium/%s/chromium-linux-arm64.zip',
     'mac10.13': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac10.14': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac10.15': cftUrl('mac-x64/chrome-mac-x64.zip'),
@@ -187,6 +190,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
     'debian13-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian13-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
+    'fedora-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'fedora-arm64': 'builds/chromium/%s/chromium-headless-shell-linux-arm64.zip',
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
@@ -218,6 +223,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'debian13-x64': cftUrl('linux64/chrome-linux64.zip'),
     'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
+    'fedora-x64': cftUrl('linux64/chrome-linux64.zip'),
+    'fedora-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-linux-arm64.zip',
     'mac10.13': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac10.14': cftUrl('mac-x64/chrome-mac-x64.zip'),
     'mac10.15': cftUrl('mac-x64/chrome-mac-x64.zip'),
@@ -249,6 +256,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
     'debian13-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
     'debian13-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
+    'fedora-x64': cftUrl('linux64/chrome-headless-shell-linux64.zip'),
+    'fedora-arm64': 'builds/chromium-tip-of-tree/%s/chromium-tip-of-tree-headless-shell-linux-arm64.zip',
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
@@ -280,6 +289,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/firefox/%s/firefox-debian-12-arm64.zip',
     'debian13-x64': 'builds/firefox/%s/firefox-debian-13.zip',
     'debian13-arm64': 'builds/firefox/%s/firefox-debian-13-arm64.zip',
+    'fedora-x64': 'builds/firefox/%s/firefox-ubuntu-24.04.zip',
+    'fedora-arm64': 'builds/firefox/%s/firefox-ubuntu-24.04-arm64.zip',
     'mac10.13': 'builds/firefox/%s/firefox-mac.zip',
     'mac10.14': 'builds/firefox/%s/firefox-mac.zip',
     'mac10.15': 'builds/firefox/%s/firefox-mac.zip',
@@ -311,6 +322,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/firefox-beta/%s/firefox-beta-debian-12-arm64.zip',
     'debian13-x64': 'builds/firefox-beta/%s/firefox-beta-debian-12.zip',
     'debian13-arm64': 'builds/firefox-beta/%s/firefox-beta-debian-12-arm64.zip',
+    'fedora-x64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04.zip',
+    'fedora-arm64': 'builds/firefox-beta/%s/firefox-beta-ubuntu-24.04-arm64.zip',
     'mac10.13': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
     'mac10.14': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
     'mac10.15': 'builds/firefox-beta/%s/firefox-beta-mac.zip',
@@ -342,6 +355,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/webkit/%s/webkit-debian-12-arm64.zip',
     'debian13-x64': 'builds/webkit/%s/webkit-debian-13.zip',
     'debian13-arm64': 'builds/webkit/%s/webkit-debian-13-arm64.zip',
+    'fedora-x64': 'builds/webkit/%s/webkit-ubuntu-24.04.zip',
+    'fedora-arm64': 'builds/webkit/%s/webkit-ubuntu-24.04-arm64.zip',
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
@@ -373,6 +388,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'debian13-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
     'debian13-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
+    'fedora-x64': 'builds/ffmpeg/%s/ffmpeg-linux.zip',
+    'fedora-arm64': 'builds/ffmpeg/%s/ffmpeg-linux-arm64.zip',
     'mac10.13': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.14': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
     'mac10.15': 'builds/ffmpeg/%s/ffmpeg-mac.zip',
@@ -404,6 +421,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': undefined,
     'debian13-x64': undefined,
     'debian13-arm64': undefined,
+    'fedora-x64': undefined,
+    'fedora-arm64': undefined,
     'mac10.13': undefined,
     'mac10.14': undefined,
     'mac10.15': undefined,
@@ -435,6 +454,8 @@ const DOWNLOAD_PATHS: Record<string, DownloadPaths> = {
     'debian12-arm64': 'builds/android/%s/android.zip',
     'debian13-x64': 'builds/android/%s/android.zip',
     'debian13-arm64': 'builds/android/%s/android.zip',
+    'fedora-x64': 'builds/android/%s/android.zip',
+    'fedora-arm64': 'builds/android/%s/android.zip',
     'mac10.13': 'builds/android/%s/android.zip',
     'mac10.14': 'builds/android/%s/android.zip',
     'mac10.15': 'builds/android/%s/android.zip',
@@ -850,7 +871,17 @@ export class Registry {
       title: webkit.title,
       revision: webkit.revision,
       browserVersion: webkit.browserVersion,
-      _install: force => this._downloadExecutable(webkit, force, webkitExecutable),
+      _install: async force => {
+        await this._downloadExecutable(webkit, force, webkitExecutable);
+        if (hostPlatform.startsWith('fedora')) {
+          try {
+            await patchWebKitWrappers(registryDirectory);
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn(`Warning: Failed to patch WebKit wrappers for Fedora compatibility: ${e}`);
+          }
+        }
+      },
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,
     });
