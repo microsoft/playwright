@@ -1,6 +1,7 @@
 [*]
 @playwright/experimental-ct-react
 @web/**
+@isomorphic/**
 
 [chip.spec.tsx]
 ***

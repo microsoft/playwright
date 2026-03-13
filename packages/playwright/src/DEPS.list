@@ -9,6 +9,7 @@ common/
 [index.ts]
 @testIsomorphic/**
 ./prompt.ts
+./errorContext.ts
 ./worker/testTracing.ts
 ./mcp/sdk/
 ./mcp/test/
@@ -18,4 +19,3 @@ common/
 **
 
 [errorContext.ts]
-./transform/babelBundle.ts

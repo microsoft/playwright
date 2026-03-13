@@ -19,7 +19,7 @@ import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
 import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup } from 'playwright-core/lib/utils';
-
+import { buildErrorContext } from './errorContext';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
 import { createCustomMessageHandler, runDaemonForBrowser } from './mcp/test/browserBackend';
@@ -733,22 +733,22 @@ class ArtifactsRecorder {
     if (context)
       await this._takePageSnapshot(context);
 
-    if (this._pageSnapshot && this._testInfo.errors.length > 0 && !this._testInfo.attachments.some(a => a.name === 'error-context')) {
-      const lines = [
-        '# Page snapshot',
-        '',
-        '```yaml',
-        this._pageSnapshot,
-        '```',
-      ];
-      const filePath = this._testInfo.outputPath('error-context.md');
-      await fs.promises.writeFile(filePath, lines.join('\n'), 'utf8');
-
-      this._testInfo._attach({
-        name: 'error-context',
-        contentType: 'text/markdown',
-        path: filePath,
-      }, undefined);
+    if (this._testInfo.errors.length > 0) {
+      const errorContextContent = buildErrorContext({
+        titlePath: this._testInfo.titlePath,
+        location: { file: this._testInfo.file, line: this._testInfo.line, column: this._testInfo.column },
+        errors: this._testInfo.errors,
+        pageSnapshot: this._pageSnapshot,
+      });
+      if (errorContextContent) {
+        const filePath = this._testInfo.outputPath('error-context.md');
+        await fs.promises.writeFile(filePath, errorContextContent, 'utf8');
+        this._testInfo._attach({
+          name: 'error-context',
+          contentType: 'text/markdown',
+          path: filePath,
+        }, undefined);
+      }
     }
   }
 
