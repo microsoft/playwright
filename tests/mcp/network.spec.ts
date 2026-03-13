@@ -115,7 +115,7 @@ test('browser_network_requests includes request payload', async ({ client, serve
   {
     const response = parseResponse(await client.callTool({
       name: 'browser_network_requests',
-      arguments: { includeBody: true },
+      arguments: { includeRequestBody: true },
     }));
     expect(response.result).toContain(`[POST] ${server.PREFIX}/api => [200] OK`);
     expect(response.result).toContain(`Request body: {"key":"value"}`);

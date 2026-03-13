@@ -28,7 +28,7 @@ const requests = defineTabTool({
     description: 'Returns all network requests since loading the page',
     inputSchema: z.object({
       includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
-      includeBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
+      includeRequestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
       filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
@@ -47,7 +47,7 @@ const requests = defineTabTool({
         if (!filter.test(request.url()))
           continue;
       }
-      text.push(await renderRequest(request, params.includeBody));
+      text.push(await renderRequest(request, params.includeRequestBody));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
