@@ -1205,6 +1205,9 @@ export const deps: any = {
       'freetype',
       'google-noto-color-emoji-fonts',
       'unifont-fonts',
+      'curl',
+      'binutils',
+      'tar',
     ],
     chromium: [
       'nss',

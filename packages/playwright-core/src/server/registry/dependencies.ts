@@ -320,11 +320,10 @@ export async function validateDependenciesLinux(sdkLanguage: string, linuxLddDir
     ]);
   }
 
-  // On non-officially-supported platforms (e.g. Fedora), if all missing deps have
-  // known package mappings, warn instead of throwing. This allows the browser to
-  // attempt launching — e.g. libx264.so requires RPM Fusion on Fedora and is
-  // non-critical for most browser functionality.
-  if (!isOfficiallySupportedPlatform && missingPackages.size && !missingDeps.size) {
+  // On Fedora, if all missing deps have known package mappings, warn instead of
+  // throwing. This allows the browser to attempt launching — e.g. libx264.so
+  // requires RPM Fusion on Fedora and is non-critical for most browser functionality.
+  if (isFedora && missingPackages.size && !missingDeps.size) {
     // eslint-disable-next-line no-console
     console.warn('\n' + wrapInASCIIBox(errorLines.join('\n'), 1));
     return;

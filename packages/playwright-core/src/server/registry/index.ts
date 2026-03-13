@@ -873,8 +873,14 @@ export class Registry {
       browserVersion: webkit.browserVersion,
       _install: async force => {
         await this._downloadExecutable(webkit, force, webkitExecutable);
-        if (hostPlatform.startsWith('fedora'))
-          await patchWebKitWrappers(registryDirectory);
+        if (hostPlatform.startsWith('fedora')) {
+          try {
+            await patchWebKitWrappers(registryDirectory);
+          } catch (e) {
+            // eslint-disable-next-line no-console
+            console.warn(`Warning: Failed to patch WebKit wrappers for Fedora compatibility: ${e}`);
+          }
+        }
       },
       _dependencyGroup: 'webkit',
       _isHermeticInstallation: true,

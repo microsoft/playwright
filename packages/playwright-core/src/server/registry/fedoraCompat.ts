@@ -34,6 +34,12 @@ import { spawnAsync } from '../utils/spawnAsync';
 
 const COMPAT_DIR = process.env.PLAYWRIGHT_COMPAT_DIR || path.join(os.homedir(), '.local', 'lib', 'playwright-compat');
 
+function debArch(): { arch: string, libDir: string } {
+  if (os.arch() === 'arm64')
+    return { arch: 'arm64', libDir: 'usr/lib/aarch64-linux-gnu' };
+  return { arch: 'amd64', libDir: 'usr/lib/x86_64-linux-gnu' };
+}
+
 export async function installFedoraWebKitCompat(): Promise<void> {
   await fs.promises.mkdir(path.join(COMPAT_DIR, 'lib64'), { recursive: true });
   await fs.promises.mkdir(path.join(COMPAT_DIR, 'icu'), { recursive: true });
@@ -57,13 +63,14 @@ async function installLibjpeg8Compat(): Promise<void> {
 
   console.log('Installing libjpeg with JPEG8 ABI (LIBJPEG_8.0 symbols)...');  // eslint-disable-line no-console
 
+  const { arch, libDir } = debArch();
   const tmpDir = path.join(os.tmpdir(), `playwright-libjpeg-compat-${process.pid}`);
   try {
     await fs.promises.mkdir(tmpDir, { recursive: true });
 
     const debVersions = ['2.1.5-2ubuntu2', '2.1.5-2ubuntu1', '2.1.5-2build1'];
     const downloaded = await downloadDebPackage(
-        debVersions.map(ver => `http://archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8_${ver}_amd64.deb`),
+        debVersions.map(ver => `https://archive.ubuntu.com/ubuntu/pool/main/libj/libjpeg-turbo/libjpeg-turbo8_${ver}_${arch}.deb`),
         path.join(tmpDir, 'libjpeg8.deb'),
     );
     if (!downloaded) {
@@ -71,7 +78,7 @@ async function installLibjpeg8Compat(): Promise<void> {
       return;
     }
 
-    const extractedDir = await extractDebPackage(tmpDir, 'libjpeg8.deb');
+    const extractedDir = await extractDebPackage(tmpDir, 'libjpeg8.deb', libDir);
     if (!extractedDir)
       return;
 
@@ -112,6 +119,7 @@ async function installICU74Compat(): Promise<void> {
 
   console.log('Installing ICU 74 compat libraries for WebKit...');  // eslint-disable-line no-console
 
+  const { arch, libDir } = debArch();
   const tmpDir = path.join(os.tmpdir(), `playwright-icu-compat-${process.pid}`);
   try {
     await fs.promises.mkdir(tmpDir, { recursive: true });
@@ -119,8 +127,8 @@ async function installICU74Compat(): Promise<void> {
     const debVersions = ['74.2-1ubuntu3', '74.2-1ubuntu4', '74.2-1ubuntu3.1'];
     const downloaded = await downloadDebPackage(
         [
-          ...debVersions.map(ver => `http://archive.ubuntu.com/ubuntu/pool/main/i/icu/libicu74_${ver}_amd64.deb`),
-          'http://launchpadlibrarian.net/723802542/libicu74_74.2-1ubuntu3_amd64.deb',
+          ...debVersions.map(ver => `https://archive.ubuntu.com/ubuntu/pool/main/i/icu/libicu74_${ver}_${arch}.deb`),
+          `https://launchpadlibrarian.net/723802542/libicu74_74.2-1ubuntu3_${arch}.deb`,
         ],
         path.join(tmpDir, 'libicu74.deb'),
     );
@@ -129,7 +137,7 @@ async function installICU74Compat(): Promise<void> {
       return;
     }
 
-    const extractedDir = await extractDebPackage(tmpDir, 'libicu74.deb');
+    const extractedDir = await extractDebPackage(tmpDir, 'libicu74.deb', libDir);
     if (!extractedDir)
       return;
 
@@ -162,7 +170,8 @@ async function createLibjxlSymlink(): Promise<void> {
     return;
 
   // Find system libjxl.
-  const { stdout } = await spawnAsync('find', ['/usr/lib64', '-name', 'libjxl.so.0.*', '-not', '-type', 'l'], {});
+  const libSearchDir = os.arch() === 'arm64' ? '/usr/lib/aarch64-linux-gnu' : '/usr/lib64';
+  const { stdout } = await spawnAsync('find', [libSearchDir, '-name', 'libjxl.so.0.*', '-not', '-type', 'l'], {});
   const systemLib = stdout.trim().split('\n')[0];
   if (systemLib && fs.existsSync(systemLib)) {
     await fs.promises.symlink(systemLib, symlinkPath);
@@ -211,17 +220,19 @@ export async function patchWebKitWrappers(browserDir: string): Promise<void> {
 async function downloadDebPackage(urls: string[], outputPath: string): Promise<boolean> {
   for (const url of urls) {
     const result = await spawnAsync('curl', ['-fsSL', '-o', outputPath, url]);
-    if (result.code === 0)
+    if (result.error)
+      continue;
+    if (result.code === 0 && fs.existsSync(outputPath))
       return true;
   }
   return false;
 }
 
 // Extracts a .deb package and returns the path to the extracted library directory.
-async function extractDebPackage(workDir: string, debFilename: string): Promise<string | null> {
+async function extractDebPackage(workDir: string, debFilename: string, libDir: string): Promise<string | null> {
   const ar = await spawnAsync('ar', ['x', debFilename], { cwd: workDir });
-  if (ar.code !== 0) {
-    console.warn('Failed to extract .deb package: ' + ar.stderr);  // eslint-disable-line no-console
+  if (ar.error || ar.code !== 0) {
+    console.warn('Failed to extract .deb package: ' + (ar.error?.message || ar.stderr));  // eslint-disable-line no-console
     return null;
   }
 
@@ -239,11 +250,15 @@ async function extractDebPackage(workDir: string, debFilename: string): Promise<
     tarArgs.push('-J');
   else if (dataTar.endsWith('.gz'))
     tarArgs.push('-z');
-  tarArgs.push('-xf', dataTar, './usr/lib/x86_64-linux-gnu/');
+  tarArgs.push('-xf', dataTar, `./${libDir}/`);
 
-  await spawnAsync('tar', tarArgs, { cwd: workDir });
+  const tar = await spawnAsync('tar', tarArgs, { cwd: workDir });
+  if (tar.error || tar.code !== 0) {
+    console.warn('Failed to extract data archive: ' + (tar.error?.message || tar.stderr));  // eslint-disable-line no-console
+    return null;
+  }
 
-  const extractedDir = path.join(workDir, 'usr', 'lib', 'x86_64-linux-gnu');
+  const extractedDir = path.join(workDir, libDir);
   if (!fs.existsSync(extractedDir)) {
     console.warn('Could not extract libraries from .deb package.');  // eslint-disable-line no-console
     return null;
