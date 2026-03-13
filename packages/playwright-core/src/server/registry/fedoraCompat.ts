@@ -169,8 +169,8 @@ async function createLibjxlSymlink(): Promise<void> {
   if (fs.existsSync(symlinkPath))
     return;
 
-  // Find system libjxl.
-  const libSearchDir = os.arch() === 'arm64' ? '/usr/lib/aarch64-linux-gnu' : '/usr/lib64';
+  // Find system libjxl. Fedora uses /usr/lib64 for both x86_64 and aarch64.
+  const libSearchDir = '/usr/lib64';
   const { stdout } = await spawnAsync('find', [libSearchDir, '-name', 'libjxl.so.0.*', '-not', '-type', 'l'], {});
   const systemLib = stdout.trim().split('\n')[0];
   if (systemLib && fs.existsSync(systemLib)) {

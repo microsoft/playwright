@@ -1208,6 +1208,7 @@ export const deps: any = {
       'curl',
       'binutils',
       'tar',
+      'findutils',
     ],
     chromium: [
       'nss',
