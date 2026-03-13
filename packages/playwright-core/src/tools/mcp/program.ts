@@ -153,8 +153,8 @@ export function decorateMCPInstallBrowserCommand(command: Command) {
       .option('--only-shell', 'only install headless shell when installing chromium')
       .option('--no-shell', 'do not install chromium headless shell')
       .action(async options => {
-        const { program } = require('../program');
         const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
-        program.parse(argv);
+        const { program: mainProgram } = await import('../../cli/program');
+        mainProgram.parse(argv);
       });
 }
