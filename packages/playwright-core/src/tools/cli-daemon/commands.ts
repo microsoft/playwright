@@ -744,10 +744,11 @@ const networkRequests = declareCommand({
   options: z.object({
     static: z.boolean().optional().describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
     body: z.boolean().optional().describe('Whether to include request body. Defaults to false.'),
+    filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
     clear: z.boolean().optional().describe('Whether to clear the network list'),
   }),
   toolName: ({ clear }) => clear ? 'browser_network_clear' : 'browser_network_requests',
-  toolParams: ({ static: includeStatic, body: includeBody, clear }) => clear ? ({}) : ({ includeStatic, includeBody }),
+  toolParams: ({ static: includeStatic, body: includeBody, filter, clear }) => clear ? ({}) : ({ includeStatic, includeBody, filter }),
 });
 
 const tracingStart = declareCommand({

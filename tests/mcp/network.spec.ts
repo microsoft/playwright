@@ -61,6 +61,27 @@ test('browser_network_requests', async ({ client, server }) => {
   }
 });
 
+test('browser_network_requests filter', async ({ client, server }) => {
+  server.setContent('/', `<script>
+    Promise.all([fetch('/api/users'), fetch('/api/orders'), fetch('/static/image.png')]);
+  </script>`, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  {
+    const response = parseResponse(await client.callTool({
+      name: 'browser_network_requests',
+      arguments: { filter: '/api/', includeStatic: true },
+    }));
+    expect(response.result).toContain(`${server.PREFIX}/api/users`);
+    expect(response.result).toContain(`${server.PREFIX}/api/orders`);
+    expect(response.result).not.toContain(`${server.PREFIX}/static/image.png`);
+  }
+});
+
 test('browser_network_requests includes request payload', async ({ client, server }) => {
   server.setContent('/', `
     <button onclick="fetch('/api', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'value' }) })">Click me</button>
