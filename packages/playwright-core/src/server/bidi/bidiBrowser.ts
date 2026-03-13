@@ -143,7 +143,7 @@ export class BidiBrowser extends Browser {
         page._getFrameNode(frame).then(node => {
           const attributes = node?.value?.attributes;
           frame._name = attributes?.name ?? attributes?.id ?? '';
-        });
+        }, () => {});
         return;
       }
       return;
