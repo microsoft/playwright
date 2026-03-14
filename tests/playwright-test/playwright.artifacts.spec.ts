@@ -572,6 +572,27 @@ test('should work with trace: retain-on-failure-and-retries', async ({ runInline
   ]);
 });
 
+test('error-context should use relative path in location', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    'a.spec.ts': `
+      import { test, expect } from '@playwright/test';
+      test('fail', async ({ page }) => {
+        expect(1).toBe(2);
+      });
+    `,
+  }, { workers: 1 });
+
+  expect(result.exitCode).toBe(1);
+  expect(result.failed).toBe(1);
+
+  const errorContextPath = testInfo.outputPath('test-results', 'a-fail', 'error-context.md');
+  const content = fs.readFileSync(errorContextPath, 'utf8');
+  const locationLine = content.split('\n').find(line => line.startsWith('- Location:'))!;
+  expect(locationLine).toBeTruthy();
+  // Location should be a relative path, not absolute.
+  expect(locationLine).toContain('- Location: a.spec.ts:');
+});
+
 test('should take screenshot when page is closed in afterEach', async ({ runInlineTest }, testInfo) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
