@@ -28,6 +28,7 @@ import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/tra
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
+import { program as cliProgram } from '../tools/cli-client/program';
 
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
@@ -352,6 +353,15 @@ Examples:
 
   $ show-trace
   $ show-trace https://example.com/trace.zip`);
+
+program
+    .command('cli', { hidden: true })
+    .allowExcessArguments(true)
+    .allowUnknownOption(true)
+    .action(async options => {
+      process.argv.splice(process.argv.indexOf('cli'), 1);
+      cliProgram();
+    });
 
 type Options = {
   browser: string;

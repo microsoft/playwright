@@ -24,11 +24,10 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  padding: 20px 0 4px;
+  padding-top: 16px;
   cursor: text;
   user-select: none;
   margin-left: 10px;
-  overflow-x: clip;
 }
 
 .timeline-divider {
@@ -52,14 +51,6 @@
   cursor: pointer;
 }
 
-.timeline-lane {
-  pointer-events: none;
-  overflow: hidden;
-  flex: none;
-  height: 20px;
-  position: relative;
-}
-
 .timeline-grid {
   position: absolute;
   top: 0;
@@ -68,80 +59,11 @@
   left: 0;
 }
 
-.timeline-bars {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  pointer-events: none;
-}
-
-.timeline-bar {
-  position: absolute;
-  --action-color: gray;
-  --action-background-color: #88888802;
-  border-top: 2px solid var(--action-color);
-}
-
-.timeline-bar.active {
-  background-color: var(--action-background-color);
-}
-
-.timeline-bar.action {
-  --action-color: var(--vscode-charts-orange);
-  --action-background-color: #d1861666;
-}
-
-.timeline-bar.action.error {
-  --action-color: var(--vscode-charts-red);
-  --action-background-color: #e5140066;
-}
-
-.timeline-bar.network {
-  --action-color: var(--vscode-charts-blue);
-  --action-background-color: #1a85ff66;
-}
-
-.timeline-bar.console-message {
-  --action-color: var(--vscode-charts-purple);
-  --action-background-color: #1a85ff66;
-}
-
-:root.dark-mode .timeline-bar.action.error {
-  --action-color: var(--vscode-errorForeground);
-  --action-background-color: #f4877166;
-}
-
-.timeline-label {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  margin-left: 2px;
-  background-color: var(--vscode-panel-background);
-  justify-content: center;
-  display: none;
-  white-space: nowrap;
-}
-
-.timeline-label.selected {
-  display: flex;
-}
-
-.timeline-marker {
-  display: none;
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  pointer-events: none;
-  border-left: 3px solid var(--light-pink);
-}
-
 .timeline-window {
   display: flex;
   position: absolute;
   top: 0;
-  bottom: 0;
+  bottom: 20px;
   left: 0;
   right: 0;
   pointer-events: none;

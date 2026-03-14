@@ -844,6 +844,7 @@ scheme.BrowserContextWaitForEventInfoParams = tType('EventTargetWaitForEventInfo
 scheme.PageWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.WorkerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.WebSocketWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
+scheme.DebuggerWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.ElectronApplicationWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.AndroidDeviceWaitForEventInfoParams = tType('EventTargetWaitForEventInfoParams');
 scheme.EventTargetWaitForEventInfoResult = tOptional(tObject({}));
@@ -851,9 +852,11 @@ scheme.BrowserContextWaitForEventInfoResult = tType('EventTargetWaitForEventInfo
 scheme.PageWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.WorkerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.WebSocketWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
+scheme.DebuggerWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.ElectronApplicationWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.AndroidDeviceWaitForEventInfoResult = tType('EventTargetWaitForEventInfoResult');
 scheme.BrowserContextInitializer = tObject({
+  debugger: tChannel(['Debugger']),
   requestContext: tChannel(['APIRequestContext']),
   tracing: tChannel(['Tracing']),
   options: tObject({
@@ -1493,6 +1496,7 @@ scheme.PageRequestsResult = tObject({
 });
 scheme.PageSnapshotForAIParams = tObject({
   track: tOptional(tString),
+  selector: tOptional(tString),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({
@@ -2493,6 +2497,28 @@ scheme.BindingCallResolveParams = tObject({
   result: tType('SerializedArgument'),
 });
 scheme.BindingCallResolveResult = tOptional(tObject({}));
+scheme.DebuggerInitializer = tOptional(tObject({}));
+scheme.DebuggerPausedStateChangedEvent = tObject({
+  pausedDetails: tArray(tObject({
+    location: tObject({
+      file: tString,
+      line: tOptional(tInt),
+      column: tOptional(tInt),
+    }),
+    title: tString,
+  })),
+});
+scheme.DebuggerSetPauseAtParams = tObject({
+  next: tOptional(tBoolean),
+  location: tOptional(tObject({
+    file: tString,
+    line: tOptional(tInt),
+    column: tOptional(tInt),
+  })),
+});
+scheme.DebuggerSetPauseAtResult = tOptional(tObject({}));
+scheme.DebuggerResumeParams = tOptional(tObject({}));
+scheme.DebuggerResumeResult = tOptional(tObject({}));
 scheme.DialogInitializer = tObject({
   page: tOptional(tChannel(['Page'])),
   type: tString,

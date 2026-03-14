@@ -34,6 +34,10 @@ export const Events = {
     Disconnected: 'disconnected'
   },
 
+  Debugger: {
+    PausedStateChanged: 'pausedstatechanged'
+  },
+
   BrowserContext: {
     Console: 'console',
     Close: 'close',

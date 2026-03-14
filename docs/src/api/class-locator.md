@@ -2485,6 +2485,19 @@ This method expects [Locator] to point to an
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
+## async method: Locator.snapshotForAI
+* since: v1.59
+- returns: <[Object]>
+  - `full` <[string]> Accessibility snapshot of the element matching this locator.
+
+Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
+
+### option: Locator.snapshotForAI.timeout = %%-input-timeout-%%
+* since: v1.59
+
+### option: Locator.snapshotForAI.timeout = %%-input-timeout-js-%%
+* since: v1.59
+
 ## async method: Locator.tap
 * since: v1.14
 

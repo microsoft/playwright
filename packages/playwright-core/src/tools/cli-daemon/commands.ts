@@ -328,12 +328,14 @@ const snapshot = declareCommand({
   name: 'snapshot',
   description: 'Capture page snapshot to obtain element ref',
   category: 'core',
-  args: z.object({}),
+  args: z.object({
+    element: z.string().optional().describe('Element selector of the root element to capture a partial snapshot instead of the whole page'),
+  }),
   options: z.object({
     filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: ({ filename }) => ({ filename }),
+  toolParams: ({ filename, element }) => ({ filename, selector: element }),
 });
 
 const evaluate = declareCommand({

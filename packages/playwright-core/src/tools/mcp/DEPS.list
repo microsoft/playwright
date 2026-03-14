@@ -15,3 +15,6 @@
 [browserFactory.ts]
 ../../client/connect.ts
 ../utils/connect.ts
+
+[program.ts]
+../../cli/program.ts

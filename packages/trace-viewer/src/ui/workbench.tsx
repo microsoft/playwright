@@ -28,6 +28,7 @@ import { SourceTab } from './sourceTab';
 import { TabbedPane } from '@web/components/tabbedPane';
 import type { TabbedPaneTabModel } from '@web/components/tabbedPane';
 import { Timeline } from './timeline';
+import { usePlayback, PlaybackScrubber } from './playbackControl';
 import { MetadataView } from './metadataView';
 import { AttachmentsTab } from './attachmentsTab';
 import { AnnotationsTab } from './annotationsTab';
@@ -84,9 +85,7 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   const [selectedTime, setSelectedTime] = usePartitionedState<Boundaries | undefined>('selectedTime');
   const [highlightedCallId, setHighlightedCallId] = usePartitionedState<string | undefined>('highlightedCallId');
   const [revealedErrorKey, setRevealedErrorKey] = usePartitionedState<string | undefined>('revealedErrorKey');
-  const [highlightedConsoleMessageOrdinal, setHighlightedConsoleMessageOrdinal] = usePartitionedState<number | undefined>('highlightedConsoleMessageOrdinal');
   const [revealedAttachmentCallId, setRevealedAttachmentCallId] = usePartitionedState<{ callId: string } | undefined>('revealedAttachmentCallId');
-  const [highlightedResourceKey, setHighlightedResourceKey] = usePartitionedState<string | undefined>('highlightedResourceKey');
   const [treeState, setTreeState] = usePartitionedState<TreeState>('treeState', { expandedItems: new Map() });
   const [actionFilterText, setActionFilterText] = React.useState('');
 
@@ -151,6 +150,19 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     setSelectedAction(action);
     setHighlightedAction(undefined);
   }, [setSelectedAction, setHighlightedAction]);
+
+  const { boundaries } = React.useMemo(() => {
+    const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
+    if (boundaries.minimum > boundaries.maximum) {
+      boundaries.minimum = 0;
+      boundaries.maximum = 30000;
+    }
+    // Leave some nice free space on the right hand side.
+    boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
+    return { boundaries };
+  }, [model]);
+
+  const playback = usePlayback(actions || [], selectedAction, onActionSelected, selectedTime, boundaries);
 
   const selectPropertiesTab = React.useCallback((tab: string) => {
     setSelectedPropertiesTab(tab);
@@ -252,14 +264,13 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
       boundaries={boundaries}
       selectedTime={selectedTime}
       onAccepted={m => setSelectedTime({ minimum: m.timestamp, maximum: m.timestamp })}
-      onEntryHovered={setHighlightedConsoleMessageOrdinal}
     />
   };
   const networkTab: TabbedPaneTabModel = {
     id: 'network',
     title: 'Network',
     count: networkModel.resources.length,
-    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} onResourceHovered={setHighlightedResourceKey} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
+    render: () => <NetworkTab boundaries={boundaries} networkModel={networkModel} sdkLanguage={model?.sdkLanguage ?? 'javascript'} />
   };
   const attachmentsTab: TabbedPaneTabModel = {
     id: 'attachments',
@@ -295,16 +306,6 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
     tabs.splice(1, 0, sourceTab);
   }
 
-  const { boundaries } = React.useMemo(() => {
-    const boundaries = { minimum: model?.startTime || 0, maximum: model?.endTime || 30000 };
-    if (boundaries.minimum > boundaries.maximum) {
-      boundaries.minimum = 0;
-      boundaries.maximum = 30000;
-    }
-    // Leave some nice free space on the right hand side.
-    boundaries.maximum += (boundaries.maximum - boundaries.minimum) / 20;
-    return { boundaries };
-  }, [model]);
 
   let time: number = 0;
   if (!isLive && model && model.endTime >= 0)
@@ -360,16 +361,12 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
   return <div className='vbox workbench' {...(inert ? { inert: true } : {})}>
     {!hideTimeline && <Timeline
       model={model}
-      consoleEntries={consoleModel.entries}
-      networkResources={networkModel.resources}
       boundaries={boundaries}
-      highlightedAction={highlightedAction}
-      highlightedResourceKey={highlightedResourceKey}
-      highlightedConsoleEntryOrdinal={highlightedConsoleMessageOrdinal}
       onSelected={onActionSelected}
       sdkLanguage={sdkLanguage}
       selectedTime={selectedTime}
       setSelectedTime={setSelectedTime}
+      scrubber={<PlaybackScrubber playback={playback} />}
     />}
     <SplitView
       sidebarSize={250}
@@ -387,7 +384,8 @@ const PartitionedWorkbench: React.FunctionComponent<WorkbenchProps & { partition
           isInspecting={isInspecting}
           setIsInspecting={setIsInspecting}
           highlightedElement={highlightedElement}
-          setHighlightedElement={elementPicked} />}
+          setHighlightedElement={elementPicked}
+          playback={playback} />}
         sidebar={
           <TabbedPane
             tabs={[actionsTab, metadataTab]}

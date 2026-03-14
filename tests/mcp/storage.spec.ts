@@ -169,6 +169,39 @@ test('browser_set_storage_state restores storage state from file', async ({ star
   });
 });
 
+test('--storage-state option works with remote endpoint in config', async ({ startClient, server, wsEndpoint }, testInfo) => {
+  const stateFile = testInfo.outputPath('state.json');
+  const storageState = {
+    cookies: [{
+      name: 'remoteCookie',
+      value: 'remoteValue',
+      domain: 'localhost',
+      path: '/',
+    }],
+    origins: [],
+  };
+  await fs.promises.writeFile(stateFile, JSON.stringify(storageState));
+
+  const { client } = await startClient({
+    config: { browser: { remoteEndpoint: wsEndpoint, isolated: true } },
+    args: ['--storage-state', stateFile],
+  });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.EMPTY_PAGE },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => document.cookie' },
+  });
+
+  expect(result).toHaveResponse({
+    result: expect.stringContaining('remoteCookie=remoteValue'),
+  });
+});
+
 test('browser_storage_state and browser_set_storage_state roundtrip', async ({ startClient, server, mcpBrowser }, testInfo) => {
   const { client } = await startClient({
     config: { capabilities: ['storage'] },

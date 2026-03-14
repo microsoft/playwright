@@ -4539,6 +4539,14 @@ export interface Page {
    */
   snapshotForAI(options?: {
     /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
      * When specified, enables incremental snapshots. Subsequent calls with the same track name will return an incremental
      * snapshot containing only changes since the last call.
      */
@@ -9688,6 +9696,11 @@ export interface BrowserContext {
   clock: Clock;
 
   /**
+   * Debugger allows to pause and resume the execution.
+   */
+  debugger: Debugger;
+
+  /**
    * API testing helper associated with this context. Requests made with this API will use context cookies.
    */
   request: APIRequestContext;
@@ -14667,6 +14680,25 @@ export interface Locator {
   }): Promise<void>;
 
   /**
+   * Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
+   * @param options
+   */
+  snapshotForAI(options?: {
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+  }): Promise<{
+    /**
+     * Accessibility snapshot of the element matching this locator.
+     */
+    full: string;
+  }>;
+
+  /**
    * Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually
    * dispatching touch events, see the [emulating legacy touch events](https://playwright.dev/docs/touch-events) page.
    *
@@ -19375,6 +19407,89 @@ export interface Coverage {
       }>;
     }>;
   }>>;
+}
+
+/**
+ * API for controlling the Playwright debugger. The debugger allows pausing script execution and inspecting the page.
+ * Obtain the debugger instance via
+ * [browserContext.debugger](https://playwright.dev/docs/api/class-browsercontext#browser-context-debugger).
+ *
+ * See also [page.pause()](https://playwright.dev/docs/api/class-page#page-pause) for a simple way to pause script
+ * execution.
+ */
+export interface Debugger {
+  /**
+   * Emitted when the debugger pauses or resumes.
+   */
+  on(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
+   */
+  once(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Emitted when the debugger pauses or resumes.
+   */
+  addListener(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  removeListener(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Removes an event listener added by `on` or `addListener`.
+   */
+  off(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Emitted when the debugger pauses or resumes.
+   */
+  prependListener(event: 'pausedstatechanged', listener: () => any): this;
+
+  /**
+   * Returns details about the currently paused calls. Returns an empty array if the debugger is not paused.
+   */
+  pausedDetails(): Array<{
+    location: {
+      file: string;
+
+      line?: number;
+
+      column?: number;
+    };
+
+    title: string;
+  }>;
+
+  /**
+   * Resumes script execution if the debugger is paused.
+   */
+  resume(): Promise<void>;
+
+  /**
+   * Configures the debugger to pause at the next action or at a specific source location. Call without arguments to
+   * reset the pausing behavior.
+   * @param options
+   */
+  setPauseAt(options?: {
+    /**
+     * When specified, the debugger will pause when the action originates from the given source location.
+     */
+    location?: {
+      file: string;
+
+      line?: number;
+
+      column?: number;
+    };
+
+    /**
+     * When `true`, the debugger will pause before the next action.
+     */
+    next?: boolean;
+  }): Promise<void>;
 }
 
 /**

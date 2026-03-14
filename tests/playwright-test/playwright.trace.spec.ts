@@ -129,6 +129,7 @@ test('should record api trace', async ({ runInlineTest, server }, testInfo) => {
     '  Fixture "context"',
     '    Close context',
     '  Fixture "request"',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -657,6 +658,7 @@ test('should show non-expect error in trace', async ({ runInlineTest }, testInfo
     '  Fixture "page"',
     '  Fixture "context"',
     '    Close context',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -985,6 +987,7 @@ test('should record nested steps, even after timeout', async ({ runInlineTest },
     '      step in barPage teardown',
     '        Close context',
     'Attach "error-context"',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -1072,6 +1075,7 @@ test('should attribute worker fixture teardown to the right test', async ({ runI
   expect(trace2.model.renderActionTree()).toEqual([
     'Before Hooks',
     'After Hooks',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "foo"',
     '    step in foo teardown',
@@ -1221,6 +1225,7 @@ test('should not corrupt actions when no library trace is present', async ({ run
     'After Hooks',
     '  Fixture "foo"',
     '    Expect "toBe"',
+    'Attach "error-context"',
     'Worker Cleanup',
   ]);
 });
@@ -1251,6 +1256,7 @@ test('should record trace for manually created context in a failed test', async 
     'Set content',
     'Expect "toBe"',
     'After Hooks',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);
@@ -1338,6 +1344,7 @@ test('should record trace after fixture teardown timeout', {
     'Evaluate',
     'After Hooks',
     '  Fixture "fixture"',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);

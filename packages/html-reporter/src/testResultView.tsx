@@ -28,9 +28,9 @@ import { CodeSnippet, PromptButton, TestScreenshotErrorView } from './testErrorV
 import * as icons from './icons';
 import './testResultView.css';
 import { useAsyncMemo } from '@web/uiUtils';
-import { copyPrompt } from '@web/shared/prompts';
 import type { LoadedReport } from './loadedReport';
 import { TestCaseListView } from './testFileView';
+import { stripAnsiEscapes } from '@isomorphic/stringUtils';
 
 interface ImageDiffWithAnchors extends ImageDiff {
   anchors: string[];
@@ -94,25 +94,28 @@ export const TestResultView: React.FC<{
   const prompt = useAsyncMemo(async () => {
     if (report.json().options?.noCopyPrompt)
       return undefined;
+    if (!errorContext)
+      return undefined;
+
+    let text = errorContext.path ? await fetch(errorContext.path).then(r => r.text()) : errorContext.body;
+    if (!text)
+      return undefined;
 
     const stdoutAttachment = result.attachments.find(a => a.name === 'stdout');
     const stderrAttachment = result.attachments.find(a => a.name === 'stderr');
     const stdout = stdoutAttachment?.body && stdoutAttachment.contentType === 'text/plain' ? stdoutAttachment.body : undefined;
     const stderr = stderrAttachment?.body && stderrAttachment.contentType === 'text/plain' ? stderrAttachment.body : undefined;
+    if (stdout)
+      text += '\n\n# Stdout\n\n```\n' + stripAnsiEscapes(stdout) + '\n```';
+    if (stderr)
+      text += '\n\n# Stderr\n\n```\n' + stripAnsiEscapes(stderr) + '\n```';
 
-    return await copyPrompt({
-      testInfo: [
-        `- Name: ${test.path.join(' >> ')} >> ${test.title}`,
-        `- Location: ${test.location.file}:${test.location.line}:${test.location.column}`
-      ].join('\n'),
-      metadata: report.json().metadata,
-      errorContext: errorContext?.path ? await fetch(errorContext.path!).then(r => r.text()) : errorContext?.body,
-      errors: result.errors,
-      buildCodeFrame: async error => error.codeframe,
-      stdout,
-      stderr,
-    });
-  }, [test, errorContext, report, result], undefined);
+    const metadata = report.json().metadata;
+    if (metadata?.gitDiff)
+      text += '\n\n# Local changes\n\n```diff\n' + metadata.gitDiff + '\n```';
+
+    return text;
+  }, [errorContext, report, result], undefined);
 
   return <div className='test-result'>
     {!!errors.length && <AutoChip header='Errors'>

@@ -97,7 +97,7 @@ test('should show running progress', async ({ runUITest }) => {
 
   await page.getByTitle('Run all').click();
   await expect(page.getByTestId('status-line')).toHaveText('Running 1/4 passed (25%)');
-  await page.getByTitle('Stop').click();
+  await page.getByTestId('stop-button').click();
   await expect(page.getByTestId('status-line')).toHaveText('1/4 passed (25%)');
   await page.getByTitle('Reload').click();
   await expect(page.getByTestId('status-line')).toBeHidden();
@@ -365,7 +365,7 @@ test('should stop', async ({ runUITest }) => {
   });
 
   await expect(page.getByTitle('Run all')).toBeEnabled();
-  await expect(page.getByTitle('Stop')).toBeDisabled();
+  await expect(page.getByTestId('stop-button')).toBeDisabled();
 
   await page.getByTitle('Run all').click();
 
@@ -388,9 +388,9 @@ test('should stop', async ({ runUITest }) => {
   `);
 
   await expect(page.getByTitle('Run all')).toBeDisabled();
-  await expect(page.getByTitle('Stop')).toBeEnabled();
+  await expect(page.getByTestId('stop-button')).toBeEnabled();
 
-  await page.getByTitle('Stop').click();
+  await page.getByTestId('stop-button').click();
 
   await expect.poll(dumpTestTree(page)).toBe(`
     ▼ ◯ a.test.ts
