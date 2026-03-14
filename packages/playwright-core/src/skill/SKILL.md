@@ -44,6 +44,8 @@ playwright-cli check e12
 playwright-cli uncheck e12
 playwright-cli snapshot
 playwright-cli snapshot --filename=after-click.yaml
+# scope snapshot to an element
+playwright-cli snapshot "#main"
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 playwright-cli dialog-accept
@@ -219,6 +221,9 @@ playwright-cli click "role=button[name=Submit]"
 
 # chaining css and role selectors
 playwright-cli click "#footer >> role=button[name=Submit]"
+
+# scoping snapshot to an element
+playwright-cli snapshot "#main"
 ```
 
 ## Browser Sessions
