@@ -34,6 +34,7 @@ export type HostPlatform = 'win64' |
                            'debian11-x64' | 'debian11-arm64' |
                            'debian12-x64' | 'debian12-arm64' |
                            'debian13-x64' | 'debian13-arm64' |
+                           'fedora-x64' | 'fedora-arm64' |
                            '<unknown>';
 
 function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupportedPlatform: boolean } {
@@ -111,6 +112,8 @@ function calculatePlatform(): { hostPlatform: HostPlatform, isOfficiallySupporte
       if (distroInfo?.version === '')
         return { hostPlatform: ('debian13' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform };
     }
+    if (distroInfo?.id === 'fedora')
+      return { hostPlatform: ('fedora' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
     return { hostPlatform: ('ubuntu24.04' + archSuffix) as HostPlatform, isOfficiallySupportedPlatform: false };
   }
   if (platform === 'win32')
