@@ -1193,6 +1193,7 @@ BrowserContext:
   extends: EventTarget
 
   initializer:
+    debugger: Debugger
     requestContext: APIRequestContext
     tracing: Tracing
     options:
@@ -3793,6 +3794,47 @@ BindingCall:
       parameters:
         result: SerializedArgument
 
+
+
+Debugger:
+  type: interface
+
+  extends: EventTarget
+
+  commands:
+
+    setPauseAt:
+      title: Configure pause behavior
+      group: configuration
+      parameters:
+        next: boolean?
+        location:
+          type: object?
+          properties:
+            file: string
+            line: int?
+            column: int?
+
+    resume:
+      title: Resume
+      group: configuration
+
+  events:
+
+    pausedStateChanged:
+      parameters:
+        pausedDetails:
+          type: array
+          items:
+            type: object
+            properties:
+              location:
+                type: object
+                properties:
+                  file: string
+                  line: int?
+                  column: int?
+              title: string
 
 
 Dialog:

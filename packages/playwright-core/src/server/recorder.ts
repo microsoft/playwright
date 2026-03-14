@@ -212,7 +212,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_resume', false, () => {
-        this._debugger.resume(false);
+        this._debugger.resume();
       });
 
       this._context.on(BrowserContext.Events.Page, (page: Page) => this._onPage(page));
@@ -325,7 +325,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   step() {
-    this._debugger.resume(true);
+    this._debugger.setPauseAt({ next: true });
+    this._debugger.resume();
   }
 
   async setLanguage(language: Language) {
@@ -334,11 +335,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   resume() {
-    this._debugger.resume(false);
+    this._debugger.resume();
   }
 
   pause() {
-    this._debugger.pauseOnNextStatement();
+    this._debugger.setPauseAt({ next: true });
   }
 
   paused() {
@@ -346,7 +347,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   close() {
-    this._debugger.resume(false);
+    this._debugger.resume();
   }
 
   async hideHighlightedSelector() {

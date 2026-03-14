@@ -74,6 +74,13 @@ This event is not emitted.
 
 Playwright has ability to mock clock and passage of time.
 
+## property: BrowserContext.debugger
+* since: v1.59
+* langs: js
+- type: <[Debugger]>
+
+Debugger allows to pause and resume the execution.
+
 ## event: BrowserContext.close
 * since: v1.8
 - argument: <[BrowserContext]>
