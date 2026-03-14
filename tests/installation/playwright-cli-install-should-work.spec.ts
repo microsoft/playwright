@@ -85,7 +85,15 @@ test('install command should work with mirror that uses chunked encoding', async
   await exec('npm i playwright');
   const server = http.createServer(async (req, res) => {
     try {
-      const upstream = await fetch('https://cdn.playwright.dev' + req.url);
+      const upstreamURL = new URL(req.url || '/', 'https://cdn.playwright.dev');
+      // Basic validation to avoid forwarding unsafe paths.
+      const normalizedPath = upstreamURL.pathname;
+      if (!normalizedPath.startsWith('/') || normalizedPath.includes('..')) {
+        res.statusCode = 400;
+        res.end('Bad request');
+        return;
+      }
+      const upstream = await fetch(upstreamURL.toString());
       const headers = new Headers(upstream.headers);
       headers.delete('content-length');
       res.writeHead(upstream.status, Object.fromEntries(headers));
