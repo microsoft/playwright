@@ -19,6 +19,11 @@
   overflow: auto;
 }
 
+.network-response-toolbar {
+  border-top: 1px solid var(--vscode-panel-border);
+  border-bottom: none !important;
+}
+
 .network-request-details-tab > * {
   flex: none;
 }
@@ -68,6 +73,10 @@
 
 .network-request-details-tab .cm-wrapper {
   overflow: hidden;
+}
+
+.network-response-body {
+  height: calc(100% - 31px /* Height of bottom toolbar */);
 }
 
 .network-request-request-body {

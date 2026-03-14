@@ -187,6 +187,12 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '  }',
     '}',
   ], { useInnerText: true });
+
+  // Untoggle pretty print to see original request body
+  await payloadPanel.getByRole('button', { name: 'Pretty print', exact: true }).click();
+  await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '{"data":{"key":"value","array":["value-1","value-2"]}}'
+  ], { useInnerText: true });
 });
 
 test('should format XML request body', async ({ runUITest, server }) => {
@@ -212,6 +218,12 @@ test('should format XML request body', async ({ runUITest, server }) => {
     '<note to="Alice" from="Bob">',
     '    <body>Hello &amp; welcome!</body>',
     '</note>'
+  ], { useInnerText: true });
+
+  // Untoggle pretty print to see original request body
+  await payloadPanel.getByRole('button', { name: 'Pretty print', exact: true }).click();
+  await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '<?xml version="1.0"?><note to="Alice" from="Bob"><body>Hello &amp; welcome!</body></note>'
   ], { useInnerText: true });
 });
 
@@ -380,15 +392,9 @@ test('should copy network request', async ({ runUITest, server }) => {
   await expect(async () => {
     const playwrightRequest = await page.evaluate(() => (window as any).__clipboardCall);
     expect(playwrightRequest).toContain(`await page.request.post('${server.PREFIX}/post-data-1', {`);
-    expect(playwrightRequest.replaceAll('\r\n', '\n')).toContain(`  data: \`{
-  "data": {
-    "key": "value",
-    "array": [
-      "value-1",
-      "value-2"
-    ]
-  }
-}\``);
+    expect(playwrightRequest.replaceAll('\r\n', '\n')).toContain(
+        `  data: '{"data":{"key":"value","array":["value-1","value-2"]}}'`
+    );
     expect(playwrightRequest).toContain(`'content-type': 'application/json'`);
   }).toPass();
 });
