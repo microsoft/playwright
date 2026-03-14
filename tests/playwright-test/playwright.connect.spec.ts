@@ -167,7 +167,11 @@ test('should print debug log when failed to connect', async ({ runInlineTest }) 
   expect(result.exitCode).toBe(1);
   expect(result.failed).toBe(1);
   expect(result.output).toContain('b-debug-log-string');
-  expect(result.results[0].attachments).toEqual([]);
+  expect(result.results[0].attachments).toEqual([{
+    name: 'error-context',
+    contentType: 'text/markdown',
+    path: expect.stringContaining('error-context.md'),
+  }]);
 });
 
 test('should record trace', async ({ runInlineTest }) => {
@@ -224,6 +228,7 @@ test('should record trace', async ({ runInlineTest }) => {
     '  Fixture "page"',
     '  Fixture "context"',
     '    Close context',
+    'Attach "error-context"',
     'Worker Cleanup',
     '  Fixture "browser"',
   ]);

@@ -23,10 +23,7 @@ import type { Language } from '@isomorphic/locatorGenerators';
 import { CopyToClipboardTextButton } from './copyToClipboard';
 import { useAsyncMemo } from '@web/uiUtils';
 import { attachmentURL } from './attachmentsTab';
-import { copyPrompt, stripAnsiEscapes } from '@web/shared/prompts';
 import { MetadataWithCommitInfo } from '@testIsomorphic/types';
-import { calculateSha1 } from './sourceTab';
-import type { StackFrame } from '@protocol/channels';
 import { useTraceModel } from './traceModelContext';
 
 const CopyPromptButton: React.FC<{ prompt: string }> = ({ prompt }) => {
@@ -92,48 +89,18 @@ export const ErrorsTab: React.FunctionComponent<{
   testRunMetadata: MetadataWithCommitInfo | undefined,
 }> = ({ errorsModel, sdkLanguage, revealInSource, wallTime, testRunMetadata }) => {
   const model = useTraceModel();
-  const errorContext = useAsyncMemo(async () => {
+
+  const prompt = useAsyncMemo(async () => {
     const attachment = model?.attachments.find(a => a.name === 'error-context');
     if (!attachment)
-      return;
-    return await fetch(attachmentURL(model, attachment)).then(r => r.text());
-  }, [model], undefined);
-
-  const buildCodeFrame = React.useCallback(async (error: ErrorDescription) => {
-    const location = error.stack?.[0];
-    if (!location)
-      return;
-
-    let response = model ? await fetch(model.createRelativeUrl(`sha1/src@${await calculateSha1(location.file)}.txt`)) : undefined;
-    if (!response || response.status === 404)
-      response = await fetch(`file?path=${encodeURIComponent(location.file)}`);
-    if (response.status >= 400)
-      return;
-
-    const source = await response.text();
-
-    return codeFrame({
-      source,
-      message: stripAnsiEscapes(error.message).split('\n')[0] || undefined,
-      location,
-      linesAbove: 100,
-      linesBelow: 100,
-    });
-  }, [model]);
-
-  const prompt = useAsyncMemo(
-      () => copyPrompt(
-          {
-            testInfo: model?.title ?? '',
-            metadata: testRunMetadata,
-            errorContext,
-            errors: model?.errorDescriptors ?? [],
-            buildCodeFrame
-          }
-      ),
-      [errorContext, testRunMetadata, model, buildCodeFrame],
-      undefined
-  );
+      return undefined;
+    let text = await fetch(attachmentURL(model, attachment)).then(r => r.text());
+    if (!text)
+      return undefined;
+    if (testRunMetadata?.gitDiff)
+      text += '\n\n# Local changes\n\n```diff\n' + testRunMetadata.gitDiff + '\n```';
+    return text;
+  }, [model, testRunMetadata], undefined);
 
   if (!errorsModel.errors.size)
     return <PlaceholderPanel text='No errors' />;
@@ -148,15 +115,3 @@ export const ErrorsTab: React.FunctionComponent<{
     })}
   </div>;
 };
-
-function codeFrame({ source, message, location, linesAbove, linesBelow }: { source: string, message?: string, location: StackFrame, linesAbove: number, linesBelow: number }): string {
-  const lines = source.split('\n').slice();
-  const start = Math.max(0, location.line - linesAbove - 1);
-  const end = Math.min(lines.length, location.line + linesBelow);
-  const scope = lines.slice(start, end);
-  const lineNumberWidth = String(end).length;
-  const frame = scope.map((line, index) => `${(start + index + 1) === location.line ? '> ' : '  '}${(start + index + 1).toString().padEnd(lineNumberWidth, ' ')} | ${line}`);
-  if (message)
-    frame.splice(location.line - start, 0, `${' '.repeat(lineNumberWidth + 2)} | ${' '.repeat(location.column - 2)} ^ ${message}`);
-  return frame.join('\n');
-}

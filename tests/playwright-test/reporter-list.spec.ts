@@ -488,6 +488,8 @@ Running 1 test using 1 worker
       9 |       
         at ${test.info().outputPath('a.test.ts')}:7:17
 
+    Error Context: test-results/a-foo/error-context.md
+
   1 interrupted
     a.test.ts:3:13 › foo ───────────────────────────────────────────────────────────────────────────
 `);
