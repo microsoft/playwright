@@ -168,6 +168,15 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (this._options.serviceWorkers === 'block')
       await this.addInitScript(`\nif (navigator.serviceWorker) navigator.serviceWorker.register = async () => { console.warn('Service Worker registration blocked by Playwright'); };\n`);
 
+    if (this._options.forceShadowDOMOpen) {
+      await this.addInitScript(`\n(() => {
+  const __attachShadow = Element.prototype.attachShadow;
+  Element.prototype.attachShadow = function attachShadow(init) {
+    return __attachShadow.call(this, init && init.mode === 'closed' ? { ...init, mode: 'open' } : init);
+  };
+})();\n`);
+    }
+
     if (this._options.permissions)
       await this.grantPermissions(this._options.permissions);
   }

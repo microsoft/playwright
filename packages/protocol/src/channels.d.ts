@@ -1029,6 +1029,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   userDataDir: string,
   slowMo?: number,
 };
@@ -1112,6 +1113,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   slowMo?: number,
 };
 export type BrowserTypeLaunchPersistentContextResult = {
@@ -1263,6 +1265,7 @@ export type BrowserNewContextParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1331,6 +1334,7 @@ export type BrowserNewContextOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1402,6 +1406,7 @@ export type BrowserNewContextForReuseParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1470,6 +1475,7 @@ export type BrowserNewContextForReuseOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   proxy?: {
     server: string,
     bypass?: string,
@@ -1604,6 +1610,7 @@ export type BrowserContextInitializer = {
     serviceWorkers?: 'allow' | 'block',
     selectorEngines?: SelectorEngine[],
     testIdAttributeName?: string,
+    forceShadowDOMOpen?: boolean,
   },
 };
 export interface BrowserContextEventTarget {
@@ -5012,6 +5019,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   pkg?: string,
   args?: string[],
   proxy?: {
@@ -5078,6 +5086,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   serviceWorkers?: 'allow' | 'block',
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
+  forceShadowDOMOpen?: boolean,
   pkg?: string,
   args?: string[],
   proxy?: {

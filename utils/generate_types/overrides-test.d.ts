@@ -292,6 +292,7 @@ export interface PlaywrightTestOptions {
   navigationTimeout: number;
   serviceWorkers: ServiceWorkerPolicy;
   testIdAttribute: string;
+  forceShadowDOMOpen: boolean;
 }
 
 

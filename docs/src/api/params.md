@@ -319,6 +319,16 @@ Whether to ignore HTTPS errors when sending network requests. Defaults to `false
 
 Toggles bypassing page's Content-Security-Policy. Defaults to `false`.
 
+## context-option-forceshadowdomopen
+* since: vX.XX
+- `forceShadowDOMOpen` <[boolean]>
+
+When true, Playwright will patch [`Element.prototype.attachShadow`](https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow) to force all shadow DOM roots to be created with `mode: 'open'`. This allows Playwright to interact with elements inside closed shadow DOM trees. Defaults to `false`.
+
+:::note
+This option only affects shadow roots attached after the init script runs. Shadow roots created by inline scripts that execute before Playwright's init script will remain closed.
+:::
+
 ## context-option-baseURL
 - `baseURL` <[string]>
 
@@ -1059,6 +1069,7 @@ between the same pixel in compared images, between zero (strict) and one (lax), 
 - %%-context-option-recordvideo-size-%%
 - %%-context-option-strict-%%
 - %%-context-option-service-worker-policy-%%
+- %%-context-option-forceshadowdomopen-%%
 
 ## browser-option-args
 - `args` <[Array]<[string]>>

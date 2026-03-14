@@ -677,3 +677,18 @@ export default defineConfig({
   },
 });
 ```
+
+## property: TestOptions.forceShadowDOMOpen = %%-context-option-forceshadowdomopen-%%
+* since: vX.XX
+
+**Usage**
+
+```js title="playwright.config.ts"
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    forceShadowDOMOpen: true,
+  },
+});
+```

@@ -152,6 +152,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(process.env.PLAYWRIGHT_TEST_BASE_URL);
   }, { option: true, box: true }],
   serviceWorkers: [({ contextOptions }, use) => use(contextOptions.serviceWorkers ?? 'allow'), { option: true, box: true }],
+  forceShadowDOMOpen: [({ contextOptions }, use) => use(contextOptions.forceShadowDOMOpen ?? false), { option: true, box: true }],
   contextOptions: [{}, { option: true, box: true }],
   _combinedContextOptions: [async ({
     acceptDownloads,
@@ -177,6 +178,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     baseURL,
     contextOptions,
     serviceWorkers,
+    forceShadowDOMOpen,
   }, use, testInfo) => {
     const options: BrowserContextOptions = {};
     if (acceptDownloads !== undefined)
@@ -223,6 +225,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       options.baseURL = baseURL;
     if (serviceWorkers !== undefined)
       options.serviceWorkers = serviceWorkers;
+    if (forceShadowDOMOpen !== undefined)
+      options.forceShadowDOMOpen = forceShadowDOMOpen;
 
     await use({
       ...contextOptions,

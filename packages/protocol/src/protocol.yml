@@ -608,6 +608,7 @@ ContextOptions:
       type: array?
       items: SelectorEngine
     testIdAttributeName: string?
+    forceShadowDOMOpen: boolean?
 
 LocalUtils:
   type: interface
