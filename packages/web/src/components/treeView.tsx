@@ -73,7 +73,6 @@ export function TreeView<T extends TreeItem>({
 
   const itemListRef = React.useRef<HTMLDivElement>(null);
   const [highlightedItem, setHighlightedItem] = React.useState<any>();
-  const [isKeyboardNavigation, setIsKeyboardNavigation] = React.useState(false);
 
   React.useEffect(() => {
     onHighlighted?.(highlightedItem);
@@ -180,12 +179,9 @@ export function TreeView<T extends TreeItem>({
           }
         }
 
-        // scrollIntoViewIfNeeded(element || undefined);
         onHighlighted?.(undefined);
-        if (newSelectedItem) {
-          setIsKeyboardNavigation(true);
+        if (newSelectedItem)
           onSelected?.(newSelectedItem);
-        }
         setHighlightedItem(undefined);
       }}
       ref={itemListRef}
@@ -207,9 +203,7 @@ export function TreeView<T extends TreeItem>({
           setHighlightedItem={setHighlightedItem}
           render={render}
           icon={icon}
-          title={title}
-          isKeyboardNavigation={isKeyboardNavigation}
-          setIsKeyboardNavigation={setIsKeyboardNavigation} />;
+          title={title} />;
       })}
     </div>
   </div>;
@@ -229,8 +223,6 @@ type TreeItemHeaderProps<T> = {
   render: (item: T) => React.ReactNode,
   title?: (item: T) => string,
   icon?: (item: T) => string | undefined,
-  isKeyboardNavigation: boolean,
-  setIsKeyboardNavigation: (value: boolean) => void,
 };
 
 export function TreeItemHeader<T extends TreeItem>({
@@ -246,18 +238,14 @@ export function TreeItemHeader<T extends TreeItem>({
   toggleSubtree,
   render,
   title,
-  icon,
-  isKeyboardNavigation,
-  setIsKeyboardNavigation }: TreeItemHeaderProps<T>) {
+  icon }: TreeItemHeaderProps<T>) {
   const groupId = React.useId();
   const itemRef = React.useRef(null);
 
   React.useEffect(() => {
-    if (selectedItem === item && isKeyboardNavigation && itemRef.current) {
+    if (selectedItem?.id === item.id && itemRef.current)
       scrollIntoViewIfNeeded(itemRef.current);
-      setIsKeyboardNavigation(false);
-    }
-  }, [item, selectedItem, isKeyboardNavigation, setIsKeyboardNavigation]);
+  }, [item.id, selectedItem?.id]);
 
   const itemData = treeItems.get(item)!;
   const indentation = itemData.depth;
@@ -320,9 +308,7 @@ export function TreeItemHeader<T extends TreeItem>({
           setHighlightedItem={setHighlightedItem}
           render={render}
           title={title}
-          icon={icon}
-          isKeyboardNavigation={isKeyboardNavigation}
-          setIsKeyboardNavigation={setIsKeyboardNavigation} />;
+          icon={icon} />;
       })}
     </div>}
   </div>;

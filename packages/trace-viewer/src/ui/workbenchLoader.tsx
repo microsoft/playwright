@@ -192,7 +192,7 @@ export const WorkbenchLoader: React.FunctionComponent<{
     if (event.dataTransfer.types.includes('Files'))
       setDragOver(true);
   }}>
-    <div className='hbox header' {...(showFileUploadDropArea ? { inert: true } : {})}>
+    <div className='hbox workbench-loader-header' {...(showFileUploadDropArea ? { inert: true } : {})}>
       <div className='logo'>
         <img src='playwright-logo.svg' alt='Playwright logo' />
       </div>
