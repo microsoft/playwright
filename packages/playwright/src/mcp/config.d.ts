@@ -245,4 +245,11 @@ export type Config = {
    * Applied after capability filtering.
    */
   allowedTools?: string[];
+
+  /**
+   * When true, the browser context is not automatically closed when the last
+   * tracked tab closes. Use this when the browser lifecycle is managed
+   * externally (e.g., Electron or Chrome embedding).
+   */
+  keepBrowserAlive?: boolean;
 };

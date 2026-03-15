@@ -77,6 +77,7 @@ export type CLIOptions = {
   userDataDir?: string;
   viewportSize?: ViewportSize;
   filterInternalUrls?: boolean;
+  keepBrowserAlive?: boolean;
   'allowed-tools'?: string[];
 };
 
@@ -309,6 +310,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     filterInternalUrls: cliOptions.filterInternalUrls,
+    keepBrowserAlive: cliOptions.keepBrowserAlive,
     allowedTools: cliOptions['allowed-tools'],
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,

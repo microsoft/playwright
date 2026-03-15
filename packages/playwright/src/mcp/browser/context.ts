@@ -153,7 +153,7 @@ export class Context {
 
     if (this._currentTab === tab)
       this._currentTab = this._tabs[Math.min(index, this._tabs.length - 1)];
-    if (!this._tabs.length)
+    if (!this._tabs.length && !this.config.keepBrowserAlive)
       void this.closeBrowserContext();
   }
 
