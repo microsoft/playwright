@@ -302,7 +302,7 @@ export class TestCase extends Base implements reporterTypes.TestCase {
     const path: string[] = [];
     this.parent._collectTagTitlePath(path);
     path.push(this.title);
-    const titleTags = path.join(' ').match(/@[\S]+/g) || [];
+    const titleTags = path.join(' ').match(/(?<!\w)@[\w-]+/g) || [];
     return [
       ...titleTags,
       ...this._tags,
