@@ -405,14 +405,15 @@ export class AndroidDevice extends SdkObject {
   }
 
   private async _refreshWebViews() {
-    // possible socketName, eg: webview_devtools_remote_32327, webview_devtools_remote_32327_zeus, webview_devtools_remote_zeus
-    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep webview_devtools_remote`)).toString().split('\n');
+    // possible socketName, eg: chrome_devtools_remote, webview_devtools_remote_32327,
+    // webview_devtools_remote_32327_zeus, webview_devtools_remote_zeus
+    const sockets = (await this._backend.runCommand(`shell:cat /proc/net/unix | grep devtools_remote`)).toString().split('\n');
     if (this._isClosed)
       return;
 
     const socketNames = new Set<string>();
     for (const line of sockets) {
-      const matchSocketName = line.match(/[^@]+@(.*?webview_devtools_remote_?.*)/);
+      const matchSocketName = line.match(/[^@]+@((?:chrome|webview)_devtools_remote_?.*)/);
       if (!matchSocketName)
         continue;
 
@@ -423,7 +424,7 @@ export class AndroidDevice extends SdkObject {
 
       // possible line: 0000000000000000: 00000002 00000000 00010000 0001 01 5841881 @webview_devtools_remote_zeus
       // the result: match[1] = ''
-      const match = line.match(/[^@]+@.*?webview_devtools_remote_?(\d*)/);
+      const match = line.match(/[^@]+@.*?(?:chrome|webview)_devtools_remote_?(\d*)/);
       let pid = -1;
       if (match && match[1])
         pid = +match[1];
