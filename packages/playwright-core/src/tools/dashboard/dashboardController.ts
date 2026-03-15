@@ -243,8 +243,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
       return [];
     const devtoolsUrl = await this._devtoolsUrl(pages[0]);
     return await Promise.all(pages.map(async page => {
-      // page.title() throws on navigation.
-      const title = await page.title().catch(() => undefined) || `Loading ${page.url()}`;
+      const title = await page.title();
       return {
         pageId: this._pageId(page),
         title,

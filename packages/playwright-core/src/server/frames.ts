@@ -1566,8 +1566,17 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async title(): Promise<string> {
-    const context = await this._utilityContext();
-    return context.evaluate(() => document.title);
+    try {
+      return await this.raceAgainstEvaluationStallingEvents(async () => {
+        const context = await this._utilityContext();
+        return await context.evaluate(() => document.title);
+      });
+    } catch {
+      const url = this.pendingDocument()?.request?.url();
+      if (url)
+        return `Loading ${url}`;
+      return '';
+    }
   }
 
   async rafrafTimeout(progress: Progress, timeout: number): Promise<void> {
