@@ -133,7 +133,7 @@ This project incorporates components from the projects listed below. The origina
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.17.1 (https://github.com/websockets/ws)
 -	yaml@2.6.0 (https://github.com/eemeli/yaml)
--	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
+-	yauzl@3.2.1 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
 -	zod@4.3.5 (https://github.com/colinhacks/zod)
@@ -3447,7 +3447,7 @@ THIS SOFTWARE.
 =========================================
 END OF yaml@2.6.0 AND INFORMATION
 
-%% yauzl@3.2.0 NOTICES AND INFORMATION BEGIN HERE
+%% yauzl@3.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -3471,7 +3471,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF yauzl@3.2.0 AND INFORMATION
+END OF yauzl@3.2.1 AND INFORMATION
 
 %% yazl@2.5.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
