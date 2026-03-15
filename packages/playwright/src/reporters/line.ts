@@ -112,7 +112,7 @@ class LineReporter extends TerminalReporter {
   }
 
   private _updateLine(test: TestCase, result: TestResult, step?: TestStep) {
-    const retriesPrefix = this.totalTestCount < this._current ? ` (retries)` : ``;
+    const retriesPrefix = this.totalTestCount < this._current && result.retry ? ` (retries)` : ``;
     const prefix = `[${this._current}/${this.totalTestCount}]${retriesPrefix} `;
     const currentRetrySuffix = result.retry ? this.screen.colors.yellow(` (retry #${result.retry})`) : '';
     const title = this.formatTestTitle(test, step) + currentRetrySuffix;
