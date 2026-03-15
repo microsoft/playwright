@@ -70,7 +70,7 @@ it('should work with pages that have loaded before being connected to', async ({
   expect(popup.url()).toBe(server.EMPTY_PAGE);
 });
 
-it('should wait for load state of empty url popup', async ({ page, browserName, isBidi }) => {
+it('should wait for load state of empty url popup', async ({ page, browserName, isBidi, browserMajorVersion }) => {
   const [popup, readyState] = await Promise.all([
     page.waitForEvent('popup'),
     page.evaluate(() => {
@@ -79,8 +79,9 @@ it('should wait for load state of empty url popup', async ({ page, browserName, 
     }),
   ]);
   await popup.waitForLoadState();
-  expect(readyState).toBe(browserName === 'firefox' && !isBidi ? 'uninitialized' : 'complete');
-  expect(await popup.evaluate(() => document.readyState)).toBe(browserName === 'firefox' && !isBidi ? 'uninitialized' : 'complete');
+  const isOldFirefox = browserName === 'firefox' && browserMajorVersion < 148;
+  expect(readyState).toBe(isOldFirefox && !isBidi ? 'uninitialized' : 'complete');
+  expect(await popup.evaluate(() => document.readyState)).toBe(isOldFirefox && !isBidi ? 'uninitialized' : 'complete');
 });
 
 it('should wait for load state of about:blank popup ', async ({ page }) => {
