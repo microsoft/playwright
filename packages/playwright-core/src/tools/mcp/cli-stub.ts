@@ -15,14 +15,9 @@
  */
 
 import { program } from '../../utilsBundle';
-import { decorateMCPCommand, decorateMCPInstallBrowserCommand } from './program';
+import { decorateMCPCommand } from './program';
 
 const packageJSON = require('../../../package.json');
 const p = program.version('Version ' + packageJSON.version).name('Playwright MCP');
 decorateMCPCommand(p);
-
-const installBrowserCommand = p.command('install-browser');
-installBrowserCommand.description('Install browser for Playwright MCP');
-decorateMCPInstallBrowserCommand(installBrowserCommand);
-
 void program.parseAsync(process.argv);
