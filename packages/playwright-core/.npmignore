@@ -10,6 +10,8 @@
 !lib/**/*.png
 !lib/**/*.svg
 !lib/**/*.ttf
+!lib/**/*.json
+!lib/skill/**/*.md
 !lib/utilsBundleImpl/xdg-open
 !lib/**/manifest.webmanifest
 # Exclude injected files. A preprocessed version of these is included via lib/generated.
@@ -37,6 +39,4 @@ lib/**/injected/
 !NOTICE
 # Include browser descriptors.
 !browsers.json
-# Include generated devices descriptors
-!deviceDescriptorsSource.json
 !ThirdPartyNotices.txt
