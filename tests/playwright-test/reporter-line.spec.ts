@@ -44,6 +44,26 @@ for (const useIntermediateMergeReport of [false, true] as const) {
       expect(result.exitCode).toBe(1);
     });
 
+    test('should not label passing tests as retries', async ({ runInlineTest }) => {
+      const result = await runInlineTest({
+        'a.test.js': `
+          const { test, expect } = require('@playwright/test');
+          test('failing', async ({}) => {
+            expect(1).toBe(0);
+          });
+          test('passing', async ({}) => {
+            expect(1).toBe(1);
+          });
+        `,
+      }, { retries: 1, reporter: 'line' });
+      const text = result.output;
+      expect(text).toContain('[1/2] a.test.js:3:11 › failing');
+      expect(text).toContain('a.test.js:3:11 › failing (retry #1)');
+      expect(text).toContain('[3/2] a.test.js:6:11 › passing');
+      expect(text).not.toContain('(retries) a.test.js:6:11 › passing');
+      expect(result.exitCode).toBe(1);
+    });
+
     test('render flaky', async ({ runInlineTest }) => {
       const result = await runInlineTest({
         'a.test.js': `
