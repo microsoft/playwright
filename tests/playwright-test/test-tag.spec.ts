@@ -91,6 +91,50 @@ test('should have correct tags', async ({ runInlineTest }) => {
   ]);
 });
 
+test('should not extract false positive tags from @ in test data', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': `
+      export default class Reporter {
+        onBegin(config, suite) {
+          const visit = suite => {
+            for (const test of suite.tests || [])
+              console.log('\\n%%title=' + test.title + ', tags=' + test.tags.join(','));
+            for (const child of suite.suites || [])
+              visit(child);
+          };
+          visit(suite);
+        }
+        onError(error) {
+          console.log(error);
+        }
+      }
+    `,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'stdio.spec.js': `
+      import { test, expect } from '@playwright/test';
+      test('email user@example.com test', () => {
+      });
+      test('special chars @#$%^&* test', () => {
+      });
+      test('valid @smoke tag', () => {
+      });
+      test('mixed valid@invalid and @real-tag', () => {
+      });
+    `
+  });
+  expect(result.exitCode).toBe(0);
+  expect(result.outputLines).toEqual([
+    `title=email user@example.com test, tags=`,
+    `title=special chars @#$%^&* test, tags=`,
+    `title=valid @smoke tag, tags=@smoke`,
+    `title=mixed valid@invalid and @real-tag, tags=@real-tag`,
+  ]);
+});
+
 test('config.grep should work', async ({ runInlineTest }) => {
   const result = await runInlineTest({
     'playwright.config.ts': `
