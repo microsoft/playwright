@@ -466,3 +466,4 @@ Here's a short list of open source reporter implementations that you can take a 
 * [Mail Reporter](https://github.com/estruyf/playwright-mail-reporter)
 * [ReportPortal](https://github.com/reportportal/agent-js-playwright)
 * [Monocart](https://github.com/cenfun/monocart-reporter)
+* [Tesults](https://github.com/tesults/playwright-tesults-reporter)
