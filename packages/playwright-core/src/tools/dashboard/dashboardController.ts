@@ -179,7 +179,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
     if (this.selectedPage) {
       this._pageListeners.forEach(d => d.dispose());
       this._pageListeners = [];
-      await this.selectedPage.screencast().stop();
+      await this.selectedPage.screencast.stop();
     }
 
     this.selectedPage = page;
@@ -199,11 +199,11 @@ export class DashboardConnection implements Transport, DashboardChannel {
           if (frame === page.mainFrame())
             this._sendTabList();
         }),
-        eventsHelper.addEventListener(page.screencast(), 'screencastframe', ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0))
+        eventsHelper.addEventListener(page.screencast, 'screencastframe', ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0))
     );
 
     const maxSize = { width: 1280, height: 800 };
-    await page.screencast().start({ maxSize });
+    await page.screencast.start({ maxSize });
   }
 
   private _deselectPage() {
@@ -211,7 +211,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
       return;
     this._pageListeners.forEach(d => d.dispose());
     this._pageListeners = [];
-    this.selectedPage.screencast().stop().catch(() => {});
+    this.selectedPage.screencast.stop().catch(() => {});
     this.selectedPage = null;
     this._lastFrameData = null;
     this._lastViewportSize = null;

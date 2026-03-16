@@ -14,7 +14,7 @@ Emitted for each captured JPEG screencast frame while the screencast is running.
 **Usage**
 
 ```js
-const screencast = page.screencast();
+const screencast = page.screencast;
 screencast.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
   require('fs').writeFileSync('frame.jpg', data);
@@ -32,7 +32,7 @@ Starts capturing screencast frames. Frames are emitted as [`event: Screencast.sc
 **Usage**
 
 ```js
-const screencast = page.screencast();
+const screencast = page.screencast;
 screencast.on('screencastframe', ({ data, width, height }) => {
   console.log(`frame ${width}x${height}, size: ${data.length}`);
 });
