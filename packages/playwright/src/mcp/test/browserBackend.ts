@@ -110,31 +110,27 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
   return lines.join('\n');
 }
 
-export async function runDaemonForBrowser(testInfo: TestInfoImpl, browser: playwright.Browser): Promise<void> {
+export async function runDaemonForContext(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   if (process.env.PWPAUSE !== 'cli')
-    return;
+    return false;
 
-  const browserTitle = `test-worker-${createGuid().slice(0, 6)}`;
-  await (browser as Browser)._register(browserTitle, { workspaceDir: testInfo.project.testDir });
-
-  const lines = [''];
-  if (testInfo.errors.length) {
-    lines.push(`### Paused on test error`);
-    for (const error of testInfo.errors)
-      lines.push(stripAnsiEscapes(error.message || ''));
-  } else {
-    lines.push(`### Paused at the end of the test`);
-  }
-  lines.push(
-      `### Debugging Instructions`,
-      `- Pick a session name, e.g. "test"`,
-      `- Run "playwright-cli --session=<name> open --attach=${browserTitle}" to attach to this page`,
-      `- Use "playwright-cli --session=<name>" to explore the page and fix the problem`,
-      `- Stop this test run when finished. Restart if needed.`,
-      ``,
-  );
+  const sessionName = `tw-${createGuid().slice(0, 6)}`;
+  await (context.browser() as Browser)._register(sessionName, { workspaceDir: testInfo.project.testDir });
 
   /* eslint-disable-next-line no-console */
-  console.log(lines.join('\n'));
-  await new Promise(() => {});
+  console.log([
+      `### The test is currently paused at the start`,
+      ``,
+      `### Debugging Instructions`,
+      `- Run "playwright-cli attach ${sessionName}" to attach to this test`,
+      `- Use "playwright-cli --session=${sessionName}" to explore the page`,
+      ``,
+      `- Run "playwright-cli --session=${sessionName} step-over" to step through the test`,
+      `- Run "playwright-cli --session=${sessionName} pause-at <location>:<line>" to continue the test until the specified location`,
+      `- Run "playwright-cli --session=${sessionName} resume" to resume the test`,
+      ``,
+  ].join('\n'));
+
+  await context.debugger.setPauseAt({ next: true });
+  return true;
 }

@@ -328,9 +328,7 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     overrides.use.trace = options.trace;
   }
   if (process.env.PWPAUSE === 'cli') {
-    overrides.timeout = 0;
-    overrides.use = overrides.use || {};
-    overrides.use.actionTimeout = 5000;
+    // overrides.timeout = 0;
   } else if (process.env.PWPAUSE) {
     overrides.pause = true;
   }

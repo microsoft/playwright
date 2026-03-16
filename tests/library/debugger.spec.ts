@@ -73,7 +73,7 @@ it('should pause at location', async ({ context, server }) => {
 
   const line = +(() => { return new Error('').stack.match(/debugger.spec.ts:(\d+)/)[1]; })();
   // Note: careful with the line offset below.
-  await dbg.setPauseAt({ location: { file: __filename, line: line + 4 } });
+  await dbg.setPauseAt({ location: { file: 'debugger.spec', line: line + 4 } });
   await page.content(); // should not pause here
   const clickPromise = page.click('div'); // should pause here
   await new Promise<void>(resolve => dbg.once('pausedstatechanged', resolve));

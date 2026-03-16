@@ -36,6 +36,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
     this.addObjectListener(Debugger.Events.PausedStateChanged, () => {
       this._dispatchEvent('pausedStateChanged', { pausedDetails: this._serializePausedDetails() });
     });
+    this._dispatchEvent('pausedStateChanged', { pausedDetails: this._serializePausedDetails() });
   }
 
   private _serializePausedDetails(): channels.DebuggerPausedStateChangedEvent['pausedDetails'] {
@@ -50,6 +51,7 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   }
 
   async setPauseAt(params: channels.DebuggerSetPauseAtParams, progress: Progress): Promise<void> {
+    this._object.setPauseBeforeInputActions();
     this._object.setPauseAt(params);
   }
 

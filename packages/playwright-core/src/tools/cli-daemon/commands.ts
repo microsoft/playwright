@@ -812,6 +812,35 @@ const devtoolsShow = declareCommand({
   toolParams: () => ({}),
 });
 
+const resume = declareCommand({
+  name: 'resume',
+  description: 'Resume the test execution',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_resume',
+  toolParams: ({ step }) => ({ step }),
+});
+
+const stepOver = declareCommand({
+  name: 'step-over',
+  description: 'Step over the next call in the test',
+  category: 'devtools',
+  args: z.object({}),
+  toolName: 'browser_resume',
+  toolParams: ({}) => ({ step: true }),
+});
+
+const pauseAt = declareCommand({
+  name: 'pause-at',
+  description: 'Run the test up to a specific location and pause there',
+  category: 'devtools',
+  args: z.object({
+    location: z.string().describe('Location to pause at. Format is <file>:<line>, e.g. "example.spec.ts:42".'),
+  }),
+  toolName: 'browser_resume',
+  toolParams: ({}) => ({ step: true }),
+});
+
 // Sessions
 
 const sessionList = declareCommand({
@@ -989,6 +1018,9 @@ const commandsArray: AnyCommandSchema[] = [
   videoStart,
   videoStop,
   devtoolsShow,
+  pauseAt,
+  resume,
+  stepOver,
 
   // session category
   sessionList,

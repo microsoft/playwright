@@ -122,6 +122,10 @@ export class Context {
     await this.stopVideoRecording();
   }
 
+  debugger() {
+    return this._rawBrowserContext.debugger;
+  }
+
   tabs(): Tab[] {
     return this._tabs;
   }

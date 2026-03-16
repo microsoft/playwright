@@ -239,6 +239,14 @@ export class Response {
     }
     if (text.length)
       addSection('Events', text);
+
+    const pausedDetails = this._context.debugger().pausedDetails();
+    if (pausedDetails.length) {
+      addSection('Paused', [
+        ...pausedDetails.map(call => `- ${call.title} at ${this._computRelativeTo(call.location.file)}${call.location.line ? ':' + call.location.line : ''}`),
+        '- Use any tools to explore and interact, resume by calling resume/step-over/pause-at',
+      ]);
+    }
     return sections;
   }
 }
@@ -312,6 +320,7 @@ export function parseResponse(response: CallToolResult) {
   const snapshot = sections.get('Snapshot');
   const events = sections.get('Events');
   const modalState = sections.get('Modal state');
+  const paused = sections.get('Paused');
   const codeNoFrame = code?.replace(/^```js\n/, '').replace(/\n```$/, '');
   const isError = response.isError;
   const attachments = response.content.length > 1 ? response.content.slice(1) : undefined;
@@ -325,6 +334,7 @@ export function parseResponse(response: CallToolResult) {
     snapshot,
     events,
     modalState,
+    paused,
     isError,
     attachments,
     text,
