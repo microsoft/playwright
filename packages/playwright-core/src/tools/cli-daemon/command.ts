@@ -65,7 +65,7 @@ function zodParse(schema: zodType.ZodAny, data: unknown, type: 'option' | 'argum
     return schema.parse(data);
   } catch (e) {
     throw new Error((e as zodType.ZodError).issues.map(issue => {
-      const keys: string[] = (issue as any).keys || [''];
+      const keys: string[] = issue.code === 'unrecognized_keys' ? issue.keys : [''];
       const props = keys.map(key => [...issue.path, key].filter(Boolean).join('.'));
       return props.map(prop => {
         const label = type === 'option' ? `'--${prop}' option` : `'${prop}' argument`;

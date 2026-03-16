@@ -59,7 +59,9 @@ export function eventWaiter<T>(page: playwright.Page, event: string, timeout: nu
   const disposables: (() => void)[] = [];
 
   const eventPromise = new Promise<T | undefined>((resolve, reject) => {
+    // eslint-disable-next-line no-restricted-syntax
     page.on(event as any, resolve as any);
+    // eslint-disable-next-line no-restricted-syntax
     disposables.push(() => page.off(event as any, resolve as any));
   });
 

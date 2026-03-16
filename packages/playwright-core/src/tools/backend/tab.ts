@@ -132,6 +132,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
         void this._downloadStarted(download);
       }),
     ];
+    // eslint-disable-next-line no-restricted-syntax
     (page as any)[tabSymbol] = this;
     const wallTime = Date.now();
     this._consoleLog = new LogFile(this.context, wallTime, 'console', 'Console');
@@ -147,6 +148,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   }
 
   static forPage(page: playwright.Page): Tab | undefined {
+    // eslint-disable-next-line no-restricted-syntax
     return (page as any)[tabSymbol];
   }
 

@@ -276,9 +276,7 @@ function trimMiddle(text: string, maxLength: number) {
  * Replaces lone surrogates with U+FFFD using String.prototype.toWellFormed().
  */
 function sanitizeUnicode(text: string): string {
-  if ((String.prototype as any).toWellFormed)
-    return text.toWellFormed();
-  return text;
+  return text.toWellFormed?.() ?? text;
 }
 
 function parseSections(text: string): Map<string, string> {

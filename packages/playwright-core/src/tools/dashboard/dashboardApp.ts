@@ -216,7 +216,8 @@ async function launchApp(appName: string) {
 
   const image = await fs.promises.readFile(path.join(__dirname, 'appIcon.png'));
   // This is local Playwright, so I can access private methods.
-  await (page as any)._setDockTile(image);
+  // eslint-disable-next-line no-restricted-syntax -- it is not essential, can regress.
+  await (page as any)._setDockTile?.(image);
   await syncLocalStorageWithSettings(page, appName);
   return { context, page };
 }
@@ -238,7 +239,9 @@ export async function syncLocalStorageWithSettings(page: api.Page, appName: stri
         if (window.top !== window)
           return;
         Object.entries(settings).map(([k, v]) => localStorage[k] = v);
+        // eslint-disable-next-line no-restricted-syntax
         (window as any).saveSettings = () => {
+          // eslint-disable-next-line no-restricted-syntax
           (window as any)._saveSerializedSettings(JSON.stringify({ ...localStorage }));
         };
       })})(${settings});

@@ -151,6 +151,7 @@ async function createUserDataDir(config: FullConfig, clientInfo: ClientInfo) {
 
 async function injectCdpPort(browserConfig: FullConfig['browser']) {
   if (browserConfig.browserName === 'chromium')
+    // eslint-disable-next-line no-restricted-syntax
     (browserConfig.launchOptions as any).cdpPort = await findFreePort();
 }
 
