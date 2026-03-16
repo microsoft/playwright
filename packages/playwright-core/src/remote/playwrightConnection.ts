@@ -110,6 +110,8 @@ export class PlaywrightConnection {
   }
 
   private async _onDisconnect(error?: Error) {
+    if (this._disconnected)
+      return;
     this._disconnected = true;
     debugLogger.log('server', `[${this._id}] disconnected. error: ${error}`);
     await this._root.stopPendingOperations(new Error('Disconnected')).catch(() => {});

@@ -186,6 +186,10 @@ const daemonProfilesDir = (workspaceDirHash: string) => {
   return path.join(baseDaemonDir, workspaceDirHash);
 };
 
+export function explicitSessionName(sessionName?: string): string | undefined {
+  return sessionName || process.env.PLAYWRIGHT_CLI_SESSION;
+}
+
 export function resolveSessionName(sessionName?: string): string {
   if (sessionName)
     return sessionName;

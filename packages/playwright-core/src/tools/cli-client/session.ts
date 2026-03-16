@@ -200,7 +200,12 @@ export class Session {
     child.stdout!.destroy();
     child.unref();
 
-    console.log(`### Browser \`${sessionName}\` opened with pid ${child.pid}.`);
+    if (cliArgs['attach']) {
+      console.log(`### Session \`${sessionName}\` created, attached to \`${cliArgs['attach']}\`.`);
+      console.log(`Run commands with: playwright --session=${sessionName} <command>`);
+    } else {
+      console.log(`### Browser \`${sessionName}\` opened with pid ${child.pid}.`);
+    }
   }
 
   private async _stopDaemon(): Promise<void> {

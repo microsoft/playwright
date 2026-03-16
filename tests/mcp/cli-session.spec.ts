@@ -295,7 +295,7 @@ workspace1:
 - browser "foobar":
   - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
   - version: ${version}
-  - run \`playwright-cli open --attach "foobar"\` to attach`);
+  - run \`playwright-cli attach "foobar"\` to attach`);
   });
 
   test('attach to browser server', async ({ cli, mcpBrowser }) => {
@@ -304,31 +304,24 @@ workspace1:
     await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
     const page = await browser.newPage();
     await page.setContent('<title>My Page</title>');
-    const { output: openOutput } = await cli('open', '--attach=foobar');
-    expect(openOutput).toContain('### Browser `default` opened with pid');
-    expect(openOutput).toContain('My Page');
+    const { output: openOutput } = await cli('attach', 'foobar');
+    expect(openOutput).toContain('### Session `foobar` created, attached to `foobar`.');
+    expect(openOutput).toContain('Run commands with: playwright --session=foobar <command>');
     const { output: listOutput } = await cli('list', '--all');
     expect(listOutput).toBe(`### Browsers
 /:
-- default:
+- foobar:
   - status: open
   - browser-type: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
   - user-data-dir: <in-memory>
-  - headed: true
-
-### Browser servers available for attach
-workspace1:
-- browser "foobar":
-  - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
-  - version: ${version}
-  - run \`playwright-cli open --attach "foobar"\` to attach`);
+  - headed: true`);
   });
 
   test('fail to attach to browser server without contexts', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
     await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
-    const { error } = await cli('open', '--attach=foobar');
+    const { error } = await cli('attach', 'foobar');
     expect(error).toContain('Error: unable to connect to a browser that does not have any contexts');
   });
 
@@ -352,21 +345,33 @@ workspace1:
   - headed: true`);
   });
 
+  test('attach with session alias', async ({ cli, mcpBrowser }) => {
+    const browserName = mcpBrowser.replace('chrome', 'chromium');
+    await using browser = await playwright[browserName].launch({ headless: true });
+    await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
+    const page = await browser.newPage();
+    await page.setContent('<title>Alias Page</title>');
+    const { output: openOutput } = await cli('attach', 'foobar', '--session=mybrowser');
+    expect(openOutput).toContain('### Session `mybrowser` created, attached to `foobar`.');
+    expect(openOutput).toContain('Run commands with: playwright --session=mybrowser <command>');
+    await cli('-s', 'mybrowser', 'close');
+  });
+
   test('detach from browser server', async ({ cli, mcpBrowser }) => {
     const browserName = mcpBrowser.replace('chrome', 'chromium');
     await using browser = await playwright[browserName].launch({ headless: true });
     await browser.newPage();
     await (browser as any)._register('foobar', { workspaceDir: 'workspace1' });
-    const { output: openOutput } = await cli('open', '--attach=foobar');
-    expect(openOutput).toContain('### Browser `default` opened with pid');
-    await cli('close');
+    const { output: openOutput } = await cli('attach', 'foobar');
+    expect(openOutput).toContain('Session `foobar` created, attached to `foobar`');
+    await cli('-s', 'foobar', 'close');
     const { output: listOutput } = await cli('list', '--all');
     expect(listOutput).toBe(`### Browser servers available for attach
 workspace1:
 - browser \"foobar\":
   - browser: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
   - version: ${version}
-  - run \`playwright-cli open --attach \"foobar\"\` to attach`);
+  - run \`playwright-cli attach \"foobar\"\` to attach`);
   });
 });
 

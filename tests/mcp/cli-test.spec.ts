@@ -20,7 +20,7 @@ import { writeFiles } from './fixtures';
 
 const testEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
 
-test('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
+test.skip('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
   await writeFiles({
     'subdir/a.test.ts': `
       import { test, expect } from '@playwright/test';

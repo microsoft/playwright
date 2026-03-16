@@ -23,7 +23,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { createClientInfo, Registry, resolveSessionName } from './registry';
+import { createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 import { serverRegistry } from '../../serverRegistry';
 
@@ -43,6 +43,7 @@ type GlobalOptions = {
 };
 
 type OpenOptions = {
+  attach?: string;
   browser?: string;
   config?: string;
   extension?: boolean;
@@ -52,6 +53,7 @@ type OpenOptions = {
 };
 
 const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+  'attach',
   'browser',
   'config',
   'extension',
@@ -148,13 +150,15 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     case 'open': {
-      const entry = registry.entry(clientInfo, sessionName);
-      if (entry)
-        await new Session(entry).stop(true);
-
-      await Session.startDaemon(clientInfo, args);
-      const newEntry = await registry.loadEntry(clientInfo, sessionName);
-      await runInSession(newEntry, clientInfo, args);
+      await startSession(sessionName, registry, clientInfo, args);
+      return;
+    }
+    case 'attach': {
+      const attachTarget = args._[1];
+      const attachSessionName = explicitSessionName(args.session) ?? attachTarget;
+      args.attach = attachTarget;
+      args.session = attachSessionName;
+      await startSession(attachSessionName, registry, clientInfo, args);
       return;
     }
     case 'close':
@@ -192,6 +196,16 @@ export async function program(options?: { embedderVersion?: string}) {
       await runInSession(entry, clientInfo, args);
     }
   }
+}
+
+async function startSession(sessionName: string, registry: Registry, clientInfo: ClientInfo, args: MinimistArgs) {
+  const entry = registry.entry(clientInfo, sessionName);
+  if (entry)
+    await new Session(entry).stop(true);
+
+  await Session.startDaemon(clientInfo, args);
+  const newEntry = await registry.loadEntry(clientInfo, sessionName);
+  await runInSession(newEntry, clientInfo, args);
 }
 
 async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: MinimistArgs) {
@@ -413,7 +427,7 @@ async function gcAndPrintBrowserSessions(workspace: string, list: BrowserDescrip
     text.push(`- browser "${descriptor.title}":`);
     text.push(`  - browser: ${descriptor.browser.browserName}`);
     text.push(`  - version: v${descriptor.playwrightVersion}`);
-    text.push(`  - run \`playwright-cli open --attach "${descriptor.title}"\` to attach`);
+    text.push(`  - run \`playwright-cli attach "${descriptor.title}"\` to attach`);
     console.log(text.join('\n'));
   }
 
