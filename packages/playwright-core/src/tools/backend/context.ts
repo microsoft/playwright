@@ -126,6 +126,10 @@ export class Context {
     return this._tabs;
   }
 
+  tabById(tabId: string): Tab | undefined {
+    return this._tabs.find(t => t.tabId === tabId);
+  }
+
   currentTab(): Tab | undefined {
     return this._currentTab;
   }
