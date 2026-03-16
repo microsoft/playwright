@@ -195,7 +195,9 @@ it('does not get stalled by beforeUnload', {
       event.preventDefault();
     });
   });
-  page.on('dialog', dialog => dialog.dismiss());
+  const dialogDismissed = new Promise<void>(resolve => {
+    page.on('dialog', dialog => dialog.dismiss().then(() => resolve()));
+  });
 
   // We have to interact with a page so that 'beforeunload' handlers
   // fire.
@@ -207,4 +209,6 @@ it('does not get stalled by beforeUnload', {
   await page.close({ runBeforeUnload: true });
 
   await page.evaluate(async () => fetch(new URL('/api', window.location.href)));
+
+  await dialogDismissed;
 });
