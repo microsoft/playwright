@@ -373,6 +373,8 @@ function configFromEnv(): Config {
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   options.suppressFocus = envToBoolean(process.env.PLAYWRIGHT_MCP_SUPPRESS_FOCUS);
+  options.keepBrowserAlive = envToBoolean(process.env.PLAYWRIGHT_MCP_KEEP_BROWSER_ALIVE);
+  options.filterInternalUrls = envToBoolean(process.env.PLAYWRIGHT_MCP_FILTER_INTERNAL_URLS);
   return configFromCLIOptions(options);
 }
 

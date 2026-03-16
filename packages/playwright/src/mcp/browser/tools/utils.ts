@@ -32,12 +32,13 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     // If the callback sends CDP commands to a dead renderer, they hang forever.
     // Race against the navigation timeout so the agent gets an error and can retry.
     const actionTimeout = tab.context.config.timeouts.navigation;
+    let actionTimeoutId: ReturnType<typeof setTimeout>;
     result = await Promise.race([
       callback(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Action timed out waiting for completion')), actionTimeout)
-      ),
-    ]);
+      new Promise<never>((_, reject) => {
+        actionTimeoutId = setTimeout(() => reject(new Error('Action timed out waiting for completion')), actionTimeout);
+      }),
+    ]).finally(() => clearTimeout(actionTimeoutId));
     await tab.waitForTimeout(500);
   } finally {
     disposeListeners();
@@ -56,8 +57,11 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
     else
       promises.push(request.response().catch(() => {}));
   }
-  const timeout = new Promise<void>(resolve => setTimeout(resolve, 5000));
-  await Promise.race([Promise.all(promises), timeout]);
+  let completionTimeoutId: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<void>(resolve => {
+    completionTimeoutId = setTimeout(resolve, 5000);
+  });
+  await Promise.race([Promise.all(promises), timeout]).finally(() => clearTimeout(completionTimeoutId));
   if (requests.length)
     await tab.waitForTimeout(500);
 

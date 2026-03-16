@@ -218,15 +218,25 @@ class BaseContextFactory implements BrowserContextFactory {
         // C1: Noop window.focus() — prevents JS from activating Chrome
         window.focus = _markNative(function focus() { /* noop */ }, 'focus');
 
-        // C2: Prevent native <select> dropdown from opening — the OS-level
-        // picker overlay activates Chrome on macOS. Playwright's selectOption
-        // tool still works (it sets values via DOM, not the native picker).
-        document.addEventListener('mousedown', (e: MouseEvent) => {
-          const target = e.target as HTMLElement;
-          if (target.tagName === 'SELECT' || target.closest?.('select')) {
-            e.preventDefault();
-          }
-        }, true);
+        // C2: Prevent native <select> picker from activating Chrome on macOS.
+        // Three mechanisms for defense-in-depth:
+        // (a) Override showPicker() — Chrome 100+ programmatic picker API
+        if ((HTMLSelectElement.prototype as any).showPicker) {
+          (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
+        }
+        // (b) CSS pointer-events:none — blocks native picker from ANY click path.
+        //     Playwright's selectOption() works via DOM manipulation, not pointer events.
+        const _style = document.createElement('style');
+        _style.textContent = 'select { pointer-events: none !important; }';
+        (document.head || document.documentElement).appendChild(_style);
+        // (c) Capture-phase mousedown/pointerdown fallback
+        for (const _evt of ['mousedown', 'pointerdown'] as const) {
+          document.addEventListener(_evt, (e: Event) => {
+            const t = (e.target as HTMLElement);
+            if (t.tagName === 'SELECT' || t.closest?.('select'))
+              e.preventDefault();
+          }, true);
+        }
       }
     });
     return {
@@ -287,8 +297,10 @@ class CdpContextFactory extends BaseContextFactory {
   protected override async _doObtainBrowser(): Promise<playwright.Browser> {
     return playwright.chromium.connectOverCDP(this.config.browser.cdpEndpoint!, {
       headers: this.config.browser.cdpHeaders,
-      timeout: this.config.browser.cdpTimeout
-    });
+      timeout: this.config.browser.cdpTimeout,
+      // Pass suppressFocus so Target.createTarget uses background:true
+      ...(this.config.suppressFocus ? { suppressFocus: true } : {}),
+    } as any);
   }
 
   protected override async _doCreateContext(browser: playwright.Browser): Promise<playwright.BrowserContext> {
@@ -458,15 +470,25 @@ class PersistentContextFactory implements BrowserContextFactory {
             // C1: Noop window.focus() — prevents JS from activating Chrome
             window.focus = _markNative(function focus() { /* noop */ }, 'focus');
 
-            // C2: Prevent native <select> dropdown from opening — the OS-level
-            // picker overlay activates Chrome on macOS. Playwright's selectOption
-            // tool still works (it sets values via DOM, not the native picker).
-            document.addEventListener('mousedown', (e: MouseEvent) => {
-              const target = e.target as HTMLElement;
-              if (target.tagName === 'SELECT' || target.closest?.('select')) {
-                e.preventDefault();
-              }
-            }, true);
+            // C2: Prevent native <select> picker from activating Chrome on macOS.
+            // Three mechanisms for defense-in-depth:
+            // (a) Override showPicker() — Chrome 100+ programmatic picker API
+            if ((HTMLSelectElement.prototype as any).showPicker) {
+              (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
+            }
+            // (b) CSS pointer-events:none — blocks native picker from ANY click path.
+            //     Playwright's selectOption() works via DOM manipulation, not pointer events.
+            const _style = document.createElement('style');
+            _style.textContent = 'select { pointer-events: none !important; }';
+            (document.head || document.documentElement).appendChild(_style);
+            // (c) Capture-phase mousedown/pointerdown fallback
+            for (const _evt of ['mousedown', 'pointerdown'] as const) {
+              document.addEventListener(_evt, (e: Event) => {
+                const t = (e.target as HTMLElement);
+                if (t.tagName === 'SELECT' || t.closest?.('select'))
+                  e.preventDefault();
+              }, true);
+            }
           }
         });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);

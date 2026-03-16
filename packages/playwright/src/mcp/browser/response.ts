@@ -135,16 +135,21 @@ export class Response {
     // CDP session is stale. Fall back to undefined so the tool returns without a snapshot
     // rather than hanging the agent forever.
     const snapshotTimeout = this._context.config.timeouts.navigation;
+    let snapshotTimeoutId: ReturnType<typeof setTimeout>;
     const tabSnapshot = this._context.currentTab() ? await Promise.race([
       this._context.currentTabOrDie().captureSnapshot(),
-      new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), snapshotTimeout)),
-    ]) : undefined;
+      new Promise<undefined>(resolve => {
+        snapshotTimeoutId = setTimeout(() => resolve(undefined), snapshotTimeout);
+      }),
+    ]).finally(() => clearTimeout(snapshotTimeoutId)) : undefined;
+    let headerTimeoutId: ReturnType<typeof setTimeout>;
     const tabHeaders = await Promise.race([
       Promise.all(this._context.tabs().map(tab => tab.headerSnapshot())),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Tab headers timed out — renderer may be stale')), snapshotTimeout)
-      ),
-    ]).catch(() => this._context.tabs().map(() => ({ title: '', url: '', current: false, changed: false })));
+      new Promise<never>((_, reject) => {
+        headerTimeoutId = setTimeout(() => reject(new Error('Tab headers timed out — renderer may be stale')), snapshotTimeout);
+      }),
+    ]).finally(() => clearTimeout(headerTimeoutId))
+      .catch(() => this._context.tabs().map(() => ({ title: '', url: '', current: false, changed: false })));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1) {
         const content = addSection('Open tabs');
