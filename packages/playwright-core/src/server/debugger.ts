@@ -15,7 +15,7 @@
  */
 
 import { SdkObject } from './instrumentation';
-import { debugMode, isUnderTest, monotonicTime } from '../utils';
+import { monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
 import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
@@ -28,7 +28,7 @@ type PauseAt = { next?: boolean, location?: { file: string, line?: number, colum
 export class Debugger extends SdkObject implements InstrumentationListener {
   private _pauseAt: PauseAt = {};
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
-  private _enabled: boolean;
+  private _enabled = false;
   private _context: BrowserContext;
 
   static Events = {
@@ -40,9 +40,6 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     super(context, 'debugger');
     this._context = context;
     (this._context as any)[symbol] = this;
-    this._enabled = !context.attribution.playwright.options.isServer && (isUnderTest() || !!context._browser.options.headful);
-    if (debugMode() === 'inspector')
-      this.setPauseAt({ next: true });
     context.instrumentation.addListener(this, context);
     this._context.once(BrowserContext.Events.Close, () => {
       this._context.instrumentation.removeListener(this);
