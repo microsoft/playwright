@@ -226,31 +226,31 @@ await page.locator('button').click();
 \`\`\``);
 });
 
-test('click button with role selector', async ({ cli, server }) => {
+test('click button with role locator', async ({ cli, server }) => {
   server.setContent('/', `<button>Submit</button>`, 'text/html');
 
   const { snapshot } = await cli('open', server.PREFIX);
   expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
 
-  const { output, snapshot: clickSnapshot } = await cli('click', 'role=button');
+  const { output, snapshot: clickSnapshot } = await cli('click', 'getByRole("button", { name: "Submit" })');
   expect(clickSnapshot).toBeTruthy();
   expect(output).toContain(`### Ran Playwright code
 \`\`\`js
-await page.locator('role=button').click();
+await page.getByRole('button', { name: 'Submit' }).click();
 \`\`\``);
 });
 
-test('click button with mixed css + role selector', async ({ cli, server }) => {
-  server.setContent('/', `<div id=main><button>Submit</button></div>`, 'text/html');
+test('click button with test id locator', async ({ cli, server }) => {
+  server.setContent('/', `<div data-testid=main><button>Submit</button></div>`, 'text/html');
 
   const { snapshot } = await cli('open', server.PREFIX);
   expect(snapshot).toContain(`- button "Submit" [ref=e3]`);
 
-  const { output, snapshot: clickSnapshot } = await cli('click', '#main >> role=button');
+  const { output, snapshot: clickSnapshot } = await cli('click', 'getByTestId("main").getByRole("button")');
   expect(clickSnapshot).toBeTruthy();
   expect(output).toContain(`### Ran Playwright code
 \`\`\`js
-await page.locator('#main').locator('role=button').click();
+await page.getByTestId('main').getByRole('button').click();
 \`\`\``);
 });
 
@@ -261,7 +261,7 @@ test('click button with wrong css selector', async ({ cli, server }) => {
   expect(snapshot).toContain(`- button "Submit" [ref=e2]`);
 
   const { output } = await cli('click', '#target');
-  expect(output).toContain(`Error: Selector #target does not match any elements.`);
+  expect(output).toContain(`"#target" does not match any elements.`);
 });
 
 test('partial snapshot', async ({ cli, server }) => {
@@ -277,7 +277,7 @@ test('partial snapshot', async ({ cli, server }) => {
   expect(strictError).toContain(`strict mode violation`);
 
   const { output: noMatchError } = await cli('snapshot', '#target');
-  expect(noMatchError).toContain(`Selector "#target" does not match any element`);
+  expect(noMatchError).toContain(`"#target" does not match any element`);
 });
 
 test('snapshot depth', async ({ cli, server }) => {

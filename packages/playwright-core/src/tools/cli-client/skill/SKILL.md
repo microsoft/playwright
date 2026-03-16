@@ -222,17 +222,17 @@ playwright-cli snapshot
 playwright-cli click e15
 ```
 
-You can also use css or role selectors, for example when explicitly asked for it.
+You can also use css selectors or Playwright locators.
 
 ```bash
 # css selector
 playwright-cli click "#main > button.submit"
 
-# role selector
-playwright-cli click "role=button[name=Submit]"
+# role locator
+playwright-cli click "getByRole('button', { name: 'Submit' })"
 
-# chaining css and role selectors
-playwright-cli click "#footer >> role=button[name=Submit]"
+# test id
+playwright-cli click "getByTestId('submit-button')"
 ```
 
 ## Browser Sessions

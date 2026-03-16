@@ -18,6 +18,7 @@ import url from 'url';
 
 import { EventEmitter } from 'events';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
+import { locatorOrSelectorAsSelector } from '../../utils/isomorphic/locatorParser';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { debug } from '../../utilsBundle';
 
@@ -438,10 +439,12 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this._initializedPromise;
     return Promise.all(params.map(async param => {
       if (param.selector) {
-        const locator = this.page.locator(param.selector);
-        if (!await locator.isVisible())
-          throw new Error(`Selector ${param.selector} does not match any elements.`);
-        return { locator, resolved: asLocator('javascript', param.selector) };
+        const selector = locatorOrSelectorAsSelector('javascript', param.selector, this.context.config.testIdAttribute || 'data-testid');
+        const handle = await this.page.$(selector);
+        if (!handle)
+          throw new Error(`"${param.selector}" does not match any elements.`);
+        handle.dispose().catch(() => {});
+        return { locator: this.page.locator(selector), resolved: asLocator('javascript', selector) };
       } else {
         try {
           let locator = this.page.locator(`aria-ref=${param.ref}`);
