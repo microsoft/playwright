@@ -28,7 +28,16 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
 
   let result: R;
   try {
-    result = await callback();
+    // Guard against stale CDP sessions (e.g., Electron renderer process swap).
+    // If the callback sends CDP commands to a dead renderer, they hang forever.
+    // Race against the navigation timeout so the agent gets an error and can retry.
+    const actionTimeout = tab.context.config.timeouts.navigation;
+    result = await Promise.race([
+      callback(),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Action timed out waiting for completion')), actionTimeout)
+      ),
+    ]);
     await tab.waitForTimeout(500);
   } finally {
     disposeListeners();

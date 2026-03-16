@@ -54,6 +54,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.')
       .option('--filter-internal-urls', 'filter out internal Electron tabs (file://, data:, chrome-extension://, localhost) from the tab list')
       .option('--keep-browser-alive', 'do not auto-close the browser context when the last tracked tab closes')
+      .option('--suppress-focus', 'suppress focus-stealing: skip bringToFront and inject window.focus noop')
       .option('--ignore-https-errors', 'ignore https errors')
       .option('--init-page <path...>', 'path to TypeScript file to evaluate on Playwright page object')
       .option('--init-script <path...>', 'path to JavaScript file to add as an initialization script. The script will be evaluated in every page before any of the page\'s scripts. Can be specified multiple times.')

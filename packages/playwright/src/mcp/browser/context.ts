@@ -96,7 +96,8 @@ export class Context {
     const tab = this._tabs[index];
     if (!tab)
       throw new Error(`Tab ${index} not found`);
-    await tab.page.bringToFront();
+    if (!this.config.suppressFocus)
+      await tab.page.bringToFront();
     this._currentTab = tab;
     return tab;
   }

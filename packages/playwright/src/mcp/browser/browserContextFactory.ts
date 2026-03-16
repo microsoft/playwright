@@ -127,6 +127,13 @@ class BaseContextFactory implements BrowserContextFactory {
     await browserContext.addInitScript(() => {
       Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
     });
+    // Set suppress-focus flag before stealth stubs so they can read it.
+    // The flag is consumed inside the stealth stubs init script below.
+    if (this.config.suppressFocus) {
+      await browserContext.addInitScript(() => {
+        (window as any).__suppressFocus = true;
+      });
+    }
     // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
     // navigator.languages, and Notification.permission overrides to prevent
     // bot detection by Akamai and similar fingerprinting services.
@@ -203,6 +210,23 @@ class BaseContextFactory implements BrowserContextFactory {
       // Notification.permission fix
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
         Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+      }
+
+      // Layer C: suppress focus-stealing behaviors when running in background.
+      // Integrated into stealth stubs to reuse _markNative (single Function.prototype.toString override).
+      if ((window as any).__suppressFocus) {
+        // C1: Noop window.focus() — prevents JS from activating Chrome
+        window.focus = _markNative(function focus() { /* noop */ }, 'focus');
+
+        // C2: Prevent native <select> dropdown from opening — the OS-level
+        // picker overlay activates Chrome on macOS. Playwright's selectOption
+        // tool still works (it sets values via DOM, not the native picker).
+        document.addEventListener('mousedown', (e: MouseEvent) => {
+          const target = e.target as HTMLElement;
+          if (target.tagName === 'SELECT' || target.closest?.('select')) {
+            e.preventDefault();
+          }
+        }, true);
       }
     });
     return {
@@ -352,6 +376,12 @@ class PersistentContextFactory implements BrowserContextFactory {
           };
           window.print = deferred;
         });
+        // Set suppress-focus flag before stealth stubs so they can read it.
+        if (this.config.suppressFocus) {
+          await browserContext.addInitScript(() => {
+            (window as any).__suppressFocus = true;
+          });
+        }
         // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
         // navigator.languages, and Notification.permission overrides to prevent
         // bot detection by Akamai and similar fingerprinting services.
@@ -420,6 +450,23 @@ class PersistentContextFactory implements BrowserContextFactory {
 
           if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
             Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+          }
+
+          // Layer C: suppress focus-stealing behaviors when running in background.
+          // Integrated into stealth stubs to reuse _markNative (single Function.prototype.toString override).
+          if ((window as any).__suppressFocus) {
+            // C1: Noop window.focus() — prevents JS from activating Chrome
+            window.focus = _markNative(function focus() { /* noop */ }, 'focus');
+
+            // C2: Prevent native <select> dropdown from opening — the OS-level
+            // picker overlay activates Chrome on macOS. Playwright's selectOption
+            // tool still works (it sets values via DOM, not the native picker).
+            document.addEventListener('mousedown', (e: MouseEvent) => {
+              const target = e.target as HTMLElement;
+              if (target.tagName === 'SELECT' || target.closest?.('select')) {
+                e.preventDefault();
+              }
+            }, true);
           }
         });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
