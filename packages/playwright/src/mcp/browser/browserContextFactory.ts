@@ -237,6 +237,11 @@ class BaseContextFactory implements BrowserContextFactory {
               e.preventDefault();
           }, true);
         }
+
+        // C3: Noop window.print() — the native print dialog activates Chrome on macOS.
+        // In hidden mode, agents should use browser_pdf_save (CDP Page.printToPDF) instead.
+        // This overwrites the deferred print handler (which waits 2s and may allow activation).
+        window.print = _markNative(function print() { /* noop */ }, 'print');
       }
     });
     return {
@@ -489,6 +494,11 @@ class PersistentContextFactory implements BrowserContextFactory {
                   e.preventDefault();
               }, true);
             }
+
+            // C3: Noop window.print() — the native print dialog activates Chrome on macOS.
+            // In hidden mode, agents should use browser_pdf_save (CDP Page.printToPDF) instead.
+            // This overwrites the deferred print handler (which waits 2s and may allow activation).
+            window.print = _markNative(function print() { /* noop */ }, 'print');
           }
         });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
