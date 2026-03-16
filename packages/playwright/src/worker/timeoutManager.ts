@@ -62,10 +62,17 @@ export class TimeoutManager {
     this._defaultSlot = { timeout, elapsed: 0 };
   }
 
-  setIgnoreTimeouts() {
-    this._ignoreTimeouts = true;
-    if (this._running)
+  setIgnoreTimeouts(ignoreTimeouts: boolean) {
+    if (this._ignoreTimeouts === ignoreTimeouts)
+      return;
+    this._ignoreTimeouts = ignoreTimeouts;
+    if (this._running) {
+      if (ignoreTimeouts)
+        this._running.slot.elapsed += monotonicTime() - this._running.start;
+      else
+        this._running.start = monotonicTime();
       this._updateTimeout(this._running);
+    }
   }
 
   interrupt() {

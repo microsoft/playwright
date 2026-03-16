@@ -237,7 +237,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     testInfo.snapshotSuffix = process.platform;
     testInfo._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
     if (debugMode() === 'inspector')
-      (testInfo as TestInfoImpl)._setDebugMode();
+      (testInfo as TestInfoImpl)._setIgnoreTimeouts(true);
 
     playwright._defaultContextTimeout = actionTimeout || 0;
     playwright._defaultContextNavigationTimeout = navigationTimeout || 0;
@@ -256,6 +256,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await artifactsRecorder.willStartTest(testInfo as TestInfoImpl);
 
     const tracingGroupSteps: TestStepInternal[] = [];
+    const pausedContexts = new Set<BrowserContextImpl>();
     const csiListener: ClientInstrumentationListener = {
       onApiCallBegin: (data, channel) => {
         const testInfo = currentTestInfo();
@@ -304,7 +305,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
       onWillPause: ({ keepTestTimeout }) => {
         if (!keepTestTimeout)
-          currentTestInfo()?._setDebugMode();
+          currentTestInfo()?._setIgnoreTimeouts(true);
       },
       runBeforeCreateBrowserContext: async (options: BrowserContextOptions) => {
         for (const [key, value] of Object.entries(_combinedContextOptions)) {
@@ -319,6 +320,17 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         }
       },
       runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
+        context.debugger.on('pausedstatechanged', () => {
+          const paused = context.debugger.pausedDetails().length > 0;
+          if (pausedContexts.has(context) && !paused) {
+            pausedContexts.delete(context);
+            (testInfo as TestInfoImpl)._setIgnoreTimeouts(false);
+          } else if (!pausedContexts.has(context) && paused) {
+            pausedContexts.add(context);
+            (testInfo as TestInfoImpl)._setIgnoreTimeouts(true);
+          }
+        });
+
         await artifactsRecorder.didCreateBrowserContext(context);
         const testInfo = currentTestInfo();
         if (testInfo)

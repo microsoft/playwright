@@ -19,7 +19,7 @@ import fs from 'fs';
 import path from 'path';
 
 import { createGuid } from './utils/crypto';
-import { debugMode } from './utils/debug';
+import { debugMode, isUnderTest } from './utils/debug';
 import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
@@ -149,18 +149,21 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     // Debugger will pause execution upon page.pause in headed mode.
     this._debugger = new Debugger(this);
 
-    // When PWDEBUG=1, show inspector for each context.
-    if (debugMode() === 'inspector')
-      await RecorderApp.show(this, { pauseOnNextStatement: true });
-
     // When paused, show inspector.
-    if (this._debugger.isPaused())
-      RecorderApp.showInspectorNoReply(this);
+    const shouldEnableDebugger = !this.attribution.playwright.options.isServer && (isUnderTest() || !!this._browser.options.headful);
+    if (shouldEnableDebugger) {
+      this._debugger.setPauseAt();
+      this._debugger.on(Debugger.Events.PausedStateChanged, () => {
+        if (this._debugger.isPaused())
+          RecorderApp.showInspectorNoReply(this);
+      });
+    }
 
-    this._debugger.on(Debugger.Events.PausedStateChanged, () => {
-      if (this._debugger.isPaused())
-        RecorderApp.showInspectorNoReply(this);
-    });
+    // When PWDEBUG=1, show inspector for each context.
+    if (debugMode() === 'inspector') {
+      this._debugger.setPauseAt({ next: true });
+      await RecorderApp.show(this, { pauseOnNextStatement: true });
+    }
 
     if (debugMode() === 'console')
       await this.exposeConsoleApi();

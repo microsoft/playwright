@@ -963,3 +963,22 @@ test('init script should not observe playwright internals', async ({ server, run
   }, {}, { PWDEBUG: '0' });
   expect(result.exitCode).toBe(0);
 });
+
+test('should pause test timeout while on pause', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+
+      test('test', async ({ page, context }) => {
+        await context.debugger.setPauseAt({ next: true });
+        const paused = new Promise(f => context.debugger.once('pausedstatechanged', f));
+        const contentPromise = page.setContent('<div>hello</div>');
+        await paused;
+        await new Promise(f => setTimeout(f, 5000));
+        await context.debugger.resume();
+        await contentPromise;
+      });
+    `,
+  }, { timeout: 3000 });
+  expect(result.exitCode).toBe(0);
+});
