@@ -71,7 +71,18 @@ export function defineTabTool<Input extends z.Schema>(tool: TabTool<Input>): Too
   return {
     ...tool,
     handle: async (context, params, response) => {
-      const tab = await context.ensureTab();
+      // If the caller provides a tabId, route to that specific tab.
+      // Otherwise fall back to the current active tab (backward compatible).
+      const tabId: string | undefined = (params as { tabId?: string }).tabId;
+      let tab: Tab;
+      if (tabId) {
+        const resolved = context.tabById(tabId);
+        if (!resolved)
+          throw new Error(`Tab "${tabId}" not found. Use browser_tabs with action "new" to open a tab and obtain its tabId.`);
+        tab = resolved;
+      } else {
+        tab = await context.ensureTab();
+      }
       const modalStates = tab.modalStates().map(state => state.type);
       if (tool.clearsModalState && !modalStates.includes(tool.clearsModalState))
         response.addError(`Error: The tool "${tool.schema.name}" can only be used when there is related modal state present.`);
