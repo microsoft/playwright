@@ -86,6 +86,7 @@ export function scaleImageToFitMessage(buffer: Buffer, imageType: 'png' | 'jpeg'
   const width = image.width * shrink | 0;
   const height = image.height * shrink | 0;
   const scaledImage = scaleImageToSize(image, { width, height });
+  // eslint-disable-next-line no-restricted-syntax
   return imageType === 'png' ? PNG.sync.write(scaledImage as any) : jpegjs.encode(scaledImage, 80).data;
 }
 

@@ -18,6 +18,7 @@ import { z } from '../../mcpBundle';
 import { escapeWithQuotes } from '../../utils/isomorphic/stringUtils';
 
 import { defineTabTool } from './tool';
+import type * as playwright from '../../..';
 
 const verifyElement = defineTabTool({
   capability: 'testing',
@@ -34,7 +35,7 @@ const verifyElement = defineTabTool({
 
   handle: async (tab, params, response) => {
     for (const frame of tab.page.frames()) {
-      const locator = frame.getByRole(params.role as any, { name: params.accessibleName });
+      const locator = frame.getByRole(params.role as Parameters<playwright.Frame['getByRole']>[0], { name: params.accessibleName });
       if (await locator.count() > 0) {
         const resolved = await locator.toCode();
         response.addCode(`await expect(page.${resolved}).toBeVisible();`);

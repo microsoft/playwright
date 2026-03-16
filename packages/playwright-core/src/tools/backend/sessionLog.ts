@@ -41,10 +41,7 @@ export class SessionLog {
   }
 
   logResponse(toolName: string, toolArgs: Record<string, any>, responseObject: any) {
-    const parsed = parseResponse(responseObject) as any;
-    if (parsed)
-      delete parsed.text;
-
+    const parsed = { ...parseResponse(responseObject), text: undefined };
     const lines: string[] = [''];
     lines.push(
         `### Tool call: ${toolName}`,

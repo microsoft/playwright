@@ -367,6 +367,13 @@ export default [
           }],
         },
       ],
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "TSAsExpression > TSAnyKeyword",
+          message: "Avoid 'as any' — risk of accidentally casting to client interfaces. Use a precise type or add an eslint-disable with justification.",
+        },
+      ],
     },
   },
   {

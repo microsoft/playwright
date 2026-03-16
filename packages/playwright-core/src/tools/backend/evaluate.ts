@@ -50,6 +50,7 @@ const evaluate = defineTabTool({
     }
 
     await tab.waitForCompletion(async () => {
+      // eslint-disable-next-line no-restricted-syntax
       const func = new Function() as any;
       func.toString = () => params.function;
       const result = locator?.locator ? await locator?.locator.evaluate(func) : await tab.page.evaluate(func);
