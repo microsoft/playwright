@@ -24,7 +24,19 @@ const browserTabs = defineTool({
   schema: {
     name: 'browser_tabs',
     title: 'Manage tabs',
-    description: 'List, create, close, or select a browser tab.',
+    description: [
+      'List, create, close, or select a browser tab.',
+      '',
+      'When opening a new tab, the response includes a `tabId` — a stable identifier for',
+      'that tab. Pass `tabId` to any other browser tool to direct its action at a specific',
+      'tab rather than whichever tab happens to be active.  This is especially useful when',
+      'multiple agents (or parallel tool calls) share the same browser session: each agent',
+      'opens its own tab, keeps its `tabId`, and never interferes with the others.',
+      '',
+      'Backward compatibility: omitting `tabId` in other tools continues to work as before,',
+      'targeting the currently active tab.',
+    ].join('
+'),
     inputSchema: z.object({
       action: z.enum(['list', 'new', 'close', 'select']).describe('Operation to perform'),
       index: z.number().optional().describe('Tab index, used for close/select. If omitted for close, current tab is closed.'),
@@ -39,8 +51,14 @@ const browserTabs = defineTool({
         break;
       }
       case 'new': {
-        await context.newTab();
-        break;
+        const tab = await context.newTab();
+        // Return the stable tabId so callers can pin subsequent tool calls to this tab.
+        response.addTextResult(`Opened new tab. tabId: ${tab.tabId}`);
+        const tabHeaders = await Promise.all(context.tabs().map(t => t.headerSnapshot()));
+        const result = renderTabsMarkdown(tabHeaders);
+        response.addTextResult(result.join('
+'));
+        return;
       }
       case 'close': {
         await context.closeTab(params.index);
@@ -55,7 +73,8 @@ const browserTabs = defineTool({
     }
     const tabHeaders = await Promise.all(context.tabs().map(tab => tab.headerSnapshot()));
     const result = renderTabsMarkdown(tabHeaders);
-    response.addTextResult(result.join('\n'));
+    response.addTextResult(result.join('
+'));
   },
 });
 
