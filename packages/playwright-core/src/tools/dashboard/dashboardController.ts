@@ -199,11 +199,13 @@ export class DashboardConnection implements Transport, DashboardChannel {
           if (frame === page.mainFrame())
             this._sendTabList();
         }),
-        eventsHelper.addEventListener(page.screencast, 'screencastframe', ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0))
     );
 
     const maxSize = { width: 1280, height: 800 };
-    await page.screencast.start({ maxSize });
+    await page.screencast.start(
+        data => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+        { maxSize },
+    );
   }
 
   private _deselectPage() {
