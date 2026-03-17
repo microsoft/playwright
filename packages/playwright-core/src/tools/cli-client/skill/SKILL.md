@@ -43,7 +43,6 @@ playwright-cli upload ./document.pdf
 playwright-cli check e12
 playwright-cli uncheck e12
 playwright-cli snapshot
-playwright-cli snapshot --filename=after-click.yaml
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
 # get element id, class, or any attribute not visible in the snapshot
@@ -195,9 +194,21 @@ After each command, playwright-cli provides a snapshot of the current browser st
 [Snapshot](.playwright-cli/page-2026-02-14T19-22-42-679Z.yml)
 ```
 
-You can also take a snapshot on demand using `playwright-cli snapshot` command.
+You can also take a snapshot on demand using `playwright-cli snapshot` command. All the options below can be combined as needed.
 
-If `--filename` is not provided, a new snapshot file is created with a timestamp. Default to automatic file naming, use `--filename=` when artifact is a part of the workflow result.
+```bash
+# default - save to a file with timestamp-based name
+playwright-cli snapshot
+
+# save to file, use when snapshot is a part of the workflow result
+playwright-cli snapshot --filename=after-click.yaml
+
+# snapshot an element instead of the whole page
+playwright-cli snapshot "#main"
+
+# limit snapshot depth for efficiency
+playwright-cli snapshot --depth=4
+```
 
 ## Targeting elements
 

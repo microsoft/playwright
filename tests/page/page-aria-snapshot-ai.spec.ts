@@ -745,9 +745,9 @@ it('should limit depth', async ({ page }) => {
   await page.setContent(`
     <ul>
       <li>item1</li>
-      <a href="about:blank">link</a>
+      <a href="about:blank" style="cursor:pointer">link</a>
       <li>
-        <ul>
+        <ul id=target>
           <li>item2</li>
           <li>
             <ul>
@@ -792,5 +792,12 @@ it('should limit depth', async ({ page }) => {
           - listitem [ref=e8]:
             - list [ref=e9]:
               - listitem [ref=e10]: item3
+  `);
+
+  const { full: snapshot4 } = await page.locator('#target').snapshotForAI({ depth: 1 });
+  expect(snapshot4).toContainYaml(`
+    - list [ref=e6]:
+      - listitem [ref=e7]: item2
+      - listitem [ref=e8]
   `);
 });
