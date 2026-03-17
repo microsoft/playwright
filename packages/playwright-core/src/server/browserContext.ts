@@ -821,6 +821,27 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
   return { ...proxy, server, bypass };
 }
 
+// Maps a user agent string to the corresponding navigator.platform value.
+// Used by Firefox and WebKit; Chromium uses its own navigatorPlatform()
+// in crPage.ts which operates on already-parsed UserAgentMetadata.
+export function navigatorPlatformFromUA(ua: string): string | undefined {
+  if (!ua)
+    return undefined;
+  if (ua.includes('Android'))
+    return ua.includes('x86') ? 'Linux x86_64' : 'Linux armv8l';
+  if (ua.includes('iPhone OS'))
+    return 'iPhone';
+  if (ua.includes('iPad'))
+    return 'iPad';
+  if (ua.includes('Mac OS X'))
+    return 'MacIntel';
+  if (ua.includes('Windows'))
+    return 'Win32';
+  if (ua.toLowerCase().includes('linux'))
+    return ua.includes('aarch64') ? 'Linux aarch64' : 'Linux x86_64';
+  return undefined;
+}
+
 const paramsThatAllowContextReuse: (keyof channels.BrowserNewContextForReuseParams)[] = [
   'colorScheme',
   'forcedColors',

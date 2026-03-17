@@ -21,6 +21,7 @@ import { eventsHelper } from '../utils/eventsHelper';
 import { hostPlatform } from '../utils/hostPlatform';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { PNG, jpegjs } from '../../utilsBundle';
+import { navigatorPlatformFromUA } from '../browserContext';
 import * as dialog from '../dialog';
 import * as dom from '../dom';
 import { TargetClosedError } from '../errors';
@@ -691,6 +692,12 @@ export class WKPage implements PageDelegate {
   async updateUserAgent(): Promise<void> {
     const contextOptions = this._browserContext._options;
     this._updateState('Page.overrideUserAgent', { value: contextOptions.userAgent });
+    if (contextOptions.userAgent && !process.env.PLAYWRIGHT_NO_UA_PLATFORM) {
+      const platform = navigatorPlatformFromUA(contextOptions.userAgent);
+      this._updateState('Page.overridePlatform', platform ? { value: platform } : { });
+    } else {
+      this._updateState('Page.overridePlatform', { });
+    }
   }
 
   async bringToFront(): Promise<void> {
