@@ -96,6 +96,8 @@ When creating or moving files, update the relevant `DEPS.list` to declare allowe
 
 ## Commit Convention
 
+Before committing, run `npm run flint` and fix errors.
+
 Semantic commit messages: `label(scope): description`
 
 Labels: `fix`, `feat`, `chore`, `docs`, `test`, `devops`

@@ -16,6 +16,7 @@
 
 import { Artifact } from './artifact';
 import { ChannelOwner } from './channelOwner';
+import { DisposableStub } from './disposable';
 
 import type * as api from '../../types/types';
 import type * as channels from '@protocol/channels';
@@ -62,6 +63,7 @@ export class Tracing extends ChannelOwner<channels.TracingChannel> implements ap
     if (options.location)
       this._additionalSources.add(options.location.file);
     await this._channel.tracingGroup({ name, location: options.location });
+    return new DisposableStub(() => this.groupEnd());
   }
 
   async groupEnd() {

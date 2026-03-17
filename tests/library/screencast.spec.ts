@@ -97,9 +97,9 @@ test('screencast.start dispose stops screencast', async ({ browser, server, trac
   const page = await context.newPage();
 
   const frames: { data: Buffer }[] = [];
-  page.screencast().on('screencastframe', frame => frames.push(frame));
+  page.screencast.on('screencastframe', frame => frames.push(frame));
 
-  const disposable = await page.screencast().start({ maxSize: { width: 500, height: 400 } });
+  const disposable = await page.screencast.start({ maxSize: { width: 500, height: 400 } });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
