@@ -12,24 +12,28 @@ PLAYWRIGHT_HTML_OPEN=never npm run special-test-command
 
 # Debugging Playwright Tests
 
-To debug a failing test, run it with Playwright as usual, but set `PWPAUSE=cli` environment variable. This command will pause the test at the point of failure, and print the debugging instructions.
+To debug a failing Playwright test, run it with `--debug=cli` option. This command will pause the test at the start and print the debugging instructions.
 
 **IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed.
 
-Once instructions are printed, use `playwright-cli` to explore the page. Debugging instructions include a browser name that should be used in `playwright-cli` to attach to the page under test.
+Once instructions containing a session name are printed, use `playwright-cli` to attach the session and explore the page.
 
 ```bash
 # Run the test
-PLAYWRIGHT_HTML_OPEN=never PWPAUSE=cli npx playwright test
+PLAYWRIGHT_HTML_OPEN=never npx playwright test --debug=cli
+# ...
+# ... debugging instructions for "tw-abcdef" session ...
 # ...
 
-# Explore the page and interact if needed
-playwright-cli --session=test open --attach=test-worker-abcdef
-playwright-cli --session=test snapshot
-playwright-cli --session=test click e14
+# Attach to the test
+playwright-cli attach tw-abcdef
 ```
 
-Keep the test running in the background while you explore and look for a fix. After fixing the test, stop the background test run.
+Keep the test running in the background while you explore and look for a fix.
+The test is paused at the start, so you should step over or pause at a particular location
+where the problem is most likely to be.
 
 Every action you perform with `playwright-cli` generates corresponding Playwright TypeScript code.
 This code appears in the output and can be copied directly into the test. Most of the time, a specific locator or an expectation should be updated, but it could also be a bug in the app. Use your judgement.
+
+After fixing the test, stop the background test run. Rerun to check that test passes.

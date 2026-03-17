@@ -20,44 +20,55 @@ import { writeFiles } from './fixtures';
 
 const testEntrypoint = path.join(__dirname, '../../packages/playwright-test/cli.js');
 
-test.skip('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
+test('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
   await writeFiles({
     'subdir/a.test.ts': `
       import { test, expect } from '@playwright/test';
       test('example test', async ({ page }) => {
         await page.setContent('<title>My Page</title><body><button>Submit</button></body>');
-        await expect(page.getByRole('button', { name: 'Missing' })).toBeVisible({ timeout: 1000 });
+        await expect(page.getByRole('button', { name: 'Submit' })).toBeVisible();
+        await page.setContent('<title>My Page</title><body><button>Close</button></body>');
+        await expect(page.getByRole('button', { name: 'Close' })).toBeVisible();
       });
     `,
   });
 
   const testProcess = childProcess({
-    command: [process.argv[0], testEntrypoint, 'test'],
+    command: [process.argv[0], testEntrypoint, 'test', '--debug=cli'],
     cwd: test.info().outputPath('subdir'),
-    env: { PWPAUSE: 'cli', ...cliEnv },
+    env: cliEnv,
   });
 
-  await testProcess.waitForOutput('playwright-cli --session=<name> open --attach=test-worker');
+  await testProcess.waitForOutput('playwright-cli attach');
 
-  const match = testProcess.output.match(/--attach=([a-zA-Z0-9-_]+)/);
-  const browserName = match[1];
+  const match = testProcess.output.match(/attach ([a-zA-Z0-9-_]+)/);
+  const session = match[1];
 
-  const { output: openOutput } = await cli('open', `--session=test-session`, `--attach=${browserName}`);
-  expect(openOutput).toContain('My Page');
+  const { output: listOutput1 } = await cli('list', '--all');
+  expect(listOutput1).toContain('subdir');
+  expect(listOutput1).toContain(`browser "${session}"`);
 
-  const listResult1 = await cli('list', '--all');
-  expect(listResult1.exitCode).toBe(0);
-  expect(listResult1.output).toContain('test-session');
-  expect(listResult1.output).toContain('subdir');
-  expect(listResult1.output).toContain(`browser "${browserName}"`);
+  const { output: attachOutput } = await cli('attach', session);
+  expect(attachOutput).toContain('### Paused');
+  expect(attachOutput).toContain(`- Set content at subdir${path.sep}a.test.ts:4`);
 
-  const snapshotResult = await cli(`--session=test-session`, 'snapshot');
-  expect(snapshotResult.exitCode).toBe(0);
+  const { output: listOutput2 } = await cli('list', '--all');
+  expect(listOutput2).toContain('/');
+  expect(listOutput2).toContain(`- ${session}`);
+
+  const { output: stepOutput } = await cli(`--session=${session}`, 'step-over');
+  expect(stepOutput).toContain('### Paused');
+  expect(stepOutput).toContain(`- Expect "toBeVisible" at subdir${path.sep}a.test.ts:5`);
+
+  const snapshotResult = await cli(`--session=${session}`, 'snapshot');
   expect(snapshotResult.snapshot).toContain('button "Submit"');
 
-  await testProcess.kill('SIGINT');
+  const { output: pauseAtOutput } = await cli(`--session=${session}`, 'pause-at', 'a.test.ts:7');
+  expect(pauseAtOutput).toContain('### Paused');
+  expect(pauseAtOutput).toContain(`- Expect "toBeVisible" at subdir${path.sep}a.test.ts:7`);
 
-  const listResult2 = await cli('list');
-  expect(listResult2.exitCode).toBe(0);
-  expect(listResult2.output).toContain('(no browsers)');
+  await cli(`--session=${session}`, 'resume');
+
+  const { output: listOutput3 } = await cli('list');
+  expect(listOutput3).toContain('(no browsers)');
 });
