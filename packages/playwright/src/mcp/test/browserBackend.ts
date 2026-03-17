@@ -111,7 +111,7 @@ async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright
 }
 
 export async function runDaemonForContext(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
-  if (process.env.PWPAUSE !== 'cli')
+  if (testInfo._configInternal.configCLIOverrides.debug !== 'cli')
     return false;
 
   const sessionName = `tw-${createGuid().slice(0, 6)}`;
@@ -119,16 +119,10 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
 
   /* eslint-disable-next-line no-console */
   console.log([
-      `### The test is currently paused at the start`,
-      ``,
-      `### Debugging Instructions`,
-      `- Run "playwright-cli attach ${sessionName}" to attach to this test`,
-      `- Use "playwright-cli --session=${sessionName}" to explore the page`,
-      ``,
-      `- Run "playwright-cli --session=${sessionName} step-over" to step through the test`,
-      `- Run "playwright-cli --session=${sessionName} pause-at <location>:<line>" to continue the test until the specified location`,
-      `- Run "playwright-cli --session=${sessionName} resume" to resume the test`,
-      ``,
+    `### The test is currently paused at the start`,
+    ``,
+    `### Debugging Instructions`,
+    `- Run "playwright-cli attach ${sessionName}" to attach to this test`,
   ].join('\n'));
 
   await context.debugger.setPauseAt({ next: true });

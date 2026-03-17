@@ -283,13 +283,20 @@ async function mergeReports(reportDir: string | undefined, opts: { [key: string]
 }
 
 function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrides {
+  if (options.ui) {
+    options.debug = undefined;
+    options.trace = undefined;
+  }
+
   const overrides: ConfigCLIOverrides = {
+    debug: options.debug,
     failOnFlakyTests: options.failOnFlakyTests ? true : undefined,
     forbidOnly: options.forbidOnly ? true : undefined,
     fullyParallel: options.fullyParallel ? true : undefined,
     globalTimeout: options.globalTimeout ? parseInt(options.globalTimeout, 10) : undefined,
     maxFailures: options.x ? 1 : (options.maxFailures ? parseInt(options.maxFailures, 10) : undefined),
     outputDir: options.output ? path.resolve(process.cwd(), options.output) : undefined,
+    pause: !!process.env.PWPAUSE,
     quiet: options.quiet ? options.quiet : undefined,
     repeatEach: options.repeatEach ? parseInt(options.repeatEach, 10) : undefined,
     retries: options.retries ? parseInt(options.retries, 10) : undefined,
@@ -301,6 +308,9 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     ignoreSnapshots: options.ignoreSnapshots ? !!options.ignoreSnapshots : undefined,
     updateSnapshots: options.updateSnapshots,
     updateSourceMethod: options.updateSourceMethod,
+    use: {
+      trace: options.trace,
+    },
     workers: options.workers,
   };
 
@@ -317,20 +327,11 @@ function overridesFromOptions(options: { [key: string]: any }): ConfigCLIOverrid
     });
   }
 
-  if (options.headed || options.debug)
-    overrides.use = { headless: false };
-  if (!options.ui && options.debug) {
-    overrides.debug = true;
+  if (options.headed)
+    overrides.use.headless = false;
+  if (options.debug === 'inspector') {
+    overrides.use.headless = false;
     process.env.PWDEBUG = '1';
-  }
-  if (!options.ui && options.trace) {
-    overrides.use = overrides.use || {};
-    overrides.use.trace = options.trace;
-  }
-  if (process.env.PWPAUSE === 'cli') {
-    // overrides.timeout = 0;
-  } else if (process.env.PWPAUSE) {
-    overrides.pause = true;
   }
   if (overrides.tsconfig && !fs.existsSync(overrides.tsconfig))
     throw new Error(`--tsconfig "${options.tsconfig}" does not exist`);
@@ -401,7 +402,7 @@ const kTraceModes: TraceMode[] = ['on', 'off', 'on-first-retry', 'on-all-retries
 const testOptions: [string, { description: string, choices?: string[], preset?: string }][] = [
   /* deprecated */ ['--browser <browser>', { description: `Browser to use for tests, one of "all", "chromium", "firefox" or "webkit" (default: "chromium")` }],
   ['-c, --config <file>', { description: `Configuration file, or a test directory with optional "playwright.config.{m,c}?{js,ts}"` }],
-  ['--debug', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options` }],
+  ['--debug [mode]', { description: `Run tests with Playwright Inspector. Shortcut for "PWDEBUG=1" environment variable and "--timeout=0 --max-failures=1 --headed --workers=1" options`, choices: ['inspector', 'cli'], preset: 'inspector' }],
   ['--fail-on-flaky-tests', { description: `Fail if any test is flagged as flaky (default: false)` }],
   ['--forbid-only', { description: `Fail if test.only is called (default: false)` }],
   ['--fully-parallel', { description: `Run all tests in parallel (default: false)` }],

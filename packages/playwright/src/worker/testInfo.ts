@@ -201,7 +201,7 @@ export class TestInfoImpl implements TestInfo {
     this.expectedStatus = test?.expectedStatus ?? 'skipped';
 
     this._timeoutManager = new TimeoutManager(this.project.timeout);
-    if (configInternal.configCLIOverrides.debug)
+    if (configInternal.configCLIOverrides.debug === 'inspector')
       this._setIgnoreTimeouts(true);
 
     this.outputDir = (() => {

@@ -838,7 +838,7 @@ const pauseAt = declareCommand({
     location: z.string().describe('Location to pause at. Format is <file>:<line>, e.g. "example.spec.ts:42".'),
   }),
   toolName: 'browser_resume',
-  toolParams: ({}) => ({ step: true }),
+  toolParams: ({ location }) => ({ location }),
 });
 
 // Sessions
