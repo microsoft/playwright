@@ -21957,7 +21957,7 @@ export interface Tracing {
 
       column?: number;
     };
-  }): Promise<void>;
+  }): Promise<Disposable>;
 
   /**
    * Closes the last group created by

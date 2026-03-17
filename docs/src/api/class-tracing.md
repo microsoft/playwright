@@ -305,6 +305,7 @@ To specify the final trace zip file name, you need to pass `path` option to
 
 ## async method: Tracing.group
 * since: v1.49
+- returns: <[Disposable]>
 
 :::caution
 Use `test.step` instead when available.
