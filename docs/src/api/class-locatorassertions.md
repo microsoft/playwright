@@ -1960,11 +1960,8 @@ Snapshot name.
 ### option: LocatorAssertions.toHaveScreenshot#1.threshold = %%-assertions-threshold-%%
 * since: v1.23
 
-### option: LocatorAssertions.toHaveScreenshot#1.scrollIntoView
-* since: v1.52
-- `scrollIntoView` <[boolean]>
-
-When set to `false`, the locator will not be scrolled into view before taking a screenshot. Defaults to `true`.
+### option: LocatorAssertions.toHaveScreenshot#1.scrollIntoView = %%-assertions-scroll-into-view-%%
+* since: v1.59
 
 ## async method: LocatorAssertions.toHaveScreenshot#2
 * since: v1.23
@@ -2015,11 +2012,8 @@ Note that screenshot assertions only work with Playwright test runner.
 ### option: LocatorAssertions.toHaveScreenshot#2.threshold = %%-assertions-threshold-%%
 * since: v1.23
 
-### option: LocatorAssertions.toHaveScreenshot#2.scrollIntoView
-* since: v1.52
-- `scrollIntoView` <[boolean]>
-
-When set to `false`, the locator will not be scrolled into view before taking a screenshot. Defaults to `true`.
+### option: LocatorAssertions.toHaveScreenshot#2.scrollIntoView = %%-assertions-scroll-into-view-%%
+* since: v1.59
 
 ## async method: LocatorAssertions.toHaveText
 * since: v1.20

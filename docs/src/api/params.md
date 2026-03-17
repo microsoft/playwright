@@ -1015,6 +1015,12 @@ An acceptable perceived color difference in the [YIQ color space](https://en.wik
 between the same pixel in compared images, between zero (strict) and one (lax), default is configurable with
 `TestConfig.expect`. Defaults to `0.2`.
 
+## assertions-scroll-into-view
+* langs: js
+- `scrollIntoView` <[boolean]>
+
+When set to `false`, do not perform automatic scroll-into-view before taking a screenshot in `expect(locator).toHaveScreenshot()`. Defaults to `true`.
+
 ## shared-context-params-list-v1.8
 - %%-context-option-acceptdownloads-%%
 - %%-context-option-ignorehttpserrors-%%
