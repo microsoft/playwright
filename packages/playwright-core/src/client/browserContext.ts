@@ -38,7 +38,7 @@ import { WebError } from './webError';
 import { Worker } from './worker';
 import { TimeoutSettings } from './timeoutSettings';
 import { mkdirIfNeeded } from './fileUtils';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
+import { headersArrayToObject, headersObjectToArray } from '../utils/isomorphic/headers';
 import { urlMatchesEqual } from '../utils/isomorphic/urlMatch';
 import { isRegExp, isString } from '../utils/isomorphic/rtti';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
@@ -288,6 +288,10 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
 
   browser(): Browser | null {
     return this._browser;
+  }
+
+  contextOptions() {
+    return contextParamsToPublicOptions(this._options);
   }
 
   pages(): Page[] {
@@ -601,6 +605,24 @@ export async function prepareBrowserContextParams(platform: Platform, options: B
   if (contextParams.recordVideo && contextParams.recordVideo.dir)
     contextParams.recordVideo.dir = platform.path().resolve(contextParams.recordVideo.dir);
   return contextParams;
+}
+
+function contextParamsToPublicOptions(params: channels.BrowserNewContextParams): api.BrowserContextOptions {
+  const result = {
+    ...params,
+    viewport: params.noDefaultViewport ? null : params.viewport,
+    extraHTTPHeaders: params.extraHTTPHeaders ? headersArrayToObject(params.extraHTTPHeaders, false) : undefined,
+    colorScheme: params.colorScheme === 'no-override' ? null : params.colorScheme,
+    reducedMotion: params.reducedMotion === 'no-override' ? null : params.reducedMotion,
+    forcedColors: params.forcedColors === 'no-override' ? null : params.forcedColors,
+    contrast: params.contrast === 'no-override' ? null : params.contrast,
+    acceptDownloads: params.acceptDownloads === 'accept' ? true : params.acceptDownloads === 'deny' ? false : undefined,
+    storageState: undefined,
+  };
+  delete result.clientCertificates;
+  delete result.noDefaultViewport;
+  delete result.selectorEngines;
+  return result;
 }
 
 function toAcceptDownloadsProtocol(acceptDownloads?: boolean) {
