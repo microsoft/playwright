@@ -121,6 +121,7 @@ export class Chromium extends BrowserType {
         downloadsPath: options.downloadsPath || artifactsDir,
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
+        suppressFocus: (options as any).suppressFocus,
       };
       validateBrowserContextOptions(persistent, browserOptions);
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, chromeTransport, browserOptions));

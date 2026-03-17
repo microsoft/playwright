@@ -360,11 +360,14 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       return;
 
     const downloadTimeout = this.context.config.timeouts.download ?? 30_000;
-    const timeout = new Promise<void>(resolve => setTimeout(resolve, downloadTimeout));
+    let downloadTimeoutId: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<void>(resolve => {
+      downloadTimeoutId = setTimeout(resolve, downloadTimeout);
+    });
     await Promise.race([
       Promise.all(pending.map(d => d.savePromise!.catch(() => {}))),
       timeout,
-    ]);
+    ]).finally(() => clearTimeout(downloadTimeoutId));
   }
 
   async refLocator(params: { element?: string, ref: string }): Promise<{ locator: Locator, resolved: string }> {

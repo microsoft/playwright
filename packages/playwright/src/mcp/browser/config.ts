@@ -77,6 +77,8 @@ export type CLIOptions = {
   userDataDir?: string;
   viewportSize?: ViewportSize;
   filterInternalUrls?: boolean;
+  keepBrowserAlive?: boolean;
+  suppressFocus?: boolean;
   'allowed-tools'?: string[];
 };
 
@@ -309,6 +311,8 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     filterInternalUrls: cliOptions.filterInternalUrls,
+    keepBrowserAlive: cliOptions.keepBrowserAlive,
+    suppressFocus: cliOptions.suppressFocus,
     allowedTools: cliOptions['allowed-tools'],
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,
@@ -368,6 +372,9 @@ function configFromEnv(): Config {
   options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
   options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
   options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  options.suppressFocus = envToBoolean(process.env.PLAYWRIGHT_MCP_SUPPRESS_FOCUS);
+  options.keepBrowserAlive = envToBoolean(process.env.PLAYWRIGHT_MCP_KEEP_BROWSER_ALIVE);
+  options.filterInternalUrls = envToBoolean(process.env.PLAYWRIGHT_MCP_FILTER_INTERNAL_URLS);
   return configFromCLIOptions(options);
 }
 

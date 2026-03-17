@@ -55,6 +55,7 @@ export type BrowserOptions = {
   wsEndpoint?: string;  // Only there when connected over web socket.
   sdkLanguage?: Language;
   originalLaunchOptions: types.LaunchOptions;
+  suppressFocus?: boolean;
 };
 
 export abstract class Browser extends SdkObject {
