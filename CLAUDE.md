@@ -125,6 +125,7 @@ EOF
 ```
 
 Never add Co-Authored-By agents in commit message.
+Never add "Generated with" in commit message.
 Branch naming for issue fixes: `fix-<issue-number>`
 
 ## Development Guides

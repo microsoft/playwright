@@ -26,11 +26,7 @@ import { compareSemver, SocketConnection } from '../utils/socketConnection';
 import { resolveSessionName } from './registry';
 
 import type { SessionConfig, ClientInfo, SessionFile } from './registry';
-
-type MinimistArgs = {
-  _: string[];
-  [key: string]: any;
-};
+import type { MinimistArgs } from './minimist';
 
 export class Session {
   readonly name: string;
@@ -47,7 +43,7 @@ export class Session {
     return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  async run(clientInfo: ClientInfo, args: MinimistArgs, cwd?: string): Promise<{ text: string }> {
+  async run(clientInfo: ClientInfo, args: MinimistArgs): Promise<{ text: string }> {
     if (!this.isCompatible(clientInfo))
       throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto restart the browser session.`);
 
@@ -127,7 +123,7 @@ export class Session {
     await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
 
     const cliPath = require.resolve('../cli-daemon/program.js');
-    const sessionName = resolveSessionName(cliArgs.session);
+    const sessionName = resolveSessionName(cliArgs.session as string);
     const errLog = path.join(clientInfo.daemonProfilesDir, sessionName + '.err');
     const err = fs.openSync(errLog, 'w');
 
