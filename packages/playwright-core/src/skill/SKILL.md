@@ -46,6 +46,9 @@ playwright-cli snapshot
 playwright-cli snapshot --filename=after-click.yaml
 playwright-cli eval "document.title"
 playwright-cli eval "el => el.textContent" e5
+# get element id, class, or any attribute not visible in the snapshot
+playwright-cli eval "el => el.id" e5
+playwright-cli eval "el => el.getAttribute('data-testid')" e5
 playwright-cli dialog-accept
 playwright-cli dialog-accept "confirmation text"
 playwright-cli dialog-dismiss
@@ -307,3 +310,4 @@ playwright-cli close
 * **Test generation** [references/test-generation.md](references/test-generation.md)
 * **Tracing** [references/tracing.md](references/tracing.md)
 * **Video recording** [references/video-recording.md](references/video-recording.md)
+* **Inspecting element attributes** [references/element-attributes.md](references/element-attributes.md)
