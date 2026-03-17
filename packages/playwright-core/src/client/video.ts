@@ -15,6 +15,7 @@
  */
 
 import { Artifact } from './artifact';
+import { DisposableStub } from './disposable';
 import { EventEmitter } from './eventEmitter';
 
 import type { Connection } from './connection';
@@ -25,6 +26,7 @@ export class Video extends EventEmitter implements api.Video {
   private _artifact: Artifact | undefined;
   private _isRemote = false;
   private _page: Page;
+  private _savePath: string | undefined;
 
   constructor(page: Page, connection: Connection, artifact: Artifact | undefined) {
     super(page._platform);
@@ -33,16 +35,18 @@ export class Video extends EventEmitter implements api.Video {
     this._artifact = artifact;
   }
 
-  async start(options: { size?: { width: number, height: number } } = {}): Promise<void> {
-    const result = await this._page._channel.videoStart(options);
+  async start(options: { path?: string, size?: { width: number, height: number } } = {}) {
+    const result = await this._page._channel.videoStart({ size: options.size });
     this._artifact = Artifact.from(result.artifact);
+    this._savePath = options.path;
+    return new DisposableStub(() => this.stop());
   }
 
-  async stop(options: { path?: string } = {}): Promise<void> {
+  async stop(): Promise<void> {
     await this._page._wrapApiCall(async () => {
       await this._page._channel.videoStop();
-      if (options.path)
-        await this.saveAs(options.path);
+      if (this._savePath)
+        await this.saveAs(this._savePath);
     });
   }
 
