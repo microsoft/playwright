@@ -47,8 +47,10 @@ export class Selectors implements api.Selectors {
   setTestIdAttribute(attributeName: string) {
     this._testIdAttributeName = attributeName;
     setTestIdAttribute(attributeName);
-    for (const context of this._contextsForSelectors)
+    for (const context of this._contextsForSelectors) {
+      context._options.testIdAttributeName = attributeName;
       context._channel.setTestIdAttributeName({ testIdAttributeName: attributeName }).catch(() => {});
+    }
   }
 
   _withSelectorOptions<T>(options: T) {

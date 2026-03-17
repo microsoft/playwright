@@ -8323,6 +8323,12 @@ export interface BrowserContext {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  /**
+   * Returns the context options that were used to create this browser context. The return type matches the options
+   * accepted by [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
+   */
+  contextOptions(): BrowserContextOptions;
   /**
    * This event is not emitted.
    */
@@ -9750,6 +9756,12 @@ export interface Browser {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  /**
+   * Returns the launch options that were used to launch this browser. The return type matches the options accepted by
+   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
+   */
+  launchOptions(): LaunchOptions;
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
@@ -9840,12 +9852,6 @@ export interface Browser {
    * Indicates that the browser is connected.
    */
   isConnected(): boolean;
-
-  /**
-   * Returns the launch options that were used to launch this browser. The return type matches the options accepted by
-   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
-   */
-  launchOptions(): Object;
 
   /**
    * **NOTE** CDP Sessions are only supported on Chromium-based browsers.
