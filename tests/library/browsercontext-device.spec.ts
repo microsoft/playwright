@@ -104,6 +104,25 @@ it.describe('device', () => {
     await context.close();
   });
 
+  it('should resolve native device user agent to current platform', async ({ playwright, browser, server }) => {
+    const device = playwright.devices['Desktop Chrome Native'];
+    expect(device.userAgent).not.toContain('{{platform}}');
+    const expectedPlatform = {
+      'darwin': 'Macintosh; Intel Mac OS X 10_15_7',
+      'linux': 'X11; Linux x86_64',
+      'win32': 'Windows NT 10.0; Win64; x64',
+    }[process.platform] ?? 'Windows NT 10.0; Win64; x64';
+    expect(device.userAgent).toContain(expectedPlatform);
+
+    const context = await browser.newContext({ ...device });
+    const page = await context.newPage();
+    await page.goto(server.PREFIX + '/mobile.html');
+    const userAgent = await page.evaluate(() => navigator.userAgent);
+    expect(userAgent).toContain(expectedPlatform);
+    expect(userAgent).not.toContain('{{platform}}');
+    await context.close();
+  });
+
   it('should emulate viewport and screen size', async ({ contextFactory, playwright }) => {
     const device = playwright.devices['iPhone 12'];
     const context = await contextFactory(device);

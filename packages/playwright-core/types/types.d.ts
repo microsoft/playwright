@@ -23565,12 +23565,18 @@ type Devices = {
   "Moto G4": DeviceDescriptor;
   "Moto G4 landscape": DeviceDescriptor;
   "Desktop Chrome HiDPI": DeviceDescriptor;
+  "Desktop Chrome HiDPI Native": DeviceDescriptor;
   "Desktop Edge HiDPI": DeviceDescriptor;
+  "Desktop Edge HiDPI Native": DeviceDescriptor;
   "Desktop Firefox HiDPI": DeviceDescriptor;
+  "Desktop Firefox HiDPI Native": DeviceDescriptor;
   "Desktop Safari": DeviceDescriptor;
   "Desktop Chrome": DeviceDescriptor;
+  "Desktop Chrome Native": DeviceDescriptor;
   "Desktop Edge": DeviceDescriptor;
+  "Desktop Edge Native": DeviceDescriptor;
   "Desktop Firefox": DeviceDescriptor;
+  "Desktop Firefox Native": DeviceDescriptor;
   [key: string]: DeviceDescriptor;
 }
 

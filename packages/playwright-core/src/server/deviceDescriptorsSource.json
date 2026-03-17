@@ -1686,6 +1686,21 @@
     "hasTouch": false,
     "defaultBrowserType": "chromium"
   },
+  "Desktop Chrome HiDPI Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36",
+    "screen": {
+      "width": 1792,
+      "height": 1120
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium"
+  },
   "Desktop Edge HiDPI": {
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36 Edg/146.0.7680.31",
     "screen": {
@@ -1701,8 +1716,38 @@
     "hasTouch": false,
     "defaultBrowserType": "chromium"
   },
+  "Desktop Edge HiDPI Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36 Edg/146.0.7680.31",
+    "screen": {
+      "width": 1792,
+      "height": 1120
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium"
+  },
   "Desktop Firefox HiDPI": {
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0.2) Gecko/20100101 Firefox/148.0.2",
+    "screen": {
+      "width": 1792,
+      "height": 1120
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 2,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "firefox"
+  },
+  "Desktop Firefox HiDPI Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}; rv:148.0.2) Gecko/20100101 Firefox/148.0.2",
     "screen": {
       "width": 1792,
       "height": 1120
@@ -1746,6 +1791,21 @@
     "hasTouch": false,
     "defaultBrowserType": "chromium"
   },
+  "Desktop Chrome Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36",
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium"
+  },
   "Desktop Edge": {
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36 Edg/146.0.7680.31",
     "screen": {
@@ -1761,8 +1821,38 @@
     "hasTouch": false,
     "defaultBrowserType": "chromium"
   },
+  "Desktop Edge Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/146.0.7680.31 Safari/537.36 Edg/146.0.7680.31",
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "chromium"
+  },
   "Desktop Firefox": {
     "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:148.0.2) Gecko/20100101 Firefox/148.0.2",
+    "screen": {
+      "width": 1920,
+      "height": 1080
+    },
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "deviceScaleFactor": 1,
+    "isMobile": false,
+    "hasTouch": false,
+    "defaultBrowserType": "firefox"
+  },
+  "Desktop Firefox Native": {
+    "userAgent": "Mozilla/5.0 ({{platform}}; rv:148.0.2) Gecko/20100101 Firefox/148.0.2",
     "screen": {
       "width": 1920,
       "height": 1080
