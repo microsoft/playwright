@@ -4521,6 +4521,11 @@ export interface Page {
    */
   snapshotForAI(options?: {
     /**
+     * When specified, limits the depth of the snapshot.
+     */
+    depth?: number;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)

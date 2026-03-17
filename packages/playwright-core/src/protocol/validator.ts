@@ -1497,6 +1497,7 @@ scheme.PageRequestsResult = tObject({
 scheme.PageSnapshotForAIParams = tObject({
   track: tOptional(tString),
   selector: tOptional(tString),
+  depth: tOptional(tInt),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({

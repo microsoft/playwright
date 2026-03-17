@@ -2613,11 +2613,13 @@ export type PageRequestsResult = {
 export type PageSnapshotForAIParams = {
   track?: string,
   selector?: string,
+  depth?: number,
   timeout: number,
 };
 export type PageSnapshotForAIOptions = {
   track?: string,
   selector?: string,
+  depth?: number,
 };
 export type PageSnapshotForAIResult = {
   full: string,

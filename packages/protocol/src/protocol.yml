@@ -2014,6 +2014,7 @@ Page:
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
         selector: string?
+        depth: int?
         timeout: float
       returns:
         full: string

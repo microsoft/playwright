@@ -4232,6 +4232,12 @@ Returns an accessibility snapshot of the page optimized for AI consumption.
 When specified, enables incremental snapshots. Subsequent calls with the same track name will return
 an incremental snapshot containing only changes since the last call.
 
+### option: Page.snapshotForAI.depth
+* since: v1.59
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
+
 ## async method: Page.tap
 * since: v1.8
 * discouraged: Use locator-based [`method: Locator.tap`] instead. Read more about [locators](../locators.md).
