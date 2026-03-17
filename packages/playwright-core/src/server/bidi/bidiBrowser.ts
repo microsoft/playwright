@@ -505,6 +505,7 @@ export class BidiBrowserContext extends BrowserContext {
     await this._browser._browserSession.send('browser.removeUserContext', {
       userContext: this._browserContextId
     });
+    await Promise.all(this._bidiPages().map(bidiPage => bidiPage._page.closedPromise));
     this._browser._contexts.delete(this._browserContextId);
   }
 

@@ -107,6 +107,7 @@ page/page-history.spec.ts › goBack/goForward should work with bfcache-able pag
 page/page-history.spec.ts › page.goBack should work for file urls [timeout]
 page/page-history.spec.ts › regression test for issue 20791 [flaky]
 page/page-keyboard.spec.ts › insertText should only emit input event [fail]
+page/page-keyboard.spec.ts › should press audio and media control keys [fail]
 page/page-keyboard.spec.ts › should press Enter [fail]
 page/page-keyboard.spec.ts › should send a character with insertText [fail]
 page/page-mouse.spec.ts › should always round down [fail]
