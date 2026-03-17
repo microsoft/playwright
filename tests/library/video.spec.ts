@@ -826,14 +826,14 @@ it.describe('screencast', () => {
     await page.video().stop();
     expectRedFrames(videoPath1, size);
 
-    await page.video().start({ size });
+    const videoPath3 = testInfo.outputPath('video3.webm');
+    await page.video().start({ size, path: videoPath3 });
     await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
     await rafraf(page, 100);
     const videoPath2 = await page.video().path();
     expect(videoPath2).toBeDefined();
     expect(videoPath2).not.toEqual(videoPath1);
-    const videoPath3 = testInfo.outputPath('video3.webm');
-    await page.video().stop({ path: videoPath3 });
+    await page.video().stop();
     const contents2 = fs.readFileSync(videoPath2).toString('base64');
     const contents3 = fs.readFileSync(videoPath3).toString('base64');
     expect(contents2 === contents3).toBeTruthy();
@@ -851,7 +851,7 @@ it.describe('screencast', () => {
     const page = await context.newPage();
     const error = await page.video().start().catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
-    await page.video().stop({ path: testInfo.outputPath('video.webm') });
+    await page.video().stop();
     await context.close();
   });
 
@@ -891,11 +891,24 @@ it.describe('screencast', () => {
     const size = { width: 800, height: 800 };
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
-    await page.video().start({ size });
     const videoPath = testInfo.outputPath('empty-video.webm');
-    await page.video().stop({ path: videoPath });
+    await page.video().start({ size, path: videoPath });
+    await page.video().stop();
     await context.close();
     expectFrames(videoPath, size, isAlmostWhite);
+  });
+
+  it('video.start dispose stops recording', async ({ browser }, testInfo) => {
+    const size = { width: 800, height: 800 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+    const videoPath = testInfo.outputPath('dispose-video.webm');
+    const disposable = await page.video().start({ size, path: videoPath });
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    await disposable.dispose();
+    expectRedFrames(videoPath, size);
+    await context.close();
   });
 
 });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import { DisposableStub } from './disposable';
 import { EventEmitter } from './eventEmitter';
 
 import type * as api from '../../types/types';
@@ -28,8 +29,9 @@ export class Screencast extends EventEmitter implements api.Screencast {
     this._page._channel.on('screencastFrame', ({ data }) => this.emit('screencastframe', { data }));
   }
 
-  async start(options: { maxSize?: { width: number, height: number } } = {}): Promise<void> {
+  async start(options: { maxSize?: { width: number, height: number } } = {}) {
     await this._page._channel.startScreencast(options);
+    return new DisposableStub(() => this.stop());
   }
 
   async stop(): Promise<void> {

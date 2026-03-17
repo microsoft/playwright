@@ -26,6 +26,7 @@ await screencast.stop();
 
 ## async method: Screencast.start
 * since: v1.59
+- returns: <[Disposable]>
 
 Starts capturing screencast frames. Frames are emitted as [`event: Screencast.screencastFrame`] events.
 

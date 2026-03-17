@@ -91,6 +91,24 @@ test('start throws when video recording is running with different params', async
   await context.close();
 });
 
+test('screencast.start dispose stops screencast', async ({ browser, server, trace }) => {
+  test.skip(trace === 'on', 'trace=on has different screencast image configuration');
+  const context = await browser.newContext({ viewport: { width: 1000, height: 400 } });
+  const page = await context.newPage();
+
+  const frames: { data: Buffer }[] = [];
+  page.screencast().on('screencastframe', frame => frames.push(frame));
+
+  const disposable = await page.screencast().start({ maxSize: { width: 500, height: 400 } });
+  await page.goto(server.EMPTY_PAGE);
+  await page.evaluate(() => document.body.style.backgroundColor = 'red');
+  await rafraf(page, 100);
+  await disposable.dispose();
+
+  expect(frames.length).toBeGreaterThan(0);
+  await context.close();
+});
+
 test('video.start does not emit screencastframe events', async ({ page, server, trace }) => {
   test.skip(trace === 'on', 'trace=on enables screencast frame events');
 
