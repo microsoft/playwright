@@ -1754,6 +1754,7 @@ Page:
         threshold: float?
         fullPage: boolean?
         clip: Rect?
+        scrollIntoView: boolean?
         $mixin: CommonScreenshotOptions
       returns:
         diff: binary?

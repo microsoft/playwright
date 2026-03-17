@@ -1439,6 +1439,27 @@ test('should support stylePath option in config', async ({ runInlineTest }) => {
   expect(result.exitCode).toBe(0);
 });
 
+test('should support scrollIntoView option for locator', async ({ runInlineTest }, testInfo) => {
+  const result = await runInlineTest({
+    ...playwrightConfig({
+      snapshotPathTemplate: '__screenshots__/{testFilePath}/{arg}{ext}',
+    }),
+    'a.spec.js': `
+      const { test, expect } = require('@playwright/test');
+      test('is a test', async ({ page }) => {
+        await page.setContent('<style> html,body { padding: 0; margin: 0; }</style><div style="width:50px;height:50px;background:red"></div>');
+        await expect(page.locator('div')).toHaveScreenshot({
+          name: 'snapshot.png',
+          scrollIntoView: false,
+        });
+      });
+    `
+  }, { 'update-snapshots': true });
+  expect(result.exitCode).toBe(0);
+  const snapshotPath = testInfo.outputPath('__screenshots__', 'a.spec.js', 'snapshot.png');
+  expect(fs.existsSync(snapshotPath)).toBe(true);
+});
+
 function playwrightConfig(obj: any) {
   return {
     'playwright.config.js': `

@@ -46,6 +46,7 @@ export type ScreenshotOptions = {
   scale?: 'css' | 'device';
   caret?: 'hide' | 'initial';
   style?: string;
+  scrollIntoView?: boolean;
 };
 
 function inPagePrepareForScreenshots(screenshotStyle: string, hideCaret: boolean, disableAnimations: boolean, syncAnimations: boolean) {
@@ -231,7 +232,8 @@ export class Screenshotter {
 
       await this._preparePageForScreenshot(progress, handle._frame, options.style, options.caret !== 'initial', options.animations === 'disabled');
       try {
-        await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
+        if (options.scrollIntoView !== false)
+          await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
 
         const boundingBox = await progress.race(handle.boundingBox());
         assert(boundingBox, 'Node is either not visible or not an HTMLElement');

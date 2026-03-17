@@ -9315,6 +9315,11 @@ interface LocatorAssertions {
     scale?: "css"|"device";
 
     /**
+     * When set to `false`, the locator will not be scrolled into view before taking a screenshot. Defaults to `true`.
+     */
+    scrollIntoView?: boolean;
+
+    /**
      * File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
      * elements, make elements invisible or change their properties to help you creating repeatable screenshots. This
      * stylesheet pierces the Shadow DOM and applies to the inner frames.
@@ -9406,6 +9411,11 @@ interface LocatorAssertions {
      * Defaults to `"css"`.
      */
     scale?: "css"|"device";
+
+    /**
+     * When set to `false`, the locator will not be scrolled into view before taking a screenshot. Defaults to `true`.
+     */
+    scrollIntoView?: boolean;
 
     /**
      * File name containing the stylesheet to apply while making the screenshot. This is where you can hide dynamic
