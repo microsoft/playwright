@@ -27,7 +27,10 @@ const requests = defineTabTool({
     title: 'List network requests',
     description: 'Returns all network requests since loading the page',
     inputSchema: z.object({
-      includeStatic: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+      static: z.boolean().default(false).describe('Whether to include successful static resources like images, fonts, scripts, etc. Defaults to false.'),
+      requestBody: z.boolean().default(false).describe('Whether to include request body. Defaults to false.'),
+      requestHeaders: z.boolean().default(false).describe('Whether to include request headers. Defaults to false.'),
+      filter: z.string().optional().describe('Only return requests whose URL matches this regexp (e.g. "/api/.*user").'),
       filename: z.string().optional().describe('Filename to save the network requests to. If not provided, requests are returned as text.'),
     }),
     type: 'readOnly',
@@ -35,11 +38,17 @@ const requests = defineTabTool({
 
   handle: async (tab, params, response) => {
     const requests = await tab.requests();
+    const filter = params.filter ? new RegExp(params.filter) : undefined;
     const text: string[] = [];
     for (const request of requests) {
-      if (!params.includeStatic && !isFetch(request) && isSuccessfulResponse(request))
+      if (!params.static && !isFetch(request) && isSuccessfulResponse(request))
         continue;
-      text.push(await renderRequest(request));
+      if (filter) {
+        filter.lastIndex = 0;
+        if (!filter.test(request.url()))
+          continue;
+      }
+      text.push(await renderRequest(request, params.requestBody, params.requestHeaders));
     }
     await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
   },
@@ -71,16 +80,27 @@ export function isFetch(request: playwright.Request): boolean {
   return ['fetch', 'xhr'].includes(request.resourceType());
 }
 
-export async function renderRequest(request: playwright.Request): Promise<string> {
+export async function renderRequest(request: playwright.Request, includeBody = false, includeHeaders = false): Promise<string> {
   const response = request.existingResponse();
 
   const result: string[] = [];
   result.push(`[${request.method().toUpperCase()}] ${request.url()}`);
   if (response)
-    result.push(`=> [${response.status()}] ${response.statusText()}`);
+    result.push(` => [${response.status()}] ${response.statusText()}`);
   else if (request.failure())
-    result.push(`=> [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
-  return result.join(' ');
+    result.push(` => [FAILED] ${request.failure()?.errorText ?? 'Unknown error'}`);
+  if (includeHeaders) {
+    const headers = request.headers();
+    const headerLines = Object.entries(headers).map(([k, v]) => `    ${k}: ${v}`).join('\n');
+    if (headerLines)
+      result.push(`\n  Request headers:\n${headerLines}`);
+  }
+  if (includeBody) {
+    const postData = request.postData();
+    if (postData)
+      result.push(`\n  Request body: ${postData}`);
+  }
+  return result.join('');
 }
 
 const networkStateSet = defineTool({
