@@ -17,12 +17,12 @@
 import type { Locator, Frame, Page } from 'playwright-core';
 import { ZipFile } from '../../packages/playwright-core/lib/server/utils/zipFile';
 import type { StackFrame } from '../../packages/protocol/src/channels';
-import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/traceUtils';
+import { parseClientSideCallMetadata } from '../../packages/playwright-core/lib/utils/isomorphic/trace/traceUtils';
 import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceLoader';
 import { TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
-import { ZipTraceLoaderBackend } from '../../packages/playwright-core/lib/server/trace/viewer/traceParser';
+import { ZipTraceLoaderBackend } from '../../packages/playwright-core/lib/tools/trace/traceParser';
 import type { SnapshotStorage } from '../../packages/playwright-core/src/utils/isomorphic/trace/snapshotStorage';
 
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;

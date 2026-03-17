@@ -1,0 +1,3 @@
+[*]
+../../utils/isomorphic/**
+../../server/utils/zipFile.ts

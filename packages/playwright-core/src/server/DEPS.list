@@ -2,12 +2,12 @@
 ../generated/
 ../protocol/
 ../utils
-../utils/isomorphic/
+../utils/isomorphic/**
 ../utilsBundle.ts
 ../zipBundle.ts
 ./
 ./codegen/
-./isomorphic/
+./isomorphic
 ./har/
 ./recorder/
 ./registry/

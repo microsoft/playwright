@@ -8,3 +8,4 @@
 ../client/
 ../server/trace/viewer/
 ../tools/cli-client/program.ts
+../tools/trace/traceCli.ts
