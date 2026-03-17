@@ -212,11 +212,11 @@ const mouseWheel = declareCommand({
   description: 'Scroll mouse wheel',
   category: 'mouse',
   args: z.object({
-    dx: numberArg.describe('Y delta'),
-    dy: numberArg.describe('X delta'),
+    dx: numberArg.describe('X delta'),
+    dy: numberArg.describe('Y delta'),
   }),
   toolName: 'browser_mouse_wheel',
-  toolParams: ({ dx: deltaY, dy: deltaX }) => ({ deltaY, deltaX }),
+  toolParams: ({ dx: deltaX, dy: deltaY }) => ({ deltaX, deltaY }),
 });
 
 // Core

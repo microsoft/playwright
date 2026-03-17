@@ -45,5 +45,5 @@ test('mousewheel', async ({ cli, server }) => {
 
   await cli('mousewheel', '10', '5');
 
-  await expect.poll(() => cli('snapshot').then(result => result.snapshot)).toContain('wheel 5 10');
+  await expect.poll(() => cli('snapshot').then(result => result.snapshot)).toContain('wheel 10 5');
 });
