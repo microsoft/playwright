@@ -95,12 +95,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly request: APIRequestContext;
   readonly touchscreen: Touchscreen;
   readonly clock: Clock;
+  readonly screencast: Screencast;
 
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
   readonly _timeoutSettings: TimeoutSettings;
   private _video: Video;
-  private _screencast: Screencast;
   readonly _opener: Page | null;
   private _closeReason: string | undefined;
   _closeWasCalled: boolean = false;
@@ -135,7 +135,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
     this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
-    this._screencast = new Screencast(this);
+    this.screencast = new Screencast(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
     this._channel.on('close', () => this._onClose());
@@ -283,10 +283,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
 
   video(): Video {
     return this._video;
-  }
-
-  screencast(): Screencast {
-    return this._screencast;
   }
 
   async pickLocator(): Promise<Locator> {

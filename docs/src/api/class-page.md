@@ -3857,23 +3857,22 @@ Handler function to route the WebSocket.
 Handler function to route the WebSocket.
 
 
-## method: Page.screencast
+## property: Page.screencast
 * since: v1.59
 * langs: js
-- returns: <[Screencast]>
+- type: <[Screencast]>
 
-Returns the [Screencast] object associated with this page.
+[Screencast] object associated with this page.
 
 **Usage**
 
 ```js
-const screencast = page.screencast();
-screencast.on('screencastFrame', data => {
+page.screencast.on('screencastFrame', data => {
   console.log('received frame, jpeg size:', data.length);
 });
-await screencast.start();
+await page.screencast.start();
 // ... perform actions ...
-await screencast.stop();
+await page.screencast.stop();
 ```
 
 

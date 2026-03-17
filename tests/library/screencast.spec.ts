@@ -26,14 +26,14 @@ test('screencast.start emits screencastframe events', async ({ browser, server, 
   const page = await context.newPage();
 
   const frames: { data: Buffer }[] = [];
-  page.screencast().on('screencastframe', frame => frames.push(frame));
+  page.screencast.on('screencastframe', frame => frames.push(frame));
 
   const maxSize = { width: 500, height: 400 };
-  await page.screencast().start({ maxSize });
+  await page.screencast.start({ maxSize });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
-  await page.screencast().stop();
+  await page.screencast.stop();
 
   expect(frames.length).toBeGreaterThan(0);
   for (const frame of frames) {
@@ -56,10 +56,10 @@ test('start throws if already running', async ({ browser, trace }) => {
   const context = await browser.newContext({ viewport: size });
   const page = await context.newPage();
 
-  await page.screencast().start({ maxSize: size });
-  await expect(page.screencast().start({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running');
+  await page.screencast.start({ maxSize: size });
+  await expect(page.screencast.start({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running');
 
-  await page.screencast().stop();
+  await page.screencast.stop();
   await context.close();
 });
 
@@ -69,11 +69,11 @@ test('start allows restart with different options after stop', async ({ browser,
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
-  await page.screencast().start({ maxSize: { width: 500, height: 400 } });
-  await page.screencast().stop();
+  await page.screencast.start({ maxSize: { width: 500, height: 400 } });
+  await page.screencast.stop();
   // Different options should succeed once the previous screencast is stopped.
-  await page.screencast().start({ maxSize: { width: 320, height: 240 } });
-  await page.screencast().stop();
+  await page.screencast.start({ maxSize: { width: 320, height: 240 } });
+  await page.screencast.stop();
   await context.close();
 });
 
@@ -85,7 +85,7 @@ test('start throws when video recording is running with different params', async
   const page = await context.newPage();
 
   await page.video().start({ size: videoSize });
-  await expect(page.screencast().start({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
+  await expect(page.screencast.start({ maxSize: { width: 320, height: 240 } })).rejects.toThrow('Screencast is already running with different options');
 
   await page.video().stop();
   await context.close();
@@ -95,7 +95,7 @@ test('video.start does not emit screencastframe events', async ({ page, server, 
   test.skip(trace === 'on', 'trace=on enables screencast frame events');
 
   const frames = [];
-  page.screencast().on('screencastframe', frame => frames.push(frame));
+  page.screencast.on('screencastframe', frame => frames.push(frame));
 
   await page.video().start({ size: { width: 320, height: 240 } });
   await page.goto(server.EMPTY_PAGE);

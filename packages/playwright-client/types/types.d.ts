@@ -4158,24 +4158,6 @@ export interface Page {
   routeWebSocket(url: string|RegExp|URLPattern|((url: URL) => boolean), handler: ((websocketroute: WebSocketRoute) => Promise<any>|any)): Promise<void>;
 
   /**
-   * Returns the [Screencast](https://playwright.dev/docs/api/class-screencast) object associated with this page.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const screencast = page.screencast();
-   * screencast.on('screencastFrame', data => {
-   *   console.log('received frame, jpeg size:', data.length);
-   * });
-   * await screencast.start();
-   * // ... perform actions ...
-   * await screencast.stop();
-   * ```
-   *
-   */
-  screencast(): Screencast;
-
-  /**
    * Returns the buffer with the captured screenshot.
    * @param options
    */
@@ -5310,6 +5292,23 @@ export interface Page {
    * details.
    */
   request: APIRequestContext;
+
+  /**
+   * [Screencast](https://playwright.dev/docs/api/class-screencast) object associated with this page.
+   *
+   * **Usage**
+   *
+   * ```js
+   * page.screencast.on('screencastFrame', data => {
+   *   console.log('received frame, jpeg size:', data.length);
+   * });
+   * await page.screencast.start();
+   * // ... perform actions ...
+   * await page.screencast.stop();
+   * ```
+   *
+   */
+  screencast: Screencast;
 
   touchscreen: Touchscreen;
 
@@ -21648,7 +21647,7 @@ export interface Screencast {
    * **Usage**
    *
    * ```js
-   * const screencast = page.screencast();
+   * const screencast = page.screencast;
    * screencast.on('screencastframe', ({ data, width, height }) => {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
@@ -21682,7 +21681,7 @@ export interface Screencast {
    * **Usage**
    *
    * ```js
-   * const screencast = page.screencast();
+   * const screencast = page.screencast;
    * screencast.on('screencastframe', ({ data, width, height }) => {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
@@ -21726,7 +21725,7 @@ export interface Screencast {
    * **Usage**
    *
    * ```js
-   * const screencast = page.screencast();
+   * const screencast = page.screencast;
    * screencast.on('screencastframe', ({ data, width, height }) => {
    *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
    *   require('fs').writeFileSync('frame.jpg', data);
@@ -21752,7 +21751,7 @@ export interface Screencast {
    * **Usage**
    *
    * ```js
-   * const screencast = page.screencast();
+   * const screencast = page.screencast;
    * screencast.on('screencastframe', ({ data, width, height }) => {
    *   console.log(`frame ${width}x${height}, size: ${data.length}`);
    * });
