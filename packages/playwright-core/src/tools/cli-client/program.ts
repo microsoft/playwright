@@ -208,7 +208,7 @@ async function install(args: MinimistArgs) {
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
   if (args.skills) {
-    const skillSourceDir = path.join(__dirname, '../../skill');
+    const skillSourceDir = path.join(__dirname, 'skill');
     const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
 
     if (!fs.existsSync(skillSourceDir)) {

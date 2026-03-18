@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { parseClientSideCallMetadata } from '@isomorphic/traceUtils';
+import { parseClientSideCallMetadata } from './traceUtils';
 
 import { SnapshotStorage } from './snapshotStorage';
 import { TraceModernizer } from './traceModernizer';

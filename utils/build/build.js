@@ -648,7 +648,13 @@ copyFiles.push({
 });
 
 copyFiles.push({
-  files: 'packages/playwright-core/src/skill/**/*.md',
+  files: 'packages/playwright-core/src/tools/cli-client/skill/**/*.md',
+  from: 'packages/playwright-core/src',
+  to: 'packages/playwright-core/lib',
+});
+
+copyFiles.push({
+  files: 'packages/playwright-core/src/tools/trace/SKILL.md',
   from: 'packages/playwright-core/src',
   to: 'packages/playwright-core/lib',
 });

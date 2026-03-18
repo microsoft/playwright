@@ -23,7 +23,7 @@ import { HarBackend } from './harBackend';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { ZipFile } from './utils/zipFile';
 import { yauzl, yazl } from '../zipBundle';
-import { serializeClientSideCallMetadata } from '../utils/isomorphic/traceUtils';
+import { serializeClientSideCallMetadata } from '../utils/isomorphic/trace/traceUtils';
 import { assert } from '../utils/isomorphic/assert';
 import { removeFolders } from './utils/fileUtils';
 

@@ -15,7 +15,8 @@
  */
 
 import url from 'url';
-import { ZipFile } from '../../utils/zipFile';
+import { ZipFile } from '../../server/utils/zipFile';
+
 import type { TraceLoaderBackend } from '@isomorphic/trace/traceLoader';
 
 export class ZipTraceLoaderBackend implements TraceLoaderBackend {

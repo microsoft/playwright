@@ -25,6 +25,7 @@ import { launchBrowserServer, printApiJson, runDriver, runServer } from './drive
 import { registry, writeDockerVersion } from '../server';
 import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, ManualPromise } from '../utils';
 import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import { addTraceCommands } from '../tools/trace/traceCli';
 import { assert, getPackageManagerExecCommand } from '../utils';
 import { wrapInASCIIBox } from '../server/utils/ascii';
 import { dotenv, program } from '../utilsBundle';
@@ -353,6 +354,8 @@ Examples:
 
   $ show-trace
   $ show-trace https://example.com/trace.zip`);
+
+addTraceCommands(program, logErrorAndExit);
 
 program
     .command('cli', { hidden: true })
