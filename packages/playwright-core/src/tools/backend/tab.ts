@@ -449,8 +449,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
           let locator = this.page.locator(`aria-ref=${param.ref}`);
           if (param.element)
             locator = locator.describe(param.element);
-          const resolved = await locator.toCode();
-          return { locator, resolved };
+          const resolved = await locator.normalize();
+          return { locator, resolved: resolved.toString() };
         } catch (e) {
           throw new Error(`Ref ${param.ref} not found in the current page snapshot. Try capturing new snapshot.`);
         }
