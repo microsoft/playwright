@@ -2509,17 +2509,20 @@ scheme.DebuggerPausedStateChangedEvent = tObject({
     title: tString,
   })),
 });
-scheme.DebuggerSetPauseAtParams = tObject({
-  next: tOptional(tBoolean),
-  location: tOptional(tObject({
+scheme.DebuggerPauseParams = tOptional(tObject({}));
+scheme.DebuggerPauseResult = tOptional(tObject({}));
+scheme.DebuggerResumeParams = tOptional(tObject({}));
+scheme.DebuggerResumeResult = tOptional(tObject({}));
+scheme.DebuggerNextParams = tOptional(tObject({}));
+scheme.DebuggerNextResult = tOptional(tObject({}));
+scheme.DebuggerRunToParams = tObject({
+  location: tObject({
     file: tString,
     line: tOptional(tInt),
     column: tOptional(tInt),
-  })),
+  }),
 });
-scheme.DebuggerSetPauseAtResult = tOptional(tObject({}));
-scheme.DebuggerResumeParams = tOptional(tObject({}));
-scheme.DebuggerResumeResult = tOptional(tObject({}));
+scheme.DebuggerRunToResult = tOptional(tObject({}));
 scheme.DialogInitializer = tObject({
   page: tOptional(tChannel(['Page'])),
   type: tString,

@@ -37,12 +37,20 @@ export class Debugger extends ChannelOwner<channels.DebuggerChannel> implements 
     });
   }
 
-  async setPauseAt(options: { next?: boolean, location?: { file: string, line?: number, column?: number } } = {}) {
-    await this._channel.setPauseAt(options);
+  async pause(): Promise<void> {
+    await this._channel.pause();
   }
 
   async resume(): Promise<void> {
     await this._channel.resume();
+  }
+
+  async next(): Promise<void> {
+    await this._channel.next();
+  }
+
+  async runTo(location: { file: string, line?: number, column?: number }): Promise<void> {
+    await this._channel.runTo({ location });
   }
 
   pausedDetails(): PausedDetail[] {

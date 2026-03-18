@@ -54,7 +54,7 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
     if (this._muted)
       return;
-    const pauseOnPauseCall = this._enabled && metadata.method === 'pause';
+    const pauseOnPauseCall = this._enabled && metadata.type === 'BrowserContext' && metadata.method === 'pause';
     const pauseOnNextStep = !!this._pauseAt.next && shouldPauseBeforeStep(metadata, this._pauseBeforeInputActions);
     const pauseOnLocation = !!this._pauseAt.location && matchesLocation(metadata, this._pauseAt.location);
     if (pauseOnPauseCall || pauseOnNextStep || pauseOnLocation)

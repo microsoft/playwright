@@ -50,12 +50,32 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
     }));
   }
 
-  async setPauseAt(params: channels.DebuggerSetPauseAtParams, progress: Progress): Promise<void> {
+  async pause(params: channels.DebuggerPauseParams, progress: Progress): Promise<void> {
+    if (this._object.isPaused())
+      throw new Error('Debugger is already paused');
     this._object.setPauseBeforeInputActions();
-    this._object.setPauseAt(params);
+    this._object.setPauseAt({ next: true });
   }
 
   async resume(params: channels.DebuggerResumeParams, progress: Progress): Promise<void> {
+    if (!this._object.isPaused())
+      throw new Error('Debugger is not paused');
+    this._object.resume();
+  }
+
+  async next(params: channels.DebuggerNextParams, progress: Progress): Promise<void> {
+    if (!this._object.isPaused())
+      throw new Error('Debugger is not paused');
+    this._object.setPauseBeforeInputActions();
+    this._object.setPauseAt({ next: true });
+    this._object.resume();
+  }
+
+  async runTo(params: channels.DebuggerRunToParams, progress: Progress): Promise<void> {
+    if (!this._object.isPaused())
+      throw new Error('Debugger is not paused');
+    this._object.setPauseBeforeInputActions();
+    this._object.setPauseAt({ location: params.location });
     this._object.resume();
   }
 }

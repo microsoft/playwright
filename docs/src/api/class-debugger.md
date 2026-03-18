@@ -5,8 +5,6 @@
 API for controlling the Playwright debugger. The debugger allows pausing script execution and inspecting the page.
 Obtain the debugger instance via [`property: BrowserContext.debugger`].
 
-See also [`method: Page.pause`] for a simple way to pause script execution.
-
 ## event: Debugger.pausedStateChanged
 * since: v1.59
 
@@ -23,28 +21,35 @@ Emitted when the debugger pauses or resumes.
 
 Returns details about the currently paused calls. Returns an empty array if the debugger is not paused.
 
+## async method: Debugger.pause
+* since: v1.59
+
+Configures the debugger to pause before the next action is executed.
+
+Throws if the debugger is already paused. Use [`method: Debugger.next`] or [`method: Debugger.runTo`] to step while paused.
+
+Note that [`method: Page.pause`] is equivalent to a "debugger" statement — it pauses execution at the call site immediately. On the contrary, [`method: Debugger.pause`] is equivalent to "pause on next statement" — it configures the debugger to pause before the next action is executed.
+
 ## async method: Debugger.resume
 * since: v1.59
 
-Resumes script execution if the debugger is paused.
+Resumes script execution. Throws if the debugger is not paused.
 
-## async method: Debugger.setPauseAt
+## async method: Debugger.next
 * since: v1.59
 
-Configures the debugger to pause at the next action or at a specific source location.
-Call without arguments to reset the pausing behavior.
+Resumes script execution and pauses again before the next action. Throws if the debugger is not paused.
 
-### option: Debugger.setPauseAt.next
+## async method: Debugger.runTo
 * since: v1.59
-- `next` <[boolean]>
 
-When `true`, the debugger will pause before the next action.
+Resumes script execution and pauses when an action originates from the given source location. Throws if the debugger is not paused.
 
-### option: Debugger.setPauseAt.location
+### param: Debugger.runTo.location
 * since: v1.59
 - `location` <[Object]>
   - `file` <[string]>
   - `line` ?<[int]>
   - `column` ?<[int]>
 
-When specified, the debugger will pause when the action originates from the given source location.
+The source location to pause at.
