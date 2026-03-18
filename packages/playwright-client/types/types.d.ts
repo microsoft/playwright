@@ -21644,127 +21644,22 @@ export interface Route {
  */
 export interface Screencast {
   /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
+   * Starts capturing screencast frames.
    *
    * **Usage**
    *
    * ```js
-   * const screencast = page.screencast;
-   * screencast.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
+   * await page.screencast.start(buffer => {
+   *   console.log(`frame size: ${buffer.length}`);
+   * }, { maxSize: { width: 800, height: 600 } });
    * // ... perform actions ...
-   * await screencast.stop();
+   * await page.screencast.stop();
    * ```
    *
-   */
-  on(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
-   */
-  once(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const screencast = page.screencast;
-   * screencast.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
-   * // ... perform actions ...
-   * await screencast.stop();
-   * ```
-   *
-   */
-  addListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  removeListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Removes an event listener added by `on` or `addListener`.
-   */
-  off(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Emitted for each captured JPEG screencast frame while the screencast is running.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const screencast = page.screencast;
-   * screencast.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, jpeg size: ${data.length}`);
-   *   require('fs').writeFileSync('frame.jpg', data);
-   * });
-   * await screencast.start({ maxSize: { width: 1200, height: 800 } });
-   * // ... perform actions ...
-   * await screencast.stop();
-   * ```
-   *
-   */
-  prependListener(event: 'screencastframe', listener: (data: {
-    /**
-     * JPEG-encoded frame data.
-     */
-    data: Buffer;
-  }) => any): this;
-
-  /**
-   * Starts capturing screencast frames. Frames are emitted as
-   * [screencast.on('screencastframe')](https://playwright.dev/docs/api/class-screencast#screencast-event-screencast-frame)
-   * events.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const screencast = page.screencast;
-   * screencast.on('screencastframe', ({ data, width, height }) => {
-   *   console.log(`frame ${width}x${height}, size: ${data.length}`);
-   * });
-   * await screencast.start({ maxSize: { width: 800, height: 600 } });
-   * // ... perform actions ...
-   * await screencast.stop();
-   * ```
-   *
+   * @param onFrame Callback that receives JPEG-encoded frame data.
    * @param options
    */
-  start(options?: {
+  start(onFrame: ((buffer: Buffer) => Promise<any>|any), options?: {
     /**
      * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
      * 800×800.
@@ -21784,12 +21679,12 @@ export interface Screencast {
 
   /**
    * Stops the screencast started with
-   * [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
    *
    * **Usage**
    *
    * ```js
-   * await screencast.start();
+   * await screencast.start(buffer => { /* handle frame *\/ });
    * // ... perform actions ...
    * await screencast.stop();
    * ```
