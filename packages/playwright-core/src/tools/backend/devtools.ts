@@ -43,9 +43,9 @@ const resume = defineTool({
       browserContext.debugger.on('pausedstatechanged', listener);
     });
 
-    let location;
     if (params.location) {
       const [file, lineStr] = params.location.split(':');
+      let location;
       if (lineStr) {
         const line = Number(lineStr);
         if (isNaN(line))
@@ -54,10 +54,12 @@ const resume = defineTool({
       } else {
         location = { file: params.location };
       }
+      await browserContext.debugger.runTo(location);
+    } else if (params.step) {
+      await browserContext.debugger.next();
+    } else {
+      await browserContext.debugger.resume();
     }
-
-    await browserContext.debugger.setPauseAt({ next: !!params.step, location });
-    await browserContext.debugger.resume();
     await pausedPromise;
   },
 });

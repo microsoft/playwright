@@ -19418,9 +19418,6 @@ export interface Coverage {
  * API for controlling the Playwright debugger. The debugger allows pausing script execution and inspecting the page.
  * Obtain the debugger instance via
  * [browserContext.debugger](https://playwright.dev/docs/api/class-browsercontext#browser-context-debugger).
- *
- * See also [page.pause()](https://playwright.dev/docs/api/class-page#page-pause) for a simple way to pause script
- * execution.
  */
 export interface Debugger {
   /**
@@ -19454,6 +19451,25 @@ export interface Debugger {
   prependListener(event: 'pausedstatechanged', listener: () => any): this;
 
   /**
+   * Resumes script execution and pauses again before the next action. Throws if the debugger is not paused.
+   */
+  next(): Promise<void>;
+
+  /**
+   * Configures the debugger to pause before the next action is executed.
+   *
+   * Throws if the debugger is already paused. Use
+   * [debugger.next()](https://playwright.dev/docs/api/class-debugger#debugger-next) or
+   * [debugger.runTo(location)](https://playwright.dev/docs/api/class-debugger#debugger-run-to) to step while paused.
+   *
+   * Note that [page.pause()](https://playwright.dev/docs/api/class-page#page-pause) is equivalent to a "debugger"
+   * statement — it pauses execution at the call site immediately. On the contrary,
+   * [debugger.pause()](https://playwright.dev/docs/api/class-debugger#debugger-pause) is equivalent to "pause on next
+   * statement" — it configures the debugger to pause before the next action is executed.
+   */
+  pause(): Promise<void>;
+
+  /**
    * Returns details about the currently paused calls. Returns an empty array if the debugger is not paused.
    */
   pausedDetails(): Array<{
@@ -19469,31 +19485,21 @@ export interface Debugger {
   }>;
 
   /**
-   * Resumes script execution if the debugger is paused.
+   * Resumes script execution. Throws if the debugger is not paused.
    */
   resume(): Promise<void>;
 
   /**
-   * Configures the debugger to pause at the next action or at a specific source location. Call without arguments to
-   * reset the pausing behavior.
-   * @param options
+   * Resumes script execution and pauses when an action originates from the given source location. Throws if the
+   * debugger is not paused.
+   * @param location The source location to pause at.
    */
-  setPauseAt(options?: {
-    /**
-     * When specified, the debugger will pause when the action originates from the given source location.
-     */
-    location?: {
-      file: string;
+  runTo(location: {
+    file: string;
 
-      line?: number;
+    line?: number;
 
-      column?: number;
-    };
-
-    /**
-     * When `true`, the debugger will pause before the next action.
-     */
-    next?: boolean;
+    column?: number;
   }): Promise<void>;
 }
 

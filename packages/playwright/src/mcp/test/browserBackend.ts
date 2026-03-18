@@ -125,6 +125,6 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
     `- Run "playwright-cli attach ${sessionName}" to attach to this test`,
   ].join('\n'));
 
-  await context.debugger.setPauseAt({ next: true });
+  await context.debugger.pause();
   return true;
 }

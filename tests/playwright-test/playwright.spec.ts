@@ -970,7 +970,7 @@ test('should pause test timeout while on pause', async ({ runInlineTest }) => {
       import { test, expect } from '@playwright/test';
 
       test('test', async ({ page, context }) => {
-        await context.debugger.setPauseAt({ next: true });
+        await context.debugger.pause();
         const paused = new Promise(f => context.debugger.once('pausedstatechanged', f));
         const contentPromise = page.setContent('<div>hello</div>');
         await paused;

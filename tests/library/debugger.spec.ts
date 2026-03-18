@@ -22,7 +22,7 @@ it('should pause at next and resume', async ({ context, server }) => {
   const dbg = context.debugger;
   expect(dbg.pausedDetails()).toEqual([]);
 
-  await dbg.setPauseAt({ next: true });
+  await dbg.pause();
   const clickPromise = page.click('div');
   await new Promise<void>(resolve => dbg.once('pausedstatechanged', resolve));
 
@@ -51,7 +51,7 @@ it('should pause at pause call', async ({ context, server }) => {
   const dbg = context.debugger;
   expect(dbg.pausedDetails()).toEqual([]);
 
-  await dbg.setPauseAt();
+  await dbg.pause();
   const pausePromise = page.pause();
   await new Promise<void>(resolve => dbg.once('pausedstatechanged', resolve));
 
@@ -65,15 +65,21 @@ it('should pause at pause call', async ({ context, server }) => {
   await pausePromise;
 });
 
-it('should pause at location', async ({ context, server }) => {
+it('should run to location', async ({ context, server }) => {
   const page = await context.newPage();
   await page.setContent('<div>click me</div>');
   const dbg = context.debugger;
   expect(dbg.pausedDetails()).toEqual([]);
 
+  // First, pause on next action.
+  await dbg.pause();
+  page.click('div').catch(() => {});
+  await new Promise<void>(resolve => dbg.once('pausedstatechanged', resolve));
+
+  // Now run to a specific location.
   const line = +(() => { return new Error('').stack.match(/debugger.spec.ts:(\d+)/)[1]; })();
   // Note: careful with the line offset below.
-  await dbg.setPauseAt({ location: { file: 'debugger.spec', line: line + 4 } });
+  await dbg.runTo({ file: 'debugger.spec', line: line + 4 });
   await page.content(); // should not pause here
   const clickPromise = page.click('div'); // should pause here
   await new Promise<void>(resolve => dbg.once('pausedstatechanged', resolve));
