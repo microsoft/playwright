@@ -14214,6 +14214,13 @@ export interface Locator {
   }): Locator;
 
   /**
+   * Returns a new locator that uses best practices for referencing the matched element, prioritizing test ids, aria
+   * roles, and other user-facing attributes over CSS selectors. This is useful for converting implementation-detail
+   * selectors into more resilient, human-readable locators.
+   */
+  normalize(): Promise<Locator>;
+
+  /**
    * Returns locator to the n-th matching element. It's zero based, `nth(0)` selects the first element.
    *
    * **Usage**
@@ -14801,12 +14808,6 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<null|string>;
-
-  /**
-   * Returns a code string for a locator that uses best practices for referencing the matched element, prioritizing test
-   * ids, aria roles, and other user-facing attributes over CSS selectors.
-   */
-  toCode(): Promise<string>;
 
   /**
    * Focuses the element, and then sends a `keydown`, `keypress`/`input`, and `keyup` event for each character in the
