@@ -2498,6 +2498,12 @@ Returns an accessibility snapshot of the element's subtree optimized for AI cons
 ### option: Locator.snapshotForAI.timeout = %%-input-timeout-js-%%
 * since: v1.59
 
+### option: Locator.snapshotForAI.depth
+* since: v1.59
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
+
 ## async method: Locator.tap
 * since: v1.14
 

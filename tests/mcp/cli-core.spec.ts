@@ -279,3 +279,20 @@ test('partial snapshot', async ({ cli, server }) => {
   const { output: noMatchError } = await cli('snapshot', '#target');
   expect(noMatchError).toContain(`Selector "#target" does not match any element`);
 });
+
+test('snapshot depth', async ({ cli, server }) => {
+  server.setContent('/', `<ul><li><button id=one>Submit</button></li><li><button id=two>Cancel</button></li></ul>`, 'text/html');
+  await cli('open', server.PREFIX);
+
+  const { snapshot: limitedSnapshot } = await cli('snapshot', '--depth=1');
+  expect(limitedSnapshot).toBe(`- list [ref=e2]:
+  - listitem [ref=e3]
+  - listitem [ref=e5]`);
+
+  const { snapshot: fullSnapshot } = await cli('snapshot', '--depth=100');
+  expect(fullSnapshot).toBe(`- list [ref=e2]:
+  - listitem [ref=e3]:
+    - button "Submit" [ref=e4]
+  - listitem [ref=e5]:
+    - button "Cancel" [ref=e6]`);
+});

@@ -246,3 +246,46 @@ test('visibility: hidden > visible should be shown', { annotation: { type: 'issu
     snapshot: expect.stringContaining(`- button "Button"`),
   });
 });
+
+test('snapshot depth', async ({ client, server }) => {
+  server.setContent('/', `
+    <ul>
+      <li>text</li>
+      <li>
+        <button>Button</button>
+      </li>
+    </ul>
+  `, 'text/html');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {
+      depth: 1,
+    }
+  })).toHaveResponse({
+    snapshot: `\`\`\`yaml
+- list [ref=e2]:
+  - listitem [ref=e3]: text
+  - listitem [ref=e4]
+\`\`\``,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_snapshot',
+    arguments: {
+      depth: 2,
+    }
+  })).toHaveResponse({
+    snapshot: `\`\`\`yaml
+- list [ref=e2]:
+  - listitem [ref=e3]: text
+  - listitem [ref=e4]:
+    - button "Button" [ref=e5]
+\`\`\``,
+  });
+});

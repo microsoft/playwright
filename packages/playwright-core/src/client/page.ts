@@ -851,8 +851,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async snapshotForAI(options: TimeoutOptions & { track?: string } = {}): Promise<{ full: string, incremental?: string }> {
-    return await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track });
+  async snapshotForAI(options: TimeoutOptions & { track?: string, depth?: number } = {}): Promise<{ full: string, incremental?: string }> {
+    return await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track, depth: options.depth });
   }
 
   async _setDockTile(image: Buffer) {

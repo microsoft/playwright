@@ -378,8 +378,8 @@ export class Locator implements api.Locator {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options, timeout: this._frame._timeout(options) });
   }
 
-  async snapshotForAI(options: TimeoutOptions = {}): Promise<{ full: string }> {
-    return await this._frame._page!._channel.snapshotForAI({ timeout: this._frame._timeout(options), selector: this._selector });
+  async snapshotForAI(options: TimeoutOptions & { depth?: number } = {}): Promise<{ full: string }> {
+    return await this._frame._page!._channel.snapshotForAI({ timeout: this._frame._timeout(options), selector: this._selector, depth: options.depth });
   }
 
   async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {

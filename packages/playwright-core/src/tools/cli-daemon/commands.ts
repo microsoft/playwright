@@ -347,9 +347,10 @@ const snapshot = declareCommand({
   }),
   options: z.object({
     filename: z.string().optional().describe('Save snapshot to markdown file instead of returning it in the response.'),
+    depth: numberArg.optional().describe('Limit snapshot depth, unlimited by default.'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: ({ filename, element }) => ({ filename, selector: element }),
+  toolParams: ({ filename, element, depth }) => ({ filename, selector: element, depth }),
 });
 
 const evaluate = declareCommand({

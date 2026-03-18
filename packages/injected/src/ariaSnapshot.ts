@@ -40,6 +40,7 @@ export type AriaTreeOptions = {
   mode: 'ai' | 'expect' | 'codegen' | 'autoexpect';
   refPrefix?: string;
   doNotRenderActive?: boolean;
+  depth?: number;
 };
 
 type InternalOptions = {
@@ -563,6 +564,10 @@ function filterSnapshotDiff(nodes: (aria.AriaNode | string)[], statusMap: Map<ar
   return result;
 }
 
+function indent(depth: number): string {
+  return '  '.repeat(depth);
+}
+
 export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previousSnapshot?: AriaSnapshot): string {
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
@@ -576,10 +581,12 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
   if (previousSnapshot)
     nodesToRender = filterSnapshotDiff(nodesToRender, statusMap);
 
-  const visitText = (text: string, indent: string) => {
+  const visitText = (text: string, depth: number) => {
+    if (publicOptions.depth && depth > publicOptions.depth)
+      return;
     const escaped = yamlEscapeValueIfNeeded(renderString(text));
     if (escaped)
-      lines.push(indent + '- text: ' + escaped);
+      lines.push(indent(depth) + '- text: ' + escaped);
   };
 
   const createKey = (ariaNode: aria.AriaNode, renderCursorPointer: boolean): string => {
@@ -623,19 +630,24 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     return ariaNode?.children.length === 1 && typeof ariaNode.children[0] === 'string' && !Object.keys(ariaNode.props).length ? ariaNode.children[0] : undefined;
   };
 
-  const visit = (ariaNode: aria.AriaNode, indent: string, renderCursorPointer: boolean) => {
+  const visit = (ariaNode: aria.AriaNode, depth: number, renderCursorPointer: boolean) => {
+    if (publicOptions.depth && depth > publicOptions.depth)
+      return;
+
     // Replace the whole subtree with a single reference when possible.
     if (statusMap.get(ariaNode) === 'same' && ariaNode.ref) {
-      lines.push(indent + `- ref=${ariaNode.ref} [unchanged]`);
+      lines.push(indent(depth) + `- ref=${ariaNode.ref} [unchanged]`);
       return;
     }
 
     // When producing a diff, add <changed> marker to all diff roots.
-    const isDiffRoot = !!previousSnapshot && !indent;
-    const escapedKey = indent + '- ' + (isDiffRoot ? '<changed> ' : '') + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
+    const isDiffRoot = !!previousSnapshot && !depth;
+    const escapedKey = indent(depth) + '- ' + (isDiffRoot ? '<changed> ' : '') + yamlEscapeKeyIfNeeded(createKey(ariaNode, renderCursorPointer));
     const singleInlinedTextChild = getSingleInlinedTextChild(ariaNode);
+    const isAtDepthLimit = !!publicOptions.depth && depth === publicOptions.depth;
+    const hasNoChildren = !singleInlinedTextChild && (!ariaNode.children.length || isAtDepthLimit);
 
-    if (!ariaNode.children.length && !Object.keys(ariaNode.props).length) {
+    if (hasNoChildren && !Object.keys(ariaNode.props).length) {
       // Leaf node without children.
       lines.push(escapedKey);
     } else if (singleInlinedTextChild !== undefined) {
@@ -649,24 +661,23 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
       // Node with (optional) props and some children.
       lines.push(escapedKey + ':');
       for (const [name, value] of Object.entries(ariaNode.props))
-        lines.push(indent + '  - /' + name + ': ' + yamlEscapeValueIfNeeded(value));
+        lines.push(indent(depth + 1) + '- /' + name + ': ' + yamlEscapeValueIfNeeded(value));
 
-      const childIndent = indent + '  ';
       const inCursorPointer = !!ariaNode.ref && renderCursorPointer && aria.hasPointerCursor(ariaNode);
       for (const child of ariaNode.children) {
         if (typeof child === 'string')
-          visitText(includeText(ariaNode, child) ? child : '', childIndent);
+          visitText(includeText(ariaNode, child) ? child : '', depth + 1);
         else
-          visit(child, childIndent, renderCursorPointer && !inCursorPointer);
+          visit(child, depth + 1, renderCursorPointer && !inCursorPointer);
       }
     }
   };
 
   for (const nodeToRender of nodesToRender) {
     if (typeof nodeToRender === 'string')
-      visitText(nodeToRender, '');
+      visitText(nodeToRender, 0);
     else
-      visit(nodeToRender, '', !!options.renderCursorPointer);
+      visit(nodeToRender, 0, !!options.renderCursorPointer);
   }
   return lines.join('\n');
 }

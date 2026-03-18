@@ -17,8 +17,9 @@
 
 import { test as it, expect } from './pageTest';
 import { unshift } from '../config/utils';
+import type { Page } from 'playwright-core';
 
-async function snapshotForAI(page: any, options?: { timeout?: number, mode?: 'full' | 'incremental', track?: string }): Promise<string> {
+async function snapshotForAI(page: Page, options?: Parameters<Page['snapshotForAI']>[0] & { mode?: 'full' | 'incremental' }): Promise<string> {
   const snapshot = await page.snapshotForAI(options);
   return options?.mode === 'incremental' ? snapshot.incremental : snapshot.full;
 }
@@ -737,5 +738,66 @@ it('should create incremental snapshot for children swap', async ({ page }) => {
     - <changed> list [ref=e2]:
       - ref=e4 [unchanged]
       - ref=e3 [unchanged]
+  `);
+});
+
+it('should limit depth', async ({ page }) => {
+  await page.setContent(`
+    <ul>
+      <li>item1</li>
+      <a href="about:blank" style="cursor:pointer">link</a>
+      <li>
+        <ul id=target>
+          <li>item2</li>
+          <li>
+            <ul>
+              <li>item3</li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+    </ul>
+  `);
+
+  const snapshot1 = await snapshotForAI(page, { depth: 1 });
+  expect(snapshot1).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]: item1
+      - link "link" [ref=e4] [cursor=pointer]:
+        - /url: about:blank
+      - listitem [ref=e5]
+  `);
+
+  const snapshot2 = await snapshotForAI(page, { depth: 3 });
+  expect(snapshot2).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]: item1
+      - link "link" [ref=e4] [cursor=pointer]:
+        - /url: about:blank
+      - listitem [ref=e5]:
+        - list [ref=e6]:
+          - listitem [ref=e7]: item2
+          - listitem [ref=e8]
+  `);
+
+  const snapshot3 = await snapshotForAI(page, { depth: 100 });
+  expect(snapshot3).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]: item1
+      - link "link" [ref=e4] [cursor=pointer]:
+        - /url: about:blank
+      - listitem [ref=e5]:
+        - list [ref=e6]:
+          - listitem [ref=e7]: item2
+          - listitem [ref=e8]:
+            - list [ref=e9]:
+              - listitem [ref=e10]: item3
+  `);
+
+  const { full: snapshot4 } = await page.locator('#target').snapshotForAI({ depth: 1 });
+  expect(snapshot4).toContainYaml(`
+    - list [ref=e6]:
+      - listitem [ref=e7]: item2
+      - listitem [ref=e8]
   `);
 });
