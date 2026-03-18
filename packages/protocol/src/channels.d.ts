@@ -2612,18 +2612,19 @@ export type PageRequestsResult = {
 };
 export type PageSnapshotForAIParams = {
   track?: string,
+  mode?: 'full' | 'incremental',
   selector?: string,
   depth?: number,
   timeout: number,
 };
 export type PageSnapshotForAIOptions = {
   track?: string,
+  mode?: 'full' | 'incremental',
   selector?: string,
   depth?: number,
 };
 export type PageSnapshotForAIResult = {
-  full: string,
-  incremental?: string,
+  snapshot: string,
 };
 export type PageStartJSCoverageParams = {
   resetOnNavigation?: boolean,

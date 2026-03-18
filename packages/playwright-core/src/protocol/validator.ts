@@ -1496,13 +1496,13 @@ scheme.PageRequestsResult = tObject({
 });
 scheme.PageSnapshotForAIParams = tObject({
   track: tOptional(tString),
+  mode: tOptional(tEnum(['full', 'incremental'])),
   selector: tOptional(tString),
   depth: tOptional(tInt),
   timeout: tFloat,
 });
 scheme.PageSnapshotForAIResult = tObject({
-  full: tString,
-  incremental: tOptional(tString),
+  snapshot: tString,
 });
 scheme.PageStartJSCoverageParams = tObject({
   resetOnNavigation: tOptional(tBoolean),

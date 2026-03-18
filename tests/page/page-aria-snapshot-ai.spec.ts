@@ -19,9 +19,8 @@ import { test as it, expect } from './pageTest';
 import { unshift } from '../config/utils';
 import type { Page } from 'playwright-core';
 
-async function snapshotForAI(page: Page, options?: Parameters<Page['snapshotForAI']>[0] & { mode?: 'full' | 'incremental' }): Promise<string> {
-  const snapshot = await page.snapshotForAI(options);
-  return options?.mode === 'incremental' ? snapshot.incremental : snapshot.full;
+async function snapshotForAI(page: Page, options?: Parameters<Page['snapshotForAI']>[0]): Promise<string> {
+  return await page.snapshotForAI(options);
 }
 
 it('should generate refs', async ({ page }) => {
@@ -717,7 +716,13 @@ it('should not create incremental snapshots without tracks', async ({ page }) =>
         - button "a button" [ref=e4]
       - listitem [ref=e5]: a span
   `);
-  expect(await snapshotForAI(page, { mode: 'incremental' })).toBe(undefined);
+  // Without a track, mode: 'incremental' falls back to full snapshot.
+  expect(await snapshotForAI(page, { mode: 'incremental' })).toContainYaml(`
+    - list [ref=e2]:
+      - listitem [ref=e3]:
+        - button "a button" [ref=e4]
+      - listitem [ref=e5]: a span
+  `);
 });
 
 it('should create incremental snapshot for children swap', async ({ page }) => {
@@ -794,7 +799,7 @@ it('should limit depth', async ({ page }) => {
               - listitem [ref=e10]: item3
   `);
 
-  const { full: snapshot4 } = await page.locator('#target').snapshotForAI({ depth: 1 });
+  const snapshot4 = await page.locator('#target').snapshotForAI({ depth: 1 });
   expect(snapshot4).toContainYaml(`
     - list [ref=e6]:
       - listitem [ref=e7]: item2

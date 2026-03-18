@@ -4213,9 +4213,7 @@ Page height in pixels.
 
 ## async method: Page.snapshotForAI
 * since: v1.59
-- returns: <[Object]>
-  - `full` <[string]> Full accessibility snapshot of the page.
-  - `incremental` ?<[string]> Incremental snapshot containing only changes since the last tracked snapshot, when using the [`option: Page.snapshotForAI.track`] option.
+- returns: <[string]>
 
 Returns an accessibility snapshot of the page optimized for AI consumption.
 
@@ -4229,8 +4227,16 @@ Returns an accessibility snapshot of the page optimized for AI consumption.
 * since: v1.59
 - `track` <[string]>
 
-When specified, enables incremental snapshots. Subsequent calls with the same track name will return
-an incremental snapshot containing only changes since the last call.
+When specified, enables incremental snapshots. Subsequent calls with the same track name will
+track changes between calls.
+
+### option: Page.snapshotForAI.mode
+* since: v1.59
+- `mode` <[string]>
+
+When set to `"incremental"` and [`option: Page.snapshotForAI.track`] is specified, returns an
+incremental snapshot containing only changes since the last call with the same track name.
+Defaults to `"full"`.
 
 ### option: Page.snapshotForAI.depth
 * since: v1.59

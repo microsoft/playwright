@@ -4526,6 +4526,13 @@ export interface Page {
     depth?: number;
 
     /**
+     * When set to `"incremental"` and
+     * [`track`](https://playwright.dev/docs/api/class-page#page-snapshot-for-ai-option-track) is specified, returns an
+     * incremental snapshot containing only changes since the last call with the same track name. Defaults to `"full"`.
+     */
+    mode?: string;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -4534,22 +4541,11 @@ export interface Page {
     timeout?: number;
 
     /**
-     * When specified, enables incremental snapshots. Subsequent calls with the same track name will return an incremental
-     * snapshot containing only changes since the last call.
+     * When specified, enables incremental snapshots. Subsequent calls with the same track name will track changes between
+     * calls.
      */
     track?: string;
-  }): Promise<{
-    /**
-     * Full accessibility snapshot of the page.
-     */
-    full: string;
-
-    /**
-     * Incremental snapshot containing only changes since the last tracked snapshot, when using the
-     * [`track`](https://playwright.dev/docs/api/class-page#page-snapshot-for-ai-option-track) option.
-     */
-    incremental?: string;
-  }>;
+  }): Promise<string>;
 
   /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
@@ -14706,12 +14702,7 @@ export interface Locator {
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-  }): Promise<{
-    /**
-     * Accessibility snapshot of the element matching this locator.
-     */
-    full: string;
-  }>;
+  }): Promise<string>;
 
   /**
    * Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually
