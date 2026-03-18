@@ -2487,8 +2487,7 @@ This method expects [Locator] to point to an
 
 ## async method: Locator.snapshotForAI
 * since: v1.59
-- returns: <[Object]>
-  - `full` <[string]> Accessibility snapshot of the element matching this locator.
+- returns: <[string]>
 
 Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
 

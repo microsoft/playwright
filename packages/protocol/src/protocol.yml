@@ -2013,12 +2013,16 @@ Page:
       parameters:
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
+        mode:
+          type: enum?
+          literals:
+            - full
+            - incremental
         selector: string?
         depth: int?
         timeout: float
       returns:
-        full: string
-        incremental: string?
+        snapshot: string
 
     startJSCoverage:
       title: Start JS coverage

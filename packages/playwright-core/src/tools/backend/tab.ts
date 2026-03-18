@@ -84,7 +84,6 @@ export type TabHeader = {
 
 type TabSnapshot = {
   ariaSnapshot: string;
-  ariaSnapshotDiff?: string;
   modalStates: ModalState[];
   events: EventEntry[];
   consoleLink?: string;
@@ -375,14 +374,15 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._requests.length = 0;
   }
 
-  async captureSnapshot(selector: string | undefined, depth: number | undefined, relativeTo: string | undefined): Promise<TabSnapshot> {
+  async captureSnapshot(selector: string | undefined, depth: number | undefined, relativeTo: string | undefined, mode: 'full' | 'incremental'): Promise<TabSnapshot> {
     await this._initializedPromise;
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
-      const snapshot: { full: string, incremental?: string } = selector ? await this.page.locator(selector).snapshotForAI({ depth }) : await this.page.snapshotForAI({ track: 'response', depth });
+      const ariaSnapshot = selector
+        ? await this.page.locator(selector).snapshotForAI({ depth })
+        : await this.page.snapshotForAI({ track: 'response', mode: this._needsFullSnapshot ? 'full' : mode, depth });
       tabSnapshot = {
-        ariaSnapshot: snapshot.full,
-        ariaSnapshotDiff: this._needsFullSnapshot ? undefined : snapshot.incremental,
+        ariaSnapshot,
         modalStates: [],
         events: [],
       };
@@ -398,7 +398,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     this._needsFullSnapshot = !tabSnapshot;
     return tabSnapshot ?? {
       ariaSnapshot: '',
-      ariaSnapshotDiff: '',
       modalStates,
       events: [],
     };

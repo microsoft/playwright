@@ -886,7 +886,7 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ full: string, incremental?: string }> {
+  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental', doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');
 
@@ -902,8 +902,9 @@ export class Page extends SdkObject<PageEventMap> {
       frame = this.mainFrame();
     }
 
-    const snapshot = await snapshotFrameForAI(progress, frame, { ...options, info });
-    return { full: snapshot.full.join('\n'), incremental: snapshot.incremental?.join('\n') };
+    const result = await snapshotFrameForAI(progress, frame, { ...options, info });
+    const snapshot = options.mode === 'incremental' && result.incremental !== undefined ? result.incremental.join('\n') : result.full.join('\n');
+    return { snapshot };
   }
 
   async setDockTile(image: Buffer) {
