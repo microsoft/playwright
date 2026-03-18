@@ -243,6 +243,15 @@ export interface WebSocketRoute {
   onClose(handler: (code: number | undefined, reason: string | undefined) => any): void;
 }
 
+export interface Screencast {
+  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
+    preferredSize?: {
+      width: number;
+      height: number;
+    };
+  }): Promise<Disposable>;
+}
+
 type DeviceDescriptor = {
   viewport: ViewportSize;
   userAgent: string;

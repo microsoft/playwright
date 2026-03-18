@@ -31,8 +31,6 @@ export class Screencast {
   private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
   private _listeners = new Set<ScreencastListener>();
-  private _screencastOptions: { width: number, height: number, quality: number } | null = null;
-
   // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler = new FrameThrottler(10, 35, 200);
@@ -47,9 +45,7 @@ export class Screencast {
   }
 
   startForTracing(listener: ScreencastListener) {
-    // If screencast is already running, use the same options, it's ok for tracing.
-    const options = this._screencastOptions || { width: 800, height: 800, quality: 90 };
-    this.startScreencast(listener, options).catch(e => debugLogger.log('error', e));
+    this.startScreencast(listener, { width: 800, height: 800, quality: 90 }).catch(e => debugLogger.log('error', e));
     this._frameThrottler.setThrottlingEnabled(true);
   }
 
@@ -142,27 +138,15 @@ export class Screencast {
   }
 
   async startScreencast(listener: ScreencastListener, options: { width: number, height: number, quality: number }) {
-    if (this._screencastOptions) {
-      if (options.width !== this._screencastOptions.width || options.height !== this._screencastOptions.height || options.quality !== this._screencastOptions.quality)
-        throw new Error(`Screencast is already running with different options (${this._screencastOptions.width}x${this._screencastOptions.height} quality=${this._screencastOptions.quality})`);
-    }
     this._listeners.add(listener);
-    if (this._listeners.size === 1) {
-      this._screencastOptions = options;
-      await this._page.delegate.startScreencast({
-        width: options.width,
-        height: options.height,
-        quality: options.quality,
-      });
-    }
+    if (this._listeners.size === 1)
+      await this._page.delegate.startScreencast(options);
   }
 
   async stopScreencast(listener: ScreencastListener) {
     this._listeners.delete(listener);
-    if (!this._listeners.size) {
-      this._screencastOptions = null;
+    if (!this._listeners.size)
       await this._page.delegate.stopScreencast();
-    }
   }
 
   onScreencastFrame(frame: types.ScreencastFrame) {
