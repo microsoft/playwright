@@ -394,6 +394,13 @@ it.describe('page screenshot', () => {
     expect(error.message).toContain('options.quality is unsupported for the png');
   });
 
+  it('quality option should work for jpeg', async ({ page, server }) => {
+    await page.goto(server.PREFIX + '/grid.html');
+    const zeroQuality = await page.screenshot({ type: 'jpeg', quality: 0 });
+    const highQuality = await page.screenshot({ type: 'jpeg', quality: 100 });
+    expect(zeroQuality.byteLength).toBeLessThan(highQuality.byteLength);
+  });
+
   it('should prefer type over extension', async ({ page }, testInfo) => {
     const outputPath = testInfo.outputPath('file.png');
     const buffer = await page.screenshot({ path: outputPath, type: 'jpeg' });
