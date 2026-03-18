@@ -37,6 +37,7 @@ import { runAllTestsWithConfig, TestRunner } from './runner/testRunner';
 import { createErrorCollectingReporter } from './runner/reporters';
 import { TestServerBackend, testServerBackendTools } from './mcp/test/testBackend';
 import { ClaudeGenerator, OpencodeGenerator, VSCodeGenerator, CopilotGenerator } from './agents/generateAgents';
+import { loadTestList } from './runner/loadUtils';
 
 import type { ConfigCLIOverrides } from './common/ipc';
 import type { TraceMode } from '../types/test';
@@ -207,6 +208,12 @@ async function runTests(args: string[], opts: { [key: string]: any }) {
   config.cliLastFailed = !!opts.lastFailed;
   config.cliTestList = opts.testList ? path.resolve(process.cwd(), opts.testList) : undefined;
   config.cliTestListInvert = opts.testListInvert ? path.resolve(process.cwd(), opts.testListInvert) : undefined;
+
+  if (config.cliTestList) {
+    const { files } = await loadTestList(config, config.cliTestList);
+    for (const project of config.projects)
+      project.project.testMatch = files;
+  }
 
   // Evaluate project filters against config before starting execution. This enables a consistent error message across run modes
   filterProjects(config.projects, config.cliProjectFilter);
