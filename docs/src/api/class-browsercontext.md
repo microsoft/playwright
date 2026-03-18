@@ -975,7 +975,7 @@ Here are some permissions that may be supported by some browsers:
 
 The [origin] to grant permissions to, e.g. "https://example.com".
 
-## method: BrowserContext.isClosedOrClosing
+## method: BrowserContext.isClosed
 * since: v1.59
 - returns: <[boolean]>
 

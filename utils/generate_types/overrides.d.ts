@@ -148,8 +148,6 @@ export interface Browser {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
-
-  launchOptions(): LaunchOptions;
 }
 
 export interface Worker {

@@ -158,14 +158,6 @@ System.Console.WriteLine(browser.Contexts.Count); // prints "1"
 
 Indicates that the browser is connected.
 
-## method: Browser.launchOptions
-* since: v1.59
-* langs: js
-- returns: <[Object]>
-
-Returns the launch options that were used to launch this browser. The return type matches the options
-accepted by [`method: BrowserType.launch`].
-
 ## async method: Browser.newBrowserCDPSession
 * since: v1.11
 - returns: <[CDPSession]>
@@ -389,14 +381,6 @@ This API controls [Chromium Tracing](https://www.chromium.org/developers/how-tos
 :::
 
 Returns the buffer with trace data.
-
-## method: Browser.userDataDir
-* since: v1.59
-* langs: js
-- returns: <[null]|[string]>
-
-Returns the user data directory that the browser was launched with, or `null` if the browser was
-launched without a persistent context.
 
 ## method: Browser.version
 * since: v1.8

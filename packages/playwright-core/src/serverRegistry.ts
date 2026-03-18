@@ -33,7 +33,6 @@ export type BrowserInfo = {
 
 export type EndpointInfo = {
   title: string;
-  wsEndpoint?: string;
   pipeName?: string;
   workspaceDir?: string;
   metadata?: Record<string, any>;
@@ -94,7 +93,6 @@ class ServerRegistry {
       playwrightLib: require.resolve('..'),
       title: endpoint.title,
       browser,
-      wsEndpoint: endpoint.wsEndpoint,
       pipeName: endpoint.pipeName,
       workspaceDir: endpoint.workspaceDir,
     };

@@ -232,7 +232,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page or the context was closed we stall all requests right away.
-      if (page?._closeWasCalled || this.isClosedOrClosing())
+      if (page?._closeWasCalled || this.isClosed())
         return;
       if (!routeHandler.matches(route.request().url()))
         continue;
@@ -298,7 +298,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
     return [...this._pages];
   }
 
-  isClosedOrClosing(): boolean {
+  isClosed(): boolean {
     return this._closingStatus !== 'none';
   }
 
@@ -520,7 +520,7 @@ export class BrowserContext extends ChannelOwner<channels.BrowserContextChannel>
   }
 
   async close(options: { reason?: string } = {}): Promise<void> {
-    if (this.isClosedOrClosing())
+    if (this.isClosed())
       return;
     this._closeReason = options.reason;
     this._closingStatus = 'closing';

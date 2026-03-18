@@ -314,7 +314,7 @@ workspace1:
   - status: open
   - browser-type: ${/* FIX browser._options */ mcpBrowser.replace('chrome', 'chromium')}
   - user-data-dir: <in-memory>
-  - headed: true`);
+  - headed: false`);
   });
 
   test('fail to attach to browser server without contexts', async ({ cli, mcpBrowser }) => {
@@ -342,7 +342,7 @@ workspace1:
   - status: open
   - browser-type: ${mcpBrowser.replace('chrome', 'chromium')}
   - user-data-dir: <in-memory>
-  - headed: true`);
+  - headed: false`);
   });
 
   test('attach with session alias', async ({ cli, mcpBrowser }) => {
