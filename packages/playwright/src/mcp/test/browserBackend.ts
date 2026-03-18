@@ -115,7 +115,7 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
     return false;
 
   const sessionName = `tw-${createGuid().slice(0, 6)}`;
-  await (context.browser() as Browser)._register(sessionName, { workspaceDir: testInfo.project.testDir });
+  await (context.browser() as Browser)!._register(sessionName, { workspaceDir: testInfo.project.testDir });
 
   /* eslint-disable-next-line no-console */
   console.log([

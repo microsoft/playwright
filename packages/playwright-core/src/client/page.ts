@@ -191,7 +191,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     const routeHandlers = this._routes.slice();
     for (const routeHandler of routeHandlers) {
       // If the page was closed we stall all requests right away.
-      if (this._closeWasCalled || this._browserContext.isClosedOrClosing())
+      if (this._closeWasCalled || this._browserContext.isClosed())
         return;
       if (!routeHandler.matches(route.request().url()))
         continue;

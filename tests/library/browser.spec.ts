@@ -51,10 +51,6 @@ test('version should work', async function({ browser, browserName }) {
     expect(version.match(/^\d+\.\d+/)).toBeTruthy();
 });
 
-test('launchOptions() should work', async function({ browser, headless }) {
-  expect(!!browser.launchOptions().headless).toBe(!!headless);
-});
-
 test('should dispatch page.on(close) upon browser.close and reject evaluate', async ({ browserType }) => {
   const browser = await browserType.launch();
   const page = await browser.newPage();

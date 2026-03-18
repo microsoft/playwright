@@ -37,6 +37,7 @@ import type * as playwright from '../../..';
 import type { SessionConfig, ClientInfo } from '../cli-client/registry';
 import type { CallToolRequest, CallToolResult } from '../backend/tool';
 import type { ContextConfig } from '../backend/context';
+import type { BrowserInfo } from '../../serverRegistry';
 
 const daemonDebug = debug('pw:daemon');
 
@@ -53,6 +54,7 @@ async function socketExists(socketPath: string): Promise<boolean> {
 export async function startCliDaemonServer(
   sessionName: string,
   browserContext: playwright.BrowserContext,
+  browserInfo: BrowserInfo,
   contextConfig: ContextConfig = {},
   clientInfo = createClientInfo(),
   options?: {
@@ -60,7 +62,7 @@ export async function startCliDaemonServer(
     exitOnClose?: boolean,
   }
 ): Promise<string> {
-  const sessionConfig = createSessionConfig(clientInfo, sessionName, browserContext, options);
+  const sessionConfig = createSessionConfig(clientInfo, sessionName, browserInfo, options);
   const { socketPath } = sessionConfig;
 
   // Clean up existing socket file on Unix
@@ -79,7 +81,7 @@ export async function startCliDaemonServer(
 
   await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
 
-  if (browserContext.isClosedOrClosing())
+  if (browserContext.isClosed())
     throw new Error('Browser context was closed before the daemon could start');
 
   const server = net.createServer(socket => {
@@ -172,11 +174,10 @@ function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
   return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
 }
 
-function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserContext: playwright.BrowserContext, options: {
+function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserInfo: BrowserInfo, options: {
   persistent?: boolean,
   exitOnStop?: boolean,
 } = {}): SessionConfig {
-  const browser = browserContext.browser()!;
   return {
     name: sessionName,
     version: clientInfo.version,
@@ -185,9 +186,9 @@ function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browse
     workspaceDir: clientInfo.workspaceDir,
     cli: { persistent: options.persistent },
     browser: {
-      browserName: browser.browserType().name(),
-      launchOptions: browser.launchOptions(),
-      userDataDir: browser.userDataDir() ?? undefined,
+      browserName: browserInfo.browserName,
+      launchOptions: browserInfo.launchOptions,
+      userDataDir: browserInfo.userDataDir,
     },
   };
 }

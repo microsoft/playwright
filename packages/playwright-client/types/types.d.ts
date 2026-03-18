@@ -9136,7 +9136,7 @@ export interface BrowserContext {
   /**
    * Indicates that the browser context is in the process of closing or has already been closed.
    */
-  isClosedOrClosing(): boolean;
+  isClosed(): boolean;
 
   /**
    * **NOTE** CDP sessions are only supported on Chromium-based browsers.
@@ -9757,12 +9757,6 @@ export interface Browser {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
-
-  /**
-   * Returns the launch options that were used to launch this browser. The return type matches the options accepted by
-   * [browserType.launch([options])](https://playwright.dev/docs/api/class-browsertype#browser-type-launch).
-   */
-  launchOptions(): LaunchOptions;
   /**
    * Emitted when Browser gets disconnected from the browser application. This might happen because of one of the
    * following:
@@ -10410,12 +10404,6 @@ export interface Browser {
    * Returns the buffer with trace data.
    */
   stopTracing(): Promise<Buffer>;
-
-  /**
-   * Returns the user data directory that the browser was launched with, or `null` if the browser was launched without a
-   * persistent context.
-   */
-  userDataDir(): null|string;
 
   /**
    * Returns the browser version.

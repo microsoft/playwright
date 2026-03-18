@@ -21,7 +21,7 @@ import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
-import { createBrowser } from '../mcp/browserFactory';
+import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { ClientInfo, createClientInfo } from '../cli-client/registry';
 import { program } from '../../utilsBundle';
@@ -48,12 +48,12 @@ program.argument('[session-name]', 'name of the session to create or connect to'
       };
 
       try {
-        const browser = await createBrowser(mcpConfig, clientInfoEx);
+        const { browser, browserInfo } = await createBrowserWithInfo(mcpConfig, clientInfoEx);
         const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
         if (!browserContext)
           throw new Error('Error: unable to connect to a browser that does not have any contexts');
         const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
-        const socketPath = await startCliDaemonServer(sessionName, browserContext, mcpConfig, clientInfo, { persistent, exitOnClose: true });
+        const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, { persistent, exitOnClose: true });
         console.log(`### Success\nDaemon listening on ${socketPath}`);
         console.log('<EOF>');
       } catch (error) {

@@ -35,27 +35,53 @@ import type { ClientInfo } from '../utils/mcp/server';
 import type { Playwright } from '../../client/playwright';
 // eslint-disable-next-line no-restricted-imports
 import type { Browser } from '../../client/browser';
+import type { BrowserInfo } from '../../serverRegistry';
 
 type ClientInfoEx = ClientInfo & {
   sessionName?: string;
   workspaceDir?: string;
 };
 
+type BrowserWithInfo = {
+  browser: playwright.Browser,
+  browserInfo: BrowserInfo
+};
+
 export async function createBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
+  const { browser } = await createBrowserWithInfo(config, clientInfo);
+  return browser;
+}
+
+export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfoEx): Promise<BrowserWithInfo> {
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
+
+  let browser: playwright.Browser;
   if (config.browser.cdpEndpoint)
-    return await createCDPBrowser(config, clientInfo);
-  if (config.browser.isolated)
-    return await createIsolatedBrowser(config, clientInfo);
-  if (config.extension)
-    return await createExtensionBrowser(config, clientInfo);
-  return await createPersistentBrowser(config, clientInfo);
+    browser = await createCDPBrowser(config, clientInfo);
+  else if (config.browser.isolated)
+    browser = await createIsolatedBrowser(config, clientInfo);
+  else if (config.extension)
+    browser = await createExtensionBrowser(config, clientInfo);
+  else
+    browser = await createPersistentBrowser(config, clientInfo);
+
+  return { browser, browserInfo: browserInfo(browser, config) };
 }
 
 export interface BrowserContextFactory {
   contexts(clientInfo: ClientInfo): Promise<playwright.BrowserContext[]>;
   createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext>;
+}
+
+function browserInfo(browser: playwright.Browser, config: FullConfig): BrowserInfo {
+  return {
+    // eslint-disable-next-line no-restricted-syntax
+    guid: (browser as any)._guid,
+    browserName: config.browser.browserName,
+    launchOptions: config.browser.launchOptions,
+    userDataDir: config.browser.userDataDir
+  };
 }
 
 async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
@@ -87,18 +113,28 @@ async function createCDPBrowser(config: FullConfig, clientInfo: ClientInfoEx): P
   return browser;
 }
 
-async function createRemoteBrowser(config: FullConfig): Promise<playwright.Browser> {
+async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo> {
   testDebug('create browser (remote)');
   const descriptor = await serverRegistry.find(config.browser.remoteEndpoint!);
-  if (descriptor)
-    return await connectToBrowserAcrossVersions(descriptor);
+  if (descriptor) {
+    const browser = await connectToBrowserAcrossVersions(descriptor);
+    return {
+      browser,
+      browserInfo: {
+        guid: descriptor.browser.guid,
+        browserName: descriptor.browser.browserName,
+        launchOptions: descriptor.browser.launchOptions,
+        userDataDir: descriptor.browser.userDataDir
+      }
+    };
+  }
 
   const endpoint = config.browser.remoteEndpoint!;
   const playwrightObject = playwright as Playwright;
   // Use connectToBrowser instead of playwright[browserName].connect because we don't have browserName.
   const browser = await connectToBrowser(playwrightObject, { endpoint });
   browser._connectToBrowserType(playwrightObject[browser._browserName], {}, undefined);
-  return browser;
+  return { browser, browserInfo: browserInfo(browser, config) };
 }
 
 async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
