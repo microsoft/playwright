@@ -154,6 +154,43 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
+`);
+});
+
+test('should report worker cleanup step for passing test', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'reporter.ts': stepIndentReporter,
+    'playwright.config.ts': `
+      module.exports = {
+        reporter: './reporter',
+      };
+    `,
+    'a.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('pass', async ({ page }) => {
+        await page.setContent('<div>hello</div>');
+        await expect(page.locator('div')).toHaveText('hello');
+      });
+    `
+  }, { reporter: '', workers: 1 });
+
+  expect(result.exitCode).toBe(0);
+  expect(result.output).toBe(`
+hook      |Before Hooks
+fixture   |  Fixture "browser"
+pw:api    |    Launch browser
+fixture   |  Fixture "context"
+pw:api    |    Create context
+fixture   |  Fixture "page"
+pw:api    |    Create page
+pw:api    |Set content @ a.test.ts:4
+expect    |Expect "toHaveText" locator('div') @ a.test.ts:5
+hook      |After Hooks
+fixture   |  Fixture "page"
+fixture   |  Fixture "context"
+pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -282,6 +319,8 @@ test('should report test.step from fixtures', async ({ runInlineTest }) => {
     `end teardown foo`,
     `end Fixture "foo"`,
     `end After Hooks`,
+    `begin Worker Cleanup`,
+    `end Worker Cleanup`,
   ]);
 });
 
@@ -306,6 +345,7 @@ test('should report expect step locations', async ({ runInlineTest }) => {
 hook      |Before Hooks
 expect    |Expect "toBeTruthy" @ a.test.ts:4
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -571,6 +611,7 @@ fixture   |  Fixture "context"
 pw:api    |    Close context
 hook      |  afterAll hook @ a.test.ts:7
 test.step |    in afterAll @ a.test.ts:8
+hook      |Worker Cleanup
 `);
 });
 
@@ -647,6 +688,7 @@ expect    |  Expect "toBe" @ a.test.ts:6
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality
 expect    |  Expect "toBe" @ a.test.ts:6
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -897,6 +939,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -945,6 +988,7 @@ test.step |  step 3 @ a.test.ts:12
 test.step |    step 4 @ a.test.ts:13
 expect    |      Expect "toBe" @ a.test.ts:14
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -994,6 +1038,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1047,6 +1092,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1100,6 +1146,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1150,6 +1197,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1217,6 +1265,7 @@ pw:api    |Clear getByRole('textbox') @ a.test.ts:30
 hook      |After Hooks
 hook      |  afterAll hook @ a.test.ts:33
 pw:api    |    Close context @ a.test.ts:34
+hook      |Worker Cleanup
 hook      |Before Hooks
 fixture   |  Fixture "browser"
 pw:api    |    Launch browser
@@ -1312,6 +1361,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1350,6 +1400,7 @@ test('should allow passing location to test.step', async ({ runInlineTest, runTS
 hook      |Before Hooks
 test.step |Perform a dummy step @ dummy-file.ts:123
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 
   const { exitCode } = await runTSC({
@@ -1402,6 +1453,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1457,6 +1509,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1496,6 +1549,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1541,6 +1595,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1579,6 +1634,7 @@ test.step |  inner step 2.1 @ a.test.ts:12 (skipped)
 test.step |  inner step 2.2 @ a.test.ts:13
 expect    |    Expect "toBe" @ a.test.ts:14
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -1608,6 +1664,7 @@ test.step |outer step 2 @ a.test.ts:5
 test.step |  inner step 2 @ a.test.ts:6 (skipped)
 expect    |Expect "toBe" @ a.test.ts:10
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -1651,6 +1708,7 @@ test.step |  inner step 2.1 @ a.test.ts:14 (skipped)
 test.step |  inner step 2.2 @ a.test.ts:15
 expect    |    Expect "toBe" @ a.test.ts:16
 hook      |After Hooks
+hook      |Worker Cleanup
 `);
 });
 
@@ -1767,6 +1825,7 @@ hook      |After Hooks
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });
 
@@ -1840,5 +1899,6 @@ pw:api    |    Set content @ a.test.ts:19
 fixture   |  Fixture "page"
 fixture   |  Fixture "context"
 pw:api    |    Close context
+hook      |Worker Cleanup
 `);
 });

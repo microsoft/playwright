@@ -496,11 +496,17 @@ export class WorkerMain extends ProcessRunner {
           }
         }
 
-        try {
-          // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
-          await this._fixtureRunner.teardownScope('worker', testInfo, { type: 'teardown', slot: teardownSlot });
-        } catch (error) {
-          firstWorkerCleanupError = firstWorkerCleanupError ?? error;
+        // Only teardown worker fixtures when the worker is actually stopping.
+        // When !nextTest but !_isStopped, the worker may be reused for another
+        // test group, so we preserve worker fixtures to avoid unnecessary
+        // browser restarts.
+        if (this._isStopped) {
+          try {
+            // Attribute to 'teardown' because worker fixtures are not perceived as a part of a test.
+            await this._fixtureRunner.teardownScope('worker', testInfo, { type: 'teardown', slot: teardownSlot });
+          } catch (error) {
+            firstWorkerCleanupError = firstWorkerCleanupError ?? error;
+          }
         }
 
         if (firstWorkerCleanupError)
