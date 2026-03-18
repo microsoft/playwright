@@ -17,6 +17,7 @@
 import { EventEmitter } from 'events';
 
 import { createGuid } from './utils/crypto';
+import { debugLogger } from './utils/debugLogger';
 
 import type { Browser } from './browser';
 import type { BrowserContext } from './browserContext';
@@ -55,6 +56,11 @@ export class SdkObject<EM extends EventMap = EventMap> extends EventEmitter<EM> 
     this.setMaxListeners(0);
     this.attribution = { ...parent.attribution };
     this.instrumentation = parent.instrumentation;
+  }
+
+  apiLog(message: string) {
+    if (!this.attribution.playwright.options.isInternalPlaywright)
+      debugLogger.log('api', message);
   }
 
   closeReason(): string | undefined {

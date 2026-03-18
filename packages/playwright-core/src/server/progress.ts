@@ -42,6 +42,8 @@ export class ProgressController {
   static createForSdkObject(sdkObject: SdkObject, callMetadata: CallMetadata) {
     const logName = sdkObject.logName || 'api';
     return new ProgressController(callMetadata, message => {
+      if (logName === 'api' && sdkObject.attribution.playwright.options.isInternalPlaywright)
+        return;
       debugLogger.log(logName, message);
       sdkObject.instrumentation.onCallLog(sdkObject, callMetadata, logName, message);
     });
