@@ -143,7 +143,7 @@ test('should filter network requests by url', async ({ runUITest, server }) => {
   await expect(networkItems.getByText('font.woff2')).toBeVisible();
 });
 
-test('should format JSON request body', async ({ runUITest, server }) => {
+test('should pretty-print JSON request body', async ({ runUITest, server }) => {
   const { page } = await runUITest({
     'network-tab.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -188,14 +188,14 @@ test('should format JSON request body', async ({ runUITest, server }) => {
     '}',
   ], { useInnerText: true });
 
-  // Untoggle pretty print to see original request body
+  // Toggle off pretty print to see original request body
   await payloadPanel.getByRole('button', { name: 'Pretty print', exact: true }).click();
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '{"data":{"key":"value","array":["value-1","value-2"]}}'
   ], { useInnerText: true });
 });
 
-test('should format XML request body', async ({ runUITest, server }) => {
+test('should pretty-print XML request body', async ({ runUITest, server }) => {
   const { page } = await runUITest({
     'network-tab.test.ts': `
       import { test, expect } from '@playwright/test';
@@ -220,11 +220,67 @@ test('should format XML request body', async ({ runUITest, server }) => {
     '</note>'
   ], { useInnerText: true });
 
-  // Untoggle pretty print to see original request body
+  // Toggle off pretty print to see original request body
   await payloadPanel.getByRole('button', { name: 'Pretty print', exact: true }).click();
   await expect(payloadPanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
     '<?xml version="1.0"?><note to="Alice" from="Bob"><body>Hello &amp; welcome!</body></note>'
   ], { useInnerText: true });
+});
+
+test('should pretty-print response bodies and show formatting errors', async ({ runUITest, server }) => {
+  server.setRoute('/response-json-good', (_, res) => res.setHeader('Content-Type', 'application/json').end('{"ok":true,"items":[1,2]}'));
+  server.setRoute('/response-json-bad', (_, res) => res.setHeader('Content-Type', 'application/json').end('{"ok":true,,}'));
+
+  const { page } = await runUITest({
+    'network-tab.test.ts': `
+      import { test } from '@playwright/test';
+      test('network response tab', async ({ request }) => {
+        await Promise.all([
+          request.get('${server.PREFIX}/response-json-good'),
+          request.get('${server.PREFIX}/response-json-bad'),
+        ].map(r => r.then(res => res.text())));
+      });
+    `,
+  });
+
+  await page.getByText('network response tab').dblclick();
+  await expect(page.getByTestId('workbench-run-status')).toContainText('Passed');
+  await page.getByRole('tab', { name: 'Network' }).click();
+
+  const networkList = page.getByRole('list', { name: 'Network requests' }).getByRole('listitem');
+  const responsePanel = page.getByRole('tabpanel', { name: 'Response' });
+
+  // Pretty printed by default
+  await networkList.filter({ hasText: 'response-json-good' }).click();
+  await page.getByRole('tabpanel', { name: 'Network' }).getByRole('tab', { name: 'Response' }).click();
+  await expect(responsePanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '{',
+    '  "ok": true,',
+    '  "items": [',
+    '    1,',
+    '    2',
+    '  ]',
+    '}',
+  ], { useInnerText: true });
+
+  // Toggle off to see original body
+  const prettyPrint = responsePanel.getByRole('button', { name: 'Pretty print', exact: true });
+  const prettyPrintError = responsePanel.getByTitle('Formatting failed');
+  await prettyPrint.click();
+  await expect(responsePanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '{"ok":true,"items":[1,2]}',
+  ], { useInnerText: true });
+  await expect(prettyPrintError).toBeHidden();
+
+  // Re-enable pretty print so errors are surfaced
+  await prettyPrint.click();
+
+  // Malformed JSON shows badge and preserves original text
+  await networkList.filter({ hasText: 'response-json-bad' }).click();
+  await expect(responsePanel.locator('.CodeMirror-code .CodeMirror-line')).toHaveText([
+    '{"ok":true,,}',
+  ], { useInnerText: true });
+  await expect(prettyPrintError).toBeVisible();
 });
 
 test('should display list of query parameters (only if present)', async ({ runUITest, server }) => {

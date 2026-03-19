@@ -239,7 +239,7 @@ const ResponseTab: React.FunctionComponent<{
     {!resource.response.content._sha1 && <div>Response body is not available for this request.</div>}
     {responseBody && responseBody.font && <FontPreview font={responseBody.font} />}
     {responseBody && responseBody.dataUrl && <div><img draggable='false' src={responseBody.dataUrl} /></div>}
-    {responseBody && responseBody.text !== undefined && <div className='network-response-body'>
+    {responseBody && responseBody.text !== undefined && <div className='vbox network-response-body'>
       <CodeMirrorWrapper text={formatResult.text} mimeType={responseBody.mimeType} readOnly lineNumbers={true}/>
       <Toolbar noShadow={true} noMinHeight={true} className='network-response-toolbar'>
         <div style={{ margin: 'auto' }}></div>
@@ -322,7 +322,7 @@ function formatXml(xml: string, indent = '  ') {
 }
 
 function formatBody(body: string, contentType?: string): string {
-  if (!contentType)
+  if (!body.trim() || !contentType)
     return body;
 
   if (isJsonMimeType(contentType))

@@ -76,7 +76,7 @@
 }
 
 .network-response-body {
-  height: calc(100% - 31px /* Height of bottom toolbar */);
+  flex: 1;
 }
 
 .network-request-request-body {
