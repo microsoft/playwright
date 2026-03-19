@@ -2140,7 +2140,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   pageErrors(params: PagePageErrorsParams, progress?: Progress): Promise<PagePageErrorsResult>;
   pdf(params: PagePdfParams, progress?: Progress): Promise<PagePdfResult>;
   requests(params?: PageRequestsParams, progress?: Progress): Promise<PageRequestsResult>;
-  snapshotForAI(params: PageSnapshotForAIParams, progress?: Progress): Promise<PageSnapshotForAIResult>;
+  ariaSnapshot(params: PageAriaSnapshotParams, progress?: Progress): Promise<PageAriaSnapshotResult>;
   startJSCoverage(params: PageStartJSCoverageParams, progress?: Progress): Promise<PageStartJSCoverageResult>;
   stopJSCoverage(params?: PageStopJSCoverageParams, progress?: Progress): Promise<PageStopJSCoverageResult>;
   startCSSCoverage(params: PageStartCSSCoverageParams, progress?: Progress): Promise<PageStartCSSCoverageResult>;
@@ -2610,20 +2610,22 @@ export type PageRequestsOptions = {};
 export type PageRequestsResult = {
   requests: RequestChannel[],
 };
-export type PageSnapshotForAIParams = {
+export type PageAriaSnapshotParams = {
+  content?: 'ai' | 'default',
   track?: string,
   mode?: 'full' | 'incremental',
   selector?: string,
   depth?: number,
   timeout: number,
 };
-export type PageSnapshotForAIOptions = {
+export type PageAriaSnapshotOptions = {
+  content?: 'ai' | 'default',
   track?: string,
   mode?: 'full' | 'incremental',
   selector?: string,
   depth?: number,
 };
-export type PageSnapshotForAIResult = {
+export type PageAriaSnapshotResult = {
   snapshot: string,
 };
 export type PageStartJSCoverageParams = {
@@ -2767,7 +2769,6 @@ export interface FrameChannel extends FrameEventTarget, Channel {
   evalOnSelectorAll(params: FrameEvalOnSelectorAllParams, progress?: Progress): Promise<FrameEvalOnSelectorAllResult>;
   addScriptTag(params: FrameAddScriptTagParams, progress?: Progress): Promise<FrameAddScriptTagResult>;
   addStyleTag(params: FrameAddStyleTagParams, progress?: Progress): Promise<FrameAddStyleTagResult>;
-  ariaSnapshot(params: FrameAriaSnapshotParams, progress?: Progress): Promise<FrameAriaSnapshotResult>;
   blur(params: FrameBlurParams, progress?: Progress): Promise<FrameBlurResult>;
   check(params: FrameCheckParams, progress?: Progress): Promise<FrameCheckResult>;
   click(params: FrameClickParams, progress?: Progress): Promise<FrameClickResult>;
@@ -2872,16 +2873,6 @@ export type FrameAddStyleTagOptions = {
 };
 export type FrameAddStyleTagResult = {
   element: ElementHandleChannel,
-};
-export type FrameAriaSnapshotParams = {
-  selector: string,
-  timeout: number,
-};
-export type FrameAriaSnapshotOptions = {
-
-};
-export type FrameAriaSnapshotResult = {
-  snapshot: string,
 };
 export type FrameBlurParams = {
   selector: string,

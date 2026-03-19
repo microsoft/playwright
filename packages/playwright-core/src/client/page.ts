@@ -851,8 +851,8 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     return result.pdf;
   }
 
-  async snapshotForAI(options: TimeoutOptions & { track?: string, mode?: 'full' | 'incremental', depth?: number } = {}): Promise<string> {
-    const result = await this._channel.snapshotForAI({ timeout: this._timeoutSettings.timeout(options), track: options.track, mode: options.mode, depth: options.depth });
+  async ariaSnapshot(options: TimeoutOptions & { content?: 'ai' | 'default', track?: string, mode?: 'full' | 'incremental', depth?: number } = {}): Promise<string> {
+    const result = await this._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), content: options.content, track: options.track, mode: options.mode, depth: options.depth });
     return result.snapshot;
   }
 

@@ -37,7 +37,7 @@ type AriaRef = {
 let lastRef = 0;
 
 export type AriaTreeOptions = {
-  mode: 'ai' | 'expect' | 'codegen' | 'autoexpect';
+  content: 'ai' | 'default' | 'codegen' | 'autoexpect';
   refPrefix?: string;
   doNotRenderActive?: boolean;
   depth?: number;
@@ -54,7 +54,7 @@ type InternalOptions = {
 };
 
 function toInternalOptions(options: AriaTreeOptions): InternalOptions {
-  if (options.mode === 'ai') {
+  if (options.content === 'ai') {
     // For AI consumption.
     return {
       visibility: 'ariaOrVisible',
@@ -65,11 +65,11 @@ function toInternalOptions(options: AriaTreeOptions): InternalOptions {
       renderCursorPointer: true,
     };
   }
-  if (options.mode === 'autoexpect') {
+  if (options.content === 'autoexpect') {
     // To auto-generate assertions on visible elements.
     return { visibility: 'ariaAndVisible', refs: 'none' };
   }
-  if (options.mode === 'codegen') {
+  if (options.content === 'codegen') {
     // To generate aria assertion with regex heurisitcs.
     return { visibility: 'aria', refs: 'none', renderStringsAsRegex: true };
   }
@@ -387,19 +387,19 @@ export type MatcherReceived = {
 };
 
 export function matchesExpectAriaTemplate(rootElement: Element, template: aria.AriaTemplateNode): { matches: aria.AriaNode[], received: MatcherReceived } {
-  const snapshot = generateAriaTree(rootElement, { mode: 'expect' });
+  const snapshot = generateAriaTree(rootElement, { content: 'default' });
   const matches = matchesNodeDeep(snapshot.root, template, false, false);
   return {
     matches,
     received: {
-      raw: renderAriaTree(snapshot, { mode: 'expect' }),
-      regex: renderAriaTree(snapshot, { mode: 'codegen' }),
+      raw: renderAriaTree(snapshot, { content: 'default' }),
+      regex: renderAriaTree(snapshot, { content: 'codegen' }),
     }
   };
 }
 
 export function getAllElementsMatchingExpectAriaTemplate(rootElement: Element, template: aria.AriaTemplateNode): Element[] {
-  const root = generateAriaTree(rootElement, { mode: 'expect' }).root;
+  const root = generateAriaTree(rootElement, { content: 'default' }).root;
   const matches = matchesNodeDeep(root, template, true, false);
   return matches.map(n => ariaNodeElement(n));
 }

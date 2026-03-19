@@ -379,8 +379,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     let tabSnapshot: TabSnapshot | undefined;
     const modalStates = await this._raceAgainstModalStates(async () => {
       const ariaSnapshot = selector
-        ? await this.page.locator(selector).snapshotForAI({ depth })
-        : await this.page.snapshotForAI({ track: 'response', mode: this._needsFullSnapshot ? 'full' : mode, depth });
+        ? await this.page.locator(selector).ariaSnapshot({ content: 'ai', depth })
+        : await this.page.ariaSnapshot({ content: 'ai', track: 'response', mode: this._needsFullSnapshot ? 'full' : mode, depth });
       tabSnapshot = {
         ariaSnapshot,
         modalStates: [],

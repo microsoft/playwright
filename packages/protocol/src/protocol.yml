@@ -2008,9 +2008,15 @@ Page:
           type: array
           items: Request
 
-    snapshotForAI:
-      internal: true
+    ariaSnapshot:
+      title: Aria snapshot
+      group: getter
       parameters:
+        content:
+          type: enum?
+          literals:
+            - ai
+            - default
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
         mode:
@@ -2269,17 +2275,6 @@ Frame:
         content: string?
       returns:
         element: ElementHandle
-      flags:
-        snapshot: true
-        pausesBeforeAction: true
-
-    ariaSnapshot:
-      title: Aria snapshot
-      parameters:
-        selector: string
-        timeout: float
-      returns:
-        snapshot: string
       flags:
         snapshot: true
         pausesBeforeAction: true

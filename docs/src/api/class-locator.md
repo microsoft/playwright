@@ -206,11 +206,24 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
+### option: Locator.ariaSnapshot.content
+* since: v1.59
+- `content` <[AriaSnapshotContent]<"ai"|"default">>
+
+When set to `"ai"`, returns a snapshot optimized for AI consumption with element references.
+Defaults to `"default"`.
+
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.49
 
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-js-%%
 * since: v1.49
+
+### option: Locator.ariaSnapshot.depth
+* since: v1.59
+- `depth` <[int]>
+
+When specified, limits the depth of the snapshot.
 
 ## async method: Locator.blur
 * since: v1.28
@@ -2492,23 +2505,6 @@ This method expects [Locator] to point to an
 ### option: Locator.setInputFiles.timeout = %%-input-timeout-js-%%
 * since: v1.14
 
-## async method: Locator.snapshotForAI
-* since: v1.59
-- returns: <[string]>
-
-Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
-
-### option: Locator.snapshotForAI.timeout = %%-input-timeout-%%
-* since: v1.59
-
-### option: Locator.snapshotForAI.timeout = %%-input-timeout-js-%%
-* since: v1.59
-
-### option: Locator.snapshotForAI.depth
-* since: v1.59
-- `depth` <[int]>
-
-When specified, limits the depth of the snapshot.
 
 ## async method: Locator.tap
 * since: v1.14

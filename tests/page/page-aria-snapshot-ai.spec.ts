@@ -19,8 +19,8 @@ import { test as it, expect } from './pageTest';
 import { unshift } from '../config/utils';
 import type { Page } from 'playwright-core';
 
-async function snapshotForAI(page: Page, options?: Parameters<Page['snapshotForAI']>[0]): Promise<string> {
-  return await page.snapshotForAI(options);
+async function snapshotForAI(page: Page, options?: Omit<Parameters<Page['ariaSnapshot']>[0], 'content'>): Promise<string> {
+  return await page.ariaSnapshot({ ...options, content: 'ai' });
 }
 
 it('should generate refs', async ({ page }) => {
@@ -799,7 +799,7 @@ it('should limit depth', async ({ page }) => {
               - listitem [ref=e10]: item3
   `);
 
-  const snapshot4 = await page.locator('#target').snapshotForAI({ depth: 1 });
+  const snapshot4 = await page.locator('#target').ariaSnapshot({ content: 'ai', depth: 1 });
   expect(snapshot4).toContainYaml(`
     - list [ref=e6]:
       - listitem [ref=e7]: item2

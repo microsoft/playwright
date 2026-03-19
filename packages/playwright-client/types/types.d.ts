@@ -2100,6 +2100,44 @@ export interface Page {
   }): Promise<ElementHandle>;
 
   /**
+   * Captures the aria snapshot of the page. Read more about [aria snapshots](https://playwright.dev/docs/aria-snapshots).
+   * @param options
+   */
+  ariaSnapshot(options?: {
+    /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
+     * `"default"`.
+     */
+    content?: "ai"|"default";
+
+    /**
+     * When specified, limits the depth of the snapshot.
+     */
+    depth?: number;
+
+    /**
+     * When set to `"incremental"` and
+     * [`track`](https://playwright.dev/docs/api/class-page#page-aria-snapshot-option-track) is specified, returns an
+     * incremental snapshot containing only changes since the last call with the same track name. Defaults to `"full"`.
+     */
+    mode?: "incremental"|"full";
+
+    /**
+     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
+     * option in the config, or by using the
+     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
+     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
+     */
+    timeout?: number;
+
+    /**
+     * When specified, enables incremental snapshots. Subsequent calls with the same track name will track changes between
+     * calls.
+     */
+    track?: string;
+  }): Promise<string>;
+
+  /**
    * Brings page to front (activates tab).
    */
   bringToFront(): Promise<void>;
@@ -4514,38 +4552,6 @@ export interface Page {
      */
     height: number;
   }): Promise<void>;
-
-  /**
-   * Returns an accessibility snapshot of the page optimized for AI consumption.
-   * @param options
-   */
-  snapshotForAI(options?: {
-    /**
-     * When specified, limits the depth of the snapshot.
-     */
-    depth?: number;
-
-    /**
-     * When set to `"incremental"` and
-     * [`track`](https://playwright.dev/docs/api/class-page#page-snapshot-for-ai-option-track) is specified, returns an
-     * incremental snapshot containing only changes since the last call with the same track name. Defaults to `"full"`.
-     */
-    mode?: string;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-
-    /**
-     * When specified, enables incremental snapshots. Subsequent calls with the same track name will track changes between
-     * calls.
-     */
-    track?: string;
-  }): Promise<string>;
 
   /**
    * **NOTE** Use locator-based [locator.tap([options])](https://playwright.dev/docs/api/class-locator#locator-tap) instead. Read
@@ -12773,6 +12779,17 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
+     * `"default"`.
+     */
+    content?: "ai"|"default";
+
+    /**
+     * When specified, limits the depth of the snapshot.
+     */
+    depth?: number;
+
+    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
@@ -14679,25 +14696,6 @@ export interface Locator {
      */
     timeout?: number;
   }): Promise<void>;
-
-  /**
-   * Returns an accessibility snapshot of the element's subtree optimized for AI consumption.
-   * @param options
-   */
-  snapshotForAI(options?: {
-    /**
-     * When specified, limits the depth of the snapshot.
-     */
-    depth?: number;
-
-    /**
-     * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
-     * option in the config, or by using the
-     * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
-     * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
-     */
-    timeout?: number;
-  }): Promise<string>;
 
   /**
    * Perform a tap gesture on the element matching the locator. For examples of emulating other gestures by manually

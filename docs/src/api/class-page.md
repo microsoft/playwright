@@ -4211,34 +4211,40 @@ Page width in pixels.
 
 Page height in pixels.
 
-## async method: Page.snapshotForAI
+## async method: Page.ariaSnapshot
 * since: v1.59
 - returns: <[string]>
 
-Returns an accessibility snapshot of the page optimized for AI consumption.
+Captures the aria snapshot of the page. Read more about [aria snapshots](../aria-snapshots.md).
 
-### option: Page.snapshotForAI.timeout = %%-input-timeout-%%
+### option: Page.ariaSnapshot.content
+* since: v1.59
+- `content` <[AriaSnapshotContent]<"ai"|"default">>
+
+When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to `"default"`.
+
+### option: Page.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.59
 
-### option: Page.snapshotForAI.timeout = %%-input-timeout-js-%%
+### option: Page.ariaSnapshot.timeout = %%-input-timeout-js-%%
 * since: v1.59
 
-### option: Page.snapshotForAI.track
+### option: Page.ariaSnapshot.track
 * since: v1.59
 - `track` <[string]>
 
 When specified, enables incremental snapshots. Subsequent calls with the same track name will
 track changes between calls.
 
-### option: Page.snapshotForAI.mode
+### option: Page.ariaSnapshot.mode
 * since: v1.59
-- `mode` <[string]>
+- `mode` <[AriaSnapshotContent]<"incremental"|"full">>
 
-When set to `"incremental"` and [`option: Page.snapshotForAI.track`] is specified, returns an
+When set to `"incremental"` and [`option: Page.ariaSnapshot.track`] is specified, returns an
 incremental snapshot containing only changes since the last call with the same track name.
 Defaults to `"full"`.
 
-### option: Page.snapshotForAI.depth
+### option: Page.ariaSnapshot.depth
 * since: v1.59
 - `depth` <[int]>
 
