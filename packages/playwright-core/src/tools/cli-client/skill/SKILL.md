@@ -207,8 +207,9 @@ playwright-cli snapshot --filename=after-click.yaml
 # snapshot an element instead of the whole page
 playwright-cli snapshot "#main"
 
-# limit snapshot depth for efficiency
+# limit snapshot depth for efficiency, take a partial snapshot afterwards
 playwright-cli snapshot --depth=4
+playwright-cli snapshot e34
 ```
 
 ## Targeting elements

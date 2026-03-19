@@ -2019,11 +2019,6 @@ Page:
             - default
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
-        mode:
-          type: enum?
-          literals:
-            - full
-            - incremental
         selector: string?
         depth: int?
         timeout: float

@@ -45,7 +45,7 @@ export class Response {
   private _errors: string[] = [];
   private _code: string[] = [];
   private _context: Context;
-  private _includeSnapshot: 'none' | 'full' | 'incremental' | 'explicit' = 'none';
+  private _includeSnapshot: 'none' | 'full' | 'explicit' = 'none';
   private _includeSnapshotFileName: string | undefined;
   private _includeSnapshotSelector: string | undefined;
   private _includeSnapshotDepth: number | undefined;
@@ -129,7 +129,7 @@ export class Response {
   }
 
   setIncludeSnapshot() {
-    this._includeSnapshot = this._context.config.snapshot?.mode || 'incremental';
+    this._includeSnapshot = this._context.config.snapshot?.mode ?? 'full';
   }
 
   setIncludeFullSnapshot(includeSnapshotFileName?: string, selector?: string, depth?: number) {
@@ -202,7 +202,7 @@ export class Response {
       addSection('Ran Playwright code', this._code, 'js');
 
     // Render tab titles upon changes or when more than one tab.
-    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotSelector, this._includeSnapshotDepth, this._clientWorkspace, this._includeSnapshot === 'incremental' ? 'incremental' : 'full') : undefined;
+    const tabSnapshot = this._context.currentTab() ? await this._context.currentTabOrDie().captureSnapshot(this._includeSnapshotSelector, this._includeSnapshotDepth, this._clientWorkspace) : undefined;
     const tabHeaders = await Promise.all(this._context.tabs().map(tab => tab.headerSnapshot()));
     if (this._includeSnapshot !== 'none' || tabHeaders.some(header => header.changed)) {
       if (tabHeaders.length !== 1)

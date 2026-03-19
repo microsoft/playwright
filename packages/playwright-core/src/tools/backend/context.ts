@@ -48,7 +48,7 @@ export type ContextConfig = {
   saveTrace?: boolean;
   secrets?: Record<string, string>;
   snapshot?: {
-    mode?: 'incremental' | 'full' | 'none';
+    mode?: 'full' | 'none';
   };
   testIdAttribute?: string;
   timeouts?: {

@@ -886,7 +886,7 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async ariaSnapshot(progress: Progress, options: { format?: 'ai' | 'default', track?: string, mode?: 'full' | 'incremental', doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
+  async ariaSnapshot(progress: Progress, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');
 
@@ -903,7 +903,7 @@ export class Page extends SdkObject<PageEventMap> {
     }
 
     const result = await ariaSnapshotForFrame(progress, frame, { ...options, info });
-    const snapshot = options.mode === 'incremental' && result.incremental !== undefined ? result.incremental.join('\n') : result.full.join('\n');
+    const snapshot = options.track && result.incremental ? result.incremental.join('\n') : result.full.join('\n');
     return { snapshot };
   }
 

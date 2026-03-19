@@ -2116,25 +2116,12 @@ export interface Page {
     format?: "ai"|"default";
 
     /**
-     * When set to `"incremental"` and
-     * [`track`](https://playwright.dev/docs/api/class-page#page-aria-snapshot-option-track) is specified, returns an
-     * incremental snapshot containing only changes since the last call with the same track name. Defaults to `"full"`.
-     */
-    mode?: "incremental"|"full";
-
-    /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
      * option in the config, or by using the
      * [browserContext.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-browsercontext#browser-context-set-default-timeout)
      * or [page.setDefaultTimeout(timeout)](https://playwright.dev/docs/api/class-page#page-set-default-timeout) methods.
      */
     timeout?: number;
-
-    /**
-     * When specified, enables incremental snapshots. Subsequent calls with the same track name will track changes between
-     * calls.
-     */
-    track?: string;
   }): Promise<string>;
 
   /**

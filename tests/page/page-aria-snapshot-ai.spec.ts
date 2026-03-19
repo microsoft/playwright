@@ -19,7 +19,7 @@ import { test as it, expect } from './pageTest';
 import { unshift } from '../config/utils';
 import type { Page } from 'playwright-core';
 
-async function snapshotForAI(page: Page, options?: Omit<Parameters<Page['ariaSnapshot']>[0], 'format'>): Promise<string> {
+async function snapshotForAI(page: Page, options?: Omit<Parameters<Page['ariaSnapshot']>[0], 'format'> & { _track?: string }): Promise<string> {
   return await page.ariaSnapshot({ ...options, format: 'ai' });
 }
 
@@ -494,26 +494,26 @@ it('should not remove generic nodes with title', async ({ page }) => {
 it('should create incremental snapshots on multiple tracks', async ({ page }) => {
   await page.setContent(`<ul><li><button>a button</button></li><li><span>a span</span></li><li id=hidden-li style="display:none">some text</li></ul>`);
 
-  expect(await snapshotForAI(page, { track: 'first', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'first' })).toContainYaml(`
     - list [ref=e2]:
       - listitem [ref=e3]:
         - button "a button" [ref=e4]
       - listitem [ref=e5]: a span
   `);
-  expect(await snapshotForAI(page, { track: 'second', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'second' })).toContainYaml(`
     - list [ref=e2]:
       - listitem [ref=e3]:
         - button "a button" [ref=e4]
       - listitem [ref=e5]: a span
   `);
-  expect(await snapshotForAI(page, { track: 'first', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'first' })).toContainYaml(`
   `);
 
   await page.evaluate(() => {
     document.querySelector('span').textContent = 'changed span';
     document.getElementById('hidden-li').style.display = 'inline';
   });
-  expect(await snapshotForAI(page, { track: 'first', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'first' })).toContainYaml(`
     - <changed> list [ref=e2]:
       - ref=e3 [unchanged]
       - listitem [ref=e5]: changed span
@@ -524,45 +524,38 @@ it('should create incremental snapshots on multiple tracks', async ({ page }) =>
     document.querySelector('span').textContent = 'a span';
     document.getElementById('hidden-li').style.display = 'none';
   });
-  expect(await snapshotForAI(page, { track: 'first', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'first' })).toContainYaml(`
     - <changed> list [ref=e2]:
       - ref=e3 [unchanged]
       - listitem [ref=e5]: a span
   `);
-  expect(await snapshotForAI(page, { track: 'second', mode: 'incremental' })).toContainYaml(`
-  `);
-
-  expect(await snapshotForAI(page, { track: 'second', mode: 'full' })).toContainYaml(`
-    - list [ref=e2]:
-      - listitem [ref=e3]:
-        - button "a button" [ref=e4]
-      - listitem [ref=e5]: a span
+  expect(await snapshotForAI(page, { _track: 'second' })).toContainYaml(`
   `);
 });
 
 it('should create incremental snapshot for attribute change', async ({ page }) => {
   await page.setContent(`<button>a button</button>`);
   await page.evaluate(() => document.querySelector('button').focus());
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - button "a button" [active] [ref=e2]
   `);
 
   await page.evaluate(() => document.querySelector('button').blur());
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> button "a button" [ref=e2]
   `);
 });
 
 it('should create incremental snapshot for child removal', async ({ page }) => {
   await page.setContent(`<li><button>a button</button><span>some text</span></li>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - listitem [ref=e2]:
       - button "a button" [ref=e3]
       - text: some text
   `);
 
   await page.evaluate(() => document.querySelector('span').remove());
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> listitem [ref=e2]:
       - ref=e3 [unchanged]
   `);
@@ -570,13 +563,13 @@ it('should create incremental snapshot for child removal', async ({ page }) => {
 
 it('should create incremental snapshot for child addition', async ({ page }) => {
   await page.setContent(`<li><button>a button</button><span style="display:none">some text</span></li>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - listitem [ref=e2]:
       - button "a button" [ref=e3]
   `);
 
   await page.evaluate(() => document.querySelector('span').style.display = 'inline');
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> listitem [ref=e2]:
       - ref=e3 [unchanged]
       - text: some text
@@ -585,13 +578,13 @@ it('should create incremental snapshot for child addition', async ({ page }) => 
 
 it('should create incremental snapshot for prop change', async ({ page }) => {
   await page.setContent(`<a href="about:blank" style="cursor:pointer">a link</a>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - link "a link" [ref=e2] [cursor=pointer]:
       - /url: about:blank
   `);
 
   await page.evaluate(() => document.querySelector('a').setAttribute('href', 'https://playwright.dev'));
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> link "a link" [ref=e2] [cursor=pointer]:
       - /url: https://playwright.dev
   `);
@@ -599,13 +592,13 @@ it('should create incremental snapshot for prop change', async ({ page }) => {
 
 it('should create incremental snapshot for cursor change', async ({ page }) => {
   await page.setContent(`<a href="about:blank" style="cursor:pointer">a link</a>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - link "a link" [ref=e2] [cursor=pointer]:
       - /url: about:blank
   `);
 
   await page.evaluate(() => document.querySelector('a').style.cursor = 'default');
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> link "a link" [ref=e2]:
       - /url: about:blank
   `);
@@ -613,24 +606,24 @@ it('should create incremental snapshot for cursor change', async ({ page }) => {
 
 it('should create incremental snapshot for name change', async ({ page }) => {
   await page.setContent(`<button><span>a button</span></button>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - button "a button" [ref=e2]
   `);
 
   await page.evaluate(() => document.querySelector('span').textContent = 'new button');
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> button "new button" [ref=e3]
   `);
 });
 
 it('should create incremental snapshot for text change', async ({ page }) => {
   await page.setContent(`<li><span>an item</span></li>`);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - listitem [ref=e2]: an item
   `);
 
   await page.evaluate(() => document.querySelector('span').textContent = 'new text');
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> listitem [ref=e2]: new text
   `);
 });
@@ -645,7 +638,7 @@ it('should produce incremental snapshot for iframes', async ({ page }) => {
       </li>
     "></iframe>
   `);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - iframe [ref=e2]:
       - listitem [ref=f1e2]:
         - button "a button" [ref=f1e3]
@@ -655,7 +648,7 @@ it('should produce incremental snapshot for iframes', async ({ page }) => {
     document.querySelector('span').style.display = 'block';
     document.querySelector('iframe').style.display = 'block';
   });
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> listitem [ref=f1e2]:
       - generic [ref=f1e4]: outer text
       - ref=f1e3 [unchanged]
@@ -677,7 +670,7 @@ it('should create multiple chunks in incremental snapshot', async ({ page }) => 
       </ul>
     </ul>
   `);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - list [ref=e2]:
       - listitem [ref=e3]: item1
       - listitem [ref=e4]: item2
@@ -697,31 +690,13 @@ it('should create multiple chunks in incremental snapshot', async ({ page }) => 
     spans[2].parentElement.appendChild(button);
     document.querySelector('#to-remove').remove();
   });
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> listitem [ref=e3]: new item1
     - <changed> group [ref=e6]:
       - text: new item3
       - button "button" [ref=e10]
     - <changed> list [ref=e7]:
       - ref=e9 [unchanged]
-  `);
-});
-
-it('should not create incremental snapshots without tracks', async ({ page }) => {
-  await page.setContent(`<ul><li><button>a button</button></li><li><span>a span</span></li><li id=hidden-li style="display:none">some text</li></ul>`);
-
-  expect(await snapshotForAI(page, { mode: 'full' })).toContainYaml(`
-    - list [ref=e2]:
-      - listitem [ref=e3]:
-        - button "a button" [ref=e4]
-      - listitem [ref=e5]: a span
-  `);
-  // Without a track, mode: 'incremental' falls back to full snapshot.
-  expect(await snapshotForAI(page, { mode: 'incremental' })).toContainYaml(`
-    - list [ref=e2]:
-      - listitem [ref=e3]:
-        - button "a button" [ref=e4]
-      - listitem [ref=e5]: a span
   `);
 });
 
@@ -732,14 +707,14 @@ it('should create incremental snapshot for children swap', async ({ page }) => {
       <li>item 2</li>
     </ul>
   `);
-  expect(await snapshotForAI(page, { track: 'track', mode: 'full' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - list [ref=e2]:
       - listitem [ref=e3]: item 1
       - listitem [ref=e4]: item 2
   `);
 
   await page.evaluate(() => document.querySelector('ul').appendChild(document.querySelector('li')));
-  expect(await snapshotForAI(page, { track: 'track', mode: 'incremental' })).toContainYaml(`
+  expect(await snapshotForAI(page, { _track: 'track' })).toContainYaml(`
     - <changed> list [ref=e2]:
       - ref=e4 [unchanged]
       - ref=e3 [unchanged]

@@ -4229,21 +4229,6 @@ When set to `"ai"`, returns a snapshot optimized for AI consumption with element
 ### option: Page.ariaSnapshot.timeout = %%-input-timeout-js-%%
 * since: v1.59
 
-### option: Page.ariaSnapshot.track
-* since: v1.59
-- `track` <[string]>
-
-When specified, enables incremental snapshots. Subsequent calls with the same track name will
-track changes between calls.
-
-### option: Page.ariaSnapshot.mode
-* since: v1.59
-- `mode` <[AriaSnapshotContent]<"incremental"|"full">>
-
-When set to `"incremental"` and [`option: Page.ariaSnapshot.track`] is specified, returns an
-incremental snapshot containing only changes since the last call with the same track name.
-Defaults to `"full"`.
-
 ### option: Page.ariaSnapshot.depth
 * since: v1.59
 - `depth` <[int]>
