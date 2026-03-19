@@ -29,7 +29,6 @@ import { isAbortError, ProgressController } from './progress';
 import * as types from './types';
 import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, renderTitleForCall } from '../utils';
 import { isSessionClosedError } from './protocolError';
-import { debugLogger } from './utils/debugLogger';
 import { eventsHelper } from './utils/eventsHelper';
 import {  isInvalidSelectorError } from '../utils/isomorphic/selectorParser';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
@@ -244,7 +243,7 @@ export class FrameManager {
     const navigationEvent: NavigationEvent = { url, name, newDocument: frame._currentDocument, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
     if (!initial) {
-      debugLogger.log('api', `  navigated to "${url}"`);
+      frame.apiLog(`  navigated to "${url}"`);
       this._page.frameNavigatedToNewDocument(frame);
     }
     // Restore pending if any - see comments above about keepPending.
@@ -263,7 +262,7 @@ export class FrameManager {
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
     this._fireInternalFrameNavigation(frame, navigationEvent);
-    debugLogger.log('api', `  navigated to "${url}"`);
+    frame.apiLog(`  navigated to "${url}"`);
   }
 
   frameAbortedNavigation(frameId: string, errorText: string, documentId?: string) {
@@ -509,7 +508,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     this._firedLifecycleEvents.add(event);
     this.emit(Frame.Events.AddLifecycle, event);
     if (this === this._page.mainFrame() && this._url !== 'about:blank')
-      debugLogger.log('api', `  "${event}" event fired`);
+      this.apiLog(`  "${event}" event fired`);
     this._page.mainFrame()._recalculateNetworkIdle();
   }
 
@@ -592,7 +591,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       this._firedLifecycleEvents.add('networkidle');
       this.emit(Frame.Events.AddLifecycle, 'networkidle');
       if (this === this._page.mainFrame() && this._url !== 'about:blank')
-        debugLogger.log('api', `  "networkidle" event fired`);
+        this.apiLog(`  "networkidle" event fired`);
     }
     if (frameThatAllowsRemovingNetworkIdle !== this && this._firedLifecycleEvents.has('networkidle') && !isNetworkIdle) {
       // Usually, networkidle is fired once and not removed after that.
@@ -755,7 +754,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
-    debugLogger.log('api', `    finding element using the selector "${selector}"`);
+    this.apiLog(`    finding element using the selector "${selector}"`);
     return this.selectors.query(selector, options);
   }
 
