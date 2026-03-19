@@ -16163,11 +16163,11 @@ export interface Screencast {
    * **Usage**
    *
    * ```js
-   * const disposable = await page.screencast.start(({ data }) => {
+   * await page.screencast.start(({ data })  => {
    *   console.log(`frame size: ${data.length}`);
    * }, { preferredSize: { width: 800, height: 600 } });
    * // ... perform actions ...
-   * await disposable.dispose();
+   * await page.screencast.stop();
    * ```
    *
    * @param onFrame Callback that receives JPEG-encoded frame data.
@@ -16179,7 +16179,11 @@ export interface Screencast {
       height: number;
     };
   }): Promise<Disposable>;
-
+  /**
+   * Stops the screencast started with
+   * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   */
+  stop(): Promise<void>;
 }
 
 type DeviceDescriptor = {
