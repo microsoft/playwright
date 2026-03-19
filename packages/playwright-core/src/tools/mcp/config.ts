@@ -58,7 +58,6 @@ export type CLIOptions = {
   imageResponses?: 'allow' | 'omit';
   sandbox?: boolean;
   outputDir?: string;
-  outputMode?: 'file' | 'stdout';
   port?: number;
   proxyBypass?: string;
   proxyServer?: string;
@@ -255,7 +254,6 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
     secrets: cliOptions.secrets,
     sharedBrowserContext: cliOptions.sharedBrowserContext,
     snapshot: cliOptions.snapshotMode ? { mode: cliOptions.snapshotMode } : undefined,
-    outputMode: cliOptions.outputMode,
     outputDir: cliOptions.outputDir,
     imageResponses: cliOptions.imageResponses,
     testIdAttribute: cliOptions.testIdAttribute,

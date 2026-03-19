@@ -30,17 +30,6 @@ test.describe('unicode serialization', () => {
     expect(result.content[0].text).toContain('Page URL:');
   });
 
-  test('preserves valid emoji and surrogate pairs', async ({ client, server }) => {
-    server.setContent('/', 'Valid emoji: 💀 skull and text', 'text/html');
-
-    const result = await client.callTool({
-      name: 'browser_navigate',
-      arguments: { url: server.PREFIX },
-    });
-
-    expect(result.content[0].text).toContain('emoji');
-  });
-
   test('handles console messages with lone surrogates', async ({ startClient, server }) => {
     server.setContent('/', `<script>console.log('msg ${String.fromCharCode(0xD800)} surrog')</script>`, 'text/html');
 

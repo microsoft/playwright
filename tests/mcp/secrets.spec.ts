@@ -123,6 +123,6 @@ await page.getByRole('textbox', { name: 'Password' }).fill(process.env['X-PASSWO
     name: 'browser_snapshot',
     arguments: {},
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`- textbox \"Password\" [active] [ref=e6]: <secret>X-PASSWORD</secret>`),
+    inlineSnapshot: expect.stringContaining(`- textbox \"Password\" [active] [ref=e6]: <secret>X-PASSWORD</secret>`),
   });
 });

@@ -50,8 +50,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       url: server.PREFIX,
     },
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-  - button "Button 1" [ref=e2]
+    snapshot: expect.stringContaining(`- button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]
   - list [ref=e4]:${listitems}`),
   });
@@ -63,9 +62,7 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       ref: 'e3',
     },
   })).toHaveResponse({
-    snapshot: `\`\`\`yaml
-
-\`\`\``,
+    snapshot: ``,
   });
 
   expect(await client.callTool({
@@ -75,24 +72,20 @@ test('should return aria snapshot diff', async ({ client, server }) => {
       ref: 'e2',
     },
   })).toHaveResponse({
-    snapshot: `\`\`\`yaml
-- <changed> generic [ref=e1]:
+    snapshot: `- <changed> generic [ref=e1]:
   - button "Button 1" [active] [ref=e2]
   - button "Button 2new text" [ref=e105]
-  - ref=e4 [unchanged]
-\`\`\``,
+  - ref=e4 [unchanged]`,
   });
 
   // browser_snapshot forces a full snapshot.
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: `\`\`\`yaml
-- generic [ref=e1]:
+    inlineSnapshot: `- generic [ref=e1]:
   - button "Button 1" [active] [ref=e2]
   - button "Button 2new text" [ref=e105]
-  - list [ref=e4]:${listitems}
-\`\`\``,
+  - list [ref=e4]:${listitems}`,
   });
 });
 
@@ -136,8 +129,7 @@ test('should reset aria snapshot diff upon navigation', async ({ client, server 
       url: server.PREFIX + '/before',
     },
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-  - button "Button 1" [ref=e2]
+    snapshot: expect.stringContaining(`- button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]`),
   });
 
@@ -148,8 +140,7 @@ test('should reset aria snapshot diff upon navigation', async ({ client, server 
       ref: 'e2',
     },
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`
-  - button "Button 1" [ref=e2]
+    snapshot: expect.stringContaining(`- button "Button 1" [ref=e2]
   - button "Button 2" [active] [ref=e3]`),
   });
 });

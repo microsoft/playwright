@@ -57,7 +57,7 @@ const open = declareCommand({
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
   }),
   toolName: ({ url }) => url ? 'browser_navigate' : 'browser_snapshot',
-  toolParams: ({ url }) => ({ url: url || 'about:blank' }),
+  toolParams: ({ url }) => url ? ({ url: url || 'about:blank' }) : { filename: '<auto>' },
 });
 
 const attach = declareCommand({
@@ -72,7 +72,7 @@ const attach = declareCommand({
     session: z.string().optional().describe('Session name alias (defaults to the attach target name)'),
   }),
   toolName: 'browser_snapshot',
-  toolParams: () => ({}),
+  toolParams: () => ({ filename: '<auto>' }),
 });
 
 const close = declareCommand({
@@ -361,8 +361,11 @@ const evaluate = declareCommand({
     func: z.string().describe('() => { /* code */ } or (element) => { /* code */ } when element is provided'),
     element: z.string().optional().describe('Exact target element reference from the page snapshot, or a unique element selector'),
   }),
+  options: z.object({
+    filename: z.string().optional().describe('Save evaluation result to a file instead of returning it in the response.'),
+  }),
   toolName: 'browser_evaluate',
-  toolParams: ({ func, element }) => ({ function: func, ...asRef(element) }),
+  toolParams: ({ func, element, filename }) => ({ function: func, filename, ...asRef(element) }),
 });
 
 const dialogAccept = declareCommand({

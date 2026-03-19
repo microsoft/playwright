@@ -61,7 +61,7 @@ test('debug test and snapshot', async ({ cliEnv, cli, childProcess }) => {
   expect(stepOutput).toContain(`- Expect "toBeVisible" at subdir${path.sep}a.test.ts:5`);
 
   const snapshotResult = await cli(`--session=${session}`, 'snapshot');
-  expect(snapshotResult.snapshot).toContain('button "Submit"');
+  expect(snapshotResult.inlineSnapshot).toContain('button "Submit"');
 
   const { output: pauseAtOutput } = await cli(`--session=${session}`, 'pause-at', 'a.test.ts:7');
   expect(pauseAtOutput).toContain('### Paused');

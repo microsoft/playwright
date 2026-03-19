@@ -55,9 +55,7 @@ test('cdp server reuse tab', async ({ cdpServer, startClient, server }) => {
   })).toHaveResponse({
     page: `- Page URL: ${server.HELLO_WORLD}
 - Page Title: Title`,
-    snapshot: `\`\`\`yaml
-- generic [active] [ref=e1]: Hello, world!
-\`\`\``,
+    inlineSnapshot: `- generic [active] [ref=e1]: Hello, world!`,
   });
 });
 

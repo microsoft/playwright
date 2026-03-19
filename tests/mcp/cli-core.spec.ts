@@ -99,16 +99,16 @@ test('hover', async ({ cli, server }) => {
   server.setContent('/', eventsPage, 'text/html');
   await cli('open', server.PREFIX);
   await cli('hover', 'e2');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain('mouse move 50 50');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('mouse move 50 50');
 });
 
 test('select', async ({ cli, server }) => {
   server.setContent('/', `<select><option value="1">One</option><option value="2">Two</option></select>`, 'text/html');
   await cli('open', server.PREFIX);
   await cli('select', 'e2', 'Two');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain('- option "Two" [selected]');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('- option "Two" [selected]');
 });
 
 test('check', async ({ cli, server, mcpBrowser }) => {
@@ -116,8 +116,8 @@ test('check', async ({ cli, server, mcpBrowser }) => {
   server.setContent('/', `<input type="checkbox">`, 'text/html');
   await cli('open', server.PREFIX);
   await cli('check', 'e2');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain(`- checkbox [checked] ${active}[ref=e2]`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`- checkbox [checked] ${active}[ref=e2]`);
 });
 
 test('uncheck', async ({ cli, server, mcpBrowser }) => {
@@ -125,8 +125,8 @@ test('uncheck', async ({ cli, server, mcpBrowser }) => {
   server.setContent('/', `<input type="checkbox" checked>`, 'text/html');
   await cli('open', server.PREFIX);
   await cli('uncheck', 'e2');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain(`- checkbox ${active}[ref=e2]`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`- checkbox ${active}[ref=e2]`);
 });
 
 test('eval', async ({ cli, server }) => {
@@ -155,8 +155,8 @@ test('dialog-accept', async ({ cli, server }) => {
   expect(output).toContain('MyAlert');
   expect(output).toContain('["alert" dialog with message "MyAlert"]: can be handled by dialog-accept or dialog-dismiss');
   await cli('dialog-accept');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).not.toContain('MyAlert');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).not.toContain('MyAlert');
 });
 
 test('dialog-dismiss', async ({ cli, server }) => {
@@ -165,8 +165,8 @@ test('dialog-dismiss', async ({ cli, server }) => {
   const { output } = await cli('click', 'e2');
   expect(output).toContain('MyAlert');
   await cli('dialog-dismiss');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).not.toContain('MyAlert');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).not.toContain('MyAlert');
 });
 
 test('dialog-accept <prompt>', async ({ cli, server }) => {
@@ -174,8 +174,8 @@ test('dialog-accept <prompt>', async ({ cli, server }) => {
   await cli('open', server.PREFIX);
   await cli('click', 'e2');
   await cli('dialog-accept', 'my reply');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain('my reply');
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain('my reply');
 });
 
 test('resize', async ({ cli, server }) => {
@@ -270,7 +270,7 @@ test('partial snapshot', async ({ cli, server }) => {
   expect(snapshot).toContain('- button "Submit" [ref=e2]');
   expect(snapshot).toContain('- button "Cancel" [ref=e3]');
 
-  const { snapshot: partialSnapshot } = await cli('snapshot', '#two');
+  const { inlineSnapshot: partialSnapshot } = await cli('snapshot', '#two');
   expect(partialSnapshot).toBe(`- button "Cancel" [ref=e3]`);
 
   const { output: strictError } = await cli('snapshot', 'button');
@@ -284,12 +284,12 @@ test('snapshot depth', async ({ cli, server }) => {
   server.setContent('/', `<ul><li><button id=one>Submit</button></li><li><button id=two>Cancel</button></li></ul>`, 'text/html');
   await cli('open', server.PREFIX);
 
-  const { snapshot: limitedSnapshot } = await cli('snapshot', '--depth=1');
+  const { inlineSnapshot: limitedSnapshot } = await cli('snapshot', '--depth=1');
   expect(limitedSnapshot).toBe(`- list [ref=e2]:
   - listitem [ref=e3]
   - listitem [ref=e5]`);
 
-  const { snapshot: fullSnapshot } = await cli('snapshot', '--depth=100');
+  const { inlineSnapshot: fullSnapshot } = await cli('snapshot', '--depth=100');
   expect(fullSnapshot).toBe(`- list [ref=e2]:
   - listitem [ref=e3]:
     - button "Submit" [ref=e4]

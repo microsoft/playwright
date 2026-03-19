@@ -54,7 +54,7 @@ test('browser_wait_for(text)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
+    inlineSnapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });
 });
 
@@ -96,7 +96,7 @@ test('browser_wait_for(textGone)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
+    inlineSnapshot: expect.stringContaining(`- generic [ref=e3]: Text to appear`),
   });
 });
 
