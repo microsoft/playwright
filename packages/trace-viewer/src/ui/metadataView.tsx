@@ -14,7 +14,7 @@
   limitations under the License.
 */
 
-import { msToString } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import type { TraceModel } from '@isomorphic/trace/traceModel';
 import './callTab.css';

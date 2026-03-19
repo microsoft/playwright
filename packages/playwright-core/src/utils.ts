@@ -29,6 +29,7 @@ export * from './utils/isomorphic/rtti';
 export * from './utils/isomorphic/semaphore';
 export * from './utils/isomorphic/stackTrace';
 export * from './utils/isomorphic/stringUtils';
+export * from './utils/isomorphic/formatUtils';
 export * from './utils/isomorphic/time';
 export * from './utils/isomorphic/timeoutRunner';
 export * from './utils/isomorphic/urlMatch';

@@ -25,7 +25,7 @@ import { statusIcon } from './statusIcon';
 import './testCaseView.css';
 import { TestResultView } from './testResultView';
 import { linkifyText } from '@web/renderUtils';
-import { msToString } from './utils';
+import { msToString } from '@isomorphic/formatUtils';
 import { clsx } from '@web/uiUtils';
 import { CopyToClipboardContainer } from './copyToClipboard';
 import { HeaderView } from './headerView';

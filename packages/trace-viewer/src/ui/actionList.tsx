@@ -15,7 +15,8 @@
 */
 
 import type { ActionTraceEvent } from '@trace/trace';
-import { clsx, msToString } from '@web/uiUtils';
+import { clsx } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import * as React from 'react';
 import './actionList.css';
 import { stats, buildActionTree } from '@isomorphic/trace/traceModel';

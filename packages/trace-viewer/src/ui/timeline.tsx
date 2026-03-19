@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { useSetting, msToString, useMeasure } from '@web/uiUtils';
+import { useSetting, useMeasure } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import { GlassPane } from '@web/shared/glassPane';
 import * as React from 'react';
 import type { Boundaries } from './geometry';

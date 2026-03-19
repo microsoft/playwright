@@ -1,3 +1,4 @@
 [*]
+@isomorphic/**
 @playwright/experimental-ct-react
 third_party/**

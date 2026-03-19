@@ -19,7 +19,7 @@ import * as React from 'react';
 import { TestFileView } from './testFileView';
 import './testFileView.css';
 import './chip.css';
-import { msToString } from './utils';
+import { msToString } from '@isomorphic/formatUtils';
 import { Chip } from './chip';
 import { CodeSnippet } from './testErrorView';
 import * as icons from './icons';

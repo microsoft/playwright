@@ -16,8 +16,7 @@
 
 import path from 'path';
 
-import { getPackageManagerExecCommand, parseErrorStack } from 'playwright-core/lib/utils';
-import { ms as milliseconds } from 'playwright-core/lib/utilsBundle';
+import { getPackageManagerExecCommand, msToString as milliseconds, parseErrorStack } from 'playwright-core/lib/utils';
 import { colors as realColors, noColors } from 'playwright-core/lib/utils';
 
 import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
