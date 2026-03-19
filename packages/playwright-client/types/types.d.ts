@@ -18295,7 +18295,7 @@ export interface APIRequestContext {
    * ```
    *
    * The common way to send file(s) in the body of a request is to upload them as form fields with `multipart/form-data`
-   * encoding, by specifiying the `multipart` parameter:
+   * encoding, by specifying the `multipart` parameter:
    *
    * ```js
    * const form = new FormData();
