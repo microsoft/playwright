@@ -135,9 +135,7 @@ const hover = defineTabTool({
     const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.hover();`);
 
-    await tab.waitForCompletion(async () => {
-      await locator.hover(tab.actionTimeoutOptions);
-    });
+    await locator.hover(tab.actionTimeoutOptions);
   },
 });
 
@@ -161,9 +159,7 @@ const selectOption = defineTabTool({
     const { locator, resolved } = await tab.refLocator(params);
     response.addCode(`await page.${resolved}.selectOption(${formatObject(params.values)});`);
 
-    await tab.waitForCompletion(async () => {
-      await locator.selectOption(params.values, tab.actionTimeoutOptions);
-    });
+    await locator.selectOption(params.values, tab.actionTimeoutOptions);
   },
 });
 
