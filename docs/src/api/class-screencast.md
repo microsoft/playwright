@@ -23,7 +23,8 @@ await disposable.dispose();
 ### param: Screencast.start.onFrame
 * since: v1.59
 * langs: js
-- `onFrame` <[function]\([Object]\): [Promise<any>|any]>
+- `onFrame` <[function]\([Object]\): [Promise]>
+  - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
 
