@@ -14,32 +14,6 @@
   limitations under the License.
 */
 
-export function msToString(ms: number): string {
-  if (!isFinite(ms))
-    return '-';
-
-  if (ms === 0)
-    return '0ms';
-
-  if (ms < 1000)
-    return ms.toFixed(0) + 'ms';
-
-  const seconds = ms / 1000;
-  if (seconds < 60)
-    return seconds.toFixed(1) + 's';
-
-  const minutes = seconds / 60;
-  if (minutes < 60)
-    return minutes.toFixed(1) + 'm';
-
-  const hours = minutes / 60;
-  if (hours < 24)
-    return hours.toFixed(1) + 'h';
-
-  const days = hours / 24;
-  return days.toFixed(1) + 'd';
-}
-
 // hash string to integer in range [0, 6] for color index, to get same color for same tag
 export function hashStringToInt(str: string) {
   let hash = 0;

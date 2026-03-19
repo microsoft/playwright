@@ -22,7 +22,7 @@ import { ToolbarButton } from '@web/components/toolbarButton';
 import type { TreeState } from '@web/components/treeView';
 import { TreeView } from '@web/components/treeView';
 import '@web/third_party/vscode/codicon.css';
-import { msToString } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import type * as reporterTypes from 'playwright/types/testReporter';
 import React from 'react';
 import type { SourceLocation } from '@isomorphic/trace/traceModel';

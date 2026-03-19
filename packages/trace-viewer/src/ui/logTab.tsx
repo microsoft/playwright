@@ -18,7 +18,7 @@ import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';
 import * as React from 'react';
 import { ListView } from '@web/components/listView';
 import { PlaceholderPanel } from './placeholderPanel';
-import { msToString } from '@web/uiUtils';
+import { msToString } from '@isomorphic/formatUtils';
 import './logTab.css';
 
 const LogList = ListView<{ message: string, time: string }>;
