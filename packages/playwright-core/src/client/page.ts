@@ -31,7 +31,6 @@ import { Keyboard, Mouse, Touchscreen } from './input';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
-import { Screencast } from './screencast';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
 import { TimeoutSettings } from './timeoutSettings';
@@ -95,7 +94,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly request: APIRequestContext;
   readonly touchscreen: Touchscreen;
   readonly clock: Clock;
-  readonly screencast: Screencast;
+  private _screencastListeners = new Set<(frame: { data: Buffer }) => any>();
 
 
   readonly _bindings = new Map<string, (source: structs.BindingSource, ...args: any[]) => any>();
@@ -135,9 +134,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
     this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
-    this.screencast = new Screencast(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));
+    this._channel.on('screencastFrame', ({ data }) => {
+      for (const listener of this._screencastListeners)
+        void listener({ data });
+    });
     this._channel.on('close', () => this._onClose());
     this._channel.on('crash', () => this._onCrash());
     this._channel.on('download', ({ url, suggestedFilename, artifact }) => {
@@ -575,6 +577,17 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   private async _updateWebSocketInterceptionPatterns(options: { internal: true } | { title: string }) {
     const patterns = WebSocketRouteHandler.prepareInterceptionPatterns(this._webSocketRoutes);
     await this._wrapApiCall(() => this._channel.setWebSocketInterceptionPatterns({ patterns }), options);
+  }
+
+  async startScreencast(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
+    this._screencastListeners.add(onFrame);
+    if (this._screencastListeners.size === 1)
+      await this._channel.startScreencast(options);
+    return new DisposableStub(async () => {
+      this._screencastListeners.delete(onFrame);
+      if (!this._screencastListeners.size)
+        await this._channel.stopScreencast();
+    });
   }
 
   async screenshot(options: Omit<channels.PageScreenshotOptions, 'mask'> & TimeoutOptions & { path?: string, mask?: api.Locator[] } = {}): Promise<Buffer> {

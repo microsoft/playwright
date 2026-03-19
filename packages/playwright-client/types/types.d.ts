@@ -1024,6 +1024,29 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  /**
+   * Starts capturing screencast frames.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const disposable = await page.startScreencast(({ data }) => {
+   *   console.log(`frame size: ${data.length}`);
+   * }, { preferredSize: { width: 800, height: 600 } });
+   * // ... perform actions ...
+   * await disposable.dispose();
+   * ```
+   *
+   * @param onFrame Callback that receives JPEG-encoded frame data.
+   * @param options
+   */
+  startScreencast(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
+    preferredSize?: {
+      width: number;
+      height: number;
+    };
+  }): Promise<Disposable>;
   /**
    * Emitted when the page closes.
    */
@@ -5293,23 +5316,6 @@ export interface Page {
    * details.
    */
   request: APIRequestContext;
-
-  /**
-   * [Screencast](https://playwright.dev/docs/api/class-screencast) object associated with this page.
-   *
-   * **Usage**
-   *
-   * ```js
-   * page.screencast.on('screencastFrame', data => {
-   *   console.log('received frame, jpeg size:', data.length);
-   * });
-   * await page.screencast.start();
-   * // ... perform actions ...
-   * await page.screencast.stop();
-   * ```
-   *
-   */
-  screencast: Screencast;
 
   touchscreen: Touchscreen;
 
@@ -16153,35 +16159,6 @@ export interface WebSocketRoute {
   url(): string;
 
   [Symbol.asyncDispose](): Promise<void>;
-}
-
-/**
- * Interface for capturing screencast frames from a page.
- */
-export interface Screencast {
-  /**
-   * Starts capturing screencast frames.
-   *
-   * **Usage**
-   *
-   * ```js
-   * const disposable = await page.screencast.start(({ data }) => {
-   *   console.log(`frame size: ${data.length}`);
-   * }, { preferredSize: { width: 800, height: 600 } });
-   * // ... perform actions ...
-   * await disposable.dispose();
-   * ```
-   *
-   * @param onFrame Callback that receives JPEG-encoded frame data.
-   * @param options
-   */
-  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
-    preferredSize?: {
-      width: number;
-      height: number;
-    };
-  }): Promise<Disposable>;
-
 }
 
 type DeviceDescriptor = {

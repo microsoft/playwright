@@ -204,7 +204,7 @@ export class DashboardConnection implements Transport, DashboardChannel {
     );
 
     const preferredSize = { width: 1280, height: 800 };
-    this._screencastSession = await page.screencast.start(
+    this._screencastSession = await page.startScreencast(
         ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
         { preferredSize },
     );

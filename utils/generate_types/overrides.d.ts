@@ -83,6 +83,13 @@ export interface Page {
      */
     behavior?: 'wait'|'ignoreErrors'|'default'
   }): Promise<void>;
+
+  startScreencast(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
+    preferredSize?: {
+      width: number;
+      height: number;
+    };
+  }): Promise<Disposable>;
 }
 
 export interface Frame {
@@ -241,15 +248,6 @@ export interface CDPSession {
 export interface WebSocketRoute {
   onMessage(handler: (message: string | Buffer) => any): void;
   onClose(handler: (code: number | undefined, reason: string | undefined) => any): void;
-}
-
-export interface Screencast {
-  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
-    preferredSize?: {
-      width: number;
-      height: number;
-    };
-  }): Promise<Disposable>;
 }
 
 type DeviceDescriptor = {

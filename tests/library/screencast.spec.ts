@@ -27,7 +27,7 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
 
   const frames: Buffer[] = [];
   const preferredSize = { width: 500, height: 400 };
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize });
+  const disposable = await page.startScreencast(({ data }) => frames.push(data), { preferredSize });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
@@ -55,8 +55,8 @@ test('supports multiple onFrame listeners', async ({ browser, server, trace }) =
 
   const frames1: Buffer[] = [];
   const frames2: Buffer[] = [];
-  const disposable1 = await page.screencast.start(({ data }) => frames1.push(data), { preferredSize: { width: 500, height: 400 } });
-  const disposable2 = await page.screencast.start(({ data }) => frames2.push(data));
+  const disposable1 = await page.startScreencast(({ data }) => frames1.push(data), { preferredSize: { width: 500, height: 400 } });
+  const disposable2 = await page.startScreencast(({ data }) => frames2.push(data));
 
   await page.goto(server.EMPTY_PAGE);
   await rafraf(page, 100);
@@ -74,10 +74,10 @@ test('start allows restart with different options after stop', async ({ browser,
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
-  const disposable1 = await page.screencast.start(() => {}, { preferredSize: { width: 500, height: 400 } });
+  const disposable1 = await page.startScreencast(() => {}, { preferredSize: { width: 500, height: 400 } });
   await disposable1.dispose();
   // Different options should succeed once the previous screencast is stopped.
-  const disposable2 = await page.screencast.start(() => {}, { preferredSize: { width: 320, height: 240 } });
+  const disposable2 = await page.startScreencast(() => {}, { preferredSize: { width: 320, height: 240 } });
   await disposable2.dispose();
   await context.close();
 });
@@ -92,7 +92,7 @@ test('start reuses existing screencast when video recording is running', async (
   await page.video().start({ size: videoSize });
 
   const frames: Buffer[] = [];
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
+  const disposable = await page.startScreencast(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
   await page.goto(server.EMPTY_PAGE);
   await rafraf(page, 100);
   await disposable.dispose();
@@ -118,7 +118,7 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
   const page = await context.newPage();
 
   const frames: Buffer[] = [];
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 500, height: 400 } });
+  const disposable = await page.startScreencast(({ data }) => frames.push(data), { preferredSize: { width: 500, height: 400 } });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);

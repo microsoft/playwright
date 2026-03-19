@@ -3857,23 +3857,42 @@ Handler function to route the WebSocket.
 Handler function to route the WebSocket.
 
 
-## property: Page.screencast
+## async method: Page.startScreencast
 * since: v1.59
 * langs: js
-- type: <[Screencast]>
+- returns: <[Disposable]>
 
-[Screencast] object associated with this page.
+Starts capturing screencast frames.
 
 **Usage**
 
 ```js
-page.screencast.on('screencastFrame', data => {
-  console.log('received frame, jpeg size:', data.length);
-});
-await page.screencast.start();
+const disposable = await page.startScreencast(({ data }) => {
+  console.log(`frame size: ${data.length}`);
+}, { preferredSize: { width: 800, height: 600 } });
 // ... perform actions ...
-await page.screencast.stop();
+await disposable.dispose();
 ```
+
+### param: Page.startScreencast.onFrame
+* since: v1.59
+* langs: js
+- `onFrame` <[function]\([Object]\): [Promise]>
+  - `data` <[Buffer]> JPEG-encoded frame data.
+
+Callback that receives JPEG-encoded frame data.
+
+### option: Page.startScreencast.preferredSize
+* since: v1.59
+- `preferredSize` ?<[Object]>
+  - `width` <[int]> Max frame width in pixels.
+  - `height` <[int]> Max frame height in pixels.
+
+Specifies the preferred maximum dimensions of screencast frames. The actual frame is scaled to preserve the page's aspect ratio and may be smaller than these bounds.
+
+If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
+
+Defaults to 800×800.
 
 
 ## async method: Page.screenshot
