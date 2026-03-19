@@ -2113,7 +2113,7 @@ export interface Page {
      * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
      * `"default"`.
      */
-    format?: "ai"|"default";
+    mode?: "ai"|"default";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`
@@ -12774,7 +12774,7 @@ export interface Locator {
      * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
      * `"default"`.
      */
-    format?: "ai"|"default";
+    mode?: "ai"|"default";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`

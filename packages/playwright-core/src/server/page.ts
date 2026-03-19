@@ -886,7 +886,7 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async ariaSnapshot(progress: Progress, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
+  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');
 
@@ -1048,7 +1048,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -1066,7 +1066,7 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
           return true;
         return injected.incrementalAriaSnapshot(node, options);
       }, {
-        format: options.format ?? 'default',
+        mode: options.mode ?? 'default',
         refPrefix: frame.seq ? 'f' + frame.seq : '',
         track: options.track,
         doNotRenderActive: options.doNotRenderActive,
@@ -1119,7 +1119,7 @@ async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, opt
   return { full, incremental };
 }
 
-async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, incrementalMode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));

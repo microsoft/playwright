@@ -2611,14 +2611,14 @@ export type PageRequestsResult = {
   requests: RequestChannel[],
 };
 export type PageAriaSnapshotParams = {
-  format?: 'ai' | 'default',
+  mode?: 'ai' | 'default',
   track?: string,
   selector?: string,
   depth?: number,
   timeout: number,
 };
 export type PageAriaSnapshotOptions = {
-  format?: 'ai' | 'default',
+  mode?: 'ai' | 'default',
   track?: string,
   selector?: string,
   depth?: number,

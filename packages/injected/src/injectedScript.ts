@@ -323,8 +323,8 @@ export class InjectedScript {
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
-    const tree = generateAriaTree(this.document.body, { format: 'ai' });
-    const ariaSnapshot = renderAriaTree(tree, { format: 'ai' });
+    const tree = generateAriaTree(this.document.body, { mode: 'ai' });
+    const ariaSnapshot = renderAriaTree(tree, { mode: 'ai' });
     return { ariaSnapshot, refs: tree.refs };
   }
 
