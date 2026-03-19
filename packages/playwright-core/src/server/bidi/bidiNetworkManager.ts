@@ -24,6 +24,7 @@ import type * as frames from '../frames';
 import type { Page } from '../page';
 import type * as types from '../types';
 import type { BidiSession } from './bidiConnection';
+import type { BidiPage } from './bidiPage';
 
 const REQUEST_BODY_HEADERS = new Set(['content-encoding', 'content-language', 'content-location', 'content-type']);
 
@@ -245,13 +246,13 @@ export class BidiNetworkManager {
     this._protocolRequestInterceptionEnabled = enabled;
     if (initial && !enabled)
       return;
-    const cachePromise = this._session.send('network.setCacheBehavior', { cacheBehavior: enabled ? 'bypass' : 'default' });
+    const contexts: [string] = [(this._page.delegate as BidiPage)._session.sessionId];
+    const cachePromise = this._session.send('network.setCacheBehavior', { cacheBehavior: enabled ? 'bypass' : 'default', contexts });
     let interceptPromise = Promise.resolve<any>(undefined);
     if (enabled) {
       interceptPromise = this._session.send('network.addIntercept', {
-        phases: [bidi.Network.InterceptPhase.AuthRequired, bidi.Network.InterceptPhase.BeforeRequestSent],
-        urlPatterns: [{ type: 'pattern' }],
-        // urlPatterns: [{ type: 'string', pattern: '*' }],
+        phases: [bidi.Network.InterceptPhase.BeforeRequestSent],
+        contexts,
       }).then(r => {
         this._intercepId = r.intercept;
       });

@@ -41,6 +41,7 @@ export class BidiBrowser extends Browser {
   readonly _contexts = new Map<string, BidiBrowserContext>();
   readonly _bidiPages = new Map<bidi.BrowsingContext.BrowsingContext, BidiPage>();
   private readonly _eventListeners: RegisteredListener[];
+  private _cacheBehavior: bidi.Network.SetCacheBehaviorParameters['cacheBehavior'] = 'default';
 
   static async connect(parent: SdkObject, transport: ConnectionTransport, options: BrowserOptions): Promise<BidiBrowser> {
     const browser = new BidiBrowser(parent, transport, options);
@@ -73,6 +74,8 @@ export class BidiBrowser extends Browser {
         'input',
       ],
     });
+
+    await browser._browserSession.send('network.addIntercept', { phases: [bidi.Network.InterceptPhase.AuthRequired] });
 
     await browser._browserSession.send('network.addDataCollector', {
       dataTypes: [bidi.Network.DataType.Response],
@@ -130,6 +133,14 @@ export class BidiBrowser extends Browser {
 
   isConnected(): boolean {
     return !this._connection.isClosed();
+  }
+
+  async updateCacheBehavior() {
+    const cacheBehavior = [...this._contexts.values()].some(context => context.requestInterceptors.length > 0) ? 'bypass' : 'default';
+    if (this._cacheBehavior !== cacheBehavior) {
+      await this._browserSession.send('network.setCacheBehavior', { cacheBehavior });
+      this._cacheBehavior = cacheBehavior;
+    }
   }
 
   private _onBrowsingContextCreated(event: bidi.BrowsingContext.Info) {
@@ -415,18 +426,18 @@ export class BidiBrowserContext extends BrowserContext {
   }
 
   async doUpdateRequestInterception(): Promise<void> {
+    let interceptPromise = Promise.resolve<any>(undefined);
     if (this.requestInterceptors.length > 0 && !this._interceptId) {
-      const { intercept } = await this._browser._browserSession.send('network.addIntercept', {
+      interceptPromise = this._browser._browserSession.send('network.addIntercept', {
         phases: [bidi.Network.InterceptPhase.BeforeRequestSent],
-        urlPatterns: [{ type: 'pattern' }],
-      });
-      this._interceptId = intercept;
+      }).then(({ intercept }) => this._interceptId = intercept);
     }
     if (this.requestInterceptors.length === 0 && this._interceptId) {
       const intercept = this._interceptId;
       this._interceptId = undefined;
-      await this._browser._browserSession.send('network.removeIntercept', { intercept });
+      interceptPromise = this._browser._browserSession.send('network.removeIntercept', { intercept });
     }
+    await Promise.all([this._browser.updateCacheBehavior(), interceptPromise]);
   }
 
   override async doUpdateDefaultViewport() {
