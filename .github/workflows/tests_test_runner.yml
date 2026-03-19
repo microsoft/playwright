@@ -1,0 +1,132 @@
+name: "test runner"
+
+on:
+  push:
+    branches:
+      - main
+      - release-*
+  pull_request:
+    paths-ignore:
+      - 'browser_patches/**'
+      - 'docs/**'
+      - 'packages/playwright-core/src/server/bidi/**'
+      - 'packages/playwright-core/src/tools/**'
+      - 'tests/bidi/**'
+      - 'tests/mcp/**'
+    branches:
+      - main
+      - release-*
+
+concurrency:
+  # For pull requests, cancel all currently-running jobs for this workflow
+  # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#concurrency
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  # Force terminal colors. @see https://www.npmjs.com/package/colors
+  FORCE_COLOR: 1
+  ELECTRON_SKIP_BINARY_DOWNLOAD: 1
+
+jobs:
+  test_test_runner:
+    name: Test Runner
+    environment: ${{ github.event_name == 'push' && 'allow-uploading-flakiness-results' || null }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        node-version: [20]
+        shardIndex: [1, 2]
+        shardTotal: [2]
+        shardWeights: ['58:42']
+        include:
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 1
+            shardTotal: 3
+            shardWeights: '44:33:23'
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 2
+            shardTotal: 3
+            shardWeights: '44:33:23'
+          - os: windows-latest
+            node-version: 20
+            shardIndex: 3
+            shardTotal: 3
+            shardWeights: '44:33:23'
+          - os: ubuntu-latest
+            node-version: 22
+            shardIndex: 1
+            shardTotal: 2
+            shardWeights: '58:42'
+          - os: ubuntu-latest
+            node-version: 22
+            shardIndex: 2
+            shardTotal: 2
+            shardWeights: '58:42'
+          - os: ubuntu-latest
+            node-version: 24
+            shardIndex: 1
+            shardTotal: 2
+            shardWeights: '58:42'
+          - os: ubuntu-latest
+            node-version: 24
+            shardIndex: 2
+            shardTotal: 2
+            shardWeights: '58:42'
+    runs-on: ${{ matrix.os }}
+    permissions:
+      id-token: write   # This is required for OIDC login (azure/login) to succeed
+      contents: read    # This is required for actions/checkout to succeed
+    steps:
+    - uses: actions/checkout@v6
+    - uses: ./.github/actions/run-test
+      with:
+        node-version: ${{matrix.node-version}}
+        command: npm run ttest -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        bot-name: "${{ matrix.os }}-node${{ matrix.node-version }}"
+        shard-index: ${{ matrix.shardIndex }}
+        flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
+        flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
+        flakiness-subscription-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_SUBSCRIPTION_ID }}
+      env:
+        PWTEST_CHANNEL: firefox-beta
+        PWTEST_SHARD_WEIGHTS: ${{ matrix.shardWeights }}
+
+  test_vscode_extension:
+    name: VSCode Extension
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - uses: actions/setup-node@v6
+      with:
+        node-version: 20
+    - run: npm ci
+      env:
+        DEBUG: pw:install
+    - run: npm run build
+    - run: npx playwright install chromium
+    - name: Checkout extension
+      run: git clone https://github.com/microsoft/playwright-vscode.git
+    - name: Print extension revision
+      run: git rev-parse HEAD
+      working-directory: ./playwright-vscode
+    - name: Remove @playwright/test from extension dependencies
+      run: node -e "const p = require('./package.json'); delete p.devDependencies['@playwright/test']; fs.writeFileSync('./package.json', JSON.stringify(p, null, 2));"
+      working-directory: ./playwright-vscode
+    - name: Build extension
+      run: npm ci && npm run build
+      working-directory: ./playwright-vscode
+    - name: Run extension tests
+      run: npm run test
+      working-directory: ./playwright-vscode
+      env:
+        PW_TAG: "@vscode-extension"
+    - name: Upload blob report
+      if: ${{ !cancelled() && (github.event_name == 'pull_request' || failure()) }}
+      uses: ./.github/actions/upload-blob-report
+      with:
+        report_dir: playwright-vscode/blob-report
+        job_name: vscode-extension
