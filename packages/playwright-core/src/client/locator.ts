@@ -312,8 +312,8 @@ export class Locator implements api.Locator {
     return await this._withElement((h, timeout) => h.screenshot({ ...options, mask, timeout }), { title: 'Screenshot', timeout: options.timeout });
   }
 
-  async ariaSnapshot(options?: TimeoutOptions): Promise<string> {
-    const result = await this._frame._channel.ariaSnapshot({ ...options, selector: this._selector, timeout: this._frame._timeout(options) });
+  async ariaSnapshot(options: TimeoutOptions & { format?: 'ai' | 'default', depth?: number } = {}): Promise<string> {
+    const result = await this._frame._page!._channel.ariaSnapshot({ timeout: this._frame._timeout(options), format: options.format, selector: this._selector, depth: options.depth });
     return result.snapshot;
   }
 
@@ -378,10 +378,6 @@ export class Locator implements api.Locator {
     await this._frame._channel.waitForSelector({ selector: this._selector, strict: true, omitReturnValue: true, ...options, timeout: this._frame._timeout(options) });
   }
 
-  async snapshotForAI(options: TimeoutOptions & { depth?: number } = {}): Promise<string> {
-    const result = await this._frame._page!._channel.snapshotForAI({ timeout: this._frame._timeout(options), selector: this._selector, depth: options.depth });
-    return result.snapshot;
-  }
 
   async _expect(expression: string, options: FrameExpectParams): Promise<{ matches: boolean, received?: any, log?: string[], timedOut?: boolean, errorMessage?: string }> {
     return this._frame._expect(expression, {

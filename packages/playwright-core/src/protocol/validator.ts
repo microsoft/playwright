@@ -1494,14 +1494,15 @@ scheme.PageRequestsParams = tOptional(tObject({}));
 scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
-scheme.PageSnapshotForAIParams = tObject({
+scheme.PageAriaSnapshotParams = tObject({
+  format: tOptional(tEnum(['ai', 'default'])),
   track: tOptional(tString),
   mode: tOptional(tEnum(['full', 'incremental'])),
   selector: tOptional(tString),
   depth: tOptional(tInt),
   timeout: tFloat,
 });
-scheme.PageSnapshotForAIResult = tObject({
+scheme.PageAriaSnapshotResult = tObject({
   snapshot: tString,
 });
 scheme.PageStartJSCoverageParams = tObject({
@@ -1629,13 +1630,6 @@ scheme.FrameAddStyleTagParams = tObject({
 });
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
-});
-scheme.FrameAriaSnapshotParams = tObject({
-  selector: tString,
-  timeout: tFloat,
-});
-scheme.FrameAriaSnapshotResult = tObject({
-  snapshot: tString,
 });
 scheme.FrameBlurParams = tObject({
   selector: tString,

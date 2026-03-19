@@ -1376,10 +1376,6 @@ export class Frame extends SdkObject<FrameEventMap> {
     return progress.wait(timeout);
   }
 
-  async ariaSnapshot(progress: Progress, selector: string): Promise<string> {
-    return await this._retryWithProgressIfNotConnected(progress, selector, { strict: true, performActionPreChecks: true }, handle => progress.race(handle.ariaSnapshot()));
-  }
-
   async expect(progress: Progress, selector: string | undefined, options: FrameExpectParams): Promise<ExpectResult> {
     progress.log(`${renderTitleForCall(progress.metadata)}${options.timeoutForLogs ? ` with timeout ${options.timeoutForLogs}ms` : ''}`);
     const lastIntermediateResult: { received?: any, isSet: boolean, errorMessage?: string } = { isSet: false };

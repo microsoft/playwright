@@ -886,7 +886,7 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async snapshotForAI(progress: Progress, options: { track?: string, mode?: 'full' | 'incremental', doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
+  async ariaSnapshot(progress: Progress, options: { format?: 'ai' | 'default', track?: string, mode?: 'full' | 'incremental', doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');
 
@@ -902,7 +902,7 @@ export class Page extends SdkObject<PageEventMap> {
       frame = this.mainFrame();
     }
 
-    const result = await snapshotFrameForAI(progress, frame, { ...options, info });
+    const result = await ariaSnapshotForFrame(progress, frame, { ...options, info });
     const snapshot = options.mode === 'incremental' && result.incremental !== undefined ? result.incremental.join('\n') : result.full.join('\n');
     return { snapshot };
   }
@@ -1048,7 +1048,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, options: { track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
@@ -1059,13 +1059,14 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
           const element = injected.querySelector(options.info.parsed, injected.document, options.info.strict);
           if (!element)
             return false;
-          return injected.incrementalAriaSnapshot(element, { mode: 'ai', ...options });
+          return injected.incrementalAriaSnapshot(element, options);
         }
         const node = injected.document.body;
         if (!node)
           return true;
-        return injected.incrementalAriaSnapshot(node, { mode: 'ai', ...options });
+        return injected.incrementalAriaSnapshot(node, options);
       }, {
+        format: options.format ?? 'default',
         refPrefix: frame.seq ? 'f' + frame.seq : '',
         track: options.track,
         doNotRenderActive: options.doNotRenderActive,
@@ -1084,7 +1085,7 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
     }
   });
 
-  const childSnapshotPromises = snapshot.iframeRefs.map(ref => snapshotFrameRefForAI(progress, frame, ref, options));
+  const childSnapshotPromises = snapshot.iframeRefs.map(ref => ariaSnapshotFrameRef(progress, frame, ref, options));
   const childSnapshots = await Promise.all(childSnapshotPromises);
 
   const full = [];
@@ -1118,14 +1119,14 @@ async function snapshotFrameForAI(progress: Progress, frame: frames.Frame, optio
   return { full, incremental };
 }
 
-async function snapshotFrameRefForAI(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { track?: string, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { format?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, mode?: 'full' | 'incremental' }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
   if (!child)
     return { full: [] };
   try {
-    return await snapshotFrameForAI(progress, child.frame, { ...options, info: undefined });
+    return await ariaSnapshotForFrame(progress, child.frame, { ...options, info: undefined });
   } catch {
     return { full: [] };
   }

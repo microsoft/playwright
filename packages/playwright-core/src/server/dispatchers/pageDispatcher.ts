@@ -344,8 +344,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     return { requests: this._page.networkRequests().map(request => RequestDispatcher.from(this.parentScope(), request)) };
   }
 
-  async snapshotForAI(params: channels.PageSnapshotForAIParams, progress: Progress): Promise<channels.PageSnapshotForAIResult> {
-    return await this._page.snapshotForAI(progress, params);
+  async ariaSnapshot(params: channels.PageAriaSnapshotParams, progress: Progress): Promise<channels.PageAriaSnapshotResult> {
+    return await this._page.ariaSnapshot(progress, params);
   }
 
   async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {
