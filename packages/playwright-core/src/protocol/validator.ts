@@ -1334,6 +1334,7 @@ scheme.PageExpectScreenshotParams = tObject({
   threshold: tOptional(tFloat),
   fullPage: tOptional(tBoolean),
   clip: tOptional(tType('Rect')),
+  scrollIntoView: tOptional(tBoolean),
   omitBackground: tOptional(tBoolean),
   caret: tOptional(tEnum(['hide', 'initial'])),
   animations: tOptional(tEnum(['disabled', 'allow'])),

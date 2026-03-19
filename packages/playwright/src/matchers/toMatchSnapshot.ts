@@ -51,6 +51,7 @@ type ToHaveScreenshotOptions = ToHaveScreenshotConfigOptions & {
   mask?: Array<Locator>;
   maskColor?: string;
   omitBackground?: boolean;
+  scrollIntoView?: boolean;
   timeout?: number;
 };
 
@@ -61,6 +62,7 @@ const NonConfigProperties: (keyof ToHaveScreenshotOptions)[] = [
   'mask',
   'maskColor',
   'omitBackground',
+  'scrollIntoView',
   'timeout',
 ];
 // Keep in sync with above (end).
@@ -350,6 +352,7 @@ export async function toHaveScreenshot(
     mask: helper.options.mask,
     maskColor: helper.options.maskColor,
     omitBackground: helper.options.omitBackground,
+    scrollIntoView: helper.options.scrollIntoView,
     scale: helper.options.scale ?? 'css',
     style,
     isNot: !!this.isNot,
