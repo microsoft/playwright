@@ -25,7 +25,7 @@ export class LRUCache<K, V> {
     this._size = 0;
   }
 
-  getOrCompute(key: K, compute: () => { value: V, size: number }): V {
+  async getOrCompute(key: K, compute: () => Promise<{ value: V, size: number }>): Promise<V> {
     if (this._map.has(key)) {
       const result = this._map.get(key)!;
       // reinserting makes this the least recently used entry
@@ -34,7 +34,7 @@ export class LRUCache<K, V> {
       return result.value;
     }
 
-    const result = compute();
+    const result = await compute();
 
     while (this._map.size && this._size + result.size > this._maxSize) {
       const [firstKey, firstValue] = this._map.entries().next().value!;

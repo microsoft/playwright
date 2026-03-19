@@ -47,8 +47,9 @@ export type FrameSnapshot = {
   wallTime?: number,
   collectionTime: number,
   doctype?: string,
-  html: NodeSnapshot,
-  resourceOverrides: ResourceOverride[],
+  html?: NodeSnapshot,
+  sha1?: string,
+  resourceOverrides?: ResourceOverride[],
   viewport: { width: number, height: number },
   isMainFrame: boolean,
 };

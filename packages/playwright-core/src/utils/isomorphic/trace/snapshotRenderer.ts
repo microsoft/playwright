@@ -46,9 +46,11 @@ export class SnapshotRenderer {
   private _snapshot: FrameSnapshot;
   private _callId: string;
   private _screencastFrames: PageEntry['screencastFrames'];
+  private _readSha1: (sha1: string) => Promise<Blob | undefined>;
 
-  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
+  constructor(htmlCache: LRUCache<SnapshotRenderer, string>, readSha1: (sha1: string) => Promise<Blob | undefined>, resources: ResourceSnapshot[], snapshots: FrameSnapshot[], screencastFrames: PageEntry['screencastFrames'], index: number) {
     this._htmlCache = htmlCache;
+    this._readSha1 = readSha1;
     this._resources = resources;
     this._snapshots = snapshots;
     this._index = index;
@@ -74,9 +76,9 @@ export class SnapshotRenderer {
     return closestFrame?.sha1;
   }
 
-  render(): RenderedFrameSnapshot {
+  async render(): Promise<RenderedFrameSnapshot> {
     const result: string[] = [];
-    const visit = (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
+    const visit = async (n: NodeSnapshot, snapshotIndex: number, parentTag: string | undefined, parentAttrs: [string, string][] | undefined) => {
       // Text node.
       if (typeof n === 'string') {
         // Best-effort Electron support: rewrite custom protocol in url() links in stylesheets.
@@ -92,7 +94,12 @@ export class SnapshotRenderer {
         // Node reference.
         const referenceIndex = snapshotIndex - n[0][0];
         if (referenceIndex >= 0 && referenceIndex <= snapshotIndex) {
-          const nodes = snapshotNodes(this._snapshots[referenceIndex]);
+          const refSnapshot = this._snapshots[referenceIndex];
+          let nodes: NodeSnapshot[] = (refSnapshot as any)._nodes;
+          if (!nodes) {
+            nodes = snapshotNodes(await this._ensureHtml(refSnapshot));
+            (refSnapshot as any)._nodes = nodes;
+          }
           const nodeIndex = n[0][1];
           if (nodeIndex >= 0 && nodeIndex < nodes.length)
             return visit(nodes[nodeIndex], referenceIndex, parentTag, parentAttrs);
@@ -134,7 +141,7 @@ export class SnapshotRenderer {
         }
         result.push('>');
         for (const child of children)
-          visit(child, snapshotIndex, nodeName, attrs);
+          await visit(child, snapshotIndex, nodeName, attrs);
         if (!autoClosing.has(nodeName))
           result.push('</', nodeName, '>');
         return;
@@ -145,8 +152,8 @@ export class SnapshotRenderer {
     };
 
     const snapshot = this._snapshot;
-    const html = this._htmlCache.getOrCompute(this, () => {
-      visit(snapshot.html, this._index, undefined, undefined);
+    const html = await this._htmlCache.getOrCompute(this, async () => {
+      await visit(await this._ensureHtml(snapshot), this._index, undefined, undefined);
       const prefix = snapshot.doctype ? `<!DOCTYPE ${snapshot.doctype}>` : '';
       const html = prefix + [
         // Hide the document in order to prevent flickering. We will unhide once script has processed shadow.
@@ -157,6 +164,19 @@ export class SnapshotRenderer {
     });
 
     return { html, pageId: snapshot.pageId, frameId: snapshot.frameId, index: this._index };
+  }
+
+  private async _ensureHtml(snapshot: FrameSnapshot): Promise<NodeSnapshot> {
+    if (!snapshot.html) {
+      try {
+        const blob = await this._readSha1(snapshot.sha1!);
+        const text = await blob!.text();
+        snapshot.html = JSON.parse(text);
+      } catch {
+        snapshot.html = ['html'];
+      }
+    }
+    return snapshot.html!;
   }
 
   resourceByUrl(url: string, method: string): ResourceSnapshot | undefined {
@@ -193,12 +213,12 @@ export class SnapshotRenderer {
     let result = sameFrameResource ?? otherFrameResource;
     if (result && method.toUpperCase() === 'GET') {
       // Patch override if necessary.
-      let override = snapshot.resourceOverrides.find(o => o.url === url);
+      let override = snapshot.resourceOverrides?.find(o => o.url === url);
       if (override?.ref) {
         // "ref" means use the same content as "ref" snapshots ago.
         const index = this._index - override.ref;
         if (index >= 0 && index < this._snapshots.length)
-          override = this._snapshots[index].resourceOverrides.find(o => o.url === url);
+          override = this._snapshots[index].resourceOverrides?.find(o => o.url === url);
       }
       if (override?.sha1) {
         result = {
@@ -220,23 +240,20 @@ export class SnapshotRenderer {
 
 const autoClosing = new Set(['AREA', 'BASE', 'BR', 'COL', 'COMMAND', 'EMBED', 'HR', 'IMG', 'INPUT', 'KEYGEN', 'LINK', 'MENUITEM', 'META', 'PARAM', 'SOURCE', 'TRACK', 'WBR']);
 
-function snapshotNodes(snapshot: FrameSnapshot): NodeSnapshot[] {
-  if (!(snapshot as any)._nodes) {
-    const nodes: NodeSnapshot[] = [];
-    const visit = (n: NodeSnapshot) => {
-      if (typeof n === 'string') {
-        nodes.push(n);
-      } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
-        const [,, ...children] = n;
-        for (const child of children)
-          visit(child);
-        nodes.push(n);
-      }
-    };
-    visit(snapshot.html);
-    (snapshot as any)._nodes = nodes;
-  }
-  return (snapshot as any)._nodes;
+function snapshotNodes(html: NodeSnapshot): NodeSnapshot[] {
+  const nodes: NodeSnapshot[] = [];
+  const visit = (n: NodeSnapshot) => {
+    if (typeof n === 'string') {
+      nodes.push(n);
+    } else if (isNodeNameAttributesChildNodesSnapshot(n)) {
+      const [,, ...children] = n;
+      for (const child of children)
+        visit(child);
+      nodes.push(n);
+    }
+  };
+  visit(html);
+  return nodes;
 }
 
 type ViewportSize = { width: number, height: number };

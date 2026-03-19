@@ -52,7 +52,7 @@ import type { Progress } from '@protocol/progress';
 import type * as types from '../../types';
 import type { ScreencastListener } from '../../screencast';
 
-const version: trace.VERSION = 8;
+const version: trace.VERSION = 9;
 
 export type TracerOptions = {
   name?: string;

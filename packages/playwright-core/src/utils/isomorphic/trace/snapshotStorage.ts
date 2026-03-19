@@ -29,6 +29,11 @@ export class SnapshotStorage {
   private _cache = new LRUCache<SnapshotRenderer, string>(100_000_000);  // 100MB per each trace
   private _contextToResources = new Map<string, ResourceSnapshot[]>();
   private _resourceUrlsWithOverrides = new Set<string>();
+  private _readSha1: (sha1: string) => Promise<Blob | undefined>;
+
+  constructor(readSha1: (sha1: string) => Promise<Blob | undefined>) {
+    this._readSha1 = readSha1;
+  }
 
   addResource(contextId: string, resource: ResourceSnapshot): void {
     resource.request.url = rewriteURLForCustomProtocol(resource.request.url);
@@ -36,7 +41,7 @@ export class SnapshotStorage {
   }
 
   addFrameSnapshot(contextId: string, snapshot: FrameSnapshot, screencastFrames: PageEntry['screencastFrames']) {
-    for (const override of snapshot.resourceOverrides)
+    for (const override of snapshot.resourceOverrides ?? [])
       override.url = rewriteURLForCustomProtocol(override.url);
     let frameSnapshots = this._frameSnapshots.get(snapshot.frameId);
     if (!frameSnapshots) {
@@ -50,7 +55,7 @@ export class SnapshotStorage {
     }
     frameSnapshots.raw.push(snapshot);
     const resources = this._ensureResourcesForContext(contextId);
-    const renderer = new SnapshotRenderer(this._cache, resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
+    const renderer = new SnapshotRenderer(this._cache, this._readSha1, resources, frameSnapshots.raw, screencastFrames, frameSnapshots.raw.length - 1);
     frameSnapshots.renderers.push(renderer);
     return renderer;
   }
@@ -72,7 +77,7 @@ export class SnapshotStorage {
     // while serving snapshots with different override values.
     for (const frameSnapshots of this._frameSnapshots.values()) {
       for (const snapshot of frameSnapshots.raw) {
-        for (const override of snapshot.resourceOverrides)
+        for (const override of snapshot.resourceOverrides ?? [])
           this._resourceUrlsWithOverrides.add(override.url);
       }
     }

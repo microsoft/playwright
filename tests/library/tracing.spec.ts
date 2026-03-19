@@ -232,7 +232,7 @@ test('should respect tracesDir and name', async ({ browserType, server, mode }, 
   function resourceNames(resources: Map<string, Buffer>) {
     return [...resources.keys()].map(file => {
       return file.replace(/^resources\/.*\.(html|css)$/, 'resources/XXX.$1');
-    }).sort();
+    }).sort().filter(name => !name.endsWith('.json'));
   }
 
   {
@@ -587,8 +587,14 @@ test('should ignore iframes in head', async ({ context, page, server }, testInfo
 
   const trace = await parseTraceRaw(testInfo.outputPath('trace.zip'));
   expect(trace.actions).toEqual(['Click']);
-  expect(trace.events.find(e => e.type === 'frame-snapshot')).toBeTruthy();
-  expect(trace.events.find(e => e.type === 'frame-snapshot' && JSON.stringify(e.snapshot.html).includes('IFRAME'))).toBeFalsy();
+  const events = trace.events.filter(e => e.type === 'frame-snapshot');
+  expect(events.length).toBeGreaterThan(0);
+  for (const event of events) {
+    let html = event.snapshot.html ? JSON.stringify(event.snapshot.html) : undefined;
+    if (!html)
+      html = trace.resources.get('resources/' + event.snapshot.sha1).toString();
+    expect(html).not.toContain('IFRAME');
+  }
 });
 
 test('should hide internal stack frames', async ({ context, page }, testInfo) => {
