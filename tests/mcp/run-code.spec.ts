@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { test, expect } from './fixtures';
+import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
 test('browser_run_code', async ({ client, server }) => {
   server.setContent('/', `
@@ -26,15 +26,14 @@ test('browser_run_code', async ({ client, server }) => {
   });
 
   const code = 'async (page) => await page.getByRole("button", { name: "Submit" }).click()';
-  expect(await client.callTool({
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code,
     },
-  })).toHaveResponse({
-    code: `await (${code})(page);`,
-    events: expect.stringContaining('- [LOG] Submit'),
-  });
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Submit');
 });
 
 test('browser_run_code block', async ({ client, server }) => {
@@ -46,15 +45,19 @@ test('browser_run_code block', async ({ client, server }) => {
     arguments: { url: server.PREFIX },
   });
 
-  expect(await client.callTool({
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code: 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); await page.getByRole("button", { name: "Submit" }).click(); }',
     },
-  })).toHaveResponse({
+  }));
+
+  expect(response).toEqual(expect.objectContaining({
     code: expect.stringContaining(`await page.getByRole(\"button\", { name: \"Submit\" }).click()`),
-    events: expect.stringMatching(/\[LOG\] Submit.*\n.*\[LOG\] Submit/),
-  });
+  }));
+
+  const content = await consoleEntries(response);
+  expect(content).toMatch(/\[LOG\] Submit.*\n.*\[LOG\] Submit/);
 });
 
 test('browser_run_code no-require', async ({ client, server }) => {
@@ -87,14 +90,18 @@ test('browser_run_code return value', async ({ client, server }) => {
   });
 
   const code = 'async (page) => { await page.getByRole("button", { name: "Submit" }).click(); return { message: "Hello, world!" }; await page.getByRole("banner").click(); }';
-  expect(await client.callTool({
+
+  const response = parseResponse(await client.callTool({
     name: 'browser_run_code',
     arguments: {
       code,
     },
-  })).toHaveResponse({
+  }));
+  expect(response).toEqual(expect.objectContaining({
     code: `await (${code})(page);`,
-    events: expect.stringContaining('- [LOG] Submit'),
     result: '{"message":"Hello, world!"}',
-  });
+  }));
+
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Submit');
 });

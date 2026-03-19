@@ -83,7 +83,6 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     headless: options.headed ? false : undefined,
     extension: options.extension,
     userDataDir: options.profile,
-    outputMode: 'file',
     snapshotMode: 'full',
   });
   daemonOverrides.browser!.remoteEndpoint = options.attach;

@@ -65,6 +65,6 @@ test('should preserve leading zeros in string arguments', async ({ cli, server }
   await cli('open', server.PREFIX);
   await cli('click', 'e2');
   await cli('type', '0812345679');
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain(`0812345679`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`0812345679`);
 });

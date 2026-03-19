@@ -33,6 +33,7 @@ export const test = baseTest.extend<{
     output: string,
     error: string,
     exitCode: number | undefined,
+    inlineSnapshot?: string,
     snapshot?: string,
     attachments?: { name: string, data: Buffer | null }[],
     pid?: number,
@@ -114,8 +115,9 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     });
 
     let snapshot: string | undefined;
+    let inlineSnapshot: string | undefined;
     if (cli.stdout.includes('### Snapshot'))
-      snapshot = await loadSnapshot(cli.stdout);
+      ({ snapshot, inlineSnapshot } = await loadSnapshot(cli.stdout));
     const attachments = loadAttachments(cli.stdout);
 
     const matches = cli.stdout.includes('### Browser') ? cli.stdout.match(/Browser `(.+)` opened with pid (\d+)\./) : undefined;
@@ -127,6 +129,7 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
       output: cli.stdout.trim(),
       error: cli.stderr.trim(),
       snapshot,
+      inlineSnapshot,
       attachments,
       pid: pid ? +pid : undefined,
     };
@@ -150,16 +153,19 @@ function loadAttachments(output: string) {
   });
 }
 
-async function loadSnapshot(output: string) {
+async function loadSnapshot(output: string): Promise<{ snapshot?: string, inlineSnapshot?: string }> {
   const lines = output.split('\n');
   if (!lines.includes('### Snapshot'))
     throw new Error('Snapshot file not found');
-  const fileLine = lines[lines.indexOf('### Snapshot') + 1];
+  const snapshotIndex = lines.indexOf('### Snapshot') + 1;
+  const fileLine = lines[snapshotIndex];
+  if (fileLine.startsWith('```yaml'))
+    return { inlineSnapshot: lines.slice(snapshotIndex + 1, lines.indexOf('```', snapshotIndex)).join('\n') };
   const fileName = fileLine.match(/- \[(.+)\]\((.+)\)/)![2];
   try {
-    return await fs.promises.readFile(test.info().outputPath(fileName), 'utf8').catch(() => undefined);
+    return { snapshot: await fs.promises.readFile(test.info().outputPath(fileName), 'utf8').catch(() => undefined) };
   } catch (e) {
-    return '';
+    return {};
   }
 }
 

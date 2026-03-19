@@ -253,9 +253,8 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _handleConsoleMessage(message: ConsoleMessage) {
     const wallTime = message.timestamp;
     this._addLogEntry({ type: 'console', wallTime, message });
-    const level = consoleLevelForMessageType(message.type);
-    if (level === 'error' || level === 'warning')
-      this._consoleLog.appendLine(wallTime, () => message.toString());
+    if (shouldIncludeMessage(this.context.config.console?.level, message.type))
+      this._consoleLog.appendLine(wallTime, message.toString());
   }
 
   private _addLogEntry(entry: EventEntry) {

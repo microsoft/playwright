@@ -32,6 +32,6 @@ browser.cdpEndpoint=${cdpServer.endpoint}
 browser.isolated=false
 `);
   await cli('open', `--config=${configPath}`);
-  const { snapshot } = await cli('snapshot');
-  expect(snapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+  const { inlineSnapshot } = await cli('snapshot');
+  expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });

@@ -235,7 +235,7 @@ type Response = Awaited<ReturnType<Client['callTool']>>;
 
 export const expect = baseExpect.extend({
   toHaveResponse(response: Response, object: any) {
-    const parsed = parseResponse(response);
+    const parsed = parseResponse(response, test.info().outputPath());
     const text = parsed.text;
     const isNot = this.isNot;
 
@@ -348,4 +348,9 @@ export function formatLog(stderr: string) {
   for (const line of lines)
     object[line] = (object[line] || 0) + 1;
   return object;
+}
+
+export async function consoleEntries(response: any) {
+  const file = response.events?.match(/New console entries: (.+\.log)(#L\d+)?/)?.[1];
+  return await fs.promises.readFile(test.info().outputPath(file), 'utf-8');
 }

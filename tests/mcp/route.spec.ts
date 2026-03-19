@@ -58,7 +58,7 @@ test('browser_route mocks response with JSON body', async ({ client, server }) =
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining('Alice'),
+    inlineSnapshot: expect.stringContaining('Alice'),
   });
 });
 
@@ -96,7 +96,7 @@ test('browser_route mocks response with custom status', async ({ client, server 
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining('Status: 404'),
+    inlineSnapshot: expect.stringContaining('Status: 404'),
   });
 });
 

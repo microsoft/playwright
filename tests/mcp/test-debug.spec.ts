@@ -119,7 +119,7 @@ test('test_debug (browser_snapshot/network/console)', async ({ startClient, serv
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`generic [active] [ref=e1]: Hello, world!`),
+    inlineSnapshot: expect.stringContaining(`generic [active] [ref=e1]: Hello, world!`),
   });
 });
 
@@ -201,7 +201,7 @@ Try recovering from the error prior to continuing`);
   expect(await client.callTool({
     name: 'browser_snapshot',
   })).toHaveResponse({
-    snapshot: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
+    inlineSnapshot: expect.stringContaining(`- button \"Submit\" [ref=e2]`),
   });
 
   expect(await client.callTool({
