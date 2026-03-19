@@ -813,6 +813,51 @@ test('override initialState ', async ({ mount }) => {
 });
 ```
 
-### How do I access the component's methods or its instance?
+### How do I access the component’s methods or its instance?
 
-Accessing a component's internal methods or its instance within test code is neither recommended nor supported. Instead, focus on observing and interacting with the component from a user's perspective, typically by clicking or verifying if something is visible on the page. Tests become less fragile and more valuable when they avoid interacting with internal implementation details, such as the component instance or its methods. Keep in mind that if a test fails when run from a user’s perspective, it likely means the automated test has uncovered a genuine bug in your code.
+Accessing a component’s internal methods or its instance within test code is neither recommended nor supported. Instead, focus on observing and interacting with the component from a user’s perspective, typically by clicking or verifying if something is visible on the page. Tests become less fragile and more valuable when they avoid interacting with internal implementation details, such as the component instance or its methods. Keep in mind that if a test fails when run from a user’s perspective, it likely means the automated test has uncovered a genuine bug in your code.
+
+## Best practices
+
+### Determine what to test
+
+Focus on testing the component’s public contract: the props it accepts, the events it emits, and the DOM it renders. A good component test verifies that given specific inputs, the component produces the expected visible output and responds correctly to user interaction.
+
+Avoid writing tests that duplicate your component’s source code line by line. Instead, test the behaviors that matter to users of the component.
+
+### Avoid testing implementation details
+
+Do not assert on internal state variables, private methods, or framework-specific internals. Tests coupled to implementation details break when you refactor without changing behavior. Instead, verify the visible output that users see.
+
+### Name tests clearly
+
+Write test names that describe the behavior being verified, not the method being called. A good test name reads like a specification: `increments counter when plus button is clicked` is better than `test click`.
+
+### Use the appropriate locator
+
+Use semantic locators that reflect how users find elements: `getByRole`, `getByText`, `getByLabel`. Avoid CSS selectors or test IDs when a semantic locator is available. Scope locator queries to the component handle returned by `mount` rather than using `page` directly.
+
+```js
+test(‘submit login form’, async ({ mount }) => {
+  const component = await mount(<LoginForm />);
+
+  // Scoped to the component - not the full page.
+  await component.getByRole(‘button’, { name: ‘Submit’ }).click();
+});
+```
+
+### Use emulation over mocking
+
+Component tests run in a real browser. Take advantage of this by using Playwright’s built-in emulation (viewport, locale, color scheme) and network interception instead of mocking browser APIs or framework internals. Use `hooksConfig` to inject dependencies like routers or stores via `beforeMount` hooks rather than patching modules.
+
+### Avoid nesting and describe blocks
+
+Flat test structure is easier to read and maintain. Each test should set up its own state through `mount` rather than relying on shared setup in nested `describe` blocks. If multiple tests need the same mounting logic, extract it into a helper function or use `test.beforeEach`.
+
+### Keep tests isolated
+
+Each test should mount a fresh component instance. Do not share component state between tests or rely on test execution order. Playwright CT reuses the same page for performance but resets state between tests, so avoid writing to global variables or module-level singletons that persist across mounts.
+
+### Ensure your test can fail
+
+After writing a test, verify it catches real regressions. Temporarily change the component or assertion to confirm the test fails with a clear error message. A test that never fails provides no value.
