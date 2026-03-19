@@ -53,7 +53,7 @@ export class TraceLoader {
     if (!ordinals.length)
       throw new Error('Cannot find .trace file');
 
-    this._snapshotStorage = new SnapshotStorage();
+    this._snapshotStorage = new SnapshotStorage(sha1 => this._backend.readBlob('resources/' + sha1));
 
     // 3 * ordinals progress increments below.
     const total = ordinals.length * 3;

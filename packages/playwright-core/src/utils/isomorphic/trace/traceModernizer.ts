@@ -33,7 +33,8 @@ export class TraceVersionError extends Error {
 
 // 6 => 10/2023 ~1.40
 // 7 => 05/2024 ~1.45
-const latestVersion: trace.VERSION = 8;
+// 8 => 03/2026 ~1.58
+const latestVersion: trace.VERSION = 9;
 
 export class TraceModernizer {
   private _contextEntry: ContextEntry;
@@ -437,5 +438,9 @@ export class TraceModernizer {
       }
     }
     return result;
+  }
+
+  _modernize_8_to_9(events: traceV8.TraceEvent[]): trace.TraceEvent[] {
+    return events as trace.TraceEvent[];
   }
 }

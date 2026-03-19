@@ -29,12 +29,12 @@ export class SnapshotServer {
     this._resourceLoader = resourceLoader;
   }
 
-  serveSnapshot(pageOrFrameId: string, searchParams: URLSearchParams, snapshotUrl: string): Response {
+  async serveSnapshot(pageOrFrameId: string, searchParams: URLSearchParams, snapshotUrl: string): Promise<Response> {
     const snapshot = this._snapshot(pageOrFrameId, searchParams);
     if (!snapshot)
       return new Response(null, { status: 404 });
 
-    const renderedSnapshot = snapshot.render();
+    const renderedSnapshot = await snapshot.render();
     this._snapshotIds.set(snapshotUrl, snapshot);
     return new Response(renderedSnapshot.html, { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
   }

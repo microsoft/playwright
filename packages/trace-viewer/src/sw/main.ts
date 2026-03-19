@@ -165,7 +165,7 @@ async function doFetch(event: FetchEvent): Promise<Response> {
       if (errorResponse)
         return errorResponse;
       const pageOrFrameId = relativePath.substring('/snapshot/'.length);
-      const response = loadedTrace!.snapshotServer.serveSnapshot(pageOrFrameId, url.searchParams, url.href);
+      const response = await loadedTrace!.snapshotServer.serveSnapshot(pageOrFrameId, url.searchParams, url.href);
       if (isDeployedAsHttps)
         response.headers.set('Content-Security-Policy', 'upgrade-insecure-requests');
       return response;

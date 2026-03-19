@@ -690,7 +690,7 @@ export async function traceSnapshot(traceFile: string, actionId: string, options
 
   const snapshotKey = `${snapshotName}@${callId}`;
 
-  const rendered = renderer.render();
+  const rendered = await renderer.render();
   const defaultName = `snapshot-${actionId}-${snapshotName}.html`;
 
   if (options.serve) {
@@ -704,10 +704,11 @@ export async function traceSnapshot(traceFile: string, actionId: string, options
       const url = new URL('http://localhost' + request.url!);
       const searchParams = url.searchParams;
       searchParams.set('name', snapshotKey);
-      const snapshotResponse = snapshotServer.serveSnapshot(pageId, searchParams, '/snapshot');
-      response.statusCode = snapshotResponse.status;
-      snapshotResponse.headers.forEach((value, key) => response.setHeader(key, value));
-      snapshotResponse.text().then(text => response.end(text));
+      snapshotServer.serveSnapshot(pageId, searchParams, '/snapshot').then(snapshotResponse => {
+        response.statusCode = snapshotResponse.status;
+        snapshotResponse.headers.forEach((value, key) => response.setHeader(key, value));
+        snapshotResponse.text().then(text => response.end(text));
+      });
       return true;
     });
 

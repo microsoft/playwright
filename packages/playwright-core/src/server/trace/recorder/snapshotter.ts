@@ -131,15 +131,24 @@ export class Snapshotter {
         frameId: frame.guid,
         frameUrl: data.url,
         doctype: data.doctype,
-        html: data.html,
         viewport: data.viewport,
         timestamp: monotonicTime(),
         wallTime: data.wallTime,
         collectionTime: data.collectionTime,
-        resourceOverrides: [],
         isMainFrame: page.mainFrame() === frame
       };
+      const htmlJson = JSON.stringify(data.html);
+      if (htmlJson.length < 200) {
+        snapshot.html = data.html;
+      } else {
+        const buffer = Buffer.from(htmlJson);
+        const sha1 = calculateSha1(buffer) + '.json';
+        snapshot.sha1 = sha1;
+        this._delegate.onSnapshotterBlob({ sha1, buffer });
+      }
       for (const { url, content, contentType } of data.resourceOverrides) {
+        if (!snapshot.resourceOverrides)
+          snapshot.resourceOverrides = [];
         if (typeof content === 'string') {
           const buffer = Buffer.from(content);
           const sha1 = calculateSha1(buffer) + '.' + (mime.getExtension(contentType) || 'dat');
