@@ -27,11 +27,11 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
 
   const frames: Buffer[] = [];
   const preferredSize = { width: 500, height: 400 };
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize });
+  await page.screencast.start(({ data }) => frames.push(data), { preferredSize });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
-  await disposable.dispose();
+  await page.screencast.stop();
 
   expect(frames.length).toBeGreaterThan(0);
   for (const frame of frames) {
@@ -47,24 +47,14 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   await context.close();
 });
 
-test('supports multiple onFrame listeners', async ({ browser, server, trace }) => {
-  test.skip(trace === 'on', 'trace=on has different screencast image configuration');
-
+test('start throws if screencast is already started', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
-  const frames1: Buffer[] = [];
-  const frames2: Buffer[] = [];
-  const disposable1 = await page.screencast.start(({ data }) => frames1.push(data), { preferredSize: { width: 500, height: 400 } });
-  const disposable2 = await page.screencast.start(({ data }) => frames2.push(data));
+  await page.screencast.start(() => {});
+  await expect(page.screencast.start(() => {})).rejects.toThrow('Screencast is already started');
 
-  await page.goto(server.EMPTY_PAGE);
-  await rafraf(page, 100);
-  await disposable1.dispose();
-  await disposable2.dispose();
-
-  expect(frames1.length).toBeGreaterThan(0);
-  expect(frames2.length).toBeGreaterThan(0);
+  await page.screencast.stop();
   await context.close();
 });
 
@@ -74,11 +64,11 @@ test('start allows restart with different options after stop', async ({ browser,
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
-  const disposable1 = await page.screencast.start(() => {}, { preferredSize: { width: 500, height: 400 } });
-  await disposable1.dispose();
+  await page.screencast.start(() => {}, { preferredSize: { width: 500, height: 400 } });
+  await page.screencast.stop();
   // Different options should succeed once the previous screencast is stopped.
-  const disposable2 = await page.screencast.start(() => {}, { preferredSize: { width: 320, height: 240 } });
-  await disposable2.dispose();
+  await page.screencast.start(() => {}, { preferredSize: { width: 320, height: 240 } });
+  await page.screencast.stop();
   await context.close();
 });
 
@@ -92,10 +82,10 @@ test('start reuses existing screencast when video recording is running', async (
   await page.video().start({ size: videoSize });
 
   const frames: Buffer[] = [];
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
+  await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
   await page.goto(server.EMPTY_PAGE);
   await rafraf(page, 100);
-  await disposable.dispose();
+  await page.screencast.stop();
 
   expect(frames.length).toBeGreaterThan(0);
   for (const frame of frames) {
@@ -118,11 +108,11 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
   const page = await context.newPage();
 
   const frames: Buffer[] = [];
-  const disposable = await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 500, height: 400 } });
+  await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 500, height: 400 } });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
-  await disposable.dispose();
+  await page.screencast.stop();
 
   const frameCountAfterDispose = frames.length;
   expect(frameCountAfterDispose).toBeGreaterThan(0);
