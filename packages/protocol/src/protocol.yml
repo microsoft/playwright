@@ -2012,7 +2012,7 @@ Page:
       title: Aria snapshot
       group: getter
       parameters:
-        content:
+        format:
           type: enum?
           literals:
             - ai

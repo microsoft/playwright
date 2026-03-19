@@ -206,9 +206,9 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
-### option: Locator.ariaSnapshot.content
+### option: Locator.ariaSnapshot.format
 * since: v1.59
-- `content` <[AriaSnapshotContent]<"ai"|"default">>
+- `format` <[AriaSnapshotFormat]<"ai"|"default">>
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption with element references.
 Defaults to `"default"`.

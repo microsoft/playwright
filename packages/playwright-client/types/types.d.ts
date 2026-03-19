@@ -2105,15 +2105,15 @@ export interface Page {
    */
   ariaSnapshot(options?: {
     /**
-     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
-     * `"default"`.
-     */
-    content?: "ai"|"default";
-
-    /**
      * When specified, limits the depth of the snapshot.
      */
     depth?: number;
+
+    /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
+     * `"default"`.
+     */
+    format?: "ai"|"default";
 
     /**
      * When set to `"incremental"` and
@@ -12779,15 +12779,15 @@ export interface Locator {
    */
   ariaSnapshot(options?: {
     /**
-     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
-     * `"default"`.
-     */
-    content?: "ai"|"default";
-
-    /**
      * When specified, limits the depth of the snapshot.
      */
     depth?: number;
+
+    /**
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
+     * `"default"`.
+     */
+    format?: "ai"|"default";
 
     /**
      * Maximum time in milliseconds. Defaults to `0` - no timeout. The default value can be changed via `actionTimeout`

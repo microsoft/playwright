@@ -1064,7 +1064,7 @@ class TextAssertionTool implements RecorderTool {
         name: 'assertSnapshot',
         selector: this._hoverHighlight.selector,
         signals: [],
-        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { content: 'codegen' }),
+        ariaSnapshot: this._recorder.injectedScript.ariaSnapshot(target, { format: 'codegen' }),
       };
     } else {
       const generated = this._recorder.injectedScript.generateSelector(target, { testIdAttributeName: this._recorder.state.testIdAttributeName, forTextExpect: true });
@@ -1698,7 +1698,7 @@ export class Recorder {
 
   private _captureAutoExpectSnapshot() {
     const documentElement = this.injectedScript.document.documentElement;
-    return documentElement ? this.injectedScript.utils.generateAriaTree(documentElement, { content: 'autoexpect' }) : undefined;
+    return documentElement ? this.injectedScript.utils.generateAriaTree(documentElement, { format: 'autoexpect' }) : undefined;
   }
 
   async performAction(action: actions.PerformOnRecordAction) {
@@ -1723,7 +1723,7 @@ export class Recorder {
   }
 
   elementPicked(selector: string, model: HighlightModel) {
-    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0], { content: 'default' });
+    const ariaSnapshot = this.injectedScript.ariaSnapshot(model.elements[0], { format: 'default' });
     void this._delegate.elementPicked?.({ selector, ariaSnapshot });
   }
 }

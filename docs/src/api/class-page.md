@@ -4217,9 +4217,9 @@ Page height in pixels.
 
 Captures the aria snapshot of the page. Read more about [aria snapshots](../aria-snapshots.md).
 
-### option: Page.ariaSnapshot.content
+### option: Page.ariaSnapshot.format
 * since: v1.59
-- `content` <[AriaSnapshotContent]<"ai"|"default">>
+- `format` <[AriaSnapshotFormat]<"ai"|"default">>
 
 When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to `"default"`.
 

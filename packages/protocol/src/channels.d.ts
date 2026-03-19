@@ -2611,7 +2611,7 @@ export type PageRequestsResult = {
   requests: RequestChannel[],
 };
 export type PageAriaSnapshotParams = {
-  content?: 'ai' | 'default',
+  format?: 'ai' | 'default',
   track?: string,
   mode?: 'full' | 'incremental',
   selector?: string,
@@ -2619,7 +2619,7 @@ export type PageAriaSnapshotParams = {
   timeout: number,
 };
 export type PageAriaSnapshotOptions = {
-  content?: 'ai' | 'default',
+  format?: 'ai' | 'default',
   track?: string,
   mode?: 'full' | 'incremental',
   selector?: string,

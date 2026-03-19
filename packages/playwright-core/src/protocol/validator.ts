@@ -1495,7 +1495,7 @@ scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
 scheme.PageAriaSnapshotParams = tObject({
-  content: tOptional(tEnum(['ai', 'default'])),
+  format: tOptional(tEnum(['ai', 'default'])),
   track: tOptional(tString),
   mode: tOptional(tEnum(['full', 'incremental'])),
   selector: tOptional(tString),
