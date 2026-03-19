@@ -143,9 +143,9 @@ export type Config = {
   sharedBrowserContext?: boolean;
 
   /**
-   * Secrets are used to prevent LLM from getting sensitive data while
-   * automating scenarios such as authentication.
-   * Prefer the browser.contextOptions.storageState over secrets file as a more secure alternative.
+   * Secrets are used to replace matching plain text in the tool responses. It is a convenience
+   * and not a security feature, make sure to always examine information coming in and from
+   * the tool on the client.
    */
   secrets?: Record<string, string>;
 

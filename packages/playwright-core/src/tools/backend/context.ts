@@ -378,6 +378,7 @@ async function checkFile(options: ContextOptions, resolvedFilename: string, flag
   // Trust llm to use valid characters in file names.
   const output = outputDir(options);
   const workspace = options.cwd;
-  if (!resolvedFilename.startsWith(output) && !resolvedFilename.startsWith(workspace))
+  const withinDir = (root: string) => resolvedFilename === root || resolvedFilename.startsWith(root + path.sep);
+  if (!withinDir(output) && !withinDir(workspace))
     throw new Error(`File access denied: ${resolvedFilename} is outside allowed roots. Allowed roots: ${output}, ${workspace}`);
 }
