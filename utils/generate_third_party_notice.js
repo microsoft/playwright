@@ -27,7 +27,9 @@ async function checkDir(dir) {
         licenseText: '',
       }
     }, function(err, packages) {
-      if (err)
+      if (err && err.message.startsWith('No packages found'))
+        r(new Error(`No packages found in ${dir}`));
+      else if (err)
         r(err);
       else
         f(packages);

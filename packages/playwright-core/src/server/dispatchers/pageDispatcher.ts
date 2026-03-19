@@ -366,7 +366,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
     if (this._screencastListener)
       throw new Error('Screencast is already running');
-    const size = params.maxSize || { width: 800, height: 800 };
+    const size = params.preferredSize || { width: 800, height: 800 };
     this._screencastListener = (frame: ScreencastFrame) => {
       this._dispatchEvent('screencastFrame', { data: frame.buffer });
     };

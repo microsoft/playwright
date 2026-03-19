@@ -2684,13 +2684,13 @@ export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
 export type PageStartScreencastParams = {
-  maxSize?: {
+  preferredSize?: {
     width: number,
     height: number,
   },
 };
 export type PageStartScreencastOptions = {
-  maxSize?: {
+  preferredSize?: {
     width: number,
     height: number,
   },

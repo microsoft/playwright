@@ -21,23 +21,24 @@ import type { Page } from './page';
 
 export class Screencast implements api.Screencast {
   private readonly _page: Page;
-  private _onFrame: ((buffer: Buffer) => any) | null = null;
+  private _listeners = new Set<(frame: { data: Buffer }) => any>();
 
   constructor(page: Page) {
     this._page = page;
     this._page._channel.on('screencastFrame', ({ data }) => {
-      this._onFrame?.(data);
+      for (const listener of this._listeners)
+        void listener({ data });
     });
   }
 
-  async start(onFrame: (buffer: Buffer) => any, options: { maxSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
-    this._onFrame = onFrame;
-    await this._page._channel.startScreencast(options);
-    return new DisposableStub(() => this.stop());
-  }
-
-  async stop(): Promise<void> {
-    this._onFrame = null;
-    await this._page._channel.stopScreencast();
+  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
+    this._listeners.add(onFrame);
+    if (this._listeners.size === 1)
+      await this._page._channel.startScreencast(options);
+    return new DisposableStub(async () => {
+      this._listeners.delete(onFrame);
+      if (!this._listeners.size)
+        await this._page._channel.stopScreencast();
+    });
   }
 }

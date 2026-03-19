@@ -1550,7 +1550,7 @@ scheme.PagePickLocatorResult = tObject({
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
 scheme.PageStartScreencastParams = tObject({
-  maxSize: tOptional(tObject({
+  preferredSize: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),

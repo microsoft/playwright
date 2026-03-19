@@ -13,38 +13,29 @@ Starts capturing screencast frames.
 **Usage**
 
 ```js
-await page.screencast.start(buffer => {
-  console.log(`frame size: ${buffer.length}`);
-}, { maxSize: { width: 800, height: 600 } });
+const disposable = await page.screencast.start(({ data }) => {
+  console.log(`frame size: ${data.length}`);
+}, { preferredSize: { width: 800, height: 600 } });
 // ... perform actions ...
-await page.screencast.stop();
+await disposable.dispose();
 ```
 
 ### param: Screencast.start.onFrame
 * since: v1.59
 * langs: js
-- `onFrame` <[function]\([Buffer]\): [Promise<any>|any]>
+- `onFrame` <[function]\([Object]\): [Promise]>
+  - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
 
-### option: Screencast.start.maxSize
+### option: Screencast.start.preferredSize
 * since: v1.59
-- `maxSize` ?<[Object]>
+- `preferredSize` ?<[Object]>
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
-Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to 800×800.
+Specifies the preferred maximum dimensions of screencast frames. The actual frame is scaled to preserve the page’s aspect ratio and may be smaller than these bounds.
 
+If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
 
-## async method: Screencast.stop
-* since: v1.59
-
-Stops the screencast started with [`method: Screencast.start`].
-
-**Usage**
-
-```js
-await screencast.start(buffer => { /* handle frame */ });
-// ... perform actions ...
-await screencast.stop();
-```
+Defaults to 800×800.

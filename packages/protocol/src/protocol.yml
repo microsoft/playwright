@@ -2101,7 +2101,7 @@ Page:
       title: Start screencast
       group: configuration
       parameters:
-        maxSize:
+        preferredSize:
           type: object?
           properties:
             width: int

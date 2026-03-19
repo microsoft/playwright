@@ -16155,6 +16155,35 @@ export interface WebSocketRoute {
   [Symbol.asyncDispose](): Promise<void>;
 }
 
+/**
+ * Interface for capturing screencast frames from a page.
+ */
+export interface Screencast {
+  /**
+   * Starts capturing screencast frames.
+   *
+   * **Usage**
+   *
+   * ```js
+   * const disposable = await page.screencast.start(({ data }) => {
+   *   console.log(`frame size: ${data.length}`);
+   * }, { preferredSize: { width: 800, height: 600 } });
+   * // ... perform actions ...
+   * await disposable.dispose();
+   * ```
+   *
+   * @param onFrame Callback that receives JPEG-encoded frame data.
+   * @param options
+   */
+  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
+    preferredSize?: {
+      width: number;
+      height: number;
+    };
+  }): Promise<Disposable>;
+
+}
+
 type DeviceDescriptor = {
   viewport: ViewportSize;
   userAgent: string;
@@ -21637,60 +21666,6 @@ export interface Route {
    * A request to be routed.
    */
   request(): Request;
-}
-
-/**
- * Interface for capturing screencast frames from a page.
- */
-export interface Screencast {
-  /**
-   * Starts capturing screencast frames.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.screencast.start(buffer => {
-   *   console.log(`frame size: ${buffer.length}`);
-   * }, { maxSize: { width: 800, height: 600 } });
-   * // ... perform actions ...
-   * await page.screencast.stop();
-   * ```
-   *
-   * @param onFrame Callback that receives JPEG-encoded frame data.
-   * @param options
-   */
-  start(onFrame: ((buffer: Buffer) => Promise<any>|any), options?: {
-    /**
-     * Maximum screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to
-     * 800×800.
-     */
-    maxSize?: {
-      /**
-       * Max frame width in pixels.
-       */
-      width: number;
-
-      /**
-       * Max frame height in pixels.
-       */
-      height: number;
-    };
-  }): Promise<Disposable>;
-
-  /**
-   * Stops the screencast started with
-   * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
-   *
-   * **Usage**
-   *
-   * ```js
-   * await screencast.start(buffer => { /* handle frame *\/ });
-   * // ... perform actions ...
-   * await screencast.stop();
-   * ```
-   *
-   */
-  stop(): Promise<void>;
 }
 
 /**
