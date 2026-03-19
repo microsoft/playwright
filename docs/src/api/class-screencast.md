@@ -24,7 +24,6 @@ await disposable.dispose();
 * since: v1.59
 * langs: js
 - `onFrame` <[function]\([Object]\): [Promise<any>|any]>
-  - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
 
@@ -34,6 +33,8 @@ Callback that receives JPEG-encoded frame data.
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
-Preferred screencast frame dimensions. The output frame may be smaller to preserve the page aspect ratio. Defaults to 800×800. Note that the actual size may not match this constraint if screencast has already been started with different parameters, for example for tracing or video recording.
+Specifies the preferred maximum dimensions of screencast frames. The actual frame is scaled to preserve the page’s aspect ratio and may be smaller than these bounds.
 
+If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
 
+Defaults to 800×800.
