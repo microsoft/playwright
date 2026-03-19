@@ -158,6 +158,22 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
   return { message, stackLines, location };
 }
 
+export function errorLocationFromStack(error: Error | undefined, pathSeparator: string, showInternalStackFrames: boolean = false): {
+  url: string,
+  lineNumber: number,
+  columnNumber: number
+} {
+  const stack = error?.stack || '';
+  const frame = parseErrorStack(stack, pathSeparator, showInternalStackFrames).location;
+  if (!frame)
+    return { url: '', lineNumber: 0, columnNumber: 0 };
+  return {
+    url: frame.file,
+    lineNumber: Math.max(frame.line - 1, 0),
+    columnNumber: Math.max(frame.column - 1, 0),
+  };
+}
+
 function belongsToNodeModules(file: string, pathSeparator: string) {
   return file.includes(`${pathSeparator}node_modules${pathSeparator}`);
 }

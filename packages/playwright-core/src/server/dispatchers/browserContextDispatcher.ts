@@ -34,6 +34,7 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
+import { errorLocationFromStack } from '../../utils/isomorphic/stackTrace';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -111,7 +112,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispose();
     });
     this.addObjectListener(BrowserContext.Events.PageError, (error: Error, page: Page) => {
-      this._dispatchEvent('pageError', { error: serializeError(error), page: PageDispatcher.from(this, page) });
+      this._dispatchEvent('pageError', {
+        error: serializeError(error),
+        page: PageDispatcher.from(this, page),
+        location: errorLocationFromStack(error, path.sep, false),
+      });
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {
       const pageDispatcher = PageDispatcher.fromNullable(this, message.page());

@@ -1690,6 +1690,11 @@ export type BrowserContextPageEvent = {
 export type BrowserContextPageErrorEvent = {
   error: SerializedError,
   page: PageChannel,
+  location: {
+    url: string,
+    lineNumber: number,
+    columnNumber: number,
+  },
 };
 export type BrowserContextRouteEvent = {
   route: RouteChannel,

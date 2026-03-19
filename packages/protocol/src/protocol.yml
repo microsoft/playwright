@@ -1532,6 +1532,12 @@ BrowserContext:
       parameters:
         error: SerializedError
         page: Page
+        location:
+          type: object
+          properties:
+            url: string
+            lineNumber: int
+            columnNumber: int
 
     route:
       parameters:

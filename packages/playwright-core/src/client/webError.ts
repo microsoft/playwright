@@ -16,14 +16,19 @@
 
 import type { Page } from './page';
 import type * as api from '../../types/types';
+import type * as channels from '@protocol/channels';
+
+type WebErrorLocation = channels.BrowserContextPageErrorEvent['location'];
 
 export class WebError implements api.WebError {
   private _page: Page | null;
   private _error: Error;
+  private _location: WebErrorLocation;
 
-  constructor(page: Page | null, error: Error) {
+  constructor(page: Page | null, error: Error, location: WebErrorLocation) {
     this._page = page;
     this._error = error;
+    this._location = location;
   }
 
   page() {
@@ -32,5 +37,9 @@ export class WebError implements api.WebError {
 
   error() {
     return this._error;
+  }
+
+  location() {
+    return this._location;
   }
 }

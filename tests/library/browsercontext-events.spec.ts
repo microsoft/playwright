@@ -181,3 +181,30 @@ test('weberror event should work', async ({ page }) => {
   expect(webError.page()).toBe(page);
   expect(webError.error().stack).toContain('boom');
 });
+
+test('weberror event should include location', async ({ page, server }) => {
+  server.setRoute('/error.js', (req, res) => {
+    res.setHeader('content-type', 'application/javascript');
+    res.end([
+      'console.log("a");',
+      'console.log("b");',
+      'throw new Error("boom");',
+      '',
+    ].join('\n'));
+  });
+
+  server.setRoute('/error.html', (req, res) => {
+    res.setHeader('content-type', 'text/html');
+    res.end('<script src="/error.js"></script>');
+  });
+
+  const [webError] = await Promise.all([
+    page.context().waitForEvent('weberror'),
+    page.goto(server.PREFIX + '/error.html'),
+  ]);
+
+  const location = webError.location();
+  expect(location.url).toBe(`${server.PREFIX}/error.js`);
+  expect(location.lineNumber).toBe(2);
+  expect(location.columnNumber).toBeGreaterThan(0); // column number is not consistent across browsers
+});
