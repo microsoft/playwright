@@ -184,11 +184,13 @@ const PayloadTab: React.FunctionComponent<{
   requestBody: RequestBody,
 }> = ({ resource, requestBody }) => {
   const [showFormatted, setShowFormatted] = useSetting('trace-viewer-network-details-show-formatted-payload', true);
+  const hasQueryString = resource.request.queryString.length > 0;
+  const hasRequestBody = !!(requestBody || resource.request.postData);
   const formatResult = useFormattedBody(requestBody, showFormatted);
 
   return <div className='vbox network-request-details-tab'>
-    {resource.request.queryString.length === 0 && !requestBody && <em className='network-request-no-payload'>No payload for this request.</em>}
-    {resource.request.queryString.length > 0 && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
+    {!hasQueryString && !hasRequestBody && <em className='network-request-no-payload'>No payload for this request.</em>}
+    {hasQueryString && <ExpandableSection title='Query String Parameters' showCount data={resource.request.queryString}/>}
     {requestBody && <ExpandableSection title='Request Body' className='network-request-request-body' titleChildren={
       <>
         <div style={{ margin: 'auto' }}></div>
