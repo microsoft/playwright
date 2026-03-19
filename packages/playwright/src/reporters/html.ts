@@ -24,7 +24,7 @@ import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 import { yazl } from 'playwright-core/lib/zipBundle';
 
-import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
+import { CommonReporterOptions, formatError, formatResultFailure, internalScreen, terminalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
 import { resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 
@@ -169,10 +169,10 @@ class HtmlReporter implements ReporterV2 {
       return;
     const { ok, singleTestId } = this._buildResult;
     const isCodingAgent = !!process.env.CLAUDECODE || !!process.env.COPILOT_CLI;
-    const shouldOpen = !isCodingAgent && !!process.stdin.isTTY && (this._open === 'always' || (!ok && this._open === 'on-failure'));
+    const shouldOpen = !isCodingAgent && terminalScreen.isTTY && (this._open === 'always' || (!ok && this._open === 'on-failure'));
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
-    } else if (this._options._mode === 'test' && !!process.stdin.isTTY) {
+    } else if (this._options._mode === 'test' && terminalScreen.isTTY) {
       const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';
@@ -741,8 +741,7 @@ function createErrorCodeframe(message: string, location: Location) {
 }
 
 function writeLine(line: string) {
-  // eslint-disable-next-line no-restricted-properties
-  process.stdout.write(line + '\n');
+  terminalScreen.stdout.write(line + '\n');
 }
 
 export default HtmlReporter;
