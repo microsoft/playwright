@@ -45,6 +45,7 @@ type OpenOptions = {
   config?: string;
   extension?: boolean;
   headed?: boolean;
+  'output-dir'?: string;
   persistent?: boolean;
   profile?: string;
 };
@@ -56,6 +57,7 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'extension',
   'headed',
   'help',
+  'output-dir',
   'persistent',
   'profile',
   'session',
