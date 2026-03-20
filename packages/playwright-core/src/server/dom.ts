@@ -383,7 +383,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     if (annotate) {
       await progress.race(this.evaluateInUtility(async ([injected, node, options]) => {
         injected.highlightNode(node, options.point, options.delay);
-        await new Promise(f => setTimeout(f, options.delay));
+        await new Promise(f => injected.utils.builtins.setTimeout(f, options.delay));
         injected.hideHighlight();
       }, { point, delay: annotate.delay }));
     }
