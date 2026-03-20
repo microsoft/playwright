@@ -40,4 +40,5 @@ export type CallMetadata = {
   pageId?: string;
   frameId?: string;
   potentiallyClosesScope?: boolean;
+  annotate?: { delay: number };
 };

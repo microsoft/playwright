@@ -1027,6 +1027,9 @@ export type BrowserTypeLaunchPersistentContextParams = {
       width: number,
       height: number,
     },
+    annotate?: {
+      delay?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1109,6 +1112,9 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    annotate?: {
+      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1261,6 +1267,9 @@ export type BrowserNewContextParams = {
       width: number,
       height: number,
     },
+    annotate?: {
+      delay?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1328,6 +1337,9 @@ export type BrowserNewContextOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    annotate?: {
+      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1400,6 +1412,9 @@ export type BrowserNewContextForReuseParams = {
       width: number,
       height: number,
     },
+    annotate?: {
+      delay?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1467,6 +1482,9 @@ export type BrowserNewContextForReuseOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    annotate?: {
+      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1602,6 +1620,9 @@ export type BrowserContextInitializer = {
       size?: {
         width: number,
         height: number,
+      },
+      annotate?: {
+        delay?: number,
       },
     },
     strictSelectors?: boolean,
@@ -2690,11 +2711,17 @@ export type PageStartScreencastParams = {
     width: number,
     height: number,
   },
+  annotate?: {
+    delay?: number,
+  },
 };
 export type PageStartScreencastOptions = {
   preferredSize?: {
     width: number,
     height: number,
+  },
+  annotate?: {
+    delay?: number,
   },
 };
 export type PageStartScreencastResult = void;
@@ -2706,11 +2733,17 @@ export type PageVideoStartParams = {
     width: number,
     height: number,
   },
+  annotate?: {
+    delay?: number,
+  },
 };
 export type PageVideoStartOptions = {
   size?: {
     width: number,
     height: number,
+  },
+  annotate?: {
+    delay?: number,
   },
 };
 export type PageVideoStartResult = {
@@ -4629,6 +4662,9 @@ export type ElectronLaunchParams = {
       width: number,
       height: number,
     },
+    annotate?: {
+      delay?: number,
+    },
   },
   strictSelectors?: boolean,
   timezoneId?: string,
@@ -4664,6 +4700,9 @@ export type ElectronLaunchOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    annotate?: {
+      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -5052,6 +5091,9 @@ export type AndroidDeviceLaunchBrowserParams = {
       width: number,
       height: number,
     },
+    annotate?: {
+      delay?: number,
+    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -5117,6 +5159,9 @@ export type AndroidDeviceLaunchBrowserOptions = {
     size?: {
       width: number,
       height: number,
+    },
+    annotate?: {
+      delay?: number,
     },
   },
   strictSelectors?: boolean,

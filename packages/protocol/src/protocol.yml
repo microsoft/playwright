@@ -598,6 +598,10 @@ ContextOptions:
           properties:
             width: int
             height: int
+        annotate:
+          type: object?
+          properties:
+            delay: int?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -2112,6 +2116,10 @@ Page:
           properties:
             width: int
             height: int
+        annotate:
+          type: object?
+          properties:
+            delay: int?
 
     stopScreencast:
       title: Stop screencast
@@ -2126,6 +2134,10 @@ Page:
           properties:
             width: int
             height: int
+        annotate:
+          type: object?
+          properties:
+            delay: int?
       returns:
         artifact: Artifact
 
@@ -4083,6 +4095,10 @@ Electron:
               properties:
                 width: int
                 height: int
+            annotate:
+              type: object?
+              properties:
+                delay: int?
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?

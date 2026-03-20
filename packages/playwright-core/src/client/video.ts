@@ -35,8 +35,8 @@ export class Video extends EventEmitter implements api.Video {
     this._artifact = artifact;
   }
 
-  async start(options: { path?: string, size?: { width: number, height: number } } = {}) {
-    const result = await this._page._channel.videoStart({ size: options.size });
+  async start(options: { path?: string, size?: { width: number, height: number }, annotate?: { delay?: number } } = {}) {
+    const result = await this._page._channel.videoStart({ size: options.size, annotate: options.annotate });
     this._artifact = Artifact.from(result.artifact);
     this._savePath = options.path;
     return new DisposableStub(() => this.stop());
