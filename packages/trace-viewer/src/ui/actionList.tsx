@@ -27,8 +27,7 @@ import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trac
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
-import { methodMetainfo } from '@isomorphic/protocolMetainfo';
-import { formatProtocolParam } from '@isomorphic/protocolFormatter';
+import { formatProtocolParam, getMetainfo } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
@@ -163,7 +162,7 @@ export const renderAction = (
 };
 
 export function renderTitleForCall(action: ActionTraceEvent, sdkLanguage?: Language): { elements: React.ReactNode[], title: string } {
-  let titleFormat = action.title ?? methodMetainfo.get(action.class + '.' + action.method)?.title ?? action.method;
+  let titleFormat = action.title ?? getMetainfo({ type: action.class, method: action.method })?.title ?? action.method;
   titleFormat = titleFormat.replace(/\n/g, ' ');
 
   const elements: React.ReactNode[] = [];

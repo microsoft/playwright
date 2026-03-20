@@ -15,6 +15,7 @@
  */
 
 import { methodMetainfo } from './protocolMetainfo';
+import type { MethodMetainfo } from './protocolMetainfo';
 
 export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
   return _formatProtocolParam(params, alternatives)?.replaceAll('\n', '\\n');
@@ -63,14 +64,18 @@ function deepParam(params: Record<string, any>, name: string): string | undefine
 }
 
 export function renderTitleForCall(metadata: { title?: string, type: string, method: string, params: Record<string, string> | undefined }) {
-  const titleFormat = metadata.title ?? methodMetainfo.get(metadata.type + '.' + metadata.method)?.title ?? metadata.method;
+  const titleFormat = metadata.title ?? getMetainfo(metadata)?.title ?? metadata.method;
   return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
     return formatProtocolParam(metadata.params, p1) ?? fullMatch;
   });
 }
 
+export function getMetainfo(metadata: { type: string, method: string }): MethodMetainfo | undefined {
+  return methodMetainfo.get(metadata.type + '.' + metadata.method);
+}
+
 export type ActionGroup = 'configuration' | 'route' | 'getter';
 
 export function getActionGroup(metadata: { type: string, method: string }) {
-  return methodMetainfo.get(metadata.type + '.' + metadata.method)?.group as undefined | ActionGroup;
+  return getMetainfo(metadata)?.group as undefined | ActionGroup;
 }
