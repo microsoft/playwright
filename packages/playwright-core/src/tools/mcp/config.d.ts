@@ -143,9 +143,9 @@ export type Config = {
   sharedBrowserContext?: boolean;
 
   /**
-   * Secrets are used to prevent LLM from getting sensitive data while
-   * automating scenarios such as authentication.
-   * Prefer the browser.contextOptions.storageState over secrets file as a more secure alternative.
+   * Secrets are used to replace matching plain text in the tool responses to prevent the LLM
+   * from accidentally getting sensitive data. It is a convenience and not a security feature,
+   * make sure to always examine information coming in and from the tool on the client.
    */
   secrets?: Record<string, string>;
 
@@ -216,8 +216,10 @@ export type Config = {
   };
 
   /**
-   * Whether to allow file uploads from anywhere on the file system.
-   * By default (false), file uploads are restricted to paths within the MCP roots only.
+   * allowUnrestrictedFileAccess acts as a guardrail to prevent the LLM from accidentally
+   * wandering outside its intended workspace. It is a convenience defense to catch unintended
+   * file access, not a secure boundary; a deliberate attempt to reach other directories can be
+   * easily worked around, so always rely on client-level permissions for true security.
    */
   allowUnrestrictedFileAccess?: boolean;
 
