@@ -98,7 +98,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
   private _onPageClose: (tab: Tab) => void;
   private _modalStates: ModalState[] = [];
   private _initializedPromise: Promise<void>;
-  private _needsFullSnapshot = false;
   private _recentEventEntries: EventEntry[] = [];
   private _consoleLog: LogFile;
   private _disposables: Disposable[];
@@ -392,9 +391,6 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._recentEventEntries = [];
     }
 
-    // If we failed to capture a snapshot this time, make sure we do a full one next time,
-    // to avoid reporting deltas against un-reported snapshot.
-    this._needsFullSnapshot = !tabSnapshot;
     return tabSnapshot ?? {
       ariaSnapshot: '',
       modalStates,
