@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
+import { setExpectConfig } from '../matchers/expect';
+
 import type { Suite } from './test';
 import type { TestInfoImpl } from '../worker/testInfo';
 
 let currentTestInfoValue: TestInfoImpl | null = null;
 export function setCurrentTestInfo(testInfo: TestInfoImpl | null) {
   currentTestInfoValue = testInfo;
+  setExpectConfig({
+    testInfo: testInfo ?? undefined,
+    ...testInfo?._projectInternal.expect,
+  });
 }
 export function currentTestInfo(): TestInfoImpl | null {
   return currentTestInfoValue;

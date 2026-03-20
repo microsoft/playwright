@@ -16,7 +16,7 @@
 
 import { formatMatcherMessage } from 'playwright-core/lib/utils';
 
-import { expectTypes } from '../util';
+import { expectTypes } from './matcherHint';
 
 import type { MatcherResult } from './matcherHint';
 import type { Locator } from 'playwright-core';

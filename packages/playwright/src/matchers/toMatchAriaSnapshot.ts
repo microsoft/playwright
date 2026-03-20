@@ -17,11 +17,9 @@
 
 import fs from 'fs';
 import path from 'path';
-
 import { formatMatcherMessage, escapeTemplateString, isString, printReceivedStringContainExpectedSubstring } from 'playwright-core/lib/utils';
 
-import { fileExistsAsync } from '../util';
-import { currentTestInfo } from '../common/globals';
+import { expectConfig } from './expect';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal, LocatorEx } from './matchers';
@@ -42,7 +40,7 @@ export async function toMatchAriaSnapshot(
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
 
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toMatchAriaSnapshot() must be called during the test`);
 
@@ -179,4 +177,13 @@ function unshift(snapshot: string): string {
 
 function indent(snapshot: string, indent: string): string {
   return snapshot.split('\n').map(line => indent + line).join('\n');
+}
+
+async function fileExistsAsync(resolved: string) {
+  try {
+    const stat = await fs.promises.stat(resolved);
+    return stat.isFile();
+  } catch {
+    return false;
+  }
 }

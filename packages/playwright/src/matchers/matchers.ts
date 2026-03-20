@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, isURLPattern, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage } from 'playwright-core/lib/utils';
+import { asLocatorDescription, constructURLBasedOnBaseURL, isRegExp, isString, isTextualMimeType, isURLPattern, pollAgainstDeadline, serializeExpectedTextValues, formatMatcherMessage, monotonicTime } from 'playwright-core/lib/utils';
 import { colors } from 'playwright-core/lib/utils';
 
-import { expectTypes } from '../util';
 import { toBeTruthy } from './toBeTruthy';
 import { toEqual } from './toEqual';
 import { toHaveURLWithPredicate } from './toHaveURL';
 import { toMatchText } from './toMatchText';
 import { toHaveScreenshotStepTitle } from './toMatchSnapshot';
-import { takeFirst } from '../common/config';
-import { currentTestInfo } from '../common/globals';
-import { TestInfoImpl } from '../worker/testInfo';
-import { MatcherResult } from './matcherHint';
+import { expectConfig } from './expect';
+import { expectTypes, MatcherResult } from './matcherHint';
 
 import type { ExpectMatcherState } from '../../types/test';
 import type { TestStepInfoImpl } from '../worker/testInfo';
@@ -476,13 +473,13 @@ export async function toPass(
     timeout?: number,
   } = {},
 ) {
-  const testInfo = currentTestInfo();
-  const timeout = takeFirst(options.timeout, testInfo?._projectInternal.expect?.toPass?.timeout, 0);
-  const intervals = takeFirst(options.intervals, testInfo?._projectInternal.expect?.toPass?.intervals, [100, 250, 500, 1000]);
+  const config = expectConfig();
+  const timeout = options.timeout ?? config.toPass?.timeout ?? 0;
+  const intervals = options.intervals ?? config.toPass?.intervals ?? [100, 250, 500, 1000];
 
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const { deadline, timeoutMessage } = config.testInfo ? config.testInfo._deadlineForMatcher(timeout) : defaultDeadlineForMatcher(timeout);
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (config && expectConfig() !== config)
       return { continuePolling: false, result: undefined };
     try {
       await callback();
@@ -516,4 +513,8 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
     }
   }
   return {};
+}
+
+export function defaultDeadlineForMatcher(timeout: number): { deadline: number; timeoutMessage: string } {
+  return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
 }
