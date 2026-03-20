@@ -2008,23 +2008,6 @@ Page:
           type: array
           items: Request
 
-    ariaSnapshot:
-      title: Aria snapshot
-      group: getter
-      parameters:
-        mode:
-          type: enum?
-          literals:
-            - ai
-            - default
-        # When track is present, an incremental snapshot is returned when possible.
-        track: string?
-        selector: string?
-        depth: int?
-        timeout: float
-      returns:
-        snapshot: string
-
     startJSCoverage:
       title: Start JS coverage
       group: configuration
@@ -2273,6 +2256,23 @@ Frame:
       flags:
         snapshot: true
         pausesBeforeAction: true
+
+    ariaSnapshot:
+      title: Aria snapshot
+      group: getter
+      parameters:
+        mode:
+          type: enum?
+          literals:
+            - ai
+            - default
+        # When track is present, an incremental snapshot is returned when possible.
+        track: string?
+        selector: string?
+        depth: int?
+        timeout: float
+      returns:
+        snapshot: string
 
     blur:
       title: Blur

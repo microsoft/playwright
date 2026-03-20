@@ -392,8 +392,8 @@ export function matchesExpectAriaTemplate(rootElement: Element, template: aria.A
   return {
     matches,
     received: {
-      raw: renderAriaTree(snapshot, { mode: 'default' }),
-      regex: renderAriaTree(snapshot, { mode: 'codegen' }),
+      raw: renderAriaTree(snapshot, { mode: 'default' }).text,
+      regex: renderAriaTree(snapshot, { mode: 'codegen' }).text,
     }
   };
 }
@@ -568,9 +568,10 @@ function indent(depth: number): string {
   return '  '.repeat(depth);
 }
 
-export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previousSnapshot?: AriaSnapshot): string {
+export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTreeOptions, previousSnapshot?: AriaSnapshot): { text: string, iframeDepths: Record<string, number> } {
   const options = toInternalOptions(publicOptions);
   const lines: string[] = [];
+  const iframeDepths: Record<string, number> = {};
   const includeText = options.renderStringsAsRegex ? textContributesInfo : () => true;
   const renderString = options.renderStringsAsRegex ? convertToBestGuessRegex : (str: string) => str;
 
@@ -634,6 +635,9 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     if (publicOptions.depth && depth > publicOptions.depth)
       return;
 
+    if (ariaNode.role === 'iframe' && ariaNode.ref)
+      iframeDepths[ariaNode.ref] = depth;
+
     // Replace the whole subtree with a single reference when possible.
     if (statusMap.get(ariaNode) === 'same' && ariaNode.ref) {
       lines.push(indent(depth) + `- ref=${ariaNode.ref} [unchanged]`);
@@ -679,7 +683,7 @@ export function renderAriaTree(ariaSnapshot: AriaSnapshot, publicOptions: AriaTr
     else
       visit(nodeToRender, 0, !!options.renderCursorPointer);
   }
-  return lines.join('\n');
+  return { text: lines.join('\n'), iframeDepths };
 }
 
 function convertToBestGuessRegex(text: string): string {

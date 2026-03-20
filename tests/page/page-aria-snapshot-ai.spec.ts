@@ -67,6 +67,38 @@ it('should list iframes', async ({ page }) => {
   expect(frameSnapshot).toEqual('- heading "World" [level=1]');
 });
 
+it('should snapshot a locator inside an iframe', async ({ page }) => {
+  await page.setContent(`
+    <h1>Main Page</h1>
+    <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
+  `);
+
+  const list = page.frames()[1].locator('ul');
+  const snapshot = await list.ariaSnapshot({ mode: 'ai' });
+  expect(snapshot).toContainYaml(`
+    - list [ref=f1e1]:
+      - listitem [ref=f1e2]: Item 1
+      - listitem [ref=f1e3]: Item 2
+  `);
+});
+
+it('should limit depth across iframe boundary', async ({ page }) => {
+  await page.setContent(`
+    <nav>
+      <iframe srcdoc="<ul><li><button>Deep</button></li></ul>"></iframe>
+    </nav>
+  `);
+
+  const snapshot = await snapshotForAI(page, { depth: 3 });
+  expect(snapshot).toContainYaml(`
+    - navigation [ref=e2]:
+      - iframe [ref=e3]:
+        - list [ref=f1e2]:
+          - listitem [ref=f1e3]
+  `);
+  expect(snapshot).not.toContain('button');
+});
+
 it('should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);

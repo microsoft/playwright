@@ -852,7 +852,7 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   }
 
   async ariaSnapshot(options: TimeoutOptions & { mode?: 'ai' | 'default', depth?: number, _track?: string } = {}): Promise<string> {
-    const result = await this._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), track: options._track, mode: options.mode, depth: options.depth });
+    const result = await this.mainFrame()._channel.ariaSnapshot({ timeout: this._timeoutSettings.timeout(options), track: options._track, mode: options.mode, depth: options.depth });
     return result.snapshot;
   }
 
