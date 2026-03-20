@@ -47,10 +47,6 @@ const isHtmlReportOption = (type: string): type is HtmlReportOpenOption => {
   return htmlReportOptions.includes(type as HtmlReportOpenOption);
 };
 
-type ScreenOptions = {
-  screen?: TerminalScreen;
-};
-
 type MachineData = {
   config: api.FullConfig;
   result: api.FullResult;
@@ -72,7 +68,7 @@ class HtmlReporter implements ReporterV2 {
   private _reportConfigs = new Map<string, api.FullConfig>();
   private _machines: MachineData[] = [];
 
-  constructor(options: HtmlReporterConfigOptions & CommonReporterOptions & ScreenOptions) {
+  constructor(options: HtmlReporterConfigOptions & CommonReporterOptions & { screen?: TerminalScreen }) {
     this._options = options;
     this._screen = options.screen ?? terminalScreen;
   }
@@ -103,12 +99,12 @@ class HtmlReporter implements ReporterV2 {
         if (reportedWarnings.has(key))
           continue;
         reportedWarnings.add(key);
-        writeLine(this._screen, this._screen.colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
-        writeLine(this._screen, `
+        this._writeLine(this._screen.colors.red(`Configuration Error: HTML reporter output folder clashes with the tests output folder:`));
+        this._writeLine(`
     html reporter folder: ${this._screen.colors.bold(outputFolder)}
     test results folder: ${this._screen.colors.bold(project.outputDir)}`);
-        writeLine(this._screen, '');
-        writeLine(this._screen, `HTML reporter will clear its output directory prior to being generated, which will lead to the artifact loss.
+        this._writeLine('');
+        this._writeLine(`HTML reporter will clear its output directory prior to being generated, which will lead to the artifact loss.
 `);
       }
     }
@@ -119,7 +115,7 @@ class HtmlReporter implements ReporterV2 {
     const outputFolder = reportFolderFromEnv() ?? resolveReporterOutputPath('playwright-report', this._options.configDir, this._options.outputFolder);
     return {
       outputFolder,
-      open: getHtmlReportOptionProcessEnv(this._screen) || this._options.open || 'on-failure',
+      open: this._getHtmlReportOptionProcessEnv() || this._options.open || 'on-failure',
       attachmentsBaseURL: process.env.PLAYWRIGHT_HTML_ATTACHMENTS_BASE_URL || this._options.attachmentsBaseURL || 'data/',
       host: process.env.PLAYWRIGHT_HTML_HOST || this._options.host,
       port: process.env.PLAYWRIGHT_HTML_PORT ? +process.env.PLAYWRIGHT_HTML_PORT : this._options.port,
@@ -183,12 +179,28 @@ class HtmlReporter implements ReporterV2 {
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';
       const portArg = this._port ? ` --port ${this._port}` : '';
-      writeLine(this._screen, '');
-      writeLine(this._screen, 'To open last HTML report run:');
-      writeLine(this._screen, this._screen.colors.cyan(`
+      this._writeLine('');
+      this._writeLine('To open last HTML report run:');
+      this._writeLine(this._screen.colors.cyan(`
   ${packageManagerCommand} playwright show-report${relativeReportPath}${hostArg}${portArg}
 `));
     }
+  }
+
+  private _getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
+    // Note: PW_TEST_HTML_REPORT_OPEN is for backwards compatibility.
+    const htmlOpenEnv = process.env.PLAYWRIGHT_HTML_OPEN || process.env.PW_TEST_HTML_REPORT_OPEN;
+    if (!htmlOpenEnv)
+      return undefined;
+    if (!isHtmlReportOption(htmlOpenEnv)) {
+      this._writeLine(this._screen.colors.red(`Configuration Error: HTML reporter Invalid value for PLAYWRIGHT_HTML_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
+      return undefined;
+    }
+    return htmlOpenEnv;
+  }
+
+  private _writeLine(line: string) {
+    writeLine(this._screen, line);
   }
 }
 
@@ -196,18 +208,6 @@ function reportFolderFromEnv(): string | undefined {
   // Note: PLAYWRIGHT_HTML_REPORT is for backwards compatibility.
   const envValue = process.env.PLAYWRIGHT_HTML_OUTPUT_DIR || process.env.PLAYWRIGHT_HTML_REPORT;
   return envValue ? path.resolve(envValue) : undefined;
-}
-
-function getHtmlReportOptionProcessEnv(screen: TerminalScreen): HtmlReportOpenOption | undefined {
-  // Note: PW_TEST_HTML_REPORT_OPEN is for backwards compatibility.
-  const htmlOpenEnv = process.env.PLAYWRIGHT_HTML_OPEN || process.env.PW_TEST_HTML_REPORT_OPEN;
-  if (!htmlOpenEnv)
-    return undefined;
-  if (!isHtmlReportOption(htmlOpenEnv)) {
-    writeLine(screen, screen.colors.red(`Configuration Error: HTML reporter Invalid value for PLAYWRIGHT_HTML_OPEN: ${htmlOpenEnv}. Valid values are: ${htmlReportOptions.join(', ')}`));
-    return undefined;
-  }
-  return htmlOpenEnv;
 }
 
 function standaloneDefaultFolder(): string {
