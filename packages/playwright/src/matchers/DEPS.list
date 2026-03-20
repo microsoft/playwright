@@ -1,6 +1,4 @@
 [*]
-../common/
-../mcp/test/browserBackend.ts
+../common/expectBundle.ts
 ../util.ts
-../utilsBundle.ts
 ../worker/testInfo.ts

@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import util from 'util';
+
 import { iso } from 'playwright-core/lib/coreBundle';
 
 import type { StackFrame } from '@protocol/channels';
@@ -55,4 +57,14 @@ export class ExpectError extends Error {
 
 export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e && !!e.matcherResult;
+}
+
+export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Locator')[], matcherName: string) {
+  if (typeof receiver !== 'object' || !types.includes(receiver._apiName)) {
+    const receiverString = typeof receiver === 'object' && receiver !== null ? `${receiver.constructor.name} ${util.inspect(receiver)}` : String(receiver);
+    const commaSeparated = types.slice();
+    const lastType = commaSeparated.pop();
+    const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
+    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}, was called with ${receiverString}`);
+  }
 }

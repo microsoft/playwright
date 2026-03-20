@@ -168,16 +168,6 @@ export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
 
-export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Locator')[], matcherName: string) {
-  if (typeof receiver !== 'object' || !types.includes(receiver._apiName)) {
-    const receiverString = typeof receiver === 'object' && receiver !== null ? `${receiver.constructor.name} ${util.inspect(receiver)}` : String(receiver);
-    const commaSeparated = types.slice();
-    const lastType = commaSeparated.pop();
-    const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
-    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}, was called with ${receiverString}`);
-  }
-}
-
 export const windowsFilesystemFriendlyLength = 60;
 
 export function trimLongString(s: string, length = 100) {
@@ -188,12 +178,6 @@ export function trimLongString(s: string, length = 100) {
   const start = Math.floor((length - middle.length) / 2);
   const end = length - middle.length - start;
   return s.substring(0, start) + middle + s.slice(-end);
-}
-
-export function addSuffixToFilePath(filePath: string, suffix: string): string {
-  const ext = path.extname(filePath);
-  const base = filePath.substring(0, filePath.length - ext.length);
-  return base + suffix + ext;
 }
 
 export function sanitizeFilePathBeforeExtension(filePath: string, ext?: string): string {
@@ -370,15 +354,6 @@ export function resolveImportSpecifierAfterMapping(resolved: string, afterPathMa
 
 function fileExists(resolved: string) {
   return fs.statSync(resolved, { throwIfNoEntry: false })?.isFile();
-}
-
-export async function fileExistsAsync(resolved: string) {
-  try {
-    const stat = await fs.promises.stat(resolved);
-    return stat.isFile();
-  } catch {
-    return false;
-  }
 }
 
 function dirExists(resolved: string) {

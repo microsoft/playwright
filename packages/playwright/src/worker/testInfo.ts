@@ -20,7 +20,7 @@ import path from 'path';
 import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
-import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
+import { filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
 import { TestTracing } from './testTracing';
 import { testInfoError } from './util';
 import { wrapFunctionWithLocation } from '../transform/transform';
@@ -165,10 +165,6 @@ export class TestInfoImpl implements TestInfo {
     const matcherMessage = `Timeout ${timeout}ms exceeded while waiting on the predicate`;
     const testMessage = `Test timeout of ${this.timeout}ms exceeded`;
     return { deadline: Math.min(testDeadline, matcherDeadline), timeoutMessage: testDeadline < matcherDeadline ? testMessage : matcherMessage };
-  }
-
-  static _defaultDeadlineForMatcher(timeout: number): { deadline: any; timeoutMessage: any; } {
-    return { deadline: (timeout ? monotonicTime() + timeout : 0), timeoutMessage: `Timeout ${timeout}ms exceeded while waiting on the predicate` };
   }
 
   constructor(
@@ -584,8 +580,10 @@ export class TestInfoImpl implements TestInfo {
       const index = (snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] || 0) + 1;
       if (updateSnapshotIndex === 'updateSnapshotIndex')
         snapshotNames.lastNamedSnapshotIndex[relativeOutputPath] = index;
-      if (index > 1)
-        relativeOutputPath = addSuffixToFilePath(relativeOutputPath, `-${index - 1}`);
+      if (index > 1) {
+        const ext = path.extname(relativeOutputPath);
+        relativeOutputPath = relativeOutputPath.slice(0, -ext.length) + `-${index - 1}` + ext;
+      }
     }
 
     const legacyTemplate = '{snapshotDir}/{testFileDir}/{testFileName}-snapshots/{arg}{-projectName}{-snapshotSuffix}{ext}';

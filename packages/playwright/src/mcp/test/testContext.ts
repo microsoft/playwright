@@ -25,7 +25,6 @@ import { debug } from 'playwright-core/lib/utilsBundle';
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
 import { StringWriteStream } from './streams';
-import { fileExistsAsync } from '../../util';
 import { TestRunner, TestRunnerEvent } from '../../runner/testRunner';
 import { ensureSeedFile, seedProject } from './seed';
 import { resolveConfigLocation } from '../../common/configLoader';
@@ -159,9 +158,13 @@ export class TestContext {
       candidateFiles.push(path.resolve(this.rootPath, seedFile));
       let resolvedSeedFile: string | undefined;
       for (const candidateFile of candidateFiles) {
-        if (await fileExistsAsync(candidateFile)) {
-          resolvedSeedFile = candidateFile;
-          break;
+        try {
+          const stat = await fs.promises.stat(candidateFile);
+          if (stat.isFile()) {
+            resolvedSeedFile = candidateFile;
+            break;
+          }
+        } catch {
         }
       }
       if (!resolvedSeedFile)

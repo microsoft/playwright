@@ -21,12 +21,12 @@ import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { colors } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
 
-import { addSuffixToFilePath, expectTypes } from '../util';
-import { currentTestInfo } from '../common/globals';
+import { expectTypes } from './matcherHint';
+import { expectConfig } from './expect';
 
 import type { MatcherResult } from './matcherHint';
 import type { ExpectMatcherStateInternal } from './matchers';
-import type { FullProjectInternal } from '../common/config';
+import type { ExpectConfig } from './expect';
 import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
@@ -37,7 +37,7 @@ type NameOrSegments = string | string[];
 
 type ImageMatcherResult = MatcherResult<string, string> & { diff?: string };
 
-type ToHaveScreenshotConfigOptions = NonNullable<NonNullable<FullProjectInternal['expect']>['toHaveScreenshot']> & {
+type ToHaveScreenshotConfigOptions = NonNullable<ExpectConfig['toHaveScreenshot']> & {
   _comparator?: string;
 };
 
@@ -255,7 +255,7 @@ export function toMatchSnapshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ImageComparatorOptions = {},
   optOptions: ImageComparatorOptions = {}
 ): MatcherResult<NameOrSegments | { name?: NameOrSegments }, string> {
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toMatchSnapshot() must be called during the test`);
   if (received instanceof Promise)
@@ -326,7 +326,7 @@ export async function toHaveScreenshot(
   nameOrOptions: NameOrSegments | { name?: NameOrSegments } & ToHaveScreenshotOptions = {},
   optOptions: ToHaveScreenshotOptions = {}
 ): Promise<MatcherResult<NameOrSegments | { name?: NameOrSegments }, string>> {
-  const testInfo = currentTestInfo();
+  const testInfo = expectConfig().testInfo;
   if (!testInfo)
     throw new Error(`toHaveScreenshot() must be called during the test`);
 
@@ -469,4 +469,10 @@ async function loadScreenshotStyles(stylePath?: string | string[]): Promise<stri
     return text.trim();
   }));
   return styles.join('\n').trim() || undefined;
+}
+
+function addSuffixToFilePath(filePath: string, suffix: string): string {
+  const ext = path.extname(filePath);
+  const base = filePath.substring(0, filePath.length - ext.length);
+  return base + suffix + ext;
 }
