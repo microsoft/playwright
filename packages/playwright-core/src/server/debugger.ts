@@ -17,7 +17,7 @@
 import { SdkObject } from './instrumentation';
 import { monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { methodMetainfo } from '../utils/isomorphic/protocolMetainfo';
+import { getMetainfo } from '../utils/isomorphic/protocolFormatter';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
 
@@ -125,6 +125,6 @@ function matchesLocation(metadata: CallMetadata, location: { file: string, line?
 function shouldPauseBeforeStep(metadata: CallMetadata, includeInputActions: boolean): boolean {
   if (metadata.internal)
     return false;
-  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
+  const metainfo = getMetainfo(metadata);
   return !!metainfo?.pausesBeforeAction || (includeInputActions && !!metainfo?.pausesBeforeInput);
 }

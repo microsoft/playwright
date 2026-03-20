@@ -351,7 +351,9 @@ for (const [name, item] of Object.entries(protocol)) {
   }
 }
 
-metainfo_ts.push(`export const methodMetainfo = new Map<string, { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean, pausesBeforeAction?: boolean, group?: string }>([
+metainfo_ts.push(`export type MethodMetainfo = { internal?: boolean, title?: string, slowMo?: boolean, snapshot?: boolean, pausesBeforeInput?: boolean, pausesBeforeAction?: boolean, group?: string };
+
+export const methodMetainfo = new Map<string, MethodMetainfo>([
   ${methodMetainfo.join(`,\n  `)}
 ]);`);
 

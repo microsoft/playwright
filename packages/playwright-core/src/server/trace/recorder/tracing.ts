@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { Snapshotter } from './snapshotter';
-import { methodMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
+import { getMetainfo } from '../../../utils/isomorphic/protocolFormatter';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -660,7 +660,7 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
 }
 
 function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-  const metainfo = methodMetainfo.get(metadata.type + '.' + metadata.method);
+  const metainfo = getMetainfo(metadata);
   return !!metainfo?.snapshot;
 }
 
