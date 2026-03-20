@@ -43,10 +43,15 @@ export type PointerActionWaitOptions = CommonActionOptions & {
   trial?: boolean;
 };
 
+export type AnnotateOptions = {
+  delay?: number,
+};
+
 export type VideoOptions = {
   width: number,
   height: number,
   outputFile: string,
+  annotate?: AnnotateOptions,
 };
 
 export type ScreencastFrame = {

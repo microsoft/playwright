@@ -27,6 +27,8 @@ import type { InjectedScript } from './injectedScript';
 type RenderedHighlightEntry = {
   targetElement: Element,
   color: string,
+  borderColor?: string,
+  fadeDuration?: number,
   highlightElement: HTMLElement,
   tooltipElement?: HTMLElement,
   box?: DOMRect,
@@ -38,6 +40,8 @@ type RenderedHighlightEntry = {
 export type HighlightEntry = {
   element: Element,
   color: string,
+  borderColor?: string,
+  fadeDuration?: number,
   tooltipText?: string,
 };
 
@@ -123,10 +127,14 @@ export class Highlight {
     this._glassPaneElement.remove();
   }
 
-  showActionPoint(x: number, y: number) {
+  showActionPoint(x: number, y: number, fadeDuration?: number) {
     this._actionPointElement.style.top = y + 'px';
     this._actionPointElement.style.left = x + 'px';
     this._actionPointElement.hidden = false;
+    if (fadeDuration)
+      this._actionPointElement.style.animation = `pw-fade-out ${fadeDuration}ms ease-out forwards`;
+    else
+      this._actionPointElement.style.animation = '';
   }
 
   hideActionPoint() {
@@ -170,7 +178,7 @@ export class Highlight {
         lineElement.textContent = entry.tooltipText;
         tooltipElement.appendChild(lineElement);
       }
-      this._renderedEntries.push({ targetElement: entry.element, color: entry.color, tooltipElement, highlightElement });
+      this._renderedEntries.push({ targetElement: entry.element, color: entry.color, borderColor: entry.borderColor, fadeDuration: entry.fadeDuration, tooltipElement, highlightElement });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
@@ -198,6 +206,10 @@ export class Highlight {
       entry.highlightElement.style.width = box.width + 'px';
       entry.highlightElement.style.height = box.height + 'px';
       entry.highlightElement.style.display = 'block';
+      if (entry.borderColor)
+        entry.highlightElement.style.border = '2px solid ' + entry.borderColor;
+      if (entry.fadeDuration)
+        entry.highlightElement.style.animation = `pw-fade-out ${entry.fadeDuration}ms ease-out forwards`;
 
       if (this._isUnderTest)
         console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console

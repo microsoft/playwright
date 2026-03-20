@@ -1290,14 +1290,19 @@ export class InjectedScript {
   }
 
   maskSelectors(selectors: ParsedSelector[], color: string) {
+    const highlight = this._createHighlight();
+    const elements = [];
+    for (const selector of selectors)
+      elements.push(this.querySelectorAll(selector, this.document.documentElement));
+    highlight.maskElements(elements.flat(), color);
+  }
+
+  private _createHighlight() {
     if (this._highlight)
       this.hideHighlight();
     this._highlight = new Highlight(this);
     this._highlight.install();
-    const elements = [];
-    for (const selector of selectors)
-      elements.push(this.querySelectorAll(selector, this.document.documentElement));
-    this._highlight.maskElements(elements.flat(), color);
+    return this._highlight;
   }
 
   highlight(selector: ParsedSelector) {
@@ -1306,6 +1311,23 @@ export class InjectedScript {
       this._highlight.install();
     }
     this._highlight.runHighlightOnRaf(selector);
+  }
+
+  highlightNode(node: Node, point?: { x: number, y: number }, delay?: number) {
+    const highlight = this._createHighlight();
+    const fadeDuration = delay ?? 500;
+
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const element = node as Element;
+      highlight.updateHighlight([{
+        element,
+        color: 'rgba(0, 128, 255, 0.15)',
+        borderColor: 'rgba(0, 128, 255, 0.6)',
+        fadeDuration,
+      }]);
+    }
+    if (point)
+      highlight.showActionPoint(point.x, point.y, fadeDuration);
   }
 
   hideHighlight() {

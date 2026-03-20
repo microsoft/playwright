@@ -10199,6 +10199,16 @@ export interface Browser {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
+      };
     };
 
     /**
@@ -15472,6 +15482,16 @@ export interface BrowserType<Unused = {}> {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
+      };
     };
 
     /**
@@ -17334,6 +17354,16 @@ export interface AndroidDevice {
          * Video frame height.
          */
         height: number;
+      };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
       };
     };
 
@@ -19915,6 +19945,16 @@ export interface Electron {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
+      };
     };
 
     /**
@@ -22015,6 +22055,17 @@ export interface Video {
    */
   start(options?: {
     /**
+     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
+     * highlighted with a semi-transparent blue box and click points are shown as red circles.
+     */
+    annotate?: {
+      /**
+       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       */
+      delay?: number;
+    };
+
+    /**
      * Path where the video should be saved when the recording is stopped.
      */
     path?: string;
@@ -22918,6 +22969,16 @@ export interface BrowserContextOptions {
        * Video frame height.
        */
       height: number;
+    };
+
+    /**
+     * If specified, enables visual annotations on interacted elements during video recording.
+     */
+    annotate?: {
+      /**
+       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       */
+      delay?: number;
     };
   };
 

@@ -611,6 +611,9 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tObject({
+      delay: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -722,6 +725,9 @@ scheme.BrowserNewContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tObject({
+      delay: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -792,6 +798,9 @@ scheme.BrowserNewContextForReuseParams = tObject({
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
+    })),
+    annotate: tOptional(tObject({
+      delay: tOptional(tInt),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -910,6 +919,9 @@ scheme.BrowserContextInitializer = tObject({
       size: tOptional(tObject({
         width: tInt,
         height: tInt,
+      })),
+      annotate: tOptional(tObject({
+        delay: tOptional(tInt),
       })),
     })),
     strictSelectors: tOptional(tBoolean),
@@ -1544,6 +1556,9 @@ scheme.PageStartScreencastParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  annotate: tOptional(tObject({
+    delay: tOptional(tInt),
+  })),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));
@@ -1552,6 +1567,9 @@ scheme.PageVideoStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,
     height: tInt,
+  })),
+  annotate: tOptional(tObject({
+    delay: tOptional(tInt),
   })),
 });
 scheme.PageVideoStartResult = tObject({
@@ -2652,6 +2670,9 @@ scheme.ElectronLaunchParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tObject({
+      delay: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
@@ -2886,6 +2907,9 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
+    })),
+    annotate: tOptional(tObject({
+      delay: tOptional(tInt),
     })),
   })),
   strictSelectors: tOptional(tBoolean),

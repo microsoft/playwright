@@ -107,6 +107,11 @@ x-pw-action-point {
   z-index: 2;
 }
 
+@keyframes pw-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 x-pw-separator {
   height: 1px;
   margin: 6px 9px;
