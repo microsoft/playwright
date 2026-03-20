@@ -94,3 +94,6 @@ or:
   <PlaywrightPlatform>osx;linux</PlaywrightPlatform>
 </PropertyGroup>
 ```
+
+## Updating Playwright
+Please note that Playwright for .NET does not follow Semantic Versioning (also known as [Semver](https://semver.org/)) — minor versions may include breaking changes.
