@@ -1494,16 +1494,6 @@ scheme.PageRequestsParams = tOptional(tObject({}));
 scheme.PageRequestsResult = tObject({
   requests: tArray(tChannel(['Request'])),
 });
-scheme.PageAriaSnapshotParams = tObject({
-  mode: tOptional(tEnum(['ai', 'default'])),
-  track: tOptional(tString),
-  selector: tOptional(tString),
-  depth: tOptional(tInt),
-  timeout: tFloat,
-});
-scheme.PageAriaSnapshotResult = tObject({
-  snapshot: tString,
-});
 scheme.PageStartJSCoverageParams = tObject({
   resetOnNavigation: tOptional(tBoolean),
   reportAnonymousScripts: tOptional(tBoolean),
@@ -1629,6 +1619,16 @@ scheme.FrameAddStyleTagParams = tObject({
 });
 scheme.FrameAddStyleTagResult = tObject({
   element: tChannel(['ElementHandle']),
+});
+scheme.FrameAriaSnapshotParams = tObject({
+  mode: tOptional(tEnum(['ai', 'default'])),
+  track: tOptional(tString),
+  selector: tOptional(tString),
+  depth: tOptional(tInt),
+  timeout: tFloat,
+});
+scheme.FrameAriaSnapshotResult = tObject({
+  snapshot: tString,
 });
 scheme.FrameBlurParams = tObject({
   selector: tString,

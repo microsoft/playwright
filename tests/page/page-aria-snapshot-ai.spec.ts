@@ -67,6 +67,21 @@ it('should list iframes', async ({ page }) => {
   expect(frameSnapshot).toEqual('- heading "World" [level=1]');
 });
 
+it('should snapshot a locator inside an iframe', async ({ page }) => {
+  await page.setContent(`
+    <h1>Main Page</h1>
+    <iframe srcdoc="<ul><li>Item 1</li><li>Item 2</li></ul>"></iframe>
+  `);
+
+  const list = page.frames()[1].locator('ul');
+  const snapshot = await list.ariaSnapshot({ mode: 'ai' });
+  expect(snapshot).toContainYaml(`
+    - list [ref=f1e1]:
+      - listitem [ref=f1e2]: Item 1
+      - listitem [ref=f1e3]: Item 2
+  `);
+});
+
 it('should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);

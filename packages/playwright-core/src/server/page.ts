@@ -886,27 +886,6 @@ export class Page extends SdkObject<PageEventMap> {
     await Promise.all(this.frames().map(frame => frame.hideHighlight().catch(() => {})));
   }
 
-  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
-    if (options.selector && options.track)
-      throw new Error('Cannot specify both selector and track options');
-
-    let frame: frames.Frame;
-    let info: SelectorInfo | undefined;
-    if (options.selector) {
-      const resolved = await this.mainFrame().selectors.resolveInjectedForSelector(options.selector, { strict: true });
-      if (!resolved)
-        throw new Error(`Selector "${options.selector}" did not resolve to any element`);
-      frame = resolved.frame;
-      info = resolved.info;
-    } else {
-      frame = this.mainFrame();
-    }
-
-    const result = await ariaSnapshotForFrame(progress, frame, { ...options, info });
-    const snapshot = options.track && result.incremental ? result.incremental.join('\n') : result.full.join('\n');
-    return { snapshot };
-  }
-
   async setDockTile(image: Buffer) {
     await this.delegate.setDockTile(image);
   }
@@ -1048,7 +1027,7 @@ export class InitScript extends DisposableObject {
   }
 }
 
-async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
+export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Frame, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, info?: SelectorInfo, depth?: number } = {}): Promise<{ full: string[], incremental?: string[] }> {
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {

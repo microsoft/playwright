@@ -24,7 +24,7 @@ import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import * as js from './javascript';
 import * as network from './network';
-import { Page } from './page';
+import { Page, ariaSnapshotForFrame } from './page';
 import { isAbortError, ProgressController } from './progress';
 import * as types from './types';
 import { LongStandingScope, asLocator, assert, constructURLBasedOnBaseURL, makeWaitForNextTask, renderTitleForCall } from '../utils';
@@ -36,6 +36,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { compressCallLog } from './callLog';
 
 import type { ConsoleMessage } from './console';
+import type { SelectorInfo } from './frameSelectors';
 import type { ElementStateWithoutStable, FrameExpectParams, InjectedScript } from '@injected/injectedScript';
 import type { Progress } from './progress';
 import type { ScreenshotOptions } from './screenshotter';
@@ -1688,6 +1689,27 @@ export class Frame extends SdkObject<FrameEventMap> {
     await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
       injectedScript.extend(source, arg);
     }, { source, arg });
+  }
+
+  async ariaSnapshot(progress: Progress, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, selector?: string, depth?: number } = {}): Promise<{ snapshot: string }> {
+    if (options.selector && options.track)
+      throw new Error('Cannot specify both selector and track options');
+
+    let targetFrame: Frame;
+    let info: SelectorInfo | undefined;
+    if (options.selector) {
+      const resolved = await this.selectors.resolveInjectedForSelector(options.selector, { strict: true });
+      if (!resolved)
+        throw new Error(`Selector "${options.selector}" did not resolve to any element`);
+      targetFrame = resolved.frame;
+      info = resolved.info;
+    } else {
+      targetFrame = this;
+    }
+
+    const result = await ariaSnapshotForFrame(progress, targetFrame, { ...options, info });
+    const snapshot = options.track && result.incremental ? result.incremental.join('\n') : result.full.join('\n');
+    return { snapshot };
   }
 
   private _asLocator(selector: string) {
