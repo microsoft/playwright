@@ -86,6 +86,7 @@ classNameMap.set('Date', 'DateTime');
 classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
+classNameMap.set('Disposable', 'IAsyncDisposable');
 
 /**
  *
@@ -132,6 +133,8 @@ function writeFile(kind, name, spec, body, folder, extendsName = null) {
 function renderClass(clazz) {
   const name = classNameMap.get(clazz.name);
   if (name === 'TimeoutException')
+    return;
+  if (name === 'IAsyncDisposable')
     return;
 
   const body = [];
@@ -323,7 +326,10 @@ function renderMember(member, parent, options, out) {
     renderMemberDoc(member, out);
     if (member.deprecated)
       out.push(`[System.Obsolete]`);
-    out.push(`event EventHandler<${type}> ${name};`);
+    if (type === 'void')
+      out.push(`event EventHandler ${name};`);
+    else
+      out.push(`event EventHandler<${type}> ${name};`);
     return;
   }
 

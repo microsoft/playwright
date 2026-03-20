@@ -33,20 +33,6 @@ it('should create new context @smoke', async function({ browser }) {
   await context2.close();
 });
 
-it('should return context options', async function({ browser }) {
-  const context = await browser.newContext({
-    userAgent: 'custom-ua',
-    locale: 'fr-FR',
-    extraHTTPHeaders: { 'foo': 'bar' },
-  });
-  const options = context.contextOptions();
-  expect(options.userAgent).toBe('custom-ua');
-  expect(options.locale).toBe('fr-FR');
-  expect(options.extraHTTPHeaders).toEqual({ 'foo': 'bar' });
-  expect((options as any).noDefaultViewport).toBeUndefined();  // internal option should not leak
-  await context.close();
-});
-
 it('should be able to click across browser contexts', async function({ browser }) {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29096' });
   expect(browser.contexts().length).toBe(0);

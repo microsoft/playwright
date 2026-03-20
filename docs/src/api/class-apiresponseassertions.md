@@ -46,6 +46,24 @@ def test_navigates_to_login_page(page: Page) -> None:
     expect(response).to_be_ok()
 ```
 
+```csharp
+using Microsoft.Playwright;
+using Microsoft.Playwright.MSTest;
+
+namespace PlaywrightTests;
+
+[TestClass]
+public class ExampleTests : PageTest
+{
+    [TestMethod]
+    public async Task NavigatesToLoginPage()
+    {
+        var response = await Page.APIRequest.GetAsync("https://playwright.dev");
+        await Expect(response).ToBeOKAsync();
+    }
+}
+```
+
 ## property: APIResponseAssertions.not
 * since: v1.20
 * langs: java, js, csharp
@@ -63,6 +81,10 @@ await expect(response).not.toBeOK();
 
 ```java
 assertThat(response).not().isOK();
+```
+
+```csharp
+await Expect(response).Not.ToBeOKAsync();
 ```
 
 ## async method: APIResponseAssertions.NotToBeOK
@@ -101,4 +123,8 @@ from playwright.sync_api import expect
 
 # ...
 expect(response).to_be_ok()
+```
+
+```csharp
+await Expect(response).ToBeOKAsync();
 ```

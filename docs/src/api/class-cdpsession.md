@@ -69,7 +69,7 @@ client.send("Animation.setPlaybackRate", params);
 
 ## event: CDPSession.close
 * since: v1.59
-* langs: js
+- argument: <[CDPSession]>
 
 Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
 

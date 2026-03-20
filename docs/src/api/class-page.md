@@ -717,7 +717,6 @@ Brings page to front (activates tab).
 
 ## async method: Page.cancelPickLocator
 * since: v1.59
-* langs: js
 
 Cancels an ongoing [`method: Page.pickLocator`] call by deactivating pick locator mode.
 If no pick locator mode is active, this method is a no-op.
@@ -2725,7 +2724,6 @@ Returns up to (currently) 200 last page errors from this page. See [`event: Page
 
 ### option: Page.pageErrors.filter
 * since: v1.59
-* langs: js
 - `filter` <[PageErrorsFilter]<"all"|"sinceNavigation">>
 
 Controls which errors are returned:
@@ -3036,7 +3034,6 @@ Whether or not to embed the document outline into the PDF. Defaults to `false`.
 
 ## async method: Page.pickLocator
 * since: v1.59
-* langs: js
 - returns: <[Locator]>
 
 Enters pick locator mode where hovering over page elements highlights them and shows the corresponding locator.
@@ -3047,6 +3044,26 @@ Once the user clicks an element, the mode is deactivated and the [Locator] for t
 ```js
 const locator = await page.pickLocator();
 console.log(locator);
+```
+
+```java
+Locator locator = page.pickLocator();
+System.out.println(locator);
+```
+
+```python async
+locator = await page.pick_locator()
+print(locator)
+```
+
+```python sync
+locator = page.pick_locator()
+print(locator)
+```
+
+```csharp
+var locator = await page.PickLocatorAsync();
+Console.WriteLine(locator);
 ```
 
 ## async method: Page.press

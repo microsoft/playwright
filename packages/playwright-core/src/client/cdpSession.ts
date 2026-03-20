@@ -34,7 +34,7 @@ export class CDPSession extends ChannelOwner<channels.CDPSessionChannel> impleme
     });
 
     this._channel.on('close', () => {
-      this.emit('close');
+      this.emit('close', this);
     });
 
     this.on = super.on;

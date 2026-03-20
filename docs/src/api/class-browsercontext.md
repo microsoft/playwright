@@ -76,7 +76,6 @@ Playwright has ability to mock clock and passage of time.
 
 ## property: BrowserContext.debugger
 * since: v1.59
-* langs: js
 - type: <[Debugger]>
 
 Debugger allows to pause and resume the execution.
@@ -1003,14 +1002,6 @@ named `page`, but it can be a `Page` or `Frame` type.
 - returns: <[Page]>
 
 Creates a new page in the browser context.
-
-## method: BrowserContext.contextOptions
-* since: v1.59
-* langs: js
-- returns: <[Object]>
-
-Returns the context options that were used to create this browser context. The return type matches the options
-accepted by [`method: Browser.newContext`].
 
 ## method: BrowserContext.pages
 * since: v1.8
