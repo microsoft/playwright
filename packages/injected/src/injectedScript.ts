@@ -306,25 +306,25 @@ export class InjectedScript {
     return this.incrementalAriaSnapshot(node, options).full;
   }
 
-  incrementalAriaSnapshot(node: Node, options: AriaTreeOptions & { track?: string, depth?: number }): { full: string, incremental?: string, iframeRefs: string[] } {
+  incrementalAriaSnapshot(node: Node, options: AriaTreeOptions & { track?: string, depth?: number }): { full: string, incremental?: string, iframeRefs: string[], iframeDepths: Record<string, number> } {
     if (node.nodeType !== Node.ELEMENT_NODE)
       throw this.createStacklessError('Can only capture aria snapshot of Element nodes.');
     const ariaSnapshot = generateAriaTree(node as Element, options);
-    const full = renderAriaTree(ariaSnapshot, options);
+    const rendered = renderAriaTree(ariaSnapshot, options);
     let incremental: string | undefined;
     if (options.track) {
       const previousSnapshot = this._lastAriaSnapshotForTrack.get(options.track);
       if (previousSnapshot)
-        incremental = renderAriaTree(ariaSnapshot, options, previousSnapshot);
+        incremental = renderAriaTree(ariaSnapshot, options, previousSnapshot).text;
       this._lastAriaSnapshotForTrack.set(options.track, ariaSnapshot);
     }
     this._lastAriaSnapshotForQuery = ariaSnapshot;
-    return { full, incremental, iframeRefs: ariaSnapshot.iframeRefs };
+    return { full: rendered.text, incremental, iframeRefs: ariaSnapshot.iframeRefs, iframeDepths: rendered.iframeDepths };
   }
 
   ariaSnapshotForRecorder(): { ariaSnapshot: string, refs: Map<Element, string> } {
     const tree = generateAriaTree(this.document.body, { mode: 'ai' });
-    const ariaSnapshot = renderAriaTree(tree, { mode: 'ai' });
+    const { text: ariaSnapshot } = renderAriaTree(tree, { mode: 'ai' });
     return { ariaSnapshot, refs: tree.refs };
   }
 

@@ -82,6 +82,23 @@ it('should snapshot a locator inside an iframe', async ({ page }) => {
   `);
 });
 
+it('should limit depth across iframe boundary', async ({ page }) => {
+  await page.setContent(`
+    <nav>
+      <iframe srcdoc="<ul><li><button>Deep</button></li></ul>"></iframe>
+    </nav>
+  `);
+
+  const snapshot = await snapshotForAI(page, { depth: 3 });
+  expect(snapshot).toContainYaml(`
+    - navigation [ref=e2]:
+      - iframe [ref=e3]:
+        - list [ref=f1e2]:
+          - listitem [ref=f1e3]
+  `);
+  expect(snapshot).not.toContain('button');
+});
+
 it('should stitch all frame snapshots', async ({ page, server }) => {
   await page.goto(server.PREFIX + '/frames/nested-frames.html');
   const snapshot = await snapshotForAI(page);

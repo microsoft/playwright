@@ -1064,7 +1064,13 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
     }
   });
 
-  const childSnapshotPromises = snapshot.iframeRefs.map(ref => ariaSnapshotFrameRef(progress, frame, ref, options));
+  // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
+  const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
+  const childSnapshotPromises = renderedIframeRefs.map(ref => {
+    const iframeDepth = snapshot.iframeDepths[ref];
+    const childDepth = options.depth ? options.depth - iframeDepth - 1 : undefined;
+    return ariaSnapshotFrameRef(progress, frame, ref, { ...options, depth: childDepth });
+  });
   const childSnapshots = await Promise.all(childSnapshotPromises);
 
   const full = [];
@@ -1072,12 +1078,12 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
 
   if (snapshot.incremental !== undefined) {
     incremental = snapshot.incremental.split('\n');
-    for (let i = 0; i < snapshot.iframeRefs.length; i++) {
+    for (let i = 0; i < renderedIframeRefs.length; i++) {
       const childSnapshot = childSnapshots[i];
       if (childSnapshot.incremental)
         incremental.push(...childSnapshot.incremental);
       else if (childSnapshot.full.length)
-        incremental.push('- <changed> iframe [ref=' + snapshot.iframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
+        incremental.push('- <changed> iframe [ref=' + renderedIframeRefs[i] + ']:', ...childSnapshot.full.map(l => '  ' + l));
     }
   }
 
@@ -1090,7 +1096,7 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
 
     const leadingSpace = match[1];
     const ref = match[2];
-    const childSnapshot = childSnapshots[snapshot.iframeRefs.indexOf(ref)] ?? { full: [] };
+    const childSnapshot = childSnapshots[renderedIframeRefs.indexOf(ref)] ?? { full: [] };
     full.push(childSnapshot.full.length ? line + ':' : line);
     full.push(...childSnapshot.full.map(l => leadingSpace + '  ' + l));
   }
@@ -1098,7 +1104,7 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
   return { full, incremental };
 }
 
-async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean }): Promise<{ full: string[], incremental?: string[] }> {
+async function ariaSnapshotFrameRef(progress: Progress, parentFrame: frames.Frame, frameRef: string, options: { mode?: 'ai' | 'default', track?: string, doNotRenderActive?: boolean, depth?: number }): Promise<{ full: string[], incremental?: string[] }> {
   const frameSelector = `aria-ref=${frameRef} >> internal:control=enter-frame`;
   const frameBodySelector = `${frameSelector} >> body`;
   const child = await progress.race(parentFrame.selectors.resolveFrameForSelector(frameBodySelector, { strict: true }));
