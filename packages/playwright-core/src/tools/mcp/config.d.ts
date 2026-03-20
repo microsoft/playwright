@@ -212,7 +212,7 @@ export type Config = {
     /**
      * When taking snapshots for responses, specifies the mode to use.
      */
-    mode?: 'incremental' | 'full' | 'none';
+    mode?: 'full' | 'none';
   };
 
   /**

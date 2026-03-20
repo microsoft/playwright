@@ -64,7 +64,7 @@ export type CLIOptions = {
   saveSession?: boolean;
   secrets?: Record<string, string>;
   sharedBrowserContext?: boolean;
-  snapshotMode?: 'incremental' | 'full' | 'none';
+  snapshotMode?: 'full' | 'none';
   storageState?: string;
   testIdAttribute?: string;
   timeoutAction?: number;

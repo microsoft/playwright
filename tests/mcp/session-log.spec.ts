@@ -78,7 +78,7 @@ test('session log should record tool calls', async ({ startClient, server, mcpBr
 \\{
   "code": "await page.getByRole\\('button', \\{ name: 'Submit' \\}\\).click\\(\\);",
   "page": "- Page URL: http://localhost:${server.PORT}/\\\\n- Page Title: Title",
-  "snapshot": "- <changed> button \\\\"Submit\\\\" \\[active\\] \\[ref=e2\\]"
+  "snapshot": "- button \\\\"Submit\\\\" \\[active\\] \\[ref=e2\\]"
 \\}
 \\\`\\\`\\\`
 `.trim()));

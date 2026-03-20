@@ -2012,18 +2012,13 @@ Page:
       title: Aria snapshot
       group: getter
       parameters:
-        format:
+        mode:
           type: enum?
           literals:
             - ai
             - default
         # When track is present, an incremental snapshot is returned when possible.
         track: string?
-        mode:
-          type: enum?
-          literals:
-            - full
-            - incremental
         selector: string?
         depth: int?
         timeout: float

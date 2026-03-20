@@ -108,7 +108,7 @@ test('browser_select_option', async ({ client, server }) => {
       values: ['bar'],
     },
   })).toHaveResponse({
-    snapshot: `- <changed> combobox [ref=e2]:
+    snapshot: `- combobox [ref=e2]:
   - option "Foo"
   - option "Bar" [selected]`,
   });
@@ -138,8 +138,10 @@ test('browser_select_option (multiple)', async ({ client, server }) => {
     },
   })).toHaveResponse({
     code: `await page.getByRole('listbox').selectOption(['bar', 'baz']);`,
-    snapshot: `- <changed> option "Bar" [selected] [ref=e4]
-- <changed> option "Baz" [selected] [ref=e5]`,
+    snapshot: `- listbox [ref=e2]:
+  - option "Foo" [ref=e3]
+  - option "Bar" [selected] [ref=e4]
+  - option "Baz" [selected] [ref=e5]`,
   });
 });
 
