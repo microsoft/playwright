@@ -16,7 +16,7 @@
 
 import { EventEmitter } from './eventEmitter';
 import { ValidationError, maybeFindValidator  } from '../protocol/validator';
-import { getMetainfo } from '../utils/isomorphic/protocolFormatter';
+import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 import { captureLibraryStackTrace } from './clientStackTrace';
 import { stringifyStackFrames } from '../utils/isomorphic/stackTrace';
 

@@ -19,7 +19,7 @@ import os from 'os';
 import path from 'path';
 
 import { Snapshotter } from './snapshotter';
-import { getMetainfo } from '../../../utils/isomorphic/protocolFormatter';
+import { getMetainfo } from '../../../utils/isomorphic/protocolMetainfo';
 import { assert } from '../../../utils/isomorphic/assert';
 import { monotonicTime } from '../../../utils/isomorphic/time';
 import { eventsHelper  } from '../../utils/eventsHelper';
@@ -435,8 +435,19 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     await this._snapshotter?.captureSnapshot(sdkObject.attribution.page, metadata.id, snapshotName).catch(() => {});
   }
 
-  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata) {
-    return !!this._snapshotter?.started() && shouldCaptureSnapshot(metadata) && !!sdkObject.attribution.page;
+  private _shouldCaptureSnapshot(sdkObject: SdkObject, metadata: CallMetadata, phase: 'before' | 'after' | 'input') {
+    if (!sdkObject.attribution.page || !this._snapshotter?.started())
+      return;
+
+    const metainfo = getMetainfo(metadata);
+    if (!metainfo?.snapshot)
+      return false;
+
+    switch (phase) {
+      case 'before': return !metainfo.input || !!metainfo.isAutoWaiting;
+      case 'input': return !!metainfo.input;
+      case 'after': return true;
+    }
   }
 
   onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string) {
@@ -445,7 +456,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'before'))
       event.beforeSnapshot = `before@${metadata.id}`;
     this._state?.callIds.add(metadata.id);
     this._appendTraceEvent(event);
@@ -460,7 +471,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'input'))
       event.inputSnapshot = `input@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.inputSnapshot, sdkObject, metadata);
@@ -487,7 +498,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (!event)
       return Promise.resolve();
     sdkObject.attribution.page?.screencast.temporarilyDisableThrottling();
-    if (this._shouldCaptureSnapshot(sdkObject, metadata))
+    if (this._shouldCaptureSnapshot(sdkObject, metadata, 'after'))
       event.afterSnapshot = `after@${metadata.id}`;
     this._appendTraceEvent(event);
     return this._captureSnapshot(event.afterSnapshot, sdkObject, metadata);
@@ -657,11 +668,6 @@ function visitTraceEvent(object: any, sha1s: Set<string>): any {
     return result;
   }
   return object;
-}
-
-function shouldCaptureSnapshot(metadata: CallMetadata): boolean {
-  const metainfo = getMetainfo(metadata);
-  return !!metainfo?.snapshot;
 }
 
 function createBeforeActionTraceEvent(metadata: CallMetadata, parentId?: string): trace.BeforeActionTraceEvent | null {

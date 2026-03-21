@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { methodMetainfo } from './protocolMetainfo';
-import type { MethodMetainfo } from './protocolMetainfo';
+import { getMetainfo } from './protocolMetainfo';
 
 export function formatProtocolParam(params: Record<string, string> | undefined, alternatives: string): string | undefined {
   return _formatProtocolParam(params, alternatives)?.replaceAll('\n', '\\n');
@@ -68,10 +67,6 @@ export function renderTitleForCall(metadata: { title?: string, type: string, met
   return titleFormat.replace(/\{([^}]+)\}/g, (fullMatch, p1) => {
     return formatProtocolParam(metadata.params, p1) ?? fullMatch;
   });
-}
-
-export function getMetainfo(metadata: { type: string, method: string }): MethodMetainfo | undefined {
-  return methodMetainfo.get(metadata.type + '.' + metadata.method);
 }
 
 export type ActionGroup = 'configuration' | 'route' | 'getter';
