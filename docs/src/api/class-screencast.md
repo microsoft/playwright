@@ -6,6 +6,7 @@ Interface for capturing screencast frames from a page.
 
 ## async method: Screencast.start
 * since: v1.59
+* langs: js
 - returns: <[Disposable]>
 
 Starts capturing screencast frames.
@@ -30,6 +31,7 @@ Callback that receives JPEG-encoded frame data.
 
 ### option: Screencast.start.preferredSize
 * since: v1.59
+* langs: js
 - `preferredSize` ?<[Object]>
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
@@ -42,6 +44,7 @@ Defaults to 800×800.
 
 ### option: Screencast.start.annotate
 * since: v1.59
+* langs: js
 - `annotate` ?<[Object]>
   - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
 
@@ -49,5 +52,6 @@ If specified, enables visual annotations on interacted elements during screencas
 
 ## async method: Screencast.stop
 * since: v1.59
+* langs: js
 
 Stops the screencast started with [`method: Screencast.start`].

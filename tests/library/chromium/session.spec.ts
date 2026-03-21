@@ -160,19 +160,20 @@ it('should emit event for each CDP event', async function({ page, server }) {
 
 it('should emit close event when session is detached', async function({ page }) {
   const client = await page.context().newCDPSession(page);
-  let closeFired = false;
-  client.on('close', () => closeFired = true);
+  let closedSession: any = null;
+  client.on('close', session => closedSession = session);
   await client.detach();
-  expect(closeFired).toBe(true);
+  expect(closedSession).toBe(client);
 });
 
 browserTest('should emit close event when page closes', async function({ browser }) {
   const context = await browser.newContext();
   const page = await context.newPage();
   const session = await context.newCDPSession(page);
-  const closePromise = new Promise<void>(f => session.on('close', f));
+  const closePromise = new Promise(f => session.on('close', f));
   await page.close();
-  await closePromise;
+  const closedSession = await closePromise;
+  expect(closedSession).toBe(session);
   await context.close();
 });
 

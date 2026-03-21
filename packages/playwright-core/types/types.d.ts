@@ -8319,11 +8319,6 @@ export interface BrowserContext {
   }): Promise<void>;
 
   /**
-   * Returns the context options that were used to create this browser context. The return type matches the options
-   * accepted by [browser.newContext([options])](https://playwright.dev/docs/api/class-browser#browser-new-context).
-   */
-  contextOptions(): BrowserContextOptions;
-  /**
    * This event is not emitted.
    */
   on(event: 'backgroundpage', listener: (page: Page) => any): this;
@@ -15830,7 +15825,7 @@ export interface CDPSession {
   /**
    * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
    */
-  on(event: 'close', listener: () => any): this;
+  on(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
@@ -15860,7 +15855,7 @@ export interface CDPSession {
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
    */
-  once(event: 'close', listener: () => any): this;
+  once(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Adds an event listener that will be automatically removed after it is triggered once. See `addListener` for more information about this event.
@@ -15880,7 +15875,7 @@ export interface CDPSession {
   /**
    * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
    */
-  addListener(event: 'close', listener: () => any): this;
+  addListener(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing
@@ -15910,7 +15905,7 @@ export interface CDPSession {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  removeListener(event: 'close', listener: () => any): this;
+  removeListener(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -15930,7 +15925,7 @@ export interface CDPSession {
   /**
    * Removes an event listener added by `on` or `addListener`.
    */
-  off(event: 'close', listener: () => any): this;
+  off(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Removes an event listener added by `on` or `addListener`.
@@ -15950,7 +15945,7 @@ export interface CDPSession {
   /**
    * Emitted when the session is closed, either because the target was closed or `session.detach()` was called.
    */
-  prependListener(event: 'close', listener: () => any): this;
+  prependListener(event: 'close', listener: (cdpSession: CDPSession) => any): this;
 
   /**
    * Emitted for every CDP event received from the session. Allows subscribing to all CDP events at once without knowing

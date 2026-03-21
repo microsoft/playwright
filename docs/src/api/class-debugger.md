@@ -1,6 +1,5 @@
 # class: Debugger
 * since: v1.59
-* langs: js
 
 API for controlling the Playwright debugger. The debugger allows pausing script execution and inspecting the page.
 Obtain the debugger instance via [`property: BrowserContext.debugger`].
