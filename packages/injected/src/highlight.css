@@ -107,6 +107,23 @@ x-pw-action-point {
   z-index: 2;
 }
 
+x-pw-subtitle {
+  position: absolute;
+  bottom: 55px;
+  left: 50%;
+  transform: translateX(-50%);
+  backdrop-filter: blur(5px);
+  background-color: rgba(0, 0, 0, 0.7);
+  color: white;
+  border-radius: 6px;
+  padding: 6px 14px;
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: nowrap;
+  user-select: none;
+  z-index: 3;
+}
+
 @keyframes pw-fade-out {
   from { opacity: 1; }
   to { opacity: 0; }

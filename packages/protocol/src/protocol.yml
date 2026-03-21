@@ -1847,6 +1847,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     keyboardUp:
       title: Key up "{key}"
@@ -1856,6 +1857,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     keyboardInsertText:
       title: Insert "{text}"
@@ -1865,6 +1867,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     keyboardType:
       title: Type "{text}"
@@ -1875,6 +1878,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     keyboardPress:
       title: Press "{key}"
@@ -1885,6 +1889,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     mouseMove:
       title: Mouse move
@@ -1896,6 +1901,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     mouseDown:
       title: Mouse down
@@ -1911,6 +1917,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     mouseUp:
       title: Mouse up
@@ -1926,6 +1933,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     mouseClick:
       title: Click
@@ -1944,6 +1952,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     mouseWheel:
       title: Mouse wheel
@@ -1954,6 +1963,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     touchscreenTap:
       title: Tap
@@ -1964,6 +1974,7 @@ Page:
         slowMo: true
         snapshot: true
         pause: true
+        input: true
 
     clearPageErrors:
       title: Clear page errors

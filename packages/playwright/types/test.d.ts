@@ -6933,6 +6933,9 @@ export interface PlaywrightWorkerOptions {
    * down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual
    * picture of each page will be scaled down if necessary to fit the specified size.
    *
+   * To annotate actions in the video with element highlights and action title subtitles, pass `annotate` with an
+   * optional `delay` in milliseconds (defaults to `500`).
+   *
    * **Usage**
    *
    * ```js
@@ -6948,7 +6951,7 @@ export interface PlaywrightWorkerOptions {
    *
    * Learn more about [recording video](https://playwright.dev/docs/test-use-options#recording-options).
    */
-  video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize };
+  video: VideoMode | /** deprecated */ 'retry-with-video' | { mode: VideoMode, size?: ViewportSize, annotate?: { delay?: number } };
 }
 
 export type ScreenshotMode = 'off' | 'on' | 'only-on-failure' | 'on-first-failure';

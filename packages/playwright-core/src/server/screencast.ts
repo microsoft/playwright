@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { assert, createGuid } from '../utils';
+import { assert, createGuid, renderTitleForCall } from '../utils';
 import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
@@ -171,9 +171,36 @@ export class Screencast implements InstrumentationListener {
       listener(frame);
   }
 
-  async onBeforeInputAction(_: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._annotate)
-      metadata.annotate = { delay: this._annotate.delay ?? 500 };
+  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
+    if (!this._annotate)
+      return;
+    metadata.annotate = true;
+  }
+
+  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
+    if (!this._annotate)
+      return;
+
+    const page = sdkObject.attribution.page;
+    if (!page)
+      return;
+
+    const title = renderTitleForCall(metadata);
+    const utility = await page.mainFrame()._utilityContext();
+
+    // Run this outside of the progress timer.
+    await utility.evaluate(async options => {
+      const { injected, delay } = options;
+      injected.annotate(options);
+      await new Promise(f => injected.utils.builtins.setTimeout(f, delay));
+      injected.hideHighlight();
+    }, {
+      injected: await utility.injectedScript(),
+      ...this._annotate,
+      point: metadata.point,
+      box: metadata.box,
+      title,
+    }).catch(e => debugLogger.log('error', e));
   }
 }
 

@@ -277,8 +277,8 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     win['__playwright_frame_bounding_rects__'] = frameBoundingRectsInfo;
 
     const kPointerWarningTitle = 'Recorded click position in absolute coordinates did not' +
-        ' match the center of the clicked element. This is likely due to a difference between' +
-        ' the test runner and the trace viewer operating systems.';
+        ' match the center of the clicked element. This is either due to the use of provided offset,' +
+        ' or due to a difference between the test runner and the trace viewer operating systems.';
 
     const scrollTops: Element[] = [];
     const scrollLefts: Element[] = [];
@@ -412,54 +412,44 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
       const search = new URL(win.location.href).searchParams;
       const isTopFrame = win === topSnapshotWindow;
 
-      if (search.get('pointX') && search.get('pointY')) {
+      if (isTopFrame && search.get('pointX') && search.get('pointY')) {
         const pointX = +search.get('pointX')!;
         const pointY = +search.get('pointY')!;
-        const hasInputTarget = search.has('hasInputTarget');
-        const hasTargetElements = targetElements.length > 0;
-        const roots = win.document.documentElement ? [win.document.documentElement] : [];
-        for (const target of (hasTargetElements ? targetElements : roots)) {
-          const pointElement = win.document.createElement('x-pw-pointer');
-          pointElement.style.position = 'fixed';
-          pointElement.style.backgroundColor = '#f44336';
-          pointElement.style.width = '20px';
-          pointElement.style.height = '20px';
-          pointElement.style.borderRadius = '10px';
-          pointElement.style.margin = '-10px 0 0 -10px';
-          pointElement.style.zIndex = '2147483646';
-          pointElement.style.display = 'flex';
-          pointElement.style.alignItems = 'center';
-          pointElement.style.justifyContent = 'center';
-          if (hasTargetElements) {
-            // Sometimes there are layout discrepancies between recording and rendering, e.g. fonts,
-            // that may place the point at the wrong place. To avoid confusion, we just show the
-            // point in the middle of the target element.
-            const box = target.getBoundingClientRect();
-            const centerX = (box.left + box.width / 2);
-            const centerY = (box.top + box.height / 2);
-            pointElement.style.left = centerX + 'px';
-            pointElement.style.top = centerY + 'px';
-            // "Warning symbol" indicates that action point is not 100% correct.
-            // Note that action point is relative to the top frame, so we can only compare in the top frame.
-            if (isTopFrame && (Math.abs(centerX - pointX) >= 10 || Math.abs(centerY - pointY) >= 10)) {
-              const warningElement = win.document.createElement('x-pw-pointer-warning');
-              warningElement.textContent = '⚠';
-              warningElement.style.fontSize = '19px';
-              warningElement.style.color = 'white';
-              warningElement.style.marginTop = '-3.5px';
-              warningElement.style.userSelect = 'none';
-              pointElement.appendChild(warningElement);
-              pointElement.setAttribute('title', kPointerWarningTitle);
-            }
-            win.document.documentElement.appendChild(pointElement);
-          } else if (isTopFrame && !hasInputTarget) {
-            // For actions without a target element, e.g. page.mouse.move(),
-            // show the point at the recorded location, which is relative to the top frame.
-            pointElement.style.left = pointX + 'px';
-            pointElement.style.top = pointY + 'px';
-            win.document.documentElement.appendChild(pointElement);
-          }
+
+        const pointElement = win.document.createElement('x-pw-pointer');
+        pointElement.style.position = 'fixed';
+        pointElement.style.backgroundColor = '#f44336';
+        pointElement.style.width = '20px';
+        pointElement.style.height = '20px';
+        pointElement.style.borderRadius = '10px';
+        pointElement.style.margin = '-10px 0 0 -10px';
+        pointElement.style.zIndex = '2147483646';
+        pointElement.style.display = 'flex';
+        pointElement.style.alignItems = 'center';
+        pointElement.style.justifyContent = 'center';
+
+        // Sometimes there are layout discrepancies between recording and rendering, e.g. fonts,
+        // that may place the point at the wrong place. To avoid confusion, we just show the
+        // point in the middle of the target element.
+        const target = targetElements[0];
+        const targetBox = target?.getBoundingClientRect();
+        const targetCenter = target ? { x: targetBox.left + targetBox.width / 2, y: targetBox.top + targetBox.height / 2 } : null;
+        pointElement.style.left = (targetCenter?.x ?? pointX) + 'px';
+        pointElement.style.top = (targetCenter?.y ?? pointY) + 'px';
+
+        const isAligned = !targetCenter || (Math.abs(targetCenter.x - pointX) <= 10 && Math.abs(targetCenter.y - pointY) <= 10);
+        if (!isAligned) {
+          const warningElement = win.document.createElement('x-pw-pointer-warning');
+          warningElement.textContent = '⚠';
+          warningElement.style.fontSize = '19px';
+          warningElement.style.color = 'white';
+          warningElement.style.marginTop = '-3.5px';
+          warningElement.style.userSelect = 'none';
+          pointElement.appendChild(warningElement);
+          pointElement.setAttribute('title', kPointerWarningTitle);
         }
+
+        win.document.documentElement.appendChild(pointElement);
       }
 
       if (canvasElements.length > 0) {

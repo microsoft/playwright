@@ -451,9 +451,6 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     this.emit(RecorderEvent.UserSourcesChanged, this.userSources(), this.pausedSourceId());
   }
 
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata) {
-  }
-
   async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
     this.updateCallLog([metadata]);
   }
