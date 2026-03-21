@@ -187,6 +187,18 @@ test('this will not work', async ({ mount }) => {
 });
 ```
 
+- Functions defined as properties of objects are silently dropped during serialization. This is a common source of confusion — no error is thrown, but the function will be `undefined` inside the component.
+
+```js
+test('this will not work', async ({ mount }) => {
+  // The `format` function will be undefined inside the component.
+  // Functions cannot be serialized across the Node.js / browser boundary.
+  const component = await mount(
+    <DataTable formatter={{ label: 'Price', format: (value) => `$${value}` }} />
+  );
+});
+```
+
 - You can't pass data to your component synchronously in a callback:
 
 ```js
