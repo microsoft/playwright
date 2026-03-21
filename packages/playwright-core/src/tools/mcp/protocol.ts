@@ -16,16 +16,22 @@
 
 // Whenever the commands/events change, the version must be updated. The latest
 // extension version should be compatible with the old MCP clients.
-export const VERSION = 1;
+export const VERSION = 2;
 
 export type ExtensionCommand = {
   'attachToTab': {
     params: {};
   };
+  'createTab': {
+    params: {
+      url?: string;
+    };
+  };
   'forwardCDPCommand': {
     params: {
       method: string,
-      sessionId?: string
+      sessionId?: string,
+      tabId?: number,
       params?: any,
     };
   };
@@ -35,7 +41,8 @@ export type ExtensionEvents = {
   'forwardCDPEvent': {
     params: {
       method: string,
-      sessionId?: string
+      sessionId?: string,
+      tabId?: number,
       params?: any,
     };
   };
