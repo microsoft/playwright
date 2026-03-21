@@ -24,7 +24,7 @@ import { TargetClosedError, isTargetClosedError, serializeError } from '../error
 import { createRootSdkObject, SdkObject } from '../instrumentation';
 import { isProtocolError } from '../protocolError';
 import { compressCallLog } from '../callLog';
-import { getMetainfo } from '../../utils/isomorphic/protocolFormatter';
+import { getMetainfo } from '../../utils/isomorphic/protocolMetainfo';
 import { Progress, ProgressController } from '../progress';
 
 import type { CallMetadata } from '../instrumentation';
