@@ -64,6 +64,7 @@ export async function startCliDaemonServer(
 ): Promise<string> {
   const sessionConfig = createSessionConfig(clientInfo, sessionName, browserInfo, options);
   const { socketPath } = sessionConfig;
+  let isStoppingExplicitly = false;
 
   // Clean up existing socket file on Unix
   if (process.platform !== 'win32' && await socketExists(socketPath)) {
@@ -95,13 +96,21 @@ export async function startCliDaemonServer(
       try {
         daemonDebug('received command', method);
         if (method === 'stop') {
+          if (isStoppingExplicitly) {
+            await connection.send({ id, result: 'ok' }).catch(() => {});
+            return;
+          }
           daemonDebug('stop command received, shutting down');
+          isStoppingExplicitly = true;
           await deleteSessionFile(clientInfo, sessionConfig);
-          const sendAck = async () => connection.send({ id, result: 'ok' }).catch(() => {});
+          // Send ack before closing the browser so the client is not blocked
+          // waiting for browser teardown.
+          await connection.send({ id, result: 'ok' }).catch(() => {});
+          // Close the browser context to terminate the browser process before exiting.
+          // Without this, the browser process may outlive the daemon.
+          await browserContext.close().catch(e => daemonDebug('failed to close browser context', e));
           if (options?.exitOnClose)
-            gracefullyProcessExitDoNotHang(0, () => sendAck());
-          else
-            await sendAck();
+            gracefullyProcessExitDoNotHang(0);
         } else if (method === 'run') {
           const { toolName, toolParams } = parseCliCommand(params.args);
           if (params.cwd)
@@ -121,6 +130,8 @@ export async function startCliDaemonServer(
 
   decorateServer(server);
   browserContext.on('close', () => Promise.resolve().then(async () => {
+    if (isStoppingExplicitly)
+      return;
     await deleteSessionFile(clientInfo, sessionConfig);
     if (options?.exitOnClose)
       gracefullyProcessExitDoNotHang(0);

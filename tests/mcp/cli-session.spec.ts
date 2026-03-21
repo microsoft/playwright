@@ -42,6 +42,27 @@ test('close', async ({ cli, server }) => {
   expect(listOutput).toContain('(no browsers)');
 });
 
+test('close terminates daemon process', async ({ cli, server }) => {
+  const { pid } = await cli('open', server.HELLO_WORLD);
+  expect(pid).toBeTruthy();
+  const daemonPid = pid!;
+
+  // Verify the daemon process is running.
+  expect(() => process.kill(daemonPid, 0)).not.toThrow();
+
+  await cli('close');
+
+  // The daemon process (and its child browser process) should be gone.
+  await expect.poll(() => {
+    try {
+      process.kill(daemonPid, 0);
+      return false;
+    } catch {
+      return true;
+    }
+  }, { timeout: 10_000 }).toBe(true);
+});
+
 test('close named session', async ({ cli, server }) => {
   await cli('-s', 'mysession', 'open', server.HELLO_WORLD);
 
