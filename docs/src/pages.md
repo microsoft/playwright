@@ -143,6 +143,12 @@ handle new pages opened by `target="_blank"` links.
 const pagePromise = context.waitForEvent('page');
 await page.getByText('open new tab').click();
 const newPage = await pagePromise;
+```typescript
+//Alternatively, use `Promise.all` to handle both the event registration and the action simultaneously, which makes the intent clearer:
+const [newPage] = await Promise.all([
+    context.waitForEvent('page'),
+    page.getByText('open new tab').click()
+]);
 // Interact with the new page normally.
 await newPage.getByRole('button').click();
 console.log(await newPage.title());
