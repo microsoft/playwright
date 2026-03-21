@@ -68,11 +68,10 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  private _connectedTabInfo: {
-    targetInfo: any;
-    // Page sessionId that should be used by this connection.
-    sessionId: string;
-  } | undefined;
+  // Map from relay sessionId (pw-tab-N) to tab info.
+  private _tabSessions = new Map<string, { targetInfo: any; tabId?: number }>();
+  // Map from extension tabId to relay sessionId, for routing CDP events.
+  private _tabIdToSessionId = new Map<number, string>();
   private _nextSessionId: number = 1;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
@@ -214,7 +213,8 @@ export class CDPRelayServer {
   }
 
   private _resetExtensionConnection() {
-    this._connectedTabInfo = undefined;
+    this._tabSessions.clear();
+    this._tabIdToSessionId.clear();
     this._extensionConnection = null;
     this._extensionConnectionPromise = new ManualPromise();
     void this._extensionConnectionPromise.catch(logUnhandledError);
@@ -245,14 +245,22 @@ export class CDPRelayServer {
 
   private _handleExtensionMessage<M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) {
     switch (method) {
-      case 'forwardCDPEvent':
-        const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
+      case 'forwardCDPEvent': {
+        let sessionId = params.sessionId;
+        if (!sessionId) {
+          // Route event to the correct relay session by tabId, or fall back to the first session.
+          if (params.tabId !== undefined)
+            sessionId = this._tabIdToSessionId.get(params.tabId);
+          else
+            sessionId = [...this._tabSessions.keys()][0];
+        }
         this._sendToPlaywright({
           sessionId,
           method: params.method,
-          params: params.params
+          params: params.params,
         });
         break;
+      }
     }
   }
 
@@ -288,28 +296,47 @@ export class CDPRelayServer {
         // Forward child session handling.
         if (sessionId)
           break;
-        // Simulate auto-attach behavior with real target info
-        const { targetInfo } = await this._extensionConnection!.send('attachToTab', { });
-        this._connectedTabInfo = {
-          targetInfo,
-          sessionId: `pw-tab-${this._nextSessionId++}`,
-        };
+        // Simulate auto-attach behavior with real target info.
+        const { targetInfo, tabId } = await this._extensionConnection!.send('attachToTab', { });
+        const tabSessionId = `pw-tab-${this._nextSessionId++}`;
+        this._tabSessions.set(tabSessionId, { targetInfo, tabId });
+        if (tabId !== undefined)
+          this._tabIdToSessionId.set(tabId, tabSessionId);
         debugLogger('Simulating auto-attach');
         this._sendToPlaywright({
           method: 'Target.attachedToTarget',
           params: {
-            sessionId: this._connectedTabInfo.sessionId,
-            targetInfo: {
-              ...this._connectedTabInfo.targetInfo,
-              attached: true,
-            },
-            waitingForDebugger: false
+            sessionId: tabSessionId,
+            targetInfo: { ...targetInfo, attached: true },
+            waitingForDebugger: false,
           }
         });
         return { };
       }
+      case 'Target.createTarget': {
+        const { targetInfo, tabId } = await this._extensionConnection!.send('createTab', { url: params?.url });
+        const tabSessionId = `pw-tab-${this._nextSessionId++}`;
+        this._tabSessions.set(tabSessionId, { targetInfo, tabId });
+        if (tabId !== undefined)
+          this._tabIdToSessionId.set(tabId, tabSessionId);
+        this._sendToPlaywright({
+          method: 'Target.attachedToTarget',
+          params: {
+            sessionId: tabSessionId,
+            targetInfo: { ...targetInfo, attached: true },
+            waitingForDebugger: false,
+          }
+        });
+        return { targetId: targetInfo.targetId };
+      }
+      case 'Target.getTargets': {
+        return {
+          targetInfos: [...this._tabSessions.values()].map(s => ({ ...s.targetInfo, attached: true })),
+        };
+      }
       case 'Target.getTargetInfo': {
-        return this._connectedTabInfo?.targetInfo;
+        const tabSession = sessionId ? this._tabSessions.get(sessionId) : undefined;
+        return (tabSession ?? [...this._tabSessions.values()][0])?.targetInfo;
       }
     }
     return await this._forwardToExtension(method, params, sessionId);
@@ -318,10 +345,13 @@ export class CDPRelayServer {
   private async _forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
     if (!this._extensionConnection)
       throw new Error('Extension not connected');
-    // Top level sessionId is only passed between the relay and the client.
-    if (this._connectedTabInfo?.sessionId === sessionId)
+    // Relay sessionIds (pw-tab-N) are internal — resolve them to tabId for routing.
+    let tabId: number | undefined;
+    if (sessionId && this._tabSessions.has(sessionId)) {
+      tabId = this._tabSessions.get(sessionId)!.tabId;
       sessionId = undefined;
-    return await this._extensionConnection.send('forwardCDPCommand', { sessionId, method, params });
+    }
+    return await this._extensionConnection.send('forwardCDPCommand', { sessionId, tabId, method, params });
   }
 
   private _sendToPlaywright(message: CDPResponse): void {
