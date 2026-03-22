@@ -104,6 +104,18 @@ Use locators that are resilient to changes in the DOM.
 // 👍
 page.getByRole('button', { name: 'submit' });
 ```
+
+### Prefer semantic locators for checkboxes
+
+When interacting with checkboxes, prefer using role-based locators instead of targeting input elements directly.
+
+```ts
+// ❌ brittle - relies on implementation
+await page.locator('input[type="checkbox"]').first().check()
+
+// ✅ stable - reflects user interaction
+await page.getByRole('checkbox', { name: 'Subscribe to newsletter' }).check()
+
 ### Generate locators
 
 Playwright has a [test generator](./codegen.md) that can generate tests and pick locators for you. It will look at your page and figure out the best locator, prioritizing role, text and test id locators. If the generator finds multiple elements matching the locator, it will improve the locator to make it resilient and uniquely identify the target element, so you don't have to worry about failing tests due to locators.
