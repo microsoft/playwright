@@ -71,8 +71,8 @@ Unhandled error that was thrown.
 * langs: js, python
 - returns: <[Object]>
   - `url` <[string]> URL of the resource.
-  - `lineNumber` <[int]> 0-based line number in the resource.
-  - `columnNumber` <[int]> 0-based column number in the resource.
+  - `line` <[int]> 0-based line number in the resource.
+  - `column` <[int]> 0-based column number in the resource.
 
 ## method: WebError.location
 * since: v1.59

@@ -22084,12 +22084,12 @@ export interface WebError {
     /**
      * 0-based line number in the resource.
      */
-    lineNumber: number;
+    line: number;
 
     /**
      * 0-based column number in the resource.
      */
-    columnNumber: number;
+    column: number;
   };
 
   /**

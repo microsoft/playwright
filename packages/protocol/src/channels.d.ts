@@ -1692,8 +1692,8 @@ export type BrowserContextPageErrorEvent = {
   page: PageChannel,
   location: {
     url: string,
-    lineNumber: number,
-    columnNumber: number,
+    line: number,
+    column: number,
   },
 };
 export type BrowserContextRouteEvent = {

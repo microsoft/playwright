@@ -1536,8 +1536,8 @@ BrowserContext:
           type: object
           properties:
             url: string
-            lineNumber: int
-            columnNumber: int
+            line: int
+            column: int
 
     route:
       parameters:

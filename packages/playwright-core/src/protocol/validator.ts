@@ -946,8 +946,8 @@ scheme.BrowserContextPageErrorEvent = tObject({
   page: tChannel(['Page']),
   location: tObject({
     url: tString,
-    lineNumber: tInt,
-    columnNumber: tInt,
+    line: tInt,
+    column: tInt,
   }),
 });
 scheme.BrowserContextRouteEvent = tObject({

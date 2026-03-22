@@ -160,17 +160,17 @@ export function parseErrorStack(stack: string, pathSeparator: string, showIntern
 
 export function errorLocationFromStack(error: Error | undefined, pathSeparator: string, showInternalStackFrames: boolean = false): {
   url: string,
-  lineNumber: number,
-  columnNumber: number
+  line: number,
+  column: number
 } {
   const stack = error?.stack || '';
   const frame = parseErrorStack(stack, pathSeparator, showInternalStackFrames).location;
   if (!frame)
-    return { url: '', lineNumber: 0, columnNumber: 0 };
+    return { url: '', line: 0, column: 0 };
   return {
     url: frame.file,
-    lineNumber: Math.max(frame.line - 1, 0),
-    columnNumber: Math.max(frame.column - 1, 0),
+    line: Math.max(frame.line - 1, 0),
+    column: Math.max(frame.column - 1, 0),
   };
 }
 

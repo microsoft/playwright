@@ -205,6 +205,6 @@ test('weberror event should include location', async ({ page, server }) => {
 
   const location = webError.location();
   expect(location.url).toBe(`${server.PREFIX}/error.js`);
-  expect(location.lineNumber).toBe(2);
-  expect(location.columnNumber).toBeGreaterThan(0); // column number is not consistent across browsers
+  expect(location.line).toBe(2);
+  expect(location.column).toBeGreaterThan(0); // column is not consistent across browsers
 });
