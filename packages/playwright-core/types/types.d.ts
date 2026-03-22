@@ -2349,7 +2349,7 @@ export interface Page {
     /**
      * Controls which messages are returned:
      */
-    filter?: "all"|"sinceNavigation";
+    filter?: "all"|"since-navigation";
   }): Promise<Array<ConsoleMessage>>;
 
   /**
@@ -3681,7 +3681,7 @@ export interface Page {
     /**
      * Controls which errors are returned:
      */
-    filter?: "all"|"sinceNavigation";
+    filter?: "all"|"since-navigation";
   }): Promise<Array<Error>>;
 
   /**

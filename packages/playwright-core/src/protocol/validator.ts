@@ -252,7 +252,7 @@ scheme.APIResponse = tObject({
   headers: tArray(tType('NameValue')),
 });
 scheme.LifecycleEvent = tEnum(['load', 'domcontentloaded', 'networkidle', 'commit']);
-scheme.ConsoleMessagesFilter = tEnum(['all', 'sinceNavigation']);
+scheme.ConsoleMessagesFilter = tEnum(['all', 'since-navigation']);
 scheme.LocalUtilsInitializer = tObject({
   deviceDescriptors: tArray(tObject({
     name: tString,

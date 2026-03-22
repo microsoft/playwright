@@ -438,7 +438,7 @@ export type APIResponse = {
 };
 
 export type LifecycleEvent = 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
-export type ConsoleMessagesFilter = 'all' | 'sinceNavigation';
+export type ConsoleMessagesFilter = 'all' | 'since-navigation';
 // ----------- LocalUtils -----------
 export type LocalUtilsInitializer = {
   deviceDescriptors: {
