@@ -956,6 +956,11 @@ scheme.BrowserContextPageEvent = tObject({
 scheme.BrowserContextPageErrorEvent = tObject({
   error: tType('SerializedError'),
   page: tChannel(['Page']),
+  location: tObject({
+    url: tString,
+    line: tInt,
+    column: tInt,
+  }),
 });
 scheme.BrowserContextRouteEvent = tObject({
   route: tChannel(['Route']),

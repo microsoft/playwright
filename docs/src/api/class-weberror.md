@@ -65,3 +65,18 @@ Unhandled error that was thrown.
 - returns: <[string]>
 
 Unhandled error that was thrown.
+
+## method: WebError.location
+* since: v1.59
+* langs: js, python
+- returns: <[Object]>
+  - `url` <[string]> URL of the resource.
+  - `line` <[int]> 0-based line number in the resource.
+  - `column` <[int]> 0-based column number in the resource.
+
+## method: WebError.location
+* since: v1.59
+* langs: csharp, java
+- returns: <[string]>
+
+URL of the resource followed by 0-based line and column numbers in the resource formatted as `URL:line:column`.

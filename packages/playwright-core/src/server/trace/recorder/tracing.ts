@@ -29,6 +29,7 @@ import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
+import { errorLocationFromStack } from '../../../utils/isomorphic/stackTrace';
 import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
@@ -602,7 +603,10 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       time: monotonicTime(),
       class: 'BrowserContext',
       method: 'pageError',
-      params: { error: serializeError(error) },
+      params: {
+        error: serializeError(error),
+        location: errorLocationFromStack(error, path.sep, false),
+      },
       pageId: page.guid,
     };
     this._appendTraceEvent(event);
