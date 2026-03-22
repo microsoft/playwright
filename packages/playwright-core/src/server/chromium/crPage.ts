@@ -988,10 +988,13 @@ class FrameSession {
 
   async _updateUserAgent(): Promise<void> {
     const options = this._crPage._browserContext._options;
+    const userAgentMetadata = calculateUserAgentMetadata(options);
+    const emulateUAPlatform = !process.env.PLAYWRIGHT_NO_UA_PLATFORM;
     await this._client.send('Emulation.setUserAgentOverride', {
       userAgent: options.userAgent || '',
       acceptLanguage: options.locale,
-      userAgentMetadata: calculateUserAgentMetadata(options),
+      platform: emulateUAPlatform && userAgentMetadata ? navigatorPlatform(userAgentMetadata, options.userAgent || '') : undefined,
+      userAgentMetadata,
     });
   }
 
@@ -1199,7 +1202,18 @@ function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
   } else if (ua.toLowerCase().includes('linux')) {
     metadata.platform = 'Linux';
   }
-  if (ua.includes('ARM'))
+  if (ua.includes('ARM') || ua.includes('aarch64'))
     metadata.architecture = 'arm';
   return metadata;
+}
+
+function navigatorPlatform(metadata: Protocol.Emulation.UserAgentMetadata, ua: string): string {
+  switch (metadata.platform) {
+    case 'Android': return metadata.architecture === 'arm' ? 'Linux armv8l' : 'Linux x86_64';
+    case 'iOS': return ua.includes('iPad') ? 'iPad' : 'iPhone';
+    case 'macOS': return 'MacIntel';
+    case 'Linux': return metadata.architecture === 'arm' ? 'Linux aarch64' : 'Linux x86_64';
+    case 'Windows': return 'Win32';
+    default: return metadata.platform;
+  }
 }
