@@ -25,6 +25,7 @@ import {
 import { ExpectError, isJestError } from './matcherHint';
 import {
   computeMatcherTitleSuffix,
+  defaultDeadlineForMatcher,
   toBeAttached,
   toBeChecked,
   toBeDisabled,
@@ -60,13 +61,47 @@ import { toHaveScreenshot, toMatchSnapshot } from './toMatchSnapshot';
 import {
   expect as expectLibrary,
 } from '../common/expectBundle';
-import { currentTestInfo } from '../common/globals';
 import { filteredStackTrace } from '../util';
-import { TestInfoImpl } from '../worker/testInfo';
 
 import type { ExpectMatcherStateInternal } from './matchers';
 import type { Expect } from '../../types/test';
-import type { TestStepInfoImpl } from '../worker/testInfo';
+import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
+
+export type ExpectConfig = {
+  testInfo?: TestInfoImpl;
+  timeout?: number;
+  toHaveScreenshot?: {
+    threshold?: number;
+    maxDiffPixels?: number;
+    maxDiffPixelRatio?: number;
+    animations?: 'allow'|'disabled';
+    caret?: 'hide'|'initial';
+    scale?: 'css'|'device';
+    stylePath?: string|Array<string>;
+    pathTemplate?: string;
+  };
+  toMatchAriaSnapshot?: {
+    pathTemplate?: string;
+    children?: 'contain'|'equal'|'deep-equal';
+  };
+  toMatchSnapshot?: {
+    threshold?: number;
+    maxDiffPixels?: number;
+    maxDiffPixelRatio?: number;
+  };
+  toPass?: {
+    timeout?: number;
+    intervals?: Array<number>;
+  };
+};
+
+let currentConfig: ExpectConfig = {};
+export function setExpectConfig(config: ExpectConfig) {
+  currentConfig = config;
+}
+export function expectConfig(): ExpectConfig {
+  return currentConfig;
+}
 
 type ExpectMessage = string | { message?: string };
 
@@ -158,7 +193,6 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 // Rely on sync call sequence to seed each matcher call with the context.
 type MatcherCallContext = {
   expectInfo: ExpectMetaInfo;
-  testInfo: TestInfoImpl | null;
   step?: TestStepInfoImpl;
 };
 
@@ -184,7 +218,7 @@ function wrapPlaywrightMatcherToPassNiceThis(matcher: any) {
   return function(this: any, ...args: any[]) {
     const { isNot, promise, utils } = this;
     const context = takeMatcherCallContext();
-    const timeout = context?.expectInfo.timeout ?? context?.testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
+    const timeout = context?.expectInfo.timeout ?? expectConfig().timeout ?? defaultExpectTimeout;
     const newThis: ExpectMatcherStateInternal = {
       isNot,
       promise,
@@ -297,8 +331,8 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       matcher = (...args: any[]) => pollMatcher(resolvedMatcherName, this._info, this._prefix, ...args);
     }
     return (...args: any[]) => {
-      const testInfo = currentTestInfo();
-      setMatcherCallContext({ expectInfo: this._info, testInfo });
+      const testInfo = expectConfig().testInfo;
+      setMatcherCallContext({ expectInfo: this._info });
       if (!testInfo)
         return matcher.call(target, ...args);
 
@@ -350,7 +384,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       };
 
       try {
-        setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
+        setMatcherCallContext({ expectInfo: this._info, step: step.info });
         const callback = () => matcher.call(target, ...args);
         const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
@@ -365,13 +399,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
 }
 
 async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, prefix: string[], ...args: any[]) {
-  const testInfo = currentTestInfo();
+  const config = expectConfig();
   const poll = info.poll!;
-  const timeout = poll.timeout ?? info.timeout ?? testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
-  const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
+  const timeout = poll.timeout ?? info.timeout ?? config.timeout ?? defaultExpectTimeout;
+  const { deadline, timeoutMessage } = config.testInfo ? config.testInfo._deadlineForMatcher(timeout) : defaultDeadlineForMatcher(timeout);
 
   const result = await pollAgainstDeadline<Error|undefined>(async () => {
-    if (testInfo && currentTestInfo() !== testInfo)
+    if (config && expectConfig() !== config)
       return { continuePolling: false, result: undefined };
 
     const innerInfo: ExpectMetaInfo = {

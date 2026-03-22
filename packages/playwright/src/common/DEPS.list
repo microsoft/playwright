@@ -7,3 +7,5 @@
 [testType.ts]
 ../matchers/expect.ts
 
+[globals.ts]
+../matchers/expect.ts

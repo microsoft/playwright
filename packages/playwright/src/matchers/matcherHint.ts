@@ -56,3 +56,12 @@ export class ExpectError extends Error {
 export function isJestError(e: unknown): e is JestError {
   return e instanceof Error && 'matcherResult' in e && !!e.matcherResult;
 }
+
+export function expectTypes(receiver: any, types: string[], matcherName: string) {
+  if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
+    const commaSeparated = types.slice();
+    const lastType = commaSeparated.pop();
+    const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
+    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}`);
+  }
+}
