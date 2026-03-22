@@ -55,7 +55,6 @@ export function httpRequest(params: HTTPRequestParams, onResponse: (r: http.Inco
       url = parsedProxyURL;
     } else {
       options.agent = new HttpsProxyAgent(parsedProxyURL);
-      options.rejectUnauthorized = false;
     }
   }
 
