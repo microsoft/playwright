@@ -29,6 +29,7 @@ export interface ToolbarButtonProps {
   testId?: string,
   className?: string,
   ariaLabel?: string,
+  errorBadge?: string,
 }
 
 export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWithChildren<ToolbarButtonProps>>(function ToolbarButton({
@@ -42,7 +43,9 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWith
   testId,
   className,
   ariaLabel,
+  errorBadge,
 }, ref) {
+  const errorId = React.useId();
   return <button
     ref={ref}
     className={clsx(className, 'toolbar-button', icon, toggled && 'toggled')}
@@ -54,9 +57,11 @@ export const ToolbarButton = React.forwardRef<HTMLButtonElement, React.PropsWith
     style={style}
     data-testid={testId}
     aria-label={ariaLabel || title}
+    aria-describedby={errorBadge ? errorId : undefined}
   >
     {icon && <span className={`codicon codicon-${icon}`} style={children ? { marginRight: 5 } : {}}></span>}
     {children}
+    {errorBadge && <span id={errorId} className='toolbar-button-error-badge' title={errorBadge} aria-label={errorBadge}></span>}
   </button>;
 });
 

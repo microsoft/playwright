@@ -15,6 +15,7 @@
 */
 
 .toolbar-button {
+  position: relative;
   flex: none;
   border: none;
   outline: none;
@@ -41,6 +42,16 @@
 
 .toolbar-button.toggled {
   color: var(--vscode-notificationLink-foreground);
+}
+
+.toolbar-button-error-badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: var(--vscode-notificationsErrorIcon-foreground);
 }
 
 .toolbar-separator {
