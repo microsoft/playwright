@@ -35,6 +35,7 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     .option('--persistent', 'use a persistent browser context')
     .option('--profile <path>', 'path to the user data dir')
     .option('--config <path>', 'path to the config file')
+    .option('--output-dir <path>', 'path to the directory for output files')
     .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
 
     .action(async (sessionName: string, options: any) => {
@@ -82,6 +83,7 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     browser: options.browser,
     headless: options.headed ? false : undefined,
     extension: options.extension,
+    outputDir: options.outputDir,
     userDataDir: options.profile,
     snapshotMode: 'full',
   });

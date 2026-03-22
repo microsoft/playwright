@@ -104,6 +104,7 @@ export function generateHelp() {
   }
 
   lines.push('\nGlobal options:');
+  lines.push(formatWithGap('  --output-dir <path>', 'path to the directory for output files'));
   lines.push(formatWithGap('  --help [command]', 'print help'));
   lines.push(formatWithGap('  --version', 'print version'));
 
