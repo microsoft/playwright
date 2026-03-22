@@ -625,6 +625,8 @@ export default defineConfig({
   - `size` ?<[Object]> Size of the recorded video. Optional.
     - `width` <[int]>
     - `height` <[int]>
+  - `annotate` ?<[Object]> If specified, visually annotates actions in the video with element highlights and action title subtitles.
+    - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
 
 Whether to record video for each test. Defaults to `'off'`.
 * `'off'`: Do not record video.
@@ -633,6 +635,8 @@ Whether to record video for each test. Defaults to `'off'`.
 * `'on-first-retry'`: Record video only when retrying a test for the first time.
 
 To control video size, pass an object with `mode` and `size` properties. If video size is not specified, it will be equal to [`property: TestOptions.viewport`] scaled down to fit into 800x800. If `viewport` is not configured explicitly the video size defaults to 800x450. Actual picture of each page will be scaled down if necessary to fit the specified size.
+
+To annotate actions in the video with element highlights and action title subtitles, pass `annotate` with an optional `delay` in milliseconds (defaults to `500`).
 
 **Usage**
 

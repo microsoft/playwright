@@ -126,6 +126,7 @@ EOF
 
 Never add Co-Authored-By agents in commit message.
 Never add "Generated with" in commit message.
+Never add test plan to PR description. Keep PR description short — a few bullet points at most.
 Branch naming for issue fixes: `fix-<issue-number>`
 
 ## Development Guides

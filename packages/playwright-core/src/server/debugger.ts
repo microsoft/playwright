@@ -17,7 +17,7 @@
 import { SdkObject } from './instrumentation';
 import { monotonicTime } from '../utils';
 import { BrowserContext } from './browserContext';
-import { getMetainfo } from '../utils/isomorphic/protocolFormatter';
+import { getMetainfo } from '../utils/isomorphic/protocolMetainfo';
 
 import type { CallMetadata, InstrumentationListener } from './instrumentation';
 
@@ -29,7 +29,7 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   private _pauseAt: PauseAt = {};
   private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
   private _enabled = false;
-  private _pauseBeforeInputActions = false;  // instead of inside input actions
+  private _pauseBeforeWaitingActions = false;  // instead of inside input actions
   private _context: BrowserContext;
 
   static Events = {
@@ -52,24 +52,27 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._muted)
+    if (this._muted || metadata.internal)
       return;
+    const metainfo = getMetainfo(metadata);
     const pauseOnPauseCall = this._enabled && metadata.type === 'BrowserContext' && metadata.method === 'pause';
-    const pauseOnNextStep = !!this._pauseAt.next && shouldPauseBeforeStep(metadata, this._pauseBeforeInputActions);
+    const pauseBeforeAction = !!this._pauseAt.next && !!metainfo?.pause && (this._pauseBeforeWaitingActions || !metainfo?.isAutoWaiting);
     const pauseOnLocation = !!this._pauseAt.location && matchesLocation(metadata, this._pauseAt.location);
-    if (pauseOnPauseCall || pauseOnNextStep || pauseOnLocation)
+    if (pauseOnPauseCall || pauseBeforeAction || pauseOnLocation)
       await this._pause(sdkObject, metadata);
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (this._muted)
+    if (this._muted || metadata.internal)
       return;
-    if (!!this._pauseAt.next && !this._pauseBeforeInputActions)
+    const metainfo = getMetainfo(metadata);
+    const pauseBeforeInput = !!this._pauseAt.next && !!metainfo?.pause && !!metainfo?.isAutoWaiting && !this._pauseBeforeWaitingActions;
+    if (pauseBeforeInput)
       await this._pause(sdkObject, metadata);
   }
 
   private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
-    if (this._muted)
+    if (this._muted || metadata.internal)
       return;
     this._pauseAt = {};
     metadata.pauseStartTime = monotonicTime();
@@ -93,8 +96,8 @@ export class Debugger extends SdkObject implements InstrumentationListener {
     this.emit(Debugger.Events.PausedStateChanged);
   }
 
-  setPauseBeforeInputActions() {
-    this._pauseBeforeInputActions = true;
+  setPauseBeforeWaitingActions() {
+    this._pauseBeforeWaitingActions = true;
   }
 
   setPauseAt(at: { next?: boolean, location?: { file: string, line?: number, column?: number } } = {}) {
@@ -120,11 +123,4 @@ function matchesLocation(metadata: CallMetadata, location: { file: string, line?
   return !!metadata.location?.file.includes(location.file) &&
       (location.line === undefined || metadata.location.line === location.line) &&
       (location.column === undefined || metadata.location.column === location.column);
-}
-
-function shouldPauseBeforeStep(metadata: CallMetadata, includeInputActions: boolean): boolean {
-  if (metadata.internal)
-    return false;
-  const metainfo = getMetainfo(metadata);
-  return !!metainfo?.pausesBeforeAction || (includeInputActions && !!metainfo?.pausesBeforeInput);
 }

@@ -1802,9 +1802,9 @@ test('should show only one pointer with multilevel iframes', async ({ page, runA
     await page.frameLocator('iframe').frameLocator('iframe').locator('button').click({ position: { x: 5, y: 5 } });
   });
   const snapshotFrame = await traceViewer.snapshotFrame('Click');
-  await expect.soft(snapshotFrame.locator('x-pw-pointer')).not.toBeAttached();
+  await expect.soft(snapshotFrame.locator('x-pw-pointer')).toBeAttached();
   await expect.soft(snapshotFrame.frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
-  await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).toBeVisible();
+  await expect.soft(snapshotFrame.frameLocator('iframe').frameLocator('iframe').locator('x-pw-pointer')).not.toBeAttached();
 });
 
 test('should show a popover', async ({ runAndTrace, page, server, platform, browserName, macVersion }) => {

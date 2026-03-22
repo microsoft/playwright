@@ -1313,21 +1313,22 @@ export class InjectedScript {
     this._highlight.runHighlightOnRaf(selector);
   }
 
-  highlightNode(node: Node, point?: { x: number, y: number }, delay?: number) {
+  annotate(annotation: { point?: channels.Point, box?: channels.Rect, title?: string, delay?: number }) {
     const highlight = this._createHighlight();
-    const fadeDuration = delay ?? 500;
+    const fadeDuration = annotation.delay ?? 500;
 
-    if (node.nodeType === Node.ELEMENT_NODE) {
-      const element = node as Element;
+    if (annotation.box) {
       highlight.updateHighlight([{
-        element,
+        box: annotation.box,
         color: 'rgba(0, 128, 255, 0.15)',
         borderColor: 'rgba(0, 128, 255, 0.6)',
         fadeDuration,
       }]);
     }
-    if (point)
-      highlight.showActionPoint(point.x, point.y, fadeDuration);
+    if (annotation.point)
+      highlight.showActionPoint(annotation.point.x, annotation.point.y, fadeDuration);
+    if (annotation.title)
+      highlight.showSubtitle(annotation.title, fadeDuration);
   }
 
   hideHighlight() {

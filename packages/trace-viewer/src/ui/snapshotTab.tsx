@@ -329,10 +329,9 @@ export type Snapshot = {
   snapshotName: string;
   pageId: string;
   point?: { x: number, y: number };
-  hasInputTarget?: boolean;
 };
 
-const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapshot' | 'afterSnapshot' | 'inputSnapshot', hasInputTarget: boolean = false): Snapshot | undefined => {
+const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapshot' | 'afterSnapshot' | 'inputSnapshot'): Snapshot | undefined => {
   if (!action)
     return undefined;
 
@@ -352,7 +351,6 @@ const createSnapshot = (action: ActionTraceEvent, snapshotNameKey: 'beforeSnapsh
     snapshotName,
     pageId: action.pageId,
     point: action.point,
-    hasInputTarget,
   };
 };
 
@@ -413,7 +411,7 @@ export function collectSnapshots(action: ActionTraceEvent | undefined): Snapshot
       afterSnapshot = beforeSnapshot;
   }
 
-  const actionSnapshot = createSnapshot(action, 'inputSnapshot', true) ?? afterSnapshot;
+  const actionSnapshot = createSnapshot(action, 'inputSnapshot') ?? afterSnapshot;
   if (actionSnapshot)
     actionSnapshot.point = action.point;
   return { action: actionSnapshot, before: beforeSnapshot, after: afterSnapshot };
@@ -430,8 +428,6 @@ export function extendSnapshot(traceUri: string, snapshot: Snapshot, shouldPopul
   if (snapshot.point) {
     params.set('pointX', String(snapshot.point.x));
     params.set('pointY', String(snapshot.point.y));
-    if (snapshot.hasInputTarget)
-      params.set('hasInputTarget', '1');
   }
   if (shouldPopulateCanvasFromScreenshot)
     params.set('shouldPopulateCanvasFromScreenshot', '1');

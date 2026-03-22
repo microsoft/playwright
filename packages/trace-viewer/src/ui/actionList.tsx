@@ -27,7 +27,8 @@ import type { ActionTraceEventInContext, ActionTreeItem } from '@isomorphic/trac
 import type { Boundaries } from './geometry';
 import { ToolbarButton } from '@web/components/toolbarButton';
 import { testStatusIcon } from './testUtils';
-import { formatProtocolParam, getMetainfo } from '@isomorphic/protocolFormatter';
+import { getMetainfo } from '@isomorphic/protocolMetainfo';
+import { formatProtocolParam } from '@isomorphic/protocolFormatter';
 
 export interface ActionListProps {
   actions: ActionTraceEventInContext[],
