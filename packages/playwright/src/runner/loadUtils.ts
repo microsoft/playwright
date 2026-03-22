@@ -350,7 +350,7 @@ function sourceMapSources(file: string, cache: Map<string, string[]>): string[] 
   }
 }
 
-export async function loadTestList(config: FullConfigInternal, filePath: string): Promise<TestCaseFilter> {
+export async function loadTestList(config: FullConfigInternal, filePath: string): Promise<TestCaseFilter & { files: string[] }> {
   try {
     const content = await fs.promises.readFile(filePath, 'utf-8');
     const lines = content.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
@@ -366,8 +366,7 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
       }
       return { project, file: toPosixPath(parseLocationArg(tokens[0]).file), titlePath: tokens.slice(1) };
     });
-    return (test: TestCase) => descriptions.some(d => {
-      // Note: there is no root yet at the time of filtering.
+    const filter = (test: TestCase) => descriptions.some(d => {
       const [projectName, , ...titles] = test.titlePath();
       if (d.project !== undefined && d.project !== projectName)
         return false;
@@ -376,6 +375,8 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
         return false;
       return d.titlePath.length <= titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });
+    filter.files = [...new Set(descriptions.map(d => d.file))];
+    return filter;
   } catch (e) {
     throw errorWithFile(filePath, 'Cannot read test list file: ' + e.message);
   }

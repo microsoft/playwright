@@ -226,3 +226,28 @@ test('--test-list with nested group entry should run only tests in that nested g
     'd-test2-p2',
   ]);
 });
+
+test('--test-list should not load files not in the list', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { testDir: '.' };
+    `,
+    'test.list': `
+      good.test.ts
+    `,
+    'good.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('good test', async () => { console.log('\\n%%good-test'); });
+    `,
+    'broken.test.ts': `
+      // This file uses invalid syntax that would crash if loaded
+      describe('broken', () => {
+        it('should fail', () => {});
+      });
+    `,
+  }, { 'workers': 1, 'test-list': 'test.list' });
+  // Should succeed without loading broken.test.ts
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+  expect(result.outputLines).toEqual(['good-test']);
+});
