@@ -681,7 +681,7 @@ test('should follow redirects when connecting over CDP', async ({ browserType, s
   });
   try {
     // Get the actual CDP endpoint
-    const json = await new Promise<string>((resolve, reject) => {
+    await new Promise<string>((resolve, reject) => {
       http.get(`http://127.0.0.1:${port}/json/version/`, resp => {
         let data = '';
         resp.on('data', chunk => data += chunk);
@@ -689,7 +689,7 @@ test('should follow redirects when connecting over CDP', async ({ browserType, s
       }).on('error', reject);
     });
     const actualEndpoint = `http://127.0.0.1:${port}/`;
-    
+
     // Set up a redirect on the test server
     server.setRoute('/json/version/', (req, res) => {
       res.writeHead(302, { Location: actualEndpoint + 'json/version/' });
@@ -700,13 +700,13 @@ test('should follow redirects when connecting over CDP', async ({ browserType, s
     const cdpBrowser = await browserType.connectOverCDP({
       endpointURL: server.PREFIX,
     });
-    
+
     const contexts = cdpBrowser.contexts();
     expect(contexts.length).toBe(1);
     const page = await contexts[0].newPage();
     await page.goto(server.EMPTY_PAGE);
     expect(page.url()).toBe(server.EMPTY_PAGE);
-    
+
     await cdpBrowser.close();
   } finally {
     await browserServer.close();
