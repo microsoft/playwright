@@ -102,6 +102,10 @@
   }
 }
 
+.step-filter {
+  margin-bottom: 8px;
+}
+
 @media only screen and (max-width: 600px) {
   .test-result {
     padding: 0 !important;
