@@ -2701,10 +2701,10 @@ Returns up to (currently) 200 last console messages from this page. See [`event:
 
 ### option: Page.consoleMessages.filter
 * since: v1.59
-- `filter` <[ConsoleMessagesFilter]<"all"|"sinceNavigation">>
+- `filter` <[ConsoleMessagesFilter]<"all"|"since-navigation">>
 
 Controls which messages are returned:
-- `'sinceNavigation'` (default) — returns only messages logged after the last committed main-frame navigation.
+- `'since-navigation'` (default) — returns only messages logged after the last committed main-frame navigation.
 - `'all'` — returns all stored console messages.
 
 
@@ -2724,10 +2724,10 @@ Returns up to (currently) 200 last page errors from this page. See [`event: Page
 
 ### option: Page.pageErrors.filter
 * since: v1.59
-- `filter` <[PageErrorsFilter]<"all"|"sinceNavigation">>
+- `filter` <[PageErrorsFilter]<"all"|"since-navigation">>
 
 Controls which errors are returned:
-- `'sinceNavigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
+- `'since-navigation'` (default) — returns only errors thrown after the last committed main-frame navigation.
 - `'all'` — returns all stored page errors.
 
 

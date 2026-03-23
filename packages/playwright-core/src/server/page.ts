@@ -407,7 +407,7 @@ export class Page extends SdkObject<PageEventMap> {
     this._consoleMessages.length = 0;
   }
 
-  consoleMessages(filter?: 'all' | 'sinceNavigation') {
+  consoleMessages(filter?: 'all' | 'since-navigation') {
     if (filter === 'all')
       return this._consoleMessages;
     const marked = this._consoleMessages.findLastIndex(m => (m as any)[navigationMarkSymbol]);
@@ -429,7 +429,7 @@ export class Page extends SdkObject<PageEventMap> {
     this._pageErrors.length = 0;
   }
 
-  pageErrors(filter?: 'all' | 'sinceNavigation') {
+  pageErrors(filter?: 'all' | 'since-navigation') {
     if (filter === 'all')
       return this._pageErrors;
     const marked = this._pageErrors.findLastIndex(e => (e as any)[navigationMarkSymbol]);
