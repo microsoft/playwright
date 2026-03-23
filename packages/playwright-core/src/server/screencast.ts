@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { assert, createGuid, renderTitleForCall } from '../utils';
+import { assert, createGuid } from '../utils';
 import { debugLogger } from '../utils';
 import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
@@ -23,12 +23,11 @@ import { registry } from './registry';
 import { validateVideoSize } from './browserContext';
 
 import type * as types from './types';
-import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
 export type ScreencastListener = (frame: types.ScreencastFrame) => void;
-export type ScreencastOptions = { width: number, height: number, quality: number, annotate?: types.AnnotateOptions };
+export type ScreencastOptions = { width: number, height: number, quality: number };
 
-export class Screencast implements InstrumentationListener {
+export class Screencast {
   private _page: Page;
   private _videoRecorder: VideoRecorder | null = null;
   private _videoId: string | null = null;
@@ -37,17 +36,14 @@ export class Screencast implements InstrumentationListener {
   // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
   private _frameThrottler: FrameThrottler | undefined;
   private _videoFrameListener: ScreencastListener | null = null;
-  private _annotate: types.AnnotateOptions | undefined;
 
   constructor(page: Page) {
     this._page = page;
-    this._page.instrumentation.addListener(this, page.browserContext);
   }
 
   dispose() {
     this._frameThrottler?.dispose();
     this._frameThrottler = undefined;
-    this._page.instrumentation.removeListener(this);
   }
 
   startForTracing(listener: ScreencastListener) {
@@ -78,10 +74,7 @@ export class Screencast implements InstrumentationListener {
     if (!recordVideo)
       return;
     // validateBrowserContextOptions ensures correct video size.
-    const videoOptions = this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
-    if (recordVideo.annotate)
-      videoOptions.annotate = recordVideo.annotate;
-    return videoOptions;
+    return this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
   }
 
   private _launchVideoRecorder(dir: string, size: { width: number, height: number }): types.VideoOptions {
@@ -113,7 +106,6 @@ export class Screencast implements InstrumentationListener {
       quality: 90,
       width: options.width,
       height: options.height,
-      annotate: options.annotate,
     });
     return this._page.browserContext._browser._videoStarted(this._page, videoId, options.outputFile);
   }
@@ -153,8 +145,6 @@ export class Screencast implements InstrumentationListener {
 
   async startScreencast(listener: ScreencastListener, options: ScreencastOptions) {
     this._clients.set(listener, options);
-    if (!this._annotate && options.annotate)
-      this._annotate = options.annotate;
     if (this._clients.size === 1)
       await this._page.delegate.startScreencast(options);
   }
@@ -163,44 +153,11 @@ export class Screencast implements InstrumentationListener {
     this._clients.delete(listener);
     if (!this._clients.size)
       await this._page.delegate.stopScreencast();
-    this._annotate = Array.from(this._clients.values()).find(options => options.annotate)?.annotate;
   }
 
   onScreencastFrame(frame: types.ScreencastFrame) {
     for (const listener of this._clients.keys())
       listener(frame);
-  }
-
-  async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
-    if (!this._annotate)
-      return;
-    metadata.annotate = true;
-  }
-
-  async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!this._annotate)
-      return;
-
-    const page = sdkObject.attribution.page;
-    if (!page)
-      return;
-
-    const title = renderTitleForCall(metadata);
-    const utility = await page.mainFrame()._utilityContext();
-
-    // Run this outside of the progress timer.
-    await utility.evaluate(async options => {
-      const { injected, delay } = options;
-      injected.annotate(options);
-      await new Promise(f => injected.utils.builtins.setTimeout(f, delay));
-      injected.hideHighlight();
-    }, {
-      injected: await utility.injectedScript(),
-      ...this._annotate,
-      point: metadata.point,
-      box: metadata.box,
-      title,
-    }).catch(e => debugLogger.log('error', e));
   }
 }
 

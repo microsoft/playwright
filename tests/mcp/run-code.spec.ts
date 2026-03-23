@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+
 import { test, expect, parseResponse, consoleEntries } from './fixtures';
 
 test('browser_run_code', async ({ client, server }) => {
@@ -104,4 +106,46 @@ test('browser_run_code return value', async ({ client, server }) => {
 
   const content = await consoleEntries(response);
   expect(content).toContain('[LOG] Submit');
+});
+
+test('browser_run_code with filename', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Clicked')">Click</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = 'async (page) => {\n  await page.getByRole("button", { name: "Click" }).click();\n}';
+  const filePath = test.info().outputPath('test-code.js');
+  await fs.promises.writeFile(filePath, code);
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_run_code',
+    arguments: { filename: 'test-code.js' },
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Clicked');
+});
+
+test('browser_run_code with filename containing template literals', async ({ client, server }) => {
+  server.setContent('/', `
+    <button onclick="console.log('Done')">Submit</button>
+  `, 'text/html');
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  const code = 'async (page) => {\n  const title = `Page: ${await page.title()}`;\n  await page.getByRole("button", { name: "Submit" }).click();\n  return title;\n}';
+  const filePath = test.info().outputPath('template-code.js');
+  await fs.promises.writeFile(filePath, code);
+
+  const response = parseResponse(await client.callTool({
+    name: 'browser_run_code',
+    arguments: { filename: 'template-code.js' },
+  }));
+  const content = await consoleEntries(response);
+  expect(content).toContain('[LOG] Done');
 });

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
 import vm from 'vm';
 
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
@@ -22,7 +23,8 @@ import { z } from '../../mcpBundle';
 import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
-  code: z.string().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
+  code: z.string().optional().describe(`A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction. For example: \`async (page) => { await page.getByRole('button', { name: 'Submit' }).click(); return await page.title(); }\``),
+  filename: z.string().optional().describe('Load code from the specified file. If both code and filename are provided, code will be ignored.'),
 });
 
 const runCode = defineTabTool({
@@ -36,22 +38,30 @@ const runCode = defineTabTool({
   },
 
   handle: async (tab, params, response) => {
-    response.addCode(`await (${params.code})(page);`);
+    let code = params.code;
+    if (params.filename) {
+      const resolvedPath = await response.resolveClientFilename(params.filename);
+      code = await fs.promises.readFile(resolvedPath, 'utf-8');
+    }
+    response.addCode(`await (${code})(page);`);
     const __end__ = new ManualPromise<void>();
-    const context = {
+    const context: any = {
       page: tab.page,
       __end__,
     };
     vm.createContext(context);
     await tab.waitForCompletion(async () => {
-      const snippet = `(async () => {
-        try {
-          const result = await (${params.code})(page);
-          __end__.resolve(JSON.stringify(result));
-        } catch (e) {
-          __end__.reject(e);
-        }
-      })()`;
+      // Compile the user function separately to avoid template literal escaping issues
+      // when the code contains backticks.
+      context.__fn__ = vm.runInContext('(' + code + ')', context);
+      const snippet = '(async () => {\n' +
+          '  try {\n' +
+          '    const result = await __fn__(page);\n' +
+          '    __end__.resolve(JSON.stringify(result));\n' +
+          '  } catch (e) {\n' +
+          '    __end__.reject(e);\n' +
+          '  }\n' +
+          '})()';
       await vm.runInContext(snippet, context);
       const result = await __end__;
       if (typeof result === 'string')

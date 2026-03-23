@@ -42,14 +42,6 @@ If a screencast is already active (e.g. started by tracing or video recording), 
 
 Defaults to 800×800.
 
-### option: Screencast.start.annotate
-* since: v1.59
-* langs: js
-- `annotate` ?<[Object]>
-  - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
-
-If specified, enables visual annotations on interacted elements during screencast. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
-
 ## async method: Screencast.stop
 * since: v1.59
 * langs: js

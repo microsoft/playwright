@@ -37,6 +37,7 @@ type RenderedHighlightEntry = {
   tooltipTop?: number,
   tooltipLeft?: number,
   tooltipText?: string,
+  cssStyle?: string,
 };
 
 export type HighlightEntry = {
@@ -46,6 +47,7 @@ export type HighlightEntry = {
   borderColor?: string,
   fadeDuration?: number,
   tooltipText?: string,
+  cssStyle?: string,
 };
 
 export class Highlight {
@@ -53,7 +55,10 @@ export class Highlight {
   private _glassPaneShadow: ShadowRoot;
   private _renderedEntries: RenderedHighlightEntry[] = [];
   private _actionPointElement: HTMLElement;
-  private _subtitleElement: HTMLElement;
+  private _titleElement: HTMLElement;
+  private _userOverlayContainer: HTMLElement;
+  private _userOverlays = new Map<string, HTMLElement>();
+  private _userOverlayHidden = false;
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
@@ -79,8 +84,10 @@ export class Highlight {
     this._glassPaneElement.style.backgroundColor = 'transparent';
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
-    this._subtitleElement = document.createElement('x-pw-subtitle');
-    this._subtitleElement.setAttribute('hidden', 'true');
+    this._titleElement = document.createElement('x-pw-title');
+    this._titleElement.setAttribute('hidden', 'true');
+    this._userOverlayContainer = document.createElement('x-pw-user-overlays');
+    this._userOverlayContainer.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
     // workaround for firefox: when taking screenshots, it complains adoptedStyleSheets.push
     // is not a function, so we fallback to style injection
@@ -94,7 +101,8 @@ export class Highlight {
       this._glassPaneShadow.appendChild(styleElement);
     }
     this._glassPaneShadow.appendChild(this._actionPointElement);
-    this._glassPaneShadow.appendChild(this._subtitleElement);
+    this._glassPaneShadow.appendChild(this._titleElement);
+    this._glassPaneShadow.appendChild(this._userOverlayContainer);
   }
 
   install() {
@@ -148,15 +156,61 @@ export class Highlight {
     this._actionPointElement.hidden = true;
   }
 
-  showSubtitle(text: string, fadeDuration: number) {
-    this._subtitleElement.textContent = text;
-    this._subtitleElement.hidden = false;
-    const fadeTime = fadeDuration / 4;
-    this._subtitleElement.style.animation = `pw-fade-out ${fadeTime}ms ease-out ${fadeDuration - fadeTime}ms forwards`;
+  showActionTitle(text: string, fadeDuration: number, cssStyle?: string) {
+    this._titleElement.textContent = text;
+    this._titleElement.hidden = false;
+    if (fadeDuration) {
+      const fadeTime = fadeDuration / 4;
+      this._titleElement.style.animation = `pw-fade-out ${fadeTime}ms ease-out ${fadeDuration - fadeTime}ms forwards`;
+    } else {
+      this._titleElement.style.animation = '';
+    }
+    if (cssStyle)
+      this._titleElement.style.cssText += ';' + cssStyle;
   }
 
-  hideSubtitle() {
-    this._subtitleElement.hidden = true;
+  hideActionTitle() {
+    this._titleElement.hidden = true;
+  }
+
+  addUserOverlay(id: string, html: string) {
+    const element = this._injectedScript.document.createElement('div');
+    element.className = 'x-pw-user-overlay';
+    element.innerHTML = html;
+    // Mild sanitization for convenience.
+    for (const script of element.querySelectorAll('script'))
+      script.remove();
+    for (const el of element.querySelectorAll('*')) {
+      for (const attr of [...el.attributes]) {
+        if (attr.name.startsWith('on'))
+          el.removeAttribute(attr.name);
+      }
+    }
+    this._userOverlays.set(id, element);
+    this._userOverlayContainer.appendChild(element);
+    this._userOverlayContainer.hidden = this._userOverlayHidden;
+    return id;
+  }
+
+  removeUserOverlay(id: string) {
+    const element = this._userOverlays.get(id);
+    if (element) {
+      element.remove();
+      this._userOverlays.delete(id);
+    }
+    if (this._userOverlays.size === 0)
+      this._userOverlayContainer.hidden = true;
+  }
+
+  hideUserOverlays() {
+    this._userOverlayHidden = true;
+    this._userOverlayContainer.hidden = true;
+  }
+
+  showUserOverlays() {
+    this._userOverlayHidden = false;
+    if (this._userOverlays.size > 0)
+      this._userOverlayContainer.hidden = false;
   }
 
   clearHighlight() {
@@ -196,7 +250,7 @@ export class Highlight {
         lineElement.textContent = entry.tooltipText;
         tooltipElement.appendChild(lineElement);
       }
-      this._renderedEntries.push({ targetElement: entry.element, box: toDOMRect(entry.box), color: entry.color, borderColor: entry.borderColor, fadeDuration: entry.fadeDuration, tooltipElement, highlightElement });
+      this._renderedEntries.push({ targetElement: entry.element, box: toDOMRect(entry.box), color: entry.color, borderColor: entry.borderColor, fadeDuration: entry.fadeDuration, cssStyle: entry.cssStyle, tooltipElement, highlightElement });
     }
 
     // 2. Trigger layout while positioning tooltips and computing bounding boxes.
@@ -230,6 +284,8 @@ export class Highlight {
         entry.highlightElement.style.border = '2px solid ' + entry.borderColor;
       if (entry.fadeDuration)
         entry.highlightElement.style.animation = `pw-fade-out ${entry.fadeDuration}ms ease-out forwards`;
+      if (entry.cssStyle)
+        entry.highlightElement.style.cssText += ';' + entry.cssStyle;
 
       if (this._isUnderTest)
         console.error('Highlight box for test: ' + JSON.stringify({ x: box.x, y: box.y, width: box.width, height: box.height })); // eslint-disable-line no-console

@@ -355,6 +355,27 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await recorder?.setMode('none');
   }
 
+  async overlayAdd(params: channels.PageOverlayAddParams): Promise<channels.PageOverlayAddResult> {
+    const id = await this._page.overlay.add(params.html, params.timeout);
+    return { id };
+  }
+
+  async overlayRemove(params: channels.PageOverlayRemoveParams): Promise<channels.PageOverlayRemoveResult> {
+    await this._page.overlay.remove(params.id);
+  }
+
+  async overlayHide(params: channels.PageOverlayHideParams): Promise<channels.PageOverlayHideResult> {
+    await this._page.overlay.hide();
+  }
+
+  async overlayShow(params: channels.PageOverlayShowParams): Promise<channels.PageOverlayShowResult> {
+    await this._page.overlay.show();
+  }
+
+  async overlayConfigure(params: channels.PageOverlayConfigureParams): Promise<channels.PageOverlayConfigureResult> {
+    await this._page.overlay.configure(params);
+  }
+
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
     if (this._screencastListener)
       throw new Error('Screencast is already running');
@@ -362,7 +383,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     this._screencastListener = (frame: ScreencastFrame) => {
       this._dispatchEvent('screencastFrame', { data: frame.buffer });
     };
-    await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height, annotate: params.annotate });
+    await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height });
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {

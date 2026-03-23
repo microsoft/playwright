@@ -5278,6 +5278,8 @@ export interface Page {
 
   mouse: Mouse;
 
+  overlay: Overlay;
+
   /**
    * API testing helper associated with this page. This method returns the same instance as
    * [browserContext.request](https://playwright.dev/docs/api/class-browsercontext#browser-context-request) on the
@@ -10193,16 +10195,6 @@ export interface Browser {
          * Video frame height.
          */
         height: number;
-      };
-
-      /**
-       * If specified, enables visual annotations on interacted elements during video recording.
-       */
-      annotate?: {
-        /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
-         */
-        delay?: number;
       };
     };
 
@@ -15477,16 +15469,6 @@ export interface BrowserType<Unused = {}> {
          */
         height: number;
       };
-
-      /**
-       * If specified, enables visual annotations on interacted elements during video recording.
-       */
-      annotate?: {
-        /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
-         */
-        delay?: number;
-      };
     };
 
     /**
@@ -17349,16 +17331,6 @@ export interface AndroidDevice {
          * Video frame height.
          */
         height: number;
-      };
-
-      /**
-       * If specified, enables visual annotations on interacted elements during video recording.
-       */
-      annotate?: {
-        /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
-         */
-        delay?: number;
       };
     };
 
@@ -19940,16 +19912,6 @@ export interface Electron {
          */
         height: number;
       };
-
-      /**
-       * If specified, enables visual annotations on interacted elements during video recording.
-       */
-      annotate?: {
-        /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
-         */
-        delay?: number;
-      };
     };
 
     /**
@@ -20861,6 +20823,56 @@ export interface Mouse {
    * @param deltaY Pixels to scroll vertically.
    */
   wheel(deltaX: number, deltaY: number): Promise<void>;
+}
+
+/**
+ * Interface for managing page overlays that display persistent visual indicators on top of the page.
+ */
+export interface Overlay {
+  /**
+   * Adds an overlay with the given HTML content. The overlay is displayed on top of the page until removed. Returns a
+   * disposable that removes the overlay when disposed.
+   * @param html HTML content for the overlay.
+   * @param options
+   */
+  add(html: string, options?: {
+    /**
+     * Optional timeout to remove the decoration after. Decoration stays until dismissed if not provided.
+     */
+    timeout?: number;
+  }): Promise<Disposable>;
+
+  /**
+   * Configures overlay behavior.
+   * @param options
+   */
+  configure(options?: {
+    /**
+     * Delay in milliseconds between actions when overlay is active.
+     */
+    actionDelay?: number;
+
+    /**
+     * CSS style string applied to the action title element displayed during actions.
+     */
+    actionStyle?: string;
+
+    /**
+     * CSS style string applied to the locator highlight element displayed during actions.
+     */
+    locatorStyle?: string;
+  }): Promise<void>;
+
+  /**
+   * Hides all overlays without removing them. Overlays can be shown again with
+   * [overlay.show()](https://playwright.dev/docs/api/class-overlay#overlay-show).
+   */
+  hide(): Promise<void>;
+
+  /**
+   * Shows previously hidden overlays.
+   */
+  show(): Promise<void>;
 }
 
 /**
@@ -22050,17 +22062,6 @@ export interface Video {
    */
   start(options?: {
     /**
-     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
-     * highlighted with a semi-transparent blue box and click points are shown as red circles.
-     */
-    annotate?: {
-      /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
-       */
-      delay?: number;
-    };
-
-    /**
      * Path where the video should be saved when the recording is stopped.
      */
     path?: string;
@@ -22964,16 +22965,6 @@ export interface BrowserContextOptions {
        * Video frame height.
        */
       height: number;
-    };
-
-    /**
-     * If specified, enables visual annotations on interacted elements during video recording.
-     */
-    annotate?: {
-      /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
-       */
-      delay?: number;
     };
   };
 

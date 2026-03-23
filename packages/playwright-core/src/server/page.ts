@@ -35,6 +35,7 @@ import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSerializers';
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
+import { Overlay } from './overlay';
 import { Screencast } from './screencast';
 import { NonRecoverableDOMError } from './dom';
 
@@ -189,6 +190,7 @@ export class Page extends SdkObject<PageEventMap> {
   private _locatorHandlerRunningCounter = 0;
   private _networkRequests: network.Request[] = [];
 
+  readonly overlay: Overlay;
   readonly screencast: Screencast;
   _closeReason: string | undefined;
 
@@ -202,6 +204,7 @@ export class Page extends SdkObject<PageEventMap> {
     this.touchscreen = new input.Touchscreen(delegate.rawTouchscreen, this);
     this.screenshotter = new Screenshotter(this);
     this.frameManager = new frames.FrameManager(this);
+    this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
     if (delegate.pdf)
       this.pdf = delegate.pdf.bind(delegate);
@@ -280,6 +283,7 @@ export class Page extends SdkObject<PageEventMap> {
   _didClose() {
     this.frameManager.dispose();
     this.screencast.dispose();
+    this.overlay.dispose();
     assert(this._closedState !== 'closed', 'Page closed twice');
     this._closedState = 'closed';
     this.emit(Page.Events.Close);
@@ -292,6 +296,7 @@ export class Page extends SdkObject<PageEventMap> {
   _didCrash() {
     this.frameManager.dispose();
     this.screencast.dispose();
+    this.overlay.dispose();
     this.emit(Page.Events.Crash);
     this._crashed = true;
     this.instrumentation.onPageClose(this);
