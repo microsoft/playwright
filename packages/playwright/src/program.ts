@@ -113,7 +113,7 @@ function addTestServerCommand(program: Command) {
 function addShowReportCommand(program: Command) {
   const command = program.command('show-report [report]');
   command.description('show HTML report');
-  command.action((report, options) => showHTMLReport(report, options.host, +options.port));
+  command.action((report, options) => showHTMLReport(terminalScreen, report, options.host, +options.port));
   command.option('--host <host>', 'Host to serve report on', 'localhost');
   command.option('--port <port>', 'Port to serve report on', '9323');
   command.addHelpText('afterAll', `
