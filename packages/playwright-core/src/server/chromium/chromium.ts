@@ -90,7 +90,7 @@ export class Chromium extends BrowserType {
       headersMap['User-Agent'] = getUserAgent();
 
     const wsEndpoint = await urlToWSEndpoint(progress, endpointURL, headersMap);
-    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap });
+    const chromeTransport = await WebSocketTransport.connect(progress, wsEndpoint, { headers: headersMap, followRedirects: true });
     const closeAndWait = async () => await chromeTransport.closeAndWait();
     return this._connectOverCDPImpl(progress, chromeTransport, closeAndWait, options, onClose);
   }
