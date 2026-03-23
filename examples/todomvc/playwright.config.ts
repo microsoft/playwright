@@ -47,7 +47,7 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    video: { mode: 'on', annotate: { delay: 500 } },
+    video: { mode: 'on', annotate: { action: { delay: 500 }, test: { level: 'step' } } },
   },
 
   /* Configure projects for major browsers */

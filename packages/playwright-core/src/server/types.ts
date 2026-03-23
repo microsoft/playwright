@@ -44,7 +44,7 @@ export type PointerActionWaitOptions = CommonActionOptions & {
 };
 
 export type AnnotateOptions = {
-  delay?: number,
+  action?: { delay?: number },
 };
 
 export type VideoOptions = {

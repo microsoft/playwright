@@ -1028,7 +1028,9 @@ export type BrowserTypeLaunchPersistentContextParams = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1114,7 +1116,9 @@ export type BrowserTypeLaunchPersistentContextOptions = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1268,7 +1272,9 @@ export type BrowserNewContextParams = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1339,7 +1345,9 @@ export type BrowserNewContextOptions = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1413,7 +1421,9 @@ export type BrowserNewContextForReuseParams = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1484,7 +1494,9 @@ export type BrowserNewContextForReuseOptions = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -1622,7 +1634,9 @@ export type BrowserContextInitializer = {
         height: number,
       },
       annotate?: {
-        delay?: number,
+        action?: {
+          delay?: number,
+        },
       },
     },
     strictSelectors?: boolean,
@@ -2169,6 +2183,7 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
   startScreencast(params: PageStartScreencastParams, progress?: Progress): Promise<PageStartScreencastResult>;
+  setScreencastStatus(params: PageSetScreencastStatusParams, progress?: Progress): Promise<PageSetScreencastStatusResult>;
   stopScreencast(params?: PageStopScreencastParams, progress?: Progress): Promise<PageStopScreencastResult>;
   videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
   videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
@@ -2693,7 +2708,9 @@ export type PageStartScreencastParams = {
     height: number,
   },
   annotate?: {
-    delay?: number,
+    action?: {
+      delay?: number,
+    },
   },
 };
 export type PageStartScreencastOptions = {
@@ -2702,10 +2719,19 @@ export type PageStartScreencastOptions = {
     height: number,
   },
   annotate?: {
-    delay?: number,
+    action?: {
+      delay?: number,
+    },
   },
 };
 export type PageStartScreencastResult = void;
+export type PageSetScreencastStatusParams = {
+  status: string[],
+};
+export type PageSetScreencastStatusOptions = {
+
+};
+export type PageSetScreencastStatusResult = void;
 export type PageStopScreencastParams = {};
 export type PageStopScreencastOptions = {};
 export type PageStopScreencastResult = void;
@@ -2715,7 +2741,9 @@ export type PageVideoStartParams = {
     height: number,
   },
   annotate?: {
-    delay?: number,
+    action?: {
+      delay?: number,
+    },
   },
 };
 export type PageVideoStartOptions = {
@@ -2724,7 +2752,9 @@ export type PageVideoStartOptions = {
     height: number,
   },
   annotate?: {
-    delay?: number,
+    action?: {
+      delay?: number,
+    },
   },
 };
 export type PageVideoStartResult = {
@@ -4661,7 +4691,15 @@ export type ElectronLaunchParams = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
+      test?: {
+        file?: boolean,
+        title?: boolean,
+        step?: boolean,
+        all?: boolean,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -4700,7 +4738,15 @@ export type ElectronLaunchOptions = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
+      test?: {
+        file?: boolean,
+        title?: boolean,
+        step?: boolean,
+        all?: boolean,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -5090,7 +5136,9 @@ export type AndroidDeviceLaunchBrowserParams = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,
@@ -5159,7 +5207,9 @@ export type AndroidDeviceLaunchBrowserOptions = {
       height: number,
     },
     annotate?: {
-      delay?: number,
+      action?: {
+        delay?: number,
+      },
     },
   },
   strictSelectors?: boolean,

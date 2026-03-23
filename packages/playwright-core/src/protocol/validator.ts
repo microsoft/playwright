@@ -612,7 +612,9 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       height: tInt,
     })),
     annotate: tOptional(tObject({
-      delay: tOptional(tInt),
+      action: tOptional(tObject({
+        delay: tOptional(tInt),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -726,7 +728,9 @@ scheme.BrowserNewContextParams = tObject({
       height: tInt,
     })),
     annotate: tOptional(tObject({
-      delay: tOptional(tInt),
+      action: tOptional(tObject({
+        delay: tOptional(tInt),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -800,7 +804,9 @@ scheme.BrowserNewContextForReuseParams = tObject({
       height: tInt,
     })),
     annotate: tOptional(tObject({
-      delay: tOptional(tInt),
+      action: tOptional(tObject({
+        delay: tOptional(tInt),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -921,7 +927,9 @@ scheme.BrowserContextInitializer = tObject({
         height: tInt,
       })),
       annotate: tOptional(tObject({
-        delay: tOptional(tInt),
+        action: tOptional(tObject({
+          delay: tOptional(tInt),
+        })),
       })),
     })),
     strictSelectors: tOptional(tBoolean),
@@ -1557,10 +1565,16 @@ scheme.PageStartScreencastParams = tObject({
     height: tInt,
   })),
   annotate: tOptional(tObject({
-    delay: tOptional(tInt),
+    action: tOptional(tObject({
+      delay: tOptional(tInt),
+    })),
   })),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
+scheme.PageSetScreencastStatusParams = tObject({
+  status: tArray(tString),
+});
+scheme.PageSetScreencastStatusResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));
 scheme.PageStopScreencastResult = tOptional(tObject({}));
 scheme.PageVideoStartParams = tObject({
@@ -1569,7 +1583,9 @@ scheme.PageVideoStartParams = tObject({
     height: tInt,
   })),
   annotate: tOptional(tObject({
-    delay: tOptional(tInt),
+    action: tOptional(tObject({
+      delay: tOptional(tInt),
+    })),
   })),
 });
 scheme.PageVideoStartResult = tObject({
@@ -2671,7 +2687,15 @@ scheme.ElectronLaunchParams = tObject({
       height: tInt,
     })),
     annotate: tOptional(tObject({
-      delay: tOptional(tInt),
+      action: tOptional(tObject({
+        delay: tOptional(tInt),
+      })),
+      test: tOptional(tObject({
+        file: tOptional(tBoolean),
+        title: tOptional(tBoolean),
+        step: tOptional(tBoolean),
+        all: tOptional(tBoolean),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),
@@ -2909,7 +2933,9 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       height: tInt,
     })),
     annotate: tOptional(tObject({
-      delay: tOptional(tInt),
+      action: tOptional(tObject({
+        delay: tOptional(tInt),
+      })),
     })),
   })),
   strictSelectors: tOptional(tBoolean),

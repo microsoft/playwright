@@ -147,9 +147,10 @@ Optional dimensions of the recorded video. If not specified the size will be equ
 ### option: Video.start.annotate
 * since: v1.59
 - `annotate` ?<[Object]>
-  - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+  - `action` ?<[Object]> Controls visual annotations on interacted elements.
+    - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
 
-If specified, enables visual annotations on interacted elements during video recording. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
+If `action` is specified, enables visual annotations during video recording. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
 
 ## async method: Video.stop
 * since: v1.59

@@ -98,6 +98,8 @@ export class TestInfoImpl implements TestInfo {
   private readonly _stepMap = new Map<string, TestStepInternal>();
   _onDidFinishTestFunctionCallbacks = new Set<() => Promise<void>>();
   _onCustomMessageCallback?: (data: any) => Promise<any>;
+  _onUserStepBegin?: (step: TestStepInternal) => Promise<void>;
+  _onUserStepEnd?: (step: TestStepInternal) => Promise<void>;
   _hasNonRetriableError = false;
   _hasUnhandledError = false;
   _allowSkips = false;

@@ -149,6 +149,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Page.pickLocator', { title: 'Pick locator', group: 'configuration', }],
   ['Page.cancelPickLocator', { title: 'Cancel pick locator', group: 'configuration', }],
   ['Page.startScreencast', { title: 'Start screencast', group: 'configuration', }],
+  ['Page.setScreencastStatus', { title: 'Set screencast status', group: 'configuration', }],
   ['Page.stopScreencast', { title: 'Stop screencast', group: 'configuration', }],
   ['Page.videoStart', { title: 'Start video recording', group: 'configuration', }],
   ['Page.videoStop', { title: 'Stop video recording', group: 'configuration', }],

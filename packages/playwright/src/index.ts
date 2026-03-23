@@ -438,14 +438,16 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfoPublic) => {
+  context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
+    const annotateTest = typeof video === 'string' ? undefined : video.annotate?.test;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await runDaemonForContext(testInfo, context);
+      installScreencastTitleUpdater(testInfo, context, annotateTest);
       await use(context);
       await close();
       return;
@@ -454,6 +456,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await runDaemonForContext(testInfo, context);
+    installScreencastTitleUpdater(testInfo, context, annotateTest);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -467,8 +470,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // First time we are reusing the context, we should create the page.
     let [page] = context.pages();
-    if (!page)
+    if (!page) {
       page = await context.newPage();
+      await page.screencast.setStatus(test.info().titlePath);
+    }
     await use(page);
   },
 
@@ -795,6 +800,32 @@ class ArtifactsRecorder {
         await tracing.stopChunk({ path: this._testInfo._tracing.maybeGenerateNextTraceRecordingPath() });
     }, { internal: true });
   }
+}
+
+function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, annotateTest?: { level?: 'file' | 'title' | 'step' }) {
+  if (!annotateTest)
+    return;
+
+  const testTitle = annotateTest.level === 'file' ? [testInfo.titlePath[0]] : testInfo.titlePath;
+  const stepStack: string[] = [];
+
+  const updateStatus = async () => {
+    const status = annotateTest.level === 'step' ? [...testTitle, ...stepStack] : testTitle;
+    for (const page of context.pages())
+      await page.screencast.setStatus(status);
+  };
+  testInfo._onUserStepBegin = async step => {
+    stepStack.push(step.title);
+    await updateStatus();
+  };
+  testInfo._onUserStepEnd = async () => {
+    stepStack.pop();
+    await updateStatus();
+  };
+
+  // Set initial status immediately.
+  for (const page of context.pages())
+    page.screencast.setStatus(testTitle).catch(() => {});
 }
 
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
