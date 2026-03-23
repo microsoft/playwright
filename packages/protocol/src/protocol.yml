@@ -601,7 +601,10 @@ ContextOptions:
         annotate:
           type: object?
           properties:
-            delay: int?
+            action:
+              type: object?
+              properties:
+                delay: int?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -2108,7 +2111,18 @@ Page:
         annotate:
           type: object?
           properties:
-            delay: int?
+            action:
+              type: object?
+              properties:
+                delay: int?
+
+    setScreencastStatus:
+      title: Set screencast status
+      group: configuration
+      parameters:
+        status:
+          type: array
+          items: string
 
     stopScreencast:
       title: Stop screencast
@@ -2126,7 +2140,10 @@ Page:
         annotate:
           type: object?
           properties:
-            delay: int?
+            action:
+              type: object?
+              properties:
+                delay: int?
       returns:
         artifact: Artifact
 
@@ -4150,7 +4167,17 @@ Electron:
             annotate:
               type: object?
               properties:
-                delay: int?
+                action:
+                  type: object?
+                  properties:
+                    delay: int?
+                test:
+                  type: object?
+                  properties:
+                    file: boolean?
+                    title: boolean?
+                    step: boolean?
+                    all: boolean?
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?

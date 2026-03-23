@@ -10196,13 +10196,18 @@ export interface Browser {
       };
 
       /**
-       * If specified, enables visual annotations on interacted elements during video recording.
+       * Controls visual annotations on interacted elements.video recording.
        */
       annotate?: {
         /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         * If specified, enables visual annotations for actions.
          */
-        delay?: number;
+        action?: {
+          /**
+           * How long each annotation is displayed in milliseconds. Defaults to `500`.
+           */
+          delay?: number;
+        };
       };
     };
 
@@ -15479,13 +15484,18 @@ export interface BrowserType<Unused = {}> {
       };
 
       /**
-       * If specified, enables visual annotations on interacted elements during video recording.
+       * Controls visual annotations on interacted elements.video recording.
        */
       annotate?: {
         /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         * If specified, enables visual annotations for actions.
          */
-        delay?: number;
+        action?: {
+          /**
+           * How long each annotation is displayed in milliseconds. Defaults to `500`.
+           */
+          delay?: number;
+        };
       };
     };
 
@@ -16181,6 +16191,13 @@ export interface Screencast {
       height: number;
     };
   }): Promise<Disposable>;
+  /**
+   * Sets the status line displayed as a breadcrumb overlay on the screencast. The status is displayed persistently
+   * until changed or cleared.
+   * @param status Array of strings rendered as breadcrumbs in the status line.
+   */
+  setStatus(status: ReadonlyArray<string>): Promise<void>;
+
   /**
    * Stops the screencast started with
    * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
@@ -17352,13 +17369,18 @@ export interface AndroidDevice {
       };
 
       /**
-       * If specified, enables visual annotations on interacted elements during video recording.
+       * Controls visual annotations on interacted elements.video recording.
        */
       annotate?: {
         /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         * If specified, enables visual annotations for actions.
          */
-        delay?: number;
+        action?: {
+          /**
+           * How long each annotation is displayed in milliseconds. Defaults to `500`.
+           */
+          delay?: number;
+        };
       };
     };
 
@@ -19942,13 +19964,18 @@ export interface Electron {
       };
 
       /**
-       * If specified, enables visual annotations on interacted elements during video recording.
+       * Controls visual annotations on interacted elements.video recording.
        */
       annotate?: {
         /**
-         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         * If specified, enables visual annotations for actions.
          */
-        delay?: number;
+        action?: {
+          /**
+           * How long each annotation is displayed in milliseconds. Defaults to `500`.
+           */
+          delay?: number;
+        };
       };
     };
 
@@ -22050,14 +22077,19 @@ export interface Video {
    */
   start(options?: {
     /**
-     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
-     * highlighted with a semi-transparent blue box and click points are shown as red circles.
+     * If `action` is specified, enables visual annotations during video recording. Interacted elements are highlighted
+     * with a semi-transparent blue box and click points are shown as red circles.
      */
     annotate?: {
       /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       * Controls visual annotations on interacted elements.
        */
-      delay?: number;
+      action?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
+      };
     };
 
     /**
@@ -22967,13 +22999,18 @@ export interface BrowserContextOptions {
     };
 
     /**
-     * If specified, enables visual annotations on interacted elements during video recording.
+     * Controls visual annotations on interacted elements.video recording.
      */
     annotate?: {
       /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       * If specified, enables visual annotations for actions.
        */
-      delay?: number;
+      action?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        delay?: number;
+      };
     };
   };
 

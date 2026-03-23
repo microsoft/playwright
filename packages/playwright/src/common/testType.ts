@@ -266,6 +266,7 @@ export class TestTypeImpl {
     if (!testInfo)
       throw new Error(`test.step() can only be called from a test`);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
+    await testInfo._onUserStepBegin?.(step);
     return await currentZone().with('stepZone', step).run(async () => {
       try {
         let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
@@ -287,6 +288,8 @@ export class TestTypeImpl {
       } catch (error) {
         step.complete({ error });
         throw error;
+      } finally {
+        await testInfo._onUserStepEnd?.(step);
       }
     });
   }

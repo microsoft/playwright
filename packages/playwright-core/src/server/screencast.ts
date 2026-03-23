@@ -38,6 +38,7 @@ export class Screencast implements InstrumentationListener {
   private _frameThrottler: FrameThrottler | undefined;
   private _videoFrameListener: ScreencastListener | null = null;
   private _annotate: types.AnnotateOptions | undefined;
+  private _status: string[] | undefined;
 
   constructor(page: Page) {
     this._page = page;
@@ -151,12 +152,29 @@ export class Screencast implements InstrumentationListener {
     await this.stopVideoRecording();
   }
 
+  async setStatus(status: string[]) {
+    this._status = status;
+    if (this._clients.size)
+      await this._doSetStatus();
+  }
+
+  private async _doSetStatus() {
+    if (!this._status)
+      return;
+    const utility = await this._page.mainFrame()._utilityContext();
+    await utility.evaluate(({ injected, status }) => {
+      injected.setScreencastStatus(status);
+    }, { injected: await utility.injectedScript(), status: this._status }).catch(e => debugLogger.log('error', e));
+  }
+
   async startScreencast(listener: ScreencastListener, options: ScreencastOptions) {
     this._clients.set(listener, options);
     if (!this._annotate && options.annotate)
       this._annotate = options.annotate;
-    if (this._clients.size === 1)
+    if (this._clients.size === 1) {
+      await this._doSetStatus();
       await this._page.delegate.startScreencast(options);
+    }
   }
 
   async stopScreencast(listener: ScreencastListener) {
@@ -172,34 +190,34 @@ export class Screencast implements InstrumentationListener {
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
-    if (!this._annotate)
+    if (!this._annotate?.action)
       return;
     metadata.annotate = true;
   }
 
   async onBeforeInputAction(sdkObject: SdkObject, metadata: CallMetadata): Promise<void> {
-    if (!this._annotate)
+    if (!this._annotate?.action)
       return;
 
     const page = sdkObject.attribution.page;
     if (!page)
       return;
 
-    const title = renderTitleForCall(metadata);
+    const actionTitle = renderTitleForCall(metadata);
     const utility = await page.mainFrame()._utilityContext();
 
     // Run this outside of the progress timer.
     await utility.evaluate(async options => {
       const { injected, delay } = options;
-      injected.annotate(options);
+      injected.setScreencastAnnotation(options);
       await new Promise(f => injected.utils.builtins.setTimeout(f, delay));
-      injected.hideHighlight();
+      injected.setScreencastAnnotation(null);
     }, {
       injected: await utility.injectedScript(),
-      ...this._annotate,
+      delay: this._annotate.action.delay,
       point: metadata.point,
       box: metadata.box,
-      title,
+      actionTitle,
     }).catch(e => debugLogger.log('error', e));
   }
 }

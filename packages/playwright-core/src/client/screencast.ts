@@ -30,7 +30,11 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number }, annotate?: { delay?: number } } = {}): Promise<DisposableStub> {
+  async setStatus(status: string[]): Promise<void> {
+    await this._page._channel.setScreencastStatus({ status });
+  }
+
+  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number }, annotate?: { action?: { delay?: number } } } = {}): Promise<DisposableStub> {
     if (this._onFrame)
       throw new Error('Screencast is already started');
     this._onFrame = onFrame;

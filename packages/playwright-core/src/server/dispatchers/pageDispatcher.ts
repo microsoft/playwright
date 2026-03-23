@@ -365,6 +365,10 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height, annotate: params.annotate });
   }
 
+  async setScreencastStatus(params: channels.PageSetScreencastStatusParams): Promise<channels.PageSetScreencastStatusResult> {
+    await this._page.screencast.setStatus(params.status);
+  }
+
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
     await this._stopScreencast();
   }

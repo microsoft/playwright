@@ -53,7 +53,8 @@ export class Highlight {
   private _glassPaneShadow: ShadowRoot;
   private _renderedEntries: RenderedHighlightEntry[] = [];
   private _actionPointElement: HTMLElement;
-  private _subtitleElement: HTMLElement;
+  private _titleElement: HTMLElement;
+  private _statusElement: HTMLElement;
   private _isUnderTest: boolean;
   private _injectedScript: InjectedScript;
   private _rafRequest: number | undefined;
@@ -79,8 +80,10 @@ export class Highlight {
     this._glassPaneElement.style.backgroundColor = 'transparent';
     this._actionPointElement = document.createElement('x-pw-action-point');
     this._actionPointElement.setAttribute('hidden', 'true');
-    this._subtitleElement = document.createElement('x-pw-subtitle');
-    this._subtitleElement.setAttribute('hidden', 'true');
+    this._titleElement = document.createElement('x-pw-title');
+    this._titleElement.setAttribute('hidden', 'true');
+    this._statusElement = document.createElement('x-pw-status');
+    this._statusElement.setAttribute('hidden', 'true');
     this._glassPaneShadow = this._glassPaneElement.attachShadow({ mode: this._isUnderTest ? 'open' : 'closed' });
     // workaround for firefox: when taking screenshots, it complains adoptedStyleSheets.push
     // is not a function, so we fallback to style injection
@@ -94,7 +97,8 @@ export class Highlight {
       this._glassPaneShadow.appendChild(styleElement);
     }
     this._glassPaneShadow.appendChild(this._actionPointElement);
-    this._glassPaneShadow.appendChild(this._subtitleElement);
+    this._glassPaneShadow.appendChild(this._titleElement);
+    this._glassPaneShadow.appendChild(this._statusElement);
   }
 
   install() {
@@ -148,15 +152,33 @@ export class Highlight {
     this._actionPointElement.hidden = true;
   }
 
-  showSubtitle(text: string, fadeDuration: number) {
-    this._subtitleElement.textContent = text;
-    this._subtitleElement.hidden = false;
-    const fadeTime = fadeDuration / 4;
-    this._subtitleElement.style.animation = `pw-fade-out ${fadeTime}ms ease-out ${fadeDuration - fadeTime}ms forwards`;
+  showActionTitle(text: string, fadeDuration: number) {
+    this._titleElement.textContent = text;
+    this._titleElement.hidden = false;
+    if (fadeDuration) {
+      const fadeTime = fadeDuration / 4;
+      this._titleElement.style.animation = `pw-fade-out ${fadeTime}ms ease-out ${fadeDuration - fadeTime}ms forwards`;
+    } else {
+      this._titleElement.style.animation = '';
+    }
   }
 
-  hideSubtitle() {
-    this._subtitleElement.hidden = true;
+  hideActionTitle() {
+    this._titleElement.hidden = true;
+  }
+
+  showStatus(status: string[]) {
+    this._statusElement.textContent = '';
+    for (let i = 0; i < status.length; i++) {
+      const span = this._injectedScript.document.createElement('div');
+      span.textContent = status[i];
+      this._statusElement.appendChild(span);
+    }
+    this._statusElement.hidden = status.length === 0;
+  }
+
+  hideStatus() {
+    this._statusElement.hidden = true;
   }
 
   clearHighlight() {
