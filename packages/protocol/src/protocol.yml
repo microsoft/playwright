@@ -433,7 +433,7 @@ ConsoleMessagesFilter:
   type: enum
   literals:
   - all
-  - sinceNavigation
+  - since-navigation
 
 CommonScreenshotOptions:
   type: mixin
