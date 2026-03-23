@@ -32,7 +32,7 @@ This project incorporates components from the projects listed below. The origina
 -	debug@4.4.3 (https://github.com/debug-js/debug)
 -	define-lazy-prop@2.0.0 (https://github.com/sindresorhus/define-lazy-prop)
 -	depd@2.0.0 (https://github.com/dougwilson/nodejs-depd)
--	diff@7.0.0 (https://github.com/kpdecker/jsdiff)
+-	diff@8.0.3 (https://github.com/kpdecker/jsdiff)
 -	dotenv@16.4.5 (https://github.com/motdotla/dotenv)
 -	dunder-proto@1.0.1 (https://github.com/es-shims/dunder-proto)
 -	ee-first@1.1.1 (https://github.com/jonathanong/ee-first)
@@ -862,7 +862,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF depd@2.0.0 AND INFORMATION
 
-%% diff@7.0.0 NOTICES AND INFORMATION BEGIN HERE
+%% diff@8.0.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 BSD 3-Clause License
 
@@ -894,7 +894,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
-END OF diff@7.0.0 AND INFORMATION
+END OF diff@8.0.3 AND INFORMATION
 
 %% dotenv@16.4.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
