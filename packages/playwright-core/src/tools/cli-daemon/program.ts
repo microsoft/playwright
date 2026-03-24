@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
@@ -69,6 +70,10 @@ function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
 }
 
+function globalConfigFile(): string {
+  return path.join(os.homedir(), '.playwright', 'cli.config.json');
+}
+
 export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {
   const config = options.config ? path.resolve(options.config) : undefined;
   try {
@@ -90,6 +95,8 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   const envOverrides = configUtils.configFromEnv();
   const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
   const configInFile = await configUtils.loadConfig(configFile);
+  const globalConfigPath = fs.existsSync(globalConfigFile()) ? globalConfigFile() : undefined;
+  const globalConfigInFile = await configUtils.loadConfig(globalConfigPath);
 
   let result = configUtils.mergeConfig(configUtils.defaultConfig, {
     browser: {
@@ -99,6 +106,7 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     }
   });
 
+  result = configUtils.mergeConfig(result, globalConfigInFile);
   result = configUtils.mergeConfig(result, configInFile);
   result = configUtils.mergeConfig(result, daemonOverrides);
   result = configUtils.mergeConfig(result, envOverrides);
