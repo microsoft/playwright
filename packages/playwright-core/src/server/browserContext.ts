@@ -821,10 +821,6 @@ export function normalizeProxySettings(proxy: types.ProxySettings): types.ProxyS
   return { ...proxy, server, bypass };
 }
 
-// Computes user-agent emulation parameters from BrowserContextOptions.
-// Returns userAgentMetadata (Chromium CDP struct) and navigatorPlatform for
-// syncing navigator.platform with the emulated user agent across all three browsers.
-// Set PLAYWRIGHT_NO_UA_PLATFORM=1 to opt out of the platform sync.
 // Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434
 export function calculateUserAgentEmulation(options: types.BrowserContextOptions): {
   navigatorPlatform: string | undefined;
@@ -880,7 +876,7 @@ export function calculateUserAgentEmulation(options: types.BrowserContextOptions
     userAgentMetadata.architecture = 'arm';
 
   let navigatorPlatform: string | undefined;
-  if (!process.env['PLAYWRIGHT_NO_UA_PLATFORM']) {
+  if (!process.env.PLAYWRIGHT_NO_UA_PLATFORM) {
     switch (userAgentMetadata.platform) {
       case 'Android': navigatorPlatform = userAgentMetadata.architecture === 'arm' ? 'Linux armv8l' : 'Linux x86_64'; break;
       case 'iOS': navigatorPlatform = ua.includes('iPad') ? 'iPad' : 'iPhone'; break;
