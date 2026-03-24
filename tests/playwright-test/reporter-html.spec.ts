@@ -3134,12 +3134,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const reportFolder = testInfo.outputPath('playwright-report');
       expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
       expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
-      expect(fs.existsSync(path.join(reportFolder, 'report.zip'))).toBe(true);
       const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
       expect(html).toContain('src="./report.js"');
       expect(html).toContain('href="./report.css"');
-      expect(html).not.toContain('playwrightReportBase64');
-      // No inline scripts or styles (CSP-compatible).
+      // Report data is stored in a <template> element (not a <script>), so no inline scripts or styles.
+      expect(html).toContain('<template id="playwrightReportBase64">');
       expect(html).not.toMatch(/<script[^>]*>[^<\s]/);
       expect(html).not.toMatch(/<style[\s>]/);
 
