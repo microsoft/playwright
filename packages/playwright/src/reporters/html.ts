@@ -143,9 +143,9 @@ class HtmlReporter implements ReporterV2 {
     await removeFolders([this._outputFolder]);
     const noSnippets = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_SNIPPETS') ?? this._options.noSnippets;
     const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
-    const separateAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_SEPARATE_ASSETS') ?? this._options.separateAssets ?? false;
+    const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
 
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, separateAssets, {
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
@@ -257,13 +257,13 @@ class HtmlBuilder {
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
-  private _separateAssets: boolean;
+  private _doNotInlineAssets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, separateAssets: boolean, options: HTMLReportOptions) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;
-    this._separateAssets = separateAssets;
+    this._doNotInlineAssets = doNotInlineAssets;
     fs.mkdirSync(this._reportFolder, { recursive: true });
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
@@ -337,7 +337,7 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    const reportIndexFile = await this._writeAppStaticFiles();
+    const reportIndexFile = await this._writeStaticAssets();
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -362,10 +362,10 @@ class HtmlBuilder {
     return { ok, singleTestId };
   }
 
-  private async _writeAppStaticFiles() {
+  private async _writeStaticAssets() {
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
     const reportIndexFile = path.join(this._reportFolder, 'index.html');
-    if (this._separateAssets) {
+    if (this._doNotInlineAssets) {
       const html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
       await Promise.all([
         fs.promises.writeFile(reportIndexFile, html),

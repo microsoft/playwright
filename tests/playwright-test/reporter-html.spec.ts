@@ -3122,13 +3122,13 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
 
-    test('should generate unpacked report with separateAssets', async ({ runInlineTest, showReport, page }, testInfo) => {
+    test('should generate unpacked report with doNotInlineAssets', async ({ runInlineTest, showReport, page }, testInfo) => {
       const result = await runInlineTest({
         'example.spec.ts': `
           import { test, expect } from '@playwright/test';
           test('passes', async ({}) => {});
         `,
-      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_SEPARATE_ASSETS: '1' });
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS: '1' });
       expect(result.exitCode).toBe(0);
 
       const reportFolder = testInfo.outputPath('playwright-report');
