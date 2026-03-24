@@ -337,9 +337,7 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
-    await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
+    const reportIndexFile = await this._copyApp();
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -359,11 +357,32 @@ class HtmlBuilder {
       }
     }
 
-    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
-    if (this._separateAssets)
-      await this._extractAssetsToSeparateFiles();
+    await this._writeReportData(reportIndexFile);
 
     return { ok, singleTestId };
+  }
+
+  private async _copyApp() {
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
+    const reportIndexFile = path.join(this._reportFolder, 'index.html');
+    if (this._separateAssets) {
+      const html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
+      await Promise.all([
+        fs.promises.writeFile(reportIndexFile, html),
+        fs.promises.copyFile(path.join(appFolder, 'report.js'), path.join(this._reportFolder, 'report.js')),
+        fs.promises.copyFile(path.join(appFolder, 'report.css'), path.join(this._reportFolder, 'report.css')),
+      ]);
+    } else {
+      let html = await fs.promises.readFile(path.join(appFolder, 'index.html'), 'utf-8');
+      const [js, css] = await Promise.all([
+        fs.promises.readFile(path.join(appFolder, 'report.js'), 'utf-8'),
+        fs.promises.readFile(path.join(appFolder, 'report.css'), 'utf-8'),
+      ]);
+      html = html.replace(/<script type="module"[^>]*><\/script>/, () => `<script type="module">${js}</script>`);
+      html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${css}</style>`);
+      await fs.promises.writeFile(reportIndexFile, html);
+    }
+    return reportIndexFile;
   }
 
   private async _writeReportData(filePath: string) {
@@ -380,36 +399,6 @@ class HtmlBuilder {
 
   private _addDataFile(fileName: string, data: any) {
     this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
-  }
-
-  private async _extractAssetsToSeparateFiles() {
-    // Extract inlined JS and CSS on the fly to avoid shipping them twice in the playwright npm package.
-    const indexFile = path.join(this._reportFolder, 'index.html');
-    let html = await fs.promises.readFile(indexFile, 'utf-8');
-
-    const styleTag = `<style type='text/css'>`;
-    const styleStart = html.indexOf(styleTag);
-    const styleEnd = html.indexOf('</style>', styleStart);
-    const css = html.slice(styleStart + styleTag.length, styleEnd);
-
-    const scriptTag = `<script type="module">`;
-    const scriptStart = html.indexOf(scriptTag);
-    const scriptEnd = html.indexOf('</script>', scriptStart);
-    const js = html.slice(scriptStart + scriptTag.length, scriptEnd);
-
-    await Promise.all([
-      fs.promises.writeFile(path.join(this._reportFolder, 'report.css'), css),
-      fs.promises.writeFile(path.join(this._reportFolder, 'report.js'), js),
-    ]);
-
-    // Replace in reverse document order so earlier offsets stay valid after each replacement.
-    const replacements = [
-      { start: styleStart, end: styleEnd + '</style>'.length, text: `<link rel="stylesheet" href="report.css">` },
-      { start: scriptStart, end: scriptEnd + '</script>'.length, text: `<script type="module" src="report.js"></script>` },
-    ].sort((a, b) => b.start - a.start);
-    for (const { start, end, text } of replacements)
-      html = html.slice(0, start) + text + html.slice(end);
-    await fs.promises.writeFile(indexFile, html);
   }
 
   private _createEntryForSuite(data: DataMap, projectName: string, suite: api.Suite, fileName: string, deep: boolean) {

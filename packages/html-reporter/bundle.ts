@@ -29,16 +29,8 @@ export function bundle(): Plugin {
       handler(html, ctx) {
         if (!ctx || !ctx.bundle)
           return html;
-        html = html.replace(/(?=<!--)([\s\S]*?)-->/, '');
-        for (const [name, value] of Object.entries(ctx.bundle)) {
-          if (name.endsWith('.map'))
-            continue;
-          if ('code' in value)
-            html = html.replace(/<script type="module".*<\/script>/, () => `<script type="module">${value.code}</script>`);
-          else
-            html = html.replace(/<link rel="stylesheet"[^>]*>/, () => `<style type='text/css'>${value.source}</style>`);
-        }
-        return html;
+        // Strip the license comment block.
+        return html.replace(/(?=<!--)([\s\S]*?)-->/, '');
       },
     },
     closeBundle: () => {
@@ -47,7 +39,8 @@ export function bundle(): Plugin {
         return;
       const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
       fs.mkdirSync(targetDir, { recursive: true });
-      fs.copyFileSync(path.join(outDir, 'index.html'), path.join(targetDir, 'index.html'));
+      for (const file of ['index.html', 'report.js', 'report.css'])
+        fs.copyFileSync(path.join(outDir, file), path.join(targetDir, file));
     },
   };
 }

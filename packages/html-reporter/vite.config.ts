@@ -21,6 +21,7 @@ import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '',
   plugins: [
     react(),
     bundle()
@@ -41,6 +42,8 @@ export default defineConfig({
       output: {
         manualChunks: undefined,
         inlineDynamicImports: true,
+        entryFileNames: 'report.js',
+        assetFileNames: (assetInfo) => assetInfo.names.some(n => n.endsWith('.css')) ? 'report.css' : '[name][extname]',
       },
     },
   },

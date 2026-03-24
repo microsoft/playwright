@@ -3135,8 +3135,8 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
       expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
       const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
-      expect(html).toContain('src="report.js"');
-      expect(html).toContain('href="report.css"');
+      expect(html).toContain('src="./report.js"');
+      expect(html).toContain('href="./report.css"');
       // Report data stays embedded in the zip within index.html (CSP-safe: type="application/zip" is not executed as JS).
       expect(html).toContain('playwrightReportBase64');
 
