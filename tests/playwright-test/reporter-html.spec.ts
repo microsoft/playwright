@@ -3122,6 +3122,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
 
+    test('should generate unpacked report with doNotInlineAssets', async ({ runInlineTest, showReport, page }, testInfo) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS: '1' });
+      expect(result.exitCode).toBe(0);
+
+      const reportFolder = testInfo.outputPath('playwright-report');
+      expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
+      expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
+      const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
+      expect(html).toContain('src="./report.js"');
+      expect(html).toContain('href="./report.css"');
+      // Report data is stored in a <template> element (not a <script>), so no inline scripts or styles.
+      expect(html).toContain('<template id="playwrightReportBase64">');
+      expect(html).not.toMatch(/<script[^>]*>[^<\s]/);
+      expect(html).not.toMatch(/<style[\s>]/);
+
+      await showReport();
+      await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+      await page.getByRole('link', { name: 'passes' }).click();
+      await expect(page.getByText('example.spec.ts')).toBeVisible();
+    });
+
     test('worker test list', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `
