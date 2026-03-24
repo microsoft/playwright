@@ -73,8 +73,6 @@ export function installSourceMapSupport() {
     environment: 'node',
     handleUncaughtExceptions: false,
     retrieveSourceMap(source) {
-      if (source.startsWith('file://') && !sourceMaps.has(source))
-        source = source.substring('file://'.length);
       if (!sourceMaps.has(source))
         return null;
       const sourceMapPath = sourceMaps.get(source)!;
