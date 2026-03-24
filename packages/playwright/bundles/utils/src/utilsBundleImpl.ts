@@ -31,9 +31,3 @@ export const chokidar = chokidarLibrary;
 
 import * as getEastAsianWidthLibrary from 'get-east-asian-width';
 export const getEastAsianWidth = getEastAsianWidthLibrary;
-
-import * as unifiedLibrary from 'unified';
-export const unified = unifiedLibrary;
-
-import remarkParseLibrary from 'remark-parse';
-export const remarkParse = remarkParseLibrary;
