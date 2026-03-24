@@ -50,6 +50,11 @@ scheme.Rect = tObject({
   width: tFloat,
   height: tFloat,
 });
+scheme.AnnotateOptions = tObject({
+  duration: tOptional(tFloat),
+  position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+  fontSize: tOptional(tInt),
+});
 scheme.SerializedValue = tObject({
   n: tOptional(tFloat),
   b: tOptional(tBoolean),
@@ -611,6 +616,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -722,6 +728,7 @@ scheme.BrowserNewContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -793,6 +800,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -911,6 +919,7 @@ scheme.BrowserContextInitializer = tObject({
         width: tInt,
         height: tInt,
       })),
+      annotate: tOptional(tType('AnnotateOptions')),
     })),
     strictSelectors: tOptional(tBoolean),
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -1539,32 +1548,33 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
-scheme.PageOverlayAddParams = tObject({
+scheme.PageOverlayShowParams = tObject({
   html: tString,
-  timeout: tOptional(tInt),
+  duration: tOptional(tFloat),
 });
-scheme.PageOverlayAddResult = tObject({
+scheme.PageOverlayShowResult = tObject({
   id: tString,
 });
 scheme.PageOverlayRemoveParams = tObject({
   id: tString,
 });
 scheme.PageOverlayRemoveResult = tOptional(tObject({}));
-scheme.PageOverlayHideParams = tOptional(tObject({}));
-scheme.PageOverlayHideResult = tOptional(tObject({}));
-scheme.PageOverlayShowParams = tOptional(tObject({}));
-scheme.PageOverlayShowResult = tOptional(tObject({}));
-scheme.PageOverlayConfigureParams = tObject({
-  actionDelay: tOptional(tInt),
-  actionStyle: tOptional(tString),
-  locatorStyle: tOptional(tString),
+scheme.PageOverlayChapterParams = tObject({
+  title: tString,
+  description: tOptional(tString),
+  duration: tOptional(tFloat),
 });
-scheme.PageOverlayConfigureResult = tOptional(tObject({}));
+scheme.PageOverlayChapterResult = tOptional(tObject({}));
+scheme.PageOverlaySetVisibleParams = tObject({
+  visible: tBoolean,
+});
+scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
 scheme.PageStartScreencastParams = tObject({
   preferredSize: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  annotate: tOptional(tType('AnnotateOptions')),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));
@@ -1574,6 +1584,7 @@ scheme.PageVideoStartParams = tObject({
     width: tInt,
     height: tInt,
   })),
+  annotate: tOptional(tType('AnnotateOptions')),
 });
 scheme.PageVideoStartResult = tObject({
   artifact: tChannel(['Artifact']),
@@ -2673,6 +2684,7 @@ scheme.ElectronLaunchParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
@@ -2908,6 +2920,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       width: tInt,
       height: tInt,
     })),
+    annotate: tOptional(tType('AnnotateOptions')),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),

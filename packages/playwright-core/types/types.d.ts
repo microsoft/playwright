@@ -10196,6 +10196,26 @@ export interface Browser {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        duration?: number;
+
+        /**
+         * Position of the action title overlay. Defaults to `"top-right"`.
+         */
+        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+        /**
+         * Font size of the action title in pixels. Defaults to `24`.
+         */
+        fontSize?: number;
+      };
     };
 
     /**
@@ -15469,6 +15489,26 @@ export interface BrowserType<Unused = {}> {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        duration?: number;
+
+        /**
+         * Position of the action title overlay. Defaults to `"top-right"`.
+         */
+        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+        /**
+         * Font size of the action title in pixels. Defaults to `24`.
+         */
+        fontSize?: number;
+      };
     };
 
     /**
@@ -16161,6 +16201,11 @@ export interface Screencast {
     preferredSize?: {
       width: number;
       height: number;
+    };
+    annotate?: {
+      duration?: number;
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
+      fontSize?: number;
     };
   }): Promise<Disposable>;
   /**
@@ -17331,6 +17376,26 @@ export interface AndroidDevice {
          * Video frame height.
          */
         height: number;
+      };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        duration?: number;
+
+        /**
+         * Position of the action title overlay. Defaults to `"top-right"`.
+         */
+        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+        /**
+         * Font size of the action title in pixels. Defaults to `24`.
+         */
+        fontSize?: number;
       };
     };
 
@@ -19912,6 +19977,26 @@ export interface Electron {
          */
         height: number;
       };
+
+      /**
+       * If specified, enables visual annotations on interacted elements during video recording.
+       */
+      annotate?: {
+        /**
+         * How long each annotation is displayed in milliseconds. Defaults to `500`.
+         */
+        duration?: number;
+
+        /**
+         * Position of the action title overlay. Defaults to `"top-right"`.
+         */
+        position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+        /**
+         * Font size of the action title in pixels. Defaults to `24`.
+         */
+        fontSize?: number;
+      };
     };
 
     /**
@@ -20830,49 +20915,42 @@ export interface Mouse {
  */
 export interface Overlay {
   /**
+   * Shows a chapter overlay with a title and optional description, centered on the page with a blurred backdrop. Useful
+   * for narrating video recordings. The overlay is removed after the specified duration, or 2000ms.
+   * @param title Title text displayed prominently in the overlay.
+   * @param options
+   */
+  chapter(title: string, options?: {
+    /**
+     * Optional description text displayed below the title.
+     */
+    description?: string;
+
+    /**
+     * Duration in milliseconds after which the overlay is automatically removed. Defaults to `2000`.
+     */
+    duration?: number;
+  }): Promise<void>;
+
+  /**
+   * Sets visibility of all overlays without removing them.
+   * @param visible Whether overlays should be visible.
+   */
+  setVisible(visible: boolean): Promise<void>;
+
+  /**
    * Adds an overlay with the given HTML content. The overlay is displayed on top of the page until removed. Returns a
    * disposable that removes the overlay when disposed.
    * @param html HTML content for the overlay.
    * @param options
    */
-  add(html: string, options?: {
+  show(html: string, options?: {
     /**
-     * Optional timeout to remove the decoration after. Decoration stays until dismissed if not provided.
+     * Duration in milliseconds after which the overlay is automatically removed. Overlay stays until dismissed if not
+     * provided.
      */
-    timeout?: number;
+    duration?: number;
   }): Promise<Disposable>;
-
-  /**
-   * Configures overlay behavior.
-   * @param options
-   */
-  configure(options?: {
-    /**
-     * Delay in milliseconds between actions when overlay is active.
-     */
-    actionDelay?: number;
-
-    /**
-     * CSS style string applied to the action title element displayed during actions.
-     */
-    actionStyle?: string;
-
-    /**
-     * CSS style string applied to the locator highlight element displayed during actions.
-     */
-    locatorStyle?: string;
-  }): Promise<void>;
-
-  /**
-   * Hides all overlays without removing them. Overlays can be shown again with
-   * [overlay.show()](https://playwright.dev/docs/api/class-overlay#overlay-show).
-   */
-  hide(): Promise<void>;
-
-  /**
-   * Shows previously hidden overlays.
-   */
-  show(): Promise<void>;
 }
 
 /**
@@ -22062,6 +22140,27 @@ export interface Video {
    */
   start(options?: {
     /**
+     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
+     * highlighted with a semi-transparent blue box and click points are shown as red circles.
+     */
+    annotate?: {
+      /**
+       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       */
+      duration?: number;
+
+      /**
+       * Position of the action title overlay. Defaults to `"top-right"`.
+       */
+      position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+      /**
+       * Font size of the action title in pixels. Defaults to `24`.
+       */
+      fontSize?: number;
+    };
+
+    /**
      * Path where the video should be saved when the recording is stopped.
      */
     path?: string;
@@ -22965,6 +23064,26 @@ export interface BrowserContextOptions {
        * Video frame height.
        */
       height: number;
+    };
+
+    /**
+     * If specified, enables visual annotations on interacted elements during video recording.
+     */
+    annotate?: {
+      /**
+       * How long each annotation is displayed in milliseconds. Defaults to `500`.
+       */
+      duration?: number;
+
+      /**
+       * Position of the action title overlay. Defaults to `"top-right"`.
+       */
+      position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+
+      /**
+       * Font size of the action title in pixels. Defaults to `24`.
+       */
+      fontSize?: number;
     };
   };
 

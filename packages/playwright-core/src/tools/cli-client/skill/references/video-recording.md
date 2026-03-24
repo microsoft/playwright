@@ -33,39 +33,59 @@ playwright-cli video-stop --filename=recordings/checkout-test-run-42.webm
 
 ### 2. Record entire hero scripts.
 
-When recording a video for the user or as a proof of work, it is best to create a code snippet and execute it.
+When recording a video for the user or as a proof of work, it is best to create a code snippet and execute it with run-code.
 It allows pulling appropriate pauses between the actions and annotating the video. There are new Playwright APIs for that.
 
-1) Perform scenario using CLI and take note of all locators and actions
-2) Create a file with the intended script for video (below)
-3) Use playwright-cli run-code with it
+1) Perform scenario using CLI and take note of all locators and actions. You'll need those locators to request thier bounding boxes for highlight.
+2) Create a file with the intended script for video (below). Use pressSequentially w/ delay for nice typing, make reasonable pauses.
+3) Use playwright-cli run-code --file your-script.js
+
+**Important**: Overlays are `pointer-events: none` — they do not interfere with page interactions. You can safely keep sticky overlays visible while clicking, filling, or performing any actions on the page.
 
 ```js
 async page => {
   await page.video().start({ path: 'video.webm', size: { width: 1280, height: 800 } });
   await page.goto('https://demo.playwright.dev/todomvc');
 
-  // Render big message, can be much prettier, this is just a basic version.
-  await page.overlay.add(`
-    <div style="position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 6px;
-      background: #808080A0;
-      border-radius: 10px;
-      font-size: 24px;
-      color: white;">1. Add the first item</div>
-  `, { timeout: 2000 });
+  // Show a chapter card — blurs the page and shows a dialog.
+  // Blocks until duration expires, then auto-removes.
+  // Use this for simple use cases, but always feel free to hand-craft your own beautiful
+  // overlay via await page.overlay.show().
+  await page.overlay.chapter('Adding Todo Items', {
+    description: 'We will add several items to the todo list.',
+    duration: 2000,
+  });
 
   // Perform action
-  await page.getByRole('textbox', { name: 'What needs to be done?' }).pressSequentially('Walk the dog');
+  await page.getByRole('textbox', { name: 'What needs to be done?' }).pressSequentially('Walk the dog', { delay: 60 });
   await page.getByRole('textbox', { name: 'What needs to be done?' }).press('Enter');
+  await page.waitForTimeout(1000);
 
-  // Wait a bit for user to see what happened.
-  await page.waitForTimeout(2000);
+  // Show next chapter
+  await page.overlay.chapter('Verifying Results', {
+    description: 'Checking the item appeared in the list.',
+    duration: 2000,
+  });
 
-  // Now annotate what happened right on the screen.
+  // Add a sticky annotation that stays while you perform actions.
+  // Overlays are pointer-events: none, so they won't block clicks.
+  const annotation = await page.overlay.show(`
+    <div style="position: absolute; top: 8px; right: 8px;
+      padding: 6px 12px; background: rgba(0,0,0,0.7);
+      border-radius: 8px; font-size: 13px; color: white;">
+      ✓ Item added successfully
+    </div>
+  `);
+
+  // Perform more actions while the annotation is visible
+  await page.getByRole('textbox', { name: 'What needs to be done?' }).pressSequentially('Buy groceries', { delay: 60 });
+  await page.getByRole('textbox', { name: 'What needs to be done?' }).press('Enter');
+  await page.waitForTimeout(1500);
+
+  // Remove the annotation when done
+  await annotation.dispose();
+
+  // You can also highlight relevant locators and provide contextual annotations.
   const bounds = await page.getByText('Walk the dog').boundingBox();
   await page.overlay.add(`
     <div style="position: absolute;
@@ -80,21 +100,27 @@ async page => {
       left: ${bounds.x + bounds.width / 2}px;
       transform: translateX(-50%);
       padding: 6px;
-      background: #808080A0;
+      background: #808080;
       border-radius: 10px;
       font-size: 14px;
       color: white;">Check it out, it is right above this text
     </div>
-  `, { timeout: 2000 });
+  `, { duration: 2000 });
 
-
-  // Alternatively, you can add sticky overlays and remove them explicitly:
-  const o1 = await page.overlay.add('...');
-  // Perform actions...
-  await o1.dispose();
   await page.video().stop();
 }
 ```
+
+Embrace creativity, overlays are powerful.
+
+### Overlay API Summary
+
+| Method | Use Case |
+|--------|----------|
+| `page.overlay.chapter(title, { description?, duration?, styleSheet? })` | Full-screen chapter card with blurred backdrop — ideal for section transitions |
+| `page.overlay.show(html, { duration? })` | Custom HTML overlay — use for callouts, labels, highlights |
+| `disposable.dispose()` | Remove a sticky overlay added without duration |
+| `page.overlay.setVisible(false/true)` | Temporarily hide/show all overlays |
 
 ## Tracing vs Video
 

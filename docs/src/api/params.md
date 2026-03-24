@@ -810,6 +810,10 @@ When set to `minimal`, only record information necessary for routing from HAR. T
     Actual picture of each page will be scaled down if necessary to fit the specified size.
     - `width` <[int]> Video frame width.
     - `height` <[int]> Video frame height.
+  - `annotate` ?<[Object]> If specified, enables visual annotations on interacted elements during video recording.
+    - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+    - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+    - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
 
 Enables video recording for all pages into `recordVideo.dir` directory. If not specified videos are not recorded. Make
 sure to await [`method: BrowserContext.close`] for videos to be saved.

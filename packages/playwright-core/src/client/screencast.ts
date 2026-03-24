@@ -16,6 +16,7 @@
 
 import { DisposableStub } from './disposable';
 
+import type { AnnotateOptions } from './types';
 import type * as api from '../../types/types';
 import type { Page } from './page';
 
@@ -30,7 +31,7 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
+  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number }, annotate?: AnnotateOptions } = {}): Promise<DisposableStub> {
     if (this._onFrame)
       throw new Error('Screencast is already started');
     this._onFrame = onFrame;

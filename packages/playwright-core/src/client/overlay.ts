@@ -26,20 +26,16 @@ export class Overlay implements api.Overlay {
     this._page = page;
   }
 
-  async add(html: string, options?: { timeout?: number }): Promise<DisposableStub> {
-    const { id } = await this._page._channel.overlayAdd({ html, timeout: options?.timeout });
+  async show(html: string, options?: { duration?: number }): Promise<DisposableStub> {
+    const { id } = await this._page._channel.overlayShow({ html, duration: options?.duration });
     return new DisposableStub(() => this._page._channel.overlayRemove({ id }));
   }
 
-  async hide(): Promise<void> {
-    await this._page._channel.overlayHide();
+  async chapter(title: string, options?: { description?: string, duration?: number }): Promise<void> {
+    await this._page._channel.overlayChapter({ title, ...options });
   }
 
-  async show(): Promise<void> {
-    await this._page._channel.overlayShow();
-  }
-
-  async configure(options: { actionDelay?: number; actionStyle?: string; locatorStyle?: string } = {}): Promise<void> {
-    await this._page._channel.overlayConfigure(options);
+  async setVisible(visible: boolean): Promise<void> {
+    await this._page._channel.overlaySetVisible({ visible });
   }
 }

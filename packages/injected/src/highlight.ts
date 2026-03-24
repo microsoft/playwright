@@ -156,7 +156,7 @@ export class Highlight {
     this._actionPointElement.hidden = true;
   }
 
-  showActionTitle(text: string, fadeDuration: number, cssStyle?: string) {
+  showActionTitle(text: string, fadeDuration: number, position?: string, fontSize?: number) {
     this._titleElement.textContent = text;
     this._titleElement.hidden = false;
     if (fadeDuration) {
@@ -165,8 +165,46 @@ export class Highlight {
     } else {
       this._titleElement.style.animation = '';
     }
-    if (cssStyle)
-      this._titleElement.style.cssText += ';' + cssStyle;
+
+    // Reset positioning
+    this._titleElement.style.top = '';
+    this._titleElement.style.bottom = '';
+    this._titleElement.style.left = '';
+    this._titleElement.style.right = '';
+    this._titleElement.style.transform = '';
+
+    switch (position) {
+      case 'top-left':
+        this._titleElement.style.top = '6px';
+        this._titleElement.style.left = '6px';
+        break;
+      case 'top':
+        this._titleElement.style.top = '6px';
+        this._titleElement.style.left = '50%';
+        this._titleElement.style.transform = 'translateX(-50%)';
+        break;
+      case 'bottom-left':
+        this._titleElement.style.bottom = '6px';
+        this._titleElement.style.left = '6px';
+        break;
+      case 'bottom':
+        this._titleElement.style.bottom = '6px';
+        this._titleElement.style.left = '50%';
+        this._titleElement.style.transform = 'translateX(-50%)';
+        break;
+      case 'bottom-right':
+        this._titleElement.style.bottom = '6px';
+        this._titleElement.style.right = '6px';
+        break;
+      case 'top-right':
+      default:
+        this._titleElement.style.top = '6px';
+        this._titleElement.style.right = '6px';
+        break;
+    }
+
+    if (fontSize)
+      this._titleElement.style.fontSize = fontSize + 'px';
   }
 
   hideActionTitle() {
@@ -192,6 +230,10 @@ export class Highlight {
     return id;
   }
 
+  getUserOverlay(id: string): HTMLElement | undefined {
+    return this._userOverlays.get(id);
+  }
+
   removeUserOverlay(id: string) {
     const element = this._userOverlays.get(id);
     if (element) {
@@ -202,15 +244,9 @@ export class Highlight {
       this._userOverlayContainer.hidden = true;
   }
 
-  hideUserOverlays() {
-    this._userOverlayHidden = true;
-    this._userOverlayContainer.hidden = true;
-  }
-
-  showUserOverlays() {
-    this._userOverlayHidden = false;
-    if (this._userOverlays.size > 0)
-      this._userOverlayContainer.hidden = false;
+  setUserOverlaysVisible(visible: boolean) {
+    this._userOverlayHidden = !visible;
+    this._userOverlayContainer.hidden = !visible || this._userOverlays.size === 0;
   }
 
   clearHighlight() {

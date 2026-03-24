@@ -42,6 +42,15 @@ If a screencast is already active (e.g. started by tracing or video recording), 
 
 Defaults to 800×800.
 
+### option: Screencast.start.annotate
+* since: v1.59
+- `annotate` ?<[Object]>
+  - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+  - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+  - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
+
+If specified, enables visual annotations on interacted elements during screencast. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
+
 ## async method: Screencast.stop
 * since: v1.59
 * langs: js
