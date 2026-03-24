@@ -3134,11 +3134,11 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       const reportFolder = testInfo.outputPath('playwright-report');
       expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
       expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
-      expect(fs.existsSync(path.join(reportFolder, 'report.json'))).toBe(true);
       const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
       expect(html).toContain('src="report.js"');
       expect(html).toContain('href="report.css"');
-      expect(html).not.toContain('playwrightReportBase64');
+      // Report data stays embedded in the zip within index.html (CSP-safe: type="application/zip" is not executed as JS).
+      expect(html).toContain('playwrightReportBase64');
 
       await showReport();
       await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');

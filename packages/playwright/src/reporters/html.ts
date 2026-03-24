@@ -249,99 +249,22 @@ export function startHtmlReportServer(folder: string): HttpServer {
 
 type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>;
 
-interface ReportWriter {
-  addDataFile(fileName: string, data: any): Promise<void>;
-  copyAppFiles(viteDir: string): Promise<void>;
-  finalize(): Promise<void>;
-}
-
-class EmbeddedReportWriter implements ReportWriter {
-  private _zipFile = new yazl.ZipFile();
-  private _indexFile: string;
-
-  constructor(reportFolder: string) {
-    this._indexFile = path.join(reportFolder, 'index.html');
-  }
-
-  async addDataFile(fileName: string, data: any) {
-    this._zipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
-  }
-
-  async copyAppFiles(viteDir: string) {
-    await copyFileAndMakeWritable(path.join(viteDir, 'htmlReport', 'index.html'), this._indexFile);
-  }
-
-  async finalize() {
-    await fs.promises.appendFile(this._indexFile, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
-    await new Promise(f => {
-      this._zipFile.end(undefined, () => {
-        this._zipFile.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(this._indexFile, { flags: 'a' })).on('close', f);
-      });
-    });
-    await fs.promises.appendFile(this._indexFile, '</script>');
-  }
-}
-
-class SeparateReportWriter implements ReportWriter {
-  constructor(private readonly _reportFolder: string) {}
-
-  async addDataFile(fileName: string, data: any) {
-    await fs.promises.writeFile(path.join(this._reportFolder, fileName), JSON.stringify(data));
-  }
-
-  async copyAppFiles(viteDir: string) {
-    await copyFileAndMakeWritable(path.join(viteDir, 'htmlReport', 'index.html'), path.join(this._reportFolder, 'index.html'));
-  }
-
-  async finalize() {
-    // Extract inlined JS and CSS on the fly to avoid shipping them twice in the playwright npm package.
-    const indexFile = path.join(this._reportFolder, 'index.html');
-    const html = await fs.promises.readFile(indexFile, 'utf-8');
-
-    const styleTag = `<style type='text/css'>`;
-    const styleStart = html.indexOf(styleTag);
-    const styleEnd = html.indexOf('</style>', styleStart);
-    const css = html.slice(styleStart + styleTag.length, styleEnd);
-
-    const scriptTag = `<script type="module">`;
-    const scriptStart = html.indexOf(scriptTag);
-    const scriptEnd = html.indexOf('</script>', scriptStart);
-    const js = html.slice(scriptStart + scriptTag.length, scriptEnd);
-
-    await Promise.all([
-      fs.promises.writeFile(path.join(this._reportFolder, 'report.css'), css),
-      fs.promises.writeFile(path.join(this._reportFolder, 'report.js'), js),
-    ]);
-
-    // Replace in reverse document order so earlier offsets stay valid after each replacement.
-    const replacements = [
-      { start: styleStart, end: styleEnd + '</style>'.length, text: `<link rel="stylesheet" href="report.css">` },
-      { start: scriptStart, end: scriptEnd + '</script>'.length, text: `<script type="module" src="report.js"></script>` },
-    ].sort((a, b) => b.start - a.start);
-    let newHtml = html;
-    for (const { start, end, text } of replacements)
-      newHtml = newHtml.slice(0, start) + text + newHtml.slice(end);
-    await fs.promises.writeFile(indexFile, newHtml);
-  }
-}
-
 class HtmlBuilder {
   private _config: api.FullConfig;
   private _reportFolder: string;
   private _stepsInFile = new MultiMap<string, TestStep>();
-  private _reportWriter: ReportWriter;
+  private _dataZipFile = new yazl.ZipFile();
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
+  private _separateAssets: boolean;
 
   constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, separateAssets: boolean, options: HTMLReportOptions) {
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;
+    this._separateAssets = separateAssets;
     fs.mkdirSync(this._reportFolder, { recursive: true });
-    this._reportWriter = separateAssets ? new SeparateReportWriter(this._reportFolder) : new EmbeddedReportWriter(this._reportFolder);
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
@@ -358,7 +281,6 @@ class HtmlBuilder {
       createSnippets(this._stepsInFile);
 
     let ok = true;
-    const fileDataWrites: Promise<void>[] = [];
     for (const [fileId, { testFile, testFileSummary }] of data) {
       const stats = testFileSummary.stats;
       for (const test of testFileSummary.tests) {
@@ -383,9 +305,8 @@ class HtmlBuilder {
       };
       testFileSummary.tests.sort(testCaseSummaryComparator);
 
-      fileDataWrites.push(this._reportWriter.addDataFile(fileId + '.json', testFile));
+      this._addDataFile(fileId + '.json', testFile);
     }
-    await Promise.all(fileDataWrites);
     const htmlReport: HTMLReport = {
       metadata,
       startTime: result.startTime.getTime(),
@@ -408,7 +329,7 @@ class HtmlBuilder {
       return w2 - w1;
     });
 
-    await this._reportWriter.addDataFile('report.json', htmlReport);
+    this._addDataFile('report.json', htmlReport);
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
@@ -417,8 +338,8 @@ class HtmlBuilder {
     }
 
     // Copy app.
-    const viteDir = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite');
-    await this._reportWriter.copyAppFiles(viteDir);
+    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
+    await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -438,9 +359,57 @@ class HtmlBuilder {
       }
     }
 
-    await this._reportWriter.finalize();
+    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
+    if (this._separateAssets)
+      await this._extractAssetsToSeparateFiles();
 
     return { ok, singleTestId };
+  }
+
+  private async _writeReportData(filePath: string) {
+    fs.appendFileSync(filePath, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
+    await new Promise(f => {
+      this._dataZipFile.end(undefined, () => {
+        this._dataZipFile.outputStream
+            .pipe(new Base64Encoder())
+            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
+      });
+    });
+    fs.appendFileSync(filePath, '</script>');
+  }
+
+  private _addDataFile(fileName: string, data: any) {
+    this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
+  }
+
+  private async _extractAssetsToSeparateFiles() {
+    // Extract inlined JS and CSS on the fly to avoid shipping them twice in the playwright npm package.
+    const indexFile = path.join(this._reportFolder, 'index.html');
+    let html = await fs.promises.readFile(indexFile, 'utf-8');
+
+    const styleTag = `<style type='text/css'>`;
+    const styleStart = html.indexOf(styleTag);
+    const styleEnd = html.indexOf('</style>', styleStart);
+    const css = html.slice(styleStart + styleTag.length, styleEnd);
+
+    const scriptTag = `<script type="module">`;
+    const scriptStart = html.indexOf(scriptTag);
+    const scriptEnd = html.indexOf('</script>', scriptStart);
+    const js = html.slice(scriptStart + scriptTag.length, scriptEnd);
+
+    await Promise.all([
+      fs.promises.writeFile(path.join(this._reportFolder, 'report.css'), css),
+      fs.promises.writeFile(path.join(this._reportFolder, 'report.js'), js),
+    ]);
+
+    // Replace in reverse document order so earlier offsets stay valid after each replacement.
+    const replacements = [
+      { start: styleStart, end: styleEnd + '</style>'.length, text: `<link rel="stylesheet" href="report.css">` },
+      { start: scriptStart, end: scriptEnd + '</script>'.length, text: `<script type="module" src="report.js"></script>` },
+    ].sort((a, b) => b.start - a.start);
+    for (const { start, end, text } of replacements)
+      html = html.slice(0, start) + text + html.slice(end);
+    await fs.promises.writeFile(indexFile, html);
   }
 
   private _createEntryForSuite(data: DataMap, projectName: string, suite: api.Suite, fileName: string, deep: boolean) {
