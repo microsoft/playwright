@@ -90,6 +90,27 @@ await using var context = await browser.NewContextAsync(iphone13);
 
 <img height="1582" width="916" alt="playwright.dev website emulated for iPhone 13" src="https://user-images.githubusercontent.com/13063165/220411073-76fe59f9-9a2d-463d-8e30-c19a7deca133.png" />
 
+**Note**: Pre-configured devices assume a specific platform. For example, "Desktop Chrome" will provide a Windows-specific user agent string.
+
+If you would like to use the user agent specific to the platform that is running the tests, we recommend unsetting the user agent property.
+
+```js
+const context = await browser.newContext({
+  ...devices['Desktop Chrome'],
+  userAgent: undefined,
+});
+```
+
+```python
+desktop_chrome = playwright.devices["Desktop Chrome"]
+context = browser.new_context(**desktop_chrome, user_agent=None)
+```
+
+```csharp
+var desktopChrome = playwright.Devices["Desktop Chrome"];
+desktopChrome.UserAgent = null;
+var context = await browser.NewContextAsync(desktopChrome);
+```
 
 ## Devices
 * langs: java
