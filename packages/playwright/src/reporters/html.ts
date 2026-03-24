@@ -337,7 +337,7 @@ class HtmlBuilder {
       singleTestId = testFile.tests[0].testId;
     }
 
-    const reportIndexFile = await this._copyApp();
+    const reportIndexFile = await this._writeAppStaticFiles();
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -362,7 +362,7 @@ class HtmlBuilder {
     return { ok, singleTestId };
   }
 
-  private async _copyApp() {
+  private async _writeAppStaticFiles() {
     const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
     const reportIndexFile = path.join(this._reportFolder, 'index.html');
     if (this._separateAssets) {
