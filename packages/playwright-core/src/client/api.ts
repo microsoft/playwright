@@ -30,6 +30,7 @@ export { Electron, ElectronApplication } from './electron';
 export { FrameLocator, Locator } from './locator';
 export { ElementHandle } from './elementHandle';
 export { FileChooser } from './fileChooser';
+export type { Overlay } from './overlay';
 export type { Screencast } from './screencast';
 export type { Logger } from './types';
 export { TimeoutError } from './errors';

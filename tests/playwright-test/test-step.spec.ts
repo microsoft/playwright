@@ -557,10 +557,10 @@ pw:api    |    Create context
 fixture   |  Fixture "page"
 pw:api    |    Create page
 test.step |grand @ a.test.ts:20
-test.step |  parent1 @ a.test.ts:22
+test.step |  parent1 @ a.test.ts:21
 test.step |    child1 @ a.test.ts:23
 pw:api    |      Click locator('body') @ a.test.ts:24
-test.step |  parent2 @ a.test.ts:27
+test.step |  parent2 @ a.test.ts:21
 test.step |    child2 @ a.test.ts:28
 expect    |      Expect "toBeVisible" main element @ a.test.ts:29
 hook      |After Hooks
@@ -785,16 +785,16 @@ hook      |Before Hooks
 test.step |boxed step @ a.test.ts:3
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
 test.step |    at a.test.ts:4:27
-test.step |    at a.test.ts:3:26
+test.step |    at a.test.ts:3:15
 expect    |  Expect "toBe" @ a.test.ts:4
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
 expect    |      at a.test.ts:4:27
-expect    |      at a.test.ts:3:26
+expect    |      at a.test.ts:3:15
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:4
           |    at a.test.ts:4:27
-          |    at a.test.ts:3:26
+          |    at a.test.ts:3:15
 `);
 });
 
@@ -820,14 +820,14 @@ test('should step w/ box', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-test.step |    at a.test.ts:8:21
+test.step |    at a.test.ts:8:15
 expect    |  Expect "toBe" @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-expect    |      at a.test.ts:8:21
+expect    |      at a.test.ts:8:15
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-          |    at a.test.ts:8:21
+          |    at a.test.ts:8:15
 `);
 });
 
@@ -853,14 +853,14 @@ test('should soft step w/ box', async ({ runInlineTest }) => {
 hook      |Before Hooks
 test.step |boxed step @ a.test.ts:8
 test.step |↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-test.step |    at a.test.ts:8:21
+test.step |    at a.test.ts:8:15
 expect    |  Expect "soft toBe" @ a.test.ts:5
 expect    |  ↪ error: Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-expect    |      at a.test.ts:8:21
+expect    |      at a.test.ts:8:15
 hook      |After Hooks
 hook      |Worker Cleanup
           |Error: expect(received).toBe(expected) // Object.is equality @ a.test.ts:8
-          |    at a.test.ts:8:21
+          |    at a.test.ts:8:15
 `);
 });
 

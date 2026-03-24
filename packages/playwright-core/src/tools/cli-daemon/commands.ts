@@ -405,10 +405,13 @@ const runCode = declareCommand({
   description: 'Run Playwright code snippet',
   category: 'devtools',
   args: z.object({
-    code: z.string().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+    code: z.string().optional().describe('A JavaScript function containing Playwright code to execute. It will be invoked with a single argument, page, which you can use for any page interaction.'),
+  }),
+  options: z.object({
+    filename: z.string().optional().describe('Load code from the specified file.'),
   }),
   toolName: 'browser_run_code',
-  toolParams: ({ code }) => ({ code }),
+  toolParams: ({ code, filename }) => ({ code, filename }),
 });
 
 // Tabs

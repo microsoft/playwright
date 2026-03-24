@@ -152,6 +152,7 @@ playwright-cli console
 playwright-cli console warning
 playwright-cli network
 playwright-cli run-code "async page => await page.context().grantPermissions(['geolocation'])"
+playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
 playwright-cli video-start

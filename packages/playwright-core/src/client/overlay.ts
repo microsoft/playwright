@@ -19,27 +19,27 @@ import { DisposableStub } from './disposable';
 import type * as api from '../../types/types';
 import type { Page } from './page';
 
-export class Screencast implements api.Screencast {
+export class Overlay implements api.Overlay {
   private readonly _page: Page;
-  private _onFrame: ((frame: { data: Buffer }) => Promise<any>) | null = null;
 
   constructor(page: Page) {
     this._page = page;
-    this._page._channel.on('screencastFrame', ({ data }) => {
-      void this._onFrame?.({ data });
-    });
   }
 
-  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
-    if (this._onFrame)
-      throw new Error('Screencast is already started');
-    this._onFrame = onFrame;
-    await this._page._channel.startScreencast(options);
-    return new DisposableStub(() => this.stop());
+  async add(html: string, options?: { timeout?: number }): Promise<DisposableStub> {
+    const { id } = await this._page._channel.overlayAdd({ html, timeout: options?.timeout });
+    return new DisposableStub(() => this._page._channel.overlayRemove({ id }));
   }
 
-  async stop(): Promise<void> {
-    this._onFrame = null;
-    await this._page._channel.stopScreencast();
+  async hide(): Promise<void> {
+    await this._page._channel.overlayHide();
+  }
+
+  async show(): Promise<void> {
+    await this._page._channel.overlayShow();
+  }
+
+  async configure(options: { actionDelay?: number; actionStyle?: string; locatorStyle?: string } = {}): Promise<void> {
+    await this._page._channel.overlayConfigure(options);
   }
 }

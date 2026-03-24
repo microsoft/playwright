@@ -1027,9 +1027,6 @@ export type BrowserTypeLaunchPersistentContextParams = {
       width: number,
       height: number,
     },
-    annotate?: {
-      delay?: number,
-    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1112,9 +1109,6 @@ export type BrowserTypeLaunchPersistentContextOptions = {
     size?: {
       width: number,
       height: number,
-    },
-    annotate?: {
-      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1267,9 +1261,6 @@ export type BrowserNewContextParams = {
       width: number,
       height: number,
     },
-    annotate?: {
-      delay?: number,
-    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1337,9 +1328,6 @@ export type BrowserNewContextOptions = {
     size?: {
       width: number,
       height: number,
-    },
-    annotate?: {
-      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1412,9 +1400,6 @@ export type BrowserNewContextForReuseParams = {
       width: number,
       height: number,
     },
-    annotate?: {
-      delay?: number,
-    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -1482,9 +1467,6 @@ export type BrowserNewContextForReuseOptions = {
     size?: {
       width: number,
       height: number,
-    },
-    annotate?: {
-      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -1620,9 +1602,6 @@ export type BrowserContextInitializer = {
       size?: {
         width: number,
         height: number,
-      },
-      annotate?: {
-        delay?: number,
       },
     },
     strictSelectors?: boolean,
@@ -2168,6 +2147,11 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   bringToFront(params?: PageBringToFrontParams, progress?: Progress): Promise<PageBringToFrontResult>;
   pickLocator(params?: PagePickLocatorParams, progress?: Progress): Promise<PagePickLocatorResult>;
   cancelPickLocator(params?: PageCancelPickLocatorParams, progress?: Progress): Promise<PageCancelPickLocatorResult>;
+  overlayAdd(params: PageOverlayAddParams, progress?: Progress): Promise<PageOverlayAddResult>;
+  overlayRemove(params: PageOverlayRemoveParams, progress?: Progress): Promise<PageOverlayRemoveResult>;
+  overlayHide(params?: PageOverlayHideParams, progress?: Progress): Promise<PageOverlayHideResult>;
+  overlayShow(params?: PageOverlayShowParams, progress?: Progress): Promise<PageOverlayShowResult>;
+  overlayConfigure(params: PageOverlayConfigureParams, progress?: Progress): Promise<PageOverlayConfigureResult>;
   startScreencast(params: PageStartScreencastParams, progress?: Progress): Promise<PageStartScreencastResult>;
   stopScreencast(params?: PageStopScreencastParams, progress?: Progress): Promise<PageStopScreencastResult>;
   videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
@@ -2687,22 +2671,50 @@ export type PagePickLocatorResult = {
 export type PageCancelPickLocatorParams = {};
 export type PageCancelPickLocatorOptions = {};
 export type PageCancelPickLocatorResult = void;
+export type PageOverlayAddParams = {
+  html: string,
+  timeout?: number,
+};
+export type PageOverlayAddOptions = {
+  timeout?: number,
+};
+export type PageOverlayAddResult = {
+  id: string,
+};
+export type PageOverlayRemoveParams = {
+  id: string,
+};
+export type PageOverlayRemoveOptions = {
+
+};
+export type PageOverlayRemoveResult = void;
+export type PageOverlayHideParams = {};
+export type PageOverlayHideOptions = {};
+export type PageOverlayHideResult = void;
+export type PageOverlayShowParams = {};
+export type PageOverlayShowOptions = {};
+export type PageOverlayShowResult = void;
+export type PageOverlayConfigureParams = {
+  actionDelay?: number,
+  actionStyle?: string,
+  locatorStyle?: string,
+};
+export type PageOverlayConfigureOptions = {
+  actionDelay?: number,
+  actionStyle?: string,
+  locatorStyle?: string,
+};
+export type PageOverlayConfigureResult = void;
 export type PageStartScreencastParams = {
   preferredSize?: {
     width: number,
     height: number,
-  },
-  annotate?: {
-    delay?: number,
   },
 };
 export type PageStartScreencastOptions = {
   preferredSize?: {
     width: number,
     height: number,
-  },
-  annotate?: {
-    delay?: number,
   },
 };
 export type PageStartScreencastResult = void;
@@ -2714,17 +2726,11 @@ export type PageVideoStartParams = {
     width: number,
     height: number,
   },
-  annotate?: {
-    delay?: number,
-  },
 };
 export type PageVideoStartOptions = {
   size?: {
     width: number,
     height: number,
-  },
-  annotate?: {
-    delay?: number,
   },
 };
 export type PageVideoStartResult = {
@@ -4660,9 +4666,6 @@ export type ElectronLaunchParams = {
       width: number,
       height: number,
     },
-    annotate?: {
-      delay?: number,
-    },
   },
   strictSelectors?: boolean,
   timezoneId?: string,
@@ -4698,9 +4701,6 @@ export type ElectronLaunchOptions = {
     size?: {
       width: number,
       height: number,
-    },
-    annotate?: {
-      delay?: number,
     },
   },
   strictSelectors?: boolean,
@@ -5089,9 +5089,6 @@ export type AndroidDeviceLaunchBrowserParams = {
       width: number,
       height: number,
     },
-    annotate?: {
-      delay?: number,
-    },
   },
   strictSelectors?: boolean,
   serviceWorkers?: 'allow' | 'block',
@@ -5157,9 +5154,6 @@ export type AndroidDeviceLaunchBrowserOptions = {
     size?: {
       width: number,
       height: number,
-    },
-    annotate?: {
-      delay?: number,
     },
   },
   strictSelectors?: boolean,

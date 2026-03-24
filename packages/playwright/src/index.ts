@@ -376,7 +376,6 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
-          annotate: typeof video === 'string' ? undefined : video.annotate,
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
@@ -438,14 +437,16 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     await use(reuse);
   }, { scope: 'worker',  title: 'context', box: true }],
 
-  context: async ({ browser, _reuseContext, _contextFactory }, use, testInfoPublic) => {
+  context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
+    const annotate = typeof video === 'string' ? undefined : video.annotate;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await runDaemonForContext(testInfo, context);
+      await installScreencastTitleUpdater(testInfo, context, annotate);
       await use(context);
       await close();
       return;
@@ -454,6 +455,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await runDaemonForContext(testInfo, context);
+    await installScreencastTitleUpdater(testInfo, context, annotate);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -467,8 +469,10 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // First time we are reusing the context, we should create the page.
     let [page] = context.pages();
-    if (!page)
+    if (!page) {
       page = await context.newPage();
+      await page.overlay.add(test.info().titlePath.join(' › '));
+    }
     await use(page);
   },
 
@@ -795,6 +799,61 @@ class ArtifactsRecorder {
         await tracing.stopChunk({ path: this._testInfo._tracing.maybeGenerateNextTraceRecordingPath() });
     }, { internal: true });
   }
+}
+
+async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, annotate?: { action?: { delay?: number, actionStyle?: string, locatorStyle?: string }, test?: { level?: 'file' | 'title' | 'step' } }) {
+  if (!annotate?.action && !annotate?.test)
+    return;
+
+  if (annotate.action) {
+    const configureOptions = {
+      actionDelay: annotate.action.delay,
+      actionStyle: annotate.action.actionStyle,
+      locatorStyle: annotate.action.locatorStyle
+    };
+    for (const page of context.pages())
+      await page.overlay.configure(configureOptions);
+    context.on('page', page => {
+      page.overlay.configure(configureOptions).catch(() => {});
+    });
+  }
+
+  if (!annotate?.test)
+    return;
+
+  const testTitle = annotate.test.level === 'file' ? [testInfo.titlePath[0]] : testInfo.titlePath;
+  const stepStack: string[] = [];
+  const overlays = new Map<Page, { dispose(): Promise<void> }>();
+
+  const updateOverlay = async () => {
+    const parts = annotate.test!.level === 'step' ? [...testTitle, ...stepStack] : testTitle;
+    const html = createTestOverlay(parts);
+    for (const page of context.pages()) {
+      await overlays.get(page)?.dispose();
+      overlays.delete(page);
+      const disposable = await page.overlay.add(html);
+      overlays.set(page, disposable);
+    }
+  };
+  testInfo._onUserStepBegin = async title => {
+    stepStack.push(title);
+    await updateOverlay();
+  };
+  testInfo._onUserStepEnd = async () => {
+    stepStack.pop();
+    await updateOverlay();
+  };
+
+  context.on('page', async () => {
+    void updateOverlay();
+  });
+  await updateOverlay();
+}
+
+function createTestOverlay(parts: string[]) {
+  return `<div style="white-space: nowrap; font-size: 13px; padding: 3px 6px; background: rgba(0,0,0,0.5); color: white; border-radius: 4px; position: absolute; top: 3px; left: 3px;">
+    ${parts.map(p => `<div>${p}</div>`).join('')}
+  </div>`;
 }
 
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {

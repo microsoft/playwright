@@ -598,10 +598,6 @@ ContextOptions:
           properties:
             width: int
             height: int
-        annotate:
-          type: object?
-          properties:
-            delay: int?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -2096,6 +2092,37 @@ Page:
       title: Cancel pick locator
       group: configuration
 
+    overlayAdd:
+      title: Add overlay
+      group: configuration
+      parameters:
+        html: string
+        timeout: int?
+      returns:
+        id: string
+
+    overlayRemove:
+      title: Remove overlay
+      group: configuration
+      parameters:
+        id: string
+
+    overlayHide:
+      title: Hide overlay
+      group: configuration
+
+    overlayShow:
+      title: Show overlay
+      group: configuration
+
+    overlayConfigure:
+      title: Configure overlay
+      group: configuration
+      parameters:
+        actionDelay: int?
+        actionStyle: string?
+        locatorStyle: string?
+
     startScreencast:
       title: Start screencast
       group: configuration
@@ -2105,10 +2132,6 @@ Page:
           properties:
             width: int
             height: int
-        annotate:
-          type: object?
-          properties:
-            delay: int?
 
     stopScreencast:
       title: Stop screencast
@@ -2123,10 +2146,6 @@ Page:
           properties:
             width: int
             height: int
-        annotate:
-          type: object?
-          properties:
-            delay: int?
       returns:
         artifact: Artifact
 
@@ -4147,10 +4166,6 @@ Electron:
               properties:
                 width: int
                 height: int
-            annotate:
-              type: object?
-              properties:
-                delay: int?
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
