@@ -385,16 +385,25 @@ class HtmlBuilder {
     return reportIndexFile;
   }
 
-  private async _writeReportData(filePath: string) {
-    fs.appendFileSync(filePath, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
-    await new Promise(f => {
-      this._dataZipFile.end(undefined, () => {
-        this._dataZipFile.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
+  private async _writeReportData(reportIndexFile: string) {
+    if (this._doNotInlineAssets) {
+      await new Promise(f => {
+        this._dataZipFile.end(undefined, () => {
+          this._dataZipFile.outputStream
+              .pipe(fs.createWriteStream(path.join(this._reportFolder, 'report.zip'))).on('close', f);
+        });
       });
-    });
-    fs.appendFileSync(filePath, '</script>');
+    } else {
+      fs.appendFileSync(reportIndexFile, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
+      await new Promise(f => {
+        this._dataZipFile.end(undefined, () => {
+          this._dataZipFile.outputStream
+              .pipe(new Base64Encoder())
+              .pipe(fs.createWriteStream(reportIndexFile, { flags: 'a' })).on('close', f);
+        });
+      });
+      fs.appendFileSync(reportIndexFile, '</script>');
+    }
   }
 
   private _addDataFile(fileName: string, data: any) {

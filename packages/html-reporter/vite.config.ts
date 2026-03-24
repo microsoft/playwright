@@ -33,7 +33,7 @@ export default defineConfig({
     },
   },
   build: {
-    outDir: path.resolve(__dirname, 'dist'),
+    outDir: path.resolve(__dirname, '../playwright-core/lib/vite/htmlReport'),
     emptyOutDir: true,
     assetsInlineLimit: 100000000,
     chunkSizeWarningLimit: 100000000,
