@@ -627,9 +627,13 @@ export default defineConfig({
     - `height` <[int]>
   - `annotate` ?<[Object]> If specified, visually annotates the video with test information and action highlights.
     - `action` ?<[Object]> Controls visual annotations on interacted elements.
-      - `delay` ?<[int]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+      - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
+      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
+      - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
     - `test` ?<[Object]> Controls test information displayed as a status overlay in the video.
       - `level` ?<[TestAnnotationLevel]<"file"|"test"|"step">> Level of the detail to include about the current test.
+      - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the test information overlay. Defaults to `"top-left"`.
+      - `fontSize` ?<[int]> Font size of the test information in pixels. Defaults to `14`.
 
 Whether to record video for each test. Defaults to `'off'`.
 * `'off'`: Do not record video.

@@ -139,6 +139,9 @@ export type SelectorEngine = {
   queryAll(root: HTMLElement, selector: string): HTMLElement[];
 };
 
+export type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
+export type AnnotateOptions = { duration?: number, position?: AnnotatePosition, fontSize?: number };
+
 export type RemoteAddr = channels.RemoteAddr;
 export type SecurityDetails = channels.SecurityDetails;
 

@@ -3,53 +3,54 @@
 
 Interface for managing page overlays that display persistent visual indicators on top of the page.
 
-## async method: Overlay.add
+## async method: Overlay.show
 * since: v1.59
 - returns: <[Disposable]>
 
 Adds an overlay with the given HTML content. The overlay is displayed on top of the page until removed. Returns a disposable that removes the overlay when disposed.
 
-### param: Overlay.add.html
+### param: Overlay.show.html
 * since: v1.59
 - `html` <[string]>
 
 HTML content for the overlay.
 
-### option: Overlay.add.timeout
+### option: Overlay.show.duration
 * since: v1.59
-- `timeout` <[int]>
+- `duration` <[float]>
 
-Optional timeout to remove the decoration after. Decoration stays until dismissed if not provided.
+Duration in milliseconds after which the overlay is automatically removed. Overlay stays until dismissed if not provided.
 
-## async method: Overlay.configure
-* since: v1.59
-
-Configures overlay behavior.
-
-### option: Overlay.configure.actionDelay
-* since: v1.59
-- `actionDelay` <[int]>
-
-Delay in milliseconds between actions when overlay is active.
-
-### option: Overlay.configure.actionStyle
-* since: v1.59
-- `actionStyle` <[string]>
-
-CSS style string applied to the action title element displayed during actions.
-
-### option: Overlay.configure.locatorStyle
-* since: v1.59
-- `locatorStyle` <[string]>
-
-CSS style string applied to the locator highlight element displayed during actions.
-
-## async method: Overlay.hide
+## async method: Overlay.chapter
 * since: v1.59
 
-Hides all overlays without removing them. Overlays can be shown again with [`method: Overlay.show`].
+Shows a chapter overlay with a title and optional description, centered on the page with a blurred backdrop. Useful for narrating video recordings. The overlay is removed after the specified duration, or 2000ms.
 
-## async method: Overlay.show
+### param: Overlay.chapter.title
+* since: v1.59
+- `title` <[string]>
+
+Title text displayed prominently in the overlay.
+
+### option: Overlay.chapter.description
+* since: v1.59
+- `description` <[string]>
+
+Optional description text displayed below the title.
+
+### option: Overlay.chapter.duration
+* since: v1.59
+- `duration` <[float]>
+
+Duration in milliseconds after which the overlay is automatically removed. Defaults to `2000`.
+
+## async method: Overlay.setVisible
 * since: v1.59
 
-Shows previously hidden overlays.
+Sets visibility of all overlays without removing them.
+
+### param: Overlay.setVisible.visible
+* since: v1.59
+- `visible` <[boolean]>
+
+Whether overlays should be visible.

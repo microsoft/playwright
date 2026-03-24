@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup } from 'playwright-core/lib/utils';
+import { setBoxedStackPrefixes, createGuid, currentZone, debugMode, jsonStringifyForceASCII, asLocatorDescription, renderTitleForCall, getActionGroup, escapeHTML } from 'playwright-core/lib/utils';
 import { buildErrorContext } from './errorContext';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -372,10 +372,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
+      const annotate = typeof video === 'string' ? undefined : video.annotate;
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
+          annotate: annotate?.action,
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
@@ -446,7 +448,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await runDaemonForContext(testInfo, context);
-      await installScreencastTitleUpdater(testInfo, context, annotate);
+      await installScreencastTitleUpdater(testInfo, context, annotate?.test);
       await use(context);
       await close();
       return;
@@ -455,7 +457,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await runDaemonForContext(testInfo, context);
-    await installScreencastTitleUpdater(testInfo, context, annotate);
+    await installScreencastTitleUpdater(testInfo, context, annotate?.test);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });
@@ -469,10 +471,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
 
     // First time we are reusing the context, we should create the page.
     let [page] = context.pages();
-    if (!page) {
+    if (!page)
       page = await context.newPage();
-      await page.overlay.add(test.info().titlePath.join(' › '));
-    }
     await use(page);
   },
 
@@ -801,37 +801,24 @@ class ArtifactsRecorder {
   }
 }
 
-async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, annotate?: { action?: { delay?: number, actionStyle?: string, locatorStyle?: string }, test?: { level?: 'file' | 'title' | 'step' } }) {
-  if (!annotate?.action && !annotate?.test)
+async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: BrowserContext, testAnnotate?: { level?: 'file' | 'title' | 'step', position?: string, fontSize?: number }) {
+  if (!testAnnotate)
     return;
 
-  if (annotate.action) {
-    const configureOptions = {
-      actionDelay: annotate.action.delay,
-      actionStyle: annotate.action.actionStyle,
-      locatorStyle: annotate.action.locatorStyle
-    };
-    for (const page of context.pages())
-      await page.overlay.configure(configureOptions);
-    context.on('page', page => {
-      page.overlay.configure(configureOptions).catch(() => {});
-    });
-  }
-
-  if (!annotate?.test)
-    return;
-
-  const testTitle = annotate.test.level === 'file' ? [testInfo.titlePath[0]] : testInfo.titlePath;
+  const testTitle = testAnnotate.level === 'file' ? [testInfo.titlePath[0]] : testInfo.titlePath;
   const stepStack: string[] = [];
   const overlays = new Map<Page, { dispose(): Promise<void> }>();
+  const position = testAnnotate.position ?? 'top-left';
+  const fontSize = testAnnotate.fontSize ?? 14;
+  const level = testAnnotate.level ?? 'step';
 
   const updateOverlay = async () => {
-    const parts = annotate.test!.level === 'step' ? [...testTitle, ...stepStack] : testTitle;
-    const html = createTestOverlay(parts);
+    const parts = level === 'step' ? [...testTitle, ...stepStack] : testTitle;
+    const html = createTestOverlay(parts, position, fontSize);
     for (const page of context.pages()) {
       await overlays.get(page)?.dispose();
       overlays.delete(page);
-      const disposable = await page.overlay.add(html);
+      const disposable = await page.overlay.show(html);
       overlays.set(page, disposable);
     }
   };
@@ -850,9 +837,18 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
   await updateOverlay();
 }
 
-function createTestOverlay(parts: string[]) {
-  return `<div style="white-space: nowrap; font-size: 13px; padding: 3px 6px; background: rgba(0,0,0,0.5); color: white; border-radius: 4px; position: absolute; top: 3px; left: 3px;">
-    ${parts.map(p => `<div>${p}</div>`).join('')}
+function createTestOverlay(parts: string[], position: string, fontSize: number) {
+  const positionStyles: Record<string, string> = {
+    'top-left': 'top: 3px; left: 3px;',
+    'top': 'top: 3px; left: 50%; transform: translateX(-50%);',
+    'top-right': 'top: 3px; right: 3px;',
+    'bottom-left': 'bottom: 3px; left: 3px;',
+    'bottom': 'bottom: 3px; left: 50%; transform: translateX(-50%);',
+    'bottom-right': 'bottom: 3px; right: 3px;',
+  };
+  const posStyle = positionStyles[position] ?? positionStyles['top-left'];
+  return `<div style="white-space: nowrap; font-size: ${fontSize}px; padding: 3px 6px; background: rgba(0,0,0,0.5); color: white; border-radius: 4px; position: absolute; ${posStyle}">
+    ${parts.map(p => `<div>${escapeHTML(p)}</div>`).join('')}
   </div>`;
 }
 

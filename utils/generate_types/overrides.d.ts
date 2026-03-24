@@ -248,6 +248,11 @@ export interface Screencast {
       width: number;
       height: number;
     };
+    annotate?: {
+      duration?: number;
+      position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
+      fontSize?: number;
+    };
   }): Promise<Disposable>;
 }
 

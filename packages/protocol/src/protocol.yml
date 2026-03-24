@@ -59,6 +59,21 @@ Rect:
     width: float
     height: float
 
+AnnotateOptions:
+  type: object
+  properties:
+    duration: float?
+    position:
+      type: enum?
+      literals:
+      - top-left
+      - top
+      - top-right
+      - bottom-left
+      - bottom
+      - bottom-right
+    fontSize: int?
+
 
 SerializedValue:
   type: object
@@ -598,6 +613,7 @@ ContextOptions:
           properties:
             width: int
             height: int
+        annotate: AnnotateOptions?
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -2092,12 +2108,12 @@ Page:
       title: Cancel pick locator
       group: configuration
 
-    overlayAdd:
-      title: Add overlay
+    overlayShow:
+      title: Show overlay
       group: configuration
       parameters:
         html: string
-        timeout: int?
+        duration: float?
       returns:
         id: string
 
@@ -2107,21 +2123,19 @@ Page:
       parameters:
         id: string
 
-    overlayHide:
-      title: Hide overlay
-      group: configuration
-
-    overlayShow:
-      title: Show overlay
-      group: configuration
-
-    overlayConfigure:
-      title: Configure overlay
+    overlayChapter:
+      title: Show chapter overlay
       group: configuration
       parameters:
-        actionDelay: int?
-        actionStyle: string?
-        locatorStyle: string?
+        title: string
+        description: string?
+        duration: float?
+
+    overlaySetVisible:
+      title: Set overlay visibility
+      group: configuration
+      parameters:
+        visible: boolean
 
     startScreencast:
       title: Start screencast
@@ -2132,6 +2146,7 @@ Page:
           properties:
             width: int
             height: int
+        annotate: AnnotateOptions?
 
     stopScreencast:
       title: Stop screencast
@@ -2146,6 +2161,7 @@ Page:
           properties:
             width: int
             height: int
+        annotate: AnnotateOptions?
       returns:
         artifact: Artifact
 
@@ -4166,6 +4182,7 @@ Electron:
               properties:
                 width: int
                 height: int
+            annotate: AnnotateOptions?
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
