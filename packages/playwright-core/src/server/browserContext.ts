@@ -855,15 +855,15 @@ export function calculateUserAgentEmulation(options: types.BrowserContextOptions
     userAgentMetadata.architecture = 'arm';
   } else if (iPhoneMatch) {
     userAgentMetadata.platform = 'iOS';
-    userAgentMetadata.platformVersion = iPhoneMatch[1];
+    userAgentMetadata.platformVersion = iPhoneMatch[1].replace(/_/g, '.');
     userAgentMetadata.architecture = 'arm';
   } else if (iPadMatch) {
     userAgentMetadata.platform = 'iOS';
-    userAgentMetadata.platformVersion = iPadMatch[1];
+    userAgentMetadata.platformVersion = iPadMatch[1].replace(/_/g, '.');
     userAgentMetadata.architecture = 'arm';
   } else if (macOSMatch) {
     userAgentMetadata.platform = 'macOS';
-    userAgentMetadata.platformVersion = macOSMatch[1];
+    userAgentMetadata.platformVersion = macOSMatch[1].replace(/_/g, '.');
     if (!ua.includes('Intel'))
       userAgentMetadata.architecture = 'arm';
   } else if (windowsMatch) {
