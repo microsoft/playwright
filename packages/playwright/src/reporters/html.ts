@@ -32,7 +32,6 @@ import type { ReportConfigureParams, ReportEndParams, ReporterV2 } from './repor
 import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAnnotation } from '../../types/test';
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
 import type { TransformCallback } from 'stream';
 
 type TestEntry = {
@@ -142,21 +141,11 @@ class HtmlReporter implements ReporterV2 {
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
     await removeFolders([this._outputFolder]);
-    let noSnippets: boolean | undefined;
-    if (process.env.PLAYWRIGHT_HTML_NO_SNIPPETS === 'false' || process.env.PLAYWRIGHT_HTML_NO_SNIPPETS === '0')
-      noSnippets = false;
-    else if (process.env.PLAYWRIGHT_HTML_NO_SNIPPETS)
-      noSnippets = true;
-    noSnippets = noSnippets || this._options.noSnippets;
+    const noSnippets = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_SNIPPETS') ?? this._options.noSnippets;
+    const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
+    const separateAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_SEPARATE_ASSETS') ?? this._options.separateAssets ?? false;
 
-    let noCopyPrompt: boolean | undefined;
-    if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === 'false' || process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT === '0')
-      noCopyPrompt = false;
-    else if (process.env.PLAYWRIGHT_HTML_NO_COPY_PROMPT)
-      noCopyPrompt = true;
-    noCopyPrompt = noCopyPrompt || this._options.noCopyPrompt;
-
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, {
+    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, separateAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
@@ -202,6 +191,15 @@ function getHtmlReportOptionProcessEnv(): HtmlReportOpenOption | undefined {
     return undefined;
   }
   return htmlOpenEnv;
+}
+
+function parseBooleanEnvVar(name: string): boolean | undefined {
+  const value = process.env[name];
+  if (value === 'false' || value === '0')
+    return false;
+  if (value)
+    return true;
+  return undefined;
 }
 
 function standaloneDefaultFolder(): string {
@@ -251,21 +249,99 @@ export function startHtmlReportServer(folder: string): HttpServer {
 
 type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummary }>;
 
+interface ReportWriter {
+  addDataFile(fileName: string, data: any): Promise<void>;
+  copyAppFiles(viteDir: string): Promise<void>;
+  finalize(): Promise<void>;
+}
+
+class EmbeddedReportWriter implements ReportWriter {
+  private _zipFile = new yazl.ZipFile();
+  private _indexFile: string;
+
+  constructor(reportFolder: string) {
+    this._indexFile = path.join(reportFolder, 'index.html');
+  }
+
+  async addDataFile(fileName: string, data: any) {
+    this._zipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
+  }
+
+  async copyAppFiles(viteDir: string) {
+    await copyFileAndMakeWritable(path.join(viteDir, 'htmlReport', 'index.html'), this._indexFile);
+  }
+
+  async finalize() {
+    await fs.promises.appendFile(this._indexFile, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
+    await new Promise(f => {
+      this._zipFile.end(undefined, () => {
+        this._zipFile.outputStream
+            .pipe(new Base64Encoder())
+            .pipe(fs.createWriteStream(this._indexFile, { flags: 'a' })).on('close', f);
+      });
+    });
+    await fs.promises.appendFile(this._indexFile, '</script>');
+  }
+}
+
+class SeparateReportWriter implements ReportWriter {
+  constructor(private readonly _reportFolder: string) {}
+
+  async addDataFile(fileName: string, data: any) {
+    await fs.promises.writeFile(path.join(this._reportFolder, fileName), JSON.stringify(data));
+  }
+
+  async copyAppFiles(viteDir: string) {
+    await copyFileAndMakeWritable(path.join(viteDir, 'htmlReport', 'index.html'), path.join(this._reportFolder, 'index.html'));
+  }
+
+  async finalize() {
+    // Extract inlined JS and CSS on the fly to avoid shipping them twice in the playwright npm package.
+    const indexFile = path.join(this._reportFolder, 'index.html');
+    const html = await fs.promises.readFile(indexFile, 'utf-8');
+
+    const styleTag = `<style type='text/css'>`;
+    const styleStart = html.indexOf(styleTag);
+    const styleEnd = html.indexOf('</style>', styleStart);
+    const css = html.slice(styleStart + styleTag.length, styleEnd);
+
+    const scriptTag = `<script type="module">`;
+    const scriptStart = html.indexOf(scriptTag);
+    const scriptEnd = html.indexOf('</script>', scriptStart);
+    const js = html.slice(scriptStart + scriptTag.length, scriptEnd);
+
+    await Promise.all([
+      fs.promises.writeFile(path.join(this._reportFolder, 'report.css'), css),
+      fs.promises.writeFile(path.join(this._reportFolder, 'report.js'), js),
+    ]);
+
+    // Replace in reverse document order so earlier offsets stay valid after each replacement.
+    const replacements = [
+      { start: styleStart, end: styleEnd + '</style>'.length, text: `<link rel="stylesheet" href="report.css">` },
+      { start: scriptStart, end: scriptEnd + '</script>'.length, text: `<script type="module" src="report.js"></script>` },
+    ].sort((a, b) => b.start - a.start);
+    let newHtml = html;
+    for (const { start, end, text } of replacements)
+      newHtml = newHtml.slice(0, start) + text + newHtml.slice(end);
+    await fs.promises.writeFile(indexFile, newHtml);
+  }
+}
+
 class HtmlBuilder {
   private _config: api.FullConfig;
   private _reportFolder: string;
   private _stepsInFile = new MultiMap<string, TestStep>();
-  private _dataZipFile: ZipFile;
+  private _reportWriter: ReportWriter;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, options: HTMLReportOptions) {
+  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, separateAssets: boolean, options: HTMLReportOptions) {
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;
     fs.mkdirSync(this._reportFolder, { recursive: true });
-    this._dataZipFile = new yazl.ZipFile();
+    this._reportWriter = separateAssets ? new SeparateReportWriter(this._reportFolder) : new EmbeddedReportWriter(this._reportFolder);
     this._attachmentsBaseURL = attachmentsBaseURL;
   }
 
@@ -282,6 +358,7 @@ class HtmlBuilder {
       createSnippets(this._stepsInFile);
 
     let ok = true;
+    const fileDataWrites: Promise<void>[] = [];
     for (const [fileId, { testFile, testFileSummary }] of data) {
       const stats = testFileSummary.stats;
       for (const test of testFileSummary.tests) {
@@ -306,8 +383,9 @@ class HtmlBuilder {
       };
       testFileSummary.tests.sort(testCaseSummaryComparator);
 
-      this._addDataFile(fileId + '.json', testFile);
+      fileDataWrites.push(this._reportWriter.addDataFile(fileId + '.json', testFile));
     }
+    await Promise.all(fileDataWrites);
     const htmlReport: HTMLReport = {
       metadata,
       startTime: result.startTime.getTime(),
@@ -330,7 +408,7 @@ class HtmlBuilder {
       return w2 - w1;
     });
 
-    this._addDataFile('report.json', htmlReport);
+    await this._reportWriter.addDataFile('report.json', htmlReport);
 
     let singleTestId: string | undefined;
     if (htmlReport.stats.total === 1) {
@@ -339,8 +417,8 @@ class HtmlBuilder {
     }
 
     // Copy app.
-    const appFolder = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite', 'htmlReport');
-    await copyFileAndMakeWritable(path.join(appFolder, 'index.html'), path.join(this._reportFolder, 'index.html'));
+    const viteDir = path.join(require.resolve('playwright-core'), '..', 'lib', 'vite');
+    await this._reportWriter.copyAppFiles(viteDir);
 
     // Copy trace viewer.
     if (this._hasTraces) {
@@ -360,26 +438,9 @@ class HtmlBuilder {
       }
     }
 
-    await this._writeReportData(path.join(this._reportFolder, 'index.html'));
-
+    await this._reportWriter.finalize();
 
     return { ok, singleTestId };
-  }
-
-  private async _writeReportData(filePath: string) {
-    fs.appendFileSync(filePath, '<script id="playwrightReportBase64" type="application/zip">data:application/zip;base64,');
-    await new Promise(f => {
-      this._dataZipFile!.end(undefined, () => {
-        this._dataZipFile!.outputStream
-            .pipe(new Base64Encoder())
-            .pipe(fs.createWriteStream(filePath, { flags: 'a' })).on('close', f);
-      });
-    });
-    fs.appendFileSync(filePath, '</script>');
-  }
-
-  private _addDataFile(fileName: string, data: any) {
-    this._dataZipFile.addBuffer(Buffer.from(JSON.stringify(data)), fileName);
   }
 
   private _createEntryForSuite(data: DataMap, projectName: string, suite: api.Suite, fileName: string, deep: boolean) {

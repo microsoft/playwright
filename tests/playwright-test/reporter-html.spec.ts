@@ -3122,6 +3122,30 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('test-snippet')).not.toBeVisible();
     });
 
+    test('should generate unpacked report with separateAssets', async ({ runInlineTest, showReport, page }, testInfo) => {
+      const result = await runInlineTest({
+        'example.spec.ts': `
+          import { test, expect } from '@playwright/test';
+          test('passes', async ({}) => {});
+        `,
+      }, { reporter: 'dot,html' }, { PLAYWRIGHT_HTML_OPEN: 'never', PLAYWRIGHT_HTML_SEPARATE_ASSETS: '1' });
+      expect(result.exitCode).toBe(0);
+
+      const reportFolder = testInfo.outputPath('playwright-report');
+      expect(fs.existsSync(path.join(reportFolder, 'report.js'))).toBe(true);
+      expect(fs.existsSync(path.join(reportFolder, 'report.css'))).toBe(true);
+      expect(fs.existsSync(path.join(reportFolder, 'report.json'))).toBe(true);
+      const html = fs.readFileSync(path.join(reportFolder, 'index.html'), 'utf-8');
+      expect(html).toContain('src="report.js"');
+      expect(html).toContain('href="report.css"');
+      expect(html).not.toContain('playwrightReportBase64');
+
+      await showReport();
+      await expect(page.locator('.subnav-item:has-text("Passed") .counter')).toHaveText('1');
+      await page.getByRole('link', { name: 'passes' }).click();
+      await expect(page.getByText('example.spec.ts')).toBeVisible();
+    });
+
     test('worker test list', async ({ runInlineTest, showReport, page }) => {
       const result = await runInlineTest({
         'playwright.config.ts': `

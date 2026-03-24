@@ -38,12 +38,17 @@ document.head.appendChild(link);
 const ReportLoader: React.FC = () => {
   const [report, setReport] = React.useState<LoadedReport | undefined>();
   React.useEffect(() => {
-    const zipReport = new ZipReport();
-    zipReport.load().then(() => {
-      // Drop node after consumption
-      document.getElementById('playwrightReportBase64')?.remove();
-      setReport(zipReport);
-    });
+    if (document.getElementById('playwrightReportBase64')) {
+      const zipReport = new ZipReport();
+      zipReport.load().then(() => {
+        // Drop node after consumption
+        document.getElementById('playwrightReportBase64')?.remove();
+        setReport(zipReport);
+      });
+    } else {
+      const fetchReport = new FetchReport();
+      fetchReport.load().then(() => setReport(fetchReport));
+    }
   }, []);
   return <SearchParamsProvider>
     <ReportView report={report} />
@@ -76,5 +81,24 @@ class ZipReport implements LoadedReport {
     const writer = new zipjs.TextWriter() as zip.TextWriter;
     await reportEntry!.getData!(writer);
     return JSON.parse(await writer.getData());
+  }
+}
+
+class FetchReport implements LoadedReport {
+  private _json!: HTMLReport;
+
+  async load() {
+    this._json = await (await fetch('report.json')).json() as HTMLReport;
+  }
+
+  json(): HTMLReport {
+    return this._json;
+  }
+
+  async entry(name: string): Promise<Object | undefined> {
+    const response = await fetch(name);
+    if (!response.ok)
+      return undefined;
+    return response.json();
   }
 }

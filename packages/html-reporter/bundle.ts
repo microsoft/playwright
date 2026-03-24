@@ -42,13 +42,12 @@ export function bundle(): Plugin {
       },
     },
     closeBundle: () => {
-      if (fs.existsSync(path.join(config.build!.outDir!, 'index.html'))) {
-        const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
-        fs.mkdirSync(targetDir, { recursive: true });
-        fs.copyFileSync(
-            path.join(config.build!.outDir!, 'index.html'),
-            path.join(targetDir, 'index.html'));
-      }
+      const outDir = config.build!.outDir!;
+      if (!fs.existsSync(path.join(outDir, 'index.html')))
+        return;
+      const targetDir = path.join(__dirname, '..', 'playwright-core', 'lib', 'vite', 'htmlReport');
+      fs.mkdirSync(targetDir, { recursive: true });
+      fs.copyFileSync(path.join(outDir, 'index.html'), path.join(targetDir, 'index.html'));
     },
   };
 }
