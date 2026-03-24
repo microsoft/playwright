@@ -1179,6 +1179,26 @@ it.describe('stubTimers', () => {
     });
   });
 
+  it('should return PerformanceEntry-like objects from performance.mark and performance.measure', async ({ install }) => {
+    it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39816' });
+    it.skip(nodeMajorVersion < 20);
+    install();
+    const markEntry = performance.mark('foo');
+    const measureEntry = performance.measure('bar');
+    for (const entry of [markEntry, measureEntry]) {
+      expect(entry).toHaveProperty('startTime');
+      expect(entry).toHaveProperty('duration');
+      expect(entry).toHaveProperty('name');
+      expect(entry).toHaveProperty('entryType');
+      expect(typeof entry.toJSON()).toBe('string');
+    }
+    expect(markEntry.name).toBe('foo');
+    expect(markEntry.entryType).toBe('mark');
+    expect(measureEntry.name).toBe('bar');
+    expect(measureEntry.entryType).toBe('measure');
+    expect(measureEntry.duration).toBe(50);
+  });
+
   it('restores global property on uninstall if it was inherited onto the global object', ({}) => {
     // Give the global object an inherited 'setTimeout' method
     const proto = {

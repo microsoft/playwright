@@ -701,6 +701,24 @@ function getClearHandler(type: TimerType) {
   return `clear${type}`;
 }
 
+class FakePerformanceEntry {
+  name: string;
+  entryType: string;
+  startTime: number;
+  duration: number;
+
+  constructor(name: string, entryType: string, startTime: number, duration: number) {
+    this.name = name;
+    this.entryType = entryType;
+    this.startTime = startTime;
+    this.duration = duration;
+  }
+
+  toJSON() {
+    return JSON.stringify({ ...this });
+  }
+}
+
 function fakePerformance(clock: ClockController, performance: Builtins['performance']): Builtins['performance'] {
   const result: any = {
     now: () => clock.performanceNow(),
@@ -712,6 +730,10 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
       continue;
     if (key === 'getEntries' || key === 'getEntriesByName' || key === 'getEntriesByType')
       result[key] = () => [];
+    else if (key === 'mark')
+      result[key] = (name: string) => new FakePerformanceEntry(name, 'mark', 0, 0);
+    else if (key === 'measure')
+      result[key] = (name: string) => new FakePerformanceEntry(name, 'measure', 0, 50);
     else
       result[key] = () => {};
   }
