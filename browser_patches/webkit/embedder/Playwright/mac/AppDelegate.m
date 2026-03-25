@@ -231,6 +231,8 @@ const NSActivityOptions ActivityOptions =
         configuration.preferences._developerExtrasEnabled = YES;
         configuration.preferences._mediaDevicesEnabled = YES;
         configuration.preferences._mockCaptureDevicesEnabled = YES;
+        // Enable WebGPU.
+        configuration.preferences._webGPUEnabled = YES;
         // Enable WebM support.
         configuration.preferences._hiddenPageDOMTimerThrottlingEnabled = NO;
         configuration.preferences._hiddenPageDOMTimerThrottlingAutoIncreases = NO;
