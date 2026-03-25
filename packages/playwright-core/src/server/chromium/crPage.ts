@@ -484,9 +484,10 @@ class FrameSession {
 
         const isInitialEmptyPage = this._isMainFrame() && this._page.mainFrame().url() === ':';
         if (isInitialEmptyPage) {
-          // Ignore lifecycle events, worlds and bindings for the initial empty page. It is never the final page
-          // hence we are going to get more lifecycle updates after the actual navigation has
-          // started (even if the target url is about:blank).
+          // For popup windows (about:blank with opener), don't wait for navigation —
+          // document.write() content won't trigger navigation events.
+          if (this._crPage._opener)
+            this._firstNonInitialNavigationCommittedFulfill();
           lifecycleEventsEnabled.catch(e => {}).then(() => {
             this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
           });
