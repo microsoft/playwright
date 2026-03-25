@@ -120,6 +120,28 @@ it('should support webgl 2 @smoke', async ({ page, browserName, isWindows }) => 
   expect(hasWebGL2).toBe(true);
 });
 
+it('should support WebGPU in WebKit', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/39762'
+  }
+}, async ({ page, browserName, isMac, isFrozenWebkit }) => {
+  it.skip(browserName !== 'webkit', 'WebGPU fix targets WebKit only');
+  it.skip(!isMac, 'WebGPU is only available for WebKit on macOS');
+  it.skip(isFrozenWebkit, 'Frozen WebKit builds predate the WebGPU preference fix');
+
+  const result = await page.evaluate(async () => {
+    return {
+      hasNavigatorGPU: 'gpu' in navigator,
+      hasGPUBufferUsage: typeof (globalThis as any).GPUBufferUsage !== 'undefined',
+      hasGPUMapMode: typeof (globalThis as any).GPUMapMode !== 'undefined',
+    };
+  });
+  expect(result.hasNavigatorGPU).toBe(true);
+  expect(result.hasGPUBufferUsage).toBe(true);
+  expect(result.hasGPUMapMode).toBe(true);
+});
+
 it('should not crash on page with mp4 @smoke', async ({ page, server, platform, browserName }) => {
   it.fixme(browserName === 'webkit' && platform === 'win32', 'https://github.com/microsoft/playwright/issues/11009, times out in setContent');
   await page.setContent(`<video><source src="${server.PREFIX}/movie.mp4"/></video>`);
