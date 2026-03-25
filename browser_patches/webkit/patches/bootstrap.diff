@@ -12492,6 +12492,9 @@ index 0000000000000000000000000000000000000000..13e45ef13e4d43dce84a8847bde2518a
 +    // TODO: allow to set preferences over the inspector protocol or find a better place for this.
 +    preferences.setJavaScriptCanOpenWindowsAutomatically(true);
 +
++    // Enable WebGPU.
++    preferences.setWebGPUEnabled(true);
++
 +    // Enable media stream.
 +    if (!preferences.mediaDevicesEnabled()) {
 +        preferences.setMediaDevicesEnabled(true);
