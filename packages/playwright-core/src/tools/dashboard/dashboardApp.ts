@@ -16,15 +16,14 @@
 
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 import net from 'net';
 import http from 'http';
 
 import { chromium } from '../../..';
 import { HttpServer } from '../../server/utils/httpServer';
+import { makeSocketPath } from '../../server/utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 import { findChromiumChannelBestEffort, registryDirectory } from '../../server/registry/index';
-import { calculateSha1 } from '../../utils';
 import { CDPConnection, DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
@@ -248,15 +247,8 @@ export async function syncLocalStorageWithSettings(page: api.Page, appName: stri
   `);
 }
 
-function socketsDirectory() {
-  return process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-}
-
 function dashboardSocketPath() {
-  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
-  return process.platform === 'win32'
-    ? `\\\\.\\pipe\\playwright-dashboard-${userNameHash}`
-    : path.join(socketsDirectory(), `dashboard-${userNameHash}.sock`);
+  return makeSocketPath('dashboard', 'app');
 }
 
 async function acquireSingleton(): Promise<net.Server> {

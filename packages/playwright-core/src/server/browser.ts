@@ -16,7 +16,6 @@
 
 import fs from 'fs';
 import path from 'path';
-import os from 'os';
 
 import { Artifact } from './artifact';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';
@@ -27,6 +26,7 @@ import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
+import { makeSocketPath } from './utils/fileUtils';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
@@ -257,12 +257,7 @@ export class BrowserServer {
   }
 
   private async _socketPath() {
-    const socketName = `${this._browser.guid.slice(0, 14)}.sock`;
-    if (process.platform === 'win32')
-      return `\\\\.\\pipe\\${socketName}`;
-    const socketsDir = process.env.PLAYWRIGHT_BROWSER_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright');
-    await fs.promises.mkdir(socketsDir, { recursive: true });
-    return path.join(socketsDir, socketName);
+    return makeSocketPath('browser', this._browser.guid.slice(0, 14));
   }
 }
 

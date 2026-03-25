@@ -16,13 +16,12 @@
 
 import fs from 'fs';
 import net from 'net';
-import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from '../../utils';
 import { debug } from '../../utilsBundle';
 
 import { decorateServer } from '../../server/utils/network';
+import { makeSocketPath } from '../../server/utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 
 import { BrowserBackend } from '../backend/browserBackend';
@@ -166,12 +165,7 @@ function parseCliCommand(args: Record<string, string> & { _: string[] }): { tool
 }
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
-  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
-  const socketName = `${sessionName}-${userNameHash}.sock`;
-  if (process.platform === 'win32')
-    return `\\\\.\\pipe\\${clientInfo.workspaceDirHash}-${socketName}`;
-  const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-  return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
+  return makeSocketPath('cli', `${clientInfo.workspaceDirHash}-${sessionName}`);
 }
 
 function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserInfo: BrowserInfo, options: {
