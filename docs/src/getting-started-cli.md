@@ -1,11 +1,11 @@
 ---
 id: getting-started-cli
-title: "Getting started - CLI for Agent"
+title: "Coding agents"
 ---
 
 ## Introduction
 
-`playwright-cli` is a command-line interface for browser automation designed for coding agents. It provides token-efficient browser control through concise CLI commands and installable skills, making it ideal for agents that need to balance browser automation with large codebases and reasoning within limited context windows.
+Playwright comes with `playwright-cli`, a command-line interface for browser automation designed for coding agents. It provides token-efficient browser control through concise CLI commands and installable skills, making it ideal for agents that need to balance browser automation with large codebases and reasoning within limited context windows.
 
 ### `playwright-cli` vs Playwright MCP
 
