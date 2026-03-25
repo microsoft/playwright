@@ -50,7 +50,13 @@ const requests = defineTabTool({
       }
       text.push(await renderRequest(request, params.requestBody, params.requestHeaders));
     }
-    await response.addResult('Network', text.join('\n'), { prefix: 'network', ext: 'log', suggestedFilename: params.filename });
+    const template = { prefix: 'network', ext: 'log', suggestedFilename: params.filename };
+    if (params.filename) {
+      const resolvedFile = await response.resolveOutputFile(template, 'Network');
+      await response.addFileResult(resolvedFile, text.join('\n'));
+    } else {
+      await response.addResult('Network', text.join('\n'), template);
+    }
   },
 });
 

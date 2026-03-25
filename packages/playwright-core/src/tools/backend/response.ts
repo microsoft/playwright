@@ -78,6 +78,13 @@ export class Response {
     return { fileName, relativeName, printableLink };
   }
 
+  async resolveOutputFile(template: FilenameTemplate, title: string): Promise<ResolvedFile> {
+    const fileName = await this._context.outputFile(template, { origin: 'llm' });
+    const relativeName = this._computRelativeTo(fileName);
+    const printableLink = `- [${title}](${relativeName})`;
+    return { fileName, relativeName, printableLink };
+  }
+
   async resolveClientFilename(filename: string): Promise<string> {
     return await this._context.workspaceFile(filename, this._clientWorkspace);
   }

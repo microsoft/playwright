@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
 import { test, expect, parseResponse } from './fixtures';
 
 test('browser_network_requests', async ({ client, server }) => {
@@ -114,6 +116,32 @@ test('browser_network_requests includes request headers', async ({ client, serve
     expect(response.result).toContain('Request headers:');
     expect(response.result).toContain('x-custom-header: test-value');
   }
+});
+
+test('browser_network_requests saves file to output directory', async ({ startClient, server }, testInfo) => {
+  const outputDir = testInfo.outputPath('output');
+  const { client } = await startClient({
+    config: { outputDir },
+  });
+
+  server.setContent('/', `<script>fetch('/api')</script>`, 'text/html');
+  server.setContent('/api', '{}', 'application/json');
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+
+  await client.callTool({
+    name: 'browser_network_requests',
+    arguments: { filename: 'network.txt' },
+  });
+
+  // The file should be saved in the output directory, not in cwd.
+  const networkFile = path.join(outputDir, 'network.txt');
+  expect(fs.existsSync(networkFile)).toBe(true);
+  const content = fs.readFileSync(networkFile, 'utf-8');
+  expect(content).toContain(`${server.PREFIX}/api`);
 });
 
 test('browser_network_requests includes request payload', async ({ client, server }) => {
