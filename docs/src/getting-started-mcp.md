@@ -185,7 +185,7 @@ For advanced configuration, use a JSON config file:
 npx @playwright/mcp@latest --config path/to/config.json
 ```
 
-The config file supports browser options, context options, network rules, timeouts, and more. See the [Playwright MCP repository](https://github.com/microsoft/playwright-mcp) for the full schema.
+The config file supports browser options, context options, network rules, timeouts, and more. See the [Playwright MCP repository](https://github.com/microsoft/playwright-mcp/blob/main/packages/playwright-mcp/config.d.ts) for the full schema.
 
 ### Standalone server
 

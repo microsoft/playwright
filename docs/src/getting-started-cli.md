@@ -5,11 +5,11 @@ title: "Getting started - CLI for Agent"
 
 ## Introduction
 
-Playwright CLI is a command-line interface for browser automation designed for coding agents. It provides token-efficient browser control through concise CLI commands and installable skills, making it ideal for agents that need to balance browser automation with large codebases and reasoning within limited context windows.
+`playwright-cli` is a command-line interface for browser automation designed for coding agents. It provides token-efficient browser control through concise CLI commands and installable skills, making it ideal for agents that need to balance browser automation with large codebases and reasoning within limited context windows.
 
-### Playwright CLI vs Playwright MCP
+### `playwright-cli` vs Playwright MCP
 
-- **CLI** is best for **coding agents** (Claude Code, GitHub Copilot, etc.) that favor token-efficient, skill-based workflows. CLI commands avoid loading large tool schemas and verbose accessibility trees into the model context.
+- **`playwright-cli`** is best for **coding agents** (Claude Code, GitHub Copilot, etc.) that favor token-efficient, skill-based workflows. CLI commands avoid loading large tool schemas and verbose accessibility trees into the model context.
 - **MCP** is best for specialized agentic loops that benefit from persistent state and iterative reasoning over page structure, such as exploratory automation or long-running autonomous workflows. See the [MCP getting started guide](./getting-started-mcp.md).
 
 ## Prerequisites
@@ -20,14 +20,14 @@ Before you begin, make sure you have the following installed:
 
 ## Installation
 
-Install Playwright CLI globally:
+Install `playwright-cli` globally:
 
 ```bash
 npm install -g @playwright/cli@latest
 playwright-cli --help
 ```
 
-If the global command is not available, use `npx`:
+Alternatively, install `@playwright/cli` as a local dependency and use `npx`:
 
 ```bash
 npx playwright-cli --help
