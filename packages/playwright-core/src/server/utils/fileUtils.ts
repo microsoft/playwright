@@ -15,7 +15,10 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
+
+import { calculateSha1 } from './crypto';
 
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 import { yazl } from '../../zipBundle';
@@ -58,6 +61,17 @@ export function sanitizeForFilePath(s: string) {
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
+}
+
+export function makeSocketPath(domain: string, name: string): string {
+  const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
+  if (process.platform === 'win32')
+    return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}`;
+  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  const dir = path.join(baseDir, domain);
+  const result = path.join(dir, `${name}.sock`);
+  fs.mkdirSync(dir, { recursive: true });
+  return result;
 }
 
 type NameValue = { name: string, value: string };
