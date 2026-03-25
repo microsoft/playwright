@@ -2722,14 +2722,12 @@ export type PageStartScreencastParams = {
     width: number,
     height: number,
   },
-  annotate?: AnnotateOptions,
 };
 export type PageStartScreencastOptions = {
   preferredSize?: {
     width: number,
     height: number,
   },
-  annotate?: AnnotateOptions,
 };
 export type PageStartScreencastResult = void;
 export type PageStopScreencastParams = {};
