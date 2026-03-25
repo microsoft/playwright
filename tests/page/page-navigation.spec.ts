@@ -38,19 +38,22 @@ it('should work with _blank target in form', async ({ page, server }) => {
   server.setRoute('/done.html?', (req, res) => {
     res.end(`Done`);
   });
+  server.setRoute('/done.html', (req, res) => {
+    res.end(`Done`);
+  });
   await page.goto(server.EMPTY_PAGE);
 
-  void page.setContent(`<form target="_blank" action="done.html" >
-      <input type="submit" value="Click me">
-    </form>`);
+  await page.setContent(`<form target="_blank" action="done.html" >
+    <input type="submit" value="Click me">
+  </form>`);
   await Promise.all([
     page.waitForEvent('popup'),
     page.click('"Click me"')
   ]);
 
-  void page.setContent(`<form target="_blank" action="done.html" method="post">
-      <input type="submit" value="Click me">
-    </form>`);
+  await page.setContent(`<form target="_blank" action="done.html" method="post">
+    <input type="submit" value="Click me">
+  </form>`);
   await Promise.all([
     page.waitForEvent('popup'),
     page.click('"Click me"')

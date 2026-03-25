@@ -21,6 +21,7 @@ import { chromium } from 'playwright-core';
 
 import { test as baseTest } from './fixtures';
 import { killProcessGroup } from '../config/commonFixtures';
+import { inheritAndCleanEnv } from '../config/utils';
 
 import type { Page } from 'playwright-core';
 import type { CommonFixtures } from '../config/commonFixtures';
@@ -101,14 +102,12 @@ async function runCli(childProcess: CommonFixtures['childProcess'], args: string
     const cli = childProcess({
       command: [process.execPath, require.resolve('../../packages/playwright-core/lib/tools/cli-client/cli.js'), ...args],
       cwd: cliOptions.cwd ?? testInfo.outputPath(),
-      env: {
-        ...process.env,
-        ...cliOptions.env,
+      env: inheritAndCleanEnv({
         ...cliEnv(),
         PLAYWRIGHT_MCP_BROWSER: options.mcpBrowser,
         PLAYWRIGHT_MCP_HEADLESS: String(options.mcpHeadless),
         ...cliOptions.env,
-      },
+      }),
     });
     await cli.exited.finally(async () => {
       await testInfo.attach(stepTitle, { body: cli.output, contentType: 'text/plain' });

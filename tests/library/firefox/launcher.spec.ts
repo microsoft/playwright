@@ -17,6 +17,7 @@
 import fs from 'fs';
 import { playwrightTest as it, expect } from '../../config/browserTest';
 import { TestServer } from '../../config/testserver';
+import { inheritAndCleanEnv } from '../../config/utils';
 
 it('should pass firefox user preferences', async ({ browserType, mode }) => {
   it.skip(mode.startsWith('service'));
@@ -67,7 +68,7 @@ it('should support custom firefox policies', async ({ browserType, mode, asset, 
   await server.waitUntilReady();
 
   const browser = await browserType.launch({
-    env: { ...process.env, 'PLAYWRIGHT_FIREFOX_POLICIES_JSON': policiesPath },
+    env: inheritAndCleanEnv({ 'PLAYWRIGHT_FIREFOX_POLICIES_JSON': policiesPath }),
   });
 
   const page = await browser.newPage();

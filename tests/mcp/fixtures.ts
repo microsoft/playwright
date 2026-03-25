@@ -26,6 +26,7 @@ import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
 import { parseResponse } from '../../packages/playwright-core/lib/tools/backend/response';
 import { commonFixtures } from '../config/commonFixtures';
+import { inheritAndCleanEnv } from '../config/utils';
 
 import type { CommonFixtures, CommonWorkerFixtures } from '../config/commonFixtures';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
@@ -134,11 +135,10 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
           };
         });
       }
-      const env = {
-        ...process.env,
+      const env = inheritAndCleanEnv({
         PW_TMPDIR_FOR_TEST: testInfo.outputPath('tmp'),
         ...options?.env
-      };
+      });
       const { transport, stderr } = await createTransport(mcpServerType, { args, env, cwd: options?.cwd || test.info().outputPath() });
       let stderrBuffer = '';
       stderr?.on('data', data => {

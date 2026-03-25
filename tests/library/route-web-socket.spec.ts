@@ -258,7 +258,7 @@ test('should pattern match', async ({ page, server }) => {
 
   const wsPromise = server.waitForWebSocket();
 
-  await page.goto('about:blank');
+  await page.goto(server.EMPTY_PAGE);
   await page.evaluate(async ({ host }) => {
     window.log = [];
     (window as any).ws1 = new WebSocket('ws://' + host + '/ws');
@@ -475,7 +475,7 @@ test('should route on context', async ({ page, server }) => {
     });
   });
 
-  await page.goto('about:blank');
+  await page.goto(server.EMPTY_PAGE);
   await page.evaluate(({ host }) => {
     window.log = [];
     (window as any).ws1 = new WebSocket('ws://' + host + '/ws1');
@@ -542,7 +542,7 @@ test('should work with no trailing slash', async ({ page, server }) => {
     });
   });
 
-  await page.goto('about:blank');
+  await page.goto(server.EMPTY_PAGE);
   await page.evaluate(({ host }) => {
     window.log = [];
     // No trailing slash!
