@@ -227,10 +227,13 @@ async function install(args: MinimistArgs) {
 }
 
 async function ensureConfiguredBrowserInstalled() {
-  if (fs.existsSync(defaultConfigFile())) {
+  const defaultPath = defaultConfigFile();
+  const globalPath = globalConfigFile();
+  const configFile = fs.existsSync(defaultPath) ? defaultPath :
+    fs.existsSync(globalPath) ? globalPath : undefined;
+  if (configFile) {
     const { registry } = await import('playwright-core/lib/server/registry/index');
-    // Config exists, ensure configured browser is installed
-    const data = await fs.promises.readFile(defaultConfigFile(), 'utf-8');
+    const data = await fs.promises.readFile(configFile, 'utf-8');
     const config = JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data) as Config;
     const browserName = config.browser?.browserName ?? 'chromium';
     const channel = config.browser?.launchOptions?.channel;
@@ -245,6 +248,10 @@ async function ensureConfiguredBrowserInstalled() {
     if (channel !== 'chrome')
       await createDefaultConfig(channel);
   }
+}
+
+function globalConfigFile(): string {
+  return path.join(os.homedir(), '.playwright', 'cli.config.json');
 }
 
 async function installBrowser() {

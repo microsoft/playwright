@@ -35,7 +35,7 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
     .option('--persistent', 'use a persistent browser context')
     .option('--profile <path>', 'path to the user data dir')
-    .option('--config <path>', 'path to the config file')
+    .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
     .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
 
     .action(async (sessionName: string, options: any) => {
