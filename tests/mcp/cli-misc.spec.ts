@@ -52,6 +52,14 @@ test('install workspace w/skills', async ({ cli }, testInfo) => {
   expect(references.length).toBeGreaterThan(0);
 });
 
+test('install workspace w/--skills=agents', async ({ cli }, testInfo) => {
+  const { output } = await cli('install', '--skills=agents');
+  expect(output).toContain(`Skills installed to \`.agents${path.sep}skills${path.sep}playwright-cli\`.`);
+
+  const skillFile = testInfo.outputPath('.agents', 'skills', 'playwright-cli', 'SKILL.md');
+  expect(fs.existsSync(skillFile)).toBe(true);
+});
+
 test('install handles browser detection', async ({ cli }) => {
   const { output } = await cli('install');
   // Verify that one of the browser detection outcomes occurred

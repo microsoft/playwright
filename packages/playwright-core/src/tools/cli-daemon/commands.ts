@@ -904,7 +904,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.boolean().optional().describe('Install skills for Claude / GitHub Copilot'),
+    skills: z.string().optional().describe('Install skills to ".claude" (default) or ".agents" dir'),
   }),
   toolName: '',
   toolParams: () => ({}),

@@ -209,9 +209,10 @@ async function install(args: MinimistArgs) {
   await fs.promises.mkdir(playwrightDir, { recursive: true });
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
-  if (args.skills) {
+  if (args.skills !== undefined) {
+    const target = args.skills === 'agents' ? 'agents' : 'claude';
     const skillSourceDir = path.join(__dirname, 'skill');
-    const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
+    const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
 
     if (!fs.existsSync(skillSourceDir)) {
       console.error('❌ Skills source directory not found:', skillSourceDir);
