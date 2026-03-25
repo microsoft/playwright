@@ -132,23 +132,6 @@ test('should strip event handlers from overlay html', async ({ browser, server }
   await context.close();
 });
 
-test('should show action highlight and title on click', async ({ browser, server }) => {
-  const context = await browser.newContext();
-  const page = await context.newPage();
-  await page.goto(server.EMPTY_PAGE);
-  await page.setContent('<button id="btn">Click me</button>');
-
-  await page.screencast.start(() => {}, { annotate: { duration: 5000 } });
-  const clickPromise = page.locator('#btn').click();
-
-  await expect(page.locator('x-pw-highlight')).toBeVisible();
-  await expect(page.locator('x-pw-title')).toBeVisible();
-  await expect(page.locator('x-pw-title')).toHaveText(/click/i);
-
-  await clickPromise;
-  await context.close();
-});
-
 test('should auto-remove overlay after timeout', async ({ browser, server }) => {
   const context = await browser.newContext();
   const page = await context.newPage();

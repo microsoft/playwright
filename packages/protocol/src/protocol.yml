@@ -2146,7 +2146,6 @@ Page:
           properties:
             width: int
             height: int
-        annotate: AnnotateOptions?
 
     stopScreencast:
       title: Stop screencast

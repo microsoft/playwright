@@ -1574,7 +1574,6 @@ scheme.PageStartScreencastParams = tObject({
     width: tInt,
     height: tInt,
   })),
-  annotate: tOptional(tType('AnnotateOptions')),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));
