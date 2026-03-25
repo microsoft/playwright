@@ -20,6 +20,7 @@ import { ChildProcess, spawn } from 'child_process';
 import { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { test as baseTest, expect, mcpServerPath, formatLog } from './fixtures';
+import { inheritAndCleanEnv } from '../config/utils';
 
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
@@ -39,12 +40,11 @@ const test = baseTest.extend<{ serverEndpoint: (options?: { args?: string[], noP
         ...(options?.args || []),
       ], {
         stdio: 'pipe',
-        env: {
-          ...process.env,
+        env: inheritAndCleanEnv({
           DEBUG: 'pw:mcp:test',
           DEBUG_COLORS: '0',
           DEBUG_HIDE_DATE: '1',
-        },
+        }),
         cwd: testInfo.outputPath(),
       });
       let stderr = '';
