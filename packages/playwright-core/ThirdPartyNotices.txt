@@ -9,7 +9,7 @@ This project incorporates components from the projects listed below. The origina
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
 -	ajv-formats@3.0.1 (https://github.com/ajv-validator/ajv-formats)
--	ajv@8.17.1 (https://github.com/ajv-validator/ajv)
+-	ajv@8.18.0 (https://github.com/ajv-validator/ajv)
 -	balanced-match@1.0.2 (https://github.com/juliangruber/balanced-match)
 -	body-parser@2.2.2 (https://github.com/expressjs/body-parser)
 -	brace-expansion@1.1.12 (https://github.com/juliangruber/brace-expansion)
@@ -271,7 +271,7 @@ SOFTWARE.
 =========================================
 END OF ajv-formats@3.0.1 AND INFORMATION
 
-%% ajv@8.17.1 NOTICES AND INFORMATION BEGIN HERE
+%% ajv@8.18.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -295,7 +295,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF ajv@8.17.1 AND INFORMATION
+END OF ajv@8.18.0 AND INFORMATION
 
 %% balanced-match@1.0.2 NOTICES AND INFORMATION BEGIN HERE
 =========================================
