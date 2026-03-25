@@ -29,6 +29,9 @@ export const TreeItem: React.FunctionComponent<{
   flash?: boolean
 }> = ({ title, loadChildren, onClick, expandByDefault, depth, style, flash }) => {
   const [expanded, setExpanded] = React.useState(expandByDefault || false);
+  React.useEffect(() => {
+    setExpanded(expandByDefault || false);
+  }, [expandByDefault]);
   return <div role='treeitem' className={clsx('tree-item', flash && 'yellow-flash')} style={style}>
     <div className='tree-item-title' style={{ paddingLeft: depth * 22 + 4 }} onClick={() => { onClick?.(); setExpanded(!expanded); }} >
       {loadChildren && !!expanded && icons.downArrow()}
