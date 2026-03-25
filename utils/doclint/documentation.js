@@ -383,6 +383,9 @@ class Member {
         arg.type?.properties?.sort((p1, p2) => p1.name.localeCompare(p2.name));
       indexArg(arg);
     }
+    // Also index return type properties so they have enclosingMethod set.
+    if (this.kind === 'method' || this.kind === 'property')
+      indexArg(this);
   }
 
   /**
