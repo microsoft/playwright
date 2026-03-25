@@ -103,7 +103,8 @@ test('isolated', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
 });
 
-test('global config', async ({ cli, server }, testInfo) => {
+test('global config', async ({ cli, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome', 'Overriden home does not contain bundled browsers');
   const globalConfigDir = testInfo.outputPath('home', '.playwright');
   await fs.promises.mkdir(globalConfigDir, { recursive: true });
   await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
@@ -120,7 +121,8 @@ test('global config', async ({ cli, server }, testInfo) => {
   expect(output).toContain('800x600');
 });
 
-test('project config overrides global config', async ({ cli, server }, testInfo) => {
+test('project config overrides global config', async ({ cli, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome', 'Overriden home does not contain bundled browsers');
   const globalConfigDir = testInfo.outputPath('home', '.playwright');
   await fs.promises.mkdir(globalConfigDir, { recursive: true });
   await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
