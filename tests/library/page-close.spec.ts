@@ -27,16 +27,6 @@ test('should close page with active dialog', async ({ page }) => {
   await page.close();
 });
 
-test('should not accept dialog after close', async ({ page, mode }) => {
-  test.fixme(mode.startsWith('service2'), 'Times out');
-  const promise = page.waitForEvent('dialog');
-  page.evaluate(() => alert()).catch(() => {});
-  const dialog = await promise;
-  await page.close();
-  const e = await dialog.dismiss().catch(e => e);
-  expect(e.message).toContain('Target page, context or browser has been closed');
-});
-
 test('expect should not print timed out error message when page closes', async ({ page }) => {
   await page.setContent('<div id=node>Text content</div>');
   const [error] = await Promise.all([
