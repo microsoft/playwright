@@ -371,7 +371,7 @@ for (const scenario of ['launch', 'connect'] as const) {
           });
           server.onMessage(message => ws.send(message));
         });
-        await page.goto('about:blank');
+        await page.goto(server.EMPTY_PAGE);
         await page.evaluate(host => {
           window.log = [];
           (window as any).ws1 = new WebSocket('ws://' + host + '/ws1');
