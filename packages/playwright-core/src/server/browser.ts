@@ -15,7 +15,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 import { Artifact } from './artifact';
 import { BrowserContext, validateBrowserContextOptions } from './browserContext';

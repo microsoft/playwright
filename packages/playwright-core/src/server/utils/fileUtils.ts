@@ -63,12 +63,12 @@ export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
 }
 
-export function makeSocketPath(component: string, name: string): string {
+export function makeSocketPath(domain: string, name: string): string {
   const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
   if (process.platform === 'win32')
-    return `\\\\.\\pipe\\playwright-${userNameHash}-${component}-${name}`;
-  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `playwright-${userNameHash}`);
-  const dir = path.join(baseDir, component);
+    return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}`;
+  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  const dir = path.join(baseDir, domain);
   const result = path.join(dir, `${name}.sock`);
   fs.mkdirSync(dir, { recursive: true });
   return result;
