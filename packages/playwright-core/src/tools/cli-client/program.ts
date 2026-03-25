@@ -91,7 +91,7 @@ export async function program(options?: { embedderVersion?: string}) {
   const command = commandName && help.commands[commandName];
   if (args.help || args.h) {
     if (command) {
-      console.log(command);
+      console.log(command.help);
     } else {
       console.log('playwright-cli - run playwright mcp commands from terminal\n');
       console.log(help.global);
@@ -104,6 +104,8 @@ export async function program(options?: { embedderVersion?: string}) {
     console.log(help.global);
     process.exit(1);
   }
+
+  validateFlags(args, command);
 
   const registry = await Registry.load();
   const sessionName = resolveSessionName(args.session as string);
@@ -429,6 +431,24 @@ async function renderSessionStatus(clientInfo: ClientInfo, session: Session) {
   if (config.browser)
     text.push(...renderResolvedConfig(config));
   return text.join('\n');
+}
+
+function validateFlags(args: MinimistArgs, command: { flags: Record<string, 'boolean' | 'string'>, help: string }) {
+  const unknownFlags: string[] = [];
+  for (const key of Object.keys(args)) {
+    if (key === '_')
+      continue;
+    if ((globalOptions as readonly string[]).includes(key))
+      continue;
+    if (!(key in command.flags))
+      unknownFlags.push(key);
+  }
+  if (unknownFlags.length) {
+    console.error(`Unknown option${unknownFlags.length > 1 ? 's' : ''}: ${unknownFlags.map(f => `--${f}`).join(', ')}`);
+    console.log('');
+    console.log(command.help);
+    process.exit(1);
+  }
 }
 
 export function calculateSha1(buffer: Buffer | string): string {
