@@ -6,6 +6,190 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.59
+
+### Video Recording
+
+New methods [`method: Video.start`] and [`method: Video.stop`] allow starting and stopping video recording manually. This approach is an alternative to the [`option: Browser.newContext.recordVideo`] option, giving you precise control over when recording begins and ends.
+
+```js
+await page.video().start({ path: 'video.webm' });
+// ... perform actions ...
+await page.video().stop();
+```
+
+You can also enable visual annotations that highlight interacted elements and show action titles during recording:
+
+```js
+await page.video().start({
+  path: 'video.webm',
+  annotate: { position: 'top-right' },
+});
+```
+
+In addition, you can set up a page overlay to produce custom visual annotations in the video:
+
+```js
+await page.overlay.chapter('Adding TODOs', {
+  description: 'Type and press enter for each TODO',
+  duration: 1000,
+});
+```
+
+### UI Mode, HTML Reporter, and Trace Viewer
+
+- UI Mode has an option to only show tests affected by source changes.
+- UI Mode and Trace Viewer have improved action filtering.
+- HTML Reporter shows the list of runs from the same worker.
+- HTML Reporter allows filtering test steps for quick search.
+
+### Trace Mode: `retain-on-failure-and-retries`
+
+New trace mode `'retain-on-failure-and-retries'` records a trace for each test run and retains all traces when an attempt fails. This is useful to compare a passing trace with a failing trace from a flaky test.
+
+```js
+import { defineConfig } from '@playwright/test';
+
+export default defineConfig({
+  use: {
+    trace: 'retain-on-failure-and-retries',
+  },
+});
+```
+
+### Debugger API
+
+Debugger is accessible through [`property: BrowserContext.debugger`] and provides programmatic control over the Playwright debugger.
+
+You can request pause at specific locations, or next api calls, resume execution and get details .
+
+Available APIs:
+- Method [`method: Debugger.pausedDetails`] provides information about the current paused api call.
+- Method [`method: Debugger.requestPause`] asks debugger to pause on the next call.
+- Method [`method: Debugger.resume`] instructs debugger to resume the currently paused call.
+- Method [`method: Debugger.next`] resumes and pauses on the next call, similar to a "step over" action.
+- Method [`method: Debugger.runTo`] resumes and pauses at a specific line in a file.
+- Event [`event: Debugger.pausedStateChanged`] notifies when debugger pauses or resumes.
+
+### Playwright CLI
+
+#### Automatic test debugging
+
+You can run `npx playwright test --debug=cli` to attach and debug tests over `playwright-cli`. This is useful for automatically fixing tests in agentic workflows. Below is an example of command-line debugging, edited for brevity.
+
+```
+$ npx playwright test --debug=cli
+### Debugging Instructions
+- Run "playwright-cli attach tw-87b59e" to attach to this test
+
+$ playwright-cli attach tw-87b59e
+### Session `tw-87b59e` created, attached to `tw-87b59e`.
+Run commands with: playwright-cli --session=tw-87b59e <command>
+### Paused
+- Navigate to "/" at output/tests/example.spec.ts:4
+
+$ playwright-cli --session tw-87b59e step-over
+### Page
+- Page URL: https://playwright.dev/
+- Page Title: Fast and reliable end-to-end testing for modern web apps | Playwright
+### Paused
+- Expect "toHaveTitle" at output/tests/example.spec.ts:7
+```
+
+#### Agentic trace analysis
+
+You can run `npx playwright trace` to explore [Playwright Trace](./trace-viewer.md) through a command line. This is designed to allow coding agents help you understand failing/flaky tests. Below is an example of command-line exploration, edited for brevity.
+
+```
+$ npx playwright trace open test-results/example-has-title-chromium/trace.zip
+  Title:        example.spec.ts:3 › has title
+
+$ npx playwright trace actions --grep="expect"
+     # Time       Action                                                  Duration
+  ──── ─────────  ─────────────────────────────────────────────────────── ────────
+    9. 0:00.859  Expect "toHaveTitle"                                        5.1s  ✗
+
+$ npx playwright trace action 9
+  Expect "toHaveTitle"
+  Error: expect(page).toHaveTitle(expected) failed
+    Expected pattern: /Wrong Title/
+    Received string:  "Fast and reliable end-to-end testing for modern web apps | Playwright"
+    Timeout: 5000ms
+  Snapshots
+    available: before, after
+    usage:     npx playwright trace snapshot 9 --name <before|after>
+
+$ npx playwright trace snapshot 9 --name after
+### Page
+- Page Title: Fast and reliable end-to-end testing for modern web apps | Playwright
+
+$ npx playwright trace close
+```
+
+### New APIs
+
+#### await using
+
+Many APIs now return [async disposables](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/asyncDispose) that enables `await using` syntax.
+
+```js
+await using page = await context.newPage();
+{
+  await using route = await page.route('**/*', route => route.continue());
+  await using script = await page.addInitScript('console.log("init script here")');
+  await page.goto('https://playwright.dev');
+  // do something
+}
+// route and init script have been removed at this point
+```
+
+#### Snapshots and Locators
+
+- Method [`method: Page.ariaSnapshot`] to capture the aria snapshot of the page. This is equivalent to `page.locator('body').ariaSnapshot()`.
+- Options `depth` and `mode` in [`method: Locator.ariaSnapshot`].
+- Method [`method: Locator.normalize`] converts locator to a new one following the best practices like test ids and aria roles.
+- Method [`method: Page.pickLocator`] enters an interactive mode where hovering over page elements highlights them and shows the corresponding locator. Once the user clicks an element, the [Locator] for the picked element is returned. Use [`method: Page.cancelPickLocator`] to cancel an ongoing pick locator mode.
+
+#### Video, Screencast and Overlay
+
+- [`property: Page.overlay`] manages overlay content in the page.
+- [`property: Page.screencast`] allows to stream screencast frames from the page.
+- Methods [`method: Video.start`] and [`method: Video.stop`] for manual video control.
+
+#### Storage, Console and Errors
+
+- Method [`method: BrowserContext.setStorageState`] clears the existing cookies, local storage and IndexedDB entries for all origins and sets the new storage state. This allows changing the storage state on an existing context without creating a new one.
+- Method [`method: Page.clearConsoleMessages`] to clear stored console messages.
+- Method [`method: Page.clearPageErrors`] to clear stored page errors.
+- Option `filter` in [`method: Page.consoleMessages`] and [`method: Page.pageErrors`] controls which messages are returned.
+- Method [`method: ConsoleMessage.timestamp`].
+
+#### Miscellaneous
+
+- [`property: BrowserContext.debugger`] provides programmatic control over the Playwright debugger.
+- Method [`method: BrowserContext.isClosed`].
+- Method [`method: Request.existingResponse`] returns the response without waiting.
+- Method [`method: Response.httpVersion`] returns the HTTP version used by the response.
+- Events [`event: CDPSession.event`] and [`event: CDPSession.close`] for CDP sessions.
+- Option `live` in [`method: Tracing.start`] for real-time trace updates.
+- Option `artifactsDir` in [`method: BrowserType.launch`] to configure the artifacts directory.
+
+### Breaking Changes
+
+- Removed macOS 14 support for WebKit. We recommend upgrading your macOS version, or keeping an older Playwright version.
+- Removed `@playwright/experimental-ct-svelte` package.
+
+### Browser Versions
+
+- Chromium 146.0.7680.31
+- Mozilla Firefox 148.0.2
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 145
+- Microsoft Edge 145
+
 ## Version 1.58
 
 ### Timeline
