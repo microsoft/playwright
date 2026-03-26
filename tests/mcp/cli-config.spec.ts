@@ -154,3 +154,35 @@ test('project config overrides global config', async ({ cli, server, mcpBrowser 
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('1024x768');
 });
+
+
+test('global config system USERPROFILE', async ({ cli, server, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser !== 'chrome', 'Overriden home does not contain bundled browsers');
+  const globalConfigDir = testInfo.outputPath('home', '.playwright');
+  await fs.promises.mkdir(globalConfigDir, { recursive: true });
+  await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
+    browser: {
+      userDataDir: testInfo.outputPath('my-data-dir'),
+      browserName: 'chromium',
+      launchOptions: {
+        channel: 'chrome',
+      },
+      contextOptions: {
+        viewport: { width: 800, height: 600 },
+      },
+    },
+  }, null, 2));
+
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify({
+    browser: {
+      contextOptions: {
+        viewport: { width: 1024, height: 768 },
+      },
+    },
+  }, null, 2));
+
+  const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+  await cli('open', server.PREFIX, { env });
+  const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
+  expect(output).toContain('1024x768');
+});
