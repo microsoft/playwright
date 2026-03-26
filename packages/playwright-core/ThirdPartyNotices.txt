@@ -132,7 +132,7 @@ This project incorporates components from the projects listed below. The origina
 -	which@2.0.2 (https://github.com/isaacs/node-which)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.17.1 (https://github.com/websockets/ws)
--	yaml@2.6.0 (https://github.com/eemeli/yaml)
+-	yaml@2.8.3 (https://github.com/eemeli/yaml)
 -	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
@@ -3429,7 +3429,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ws@8.17.1 AND INFORMATION
 
-%% yaml@2.6.0 NOTICES AND INFORMATION BEGIN HERE
+%% yaml@2.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright Eemeli Aro <eemeli@gmail.com>
 
@@ -3445,7 +3445,7 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 =========================================
-END OF yaml@2.6.0 AND INFORMATION
+END OF yaml@2.8.3 AND INFORMATION
 
 %% yauzl@3.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
