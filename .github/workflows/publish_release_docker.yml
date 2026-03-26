@@ -24,13 +24,13 @@ jobs:
         node-version: 20
         registry-url: 'https://registry.npmjs.org'
     - name: Set up Docker QEMU for arm64 docker builds
-      uses: docker/setup-qemu-action@v4
+      uses: docker/setup-qemu-action@ce360397dd3f832beb865e1373c09c0e9f86d70a # v4
       with:
         platforms: arm64
     - run: npm ci
     - run: npm run build
     - name: Azure Login
-      uses: azure/login@v2
+      uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
       with:
         client-id: ${{ secrets.AZURE_DOCKER_CLIENT_ID }}
         tenant-id: ${{ secrets.AZURE_DOCKER_TENANT_ID }}
