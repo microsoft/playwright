@@ -4174,7 +4174,7 @@ Electron:
         recordVideo:
           type: object?
           properties:
-            dir: string
+            dir: string?
             size:
               type: object?
               properties:

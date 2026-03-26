@@ -2679,7 +2679,7 @@ scheme.ElectronLaunchParams = tObject({
   locale: tOptional(tString),
   offline: tOptional(tBoolean),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,

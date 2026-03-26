@@ -4676,7 +4676,7 @@ export type ElectronLaunchParams = {
   locale?: string,
   offline?: boolean,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -4713,7 +4713,7 @@ export type ElectronLaunchOptions = {
   locale?: string,
   offline?: boolean,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
