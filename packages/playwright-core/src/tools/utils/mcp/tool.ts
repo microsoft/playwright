@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z as zod } from '../../../mcpBundle';
+import { z as zod } from '../../../zodBundle';
 import type { z } from 'zod';
 import type * as mcpServer from './server';
 

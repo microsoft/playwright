@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { formatObject, formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
 
 import { defineTabTool, defineTool } from './tool';

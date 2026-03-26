@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 
 import common from './common';
 import config from './config';

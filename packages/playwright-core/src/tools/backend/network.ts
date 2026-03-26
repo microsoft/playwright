@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTool, defineTabTool } from './tool';
 
 import type * as playwright from '../../..';

@@ -14,25 +14,11 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-import { defineTool } from './tool';
+// @ts-ignore
+import * as bundle from './zodBundleImpl';
 
-const configShow = defineTool({
-  capability: 'config',
+const z: typeof import('zod') = bundle.z;
 
-  schema: {
-    name: 'browser_get_config',
-    title: 'Get config',
-    description: 'Get the final resolved config after merging CLI options, environment variables and config file.',
-    inputSchema: z.object({}),
-    type: 'readOnly',
-  },
-
-  handle: async (context, params, response) => {
-    response.addTextResult(JSON.stringify(context.config, null, 2));
-  },
-});
-
-export default [
-  configShow,
-];
+export {
+  z,
+};

@@ -3,8 +3,8 @@
   "version": "0.0.1",
   "private": true,
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.26.0",
-    "zod": "^4.3.5",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "zod": "^4.3.6",
     "zod-to-json-schema": "^3.25.1"
   }
 }

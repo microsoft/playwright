@@ -9,7 +9,7 @@ Create `packages/playwright-core/src/tools/backend/<your-tool>.ts`.
 Import zod from the MCP bundle and use `defineTool` or `defineTabTool`:
 
 ```typescript
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTool, defineTabTool } from './tool';
 ```
 
@@ -201,7 +201,7 @@ Implement the corresponding MCP tool first (see section above). CLI commands cal
 In `packages/playwright-core/src/tools/cli-daemon/commands.ts`, use `declareCommand()`:
 
 ```typescript
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { declareCommand } from './command';
 
 const myCommand = declareCommand({

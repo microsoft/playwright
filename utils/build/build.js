@@ -69,6 +69,8 @@ const copyFiles = [];
 const watchMode = process.argv.slice(2).includes('--watch');
 const withSourceMaps = watchMode;
 const disableInstall = process.argv.slice(2).includes('--disable-install');
+const bundleFilterIndex = process.argv.indexOf('--bundle');
+const bundleFilter = bundleFilterIndex !== -1 ? process.argv[bundleFilterIndex + 1] : undefined;
 const ROOT = path.join(__dirname, '..', '..');
 
 /**
@@ -200,6 +202,19 @@ async function runWatch() {
     runOnChange(onChange);
 }
 
+/**
+ * @param {string} filter 
+ */
+async function runBundleOnly(filter) {
+  const matching = bundleSteps.filter((_, i) => bundles[i].modulePath.includes(filter));
+  if (!matching.length) {
+    console.error(`No bundles matching "${filter}". Available: ${bundles.map(b => b.modulePath).join(', ')}`);
+    process.exit(1);
+  }
+  for (const step of matching)
+    await step.run();
+}
+
 async function runBuild() {
   for (const { files, from, to, ignored } of copyFiles) {
     const watcher = chokidar.watch([filePath(files)], {
@@ -277,12 +292,18 @@ bundles.push({
 
 bundles.push({
   modulePath: 'packages/playwright-core/bundles/mcp',
-  outfile: 'packages/playwright-core/lib/mcpBundleImpl/index.js',
+  outfile: 'packages/playwright-core/lib/mcpBundleImpl.js',
   entryPoints: ['src/mcpBundleImpl.ts'],
   external: ['express', '@anthropic-ai/sdk'],
   alias: {
     'raw-body': 'raw-body.ts',
   },
+});
+
+bundles.push({
+  modulePath: 'packages/playwright-core/bundles/zod',
+  outfile: 'packages/playwright-core/lib/zodBundleImpl.js',
+  entryPoints: ['src/zodBundleImpl.ts'],
 });
 
 // @playwright/client
@@ -518,9 +539,12 @@ const pkgSizePlugin = {
 };
 
 // Build/watch bundles.
-for (const bundle of bundles) {
-  /** @type {import('esbuild').BuildOptions} */
-  const options = {
+/**
+ * @param {BundleOptions} bundle
+ * @returns {import('esbuild').BuildOptions}
+ */
+function bundleToEsbuildOptions(bundle) {
+  return {
     bundle: true,
     format: 'cjs',
     platform: 'node',
@@ -537,8 +561,12 @@ for (const bundle of bundles) {
     metafile: true,
     plugins: [pkgSizePlugin],
   };
-  steps.push(new EsbuildStep(options));
 }
+
+/** @type {EsbuildStep[]} */
+const bundleSteps = bundles.map(b => new EsbuildStep(bundleToEsbuildOptions(b)));
+for (const step of bundleSteps)
+  steps.push(step);
 
 // Build/watch trace viewer service worker.
 steps.push(new ProgramStep({
@@ -717,4 +745,4 @@ process.on('SIGINT', () => {
 });
 
 
-watchMode ? runWatch() : runBuild();
+bundleFilter ? runBundleOnly(bundleFilter) : watchMode ? runWatch() : runBuild();
