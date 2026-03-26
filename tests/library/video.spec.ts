@@ -188,9 +188,8 @@ it.describe('screencast', () => {
     expectRedFrames(videoFile, size);
   });
 
-  it('should throw without recordVideo.dir', async ({ browser }) => {
-    const error = await browser.newContext({ recordVideo: {} as any }).catch(e => e);
-    expect(error.message).toContain('recordVideo.dir: expected string, got undefined');
+  it('should not throw without recordVideo.dir', async ({ browser }) => {
+    await browser.newContext({ recordVideo: {} });
   });
 
   it('should capture static page', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
@@ -840,6 +839,30 @@ it.describe('screencast', () => {
     expectFrames(videoPath3, size, isAlmostGray);
 
     await context.close();
+  });
+
+  it('video.start/stop twice without path creates two files in artifactsDir', async ({ browserType }, testInfo) => {
+    const artifactsDir = testInfo.outputPath('artifacts');
+    const browser = await browserType.launch({ artifactsDir });
+    const size = { width: 800, height: 800 };
+    const context = await browser.newContext({ viewport: size });
+    const page = await context.newPage();
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'red');
+    await rafraf(page, 100);
+    await page.video().stop();
+
+    await page.video().start({ size });
+    await page.evaluate(() => document.body.style.backgroundColor = 'blue');
+    await rafraf(page, 100);
+    await page.video().stop();
+
+    const videoFiles = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'));
+    expect(videoFiles).toHaveLength(2);
+
+    await context.close();
+    await browser.close();
   });
 
   it('video.start should fail when recordVideo is set, but stop should work', async ({ browser }, testInfo) => {

@@ -531,7 +531,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await browser.close();
     });
 
-    test('should return video path inside artifactsDir when connecting to remote browser', async ({ connect, startRemoteServer }, testInfo) => {
+    test('should name video file after page guid when connecting to remote browser with artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
       const artifactsDir = testInfo.outputPath('artifacts');
       const remoteServer = await startRemoteServer(kind, { artifactsDir });
       const browser = await connect(remoteServer.wsEndpoint());
@@ -543,9 +543,7 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await rafraf(page, 100);
       await context.close();
 
-      const videoPath = await page.video().path();
-      expect(videoPath).toContain(artifactsDir);
-      expect(fs.existsSync(videoPath)).toBeTruthy();
+      expect(fs.existsSync(path.join(artifactsDir, (page as any)._guid + '.webm'))).toBeTruthy();
 
       await browser.close();
     });
