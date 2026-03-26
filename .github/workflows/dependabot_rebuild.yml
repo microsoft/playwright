@@ -39,8 +39,7 @@ jobs:
             # Pushing with GITHUB_TOKEN does not retrigger workflow runs, see:
             # https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs
             # Close and reopen the PR to fire a pull_request reopened event, which
-            # retriggers infra.yml on the new commit. PATs and GitHub Apps are not
-            # available due to company policy.
+            # retriggers infra.yml on the new commit.
             # Remove labels first to avoid triggering bots on the close/reopen events.
             gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels -X DELETE
             gh pr close ${{ github.event.pull_request.number }}
