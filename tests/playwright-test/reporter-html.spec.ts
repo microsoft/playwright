@@ -829,6 +829,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
           test('has steps', async ({}) => {
             await test.step('click button', async () => {});
             await test.step('fill form', async () => {
+              await test.step('enter username', async () => {});
+              await test.step('enter password', async () => {});
+            });
+            await test.step('another form', async () => {
               await test.step('fill username', async () => {});
               await test.step('fill password', async () => {});
             });
@@ -850,7 +854,10 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.locator('.tree-item-title', { hasText: 'fill form' })).toBeVisible();
       await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeHidden();
       await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeHidden();
-      // matching parent is auto-expanded to show matching children (like trace viewer)
+      // matching parent is not auto-expanded when it has no matching children
+      await expect(page.locator('.tree-item-title', { hasText: 'enter username' })).toBeHidden();
+      await expect(page.locator('.tree-item-title', { hasText: 'enter password' })).toBeHidden();
+      // non-matching parent is auto-expanded when it has a matching child
       await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeVisible();
       await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeVisible();
 
@@ -858,7 +865,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await filterInput.clear();
       await expect(page.locator('.tree-item-title', { hasText: 'click button' })).toBeVisible();
       await expect(page.locator('.tree-item-title', { hasText: 'submit form' })).toBeVisible();
-      // children of fill form are collapsed again after clearing the filter
+      // children are collapsed again after clearing the filter
       await expect(page.locator('.tree-item-title', { hasText: 'fill username' })).toBeHidden();
       await expect(page.locator('.tree-item-title', { hasText: 'fill password' })).toBeHidden();
     });
