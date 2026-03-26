@@ -35,7 +35,7 @@ jobs:
           if [[ -n "$(git status --porcelain)" ]]; then
             git add .
             git commit -m "chore: update generated files after dependency update"
-            git push origin HEAD:${{ github.head_ref }}
+            git push origin HEAD:${HEAD_REF}
             # Pushing with GITHUB_TOKEN does not retrigger workflow runs, see:
             # https://docs.github.com/en/actions/concepts/security/github_token#when-github_token-triggers-workflow-runs
             # Close and reopen the PR to fire a pull_request reopened event, which
@@ -49,3 +49,4 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.head_ref }}
