@@ -16,7 +16,6 @@
  */
 
 import fs from 'fs';
-import path from 'path';
 
 import { createGuid } from './utils/crypto';
 import { debugMode, isUnderTest } from './utils/debug';
@@ -24,7 +23,6 @@ import { Clock } from './clock';
 import { Debugger } from './debugger';
 import { DialogManager } from './dialog';
 import { BrowserContextAPIRequestContext } from './fetch';
-import { mkdirIfNeeded } from './utils/fileUtils';
 import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
 import { HarRecorder } from './har/harRecorder';
 import { helper } from './helper';
@@ -187,11 +185,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       function installConsoleApi(injectedScript) { injectedScript.consoleApi.install(); }
       module.exports = { default: () => installConsoleApi };
     `);
-  }
-
-  async _ensureVideosPath() {
-    if (this._options.recordVideo)
-      await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
   }
 
   canResetForReuse(): boolean {
