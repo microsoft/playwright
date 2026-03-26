@@ -11,6 +11,7 @@ jobs:
     if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
     permissions:
       contents: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v6
         with:
@@ -35,41 +36,11 @@ jobs:
             git add .
             git commit -m "chore: update generated files after dependency update"
             git push origin HEAD:${{ github.head_ref }}
+            gh api repos/${{ github.repository }}/issues/${{ github.event.pull_request.number }}/labels -X DELETE
+            gh pr close ${{ github.event.pull_request.number }}
+            gh pr reopen ${{ github.event.pull_request.number }}
           else
             echo "No generated files changed, nothing to commit."
           fi
-
-  doc-and-lint:
-    name: "docs & lint"
-    needs: rebuild
-    runs-on: ubuntu-24.04
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        ref: ${{ github.head_ref }}
-    - uses: actions/setup-node@v6
-      with:
-        node-version: 20
-    - run: npm ci
-    - run: npm run build
-    - run: npx playwright install --with-deps
-    - run: npm run lint
-    - name: Verify clean tree
-      run: |
-        if [[ -n $(git status -s) ]]; then
-          echo "ERROR: tree is dirty after npm run build:"
-          git diff
-          exit 1
-        fi
-    - name: Audit prod NPM dependencies
-      run: node utils/check_audit.js
-      continue-on-error: true
-
-  lint-snippets:
-    name: "Lint snippets"
-    needs: rebuild
-    runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]' && github.repository == 'microsoft/playwright'
-    steps:
-    - run: echo "Skipped for dependabot PRs"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
