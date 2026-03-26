@@ -15,7 +15,7 @@
  */
 
 import path from 'path';
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTool } from './tool';
 
 const startVideo = defineTool({
