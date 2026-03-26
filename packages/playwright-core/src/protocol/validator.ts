@@ -2689,6 +2689,7 @@ scheme.ElectronLaunchParams = tObject({
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
   tracesDir: tOptional(tString),
+  artifactsDir: tOptional(tString),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
 });
