@@ -6,6 +6,12 @@ common/
 [program.ts]
 **
 
+[testActions.ts]
+**
+
+[reportActions.ts]
+**
+
 [index.ts]
 @testIsomorphic/**
 ./prompt.ts

@@ -14,16 +14,6 @@
  * limitations under the License.
  */
 
-import { traceOpen } from './traceOpen';
-import { traceActions, traceAction } from './traceActions';
-import { traceRequests, traceRequest } from './traceRequests';
-import { traceConsole } from './traceConsole';
-import { traceErrors } from './traceErrors';
-import { traceSnapshot } from './traceSnapshot';
-import { traceScreenshot } from './traceScreenshot';
-import { traceAttachments, traceAttachment } from './traceAttachments';
-import { installSkill } from './installSkill';
-
 import type { Command } from '../../utilsBundle';
 
 export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) => void) {
@@ -34,7 +24,8 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
   traceCommand
       .command('open <trace>')
       .description('extract trace file for inspection')
-      .action((trace: string) => {
+      .action(async (trace: string) => {
+        const { traceOpen } = await import('./traceOpen');
         traceOpen(trace).catch(logErrorAndExit);
       });
 
@@ -43,14 +34,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .description('list actions in the trace')
       .option('--grep <pattern>', 'filter actions by title pattern')
       .option('--errors-only', 'only show failed actions')
-      .action((options: { grep?: string, errorsOnly?: boolean }) => {
+      .action(async (options: { grep?: string, errorsOnly?: boolean }) => {
+        const { traceActions } = await import('./traceActions');
         traceActions(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('action <action-id>')
       .description('show details of a specific action')
-      .action((actionId: string) => {
+      .action(async (actionId: string) => {
+        const { traceAction } = await import('./traceActions');
         traceAction(actionId).catch(logErrorAndExit);
       });
 
@@ -61,14 +54,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--method <method>', 'filter by HTTP method')
       .option('--status <code>', 'filter by status code')
       .option('--failed', 'only show failed requests (status >= 400)')
-      .action((options: { grep?: string, method?: string, status?: string, failed?: boolean }) => {
+      .action(async (options: { grep?: string, method?: string, status?: string, failed?: boolean }) => {
+        const { traceRequests } = await import('./traceRequests');
         traceRequests(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('request <request-id>')
       .description('show details of a specific network request')
-      .action((requestId: string) => {
+      .action(async (requestId: string) => {
+        const { traceRequest } = await import('./traceRequests');
         traceRequest(requestId).catch(logErrorAndExit);
       });
 
@@ -79,14 +74,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .option('--warnings', 'show errors and warnings')
       .option('--browser', 'only browser console messages')
       .option('--stdio', 'only stdout/stderr')
-      .action((options: { errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
+      .action(async (options: { errorsOnly?: boolean, warnings?: boolean, browser?: boolean, stdio?: boolean }) => {
+        const { traceConsole } = await import('./traceConsole');
         traceConsole(options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('errors')
       .description('show errors with stack traces')
-      .action(() => {
+      .action(async () => {
+        const { traceErrors } = await import('./traceErrors');
         traceErrors().catch(logErrorAndExit);
       });
 
@@ -99,6 +96,7 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .allowExcessArguments(true)
       .action(async (actionId: string, options: { name?: string, serve?: boolean }, cmd: Command) => {
         try {
+          const { traceSnapshot } = await import('./traceSnapshot');
           // Collect everything after '--' as the browser command.
           const browserArgs = cmd.args.slice(1);
           await traceSnapshot(actionId, { ...options, browserArgs });
@@ -111,14 +109,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .command('screenshot <action-id>')
       .description('save screencast screenshot for an action')
       .option('-o, --output <path>', 'output file path')
-      .action((actionId: string, options: { output?: string }) => {
+      .action(async (actionId: string, options: { output?: string }) => {
+        const { traceScreenshot } = await import('./traceScreenshot');
         traceScreenshot(actionId, options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('attachments')
       .description('list trace attachments')
-      .action(() => {
+      .action(async () => {
+        const { traceAttachments } = await import('./traceAttachments');
         traceAttachments().catch(logErrorAndExit);
       });
 
@@ -126,14 +126,16 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       .command('attachment <attachment-id>')
       .description('extract a trace attachment by its number')
       .option('-o, --output <path>', 'output file path')
-      .action((attachmentId: string, options: { output?: string }) => {
+      .action(async (attachmentId: string, options: { output?: string }) => {
+        const { traceAttachment } = await import('./traceAttachments');
         traceAttachment(attachmentId, options).catch(logErrorAndExit);
       });
 
   traceCommand
       .command('install-skill')
       .description('install SKILL.md for LLM integration')
-      .action(() => {
+      .action(async () => {
+        const { installSkill } = await import('./installSkill');
         installSkill().catch(logErrorAndExit);
       });
 }

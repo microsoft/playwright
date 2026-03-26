@@ -16,27 +16,10 @@
 
 /* eslint-disable no-console */
 
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
-
-import * as playwright from '../..';
-import { launchBrowserServer, printApiJson, runDriver, runServer } from './driver';
-import { registry, writeDockerVersion } from '../server';
-import { gracefullyProcessExitDoNotHang, isLikelyNpxGlobal, ManualPromise } from '../utils';
-import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import { gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import { addTraceCommands } from '../tools/trace/traceCli';
-import { assert, getPackageManagerExecCommand } from '../utils';
-import { wrapInASCIIBox } from '../server/utils/ascii';
-import { dotenv, program } from '../utilsBundle';
-import { program as cliProgram } from '../tools/cli-client/program';
+import { program } from '../utilsBundle';
 
-import type { Browser } from '../client/browser';
-import type { BrowserContext } from '../client/browserContext';
-import type { BrowserType } from '../client/browserType';
-import type { Page } from '../client/page';
-import type { BrowserContextOptions, LaunchOptions } from '../client/types';
-import type { BrowserInfo } from '../server';
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import type { Command } from '../utilsBundle';
 
@@ -52,13 +35,14 @@ program
     .command('mark-docker-image [dockerImageNameTemplate]', { hidden: true })
     .description('mark docker image')
     .allowUnknownOption(true)
-    .action(function(dockerImageNameTemplate) {
-      assert(dockerImageNameTemplate, 'dockerImageNameTemplate is required');
-      writeDockerVersion(dockerImageNameTemplate).catch(logErrorAndExit);
+    .action(async function(dockerImageNameTemplate) {
+      const { markDockerImage } = await import('./installActions');
+      markDockerImage(dockerImageNameTemplate).catch(logErrorAndExit);
     });
 
 commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
-    .action(function(url, options) {
+    .action(async function(url, options) {
+      const { open } = await import('./browserActions');
       open(options, url).catch(logErrorAndExit);
     })
     .addHelpText('afterAll', `
@@ -73,6 +57,7 @@ commandWithOpenOptions('codegen [url]', 'open page and generate code for user ac
       ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
       ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
     ]).action(async function(url, options) {
+  const { codegen } = await import('./browserActions');
   await codegen(options, url);
 }).addHelpText('afterAll', `
 Examples:
@@ -80,63 +65,6 @@ Examples:
   $ codegen
   $ codegen --target=python
   $ codegen -b webkit https://example.com`);
-
-function printInstalledBrowsers(browsers: BrowserInfo[]) {
-  const browserPaths = new Set<string>();
-  for (const browser of browsers)
-    browserPaths.add(browser.browserPath);
-  console.log(`  Browsers:`);
-  for (const browserPath of [...browserPaths].sort())
-    console.log(`    ${browserPath}`);
-  console.log(`  References:`);
-
-  const references = new Set<string>();
-  for (const browser of browsers)
-    references.add(browser.referenceDir);
-  for (const reference of [...references].sort())
-    console.log(`    ${reference}`);
-}
-
-function printGroupedByPlaywrightVersion(browsers: BrowserInfo[]) {
-  const dirToVersion = new Map<string, string>();
-  for (const browser of browsers) {
-    if (dirToVersion.has(browser.referenceDir))
-      continue;
-    const packageJSON = require(path.join(browser.referenceDir, 'package.json'));
-    const version = packageJSON.version;
-    dirToVersion.set(browser.referenceDir, version);
-  }
-
-  const groupedByPlaywrightMinorVersion = new Map<string, BrowserInfo[]>();
-  for (const browser of browsers) {
-    const version = dirToVersion.get(browser.referenceDir)!;
-    let entries = groupedByPlaywrightMinorVersion.get(version);
-    if (!entries) {
-      entries = [];
-      groupedByPlaywrightMinorVersion.set(version, entries);
-    }
-    entries.push(browser);
-  }
-
-  const sortedVersions = [...groupedByPlaywrightMinorVersion.keys()].sort((a, b) => {
-    const aComponents = a.split('.');
-    const bComponents = b.split('.');
-    const aMajor = parseInt(aComponents[0], 10);
-    const bMajor = parseInt(bComponents[0], 10);
-    if (aMajor !== bMajor)
-      return aMajor - bMajor;
-    const aMinor = parseInt(aComponents[1], 10);
-    const bMinor = parseInt(bComponents[1], 10);
-    if (aMinor !== bMinor)
-      return aMinor - bMinor;
-    return aComponents.slice(2).join('.').localeCompare(bComponents.slice(2).join('.'));
-  });
-
-  for (const version of sortedVersions) {
-    console.log(`\nPlaywright version: ${version}`);
-    printInstalledBrowsers(groupedByPlaywrightMinorVersion.get(version)!);
-  }
-}
 
 program
     .command('install [browser...]')
@@ -148,57 +76,9 @@ program
     .option('--only-shell', 'only install headless shell when installing chromium')
     .option('--no-shell', 'do not install chromium headless shell')
     .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
-      if (isLikelyNpxGlobal()) {
-        console.error(wrapInASCIIBox([
-          `WARNING: It looks like you are running 'npx playwright install' without first`,
-          `installing your project's dependencies.`,
-          ``,
-          `To avoid unexpected behavior, please install your dependencies first, and`,
-          `then run Playwright's install command:`,
-          ``,
-          `    npm install`,
-          `    npx playwright install`,
-          ``,
-          `If your project does not yet depend on Playwright, first install the`,
-          `applicable npm package (most commonly @playwright/test), and`,
-          `then run Playwright's install command to download the browsers:`,
-          ``,
-          `    npm install @playwright/test`,
-          `    npx playwright install`,
-          ``,
-        ].join('\n'), 1));
-      }
       try {
-        if (options.shell === false && options.onlyShell)
-          throw new Error(`Only one of --no-shell and --only-shell can be specified`);
-        const shell = options.shell === false ? 'no' : options.onlyShell ? 'only' : undefined;
-        const executables = registry.resolveBrowsers(args, { shell });
-        if (options.withDeps)
-          await registry.installDeps(executables, !!options.dryRun);
-        if (options.dryRun && options.list)
-          throw new Error(`Only one of --dry-run and --list can be specified`);
-        if (options.dryRun) {
-          for (const executable of executables) {
-            console.log(registry.calculateDownloadTitle(executable));
-            console.log(`  Install location:    ${executable.directory ?? '<system>'}`);
-            if (executable.downloadURLs?.length) {
-              const [url, ...fallbacks] = executable.downloadURLs;
-              console.log(`  Download url:        ${url}`);
-              for (let i = 0; i < fallbacks.length; ++i)
-                console.log(`  Download fallback ${i + 1}: ${fallbacks[i]}`);
-            }
-            console.log(``);
-          }
-        } else if (options.list) {
-          const browsers = await registry.listInstalledBrowsers();
-          printGroupedByPlaywrightVersion(browsers);
-        } else {
-          await registry.install(executables, { force: options.force });
-          await registry.validateHostRequirementsForExecutablesIfNeeded(executables, process.env.PW_LANG_NAME || 'javascript').catch((e: Error) => {
-            e.name = 'Playwright Host validation warning';
-            console.error(e);
-          });
-        }
+        const { installBrowsers } = await import('./installActions');
+        await installBrowsers(args, options);
       } catch (e) {
         console.log(`Failed to install browsers\n${e}`);
         gracefullyProcessExitDoNotHang(1);
@@ -210,20 +90,15 @@ Examples:
     Install default browsers.
 
   - $ install chrome firefox
-    Install custom browsers, supports ${registry.suggestedBrowsersToInstall()}.`);
+    Install custom browsers, supports chromium, firefox, webkit, chromium-headless-shell.`);
 
 program
     .command('uninstall')
     .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
     .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
     .action(async (options: { all?: boolean }) => {
-      delete process.env.PLAYWRIGHT_SKIP_BROWSER_GC;
-      await registry.uninstall(!!options.all).then(({ numberOfBrowsersLeft }) => {
-        if (!options.all && numberOfBrowsersLeft > 0) {
-          console.log('Successfully uninstalled Playwright browsers for the current Playwright installation.');
-          console.log(`There are still ${numberOfBrowsersLeft} browsers left, used by other Playwright installations.\nTo uninstall Playwright browsers for all installations, re-run with --all flag.`);
-        }
-      }).catch(logErrorAndExit);
+      const { uninstallBrowsers } = await import('./installActions');
+      uninstallBrowsers(options).catch(logErrorAndExit);
     });
 
 program
@@ -232,7 +107,8 @@ program
     .option('--dry-run', 'Do not execute installation commands, only print them')
     .action(async function(args: string[], options: { dryRun?: boolean }) {
       try {
-        await registry.installDeps(registry.resolveBrowsers(args, {}), !!options.dryRun);
+        const { installDeps } = await import('./installActions');
+        await installDeps(args, options);
       } catch (e) {
         console.log(`Failed to install browser dependencies\n${e}`);
         gracefullyProcessExitDoNotHang(1);
@@ -243,7 +119,7 @@ Examples:
     Install dependencies for default browsers.
 
   - $ install-deps chrome firefox
-    Install dependencies for specific browsers, supports ${registry.suggestedBrowsersToInstall()}.`);
+    Install dependencies for specific browsers, supports chromium, firefox, webkit, chromium-headless-shell.`);
 
 const browsers = [
   { alias: 'cr', name: 'Chromium', type: 'chromium' },
@@ -253,7 +129,8 @@ const browsers = [
 
 for (const { alias, name, type } of browsers) {
   commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
-      .action(function(url, options) {
+      .action(async function(url, options) {
+        const { open } = await import('./browserActions');
         open({ ...options, browser: type }, url).catch(logErrorAndExit);
       }).addHelpText('afterAll', `
 Examples:
@@ -266,7 +143,8 @@ commandWithOpenOptions('screenshot <url> <filename>', 'capture a page screenshot
       ['--wait-for-selector <selector>', 'wait for selector before taking a screenshot'],
       ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
       ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
-    ]).action(function(url, filename, command) {
+    ]).action(async function(url, filename, command) {
+  const { screenshot } = await import('./browserActions');
   screenshot(command, command, url, filename).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
 Examples:
@@ -278,7 +156,8 @@ commandWithOpenOptions('pdf <url> <filename>', 'save page as pdf',
       ['--paper-format <format>', 'paper format: Letter, Legal, Tabloid, Ledger, A0, A1, A2, A3, A4, A5, A6'],
       ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
       ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
-    ]).action(function(url, filename, options) {
+    ]).action(async function(url, filename, options) {
+  const { pdf } = await import('./browserActions');
   pdf(options, options, url, filename).catch(logErrorAndExit);
 }).addHelpText('afterAll', `
 Examples:
@@ -287,7 +166,8 @@ Examples:
 
 program
     .command('run-driver', { hidden: true })
-    .action(function(options) {
+    .action(async function(options) {
+      const { runDriver } = await import('./driver');
       runDriver();
     });
 
@@ -299,7 +179,8 @@ program
     .option('--max-clients <maxClients>', 'Maximum clients')
     .option('--mode <mode>', 'Server mode, either "default" or "extension"')
     .option('--artifacts-dir <artifactsDir>', 'Artifacts directory')
-    .action(function(options) {
+    .action(async function(options) {
+      const { runServer } = await import('./driver');
       runServer({
         port: options.port ? +options.port : undefined,
         host: options.host,
@@ -312,7 +193,8 @@ program
 
 program
     .command('print-api-json', { hidden: true })
-    .action(function(options) {
+    .action(async function(options) {
+      const { printApiJson } = await import('./driver');
       printApiJson();
     });
 
@@ -320,7 +202,8 @@ program
     .command('launch-server', { hidden: true })
     .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
     .option('--config <path-to-config-file>', 'JSON file with launchServer options')
-    .action(function(options) {
+    .action(async function(options) {
+      const { launchBrowserServer } = await import('./driver');
       launchBrowserServer(options.browser, options.config);
     });
 
@@ -331,7 +214,7 @@ program
     .option('-p, --port <port>', 'Port to serve trace on, 0 for any free port; specifying this option opens trace in a browser tab')
     .option('--stdin', 'Accept trace URLs over stdin to update the viewer')
     .description('show trace viewer')
-    .action(function(trace, options) {
+    .action(async function(trace, options) {
       if (options.browser === 'cr')
         options.browser = 'chromium';
       if (options.browser === 'ff')
@@ -345,6 +228,7 @@ program
         isServer: !!options.stdin,
       };
 
+      const { runTraceInBrowser, runTraceViewerApp } = await import('../server/trace/viewer/traceViewer');
       if (options.port !== undefined || options.host !== undefined)
         runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
       else
@@ -362,348 +246,10 @@ program
     .allowExcessArguments(true)
     .allowUnknownOption(true)
     .action(async options => {
+      const { program: cliProgram } = await import('../tools/cli-client/program');
       process.argv.splice(process.argv.indexOf('cli'), 1);
       cliProgram();
     });
-
-type Options = {
-  browser: string;
-  channel?: string;
-  colorScheme?: string;
-  device?: string;
-  geolocation?: string;
-  ignoreHttpsErrors?: boolean;
-  lang?: string;
-  loadStorage?: string;
-  proxyServer?: string;
-  proxyBypass?: string;
-  blockServiceWorkers?: boolean;
-  saveHar?: string;
-  saveHarGlob?: string;
-  saveStorage?: string;
-  timeout: string;
-  timezone?: string;
-  viewportSize?: string;
-  userAgent?: string;
-  userDataDir?: string;
-};
-
-type CaptureOptions = {
-  waitForSelector?: string;
-  waitForTimeout?: string;
-  fullPage: boolean;
-  paperFormat?: string;
-};
-
-async function launchContext(options: Options, extraOptions: LaunchOptions): Promise<{ browser: Browser, browserName: string, launchOptions: LaunchOptions, contextOptions: BrowserContextOptions, context: BrowserContext, closeBrowser: () => Promise<void> }> {
-  validateOptions(options);
-  const browserType = lookupBrowserType(options);
-  const launchOptions: LaunchOptions = extraOptions;
-  if (options.channel)
-    launchOptions.channel = options.channel as any;
-  launchOptions.handleSIGINT = false;
-
-  const contextOptions: BrowserContextOptions =
-    // Copy the device descriptor since we have to compare and modify the options.
-    options.device ? { ...playwright.devices[options.device] } : {};
-
-  // In headful mode, use host device scale factor for things to look nice.
-  // In headless, keep things the way it works in Playwright by default.
-  // Assume high-dpi on MacOS. TODO: this is not perfect.
-  if (!extraOptions.headless)
-    contextOptions.deviceScaleFactor = os.platform() === 'darwin' ? 2 : 1;
-
-  // Work around the WebKit GTK scrolling issue.
-  if (browserType.name() === 'webkit' && process.platform === 'linux') {
-    delete contextOptions.hasTouch;
-    delete contextOptions.isMobile;
-  }
-
-  if (contextOptions.isMobile && browserType.name() === 'firefox')
-    contextOptions.isMobile = undefined;
-
-  if (options.blockServiceWorkers)
-    contextOptions.serviceWorkers = 'block';
-
-  // Proxy
-
-  if (options.proxyServer) {
-    launchOptions.proxy = {
-      server: options.proxyServer
-    };
-    if (options.proxyBypass)
-      launchOptions.proxy.bypass = options.proxyBypass;
-  }
-
-  // Viewport size
-  if (options.viewportSize) {
-    try {
-      const [width, height] = options.viewportSize.split(',').map(n => +n);
-      if (isNaN(width) || isNaN(height))
-        throw new Error('bad values');
-      contextOptions.viewport = { width, height };
-    } catch (e) {
-      throw new Error('Invalid viewport size format: use "width,height", for example --viewport-size="800,600"');
-    }
-  }
-
-  // Geolocation
-
-  if (options.geolocation) {
-    try {
-      const [latitude, longitude] = options.geolocation.split(',').map(n => parseFloat(n.trim()));
-      contextOptions.geolocation = {
-        latitude,
-        longitude
-      };
-    } catch (e) {
-      throw new Error('Invalid geolocation format, should be "lat,long". For example --geolocation="37.819722,-122.478611"');
-    }
-    contextOptions.permissions = ['geolocation'];
-  }
-
-  // User agent
-
-  if (options.userAgent)
-    contextOptions.userAgent = options.userAgent;
-
-  // Lang
-
-  if (options.lang)
-    contextOptions.locale = options.lang;
-
-  // Color scheme
-
-  if (options.colorScheme)
-    contextOptions.colorScheme = options.colorScheme as 'dark' | 'light';
-
-  // Timezone
-
-  if (options.timezone)
-    contextOptions.timezoneId = options.timezone;
-
-  // Storage
-
-  if (options.loadStorage)
-    contextOptions.storageState = options.loadStorage;
-
-  if (options.ignoreHttpsErrors)
-    contextOptions.ignoreHTTPSErrors = true;
-
-  // HAR
-
-  if (options.saveHar) {
-    contextOptions.recordHar = { path: path.resolve(process.cwd(), options.saveHar), mode: 'minimal' };
-    if (options.saveHarGlob)
-      contextOptions.recordHar.urlFilter = options.saveHarGlob;
-    contextOptions.serviceWorkers = 'block';
-  }
-
-  let browser: Browser;
-  let context: BrowserContext;
-
-  if (options.userDataDir) {
-    context = await browserType.launchPersistentContext(options.userDataDir, { ...launchOptions, ...contextOptions });
-    browser = context.browser()!;
-  } else {
-    browser = await browserType.launch(launchOptions);
-    context = await browser.newContext(contextOptions);
-  }
-
-  let closingBrowser = false;
-  async function closeBrowser() {
-    // We can come here multiple times. For example, saving storage creates
-    // a temporary page and we call closeBrowser again when that page closes.
-    if (closingBrowser)
-      return;
-    closingBrowser = true;
-    if (options.saveStorage)
-      await context.storageState({ path: options.saveStorage }).catch(e => null);
-    if (options.saveHar)
-      await context.close();
-    await browser.close();
-  }
-
-  context.on('page', page => {
-    page.on('dialog', () => {});  // Prevent dialogs from being automatically dismissed.
-    page.on('close', () => {
-      const hasPage = browser.contexts().some(context => context.pages().length > 0);
-      if (hasPage)
-        return;
-      // Avoid the error when the last page is closed because the browser has been closed.
-      closeBrowser().catch(() => {});
-    });
-  });
-  process.on('SIGINT', async () => {
-    await closeBrowser();
-    gracefullyProcessExitDoNotHang(130);
-  });
-
-  const timeout = options.timeout ? parseInt(options.timeout, 10) : 0;
-  context.setDefaultTimeout(timeout);
-  context.setDefaultNavigationTimeout(timeout);
-
-  // Omit options that we add automatically for presentation purpose.
-  delete launchOptions.headless;
-  delete launchOptions.executablePath;
-  delete launchOptions.handleSIGINT;
-  delete contextOptions.deviceScaleFactor;
-  return { browser, browserName: browserType.name(), context, contextOptions, launchOptions, closeBrowser };
-}
-
-async function openPage(context: BrowserContext, url: string | undefined): Promise<Page> {
-  let page = context.pages()[0];
-  if (!page)
-    page = await context.newPage();
-  if (url) {
-    if (fs.existsSync(url))
-      url = 'file://' + path.resolve(url);
-    else if (!url.startsWith('http') && !url.startsWith('file://') && !url.startsWith('about:') && !url.startsWith('data:'))
-      url = 'http://' + url;
-    await page.goto(url);
-  }
-  return page;
-}
-
-async function open(options: Options, url: string | undefined) {
-  const { context } = await launchContext(options, { headless: !!process.env.PWTEST_CLI_HEADLESS, executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH });
-  await context._exposeConsoleApi();
-  await openPage(context, url);
-}
-
-async function codegen(options: Options & { target: string, output?: string, testIdAttribute?: string }, url: string | undefined) {
-  const { target: language, output: outputFile, testIdAttribute: testIdAttributeName } = options;
-  const tracesDir = path.join(os.tmpdir(), `playwright-recorder-trace-${Date.now()}`);
-  const { context, browser, launchOptions, contextOptions, closeBrowser } = await launchContext(options, {
-    headless: !!process.env.PWTEST_CLI_HEADLESS,
-    executablePath: process.env.PWTEST_CLI_EXECUTABLE_PATH,
-    tracesDir,
-  });
-  const donePromise = new ManualPromise<void>();
-  maybeSetupTestHooks(browser, closeBrowser, donePromise);
-  dotenv.config({ path: 'playwright.env' });
-  await context._enableRecorder({
-    language,
-    launchOptions,
-    contextOptions,
-    device: options.device,
-    saveStorage: options.saveStorage,
-    mode: 'recording',
-    testIdAttributeName,
-    outputFile: outputFile ? path.resolve(outputFile) : undefined,
-    handleSIGINT: false,
-  });
-  await openPage(context, url);
-  donePromise.resolve();
-}
-
-async function maybeSetupTestHooks(browser: Browser, closeBrowser: () => Promise<void>, donePromise: Promise<void>) {
-  if (!process.env.PWTEST_CLI_IS_UNDER_TEST)
-    return;
-
-  // Make sure we exit abnormally when browser crashes.
-  const logs: string[] = [];
-  require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
-    const line = require('util').format(...args) + '\n';
-    logs.push(line);
-    // eslint-disable-next-line no-restricted-properties
-    process.stderr.write(line);
-  };
-  browser.on('disconnected', () => {
-    const hasCrashLine = logs.some(line => line.includes('process did exit:') && !line.includes('process did exit: exitCode=0, signal=null'));
-    if (hasCrashLine) {
-      // eslint-disable-next-line no-restricted-properties
-      process.stderr.write('Detected browser crash.\n');
-      gracefullyProcessExitDoNotHang(1);
-    }
-  });
-
-  const close = async () => {
-    await donePromise;
-    await closeBrowser();
-  };
-
-  if (process.env.PWTEST_CLI_EXIT_AFTER_TIMEOUT) {
-    setTimeout(close, +process.env.PWTEST_CLI_EXIT_AFTER_TIMEOUT);
-    return;
-  }
-
-  // Note: we cannot use SIGINT, as it is not available on Windows.
-  let stdin = '';
-  process.stdin.on('data', data => {
-    stdin += data.toString();
-    if (stdin.startsWith('exit')) {
-      process.stdin.destroy();
-      close();
-    }
-  });
-}
-
-async function waitForPage(page: Page, captureOptions: CaptureOptions) {
-  if (captureOptions.waitForSelector) {
-    console.log(`Waiting for selector ${captureOptions.waitForSelector}...`);
-    await page.waitForSelector(captureOptions.waitForSelector);
-  }
-  if (captureOptions.waitForTimeout) {
-    console.log(`Waiting for timeout ${captureOptions.waitForTimeout}...`);
-    await page.waitForTimeout(parseInt(captureOptions.waitForTimeout, 10));
-  }
-}
-
-async function screenshot(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
-  const { context } = await launchContext(options, { headless: true });
-  console.log('Navigating to ' + url);
-  const page = await openPage(context, url);
-  await waitForPage(page, captureOptions);
-  console.log('Capturing screenshot into ' + path);
-  await page.screenshot({ path, fullPage: !!captureOptions.fullPage });
-  // launchContext takes care of closing the browser.
-  await page.close();
-}
-
-async function pdf(options: Options, captureOptions: CaptureOptions, url: string, path: string) {
-  if (options.browser !== 'chromium')
-    throw new Error('PDF creation is only working with Chromium');
-  const { context } = await launchContext({ ...options, browser: 'chromium' }, { headless: true });
-  console.log('Navigating to ' + url);
-  const page = await openPage(context, url);
-  await waitForPage(page, captureOptions);
-  console.log('Saving as pdf into ' + path);
-  await page.pdf!({ path, format: captureOptions.paperFormat });
-  // launchContext takes care of closing the browser.
-  await page.close();
-}
-
-function lookupBrowserType(options: Options): BrowserType {
-  let name = options.browser;
-  if (options.device) {
-    const device = playwright.devices[options.device];
-    name = device.defaultBrowserType;
-  }
-  let browserType: any;
-  switch (name) {
-    case 'chromium': browserType = playwright.chromium; break;
-    case 'webkit': browserType = playwright.webkit; break;
-    case 'firefox': browserType = playwright.firefox; break;
-    case 'cr': browserType = playwright.chromium; break;
-    case 'wk': browserType = playwright.webkit; break;
-    case 'ff': browserType = playwright.firefox; break;
-  }
-  if (browserType)
-    return browserType;
-  program.help();
-}
-
-function validateOptions(options: Options) {
-  if (options.device && !(options.device in playwright.devices)) {
-    const lines = [`Device descriptor not found: '${options.device}', available devices are:`];
-    for (const name in playwright.devices)
-      lines.push(`  "${name}"`);
-    throw new Error(lines.join('\n'));
-  }
-  if (options.colorScheme && !['light', 'dark'].includes(options.colorScheme))
-    throw new Error('Invalid color scheme, should be one of "light", "dark"');
-}
 
 function logErrorAndExit(e: Error) {
   if (process.env.PWDEBUGIMPL)

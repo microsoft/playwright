@@ -432,6 +432,27 @@ class CustomCallbackStep extends Step {
   }
 }
 
+// Plugin to convert dynamic import() of relative paths to require().
+// esbuild preserves dynamic import() even in CJS format, but we want
+// all local imports to use require() for consistency.
+const dynamicImportToRequirePlugin = {
+  name: 'dynamic-import-to-require',
+  setup(build) {
+    build.onLoad({ filter: /\.ts$/ }, async (args) => {
+      const contents = await fs.promises.readFile(args.path, 'utf8');
+      if (!contents.includes('await import('))
+        return undefined;
+      return {
+        contents: contents.replace(
+            /\bawait import\((['"]\..*?['"])\)/g,
+            (_, specifier) => `require(${specifier})`
+        ),
+        loader: 'ts',
+      };
+    });
+  }
+};
+
 // Run esbuild.
 for (const pkg of workspace.packages()) {
   if (!fs.existsSync(path.join(pkg.path, 'src')))
@@ -446,6 +467,7 @@ for (const pkg of workspace.packages()) {
     sourcemap: withSourceMaps ? 'linked' : false,
     platform: 'node',
     format: 'cjs',
+    plugins: [dynamicImportToRequirePlugin],
   }));
 }
 
