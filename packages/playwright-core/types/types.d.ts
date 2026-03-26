@@ -2110,8 +2110,8 @@ export interface Page {
     depth?: number;
 
     /**
-     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
-     * `"default"`.
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption: including element references like `[ref=e2]`
+     * and snapshots of `<iframe>`s. Defaults to `"default"`.
      */
     mode?: "ai"|"default";
 
@@ -12779,6 +12779,11 @@ export interface Locator {
    *     - link "About"
    * ```
    *
+   * An AI-optimized snapshot, controlled by
+   * [`mode`](https://playwright.dev/docs/api/class-locator#locator-aria-snapshot-option-mode), is different from a
+   * default snapshot:
+   * 1. Includes element references `[ref=e2]`. 2. Does not wait for an element matching the locator, and throws when
+   *    no elements match. 3. Includes snapshots of `<iframe>`s inside the target.
    * @param options
    */
   ariaSnapshot(options?: {
@@ -12788,8 +12793,8 @@ export interface Locator {
     depth?: number;
 
     /**
-     * When set to `"ai"`, returns a snapshot optimized for AI consumption with element references. Defaults to
-     * `"default"`.
+     * When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more
+     * information.
      */
     mode?: "ai"|"default";
 

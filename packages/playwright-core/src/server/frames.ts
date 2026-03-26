@@ -1694,6 +1694,14 @@ export class Frame extends SdkObject<FrameEventMap> {
     if (options.selector && options.track)
       throw new Error('Cannot specify both selector and track options');
 
+    if (options.selector && options.mode !== 'ai') {
+      // Non-ai locator snapshot is auto-waiting and does not include iframes.
+      const snapshot = await this._retryWithProgressIfNotConnected(progress, options.selector, { strict: true, performActionPreChecks: true }, async handle => {
+        return await progress.race(handle.evaluateInUtility(([injected, element, opts]) => injected.ariaSnapshot(element, opts), { mode: 'default' as const, depth: options.depth }));
+      });
+      return { snapshot };
+    }
+
     let targetFrame: Frame;
     let info: SelectorInfo | undefined;
     if (options.selector) {
