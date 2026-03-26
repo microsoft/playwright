@@ -61,6 +61,7 @@ export class Electron extends ChannelOwner<channels.ElectronChannel> implements 
       ...await prepareBrowserContextParams(this._platform, options),
       env: envObjectToArray(options.env ? options.env : this._platform.env),
       tracesDir: options.tracesDir,
+      artifactsDir: options.artifactsDir,
       timeout: new TimeoutSettings(this._platform).launchTimeout(options),
     };
     const app = ElectronApplication.from((await this._channel.launch(params)).electronApplication);

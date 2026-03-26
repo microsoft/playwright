@@ -4184,6 +4184,7 @@ Electron:
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
+        artifactsDir: string?
         selectorEngines:
           type: array?
           items: SelectorEngine

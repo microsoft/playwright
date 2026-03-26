@@ -4686,6 +4686,7 @@ export type ElectronLaunchParams = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
 };
@@ -4723,6 +4724,7 @@ export type ElectronLaunchOptions = {
   strictSelectors?: boolean,
   timezoneId?: string,
   tracesDir?: string,
+  artifactsDir?: string,
   selectorEngines?: SelectorEngine[],
   testIdAttributeName?: string,
 };
