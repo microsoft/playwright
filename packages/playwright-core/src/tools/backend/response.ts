@@ -244,9 +244,9 @@ export class Response {
       addSection('Events', text);
 
     const pausedDetails = this._context.debugger().pausedDetails();
-    if (pausedDetails.length) {
+    if (pausedDetails) {
       addSection('Paused', [
-        ...pausedDetails.map(call => `- ${call.title} at ${this._computRelativeTo(call.location.file)}${call.location.line ? ':' + call.location.line : ''}`),
+        `- ${pausedDetails.title} at ${this._computRelativeTo(pausedDetails.location.file)}${pausedDetails.location.line ? ':' + pausedDetails.location.line : ''}`,
         '- Use any tools to explore and interact, resume by calling resume/step-over/pause-at',
       ]);
     }

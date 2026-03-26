@@ -243,10 +243,9 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   private _pausedStateChanged() {
     // If we are called upon page.pause, we don't have metadatas, populate them.
-    for (const { metadata, sdkObject } of this._debugger.pausedDetails()) {
-      if (!this._currentCallsMetadata.has(metadata))
-        this.onBeforeCall(sdkObject, metadata);
-    }
+    const pausedDetails = this._debugger.pausedDetails();
+    if (pausedDetails && !this._currentCallsMetadata.has(pausedDetails.metadata))
+      this.onBeforeCall(pausedDetails.sdkObject, pausedDetails.metadata);
     this.emit(RecorderEvent.PausedStateChanged, this._debugger.isPaused());
     this._updateUserSources();
     this.updateCallLog([...this._currentCallsMetadata.keys()]);
@@ -356,13 +355,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   pausedSourceId() {
-    for (const { metadata } of this._debugger.pausedDetails()) {
-      if (!metadata.location)
-        continue;
-      const source = this._userSources.get(metadata.location.file);
-      if (!source)
-        continue;
-      return source.id;
+    const pausedDetails = this._debugger.pausedDetails();
+    if (pausedDetails?.metadata.location) {
+      const source = this._userSources.get(pausedDetails.metadata.location.file);
+      if (source)
+        return source.id;
     }
   }
 

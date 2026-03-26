@@ -40,17 +40,21 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   }
 
   private _serializePausedDetails(): channels.DebuggerPausedStateChangedEvent['pausedDetails'] {
-    return this._object.pausedDetails().map(({ metadata, sdkObject }) => ({
+    const details = this._object.pausedDetails();
+    if (!details)
+      return undefined;
+    const { metadata } = details;
+    return {
       location: {
         file: metadata.location?.file ?? '<unknown>',
         line: metadata.location?.line,
         column: metadata.location?.column,
       },
       title: renderTitleForCall(metadata),
-    }));
+    };
   }
 
-  async pause(params: channels.DebuggerPauseParams, progress: Progress): Promise<void> {
+  async requestPause(params: channels.DebuggerRequestPauseParams, progress: Progress): Promise<void> {
     if (this._object.isPaused())
       throw new Error('Debugger is already paused');
     this._object.setPauseBeforeWaitingActions();
