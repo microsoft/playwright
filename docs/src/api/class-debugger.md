@@ -11,23 +11,23 @@ Emitted when the debugger pauses or resumes.
 
 ## method: Debugger.pausedDetails
 * since: v1.59
-- returns: <[Array]<[Object]>>
+- returns: <[null]|[Object]>
   - `location` <[Object]>
     - `file` <[string]>
     - `line` ?<[int]>
     - `column` ?<[int]>
   - `title` <[string]>
 
-Returns details about the currently paused calls. Returns an empty array if the debugger is not paused.
+Returns details about the currently paused call. Returns `null` if the debugger is not paused.
 
-## async method: Debugger.pause
+## async method: Debugger.requestPause
 * since: v1.59
 
 Configures the debugger to pause before the next action is executed.
 
 Throws if the debugger is already paused. Use [`method: Debugger.next`] or [`method: Debugger.runTo`] to step while paused.
 
-Note that [`method: Page.pause`] is equivalent to a "debugger" statement — it pauses execution at the call site immediately. On the contrary, [`method: Debugger.pause`] is equivalent to "pause on next statement" — it configures the debugger to pause before the next action is executed.
+Note that [`method: Page.pause`] is equivalent to a "debugger" statement — it pauses execution at the call site immediately. On the contrary, [`method: Debugger.requestPause`] is equivalent to "pause on next statement" — it configures the debugger to pause before the next action is executed.
 
 ## async method: Debugger.resume
 * since: v1.59

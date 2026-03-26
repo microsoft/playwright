@@ -4365,24 +4365,25 @@ export interface DebuggerEventTarget {
 }
 export interface DebuggerChannel extends DebuggerEventTarget, EventTargetChannel {
   _type_Debugger: boolean;
-  pause(params?: DebuggerPauseParams, progress?: Progress): Promise<DebuggerPauseResult>;
+  requestPause(params?: DebuggerRequestPauseParams, progress?: Progress): Promise<DebuggerRequestPauseResult>;
   resume(params?: DebuggerResumeParams, progress?: Progress): Promise<DebuggerResumeResult>;
   next(params?: DebuggerNextParams, progress?: Progress): Promise<DebuggerNextResult>;
   runTo(params: DebuggerRunToParams, progress?: Progress): Promise<DebuggerRunToResult>;
 }
 export type DebuggerPausedStateChangedEvent = {
-  pausedDetails: {
+  pausedDetails?: {
     location: {
       file: string,
       line?: number,
       column?: number,
     },
     title: string,
-  }[],
+    stack?: string,
+  },
 };
-export type DebuggerPauseParams = {};
-export type DebuggerPauseOptions = {};
-export type DebuggerPauseResult = void;
+export type DebuggerRequestPauseParams = {};
+export type DebuggerRequestPauseOptions = {};
+export type DebuggerRequestPauseResult = void;
 export type DebuggerResumeParams = {};
 export type DebuggerResumeOptions = {};
 export type DebuggerResumeResult = void;

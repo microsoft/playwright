@@ -19531,23 +19531,9 @@ export interface Debugger {
   next(): Promise<void>;
 
   /**
-   * Configures the debugger to pause before the next action is executed.
-   *
-   * Throws if the debugger is already paused. Use
-   * [debugger.next()](https://playwright.dev/docs/api/class-debugger#debugger-next) or
-   * [debugger.runTo(location)](https://playwright.dev/docs/api/class-debugger#debugger-run-to) to step while paused.
-   *
-   * Note that [page.pause()](https://playwright.dev/docs/api/class-page#page-pause) is equivalent to a "debugger"
-   * statement — it pauses execution at the call site immediately. On the contrary,
-   * [debugger.pause()](https://playwright.dev/docs/api/class-debugger#debugger-pause) is equivalent to "pause on next
-   * statement" — it configures the debugger to pause before the next action is executed.
+   * Returns details about the currently paused call. Returns `null` if the debugger is not paused.
    */
-  pause(): Promise<void>;
-
-  /**
-   * Returns details about the currently paused calls. Returns an empty array if the debugger is not paused.
-   */
-  pausedDetails(): Array<{
+  pausedDetails(): null|{
     location: {
       file: string;
 
@@ -19557,7 +19543,21 @@ export interface Debugger {
     };
 
     title: string;
-  }>;
+  };
+
+  /**
+   * Configures the debugger to pause before the next action is executed.
+   *
+   * Throws if the debugger is already paused. Use
+   * [debugger.next()](https://playwright.dev/docs/api/class-debugger#debugger-next) or
+   * [debugger.runTo(location)](https://playwright.dev/docs/api/class-debugger#debugger-run-to) to step while paused.
+   *
+   * Note that [page.pause()](https://playwright.dev/docs/api/class-page#page-pause) is equivalent to a "debugger"
+   * statement — it pauses execution at the call site immediately. On the contrary,
+   * [debugger.requestPause()](https://playwright.dev/docs/api/class-debugger#debugger-request-pause) is equivalent to
+   * "pause on next statement" — it configures the debugger to pause before the next action is executed.
+   */
+  requestPause(): Promise<void>;
 
   /**
    * Resumes script execution. Throws if the debugger is not paused.

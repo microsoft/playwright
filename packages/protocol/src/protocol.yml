@@ -3901,7 +3901,7 @@ Debugger:
 
   commands:
 
-    pause:
+    requestPause:
       title: Pause on next call
       group: configuration
 
@@ -3929,17 +3929,16 @@ Debugger:
     pausedStateChanged:
       parameters:
         pausedDetails:
-          type: array
-          items:
-            type: object
-            properties:
-              location:
-                type: object
-                properties:
-                  file: string
-                  line: int?
-                  column: int?
-              title: string
+          type: object?
+          properties:
+            location:
+              type: object
+              properties:
+                file: string
+                line: int?
+                column: int?
+            title: string
+            stack: string?
 
 
 Dialog:

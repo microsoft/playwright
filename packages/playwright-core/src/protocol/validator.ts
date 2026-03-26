@@ -2524,17 +2524,18 @@ scheme.BindingCallResolveParams = tObject({
 scheme.BindingCallResolveResult = tOptional(tObject({}));
 scheme.DebuggerInitializer = tOptional(tObject({}));
 scheme.DebuggerPausedStateChangedEvent = tObject({
-  pausedDetails: tArray(tObject({
+  pausedDetails: tOptional(tObject({
     location: tObject({
       file: tString,
       line: tOptional(tInt),
       column: tOptional(tInt),
     }),
     title: tString,
+    stack: tOptional(tString),
   })),
 });
-scheme.DebuggerPauseParams = tOptional(tObject({}));
-scheme.DebuggerPauseResult = tOptional(tObject({}));
+scheme.DebuggerRequestPauseParams = tOptional(tObject({}));
+scheme.DebuggerRequestPauseResult = tOptional(tObject({}));
 scheme.DebuggerResumeParams = tOptional(tObject({}));
 scheme.DebuggerResumeResult = tOptional(tObject({}));
 scheme.DebuggerNextParams = tOptional(tObject({}));

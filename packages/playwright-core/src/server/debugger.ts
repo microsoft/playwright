@@ -27,7 +27,7 @@ type PauseAt = { next?: boolean, location?: { file: string, line?: number, colum
 
 export class Debugger extends SdkObject implements InstrumentationListener {
   private _pauseAt: PauseAt = {};
-  private _pausedCallsMetadata = new Map<CallMetadata, { resolve: () => void, sdkObject: SdkObject }>();
+  private _pausedCall: { metadata: CallMetadata, sdkObject: SdkObject, resolve: () => void } | undefined;
   private _enabled = false;
   private _pauseBeforeWaitingActions = false;  // instead of inside input actions
   private _context: BrowserContext;
@@ -74,25 +74,24 @@ export class Debugger extends SdkObject implements InstrumentationListener {
   private async _pause(sdkObject: SdkObject, metadata: CallMetadata) {
     if (this._muted || metadata.internal)
       return;
+    if (this._pausedCall)
+      return;
     this._pauseAt = {};
     metadata.pauseStartTime = monotonicTime();
     const result = new Promise<void>(resolve => {
-      this._pausedCallsMetadata.set(metadata, { resolve, sdkObject });
+      this._pausedCall = { metadata, sdkObject, resolve };
     });
     this.emit(Debugger.Events.PausedStateChanged);
     return result;
   }
 
   resume() {
-    if (!this.isPaused())
+    if (!this._pausedCall)
       return;
 
-    const endTime = monotonicTime();
-    for (const [metadata, { resolve }] of this._pausedCallsMetadata) {
-      metadata.pauseEndTime = endTime;
-      resolve();
-    }
-    this._pausedCallsMetadata.clear();
+    this._pausedCall.metadata.pauseEndTime = monotonicTime();
+    this._pausedCall.resolve();
+    this._pausedCall = undefined;
     this.emit(Debugger.Events.PausedStateChanged);
   }
 
@@ -107,15 +106,12 @@ export class Debugger extends SdkObject implements InstrumentationListener {
 
   isPaused(metadata?: CallMetadata): boolean {
     if (metadata)
-      return this._pausedCallsMetadata.has(metadata);
-    return !!this._pausedCallsMetadata.size;
+      return this._pausedCall?.metadata === metadata;
+    return !!this._pausedCall;
   }
 
-  pausedDetails(): { metadata: CallMetadata, sdkObject: SdkObject }[] {
-    const result: { metadata: CallMetadata, sdkObject: SdkObject }[] = [];
-    for (const [metadata, { sdkObject }] of this._pausedCallsMetadata)
-      result.push({ metadata, sdkObject });
-    return result;
+  pausedDetails(): { metadata: CallMetadata, sdkObject: SdkObject } | undefined {
+    return this._pausedCall;
   }
 }
 

@@ -321,7 +321,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
       runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
         context.debugger.on('pausedstatechanged', () => {
-          const paused = context.debugger.pausedDetails().length > 0;
+          const paused = !!context.debugger.pausedDetails();
           if (pausedContexts.has(context) && !paused) {
             pausedContexts.delete(context);
             (testInfo as TestInfoImpl)._setIgnoreTimeouts(false);
