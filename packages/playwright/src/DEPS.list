@@ -6,6 +6,18 @@ common/
 [program.ts]
 **
 
+[testCommand.ts]
+**
+
+[mergeReportsCommand.ts]
+**
+
+[mcpServerCommand.ts]
+**
+
+[initAgentsCommand.ts]
+**
+
 [index.ts]
 @testIsomorphic/**
 ./prompt.ts

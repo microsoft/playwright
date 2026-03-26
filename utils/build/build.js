@@ -276,6 +276,12 @@ bundles.push({
 });
 
 bundles.push({
+  modulePath: 'packages/playwright-core/bundles/zod',
+  outdir: 'packages/playwright-core/lib',
+  entryPoints: ['src/zodBundleImpl.ts'],
+});
+
+bundles.push({
   modulePath: 'packages/playwright-core/bundles/mcp',
   outfile: 'packages/playwright-core/lib/mcpBundleImpl/index.js',
   entryPoints: ['src/mcpBundleImpl.ts'],

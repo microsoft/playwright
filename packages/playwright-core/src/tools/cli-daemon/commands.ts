@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';

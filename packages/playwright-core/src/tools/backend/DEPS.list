@@ -2,6 +2,7 @@
 ../../..
 ../..
 ../../mcpBundle.ts
+../../zodBundle.ts
 ../../server/utils/
 ../../utils/
 ../../utils/isomorphic/

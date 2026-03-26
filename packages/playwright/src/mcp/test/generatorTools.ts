@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { z } from 'playwright-core/lib/mcpBundle';
+import { z } from 'playwright-core/lib/zodBundle';
 import { defineTestTool } from './testTool';
 import { GeneratorJournal } from './testContext';
 

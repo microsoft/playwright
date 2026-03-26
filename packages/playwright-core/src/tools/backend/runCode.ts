@@ -19,7 +19,7 @@ import vm from 'vm';
 
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTabTool } from './tool';
 
 const codeSchema = z.object({
