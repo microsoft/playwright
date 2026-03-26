@@ -21,7 +21,6 @@ import path from 'path';
 import { calculateSha1 } from './crypto';
 
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { yazl } from '../../zipBundle';
 
 import type { EventEmitter } from 'events';
 
@@ -201,6 +200,7 @@ export class SerializedFS {
         return;
       }
       case 'zip': {
+        const { yazl } = await import('playwright-core/lib/zipBundle');
         const zipFile = new yazl.ZipFile();
         const result = new ManualPromise<void>();
         (zipFile as any as EventEmitter).on('error', error => result.reject(error));

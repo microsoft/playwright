@@ -19,6 +19,7 @@ export * from './utils/isomorphic/assert';
 export * from './utils/isomorphic/colors';
 export * from './utils/isomorphic/headers';
 export * from './utils/isomorphic/imageUtils';
+export * from './utils/isomorphic/jsonSchema';
 export * from './utils/isomorphic/locatorGenerators';
 export * from './utils/isomorphic/manualPromise';
 export * from './utils/isomorphic/mimeType';

@@ -18,7 +18,6 @@ import fs from 'fs';
 import path from 'path';
 
 import { ManualPromise, SerializedFS, calculateSha1, createGuid, getPlaywrightVersion, monotonicTime } from 'playwright-core/lib/utils';
-import { yauzl, yazl } from 'playwright-core/lib/zipBundle';
 
 import { filteredStackTrace } from '../util';
 
@@ -183,6 +182,7 @@ export class TestTracing {
       return;
     }
 
+    const { yazl } = await import('playwright-core/lib/zipBundle');
     const zipFile = new yazl.ZipFile();
 
     if (!this._options?.attachments) {
@@ -347,6 +347,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
   }
 
   const mergePromise = new ManualPromise();
+  const { yazl, yauzl } = await import('playwright-core/lib/zipBundle');
   const zipFile = new yazl.ZipFile();
   const entryNames = new Set<string>();
   (zipFile as any as EventEmitter).on('error', error => mergePromise.reject(error));

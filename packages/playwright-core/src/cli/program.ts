@@ -16,6 +16,7 @@
 
 /* eslint-disable no-console */
 
+import '../bootstrap';
 import { gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import { addTraceCommands } from '../tools/trace/traceCli';
 import { program } from '../utilsBundle';

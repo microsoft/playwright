@@ -11,3 +11,4 @@
 ../tools/trace/traceCli.ts
 ./browserActions.ts
 ./installActions.ts
+../bootstrap.ts
