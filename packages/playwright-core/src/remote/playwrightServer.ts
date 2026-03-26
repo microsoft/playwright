@@ -103,12 +103,14 @@ export class PlaywrightServer {
             launchOptions.timeout = DEFAULT_PLAYWRIGHT_LAUNCH_TIMEOUT;
         } catch (e) {
         }
-        if (this._options.artifactsDir)
-          launchOptions.artifactsDir = this._options.artifactsDir;
 
         const isExtension = this._options.mode === 'extension';
         const allowFSPaths = isExtension;
         launchOptions = filterLaunchOptions(launchOptions, allowFSPaths);
+
+        // Always override artifacts dir with the one from server options.
+        if (this._options.artifactsDir)
+          launchOptions.artifactsDir = this._options.artifactsDir;
 
         if (isExtension) {
           const connectFilter = url.searchParams.get('connect');

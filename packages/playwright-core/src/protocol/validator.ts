@@ -611,7 +611,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -723,7 +723,7 @@ scheme.BrowserNewContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -795,7 +795,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -914,7 +914,7 @@ scheme.BrowserContextInitializer = tObject({
     contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
     baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
-      dir: tString,
+      dir: tOptional(tString),
       size: tOptional(tObject({
         width: tInt,
         height: tInt,
@@ -2915,7 +2915,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,

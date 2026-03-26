@@ -52,8 +52,6 @@ export class Video extends EventEmitter implements api.Video {
   }
 
   async path(): Promise<string> {
-    if (this._isRemote)
-      throw new Error(`Path is not available when connecting remotely. Use saveAs() to save a local copy.`);
     if (!this._artifact)
       throw new Error('Video recording has not been started.');
     return this._artifact._initializer.absolutePath;

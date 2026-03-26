@@ -1028,7 +1028,7 @@ export type BrowserTypeLaunchPersistentContextParams = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1112,7 +1112,7 @@ export type BrowserTypeLaunchPersistentContextOptions = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1264,7 +1264,7 @@ export type BrowserNewContextParams = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1333,7 +1333,7 @@ export type BrowserNewContextOptions = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1405,7 +1405,7 @@ export type BrowserNewContextForReuseParams = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1474,7 +1474,7 @@ export type BrowserNewContextForReuseOptions = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -1610,7 +1610,7 @@ export type BrowserContextInitializer = {
     contrast?: 'no-preference' | 'more' | 'no-override',
     baseURL?: string,
     recordVideo?: {
-      dir: string,
+      dir?: string,
       size?: {
         width: number,
         height: number,
@@ -5101,7 +5101,7 @@ export type AndroidDeviceLaunchBrowserParams = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,
@@ -5168,7 +5168,7 @@ export type AndroidDeviceLaunchBrowserOptions = {
   contrast?: 'no-preference' | 'more' | 'no-override',
   baseURL?: string,
   recordVideo?: {
-    dir: string,
+    dir?: string,
     size?: {
       width: number,
       height: number,

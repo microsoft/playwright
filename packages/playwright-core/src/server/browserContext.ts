@@ -189,11 +189,6 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     `);
   }
 
-  async _ensureVideosPath() {
-    if (this._options.recordVideo)
-      await mkdirIfNeeded(path.join(this._options.recordVideo.dir, 'dummy'));
-  }
-
   canResetForReuse(): boolean {
     if (this._closedStatus !== 'open')
       return false;

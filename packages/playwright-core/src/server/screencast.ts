@@ -78,7 +78,8 @@ export class Screencast implements InstrumentationListener {
     if (!recordVideo)
       return;
     // validateBrowserContextOptions ensures correct video size.
-    const videoOptions = this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
+    const dir = recordVideo.dir ?? this._page.browserContext._browser.options.artifactsDir;
+    const videoOptions = this._launchVideoRecorder(dir, recordVideo.size!);
     if (recordVideo.annotate)
       videoOptions.annotate = recordVideo.annotate;
     return videoOptions;

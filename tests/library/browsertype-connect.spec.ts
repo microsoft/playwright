@@ -508,8 +508,6 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       const savedAsPath = testInfo.outputPath('my-video.webm');
       await page.video().saveAs(savedAsPath);
       expect(fs.existsSync(savedAsPath)).toBeTruthy();
-      const error = await page.video().path().catch(e => e);
-      expect(error.message).toContain('Path is not available when connecting remotely. Use saveAs() to save a local copy.');
     });
 
     test('should save videos to artifactsDir', async ({ connect, startRemoteServer }, testInfo) => {
@@ -529,6 +527,25 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       await page.video().saveAs(savedAsPath);
       expect(fs.existsSync(savedAsPath)).toBeTruthy();
       expect(fs.existsSync(localDir)).toBeFalsy();
+
+      await browser.close();
+    });
+
+    test('should return video path inside artifactsDir when connecting to remote browser', async ({ connect, startRemoteServer }, testInfo) => {
+      const artifactsDir = testInfo.outputPath('artifacts');
+      const remoteServer = await startRemoteServer(kind, { artifactsDir });
+      const browser = await connect(remoteServer.wsEndpoint());
+      const context = await browser.newContext({
+        recordVideo: { size: { width: 320, height: 240 } },
+      });
+      const page = await context.newPage();
+      await page.evaluate(() => document.body.style.backgroundColor = 'red');
+      await rafraf(page, 100);
+      await context.close();
+
+      const videoPath = await page.video().path();
+      expect(videoPath).toContain(artifactsDir);
+      expect(fs.existsSync(videoPath)).toBeTruthy();
 
       await browser.close();
     });
