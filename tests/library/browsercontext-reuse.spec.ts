@@ -120,6 +120,7 @@ for (const scenario of ['launch', 'connect'] as const) {
           <title>Page Title</title>
           <script>
             navigator.serviceWorker.register('sw.js');
+            window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
           </script>
         `);
       });
@@ -142,6 +143,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       let page = await context.newPage();
       await page.goto(server.PREFIX + '/page.html');
       await expect(page).toHaveTitle('Page Title');
+      await page.evaluate(() => window['activationPromise']);
 
       context = await reusedContext();
       page = context.pages()[0];

@@ -203,7 +203,7 @@ test('should format console messages in page', async ({ runUITest }, testInfo) =
   await expect(label).toHaveCSS('color', 'rgb(255, 0, 0)');
   await expect(label).toHaveCSS('font-weight', '700');
   // blue should not be used, should inherit color red.
-  await expect(label).toHaveCSS('outline', 'rgb(255, 0, 0) none 0px');
+  await expect(label).toHaveCSS('outline-color', 'rgb(255, 0, 0)');
 
   const link = page.getByText('https://fb.me/react-devtools');
   await expect(link).toHaveCSS('color', 'rgb(0, 0, 255)');
