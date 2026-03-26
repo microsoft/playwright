@@ -229,7 +229,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configF
       launchOptions,
       contextOptions,
       cdpEndpoint: cliOptions.cdpEndpoint,
-      cdpHeaders: cliOptions.cdpHeader,
+      cdpHeaders: nonEmptyRecord(cliOptions.cdpHeader),
       cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
@@ -276,7 +276,9 @@ export function configFromEnv(): Config & { configFile?: string } {
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
-  options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
+  const cdpHeadersEnv = process.env.PLAYWRIGHT_MCP_CDP_HEADERS?.trim();
+  if (cdpHeadersEnv)
+    options.cdpHeader = headerParser(cdpHeadersEnv, {});
   options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
@@ -332,6 +334,12 @@ function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
   return Object.fromEntries(
       Object.entries(obj ?? {}).filter(([_, v]) => v !== undefined)
   ) as Partial<T>;
+}
+
+function nonEmptyRecord(r: Record<string, string> | undefined): Record<string, string> | undefined {
+  if (!r || !Object.keys(r).length)
+    return undefined;
+  return r;
 }
 
 export function mergeConfig(base: FullConfig, overrides: Config): FullConfig {

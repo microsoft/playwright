@@ -118,6 +118,29 @@ test('test sandbox configuration', async ({}) => {
   expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
 });
 
+test('file browser.cdpHeaders preserved when PLAYWRIGHT_MCP_CDP_HEADERS unset', async ({}, testInfo) => {
+  const prev = process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
+  delete process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
+  try {
+    const config: Config = {
+      browser: {
+        cdpEndpoint: 'ws://example.invalid',
+        cdpHeaders: { Authorization: 'Bearer token-from-file' },
+      },
+    };
+    const configPath = testInfo.outputPath('config.json');
+    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
+
+    const resolved = await resolveCLIConfig({ config: configPath });
+    expect(resolved.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
+  } finally {
+    if (prev !== undefined)
+      process.env.PLAYWRIGHT_MCP_CDP_HEADERS = prev;
+    else
+      delete process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
+  }
+});
+
 test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {
   const { client } = await startClient({
     config: {
