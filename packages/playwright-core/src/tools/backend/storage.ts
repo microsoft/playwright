@@ -55,7 +55,8 @@ const setStorageState = defineTool({
 
   handle: async (context, params, response) => {
     const browserContext = await context.ensureBrowserContext();
-    await browserContext.setStorageState(params.filename);
+    const resolvedFilename = await response.resolveClientFilename(params.filename);
+    await browserContext.setStorageState(resolvedFilename);
     response.addTextResult(`Storage state restored from ${params.filename}`);
     response.addCode(`await page.context().setStorageState('${params.filename}');`);
   },
