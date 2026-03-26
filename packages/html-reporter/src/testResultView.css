@@ -65,6 +65,10 @@
   min-width: 0;
 }
 
+.step-title-highlight {
+  background: var(--color-attention-subtle);
+}
+
 .step-spacer {
   flex: auto;
 }
