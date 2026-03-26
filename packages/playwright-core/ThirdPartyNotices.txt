@@ -5,7 +5,7 @@ THIRD-PARTY SOFTWARE NOTICES AND INFORMATION
 This project incorporates components from the projects listed below. The original copyright notices and the licenses under which Microsoft received such components are set forth below. Microsoft reserves all rights not expressly granted herein, whether by implication, estoppel or otherwise.
 
 -	@hono/node-server@1.19.11 (https://github.com/honojs/node-server)
--	@modelcontextprotocol/sdk@1.26.0 (https://github.com/modelcontextprotocol/typescript-sdk)
+-	@modelcontextprotocol/sdk@1.28.0 (https://github.com/modelcontextprotocol/typescript-sdk)
 -	accepts@2.0.0 (https://github.com/jshttp/accepts)
 -	agent-base@7.1.4 (https://github.com/TooTallNate/proxy-agents)
 -	ajv-formats@3.0.1 (https://github.com/ajv-validator/ajv-formats)
@@ -136,7 +136,6 @@ This project incorporates components from the projects listed below. The origina
 -	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
--	zod@4.3.5 (https://github.com/colinhacks/zod)
 -	zod@4.3.6 (https://github.com/colinhacks/zod)
 
 %% @hono/node-server@1.19.11 NOTICES AND INFORMATION BEGIN HERE
@@ -165,7 +164,7 @@ SOFTWARE.
 =========================================
 END OF @hono/node-server@1.19.11 AND INFORMATION
 
-%% @modelcontextprotocol/sdk@1.26.0 NOTICES AND INFORMATION BEGIN HERE
+%% @modelcontextprotocol/sdk@1.28.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
 
@@ -189,7 +188,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 =========================================
-END OF @modelcontextprotocol/sdk@1.26.0 AND INFORMATION
+END OF @modelcontextprotocol/sdk@1.28.0 AND INFORMATION
 
 %% accepts@2.0.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3520,32 +3519,6 @@ OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF zod-to-json-schema@3.25.1 AND INFORMATION
 
-%% zod@4.3.5 NOTICES AND INFORMATION BEGIN HERE
-=========================================
-MIT License
-
-Copyright (c) 2025 Colin McDonnell
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-=========================================
-END OF zod@4.3.5 AND INFORMATION
-
 %% zod@4.3.6 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 MIT License
@@ -3574,6 +3547,6 @@ END OF zod@4.3.6 AND INFORMATION
 
 SUMMARY BEGIN HERE
 =========================================
-Total Packages: 134
+Total Packages: 133
 =========================================
 END OF SUMMARY
