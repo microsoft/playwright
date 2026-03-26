@@ -78,7 +78,9 @@ function defaultConfigFile(): string {
 }
 
 function globalConfigFile(): string {
-  return path.join(os.homedir(), '.playwright', 'cli.config.json');
+  const result = path.join(os.homedir(), '.playwright', 'cli.config.json');
+  console.error('Global config file path', result);
+  return result;
 }
 
 export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {

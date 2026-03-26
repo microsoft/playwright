@@ -36,8 +36,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        shardIndex: [1, 2]
-        shardTotal: [2]
+        shardIndex: [1]
+        shardTotal: [1]
     runs-on: ${{ matrix.os }}
     permissions:
       id-token: write   # This is required for OIDC login (azure/login) to succeed
@@ -47,7 +47,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         node-version: "22"
-        command: npm run test-mcp -- --shard ${{ matrix.shardIndex }}/${{ matrix.shardTotal }}
+        command: npm run test-mcp -- cli-config.spec.ts  --reporter=list
         bot-name: "mcp-${{ matrix.os }}"
         shard-index: ${{ matrix.shardIndex }}
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}

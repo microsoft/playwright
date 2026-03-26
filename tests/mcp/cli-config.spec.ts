@@ -46,6 +46,7 @@ test('context options', async ({ cli, server }, testInfo) => {
 test('config-print prints merged config', async ({ cli }) => {
   await cli('open');
   const { output } = await cli('config-print');
+  console.error('Config print output', output);
   expect(output).toContain('"browser"');
 });
 
@@ -77,7 +78,7 @@ test('config-print prints merged config from file, env and cli', async ({ cli, s
   expect(config.browser.isolated).toBe(true);
 });
 
-test('context options with UTF-8 BOM', async ({ cli, server }, testInfo) => {
+test('context options with UTF-8 BOM', async ({ cli, server, mcpBrowser }, testInfo) => {
   const config = {
     browser: {
       contextOptions: {
@@ -85,6 +86,7 @@ test('context options with UTF-8 BOM', async ({ cli, server }, testInfo) => {
       },
     },
   };
+  console.error('Writing config with UTF-8 BOM', mcpBrowser);
   // Write config with UTF-8 BOM prefix, as some Windows editors (Notepad, PowerShell) do.
   await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), '\uFEFF' + JSON.stringify(config, null, 2));
   await cli('open', server.PREFIX);
@@ -109,6 +111,7 @@ test('global config', async ({ cli, server, mcpBrowser }, testInfo) => {
   await fs.promises.mkdir(globalConfigDir, { recursive: true });
   await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
     browser: {
+      userDataDir: testInfo.outputPath('my-data-dir'),
       contextOptions: {
         viewport: { width: 800, height: 600 },
       },
@@ -127,6 +130,11 @@ test('project config overrides global config', async ({ cli, server, mcpBrowser 
   await fs.promises.mkdir(globalConfigDir, { recursive: true });
   await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
     browser: {
+      userDataDir: testInfo.outputPath('my-data-dir'),
+      browserName: 'chromium',
+      launchOptions: {
+        channel: 'chrome',
+      },
       contextOptions: {
         viewport: { width: 800, height: 600 },
       },
