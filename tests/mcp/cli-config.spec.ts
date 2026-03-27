@@ -119,6 +119,10 @@ test('global config', async ({ cli, server, mcpBrowser }, testInfo) => {
   }, null, 2));
 
   const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+  {
+    const { output } = await cli('config-print', { env });
+    console.error('global config - print output', output);
+  }
   await cli('open', server.PREFIX, { env });
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('800x600');
@@ -150,6 +154,12 @@ test('project config overrides global config', async ({ cli, server, mcpBrowser 
   }, null, 2));
 
   const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+
+  {
+    const { output } = await cli('config-print', { env });
+    console.error('project config overrides global config - print output', output);
+  }
+
   await cli('open', server.PREFIX, { env });
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('1024x768');
@@ -181,7 +191,11 @@ test('global config system USERPROFILE', async ({ cli, server, mcpBrowser }, tes
     },
   }, null, 2));
 
-  const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+  const env = {  };
+  {
+    const { output } = await cli('config-print', { env });
+    console.error('global config system USERPROFILE - print output', output);
+  }
   await cli('open', server.PREFIX, { env });
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('1024x768');
