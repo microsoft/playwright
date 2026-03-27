@@ -86,6 +86,26 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByTestId('metadata-view')).not.toBeVisible();
     });
 
+    test('should open report outside test server even when stdin is not a tty', async ({ interactWithTestRunner }) => {
+      const testProcess = await interactWithTestRunner({
+        'playwright.config.ts': `
+          module.exports = { reporter: 'html' };
+        `,
+        'a.test.js': `
+          import { test } from '@playwright/test';
+          test('passes', async ({}) => {});
+        `,
+      }, {}, { PLAYWRIGHT_HTML_OPEN: 'always' });
+
+      const result = await Promise.race([
+        testProcess.waitForOutput('Serving HTML report at').then(() => 'opened' as const),
+        testProcess.exited.then(() => 'exited' as const),
+      ]);
+      expect(result).toBe('opened');
+
+      await testProcess.kill();
+    });
+
     test('should allow navigating to testId=test.id', async ({ runInlineTest, page, showReport }) => {
       const result = await runInlineTest({
         'a.test.js': `

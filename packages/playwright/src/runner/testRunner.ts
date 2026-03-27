@@ -352,7 +352,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
       config.preOnlyTestFilters.push(test => testIdSet.has(test.id));
     }
 
-    const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test');
+    const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test', undefined, { isTestServer: true });
     const reporter = new InternalReporter([...configReporters, userReporter]);
     const stop = new ManualPromise();
     const tasks = [
