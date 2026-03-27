@@ -45,7 +45,7 @@ This project incorporates components from the projects listed below. The origina
 -	etag@1.8.1 (https://github.com/jshttp/etag)
 -	eventsource-parser@3.0.3 (https://github.com/rexxars/eventsource-parser)
 -	eventsource@3.0.7 (git://git@github.com/EventSource/eventsource)
--	express-rate-limit@8.2.1 (https://github.com/express-rate-limit/express-rate-limit)
+-	express-rate-limit@8.3.1 (https://github.com/express-rate-limit/express-rate-limit)
 -	express@5.2.1 (https://github.com/expressjs/express)
 -	fast-deep-equal@3.1.3 (https://github.com/epoberezkin/fast-deep-equal)
 -	fast-uri@3.1.0 (https://github.com/fastify/fast-uri)
@@ -66,7 +66,7 @@ This project incorporates components from the projects listed below. The origina
 -	iconv-lite@0.7.2 (https://github.com/pillarjs/iconv-lite)
 -	inherits@2.0.4 (https://github.com/isaacs/inherits)
 -	ini@6.0.0 (https://github.com/npm/ini)
--	ip-address@10.0.1 (https://github.com/beaugunderson/ip-address)
+-	ip-address@10.1.0 (https://github.com/beaugunderson/ip-address)
 -	ip-address@9.0.5 (https://github.com/beaugunderson/ip-address)
 -	ipaddr.js@1.9.1 (https://github.com/whitequark/ipaddr.js)
 -	is-docker@2.2.1 (https://github.com/sindresorhus/is-docker)
@@ -103,7 +103,7 @@ This project incorporates components from the projects listed below. The origina
 -	proxy-addr@2.0.7 (https://github.com/jshttp/proxy-addr)
 -	proxy-from-env@2.0.0 (https://github.com/Rob--W/proxy-from-env)
 -	pump@3.0.2 (https://github.com/mafintosh/pump)
--	qs@6.14.1 (https://github.com/ljharb/qs)
+-	qs@6.15.0 (https://github.com/ljharb/qs)
 -	range-parser@1.2.1 (https://github.com/jshttp/range-parser)
 -	raw-body@3.0.2 (https://github.com/stream-utils/raw-body)
 -	require-from-string@2.0.2 (https://github.com/floatdrop/require-from-string)
@@ -132,7 +132,7 @@ This project incorporates components from the projects listed below. The origina
 -	which@2.0.2 (https://github.com/isaacs/node-which)
 -	wrappy@1.0.2 (https://github.com/npm/wrappy)
 -	ws@8.17.1 (https://github.com/websockets/ws)
--	yaml@2.6.0 (https://github.com/eemeli/yaml)
+-	yaml@2.8.3 (https://github.com/eemeli/yaml)
 -	yauzl@3.2.0 (https://github.com/thejoshwolfe/yauzl)
 -	yazl@2.5.1 (https://github.com/thejoshwolfe/yazl)
 -	zod-to-json-schema@3.25.1 (https://github.com/StefanTerdell/zod-to-json-schema)
@@ -1216,7 +1216,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF eventsource@3.0.7 AND INFORMATION
 
-%% express-rate-limit@8.2.1 NOTICES AND INFORMATION BEGIN HERE
+%% express-rate-limit@8.3.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 # MIT License
 
@@ -1239,7 +1239,7 @@ COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
-END OF express-rate-limit@8.2.1 AND INFORMATION
+END OF express-rate-limit@8.3.1 AND INFORMATION
 
 %% express@5.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -1748,7 +1748,7 @@ IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 =========================================
 END OF ini@6.0.0 AND INFORMATION
 
-%% ip-address@10.0.1 NOTICES AND INFORMATION BEGIN HERE
+%% ip-address@10.1.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright (C) 2011 by Beau Gunderson
 
@@ -1770,7 +1770,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF ip-address@10.0.1 AND INFORMATION
+END OF ip-address@10.1.0 AND INFORMATION
 
 %% ip-address@9.0.5 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -2699,7 +2699,7 @@ THE SOFTWARE.
 =========================================
 END OF pump@3.0.2 AND INFORMATION
 
-%% qs@6.14.1 NOTICES AND INFORMATION BEGIN HERE
+%% qs@6.15.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 BSD 3-Clause License
 
@@ -2731,7 +2731,7 @@ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
 OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 =========================================
-END OF qs@6.14.1 AND INFORMATION
+END OF qs@6.15.0 AND INFORMATION
 
 %% range-parser@1.2.1 NOTICES AND INFORMATION BEGIN HERE
 =========================================
@@ -3429,7 +3429,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 =========================================
 END OF ws@8.17.1 AND INFORMATION
 
-%% yaml@2.6.0 NOTICES AND INFORMATION BEGIN HERE
+%% yaml@2.8.3 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 Copyright Eemeli Aro <eemeli@gmail.com>
 
@@ -3445,7 +3445,7 @@ OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
 TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 =========================================
-END OF yaml@2.6.0 AND INFORMATION
+END OF yaml@2.8.3 AND INFORMATION
 
 %% yauzl@3.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
