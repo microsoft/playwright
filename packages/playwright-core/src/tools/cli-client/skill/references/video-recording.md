@@ -50,7 +50,7 @@ It allows pulling appropriate pauses between the actions and annotating the vide
 
 ```js
 async page => {
-  await page.video().start({ path: 'video.webm', size: { width: 1280, height: 800 } });
+  await page.screencast.start({ path: 'video.webm', size: { width: 1280, height: 800 } });
   await page.goto('https://demo.playwright.dev/todomvc');
 
   // Show a chapter card — blurs the page and shows a dialog.
@@ -113,7 +113,7 @@ async page => {
     </div>
   `, { duration: 2000 });
 
-  await page.video().stop();
+  await page.screencast.stop();
 }
 ```
 

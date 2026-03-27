@@ -3888,10 +3888,7 @@ Handler function to route the WebSocket.
 **Usage**
 
 ```js
-page.screencast.on('screencastFrame', data => {
-  console.log('received frame, jpeg size:', data.length);
-});
-await page.screencast.start();
+await page.screencast.start({ path: 'video.webm' });
 // ... perform actions ...
 await page.screencast.stop();
 ```
@@ -4461,8 +4458,7 @@ Optional handler function to route the request.
 * since: v1.8
 - returns: <[Video]>
 
-Video object associated with this page. Can be used to control video recording with [`method: Video.start`]
-and [`method: Video.stop`], or to access the video file when using the `recordVideo` context option.
+Video object associated with this page. Can be used to access the video file when using the `recordVideo` context option.
 
 ## method: Page.viewportSize
 * since: v1.8

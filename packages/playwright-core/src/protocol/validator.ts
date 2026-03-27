@@ -1570,26 +1570,19 @@ scheme.PageOverlaySetVisibleParams = tObject({
 });
 scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
 scheme.PageStartScreencastParams = tObject({
-  preferredSize: tOptional(tObject({
-    width: tInt,
-    height: tInt,
-  })),
-});
-scheme.PageStartScreencastResult = tOptional(tObject({}));
-scheme.PageStopScreencastParams = tOptional(tObject({}));
-scheme.PageStopScreencastResult = tOptional(tObject({}));
-scheme.PageVideoStartParams = tObject({
+  saveFile: tOptional(tBoolean),
+  sendFrames: tOptional(tBoolean),
   size: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
   annotate: tOptional(tType('AnnotateOptions')),
 });
-scheme.PageVideoStartResult = tObject({
-  artifact: tChannel(['Artifact']),
+scheme.PageStartScreencastResult = tObject({
+  artifact: tOptional(tChannel(['Artifact'])),
 });
-scheme.PageVideoStopParams = tOptional(tObject({}));
-scheme.PageVideoStopResult = tOptional(tObject({}));
+scheme.PageStopScreencastParams = tOptional(tObject({}));
+scheme.PageStopScreencastResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,

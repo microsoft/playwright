@@ -2166,8 +2166,6 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   overlaySetVisible(params: PageOverlaySetVisibleParams, progress?: Progress): Promise<PageOverlaySetVisibleResult>;
   startScreencast(params: PageStartScreencastParams, progress?: Progress): Promise<PageStartScreencastResult>;
   stopScreencast(params?: PageStopScreencastParams, progress?: Progress): Promise<PageStopScreencastResult>;
-  videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
-  videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
 }
@@ -2718,41 +2716,29 @@ export type PageOverlaySetVisibleOptions = {
 };
 export type PageOverlaySetVisibleResult = void;
 export type PageStartScreencastParams = {
-  preferredSize?: {
+  saveFile?: boolean,
+  sendFrames?: boolean,
+  size?: {
     width: number,
     height: number,
   },
+  annotate?: AnnotateOptions,
 };
 export type PageStartScreencastOptions = {
-  preferredSize?: {
+  saveFile?: boolean,
+  sendFrames?: boolean,
+  size?: {
     width: number,
     height: number,
   },
+  annotate?: AnnotateOptions,
 };
-export type PageStartScreencastResult = void;
+export type PageStartScreencastResult = {
+  artifact?: ArtifactChannel,
+};
 export type PageStopScreencastParams = {};
 export type PageStopScreencastOptions = {};
 export type PageStopScreencastResult = void;
-export type PageVideoStartParams = {
-  size?: {
-    width: number,
-    height: number,
-  },
-  annotate?: AnnotateOptions,
-};
-export type PageVideoStartOptions = {
-  size?: {
-    width: number,
-    height: number,
-  },
-  annotate?: AnnotateOptions,
-};
-export type PageVideoStartResult = {
-  artifact: ArtifactChannel,
-};
-export type PageVideoStopParams = {};
-export type PageVideoStopOptions = {};
-export type PageVideoStopResult = void;
 export type PageUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,

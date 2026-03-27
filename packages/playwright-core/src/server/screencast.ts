@@ -22,6 +22,7 @@ import { Page } from './page';
 import { registry } from './registry';
 import { validateVideoSize } from './browserContext';
 
+import type { Artifact } from './artifact';
 import type * as types from './types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
@@ -136,9 +137,9 @@ export class Screencast implements InstrumentationListener {
     video?.reportFinished();
   }
 
-  async startExplicitVideoRecording(options: { size?: types.Size, annotate?: types.AnnotateOptions } = {}) {
+  private async _startUserVideoRecording(options: { size?: types.Size, annotate?: types.AnnotateOptions } = {}) {
     if (this._videoId)
-      throw new Error('Video is already being recorded');
+      throw new Error('Screencast is already being recorded');
     const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
     const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
     if (options.annotate)
@@ -146,10 +147,27 @@ export class Screencast implements InstrumentationListener {
     return await this.startVideoRecording(videoOptions);
   }
 
-  async stopExplicitVideoRecording() {
-    if (!this._videoId)
-      throw new Error('Video is not being recorded');
-    await this.stopVideoRecording();
+  async startUserScreencast(options: { saveFile?: boolean, size?: types.Size, annotate?: types.AnnotateOptions, onFrame?: ScreencastListener }): Promise<{ artifact: Artifact | undefined, listener: ScreencastListener | undefined }> {
+    const size = options.size || { width: 800, height: 800 };
+    let artifact: Artifact | undefined;
+    if (options.saveFile)
+      artifact = await this._startUserVideoRecording({ size: options.size, annotate: options.annotate });
+
+    let listener: ScreencastListener | undefined;
+    if (options.onFrame) {
+      listener = options.onFrame;
+      await this.startScreencast(listener, { quality: 90, width: size.width, height: size.height });
+    }
+    return { artifact, listener };
+  }
+
+  async stopUserScreencast(listener: ScreencastListener | null) {
+    if (!listener && !this._videoId)
+      throw new Error('Screencast is not running');
+    if (listener)
+      await this.stopScreencast(listener);
+    if (this._videoId)
+      await this.stopVideoRecording();
   }
 
   async startScreencast(listener: ScreencastListener, options: ScreencastOptions) {

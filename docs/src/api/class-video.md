@@ -23,38 +23,6 @@ print(page.video.path())
 Console.WriteLine(await page.Video.GetPathAsync());
 ```
 
-Alternatively, you can use [`method: Video.start`] and [`method: Video.stop`] to record video manually. This approach is mutually exclusive with the `recordVideo` option.
-
-```js
-await page.video().start({ path: 'video.webm' });
-// ... perform actions ...
-await page.video().stop();
-```
-
-```java
-page.video().start(new Video.StartOptions().setPath(Paths.get("video.webm")));
-// ... perform actions ...
-page.video().stop();
-```
-
-```python async
-await page.video.start(path="video.webm")
-# ... perform actions ...
-await page.video.stop()
-```
-
-```python sync
-page.video.start(path="video.webm")
-# ... perform actions ...
-page.video.stop()
-```
-
-```csharp
-await page.Video.StartAsync(new() { Path = "video.webm" });
-// ... perform actions ...
-await page.Video.StopAsync();
-```
-
 ## async method: Video.delete
 * since: v1.11
 
@@ -92,68 +60,3 @@ Saves the video to a user-specified path. If using the sync API, this must be ca
 Path where the video should be saved.
 
 
-## async method: Video.start
-* since: v1.59
-- returns: <[Disposable]>
-
-Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
-
-**Usage**
-
-```js
-await page.video().start({ path: 'video.webm' });
-// ... perform actions ...
-await page.video().stop();
-```
-
-```java
-page.video().start(new Video.StartOptions().setPath(Paths.get("video.webm")));
-// ... perform actions ...
-page.video().stop();
-```
-
-```python async
-await page.video.start(path="video.webm")
-# ... perform actions ...
-await page.video.stop()
-```
-
-```python sync
-page.video.start(path="video.webm")
-# ... perform actions ...
-page.video.stop()
-```
-
-```csharp
-await page.Video.StartAsync(new() { Path = "video.webm" });
-// ... perform actions ...
-await page.Video.StopAsync();
-```
-
-### option: Video.start.path
-* since: v1.59
-- `path` <[path]>
-
-Path where the video should be saved when the recording is stopped.
-
-### option: Video.start.size
-* since: v1.59
-- `size` ?<[Object]>
-  - `width` <[int]> Video frame width.
-  - `height` <[int]> Video frame height.
-
-Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
-
-### option: Video.start.annotate
-* since: v1.59
-- `annotate` ?<[Object]>
-  - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
-  - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
-  - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
-
-If specified, enables visual annotations on interacted elements during video recording. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
-
-## async method: Video.stop
-* since: v1.59
-
-Stops video recording started with [`method: Video.start`].

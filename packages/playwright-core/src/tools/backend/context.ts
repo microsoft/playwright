@@ -86,7 +86,7 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
-type VideoParams = NonNullable<Parameters<playwright.Video['start']>[0]>;
+type VideoParams = Pick<NonNullable<Parameters<playwright.Screencast['start']>[0]>, 'size'>;
 
 export class Context {
   readonly config: ContextConfig;
@@ -195,7 +195,7 @@ export class Context {
       return [];
     const video = this._video;
     for (const page of this._rawBrowserContext.pages())
-      await page.video().stop();
+      await page.screencast.stop();
     this._video = undefined;
     return [...video.allVideos];
   }
@@ -204,7 +204,7 @@ export class Context {
     if (!this._video)
       return;
     this._video.allVideos.add(page.video());
-    await page.video().start(this._video.params);
+    await page.screencast.start(this._video.params);
   }
 
   private _onPageCreated(page: playwright.Page) {

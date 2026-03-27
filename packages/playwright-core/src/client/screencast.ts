@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
+import { Artifact } from './artifact';
 import { DisposableStub } from './disposable';
 
+import type { AnnotateOptions } from './types';
 import type * as api from '../../types/types';
 import type { Page } from './page';
 
 export class Screencast implements api.Screencast {
   private readonly _page: Page;
   private _onFrame: ((frame: { data: Buffer }) => Promise<any>) | null = null;
+  private _artifact: Artifact | undefined;
+  private _savePath: string | undefined;
 
   constructor(page: Page) {
     this._page = page;
@@ -30,16 +34,23 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { preferredSize?: { width: number, height: number } } = {}): Promise<DisposableStub> {
-    if (this._onFrame)
-      throw new Error('Screencast is already started');
-    this._onFrame = onFrame;
-    await this._page._channel.startScreencast(options);
+  async start(options: { onFrame?: (frame: { data: Buffer }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, annotate?: AnnotateOptions } = {}): Promise<DisposableStub> {
+    this._onFrame = options.onFrame ?? null;
+    this._savePath = options.path;
+    const result = await this._page._channel.startScreencast({ saveFile: !!options.path, sendFrames: !!options.onFrame, size: options.size, annotate: options.annotate });
+    if (result.artifact)
+      this._artifact = Artifact.from(result.artifact);
     return new DisposableStub(() => this.stop());
   }
 
   async stop(): Promise<void> {
-    this._onFrame = null;
-    await this._page._channel.stopScreencast();
+    await this._page._wrapApiCall(async () => {
+      this._onFrame = null;
+      await this._page._channel.stopScreencast();
+      if (this._savePath && this._artifact)
+        await this._artifact.saveAs(this._savePath);
+      this._artifact = undefined;
+      this._savePath = undefined;
+    });
   }
 }

@@ -243,8 +243,10 @@ export interface WebSocketRoute {
 }
 
 export interface Screencast {
-  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
-    preferredSize?: {
+  start(options?: {
+    onFrame?: ((frame: { data: Buffer }) => Promise<any>|any);
+    path?: string;
+    size?: {
       width: number;
       height: number;
     };

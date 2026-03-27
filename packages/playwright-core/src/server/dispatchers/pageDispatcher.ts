@@ -375,11 +375,20 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
     if (this._screencastListener)
       throw new Error('Screencast is already running');
-    const size = params.preferredSize || { width: 800, height: 800 };
-    this._screencastListener = (frame: ScreencastFrame) => {
+    this._screencastListener = () => {};
+
+    const onFrame = params.sendFrames ? (frame: ScreencastFrame) => {
       this._dispatchEvent('screencastFrame', { data: frame.buffer });
-    };
-    await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height });
+    } : undefined;
+    const { artifact: videoArtifact, listener } = await this._page.screencast.startUserScreencast({
+      saveFile: params.saveFile,
+      size: params.size,
+      annotate: params.annotate,
+      onFrame,
+    });
+    this._screencastListener = listener || null;
+    const artifact = videoArtifact ? createVideoDispatcher(this.parentScope(), videoArtifact) : undefined;
+    return { artifact };
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
@@ -389,17 +398,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private async _stopScreencast() {
     const listener = this._screencastListener;
     this._screencastListener = null;
-    if (listener)
-      await this._page.screencast.stopScreencast(listener);
-  }
-
-  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
-    const artifact = await this._page.screencast.startExplicitVideoRecording(params);
-    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
-  }
-
-  async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
-    await this._page.screencast.stopExplicitVideoRecording();
+    await this._page.screencast.stopUserScreencast(listener);
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {

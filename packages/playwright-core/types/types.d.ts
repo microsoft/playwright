@@ -4797,10 +4797,8 @@ export interface Page {
   url(): string;
 
   /**
-   * Video object associated with this page. Can be used to control video recording with
-   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
-   * [video.stop()](https://playwright.dev/docs/api/class-video#video-stop), or to access the video file when using the
-   * `recordVideo` context option.
+   * Video object associated with this page. Can be used to access the video file when using the `recordVideo` context
+   * option.
    */
   video(): Video;
 
@@ -5295,10 +5293,7 @@ export interface Page {
    * **Usage**
    *
    * ```js
-   * page.screencast.on('screencastFrame', data => {
-   *   console.log('received frame, jpeg size:', data.length);
-   * });
-   * await page.screencast.start();
+   * await page.screencast.start({ path: 'video.webm' });
    * // ... perform actions ...
    * await page.screencast.stop();
    * ```
@@ -16185,27 +16180,44 @@ export interface WebSocketRoute {
 }
 
 /**
- * Interface for capturing screencast frames from a page.
+ * Interface for capturing screencast and recording video from a page.
  */
 export interface Screencast {
   /**
-   * Starts capturing screencast frames.
+   * Starts capturing screencast frames and/or recording video. At least one of
+   * [`onFrame`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-on-frame) or
+   * [`path`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-path) must be specified.
+   *
+   * When [`path`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-path) is specified, video is
+   * recorded to the given file. When
+   * [`onFrame`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-on-frame) is specified,
+   * JPEG-encoded frames are delivered to the callback. Both options can be used simultaneously.
    *
    * **Usage**
    *
    * ```js
-   * await page.screencast.start(({ data })  => {
-   *   console.log(`frame size: ${data.length}`);
-   * }, { preferredSize: { width: 800, height: 600 } });
+   * // Record video to a file
+   * await page.screencast.start({ path: 'video.webm' });
    * // ... perform actions ...
    * await page.screencast.stop();
    * ```
    *
-   * @param onFrame Callback that receives JPEG-encoded frame data.
+   * ```js
+   * // Capture screencast frames
+   * await page.screencast.start({
+   *   onFrame: ({ data }) => console.log(`frame size: ${data.length}`),
+   *   size: { width: 800, height: 600 },
+   * });
+   * // ... perform actions ...
+   * await page.screencast.stop();
+   * ```
+   *
    * @param options
    */
-  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
-    preferredSize?: {
+  start(options?: {
+    onFrame?: ((frame: { data: Buffer }) => Promise<any>|any);
+    path?: string;
+    size?: {
       width: number;
       height: number;
     };
@@ -16217,7 +16229,7 @@ export interface Screencast {
   }): Promise<Disposable>;
   /**
    * Stops the screencast started with
-   * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   * [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
    */
   stop(): Promise<void>;
 }
@@ -22111,16 +22123,6 @@ export interface Tracing {
  * console.log(await page.video().path());
  * ```
  *
- * Alternatively, you can use [video.start([options])](https://playwright.dev/docs/api/class-video#video-start) and
- * [video.stop()](https://playwright.dev/docs/api/class-video#video-stop) to record video manually. This approach is
- * mutually exclusive with the `recordVideo` option.
- *
- * ```js
- * await page.video().start({ path: 'video.webm' });
- * // ... perform actions ...
- * await page.video().stop();
- * ```
- *
  */
 export interface Video {
   /**
@@ -22140,69 +22142,6 @@ export interface Video {
    * @param path Path where the video should be saved.
    */
   saveAs(path: string): Promise<void>;
-
-  /**
-   * Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
-   *
-   * **Usage**
-   *
-   * ```js
-   * await page.video().start({ path: 'video.webm' });
-   * // ... perform actions ...
-   * await page.video().stop();
-   * ```
-   *
-   * @param options
-   */
-  start(options?: {
-    /**
-     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
-     * highlighted with a semi-transparent blue box and click points are shown as red circles.
-     */
-    annotate?: {
-      /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
-       */
-      duration?: number;
-
-      /**
-       * Position of the action title overlay. Defaults to `"top-right"`.
-       */
-      position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
-
-      /**
-       * Font size of the action title in pixels. Defaults to `24`.
-       */
-      fontSize?: number;
-    };
-
-    /**
-     * Path where the video should be saved when the recording is stopped.
-     */
-    path?: string;
-
-    /**
-     * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
-     * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
-     */
-    size?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-  }): Promise<Disposable>;
-
-  /**
-   * Stops video recording started with
-   * [video.start([options])](https://playwright.dev/docs/api/class-video#video-start).
-   */
-  stop(): Promise<void>;
 }
 
 /**
