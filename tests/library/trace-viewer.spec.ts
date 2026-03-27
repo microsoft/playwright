@@ -1221,7 +1221,7 @@ test('should display waitForLoadState even if did not wait for it', async ({ run
 });
 
 test('should display language-specific locators', async ({ runAndTrace, server, page, toImpl }) => {
-  toImpl(page).attribution.playwright.options.sdkLanguage = 'python';
+  toImpl(page).attribution.browser.options.sdkLanguage = 'python';
   const traceViewer = await runAndTrace(async () => {
     await page.setContent('<button>Submit</button>');
     await page.getByRole('button', { name: 'Submit' }).click();
@@ -1230,7 +1230,7 @@ test('should display language-specific locators', async ({ runAndTrace, server, 
     /Set content/,
     /Click.*get_by_role\("button", name="Submit"\)/,
   ]);
-  toImpl(page).attribution.playwright.options.sdkLanguage = 'javascript';
+  toImpl(page).attribution.browser.options.sdkLanguage = 'javascript';
 });
 
 test('should pick locator', async ({ page, runAndTrace, server }) => {
