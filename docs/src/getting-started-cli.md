@@ -200,7 +200,8 @@ playwright-cli run-code <code>          # run Playwright code snippet
 playwright-cli tracing-start            # start trace recording
 playwright-cli tracing-stop             # stop trace recording
 playwright-cli video-start              # start video recording
-playwright-cli video-stop [filename]    # stop video recording
+playwright-cli video-chapter <title>    # add chapter marker to video
+playwright-cli video-stop --filename=f  # stop video recording
 ```
 
 ## Sessions
