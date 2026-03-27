@@ -23,6 +23,10 @@ test('should discover WebContentsViews via Playwright electron API', {
   test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39427' });
 
   const app = await launchElectronApp('electron-webcontentsview-app.js');
+
+  const window = await app.firstWindow();
+  expect(await window.title()).toBe('WebContentsView1');
+
   await expect.poll(() => app.windows().length, { timeout: 10000 }).toBe(3);
   const titles = await Promise.all(app.windows().map(w => w.title()));
   expect(titles.sort()).toEqual(['WebContentsView1', 'WebContentsView2', 'WebContentsView3']);
