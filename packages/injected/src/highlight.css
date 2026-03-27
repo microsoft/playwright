@@ -109,8 +109,6 @@ x-pw-action-point {
 
 x-pw-title {
   position: absolute;
-  top: 6px;
-  right: 6px;
   backdrop-filter: blur(5px);
   background-color: rgba(0, 0, 0, 0.5);
   color: white;

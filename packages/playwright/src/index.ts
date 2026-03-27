@@ -839,12 +839,12 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
 
 function createTestOverlay(parts: string[], position: string, fontSize: number) {
   const positionStyles: Record<string, string> = {
-    'top-left': 'top: 3px; left: 3px;',
-    'top': 'top: 3px; left: 50%; transform: translateX(-50%);',
-    'top-right': 'top: 3px; right: 3px;',
-    'bottom-left': 'bottom: 3px; left: 3px;',
-    'bottom': 'bottom: 3px; left: 50%; transform: translateX(-50%);',
-    'bottom-right': 'bottom: 3px; right: 3px;',
+    'top-left': 'top: 6px; left: 6px;',
+    'top': 'top: 6px; left: 50%; transform: translateX(-50%);',
+    'top-right': 'top: 6px; right: 6px;',
+    'bottom-left': 'bottom: 6px; left: 6px;',
+    'bottom': 'bottom: 6px; left: 50%; transform: translateX(-50%);',
+    'bottom-right': 'bottom: 6px; right: 6px;',
   };
   const posStyle = positionStyles[position] ?? positionStyles['top-left'];
   return `<div style="white-space: nowrap; font-size: ${fontSize}px; padding: 3px 6px; background: rgba(0,0,0,0.5); color: white; border-radius: 4px; position: absolute; ${posStyle}">
