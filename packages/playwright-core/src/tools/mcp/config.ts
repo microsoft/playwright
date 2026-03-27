@@ -110,8 +110,8 @@ export async function resolveConfig(config: Config): Promise<FullConfig> {
   return { ...merged, browser };
 }
 
-export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<FullConfig> {
-  const envOverrides = configFromEnv();
+export async function resolveCLIConfigForMCP(cliOptions: CLIOptions, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
+  const envOverrides = configFromEnv(env);
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
@@ -128,7 +128,7 @@ export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<Fu
   return { ...result, browser, configFile };
 }
 
-export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any): Promise<FullConfig> {
+export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any, env?: NodeJS.ProcessEnv): Promise<FullConfig> {
   const config = options.config ? path.resolve(options.config) : undefined;
   try {
     const defaultConfigFile = path.resolve('.playwright', 'cli.config.json');
@@ -147,17 +147,17 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   });
   daemonOverrides.browser!.remoteEndpoint = options.attach;
 
-  const envOverrides = configFromEnv();
-  const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
+  const envOverrides = configFromEnv(env);
+  const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
   const configInFile = await loadConfig(configFile);
-  const globalConfigPath = path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
+  const globalConfigPath = path.join((env ?? process.env)['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
   const globalConfigInFile = await loadConfig(fs.existsSync(globalConfigPath) ? globalConfigPath : undefined);
 
   let result = defaultConfig;
   result = mergeConfig(result, globalConfigInFile);
   result = mergeConfig(result, configInFile);
-  result = mergeConfig(result, daemonOverrides);
   result = mergeConfig(result, envOverrides);
+  result = mergeConfig(result, daemonOverrides);
 
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
@@ -332,50 +332,51 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   return { ...config, configFile: cliOptions.config };
 }
 
-export function configFromEnv(): Config & { configFile?: string } {
+export function configFromEnv(env?: NodeJS.ProcessEnv): Config & { configFile?: string } {
+  const e = env ?? process.env;
   const options: CLIOptions = {};
-  options.allowedHosts = commaSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
-  options.allowedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
-  options.allowUnrestrictedFileAccess = envToBoolean(process.env.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
-  options.blockedOrigins = semicolonSeparatedList(process.env.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
-  options.blockServiceWorkers = envToBoolean(process.env.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
-  options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
-  options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
-  options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
-  options.cdpHeader = headerParser(envToString(process.env.PLAYWRIGHT_MCP_CDP_HEADERS));
-  options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
-  options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
-  if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
-    options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
-  options.device = envToString(process.env.PLAYWRIGHT_MCP_DEVICE);
-  options.executablePath = envToString(process.env.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
-  options.extension = envToBoolean(process.env.PLAYWRIGHT_MCP_EXTENSION);
-  options.grantPermissions = commaSeparatedList(process.env.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
-  options.headless = envToBoolean(process.env.PLAYWRIGHT_MCP_HEADLESS);
-  options.host = envToString(process.env.PLAYWRIGHT_MCP_HOST);
-  options.ignoreHttpsErrors = envToBoolean(process.env.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
-  const initPage = envToString(process.env.PLAYWRIGHT_MCP_INIT_PAGE);
+  options.allowedHosts = commaSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_HOSTS);
+  options.allowedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_ALLOWED_ORIGINS);
+  options.allowUnrestrictedFileAccess = envToBoolean(e.PLAYWRIGHT_MCP_ALLOW_UNRESTRICTED_FILE_ACCESS);
+  options.blockedOrigins = semicolonSeparatedList(e.PLAYWRIGHT_MCP_BLOCKED_ORIGINS);
+  options.blockServiceWorkers = envToBoolean(e.PLAYWRIGHT_MCP_BLOCK_SERVICE_WORKERS);
+  options.browser = envToString(e.PLAYWRIGHT_MCP_BROWSER);
+  options.caps = commaSeparatedList(e.PLAYWRIGHT_MCP_CAPS);
+  options.cdpEndpoint = envToString(e.PLAYWRIGHT_MCP_CDP_ENDPOINT);
+  options.cdpHeader = headerParser(envToString(e.PLAYWRIGHT_MCP_CDP_HEADERS));
+  options.cdpTimeout = numberParser(e.PLAYWRIGHT_MCP_CDP_TIMEOUT);
+  options.config = envToString(e.PLAYWRIGHT_MCP_CONFIG);
+  if (e.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
+    options.consoleLevel = enumParser<'error' | 'warning' | 'info' | 'debug'>('--console-level', ['error', 'warning', 'info', 'debug'], e.PLAYWRIGHT_MCP_CONSOLE_LEVEL);
+  options.device = envToString(e.PLAYWRIGHT_MCP_DEVICE);
+  options.executablePath = envToString(e.PLAYWRIGHT_MCP_EXECUTABLE_PATH);
+  options.extension = envToBoolean(e.PLAYWRIGHT_MCP_EXTENSION);
+  options.grantPermissions = commaSeparatedList(e.PLAYWRIGHT_MCP_GRANT_PERMISSIONS);
+  options.headless = envToBoolean(e.PLAYWRIGHT_MCP_HEADLESS);
+  options.host = envToString(e.PLAYWRIGHT_MCP_HOST);
+  options.ignoreHttpsErrors = envToBoolean(e.PLAYWRIGHT_MCP_IGNORE_HTTPS_ERRORS);
+  const initPage = envToString(e.PLAYWRIGHT_MCP_INIT_PAGE);
   if (initPage)
     options.initPage = [initPage];
-  const initScript = envToString(process.env.PLAYWRIGHT_MCP_INIT_SCRIPT);
+  const initScript = envToString(e.PLAYWRIGHT_MCP_INIT_SCRIPT);
   if (initScript)
     options.initScript = [initScript];
-  options.isolated = envToBoolean(process.env.PLAYWRIGHT_MCP_ISOLATED);
-  if (process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
-    options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], process.env.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
-  options.sandbox = envToBoolean(process.env.PLAYWRIGHT_MCP_SANDBOX);
-  options.outputDir = envToString(process.env.PLAYWRIGHT_MCP_OUTPUT_DIR);
-  options.port = numberParser(process.env.PLAYWRIGHT_MCP_PORT);
-  options.proxyBypass = envToString(process.env.PLAYWRIGHT_MCP_PROXY_BYPASS);
-  options.proxyServer = envToString(process.env.PLAYWRIGHT_MCP_PROXY_SERVER);
-  options.secrets = dotenvFileLoader(process.env.PLAYWRIGHT_MCP_SECRETS_FILE);
-  options.storageState = envToString(process.env.PLAYWRIGHT_MCP_STORAGE_STATE);
-  options.testIdAttribute = envToString(process.env.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
-  options.timeoutAction = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
-  options.timeoutNavigation = numberParser(process.env.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
-  options.userAgent = envToString(process.env.PLAYWRIGHT_MCP_USER_AGENT);
-  options.userDataDir = envToString(process.env.PLAYWRIGHT_MCP_USER_DATA_DIR);
-  options.viewportSize = resolutionParser('--viewport-size', process.env.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
+  options.isolated = envToBoolean(e.PLAYWRIGHT_MCP_ISOLATED);
+  if (e.PLAYWRIGHT_MCP_IMAGE_RESPONSES)
+    options.imageResponses = enumParser<'allow' | 'omit'>('--image-responses', ['allow', 'omit'], e.PLAYWRIGHT_MCP_IMAGE_RESPONSES);
+  options.sandbox = envToBoolean(e.PLAYWRIGHT_MCP_SANDBOX);
+  options.outputDir = envToString(e.PLAYWRIGHT_MCP_OUTPUT_DIR);
+  options.port = numberParser(e.PLAYWRIGHT_MCP_PORT);
+  options.proxyBypass = envToString(e.PLAYWRIGHT_MCP_PROXY_BYPASS);
+  options.proxyServer = envToString(e.PLAYWRIGHT_MCP_PROXY_SERVER);
+  options.secrets = dotenvFileLoader(e.PLAYWRIGHT_MCP_SECRETS_FILE);
+  options.storageState = envToString(e.PLAYWRIGHT_MCP_STORAGE_STATE);
+  options.testIdAttribute = envToString(e.PLAYWRIGHT_MCP_TEST_ID_ATTRIBUTE);
+  options.timeoutAction = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_ACTION);
+  options.timeoutNavigation = numberParser(e.PLAYWRIGHT_MCP_TIMEOUT_NAVIGATION);
+  options.userAgent = envToString(e.PLAYWRIGHT_MCP_USER_AGENT);
+  options.userDataDir = envToString(e.PLAYWRIGHT_MCP_USER_DATA_DIR);
+  options.viewportSize = resolutionParser('--viewport-size', e.PLAYWRIGHT_MCP_VIEWPORT_SIZE);
   return configFromCLIOptions(options);
 }
 

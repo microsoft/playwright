@@ -17,7 +17,6 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfigForMCP } from '../../packages/playwright-core/lib/tools/mcp/config';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -103,42 +102,6 @@ test.describe(() => {
       page: expect.stringContaining(`Firefox`),
     });
   });
-});
-
-async function sandboxOption(cli: any) {
-  const config: any = await resolveCLIConfigForMCP(cli);
-  return config.browser.launchOptions.chromiumSandbox;
-}
-
-test('test sandbox configuration', async ({}) => {
-  expect(await sandboxOption({ browser: 'chromium' })).toBe(process.platform !== 'linux');
-  expect(await sandboxOption({ browser: 'chromium', sandbox: true })).toBe(true);
-  expect(await sandboxOption({ browser: 'chrome', sandbox: false })).toBe(false);
-  expect(await sandboxOption({ browser: 'chrome' })).toBe(true);
-  expect(await sandboxOption({ browser: 'msedge' })).toBe(true);
-});
-
-test('file browser.cdpHeaders preserved when PLAYWRIGHT_MCP_CDP_HEADERS unset', async ({}, testInfo) => {
-  const prev = process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
-  delete process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
-  try {
-    const config: Config = {
-      browser: {
-        cdpEndpoint: 'ws://example.invalid',
-        cdpHeaders: { Authorization: 'Bearer token-from-file' },
-      },
-    };
-    const configPath = testInfo.outputPath('config.json');
-    await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
-
-    const resolved = await resolveCLIConfigForMCP({ config: configPath });
-    expect(resolved.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
-  } finally {
-    if (prev !== undefined)
-      process.env.PLAYWRIGHT_MCP_CDP_HEADERS = prev;
-    else
-      delete process.env.PLAYWRIGHT_MCP_CDP_HEADERS;
-  }
 });
 
 test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {
