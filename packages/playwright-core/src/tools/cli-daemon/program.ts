@@ -79,7 +79,7 @@ function defaultConfigFile(): string {
 }
 
 function globalConfigFile(): string {
-  return path.join(os.homedir(), '.playwright', 'cli.config.json');
+  return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
 export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {

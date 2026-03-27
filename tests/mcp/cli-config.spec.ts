@@ -103,11 +103,10 @@ test('isolated', async ({ cli, server }, testInfo) => {
   expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
 });
 
-test('global config', async ({ cli, server, mcpBrowser }, testInfo) => {
-  test.skip(mcpBrowser !== 'chrome', 'Overriden home does not contain bundled browsers');
-  const globalConfigDir = testInfo.outputPath('home', '.playwright');
-  await fs.promises.mkdir(globalConfigDir, { recursive: true });
-  await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
+test('global config', async ({ cli, server }, testInfo) => {
+  const fakeHome = testInfo.outputPath('home');
+  await fs.promises.mkdir(path.join(fakeHome, '.playwright'), { recursive: true });
+  await fs.promises.writeFile(path.join(fakeHome, '.playwright', 'cli.config.json'), JSON.stringify({
     browser: {
       contextOptions: {
         viewport: { width: 800, height: 600 },
@@ -115,17 +114,16 @@ test('global config', async ({ cli, server, mcpBrowser }, testInfo) => {
     },
   }, null, 2));
 
-  const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+  const env = { PWTEST_CLI_GLOBAL_CONFIG: fakeHome };
   await cli('open', server.PREFIX, { env });
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('800x600');
 });
 
-test('project config overrides global config', async ({ cli, server, mcpBrowser }, testInfo) => {
-  test.skip(mcpBrowser !== 'chrome', 'Overriden home does not contain bundled browsers');
-  const globalConfigDir = testInfo.outputPath('home', '.playwright');
-  await fs.promises.mkdir(globalConfigDir, { recursive: true });
-  await fs.promises.writeFile(path.join(globalConfigDir, 'cli.config.json'), JSON.stringify({
+test('project config overrides global config', async ({ cli, server }, testInfo) => {
+  const fakeHome = testInfo.outputPath('home');
+  await fs.promises.mkdir(path.join(fakeHome, '.playwright'), { recursive: true });
+  await fs.promises.writeFile(path.join(fakeHome, '.playwright', 'cli.config.json'), JSON.stringify({
     browser: {
       contextOptions: {
         viewport: { width: 800, height: 600 },
@@ -141,7 +139,7 @@ test('project config overrides global config', async ({ cli, server, mcpBrowser 
     },
   }, null, 2));
 
-  const env = { HOME: testInfo.outputPath('home'), USERPROFILE: testInfo.outputPath('home') };
+  const env = { PWTEST_CLI_GLOBAL_CONFIG: fakeHome };
   await cli('open', server.PREFIX, { env });
   const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
   expect(output).toContain('1024x768');
