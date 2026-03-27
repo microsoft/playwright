@@ -24,11 +24,9 @@ import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
-import { ClientInfo, createClientInfo } from '../cli-client/registry';
+import { createClientInfo } from '../cli-client/registry';
 import { program } from '../../utilsBundle';
 import { registry as browserRegistry } from '../../server/registry/index';
-
-import type { FullConfig } from '../mcp/config';
 
 program.argument('[session-name]', 'name of the session to create or connect to', 'default')
     .option('--headed', 'run in headed mode (non-headless)')
@@ -49,7 +47,7 @@ program.argument('[session-name]', 'name of the session to create or connect to'
 
       setupExitWatchdog();
       const clientInfo = createClientInfo();
-      const mcpConfig = await resolveCLIConfig(clientInfo, sessionName, options);
+      const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
       const clientInfoEx = {
         cwd: process.cwd(),
         sessionName,
@@ -82,63 +80,6 @@ function globalConfigFile(): string {
   return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
 }
 
-export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {
-  const config = options.config ? path.resolve(options.config) : undefined;
-  try {
-    if (!config && fs.existsSync(defaultConfigFile()))
-      options.config = defaultConfigFile();
-  } catch {
-  }
-
-  const daemonOverrides = configUtils.configFromCLIOptions({
-    config: options.config,
-    browser: options.browser,
-    headless: options.headed ? false : undefined,
-    extension: options.extension,
-    userDataDir: options.profile,
-    snapshotMode: 'full',
-  });
-  daemonOverrides.browser!.remoteEndpoint = options.attach;
-
-  const envOverrides = configUtils.configFromEnv();
-  const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
-  const configInFile = await configUtils.loadConfig(configFile);
-  const globalConfigPath = fs.existsSync(globalConfigFile()) ? globalConfigFile() : undefined;
-  const globalConfigInFile = await configUtils.loadConfig(globalConfigPath);
-
-  let result = configUtils.mergeConfig(configUtils.defaultConfig, {
-    browser: {
-      launchOptions: {
-        headless: true,
-      }
-    }
-  });
-
-  result = configUtils.mergeConfig(result, globalConfigInFile);
-  result = configUtils.mergeConfig(result, configInFile);
-  result = configUtils.mergeConfig(result, daemonOverrides);
-  result = configUtils.mergeConfig(result, envOverrides);
-
-  if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
-
-  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
-    // No custom value provided, use the daemon data dir.
-    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
-    const userDataDir = path.resolve(clientInfo.daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
-    result.browser.userDataDir = userDataDir;
-  }
-
-  result.configFile = configFile;
-  result.skillMode = true;
-  if (result.browser.launchOptions.headless !== false)
-    result.browser.contextOptions.viewport ??= { width: 1280, height: 720 };
-
-  await configUtils.validateConfig(result);
-
-  return result;
-}
-
 async function initWorkspace(initSkills: string | undefined) {
   const cwd = process.cwd();
   const playwrightDir = path.join(cwd, '.playwright');
@@ -165,7 +106,7 @@ async function ensureConfiguredBrowserInstalled() {
   if (fs.existsSync(defaultConfigFile()) || fs.existsSync(globalConfigFile())) {
     // Config exists, ensure configured browser is installed
     const clientInfo = createClientInfo();
-    const config = await resolveCLIConfig(clientInfo, 'default', {});
+    const config = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, 'default', {});
     const browserName = config.browser.browserName;
     const channel = config.browser.launchOptions.channel;
     if (!channel || channel.startsWith('chromium')) {

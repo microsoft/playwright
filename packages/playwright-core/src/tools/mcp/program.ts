@@ -17,7 +17,7 @@
 import { ProgramOption } from '../../utilsBundle';
 
 import * as mcpServer from '../utils/mcp/server';
-import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfig, semicolonSeparatedList } from './config';
+import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
 import { createBrowser } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
@@ -91,7 +91,7 @@ export function decorateMCPCommand(command: Command) {
         if (options.caps?.includes('tracing'))
           options.caps.push('devtools');
 
-        const config = await resolveCLIConfig(options);
+        const config = await resolveCLIConfigForMCP(options);
         const tools = filteredTools(config);
         if (config.extension) {
           const serverBackendFactory: mcpServer.ServerBackendFactory = {

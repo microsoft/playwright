@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import os from 'os';
 
 import { devices } from '../../..';
@@ -74,18 +75,11 @@ export type CLIOptions = {
   viewportSize?: ViewportSize;
 };
 
-export const defaultConfig: FullConfig = {
+const defaultConfig: MergedConfig = {
   browser: {
-    browserName: 'chromium',
-    launchOptions: {
-      channel: 'chrome',
-      headless: os.platform() === 'linux' && !process.env.DISPLAY,
-    },
-    contextOptions: {
-      viewport: null,
-    },
+    launchOptions: {},
+    contextOptions: {},
   },
-  server: {},
   timeouts: {
     action: 5000,
     navigation: 60000,
@@ -95,22 +89,28 @@ export const defaultConfig: FullConfig = {
 
 type BrowserUserConfig = NonNullable<Config['browser']>;
 
-export type FullConfig = Config & {
-  browser: Omit<BrowserUserConfig, 'browserName' | 'launchOptions' | 'contextOptions'> & {
-    browserName: 'chromium' | 'firefox' | 'webkit';
+export type MergedConfig = Config & {
+  browser: BrowserUserConfig & {
     launchOptions: NonNullable<BrowserUserConfig['launchOptions']>;
     contextOptions: NonNullable<BrowserUserConfig['contextOptions']>;
+  }
+};
+
+export type FullConfig = MergedConfig & {
+  browser: MergedConfig['browser'] & {
+    browserName: 'chromium' | 'firefox' | 'webkit';
   },
-  server?: Config['server'],
   skillMode?: boolean;
   configFile?: string;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
-  return mergeConfig(defaultConfig, config);
+  const merged = mergeConfig(defaultConfig, config);
+  const browser = await validateBrowserConfig(merged.browser);
+  return { ...merged, browser };
 }
 
-export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConfig> {
+export async function resolveCLIConfigForMCP(cliOptions: CLIOptions): Promise<FullConfig> {
   const envOverrides = configFromEnv();
   const cliOverrides = configFromCLIOptions(cliOptions);
   const configFile = cliOverrides.configFile ?? envOverrides.configFile;
@@ -120,37 +120,103 @@ export async function resolveCLIConfig(cliOptions: CLIOptions): Promise<FullConf
   result = mergeConfig(result, configInFile);
   result = mergeConfig(result, envOverrides);
   result = mergeConfig(result, cliOverrides);
-  result.configFile = configFile;
-  await validateConfig(result);
-  return result;
+
+  const browser = await validateBrowserConfig(result.browser);
+  if (browser.launchOptions.headless === undefined)
+    browser.launchOptions.headless = os.platform() === 'linux' && !process.env.DISPLAY;
+
+  return { ...result, browser, configFile };
 }
 
-export async function validateConfig(config: FullConfig): Promise<void> {
-  if (config.browser.browserName === 'chromium' && config.browser.launchOptions.chromiumSandbox === undefined) {
-    if (process.platform === 'linux')
-      config.browser.launchOptions.chromiumSandbox = config.browser.launchOptions.channel !== 'chromium' && config.browser.launchOptions.channel !== 'chrome-for-testing';
-    else
-      config.browser.launchOptions.chromiumSandbox = true;
+export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionName: string, options: any): Promise<FullConfig> {
+  const config = options.config ? path.resolve(options.config) : undefined;
+  try {
+    const defaultConfigFile = path.resolve('.playwright', 'cli.config.json');
+    if (!config && fs.existsSync(defaultConfigFile))
+      options.config = defaultConfigFile;
+  } catch {
   }
 
-  if (config.browser.isolated && config.browser.userDataDir)
+  const daemonOverrides = configFromCLIOptions({
+    config: options.config,
+    browser: options.browser,
+    headless: options.headed ? false : undefined,
+    extension: options.extension,
+    userDataDir: options.profile,
+    snapshotMode: 'full',
+  });
+  daemonOverrides.browser!.remoteEndpoint = options.attach;
+
+  const envOverrides = configFromEnv();
+  const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
+  const configInFile = await loadConfig(configFile);
+  const globalConfigPath = path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
+  const globalConfigInFile = await loadConfig(fs.existsSync(globalConfigPath) ? globalConfigPath : undefined);
+
+  let result = defaultConfig;
+  result = mergeConfig(result, globalConfigInFile);
+  result = mergeConfig(result, configInFile);
+  result = mergeConfig(result, daemonOverrides);
+  result = mergeConfig(result, envOverrides);
+
+  if (result.browser.isolated === undefined)
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
+
+  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
+    // No custom value provided, use the daemon data dir.
+    const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
+    const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
+    result.browser.userDataDir = userDataDir;
+  }
+
+  if (result.browser.launchOptions.headless === undefined)
+    result.browser.launchOptions.headless = true;
+
+  const browser = await validateBrowserConfig(result.browser);
+  return { ...result, browser, configFile, skillMode: true };
+}
+
+async function validateBrowserConfig(browser: MergedConfig['browser']): Promise<FullConfig['browser']> {
+  let browserName = browser.browserName;
+  if (!browserName) {
+    browserName = 'chromium';
+    // Assign channel only if the browserName is not provided, otherwise assume full control to the user.
+    if (browser.launchOptions.channel === undefined)
+      browser.launchOptions.channel = 'chrome';
+  }
+
+  if (browser.browserName === 'chromium' && browser.launchOptions.chromiumSandbox === undefined) {
+    if (process.platform === 'linux')
+      browser.launchOptions.chromiumSandbox = browser.launchOptions.channel !== 'chromium' && browser.launchOptions.channel !== 'chrome-for-testing';
+    else
+      browser.launchOptions.chromiumSandbox = true;
+  }
+
+  if (browser.isolated && browser.userDataDir)
     throw new Error('Browser userDataDir is not supported in isolated mode.');
 
-  if (config.browser.initScript) {
-    for (const script of config.browser.initScript) {
+  if (browser.initScript) {
+    for (const script of browser.initScript) {
       if (!await fileExistsAsync(script))
         throw new Error(`Init script file does not exist: ${script}`);
     }
   }
-  if (config.browser.initPage) {
-    for (const page of config.browser.initPage) {
+  if (browser.initPage) {
+    for (const page of browser.initPage) {
       if (!await fileExistsAsync(page))
         throw new Error(`Init page file does not exist: ${page}`);
     }
   }
+  if (browser.contextOptions.viewport === undefined) {
+    if (browser.launchOptions.headless)
+      browser.contextOptions.viewport = { width: 1280, height: 720 };
+    else
+      browser.contextOptions.viewport = null;
+  }
+  return { ...browser, browserName };
 }
 
-export function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
+function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: string } {
   let browserName: 'chromium' | 'firefox' | 'webkit' | undefined;
   let channel: string | undefined;
   switch (cliOptions.browser) {
@@ -334,11 +400,11 @@ function pickDefined<T extends object>(obj: T | undefined): Partial<T> {
   ) as Partial<T>;
 }
 
-export function mergeConfig(base: FullConfig, overrides: Config): FullConfig {
-  const browser: FullConfig['browser'] = {
+function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
+  const browser: Config['browser'] = {
     ...pickDefined(base.browser),
     ...pickDefined(overrides.browser),
-    browserName: overrides.browser?.browserName ?? base.browser?.browserName ?? 'chromium',
+    browserName: overrides.browser?.browserName ?? base.browser?.browserName,
     isolated: overrides.browser?.isolated ?? base.browser?.isolated,
     launchOptions: {
       ...pickDefined(base.browser?.launchOptions),
