@@ -15,6 +15,7 @@ Inspect `.zip` trace files produced by Playwright tests without opening a browse
 3. Use `trace action <action-id>` to drill into a specific action — see parameters, logs, source location, and available snapshots.
 4. Use `trace requests`, `trace console`, or `trace errors` for cross-cutting views.
 5. Use `trace snapshot <action-id>` to get the DOM snapshot, or run a browser command against it.
+6. Use `trace close` to remove the extracted trace data when done.
 
 All commands after `open` operate on the currently opened trace — no need to pass the trace file again. Opening a new trace replaces the previous one.
 
@@ -25,6 +26,13 @@ All commands after `open` operate on the currently opened trace — no need to p
 ```bash
 # Extract trace and show metadata: browser, viewport, duration, action/error counts
 npx playwright trace open <trace.zip>
+```
+
+### Close a trace
+
+```bash
+# Remove extracted trace data
+npx playwright trace close
 ```
 
 ### Actions

@@ -30,6 +30,14 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
       });
 
   traceCommand
+      .command('close')
+      .description('remove extracted trace data')
+      .action(async () => {
+        const { closeTrace } = await import('./traceUtils');
+        closeTrace().catch(logErrorAndExit);
+      });
+
+  traceCommand
       .command('actions')
       .description('list actions in the trace')
       .option('--grep <pattern>', 'filter actions by title pattern')
