@@ -72,7 +72,7 @@ texts = page.get_by_role("link").all_inner_texts()
 ```
 
 ```java
-String[] texts = page.getByRole(AriaRole.LINK).allInnerTexts();
+List<String> texts = page.getByRole(AriaRole.LINK).allInnerTexts();
 ```
 
 ```csharp
@@ -104,7 +104,7 @@ texts = page.get_by_role("link").all_text_contents()
 ```
 
 ```java
-String[] texts = page.getByRole(AriaRole.LINK).allTextContents();
+List<String> texts = page.getByRole(AriaRole.LINK).allTextContents();
 ```
 
 ```csharp
