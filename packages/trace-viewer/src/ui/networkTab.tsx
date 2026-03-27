@@ -195,8 +195,9 @@ const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell 
   if (column === 'method')
     return { body: entry.method };
   if (column === 'status') {
+    const statusBody = entry.status.code > 0 ? entry.status.code : (entry.status.code === -1 ? 'Canceled' : '');
     return {
-      body: entry.status.code > 0 ? entry.status.code : '',
+      body: statusBody,
       title: entry.status.text
     };
   }
