@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-import { createGuid } from 'playwright-core/lib/utils';
-import * as tools from 'playwright-core/lib/tools/exports';
+import crypto from 'crypto';
+import { stripAnsiEscapes } from 'playwright-core/lib/utils';
 
-import { stripAnsiEscapes } from '../../util';
-
+import type * as tools from 'playwright-core/lib/tools/exports';
 import type * as playwright from '../../../index';
 import type { TestInfoImpl } from '../../worker/testInfo';
 import type { Browser } from '../../../../playwright-core/src/client/browser';
@@ -39,15 +38,18 @@ export type BrowserMCPResponse = {
 export function createCustomMessageHandler(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   let backend: tools.BrowserBackend | undefined;
   const config: tools.ContextConfig = { capabilities: ['testing'] };
-  const toolList = tools.filteredTools(config);
+  let tools: typeof import('playwright-core/lib/tools/exports') | undefined;
 
   return async (data: BrowserMCPRequest): Promise<BrowserMCPResponse> => {
+    if (!tools)
+      tools = await import('playwright-core/lib/tools/exports');
+    const toolList = tools.filteredTools(config);
     if (data.initialize) {
       if (backend)
         throw new Error('MCP backend is already initialized');
       backend = new tools.BrowserBackend(config, context, toolList);
       await backend.initialize(data.initialize.clientInfo);
-      const pausedMessage = await generatePausedMessage(testInfo, context);
+      const pausedMessage = await generatePausedMessage(tools, testInfo, context);
       return { initialize: { pausedMessage } };
     }
 
@@ -67,7 +69,7 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
   };
 }
 
-async function generatePausedMessage(testInfo: TestInfoImpl, context: playwright.BrowserContext) {
+async function generatePausedMessage(tools: typeof import('playwright-core/lib/tools/exports'), testInfo: TestInfoImpl, context: playwright.BrowserContext) {
   const lines: string[] = [];
 
   if (testInfo.errors.length) {
@@ -114,7 +116,7 @@ export async function runDaemonForContext(testInfo: TestInfoImpl, context: playw
   if (testInfo._configInternal.configCLIOverrides.debug !== 'cli')
     return false;
 
-  const sessionName = `tw-${createGuid().slice(0, 6)}`;
+  const sessionName = `tw-${crypto.randomBytes(3).toString('hex')}`;
   await (context.browser() as Browser)!._register(sessionName, { workspaceDir: testInfo.project.testDir });
 
   /* eslint-disable-next-line no-console */

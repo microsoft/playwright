@@ -16,6 +16,7 @@
 
 /* eslint-disable no-console */
 
+import 'playwright-core/lib/bootstrap';
 import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
 
 import { program } from 'playwright-core/lib/cli/program';

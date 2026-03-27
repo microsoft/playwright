@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-import { z as zod } from 'playwright-core/lib/zodBundle';
+import { validate } from 'playwright-core/lib/utils';
 
-import type { TestAnnotation, TestDetailsAnnotation } from '../../types/test';
+import type { TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { ZodError } from 'zod';
+import type { JsonSchema } from 'playwright-core/lib/utils';
 
-const testAnnotationSchema = zod.object({
-  type: zod.string(),
-  description: zod.string().optional(),
-});
+const testAnnotationSchema: JsonSchema = {
+  type: 'object',
+  properties: {
+    type: { type: 'string' },
+    description: { type: 'string' },
+  },
+  required: ['type'],
+};
 
-const testDetailsSchema = zod.object({
-  tag: zod.union([
-    zod.string().optional(),
-    zod.array(zod.string())
-  ]).transform(val => Array.isArray(val) ? val : val !== undefined ? [val] : []).refine(val => val.every(v => v.startsWith('@')), {
-    message: "Tag must start with '@'"
-  }),
-  annotation: zod.union([
-    testAnnotationSchema,
-    zod.array(testAnnotationSchema).optional()
-  ]).transform(val => Array.isArray(val) ? val : val !== undefined ? [val] : []),
-});
-
-export function validateTestAnnotation(annotation: unknown): TestAnnotation {
-  try {
-    return testAnnotationSchema.parse(annotation);
-  } catch (error) {
-    throwZodError(error);
-  }
-}
+const testDetailsSchema: JsonSchema = {
+  type: 'object',
+  properties: {
+    tag: {
+      oneOf: [
+        { type: 'string', pattern: '^@', patternError: "Tag must start with '@'" },
+        { type: 'array', items: { type: 'string', pattern: '^@', patternError: "Tag must start with '@'" } },
+      ]
+    },
+    annotation: {
+      oneOf: [
+        testAnnotationSchema,
+        { type: 'array', items: testAnnotationSchema },
+      ]
+    },
+  },
+};
 
 type ValidTestDetails = {
   tags: string[];
@@ -53,18 +54,20 @@ type ValidTestDetails = {
 };
 
 export function validateTestDetails(details: unknown, location: Location): ValidTestDetails {
-  try {
-    const parsedDetails = testDetailsSchema.parse(details);
-    return {
-      annotations: parsedDetails.annotation.map(a => ({ ...a, location })),
-      tags: parsedDetails.tag,
-      location,
-    };
-  } catch (error) {
-    throwZodError(error);
-  }
-}
+  const errors = validate(details, testDetailsSchema, 'details');
+  if (errors.length)
+    throw new Error(errors.join('\n'));
 
-function throwZodError(error: any): never {
-  throw new Error((error as ZodError).issues.map(i => i.message).join('\n'));
+  const obj = details as Record<string, unknown>;
+  const tag = obj.tag;
+  const tags: string[] = tag === undefined ? [] : typeof tag === 'string' ? [tag] : tag as string[];
+
+  const annotation = obj.annotation;
+  const annotations: TestDetailsAnnotation[] = annotation === undefined ? [] : Array.isArray(annotation) ? annotation : [annotation as TestDetailsAnnotation];
+
+  return {
+    annotations: annotations.map(a => ({ ...a, location })),
+    tags,
+    location,
+  };
 }

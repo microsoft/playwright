@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import { yauzl } from '../../zipBundle';
-
 import type { Entry, UnzipFile } from '../../zipBundle';
 
 export class ZipFile {
@@ -30,6 +28,7 @@ export class ZipFile {
   }
 
   private async _open() {
+    const { yauzl } = await import('../../zipBundle');
     await new Promise<UnzipFile>((fulfill, reject) => {
       yauzl.open(this._fileName, { autoClose: false }, (e, z) => {
         if (e) {

@@ -22,7 +22,6 @@ import { HttpServer, MultiMap, assert, calculateSha1, getPackageManagerExecComma
 import { colors } from 'playwright-core/lib/utils';
 import { open } from 'playwright-core/lib/utilsBundle';
 import { mime } from 'playwright-core/lib/utilsBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
@@ -33,6 +32,7 @@ import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAn
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { TransformCallback } from 'stream';
+import type { ZipFile } from 'playwright-core/lib/zipBundle';
 
 type TestEntry = {
   testCase: TestCase;
@@ -145,7 +145,8 @@ class HtmlReporter implements ReporterV2 {
     const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
     const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
 
-    const builder = new HtmlBuilder(this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
+    const { yazl } = await import('playwright-core/lib/zipBundle');
+    const builder = new HtmlBuilder(yazl, this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,
       noCopyPrompt,
@@ -253,13 +254,14 @@ class HtmlBuilder {
   private _config: api.FullConfig;
   private _reportFolder: string;
   private _stepsInFile = new MultiMap<string, TestStep>();
-  private _dataZipFile = new yazl.ZipFile();
+  private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
   private _options: HTMLReportOptions;
   private _doNotInlineAssets: boolean;
 
-  constructor(config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('playwright-core/lib/zipBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+    this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;
     this._options = options;

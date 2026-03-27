@@ -21,7 +21,6 @@ import { Artifact } from '../artifact';
 import { HarTracer } from './harTracer';
 import { createGuid } from '../utils/crypto';
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { yazl } from '../../zipBundle';
 
 import type { BrowserContext } from '../browserContext';
 import type { HarTracerDelegate } from './harTracer';
@@ -52,6 +51,7 @@ export class HarRecorder implements HarTracerDelegate {
       waitForContentOnStop: true,
       urlFilter: urlFilterRe ?? options.urlGlob,
     });
+    const { yazl } = require('../../zipBundle');
     this._zipFile = content === 'attach' || expectsZip ? new yazl.ZipFile() : null;
     this._tracer.start({ omitScripts: false });
   }
