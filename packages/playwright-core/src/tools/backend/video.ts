@@ -15,10 +15,10 @@
  */
 
 import path from 'path';
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTool } from './tool';
 
-const startVideo = defineTool({
+const videoStart = defineTool({
   capability: 'devtools',
 
   schema: {
@@ -40,7 +40,7 @@ const startVideo = defineTool({
   },
 });
 
-const stopVideo = defineTool({
+const videoStop = defineTool({
   capability: 'devtools',
 
   schema: {
@@ -73,7 +73,33 @@ const stopVideo = defineTool({
   },
 });
 
+const videoChapter = defineTool({
+  capability: 'devtools',
+
+  schema: {
+    name: 'browser_video_chapter',
+    title: 'Video chapter',
+    description: 'Add a chapter marker to the video recording. Shows a full-screen chapter card with blurred backdrop.',
+    inputSchema: z.object({
+      title: z.string().describe('Chapter title'),
+      description: z.string().optional().describe('Chapter description'),
+      duration: z.number().optional().describe('Duration in milliseconds to show the chapter card'),
+    }),
+    type: 'readOnly',
+  },
+
+  handle: async (context, params, response) => {
+    const tab = context.currentTabOrDie();
+    await tab.page.overlay.chapter(params.title, {
+      description: params.description,
+      duration: params.duration,
+    });
+    response.addTextResult(`Chapter '${params.title}' added.`);
+  },
+});
+
 export default [
-  startVideo,
-  stopVideo,
+  videoStart,
+  videoStop,
+  videoChapter,
 ];

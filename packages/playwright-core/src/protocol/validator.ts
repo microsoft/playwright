@@ -611,7 +611,7 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -723,7 +723,7 @@ scheme.BrowserNewContextParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -795,7 +795,7 @@ scheme.BrowserNewContextForReuseParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -914,7 +914,7 @@ scheme.BrowserContextInitializer = tObject({
     contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
     baseURL: tOptional(tString),
     recordVideo: tOptional(tObject({
-      dir: tString,
+      dir: tOptional(tString),
       size: tOptional(tObject({
         width: tInt,
         height: tInt,
@@ -1574,7 +1574,6 @@ scheme.PageStartScreencastParams = tObject({
     width: tInt,
     height: tInt,
   })),
-  annotate: tOptional(tType('AnnotateOptions')),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));
@@ -2525,17 +2524,18 @@ scheme.BindingCallResolveParams = tObject({
 scheme.BindingCallResolveResult = tOptional(tObject({}));
 scheme.DebuggerInitializer = tOptional(tObject({}));
 scheme.DebuggerPausedStateChangedEvent = tObject({
-  pausedDetails: tArray(tObject({
+  pausedDetails: tOptional(tObject({
     location: tObject({
       file: tString,
       line: tOptional(tInt),
       column: tOptional(tInt),
     }),
     title: tString,
+    stack: tOptional(tString),
   })),
 });
-scheme.DebuggerPauseParams = tOptional(tObject({}));
-scheme.DebuggerPauseResult = tOptional(tObject({}));
+scheme.DebuggerRequestPauseParams = tOptional(tObject({}));
+scheme.DebuggerRequestPauseResult = tOptional(tObject({}));
 scheme.DebuggerResumeParams = tOptional(tObject({}));
 scheme.DebuggerResumeResult = tOptional(tObject({}));
 scheme.DebuggerNextParams = tOptional(tObject({}));
@@ -2679,7 +2679,7 @@ scheme.ElectronLaunchParams = tObject({
   locale: tOptional(tString),
   offline: tOptional(tBoolean),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,
@@ -2689,6 +2689,7 @@ scheme.ElectronLaunchParams = tObject({
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
   tracesDir: tOptional(tString),
+  artifactsDir: tOptional(tString),
   selectorEngines: tOptional(tArray(tType('SelectorEngine'))),
   testIdAttributeName: tOptional(tString),
 });
@@ -2915,7 +2916,7 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
   contrast: tOptional(tEnum(['no-preference', 'more', 'no-override'])),
   baseURL: tOptional(tString),
   recordVideo: tOptional(tObject({
-    dir: tString,
+    dir: tOptional(tString),
     size: tOptional(tObject({
       width: tInt,
       height: tInt,

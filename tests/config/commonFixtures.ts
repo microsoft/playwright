@@ -19,7 +19,7 @@ import type { ChildProcess } from 'child_process';
 import { execSync, spawn } from 'child_process';
 import net from 'net';
 import fs from 'fs';
-import { stripAnsi } from './utils';
+import { inheritAndCleanEnv, stripAnsi } from './utils';
 
 type TestChildParams = {
   command: string[],
@@ -111,10 +111,7 @@ export class TestChildProcess {
     const command = params.shell ? params.command.join(' ') : params.command[0];
     const args = params.shell ? [] : params.command.slice(1);
     this.process = spawn(command, args, {
-      env: {
-        ...process.env,
-        ...params.env,
-      },
+      env: inheritAndCleanEnv(params.env),
       cwd: params.cwd,
       shell: params.shell,
       // On non-windows platforms, `detached: true` makes child process a leader of a new

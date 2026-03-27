@@ -18,7 +18,7 @@ import { scaleImageToSize } from '../../utils/isomorphic/imageUtils';
 import { jpegjs, PNG } from '../../utilsBundle';
 import { formatObject } from '../../utils/isomorphic/stringUtils';
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTabTool } from './tool';
 
 import type * as playwright from '../../..';

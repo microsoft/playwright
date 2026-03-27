@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -78,18 +78,19 @@ export class Screencast implements InstrumentationListener {
     if (!recordVideo)
       return;
     // validateBrowserContextOptions ensures correct video size.
-    const videoOptions = this._launchVideoRecorder(recordVideo.dir, recordVideo.size!);
+    const dir = recordVideo.dir ?? this._page.browserContext._browser.options.artifactsDir;
+    const videoOptions = this._launchVideoRecorder(dir, recordVideo.size!, this._page.guid);
     if (recordVideo.annotate)
       videoOptions.annotate = recordVideo.annotate;
     return videoOptions;
   }
 
-  private _launchVideoRecorder(dir: string, size: { width: number, height: number }): types.VideoOptions {
+  private _launchVideoRecorder(dir: string, size: { width: number, height: number }, videoId?: string): types.VideoOptions {
     assert(!this._videoId);
     // Do this first, it likes to throw.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
 
-    this._videoId = createGuid();
+    this._videoId = videoId || createGuid();
     const outputFile = path.join(dir, this._videoId + '.webm');
     const videoOptions = {
       ...size,

@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -321,7 +321,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       },
       runAfterCreateBrowserContext: async (context: BrowserContextImpl) => {
         context.debugger.on('pausedstatechanged', () => {
-          const paused = context.debugger.pausedDetails().length > 0;
+          const paused = !!context.debugger.pausedDetails();
           if (pausedContexts.has(context) && !paused) {
             pausedContexts.delete(context);
             (testInfo as TestInfoImpl)._setIgnoreTimeouts(false);

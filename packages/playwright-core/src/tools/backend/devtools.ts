@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { defineTool } from './tool';
 
 const resume = defineTool({
@@ -35,7 +35,7 @@ const resume = defineTool({
     const browserContext = await context.ensureBrowserContext();
     const pausedPromise = new Promise<void>(resolve => {
       const listener = () => {
-        if (browserContext.debugger.pausedDetails().length > 0) {
+        if (browserContext.debugger.pausedDetails()) {
           browserContext.debugger.off('pausedstatechanged', listener);
           resolve();
         }

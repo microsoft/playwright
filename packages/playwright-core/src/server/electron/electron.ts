@@ -164,7 +164,14 @@ export class Electron extends SdkObject {
         electronArguments.unshift('--no-sandbox');
     }
 
-    const artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+    let artifactsDir: string;
+    const tempDirectories: string[] = [];
+    if (options.artifactsDir) {
+      artifactsDir = options.artifactsDir;
+    } else {
+      artifactsDir = await progress.race(fs.promises.mkdtemp(ARTIFACTS_FOLDER));
+      tempDirectories.push(artifactsDir);
+    }
     const browserLogsCollector = new RecentLogsCollector();
     const env = options.env ? envArrayToObject(options.env) : process.env;
 
@@ -216,7 +223,7 @@ export class Electron extends SdkObject {
       shell,
       stdio: 'pipe',
       cwd: options.cwd,
-      tempDirectories: [artifactsDir],
+      tempDirectories,
       attemptToGracefullyClose: () => app!.close(),
       handleSIGINT: true,
       handleSIGTERM: true,

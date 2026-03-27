@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Microsoft Corporation.
  *
- * Licensed under the Apache License, Version 2.0 (the 'License");
+ * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -22,7 +22,6 @@ import { calculateSha1 } from './utils/crypto';
 import { HarBackend } from './harBackend';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 import { ZipFile } from './utils/zipFile';
-import { yauzl, yazl } from '../zipBundle';
 import { serializeClientSideCallMetadata } from '../utils/isomorphic/trace/traceUtils';
 import { assert } from '../utils/isomorphic/assert';
 import { removeFolders } from './utils/fileUtils';
@@ -43,6 +42,7 @@ export type StackSession = {
 
 export async function zip(progress: Progress, stackSessions: Map<string, StackSession>, params: channels.LocalUtilsZipParams): Promise<void> {
   const promise = new ManualPromise<void>();
+  const { yauzl, yazl } = await import('../zipBundle');
   const zipFile = new yazl.ZipFile();
   (zipFile as any as EventEmitter).on('error', error => promise.reject(error));
 

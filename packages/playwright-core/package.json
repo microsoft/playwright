@@ -22,11 +22,13 @@
       "default": "./index.js"
     },
     "./package.json": "./package.json",
+    "./lib/bootstrap": "./lib/bootstrap.js",
     "./lib/outofprocess": "./lib/outofprocess.js",
     "./lib/cli/program": "./lib/cli/program.js",
     "./lib/tools/cli-client/program": "./lib/tools/cli-client/program.js",
     "./lib/tools/mcp/program": "./lib/tools/mcp/program.js",
     "./lib/mcpBundle": "./lib/mcpBundle.js",
+    "./lib/zodBundle": "./lib/zodBundle.js",
     "./lib/tools/exports": "./lib/tools/exports.js",
     "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
     "./lib/server": "./lib/server/index.js",

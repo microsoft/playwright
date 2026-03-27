@@ -477,7 +477,7 @@ export class FFPage implements PageDelegate {
   }
 
   async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
-    await this._session.send('Page.startScreencast', options);
+    await this._session.send('Page.startScreencast', { width: options.width, height: options.height, quality: options.quality });
   }
 
   async stopScreencast(): Promise<void> {

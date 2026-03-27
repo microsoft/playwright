@@ -15,10 +15,12 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
+import { calculateSha1 } from './crypto';
+
 import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { yazl } from '../../zipBundle';
 
 import type { EventEmitter } from 'events';
 
@@ -58,6 +60,17 @@ export function sanitizeForFilePath(s: string) {
 
 export function toPosixPath(aPath: string): string {
   return aPath.split(path.sep).join(path.posix.sep);
+}
+
+export function makeSocketPath(domain: string, name: string): string {
+  const userNameHash = calculateSha1(process.env.USERNAME || process.env.USER || 'default').slice(0, 8);
+  if (process.platform === 'win32')
+    return `\\\\.\\pipe\\pw-${userNameHash}-${domain}-${name}`;
+  const baseDir = process.env.PLAYWRIGHT_SOCKETS_DIR || path.join(os.tmpdir(), `pw-${userNameHash}`);
+  const dir = path.join(baseDir, domain);
+  const result = path.join(dir, `${name}.sock`);
+  fs.mkdirSync(dir, { recursive: true });
+  return result;
 }
 
 type NameValue = { name: string, value: string };
@@ -187,6 +200,7 @@ export class SerializedFS {
         return;
       }
       case 'zip': {
+        const { yazl } = await import('playwright-core/lib/zipBundle');
         const zipFile = new yazl.ZipFile();
         const result = new ManualPromise<void>();
         (zipFile as any as EventEmitter).on('error', error => result.reject(error));

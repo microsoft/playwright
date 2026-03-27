@@ -19,7 +19,13 @@ import { test, expect } from './cli-fixtures';
 test('unknown option', async ({ cli, server }) => {
   const { error, exitCode } = await cli('open', '--some-option', 'value', 'about:blank');
   expect(exitCode).toBe(1);
-  expect(error).toContain(`error: unknown '--some-option' option`);
+  expect(error).toContain(`Unknown option: --some-option`);
+});
+
+test('unknown option typo', async ({ cli }) => {
+  const { error, exitCode } = await cli('install', '--skill');
+  expect(exitCode).toBe(1);
+  expect(error).toContain(`Unknown option: --skill`);
 });
 
 test('too many arguments', async ({ cli, server }) => {

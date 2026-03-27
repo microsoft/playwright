@@ -277,7 +277,7 @@ export const methodMetainfo = new Map<string, MethodMetainfo>([
   ['Response.sizes', { internal: true, }],
   ['BindingCall.reject', { internal: true, }],
   ['BindingCall.resolve', { internal: true, }],
-  ['Debugger.pause', { title: 'Pause on next call', group: 'configuration', }],
+  ['Debugger.requestPause', { title: 'Pause on next call', group: 'configuration', }],
   ['Debugger.resume', { title: 'Resume', group: 'configuration', }],
   ['Debugger.next', { title: 'Step to next call', group: 'configuration', }],
   ['Debugger.runTo', { title: 'Run to location', group: 'configuration', }],

@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+import path from 'path';
 import { test, expect } from './cli-fixtures';
 
 test('user-data-dir', async ({ cli, server }, testInfo) => {
@@ -100,4 +101,46 @@ test('isolated', async ({ cli, server }, testInfo) => {
   await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify(config, null, 2));
   await cli('open', server.PREFIX);
   expect(fs.existsSync(testInfo.outputPath('daemon', 'default-user-data'))).toBe(false);
+});
+
+test('global config', async ({ cli, server }, testInfo) => {
+  const fakeHome = testInfo.outputPath('home');
+  await fs.promises.mkdir(path.join(fakeHome, '.playwright'), { recursive: true });
+  await fs.promises.writeFile(path.join(fakeHome, '.playwright', 'cli.config.json'), JSON.stringify({
+    browser: {
+      contextOptions: {
+        viewport: { width: 800, height: 600 },
+      },
+    },
+  }, null, 2));
+
+  const env = { PWTEST_CLI_GLOBAL_CONFIG: fakeHome };
+  await cli('open', server.PREFIX, { env });
+  const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
+  expect(output).toContain('800x600');
+});
+
+test('project config overrides global config', async ({ cli, server }, testInfo) => {
+  const fakeHome = testInfo.outputPath('home');
+  await fs.promises.mkdir(path.join(fakeHome, '.playwright'), { recursive: true });
+  await fs.promises.writeFile(path.join(fakeHome, '.playwright', 'cli.config.json'), JSON.stringify({
+    browser: {
+      contextOptions: {
+        viewport: { width: 800, height: 600 },
+      },
+    },
+  }, null, 2));
+
+  await fs.promises.writeFile(testInfo.outputPath('.playwright', 'cli.config.json'), JSON.stringify({
+    browser: {
+      contextOptions: {
+        viewport: { width: 1024, height: 768 },
+      },
+    },
+  }, null, 2));
+
+  const env = { PWTEST_CLI_GLOBAL_CONFIG: fakeHome };
+  await cli('open', server.PREFIX, { env });
+  const { output } = await cli('eval', 'window.innerWidth + "x" + window.innerHeight', { env });
+  expect(output).toContain('1024x768');
 });

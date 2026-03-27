@@ -16,13 +16,10 @@
 
 import fs from 'fs';
 import net from 'net';
-import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from '../../utils';
-import { debug } from '../../utilsBundle';
-
 import { decorateServer } from '../../server/utils/network';
+import { makeSocketPath } from '../../server/utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
 
 import { BrowserBackend } from '../backend/browserBackend';
@@ -38,8 +35,6 @@ import type { SessionConfig, ClientInfo } from '../cli-client/registry';
 import type { CallToolRequest, CallToolResult } from '../backend/tool';
 import type { ContextConfig } from '../backend/context';
 import type { BrowserInfo } from '../../serverRegistry';
-
-const daemonDebug = debug('pw:daemon');
 
 async function socketExists(socketPath: string): Promise<boolean> {
   try {
@@ -67,11 +62,9 @@ export async function startCliDaemonServer(
 
   // Clean up existing socket file on Unix
   if (process.platform !== 'win32' && await socketExists(socketPath)) {
-    daemonDebug(`Socket already exists, removing: ${socketPath}`);
     try {
       await fs.promises.unlink(socketPath);
     } catch (error) {
-      daemonDebug(`Failed to remove existing socket: ${error}`);
       throw error;
     }
   }
@@ -79,23 +72,15 @@ export async function startCliDaemonServer(
   const backend = new BrowserBackend(contextConfig, browserContext, browserTools);
   await backend.initialize({ cwd: process.cwd() });
 
-  await fs.promises.mkdir(path.dirname(socketPath), { recursive: true });
-
   if (browserContext.isClosed())
     throw new Error('Browser context was closed before the daemon could start');
 
   const server = net.createServer(socket => {
-    daemonDebug('new client connection');
     const connection = new SocketConnection(socket);
-    connection.onclose = () => {
-      daemonDebug('client disconnected');
-    };
     connection.onmessage = async message => {
       const { id, method, params } = message;
       try {
-        daemonDebug('received command', method);
         if (method === 'stop') {
-          daemonDebug('stop command received, shutting down');
           await deleteSessionFile(clientInfo, sessionConfig);
           const sendAck = async () => connection.send({ id, result: 'ok' }).catch(() => {});
           if (options?.exitOnClose)
@@ -112,7 +97,6 @@ export async function startCliDaemonServer(
           throw new Error(`Unknown method: ${method}`);
         }
       } catch (e) {
-        daemonDebug('command failed', e);
         const error = process.env.PWDEBUGIMPL ? (e as Error).stack || (e as Error).message : (e as Error).message;
         connection.send({ id, error }).catch(() => {});
       }
@@ -127,10 +111,7 @@ export async function startCliDaemonServer(
   }));
 
   await new Promise<void>((resolve, reject) => {
-    server.on('error', (error: NodeJS.ErrnoException) => {
-      daemonDebug(`server error: ${error.message}`);
-      reject(error);
-    });
+    server.on('error', reject);
     server.listen(socketPath, () => resolve());
   });
 
@@ -166,12 +147,7 @@ function parseCliCommand(args: Record<string, string> & { _: string[] }): { tool
 }
 
 function daemonSocketPath(clientInfo: ClientInfo, sessionName: string): string {
-  const userNameHash = calculateSha1(process.env.USERNAME || 'default').slice(0, 8);
-  const socketName = `${sessionName}-${userNameHash}.sock`;
-  if (process.platform === 'win32')
-    return `\\\\.\\pipe\\${clientInfo.workspaceDirHash}-${socketName}`;
-  const socketsDir = process.env.PLAYWRIGHT_DAEMON_SOCKETS_DIR || path.join(os.tmpdir(), 'playwright-cli');
-  return path.join(socketsDir, clientInfo.workspaceDirHash, socketName);
+  return makeSocketPath('cli', `${clientInfo.workspaceDirHash}-${sessionName}`);
 }
 
 function createSessionConfig(clientInfo: ClientInfo, sessionName: string, browserInfo: BrowserInfo, options: {

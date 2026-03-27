@@ -120,6 +120,7 @@ for (const scenario of ['launch', 'connect'] as const) {
           <title>Page Title</title>
           <script>
             navigator.serviceWorker.register('sw.js');
+            window.activationPromise = new Promise(resolve => navigator.serviceWorker.oncontrollerchange = resolve);
           </script>
         `);
       });
@@ -142,6 +143,7 @@ for (const scenario of ['launch', 'connect'] as const) {
       let page = await context.newPage();
       await page.goto(server.PREFIX + '/page.html');
       await expect(page).toHaveTitle('Page Title');
+      await page.evaluate(() => window['activationPromise']);
 
       context = await reusedContext();
       page = context.pages()[0];
@@ -371,7 +373,7 @@ for (const scenario of ['launch', 'connect'] as const) {
           });
           server.onMessage(message => ws.send(message));
         });
-        await page.goto('about:blank');
+        await page.goto(server.EMPTY_PAGE);
         await page.evaluate(host => {
           window.log = [];
           (window as any).ws1 = new WebSocket('ws://' + host + '/ws1');

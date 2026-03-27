@@ -206,12 +206,16 @@ Below is the HTML markup and the respective ARIA snapshot:
     - link "About"
 ```
 
+An AI-optimized snapshot, controlled by [`option: Locator.ariaSnapshot.mode`], is different from a default snapshot:
+1. Includes element references `[ref=e2]`.
+2. Does not wait for an element matching the locator, and throws when no elements match.
+3. Includes snapshots of `<iframe>`s inside the target.
+
 ### option: Locator.ariaSnapshot.mode
 * since: v1.59
 - `mode` <[AriaSnapshotMode]<"ai"|"default">>
 
-When set to `"ai"`, returns a snapshot optimized for AI consumption with element references.
-Defaults to `"default"`.
+When set to `"ai"`, returns a snapshot optimized for AI consumption. Defaults to `"default"`. See details for more information.
 
 ### option: Locator.ariaSnapshot.timeout = %%-input-timeout-%%
 * since: v1.49

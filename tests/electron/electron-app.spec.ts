@@ -339,3 +339,29 @@ test('should report downloads', async ({ launchElectronApp, electronMajorVersion
   expect(fs.readFileSync(path).toString()).toBe('Hello world');
   await app.close();
 });
+
+test('should save downloads to artifactsDir', async ({ launchElectronApp, electronMajorVersion, server }, testInfo) => {
+  server.setRoute('/download', (req, res) => {
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', 'attachment');
+    res.end(`Hello world`);
+  });
+
+  const artifactsDir = testInfo.outputPath('artifacts');
+  const app = await launchElectronApp('electron-window-app.js', [], {
+    acceptDownloads: true,
+    artifactsDir,
+  });
+  const window = await app.firstWindow();
+  await window.setContent(`<a href="${server.PREFIX}/download">download</a>`);
+  const [download] = await Promise.all([
+    window.waitForEvent('download'),
+    window.click('a')
+  ]);
+  const downloadPath = await download.path();
+  expect(downloadPath.startsWith(artifactsDir)).toBeTruthy();
+  expect(fs.existsSync(downloadPath)).toBeTruthy();
+  await app.close();
+  // User-provided artifactsDir should not be cleaned up.
+  expect(fs.existsSync(artifactsDir)).toBeTruthy();
+});

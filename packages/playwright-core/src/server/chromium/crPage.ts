@@ -24,6 +24,7 @@ import * as frames from '../frames';
 import { helper } from '../helper';
 import * as network from '../network';
 import { Page, PageBinding, Worker } from '../page';
+import { calculateUserAgentEmulation } from '../browserContext';
 import { CRBrowserContext } from './crBrowser';
 import { CRCoverage } from './crCoverage';
 import { DragManager } from './crDragDrop';
@@ -989,10 +990,12 @@ class FrameSession {
 
   async _updateUserAgent(): Promise<void> {
     const options = this._crPage._browserContext._options;
+    const { navigatorPlatform, userAgentMetadata } = calculateUserAgentEmulation(options);
     await this._client.send('Emulation.setUserAgentOverride', {
       userAgent: options.userAgent || '',
       acceptLanguage: options.locale,
-      userAgentMetadata: calculateUserAgentMetadata(options),
+      platform: navigatorPlatform,
+      userAgentMetadata,
     });
   }
 
@@ -1158,49 +1161,4 @@ async function emulateTimezone(session: CRSession, timezoneId: string) {
       throw new Error(`Invalid timezone ID: ${timezoneId}`);
     throw exception;
   }
-}
-
-// Chromium reference: https://source.chromium.org/chromium/chromium/src/+/main:components/embedder_support/user_agent_utils.cc;l=434;drc=70a6711e08e9f9e0d8e4c48e9ba5cab62eb010c2
-function calculateUserAgentMetadata(options: types.BrowserContextOptions) {
-  const ua = options.userAgent;
-  if (!ua)
-    return undefined;
-  const metadata: Protocol.Emulation.UserAgentMetadata = {
-    mobile: !!options.isMobile,
-    model: '',
-    architecture: 'x86',
-    platform: 'Windows',
-    platformVersion: '',
-  };
-  const androidMatch = ua.match(/Android (\d+(\.\d+)?(\.\d+)?)/);
-  const iPhoneMatch = ua.match(/iPhone OS (\d+(_\d+)?)/);
-  const iPadMatch = ua.match(/iPad; CPU OS (\d+(_\d+)?)/);
-  const macOSMatch = ua.match(/Mac OS X (\d+(_\d+)?(_\d+)?)/);
-  const windowsMatch = ua.match(/Windows\D+(\d+(\.\d+)?(\.\d+)?)/);
-  if (androidMatch) {
-    metadata.platform = 'Android';
-    metadata.platformVersion = androidMatch[1];
-    metadata.architecture = 'arm';
-  } else if (iPhoneMatch) {
-    metadata.platform = 'iOS';
-    metadata.platformVersion = iPhoneMatch[1];
-    metadata.architecture = 'arm';
-  } else if (iPadMatch) {
-    metadata.platform = 'iOS';
-    metadata.platformVersion = iPadMatch[1];
-    metadata.architecture = 'arm';
-  } else if (macOSMatch) {
-    metadata.platform = 'macOS';
-    metadata.platformVersion = macOSMatch[1];
-    if (!ua.includes('Intel'))
-      metadata.architecture = 'arm';
-  } else if (windowsMatch) {
-    metadata.platform = 'Windows';
-    metadata.platformVersion = windowsMatch[1];
-  } else if (ua.toLowerCase().includes('linux')) {
-    metadata.platform = 'Linux';
-  }
-  if (ua.includes('ARM'))
-    metadata.architecture = 'arm';
-  return metadata;
 }

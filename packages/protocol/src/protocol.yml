@@ -607,7 +607,7 @@ ContextOptions:
     recordVideo:
       type: object?
       properties:
-        dir: string
+        dir: string?
         size:
           type: object?
           properties:
@@ -2146,7 +2146,6 @@ Page:
           properties:
             width: int
             height: int
-        annotate: AnnotateOptions?
 
     stopScreencast:
       title: Stop screencast
@@ -3902,7 +3901,7 @@ Debugger:
 
   commands:
 
-    pause:
+    requestPause:
       title: Pause on next call
       group: configuration
 
@@ -3930,17 +3929,16 @@ Debugger:
     pausedStateChanged:
       parameters:
         pausedDetails:
-          type: array
-          items:
-            type: object
-            properties:
-              location:
-                type: object
-                properties:
-                  file: string
-                  line: int?
-                  column: int?
-              title: string
+          type: object?
+          properties:
+            location:
+              type: object
+              properties:
+                file: string
+                line: int?
+                column: int?
+            title: string
+            stack: string?
 
 
 Dialog:
@@ -4176,7 +4174,7 @@ Electron:
         recordVideo:
           type: object?
           properties:
-            dir: string
+            dir: string?
             size:
               type: object?
               properties:
@@ -4186,6 +4184,7 @@ Electron:
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
+        artifactsDir: string?
         selectorEngines:
           type: array?
           items: SelectorEngine

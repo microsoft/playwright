@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { z } from '../../mcpBundle';
+import { z } from '../../zodBundle';
 import { declareCommand } from './command';
 
 import type { AnyCommandSchema } from './command';
@@ -813,6 +813,21 @@ const videoStop = declareCommand({
   toolParams: ({ filename }) => ({ filename }),
 });
 
+const videoChapter = declareCommand({
+  name: 'video-chapter',
+  description: 'Add a chapter marker to the video recording',
+  category: 'devtools',
+  args: z.object({
+    title: z.string().describe('Chapter title.'),
+  }),
+  options: z.object({
+    description: z.string().optional().describe('Chapter description.'),
+    duration: numberArg.optional().describe('Duration in milliseconds to show the chapter card.'),
+  }),
+  toolName: 'browser_video_chapter',
+  toolParams: ({ title, description, duration }) => ({ title, description, duration }),
+});
+
 const devtoolsShow = declareCommand({
   name: 'show',
   description: 'Show browser DevTools',
@@ -904,7 +919,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.boolean().optional().describe('Install skills for Claude / GitHub Copilot'),
+    skills: z.string().optional().describe('Install skills to ".claude" (default) or ".agents" dir'),
   }),
   toolName: '',
   toolParams: () => ({}),
@@ -1027,6 +1042,7 @@ const commandsArray: AnyCommandSchema[] = [
   tracingStop,
   videoStart,
   videoStop,
+  videoChapter,
   devtoolsShow,
   pauseAt,
   resume,

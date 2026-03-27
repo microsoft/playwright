@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
@@ -25,6 +26,7 @@ import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { ClientInfo, createClientInfo } from '../cli-client/registry';
 import { program } from '../../utilsBundle';
+import { registry as browserRegistry } from '../../server/registry/index';
 
 import type { FullConfig } from '../mcp/config';
 
@@ -34,10 +36,17 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
     .option('--persistent', 'use a persistent browser context')
     .option('--profile <path>', 'path to the user data dir')
-    .option('--config <path>', 'path to the config file')
+    .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
     .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
+    .option('--init-workspace', 'initialize workspace')
+    .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
 
     .action(async (sessionName: string, options: any) => {
+      if (options.initWorkspace) {
+        await initWorkspace(options.initSkills);
+        return;
+      }
+
       setupExitWatchdog();
       const clientInfo = createClientInfo();
       const mcpConfig = await resolveCLIConfig(clientInfo, sessionName, options);
@@ -69,6 +78,10 @@ function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');
 }
 
+function globalConfigFile(): string {
+  return path.join(process.env['PWTEST_CLI_GLOBAL_CONFIG'] ?? os.homedir(), '.playwright', 'cli.config.json');
+}
+
 export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: string, options: any): Promise<FullConfig> {
   const config = options.config ? path.resolve(options.config) : undefined;
   try {
@@ -90,6 +103,8 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   const envOverrides = configUtils.configFromEnv();
   const configFile = envOverrides.configFile ?? daemonOverrides.configFile;
   const configInFile = await configUtils.loadConfig(configFile);
+  const globalConfigPath = fs.existsSync(globalConfigFile()) ? globalConfigFile() : undefined;
+  const globalConfigInFile = await configUtils.loadConfig(globalConfigPath);
 
   let result = configUtils.mergeConfig(configUtils.defaultConfig, {
     browser: {
@@ -99,6 +114,7 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
     }
   });
 
+  result = configUtils.mergeConfig(result, globalConfigInFile);
   result = configUtils.mergeConfig(result, configInFile);
   result = configUtils.mergeConfig(result, daemonOverrides);
   result = configUtils.mergeConfig(result, envOverrides);
@@ -121,4 +137,71 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   await configUtils.validateConfig(result);
 
   return result;
+}
+
+async function initWorkspace(initSkills: string | undefined) {
+  const cwd = process.cwd();
+  const playwrightDir = path.join(cwd, '.playwright');
+  await fs.promises.mkdir(playwrightDir, { recursive: true });
+  console.log(`✅ Workspace initialized at \`${cwd}\`.`);
+
+  if (initSkills) {
+    const skillSourceDir = path.join(__dirname, '../cli-client/skill');
+    const target = initSkills === 'agents' ? 'agents' : 'claude';
+    const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
+    if (!fs.existsSync(skillSourceDir)) {
+      console.error('❌ Skills source directory not found:', skillSourceDir);
+      // eslint-disable-next-line no-restricted-properties
+      process.exit(1);
+    }
+    await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
+    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
+  }
+
+  await ensureConfiguredBrowserInstalled();
+}
+
+async function ensureConfiguredBrowserInstalled() {
+  if (fs.existsSync(defaultConfigFile()) || fs.existsSync(globalConfigFile())) {
+    // Config exists, ensure configured browser is installed
+    const clientInfo = createClientInfo();
+    const config = await resolveCLIConfig(clientInfo, 'default', {});
+    const browserName = config.browser.browserName;
+    const channel = config.browser.launchOptions.channel;
+    if (!channel || channel.startsWith('chromium')) {
+      const executable = browserRegistry.findExecutable(channel ?? browserName);
+      if (executable && !fs.existsSync(executable.executablePath()!))
+        await browserRegistry.install([executable]);
+    }
+  } else {
+    const channel = await findOrInstallDefaultBrowser();
+    if (channel !== 'chrome')
+      await createDefaultConfig(channel);
+  }
+}
+
+async function findOrInstallDefaultBrowser() {
+  const channels = ['chrome', 'msedge'];
+  for (const channel of channels) {
+    const executable = browserRegistry.findExecutable(channel);
+    if (!executable?.executablePath())
+      continue;
+    console.log(`✅ Found ${channel}, will use it as the default browser.`);
+    return channel;
+  }
+  const chromiumExecutable = browserRegistry.findExecutable('chromium');
+  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
+    await browserRegistry.install([chromiumExecutable]);
+  return 'chromium';
+}
+
+async function createDefaultConfig(channel: string) {
+  const config = {
+    browser: {
+      browserName: 'chromium',
+      launchOptions: { channel },
+    },
+  };
+  await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
+  console.log(`✅ Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
 }
