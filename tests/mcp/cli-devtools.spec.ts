@@ -151,3 +151,11 @@ test('video-start-stop', async ({ cli, server }) => {
   const { output: videoStopOutput } = await cli('video-stop', '--filename=video.webm');
   expect(videoStopOutput).toContain(`### Result\n- [Video](video.webm)\n- [Video](video-1.webm)`);
 });
+
+test('video-chapter', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  await cli('video-start');
+  const { output } = await cli('video-chapter', 'Introduction', '--description=Welcome to the demo', '--duration=100');
+  expect(output).toContain(`Chapter 'Introduction' added.`);
+  await cli('video-stop');
+});
