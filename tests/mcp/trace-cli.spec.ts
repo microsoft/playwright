@@ -170,6 +170,20 @@ test('trace screenshot saves image file', async ({ runTraceCli }, testInfo) => {
   }
 });
 
+test('trace close removes extracted trace', async ({ traceFile, runTraceCli }) => {
+  const { exitCode } = await runTraceCli(['close']);
+  expect(exitCode).toBe(0);
+
+  // Subsequent commands should fail because trace is closed.
+  const { stderr, exitCode: exitCode2 } = await runTraceCli(['actions']);
+  expect(exitCode2).toBe(1);
+  expect(stderr).toContain('No trace opened');
+
+  // Re-open for remaining tests.
+  const { exitCode: exitCode3 } = await runTraceCli(['open', traceFile]);
+  expect(exitCode3).toBe(0);
+});
+
 test('trace attachments lists attachments', async ({ runTraceCli }) => {
   const { stdout, exitCode } = await runTraceCli(['attachments']);
   expect(exitCode).toBe(0);

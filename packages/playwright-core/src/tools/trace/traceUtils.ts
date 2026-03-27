@@ -57,12 +57,16 @@ function ensureTraceOpen(): string {
   return traceDir;
 }
 
+export async function closeTrace() {
+  if (fs.existsSync(traceDir))
+    await fs.promises.rm(traceDir, { recursive: true });
+}
+
 export async function openTrace(traceFile: string) {
   const filePath = path.resolve(traceFile);
   if (!fs.existsSync(filePath))
     throw new Error(`Trace file not found: ${filePath}`);
-  if (fs.existsSync(traceDir))
-    await fs.promises.rm(traceDir, { recursive: true });
+  await closeTrace();
   await fs.promises.mkdir(traceDir, { recursive: true });
   await extractTrace(filePath, traceDir);
 }
