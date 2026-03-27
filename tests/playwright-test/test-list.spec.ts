@@ -226,3 +226,23 @@ test('--test-list with nested group entry should run only tests in that nested g
     'd-test2-p2',
   ]);
 });
+
+test('--test-list should not load files not in the list', async ({ runInlineTest }) => {
+  const result = await runInlineTest({
+    'playwright.config.ts': `
+      module.exports = { testDir: '.' };
+    `,
+    'test.list': `
+      compiles.test.ts
+    `,
+    'compiles.test.ts': `
+      import { test, expect } from '@playwright/test';
+      test('test', async () => {});
+    `,
+    'fails.test.ts': `
+      await await;
+    `,
+  }, { 'test-list': 'test.list' });
+  expect(result.exitCode).toBe(0);
+  expect(result.passed).toBe(1);
+});
