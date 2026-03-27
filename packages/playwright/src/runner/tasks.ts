@@ -31,7 +31,7 @@ import { detectChangedTestFiles } from './vcs';
 import { Suite } from '../common/test';
 import { createTestGroups } from '../runner/testGroups';
 import { cacheDir } from '../transform/compilationCache';
-import { removeDirAndLogToConsole } from '../util';
+import { createFileMatcherFromArguments, removeDirAndLogToConsole } from '../util';
 
 import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
@@ -258,6 +258,24 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
   return {
     title: 'load tests',
     setup: async (testRun, errors, softErrors) => {
+      if (testRun.config.cliArgs.length)
+        testRun.config.loadFileFilters.push(createFileMatcherFromArguments(testRun.config.cliArgs));
+
+      if (testRun.config.cliTestList) {
+        const { testFilter, fileFilter } = await loadTestList(testRun.config, testRun.config.cliTestList);
+        testRun.config.preOnlyTestFilters.push(testFilter);
+        testRun.config.loadFileFilters.push(fileFilter);
+      }
+
+      if (testRun.config.cliTestListInvert) {
+        // Note: invert list does not mean we can filter files. For example, the following invert list
+        // can still run tests from foo.spec.ts:
+        //
+        // foo.spec.ts > some test
+        const { testFilter } = await loadTestList(testRun.config, testRun.config.cliTestListInvert);
+        testRun.config.preOnlyTestFilters.push(test => !testFilter(test));
+      }
+
       await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter);
       await loadFileSuites(testRun, mode, options.failOnLoadErrors ? errors : softErrors);
 
@@ -269,16 +287,6 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
       if (testRun.config.cliOnlyChanged) {
         const changedFiles = await detectChangedTestFiles(testRun.config.cliOnlyChanged, testRun.config.configDir);
         testRun.config.preOnlyTestFilters.push(test => changedFiles.has(test.location.file));
-      }
-
-      if (testRun.config.cliTestList) {
-        const testListFilter = await loadTestList(testRun.config, testRun.config.cliTestList);
-        testRun.config.preOnlyTestFilters.push(testListFilter);
-      }
-
-      if (testRun.config.cliTestListInvert) {
-        const testListInvertFilter = await loadTestList(testRun.config, testRun.config.cliTestListInvert);
-        testRun.config.preOnlyTestFilters.push(test => !testListInvertFilter(test));
       }
 
       const { rootSuite, topLevelProjects } = await createRootSuite(testRun, options.failOnLoadErrors ? errors : softErrors, !!options.filterOnly);

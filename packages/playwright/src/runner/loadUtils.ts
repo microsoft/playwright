@@ -19,7 +19,7 @@ import fs from 'fs';
 import { toPosixPath } from 'playwright-core/lib/utils';
 
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
-import { createFileFiltersFromArguments, createFileMatcherFromArguments, createTitleMatcher, errorWithFile, forceRegExp, parseLocationArg } from '../util';
+import { createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
 import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
@@ -42,7 +42,6 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const config = testRun.config;
   const fsCache = new Map();
   const sourceMapCache = new Map();
-  const cliFileMatcher = config.cliArgs.length ? createFileMatcherFromArguments(config.cliArgs) : null;
 
   // First collect all files for the projects in the command line, don't apply any file filters.
   const allFilesForProject = new Map<FullProjectInternal, string[]>();
@@ -56,10 +55,13 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
   const filesToRunByProject = new Map<FullProjectInternal, string[]>();
   for (const [project, files] of allFilesForProject) {
     const matchedFiles = files.filter(file => {
-      const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
-        if (cliFileMatcher && !cliFileMatcher(source))
-          return false;
+      if (!config.loadFileFilters.length) {
+        // Avoid loading source maps.
         return true;
+      }
+      const hasMatchingSources = sourceMapSources(file, sourceMapCache).some(source => {
+        const matchesAllFileFilters = config.loadFileFilters.every(filter => filter(source));
+        return matchesAllFileFilters;
       });
       return hasMatchingSources;
     });
@@ -350,7 +352,7 @@ function sourceMapSources(file: string, cache: Map<string, string[]>): string[] 
   }
 }
 
-export async function loadTestList(config: FullConfigInternal, filePath: string): Promise<TestCaseFilter> {
+export async function loadTestList(config: FullConfigInternal, filePath: string): Promise<{ testFilter: TestCaseFilter, fileFilter: Matcher }> {
   try {
     const content = await fs.promises.readFile(filePath, 'utf-8');
     const lines = content.split('\n').map(line => line.trim()).filter(line => line && !line.startsWith('#'));
@@ -366,7 +368,7 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
       }
       return { project, file: toPosixPath(parseLocationArg(tokens[0]).file), titlePath: tokens.slice(1) };
     });
-    return (test: TestCase) => descriptions.some(d => {
+    const testFilter = (test: TestCase) => descriptions.some(d => {
       // Note: there is no root yet at the time of filtering.
       const [projectName, , ...titles] = test.titlePath();
       if (d.project !== undefined && d.project !== projectName)
@@ -376,6 +378,11 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
         return false;
       return d.titlePath.length <= titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });
+    const fileFilter = (file: string) => {
+      const relativeFile = toPosixPath(path.relative(config.config.rootDir, file));
+      return descriptions.some(d => d.file === relativeFile);
+    };
+    return { testFilter, fileFilter };
   } catch (e) {
     throw errorWithFile(filePath, 'Cannot read test list file: ' + e.message);
   }
