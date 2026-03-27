@@ -66,9 +66,9 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
     const entry = entries.get(entryName);
     if (!entry)
       return;
-    const writer = new zipjs.TextWriter();
+    const writer = new zipjs.Uint8ArrayWriter();
     await entry.getData?.(writer);
-    return writer.getData();
+    return new TextDecoder().decode(writer.getData());
   }
 
   async readBlob(entryName: string): Promise<Blob | undefined> {
@@ -76,9 +76,9 @@ export class ZipTraceLoaderBackend implements TraceLoaderBackend {
     const entry = entries.get(entryName);
     if (!entry)
       return;
-    const writer = new zipjs.BlobWriter() as zip.BlobWriter;
+    const writer = new zipjs.Uint8ArrayWriter();
     await entry.getData!(writer);
-    return writer.getData();
+    return new Blob([writer.getData()]);
   }
 }
 
