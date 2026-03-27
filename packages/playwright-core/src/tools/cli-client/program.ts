@@ -201,7 +201,7 @@ async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: Mi
 
 async function runInitWorkspace(args: MinimistArgs) {
   const cliPath = require.resolve('../cli-daemon/program.js');
-  const daemonArgs = [cliPath, args.skills ? '--init-workspace=skills' : '--init-workspace'];
+  const daemonArgs: string[] = [cliPath, '--init-workspace', ...(args.skills ? ['--init-skills', String(args.skills)] : [])];
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, daemonArgs, {
       stdio: 'inherit',

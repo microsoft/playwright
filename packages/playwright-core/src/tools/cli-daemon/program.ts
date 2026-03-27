@@ -38,11 +38,12 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     .option('--profile <path>', 'path to the user data dir')
     .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
     .option('--attach <name-or-endpoint>', 'attach to a running Playwright browser by name or endpoint')
-    .option('--init-workspace [value]', 'initialize workspace; pass "skills" to also install Claude skills')
+    .option('--init-workspace', 'initialize workspace')
+    .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
 
     .action(async (sessionName: string, options: any) => {
-      if (options.initWorkspace !== undefined) {
-        await initWorkspace(options.initWorkspace === 'skills');
+      if (options.initWorkspace) {
+        await initWorkspace(options.initSkills);
         return;
       }
 
@@ -138,15 +139,16 @@ export async function resolveCLIConfig(clientInfo: ClientInfo, sessionName: stri
   return result;
 }
 
-async function initWorkspace(installSkills: boolean) {
+async function initWorkspace(initSkills: string | undefined) {
   const cwd = process.cwd();
   const playwrightDir = path.join(cwd, '.playwright');
   await fs.promises.mkdir(playwrightDir, { recursive: true });
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
-  if (installSkills) {
+  if (initSkills) {
     const skillSourceDir = path.join(__dirname, '../cli-client/skill');
-    const skillDestDir = path.join(cwd, '.claude', 'skills', 'playwright-cli');
+    const target = initSkills === 'agents' ? 'agents' : 'claude';
+    const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
     if (!fs.existsSync(skillSourceDir)) {
       console.error('❌ Skills source directory not found:', skillSourceDir);
       // eslint-disable-next-line no-restricted-properties
