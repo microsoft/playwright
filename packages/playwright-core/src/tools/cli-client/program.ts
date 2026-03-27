@@ -20,7 +20,6 @@
 import { execSync, spawn } from 'child_process';
 
 import crypto from 'crypto';
-import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
@@ -28,7 +27,6 @@ import { Session, renderResolvedConfig } from './session';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
 
-import type { Config } from '../mcp/config.d';
 import type { ClientInfo, SessionFile } from './registry';
 import type { BrowserDescriptor } from '../../serverRegistry';
 import type { MinimistArgs } from './minimist';
@@ -156,7 +154,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await session.stop();
       return;
     case 'install':
-      await install(args);
+      await runInitWorkspace(args);
       return;
     case 'install-browser':
       await installBrowser();
@@ -201,90 +199,27 @@ async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: Mi
   console.log(result.text);
 }
 
-async function install(args: MinimistArgs) {
-  const cwd = process.cwd();
-
-  // Create .playwright folder to mark workspace root
-  const playwrightDir = path.join(cwd, '.playwright');
-  await fs.promises.mkdir(playwrightDir, { recursive: true });
-  console.log(`✅ Workspace initialized at \`${cwd}\`.`);
-
-  if (args.skills !== undefined) {
-    const target = args.skills === 'agents' ? 'agents' : 'claude';
-    const skillSourceDir = path.join(__dirname, 'skill');
-    const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
-
-    if (!fs.existsSync(skillSourceDir)) {
-      console.error('❌ Skills source directory not found:', skillSourceDir);
-      process.exit(1);
-    }
-
-    await fs.promises.cp(skillSourceDir, skillDestDir, { recursive: true });
-    console.log(`✅ Skills installed to \`${path.relative(cwd, skillDestDir)}\`.`);
-  }
-
-  await ensureConfiguredBrowserInstalled();
-}
-
-async function ensureConfiguredBrowserInstalled() {
-  if (fs.existsSync(defaultConfigFile())) {
-    const { registry } = await import('playwright-core/lib/server/registry/index');
-    // Config exists, ensure configured browser is installed
-    const data = await fs.promises.readFile(defaultConfigFile(), 'utf-8');
-    const config = JSON.parse(data.charCodeAt(0) === 0xFEFF ? data.slice(1) : data) as Config;
-    const browserName = config.browser?.browserName ?? 'chromium';
-    const channel = config.browser?.launchOptions?.channel;
-    if (!channel || channel.startsWith('chromium')) {
-      const executable = registry.findExecutable(channel ?? browserName);
-      if (executable && !fs.existsSync(executable?.executablePath()!))
-        await registry.install([executable]);
-    }
-  } else {
-    // No config exists, detect or install a browser and create config
-    const channel = await findOrInstallDefaultBrowser();
-    if (channel !== 'chrome')
-      await createDefaultConfig(channel);
-  }
+async function runInitWorkspace(args: MinimistArgs) {
+  const cliPath = require.resolve('../cli-daemon/program.js');
+  const daemonArgs: string[] = [cliPath, '--init-workspace', ...(args.skills ? ['--init-skills', String(args.skills)] : [])];
+  await new Promise<void>((resolve, reject) => {
+    const child = spawn(process.execPath, daemonArgs, {
+      stdio: 'inherit',
+      cwd: process.cwd(),
+    });
+    child.on('close', code => {
+      if (code === 0)
+        resolve();
+      else
+        reject(new Error(`Workspace initialization failed with exit code ${code}`));
+    });
+  });
 }
 
 async function installBrowser() {
   const { program } = require('../../cli/program');
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
   program.parse(argv);
-}
-
-async function createDefaultConfig(channel: string) {
-  const config: Config = {
-    browser: {
-      browserName: 'chromium',
-      launchOptions: {
-        channel,
-      },
-    },
-  };
-  await fs.promises.writeFile(defaultConfigFile(), JSON.stringify(config, null, 2));
-  console.log(`✅ Created default config for ${channel} at ${path.relative(process.cwd(), defaultConfigFile())}.`);
-}
-
-async function findOrInstallDefaultBrowser() {
-  const { registry } = await import('playwright-core/lib/server/registry/index');
-  const channels = ['chrome', 'msedge'];
-  for (const channel of channels) {
-    const executable = registry.findExecutable(channel);
-    if (!executable?.executablePath())
-      continue;
-    console.log(`✅ Found ${channel}, will use it as the default browser.`);
-    return channel;
-  }
-  const chromiumExecutable = registry.findExecutable('chromium');
-  // Unlike channels, chromium executable path is always valid, even if the browser is not installed.
-  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
-    await registry.install([chromiumExecutable]);
-  return 'chromium';
-}
-
-function defaultConfigFile(): string {
-  return path.resolve('.playwright', 'cli.config.json');
 }
 
 async function killAllDaemons(): Promise<void> {

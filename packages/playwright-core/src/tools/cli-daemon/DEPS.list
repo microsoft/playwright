@@ -6,5 +6,6 @@
 ../../utilsBundle.ts
 ../../utils/
 ../../zodBundle.ts
+../../server/registry/index.ts
 ../../server/utils/
 ../../serverRegistry.ts
