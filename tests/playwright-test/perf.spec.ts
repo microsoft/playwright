@@ -26,7 +26,7 @@ test('should not load rare bundles during test run', async ({ runInlineTest }) =
   expect(result.exitCode).toBe(0);
   expect(result.passed).toBe(1);
   const output = result.output;
-  expect(output).toContain('utilsBundle');
+  expect(output).toContain('babelBundle');
   expect(output).not.toContain('mcpBundle');
   expect(output).not.toContain('zodBundle');
   expect(output).not.toContain('zipBundle');

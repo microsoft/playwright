@@ -257,7 +257,7 @@ declare global {
 }
 
 function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
-  function applyPlaywrightAttributes(viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
+  function applyPlaywrightAttributes(blankSnapshotUrl: string, viewport: ViewportSize, ...targetIds: (string | undefined)[]) {
     // eslint-disable-next-line no-restricted-globals
     const win = window;
     const searchParams = new URLSearchParams(win.location.search);
@@ -555,7 +555,7 @@ function snapshotScript(viewport: ViewportSize, ...targetIds: (string | undefine
     win.addEventListener('DOMContentLoaded', onDOMContentLoaded);
   }
 
-  return `\n(${applyPlaywrightAttributes.toString()})(${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
+  return `\n(${applyPlaywrightAttributes.toString()})(${JSON.stringify(blankSnapshotUrl)},${JSON.stringify(viewport)}${targetIds.map(id => `, "${id}"`).join('')})`;
 }
 
 
