@@ -50,8 +50,8 @@ export default defineConfig({
     video: {
       mode: 'on',
       annotate: {
-        action: {},
-        test: {}
+        action: { position: 'top-left'},
+        test: { position: 'top-right' },
       }
     },
   },
