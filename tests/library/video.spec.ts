@@ -672,6 +672,34 @@ it.describe('screencast', () => {
     expect(videoPlayer.videoHeight).toBe(240);
   });
 
+  it('should close ffmpeg even if there were no frames', {
+    annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39872' }
+  }, async ({ browserType }, testInfo) => {
+    const size = { width: 320, height: 240 };
+    const browser = await browserType.launch();
+
+    const videoDir = testInfo.outputPath('');
+    const context = await browser.newContext({
+      recordVideo: {
+        dir: videoDir,
+        size,
+      },
+      viewport: size,
+    });
+
+    const page1 = await context.newPage();
+    await page1.close();
+
+    const page2 = await context.newPage();
+    await page2.close();
+
+    await context.close();
+    await browser.close();
+
+    const videoFiles = findVideos(videoDir);
+    expect(videoFiles.length).toBe(2);
+  });
+
   it('should not create video for internal pages', async ({ browser, server }, testInfo) => {
     server.setRoute('/empty.html', (req, res) => {
       res.setHeader('Set-Cookie', 'name=value');
