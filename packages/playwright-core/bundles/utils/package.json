@@ -6,7 +6,7 @@
     "colors": "1.4.0",
     "commander": "^13.0.0",
     "debug": "^4.3.4",
-    "diff": "^7.0.0",
+    "diff": "^8.0.3",
     "dotenv": "^16.4.5",
     "graceful-fs": "4.2.10",
     "https-proxy-agent": "7.0.6",
@@ -22,7 +22,7 @@
     "signal-exit": "3.0.7",
     "socks-proxy-agent": "8.0.5",
     "ws": "8.17.1",
-    "yaml": "^2.6.0"
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.7",
