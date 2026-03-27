@@ -11,10 +11,16 @@ playwright-cli open
 # Start recording
 playwright-cli video-start
 
+# Add a chapter marker for section transitions
+playwright-cli video-chapter "Getting Started" --description="Opening the homepage" --duration=2000
+
 # Navigate and perform actions
 playwright-cli goto https://example.com
 playwright-cli snapshot
 playwright-cli click e1
+
+# Add another chapter
+playwright-cli video-chapter "Filling Form" --description="Entering test data" --duration=2000
 playwright-cli fill e2 "test input"
 
 # Stop and save

@@ -156,6 +156,7 @@ playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
 playwright-cli video-start
+playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
 playwright-cli video-stop --filename=video.webm
 ```
 
