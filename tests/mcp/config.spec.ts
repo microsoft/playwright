@@ -17,7 +17,7 @@
 import fs from 'node:fs';
 
 import { test, expect, parseResponse } from './fixtures';
-import { resolveCLIConfig } from '../../packages/playwright-core/lib/tools/mcp/config';
+import { resolveCLIConfigForMCP } from '../../packages/playwright-core/lib/tools/mcp/config';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
 test('config user data dir', async ({ startClient, server }, testInfo) => {
@@ -106,7 +106,7 @@ test.describe(() => {
 });
 
 async function sandboxOption(cli: any) {
-  const config: any = await resolveCLIConfig(cli);
+  const config: any = await resolveCLIConfigForMCP(cli);
   return config.browser.launchOptions.chromiumSandbox;
 }
 
@@ -131,7 +131,7 @@ test('file browser.cdpHeaders preserved when PLAYWRIGHT_MCP_CDP_HEADERS unset', 
     const configPath = testInfo.outputPath('config.json');
     await fs.promises.writeFile(configPath, JSON.stringify(config, null, 2));
 
-    const resolved = await resolveCLIConfig({ config: configPath });
+    const resolved = await resolveCLIConfigForMCP({ config: configPath });
     expect(resolved.browser.cdpHeaders).toEqual({ Authorization: 'Bearer token-from-file' });
   } finally {
     if (prev !== undefined)
