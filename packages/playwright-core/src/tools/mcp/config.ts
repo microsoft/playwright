@@ -276,7 +276,7 @@ export function configFromEnv(): Config & { configFile?: string } {
   options.browser = envToString(process.env.PLAYWRIGHT_MCP_BROWSER);
   options.caps = commaSeparatedList(process.env.PLAYWRIGHT_MCP_CAPS);
   options.cdpEndpoint = envToString(process.env.PLAYWRIGHT_MCP_CDP_ENDPOINT);
-  options.cdpHeader = headerParser(process.env.PLAYWRIGHT_MCP_CDP_HEADERS, {});
+  options.cdpHeader = headerParser(envToString(process.env.PLAYWRIGHT_MCP_CDP_HEADERS));
   options.cdpTimeout = numberParser(process.env.PLAYWRIGHT_MCP_CDP_TIMEOUT);
   options.config = envToString(process.env.PLAYWRIGHT_MCP_CONFIG);
   if (process.env.PLAYWRIGHT_MCP_CONSOLE_LEVEL)
@@ -427,10 +427,10 @@ export function resolutionParser(name: string, value: string | undefined): Viewp
   throw new Error(`Invalid resolution format: use ${name}="800x600"`);
 }
 
-export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> {
+export function headerParser(arg: string | undefined, previous?: Record<string, string>): Record<string, string> | undefined {
   if (!arg)
-    return previous || {};
-  const result: Record<string, string> = previous || {};
+    return previous;
+  const result: Record<string, string> = { ...(previous ?? {}) };
   const colonIndex = arg.indexOf(':');
 
   const name = colonIndex === -1 ? arg.trim() : arg.substring(0, colonIndex).trim();
