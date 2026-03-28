@@ -14,17 +14,84 @@
  * limitations under the License.
  */
 
-import { assert, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
+import path from 'path';
+
+import { assert, createGuid, debugLogger, mkdirIfNeeded, monotonicTime } from '../utils';
 import { launchProcess } from './utils/processLauncher';
 import { jpegjs } from '../utilsBundle';
+import { Artifact } from './artifact';
+import { registry } from '.';
 
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';
+import type { Screencast, ScreencastClient } from './screencast';
+import type { Page } from './page';
 
 const fps = 25;
 
 export class VideoRecorder {
-  private _options: types.VideoOptions;
+  private _screencast: Screencast;
+  private _videoRecorder: FfmpegVideoRecorder | undefined;
+  private _client: ScreencastClient | undefined;
+  private _artifact: Artifact | undefined;
+
+  constructor(screencast: Screencast) {
+    this._screencast = screencast;
+  }
+
+  start(options: { fileName?: string, size?: { width: number, height: number }, annotate?: types.AnnotateOptions }) {
+    assert(!this._artifact);
+    // Do this first, it likes to throw.
+    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
+    const outputFile = options.fileName ?? path.join(this._screencast.page.browserContext._browser.options.artifactsDir, createGuid() + '.webm');
+
+    this._client = {
+      onFrame: frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000),
+      gracefulClose: () => this.stop(),
+      dispose: () => this.stop().catch(e => debugLogger.log('error', `Failed to stop video recorder: ${String(e)}`)),
+      size: options.size,
+      annotate: options.annotate,
+    };
+
+    const { size } = this._screencast.addClient(this._client);
+    // For video files only, prioritize encoding into the given size, regardless of the actual pixel data.
+    const videoSize = options.size ?? size;
+    this._videoRecorder = new FfmpegVideoRecorder(ffmpegPath, videoSize, outputFile);
+    this._artifact = new Artifact(this._screencast.page.browserContext, outputFile);
+    return this._artifact;
+  }
+
+  async stop() {
+    if (!this._artifact)
+      return;
+
+    const artifact = this._artifact;
+    this._artifact = undefined;
+    const client = this._client!;
+    this._client = undefined;
+    const videoRecorder = this._videoRecorder!;
+    this._videoRecorder = undefined;
+
+    this._screencast.removeClient(client);
+    await videoRecorder.stop();
+    artifact.reportFinished();
+  }
+}
+
+// Note: it is important to start video recorder before sending Screencast.startScreencast,
+// and it is equally important to send Screencast.startScreencast before sending Target.resume.
+export function startAutomaticVideoRecording(page: Page) {
+  const recordVideo = page.browserContext._options.recordVideo;
+  if (!recordVideo)
+    return;
+  const recorder = new VideoRecorder(page.screencast);
+  const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
+  const artifact = recorder.start({ size: recordVideo.size, annotate: recordVideo.annotate, fileName: path.join(dir, page.guid + '.webm') });
+  page.video = artifact;
+}
+
+class FfmpegVideoRecorder {
+  private _size: types.Size;
   private _process: ChildProcess | null = null;
   private _gracefullyClose: (() => Promise<void>) | null = null;
   private _lastWritePromise: Promise<void> = Promise.resolve();
@@ -35,17 +102,19 @@ export class VideoRecorder {
   private _isStopped = false;
   private _ffmpegPath: string;
   private _launchPromise: Promise<Error | null>;
+  private _outputFile: string;
 
-  constructor(ffmpegPath: string, options: types.VideoOptions) {
-    this._ffmpegPath = ffmpegPath;
-    if (!options.outputFile.endsWith('.webm'))
+  constructor(ffmpegPath: string, size: types.Size, outputFile: string) {
+    if (!outputFile.endsWith('.webm'))
       throw new Error('File must have .webm extension');
-    this._options = options;
+    this._outputFile = outputFile;
+    this._ffmpegPath = ffmpegPath;
+    this._size = size;
     this._launchPromise = this._launch().catch(e => e);
   }
 
   private async _launch() {
-    await mkdirIfNeeded(this._options.outputFile);
+    await mkdirIfNeeded(this._outputFile);
     // How to tune the codec:
     // 1. Read vp8 documentation to figure out the options.
     //   https://www.webmproject.org/docs/encoder-parameters/
@@ -85,10 +154,10 @@ export class VideoRecorder {
     // "-threads 1" means using one thread. This drastically reduces stalling when
     //   cpu is overbooked. By default vp8 tries to use all available threads?
 
-    const w = this._options.width;
-    const h = this._options.height;
+    const w = this._size.width;
+    const h = this._size.height;
     const args = `-loglevel error -f image2pipe -avioflags direct -fpsprobesize 0 -probesize 32 -analyzeduration 0 -c:v mjpeg -i pipe:0 -y -an -r ${fps} -c:v vp8 -qmin 0 -qmax 50 -crf 8 -deadline realtime -speed 8 -b:v 1M -threads 1 -vf pad=${w}:${h}:0:0:gray,crop=${w}:${h}:0:0`.split(' ');
-    args.push(this._options.outputFile);
+    args.push(this._outputFile);
 
     const { launchedProcess, gracefullyClose } = await launchProcess({
       command: this._ffmpegPath,
@@ -164,7 +233,7 @@ export class VideoRecorder {
       return;
     if (!this._lastFrame) {
       // ffmpeg only creates a file upon some non-empty input
-      this._writeFrame(createWhiteImage(this._options.width, this._options.height), monotonicTime());
+      this._writeFrame(createWhiteImage(this._size.width, this._size.height), monotonicTime());
     }
     // Pad with at least 1s of the last frame in the end for convenience.
     // This also ensures non-empty videos with 1 frame.

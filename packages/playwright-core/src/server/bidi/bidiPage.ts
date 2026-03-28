@@ -561,10 +561,10 @@ export class BidiPage implements PageDelegate {
     });
   }
 
-  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
+  startScreencast(options: { width: number, height: number, quality: number }) {
   }
 
-  async stopScreencast(): Promise<void> {
+  stopScreencast() {
   }
 
   rafCountForStablePosition(): number {

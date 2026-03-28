@@ -86,7 +86,6 @@ export class ElectronApplication extends SdkObject {
     this._nodeSession.on('Runtime.consoleAPICalled', event => this._onConsoleAPI(event));
     const appClosePromise = new Promise(f => this.once(ElectronApplication.Events.Close, f));
     this._browserContext.setCustomCloseHandler(async () => {
-      await this._browserContext.stopVideoRecording();
       const electronHandle = await this._nodeElectronHandlePromise;
       await electronHandle.evaluate(({ app }) => app.quit()).catch(() => {});
       this._nodeConnection.close();

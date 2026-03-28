@@ -36,6 +36,7 @@ import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crP
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
+import { startAutomaticVideoRecording } from '../videoRecorder';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
@@ -287,17 +288,17 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._scrollRectIntoViewIfNeeded(handle, rect);
   }
 
-  async startScreencast(options: { width: number; height: number; quality: number; }): Promise<void> {
-    await this._mainFrameSession._client.send('Page.startScreencast', {
+  startScreencast(options: { width: number; height: number; quality: number; }) {
+    this._mainFrameSession._client.send('Page.startScreencast', {
       format: 'jpeg',
       quality: options.quality,
       maxWidth: options.width,
       maxHeight: options.height,
-    });
+    }).catch(() => {});
   }
 
-  async stopScreencast() {
-    await this._mainFrameSession._client._sendMayFail('Page.stopScreencast');
+  stopScreencast() {
+    this._mainFrameSession._client._sendMayFail('Page.stopScreencast').catch(() => {});
   }
 
   rafCountForStablePosition(): number {
@@ -444,9 +445,8 @@ class FrameSession {
       this._windowId = windowId;
     }
 
-    let videoOptions: types.VideoOptions | undefined;
     if (this._isMainFrame() && hasUIWindow && !this._page.isStorageStatePage)
-      videoOptions = this._crPage._page.screencast.launchAutomaticVideoRecorder();
+      startAutomaticVideoRecording(this._crPage._page);
 
     let lifecycleEventsEnabled: Promise<any>;
     if (!this._isMainFrame())
@@ -535,8 +535,6 @@ class FrameSession {
       promises.push(this._updateFileChooserInterception(true));
       for (const initScript of this._crPage._page.allInitScripts())
         promises.push(this._evaluateOnNewDocument(initScript, 'main', true /* runImmediately */));
-      if (videoOptions)
-        promises.push(this._crPage._page.screencast.startVideoRecording(videoOptions));
     }
     promises.push(this._client.send('Runtime.runIfWaitingForDebugger'));
     promises.push(this._firstNonInitialNavigationCommittedPromise);
@@ -883,15 +881,14 @@ class FrameSession {
   }
 
   _onScreencastFrame(payload: Protocol.Page.screencastFramePayload) {
-    this._page.screencast.throttleFrameAck(() => {
-      this._client._sendMayFail('Page.screencastFrameAck', { sessionId: payload.sessionId });
-    });
     const buffer = Buffer.from(payload.data, 'base64');
     this._page.screencast.onScreencastFrame({
       buffer,
       frameSwapWallTime: payload.metadata.timestamp ? payload.metadata.timestamp * 1000 : Date.now(),
       viewportWidth: payload.metadata.deviceWidth,
       viewportHeight: payload.metadata.deviceHeight,
+    }, () => {
+      this._client._sendMayFail('Page.screencastFrameAck', { sessionId: payload.sessionId });
     });
   }
 

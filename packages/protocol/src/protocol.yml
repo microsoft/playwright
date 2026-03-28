@@ -2141,11 +2141,12 @@ Page:
       title: Start screencast
       group: configuration
       parameters:
-        preferredSize:
+        size:
           type: object?
           properties:
             width: int
             height: int
+        quality: int?
 
     stopScreencast:
       title: Stop screencast

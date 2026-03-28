@@ -532,12 +532,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       await this.tracing.flush();
 
       // Cleanup.
-      const promises: Promise<void>[] = [];
-      for (const { context, artifact } of this._browser._idToVideo.values()) {
-        // Wait for the videos to finish.
-        if (context === this)
-          promises.push(artifact.finishedPromise());
-      }
+      const promises: Promise<void>[] = this.pages().map(page => page.screencast.handlePageOrContextClose());
 
       if (this._customCloseHandler) {
         await this._customCloseHandler();
@@ -738,27 +733,9 @@ export function validateBrowserContextOptions(options: types.BrowserContextOptio
     options.acceptDownloads = 'internal-browser-default';
   if (!options.viewport && !options.noDefaultViewport)
     options.viewport = { width: 1280, height: 720 };
-  if (options.recordVideo)
-    options.recordVideo.size = validateVideoSize(options.recordVideo.size, options.viewport);
   if (options.proxy)
     options.proxy = normalizeProxySettings(options.proxy);
   verifyGeolocation(options.geolocation);
-}
-
-export function validateVideoSize(size: types.Size | undefined, viewport: types.Size | undefined): types.Size {
-  if (!size) {
-    viewport ??= { width: 800, height: 600 };
-    const scale = Math.min(1, 800 / Math.max(viewport.width, viewport.height));
-    size = {
-      width: Math.floor(viewport.width * scale),
-      height: Math.floor(viewport.height * scale)
-    };
-  }
-  // Make sure both dimensions are odd, this is required for vp8
-  return {
-    width: size.width & ~1,
-    height: size.height & ~1
-  };
 }
 
 export function verifyGeolocation(geolocation?: types.Geolocation): asserts geolocation is types.Geolocation {

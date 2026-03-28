@@ -36,8 +36,8 @@ import { parseEvaluationResultValue } from '../utils/isomorphic/utilityScriptSer
 import { compressCallLog } from './callLog';
 import * as rawBindingsControllerSource from '../generated/bindingsControllerSource';
 import { Overlay } from './overlay';
-import { Screencast } from './screencast';
 import { NonRecoverableDOMError } from './dom';
+import { Screencast } from './screencast';
 
 import type { Artifact } from './artifact';
 import type { BrowserContextEventMap } from './browserContext';
@@ -85,8 +85,8 @@ export interface PageDelegate {
   getBoundingBox(handle: dom.ElementHandle): Promise<types.Rect | null>;
   getFrameElement(frame: frames.Frame): Promise<dom.ElementHandle>;
   scrollRectIntoViewIfNeeded(handle: dom.ElementHandle, rect?: types.Rect): Promise<'error:notvisible' | 'error:notconnected' | 'done'>;
-  startScreencast(options: { width: number, height: number, quality: number }): Promise<void>;
-  stopScreencast(): Promise<void>;
+  startScreencast(options: { width: number, height: number, quality: number }): void;
+  stopScreencast(): void;
 
   pdf?: (options: channels.PagePdfParams) => Promise<Buffer>;
   coverage?: () => any;
@@ -801,6 +801,7 @@ export class Page extends SdkObject<PageEventMap> {
       // while we are trying to close the page.
       await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
     }
+    await this.screencast.handlePageOrContextClose();
     if (!runBeforeUnload)
       await this.closedPromise;
   }

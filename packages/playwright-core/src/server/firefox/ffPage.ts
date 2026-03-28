@@ -26,6 +26,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './ffInput';
 import { FFNetworkManager } from './ffNetworkManager';
 import { splitErrorMessage } from '../../utils/isomorphic/stackTrace';
 import { TargetClosedError } from '../errors';
+import { startAutomaticVideoRecording } from '../videoRecorder';
 
 import type { Progress } from '../progress';
 import type { FFBrowserContext } from './ffBrowser';
@@ -97,9 +98,8 @@ export class FFPage implements PageDelegate {
     ];
 
     const promises: Promise<any>[] = [];
-    const videoOptions = this._page.isStorageStatePage ? undefined : this._page.screencast.launchAutomaticVideoRecorder();
-    if (videoOptions)
-      promises.push(this._page.screencast.startVideoRecording(videoOptions));
+    if (!this._page.isStorageStatePage)
+      startAutomaticVideoRecording(this._page);
     promises.push(new Promise(f => this._session.once('Page.ready', f)));
     Promise.all(promises).then(() => this._reportAsNew(), error => this._reportAsNew(error));
 
@@ -476,25 +476,23 @@ export class FFPage implements PageDelegate {
     });
   }
 
-  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
-    await this._session.send('Page.startScreencast', { width: options.width, height: options.height, quality: options.quality });
+  startScreencast(options: { width: number, height: number, quality: number }) {
+    this._session.sendMayFail('Page.startScreencast', { width: options.width, height: options.height, quality: options.quality });
   }
 
-  async stopScreencast(): Promise<void> {
-    await this._session.sendMayFail('Page.stopScreencast');
+  stopScreencast() {
+    this._session.sendMayFail('Page.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Page.screencastFramePayload) {
-    this._page.screencast.throttleFrameAck(() => {
-      this._session.sendMayFail('Page.screencastFrameAck');
-    });
-
     const buffer = Buffer.from(event.data, 'base64');
     this._page.screencast.onScreencastFrame({
       buffer,
       frameSwapWallTime: event.timestamp * 1000, // timestamp is in seconds, we need to convert to milliseconds.
       viewportWidth: event.deviceWidth,
       viewportHeight: event.deviceHeight,
+    }, () => {
+      this._session.sendMayFail('Page.screencastFrameAck');
     });
   }
 

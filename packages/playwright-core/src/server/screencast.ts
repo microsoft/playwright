@@ -14,162 +14,114 @@
  * limitations under the License.
  */
 
-import path from 'path';
-import { assert, createGuid, renderTitleForCall } from '../utils';
+import { renderTitleForCall } from '../utils';
 import { debugLogger } from '../utils';
-import { VideoRecorder } from './videoRecorder';
 import { Page } from './page';
-import { registry } from './registry';
-import { validateVideoSize } from './browserContext';
 
 import type * as types from './types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
 
-export type ScreencastListener = (frame: types.ScreencastFrame) => void;
-export type ScreencastOptions = { width: number, height: number, quality: number, annotate?: types.AnnotateOptions };
+export type ScreencastClient = {
+  onFrame: (frame: types.ScreencastFrame) => Promise<void> | void;
+  gracefulClose?: () => Promise<void> | void;
+  dispose: () => void;
+  size?: types.Size;
+  quality?: number;
+  annotate?: types.AnnotateOptions;
+};
 
 export class Screencast implements InstrumentationListener {
-  private _page: Page;
-  private _videoRecorder: VideoRecorder | null = null;
-  private _videoId: string | null = null;
-  private _clients = new Map<ScreencastListener, ScreencastOptions>();
-  // Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
-  // When throttling for tracing, 200ms between frames, except for 10 frames around the action.
-  private _frameThrottler: FrameThrottler | undefined;
-  private _videoFrameListener: ScreencastListener | null = null;
+  readonly page: Page;
+  private _clients = new Set<ScreencastClient>();
   private _annotate: types.AnnotateOptions | undefined;
+  private _size: types.Size | undefined;
 
   constructor(page: Page) {
-    this._page = page;
-    this._page.instrumentation.addListener(this, page.browserContext);
+    this.page = page;
+    this.page.instrumentation.addListener(this, page.browserContext);
+  }
+
+  async handlePageOrContextClose() {
+    for (const clients of this._clients) {
+      if (clients.gracefulClose)
+        await clients.gracefulClose();
+    }
+    this._clients.clear();
   }
 
   dispose() {
-    this._frameThrottler?.dispose();
-    this._frameThrottler = undefined;
-    this._page.instrumentation.removeListener(this);
+    for (const client of this._clients)
+      client.dispose();
+    this._clients.clear();
+    this.page.instrumentation.removeListener(this);
   }
 
-  startForTracing(listener: ScreencastListener) {
-    this.startScreencast(listener, { width: 800, height: 800, quality: 90 }).catch(e => debugLogger.log('error', e));
-    this._frameThrottler = new FrameThrottler(10, 35, 200);
+  addClient(client: ScreencastClient): { size: types.Size } {
+    this._clients.add(client);
+    if (!this._annotate && client.annotate)
+      this._annotate = client.annotate;
+    if (this._clients.size === 1)
+      this._startScreencast(client.size, client.quality);
+    return { size: this._size! };
   }
 
-  stopForTracing(listener: ScreencastListener) {
-    this.stopScreencast(listener).catch(e => debugLogger.log('error', e));
-    this.dispose();
-  }
-
-  throttleFrameAck(ack: () => void) {
-    if (!this._frameThrottler)
-      ack();
-    else
-      this._frameThrottler.ack(ack);
-  }
-
-  temporarilyDisableThrottling() {
-    this._frameThrottler?.recharge();
-  }
-
-  // Note: it is important to start video recorder before sending Screencast.startScreencast,
-  // and it is equally important to send Screencast.startScreencast before sending Target.resume.
-  launchAutomaticVideoRecorder(): types.VideoOptions | undefined {
-    const recordVideo = this._page.browserContext._options.recordVideo;
-    if (!recordVideo)
+  removeClient(client: ScreencastClient) {
+    if (!this._clients.has(client))
       return;
-    // validateBrowserContextOptions ensures correct video size.
-    const dir = recordVideo.dir ?? this._page.browserContext._browser.options.artifactsDir;
-    const videoOptions = this._launchVideoRecorder(dir, recordVideo.size!, this._page.guid);
-    if (recordVideo.annotate)
-      videoOptions.annotate = recordVideo.annotate;
-    return videoOptions;
+    this._clients.delete(client);
+    if (!this._clients.size)
+      this._stopScreencast();
+    this._annotate = Array.from(this._clients).find(c => c.annotate)?.annotate;
   }
 
-  private _launchVideoRecorder(dir: string, size: { width: number, height: number }, videoId?: string): types.VideoOptions {
-    assert(!this._videoId);
-    // Do this first, it likes to throw.
-    const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._page.browserContext._browser.sdkLanguage());
+  size(): types.Size | undefined {
+    return this._size;
+  }
 
-    this._videoId = videoId || createGuid();
-    const outputFile = path.join(dir, this._videoId + '.webm');
-    const videoOptions = {
-      ...size,
-      outputFile,
+  private _startScreencast(size: types.Size | undefined, quality: number | undefined) {
+    this._size = size;
+    if (!this._size) {
+      const viewport = this.page.browserContext._options.viewport || { width: 800, height: 600 };
+      const scale = Math.min(1, 800 / Math.max(viewport.width, viewport.height));
+      this._size = {
+        width: Math.floor(viewport.width * scale),
+        height: Math.floor(viewport.height * scale)
+      };
+    }
+
+    // Make sure both dimensions are odd, this is required for vp8
+    this._size = {
+      width: this._size.width & ~1,
+      height: this._size.height & ~1
     };
 
-    this._videoRecorder = new VideoRecorder(ffmpegPath, videoOptions);
-    this._videoFrameListener = frame => this._videoRecorder!.writeFrame(frame.buffer, frame.frameSwapWallTime / 1000);
-    this._page.waitForInitializedOrError().then(p => {
-      if (p instanceof Error)
-        this.stopVideoRecording().catch(() => {});
+    this.page.delegate.startScreencast({
+      width: this._size.width,
+      height: this._size.height,
+      quality: quality ?? 90,
     });
-    return videoOptions;
   }
 
-  async startVideoRecording(options: types.VideoOptions) {
-    const videoId = this._videoId;
-    assert(videoId);
-    this._page.once(Page.Events.Close, () => this.stopVideoRecording().catch(() => {}));
-    await this.startScreencast(this._videoFrameListener!, {
-      quality: 90,
-      width: options.width,
-      height: options.height,
-      annotate: options.annotate,
-    });
-    return this._page.browserContext._browser._videoStarted(this._page, videoId, options.outputFile);
+  private _stopScreencast() {
+    this.page.delegate.stopScreencast();
   }
 
-  async stopVideoRecording(): Promise<void> {
-    if (!this._videoId)
-      return;
-    const videoFrameListener = this._videoFrameListener!;
-    this._videoFrameListener = null;
-    const videoId = this._videoId;
-    this._videoId = null;
-    const videoRecorder = this._videoRecorder!;
-    this._videoRecorder = null;
-    await this.stopScreencast(videoFrameListener);
-    await videoRecorder.stop();
-    // Keep the video artifact in the map until encoding is fully finished, if the context
-    // starts closing before the video is fully written to disk it will wait for it.
-    const video = this._page.browserContext._browser._takeVideo(videoId);
-    video?.reportFinished();
-  }
-
-  async startExplicitVideoRecording(options: { size?: types.Size, annotate?: types.AnnotateOptions } = {}) {
-    if (this._videoId)
-      throw new Error('Video is already being recorded');
-    const size = validateVideoSize(options.size, this._page.emulatedSize()?.viewport);
-    const videoOptions = this._launchVideoRecorder(this._page.browserContext._browser.options.artifactsDir, size);
-    if (options.annotate)
-      videoOptions.annotate = options.annotate;
-    return await this.startVideoRecording(videoOptions);
-  }
-
-  async stopExplicitVideoRecording() {
-    if (!this._videoId)
-      throw new Error('Video is not being recorded');
-    await this.stopVideoRecording();
-  }
-
-  async startScreencast(listener: ScreencastListener, options: ScreencastOptions) {
-    this._clients.set(listener, options);
-    if (!this._annotate && options.annotate)
-      this._annotate = options.annotate;
-    if (this._clients.size === 1)
-      await this._page.delegate.startScreencast(options);
-  }
-
-  async stopScreencast(listener: ScreencastListener) {
-    this._clients.delete(listener);
-    if (!this._clients.size)
-      await this._page.delegate.stopScreencast();
-    this._annotate = Array.from(this._clients.values()).find(options => options.annotate)?.annotate;
-  }
-
-  onScreencastFrame(frame: types.ScreencastFrame) {
-    for (const listener of this._clients.keys())
-      listener(frame);
+  onScreencastFrame(frame: types.ScreencastFrame, ack?: () => void) {
+    const asyncResults: Promise<void>[] = [];
+    for (const client of this._clients) {
+      const result = client.onFrame(frame);
+      if (result)
+        asyncResults.push(result);
+    }
+    if (ack) {
+      // Ack when any client resolves (OR logic). This ensures that even if
+      // tracing throttles its response, other clients (like video) that resolve
+      // immediately keep frames flowing.
+      if (!asyncResults.length)
+        ack();
+      else
+        Promise.race(asyncResults).then(ack);
+    }
   }
 
   async onBeforeCall(sdkObject: SdkObject, metadata: CallMetadata, parentId?: string): Promise<void> {
@@ -204,71 +156,5 @@ export class Screencast implements InstrumentationListener {
       position: this._annotate?.position,
       fontSize: this._annotate?.fontSize,
     }).catch(e => debugLogger.log('error', e));
-  }
-}
-
-class FrameThrottler {
-  private _acks: (() => void)[] = [];
-  private _defaultInterval: number;
-  private _throttlingInterval: number;
-  private _nonThrottledFrames: number;
-  private _budget: number;
-  private _throttlingEnabled = false;
-  private _timeoutId: NodeJS.Timeout | undefined;
-
-  constructor(nonThrottledFrames: number, defaultInterval: number, throttlingInterval: number) {
-    this._nonThrottledFrames = nonThrottledFrames;
-    this._budget = nonThrottledFrames;
-    this._defaultInterval = defaultInterval;
-    this._throttlingInterval = throttlingInterval;
-    this._tick();
-  }
-
-  dispose() {
-    if (this._timeoutId) {
-      clearTimeout(this._timeoutId);
-      this._timeoutId = undefined;
-    }
-  }
-
-  setThrottlingEnabled(enabled: boolean) {
-    this._throttlingEnabled = enabled;
-  }
-
-  recharge() {
-    // Send all acks, reset budget.
-    for (const ack of this._acks)
-      ack();
-    this._acks = [];
-    this._budget = this._nonThrottledFrames;
-    if (this._timeoutId) {
-      clearTimeout(this._timeoutId);
-      this._tick();
-    }
-  }
-
-  ack(ack: () => void) {
-    if (!this._timeoutId) {
-      // Already disposed.
-      ack();
-      return;
-    }
-    this._acks.push(ack);
-  }
-
-  private _tick() {
-    const ack = this._acks.shift();
-    if (ack) {
-      --this._budget;
-      ack();
-    }
-
-    if (this._throttlingEnabled && this._budget <= 0) {
-      // Non-throttled frame budget is exceeded. Next ack will be throttled.
-      this._timeoutId = setTimeout(() => this._tick(), this._throttlingInterval);
-    } else {
-      // Either not throttling, or still under budget. Next ack will be after the default timeout.
-      this._timeoutId = setTimeout(() => this._tick(), this._defaultInterval);
-    }
   }
 }

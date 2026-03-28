@@ -213,16 +213,6 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.offline)
       promises.push(this.doUpdateOffline());
     promises.push(this.doUpdateDefaultEmulatedMedia());
-    if (this._options.recordVideo) {
-      promises.push(this._browser.session.send('Browser.setScreencastOptions', {
-        // validateBrowserContextOptions ensures correct video size.
-        options: {
-          ...this._options.recordVideo!.size!,
-          quality: 90,
-        },
-        browserContextId: this._browserContextId
-      }));
-    }
     const proxy = this._options.proxyOverride || this._options.proxy;
     if (proxy) {
       promises.push(this._browser.session.send('Browser.setContextProxy', {
@@ -419,8 +409,6 @@ export class FFBrowserContext extends BrowserContext {
 
   async doClose(reason: string | undefined) {
     if (!this._browserContextId) {
-      if (this._options.recordVideo)
-        await Promise.all(this._ffPages().map(ffPage => ffPage._page.screencast.stopVideoRecording()));
       // Closing persistent context should close the browser.
       await this._browser.close({ reason });
     } else {
