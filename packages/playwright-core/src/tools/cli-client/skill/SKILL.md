@@ -155,9 +155,9 @@ playwright-cli run-code "async page => await page.context().grantPermissions(['g
 playwright-cli run-code --filename=script.js
 playwright-cli tracing-start
 playwright-cli tracing-stop
-playwright-cli video-start
+playwright-cli video-start video.webm
 playwright-cli video-chapter "Chapter Title" --description="Details" --duration=2000
-playwright-cli video-stop --filename=video.webm
+playwright-cli video-stop
 ```
 
 ## Open parameters

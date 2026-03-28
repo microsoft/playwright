@@ -9,7 +9,7 @@ Capture browser automation sessions as video for debugging, documentation, or ve
 playwright-cli open
 
 # Start recording
-playwright-cli video-start
+playwright-cli video-start demo.webm
 
 # Add a chapter marker for section transitions
 playwright-cli video-chapter "Getting Started" --description="Opening the homepage" --duration=2000
@@ -24,7 +24,7 @@ playwright-cli video-chapter "Filling Form" --description="Entering test data" -
 playwright-cli fill e2 "test input"
 
 # Stop and save
-playwright-cli video-stop --filename=demo.webm
+playwright-cli video-stop
 ```
 
 ## Best Practices
@@ -33,8 +33,8 @@ playwright-cli video-stop --filename=demo.webm
 
 ```bash
 # Include context in filename
-playwright-cli video-stop --filename=recordings/login-flow-2024-01-15.webm
-playwright-cli video-stop --filename=recordings/checkout-test-run-42.webm
+playwright-cli video-start recordings/login-flow-2024-01-15.webm
+playwright-cli video-start recordings/checkout-test-run-42.webm
 ```
 
 ### 2. Record entire hero scripts.
@@ -50,14 +50,14 @@ It allows pulling appropriate pauses between the actions and annotating the vide
 
 ```js
 async page => {
-  await page.video().start({ path: 'video.webm', size: { width: 1280, height: 800 } });
+  await page.screencast.startRecording('video.webm', { size: { width: 1280, height: 800 } });
   await page.goto('https://demo.playwright.dev/todomvc');
 
   // Show a chapter card — blurs the page and shows a dialog.
   // Blocks until duration expires, then auto-removes.
   // Use this for simple use cases, but always feel free to hand-craft your own beautiful
-  // overlay via await page.overlay.show().
-  await page.overlay.chapter('Adding Todo Items', {
+  // overlay via await page.screencast.showOverlay().
+  await page.screencast.showChapter('Adding Todo Items', {
     description: 'We will add several items to the todo list.',
     duration: 2000,
   });
@@ -68,14 +68,14 @@ async page => {
   await page.waitForTimeout(1000);
 
   // Show next chapter
-  await page.overlay.chapter('Verifying Results', {
+  await page.screencast.showChapter('Verifying Results', {
     description: 'Checking the item appeared in the list.',
     duration: 2000,
   });
 
   // Add a sticky annotation that stays while you perform actions.
   // Overlays are pointer-events: none, so they won't block clicks.
-  const annotation = await page.overlay.show(`
+  const annotation = await page.screencast.showOverlay(`
     <div style="position: absolute; top: 8px; right: 8px;
       padding: 6px 12px; background: rgba(0,0,0,0.7);
       border-radius: 8px; font-size: 13px; color: white;">
@@ -93,7 +93,7 @@ async page => {
 
   // You can also highlight relevant locators and provide contextual annotations.
   const bounds = await page.getByText('Walk the dog').boundingBox();
-  await page.overlay.add(`
+  await page.screencast.showOverlay(`
     <div style="position: absolute;
       top: ${bounds.y}px;
       left: ${bounds.x}px;
@@ -113,7 +113,7 @@ async page => {
     </div>
   `, { duration: 2000 });
 
-  await page.video().stop();
+  await page.screencast.stopRecording();
 }
 ```
 
@@ -123,10 +123,10 @@ Embrace creativity, overlays are powerful.
 
 | Method | Use Case |
 |--------|----------|
-| `page.overlay.chapter(title, { description?, duration?, styleSheet? })` | Full-screen chapter card with blurred backdrop — ideal for section transitions |
-| `page.overlay.show(html, { duration? })` | Custom HTML overlay — use for callouts, labels, highlights |
+| `page.screencast.showChapter(title, { description?, duration?, styleSheet? })` | Full-screen chapter card with blurred backdrop — ideal for section transitions |
+| `page.screencast.showOverlay(html, { duration? })` | Custom HTML overlay — use for callouts, labels, highlights |
 | `disposable.dispose()` | Remove a sticky overlay added without duration |
-| `page.overlay.setVisible(false/true)` | Temporarily hide/show all overlays |
+| `page.screencast.hideOverlays()` / `page.screencast.showOverlays()` | Temporarily hide/show all overlays |
 
 ## Tracing vs Video
 

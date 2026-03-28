@@ -371,7 +371,7 @@ export async function toHaveScreenshot(
     return helper.createMatcherResult(`A snapshot doesn't exist at ${helper.expectedPath}.`, false);
 
   // Hide overlays during screenshot capture so they don't affect visual comparison.
-  await page.overlay.setVisible(false);
+  await page.screencast.hideOverlays();
   try {
     if (this.isNot) {
       // Having `errorMessage` means we timed out while waiting
@@ -431,7 +431,7 @@ export async function toHaveScreenshot(
     const header = formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, matcherName: 'toHaveScreenshot', locator: locator?.toString(), expectation: 'expected', timeout, timedOut });
     return helper.handleDifferent(actual, expectScreenshotOptions.expected, previous, diff, header, errorMessage, log, this._stepInfo);
   } finally {
-    await page.overlay.setVisible(true);
+    await page.screencast.showOverlays();
   }
 }
 

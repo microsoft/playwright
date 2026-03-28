@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import path from 'path';
 import { z } from '../../zodBundle';
 import { defineTool } from './tool';
 
@@ -26,6 +25,7 @@ const videoStart = defineTool({
     title: 'Start video',
     description: 'Start video recording',
     inputSchema: z.object({
+      filename: z.string().optional().describe('Filename to save the video.'),
       size: z.object({
         width: z.number().describe('Video width'),
         height: z.number().describe('Video height'),
@@ -35,7 +35,8 @@ const videoStart = defineTool({
   },
 
   handle: async (context, params, response) => {
-    await context.startVideoRecording({ size: params.size });
+    const resolvedFile = await response.resolveClientFile({ prefix: 'video', ext: 'webm', suggestedFilename: params.filename }, 'Video');
+    await context.startVideoRecording(resolvedFile.fileName, { size: params.size });
     response.addTextResult('Video recording started.');
   },
 });
@@ -47,27 +48,22 @@ const videoStop = defineTool({
     name: 'browser_stop_video',
     title: 'Stop video',
     description: 'Stop video recording',
-    inputSchema: z.object({
-      filename: z.string().optional().describe('Filename to save the video'),
-    }),
+    inputSchema: z.object({}),
     type: 'readOnly',
   },
 
   handle: async (context, params, response) => {
-    const videos = await context.stopVideoRecording();
-    if (!videos.length) {
+    const fileNames = await context.stopVideoRecording();
+    if (!fileNames.length) {
       response.addTextResult('No videos were recorded.');
       return;
     }
-    for (const [index, video] of videos.entries()) {
-      const suffix = index ? `-${index}` : '';
-      let suggestedFilename = params.filename;
-      if (suggestedFilename && suffix) {
-        const ext = path.extname(suggestedFilename);
-        suggestedFilename = path.basename(suggestedFilename, ext) + suffix + ext;
-      }
-      const resolvedFile = await response.resolveClientFile({ prefix: 'video' + suffix, ext: 'webm', suggestedFilename }, 'Video');
-      await video.saveAs(resolvedFile.fileName);
+    for (const fileName of fileNames) {
+      const resolvedFile = await response.resolveClientFile({
+        prefix: 'video',
+        ext: 'webm',
+        suggestedFilename: fileName
+      }, 'Video');
       await response.addFileResult(resolvedFile, null);
     }
   },
@@ -90,7 +86,7 @@ const videoChapter = defineTool({
 
   handle: async (context, params, response) => {
     const tab = context.currentTabOrDie();
-    await tab.page.overlay.chapter(params.title, {
+    await tab.page.screencast.showChapter(params.title, {
       description: params.description,
       duration: params.duration,
     });
