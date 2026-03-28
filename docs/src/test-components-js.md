@@ -423,6 +423,7 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
   defaultValue="react"
   values={[
     {label: 'React', value: 'react'},
+    {label: 'Svelte', value: 'svelte'},
     {label: 'Vue', value: 'vue'},
   ]
 }>
@@ -452,6 +453,39 @@ You can use `beforeMount` and `afterMount` hooks to configure your app. This let
       hooksConfig: { enableRouting: true },
     });
     await expect(component.getByRole('link')).toHaveAttribute('href', '/products/42');
+  });
+  ```
+
+  </TabItem>
+
+  <TabItem value="svelte">
+
+  ```js title="playwright/index.ts"
+  import { beforeMount, afterMount } from '@playwright/experimental-ct-svelte/hooks';
+
+  export type HooksConfig = {
+    context?: string;
+  }
+
+  beforeMount<HooksConfig>(async ({ hooksConfig, App }) => {
+    return new App({
+      context: new Map([
+        ['context-key', hooksConfig?.context]
+      ]),
+    });
+  });
+  ```
+
+  ```js title="src/context.spec.ts"
+  import { test, expect } from '@playwright/experimental-ct-svelte';
+  import type { HooksConfig } from '../playwright';
+  import Context from './Context.svelte';
+
+  test('provide context through hooks config', async ({ mount }) => {
+    const component = await mount<HooksConfig>(Context, {
+      hooksConfig: { context: 'context-value' },
+    });
+    await expect(component).toContainText('context-value');
   });
   ```
 
