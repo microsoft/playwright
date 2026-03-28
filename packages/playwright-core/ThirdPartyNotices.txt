@@ -95,7 +95,7 @@ This project incorporates components from the projects listed below. The origina
 -	open@8.4.0 (https://github.com/sindresorhus/open)
 -	parseurl@1.3.3 (https://github.com/pillarjs/parseurl)
 -	path-key@3.1.1 (https://github.com/sindresorhus/path-key)
--	path-to-regexp@8.3.0 (https://github.com/pillarjs/path-to-regexp)
+-	path-to-regexp@8.4.0 (https://github.com/pillarjs/path-to-regexp)
 -	pend@1.2.0 (https://github.com/andrewrk/node-pend)
 -	pkce-challenge@5.0.0 (https://github.com/crouchcd/pkce-challenge)
 -	pngjs@6.0.0 (https://github.com/lukeapage/pngjs)
@@ -2489,7 +2489,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 =========================================
 END OF path-key@3.1.1 AND INFORMATION
 
-%% path-to-regexp@8.3.0 NOTICES AND INFORMATION BEGIN HERE
+%% path-to-regexp@8.4.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
 The MIT License (MIT)
 
@@ -2513,7 +2513,7 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 =========================================
-END OF path-to-regexp@8.3.0 AND INFORMATION
+END OF path-to-regexp@8.4.0 AND INFORMATION
 
 %% pend@1.2.0 NOTICES AND INFORMATION BEGIN HERE
 =========================================
