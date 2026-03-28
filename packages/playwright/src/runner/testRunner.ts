@@ -467,11 +467,19 @@ export async function runAllTestsWithConfig(config: FullConfigInternal): Promise
   webServerPluginsForConfig(config).forEach(p => config.plugins.push({ factory: p }));
 
   const reporters = await createReporters(config, listOnly ? 'list' : 'test');
-  const lastRun = new LastRunReporter(config);
-  if (config.cliLastFailed)
-    await lastRun.filterLastFailed();
+  //change done here
+  let reporter;
 
-  const reporter = new InternalReporter([...reporters, lastRun]);
+  if (listOnly) {
+    // In --list mode → do NOT use LastRunReporter
+    reporter = new InternalReporter([...reporters]);
+  } else {
+    const lastRun = new LastRunReporter(config);
+    if (config.cliLastFailed)
+      await lastRun.filterLastFailed();
+
+    reporter = new InternalReporter([...reporters, lastRun]);
+  }
   const tasks = listOnly ? [
     createLoadTask('in-process', { failOnLoadErrors: true, filterOnly: false }),
     createReportBeginTask(),
