@@ -797,20 +797,25 @@ const videoStart = declareCommand({
   name: 'video-start',
   description: 'Start video recording',
   category: 'devtools',
-  args: z.object({}),
+  args: z.object({
+    filename: z.string().optional().describe('Filename to save the video.'),
+  }),
+  options: z.object({
+    size: z.string().optional().describe('Video frame size, e.g. "800x600". If not specified, the size of the recorded video will fit 800x800.'),
+  }),
   toolName: 'browser_start_video',
-  toolParams: () => ({}),
+  toolParams: ({ filename, size }) => {
+    const parsedSize = size ? size.split('x').map(Number) : undefined;
+    return { filename, size: parsedSize ? { width: parsedSize[0], height: parsedSize[1] } : undefined };
+  }
 });
 
 const videoStop = declareCommand({
   name: 'video-stop',
   description: 'Stop video recording',
   category: 'devtools',
-  options: z.object({
-    filename: z.string().optional().describe('Filename to save the video.'),
-  }),
   toolName: 'browser_stop_video',
-  toolParams: ({ filename }) => ({ filename }),
+  toolParams: () => ({}),
 });
 
 const videoChapter = declareCommand({

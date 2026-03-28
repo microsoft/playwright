@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
+import { Artifact } from './artifact';
 import { DisposableStub } from './disposable';
 
 import type * as api from '../../types/types';
 import type { Page } from './page';
+import type { AnnotateOptions } from './types';
 
 export class Screencast implements api.Screencast {
-  private readonly _page: Page;
+  private _page: Page;
+  private _savePath: string | undefined;
   private _onFrame: ((frame: { data: Buffer }) => Promise<any>) | null = null;
+  private _artifact: Artifact | undefined;
 
   constructor(page: Page) {
     this._page = page;
@@ -41,5 +45,37 @@ export class Screencast implements api.Screencast {
   async stop(): Promise<void> {
     this._onFrame = null;
     await this._page._channel.stopScreencast();
+  }
+
+  async startRecording(path: string, options: { size?: { width: number, height: number }, annotate?: AnnotateOptions } = {}) {
+    const result = await this._page._channel.videoStart({ size: options.size, annotate: options.annotate });
+    this._artifact = Artifact.from(result.artifact);
+    this._savePath = path;
+    return new DisposableStub(() => this.stopRecording());
+  }
+
+  async stopRecording(): Promise<void> {
+    await this._page._wrapApiCall(async () => {
+      await this._page._channel.videoStop();
+      if (this._savePath)
+        await this._artifact?.saveAs(this._savePath);
+    });
+  }
+
+  async showOverlay(html: string, options?: { duration?: number }): Promise<DisposableStub> {
+    const { id } = await this._page._channel.overlayShow({ html, duration: options?.duration });
+    return new DisposableStub(() => this._page._channel.overlayRemove({ id }));
+  }
+
+  async showChapter(title: string, options?: { description?: string, duration?: number }): Promise<void> {
+    await this._page._channel.overlayChapter({ title, ...options });
+  }
+
+  async showOverlays(): Promise<void> {
+    await this._page._channel.overlaySetVisible({ visible: true });
+  }
+
+  async hideOverlays(): Promise<void> {
+    await this._page._channel.overlaySetVisible({ visible: false });
   }
 }

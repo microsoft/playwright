@@ -1594,7 +1594,7 @@ test('should hide overlays during toHaveScreenshot', async ({ runInlineTest }, t
     'a.spec.js': `
       const { test, expect } = require('@playwright/test');
       test('is a test', async ({ page }) => {
-        await page.overlay.show('<div style="position:absolute;inset:0;background:red"></div>');
+        await page.screencast.showOverlay('<div style="position:absolute;inset:0;background:red"></div>');
         await expect(page).toHaveScreenshot('snapshot.png');
       });
     `

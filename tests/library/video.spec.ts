@@ -845,26 +845,19 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
-    await page.video().start({ size });
+    const videoPath1 = testInfo.outputPath('video1.webm');
+    await page.screencast.startRecording(videoPath1, { size });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
-    const videoPath1 = await page.video().path();
-    expect(videoPath1).toBeDefined();
-    await page.video().stop();
+    await page.screencast.stopRecording();
     expectRedFrames(videoPath1, size);
 
-    const videoPath3 = testInfo.outputPath('video3.webm');
-    await page.video().start({ size, path: videoPath3 });
+    const videoPath2 = testInfo.outputPath('video2.webm');
+    await page.screencast.startRecording(videoPath2, { size });
     await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
     await rafraf(page, 100);
-    const videoPath2 = await page.video().path();
-    expect(videoPath2).toBeDefined();
-    expect(videoPath2).not.toEqual(videoPath1);
-    await page.video().stop();
-    const contents2 = fs.readFileSync(videoPath2).toString('base64');
-    const contents3 = fs.readFileSync(videoPath3).toString('base64');
-    expect(contents2 === contents3).toBeTruthy();
-    expectFrames(videoPath3, size, isAlmostGray);
+    await page.screencast.stopRecording();
+    expectFrames(videoPath2, size, isAlmostGray);
 
     await context.close();
   });
@@ -876,15 +869,15 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
 
-    await page.video().start({ size });
+    await page.screencast.startRecording(testInfo.outputPath('video1.webm'), { size });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
-    await page.video().stop();
+    await page.screencast.stopRecording();
 
-    await page.video().start({ size });
+    await page.screencast.startRecording(testInfo.outputPath('video2.webm'), { size });
     await page.evaluate(() => document.body.style.backgroundColor = 'blue');
     await rafraf(page, 100);
-    await page.video().stop();
+    await page.screencast.stopRecording();
 
     const videoFiles = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'));
     expect(videoFiles).toHaveLength(2);
@@ -900,23 +893,23 @@ it.describe('screencast', () => {
       },
     });
     const page = await context.newPage();
-    const error = await page.video().start().catch(e => e);
+    const error = await page.screencast.startRecording(testInfo.outputPath('video.webm')).catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
-    await page.video().stop();
+    await page.screencast.stopRecording();
     await context.close();
   });
 
-  it('video.start should fail when another recording is in progress', async ({ page, trace }) => {
+  it('video.start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {
     it.skip(trace === 'on', 'trace=on has different screencast image configuration');
-    await page.video().start();
-    const error = await page.video().start().catch(e => e);
+    await page.screencast.startRecording(testInfo.outputPath('video.webm'));
+    const error = await page.screencast.startRecording(testInfo.outputPath('video2.webm')).catch(e => e);
     expect(error.message).toContain('Video is already being recorded');
   });
 
   it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    const error = await page.video().stop().catch(e => e);
+    const error = await page.screencast.stopRecording().catch(e => e);
     expect(error.message).toContain('Video is not being recorded');
     await context.close();
   });
@@ -924,17 +917,13 @@ it.describe('screencast', () => {
   it('video.start should finish when page is closed', async ({ browser }, testInfo) => {
     const context = await browser.newContext();
     const page = await context.newPage();
-    await page.video().start({ size: { width: 800, height: 800 } });
+    const videoPath = testInfo.outputPath('video.webm');
+    await page.screencast.startRecording(videoPath, { size: { width: 800, height: 800 } });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
-    const videoPath = await page.video().path();
-    expect(videoPath).toBeDefined();
     await page.close();
-    const error = await page.video().stop().catch(e => e);
+    const error = await page.screencast.stopRecording().catch(e => e);
     expect(error.message).toContain(kTargetClosedErrorMessage);
-    const newPath = testInfo.outputPath('video.webm');
-    await page.video().saveAs(newPath);
-    expect(fs.existsSync(newPath)).toBeTruthy();
     await context.close();
   });
 
@@ -943,8 +932,8 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
     const videoPath = testInfo.outputPath('empty-video.webm');
-    await page.video().start({ size, path: videoPath });
-    await page.video().stop();
+    await page.screencast.startRecording(videoPath, { size });
+    await page.screencast.stopRecording();
     await context.close();
     expectFrames(videoPath, size, isAlmostWhite);
   });
@@ -954,7 +943,7 @@ it.describe('screencast', () => {
     const context = await browser.newContext({ viewport: size });
     const page = await context.newPage();
     const videoPath = testInfo.outputPath('dispose-video.webm');
-    const disposable = await page.video().start({ size, path: videoPath });
+    const disposable = await page.screencast.startRecording(videoPath, { size });
     await page.evaluate(() => document.body.style.backgroundColor = 'red');
     await rafraf(page, 100);
     await disposable.dispose();

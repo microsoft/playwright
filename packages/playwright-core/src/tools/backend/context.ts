@@ -86,7 +86,7 @@ export type FilenameTemplate = {
   date?: Date;
 };
 
-type VideoParams = NonNullable<Parameters<playwright.Video['start']>[0]>;
+type VideoParams = { size?: { width: number; height: number } };
 
 export class Context {
   readonly config: ContextConfig;
@@ -98,8 +98,9 @@ export class Context {
   private _currentTab: Tab | undefined;
   private _routes: RouteEntry[] = [];
   private _video: {
-    allVideos: Set<playwright.Video>;
     params: VideoParams;
+    fileNames: string[];
+    fileName: string;
   } | undefined;
   private _disposables: Disposable[] = [];
 
@@ -181,30 +182,36 @@ export class Context {
     return await outputFile(this.options, baseName, options);
   }
 
-  async startVideoRecording(params: VideoParams) {
+  async startVideoRecording(fileName: string, params: VideoParams) {
     if (this._video)
       throw new Error('Video recording has already been started.');
-    this._video = { allVideos: new Set(), params };
+    this._video = { params, fileName, fileNames: [] };
     const browserContext = await this.ensureBrowserContext();
     for (const page of browserContext.pages())
       await this._startPageVideo(page);
   }
 
-  async stopVideoRecording(): Promise<playwright.Video[]> {
+  async stopVideoRecording(): Promise<string[]> {
     if (!this._video)
       return [];
     const video = this._video;
     for (const page of this._rawBrowserContext.pages())
-      await page.video().stop();
+      await page.screencast.stopRecording();
     this._video = undefined;
-    return [...video.allVideos];
+    return [...video.fileNames];
   }
 
   private async _startPageVideo(page: playwright.Page) {
     if (!this._video)
       return;
-    this._video.allVideos.add(page.video());
-    await page.video().start(this._video.params);
+    const suffix = this._video.fileNames.length ? `-${this._video.fileNames.length}` : '';
+    let fileName = this._video.fileName;
+    if (fileName && suffix) {
+      const ext = path.extname(fileName);
+      fileName = path.basename(fileName, ext) + suffix + ext;
+    }
+    this._video.fileNames.push(fileName);
+    await page.screencast.startRecording(fileName, this._video.params);
   }
 
   private _onPageCreated(page: playwright.Page) {

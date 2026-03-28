@@ -31,7 +31,6 @@ import { Keyboard, Mouse, Touchscreen } from './input';
 import { JSHandle, assertMaxArguments, parseResult, serializeArgument } from './jsHandle';
 import { Request, Response, Route, RouteHandler, WebSocket,  WebSocketRoute, WebSocketRouteHandler, validateHeaders } from './network';
 import { Video } from './video';
-import { Overlay } from './overlay';
 import { Screencast } from './screencast';
 import { Waiter } from './waiter';
 import { Worker } from './worker';
@@ -96,7 +95,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
   readonly request: APIRequestContext;
   readonly touchscreen: Touchscreen;
   readonly clock: Clock;
-  readonly overlay: Overlay;
   readonly screencast: Screencast;
 
 
@@ -137,7 +135,6 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._closed = initializer.isClosed;
     this._opener = Page.fromNullable(initializer.opener);
     this._video = new Video(this, this._connection, initializer.video ? Artifact.from(initializer.video) : undefined);
-    this.overlay = new Overlay(this);
     this.screencast = new Screencast(this);
 
     this._channel.on('bindingCall', ({ binding }) => this._onBinding(BindingCall.from(binding)));

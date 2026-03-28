@@ -818,7 +818,7 @@ async function installScreencastTitleUpdater(testInfo: TestInfoImpl, context: Br
     for (const page of context.pages()) {
       await overlays.get(page)?.dispose();
       overlays.delete(page);
-      const disposable = await page.overlay.show(html);
+      const disposable = await page.screencast.showOverlay(html);
       overlays.set(page, disposable);
     }
   };

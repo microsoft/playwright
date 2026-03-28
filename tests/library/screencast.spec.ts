@@ -72,14 +72,14 @@ test('start allows restart with different options after stop', async ({ browser,
   await context.close();
 });
 
-test('start reuses existing screencast when video recording is running', async ({ browser, server, trace }) => {
+test('start reuses existing screencast when video recording is running', async ({ browser, server, trace }, testInfo) => {
   test.skip(trace === 'on', 'trace=on enables screencast with different options');
 
   const videoSize = { width: 500, height: 400 };
   const context = await browser.newContext({ viewport: videoSize });
   const page = await context.newPage();
 
-  await page.video().start({ size: videoSize });
+  await page.screencast.startRecording(testInfo.outputPath('video.webm'), { size: videoSize });
 
   const frames: Buffer[] = [];
   await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
@@ -98,7 +98,7 @@ test('start reuses existing screencast when video recording is running', async (
     expect(height).toBe(videoSize.height);
   }
 
-  await page.video().stop();
+  await page.screencast.stopRecording();
   await context.close();
 });
 

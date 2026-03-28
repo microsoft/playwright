@@ -23,7 +23,7 @@ test('should add and remove overlay', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  const disposable = await page.overlay.show('<div id="my-overlay">Hello Overlay</div>');
+  const disposable = await page.screencast.showOverlay('<div id="my-overlay">Hello Overlay</div>');
   await expect(page.locator('x-pw-user-overlays')).toBeVisible();
   await expect(page.locator('.x-pw-user-overlay')).toHaveCount(1);
   await expect(page.locator('#my-overlay')).toHaveText('Hello Overlay');
@@ -39,8 +39,8 @@ test('should add multiple overlays', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  const d1 = await page.overlay.show('<div id="overlay-1">First</div>');
-  const d2 = await page.overlay.show('<div id="overlay-2">Second</div>');
+  const d1 = await page.screencast.showOverlay('<div id="overlay-1">First</div>');
+  const d2 = await page.screencast.showOverlay('<div id="overlay-2">Second</div>');
   await expect(page.locator('.x-pw-user-overlay')).toHaveCount(2);
   await expect(page.locator('#overlay-1')).toHaveText('First');
   await expect(page.locator('#overlay-2')).toHaveText('Second');
@@ -60,13 +60,13 @@ test('should hide and show overlays', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="my-overlay">Visible</div>');
+  await page.screencast.showOverlay('<div id="my-overlay">Visible</div>');
   await expect(page.locator('x-pw-user-overlays')).toBeVisible();
 
-  await page.overlay.setVisible(false);
+  await page.screencast.hideOverlays();
   await expect(page.locator('x-pw-user-overlays')).toBeHidden();
 
-  await page.overlay.setVisible(true);
+  await page.screencast.showOverlays();
   await expect(page.locator('x-pw-user-overlays')).toBeVisible();
   await expect(page.locator('#my-overlay')).toHaveText('Visible');
 
@@ -78,7 +78,7 @@ test('should survive navigation', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="persistent">Survives Reload</div>');
+  await page.screencast.showOverlay('<div id="persistent">Survives Reload</div>');
   await expect(page.locator('#persistent')).toHaveText('Survives Reload');
 
   await page.goto(server.EMPTY_PAGE);
@@ -95,7 +95,7 @@ test('should remove overlay and not restore after navigation', async ({ browser,
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  const disposable = await page.overlay.show('<div id="temp">Temporary</div>');
+  const disposable = await page.screencast.showOverlay('<div id="temp">Temporary</div>');
   await expect(page.locator('#temp')).toHaveText('Temporary');
 
   await disposable.dispose();
@@ -112,7 +112,7 @@ test('should sanitize scripts from overlay html', async ({ browser, server }) =>
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="safe">Safe</div><script>window.__injected = true</script>');
+  await page.screencast.showOverlay('<div id="safe">Safe</div><script>window.__injected = true</script>');
   await expect(page.locator('#safe')).toHaveText('Safe');
   expect(await page.evaluate(() => (window as any).__injected)).toBeUndefined();
 
@@ -124,7 +124,7 @@ test('should strip event handlers from overlay html', async ({ browser, server }
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="clean" onclick="window.__clicked=true">Click me</div>');
+  await page.screencast.showOverlay('<div id="clean" onclick="window.__clicked=true">Click me</div>');
   await expect(page.locator('#clean')).toHaveText('Click me');
   const hasOnclick = await page.locator('#clean').evaluate(el => el.hasAttribute('onclick'));
   expect(hasOnclick).toBe(false);
@@ -137,7 +137,7 @@ test('should auto-remove overlay after timeout', async ({ browser, server }) => 
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="timed">Temporary</div>', { duration: 1 });
+  await page.screencast.showOverlay('<div id="timed">Temporary</div>', { duration: 1 });
   await expect(page.locator('.x-pw-user-overlay')).toHaveCount(0);
 
   await context.close();
@@ -148,7 +148,7 @@ test('should allow styles in overlay html', async ({ browser, server }) => {
   const page = await context.newPage();
   await page.goto(server.EMPTY_PAGE);
 
-  await page.overlay.show('<div id="styled" style="color: red; font-size: 20px;">Styled</div>');
+  await page.screencast.showOverlay('<div id="styled" style="color: red; font-size: 20px;">Styled</div>');
   await expect(page.locator('#styled')).toHaveText('Styled');
   const color = await page.locator('#styled').evaluate(el => getComputedStyle(el).color);
   expect(color).toBe('rgb(255, 0, 0)');

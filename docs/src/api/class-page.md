@@ -2759,10 +2759,6 @@ The page's main frame. Page is guaranteed to have a main frame which persists du
 * since: v1.8
 - type: <[Mouse]>
 
-## property: Page.overlay
-* since: v1.59
-- type: <[Overlay]>
-
 ## method: Page.onceDialog
 * since: v1.10
 * langs: java
@@ -4461,8 +4457,7 @@ Optional handler function to route the request.
 * since: v1.8
 - returns: <[Video]>
 
-Video object associated with this page. Can be used to control video recording with [`method: Video.start`]
-and [`method: Video.stop`], or to access the video file when using the `recordVideo` context option.
+Video object associated with this page. Can be used to access the video file when using the `recordVideo` context option.
 
 ## method: Page.viewportSize
 * since: v1.8
