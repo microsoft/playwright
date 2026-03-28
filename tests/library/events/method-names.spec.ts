@@ -25,8 +25,7 @@ import { test, expect } from '@playwright/test';
 
 test('EventEmitter prototype test', () => {
   const ee = new EventEmitter();
-  // eslint-disable-next-line no-proto
-  expect((ee as any).__proto__.constructor.name).toEqual('EventEmitter');
+  expect(Object.getPrototypeOf(ee).constructor.name).toEqual('EventEmitter');
   expect(ee.on).toEqual(ee.addListener);  // Same method.
   expect(ee.off).toEqual(ee.removeListener);  // Same method.
 

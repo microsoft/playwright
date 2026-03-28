@@ -524,7 +524,7 @@
   /*  */
 
   // can we use __proto__?
-  var hasProto = '__proto__' in {};
+  var hasProto = !!Object.setPrototypeOf;
 
   // Browser environment sniffing
   var inBrowser = typeof window !== 'undefined';
@@ -961,12 +961,10 @@
 
   /**
    * Augment a target Object or Array by intercepting
-   * the prototype chain using __proto__
+   * the prototype chain using Object.setPrototypeOf
    */
   function protoAugment (target, src) {
-    /* eslint-disable no-proto */
-    target.__proto__ = src;
-    /* eslint-enable no-proto */
+    Object.setPrototypeOf(target, src);
   }
 
   /**

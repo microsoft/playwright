@@ -724,8 +724,7 @@ function fakePerformance(clock: ClockController, performance: Builtins['performa
     now: () => clock.performanceNow(),
   };
   result.__defineGetter__('timeOrigin', () => clock._now.origin || 0);
-  // eslint-disable-next-line no-proto
-  for (const key of Object.keys((performance as any).__proto__)) {
+  for (const key of Object.keys(Object.getPrototypeOf(performance) as object)) {
     if (key === 'now' || key === 'timeOrigin')
       continue;
     if (key === 'getEntries' || key === 'getEntriesByName' || key === 'getEntriesByType')
