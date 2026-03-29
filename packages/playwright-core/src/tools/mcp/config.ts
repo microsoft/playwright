@@ -464,7 +464,8 @@ export function commaSeparatedList(value: string | undefined): string[] | undefi
 export function dotenvFileLoader(value: string | undefined): Record<string, string> | undefined {
   if (!value)
     return undefined;
-  return dotenv.parse(fs.readFileSync(value, 'utf8'));
+  const parsed = dotenv.parse(fs.readFileSync(value, 'utf8'));
+  return Object.fromEntries(Object.entries(parsed).filter(([, v]) => v));
 }
 
 export function numberParser(value: string | undefined): number | undefined {

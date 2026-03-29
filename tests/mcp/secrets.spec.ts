@@ -126,3 +126,28 @@ await page.getByRole('textbox', { name: 'Password' }).fill(process.env['X-PASSWO
     inlineSnapshot: expect.stringContaining(`- textbox \"Password\" [active] [ref=e6]: <secret>X-PASSWORD</secret>`),
   });
 });
+
+
+test('empty secret values should not cause crash', async ({ startClient, server }) => {
+  const secretsFile = test.info().outputPath('secrets.env');
+  await fs.promises.writeFile(secretsFile, 'EMPTY_SECRET=\nREAL_SECRET=password123');
+
+  const { client } = await startClient({
+    args: ['--secrets', secretsFile],
+  });
+
+  server.setContent('/', `
+    <!DOCTYPE html>
+    <html>
+      <body>password123</body>
+    </html>
+  `, 'text/html');
+
+  const response = await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.PREFIX },
+  });
+  expect(response).toHaveResponse({
+    snapshot: expect.stringContaining('<secret>REAL_SECRET</secret>'),
+  });
+});
