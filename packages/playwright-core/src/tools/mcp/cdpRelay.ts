@@ -344,11 +344,9 @@ export class CDPRelayServer {
         const targetId = params?.targetId;
         const tabSessionId = this._findSessionByTargetId(targetId);
         if (tabSessionId) {
-          const tabId = this._tabSessions.get(tabSessionId)!.tabId;
+          // Forward the close to the extension so the real browser tab is closed.
+          await this._forwardToExtension(method, params, tabSessionId);
           this._removeTabSession(tabSessionId);
-          // Forward the close to the extension so the actual browser tab is removed.
-          if (tabId !== undefined)
-            this._extensionConnection?.send('forwardCDPCommand', { tabId, method: 'Target.closeTarget', params }).catch(() => {});
           this._sendToPlaywright({
             method: 'Target.detachedFromTarget',
             params: { sessionId: tabSessionId, targetId },
