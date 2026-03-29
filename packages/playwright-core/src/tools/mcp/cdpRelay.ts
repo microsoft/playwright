@@ -254,6 +254,12 @@ export class CDPRelayServer {
           else
             sessionId = [...this._tabSessions.keys()][0];
         }
+        // Clean up tab session when the target is destroyed.
+        if (params.method === 'Target.targetDestroyed') {
+          const destroyedSessionId = this._findSessionByTargetId(params.params?.targetId);
+          if (destroyedSessionId)
+            this._removeTabSession(destroyedSessionId);
+        }
         this._sendToPlaywright({
           sessionId,
           method: params.method,
@@ -334,12 +340,41 @@ export class CDPRelayServer {
           targetInfos: [...this._tabSessions.values()].map(s => ({ ...s.targetInfo, attached: true })),
         };
       }
+      case 'Target.closeTarget': {
+        const targetId = params?.targetId;
+        const tabSessionId = this._findSessionByTargetId(targetId);
+        if (tabSessionId) {
+          this._removeTabSession(tabSessionId);
+          this._sendToPlaywright({
+            method: 'Target.detachedFromTarget',
+            params: { sessionId: tabSessionId },
+          });
+        }
+        return { success: true };
+      }
       case 'Target.getTargetInfo': {
         const tabSession = sessionId ? this._tabSessions.get(sessionId) : undefined;
         return (tabSession ?? [...this._tabSessions.values()][0])?.targetInfo;
       }
     }
     return await this._forwardToExtension(method, params, sessionId);
+  }
+
+  private _removeTabSession(tabSessionId: string) {
+    const session = this._tabSessions.get(tabSessionId);
+    if (!session)
+      return;
+    this._tabSessions.delete(tabSessionId);
+    if (session.tabId !== undefined)
+      this._tabIdToSessionId.delete(session.tabId);
+  }
+
+  private _findSessionByTargetId(targetId: string): string | undefined {
+    for (const [sessionId, session] of this._tabSessions) {
+      if (session.targetInfo?.targetId === targetId)
+        return sessionId;
+    }
+    return undefined;
   }
 
   private async _forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
