@@ -185,12 +185,12 @@ test('weberror event should work', async ({ page }) => {
 test('weberror event should include location', async ({ page, server }) => {
   server.setRoute('/error.js', (req, res) => {
     res.setHeader('content-type', 'application/javascript');
-    res.end([
-      'console.log("a");',
-      'console.log("b");',
-      'throw new Error("boom");',
-      '',
-    ].join('\n'));
+    res.end(`
+      function foo() {
+        throw new Error('boom');
+      }
+      foo();
+    `);
   });
 
   server.setRoute('/error.html', (req, res) => {

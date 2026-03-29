@@ -34,7 +34,6 @@ import { WebSocketRouteDispatcher } from './webSocketRouteDispatcher';
 import { WritableStreamDispatcher } from './writableStreamDispatcher';
 import { createGuid } from '../utils/crypto';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
-import { errorLocationFromStack } from '../../utils/isomorphic/stackTrace';
 import { Recorder } from '../recorder';
 import { RecorderApp } from '../recorder/recorderApp';
 import { ElementHandleDispatcher } from './elementHandlerDispatcher';
@@ -44,7 +43,7 @@ import { disposeAll } from '../disposable';
 import type { ConsoleMessage } from '../console';
 import type { Dialog } from '../dialog';
 import type { Request, Response, RouteHandler } from '../network';
-import type { InitScript, Page } from '../page';
+import type { InitScript, Page, PageError } from '../page';
 import type { Disposable } from '../disposable';
 import type { DispatcherScope } from './dispatcher';
 import type * as channels from '@protocol/channels';
@@ -111,11 +110,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       this._dispatchEvent('close');
       this._dispose();
     });
-    this.addObjectListener(BrowserContext.Events.PageError, (error: Error, page: Page) => {
+    this.addObjectListener(BrowserContext.Events.PageError, (pageError: PageError, page: Page) => {
       this._dispatchEvent('pageError', {
-        error: serializeError(error),
+        error: serializeError(pageError.error),
         page: PageDispatcher.from(this, page),
-        location: errorLocationFromStack(error, path.sep, false),
+        location: {
+          url: pageError.location.url,
+          line: pageError.location.lineNumber,
+          column: pageError.location.columnNumber,
+        },
       });
     });
     this.addObjectListener(BrowserContext.Events.Console, (message: ConsoleMessage) => {

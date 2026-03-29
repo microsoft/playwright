@@ -31,7 +31,7 @@ import { createHandle, CRExecutionContext } from './crExecutionContext';
 import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './crInput';
 import { CRNetworkManager } from './crNetworkManager';
 import { CRPDF } from './crPdf';
-import { exceptionToError, releaseObject, toConsoleMessageLocation } from './crProtocolHelper';
+import { exceptionToError, releaseObject, stackTraceToLocation } from './crProtocolHelper';
 import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
@@ -742,9 +742,9 @@ class FrameSession {
     session.on('Target.detachedFromTarget', event => this._onDetachedFromTarget(event));
     session.on('Runtime.consoleAPICalled', event => {
       const args = event.args.map(o => createHandle(worker.existingExecutionContext!, o));
-      this._page.addConsoleMessage(worker, event.type, args, toConsoleMessageLocation(event.stackTrace), undefined, event.timestamp);
+      this._page.addConsoleMessage(worker, event.type, args, stackTraceToLocation(event.stackTrace), undefined, event.timestamp);
     });
-    session.on('Runtime.exceptionThrown', exception => this._page.addPageError(exceptionToError(exception.exceptionDetails)));
+    session.on('Runtime.exceptionThrown', exception => this._page.addPageError(exceptionToError(exception.exceptionDetails), stackTraceToLocation(exception.exceptionDetails.stackTrace)));
   }
 
   _onDetachedFromTarget(event: Protocol.Target.detachedFromTargetPayload) {
@@ -805,7 +805,7 @@ class FrameSession {
     if (!context)
       return;
     const values = event.args.map(arg => createHandle(context, arg));
-    this._page.addConsoleMessage(null, event.type, values, toConsoleMessageLocation(event.stackTrace), undefined, event.timestamp);
+    this._page.addConsoleMessage(null, event.type, values, stackTraceToLocation(event.stackTrace), undefined, event.timestamp);
   }
 
   async _onBindingCalled(event: Protocol.Runtime.bindingCalledPayload) {
@@ -834,7 +834,7 @@ class FrameSession {
   }
 
   _handleException(exceptionDetails: Protocol.Runtime.ExceptionDetails) {
-    this._page.addPageError(exceptionToError(exceptionDetails));
+    this._page.addPageError(exceptionToError(exceptionDetails), stackTraceToLocation(exceptionDetails.stackTrace));
   }
 
   async _onTargetCrashed() {

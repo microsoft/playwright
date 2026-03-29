@@ -280,7 +280,9 @@ export class BidiPage implements PageDelegate {
         const location = `${f.url}:${f.lineNumber + 1}:${f.columnNumber + 1}`;
         return f.functionName ? `    at ${f.functionName} (${location})` : `    at ${location}`;
       }).join('\n')}`;
-      this._page.addPageError(error);
+      const callFrame = params.stackTrace?.callFrames[0];
+      const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
+      this._page.addPageError(error, location);
       return;
     }
     if (params.type !== 'console')

@@ -29,7 +29,6 @@ import { Artifact } from '../../artifact';
 import { BrowserContext } from '../../browserContext';
 import { Dispatcher } from '../../dispatchers/dispatcher';
 import { serializeError } from '../../errors';
-import { errorLocationFromStack } from '../../../utils/isomorphic/stackTrace';
 import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
@@ -45,6 +44,7 @@ import type { Download } from '../../download';
 import type { APIRequestContext } from '../../fetch';
 import type { HarTracerDelegate } from '../../har/harTracer';
 import type { CallMetadata, InstrumentationListener } from '../../instrumentation';
+import type { PageError } from '../../page';
 import type { StackFrame, TracingTracingStopChunkParams } from '@protocol/channels';
 import type * as har from '@trace/har';
 import type { FrameSnapshot } from '@trace/snapshot';
@@ -586,15 +586,19 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     this._appendTraceEvent(event);
   }
 
-  private _onPageError(error: Error, page: Page) {
+  private _onPageError(pageError: PageError, page: Page) {
     const event: trace.EventTraceEvent = {
       type: 'event',
       time: monotonicTime(),
       class: 'BrowserContext',
       method: 'pageError',
       params: {
-        error: serializeError(error),
-        location: errorLocationFromStack(error, path.sep, false),
+        error: serializeError(pageError.error),
+        location: {
+          url: pageError.location.url,
+          line: pageError.location.lineNumber,
+          column: pageError.location.columnNumber,
+        },
       },
       pageId: page.guid,
     };

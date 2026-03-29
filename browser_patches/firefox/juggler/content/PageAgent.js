@@ -126,7 +126,7 @@ export class PageAgent {
         }
       }),
       helper.addObserver(this._onWindowOpen.bind(this), 'webNavigation-createdNavigationTarget-from-js'),
-      this._runtime.events.onErrorFromWorker((domWindow, message, stack) => {
+      this._runtime.events.onErrorFromWorker((domWindow, message, stack, location) => {
         const frame = this._frameTree.frameForDocShell(domWindow.docShell);
         if (!frame)
           return;
@@ -134,6 +134,7 @@ export class PageAgent {
           frameId: frame.id(),
           message,
           stack,
+          location,
         });
       }),
       this._runtime.events.onConsoleMessage(msg => this._browserPage.emit('runtimeConsole', msg)),
@@ -262,11 +263,12 @@ export class PageAgent {
     });
   }
 
-  _onRuntimeError({ executionContext, message, stack }) {
+  _onRuntimeError({ executionContext, message, stack, location }) {
     this._browserPage.emit('pageUncaughtError', {
       frameId: executionContext.auxData().frameId,
       message: message.toString(),
       stack: stack.toString(),
+      location,
     });
   }
 

@@ -392,6 +392,11 @@ export namespace Protocol {
       frameId: string;
       message: string;
       stack: string;
+      location: {
+        columnNumber: number;
+        lineNumber: number;
+        url: string;
+      };
     }
     export type frameAttachedPayload = {
       frameId: string;
