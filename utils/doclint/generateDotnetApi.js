@@ -388,6 +388,11 @@ function getPropertyOverloads(type, member, name, parent) {
  * @param {*} parent
  */
 function generateNameDefault(member, name, t, parent) {
+  if (t.structName) {
+    registerModelType(t.structName, t);
+    return t.structName;
+  }
+
   if (!t.properties
     && !t.templates
     && !t.union
