@@ -1318,7 +1318,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 ### option: Frame.isHidden.timeout
 * since: v1.8
 * deprecated: This option is ignored. [`method: Frame.isHidden`] does not wait for the element to become hidden and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## async method: Frame.isVisible
 * since: v1.8
@@ -1336,7 +1336,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 ### option: Frame.isVisible.timeout
 * since: v1.8
 * deprecated: This option is ignored. [`method: Frame.isVisible`] does not wait for the element to become visible and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## method: Frame.locator
 * since: v1.14

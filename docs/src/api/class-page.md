@@ -2657,7 +2657,7 @@ Returns whether the element is hidden, the opposite of [visible](../actionabilit
 * since: v1.8
 * deprecated: This option is ignored. [`method: Page.isHidden`] does not wait for the
   element to become hidden and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## async method: Page.isVisible
 * since: v1.8
@@ -2676,7 +2676,7 @@ Returns whether the element is [visible](../actionability.md#visible). [`param: 
 * since: v1.8
 * deprecated: This option is ignored. [`method: Page.isVisible`] does not wait
   for the element to become visible and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## property: Page.keyboard
 * since: v1.8

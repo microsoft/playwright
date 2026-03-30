@@ -3586,7 +3586,7 @@ export interface Page {
      * [page.isHidden(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-hidden) does not wait for
      * the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**
@@ -3612,7 +3612,7 @@ export interface Page {
      * [page.isVisible(selector[, options])](https://playwright.dev/docs/api/class-page#page-is-visible) does not wait for
      * the element to become visible and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**
@@ -7341,7 +7341,7 @@ export interface Frame {
      * [frame.isHidden(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-hidden) does not wait
      * for the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**
@@ -7367,7 +7367,7 @@ export interface Frame {
      * [frame.isVisible(selector[, options])](https://playwright.dev/docs/api/class-frame#frame-is-visible) does not wait
      * for the element to become visible and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**
@@ -14134,7 +14134,7 @@ export interface Locator {
      * [locator.isHidden([options])](https://playwright.dev/docs/api/class-locator#locator-is-hidden) does not wait for
      * the element to become hidden and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**
@@ -14158,7 +14158,7 @@ export interface Locator {
      * [locator.isVisible([options])](https://playwright.dev/docs/api/class-locator#locator-is-visible) does not wait for
      * the element to become visible and returns immediately.
      */
-    timeout?: number;
+    timeout?: never;
   }): Promise<boolean>;
 
   /**

@@ -1735,7 +1735,7 @@ Boolean hidden = await page.GetByRole(AriaRole.Button).IsHiddenAsync();
 ### option: Locator.isHidden.timeout
 * since: v1.14
 * deprecated: This option is ignored. [`method: Locator.isHidden`] does not wait for the element to become hidden and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## async method: Locator.isVisible
 * since: v1.14
@@ -1772,7 +1772,7 @@ Boolean visible = await page.GetByRole(AriaRole.Button).IsVisibleAsync();
 ### option: Locator.isVisible.timeout
 * since: v1.14
 * deprecated: This option is ignored. [`method: Locator.isVisible`] does not wait for the element to become visible and returns immediately.
-- `timeout` <[float]>
+- `timeout` <[never]>
 
 ## method: Locator.last
 * since: v1.14
