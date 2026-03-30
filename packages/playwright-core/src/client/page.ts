@@ -281,7 +281,12 @@ export class Page extends ChannelOwner<channels.PageChannel> implements api.Page
     this._timeoutSettings.setDefaultTimeout(timeout);
   }
 
-  video(): Video {
+  video(): Video | null {
+    // Note: we are creating Video object lazily, because we do not know
+    // BrowserContextOptions when constructing the page - it is assigned
+    // too late during launchPersistentContext.
+    if (!this._browserContext._options.recordVideo)
+      return null;
     return this._video;
   }
 
