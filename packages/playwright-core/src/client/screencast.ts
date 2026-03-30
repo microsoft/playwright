@@ -23,6 +23,7 @@ import type { AnnotateOptions } from './types';
 
 export class Screencast implements api.Screencast {
   private _page: Page;
+  private _started = false;
   private _savePath: string | undefined;
   private _onFrame: ((frame: { data: Buffer }) => Promise<any>) | null = null;
   private _artifact: Artifact | undefined;
@@ -34,31 +35,35 @@ export class Screencast implements api.Screencast {
     });
   }
 
-  async start(onFrame: (frame: { data: Buffer }) => Promise<any>|any, options: { size?: { width: number, height: number }, quality?: number } = {}): Promise<DisposableStub> {
-    if (this._onFrame)
+  async start(options: { onFrame?: (frame: { data: Buffer }) => Promise<any>|any, path?: string, size?: { width: number, height: number }, quality?: number, annotate?: AnnotateOptions } = {}): Promise<DisposableStub> {
+    if (this._started)
       throw new Error('Screencast is already started');
-    this._onFrame = onFrame;
-    await this._page._channel.startScreencast(options);
+    this._started = true;
+    if (options.onFrame)
+      this._onFrame = options.onFrame;
+    const result = await this._page._channel.screencastStart({
+      size: options.size,
+      quality: options.quality,
+      sendFrames: !!options.onFrame,
+      record: !!options.path,
+      annotate: options.annotate,
+    });
+    if (result.artifact) {
+      this._artifact = Artifact.from(result.artifact);
+      this._savePath = options.path;
+    }
     return new DisposableStub(() => this.stop());
   }
 
   async stop(): Promise<void> {
-    this._onFrame = null;
-    await this._page._channel.stopScreencast();
-  }
-
-  async startRecording(path: string, options: { size?: { width: number, height: number }, annotate?: AnnotateOptions } = {}) {
-    const result = await this._page._channel.videoStart({ size: options.size, annotate: options.annotate });
-    this._artifact = Artifact.from(result.artifact);
-    this._savePath = path;
-    return new DisposableStub(() => this.stopRecording());
-  }
-
-  async stopRecording(): Promise<void> {
     await this._page._wrapApiCall(async () => {
-      await this._page._channel.videoStop();
+      this._started = false;
+      this._onFrame = null;
+      await this._page._channel.screencastStop();
       if (this._savePath)
         await this._artifact?.saveAs(this._savePath);
+      this._artifact = undefined;
+      this._savePath = undefined;
     });
   }
 

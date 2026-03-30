@@ -196,7 +196,7 @@ export class Context {
       return [];
     const video = this._video;
     for (const page of this._rawBrowserContext.pages())
-      await page.screencast.stopRecording();
+      await page.screencast.stop();
     this._video = undefined;
     return [...video.fileNames];
   }
@@ -211,7 +211,7 @@ export class Context {
       fileName = path.basename(fileName, ext) + suffix + ext;
     }
     this._video.fileNames.push(fileName);
-    await page.screencast.startRecording(fileName, this._video.params);
+    await page.screencast.start({ path: fileName, ...this._video.params });
   }
 
   private _onPageCreated(page: playwright.Page) {

@@ -2164,10 +2164,8 @@ export interface PageChannel extends PageEventTarget, EventTargetChannel {
   overlayRemove(params: PageOverlayRemoveParams, progress?: Progress): Promise<PageOverlayRemoveResult>;
   overlayChapter(params: PageOverlayChapterParams, progress?: Progress): Promise<PageOverlayChapterResult>;
   overlaySetVisible(params: PageOverlaySetVisibleParams, progress?: Progress): Promise<PageOverlaySetVisibleResult>;
-  startScreencast(params: PageStartScreencastParams, progress?: Progress): Promise<PageStartScreencastResult>;
-  stopScreencast(params?: PageStopScreencastParams, progress?: Progress): Promise<PageStopScreencastResult>;
-  videoStart(params: PageVideoStartParams, progress?: Progress): Promise<PageVideoStartResult>;
-  videoStop(params?: PageVideoStopParams, progress?: Progress): Promise<PageVideoStopResult>;
+  screencastStart(params: PageScreencastStartParams, progress?: Progress): Promise<PageScreencastStartResult>;
+  screencastStop(params?: PageScreencastStopParams, progress?: Progress): Promise<PageScreencastStopResult>;
   updateSubscription(params: PageUpdateSubscriptionParams, progress?: Progress): Promise<PageUpdateSubscriptionResult>;
   setDockTile(params: PageSetDockTileParams, progress?: Progress): Promise<PageSetDockTileResult>;
 }
@@ -2717,44 +2715,32 @@ export type PageOverlaySetVisibleOptions = {
 
 };
 export type PageOverlaySetVisibleResult = void;
-export type PageStartScreencastParams = {
+export type PageScreencastStartParams = {
   size?: {
     width: number,
     height: number,
   },
   quality?: number,
+  sendFrames?: boolean,
+  record?: boolean,
+  annotate?: AnnotateOptions,
 };
-export type PageStartScreencastOptions = {
+export type PageScreencastStartOptions = {
   size?: {
     width: number,
     height: number,
   },
   quality?: number,
-};
-export type PageStartScreencastResult = void;
-export type PageStopScreencastParams = {};
-export type PageStopScreencastOptions = {};
-export type PageStopScreencastResult = void;
-export type PageVideoStartParams = {
-  size?: {
-    width: number,
-    height: number,
-  },
+  sendFrames?: boolean,
+  record?: boolean,
   annotate?: AnnotateOptions,
 };
-export type PageVideoStartOptions = {
-  size?: {
-    width: number,
-    height: number,
-  },
-  annotate?: AnnotateOptions,
+export type PageScreencastStartResult = {
+  artifact?: ArtifactChannel,
 };
-export type PageVideoStartResult = {
-  artifact: ArtifactChannel,
-};
-export type PageVideoStopParams = {};
-export type PageVideoStopOptions = {};
-export type PageVideoStopResult = void;
+export type PageScreencastStopParams = {};
+export type PageScreencastStopOptions = {};
+export type PageScreencastStopResult = void;
 export type PageUpdateSubscriptionParams = {
   event: 'console' | 'dialog' | 'fileChooser' | 'request' | 'response' | 'requestFinished' | 'requestFailed',
   enabled: boolean,

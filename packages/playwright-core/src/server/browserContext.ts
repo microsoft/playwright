@@ -530,9 +530,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       for (const harRecorder of this._harRecorders.values())
         await harRecorder.flush();
       await this.tracing.flush();
-
-      // Cleanup.
-      const promises: Promise<void>[] = this.pages().map(page => page.screencast.handlePageOrContextClose());
+      await Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose()));
 
       if (this._customCloseHandler) {
         await this._customCloseHandler();
@@ -543,6 +541,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
 
       // We delete downloads after context closure
       // so that browser does not write to the download file anymore.
+      const promises: Promise<void>[] = [];
       promises.push(this._deleteAllDownloads());
       promises.push(this._deleteAllTempDirs());
       await Promise.all(promises);

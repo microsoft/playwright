@@ -74,7 +74,7 @@ export class VideoRecorder {
 
     this._screencast.removeClient(client);
     await videoRecorder.stop();
-    artifact.reportFinished();
+    await artifact.reportFinished();
   }
 }
 

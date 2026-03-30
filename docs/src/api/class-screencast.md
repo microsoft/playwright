@@ -1,33 +1,52 @@
 # class: Screencast
 * since: v1.59
-* langs: js
 
 Interface for capturing screencast frames from a page.
 
 ## async method: Screencast.start
 * since: v1.59
-* langs: js
 - returns: <[Disposable]>
 
-Starts capturing screencast frames.
+Starts the screencast. When [`option: Screencast.start.path`] is provided, it saves video recording to the specified file.
+When [`option: Screencast.start.onFrame`] is provided, delivers JPEG-encoded frames to the callback. Both can be used together.
 
 **Usage**
 
 ```js
-await page.screencast.start(({ data })  => {
-  console.log(`frame size: ${data.length}`);
-}, { size: { width: 800, height: 600 } });
+// Record video
+await page.screencast.start({ path: 'video.webm', size: { width: 1280, height: 800 } });
 // ... perform actions ...
 await page.screencast.stop();
 ```
 
-### param: Screencast.start.onFrame
+```js
+// Capture frames
+await page.screencast.start({
+  onFrame: ({ data }) => console.log(`frame size: ${data.length}`),
+  size: { width: 800, height: 600 },
+});
+// ... perform actions ...
+await page.screencast.stop();
+```
+
+### option: Screencast.start.onFrame
 * since: v1.59
-* langs: js
 - `onFrame` <[function]\([Object]\): [Promise]>
   - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
+
+### option: Screencast.start.path
+* since: v1.59
+- `path` <[path]>
+
+Path where the video should be saved when the screencast is stopped. When provided, video recording is started.
+
+### option: Screencast.start.quality
+* since: v1.59
+- `quality` <[int]>
+
+The quality of the image, between 0-100.
 
 ### option: Screencast.start.size
 * since: v1.59
@@ -36,56 +55,14 @@ Callback that receives JPEG-encoded frame data.
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
-Specifies the dimensions of screencast frames. The actual frame is scaled to preserve the page’s aspect ratio and may be smaller than these bounds.
+Specifies the dimensions of screencast frames. The actual frame is scaled to preserve the page's aspect ratio and may be smaller than these bounds.
 If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
 If not specified the size will be equal to page viewport scaled down to fit into 800×800.
 
-### option: Screencast.start.quality
-* since: v1.59
-* langs: js
-- `quality` <[int]>
-
-The quality of the image, between 0-100.
-
 ## async method: Screencast.stop
 * since: v1.59
-* langs: js
 
-Stops the screencast started with [`method: Screencast.start`].
-
-## async method: Screencast.startRecording
-* since: v1.59
-- returns: <[Disposable]>
-
-Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
-
-### param: Screencast.startRecording.path
-* since: v1.59
-- `path` <[path]>
-
-Path where the video should be saved when the recording is stopped.
-
-### option: Screencast.startRecording.size
-* since: v1.59
-- `size` ?<[Object=ScreencastSize]>
-  - `width` <[int]> Video frame width.
-  - `height` <[int]> Video frame height.
-
-Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800×800. Actual picture of the page will be scaled down if necessary to fit the specified size.
-
-### option: Screencast.startRecording.annotate
-* since: v1.59
-- `annotate` ?<[Object=ScreencastAnnotation]>
-  - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
-  - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
-  - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
-
-If specified, enables visual annotations on interacted elements during video recording. Interacted elements are highlighted with a semi-transparent blue box and click points are shown as red circles.
-
-## async method: Screencast.stopRecording
-* since: v1.59
-
-Stops video recording started with [`method: Screencast.startRecording`].
+Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified in [`method: Screencast.start`].
 
 ## async method: Screencast.showOverlay
 * since: v1.59
