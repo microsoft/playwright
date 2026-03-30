@@ -171,22 +171,29 @@ export async function createConnectionAsync(
 }
 
 async function lookupAddresses(hostname: string): Promise<dns.LookupAddress[]> {
-  const addresses = await dns.promises.lookup(hostname, { all: true, family: 0, verbatim: true });
-  let firstFamily = addresses.filter(({ family }) => family === 6);
-  let secondFamily = addresses.filter(({ family }) => family === 4);
-  // Make sure first address in the list is the same as in the original order.
-  if (firstFamily.length && firstFamily[0] !== addresses[0]) {
-    const tmp = firstFamily;
-    firstFamily = secondFamily;
-    secondFamily = tmp;
+  // Use separate family lookups to avoid AI_ADDRCONFIG filtering. When family: 0 is used,
+  // Node.js passes AI_ADDRCONFIG to getaddrinfo(), which on macOS can filter out addresses
+  // for a family that has no non-loopback interface — e.g. returning only 127.0.0.1 for
+  // "localhost" when IPv6 is not available on non-loopback interfaces, even though ::1 is
+  // present in /etc/hosts. Separate family: 4 and family: 6 lookups do not pass AI_ADDRCONFIG.
+  const [v4Result, v6Result] = await Promise.allSettled([
+    dns.promises.lookup(hostname, { all: true, family: 4 }),
+    dns.promises.lookup(hostname, { all: true, family: 6 }),
+  ]);
+  const v4Addresses = v4Result.status === 'fulfilled' ? v4Result.value : [];
+  const v6Addresses = v6Result.status === 'fulfilled' ? v6Result.value : [];
+  if (!v4Addresses.length && !v6Addresses.length) {
+    if (v4Result.status === 'rejected')
+      throw v4Result.reason;
+    throw (v6Result as PromiseRejectedResult).reason;
   }
-  const result = [];
-  // Alternate ipv6 and ipv4 addresses.
-  for (let i = 0; i < Math.max(firstFamily.length, secondFamily.length); i++) {
-    if (firstFamily[i])
-      result.push(firstFamily[i]);
-    if (secondFamily[i])
-      result.push(secondFamily[i]);
+  const result: dns.LookupAddress[] = [];
+  // Alternate IPv6 and IPv4 addresses per RFC 8305 (prefer IPv6 first).
+  for (let i = 0; i < Math.max(v4Addresses.length, v6Addresses.length); i++) {
+    if (v6Addresses[i])
+      result.push(v6Addresses[i]);
+    if (v4Addresses[i])
+      result.push(v4Addresses[i]);
   }
   return result;
 }
