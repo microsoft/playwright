@@ -132,9 +132,10 @@ export class CDPRelayServer {
       url.searchParams.set('token', token);
     const href = url.toString();
 
+    const channel = registry.isChromiumAlias(this._browserChannel) ? 'chromium' : this._browserChannel;
     let executablePath = this._executablePath;
     if (!executablePath) {
-      const executableInfo = registry.findExecutable(this._browserChannel);
+      const executableInfo = registry.findExecutable(channel);
       if (!executableInfo)
         throw new Error(`Unsupported channel: "${this._browserChannel}"`);
       executablePath = executableInfo.executablePath();
@@ -145,7 +146,7 @@ export class CDPRelayServer {
     const args: string[] = [];
     if (this._userDataDir)
       args.push(`--user-data-dir=${this._userDataDir}`);
-    if (os.platform() === 'linux' && this._browserChannel === 'chromium')
+    if (os.platform() === 'linux' && channel === 'chromium')
       args.push('--no-sandbox');
     args.push(href);
     spawn(executablePath, args, {
