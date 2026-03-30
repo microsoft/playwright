@@ -16185,22 +16185,35 @@ export interface WebSocketRoute {
  */
 export interface Screencast {
   /**
-   * Starts capturing screencast frames.
+   * Starts the screencast. When [`path`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-path)
+   * is provided, it saves video recording to the specified file. When
+   * [`onFrame`](https://playwright.dev/docs/api/class-screencast#screencast-start-option-on-frame) is provided,
+   * delivers JPEG-encoded frames to the callback. Both can be used together.
    *
    * **Usage**
    *
    * ```js
-   * await page.screencast.start(({ data })  => {
-   *   console.log(`frame size: ${data.length}`);
-   * }, { size: { width: 800, height: 600 } });
+   * // Record video
+   * await page.screencast.start({ path: 'video.webm', size: { width: 1280, height: 800 } });
    * // ... perform actions ...
    * await page.screencast.stop();
    * ```
    *
-   * @param onFrame Callback that receives JPEG-encoded frame data.
+   * ```js
+   * // Capture frames
+   * await page.screencast.start({
+   *   onFrame: ({ data }) => console.log(`frame size: ${data.length}`),
+   *   size: { width: 800, height: 600 },
+   * });
+   * // ... perform actions ...
+   * await page.screencast.stop();
+   * ```
+   *
    * @param options
    */
-  start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
+  start(options?: {
+    onFrame?: (frame: { data: Buffer }) => Promise<any>|any;
+    path?: string;
     size?: {
       width: number;
       height: number;
@@ -16255,60 +16268,10 @@ export interface Screencast {
   showOverlays(): Promise<void>;
 
   /**
-   * Starts video recording. This method is mutually exclusive with the `recordVideo` context option.
-   * @param path Path where the video should be saved when the recording is stopped.
-   * @param options
-   */
-  startRecording(path: string, options?: {
-    /**
-     * If specified, enables visual annotations on interacted elements during video recording. Interacted elements are
-     * highlighted with a semi-transparent blue box and click points are shown as red circles.
-     */
-    annotate?: {
-      /**
-       * How long each annotation is displayed in milliseconds. Defaults to `500`.
-       */
-      duration?: number;
-
-      /**
-       * Position of the action title overlay. Defaults to `"top-right"`.
-       */
-      position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
-
-      /**
-       * Font size of the action title in pixels. Defaults to `24`.
-       */
-      fontSize?: number;
-    };
-
-    /**
-     * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
-     * fit into 800×800. Actual picture of the page will be scaled down if necessary to fit the specified size.
-     */
-    size?: {
-      /**
-       * Video frame width.
-       */
-      width: number;
-
-      /**
-       * Video frame height.
-       */
-      height: number;
-    };
-  }): Promise<Disposable>;
-
-  /**
-   * Stops the screencast started with
-   * [screencast.start(onFrame[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
+   * Stops the screencast and video recording if active. If a video was being recorded, saves it to the path specified
+   * in [screencast.start([options])](https://playwright.dev/docs/api/class-screencast#screencast-start).
    */
   stop(): Promise<void>;
-
-  /**
-   * Stops video recording started with
-   * [screencast.startRecording(path[, options])](https://playwright.dev/docs/api/class-screencast#screencast-start-recording).
-   */
-  stopRecording(): Promise<void>;
 }
 
 type DeviceDescriptor = {

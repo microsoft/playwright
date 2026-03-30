@@ -790,9 +790,14 @@ export class Page extends SdkObject<PageEventMap> {
   async close(options: { runBeforeUnload?: boolean, reason?: string } = {}) {
     if (this._closedState === 'closed')
       return;
+
     if (options.reason)
       this._closeReason = options.reason;
     const runBeforeUnload = !!options.runBeforeUnload;
+
+    if (!runBeforeUnload)
+      await this.screencast.handlePageOrContextClose();
+
     if (this._closedState !== 'closing') {
       // If runBeforeUnload is true, we don't know if we will close, so don't modify the state
       if (!runBeforeUnload)
@@ -801,7 +806,6 @@ export class Page extends SdkObject<PageEventMap> {
       // while we are trying to close the page.
       await this.delegate.closePage(runBeforeUnload).catch(e => debugLogger.log('error', e));
     }
-    await this.screencast.handlePageOrContextClose();
     if (!runBeforeUnload)
       await this.closedPromise;
   }

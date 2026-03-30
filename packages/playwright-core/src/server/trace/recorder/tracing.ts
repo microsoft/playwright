@@ -722,10 +722,8 @@ function createAfterActionTraceEvent(metadata: CallMetadata): trace.AfterActionT
   };
 }
 
-// Aiming at 25 fps by default - each frame is 40ms, but we give some slack with 35ms.
-// When an action occurs, throttling is disabled for 200ms to capture the action.
-const throttledRate = 35;
-const unthrottleDuration = 200;
+const throttledRate = 200;
+const unthrottleDuration = 500;
 
 class ScreencastTracingRecorder {
   private _screencast: Screencast;

@@ -1569,28 +1569,21 @@ scheme.PageOverlaySetVisibleParams = tObject({
   visible: tBoolean,
 });
 scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
-scheme.PageStartScreencastParams = tObject({
+scheme.PageScreencastStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
   quality: tOptional(tInt),
-});
-scheme.PageStartScreencastResult = tOptional(tObject({}));
-scheme.PageStopScreencastParams = tOptional(tObject({}));
-scheme.PageStopScreencastResult = tOptional(tObject({}));
-scheme.PageVideoStartParams = tObject({
-  size: tOptional(tObject({
-    width: tInt,
-    height: tInt,
-  })),
+  sendFrames: tOptional(tBoolean),
+  record: tOptional(tBoolean),
   annotate: tOptional(tType('AnnotateOptions')),
 });
-scheme.PageVideoStartResult = tObject({
-  artifact: tChannel(['Artifact']),
+scheme.PageScreencastStartResult = tObject({
+  artifact: tOptional(tChannel(['Artifact'])),
 });
-scheme.PageVideoStopParams = tOptional(tObject({}));
-scheme.PageVideoStopResult = tOptional(tObject({}));
+scheme.PageScreencastStopParams = tOptional(tObject({}));
+scheme.PageScreencastStopResult = tOptional(tObject({}));
 scheme.PageUpdateSubscriptionParams = tObject({
   event: tEnum(['console', 'dialog', 'fileChooser', 'request', 'response', 'requestFinished', 'requestFailed']),
   enabled: tBoolean,

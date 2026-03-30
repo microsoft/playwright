@@ -14,77 +14,15 @@
  * limitations under the License.
  */
 
-import { spawnSync } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import { PNG, jpegjs } from 'playwright-core/lib/utilsBundle';
-import { registry } from '../../packages/playwright-core/lib/server';
+import { jpegjs } from 'playwright-core/lib/utilsBundle';
 import { expect, browserTest as it } from '../config/browserTest';
 import { parseTraceRaw, rafraf } from '../config/utils';
-import { kTargetClosedErrorMessage } from '../config/errors';
-
-export class VideoPlayer {
-  fileName: string;
-  output: string;
-  duration: number;
-  frames: number;
-  videoWidth: number;
-  videoHeight: number;
-  cache = new Map<number, any>();
-
-  constructor(fileName: string) {
-    this.fileName = fileName;
-    const ffmpeg = registry.findExecutable('ffmpeg')!.executablePathOrDie('javascript');
-    // Force output frame rate to 25 fps as otherwise it would produce one image per timebase unit
-    // which is 1 / (25 * 1000).
-    this.output = spawnSync(ffmpeg, ['-i', this.fileName, '-r', '25', `${this.fileName}-%04d.png`]).stderr.toString();
-
-    const lines = this.output.split('\n');
-    let framesLine = lines.find(l => l.startsWith('frame='))!;
-    if (!framesLine)
-      throw new Error(`No frame data in the output:\n${this.output}`);
-    framesLine = framesLine.substring(framesLine.lastIndexOf('frame='));
-    const framesMatch = framesLine.match(/frame=\s+(\d+)/);
-    const streamLine = lines.find(l => l.trim().startsWith('Stream #0:0'));
-    const resolutionMatch = streamLine.match(/, (\d+)x(\d+),/);
-    const durationMatch = lines.find(l => l.trim().startsWith('Duration'))!.match(/Duration: (\d+):(\d\d):(\d\d.\d\d)/);
-    this.duration = (((parseInt(durationMatch![1], 10) * 60) + parseInt(durationMatch![2], 10)) * 60 + parseFloat(durationMatch![3])) * 1000;
-    this.frames = parseInt(framesMatch![1], 10);
-    this.videoWidth = parseInt(resolutionMatch![1], 10);
-    this.videoHeight = parseInt(resolutionMatch![2], 10);
-  }
-
-  findFrame(framePredicate: (pixels: Buffer) => boolean, offset?: { x: number, y: number }): any |undefined {
-    for (let f = 1; f <= this.frames; ++f) {
-      const frame = this.frame(f, offset);
-      if (framePredicate(frame.data))
-        return frame;
-    }
-  }
-
-  seekLastFrame(offset?: { x: number, y: number }): any {
-    return this.frame(this.frames, offset);
-  }
-
-  frame(frame: number, offset = { x: 10, y: 10 }): any {
-    if (!this.cache.has(frame)) {
-      const gap = '0'.repeat(4 - String(frame).length);
-      const buffer = fs.readFileSync(`${this.fileName}-${gap}${frame}.png`);
-      this.cache.set(frame, PNG.sync.read(buffer));
-    }
-    const decoded = this.cache.get(frame);
-    const dst = new PNG({ width: 10, height: 10 });
-    PNG.bitblt(decoded, dst, offset.x, offset.y, 10, 10, 0, 0);
-    return dst;
-  }
-}
+import { VideoPlayer } from './videoPlayer';
 
 type Pixel = { r: number, g: number, b: number, alpha: number };
 type PixelPredicate = (pixel: Pixel) => boolean;
-
-function isAlmostWhite({ r, g, b, alpha }: Pixel): boolean {
-  return r > 185 && g > 185 && b > 185 && alpha === 255;
-}
 
 function isAlmostRed({ r, g, b, alpha }: Pixel): boolean {
   return r > 185 && g < 70 && b < 70 && alpha === 255;
@@ -823,126 +761,6 @@ it.describe('screencast', () => {
       alpha: image.data.readUInt8(offset + 3),
     };
     expect(isAlmostRed(pixel)).toBe(true);
-  });
-
-  it('video.start/stop twice', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-
-    const videoPath1 = testInfo.outputPath('video1.webm');
-    await page.screencast.startRecording(videoPath1, { size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await page.screencast.stopRecording();
-    expectRedFrames(videoPath1, size);
-
-    const videoPath2 = testInfo.outputPath('video2.webm');
-    await page.screencast.startRecording(videoPath2, { size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'rgb(100,100,100)');
-    await rafraf(page, 100);
-    await page.screencast.stopRecording();
-    expectFrames(videoPath2, size, isAlmostGray);
-
-    await context.close();
-  });
-
-  it('video.start/stop twice without path creates two files in artifactsDir', async ({ browserType }, testInfo) => {
-    const artifactsDir = testInfo.outputPath('artifacts');
-    const browser = await browserType.launch({ artifactsDir });
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-
-    await page.screencast.startRecording(testInfo.outputPath('video1.webm'), { size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await page.screencast.stopRecording();
-
-    await page.screencast.startRecording(testInfo.outputPath('video2.webm'), { size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'blue');
-    await rafraf(page, 100);
-    await page.screencast.stopRecording();
-
-    const videoFiles = fs.readdirSync(artifactsDir).filter(f => f.endsWith('.webm'));
-    expect(videoFiles).toHaveLength(2);
-
-    await context.close();
-    await browser.close();
-  });
-
-  it('video.start should work when recordVideo is set', async ({ browser }, testInfo) => {
-    const autoDir = testInfo.outputPath('auto');
-    const manualDir = testInfo.outputPath('manual');
-    const context = await browser.newContext({
-      recordVideo: {
-        dir: autoDir,
-      },
-    });
-    const page = await context.newPage();
-
-    await page.screencast.startRecording(path.join(manualDir, 'video.webm'));
-    await page.evaluate(() => document.body.style.backgroundColor = 'blue');
-    await rafraf(page, 100);
-    await page.screencast.stopRecording();
-    const videoFiles1 = fs.readdirSync(manualDir).filter(f => f.endsWith('.webm'));
-    expect(videoFiles1).toHaveLength(1);
-
-    await context.close();
-    const videoFiles2 = fs.readdirSync(autoDir).filter(f => f.endsWith('.webm'));
-    expect(videoFiles2).toHaveLength(1);
-  });
-
-  it('video.start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {
-    it.skip(trace === 'on', 'trace=on has different screencast image configuration');
-    await page.screencast.startRecording(testInfo.outputPath('video.webm'));
-    const error = await page.screencast.startRecording(testInfo.outputPath('video2.webm')).catch(e => e);
-    expect(error.message).toContain('Video is already being recorded');
-  });
-
-  it('video.stop should fail when no recording is in progress', async ({ browser }, testInfo) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const error = await page.screencast.stopRecording().catch(e => e);
-    expect(error.message).toContain('Video is not being recorded');
-    await context.close();
-  });
-
-  it('video.start should finish when page is closed', async ({ browser }, testInfo) => {
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    const videoPath = testInfo.outputPath('video.webm');
-    await page.screencast.startRecording(videoPath, { size: { width: 800, height: 800 } });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await page.close();
-    const error = await page.screencast.stopRecording().catch(e => e);
-    expect(error.message).toContain(kTargetClosedErrorMessage);
-    await context.close();
-  });
-
-  it('empty video', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-    const videoPath = testInfo.outputPath('empty-video.webm');
-    await page.screencast.startRecording(videoPath, { size });
-    await page.screencast.stopRecording();
-    await context.close();
-    expectFrames(videoPath, size, isAlmostWhite);
-  });
-
-  it('video.start dispose stops recording', async ({ browser }, testInfo) => {
-    const size = { width: 800, height: 800 };
-    const context = await browser.newContext({ viewport: size });
-    const page = await context.newPage();
-    const videoPath = testInfo.outputPath('dispose-video.webm');
-    const disposable = await page.screencast.startRecording(videoPath, { size });
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await disposable.dispose();
-    expectRedFrames(videoPath, size);
-    await context.close();
   });
 
 });

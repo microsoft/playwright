@@ -202,10 +202,10 @@ export class DashboardConnection implements Transport, DashboardChannel {
     );
 
     const size = { width: 1280, height: 800 };
-    await page.screencast.start(
-        ({ data }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
-        { size },
-    );
+    await page.screencast.start({
+      onFrame: ({ data }: { data: Buffer }) => this._writeFrame(data, page.viewportSize()?.width ?? 0, page.viewportSize()?.height ?? 0),
+      size,
+    });
   }
 
   private _deselectPage() {

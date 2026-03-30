@@ -62,8 +62,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
-  private _screencastClient: ScreencastClient | null = null;
-  private _videoRecorder: VideoRecorder | null = null;
+  private _screencastClient: ScreencastClient | undefined;
+  private _videoRecorder: VideoRecorder | undefined;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -374,45 +374,40 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await this._page.overlay.setVisible(params.visible);
   }
 
-  async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
-    if (this._screencastClient)
+  async screencastStart(params: channels.PageScreencastStartParams, progress?: Progress): Promise<channels.PageScreencastStartResult> {
+    if (this._screencastClient || this._videoRecorder)
       throw new Error('Screencast is already running');
 
-    this._screencastClient = {
-      onFrame: (frame: ScreencastFrame) => {
-        this._dispatchEvent('screencastFrame', { data: frame.buffer });
-      },
-      dispose: () => {},
-      size: params.size,
-      quality: params.quality,
-    };
-    this._page.screencast.addClient(this._screencastClient);
+    if (params.sendFrames) {
+      this._screencastClient = {
+        onFrame: (frame: ScreencastFrame) => {
+          this._dispatchEvent('screencastFrame', { data: frame.buffer });
+        },
+        dispose: () => {},
+        size: params.size,
+        quality: params.quality,
+      };
+      this._page.screencast.addClient(this._screencastClient);
+    }
+
+    let artifact: Artifact | undefined;
+    if (params.record) {
+      this._videoRecorder = new VideoRecorder(this._page.screencast);
+      artifact = this._videoRecorder.start(params);
+    }
+    return { artifact: artifact ? createVideoDispatcher(this.parentScope(), artifact) : undefined };
   }
 
-  async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
-    await this._stopScreencast();
-  }
+  async screencastStop(params: channels.PageScreencastStopParams, progress?: Progress): Promise<channels.PageScreencastStopResult> {
+    if (this._videoRecorder) {
+      await this._videoRecorder.stop();
+      this._videoRecorder = undefined;
+    }
 
-  private async _stopScreencast() {
     const client = this._screencastClient;
-    this._screencastClient = null;
+    this._screencastClient = undefined;
     if (client)
       this._page.screencast.removeClient(client);
-  }
-
-  async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
-    if (this._videoRecorder)
-      throw new Error('Video is already being recorded');
-    this._videoRecorder = new VideoRecorder(this._page.screencast);
-    const artifact = this._videoRecorder.start(params);
-    return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
-  }
-
-  async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
-    if (!this._videoRecorder)
-      throw new Error('Video is not being recorded');
-    await this._videoRecorder.stop();
-    this._videoRecorder = null;
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {
@@ -469,7 +464,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     if (this._cssCoverageActive)
       (this._page.coverage as CRCoverage).stopCSSCoverage().catch(() => {});
     this._cssCoverageActive = false;
-    this._stopScreencast().catch(() => {});
+    this.screencastStop({}, undefined).catch(() => {});
   }
 
   async setDockTile(params: channels.PageSetDockTileParams): Promise<void> {

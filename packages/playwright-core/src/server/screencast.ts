@@ -42,11 +42,12 @@ export class Screencast implements InstrumentationListener {
   }
 
   async handlePageOrContextClose() {
-    for (const clients of this._clients) {
-      if (clients.gracefulClose)
-        await clients.gracefulClose();
-    }
+    const clients = [...this._clients];
     this._clients.clear();
+    for (const client of clients) {
+      if (client.gracefulClose)
+        await client.gracefulClose();
+    }
   }
 
   dispose() {
