@@ -34,6 +34,6 @@ export async function createExtensionBrowser(config: FullConfig, clientInfo: Cli
       config.browser.launchOptions.executablePath);
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
-  await relay.ensureExtensionConnectionForMCPContext(clientInfo, /* forceNewTab */ false);
+  await relay.ensureExtensionConnectionForMCPContext(clientInfo);
   return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
 }
