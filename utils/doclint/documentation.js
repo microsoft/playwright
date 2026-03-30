@@ -544,6 +544,14 @@ class Type {
         type.templates.push(Type.fromParsedType(t));
       return type;
     }
+
+    const stripped = parsedType.name.replace(/^\[/, '').replace(/\]$/, '');
+    const eqIndex = stripped.indexOf('=');
+    if (eqIndex !== -1) {
+      const type = new Type(stripped.substring(0, eqIndex));
+      type.structName = stripped.substring(eqIndex + 1);
+      return type;
+    }
     return new Type(parsedType.name);
   }
 
@@ -565,6 +573,8 @@ class Type {
     this.templates = undefined;
     /** @type {string | undefined} */
     this.expression = undefined;
+    /** @type {string | undefined} */
+    this.structName = undefined;
   }
 
   visit(visitor) {
@@ -587,6 +597,7 @@ class Type {
     if (this.templates)
       type.templates = this.templates.map(type => type.clone());
     type.expression = this.expression;
+    type.structName = this.structName;
     return type;
   }
 

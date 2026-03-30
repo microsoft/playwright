@@ -569,7 +569,7 @@ The default browser context cannot be closed.
 
 ## async method: BrowserContext.cookies
 * since: v1.8
-- returns: <[Array]<[Object]>>
+- returns: <[Array]<[Object=BrowserContextCookiesResult]>>
   - `name` <[string]>
   - `value` <[string]>
   - `domain` <[string]>

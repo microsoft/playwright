@@ -4461,7 +4461,7 @@ Video object associated with this page. Can be used to access the video file whe
 
 ## method: Page.viewportSize
 * since: v1.8
-- returns: <[null]|[Object]>
+- returns: <[null]|[Object=PageViewportSizeResult]>
   - `width` <[int]> page width in pixels.
   - `height` <[int]> page height in pixels.
 
