@@ -11,7 +11,7 @@ Emitted when the debugger pauses or resumes.
 
 ## method: Debugger.pausedDetails
 * since: v1.59
-- returns: <[null]|[Object]>
+- returns: <[null]|[Object=DebuggerPausedDetails]>
   - `location` <[Object]>
     - `file` <[string]>
     - `line` ?<[int]>

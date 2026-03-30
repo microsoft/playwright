@@ -164,6 +164,10 @@ it.describe('screencast', () => {
   it.slow();
   it.skip(({ mode }) => mode !== 'default', 'video.path() is not available in remote mode');
 
+  it('should not have video by default', async ({ page }) => {
+    expect(page.video()).toBeNull();
+  });
+
   it('videoSize should require videosPath', async ({ browser }) => {
     const error = await browser.newContext({ videoSize: { width: 100, height: 100 } }).catch(e => e);
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');

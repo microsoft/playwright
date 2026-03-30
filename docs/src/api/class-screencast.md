@@ -32,7 +32,7 @@ Callback that receives JPEG-encoded frame data.
 ### option: Screencast.start.size
 * since: v1.59
 * langs: js
-- `size` ?<[Object]>
+- `size` ?<[Object=ScreencastSize]>
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
@@ -67,7 +67,7 @@ Path where the video should be saved when the recording is stopped.
 
 ### option: Screencast.startRecording.size
 * since: v1.59
-- `size` ?<[Object]>
+- `size` ?<[Object=ScreencastSize]>
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
@@ -75,7 +75,7 @@ Optional dimensions of the recorded video. If not specified the size will be equ
 
 ### option: Screencast.startRecording.annotate
 * since: v1.59
-- `annotate` ?<[Object]>
+- `annotate` ?<[Object=ScreencastAnnotation]>
   - `duration` ?<[float]> How long each annotation is displayed in milliseconds. Defaults to `500`.
   - `position` ?<[AnnotatePosition]<"top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right">> Position of the action title overlay. Defaults to `"top-right"`.
   - `fontSize` ?<[int]> Font size of the action title in pixels. Defaults to `24`.
