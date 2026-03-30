@@ -2718,16 +2718,18 @@ export type PageOverlaySetVisibleOptions = {
 };
 export type PageOverlaySetVisibleResult = void;
 export type PageStartScreencastParams = {
-  preferredSize?: {
+  size?: {
     width: number,
     height: number,
   },
+  quality?: number,
 };
 export type PageStartScreencastOptions = {
-  preferredSize?: {
+  size?: {
     width: number,
     height: number,
   },
+  quality?: number,
 };
 export type PageStartScreencastResult = void;
 export type PageStopScreencastParams = {};

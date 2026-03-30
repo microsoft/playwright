@@ -16,7 +16,7 @@ Starts capturing screencast frames.
 ```js
 await page.screencast.start(({ data })  => {
   console.log(`frame size: ${data.length}`);
-}, { preferredSize: { width: 800, height: 600 } });
+}, { size: { width: 800, height: 600 } });
 // ... perform actions ...
 await page.screencast.stop();
 ```
@@ -29,18 +29,23 @@ await page.screencast.stop();
 
 Callback that receives JPEG-encoded frame data.
 
-### option: Screencast.start.preferredSize
+### option: Screencast.start.size
 * since: v1.59
 * langs: js
-- `preferredSize` ?<[Object=ScreencastSize]>
+- `size` ?<[Object=ScreencastSize]>
   - `width` <[int]> Max frame width in pixels.
   - `height` <[int]> Max frame height in pixels.
 
-Specifies the preferred maximum dimensions of screencast frames. The actual frame is scaled to preserve the page’s aspect ratio and may be smaller than these bounds.
-
+Specifies the dimensions of screencast frames. The actual frame is scaled to preserve the page’s aspect ratio and may be smaller than these bounds.
 If a screencast is already active (e.g. started by tracing or video recording), the existing configuration takes precedence and the frame size may exceed these bounds or this option may be ignored.
+If not specified the size will be equal to page viewport scaled down to fit into 800×800.
 
-Defaults to 800×800.
+### option: Screencast.start.quality
+* since: v1.59
+* langs: js
+- `quality` <[int]>
+
+The quality of the image, between 0-100.
 
 ## async method: Screencast.stop
 * since: v1.59
@@ -66,7 +71,7 @@ Path where the video should be saved when the recording is stopped.
   - `width` <[int]> Video frame width.
   - `height` <[int]> Video frame height.
 
-Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to fit into 800×800. Actual picture of the page will be scaled down if necessary to fit the specified size.
 
 ### option: Screencast.startRecording.annotate
 * since: v1.59

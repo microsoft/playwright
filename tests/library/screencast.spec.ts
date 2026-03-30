@@ -26,8 +26,8 @@ test('screencast.start delivers frames via onFrame callback', async ({ browser, 
   const page = await context.newPage();
 
   const frames: Buffer[] = [];
-  const preferredSize = { width: 500, height: 400 };
-  await page.screencast.start(({ data }) => frames.push(data), { preferredSize });
+  const size = { width: 500, height: 400 };
+  await page.screencast.start(({ data }) => frames.push(data), { size });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);
@@ -64,10 +64,10 @@ test('start allows restart with different options after stop', async ({ browser,
   const context = await browser.newContext({ viewport: { width: 500, height: 400 } });
   const page = await context.newPage();
 
-  await page.screencast.start(() => {}, { preferredSize: { width: 500, height: 400 } });
+  await page.screencast.start(() => {}, { size: { width: 500, height: 400 } });
   await page.screencast.stop();
   // Different options should succeed once the previous screencast is stopped.
-  await page.screencast.start(() => {}, { preferredSize: { width: 320, height: 240 } });
+  await page.screencast.start(() => {}, { size: { width: 320, height: 240 } });
   await page.screencast.stop();
   await context.close();
 });
@@ -82,7 +82,7 @@ test('start reuses existing screencast when video recording is running', async (
   await page.screencast.startRecording(testInfo.outputPath('video.webm'), { size: videoSize });
 
   const frames: Buffer[] = [];
-  await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 320, height: 240 } });
+  await page.screencast.start(({ data }) => frames.push(data), { size: { width: 320, height: 240 } });
   await page.goto(server.EMPTY_PAGE);
   await rafraf(page, 100);
   await page.screencast.stop();
@@ -108,7 +108,7 @@ test('start returns a disposable that stops screencast', async ({ browser, serve
   const page = await context.newPage();
 
   const frames: Buffer[] = [];
-  await page.screencast.start(({ data }) => frames.push(data), { preferredSize: { width: 500, height: 400 } });
+  await page.screencast.start(({ data }) => frames.push(data), { size: { width: 500, height: 400 } });
   await page.goto(server.EMPTY_PAGE);
   await page.evaluate(() => document.body.style.backgroundColor = 'red');
   await rafraf(page, 100);

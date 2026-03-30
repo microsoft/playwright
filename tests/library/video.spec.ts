@@ -173,25 +173,6 @@ it.describe('screencast', () => {
     expect(error.message).toContain('"videoSize" option requires "videosPath" to be specified');
   });
 
-  it('should work with old options', async ({ browser, browserName, trace, headless, isWindows }, testInfo) => {
-    const videosPath = testInfo.outputPath('');
-    // Firefox does not have a mobile variant and has a large minimum size (500 on windows and 450 elsewhere).
-    const size = browserName === 'firefox' ? { width: 500, height: 400 } : { width: 320, height: 240 };
-    const context = await browser.newContext({
-      videosPath,
-      viewport: size,
-      videoSize: size
-    });
-    const page = await context.newPage();
-
-    await page.evaluate(() => document.body.style.backgroundColor = 'red');
-    await rafraf(page, 100);
-    await context.close();
-
-    const videoFile = await page.video().path();
-    expectRedFrames(videoFile, size);
-  });
-
   it('should not throw without recordVideo.dir', async ({ browser }) => {
     await browser.newContext({ recordVideo: {} });
   });
@@ -890,17 +871,26 @@ it.describe('screencast', () => {
     await browser.close();
   });
 
-  it('video.start should fail when recordVideo is set, but stop should work', async ({ browser }, testInfo) => {
+  it('video.start should work when recordVideo is set', async ({ browser }, testInfo) => {
+    const autoDir = testInfo.outputPath('auto');
+    const manualDir = testInfo.outputPath('manual');
     const context = await browser.newContext({
       recordVideo: {
-        dir: testInfo.outputPath(''),
+        dir: autoDir,
       },
     });
     const page = await context.newPage();
-    const error = await page.screencast.startRecording(testInfo.outputPath('video.webm')).catch(e => e);
-    expect(error.message).toContain('Video is already being recorded');
+
+    await page.screencast.startRecording(path.join(manualDir, 'video.webm'));
+    await page.evaluate(() => document.body.style.backgroundColor = 'blue');
+    await rafraf(page, 100);
     await page.screencast.stopRecording();
+    const videoFiles1 = fs.readdirSync(manualDir).filter(f => f.endsWith('.webm'));
+    expect(videoFiles1).toHaveLength(1);
+
     await context.close();
+    const videoFiles2 = fs.readdirSync(autoDir).filter(f => f.endsWith('.webm'));
+    expect(videoFiles2).toHaveLength(1);
   });
 
   it('video.start should fail when another recording is in progress', async ({ page, trace }, testInfo) => {

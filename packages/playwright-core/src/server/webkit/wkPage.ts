@@ -36,6 +36,7 @@ import { WKProvisionalPage } from './wkProvisionalPage';
 import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
 import { registry } from '../registry';
+import { startAutomaticVideoRecording } from '../videoRecorder';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -128,7 +129,7 @@ export class WKPage implements PageDelegate {
       for (const [key, value] of this._browserContext._permissions)
         promises.push(this._grantPermissions(key, value));
     }
-    promises.push(this._initializeVideoRecording());
+    startAutomaticVideoRecording(this._page);
     await Promise.all(promises);
   }
 
@@ -849,13 +850,6 @@ export class WKPage implements PageDelegate {
     return 0;
   }
 
-  private async _initializeVideoRecording() {
-    const screencast = this._page.screencast;
-    const videoOptions = this._page.isStorageStatePage ? undefined : screencast.launchAutomaticVideoRecorder();
-    if (videoOptions)
-      await screencast.startVideoRecording(videoOptions);
-  }
-
   private validateScreenshotDimension(side: number, omitDeviceScaleFactor: boolean) {
     // Cairo based implementations (Linux and Windows) have hard limit of 32767
     // (see https://github.com/microsoft/playwright/issues/16727).
@@ -930,25 +924,21 @@ export class WKPage implements PageDelegate {
     });
   }
 
-  async startScreencast(options: { width: number, height: number, quality: number }): Promise<void> {
-    const { generation } = await this._pageProxySession.send('Screencast.startScreencast', {
+  startScreencast(options: { width: number, height: number, quality: number }) {
+    this._pageProxySession.send('Screencast.startScreencast', {
       quality: options.quality,
       width: options.width,
       height: options.height,
       toolbarHeight: this._toolbarHeight(),
-    });
-    this._screencastGeneration = generation;
+    }).then(({ generation }) => this._screencastGeneration = generation).catch(() => {});
   }
 
-  async stopScreencast(): Promise<void> {
-    await this._pageProxySession.sendMayFail('Screencast.stopScreencast');
+  stopScreencast() {
+    this._pageProxySession.sendMayFail('Screencast.stopScreencast');
   }
 
   private _onScreencastFrame(event: Protocol.Screencast.screencastFramePayload) {
     const generation = this._screencastGeneration;
-    this._page.screencast.throttleFrameAck(() => {
-      this._pageProxySession.sendMayFail('Screencast.screencastFrameAck', { generation });
-    });
     const buffer = Buffer.from(event.data, 'base64');
     this._page.screencast.onScreencastFrame({
       buffer,
@@ -961,6 +951,8 @@ export class WKPage implements PageDelegate {
         : Date.now(),
       viewportWidth: event.deviceWidth,
       viewportHeight: event.deviceHeight,
+    }, () => {
+      this._pageProxySession.sendMayFail('Screencast.screencastFrameAck', { generation });
     });
   }
 

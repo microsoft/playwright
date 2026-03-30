@@ -30,6 +30,7 @@ import { SdkObject } from '../instrumentation';
 import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
+import { VideoRecorder } from '../videoRecorder';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -46,7 +47,7 @@ import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 import type { URLMatch } from '../../utils/isomorphic/urlMatch';
 import type { ScreencastFrame } from '../types';
-import type { ScreencastListener } from '../screencast';
+import type { ScreencastClient } from '../screencast';
 
 export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, BrowserContextDispatcher> implements channels.PageChannel {
   _type_EventTarget = true;
@@ -61,7 +62,8 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   private _locatorHandlers = new Set<number>();
   private _jsCoverageActive = false;
   private _cssCoverageActive = false;
-  private _screencastListener: ScreencastListener | null = null;
+  private _screencastClient: ScreencastClient | null = null;
+  private _videoRecorder: VideoRecorder | null = null;
 
   static from(parentScope: BrowserContextDispatcher, page: Page): PageDispatcher {
     return PageDispatcher.fromNullable(parentScope, page)!;
@@ -373,13 +375,18 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async startScreencast(params: channels.PageStartScreencastParams, progress?: Progress): Promise<channels.PageStartScreencastResult> {
-    if (this._screencastListener)
+    if (this._screencastClient)
       throw new Error('Screencast is already running');
-    const size = params.preferredSize || { width: 800, height: 800 };
-    this._screencastListener = (frame: ScreencastFrame) => {
-      this._dispatchEvent('screencastFrame', { data: frame.buffer });
+
+    this._screencastClient = {
+      onFrame: (frame: ScreencastFrame) => {
+        this._dispatchEvent('screencastFrame', { data: frame.buffer });
+      },
+      dispose: () => {},
+      size: params.size,
+      quality: params.quality,
     };
-    await this._page.screencast.startScreencast(this._screencastListener, { quality: 90, width: size.width, height: size.height });
+    this._page.screencast.addClient(this._screencastClient);
   }
 
   async stopScreencast(params: channels.PageStopScreencastParams, progress?: Progress): Promise<channels.PageStopScreencastResult> {
@@ -387,19 +394,25 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   private async _stopScreencast() {
-    const listener = this._screencastListener;
-    this._screencastListener = null;
-    if (listener)
-      await this._page.screencast.stopScreencast(listener);
+    const client = this._screencastClient;
+    this._screencastClient = null;
+    if (client)
+      this._page.screencast.removeClient(client);
   }
 
   async videoStart(params: channels.PageVideoStartParams, progress: Progress): Promise<channels.PageVideoStartResult> {
-    const artifact = await this._page.screencast.startExplicitVideoRecording(params);
+    if (this._videoRecorder)
+      throw new Error('Video is already being recorded');
+    this._videoRecorder = new VideoRecorder(this._page.screencast);
+    const artifact = this._videoRecorder.start(params);
     return { artifact: createVideoDispatcher(this.parentScope(), artifact) };
   }
 
   async videoStop(params: channels.PageVideoStopParams, progress: Progress): Promise<channels.PageVideoStopResult> {
-    await this._page.screencast.stopExplicitVideoRecording();
+    if (!this._videoRecorder)
+      throw new Error('Video is not being recorded');
+    await this._videoRecorder.stop();
+    this._videoRecorder = null;
   }
 
   async startJSCoverage(params: channels.PageStartJSCoverageParams, progress: Progress): Promise<void> {

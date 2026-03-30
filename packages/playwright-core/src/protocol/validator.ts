@@ -1570,10 +1570,11 @@ scheme.PageOverlaySetVisibleParams = tObject({
 });
 scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
 scheme.PageStartScreencastParams = tObject({
-  preferredSize: tOptional(tObject({
+  size: tOptional(tObject({
     width: tInt,
     height: tInt,
   })),
+  quality: tOptional(tInt),
 });
 scheme.PageStartScreencastResult = tOptional(tObject({}));
 scheme.PageStopScreencastParams = tOptional(tObject({}));

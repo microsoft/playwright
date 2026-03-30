@@ -16192,7 +16192,7 @@ export interface Screencast {
    * ```js
    * await page.screencast.start(({ data })  => {
    *   console.log(`frame size: ${data.length}`);
-   * }, { preferredSize: { width: 800, height: 600 } });
+   * }, { size: { width: 800, height: 600 } });
    * // ... perform actions ...
    * await page.screencast.stop();
    * ```
@@ -16201,10 +16201,11 @@ export interface Screencast {
    * @param options
    */
   start(onFrame: ((frame: { data: Buffer }) => Promise<any>|any), options?: {
-    preferredSize?: {
+    size?: {
       width: number;
       height: number;
     };
+    quality?: number;
     annotate?: {
       duration?: number;
       position?: 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
@@ -16282,7 +16283,7 @@ export interface Screencast {
 
     /**
      * Optional dimensions of the recorded video. If not specified the size will be equal to page viewport scaled down to
-     * fit into 800x800. Actual picture of the page will be scaled down if necessary to fit the specified size.
+     * fit into 800×800. Actual picture of the page will be scaled down if necessary to fit the specified size.
      */
     size?: {
       /**
