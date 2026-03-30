@@ -4800,7 +4800,7 @@ export interface Page {
    * Video object associated with this page. Can be used to access the video file when using the `recordVideo` context
    * option.
    */
-  video(): Video;
+  video(): null|Video;
 
   viewportSize(): null|{
     /**

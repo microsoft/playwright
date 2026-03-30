@@ -4455,7 +4455,7 @@ Optional handler function to route the request.
 
 ## method: Page.video
 * since: v1.8
-- returns: <[Video]>
+- returns: <[null]|[Video]>
 
 Video object associated with this page. Can be used to access the video file when using the `recordVideo` context option.
 
