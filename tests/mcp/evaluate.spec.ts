@@ -76,6 +76,45 @@ test('browser_evaluate object', async ({ client, server }) => {
   });
 });
 
+test('browser_evaluate expression', async ({ client, server }) => {
+  expect(await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: server.HELLO_WORLD },
+  })).toHaveResponse({
+    page: expect.stringContaining(`- Page Title: Title`),
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '(1+1)',
+    },
+  })).toHaveResponse({
+    result: `2`,
+    code: `await page.evaluate('() => ((1+1))');`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: '[1,2,3].map(x => x*2)',
+    },
+  })).toHaveResponse({
+    result: `[\n  2,\n  4,\n  6\n]`,
+    code: `await page.evaluate('() => ([1,2,3].map(x => x*2))');`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: 'function foo() { return 1; }',
+    },
+  })).toHaveResponse({
+    result: `1`,
+    code: `await page.evaluate('function foo() { return 1; }');`,
+  });
+});
+
 test('browser_evaluate (error)', async ({ client, server }) => {
   expect(await client.callTool({
     name: 'browser_navigate',
