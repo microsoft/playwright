@@ -138,12 +138,4 @@ export function addTraceCommands(program: Command, logErrorAndExit: (e: Error) =
         const { traceAttachment } = await import('./traceAttachments');
         traceAttachment(attachmentId, options).catch(logErrorAndExit);
       });
-
-  traceCommand
-      .command('install-skill')
-      .description('install SKILL.md for LLM integration')
-      .action(async () => {
-        const { installSkill } = await import('./installSkill');
-        installSkill().catch(logErrorAndExit);
-      });
 }
