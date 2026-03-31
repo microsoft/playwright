@@ -143,12 +143,14 @@ export interface FullResult {
  *   [TestProject](https://playwright.dev/docs/api/class-testproject) objects. E.g. if project 'Desktop Chrome' was
  *   sharded across 5 machines then there will be 5 instances of projects with the same name in the config passed to
  *   [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin).
+ * @since v1.10
  */
 export interface Reporter {
   /**
    * Called after all tests have been run, or testing has been interrupted. Note that this method may return a [Promise]
    * and Playwright Test will await it. Reporter is allowed to override the status and hence affect the exit code of the
    * test runner.
+   * @since v1.10
    * @param result Result of the full test run, `status` can be one of:
    * - `'passed'` - Everything went as expected.
    * - `'failed'` - Any test has failed.
@@ -161,6 +163,7 @@ export interface Reporter {
   /**
    * Called once before running tests. All tests have been already discovered and put into a hierarchy of
    * [Suite](https://playwright.dev/docs/api/class-suite)s.
+   * @since v1.10
    * @param config Resolved configuration.
    * @param suite The root suite that contains all projects, files and test cases.
    */
@@ -168,6 +171,7 @@ export interface Reporter {
 
   /**
    * Called on some global error, for example unhandled exception in the worker process.
+   * @since v1.10
    * @param error The error.
    */
   onError?(error: TestError): void;
@@ -176,11 +180,13 @@ export interface Reporter {
    * Called immediately before test runner exists. At this point all the reporters have received the
    * [reporter.onEnd(result)](https://playwright.dev/docs/api/class-reporter#reporter-on-end) signal, so all the reports
    * should be build. You can run the code that uploads the reports in this hook.
+   * @since v1.33
    */
   onExit?(): Promise<void>;
 
   /**
    * Called when something has been written to the standard error in the worker process.
+   * @since v1.10
    * @param chunk Output chunk.
    * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
    * @param result Result of the test run, this object gets populated while the test runs.
@@ -189,6 +195,7 @@ export interface Reporter {
 
   /**
    * Called when something has been written to the standard output in the worker process.
+   * @since v1.10
    * @param chunk Output chunk.
    * @param test Test that was running. Note that output may happen when no test is running, in which case this will be [void].
    * @param result Result of the test run, this object gets populated while the test runs.
@@ -197,6 +204,7 @@ export interface Reporter {
 
   /**
    * Called when a test step started in the worker process.
+   * @since v1.10
    * @param test Test that the step belongs to.
    * @param result Result of the test run, this object gets populated while the test runs.
    * @param step Test step instance that has started.
@@ -205,6 +213,7 @@ export interface Reporter {
 
   /**
    * Called when a test step finished in the worker process.
+   * @since v1.10
    * @param test Test that the step belongs to.
    * @param result Result of the test run.
    * @param step Test step instance that has finished.
@@ -213,6 +222,7 @@ export interface Reporter {
 
   /**
    * Called after a test has been started in the worker process.
+   * @since v1.10
    * @param test Test that has been started.
    * @param result Result of the test run, this object gets populated while the test runs.
    */
@@ -220,6 +230,7 @@ export interface Reporter {
 
   /**
    * Called after a test has been finished in the worker process.
+   * @since v1.10
    * @param test Test that has been finished.
    * @param result Result of the test run.
    */
@@ -228,6 +239,7 @@ export interface Reporter {
   /**
    * Whether this reporter uses stdio for reporting. When it does not, Playwright Test could add some output to enhance
    * user experience. If your reporter does not print to the terminal, it is strongly recommended to return `false`.
+   * @since v1.10
    */
   printsToStdio?(): boolean;
 }
@@ -350,11 +362,13 @@ export {};
  *
  * Reporter is given a root suite in the
  * [reporter.onBegin(config, suite)](https://playwright.dev/docs/api/class-reporter#reporter-on-begin) method.
+ * @since v1.10
  */
 export interface Suite {
   /**
    * Returns the list of all test cases in this suite and its descendants, as opposite to
    * [suite.tests](https://playwright.dev/docs/api/class-suite#suite-tests).
+   * @since v1.10
    */
   allTests(): Array<TestCase>;
 
@@ -363,31 +377,37 @@ export interface Suite {
    * differentiate between various entry types by using
    * [testCase.type](https://playwright.dev/docs/api/class-testcase#test-case-type) and
    * [suite.type](https://playwright.dev/docs/api/class-suite#suite-type).
+   * @since v1.44
    */
   entries(): Array<TestCase|Suite>;
 
   /**
    * Configuration of the project this suite belongs to, or [void] for the root suite.
+   * @since v1.10
    */
   project(): FullProject|undefined;
 
   /**
    * Returns a list of titles from the root down to this suite.
+   * @since v1.10
    */
   titlePath(): Array<string>;
 
   /**
    * Location in the source where the suite is defined. Missing for root and project suites.
+   * @since v1.10
    */
   location?: Location;
 
   /**
    * Parent suite, missing for the root suite.
+   * @since v1.10
    */
   parent?: Suite;
 
   /**
    * Child suites. See [Suite](https://playwright.dev/docs/api/class-suite) for the hierarchy of suites.
+   * @since v1.10
    */
   suites: Array<Suite>;
 
@@ -396,6 +416,7 @@ export interface Suite {
    * defined in nested
    * [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) groups are
    * listed in the child [suite.suites](https://playwright.dev/docs/api/class-suite#suite-suites).
+   * @since v1.10
    */
   tests: Array<TestCase>;
 
@@ -407,12 +428,14 @@ export interface Suite {
    * - Title passed to
    *   [test.describe([title, details, callback])](https://playwright.dev/docs/api/class-test#test-describe) for a
    *   group suite.
+   * @since v1.10
    */
   title: string;
 
   /**
    * Returns the type of the suite. The Suites form the following hierarchy: `root` -> `project` -> `file` -> `describe`
    * -> ...`describe` -> `test`.
+   * @since v1.44
    */
   type: "root"|"project"|"file"|"describe";
 }
@@ -423,10 +446,12 @@ export interface Suite {
  * When a single [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) is
  * running in multiple projects or repeated multiple times, it will have multiple `TestCase` objects in corresponding
  * projects' suites.
+ * @since v1.10
  */
 export interface TestCase {
   /**
    * Whether the test is considered running fine. Non-ok tests fail the test run with non-zero exit code.
+   * @since v1.10
    */
   ok(): boolean;
 
@@ -435,31 +460,37 @@ export interface TestCase {
    * [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status):
    * - Test that is expected to fail and actually fails is `'expected'`.
    * - Test that passes on a second retry is `'flaky'`.
+   * @since v1.10
    */
   outcome(): "skipped"|"expected"|"unexpected"|"flaky";
 
   /**
    * Returns a list of titles from the root down to this test.
+   * @since v1.10
    */
   titlePath(): Array<string>;
 
   /**
    * [testResult.annotations](https://playwright.dev/docs/api/class-testresult#test-result-annotations) of the last test
    * run.
+   * @since v1.10
    */
   annotations: Array<{
     /**
      * Annotation type, for example `'skip'` or `'fail'`.
+     * @since v1.10
      */
     type: string;
 
     /**
      * Optional description.
+     * @since v1.10
      */
     description?: string;
 
     /**
      * Optional location in the source where the annotation is added.
+     * @since v1.10
      */
     location?: Location;
   }>;
@@ -478,33 +509,39 @@ export interface TestCase {
    *
    * See also [testResult.status](https://playwright.dev/docs/api/class-testresult#test-result-status) for the actual
    * status.
+   * @since v1.10
    */
   expectedStatus: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * A test ID that is computed based on the test file name, test title and project name. The ID is unique within
    * Playwright session.
+   * @since v1.25
    */
   id: string;
 
   /**
    * Location in the source where the test is defined.
+   * @since v1.10
    */
   location: Location;
 
   /**
    * Suite this test case belongs to.
+   * @since v1.10
    */
   parent: Suite;
 
   /**
    * Contains the repeat index when running in "repeat each" mode. This mode is enabled by passing `--repeat-each` to
    * the [command line](https://playwright.dev/docs/test-cli).
+   * @since v1.10
    */
   repeatEachIndex: number;
 
   /**
    * Results for each run of this test.
+   * @since v1.10
    */
   results: Array<TestResult>;
 
@@ -512,6 +549,7 @@ export interface TestCase {
    * The maximum number of retries given to this test in the configuration.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   * @since v1.10
    */
   retries: number;
 
@@ -522,6 +560,7 @@ export interface TestCase {
    * `@`-tokens extracted from test and suite titles.
    *
    * Learn more about [test tags](https://playwright.dev/docs/test-annotations#tag-tests).
+   * @since v1.42
    */
   tags: Array<string>;
 
@@ -532,61 +571,72 @@ export interface TestCase {
    * [test.setTimeout(timeout)](https://playwright.dev/docs/api/class-test#test-set-timeout),
    * [test.slow([condition, callback, description])](https://playwright.dev/docs/api/class-test#test-slow) and
    * [testInfo.setTimeout(timeout)](https://playwright.dev/docs/api/class-testinfo#test-info-set-timeout).
+   * @since v1.10
    */
   timeout: number;
 
   /**
    * Test title as passed to the
    * [test.(call)(title[, details, body])](https://playwright.dev/docs/api/class-test#test-call) call.
+   * @since v1.10
    */
   title: string;
 
   /**
    * Returns "test". Useful for detecting test cases in
    * [suite.entries()](https://playwright.dev/docs/api/class-suite#suite-entries).
+   * @since v1.44
    */
   type: "test";
 }
 
 /**
  * Information about an error thrown during test execution.
+ * @since v1.10
  */
 export interface TestError {
   /**
    * Error cause. Set when there is a
    * [cause](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error/cause) for the
    * error. Will be `undefined` if there is no cause or if the cause is not an instance of [Error].
+   * @since v1.49
    */
   cause?: TestError;
 
   /**
    * Error location in the source code.
+   * @since v1.30
    */
   location?: Location;
 
   /**
    * Error message. Set when [Error] (or its subclass) has been thrown.
+   * @since v1.10
    */
   message?: string;
 
   /**
    * Source code snippet with highlighted error.
+   * @since v1.33
    */
   snippet?: string;
 
   /**
    * Error stack. Set when [Error] (or its subclass) has been thrown.
+   * @since v1.10
    */
   stack?: string;
 
   /**
    * The value that was thrown. Set when anything except the [Error] (or its subclass) has been thrown.
+   * @since v1.10
    */
   value?: string;
 }
 
 /**
  * A result of a single [TestCase](https://playwright.dev/docs/api/class-testcase) run.
+ * @since v1.10
  */
 export interface TestResult {
   /**
@@ -607,20 +657,24 @@ export interface TestResult {
    * [testInfo.annotations](https://playwright.dev/docs/api/class-testinfo#test-info-annotations).
    *
    * Learn more about [test annotations](https://playwright.dev/docs/test-annotations).
+   * @since v1.52
    */
   annotations: Array<{
     /**
      * Annotation type, for example `'skip'` or `'fail'`.
+     * @since v1.52
      */
     type: string;
 
     /**
      * Optional description.
+     * @since v1.52
      */
     description?: string;
 
     /**
      * Optional location in the source where the annotation is added.
+     * @since v1.52
      */
     location?: Location;
   }>;
@@ -628,49 +682,58 @@ export interface TestResult {
   /**
    * The list of files or buffers attached during the test execution through
    * [testInfo.attachments](https://playwright.dev/docs/api/class-testinfo#test-info-attachments).
+   * @since v1.10
    */
   attachments: Array<{
     /**
      * Attachment name.
+     * @since v1.10
      */
     name: string;
 
     /**
      * Content type of this attachment to properly present in the report, for example `'application/json'` or
      * `'image/png'`.
+     * @since v1.10
      */
     contentType: string;
 
     /**
      * Optional path on the filesystem to the attached file.
+     * @since v1.10
      */
     path?: string;
 
     /**
      * Optional attachment body used instead of a file.
+     * @since v1.10
      */
     body?: Buffer;
   }>;
 
   /**
    * Running time in milliseconds.
+   * @since v1.10
    */
   duration: number;
 
   /**
    * First error thrown during test execution, if any. This is equal to the first element in
    * [testResult.errors](https://playwright.dev/docs/api/class-testresult#test-result-errors).
+   * @since v1.10
    */
   error?: TestError;
 
   /**
    * Errors thrown during the test execution.
+   * @since v1.10
    */
   errors: Array<TestError>;
 
   /**
    * The index of the worker between `0` and `workers - 1`. It is guaranteed that workers running at the same time have
    * a different `parallelIndex`.
+   * @since v1.30
    */
   parallelIndex: number;
 
@@ -678,32 +741,38 @@ export interface TestResult {
    * When test is retried multiple times, each retry attempt is given a sequential number.
    *
    * Learn more about [test retries](https://playwright.dev/docs/test-retries#retries).
+   * @since v1.10
    */
   retry: number;
 
   /**
    * Start time of this particular test run.
+   * @since v1.10
    */
   startTime: Date;
 
   /**
    * The status of this test result. See also
    * [testCase.expectedStatus](https://playwright.dev/docs/api/class-testcase#test-case-expected-status).
+   * @since v1.10
    */
   status: "passed"|"failed"|"timedOut"|"skipped"|"interrupted";
 
   /**
    * Anything written to the standard error during the test run.
+   * @since v1.10
    */
   stderr: Array<string|Buffer>;
 
   /**
    * Anything written to the standard output during the test run.
+   * @since v1.10
    */
   stdout: Array<string|Buffer>;
 
   /**
    * List of steps inside this test run.
+   * @since v1.10
    */
   steps: Array<TestStep>;
 
@@ -712,35 +781,42 @@ export interface TestResult {
    * interrupted testing, the only result will have a `workerIndex` equal to `-1`.
    *
    * Learn more about [parallelism and sharding](https://playwright.dev/docs/test-parallel) with Playwright Test.
+   * @since v1.10
    */
   workerIndex: number;
 }
 
 /**
  * Represents a step in the [TestRun].
+ * @since v1.10
  */
 export interface TestStep {
   /**
    * Returns a list of step titles from the root step down to this step.
+   * @since v1.10
    */
   titlePath(): Array<string>;
 
   /**
    * The list of annotations applicable to the current test step.
+   * @since v1.51
    */
   annotations: Array<{
     /**
      * Annotation type, for example `'skip'`.
+     * @since v1.51
      */
     type: string;
 
     /**
      * Optional description.
+     * @since v1.51
      */
     description?: string;
 
     /**
      * Optional location in the source where the annotation is added.
+     * @since v1.51
      */
     location?: Location;
   }>;
@@ -748,26 +824,31 @@ export interface TestStep {
   /**
    * The list of files or buffers attached in the step execution through
    * [testInfo.attach(name[, options])](https://playwright.dev/docs/api/class-testinfo#test-info-attach).
+   * @since v1.50
    */
   attachments: Array<{
     /**
      * Attachment name.
+     * @since v1.50
      */
     name: string;
 
     /**
      * Content type of this attachment to properly present in the report, for example `'application/json'` or
      * `'image/png'`.
+     * @since v1.50
      */
     contentType: string;
 
     /**
      * Optional path on the filesystem to the attached file.
+     * @since v1.50
      */
     path?: string;
 
     /**
      * Optional attachment body used instead of a file.
+     * @since v1.50
      */
     body?: Buffer;
   }>;
@@ -780,41 +861,49 @@ export interface TestStep {
    * - `pw:api` for Playwright API calls.
    * - `test.step` for test.step API calls.
    * - `test.attach` for testInfo.attach API calls.
+   * @since v1.10
    */
   category: string;
 
   /**
    * Running time in milliseconds.
+   * @since v1.10
    */
   duration: number;
 
   /**
    * Error thrown during the step execution, if any.
+   * @since v1.10
    */
   error?: TestError;
 
   /**
    * Optional location in the source where the step is defined.
+   * @since v1.10
    */
   location?: Location;
 
   /**
    * Parent step, if any.
+   * @since v1.10
    */
   parent?: TestStep;
 
   /**
    * Start time of this particular test step.
+   * @since v1.10
    */
   startTime: Date;
 
   /**
    * List of steps inside this step.
+   * @since v1.10
    */
   steps: Array<TestStep>;
 
   /**
    * User-friendly test step title.
+   * @since v1.10
    */
   title: string;
 }

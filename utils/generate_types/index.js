@@ -91,7 +91,10 @@ class TypesGenerator {
       if (!docClass)
         return '';
       handledClasses.add(className);
-      return this.writeComment(docClass.comment, '') + '\n';
+      const comment = docClass.comment || '';
+      const since = docClass.since ? `@since ${docClass.since}` : '';
+      const lines = [comment, since].filter(Boolean).join('\n');
+      return this.writeComment(lines, '') + '\n';
     }, (className, methodName, overloadIndex, indent) => {
       if (methodName === '__call')
         methodName = '(call)';
@@ -200,8 +203,11 @@ class TypesGenerator {
    */
   classToString(classDesc) {
     const parts = [];
-    if (classDesc.comment) {
-      parts.push(this.writeComment(classDesc.comment, ''))
+    if (classDesc.comment || classDesc.since) {
+      const comment = classDesc.comment || '';
+      const since = classDesc.since ? `@since ${classDesc.since}` : '';
+      const lines = [comment, since].filter(Boolean).join('\n');
+      parts.push(this.writeComment(lines, ''))
     }
     const shouldExport = !this.doNotExportClassNames.has(classDesc.name);
     parts.push(`${shouldExport ? 'export ' : ''}interface ${classDesc.name} ${classDesc.extends ? `extends ${classDesc.extends} ` : ''}{`);
@@ -486,6 +492,8 @@ class TypesGenerator {
       lines.push(...member.comment.split('\n'));
     if (member.deprecated)
       lines.push('@deprecated ' + md.wrapText(member.deprecated, { flattenText: true, maxColumns: 120 - 5 }, ''));
+    if (member.since)
+      lines.push(`@since ${member.since}`);
     lines.push(...member.argsArray.map(arg => {
       const paramPrefix = `@param ${arg.alias.replace(/\./g, '')} `;
       return paramPrefix + md.wrapText(arg.comment, { flattenText: true, maxColumns: 120 - 5 }, '');
