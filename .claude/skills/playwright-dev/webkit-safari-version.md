@@ -15,4 +15,8 @@ const DEFAULT_USER_AGENT = `Mozilla/5.0 ... Version/${BROWSER_VERSION} Safari/60
 
 2. **Update `BROWSER_VERSION`** in `wkBrowser.ts`.
 
-That is the only file that needs changing — the user-agent string is built from the constant automatically.
+3. **Run lint** to update any generated files that embed the version:
+
+   ```bash
+   npm run flint
+   ```
