@@ -50,11 +50,6 @@ scheme.Rect = tObject({
   width: tFloat,
   height: tFloat,
 });
-scheme.AnnotateOptions = tObject({
-  duration: tOptional(tFloat),
-  position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
-  fontSize: tOptional(tInt),
-});
 scheme.SerializedValue = tObject({
   n: tOptional(tFloat),
   b: tOptional(tBoolean),
@@ -616,7 +611,11 @@ scheme.BrowserTypeLaunchPersistentContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
-    annotate: tOptional(tType('AnnotateOptions')),
+    showActions: tOptional(tObject({
+      duration: tOptional(tFloat),
+      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+      fontSize: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -728,7 +727,11 @@ scheme.BrowserNewContextParams = tObject({
       width: tInt,
       height: tInt,
     })),
-    annotate: tOptional(tType('AnnotateOptions')),
+    showActions: tOptional(tObject({
+      duration: tOptional(tFloat),
+      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+      fontSize: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -800,7 +803,11 @@ scheme.BrowserNewContextForReuseParams = tObject({
       width: tInt,
       height: tInt,
     })),
-    annotate: tOptional(tType('AnnotateOptions')),
+    showActions: tOptional(tObject({
+      duration: tOptional(tFloat),
+      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+      fontSize: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -919,7 +926,11 @@ scheme.BrowserContextInitializer = tObject({
         width: tInt,
         height: tInt,
       })),
-      annotate: tOptional(tType('AnnotateOptions')),
+      showActions: tOptional(tObject({
+        duration: tOptional(tFloat),
+        position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+        fontSize: tOptional(tInt),
+      })),
     })),
     strictSelectors: tOptional(tBoolean),
     serviceWorkers: tOptional(tEnum(['allow', 'block'])),
@@ -1548,27 +1559,35 @@ scheme.PagePickLocatorResult = tObject({
 });
 scheme.PageCancelPickLocatorParams = tOptional(tObject({}));
 scheme.PageCancelPickLocatorResult = tOptional(tObject({}));
-scheme.PageOverlayShowParams = tObject({
+scheme.PageScreencastShowOverlayParams = tObject({
   html: tString,
   duration: tOptional(tFloat),
 });
-scheme.PageOverlayShowResult = tObject({
+scheme.PageScreencastShowOverlayResult = tObject({
   id: tString,
 });
-scheme.PageOverlayRemoveParams = tObject({
+scheme.PageScreencastRemoveOverlayParams = tObject({
   id: tString,
 });
-scheme.PageOverlayRemoveResult = tOptional(tObject({}));
-scheme.PageOverlayChapterParams = tObject({
+scheme.PageScreencastRemoveOverlayResult = tOptional(tObject({}));
+scheme.PageScreencastChapterParams = tObject({
   title: tString,
   description: tOptional(tString),
   duration: tOptional(tFloat),
 });
-scheme.PageOverlayChapterResult = tOptional(tObject({}));
-scheme.PageOverlaySetVisibleParams = tObject({
+scheme.PageScreencastChapterResult = tOptional(tObject({}));
+scheme.PageScreencastSetOverlayVisibleParams = tObject({
   visible: tBoolean,
 });
-scheme.PageOverlaySetVisibleResult = tOptional(tObject({}));
+scheme.PageScreencastSetOverlayVisibleResult = tOptional(tObject({}));
+scheme.PageScreencastShowActionsParams = tObject({
+  duration: tOptional(tFloat),
+  position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+  fontSize: tOptional(tInt),
+});
+scheme.PageScreencastShowActionsResult = tOptional(tObject({}));
+scheme.PageScreencastHideActionsParams = tOptional(tObject({}));
+scheme.PageScreencastHideActionsResult = tOptional(tObject({}));
 scheme.PageScreencastStartParams = tObject({
   size: tOptional(tObject({
     width: tInt,
@@ -1577,7 +1596,6 @@ scheme.PageScreencastStartParams = tObject({
   quality: tOptional(tInt),
   sendFrames: tOptional(tBoolean),
   record: tOptional(tBoolean),
-  annotate: tOptional(tType('AnnotateOptions')),
 });
 scheme.PageScreencastStartResult = tObject({
   artifact: tOptional(tChannel(['Artifact'])),
@@ -2678,7 +2696,11 @@ scheme.ElectronLaunchParams = tObject({
       width: tInt,
       height: tInt,
     })),
-    annotate: tOptional(tType('AnnotateOptions')),
+    showActions: tOptional(tObject({
+      duration: tOptional(tFloat),
+      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+      fontSize: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   timezoneId: tOptional(tString),
@@ -2915,7 +2937,11 @@ scheme.AndroidDeviceLaunchBrowserParams = tObject({
       width: tInt,
       height: tInt,
     })),
-    annotate: tOptional(tType('AnnotateOptions')),
+    showActions: tOptional(tObject({
+      duration: tOptional(tFloat),
+      position: tOptional(tEnum(['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'])),
+      fontSize: tOptional(tInt),
+    })),
   })),
   strictSelectors: tOptional(tBoolean),
   serviceWorkers: tOptional(tEnum(['allow', 'block'])),

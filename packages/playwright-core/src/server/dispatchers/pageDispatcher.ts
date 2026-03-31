@@ -357,21 +357,29 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     await recorder?.setMode('none');
   }
 
-  async overlayShow(params: channels.PageOverlayShowParams): Promise<channels.PageOverlayShowResult> {
+  async screencastShowOverlay(params: channels.PageScreencastShowOverlayParams): Promise<channels.PageScreencastShowOverlayResult> {
     const id = await this._page.overlay.show(params.html, params.duration);
     return { id };
   }
 
-  async overlayRemove(params: channels.PageOverlayRemoveParams): Promise<channels.PageOverlayRemoveResult> {
+  async screencastRemoveOverlay(params: channels.PageScreencastRemoveOverlayParams): Promise<channels.PageScreencastRemoveOverlayResult> {
     await this._page.overlay.remove(params.id);
   }
 
-  async overlayChapter(params: channels.PageOverlayChapterParams): Promise<channels.PageOverlayChapterResult> {
+  async screencastChapter(params: channels.PageScreencastChapterParams): Promise<channels.PageScreencastChapterResult> {
     await this._page.overlay.chapter(params);
   }
 
-  async overlaySetVisible(params: channels.PageOverlaySetVisibleParams): Promise<channels.PageOverlaySetVisibleResult> {
+  async screencastSetOverlayVisible(params: channels.PageScreencastSetOverlayVisibleParams): Promise<channels.PageScreencastSetOverlayVisibleResult> {
     await this._page.overlay.setVisible(params.visible);
+  }
+
+  async screencastShowActions(params: channels.PageScreencastShowActionsParams): Promise<channels.PageScreencastShowActionsResult> {
+    this._page.screencast.showActions({ duration: params.duration, position: params.position, fontSize: params.fontSize });
+  }
+
+  async screencastHideActions(): Promise<channels.PageScreencastHideActionsResult> {
+    this._page.screencast.hideActions();
   }
 
   async screencastStart(params: channels.PageScreencastStartParams, progress?: Progress): Promise<channels.PageScreencastStartResult> {

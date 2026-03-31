@@ -43,19 +43,10 @@ export type PointerActionWaitOptions = CommonActionOptions & {
   trial?: boolean;
 };
 
-export type AnnotatePosition = 'top-left' | 'top' | 'top-right' | 'bottom-left' | 'bottom' | 'bottom-right';
-
-export type AnnotateOptions = {
-  duration?: number,
-  position?: AnnotatePosition,
-  fontSize?: number,
-};
-
 export type VideoOptions = {
   width: number,
   height: number,
   outputFile: string,
-  annotate?: AnnotateOptions,
 };
 
 export type ScreencastFrame = {
