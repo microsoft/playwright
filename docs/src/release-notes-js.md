@@ -212,7 +212,7 @@ await using page = await context.newPage();
 
 - Chromium 147.0.7727.15
 - Mozilla Firefox 148.0.2
-- WebKit 26.0
+- WebKit 26.4
 
 This version was also tested against the following stable channels:
 

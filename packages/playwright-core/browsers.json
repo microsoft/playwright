@@ -55,7 +55,7 @@
         "ubuntu20.04-x64": "2092",
         "ubuntu20.04-arm64": "2092"
       },
-      "browserVersion": "26.0",
+      "browserVersion": "26.4",
       "title": "WebKit"
     },
     {
