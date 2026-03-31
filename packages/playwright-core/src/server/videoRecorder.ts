@@ -39,7 +39,7 @@ export class VideoRecorder {
     this._screencast = screencast;
   }
 
-  start(options: { fileName?: string, size?: { width: number, height: number }, annotate?: types.AnnotateOptions }) {
+  start(options: { fileName?: string, size?: { width: number, height: number } }) {
     assert(!this._artifact);
     // Do this first, it likes to throw.
     const ffmpegPath = registry.findExecutable('ffmpeg')!.executablePathOrDie(this._screencast.page.browserContext._browser.sdkLanguage());
@@ -50,7 +50,6 @@ export class VideoRecorder {
       gracefulClose: () => this.stop(),
       dispose: () => this.stop().catch(e => debugLogger.log('error', `Failed to stop video recorder: ${String(e)}`)),
       size: options.size,
-      annotate: options.annotate,
     };
 
     const { size } = this._screencast.addClient(this._client);
@@ -85,8 +84,10 @@ export function startAutomaticVideoRecording(page: Page) {
   if (!recordVideo)
     return;
   const recorder = new VideoRecorder(page.screencast);
+  if (page.browserContext._options.recordVideo?.showActions)
+    page.screencast.showActions(page.browserContext._options.recordVideo?.showActions);
   const dir = recordVideo.dir ?? page.browserContext._browser.options.artifactsDir;
-  const artifact = recorder.start({ size: recordVideo.size, annotate: recordVideo.annotate, fileName: path.join(dir, page.guid + '.webm') });
+  const artifact = recorder.start({ size: recordVideo.size, fileName: path.join(dir, page.guid + '.webm') });
   page.video = artifact;
 }
 

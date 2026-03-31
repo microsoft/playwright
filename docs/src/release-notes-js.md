@@ -34,13 +34,27 @@ await page.screencast.start({
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
 
 ```js
-await page.screencast.start({
-  path: 'video.webm',
-  annotate: { position: 'top-right' },
-});
+await page.screencast.showActions({ position: 'top-right' });
 ```
 
-The `annotate` option accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `fontSize` (px).
+[`method: Screencast.showActions`] accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `fontSize` (px). Returns a disposable to stop showing actions.
+
+Action annotations can also be enabled in test fixtures via the `video` option:
+
+```js
+// playwright.config.ts
+export default defineConfig({
+  use: {
+    video: {
+      mode: 'on',
+      show: {
+        actions: { position: 'top-left' },
+        test: { position: 'top-right' },
+      },
+    },
+  },
+});
+```
 
 **Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
 
@@ -56,10 +70,8 @@ await page.screencast.showOverlay('<div style="color: red">Recording</div>');
 **Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
 
 ```js
-await page.screencast.start({
-  path: 'receipt.webm',
-  annotate: { position: 'top-right' },
-});
+await page.screencast.start({ path: 'receipt.webm' });
+await page.screencast.showActions({ position: 'top-right' });
 
 await page.screencast.showChapter('Verifying checkout flow', {
   description: 'Added coupon code support per ticket #1234',
@@ -162,7 +174,8 @@ await using page = await context.newPage();
 
 - [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
 - Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
-- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showActions`] and [`method: Screencast.hideActions`] for action annotations.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual overlays.
 - Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
 
 #### Storage, Console and Errors

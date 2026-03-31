@@ -33,13 +33,10 @@ await page.Screencast.StartAsync(new() {
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
 
 ```csharp
-await page.Screencast.StartAsync(new() {
-    Path = "video.webm",
-    Annotate = new() { Position = "top-right" },
-});
+await page.Screencast.ShowActionsAsync(new() { Position = "top-right" });
 ```
 
-The `Annotate` option accepts `Position` (`"top-left"`, `"top"`, `"top-right"`, `"bottom-left"`, `"bottom"`, `"bottom-right"`), `Duration` (ms per annotation), and `FontSize` (px).
+`ShowActionsAsync` accepts `Position` (`"top-left"`, `"top"`, `"top-right"`, `"bottom-left"`, `"bottom"`, `"bottom-right"`), `Duration` (ms per annotation), and `FontSize` (px). Returns a disposable to stop showing actions.
 
 **Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
 
@@ -55,10 +52,8 @@ await page.Screencast.ShowOverlayAsync("<div style=\"color: red\">Recording</div
 **Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
 
 ```csharp
-await page.Screencast.StartAsync(new() {
-    Path = "receipt.webm",
-    Annotate = new() { Position = "top-right" },
-});
+await page.Screencast.StartAsync(new() { Path = "receipt.webm" });
+await page.Screencast.ShowActionsAsync(new() { Position = "top-right" });
 
 await page.Screencast.ShowChapterAsync("Verifying checkout flow", new() {
     Description = "Added coupon code support per ticket #1234",
@@ -91,7 +86,8 @@ The resulting video serves as a receipt: chapter titles provide context, action 
 
 - [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
 - Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
-- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showActions`] and [`method: Screencast.hideActions`] for action annotations.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual overlays.
 - Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
 
 #### Storage, Console and Errors
