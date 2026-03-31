@@ -200,7 +200,8 @@ export class TestServer {
       reject = r;
     });
     promise[fulfillSymbol] = fulfill;
-    promise[rejectSymbol] = reject;
+    const error = new Error(`Request ${path} was not received before the test finished.`);
+    promise[rejectSymbol] = () => reject(error);
     this._requestSubscribers.set(path, promise);
     return promise;
   }
@@ -214,9 +215,8 @@ export class TestServer {
     this._upgradeCallback = undefined;
     this._wsServer.removeAllListeners('connection');
     this._server.closeAllConnections();
-    const error = new Error('Static Server has been reset');
     for (const subscriber of this._requestSubscribers.values())
-      subscriber[rejectSymbol].call(null, error);
+      subscriber[rejectSymbol].call(null);
     this._requestSubscribers.clear();
   }
 

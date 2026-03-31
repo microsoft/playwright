@@ -30,7 +30,7 @@ function _formatProtocolParam(params: Record<string, string> | undefined, altern
         const urlObject = new URL(params[name]);
         if (urlObject.protocol === 'data:')
           return urlObject.protocol;
-        if (urlObject.protocol === 'about:')
+        if (['about:', 'chrome:', 'edge:'].includes(urlObject.protocol))
           return params[name];
         return urlObject.pathname + urlObject.search;
       } catch (error) {

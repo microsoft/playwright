@@ -143,7 +143,7 @@ jobs:
     - uses: ./.github/actions/run-test
       with:
         browsers-to-install: ${{ matrix.browser }} chromium
-        command: npm run test -- --project=${{ matrix.browser }}-* --headed
+        command: npm run test -- --project=${{ matrix.browser }}-* --headed ${{ matrix.os == 'macos-14-xlarge' && '--workers 2' || '' }}
         bot-name: "${{ matrix.browser }}-headed-${{ matrix.os }}"
         flakiness-client-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_CLIENT_ID }}
         flakiness-tenant-id: ${{ secrets.AZURE_FLAKINESS_DASHBOARD_TENANT_ID }}
