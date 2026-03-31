@@ -87,6 +87,7 @@ classNameMap.set('URL', 'string');
 classNameMap.set('RegExp', 'Regex');
 classNameMap.set('Readable', 'Stream');
 classNameMap.set('Disposable', 'IAsyncDisposable');
+classNameMap.set('Promise', 'Task');
 
 /**
  *
