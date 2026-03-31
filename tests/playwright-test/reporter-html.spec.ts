@@ -1768,7 +1768,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
         const result = await runInlineTest({
           'a.test.js': `
             const { expect, test } = require('@playwright/test');
-            test('pass', async ({}) => {
+            test('pass', { tag: '@smoke' }, async ({}) => {
               expect(1).toBe(1);
             });
           `,
@@ -1779,8 +1779,7 @@ for (const useIntermediateMergeReport of [true, false] as const) {
 
         await showReport();
 
-        await expect(page.locator('.test-file-test .label')).toHaveCount(0);
-        await expect(page.locator('.label-row')).not.toBeVisible();
+        await expect(page.locator('.test-file-test .label')).toHaveCount(1);
       });
 
       test('testCaseView - after click test label and go back, testCaseView should be visible', async ({ runInlineTest, showReport, page }) => {
