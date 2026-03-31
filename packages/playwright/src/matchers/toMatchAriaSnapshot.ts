@@ -20,12 +20,13 @@ import path from 'path';
 
 import { formatMatcherMessage, escapeTemplateString, isString, printReceivedStringContainExpectedSubstring } from 'playwright-core/lib/utils';
 
-import { fileExistsAsync } from '../util';
+import { expectTypes, fileExistsAsync } from '../util';
 import { currentTestInfo } from '../common/globals';
 
 import type { MatcherResult } from './matcherHint';
-import type { ExpectMatcherStateInternal, LocatorEx } from './matchers';
+import type { ExpectMatcherStateInternal, FrameEx, LocatorEx } from './matchers';
 import type { MatcherReceived } from '@injected/ariaSnapshot';
+import type { Page } from 'playwright-core';
 
 
 type ToMatchAriaSnapshotExpected = {
@@ -36,15 +37,17 @@ type ToMatchAriaSnapshotExpected = {
 
 export async function toMatchAriaSnapshot(
   this: ExpectMatcherStateInternal,
-  locator: LocatorEx,
+  receiver: LocatorEx | Page,
   expectedParam?: ToMatchAriaSnapshotExpected,
   options: { timeout?: number } = {},
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
+  expectTypes(receiver, ['Page', 'Locator'], matcherName);
+  const locator = receiver.constructor.name === 'Page' ? undefined : receiver as LocatorEx;
 
   const testInfo = currentTestInfo();
   if (!testInfo)
-    throw new Error(`toMatchAriaSnapshot() must be called during the test`);
+    throw new Error(`${matcherName}() must be called during the test`);
 
   if (testInfo._projectInternal.project.ignoreSnapshots)
     return { pass: !this.isNot, message: () => '', name: 'toMatchAriaSnapshot', expected: '' };
@@ -85,7 +88,10 @@ export async function toMatchAriaSnapshot(
   if (globalChildren && !expected.match(/^- \/children:/m))
     expected = `- /children: ${globalChildren}\n` + expected;
 
-  const { matches: pass, received, log, timedOut, errorMessage } = await locator._expect('to.match.aria', { expectedValue: expected, isNot: this.isNot, timeout });
+  const expectParams = { expectedValue: expected, isNot: this.isNot, timeout };
+  const { matches: pass, received, log, timedOut, errorMessage } = locator ?
+    await (locator as LocatorEx)._expect('to.match.aria', expectParams) :
+    await ((receiver as Page).mainFrame() as FrameEx)._expect('to.match.aria', expectParams);
   const typedReceived = received as MatcherReceived;
 
   const message = () => {
@@ -106,7 +112,7 @@ export async function toMatchAriaSnapshot(
       promise: this.promise,
       matcherName,
       expectation: 'expected',
-      locator: locator.toString(),
+      locator: locator?.toString(),
       timeout,
       timedOut,
       printedExpected,

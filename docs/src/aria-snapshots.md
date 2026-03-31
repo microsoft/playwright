@@ -10,7 +10,7 @@ With Playwright's Snapshot testing you can assert the accessibility tree of a pa
 
 ```js
 await page.goto('https://playwright.dev/');
-await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
+await expect(page).toMatchAriaSnapshot(`
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
     - link "Get started":
@@ -23,7 +23,7 @@ await expect(page.getByRole('banner')).toMatchAriaSnapshot(`
 
 ```python sync
 page.goto('https://playwright.dev/')
-expect(page.query_selector('banner')).to_match_aria_snapshot("""
+expect(page).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
     - link "Get started":
@@ -36,7 +36,7 @@ expect(page.query_selector('banner')).to_match_aria_snapshot("""
 
 ```python async
 await page.goto('https://playwright.dev/')
-await expect(page.query_selector('banner')).to_match_aria_snapshot("""
+await expect(page).to_match_aria_snapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
     - link "Get started":
@@ -49,7 +49,7 @@ await expect(page.query_selector('banner')).to_match_aria_snapshot("""
 
 ```java
 page.navigate("https://playwright.dev/");
-assertThat(page.locator("banner")).matchesAriaSnapshot("""
+assertThat(page).matchesAriaSnapshot("""
   - banner:
     - heading /Playwright enables reliable end-to-end/ [level=1]
     - link "Get started":
@@ -62,7 +62,7 @@ assertThat(page.locator("banner")).matchesAriaSnapshot("""
 
 ```csharp
 await page.GotoAsync("https://playwright.dev/");
-await Expect(page.Locator("banner")).ToMatchAriaSnapshotAsync(@"
+await Expect(page).ToMatchAriaSnapshotAsync(@"
   - banner:
     - heading ""Playwright enables reliable end-to-end testing for modern web apps."" [level=1]
     - link ""Get started"":
@@ -164,9 +164,9 @@ structure of a page, use the [Chrome DevTools Accessibility Tab](https://develop
 
 ## Snapshot matching
 
-The [`method: LocatorAssertions.toMatchAriaSnapshot`] assertion method in Playwright compares the accessible
-structure of the locator scope with a predefined aria snapshot template, helping validate the page's state against
-testing requirements.
+The [`method: PageAssertions.toMatchAriaSnapshot`] assertion method in Playwright compares the accessible
+structure of the page with a predefined aria snapshot template, helping validate the page's state against
+testing requirements. You can also use [`method: LocatorAssertions.toMatchAriaSnapshot`] to match a specific part of the page.
 
 For the following DOM:
 
@@ -177,31 +177,31 @@ For the following DOM:
 You can match it using the following snapshot template:
 
 ```js
-await expect(page.locator('body')).toMatchAriaSnapshot(`
+await expect(page).toMatchAriaSnapshot(`
   - heading "title"
 `);
 ```
 
 ```python sync
-expect(page.locator("body")).to_match_aria_snapshot("""
+expect(page).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```python async
-await expect(page.locator("body")).to_match_aria_snapshot("""
+await expect(page).to_match_aria_snapshot("""
   - heading "title"
 """)
 ```
 
 ```java
-assertThat(page.locator("body")).matchesAriaSnapshot("""
+assertThat(page).matchesAriaSnapshot("""
   - heading "title"
 """);
 ```
 
 ```csharp
-await Expect(page.Locator("body")).ToMatchAriaSnapshotAsync(@"
+await Expect(page).ToMatchAriaSnapshotAsync(@"
   - heading ""title""
 ");
 ```
@@ -418,35 +418,35 @@ export default defineConfig({
 });
 ```
 
-### Using the `Locator.ariaSnapshot` method
+### Using [`method: Page.ariaSnapshot`] and [`method: Locator.ariaSnapshot`]
 
-The [`method: Locator.ariaSnapshot`] method allows you to programmatically create a YAML representation of accessible
+Methods [`method: Page.ariaSnapshot`] and [`method: Locator.ariaSnapshot`] allow you to programmatically create a YAML representation of accessible
 elements within a locator's scope, especially helpful for generating snapshots dynamically during test execution.
 
 **Example**:
 
 ```js
-const snapshot = await page.locator('body').ariaSnapshot();
+const snapshot = await page.ariaSnapshot();
 console.log(snapshot);
 ```
 
 ```python sync
-snapshot = page.locator("body").aria_snapshot()
+snapshot = page.aria_snapshot()
 print(snapshot)
 ```
 
 ```python async
-snapshot = await page.locator("body").aria_snapshot()
+snapshot = await page.aria_snapshot()
 print(snapshot)
 ```
 
 ```java
-String snapshot = page.locator("body").ariaSnapshot();
+String snapshot = page.ariaSnapshot();
 System.out.println(snapshot);
 ```
 
 ```csharp
-var snapshot = await page.Locator("body").AriaSnapshotAsync();
+var snapshot = await page.AriaSnapshotAsync();
 Console.WriteLine(snapshot);
 ```
 

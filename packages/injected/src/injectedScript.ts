@@ -1467,6 +1467,15 @@ export class InjectedScript {
         const received = this.document.location.href;
         return { received, matches: matcher.matches(received) };
       }
+      if (options.expression === 'to.match.aria' && !options.selector) {
+        if (!this.document.body)
+          return { matches: options.isNot, missingReceived: true };
+        const result = matchesExpectAriaTemplate(this.document.body, options.expectedValue);
+        return {
+          received: result.received,
+          matches: !!result.matches.length,
+        };
+      }
       // When none of the above applies, expect does not match.
       return { matches: options.isNot, missingReceived: true };
     }

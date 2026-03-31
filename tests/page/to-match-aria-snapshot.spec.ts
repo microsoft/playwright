@@ -17,6 +17,49 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
+test('should match page', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  await expect(page).toMatchAriaSnapshot(`
+    - heading "title"
+  `);
+});
+
+test('should match page complex', async ({ page }) => {
+  await page.setContent(`
+    <h1>Microsoft</h1>
+    <div>Open source projects and samples from Microsoft</div>
+    <ul>
+      <li>
+        <a href="about:blank">Playwright</a>
+      </li>
+    </ul>`);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - heading "Microsoft"
+    - text: Open source projects and samples from Microsoft
+    - list:
+      - listitem:
+        - link "Playwright"
+  `);
+});
+
+test('should match page with not', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  await expect(page).not.toMatchAriaSnapshot(`
+    - heading "wrong"
+  `);
+});
+
+test('should fail page with timeout', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  const e = await expect(page).toMatchAriaSnapshot(`
+    - heading "wrong"
+  `, { timeout: 2000 }).catch(e => e);
+  expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(e.message)).toContain('Timeout:  2000ms');
+  expect(stripAnsi(e.message)).not.toContain('Locator');
+});
+
 test('should match', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
   await expect(page.locator('body')).toMatchAriaSnapshot(`

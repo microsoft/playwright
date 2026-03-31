@@ -9762,6 +9762,57 @@ interface PageAssertions {
   }): Promise<void>;
 
   /**
+   * Asserts that the page body matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
+   *
+   * **Usage**
+   *
+   * ```js
+   * await page.goto('https://demo.playwright.dev/todomvc/');
+   * await expect(page).toMatchAriaSnapshot(`
+   *   - heading "todos"
+   *   - textbox "What needs to be done?"
+   * `);
+   * ```
+   *
+   * @param expected
+   * @param options
+   */
+  toMatchAriaSnapshot(expected: string, options?: {
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
+   * Asserts that the page body matches the given [accessibility snapshot](https://playwright.dev/docs/aria-snapshots).
+   *
+   * Snapshot is stored in a separate `.aria.yml` file in a location configured by
+   * `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
+   *
+   * **Usage**
+   *
+   * ```js
+   * await expect(page).toMatchAriaSnapshot();
+   * await expect(page).toMatchAriaSnapshot({ name: 'home.aria.yml' });
+   * ```
+   *
+   * @param options
+   */
+  toMatchAriaSnapshot(options?: {
+    /**
+     * Name of the snapshot to store in the snapshot folder corresponding to this test. Generates sequential names if not
+     * specified.
+     */
+    name?: string;
+
+    /**
+     * Time to retry the assertion for in milliseconds. Defaults to `timeout` in `TestConfig.expect`.
+     */
+    timeout?: number;
+  }): Promise<void>;
+
+  /**
    * Makes the assertion check for the opposite condition.
    *
    * **Usage**
