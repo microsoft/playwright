@@ -27,6 +27,7 @@ import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { program } from '../../utilsBundle';
 import { registry as browserRegistry } from '../../server/registry/index';
+import { getAsBooleanFromENV } from '../../server/utils/env';
 
 program.argument('[session-name]', 'name of the session to create or connect to', 'default')
     .option('--headed', 'run in headed mode (non-headless)')
@@ -103,6 +104,8 @@ async function initWorkspace(initSkills: string | undefined) {
 }
 
 async function ensureConfiguredBrowserInstalled() {
+  if (getAsBooleanFromENV('PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD'))
+    return;
   if (fs.existsSync(defaultConfigFile()) || fs.existsSync(globalConfigFile())) {
     // Config exists, ensure configured browser is installed
     const clientInfo = createClientInfo();
