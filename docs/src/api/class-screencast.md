@@ -31,7 +31,7 @@ await page.screencast.stop();
 
 ### option: Screencast.start.onFrame
 * since: v1.59
-- `onFrame` <[function]\([Object]\): [Promise]>
+- `onFrame` <[function]\([Object=ScreencastFrame]\): [Promise]>
   - `data` <[Buffer]> JPEG-encoded frame data.
 
 Callback that receives JPEG-encoded frame data.
