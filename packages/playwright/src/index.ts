@@ -101,7 +101,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     playwright._defaultLaunchOptions = undefined;
   }, { scope: 'worker', auto: true, box: true }],
 
-  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use) => {
+  browser: [async ({ playwright, browserName, _browserOptions, connectOptions }, use, workerInfo) => {
     if (!['chromium', 'firefox', 'webkit'].includes(browserName))
       throw new Error(`Unexpected browserName "${browserName}", must be one of "chromium", "firefox" or "webkit"`);
 
@@ -121,6 +121,8 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     }
 
     const browser = await playwright[browserName].launch();
+    if (process.env.PLAYWRIGHT_DASHBOARD)
+      await browser.bind(`worker-${workerInfo.parallelIndex}`);
     await use(browser);
     await browser.close({ reason: 'Test ended.' });
   }, { scope: 'worker', timeout: 0 }],

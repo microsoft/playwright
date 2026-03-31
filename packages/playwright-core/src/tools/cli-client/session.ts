@@ -143,8 +143,8 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
-    if (cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION)
-      args.push(`--attach=${cliArgs.attach || process.env.PLAYWRIGHT_CLI_SESSION}`);
+    if (cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION)
+      args.push(`--endpoint=${cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION}`);
 
     const child = spawn(process.execPath, args, {
       detached: true,
@@ -196,8 +196,8 @@ export class Session {
     child.stdout!.destroy();
     child.unref();
 
-    if (cliArgs['attach']) {
-      console.log(`### Session \`${sessionName}\` created, attached to \`${cliArgs['attach']}\`.`);
+    if (cliArgs['endpoint']) {
+      console.log(`### Session \`${sessionName}\` created, attached to \`${cliArgs['endpoint']}\`.`);
       console.log(`Run commands with: playwright-cli --session=${sessionName} <command>`);
     } else {
       console.log(`### Browser \`${sessionName}\` opened with pid ${child.pid}.`);

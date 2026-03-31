@@ -347,7 +347,7 @@ test.describe('resolveCLIConfigForCLI - isolated and userDataDir', () => {
   });
 
   test('not isolated when --attach is set', async ({}, testInfo) => {
-    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { attach: 'ws://localhost:1234' });
+    const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { endpoint: 'ws://localhost:1234' });
     expect(config.browser.isolated).toBe(false);
   });
 

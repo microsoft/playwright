@@ -47,6 +47,7 @@ export type CLIOptions = {
   config?: string;
   consoleLevel?: 'error' | 'warning' | 'info' | 'debug';
   device?: string;
+  endpoint?: string;
   extension?: boolean;
   executablePath?: string;
   grantPermissions?: string[];
@@ -138,6 +139,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   }
 
   const daemonOverrides = configFromCLIOptions({
+    endpoint: options.endpoint,
     config: options.config,
     browser: options.browser,
     headless: options.headed ? false : undefined,
@@ -145,7 +147,6 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
     userDataDir: options.profile,
     snapshotMode: 'full',
   });
-  daemonOverrides.browser!.remoteEndpoint = options.attach;
 
   const envOverrides = configFromEnv(env);
   const configFile = daemonOverrides.configFile ?? envOverrides.configFile;
@@ -299,6 +300,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       cdpTimeout: cliOptions.cdpTimeout,
       initPage: cliOptions.initPage,
       initScript: cliOptions.initScript,
+      remoteEndpoint: cliOptions.endpoint,
     },
     extension: cliOptions.extension,
     server: {

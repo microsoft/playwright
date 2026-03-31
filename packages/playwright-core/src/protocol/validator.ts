@@ -659,9 +659,11 @@ scheme.BrowserStartServerParams = tObject({
   title: tString,
   workspaceDir: tOptional(tString),
   metadata: tOptional(tAny),
+  host: tOptional(tString),
+  port: tOptional(tInt),
 });
 scheme.BrowserStartServerResult = tObject({
-  pipeName: tString,
+  endpoint: tString,
 });
 scheme.BrowserStopServerParams = tOptional(tObject({}));
 scheme.BrowserStopServerResult = tOptional(tObject({}));
