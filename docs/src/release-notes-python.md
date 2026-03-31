@@ -6,6 +6,126 @@ toc_max_heading_level: 2
 
 import LiteYouTube from '@site/src/components/LiteYouTube';
 
+## Version 1.59
+
+### 🎬 Screencast
+
+New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings and as real-time frame streams.
+
+<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-screencast-demo.gif" alt="Demo" width="500" height="313" />
+
+**Video recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideoDir`] option:
+
+```python
+page.screencast.start(path="video.webm")
+# ... perform actions ...
+page.screencast.stop()
+```
+
+**Real-time frame capture** — stream JPEG-encoded frames for custom processing like thumbnails, live previews, AI vision, and more:
+
+```python
+page.screencast.start(
+    on_frame=lambda frame: send_to_vision_model(frame["data"]),
+)
+```
+
+**Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
+
+```python
+page.screencast.start(
+    path="video.webm",
+    annotate={"position": "top-right"},
+)
+```
+
+The `annotate` option accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `font_size` (px).
+
+**Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
+
+```python
+page.screencast.show_chapter("Adding TODOs",
+    description="Type and press enter for each TODO",
+    duration=1000,
+)
+
+page.screencast.show_overlay('<div style="color: red">Recording</div>')
+```
+
+**Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
+
+```python
+page.screencast.start(
+    path="receipt.webm",
+    annotate={"position": "top-right"},
+)
+
+page.screencast.show_chapter("Verifying checkout flow",
+    description="Added coupon code support per ticket #1234",
+)
+
+# Agent performs the verification steps...
+page.locator("#coupon").fill("SAVE20")
+page.locator("#apply-coupon").click()
+expect(page.locator(".discount")).to_contain_text("20%")
+
+page.screencast.show_chapter("Done",
+    description="Coupon applied, discount reflected in total",
+)
+
+page.screencast.stop()
+```
+
+The resulting video serves as a receipt: chapter titles provide context, action annotations highlight each interaction, and the visual walkthrough is faster to review than text logs.
+
+### 🔍 Snapshots and Locators
+
+- Method [`method: Page.ariaSnapshot`] to capture the aria snapshot of the page — equivalent to `page.locator('body').aria_snapshot()`.
+- Options `depth` and `mode` in [`method: Locator.ariaSnapshot`].
+- Method [`method: Locator.normalize`] converts a locator to follow best practices like test ids and aria roles.
+- Method [`method: Page.pickLocator`] enters an interactive mode where hovering over elements highlights them and shows the corresponding locator. Click an element to get its [Locator] back. Use [`method: Page.cancelPickLocator`] to cancel.
+
+### New APIs
+
+#### Screencast
+
+- [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
+- Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
+
+#### Storage, Console and Errors
+
+- Method [`method: BrowserContext.setStorageState`] clears existing cookies, local storage, and IndexedDB for all origins and sets a new storage state — no need to create a new context.
+- Methods [`method: Page.clearConsoleMessages`] and [`method: Page.clearPageErrors`] to clear stored messages and errors.
+- Option `filter` in [`method: Page.consoleMessages`] and [`method: Page.pageErrors`] controls which messages are returned.
+- Method [`method: ConsoleMessage.timestamp`].
+
+#### Miscellaneous
+
+- [`property: BrowserContext.debugger`] provides programmatic control over the Playwright debugger.
+- Method [`method: BrowserContext.isClosed`].
+- Method [`method: Request.existingResponse`] returns the response without waiting.
+- Method [`method: Response.httpVersion`] returns the HTTP version used by the response.
+- Event [`event: CDPSession.close`] for CDP sessions.
+- Option `live` in [`method: Tracing.start`] for real-time trace updates.
+- Option `artifacts_dir` in [`method: BrowserType.launch`] to configure the artifacts directory.
+
+### Breaking Changes ⚠️
+
+- Removed macOS 14 support for WebKit. We recommend upgrading your macOS version, or keeping an older Playwright version.
+
+### Browser Versions
+
+- Chromium 147.0.7727.15
+- Mozilla Firefox 148.0.2
+- WebKit 26.0
+
+This version was also tested against the following stable channels:
+
+- Google Chrome 146
+- Microsoft Edge 146
+
 ## Version 1.58
 
 ### UI Mode and Trace Viewer Improvements

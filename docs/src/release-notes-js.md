@@ -197,14 +197,14 @@ await using page = await context.newPage();
 
 ### Browser Versions
 
-- Chromium 146.0.7680.31
+- Chromium 147.0.7727.15
 - Mozilla Firefox 148.0.2
 - WebKit 26.0
 
 This version was also tested against the following stable channels:
 
-- Google Chrome 145
-- Microsoft Edge 145
+- Google Chrome 146
+- Microsoft Edge 146
 
 
 ## Version 1.58

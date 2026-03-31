@@ -3876,7 +3876,6 @@ Handler function to route the WebSocket.
 
 ## property: Page.screencast
 * since: v1.59
-* langs: js
 - type: <[Screencast]>
 
 [Screencast] object associated with this page.
