@@ -128,12 +128,12 @@ export class Browser extends ChannelOwner<channels.BrowserChannel> implements ap
     return this._initializer.version;
   }
 
-  async _register(title: string, options: { workspaceDir?: string, metadata?: Record<string, any>, wsPath?: string } = {}): Promise<{ pipeName: string }> {
-    const { pipeName } = await this._channel.startServer({ title, ...options });
-    return { pipeName };
+  async bind(title: string, options: { workspaceDir?: string, metadata?: Record<string, any>, host?: string, port?: number } = {}): Promise<{ endpoint: string }> {
+    const { endpoint } = await this._channel.startServer({ title, ...options });
+    return { endpoint };
   }
 
-  async _unregister(): Promise<void> {
+  async unbind(): Promise<void> {
     await this._channel.stopServer();
   }
 

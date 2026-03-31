@@ -33,7 +33,7 @@ export type BrowserInfo = {
 
 export type EndpointInfo = {
   title: string;
-  pipeName?: string;
+  endpoint?: string;
   workspaceDir?: string;
   metadata?: Record<string, any>;
 };
@@ -93,7 +93,7 @@ class ServerRegistry {
       playwrightLib: require.resolve('..'),
       title: endpoint.title,
       browser,
-      pipeName: endpoint.pipeName,
+      endpoint: endpoint.endpoint,
       workspaceDir: endpoint.workspaceDir,
     };
     await fs.promises.writeFile(file, JSON.stringify(descriptor), 'utf-8');
@@ -137,16 +137,25 @@ class ServerRegistry {
 }
 
 async function canConnect(descriptor: BrowserDescriptor): Promise<boolean> {
-  if (descriptor.pipeName) {
+  if (!descriptor.endpoint)
+    return false;
+  if (descriptor.endpoint.startsWith('ws://') || descriptor.endpoint.startsWith('wss://')) {
     return await new Promise(resolve => {
-      const socket = net.createConnection(descriptor.pipeName!, () => {
+      const url = new URL(descriptor.endpoint!);
+      const socket = net.createConnection(Number(url.port), url.hostname, () => {
         socket.destroy();
         resolve(true);
       });
       socket.on('error', () => resolve(false));
     });
   }
-  return false;
+  return await new Promise(resolve => {
+    const socket = net.createConnection(descriptor.endpoint ?? (descriptor as any).pipeName, () => {
+      socket.destroy();
+      resolve(true);
+    });
+    socket.on('error', () => resolve(false));
+  });
 }
 
 const defaultCacheDirectory = (() => {

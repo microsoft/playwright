@@ -33,8 +33,6 @@ import type { FullConfig } from './config';
 import type { ClientInfo } from '../utils/mcp/server';
 // eslint-disable-next-line no-restricted-imports
 import type { Playwright } from '../../client/playwright';
-// eslint-disable-next-line no-restricted-imports
-import type { Browser } from '../../client/browser';
 import type { BrowserInfo } from '../../serverRegistry';
 
 type ClientInfoEx = ClientInfo & {
@@ -255,5 +253,5 @@ function throwBrowserIsNotInstalledError(config: FullConfig): never {
 
 async function startServer(browser: playwright.Browser, clientInfo: ClientInfoEx) {
   if (clientInfo.sessionName)
-    await (browser as Browser)._register(clientInfo.sessionName, { workspaceDir: clientInfo.workspaceDir });
+    await browser.bind(clientInfo.sessionName, { workspaceDir: clientInfo.workspaceDir });
 }
