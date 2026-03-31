@@ -128,8 +128,7 @@ browserTest('should support touch with null viewport', async ({ browser, server 
   await context.close();
 });
 
-it('should set both screen and viewport options', async ({ contextFactory, browserName, isBidi }) => {
-  it.fail(browserName === 'firefox' && !isBidi, 'Screen size is reset to viewport');
+it('should set both screen and viewport options', async ({ contextFactory }) => {
   const context = await contextFactory({
     screen: { 'width': 1280, 'height': 720 },
     viewport: { 'width': 1000, 'height': 600 },

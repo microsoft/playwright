@@ -597,6 +597,7 @@ export class PageTarget {
     // Otherwise, explicitly set page viewport prevales over browser context
     // default viewport.
     const viewportSize = this._viewportSize || this._browserContext.defaultViewportSize;
+    const screenSize = this._screenSize || this._browserContext.defaultScreenSize;
     if (viewportSize) {
       const {width, height} = viewportSize;
       this._linkedBrowser.style.setProperty('width', width + 'px');
@@ -605,7 +606,15 @@ export class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.setProperty('overflow', 'auto');
       this._linkedBrowser.closest('.browserStack').style.setProperty('contain', 'size');
       this._linkedBrowser.closest('.browserStack').style.setProperty('scrollbar-width', 'none');
-      this._linkedBrowser.browsingContext.inRDMPane = true;
+
+      const bc = this._linkedBrowser.browsingContext;
+      if (screenSize) {
+        bc.inRDMPane = false;
+        bc.setScreenAreaOverride(screenSize.width, screenSize.height);
+      } else {
+        bc.inRDMPane = true;
+        bc.resetScreenAreaOverride();
+      }
 
       const stackRect = this._linkedBrowser.closest('.browserStack').getBoundingClientRect();
       const toolbarTop = stackRect.y;
@@ -620,6 +629,7 @@ export class PageTarget {
       this._linkedBrowser.closest('.browserStack').style.removeProperty('contain');
       this._linkedBrowser.closest('.browserStack').style.removeProperty('scrollbar-width');
       this._linkedBrowser.browsingContext.inRDMPane = false;
+      this._linkedBrowser.browsingContext.resetScreenAreaOverride();
 
       const actualSize = this._linkedBrowser.getBoundingClientRect();
       await this._channel.connect('').send('awaitViewportDimensions', {
@@ -681,8 +691,9 @@ export class PageTarget {
     await this._channel.connect('').send('setInterceptFileChooserDialog', enabled).catch(e => {});
   }
 
-  async setViewportSize(viewportSize) {
+  async setViewportSize(viewportSize, screenSize) {
     this._viewportSize = viewportSize;
+    this._screenSize = screenSize;
     await this.updateViewportSize();
   }
 
@@ -890,6 +901,7 @@ class BrowserContext {
     this.ignoreHTTPSErrors = undefined;
     this.downloadOptions = undefined;
     this.defaultViewportSize = undefined;
+    this.defaultScreenSize = undefined;
     this.deviceScaleFactor = undefined;
     this.defaultUserAgent = null;
     this.timezoneOverride = undefined;
@@ -1029,6 +1041,7 @@ class BrowserContext {
 
   async setDefaultViewport(viewport) {
     this.defaultViewportSize = viewport ? viewport.viewportSize : undefined;
+    this.defaultScreenSize = viewport ? viewport.screenSize : undefined;
     this.deviceScaleFactor = viewport ? viewport.deviceScaleFactor : undefined;
     await Promise.all(Array.from(this.pages).map(page => page.updateViewportSize()));
   }
