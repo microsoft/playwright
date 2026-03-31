@@ -11,7 +11,7 @@
 !lib/**/*.svg
 !lib/**/*.ttf
 !lib/**/*.json
-!lib/**/skill/**/*.md
+!lib/**/*.md
 !lib/utilsBundleImpl/xdg-open
 !lib/**/manifest.webmanifest
 # Exclude injected files. A preprocessed version of these is included via lib/generated.

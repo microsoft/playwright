@@ -22,7 +22,7 @@ import path from 'path';
 export async function installSkill() {
   const cwd = process.cwd();
   const skillSource = path.join(__dirname, 'SKILL.md');
-  const destDir = path.join(cwd, '.claude', 'playwright-trace');
+  const destDir = path.join(cwd, '.claude', 'skills', 'playwright-trace');
   await fs.promises.mkdir(destDir, { recursive: true });
   const destFile = path.join(destDir, 'SKILL.md');
   await fs.promises.copyFile(skillSource, destFile);
