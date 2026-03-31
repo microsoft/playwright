@@ -78,6 +78,19 @@ test('create new tab', async ({ client }) => {
   });
 });
 
+test('create new tab with url', async ({ client }) => {
+  expect(await client.callTool({
+    name: 'browser_tabs',
+    arguments: {
+      action: 'new',
+      url: `data:text/html,<title>Tab one</title><body>Body one</body>`,
+    },
+  })).toHaveResponse({
+    result: `- 0: [](about:blank)
+- 1: (current) [Tab one](data:text/html,<title>Tab one</title><body>Body one</body>)`,
+  });
+});
+
 test('select tab', async ({ client }) => {
   await createTab(client, 'Tab one', 'Body one');
   await createTab(client, 'Tab two', 'Body two');
