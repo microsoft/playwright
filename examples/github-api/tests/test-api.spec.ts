@@ -3,7 +3,7 @@
 /**
  * In this script, we will login and run a few tests that use GitHub API.
  *
- * Steps summary
+ * Steps summaries
  * 1. Create a new repo.
  * 2. Run tests that programmatically create new issues.
  * 3. Delete the repo.
