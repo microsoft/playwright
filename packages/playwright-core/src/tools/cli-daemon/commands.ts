@@ -924,7 +924,7 @@ const install = declareCommand({
   category: 'install',
   args: z.object({}),
   options: z.object({
-    skills: z.string().optional().describe('Install skills to ".claude" (default) or ".agents" dir'),
+    skills: z.string().optional().describe('Install skills, possible values: claude (default), agents.'),
   }),
   toolName: '',
   toolParams: () => ({}),
