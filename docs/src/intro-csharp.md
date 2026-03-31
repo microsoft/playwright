@@ -159,7 +159,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -195,7 +195,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 
@@ -230,7 +230,7 @@ public class UnitTest1: PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 </TabItem>
@@ -264,7 +264,7 @@ public class UnitTest1: PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    } 
+    }
 }
 ```
 </TabItem>
@@ -285,7 +285,7 @@ See our doc on [Running and Debugging Tests](./running-tests.md) to learn more a
 
 - Playwright is distributed as a .NET Standard 2.0 library. We recommend .NET 8.
 - Windows 11+, Windows Server 2019+ or Windows Subsystem for Linux (WSL).
-- macOS 14 Ventura, or later.
+- macOS 14 Sonoma, or later.
 - Debian 12, Debian 13, Ubuntu 22.04, Ubuntu 24.04, on x86-64 and arm64 architecture.
 
 ## What's next
