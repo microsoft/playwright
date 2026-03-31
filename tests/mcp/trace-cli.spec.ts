@@ -17,6 +17,7 @@
 import fs from 'fs';
 
 import { test, expect } from './trace-cli-fixtures';
+import path from 'path';
 
 test.skip(({ mcpBrowser }) => mcpBrowser !== 'chrome', 'Chrome-only');
 
@@ -106,6 +107,24 @@ test('trace request shows details', async ({ runTraceCli }) => {
   expect(stdout).toContain('status:');
   expect(stdout).toContain('Request headers');
   expect(stdout).toContain('Response headers');
+});
+
+test('trace request shows request and response body', async ({ traceCwd, runTraceCli }) => {
+  const { stdout, exitCode } = await runTraceCli(['requests', '--grep', 'feedback']);
+  expect(exitCode).toBe(0);
+  expect(stdout).toContain('feedback');
+  const ordinal = stdout.match(/^\s+(\d+)\.\s/m)![1];
+  const { stdout: requestOutput, exitCode: requestExitCode } = await runTraceCli(['request', ordinal]);
+  expect(requestExitCode).toBe(0);
+  expect(requestOutput).toContain('Request body');
+  const requestBodyPath = path.join('.playwright-cli', 'trace', 'resources', '60e4c013c41de11280ed8ba99dd94144124a0c35.txt');
+  expect(requestOutput).toContain(' ' + requestBodyPath);
+  expect(fs.readFileSync(path.join(traceCwd, requestBodyPath), 'utf-8')).toEqual('What a great product!');
+  expect(requestOutput).toContain('Response body');
+  expect(requestOutput).toContain('application/json');
+  const responseBodyPath = path.join('.playwright-cli', 'trace', 'resources', '030b61c2fb7042fb4fc0ef4287a4ae3c0d98ed68.json');
+  expect(requestOutput).toContain(' ' + responseBodyPath);
+  expect(fs.readFileSync(path.join(traceCwd, responseBodyPath), 'utf-8')).toEqual(JSON.stringify({ received: true }));
 });
 
 test('trace request with invalid ID', async ({ runTraceCli }) => {
