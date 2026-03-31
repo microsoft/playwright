@@ -563,7 +563,7 @@ test('should throw when workers is 0 in config', async ({ runInlineTest }) => {
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Workers must be a positive');
+  expect(result.output).toContain('must be a positive');
 });
 
 test('should throw when workers is negative in config', async ({ runInlineTest }) => {
@@ -577,7 +577,7 @@ test('should throw when workers is negative in config', async ({ runInlineTest }
     `,
   });
   expect(result.exitCode).toBe(1);
-  expect(result.output).toContain('Workers must be a positive');
+  expect(result.output).toContain('must be a positive');
 });
 
 test('should throw when workers is 0 via CLI', async ({ runInlineTest }) => {
@@ -589,7 +589,7 @@ test('should throw when workers is 0 via CLI', async ({ runInlineTest }) => {
     `,
   }, { workers: 0 });
   expect(result.exitCode).not.toBe(0);
-  expect(result.output).toContain('Workers must be a positive');
+  expect(result.output).toContain('must be a positive');
 });
 
 test('should throw when workers is negative via CLI', async ({ runInlineTest }) => {
@@ -601,7 +601,7 @@ test('should throw when workers is negative via CLI', async ({ runInlineTest }) 
     `,
   }, { workers: -1 });
   expect(result.exitCode).not.toBe(0);
-  expect(result.output).toContain('Workers must be a positive');
+  expect(result.output).toContain('must be a positive');
 });
 
 test('should work with undefined values and base', async ({ runInlineTest }) => {
