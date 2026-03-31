@@ -203,9 +203,6 @@ const Browser = {
       canceled: t.Optional(t.Boolean),
       error: t.Optional(t.String),
     },
-    'videoRecordingFinished': {
-      screencastId: t.String,
-    },
   },
 
   methods: {
@@ -430,13 +427,13 @@ const Browser = {
         contrast: t.Nullable(t.Enum(['less', 'more', 'custom', 'no-preference'])),
       },
     },
-    'setVideoRecordingOptions': {
+    'setScreencastOptions': {
       params: {
         browserContextId: t.Optional(t.String),
         options: t.Optional({
-          dir: t.String,
           width: t.Number,
           height: t.Number,
+          quality: t.Number,
         }),
       },
     },
@@ -697,10 +694,6 @@ const Page = {
       workerId: t.String,
       message: t.String,
     },
-    'videoRecordingStarted': {
-      screencastId: t.String,
-      file: t.String,
-    },
     'webSocketCreated': {
       frameId: t.String,
       wsid: t.String,
@@ -834,7 +827,6 @@ const Page = {
       },
     },
     'reload': {
-      params: { },
     },
     'adoptNode': {
       params: {
@@ -922,7 +914,6 @@ const Page = {
       }
     },
     'crash': {
-      params: {}
     },
     'handleDialog': {
       params: {
@@ -949,14 +940,8 @@ const Page = {
         height: t.Number,
         quality: t.Number,
       },
-      returns: {
-        screencastId: t.String,
-      },
     },
     'screencastFrameAck': {
-      params: {
-        screencastId: t.String,
-      },
     },
     'stopScreencast': {
     },
