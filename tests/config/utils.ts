@@ -170,7 +170,7 @@ export async function parseTrace(file: string): Promise<{ snapshots: SnapshotSto
   await extractTrace(file, dir);
   const backend = new DirTraceLoaderBackend(dir);
   const loader = new TraceLoader();
-  await loader.load(backend, () => {});
+  await loader.load(backend);
   return { model: new TraceModel(dir, loader.contextEntries), snapshots: loader.storage() };
 }
 

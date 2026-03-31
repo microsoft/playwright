@@ -203,6 +203,31 @@ test('trace close removes extracted trace', async ({ traceFile, runTraceCli }) =
   expect(exitCode3).toBe(0);
 });
 
+test('trace open with .trace file creates link', async ({ traceFile, traceCwd, runTraceCli }) => {
+  // Extract the zip using the CLI to get raw trace files.
+  const extractCwd = path.join(path.dirname(traceFile), 'extracted');
+  fs.mkdirSync(extractCwd, { recursive: true });
+  const cliPath = path.resolve(__dirname, '../../packages/playwright-core/cli.js');
+  const { execFileSync } = require('child_process');
+  execFileSync(process.execPath, [cliPath, 'trace', 'open', traceFile], { cwd: extractCwd });
+  const extractDir = path.join(extractCwd, '.playwright-cli', 'trace');
+
+  const traceEntries = fs.readdirSync(extractDir).filter((f: string) => f.endsWith('.trace'));
+  expect(traceEntries.length).toBeGreaterThan(0);
+  const dotTraceFile = path.join(extractDir, traceEntries[0]);
+  const { exitCode } = await runTraceCli(['open', dotTraceFile]);
+  expect(exitCode).toBe(0);
+
+  const linkFile = path.join(traceCwd, '.playwright-cli', 'trace', '.link');
+  expect(fs.existsSync(linkFile)).toBe(true);
+  expect(fs.readFileSync(linkFile, 'utf-8')).toBe(dotTraceFile);
+
+  const { stdout: actionsOutput, exitCode: actionsExitCode } = await runTraceCli(['actions']);
+  expect(actionsExitCode).toBe(0);
+  expect(actionsOutput).toContain('Navigate');
+  expect(actionsOutput).toContain('Click');
+});
+
 test('trace attachments lists attachments', async ({ runTraceCli }) => {
   const { stdout, exitCode } = await runTraceCli(['attachments']);
   expect(exitCode).toBe(0);
