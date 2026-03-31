@@ -109,11 +109,8 @@ async function ensureConfiguredBrowserInstalled() {
     const config = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, 'default', {});
     const browserName = config.browser.browserName;
     const channel = config.browser.launchOptions.channel;
-    if (!channel || channel.startsWith('chromium')) {
-      const executable = browserRegistry.findExecutable(channel ?? browserName);
-      if (executable && !fs.existsSync(executable.executablePath()!))
-        await browserRegistry.install([executable]);
-    }
+    if (!channel || channel.startsWith('chromium'))
+      await resolveAndInstall(channel ?? browserName);
   } else {
     const channel = await findOrInstallDefaultBrowser();
     if (channel !== 'chrome')
@@ -127,13 +124,17 @@ async function findOrInstallDefaultBrowser() {
     const executable = browserRegistry.findExecutable(channel);
     if (!executable?.executablePath())
       continue;
+    await resolveAndInstall('ffmpeg');
     console.log(`✅ Found ${channel}, will use it as the default browser.`);
     return channel;
   }
-  const chromiumExecutable = browserRegistry.findExecutable('chromium');
-  if (!fs.existsSync(chromiumExecutable?.executablePath()!))
-    await browserRegistry.install([chromiumExecutable]);
+  await resolveAndInstall('chromium');
   return 'chromium';
+}
+
+async function resolveAndInstall(nameOrChannel: string) {
+  const executables = browserRegistry.resolveBrowsers([nameOrChannel], { shell: 'no' });
+  await browserRegistry.install(executables);
 }
 
 async function createDefaultConfig(channel: string) {
