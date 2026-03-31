@@ -10197,7 +10197,7 @@ export interface Browser {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -15496,7 +15496,7 @@ export interface BrowserType<Unused = {}> {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -16226,9 +16226,35 @@ export interface Screencast {
     };
   }): Promise<Disposable>;
   /**
+   * Removes action decorations.
+   */
+  hideActions(): Promise<void>;
+
+  /**
    * Hides overlays without removing them.
    */
   hideOverlays(): Promise<void>;
+
+  /**
+   * Enables visual annotations on interacted elements. Returns a disposable that stops showing actions when disposed.
+   * @param options
+   */
+  showActions(options?: {
+    /**
+     * How long each annotation is displayed in milliseconds. Defaults to `500`.
+     */
+    duration?: number;
+
+    /**
+     * Font size of the action title in pixels. Defaults to `24`.
+     */
+    fontSize?: number;
+
+    /**
+     * Position of the action title overlay. Defaults to `"top-right"`.
+     */
+    position?: "top-left"|"top"|"top-right"|"bottom-left"|"bottom"|"bottom-right";
+  }): Promise<Disposable>;
 
   /**
    * Shows a chapter overlay with a title and optional description, centered on the page with a blurred backdrop. Useful
@@ -17441,7 +17467,7 @@ export interface AndroidDevice {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -20049,7 +20075,7 @@ export interface Electron {
       /**
        * If specified, enables visual annotations on interacted elements during video recording.
        */
-      annotate?: {
+      showActions?: {
         /**
          * How long each annotation is displayed in milliseconds. Defaults to `500`.
          */
@@ -23022,7 +23048,7 @@ export interface BrowserContextOptions {
     /**
      * If specified, enables visual annotations on interacted elements during video recording.
      */
-    annotate?: {
+    showActions?: {
       /**
        * How long each annotation is displayed in milliseconds. Defaults to `500`.
        */

@@ -32,12 +32,10 @@ page.screencast().start(new Screencast.StartOptions()
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
 
 ```java
-page.screencast().start(new Screencast.StartOptions()
-    .setPath(Paths.get("video.webm"))
-    .setAnnotate(new Screencast.Annotate().setPosition("top-right")));
+page.screencast().showActions(new Screencast.ShowActionsOptions().setPosition("top-right"));
 ```
 
-The `annotate` option accepts `position` (`"top-left"`, `"top"`, `"top-right"`, `"bottom-left"`, `"bottom"`, `"bottom-right"`), `duration` (ms per annotation), and `fontSize` (px).
+[`method: Screencast.showActions`] accepts `position` (`"top-left"`, `"top"`, `"top-right"`, `"bottom-left"`, `"bottom"`, `"bottom-right"`), `duration` (ms per annotation), and `fontSize` (px). Returns a disposable to stop showing actions.
 
 **Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
 
@@ -54,8 +52,8 @@ page.screencast().showOverlay("<div style=\"color: red\">Recording</div>");
 
 ```java
 page.screencast().start(new Screencast.StartOptions()
-    .setPath(Paths.get("receipt.webm"))
-    .setAnnotate(new Screencast.Annotate().setPosition("top-right")));
+    .setPath(Paths.get("receipt.webm")));
+page.screencast().showActions(new Screencast.ShowActionsOptions().setPosition("top-right"));
 
 page.screencast().showChapter("Verifying checkout flow",
     new Screencast.ShowChapterOptions()
@@ -88,7 +86,8 @@ The resulting video serves as a receipt: chapter titles provide context, action 
 
 - [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
 - Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
-- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showActions`] and [`method: Screencast.hideActions`] for action annotations.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual overlays.
 - Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
 
 #### Storage, Console and Errors

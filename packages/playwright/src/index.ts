@@ -372,12 +372,12 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           `If you would like to configure your page before each test, do that in beforeEach hook instead.`,
         ].join('\n'));
       }
-      const annotate = typeof video === 'string' ? undefined : video.annotate;
+      const show = typeof video === 'string' ? undefined : video.show;
       const videoOptions: BrowserContextOptions = captureVideo ? {
         recordVideo: {
           dir: tracing().artifactsDir(),
           size: typeof video === 'string' ? undefined : video.size,
-          annotate: annotate?.action,
+          showActions: show?.actions,
         }
       } : {};
       const context = await browser.newContext({ ...videoOptions, ...options }) as BrowserContextImpl;
@@ -442,13 +442,13 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
   context: async ({ browser, video, _reuseContext, _contextFactory }, use, testInfoPublic) => {
     const browserImpl = browser as BrowserImpl;
     const testInfo = testInfoPublic as TestInfoImpl;
-    const annotate = typeof video === 'string' ? undefined : video.annotate;
+    const show = typeof video === 'string' ? undefined : video.show;
     attachConnectedHeaderIfNeeded(testInfo, browserImpl);
     if (!_reuseContext) {
       const { context, close } = await _contextFactory();
       testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
       await runDaemonForContext(testInfo, context);
-      await installScreencastTitleUpdater(testInfo, context, annotate?.test);
+      await installScreencastTitleUpdater(testInfo, context, show?.test);
       await use(context);
       await close();
       return;
@@ -457,7 +457,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
     const context = await browserImpl._wrapApiCall(() => browserImpl._newContextForReuse(), { internal: true });
     testInfo._onCustomMessageCallback = createCustomMessageHandler(testInfo, context);
     await runDaemonForContext(testInfo, context);
-    await installScreencastTitleUpdater(testInfo, context, annotate?.test);
+    await installScreencastTitleUpdater(testInfo, context, show?.test);
     await use(context);
     const closeReason = testInfo.status === 'timedOut' ? 'Test timeout of ' + testInfo.timeout + 'ms exceeded.' : 'Test ended.';
     await browserImpl._wrapApiCall(() => browserImpl._disconnectFromReusedContext(closeReason), { internal: true });

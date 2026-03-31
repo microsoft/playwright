@@ -33,13 +33,10 @@ page.screencast.start(
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
 
 ```python
-page.screencast.start(
-    path="video.webm",
-    annotate={"position": "top-right"},
-)
+page.screencast.show_actions(position="top-right")
 ```
 
-The `annotate` option accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `font_size` (px).
+[`method: Screencast.showActions`] accepts `position` (`'top-left'`, `'top'`, `'top-right'`, `'bottom-left'`, `'bottom'`, `'bottom-right'`), `duration` (ms per annotation), and `font_size` (px). Returns a disposable to stop showing actions.
 
 **Visual overlays** — add chapter titles and custom HTML overlays on top of the page for richer narration:
 
@@ -55,10 +52,8 @@ page.screencast.show_overlay('<div style="color: red">Recording</div>')
 **Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
 
 ```python
-page.screencast.start(
-    path="receipt.webm",
-    annotate={"position": "top-right"},
-)
+page.screencast.start(path="receipt.webm")
+page.screencast.show_actions(position="top-right")
 
 page.screencast.show_chapter("Verifying checkout flow",
     description="Added coupon code support per ticket #1234",
@@ -91,7 +86,8 @@ The resulting video serves as a receipt: chapter titles provide context, action 
 
 - [`property: Page.screencast`] provides video recording, real-time frame streaming, and overlay management.
 - Methods [`method: Screencast.start`] and [`method: Screencast.stop`] for recording and frame capture.
-- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual annotations.
+- Methods [`method: Screencast.showActions`] and [`method: Screencast.hideActions`] for action annotations.
+- Methods [`method: Screencast.showChapter`] and [`method: Screencast.showOverlay`] for visual overlays.
 - Methods [`method: Screencast.showOverlays`] and [`method: Screencast.hideOverlays`] for overlay visibility control.
 
 #### Storage, Console and Errors

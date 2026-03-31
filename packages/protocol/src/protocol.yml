@@ -59,8 +59,8 @@ Rect:
     width: float
     height: float
 
-AnnotateOptions:
-  type: object
+ShowActionsOptions:
+  type: mixin
   properties:
     duration: float?
     position:
@@ -613,7 +613,10 @@ ContextOptions:
           properties:
             width: int
             height: int
-        annotate: AnnotateOptions?
+        showActions:
+          type: object?
+          properties:
+            $mixin: ShowActionsOptions
     strictSelectors: boolean?
     serviceWorkers:
       type: enum?
@@ -2108,7 +2111,7 @@ Page:
       title: Cancel pick locator
       group: configuration
 
-    overlayShow:
+    screencastShowOverlay:
       title: Show overlay
       group: configuration
       parameters:
@@ -2117,13 +2120,13 @@ Page:
       returns:
         id: string
 
-    overlayRemove:
+    screencastRemoveOverlay:
       title: Remove overlay
       group: configuration
       parameters:
         id: string
 
-    overlayChapter:
+    screencastChapter:
       title: Show chapter overlay
       group: configuration
       parameters:
@@ -2131,11 +2134,21 @@ Page:
         description: string?
         duration: float?
 
-    overlaySetVisible:
+    screencastSetOverlayVisible:
       title: Set overlay visibility
       group: configuration
       parameters:
         visible: boolean
+
+    screencastShowActions:
+      title: Show actions
+      group: configuration
+      parameters:
+        $mixin: ShowActionsOptions
+
+    screencastHideActions:
+      title: Remove actions
+      group: configuration
 
     screencastStart:
       title: Start screencast
@@ -2149,7 +2162,6 @@ Page:
         quality: int?
         sendFrames: boolean?
         record: boolean?
-        annotate: AnnotateOptions?
       returns:
         artifact: Artifact?
 
@@ -4169,7 +4181,10 @@ Electron:
               properties:
                 width: int
                 height: int
-            annotate: AnnotateOptions?
+            showActions:
+              type: object?
+              properties:
+                $mixin: ShowActionsOptions
         strictSelectors: boolean?
         timezoneId: string?
         tracesDir: string?
