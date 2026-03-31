@@ -64,6 +64,11 @@ const tracingStop = defineTool({
     await browserContext.tracing.stop();
     // eslint-disable-next-line no-restricted-syntax
     const traceLegend = (browserContext.tracing as any)[traceLegendSymbol];
+    if (!traceLegend)
+      throw new Error('Tracing is not started');
+    // eslint-disable-next-line no-restricted-syntax
+    delete (browserContext.tracing as any)[traceLegendSymbol];
+
     response.addTextResult(`Trace recording stopped.`);
     response.addFileLink('Trace', `${traceLegend.tracesDir}/${traceLegend.name}.trace`);
     response.addFileLink('Network log', `${traceLegend.tracesDir}/${traceLegend.name}.network`);

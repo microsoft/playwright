@@ -38,38 +38,39 @@ export class TraceLoader {
   constructor() {
   }
 
-  async load(backend: TraceLoaderBackend, unzipProgress: (done: number, total: number) => void) {
+  async load(backend: TraceLoaderBackend, traceFile?: string, unzipProgress?: (done: number, total: number) => void) {
     this._backend = backend;
 
-    const ordinals: string[] = [];
+    const prefix = traceFile?.match(/(.+)\.trace$/)?.[1];
+    const prefixes: string[] = [];
     let hasSource = false;
     for (const entryName of await this._backend.entryNames()) {
       const match = entryName.match(/(.+)\.trace$/);
-      if (match)
-        ordinals.push(match[1] || '');
+      if (match && (!prefix || prefix  === match[1]))
+        prefixes.push(match[1] || '');
       if (entryName.includes('src@'))
         hasSource = true;
     }
-    if (!ordinals.length)
+    if (!prefixes.length)
       throw new Error('Cannot find .trace file');
 
     this._snapshotStorage = new SnapshotStorage();
 
     // 3 * ordinals progress increments below.
-    const total = ordinals.length * 3;
+    const total = prefixes.length * 3;
     let done = 0;
-    for (const ordinal of ordinals) {
+    for (const prefix of prefixes) {
       const contextEntry = createEmptyContext();
       contextEntry.hasSource = hasSource;
       const modernizer = new TraceModernizer(contextEntry, this._snapshotStorage);
 
-      const trace = await this._backend.readText(ordinal + '.trace') || '';
+      const trace = await this._backend.readText(prefix + '.trace') || '';
       modernizer.appendTrace(trace);
-      unzipProgress(++done, total);
+      unzipProgress?.(++done, total);
 
-      const network = await this._backend.readText(ordinal + '.network') || '';
+      const network = await this._backend.readText(prefix + '.network') || '';
       modernizer.appendTrace(network);
-      unzipProgress(++done, total);
+      unzipProgress?.(++done, total);
 
       contextEntry.actions = modernizer.actions().sort((a1, a2) => a1.startTime - a2.startTime);
 
@@ -87,13 +88,13 @@ export class TraceLoader {
         }
       }
 
-      const stacks = await this._backend.readText(ordinal + '.stacks');
+      const stacks = await this._backend.readText(prefix + '.stacks');
       if (stacks) {
         const callMetadata = parseClientSideCallMetadata(JSON.parse(stacks));
         for (const action of contextEntry.actions)
           action.stack = action.stack || callMetadata.get(action.callId);
       }
-      unzipProgress(++done, total);
+      unzipProgress?.(++done, total);
 
       for (const resource of contextEntry.resources) {
         if (resource.request.postData?._sha1)
