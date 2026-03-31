@@ -1064,8 +1064,10 @@ Browser:
         title: string
         workspaceDir: string?
         metadata: json?
+        host: string?
+        port: int?
       returns:
-        pipeName: string
+        endpoint: string
 
     stopServer:
       title: Stop server

@@ -10,11 +10,14 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### 🎬 Screencast
 
-New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings and as real-time frame streams.
+New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings, annotations, overlays, and a real-time frame stream.
 
+<center>
 <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-screencast-demo.gif" alt="Demo" width="500" height="313" />
+</center>
 
-**Video recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideo`] option:
+
+**Screencast recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideo`] option:
 
 ```js
 await page.screencast.start({ path: 'video.webm' });
@@ -91,9 +94,62 @@ await page.screencast.stop();
 
 The resulting video serves as a receipt: chapter titles provide context, action annotations highlight each interaction, and the visual walkthrough is faster to review than text logs.
 
-### 🤖 Agentic Tools
+### 🔗 Interoperability
 
-#### CLI debugger
+New [`method: Browser.bind`] API makes a launched browser available for `playwright-cli`, `@playwright/mcp`, and other clients to connect to.
+
+**Bind a browser** — start a browser and bind it so others can connect:
+
+```js
+const browser = await chromium.launch();
+const { endpoint } = await browser.bind('my-session', {
+  workspaceDir: '/my/project',
+});
+```
+
+**Connect from playwright-cli**
+
+```bash
+playwright-cli attach my-session
+playwright-cli -s my-session snapshot
+```
+
+**Connect from playwright/mcp**
+
+```bash
+@playwright/mcp --endpoint=my-session
+```
+
+**Connect from another client**
+
+```js
+const browser = await chromium.connect(endpoint);
+```
+
+Pass `host` and `port` options to bind over WebSocket instead of a named pipe:
+
+```js
+const { endpoint } = await browser.bind('my-session', {
+  host: 'localhost',
+  port: 0,
+});
+// endpoint is a ws:// URL
+```
+
+Call [`method: Browser.unbind`] to stop accepting new connections.
+
+### 📊 Observability
+
+Run `playwright-cli show` to open the Dashboard that lists all bound browsers, their status, and workspace.
+
+<center>
+<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-dashboard.gif" alt="Demo" width="1169" height="835" />
+</center>
+
+- `playwright-cli` binds all of its browsers automatically, so you can see what your agents are doing.
+- Pass `PLAYWRIGHT_DASHBOARD=1` env variable to see all `@playwright/test` browsers in the dashboard.
+
+### 🐛 CLI debugger for agents
 
 Coding agents can now run `npx playwright test --debug=cli` to attach and debug tests over `playwright-cli` — perfect for automatically fixing tests in agentic workflows:
 
@@ -116,7 +172,7 @@ $ playwright-cli --session tw-87b59e step-over
 - Expect "toHaveTitle" at output/tests/example.spec.ts:7
 ```
 
-#### CLI trace analysis
+### 📋 CLI trace analysis for agents
 
 Coding agents can run `npx playwright trace` to explore [Playwright Trace](./trace-viewer.md) and understand failing or flaky tests from the command line:
 

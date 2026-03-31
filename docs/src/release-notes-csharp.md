@@ -10,11 +10,14 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### 🎬 Screencast
 
-New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings and as real-time frame streams.
+New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings, annotations, overlays, and a real-time frame stream.
 
+<center>
 <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-screencast-demo.gif" alt="Demo" width="500" height="313" />
+</center>
 
-**Video recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideoDir`] option:
+
+**Screencast recording** — record video with precise start/stop control, as an alternative to the [`option: Browser.newContext.recordVideoDir`] option:
 
 ```csharp
 await page.Screencast.StartAsync(new() { Path = "video.webm" });
@@ -103,9 +106,62 @@ The resulting video serves as a receipt: chapter titles provide context, action 
 - Method [`method: BrowserContext.isClosed`].
 - Method [`method: Request.existingResponse`] returns the response without waiting.
 - Method [`method: Response.httpVersion`] returns the HTTP version used by the response.
-- Event [`event: CDPSession.close`] for CDP sessions.
 - Option `Live` in [`method: Tracing.start`] for real-time trace updates.
 - Option `ArtifactsDir` in [`method: BrowserType.launch`] to configure the artifacts directory.
+
+### 🔗 Interoperability
+
+New [`method: Browser.bind`] API makes a launched browser available for `playwright-cli`, `@playwright/mcp`, and other clients to connect to.
+
+**Bind a browser** — start a browser and bind it so others can connect:
+
+```csharp
+var browser = await chromium.LaunchAsync();
+var serverInfo = await browser.BindAsync("my-session", new() {
+    WorkspaceDir = "/my/project",
+});
+```
+
+**Connect from playwright-cli**
+
+```bash
+playwright-cli attach my-session
+```
+
+**Connect from playwright/mcp**
+
+```bash
+@playwright/mcp --endpoint=my-session
+```
+
+**Connect from another client**
+
+```csharp
+var browser = await chromium.ConnectAsync(serverInfo.Endpoint);
+```
+
+Pass `Host` and `Port` options to bind over WebSocket instead of a named pipe:
+
+```csharp
+var serverInfo = await browser.BindAsync("my-session", new() {
+    Host = "localhost",
+    Port = 0,
+});
+// serverInfo.Endpoint is a ws:// URL
+```
+
+Call [`method: Browser.unbind`] to stop accepting new connections.
+
+### 📊 Observability
+
+Run `playwright-cli show` to open the Dashboard that lists all bound browsers, their status, and workspace.
+
+<center>
+<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-dashboard.gif" alt="Demo" width="1169" height="835" />
+</center>
+
+- `playwright-cli` binds all of its browsers automatically, so you can see what your agents are doing.
+- Pass `PLAYWRIGHT_DASHBOARD=1` env variable to see all `@playwright/test` browsers in the dashboard.
 
 ### Breaking Changes ⚠️
 

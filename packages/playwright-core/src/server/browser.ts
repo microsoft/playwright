@@ -25,6 +25,7 @@ import { PlaywrightPipeServer } from '../remote/playwrightPipeServer';
 import { PlaywrightWebSocketServer } from '../remote/playwrightWebSocketServer';
 import { BrowserInfo, serverRegistry } from '../serverRegistry';
 import { makeSocketPath } from './utils/fileUtils';
+import { createGuid } from '../utils';
 
 import type * as types from './types';
 import type { ProxySettings } from './types';
@@ -158,7 +159,7 @@ export abstract class Browser extends SdkObject {
     this._downloads.delete(uuid);
   }
 
-  async startServer(title: string, options: channels.BrowserStartServerOptions): Promise<{ pipeName: string }> {
+  async startServer(title: string, options: channels.BrowserStartServerOptions): Promise<{ endpoint: string }> {
     return await this._server.start(title, options);
   }
 
@@ -203,15 +204,21 @@ export class BrowserServer {
     this._browser = browser;
   }
 
-  async start(title: string, options: channels.BrowserStartServerOptions): Promise<{ pipeName: string }> {
+  async start(title: string, options: channels.BrowserStartServerOptions): Promise<{ endpoint: string }> {
     if (this._isStarted)
       throw new Error(`Server is already started.`);
     this._isStarted = true;
 
-    this._pipeServer = new PlaywrightPipeServer(this._browser);
-    this._pipeSocketPath = await this._socketPath();
-    await this._pipeServer.listen(this._pipeSocketPath);
-    const pipeName = this._pipeSocketPath;
+    let endpoint: string;
+    if (options.host !== undefined || options.port !== undefined) {
+      this._wsServer = new PlaywrightWebSocketServer(this._browser, '/');
+      endpoint = await this._wsServer.listen(options.port ?? 0, options.host, createGuid());
+    } else {
+      this._pipeServer = new PlaywrightPipeServer(this._browser);
+      this._pipeSocketPath = await this._socketPath();
+      await this._pipeServer.listen(this._pipeSocketPath);
+      endpoint = this._pipeSocketPath;
+    }
 
     const browserInfo: BrowserInfo = {
       guid: this._browser.guid,
@@ -221,11 +228,11 @@ export class BrowserServer {
     };
     await serverRegistry.create(browserInfo, {
       title,
-      pipeName,
+      endpoint,
       workspaceDir: options.workspaceDir,
       metadata: options.metadata,
     });
-    return { pipeName };
+    return { endpoint };
   }
 
   async stop() {

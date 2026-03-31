@@ -1193,13 +1193,17 @@ export type BrowserStartServerParams = {
   title: string,
   workspaceDir?: string,
   metadata?: any,
+  host?: string,
+  port?: number,
 };
 export type BrowserStartServerOptions = {
   workspaceDir?: string,
   metadata?: any,
+  host?: string,
+  port?: number,
 };
 export type BrowserStartServerResult = {
-  pipeName: string,
+  endpoint: string,
 };
 export type BrowserStopServerParams = {};
 export type BrowserStopServerOptions = {};

@@ -9783,6 +9783,36 @@ export interface Browser {
   prependListener(event: 'disconnected', listener: (browser: Browser) => any): this;
 
   /**
+   * Binds the browser to a named pipe or web socket, making it available for other clients to connect to.
+   * @param title Title of the browser server, used for identification.
+   * @param options
+   */
+  bind(title: string, options?: {
+    /**
+     * Host to bind the web socket server to. When specified, a web socket server is created instead of a named pipe.
+     */
+    host?: string;
+
+    /**
+     * Additional metadata to associate with the browser server.
+     */
+    metadata?: { [key: string]: any; };
+
+    /**
+     * Port to bind the web socket server to. When specified, a web socket server is created instead of a named pipe. Use
+     * `0` to let the OS pick an available port.
+     */
+    port?: number;
+
+    /**
+     * Working directory associated with this browser server.
+     */
+    workspaceDir?: string;
+  }): Promise<{
+    endpoint: string;
+  }>;
+
+  /**
    * Get the browser type (chromium, firefox or webkit) that the browser belongs to.
    */
   browserType(): BrowserType;
@@ -10411,6 +10441,12 @@ export interface Browser {
    * Returns the buffer with trace data.
    */
   stopTracing(): Promise<Buffer>;
+
+  /**
+   * Unbinds the browser server previously bound with
+   * [browser.bind(title[, options])](https://playwright.dev/docs/api/class-browser#browser-bind).
+   */
+  unbind(): Promise<void>;
 
   /**
    * Returns the browser version.
