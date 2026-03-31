@@ -125,8 +125,8 @@ npx playwright trace snapshot <action-id> -- eval "el => el.getAttribute('data-t
 npx playwright trace snapshot <action-id> -- screenshot
 
 # Redirect output to a file
-npx playwright trace snapshot <action-id> -- eval "document.body.outerHTML" > page.html
-npx playwright trace snapshot <action-id> -- screenshot > screenshot.png
+npx playwright trace snapshot <action-id> -- eval "document.body.outerHTML" --filename=page.html
+npx playwright trace snapshot <action-id> -- screenshot --filename=screenshot.png
 ```
 
 Only three browser commands are useful on a frozen snapshot: `snapshot`, `eval`, and `screenshot`.
