@@ -10,7 +10,12 @@ import LiteYouTube from '@site/src/components/LiteYouTube';
 
 ### 🎬 Screencast
 
-New [`property: Page.screencast`] API provides a unified interface for capturing page content — both as video recordings, annotations, overlays, and a real-time frame stream.
+New [`property: Page.screencast`] API provides a unified interface for capturing page content with:
+- Screencast recordings
+- Action annotations
+- Visual overlays
+- Real-time frame capture
+- Agentic video receipts
 
 <center>
 <img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-screencast-demo.gif" alt="Demo" width="500" height="313" />
@@ -23,13 +28,6 @@ New [`property: Page.screencast`] API provides a unified interface for capturing
 page.screencast().start(new Screencast.StartOptions().setPath(Paths.get("video.webm")));
 // ... perform actions ...
 page.screencast().stop();
-```
-
-**Real-time frame capture** — stream JPEG-encoded frames for custom processing like thumbnails, live previews, AI vision, and more:
-
-```java
-page.screencast().start(new Screencast.StartOptions()
-    .setOnFrame(frame -> sendToVisionModel(frame.data)));
 ```
 
 **Action annotations** — enable built-in visual annotations that highlight interacted elements and display action titles during recording:
@@ -49,6 +47,13 @@ page.screencast().showChapter("Adding TODOs",
         .setDuration(1000));
 
 page.screencast().showOverlay("<div style=\"color: red\">Recording</div>");
+```
+
+**Real-time frame capture** — stream JPEG-encoded frames for custom processing like thumbnails, live previews, AI vision, and more:
+
+```java
+page.screencast().start(new Screencast.StartOptions()
+    .setOnFrame(frame -> sendToVisionModel(frame.data)));
 ```
 
 **Agentic video receipts** — coding agents can produce video evidence of their work. After completing a task, an agent can record a walkthrough video with rich annotations for human review:
@@ -116,24 +121,24 @@ New [`method: Browser.bind`] API makes a launched browser available for `playwri
 **Bind a browser** — start a browser and bind it so others can connect:
 
 ```java
-Browser browser = chromium.launch();
 Browser.BindResult serverInfo = browser.bind("my-session",
     new Browser.BindOptions().setWorkspaceDir("/my/project"));
 ```
 
-**Connect from playwright-cli**
+**Connect from playwright-cli** — connect to the running browser from your favorite coding agent.
 
 ```bash
 playwright-cli attach my-session
+playwright-cli -s my-session snapshot
 ```
 
-**Connect from playwright/mcp**
+**Connect from @playwright/mcp** — or point your MCP server to the running browser.
 
 ```bash
 @playwright/mcp --endpoint=my-session
 ```
 
-**Connect from another client**
+**Connect from a Playwright client** — use API to connect to the browser. Multiple clients at a time are supported!
 
 ```java
 Browser browser = chromium.connect(serverInfo.endpoint);
@@ -151,10 +156,13 @@ Call [`method: Browser.unbind`] to stop accepting new connections.
 
 ### 📊 Observability
 
-Run `playwright-cli show` to open the Dashboard that lists all bound browsers, their status, and workspace.
+Run `playwright-cli show` to open the Dashboard that lists all the bound browsers, their statuses, and allows interacting with them:
+- See what your agent is doing on the background browsers
+- Click into the sessions for manual interventions
+- Open DevTools to inspect pages from the background browsers.
 
 <center>
-<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-dashboard.gif" alt="Demo" width="1169" height="835" />
+<img src="https://raw.githubusercontent.com/microsoft/playwright/main/docs/src/images/release-notes-1.59-dashboard.png" alt="Demo" width="1169" height="835" />
 </center>
 
 - `playwright-cli` binds all of its browsers automatically, so you can see what your agents are doing.
