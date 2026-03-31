@@ -38,11 +38,6 @@
   background: var(--color-canvas-overlay);
 }
 
-.dashboard-view.interactive .tab.active {
-  background: rgb(var(--interactive-orange));
-  color: var(--color-fg-on-emphasis);
-}
-
 .dashboard-view.interactive .toolbar::after {
   content: '';
   position: absolute;
@@ -72,7 +67,7 @@
   transform: translate(-50%, -50%) scale(0.35);
   box-shadow: 0 0 0 0 rgb(var(--interactive-orange) / 0.52);
   z-index: -1;
-  animation: interactive-track-radial 420ms cubic-bezier(0.12, 0.72, 0.22, 1);
+  animation: interactive-track-radial 420ms cubic-bezier(0.12, 0.72, 0.22, 1) forwards;
 }
 
 .dashboard-view.interactive .segmented-control.interactive::after {
@@ -186,6 +181,11 @@
 }
 :root.light-mode .tab.active {
   background: var(--color-canvas-subtle);
+}
+
+.dashboard-view.interactive .tab.active {
+  background: rgb(var(--interactive-orange));
+  color: var(--color-fg-on-emphasis);
 }
 
 .tab-label {
