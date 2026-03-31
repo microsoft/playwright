@@ -249,7 +249,7 @@ program
     .action(async options => {
       const { program: cliProgram } = await import('../tools/cli-client/program');
       process.argv.splice(process.argv.indexOf('cli'), 1);
-      cliProgram();
+      cliProgram().catch(logErrorAndExit);
     });
 
 function logErrorAndExit(e: Error) {

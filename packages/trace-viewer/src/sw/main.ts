@@ -111,7 +111,7 @@ async function innerLoadTrace(traceUri: string, progress: Progress): Promise<Loa
     // Allow 10% to hop from sw to page.
     const [fetchProgress, unzipProgress] = splitProgress(progress, [0.5, 0.4, 0.1]);
     const backend = isLiveTrace(traceUri) || traceUri.endsWith('traces.dir') ? new FetchTraceLoaderBackend(traceUri) : new ZipTraceLoaderBackend(traceUri, fetchProgress);
-    await traceLoader.load(backend, unzipProgress);
+    await traceLoader.load(backend, undefined, unzipProgress);
   } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error(error);
