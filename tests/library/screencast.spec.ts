@@ -23,6 +23,7 @@ import { VideoPlayer } from './videoPlayer';
 
 test.skip(({ mode }) => mode !== 'default', 'screencast is not available in remote mode');
 test.skip(({ video }) => video === 'on', 'conflicts with built-in video recording');
+test.slow();
 
 test('screencast.start delivers frames via onFrame callback', async ({ browser, server, trace }) => {
   test.skip(trace === 'on', 'trace=on has different screencast image configuration');
