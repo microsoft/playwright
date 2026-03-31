@@ -50,9 +50,6 @@ export class BrowserHandler {
       helper.on(this._targetRegistry, TargetRegistry.Events.TargetDestroyed, this._onTargetDestroyed.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadCreated, this._onDownloadCreated.bind(this)),
       helper.on(this._targetRegistry, TargetRegistry.Events.DownloadFinished, this._onDownloadFinished.bind(this)),
-      helper.on(this._targetRegistry, TargetRegistry.Events.ScreencastStopped, sessionId => {
-        this._session.emitEvent('Browser.videoRecordingFinished', {screencastId: '' + sessionId});
-      })
     ];
 
     for (const target of this._targetRegistry.targets())
@@ -104,6 +101,10 @@ export class BrowserHandler {
       targetInfo: target.info()
     });
     session.setHandler(new PageHandler(target, session, channel));
+    // Start screencast only after page handler is created, so that
+    // any screencast frames are actually sent to the client.
+    if (target.browserContext().screencastOptions)
+      target.startScreencast(target.browserContext().screencastOptions);
   }
 
   _onTargetDestroyed(target) {
@@ -230,8 +231,8 @@ export class BrowserHandler {
     await this._targetRegistry.browserContextForId(browserContextId).setContrast(nullToUndefined(contrast));
   }
 
-  async ['Browser.setVideoRecordingOptions']({browserContextId, options}) {
-    await this._targetRegistry.browserContextForId(browserContextId).setVideoRecordingOptions(options);
+  async ['Browser.setScreencastOptions']({browserContextId, options}) {
+    await this._targetRegistry.browserContextForId(browserContextId).setScreencastOptions(options);
   }
 
   async ['Browser.setUserAgentOverride']({browserContextId, userAgent}) {
@@ -251,7 +252,7 @@ export class BrowserHandler {
   }
 
   async ['Browser.setLocaleOverride']({browserContextId, locale}) {
-    await this._targetRegistry.browserContextForId(browserContextId).applySetting('locale', nullToUndefined(locale));
+    await this._targetRegistry.browserContextForId(browserContextId).setLanguageOverride(nullToUndefined(locale));
   }
 
   async ['Browser.setTimezoneOverride']({browserContextId, timezoneId}) {

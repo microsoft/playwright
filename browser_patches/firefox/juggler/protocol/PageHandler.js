@@ -92,9 +92,6 @@ export class PageHandler {
     // to be ignored by the protocol clients.
     this._isPageReady = false;
 
-    if (this._pageTarget.videoRecordingInfo())
-      this._onVideoRecordingStarted();
-
     this._pageEventSink = {};
     helper.decorateAsEventEmitter(this._pageEventSink);
 
@@ -105,7 +102,6 @@ export class PageHandler {
       helper.on(this._pageTarget, PageTarget.Events.Crashed, () => {
         this._session.emitEvent('Page.crashed', {});
       }),
-      helper.on(this._pageTarget, PageTarget.Events.ScreencastStarted, this._onVideoRecordingStarted.bind(this)),
       helper.on(this._pageTarget, PageTarget.Events.ScreencastFrame, this._onScreencastFrame.bind(this)),
       helper.on(this._pageNetwork, PageNetwork.Events.Request, this._handleNetworkEvent.bind(this, 'Network.requestWillBeSent')),
       helper.on(this._pageNetwork, PageNetwork.Events.Response, this._handleNetworkEvent.bind(this, 'Network.responseReceived')),
@@ -157,11 +153,6 @@ export class PageHandler {
     for (const watcher of this._pendingEventWatchers)
       watcher.dispose();
     helper.removeListeners(this._eventListeners);
-  }
-
-  _onVideoRecordingStarted() {
-    const info = this._pageTarget.videoRecordingInfo();
-    this._session.emitEvent('Page.videoRecordingStarted', { screencastId: info.sessionId, file: info.file });
   }
 
   _onScreencastFrame(params) {
@@ -679,6 +670,10 @@ export class PageHandler {
   }
 
   async ['Page.stopScreencast'](options) {
+    // If screencast is enabled at the context level, then browser
+    // context will handle the stopping.
+    if (this._pageTarget.browserContext().screencastOptions)
+      return;
     await this._pageTarget.stopScreencast(options);
   }
 
