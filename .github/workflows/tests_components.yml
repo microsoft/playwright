@@ -1,21 +1,22 @@
 name: "components"
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
-  pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/playwright-core/src/server/bidi/**'
-      - 'packages/playwright-core/src/tools/**'
-      - 'tests/bidi/**'
-      - 'tests/mcp/**'
-    branches:
-      - main
-      - release-*
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #     - release-*
+  # pull_request:
+  #   paths-ignore:
+  #     - 'browser_patches/**'
+  #     - 'docs/**'
+  #     - 'packages/playwright-core/src/server/bidi/**'
+  #     - 'packages/playwright-core/src/tools/**'
+  #     - 'tests/bidi/**'
+  #     - 'tests/mcp/**'
+  #   branches:
+  #     - main
+  #     - release-*
 
 env:
   FORCE_COLOR: 1
