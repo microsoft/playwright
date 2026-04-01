@@ -876,12 +876,19 @@ export class InjectedScript {
       return 'done';
     }
     (element as HTMLElement | SVGElement).focus();
-    const range = element.ownerDocument.createRange();
-    range.selectNodeContents(element);
-    const selection = element.ownerDocument.defaultView!.getSelection();
-    if (selection) {
-      selection.removeAllRanges();
-      selection.addRange(range);
+    if (this._browserName === 'webkit' && (element as HTMLElement).isContentEditable) {
+      // Use execCommand('selectAll') for contenteditable elements.
+      // This works correctly in shadow DOM on WebKit, where window.getSelection()
+      // does not reflect the selection inside the shadow root.
+      element.ownerDocument.execCommand('selectAll', false);
+    } else {
+      const range = element.ownerDocument.createRange();
+      range.selectNodeContents(element);
+      const selection = element.ownerDocument.defaultView!.getSelection();
+      if (selection) {
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
     }
     return 'done';
   }

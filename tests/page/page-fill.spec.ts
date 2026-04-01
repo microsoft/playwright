@@ -426,3 +426,25 @@ it('should fill contenteditable with focus handler that collapses selection', {
   await page.fill('div[contenteditable]', 'some value');
   expect(await page.locator('div[contenteditable]').textContent()).toBe('some value');
 });
+
+it('should fill contenteditable in shadow root', {
+  annotation: {
+    type: 'issue',
+    description: 'https://github.com/microsoft/playwright/issues/39983'
+  }
+}, async ({ page }) => {
+  await page.setContent(`
+    <div id="host"></div>
+    <script>
+      const host = document.getElementById('host')
+      const root = host.attachShadow({ mode: 'open' })
+      const editor = document.createElement('div')
+      editor.contentEditable = 'true'
+      root.appendChild(editor)
+      window.__editor = editor
+    </script>
+  `);
+
+  await page.locator('div[contenteditable]').fill('Hello');
+  await expect(page.locator('div[contenteditable]')).toHaveText('Hello', { timeout: 200 });
+});
