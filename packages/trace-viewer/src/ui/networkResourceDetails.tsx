@@ -150,7 +150,7 @@ const HeadersTab: React.FunctionComponent<{
     Object.entries({
       'URL': resource.request.url,
       'Method': resource.request.method,
-      'Status Code': resource.response.status !== -1 && <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText}</span>,
+      'Status Code': resource.response.status === -1 ? 'canceled' : resource.response.status > 0 && <span className={statusClass(resource.response.status)}> {resource.response.status} {resource.response.statusText}</span>,
       'Start': msToString(startTimeOffset),
       'Duration': msToString(resource.time),
     }).map(([name, value]) => ({ name, value })),
