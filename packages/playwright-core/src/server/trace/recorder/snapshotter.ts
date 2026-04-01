@@ -167,7 +167,7 @@ export class Snapshotter {
       const parent = frame.parentFrame();
       if (!parent)
         return;
-      const context = await parent._mainContext();
+      const context = await parent.mainContext();
       await context?.evaluate(({ snapshotStreamer, frameElement, frameId }) => {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
       }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });

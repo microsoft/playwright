@@ -141,7 +141,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return this._selectors;
   }
 
-  async _initialize() {
+  async initialize() {
     if (this.attribution.playwright.options.isInternalPlaywright)
       return;
     // Debugger will pause execution upon page.pause in headed mode.
@@ -244,7 +244,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     await page?.resetForReuse(progress);
   }
 
-  _browserClosed() {
+  browserClosed() {
     for (const page of this.pages())
       page._didClose();
     this._didCloseInternal();
@@ -419,7 +419,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
   }
 
-  async _loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
+  async loadDefaultContextAsIs(progress: Progress): Promise<Page | undefined> {
     if (!this.possiblyUninitializedPages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       // Race against BrowserContext.close
@@ -435,8 +435,8 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     return page;
   }
 
-  async _loadDefaultContext(progress: Progress) {
-    const defaultPage = await this._loadDefaultContextAsIs(progress);
+  async loadDefaultContext(progress: Progress) {
+    const defaultPage = await this.loadDefaultContextAsIs(progress);
     if (!defaultPage)
       return;
     const browserName = this._browser.options.name;
@@ -449,7 +449,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
   }
 
-  protected _authenticateProxyViaHeader() {
+  protected authenticateProxyViaHeader() {
     const proxy = this._options.proxy || this._browser.options.proxy || { username: undefined, password: undefined };
     const { username, password } = proxy;
     if (username) {
@@ -462,7 +462,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     }
   }
 
-  protected _authenticateProxyViaCredentials() {
+  protected authenticateProxyViaCredentials() {
     const proxy = this._options.proxy || this._browser.options.proxy;
     if (!proxy)
       return;

@@ -61,18 +61,18 @@ export class Dialog extends SdkObject {
   async accept(promptText?: string) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
-    this._page.browserContext.dialogManager.dialogWillClose(this);
+    this._page.browserContext.dialogManager._dialogWillClose(this);
     await this._onHandle(true, promptText);
   }
 
   async dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
-    this._page.browserContext.dialogManager.dialogWillClose(this);
+    this._page.browserContext.dialogManager._dialogWillClose(this);
     await this._onHandle(false);
   }
 
-  async close() {
+  async _close() {
     if (this._type === 'beforeunload')
       await this.accept();
     else
@@ -92,7 +92,7 @@ export class DialogManager {
   dialogDidOpen(dialog: Dialog) {
     // Any ongoing evaluations will be stalled until the dialog is closed.
     for (const frame of dialog.page().frameManager.frames())
-      frame._invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
+      frame.invalidateNonStallingEvaluations('JavaScript dialog interrupted evaluation');
     this._openedDialogs.add(dialog);
     this._instrumentation.onDialog(dialog);
 
@@ -102,10 +102,10 @@ export class DialogManager {
         hasHandlers = true;
     }
     if (!hasHandlers)
-      dialog.close().then(() => {});
+      dialog._close().then(() => {});
   }
 
-  dialogWillClose(dialog: Dialog) {
+  _dialogWillClose(dialog: Dialog) {
     this._openedDialogs.delete(dialog);
   }
 
@@ -117,7 +117,7 @@ export class DialogManager {
     this._dialogHandlers.delete(handler);
     if (!this._dialogHandlers.size) {
       for (const dialog of this._openedDialogs)
-        dialog.close().catch(() => {});
+        dialog._close().catch(() => {});
     }
   }
 

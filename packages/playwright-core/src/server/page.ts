@@ -315,7 +315,7 @@ export class Page extends SdkObject<PageEventMap> {
       handle.dispose();
       return;
     }
-    const fileChooser = new FileChooser(this, handle, multiple);
+    const fileChooser = new FileChooser(handle, multiple);
     this.emit(Page.Events.FileChooser, fileChooser);
   }
 
@@ -447,7 +447,7 @@ export class Page extends SdkObject<PageEventMap> {
       // so we should await it immediately.
       const [response] = await Promise.all([
         // Reload must be a new document, and should not be confused with a stray pushState.
-        this.mainFrame()._waitForNavigation(progress, true /* requiresNewDocument */, options),
+        this.mainFrame().waitForNavigation(progress, true /* requiresNewDocument */, options),
         progress.race(this.delegate.reload()),
       ]);
       return response;
@@ -459,7 +459,7 @@ export class Page extends SdkObject<PageEventMap> {
       // Note: waitForNavigation may fail before we get response to goBack,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
+      const waitPromise = this.mainFrame().waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -480,7 +480,7 @@ export class Page extends SdkObject<PageEventMap> {
       // Note: waitForNavigation may fail before we get response to goForward,
       // so we should catch it immediately.
       let error: Error | undefined;
-      const waitPromise = this.mainFrame()._waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
+      const waitPromise = this.mainFrame().waitForNavigation(progress, false /* requiresNewDocument */, options).catch(e => {
         error = e;
         return null;
       });
@@ -1041,7 +1041,7 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
   // Only await the topmost navigations, inner frames will be empty when racing.
   const snapshot = await frame.retryWithProgressAndTimeouts(progress, [1000, 2000, 4000, 8000], async continuePolling => {
     try {
-      const context = await progress.race(frame._utilityContext());
+      const context = await progress.race(frame.utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
       const snapshotOrRetry = await progress.race(injectedScript.evaluate((injected, options) => {
         if (options.info) {

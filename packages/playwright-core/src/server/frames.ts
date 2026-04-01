@@ -108,7 +108,7 @@ export class FrameManager {
     this._mainFrame = undefined as any as Frame;
   }
 
-  nextFrameSeq() {
+  _allocateFrameSeq() {
     return this._nextFrameSeq++;
   }
 
@@ -120,7 +120,7 @@ export class FrameManager {
   dispose() {
     for (const frame of this._frames.values()) {
       frame._stopNetworkIdleTimer();
-      frame._invalidateNonStallingEvaluations('Target crashed');
+      frame.invalidateNonStallingEvaluations('Target crashed');
     }
   }
 
@@ -135,7 +135,7 @@ export class FrameManager {
 
     function collect(frame: Frame) {
       frames.push(frame);
-      for (const subframe of frame.childFrames())
+      for (const subframe of frame._getChildFrames())
         collect(subframe);
     }
   }
@@ -205,13 +205,13 @@ export class FrameManager {
     }
 
     const request = documentId ? Array.from(frame._inflightRequests).find(request => request._documentId === documentId) : undefined;
-    frame.setPendingDocument({ documentId, request });
+    frame._setPendingDocument({ documentId, request });
   }
 
   frameCommittedNewDocumentNavigation(frameId: string, url: string, name: string, documentId: string, initial: boolean) {
     const frame = this._frames.get(frameId)!;
     this.removeChildFramesRecursively(frame);
-    this.clearWebSockets(frame);
+    this._clearWebSockets(frame);
     frame._url = url;
     frame._name = name;
 
@@ -234,7 +234,7 @@ export class FrameManager {
         keepPending = pendingDocument;
         frame._currentDocument = { documentId, request: undefined };
       }
-      frame.setPendingDocument(undefined);
+      frame._setPendingDocument(undefined);
     } else {
       // No pending - just commit a new document.
       frame._currentDocument = { documentId, request: undefined };
@@ -248,7 +248,7 @@ export class FrameManager {
       this._page.frameNavigatedToNewDocument(frame);
     }
     // Restore pending if any - see comments above about keepPending.
-    frame.setPendingDocument(keepPending);
+    frame._setPendingDocument(keepPending);
   }
 
   frameCommittedSameDocumentNavigation(frameId: string, url: string) {
@@ -258,7 +258,7 @@ export class FrameManager {
     const pending = frame.pendingDocument();
     if (pending && pending.documentId === undefined && pending.request === undefined) {
       // WebKit has notified about the same-document navigation being requested, so clear it.
-      frame.setPendingDocument(undefined);
+      frame._setPendingDocument(undefined);
     }
     frame._url = url;
     const navigationEvent: NavigationEvent = { url, name: frame._name, isPublic: true };
@@ -279,7 +279,7 @@ export class FrameManager {
       error: new NavigationAbortedError(documentId, errorText),
       isPublic: !(documentId && frame._redirectedNavigations.has(documentId)),
     };
-    frame.setPendingDocument(undefined);
+    frame._setPendingDocument(undefined);
     this._fireInternalFrameNavigation(frame, navigationEvent);
   }
 
@@ -294,14 +294,14 @@ export class FrameManager {
   frameLifecycleEvent(frameId: string, event: RegularLifecycleEvent) {
     const frame = this._frames.get(frameId);
     if (frame)
-      frame._onLifecycleEvent(event);
+      frame.onLifecycleEvent(event);
   }
 
   requestStarted(request: network.Request, route?: network.RouteDelegate) {
     const frame = request.frame()!;
     this._inflightRequestStarted(request);
     if (request._documentId)
-      frame.setPendingDocument({ documentId: request._documentId, request });
+      frame._setPendingDocument({ documentId: request._documentId, request });
     if (request._isFavicon) {
       // Abort favicon requests to avoid network access in case of interception.
       route?.abort('aborted').catch(() => {});
@@ -341,7 +341,7 @@ export class FrameManager {
   }
 
   removeChildFramesRecursively(frame: Frame) {
-    for (const child of frame.childFrames())
+    for (const child of frame._getChildFrames())
       this._removeFramesRecursively(child);
   }
 
@@ -385,7 +385,7 @@ export class FrameManager {
     return true;
   }
 
-  clearWebSockets(frame: Frame) {
+  private _clearWebSockets(frame: Frame) {
     // TODO: attribute sockets to frames.
     if (frame.parentFrame())
       return;
@@ -479,7 +479,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   constructor(page: Page, id: string, parentFrame: Frame | null) {
     super(page, 'frame');
     this.attribution.frame = this;
-    this.seq = page.frameManager.nextFrameSeq();
+    this.seq = page.frameManager._allocateFrameSeq();
     this._id = id;
     this._page = page;
     this._parentFrame = parentFrame;
@@ -499,11 +499,11 @@ export class Frame extends SdkObject<FrameEventMap> {
       this._startNetworkIdleTimer();
   }
 
-  isDetached(): boolean {
+  private _isDetached(): boolean {
     return this._detachedScope.isClosed();
   }
 
-  _onLifecycleEvent(event: RegularLifecycleEvent) {
+  onLifecycleEvent(event: RegularLifecycleEvent) {
     if (this._firedLifecycleEvents.has(event))
       return;
     this._firedLifecycleEvents.add(event);
@@ -523,20 +523,20 @@ export class Frame extends SdkObject<FrameEventMap> {
     if (this._inflightRequests.size === 0)
       this._startNetworkIdleTimer();
     this._page.mainFrame()._recalculateNetworkIdle(this);
-    this._onLifecycleEvent('commit');
+    this.onLifecycleEvent('commit');
   }
 
-  setPendingDocument(documentInfo: DocumentInfo | undefined) {
+  _setPendingDocument(documentInfo: DocumentInfo | undefined) {
     this._pendingDocument = documentInfo;
     if (documentInfo)
-      this._invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
+      this.invalidateNonStallingEvaluations('Navigation interrupted the evaluation');
   }
 
   pendingDocument(): DocumentInfo | undefined {
     return this._pendingDocument;
   }
 
-  _invalidateNonStallingEvaluations(message: string) {
+  invalidateNonStallingEvaluations(message: string) {
     if (!this._raceAgainstEvaluationStallingEventsPromises.size)
       return;
     const error = new Error(message);
@@ -689,7 +689,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return response;
   }
 
-  async _waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: types.NavigateOptions): Promise<network.Response | null> {
+  async waitForNavigation(progress: Progress, requiresNewDocument: boolean, options: types.NavigateOptions): Promise<network.Response | null> {
     const waitUntil = verifyLifecycle('waitUntil', options.waitUntil === undefined ? 'load' : options.waitUntil);
     progress.log(`waiting for navigation until "${waitUntil}"`);
 
@@ -722,7 +722,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this._page.delegate.getFrameElement(this);
   }
 
-  _context(world: types.World): Promise<dom.FrameExecutionContext> {
+  context(world: types.World): Promise<dom.FrameExecutionContext> {
     return this._contextData.get(world)!.contextPromise.then(contextOrDestroyedReason => {
       if (contextOrDestroyedReason instanceof js.ExecutionContext)
         return contextOrDestroyedReason;
@@ -730,26 +730,26 @@ export class Frame extends SdkObject<FrameEventMap> {
     });
   }
 
-  _mainContext(): Promise<dom.FrameExecutionContext> {
-    return this._context('main');
+  mainContext(): Promise<dom.FrameExecutionContext> {
+    return this.context('main');
   }
 
   private _existingMainContext(): dom.FrameExecutionContext | null {
     return this._contextData.get('main')?.context || null;
   }
 
-  _utilityContext(): Promise<dom.FrameExecutionContext> {
-    return this._context('utility');
+  utilityContext(): Promise<dom.FrameExecutionContext> {
+    return this.context('utility');
   }
 
   async evaluateExpression(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<any> {
-    const context = await this._context(options.world ?? 'main');
+    const context = await this.context(options.world ?? 'main');
     const value = await context.evaluateExpression(expression, options, arg);
     return value;
   }
 
   async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<js.JSHandle<any>> {
-    const context = await this._context(options.world ?? 'main');
+    const context = await this.context(options.world ?? 'main');
     const value = await context.evaluateExpressionHandle(expression, options, arg);
     return value;
   }
@@ -815,13 +815,13 @@ export class Frame extends SdkObject<FrameEventMap> {
       if ((options as any).__testHookBeforeAdoptNode)
         await progress.race((options as any).__testHookBeforeAdoptNode());
       try {
-        const mainContext = await progress.race(resolved.frame._mainContext());
+        const mainContext = await progress.race(resolved.frame.mainContext());
         return await progress.race(element._adoptTo(mainContext));
       } catch (e) {
         return continuePolling;
       }
     });
-    return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
+    return scope ? scope._context.raceAgainstContextDestroyed(promise) : promise;
   }
 
   async dispatchEvent(progress: Progress, selector: string, type: string, eventInit: Object = {}, options: types.QueryOnSelectorOptions, scope?: dom.ElementHandle): Promise<void> {
@@ -847,7 +847,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async maskSelectors(selectors: ParsedSelector[], color: string): Promise<void> {
-    const context = await this._utilityContext();
+    const context = await this.utilityContext();
     const injectedScript = await context.injectedScript();
     await injectedScript.evaluate((injected, { parsed, color }) => {
       injected.maskSelectors(parsed, color);
@@ -870,7 +870,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async content(): Promise<string> {
     try {
-      const context = await this._utilityContext();
+      const context = await this.utilityContext();
       return await context.evaluate(() => {
         let retVal = '';
         if (document.doctype)
@@ -891,7 +891,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     await this.raceNavigationAction(progress, async () => {
       const waitUntil = options.waitUntil === undefined ? 'load' : options.waitUntil;
       progress.log(`setting frame content, waiting until "${waitUntil}"`);
-      const context = await progress.race(this._utilityContext());
+      const context = await progress.race(this.utilityContext());
       const tagPromise = new ManualPromise<void>();
       this._page.frameManager._consoleMessageTags.set(tag, () => {
         // Clear lifecycle right after document.open() - see 'tag' below.
@@ -930,7 +930,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this._parentFrame;
   }
 
-  childFrames(): Frame[] {
+  _getChildFrames(): Frame[] {
     return Array.from(this._childFrames);
   }
 
@@ -947,7 +947,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
-    const context = await this._mainContext();
+    const context = await this.mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandle(addScriptUrl, { url, type })).asElement()!;
@@ -994,7 +994,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     if (!url && !content)
       throw new Error('Provide an object with a `url`, `path` or `content` property');
 
-    const context = await this._mainContext();
+    const context = await this.mainContext();
     return this._raceWithCSPError(async () => {
       if (url !== null)
         return (await context.evaluateHandle(addStyleUrl, url)).asElement()!;
@@ -1091,7 +1091,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     if (dom.isNonRecoverableDOMError(e) || isInvalidSelectorError(e))
       return true;
     // If the call is made on the detached frame - throw.
-    if (this.isDetached())
+    if (this._isDetached())
       return true;
     // Retry upon all other errors.
     return false;
@@ -1284,7 +1284,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async hideHighlight() {
     return this.raceAgainstEvaluationStallingEvents(async () => {
-      const context = await this._utilityContext();
+      const context = await this.utilityContext();
       const injectedScript = await context.injectedScript();
       return await injectedScript.evaluate(injected => {
         return injected.hideHighlight();
@@ -1445,7 +1445,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
     const { frame, info } = selectorInFrame || { frame: this, info: undefined };
     const world = options.expression === 'to.have.property' ? 'main' : (info?.world ?? 'utility');
-    const context = await race(frame._context(world));
+    const context = await race(frame.context(world));
     const injected = await race(context.injectedScript());
 
     const { log, matches, received, missingReceived } = await race(injected.evaluate(async (injected, { info, options, callId }) => {
@@ -1487,7 +1487,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       assert(options.pollingInterval > 0, 'Cannot poll with non-positive interval: ' + options.pollingInterval);
     expression = js.normalizeEvaluationExpression(expression, isFunction);
     return this.retryWithProgressAndTimeouts(progress, [100], async () => {
-      const context = world === 'main' ? await progress.race(this._mainContext()) : await progress.race(this._utilityContext());
+      const context = world === 'main' ? await progress.race(this.mainContext()) : await progress.race(this.utilityContext());
       const injectedScript = await progress.race(context.injectedScript());
       const handle = await progress.race(injectedScript.evaluateHandle((injected, { expression, isFunction, polling, arg }) => {
         let evaledExpression: any;
@@ -1564,7 +1564,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   async title(): Promise<string> {
     try {
       return await this.raceAgainstEvaluationStallingEvents(async () => {
-        const context = await this._utilityContext();
+        const context = await this.utilityContext();
         return await context.evaluate(() => document.title);
       });
     } catch {
@@ -1578,7 +1578,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   async rafrafTimeout(progress: Progress, timeout: number): Promise<void> {
     if (timeout === 0)
       return;
-    const context = await progress.race(this._utilityContext());
+    const context = await progress.race(this.utilityContext());
     await Promise.all([
       // wait for double raf
       progress.race(context.evaluate(() => new Promise(x => {
@@ -1626,7 +1626,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         return continuePolling;
       return value!;
     });
-    return scope ? scope._context._raceAgainstContextDestroyed(promise) : promise;
+    return scope ? scope._context.raceAgainstContextDestroyed(promise) : promise;
   }
 
   private _setContext(world: types.World, context: dom.FrameExecutionContext | null) {
@@ -1638,7 +1638,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       data.contextPromise = new ManualPromise();
   }
 
-  _contextCreated(world: types.World, context: dom.FrameExecutionContext) {
+  contextCreated(world: types.World, context: dom.FrameExecutionContext) {
     const data = this._contextData.get(world)!;
     // In case of multiple sessions to the same target, there's a race between
     // connections so we might end up creating multiple isolated worlds.
@@ -1650,7 +1650,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     this._setContext(world, context);
   }
 
-  _contextDestroyed(context: dom.FrameExecutionContext) {
+  contextDestroyed(context: dom.FrameExecutionContext) {
     // Sometimes we get this after detach, in which case we should not reset
     // our already destroyed contexts to something that will never resolve.
     if (this._detachedScope.isClosed())
@@ -1683,7 +1683,7 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async extendInjectedScript(source: string, arg?: any) {
-    const context = await this._context('main');
+    const context = await this.context('main');
     const injectedScriptHandle = await context.injectedScript();
     await injectedScriptHandle.evaluate((injectedScript, { source, arg }) => {
       injectedScript.extend(source, arg);

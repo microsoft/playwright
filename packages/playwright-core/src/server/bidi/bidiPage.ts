@@ -118,7 +118,7 @@ export class BidiPage implements PageDelegate {
       if (context.frame === frame) {
         this._contextIdToContext.delete(contextId);
         if (notifyFrame)
-          frame._contextDestroyed(context);
+          frame.contextDestroyed(context);
       }
     }
   }
@@ -151,7 +151,7 @@ export class BidiPage implements PageDelegate {
     }
     const delegate = new BidiExecutionContext(this._session, realmInfo);
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
-    frame._contextCreated(worldName, context);
+    frame.contextCreated(worldName, context);
     this._contextIdToContext.set(realmInfo.realm, context);
   }
 
@@ -175,7 +175,7 @@ export class BidiPage implements PageDelegate {
     const context = this._contextIdToContext.get(params.realm);
     if (context) {
       this._contextIdToContext.delete(params.realm);
-      context.frame._contextDestroyed(context);
+      context.frame.contextDestroyed(context);
       return true;
     }
     const existed = this._realmToWorkerContext.delete(params.realm);
@@ -254,13 +254,13 @@ export class BidiPage implements PageDelegate {
     if (!originPage)
       return;
 
-    this._browserContext._browser._downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
+    this._browserContext._browser.downloadCreated(originPage, event.navigation, event.url, event.suggestedFilename, event.suggestedFilename);
   }
 
   private _onDownloadEnded(event: bidi.BrowsingContext.DownloadEndParams) {
     if (!event.navigation)
       return;
-    this._browserContext._browser._downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
+    this._browserContext._browser.downloadFinished(event.navigation, event.status === 'canceled' ? 'canceled' : undefined);
   }
 
   private _onLogEntryAdded(params: bidi.Log.Entry) {
@@ -302,7 +302,7 @@ export class BidiPage implements PageDelegate {
     const frame = this._page.frameManager.frame(params.context);
     if (!frame)
       return;
-    const executionContext = await frame._mainContext();
+    const executionContext = await frame.mainContext();
     try {
       const handle = await toBidiExecutionContext(executionContext).remoteObjectForNodeId(executionContext, { sharedId: params.element.sharedId });
       await this._page._onFileChooserOpened(handle as dom.ElementHandle);
@@ -631,7 +631,7 @@ export class BidiPage implements PageDelegate {
     const node = await this._getFrameNode(frame);
     if (!node?.sharedId)
       throw new Error('Frame has been detached.');
-    const parentFrameExecutionContext = await parent._mainContext();
+    const parentFrameExecutionContext = await parent.mainContext();
     return await toBidiExecutionContext(parentFrameExecutionContext).remoteObjectForNodeId(parentFrameExecutionContext, { sharedId: node.sharedId });
   }
 

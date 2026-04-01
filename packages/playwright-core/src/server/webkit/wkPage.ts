@@ -487,7 +487,7 @@ export class WKPage implements PageDelegate {
       if (context.frame === frame) {
         this._contextIdToContext.delete(contextId);
         if (notifyFrame)
-          frame._contextDestroyed(context);
+          frame.contextDestroyed(context);
       }
     }
   }
@@ -506,7 +506,7 @@ export class WKPage implements PageDelegate {
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     if (worldName)
-      frame._contextCreated(worldName, context);
+      frame.contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -619,7 +619,7 @@ export class WKPage implements PageDelegate {
   private async _onFileChooserOpened(event: {frameId: Protocol.Network.FrameId, element: Protocol.Runtime.RemoteObject}) {
     let handle;
     try {
-      const context = await this._page.frameManager.frame(event.frameId)!._mainContext();
+      const context = await this._page.frameManager.frame(event.frameId)!.mainContext();
       handle =  createHandle(context, event.element).asElement()!;
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.
@@ -1005,7 +1005,7 @@ export class WKPage implements PageDelegate {
     const parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    const context = await parent._mainContext();
+    const context = await parent.mainContext();
     const result = await this._session.send('DOM.resolveNode', {
       frameId: frame._id,
       executionContextId: (context.delegate as WKExecutionContext)._contextId

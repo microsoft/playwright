@@ -40,11 +40,7 @@ export class Download {
       this._fireDownloadEvent();
   }
 
-  page(): Page {
-    return this._page;
-  }
-
-  _filenameSuggested(suggestedFilename: string) {
+  filenameSuggested(suggestedFilename: string) {
     assert(this._suggestedFilename === undefined);
     this._suggestedFilename = suggestedFilename;
     this._fireDownloadEvent();

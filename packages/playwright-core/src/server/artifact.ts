@@ -41,10 +41,6 @@ export class Artifact extends SdkObject {
     this._cancelCallback = cancelCallback;
   }
 
-  finishedPromise() {
-    return this._finishedPromise;
-  }
-
   localPath() {
     return this._localPath;
   }

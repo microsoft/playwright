@@ -128,7 +128,7 @@ class SocksProxyConnection {
   }
 
   async connect() {
-    const proxyAgent = this.socksProxy.getProxyAgent(this.host, this.port);
+    const proxyAgent = this.socksProxy._getProxyAgent(this.host, this.port);
     if (proxyAgent)
       this._serverEncrypted = await proxyAgent.connect(new EventEmitter() as any, { host: rewriteToLocalhostIfNeeded(this.host), port: this.port, secureEndpoint: false });
     else
@@ -147,14 +147,14 @@ class SocksProxyConnection {
     });
   }
 
-  public onClose() {
+  onClose() {
     // Close the other end and cleanup TLS resources.
     this._serverEncrypted.destroy();
     this._browserEncrypted.destroy();
     this._closed = true;
   }
 
-  public onData(data: Buffer) {
+  onData(data: Buffer) {
     // HTTP / TLS are client-hello based protocols. This allows us to detect
     // the protocol on the first package and attach appropriate listeners.
     if (!this._firstPackageReceived) {
@@ -309,7 +309,7 @@ export class ClientCertificatesProxy {
     loadDummyServerCertsIfNeeded();
   }
 
-  getProxyAgent(host: string, port: number) {
+  _getProxyAgent(host: string, port: number) {
     const proxyFromOptions = createProxyAgent(this._proxy);
     if (proxyFromOptions)
       return proxyFromOptions;

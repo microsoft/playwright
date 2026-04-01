@@ -46,7 +46,7 @@ npm run watch       # Watch mode (recommended during development)
 
 Assume watch is running and code is up to date. Generated files (types, channels, validators) are produced by watch automatically.
 
-## Lint
+## Lint and type check
 
 ```bash
 npm run flint
@@ -93,6 +93,15 @@ Import boundaries are enforced via `DEPS.list` files (52+ across the repo), chec
 
 **Key rule**: Client code NEVER imports server code. Server code NEVER imports client code. Communication is only through the protocol.
 When creating or moving files, update the relevant `DEPS.list` to declare allowed imports. Files marked `"strict"` can only import what is explicitly listed.
+
+## Coding Convention
+
+For exported classes:
+- `private _method()` — only used within the class itself
+- `_method()` (no `private`) — used by other code in the same file, but not outside the file
+- `method()` (public) — used in other files
+
+Non-exported classes have no naming convention; they are internal implementation details.
 
 ## Commit Convention
 

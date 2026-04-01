@@ -184,7 +184,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
 
   const controller = new ProgressController();
   await controller.run(async progress => {
-    await context._browser._defaultContext!._loadDefaultContextAsIs(progress);
+    await context._browser._defaultContext!.loadDefaultContextAsIs(progress);
 
     if (process.env.PWTEST_PRINT_WS_ENDPOINT) {
       // eslint-disable-next-line no-restricted-properties

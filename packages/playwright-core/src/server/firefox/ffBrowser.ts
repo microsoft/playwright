@@ -57,7 +57,7 @@ export class FFBrowser extends Browser {
     ];
     if (options.persistent) {
       browser._defaultContext = new FFBrowserContext(browser, undefined, options.persistent);
-      promises.push((browser._defaultContext as FFBrowserContext)._initialize());
+      promises.push(browser._defaultContext.initialize());
     }
     const proxy = options.originalLaunchOptions.proxyOverride || options.proxy;
     if (proxy)
@@ -94,7 +94,7 @@ export class FFBrowser extends Browser {
       throw new Error('options.isMobile is not supported in Firefox');
     const { browserContextId } = await this.session.send('Browser.createBrowserContext', { removeOnDetach: true });
     const context = new FFBrowserContext(this, browserContextId, options);
-    await context._initialize();
+    await context.initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -147,19 +147,19 @@ export class FFBrowser extends Browser {
     }
     if (!originPage)
       return;
-    this._downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
+    this.downloadCreated(originPage, payload.uuid, payload.url, payload.suggestedFileName);
   }
 
   _onDownloadFinished(payload: Protocol.Browser.downloadFinishedPayload) {
     const error = payload.canceled ? 'canceled' : payload.error;
-    this._downloadFinished(payload.uuid, error);
+    this.downloadFinished(payload.uuid, error);
   }
 
   _onDisconnect() {
     for (const ffPage of this._ffPages.values())
       ffPage.didClose();
     this._ffPages.clear();
-    this._didClose();
+    this.didClose();
   }
 }
 
@@ -170,11 +170,11 @@ export class FFBrowserContext extends BrowserContext {
     super(browser, options, browserContextId);
   }
 
-  override async _initialize() {
+  override async initialize() {
     assert(!this._ffPages().length);
     const browserContextId = this._browserContextId;
     const promises: Promise<any>[] = [
-      super._initialize(),
+      super.initialize(),
       this._updateInitScripts(),
     ];
     if (this._options.acceptDownloads !== 'internal-browser-default') {

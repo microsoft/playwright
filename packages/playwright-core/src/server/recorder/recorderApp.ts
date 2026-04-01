@@ -221,7 +221,7 @@ export class RecorderApp {
     });
     const controller = new ProgressController();
     await controller.run(async progress => {
-      await appContext._browser._defaultContext!._loadDefaultContextAsIs(progress);
+      await appContext._browser._defaultContext!.loadDefaultContextAsIs(progress);
     });
 
     const appParams = {

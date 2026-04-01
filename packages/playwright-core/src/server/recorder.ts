@@ -248,7 +248,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       this.onBeforeCall(pausedDetails.sdkObject, pausedDetails.metadata);
     this.emit(RecorderEvent.PausedStateChanged, this._debugger.isPaused());
     this._updateUserSources();
-    this.updateCallLog([...this._currentCallsMetadata.keys()]);
+    this._updateCallLog([...this._currentCallsMetadata.keys()]);
   }
 
   mode() {
@@ -406,7 +406,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       return;
     this._currentCallsMetadata.set(metadata, sdkObject);
     this._updateUserSources();
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
     if (isScreenshotCommand(metadata))
       this.hideHighlightedSelector();
     else if (metadata.params && metadata.params.selector)
@@ -419,7 +419,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     if (!metadata.error)
       this._currentCallsMetadata.delete(metadata);
     this._updateUserSources();
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
   }
 
   private _updateUserSources() {
@@ -449,10 +449,10 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
   }
 
   async onCallLog(sdkObject: SdkObject, metadata: CallMetadata, logName: string, message: string): Promise<void> {
-    this.updateCallLog([metadata]);
+    this._updateCallLog([metadata]);
   }
 
-  updateCallLog(metadatas: CallMetadata[]) {
+  private _updateCallLog(metadatas: CallMetadata[]) {
     if (this._isRecording())
       return;
     const logs: CallLog[] = [];
