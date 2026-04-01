@@ -37,10 +37,10 @@ export class DialogDispatcher extends Dispatcher<Dialog, channels.DialogChannel,
   }
 
   async accept(params: channels.DialogAcceptParams, progress: Progress): Promise<void> {
-    await progress.race(this._object.accept(params.promptText));
+    await this._object.accept(progress, params.promptText);
   }
 
   async dismiss(params: channels.DialogDismissParams, progress: Progress): Promise<void> {
-    await progress.race(this._object.dismiss());
+    await this._object.dismiss(progress);
   }
 }

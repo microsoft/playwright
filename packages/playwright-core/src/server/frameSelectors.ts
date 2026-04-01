@@ -101,7 +101,7 @@ export class FrameSelectors {
       return elements;
     }, { info: resolved.info, scope: resolved.scope });
 
-    const properties = await arrayHandle.getProperties();
+    const properties = await arrayHandle.internalGetProperties();
     arrayHandle.dispose();
 
     // Note: adopting elements one by one may be slow. If we encounter the issue here,
