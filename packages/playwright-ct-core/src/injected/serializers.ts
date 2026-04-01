@@ -26,7 +26,6 @@ function isFunctionRef(value: any): value is FunctionRef {
 }
 
 export function wrapObject(value: any, callbacks: Function[]): any {
-  warnClassInstances(value, []);
   return transformObject(value, (v: any) => {
     if (typeof v === 'function') {
       const ordinal = callbacks.length;
@@ -38,44 +37,6 @@ export function wrapObject(value: any, callbacks: Function[]): any {
       return { result };
     }
   });
-}
-
-function isClassInstance(value: any): boolean {
-  if (value === null || typeof value !== 'object')
-    return false;
-  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
-    return false;
-  if (Array.isArray(value))
-    return false;
-  const proto = Object.getPrototypeOf(value);
-  return proto !== Object.prototype && proto !== null;
-}
-
-function warnClassInstances(value: any, path: string[], visited = new Set<any>()): void {
-  if (value === null || typeof value !== 'object' || visited.has(value))
-    return;
-  visited.add(value);
-  if (typeof value === 'function')
-    return;
-  if (value instanceof Date || value instanceof RegExp || value instanceof URL)
-    return;
-  if (Array.isArray(value)) {
-    value.forEach((item, i) => warnClassInstances(item, [...path, `[${i}]`], visited));
-    return;
-  }
-  if (isClassInstance(value)) {
-    const className = value.constructor?.name || 'Unknown';
-    const location = path.length ? `"${path.join('.')}"` : 'root';
-    // eslint-disable-next-line no-console
-    console.warn(
-        `[Playwright CT] Warning: class instance "${className}" was passed at ${location}. ` +
-        `Only plain objects can be passed to components — prototype methods and non-enumerable properties will be lost. ` +
-        `Consider using a plain object or a test story instead. ` +
-        `See https://playwright.dev/docs/test-components#test-stories`
-    );
-  }
-  for (const [key, prop] of Object.entries(value))
-    warnClassInstances(prop, [...path, key], visited);
 }
 
 export async function unwrapObject(value: any): Promise<any> {
