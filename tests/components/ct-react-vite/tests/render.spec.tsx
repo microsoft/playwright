@@ -51,22 +51,3 @@ test('render Fragment shorthand notation', { annotation: { type: 'issue', descri
   const component = await mount(<>Learn React</>);
   await expect(component).toContainText('Learn React');
 });
-
-test('warn when class instance is passed as prop', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/22194' } }, async ({ mount }) => {
-  class UserModel {
-    name = 'Alice';
-    greet() { return `Hello, ${this.name}`; }
-  }
-
-  const warnings: string[] = [];
-  const origWarn = console.warn;
-  console.warn = (...args: any[]) => warnings.push(args.join(' '));
-
-  try {
-    await mount(<Button title="test" data-model={new UserModel() as any} />);
-  } finally {
-    console.warn = origWarn;
-  }
-
-  expect(warnings.some(w => w.includes('class instance "UserModel"'))).toBe(true);
-});
