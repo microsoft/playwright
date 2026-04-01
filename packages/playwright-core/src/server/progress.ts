@@ -50,10 +50,6 @@ export class ProgressController {
     });
   }
 
-  static runInternalTask(task: (progress: Progress) => Promise<void>, timeout?: number) {
-    const progress = new ProgressController();
-    return progress.run(task, timeout);
-  }
 
   async abort(error: Error) {
     if (this._state === 'running') {

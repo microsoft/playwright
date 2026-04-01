@@ -85,7 +85,7 @@ export class BidiBrowser extends Browser {
     if (options.persistent) {
       const context = new BidiBrowserContext(browser, undefined, options.persistent);
       browser._defaultContext = context;
-      await context._initialize();
+      await context.initialize();
       // Create default page as we cannot get access to the existing one.
       const page = await browser._defaultContext.doCreateNewPage();
       await page.waitForInitializedOrError();
@@ -104,7 +104,7 @@ export class BidiBrowser extends Browser {
   }
 
   _onDisconnect() {
-    this._didClose();
+    this.didClose();
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
@@ -114,7 +114,7 @@ export class BidiBrowser extends Browser {
       proxy: getProxyConfiguration(proxy),
     });
     const context = new BidiBrowserContext(this, userContext, options);
-    await context._initialize();
+    await context.initialize();
     this._contexts.set(userContext, context);
     return context;
   }
@@ -215,16 +215,16 @@ export class BidiBrowserContext extends BrowserContext {
 
   constructor(browser: BidiBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
-    this._authenticateProxyViaHeader();
+    this.authenticateProxyViaHeader();
   }
 
   private _bidiPages() {
     return [...this._browser._bidiPages.values()].filter(bidiPage => bidiPage._browserContext === this);
   }
 
-  override async _initialize() {
+  override async initialize() {
     const promises: Promise<any>[] = [
-      super._initialize(),
+      super.initialize(),
     ];
     const downloadBehavior: bidi.Browser.DownloadBehavior = this._options.acceptDownloads === 'accept' ?
       { type: 'allowed', destinationFolder: this._browser.options.downloadsPath } :

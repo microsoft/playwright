@@ -202,7 +202,7 @@ export class Screenshotter {
 
   async screenshotPage(progress: Progress, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue._postTask(async () => {
       progress.log('taking page screenshot');
       const viewportSize = await this._originalViewportSize(progress);
       await this._preparePageForScreenshot(progress, this._page.mainFrame(), options.style, options.caret !== 'initial', options.animations === 'disabled');
@@ -225,7 +225,7 @@ export class Screenshotter {
 
   async screenshotElement(progress: Progress, handle: dom.ElementHandle, options: ScreenshotOptions): Promise<Buffer> {
     const format = validateScreenshotOptions(options);
-    return this._queue.postTask(async () => {
+    return this._queue._postTask(async () => {
       progress.log('taking element screenshot');
       const viewportSize = await this._originalViewportSize(progress);
 
@@ -250,7 +250,7 @@ export class Screenshotter {
     });
   }
 
-  async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
+  private async _preparePageForScreenshot(progress: Progress, frame: Frame, screenshotStyle: string | undefined, hideCaret: boolean, disableAnimations: boolean) {
     if (disableAnimations)
       progress.log('  disabled all CSS animations');
     const syncAnimations = this._page.delegate.shouldToggleStyleSheetToSyncAnimations();
@@ -267,11 +267,11 @@ export class Screenshotter {
     }
   }
 
-  async _restorePageAfterScreenshot() {
+  private async _restorePageAfterScreenshot() {
     await this._page.safeNonStallingEvaluateInAllFrames('window.__pwCleanupScreenshot && window.__pwCleanupScreenshot()', 'utility');
   }
 
-  async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {
+  private async _maskElements(progress: Progress, options: ScreenshotOptions): Promise<() => Promise<void>> {
     if (!options.mask || !options.mask.length)
       return () => Promise.resolve();
 
@@ -332,7 +332,7 @@ class TaskQueue {
     this._chain = Promise.resolve();
   }
 
-  postTask(task: () => any): Promise<any> {
+  _postTask(task: () => any): Promise<any> {
     const result = this._chain.then(task);
     this._chain = result.catch(() => {});
     return result;

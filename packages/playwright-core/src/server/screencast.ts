@@ -87,10 +87,6 @@ export class Screencast implements InstrumentationListener {
       this._stopScreencast();
   }
 
-  size(): types.Size | undefined {
-    return this._size;
-  }
-
   private _startScreencast(size: types.Size | undefined, quality: number | undefined) {
     this._size = size;
     if (!this._size) {
@@ -152,7 +148,7 @@ export class Screencast implements InstrumentationListener {
       return;
 
     const actionTitle = renderTitleForCall(metadata);
-    const utility = await page.mainFrame()._utilityContext();
+    const utility = await page.mainFrame().utilityContext();
 
     // Run this outside of the progress timer.
     await utility.evaluate(async options => {

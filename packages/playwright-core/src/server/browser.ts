@@ -139,19 +139,19 @@ export abstract class Browser extends SdkObject {
     return this._contextForReuse?.context;
   }
 
-  _downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string, downloadFilename?: string) {
+  downloadCreated(page: Page, uuid: string, url: string, suggestedFilename?: string, downloadFilename?: string) {
     const download = new Download(page, this.options.downloadsPath || '', uuid, url, suggestedFilename, downloadFilename);
     this._downloads.set(uuid, download);
   }
 
-  _downloadFilenameSuggested(uuid: string, suggestedFilename: string) {
+  downloadFilenameSuggested(uuid: string, suggestedFilename: string) {
     const download = this._downloads.get(uuid);
     if (!download)
       return;
-    download._filenameSuggested(suggestedFilename);
+    download.filenameSuggested(suggestedFilename);
   }
 
-  _downloadFinished(uuid: string, error?: string) {
+  downloadFinished(uuid: string, error?: string) {
     const download = this._downloads.get(uuid);
     if (!download)
       return;
@@ -167,11 +167,11 @@ export abstract class Browser extends SdkObject {
     await this._server.stop();
   }
 
-  _didClose() {
+  protected didClose() {
     for (const context of this.contexts())
-      context._browserClosed();
+      context.browserClosed();
     if (this._defaultContext)
-      this._defaultContext._browserClosed();
+      this._defaultContext.browserClosed();
     this.stopServer().catch(() => {});
     this.emit(Browser.Events.Disconnected);
     this.instrumentation.onBrowserClose(this);

@@ -51,7 +51,7 @@ export class WKBrowser extends Browser {
     if (options.persistent) {
       options.persistent.userAgent ||= DEFAULT_USER_AGENT;
       browser._defaultContext = new WKBrowserContext(browser, undefined, options.persistent);
-      promises.push((browser._defaultContext as WKBrowserContext)._initialize());
+      promises.push(browser._defaultContext.initialize());
     }
     await Promise.all(promises);
     return browser;
@@ -75,7 +75,7 @@ export class WKBrowser extends Browser {
     for (const wkPage of this._wkPages.values())
       wkPage.didClose();
     this._wkPages.clear();
-    this._didClose();
+    this.didClose();
   }
 
   async doCreateNewContext(options: types.BrowserContextOptions): Promise<BrowserContext> {
@@ -89,7 +89,7 @@ export class WKBrowser extends Browser {
     const { browserContextId } = await this._browserSession.send('Playwright.createContext', createOptions);
     options.userAgent = options.userAgent || DEFAULT_USER_AGENT;
     const context = new WKBrowserContext(this, browserContextId, options);
-    await context._initialize();
+    await context.initialize();
     this._contexts.set(browserContextId, context);
     return context;
   }
@@ -136,15 +136,15 @@ export class WKBrowser extends Browser {
     }
     if (!originPage)
       return;
-    this._downloadCreated(originPage, payload.uuid, payload.url);
+    this.downloadCreated(originPage, payload.uuid, payload.url);
   }
 
   _onDownloadFilenameSuggested(payload: Protocol.Playwright.downloadFilenameSuggestedPayload) {
-    this._downloadFilenameSuggested(payload.uuid, payload.suggestedFilename);
+    this.downloadFilenameSuggested(payload.uuid, payload.suggestedFilename);
   }
 
   _onDownloadFinished(payload: Protocol.Playwright.downloadFinishedPayload) {
-    this._downloadFinished(payload.uuid, payload.error);
+    this.downloadFinished(payload.uuid, payload.error);
   }
 
   _onPageProxyCreated(event: Protocol.Playwright.pageProxyCreatedPayload) {
@@ -210,13 +210,13 @@ export class WKBrowserContext extends BrowserContext {
   constructor(browser: WKBrowser, browserContextId: string | undefined, options: types.BrowserContextOptions) {
     super(browser, options, browserContextId);
     this._validateEmulatedViewport(options.viewport);
-    this._authenticateProxyViaHeader();
+    this.authenticateProxyViaHeader();
   }
 
-  override async _initialize() {
+  override async initialize() {
     assert(!this._wkPages().length);
     const browserContextId = this._browserContextId;
-    const promises: Promise<any>[] = [super._initialize()];
+    const promises: Promise<any>[] = [super.initialize()];
     promises.push(this._browser._browserSession.send('Playwright.setDownloadBehavior', {
       behavior: this._options.acceptDownloads === 'accept' ? 'allow' : 'deny',
       downloadPath: this._browser.options.channel === 'webkit-wsl' ? await translatePathToWSL(this._browser.options.downloadsPath) : this._browser.options.downloadsPath,

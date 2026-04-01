@@ -354,7 +354,7 @@ export class CRPage implements PageDelegate {
     parent = frame.parentFrame();
     if (!parent)
       throw new Error('Frame has been detached.');
-    return parentSession._adoptBackendNodeId(backendNodeId, await parent._mainContext());
+    return parentSession._adoptBackendNodeId(backendNodeId, await parent.mainContext());
   }
 
   shouldToggleStyleSheetToSyncAnimations(): boolean {
@@ -668,7 +668,7 @@ class FrameSession {
       worldName = 'utility';
     const context = new dom.FrameExecutionContext(delegate, frame, worldName);
     if (worldName)
-      frame._contextCreated(worldName, context);
+      frame.contextCreated(worldName, context);
     this._contextIdToContext.set(contextPayload.id, context);
   }
 
@@ -677,7 +677,7 @@ class FrameSession {
     if (!context)
       return;
     this._contextIdToContext.delete(executionContextId);
-    context.frame._contextDestroyed(context);
+    context.frame.contextDestroyed(context);
   }
 
   _onExecutionContextsCleared() {
@@ -863,7 +863,7 @@ class FrameSession {
       return;
     let handle;
     try {
-      const utilityContext = await frame._utilityContext();
+      const utilityContext = await frame.utilityContext();
       handle = await this._adoptBackendNodeId(event.backendNodeId, utilityContext);
     } catch (e) {
       // During async processing, frame/context may go away. We should not throw.

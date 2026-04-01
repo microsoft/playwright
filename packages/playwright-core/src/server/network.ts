@@ -313,7 +313,7 @@ export class Request extends SdkObject {
     return this._bodySize || this.postDataBuffer()?.length || 0;
   }
 
-  async requestHeadersSize(): Promise<number> {
+  async _requestHeadersSize(): Promise<number> {
     let headersSize = 4; // 4 = 2 spaces + 2 line breaks (GET /path \r\n)
     headersSize += this.method().length;
     headersSize += (new URL(this.url())).pathname.length;
@@ -663,7 +663,7 @@ export class Response extends SdkObject {
   }
 
   async sizes(): Promise<ResourceSizes> {
-    const requestHeadersSize = await this._request.requestHeadersSize();
+    const requestHeadersSize = await this._request._requestHeadersSize();
     const responseHeadersSize = await this.responseHeadersSize();
 
     let encodedBodySize = await this._encodedBodySizePromise;

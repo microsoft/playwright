@@ -190,7 +190,7 @@ export class Chromium extends BrowserType {
     transport.send(message);
   }
 
-  override async _launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
+  override async launchWithSeleniumHub(progress: Progress, hubUrl: string, options: types.LaunchOptions): Promise<CRBrowser> {
     if (!hubUrl.endsWith('/'))
       hubUrl = hubUrl + '/';
 

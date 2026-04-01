@@ -24,7 +24,7 @@ export class Cookie {
     this._raw = data;
   }
 
-  name(): string {
+  _name(): string {
     return this._raw.name;
   }
 
@@ -39,21 +39,21 @@ export class Cookie {
     return true;
   }
 
-  equals(other: Cookie) {
+  _equals(other: Cookie) {
     return this._raw.name === other._raw.name &&
       this._raw.domain === other._raw.domain &&
       this._raw.path === other._raw.path;
   }
 
-  networkCookie(): channels.NetworkCookie {
+  _networkCookie(): channels.NetworkCookie {
     return this._raw;
   }
 
-  updateExpiresFrom(other: Cookie) {
+  _updateExpiresFrom(other: Cookie) {
     this._raw.expires = other._raw.expires;
   }
 
-  expired() {
+  _expired() {
     if (this._raw.expires === -1)
       return false;
     return this._raw.expires * 1000 < Date.now();
@@ -72,7 +72,7 @@ export class CookieStore {
     const result = [];
     for (const cookie of this._cookiesIterator()) {
       if (cookie.matches(url))
-        result.push(cookie.networkCookie());
+        result.push(cookie._networkCookie());
     }
     return result;
   }
@@ -80,19 +80,19 @@ export class CookieStore {
   allCookies(): channels.NetworkCookie[] {
     const result = [];
     for (const cookie of this._cookiesIterator())
-      result.push(cookie.networkCookie());
+      result.push(cookie._networkCookie());
     return result;
   }
 
   private _addCookie(cookie: Cookie) {
-    let set = this._nameToCookies.get(cookie.name());
+    let set = this._nameToCookies.get(cookie._name());
     if (!set) {
       set = new Set();
-      this._nameToCookies.set(cookie.name(), set);
+      this._nameToCookies.set(cookie._name(), set);
     }
     // https://datatracker.ietf.org/doc/html/rfc6265#section-5.3
     for (const other of set) {
-      if (other.equals(cookie))
+      if (other._equals(cookie))
         set.delete(other);
     }
     set.add(cookie);
@@ -111,7 +111,7 @@ export class CookieStore {
 
   private static pruneExpired(cookies: Set<Cookie>) {
     for (const cookie of cookies) {
-      if (cookie.expired())
+      if (cookie._expired())
         cookies.delete(cookie);
     }
   }

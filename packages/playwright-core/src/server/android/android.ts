@@ -353,7 +353,7 @@ export class AndroidDevice extends SdkObject {
 
       const browser = await progress.race(CRBrowser.connect(this.attribution.playwright, androidBrowser, browserOptions));
       const defaultContext = browser._defaultContext!;
-      await defaultContext._loadDefaultContextAsIs(progress);
+      await defaultContext.loadDefaultContextAsIs(progress);
       return defaultContext;
     } catch (error) {
       socket.close();

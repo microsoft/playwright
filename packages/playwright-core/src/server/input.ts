@@ -96,10 +96,10 @@ export class Keyboard {
 
   async apiInsertText(progress: Progress, text: string) {
     await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
-    await this._insertText(progress, text);
+    await this.insertText(progress, text);
   }
 
-  async _insertText(progress: Progress, text: string) {
+  async insertText(progress: Progress, text: string) {
     await this._raw.sendText(progress, text);
   }
 
@@ -116,7 +116,7 @@ export class Keyboard {
       } else {
         if (delay)
           await progress.wait(delay);
-        await this._insertText(progress, char);
+        await this.insertText(progress, char);
       }
     }
   }
@@ -209,7 +209,7 @@ export class Mouse {
     this._keyboard = this._page.keyboard;
   }
 
-  currentPoint() {
+  private _currentPoint() {
     return { x: this._x, y: this._y };
   }
 
@@ -233,7 +233,7 @@ export class Mouse {
   }
 
   async apiDown(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    progress.metadata.point = this.currentPoint();
+    progress.metadata.point = this._currentPoint();
     await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
     await this.down(progress, options);
   }
@@ -246,7 +246,7 @@ export class Mouse {
   }
 
   async apiUp(progress: Progress, options: { button?: types.MouseButton, clickCount?: number } = {}) {
-    progress.metadata.point = this.currentPoint();
+    progress.metadata.point = this._currentPoint();
     await this._page.instrumentation.onBeforeInputAction(this._page, progress.metadata);
     await this.up(progress, options);
   }

@@ -134,7 +134,7 @@ async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promi
       const frameElement = await frame.frameElement();
       if (!frameElement || !parent)
         return;
-      const utility = await parent._utilityContext();
+      const utility = await parent.utilityContext();
       const injected = await utility.injectedScript();
       const selector = await injected.evaluate((injected, element) => {
         return injected.generateSelectorSimple(element as Element);

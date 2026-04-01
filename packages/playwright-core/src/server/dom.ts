@@ -136,7 +136,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async evaluateInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<R | 'error:notconnected'> {
     try {
-      const utility = await this._frame._utilityContext();
+      const utility = await this._frame.utilityContext();
       return await utility.evaluate(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
       if (this._frame.isNonRetriableError(e))
@@ -145,9 +145,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
   }
 
-  async evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R> | 'error:notconnected'> {
+  private async _evaluateHandleInUtility<R, Arg>(pageFunction: js.Func1<[js.JSHandle<InjectedScript>, ElementHandle<T>, Arg], R>, arg: Arg): Promise<js.JSHandle<R> | 'error:notconnected'> {
     try {
-      const utility = await this._frame._utilityContext();
+      const utility = await this._frame.utilityContext();
       return await utility.evaluateHandle(pageFunction, [await utility.injectedScript(), this, arg]);
     } catch (e) {
       if (this._frame.isNonRetriableError(e))
@@ -171,12 +171,12 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     return null;
   }
 
-  async isIframeElement(): Promise<boolean | 'error:notconnected'> {
+  private async _isIframeElement(): Promise<boolean | 'error:notconnected'> {
     return this.evaluateInUtility(([injected, node]) => node && (node.nodeName === 'IFRAME' || node.nodeName === 'FRAME'), {});
   }
 
   async contentFrame(): Promise<frames.Frame | null> {
-    const isFrameElement = throwRetargetableDOMError(await this.isIframeElement());
+    const isFrameElement = throwRetargetableDOMError(await this._isIframeElement());
     if (!isFrameElement)
       return null;
     return this._page.delegate.getContentFrame(this);
@@ -249,7 +249,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
     const [quads, metrics] = await Promise.all([
       this._page.delegate.getContentQuads(this),
-      this._page.mainFrame()._utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
+      this._page.mainFrame().utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
     ] as const);
     if (quads === 'error:notconnected')
       return quads;
@@ -453,7 +453,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
         return frameCheckResult;
       const hitPoint = frameCheckResult.framePoint;
       const actionType = actionName === 'move and up' ? 'drag' : ((actionName === 'hover' || actionName === 'tap') ? actionName : 'mouse');
-      const handle = await progress.race(this.evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const));
+      const handle = await progress.race(this._evaluateHandleInUtility(([injected, node, { actionType, hitPoint, trial }]) => injected.setupHitTargetInterceptor(node, actionType, hitPoint, trial), { actionType, hitPoint, trial: !!options.trial } as const));
       if (handle === 'error:notconnected')
         return handle;
       if (!handle._objectId) {
@@ -616,7 +616,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }, { value, force: options.force }));
       if (result === 'needsinput') {
         if (value)
-          await this._page.keyboard._insertText(progress, value);
+          await this._page.keyboard.insertText(progress, value);
         else
           await this._page.keyboard.press(progress, 'Delete');
         return 'done';
@@ -652,7 +652,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _setInputFiles(progress: Progress, items: InputFilesItems): Promise<'error:notconnected' | 'done'> {
     const { filePayloads, localPaths, localDirectory } = items;
     const multiple = filePayloads && filePayloads.length > 1 || localPaths && localPaths.length > 1;
-    const result = await progress.race(this.evaluateHandleInUtility(([injected, node, { multiple, directoryUpload }]): Element | undefined => {
+    const result = await progress.race(this._evaluateHandleInUtility(([injected, node, { multiple, directoryUpload }]): Element | undefined => {
       const element = injected.retarget(node, 'follow-label');
       if (!element)
         return;
