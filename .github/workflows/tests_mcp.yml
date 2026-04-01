@@ -1,19 +1,20 @@
 name: MCP
 
 on:
-  push:
-    branches:
-      - main
-      - release-*
-  pull_request:
-    paths-ignore:
-      - 'browser_patches/**'
-      - 'docs/**'
-      - 'packages/playwright-core/src/server/bidi/**'
-      - 'tests/bidi/**'
-    branches:
-      - main
-      - release-*
+  workflow_dispatch:
+  # push:
+  #   branches:
+  #     - main
+  #     - release-*
+  # pull_request:
+  #   paths-ignore:
+  #     - 'browser_patches/**'
+  #     - 'docs/**'
+  #     - 'packages/playwright-core/src/server/bidi/**'
+  #     - 'tests/bidi/**'
+  #   branches:
+  #     - main
+  #     - release-*
 
 concurrency:
   # For pull requests, cancel all currently-running jobs for this workflow

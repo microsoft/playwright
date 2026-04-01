@@ -23,6 +23,7 @@ import { Artifact } from './artifact';
 export class Download {
   readonly artifact: Artifact;
   readonly url: string;
+  readonly uuid: string;
   private _page: Page;
   private _suggestedFilename: string | undefined;
 
@@ -34,6 +35,7 @@ export class Download {
     });
     this._page = page;
     this.url = url;
+    this.uuid = uuid;
     this._suggestedFilename = suggestedFilename;
     page.browserContext._downloads.add(this);
     if (suggestedFilename !== undefined)

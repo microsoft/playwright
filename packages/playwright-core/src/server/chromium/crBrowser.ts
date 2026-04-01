@@ -559,6 +559,7 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       return;
     }
 
+    await Promise.all([...this._downloads].map(download => this.cancelDownload(download.uuid)));
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
