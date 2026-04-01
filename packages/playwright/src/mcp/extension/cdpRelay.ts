@@ -76,6 +76,20 @@ export class CDPRelayServer {
   private _nextSessionId: number = 1;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
+  // Fetch.enable pattern merging for inline PDF interception.
+  // Tracks Playwright's Fetch.enable params per session (key: sessionId ?? '').
+  // Response-stage patterns are merged into every Fetch.enable call so the relay
+  // can intercept inline PDFs and inject Content-Disposition: attachment.
+  private _playwrightFetchParams = new Map<string, { handleAuthRequests?: boolean; patterns: any[] }>();
+  private _pdfInterceptionEnabled = true;
+
+  // Response-stage pattern for inline PDF interception.
+  // resourceType: 'Document' limits to navigation responses only (main_frame + sub_frame),
+  // avoiding pausing XHR/CSS/JS/images which would add latency on AJAX-heavy pages.
+  private static readonly RESPONSE_PDF_PATTERN = {
+    urlPattern: '*', requestStage: 'Response', resourceType: 'Document',
+  };
+
   constructor(server: http.Server, browserChannel: string, userDataDir?: string, executablePath?: string) {
     this._wsHost = addressToString(server.address(), { protocol: 'ws' });
     this._browserChannel = browserChannel;
@@ -203,6 +217,7 @@ export class CDPRelayServer {
       // (multi-agent flows: LoginAgent → AccountValidationAgent use the same relay).
       // Reset connectedTabInfo so the next client re-attaches via Target.setAutoAttach.
       this._connectedTabInfo = undefined;
+      this._playwrightFetchParams.clear();
       debugLogger('Playwright WebSocket closed, extension connection kept alive');
     });
     ws.on('error', error => {
@@ -220,6 +235,7 @@ export class CDPRelayServer {
   private _resetExtensionConnection() {
     this._connectedTabInfo = undefined;
     this._extensionConnection = null;
+    this._playwrightFetchParams.clear();
     this._extensionConnectionPromise = new ManualPromise();
     void this._extensionConnectionPromise.catch(logUnhandledError);
   }
@@ -249,9 +265,36 @@ export class CDPRelayServer {
 
   private _handleExtensionMessage<M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) {
     switch (method) {
-      case 'forwardCDPEvent':
+      case 'forwardCDPEvent': {
         const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
         const eventMethod = params.method;
+
+        // Filter response-stage Fetch.requestPaused — handle internally for PDF detection.
+        // CRITICAL: response-stage events must NEVER reach Playwright's crNetworkManager.
+        // It has zero response-stage awareness and would hang the request permanently.
+        if (eventMethod === 'Fetch.requestPaused' && this._pdfInterceptionEnabled) {
+          const ep = params.params;
+          if (ep?.responseStatusCode !== undefined || ep?.responseErrorReason !== undefined) {
+            this._handleResponseStagePaused(ep, sessionId);
+            return;
+          }
+        }
+
+        // Proactive response-stage Fetch.enable for OOPIF child sessions.
+        // When Chrome creates an out-of-process iframe, it emits Target.attachedToTarget
+        // with a new sessionId. We must enable response-stage Fetch on the child session
+        // because Playwright MCP won't call Fetch.enable for it (no routes configured).
+        if (eventMethod === 'Target.attachedToTarget' && this._pdfInterceptionEnabled) {
+          const childSessionId = params.params?.sessionId;
+          if (childSessionId) {
+            this._forwardToExtension('Fetch.enable', {
+              patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+            }, childSessionId).catch((e: Error) => {
+              debugLogger(`OOPIF Fetch.enable failed for session ${childSessionId}: ${e.message}`);
+            });
+          }
+        }
+
         if (eventMethod.startsWith('Page.') || eventMethod.startsWith('Target.') || eventMethod.startsWith('Network.'))
           debugLogger(`← Extension event: ${eventMethod} (sid=${sessionId ?? 'none'}) → PW=${!!this._playwrightConnection}`);
         this._sendToPlaywright({
@@ -260,6 +303,7 @@ export class CDPRelayServer {
           params: params.params
         });
         break;
+      }
     }
   }
 
@@ -313,10 +357,45 @@ export class CDPRelayServer {
             waitingForDebugger: false
           }
         });
+        // Proactively enable response-stage Fetch interception for inline PDF capture.
+        // Playwright MCP may never call Fetch.enable (it only does so when routes or
+        // credentials are configured). We must ensure response-stage patterns are active
+        // regardless. Awaited to prevent race with Playwright's subsequent Fetch.enable.
+        if (this._pdfInterceptionEnabled) {
+          try {
+            await this._forwardToExtension('Fetch.enable', {
+              patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+            }, this._connectedTabInfo.sessionId);
+            debugLogger('Proactive response-stage Fetch.enable succeeded');
+          } catch (e) {
+            debugLogger(`Proactive response-stage Fetch.enable failed: ${(e as Error).message}`);
+          }
+        }
         return { };
       }
       case 'Target.getTargetInfo': {
         return this._connectedTabInfo?.targetInfo;
+      }
+      case 'Fetch.enable': {
+        const sessionKey = sessionId ?? '';
+        this._playwrightFetchParams.set(sessionKey, {
+          handleAuthRequests: params?.handleAuthRequests,
+          patterns: params?.patterns ?? [],
+        });
+        const merged = this._buildMergedFetchParams(sessionKey);
+        debugLogger(`Fetch.enable merge: PW patterns=${params?.patterns?.length ?? 0}, merged=${merged.patterns.length} (sid=${sessionId ?? 'none'})`);
+        return await this._forwardToExtension('Fetch.enable', merged, sessionId);
+      }
+      case 'Fetch.disable': {
+        const sessionKey = sessionId ?? '';
+        this._playwrightFetchParams.delete(sessionKey);
+        if (this._pdfInterceptionEnabled) {
+          debugLogger('Fetch.disable → converting to response-only Fetch.enable for PDF interception');
+          return await this._forwardToExtension('Fetch.enable', {
+            patterns: [CDPRelayServer.RESPONSE_PDF_PATTERN],
+          }, sessionId);
+        }
+        return await this._forwardToExtension('Fetch.disable', params, sessionId);
       }
     }
     return await this._forwardToExtension(method, params, sessionId);
@@ -329,6 +408,84 @@ export class CDPRelayServer {
     if (this._connectedTabInfo?.sessionId === sessionId)
       sessionId = undefined;
     return await this._extensionConnection.send('forwardCDPCommand', { sessionId, method, params });
+  }
+
+  private _buildMergedFetchParams(sessionKey: string): any {
+    const pwParams = this._playwrightFetchParams.get(sessionKey);
+    if (!this._pdfInterceptionEnabled)
+      return pwParams;
+    const pwPatterns = pwParams?.patterns ?? [];
+    return {
+      handleAuthRequests: pwParams?.handleAuthRequests,
+      patterns: [...pwPatterns, CDPRelayServer.RESPONSE_PDF_PATTERN],
+    };
+  }
+
+  private async _handleResponseStagePaused(eventParams: any, sessionId: string | undefined): Promise<void> {
+    const { requestId, request, responseStatusCode, responseHeaders, responseErrorReason } = eventParams;
+
+    // Error responses — continue immediately, nothing to intercept
+    if (responseErrorReason) {
+      debugLogger(`Response-stage error: ${responseErrorReason} url=${request?.url}`);
+      this._continueFetchResponse(requestId, sessionId);
+      return;
+    }
+
+    const contentType = (responseHeaders as Array<{ name: string; value: string }>)
+      ?.find((h: { name: string }) => h.name.toLowerCase() === 'content-type')
+      ?.value ?? '';
+
+    const url = request?.url ?? 'unknown';
+    const shortUrl = url.length > 120 ? url.slice(0, 120) + '...' : url;
+    debugLogger(`Response-stage: status=${responseStatusCode} ct="${contentType}" url=${shortUrl}`);
+
+    if (!contentType.toLowerCase().includes('application/pdf')) {
+      this._continueFetchResponse(requestId, sessionId);
+      return;
+    }
+
+    // Skip if already has Content-Disposition: attachment — Layer 2 handles these
+    const hasAttachment = (responseHeaders as Array<{ name: string; value: string }>)
+      ?.some((h: { name: string; value: string }) =>
+        h.name.toLowerCase() === 'content-disposition' &&
+        h.value.toLowerCase().startsWith('attachment'));
+    if (hasAttachment) {
+      this._continueFetchResponse(requestId, sessionId);
+      return;
+    }
+
+    // Inject Content-Disposition: attachment to convert inline PDF to download
+    debugLogger(`PDF interception: injecting Content-Disposition: attachment for ${request?.url}`);
+    const newHeaders = [
+      ...(responseHeaders ?? []).filter(
+        (h: { name: string }) => h.name.toLowerCase() !== 'content-disposition'
+      ),
+      { name: 'Content-Disposition', value: 'attachment' },
+    ];
+
+    try {
+      const extSid = this._connectedTabInfo?.sessionId === sessionId ? undefined : sessionId;
+      await this._extensionConnection!.send('forwardCDPCommand', {
+        sessionId: extSid,
+        method: 'Fetch.continueResponse',
+        params: { requestId, responseCode: responseStatusCode, responseHeaders: newHeaders },
+      });
+    } catch (e) {
+      debugLogger(`Error in continueResponse for PDF: ${(e as Error).message}`);
+      // MUST continue to avoid hanging the request — fall back to unmodified response
+      this._continueFetchResponse(requestId, sessionId);
+    }
+  }
+
+  private _continueFetchResponse(requestId: string, sessionId: string | undefined): void {
+    const extSid = this._connectedTabInfo?.sessionId === sessionId ? undefined : sessionId;
+    this._extensionConnection?.send('forwardCDPCommand', {
+      sessionId: extSid,
+      method: 'Fetch.continueResponse',
+      params: { requestId },
+    }).catch((e: Error) => {
+      debugLogger(`Error continuing fetch response: ${e.message}`);
+    });
   }
 
   private _sendToPlaywright(message: CDPResponse): void {
