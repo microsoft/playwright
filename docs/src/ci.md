@@ -301,6 +301,60 @@ jobs:
         run: dotnet test
 ```
 
+#### Via Containers (dynamic)
+* langs: js
+
+Resolve the Docker image tag from the lockfile instead of hardcoding it in workflow YAML.
+
+```yml js title=".github/workflows/playwright.yml"
+name: Playwright Tests
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+jobs:
+  resolve-playwright-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.resolve-playwright-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+      - name: Resolve Playwright version
+        id: resolve-playwright-version
+        run: |
+          version="$(npm ls @playwright/test --package-lock-only --json | jq -r '.dependencies["@playwright/test"].version')"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  playwright:
+    name: 'Playwright Tests'
+    runs-on: ubuntu-latest
+    needs: resolve-playwright-version
+    container:
+      image: mcr.microsoft.com/playwright:v${{ needs.resolve-playwright-version.outputs.version }}-noble
+      options: --user 1001
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: lts/*
+      - name: Install dependencies
+        run: npm ci
+      - name: Run your tests
+        run: npx playwright test
+```
+
+Replace the `version="$(...)"` line for Yarn Berry, pnpm, and Bun:
+
+```bash
+version="$(yarn info @playwright/test --json | jq -r '.children.Version')"
+version="$(pnpm why --json @playwright/test | jq -r '.[0].version')"
+version="$(bun why @playwright/test | sed -n '1s/.*@//p')"
+```
+
 #### On deployment
 
 This will start the tests after a [GitHub Deployment](https://developer.github.com/v3/repos/deployments/) went into the `success` state.
