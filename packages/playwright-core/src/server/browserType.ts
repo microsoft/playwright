@@ -216,6 +216,7 @@ export abstract class BrowserType extends SdkObject {
       command: prepared.executable,
       args: prepared.browserArguments,
       env: this.amendEnvironment(env, prepared.userDataDir, isPersistent, options),
+      headless: options.headless,
       handleSIGINT,
       handleSIGTERM,
       handleSIGHUP,

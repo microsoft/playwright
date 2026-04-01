@@ -27,6 +27,7 @@ export type LaunchProcessOptions = {
   args?: string[],
   env?: NodeJS.ProcessEnv,
   shell?: boolean,
+  headless?: boolean,
 
   handleSIGINT?: boolean,
   handleSIGTERM?: boolean,
@@ -136,7 +137,7 @@ export async function launchProcess(options: LaunchProcessOptions): Promise<Laun
     // process group, making it possible to kill child process tree with `.kill(-pid)` command.
     // @see https://nodejs.org/api/child_process.html#child_process_options_detached
     detached: process.platform !== 'win32',
-    windowsHide: true,
+    windowsHide: options.headless,
     env: options.env,
     cwd: options.cwd,
     shell: options.shell,
