@@ -196,6 +196,8 @@ GitHub Actions supports [sharding tests between multiple jobs](https://docs.gith
 
 GitHub Actions support [running jobs in a container](https://docs.github.com/en/actions/using-jobs/running-jobs-in-a-container) by using the [`jobs.<job_id>.container`](https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#jobsjob_idcontainer) option. This is useful to not pollute the host environment with dependencies and to have a consistent environment for e.g. screenshots/visual regression testing across different operating systems.
 
+If you want to avoid Docker image tag drift during Playwright upgrades, you can resolve the image tag from the lockfile in a setup job instead of hardcoding it in workflow YAML. One way to do this is to parse `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml`, or `bun.lock` with [`lockparse`](https://www.npmjs.com/package/lockparse) after installing it with `npm install --save-dev lockparse # Or with your own package manager like pnpm, bun, etc`, then pass the resolved version to `container.image`.
+
 ```yml js title=".github/workflows/playwright.yml"
 name: Playwright Tests
 on:
