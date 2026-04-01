@@ -17,9 +17,52 @@
 import { stripAnsi } from '../config/utils';
 import { test, expect } from './pageTest';
 
+test('should match page', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  await expect(page).toMatchAriaSnapshot(`
+    - heading "title"
+  `);
+});
+
+test('should match page complex', async ({ page }) => {
+  await page.setContent(`
+    <h1>Microsoft</h1>
+    <div>Open source projects and samples from Microsoft</div>
+    <ul>
+      <li>
+        <a href="about:blank">Playwright</a>
+      </li>
+    </ul>`);
+
+  await expect(page).toMatchAriaSnapshot(`
+    - heading "Microsoft"
+    - text: Open source projects and samples from Microsoft
+    - list:
+      - listitem:
+        - link "Playwright"
+  `);
+});
+
+test('should match page with not', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  await expect(page).not.toMatchAriaSnapshot(`
+    - heading "wrong"
+  `);
+});
+
+test('should fail page with timeout', async ({ page }) => {
+  await page.setContent(`<h1>title</h1>`);
+  const e = await expect(page).toMatchAriaSnapshot(`
+    - heading "wrong"
+  `, { timeout: 2000 }).catch(e => e);
+  expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(e.message)).toContain('Timeout:  2000ms');
+  expect(stripAnsi(e.message)).not.toContain('Locator');
+});
+
 test('should match', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "title"
   `);
 });
@@ -29,7 +72,7 @@ test('should match in list', async ({ page }) => {
     <h1>title</h1>
     <h1>title 2</h1>
   `);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "title"
   `);
 });
@@ -41,7 +84,7 @@ test('should match list with accessible name', async ({ page }) => {
       <li>two</li>
     </ul>
   `);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list "my list":
       - listitem: "one"
       - listitem: "two"
@@ -55,7 +98,7 @@ test('should match deep item', async ({ page }) => {
       <h1>title 2</h1>
     </div>
   `);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "title"
   `);
 });
@@ -68,7 +111,7 @@ test('should match complex', async ({ page }) => {
       </li>
     </ul>
   `);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list:
       - listitem:
         - link "link"
@@ -78,25 +121,25 @@ test('should match complex', async ({ page }) => {
 test('should match regex', async ({ page }) => {
   {
     await page.setContent(`<h1>Issues 12</h1>`);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - heading ${/Issues \d+/}
     `);
   }
   {
     await page.setContent(`<h1>Issues 1/2</h1>`);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - heading ${/Issues 1[/]2/}
     `);
   }
   {
     await page.setContent(`<h1>Issues 1[</h1>`);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - heading ${/Issues 1\[/}
     `);
   }
   {
     await page.setContent(`<h1>Issues 1]]2</h1>`);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - heading ${/Issues 1[\]]]2/}
     `);
   }
@@ -108,7 +151,7 @@ test('should allow text nodes', async ({ page }) => {
     <div>Open source projects and samples from Microsoft</div>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "Microsoft"
     - text: "Open source projects and samples from Microsoft"
   `);
@@ -122,7 +165,7 @@ test('details visibility', async ({ page }) => {
     </details>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - group: "Summary"
   `);
 });
@@ -132,36 +175,36 @@ test('checked attribute', async ({ page }) => {
     <input type='checkbox' checked />
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - checkbox
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - checkbox [checked]
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - checkbox [checked=true]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - checkbox [checked=false]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - checkbox [checked=mixed]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - checkbox [checked=5]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a boolean or "mixed"');
@@ -173,28 +216,28 @@ test('disabled attribute', async ({ page }) => {
     <button disabled>Click me</button>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [disabled]
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [disabled=true]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [disabled=false]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [disabled=invalid]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
@@ -206,28 +249,28 @@ test('expanded attribute', async ({ page }) => {
     <button aria-expanded="true">Toggle</button>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [expanded]
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [expanded=true]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [expanded=false]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [expanded=invalid]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
@@ -239,24 +282,24 @@ test('level attribute', async ({ page }) => {
     <h2>Section Title</h2>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading [level=2]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - heading [level=3]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - heading [level=two]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a number');
@@ -268,23 +311,23 @@ test('pressed attribute', async ({ page }) => {
     <button aria-pressed="true">Like</button>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [pressed]
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [pressed=true]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [pressed=false]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
@@ -293,20 +336,20 @@ test('pressed attribute', async ({ page }) => {
     <button aria-pressed="mixed">Like</button>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - button [pressed=mixed]
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [pressed=true]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+    expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
     expect(stripAnsi(e.message)).toContain('Timeout:  1000ms');
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - button [pressed=5]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a boolean or "mixed"');
@@ -325,17 +368,17 @@ test('selected attribute', async ({ page }) => {
     </table>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - row
     - row
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - row [selected]
     - row
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - row [selected=true]
     - row [selected=false]
   `);
@@ -348,13 +391,12 @@ test('selected attribute', async ({ page }) => {
   `);
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - row [selected=false]
       - row [selected=false]
     `, { timeout: 1000 }).catch(e => e);
-    expect(stripAnsi(e.message)).toContain(`expect(locator).toMatchAriaSnapshot(expected) failed
+    expect(stripAnsi(e.message)).toContain(`expect(page).toMatchAriaSnapshot(expected) failed
 
-Locator: locator('body')
 Timeout: 1000ms
 - Expected  - 2
 + Received  + 6
@@ -373,7 +415,7 @@ Call log:
   }
 
   {
-    const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const e = await expect(page).toMatchAriaSnapshot(`
       - row [selected=invalid]
     `, { timeout: 1000 }).catch(e => e);
     expect(stripAnsi(e.message)).toContain(' attribute must be a boolean');
@@ -414,7 +456,7 @@ test('integration test', async ({ page }) => {
       </li>
     </ul>`);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "Microsoft"
     - text: Open source projects and samples from Microsoft
     - list:
@@ -433,7 +475,7 @@ test('integration test 2', async ({ page }) => {
         <input placeholder="What needs to be done?">
       </header>
     </div>`);
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - heading "todos"
     - textbox "What needs to be done?"
   `);
@@ -448,16 +490,15 @@ test('expected formatter', async ({ page }) => {
         <button>Time 15:30</button>
       </header>
     </div>`);
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
     - heading "todos"
     - textbox "Wrong text"
   `, { timeout: 1 }).catch(e => e);
 
   // Note that error message should not contain any regular expressions,
   // unlike the baseline generated by --update-snapshots.
-  expect(stripAnsi(error.message)).toContain(`expect(locator).toMatchAriaSnapshot(expected) failed
+  expect(stripAnsi(error.message)).toContain(`expect(page).toMatchAriaSnapshot(expected) failed
 
-Locator: locator('body')
 Timeout: 1ms
 - Expected  - 2
 + Received  + 4
@@ -478,10 +519,10 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <button>Click: me</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - 'button "Click: me"'
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - 'button /Click: me/'
     `);
   }
@@ -490,13 +531,13 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <button>Click / me</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button "Click / me"
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button /Click \\/ me/
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - 'button /Click \\/ me/'
     `);
   }
@@ -505,13 +546,13 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <button>Click " me</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button "Click \\\" me"
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button /Click \" me/
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button /Click \\\" me/
     `);
   }
@@ -520,13 +561,13 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <button>Click \\ me</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button "Click \\\\ me"
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button /Click \\\\ me/
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - 'button /Click \\\\ me/'
     `);
   }
@@ -535,7 +576,7 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <button>Click ' me</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - 'button "Click '' me"'
     `);
   }
@@ -544,7 +585,7 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <h1>heading "name" [level=1]</h1>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - heading "heading \\"name\\" [level=1]" [level=1]
     `);
   }
@@ -553,7 +594,7 @@ test('should unpack escaped names', async ({ page }) => {
     await page.setContent(`
       <h1>heading \\" [level=2]</h1>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - |
           heading    "heading \\\\\\" [level=2]" [
              level  =   1   ]
@@ -565,14 +606,14 @@ test('should report error in YAML', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       heading "title"
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Aria snapshot must be a YAML sequence, elements starting with " -"`);
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading: a:
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Nested mappings are not allowed in compact mappings at line 1, column 12:
@@ -587,7 +628,7 @@ test('should report error in YAML keys', async ({ page }) => {
   await page.setContent(`<h1>title</h1>`);
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading "title
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated string:
@@ -598,7 +639,7 @@ heading "title
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading /title
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unterminated regex:
@@ -609,7 +650,7 @@ heading /title
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading [level=a]
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
@@ -620,7 +661,7 @@ heading [level=a]
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading [expanded=FALSE]
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "expanded" attribute must be a boolean:
@@ -631,7 +672,7 @@ heading [expanded=FALSE]
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading [checked=foo]
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "checked" attribute must be a boolean or "mixed":
@@ -642,7 +683,7 @@ heading [checked=foo]
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading [level=]
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Value of "level" attribute must be a number:
@@ -653,7 +694,7 @@ heading [level=]
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading [bogus]
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unsupported attribute [bogus]:
@@ -664,7 +705,7 @@ heading [bogus]
   }
 
   {
-    const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+    const error = await expect(page).toMatchAriaSnapshot(`
       - heading invalid
     `).catch(e => e);
     expect.soft(error.message).toBe(`expect.toMatchAriaSnapshot: Unexpected input:
@@ -677,11 +718,11 @@ heading invalid
 
 test('call log should contain actual snapshot', async ({ page }) => {
   await page.setContent(`<h1>todos</h1>`);
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
     - heading "wrong"
   `, { timeout: 3000 }).catch(e => e);
 
-  expect(stripAnsi(error.message)).toContain(`- unexpected value "- heading "todos" [level=1]"`);
+  expect(stripAnsi(error.message)).toContain(`unexpected value "- heading "todos" [level=1]"`);
 });
 
 test('should parse attributes', async ({ page }) => {
@@ -689,7 +730,7 @@ test('should parse attributes', async ({ page }) => {
     await page.setContent(`
       <button aria-pressed="mixed">hello world</button>
     `);
-    await expect(page.locator('body')).toMatchAriaSnapshot(`
+    await expect(page).toMatchAriaSnapshot(`
       - button [pressed=mixed ]
     `);
   }
@@ -709,7 +750,7 @@ test('should not unshift actual template text', async ({ page }) => {
     <h1>title</h1>
     <h1>title 2</h1>
   `);
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
         - heading "title" [level=1]
     - heading "title 2" [level=1]
   `, { timeout: 1000 }).catch(e => e);
@@ -720,7 +761,7 @@ test('should not unshift actual template text', async ({ page }) => {
 
 test('should not match what is not matched', async ({ page }) => {
   await page.setContent(`<p>Text</p>`);
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
     - paragraph:
       - button "bogus"
   `).catch(e => e);
@@ -735,7 +776,7 @@ test('should match url', async ({ page }) => {
     <a href='https://example.com'>Link</a>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - link:
       - /url: /.*example.com/
   `);
@@ -750,20 +791,20 @@ test('should detect unexpected children: equal', async ({ page }) => {
     </ul>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list:
       - listitem: "One"
       - listitem: "Three"
   `);
 
-  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const e = await expect(page).toMatchAriaSnapshot(`
     - list:
       - /children: equal
       - listitem: "One"
       - listitem: "Three"
   `, { timeout: 1000 }).catch(e => e);
 
-  expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
   expect(stripAnsi(e.message)).toContain('+   - listitem: Two');
 });
 
@@ -779,14 +820,14 @@ test('should detect unexpected children: deep-equal', async ({ page }) => {
     </ul>
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list:
       - listitem:
         - list:
           - listitem: 1.1
   `);
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list:
       - /children: equal
       - listitem:
@@ -794,7 +835,7 @@ test('should detect unexpected children: deep-equal', async ({ page }) => {
           - listitem: 1.1
   `);
 
-  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const e = await expect(page).toMatchAriaSnapshot(`
     - list:
       - /children: deep-equal
       - listitem:
@@ -802,7 +843,7 @@ test('should detect unexpected children: deep-equal', async ({ page }) => {
           - listitem: 1.1
   `, { timeout: 1000 }).catch(e => e);
 
-  expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
   expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
 });
 
@@ -818,7 +859,7 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
     </ul>
   `);
 
-  const e = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const e = await expect(page).toMatchAriaSnapshot(`
     - list:
       - /children: deep-equal
       - listitem:
@@ -826,10 +867,10 @@ test('should allow restoring contain mode inside deep-equal', async ({ page }) =
           - listitem: 1.1
   `, { timeout: 1000 }).catch(e => e);
 
-  expect(stripAnsi(e.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(e.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
   expect(stripAnsi(e.message)).toContain('+       - listitem: \"1.2\"');
 
-  await expect(page.locator('body')).toMatchAriaSnapshot(`
+  await expect(page).toMatchAriaSnapshot(`
     - list:
       - /children: deep-equal
       - listitem:
@@ -851,7 +892,7 @@ test('top-level deep-equal', { annotation: { type: 'issue', description: 'https:
     </ul>
   `);
 
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
     - /children: deep-equal
     - list
   `, { timeout: 1000 }).catch(e => e);
@@ -870,11 +911,11 @@ test('top-level deep-equal', { annotation: { type: 'issue', description: 'https:
 
 test('treat bad regex as a string', async ({ page }) => {
   await page.setContent(`<a href="/foo">Log in</a>`);
-  const error = await expect(page.locator('body')).toMatchAriaSnapshot(`
+  const error = await expect(page).toMatchAriaSnapshot(`
     - link "Log in":
       - /url: /[a/
   `, { timeout: 1 }).catch(e => e);
-  expect(stripAnsi(error.message)).toContain('expect(locator).toMatchAriaSnapshot(expected) failed');
+  expect(stripAnsi(error.message)).toContain('expect(page).toMatchAriaSnapshot(expected) failed');
   expect(stripAnsi(error.message)).toContain('-   - /url: /[a/');
   expect(stripAnsi(error.message)).toContain('+   - /url: /foo');
 });

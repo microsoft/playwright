@@ -127,6 +127,104 @@ Whether to perform case-insensitive match. [`option: ignoreCase`] option takes p
 ### option: PageAssertions.NotToHaveURL.timeout = %%-csharp-java-python-assertions-timeout-%%
 * since: v1.18
 
+## async method: PageAssertions.toMatchAriaSnapshot
+* since: v1.60
+* langs:
+  - alias-java: matchesAriaSnapshot
+
+Asserts that the page body matches the given [accessibility snapshot](../aria-snapshots.md).
+
+**Usage**
+
+```js
+await page.goto('https://demo.playwright.dev/todomvc/');
+await expect(page).toMatchAriaSnapshot(`
+  - heading "todos"
+  - textbox "What needs to be done?"
+`);
+```
+
+```python async
+await page.goto("https://demo.playwright.dev/todomvc/")
+await expect(page).to_match_aria_snapshot('''
+  - heading "todos"
+  - textbox "What needs to be done?"
+''')
+```
+
+```python sync
+page.goto("https://demo.playwright.dev/todomvc/")
+expect(page).to_match_aria_snapshot('''
+  - heading "todos"
+  - textbox "What needs to be done?"
+''')
+```
+
+```csharp
+await page.GotoAsync("https://demo.playwright.dev/todomvc/");
+await Expect(page).ToMatchAriaSnapshotAsync(@"
+  - heading ""todos""
+  - textbox ""What needs to be done?""
+");
+```
+
+```java
+page.navigate("https://demo.playwright.dev/todomvc/");
+assertThat(page).matchesAriaSnapshot("""
+  - heading "todos"
+  - textbox "What needs to be done?"
+""");
+```
+
+### param: PageAssertions.toMatchAriaSnapshot.expected
+* since: v1.60
+- `expected` <[string]>
+
+### option: PageAssertions.toMatchAriaSnapshot.timeout = %%-js-assertions-timeout-%%
+* since: v1.60
+
+### option: PageAssertions.toMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.60
+
+## async method: PageAssertions.NotToMatchAriaSnapshot
+* since: v1.60
+* langs: python
+
+The opposite of [`method: PageAssertions.toMatchAriaSnapshot`].
+
+### param: PageAssertions.NotToMatchAriaSnapshot.expected
+* since: v1.60
+- `expected` <[string]>
+
+### option: PageAssertions.NotToMatchAriaSnapshot.timeout = %%-csharp-java-python-assertions-timeout-%%
+* since: v1.60
+
+## async method: PageAssertions.toMatchAriaSnapshot#2
+* since: v1.60
+* langs: js
+
+Asserts that the page body matches the given [accessibility snapshot](../aria-snapshots.md).
+
+Snapshot is stored in a separate `.aria.yml` file in a location configured by `expect.toMatchAriaSnapshot.pathTemplate` and/or `snapshotPathTemplate` properties in the configuration file.
+
+**Usage**
+
+```js
+await expect(page).toMatchAriaSnapshot();
+await expect(page).toMatchAriaSnapshot({ name: 'home.aria.yml' });
+```
+
+### option: PageAssertions.toMatchAriaSnapshot#2.name
+* since: v1.60
+* langs: js
+- `name` <[string]>
+
+Name of the snapshot to store in the snapshot folder corresponding to this test.
+Generates sequential names if not specified.
+
+### option: PageAssertions.toMatchAriaSnapshot#2.timeout = %%-js-assertions-timeout-%%
+* since: v1.60
+
 ## async method: PageAssertions.toHaveScreenshot#1
 * since: v1.23
 * langs: js

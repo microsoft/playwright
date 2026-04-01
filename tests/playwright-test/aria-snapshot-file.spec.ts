@@ -29,7 +29,7 @@ test('should match snapshot with name', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   });
@@ -43,9 +43,9 @@ test('should generate multiple missing', async ({ runInlineTest }, testInfo) => 
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
         await page.setContent(\`<h1>hello world 2</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
       });
     `
   });
@@ -71,9 +71,9 @@ test('should rebaseline all', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test-1.aria.yml' });
         await page.setContent(\`<h1>hello world 2</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test-2.aria.yml' });
       });
     `
   }, { 'update-snapshots': 'all' });
@@ -96,7 +96,7 @@ test('should not rebaseline matching', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('test', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot({ name: 'test.aria.yml' });
+        await expect(page).toMatchAriaSnapshot({ name: 'test.aria.yml' });
       });
     `
   }, { 'update-snapshots': 'changed' });
@@ -112,9 +112,9 @@ test('should generate snapshot name', async ({ runInlineTest }, testInfo) => {
       import { test, expect } from '@playwright/test';
       test('test name', async ({ page }) => {
         await page.setContent(\`<h1>hello world</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot();
+        await expect(page).toMatchAriaSnapshot();
         await page.setContent(\`<h1>hello world 2</h1>\`);
-        await expect(page.locator('body')).toMatchAriaSnapshot();
+        await expect(page).toMatchAriaSnapshot();
       });
     `
   });
