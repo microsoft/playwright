@@ -43,6 +43,7 @@ export const TestCaseView: React.FC<{
   const searchParams = useSearchParams();
 
   const visibleTestAnnotations = test.annotations.filter(a => !a.type.startsWith('_')) ?? [];
+  appendRepeatEachIndexAnnotation(visibleTestAnnotations, test.repeatEachIndex);
 
   return <>
     <HeaderView
@@ -78,6 +79,7 @@ export const TestCaseView: React.FC<{
         </div>,
         render: () => {
           const visibleAnnotations = result.annotations.filter(annotation => !annotation.type.startsWith('_'));
+          appendRepeatEachIndexAnnotation(visibleAnnotations, test.repeatEachIndex);
           return <>
             {!!visibleAnnotations.length && <AutoChip header='Annotations' dataTestId='test-case-annotations'>
               {visibleAnnotations.map((annotation, index) => <TestCaseAnnotationView key={index} annotation={annotation} />)}
@@ -96,6 +98,11 @@ function TestCaseAnnotationView({ annotation: { type, description } }: { annotat
       {description && <CopyToClipboardContainer value={description}>: {linkifyText(description)}</CopyToClipboardContainer>}
     </div>
   );
+}
+
+function appendRepeatEachIndexAnnotation(annotations: TestAnnotation[], repeatEachIndex: number | undefined) {
+  if (repeatEachIndex)
+    annotations.push({ type: 'repeatEachIndex', description: String(repeatEachIndex) });
 }
 
 function retryLabel(index: number) {

@@ -1317,6 +1317,32 @@ for (const useIntermediateMergeReport of [true, false] as const) {
       await expect(page.getByText('ouch')).toBeHidden();
     });
 
+    test('should show repeatEachIndex annotation when non-zero', async ({ runInlineTest, showReport, page }) => {
+      const result = await runInlineTest({
+        'a.spec.js': `
+          import { test, expect } from '@playwright/test';
+          test('sample', async ({}, testInfo) => {
+          });
+        `
+      }, { 'reporter': 'dot,html', 'repeat-each': 3 }, { PLAYWRIGHT_HTML_OPEN: 'never' });
+      expect(result.exitCode).toBe(0);
+      await showReport();
+
+      // First repeat (index 0) should not show repeatEachIndex annotation.
+      await page.getByText('sample').first().click();
+      await expect(page.locator('.test-case-annotation')).toBeHidden();
+      await page.goBack();
+
+      // Second repeat (index 1) should show repeatEachIndex annotation.
+      await page.getByText('sample').nth(1).click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('repeatEachIndex: 1');
+      await page.goBack();
+
+      // Third repeat (index 2) should show repeatEachIndex annotation.
+      await page.getByText('sample').nth(2).click();
+      await expect(page.locator('.test-case-annotation')).toHaveText('repeatEachIndex: 2');
+    });
+
     test('should group similar / loop steps', async ({ runInlineTest, showReport, page }) => {
       test.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/10098' });
       const result = await runInlineTest({
