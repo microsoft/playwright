@@ -246,8 +246,12 @@ function resolveWorkers(workers: string | number): number {
     const parsedWorkers = parseInt(workers, 10);
     if (isNaN(parsedWorkers))
       throw new Error(`Workers ${workers} must be a number or percentage.`);
+    if (parsedWorkers <= 0)
+      throw new Error(`Workers ${workers} must be a positive number.`);
     return parsedWorkers;
   }
+  if (workers <= 0)
+    throw new Error(`Workers ${workers} must be a positive number.`);
   return workers;
 }
 
