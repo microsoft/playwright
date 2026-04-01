@@ -719,8 +719,10 @@ for (const kind of ['launchServer', 'run-server'] as const) {
       expect(await response.json()).toEqual({ 'foo': 'bar' });
     });
 
-    test('should upload large file', async ({ connect, startRemoteServer, server }, testInfo) => {
-      test.slow();
+    test('should upload large file', async ({ connect, startRemoteServer, server, isMac }, testInfo) => {
+      if (isMac)
+        test.setTimeout(test.info().timeout * 3);  // Extra slow!
+
       const remoteServer = await startRemoteServer(kind);
       const browser = await connect(remoteServer.wsEndpoint());
       const context = await browser.newContext();
