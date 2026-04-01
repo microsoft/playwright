@@ -159,7 +159,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    }
+    } 
 }
 ```
 
@@ -195,7 +195,7 @@ public class ExampleTest : PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    }
+    } 
 }
 ```
 
@@ -230,7 +230,7 @@ public class UnitTest1: PageTest
 
         // Expects page to have a heading with the name of Installation.
         await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    }
+    } 
 }
 ```
 </TabItem>
@@ -263,8 +263,7 @@ public class UnitTest1: PageTest
         await Page.GetByRole(AriaRole.Link, new() { Name = "Get started" }).ClickAsync();
 
         // Expects page to have a heading with the name of Installation.
-        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync();
-    }
+        await Expect(Page.GetByRole(AriaRole.Heading, new() { Name = "Installation" })).ToBeVisibleAsync
 }
 ```
 </TabItem>
