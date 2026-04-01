@@ -17,7 +17,7 @@
 
 import { assert } from '../../utils';
 import { Browser } from '../browser';
-import { BrowserContext, calculateUserAgentEmulation, verifyGeolocation } from '../browserContext';
+import { BrowserContext, verifyGeolocation } from '../browserContext';
 import * as network from '../network';
 import { ConnectionEvents, FFConnection  } from './ffConnection';
 import { FFPage } from './ffPage';
@@ -189,11 +189,8 @@ export class FFBrowserContext extends BrowserContext {
     promises.push(this.doUpdateDefaultViewport());
     if (this._options.hasTouch)
       promises.push(this._browser.session.send('Browser.setTouchOverride', { browserContextId, hasTouch: true }));
-    if (this._options.userAgent) {
+    if (this._options.userAgent)
       promises.push(this._browser.session.send('Browser.setUserAgentOverride', { browserContextId, userAgent: this._options.userAgent }));
-      const { navigatorPlatform } = calculateUserAgentEmulation(this._options);
-      promises.push(this._browser.session.send('Browser.setPlatformOverride', { browserContextId, platform: navigatorPlatform || null }));
-    }
     if (this._options.bypassCSP)
       promises.push(this._browser.session.send('Browser.setBypassCSP', { browserContextId, bypassCSP: true }));
     if (this._options.ignoreHTTPSErrors || this._options.internalIgnoreHTTPSErrors)
@@ -318,8 +315,6 @@ export class FFBrowserContext extends BrowserContext {
 
   async setUserAgent(userAgent: string | undefined): Promise<void> {
     await this._browser.session.send('Browser.setUserAgentOverride', { browserContextId: this._browserContextId, userAgent: userAgent || null });
-    const { navigatorPlatform } = calculateUserAgentEmulation({ userAgent });
-    await this._browser.session.send('Browser.setPlatformOverride', { browserContextId: this._browserContextId, platform: navigatorPlatform || null });
   }
 
   async doUpdateOffline(): Promise<void> {
