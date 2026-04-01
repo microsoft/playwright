@@ -2021,7 +2021,7 @@ test('should render locator descriptions', async ({ runAndTrace, page }) => {
     await page.locator('input').describe('custom').first().click();
   });
 
-  await expect(traceViewer.page.locator('body')).toMatchAriaSnapshot(`
+  await expect(traceViewer.page).toMatchAriaSnapshot(`
     - treeitem /Click.*custom/
     - treeitem /Click.*input.*first/
   `);
@@ -2067,7 +2067,7 @@ test('should filter actions', async ({ runAndTrace, page }) => {
   await expect(traceViewer.page.getByText('3 hidden', { exact: true })).toBeVisible();
 
   await traceViewer.page.getByRole('button', { name: 'Filter actions' }).click();
-  await expect(traceViewer.page.getByTestId('actions-filter-dialog')).toMatchAriaSnapshot(`
+  await expect(traceViewer.page).toMatchAriaSnapshot(`
     - dialog:
       - checkbox "Getters 1"
       - checkbox "Network routes 2"
