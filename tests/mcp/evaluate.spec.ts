@@ -113,6 +113,26 @@ test('browser_evaluate expression', async ({ client, server }) => {
     result: `1`,
     code: `await page.evaluate('function foo() { return 1; }');`,
   });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: 'async () => 42',
+    },
+  })).toHaveResponse({
+    result: `42`,
+    code: `await page.evaluate('async () => 42');`,
+  });
+
+  expect(await client.callTool({
+    name: 'browser_evaluate',
+    arguments: {
+      function: 'Promise.resolve(42)',
+    },
+  })).toHaveResponse({
+    result: `42`,
+    code: `await page.evaluate('() => (Promise.resolve(42))');`,
+  });
 });
 
 test('browser_evaluate (error)', async ({ client, server }) => {
