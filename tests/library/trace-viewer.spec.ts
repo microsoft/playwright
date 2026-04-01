@@ -30,6 +30,7 @@ import { parseTrace, rafraf, roundBox } from '../config/utils';
 
 const test = playwrightTest.extend<TraceViewerFixtures>(traceViewerFixtures);
 
+// NOTE: set PWTEST_DEBUG_TRACE_VIEWER=1 to record/attach traces for these tests.
 test.skip(({ trace }) => trace === 'on');
 test.skip(({ mode }) => mode.startsWith('service'));
 test.skip(process.env.PW_CLOCK === 'frozen');
@@ -1419,10 +1420,10 @@ test('should pick locator in iframe', async ({ page, runAndTrace, server }) => {
     await frameTwo.setContent(`<div>HelloNameTwo</div>`);
     await page.evaluate('2+2');
   });
+  const snapshot = await traceViewer.snapshotFrame('Evaluate');
+
   await traceViewer.page.getByTitle('Pick locator').click();
   const cmWrapper = traceViewer.page.locator('.cm-wrapper').first();
-
-  const snapshot = await traceViewer.snapshotFrame('Evaluate');
 
   await snapshot.frameLocator('#frame1').getByText('Hello1').click();
   await expect.soft(cmWrapper).toContainText(`locator('#frame1').contentFrame().getByText('Hello1')`);
