@@ -202,9 +202,6 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
     filterTestsRemoveEmptySuites(rootSuite, test => testsInThisShard.has(test));
   }
 
-  if (config.postShardTestFilters.length)
-    filterTestsRemoveEmptySuites(rootSuite, test => config.postShardTestFilters.every(filter => filter(test)));
-
   const topLevelProjects = [];
   // Now prepend dependency projects without filtration.
   {
@@ -220,6 +217,11 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
         topLevelProjects.push(project);
     }
   }
+
+  // Apply post-shard filters after dependency projects are added so that tests
+  // from dependency projects (e.g. --last-failed) are included in the filter.
+  if (config.postShardTestFilters.length)
+    filterTestsRemoveEmptySuites(rootSuite, test => config.postShardTestFilters.every(filter => filter(test)));
 
   return { rootSuite, topLevelProjects };
 }
