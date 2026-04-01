@@ -188,7 +188,7 @@ test('this will not work', async ({ mount }) => {
   // Class instances lose their prototype methods when serialized.
   // Calling `user.greet()` in the component will fail.
   class UserModel { greet() { return `Hello, ${this.name}`; } }
-  await mount(<UserCard user={new UserModel('Alice')}/>);
+  await mount(<UserCard user={new UserModel()}/>);
 });
 ```
 
