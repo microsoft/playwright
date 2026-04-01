@@ -55,12 +55,14 @@ export class Response {
   readonly toolArgs: Record<string, any>;
   private _clientWorkspace: string;
   private _imageResults: { data: Buffer, imageType: 'png' | 'jpeg' }[] = [];
+  private _raw: boolean;
 
-  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, relativeTo?: string) {
+  constructor(context: Context, toolName: string, toolArgs: Record<string, any>, options?: { relativeTo?: string, raw?: boolean }) {
     this._context = context;
     this.toolName = toolName;
     this.toolArgs = toolArgs;
-    this._clientWorkspace = relativeTo ?? context.options.cwd;
+    this._clientWorkspace = options?.relativeTo ?? context.options.cwd;
+    this._raw = options?.raw ?? false;
   }
 
   private _computRelativeTo(fileName: string): string {
@@ -150,18 +152,24 @@ export class Response {
 
 
   async serialize(): Promise<CallToolResult> {
-    const sections = await this._build();
+    const allSections = await this._build();
+    const rawSections = ['Error', 'Result', 'Snapshot'] as const;
+    const sections = this._raw ? allSections.filter(section => rawSections.includes(section.title as typeof rawSections[number])) : allSections;
 
     const text: string[] = [];
     for (const section of sections) {
       if (!section.content.length)
         continue;
-      text.push(`### ${section.title}`);
-      if (section.codeframe)
-        text.push(`\`\`\`${section.codeframe}`);
-      text.push(...section.content);
-      if (section.codeframe)
-        text.push('```');
+      if (!this._raw) {
+        text.push(`### ${section.title}`);
+        if (section.codeframe)
+          text.push(`\`\`\`${section.codeframe}`);
+        text.push(...section.content);
+        if (section.codeframe)
+          text.push('```');
+      } else {
+        text.push(...section.content);
+      }
     }
 
     const content: (TextContent | ImageContent)[] = [

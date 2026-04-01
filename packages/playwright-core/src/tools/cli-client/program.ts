@@ -33,6 +33,7 @@ import type { MinimistArgs } from './minimist';
 
 type GlobalOptions = {
   help?: boolean;
+  raw?: boolean;
   session?: string;
   version?: boolean;
 };
@@ -56,6 +57,7 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'help',
   'persistent',
   'profile',
+  'raw',
   'session',
   'version',
 ];
@@ -63,6 +65,7 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
 const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[] = [
   'all',
   'help',
+  'raw',
   'version',
 ];
 
@@ -192,10 +195,11 @@ async function startSession(sessionName: string, registry: Registry, clientInfo:
 }
 
 async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: MinimistArgs) {
+  const raw = !!args.raw;
   for (const globalOption of globalOptions)
     delete args[globalOption];
   const session = new Session(entry);
-  const result = await session.run(clientInfo, args);
+  const result = await session.run(clientInfo, args, { raw });
   console.log(result.text);
 }
 
