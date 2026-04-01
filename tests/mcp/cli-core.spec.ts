@@ -296,3 +296,31 @@ test('snapshot depth', async ({ cli, server }) => {
   - listitem [ref=e5]:
     - button "Cancel" [ref=e6]`);
 });
+
+test('eval --raw', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('eval', '--raw', '() => document.title');
+  expect(output).toBe('"Title"');
+});
+
+test('eval --raw with error', async ({ cli, server }) => {
+  await cli('open', server.HELLO_WORLD);
+  const { output } = await cli('eval', '--raw', '() => { throw new Error("my error") }');
+  expect(output).toContain('my error');
+  expect(output).not.toContain('##');
+});
+
+test('snapshot --raw', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('snapshot', '--raw');
+  expect(output).toBe('- button "Submit" [ref=e2]');
+});
+
+test('--raw on command without output', async ({ cli, server }) => {
+  server.setContent('/', `<button>Submit</button>`, 'text/html');
+  await cli('open', server.PREFIX);
+  const { output } = await cli('click', '--raw', 'e2');
+  expect(output).not.toContain('### ');
+  expect(output).not.toContain('Page URL');
+});

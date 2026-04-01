@@ -43,14 +43,14 @@ export class Session {
     return compareSemver(clientInfo.version, this.config.version) >= 0;
   }
 
-  async run(clientInfo: ClientInfo, args: MinimistArgs): Promise<{ text: string }> {
+  async run(clientInfo: ClientInfo, args: MinimistArgs, options?: { raw?: boolean }): Promise<{ text: string }> {
     if (!this.isCompatible(clientInfo))
       throw new Error(`Client is v${clientInfo.version}, session '${this.name}' is v${this.config.version}. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto restart the browser session.`);
 
     const { socket } = await this._connect();
     if (!socket)
       throw new Error(`Browser '${this.name}' is not open. Run\n\n  playwright-cli${this.name !== 'default' ? ` -s=${this.name}` : ''} open\n\nto start the browser session.`);
-    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd() });
+    return await SocketConnectionClient.sendAndClose(socket, 'run', { args, cwd: process.cwd(), raw: options?.raw });
   }
 
   async stop(quiet: boolean = false): Promise<void> {

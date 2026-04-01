@@ -71,6 +71,8 @@ const evaluate = defineTabTool({
 
       const text = JSON.stringify(evalResult.result, null, 2) ?? 'undefined';
       await response.addResult('Evaluation result', text, { prefix: 'result', ext: 'json', suggestedFilename: params.filename });
+    }).catch(e => {
+      response.addError(e instanceof Error ? e.message : String(e));
     });
   },
 });
