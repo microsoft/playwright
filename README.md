@@ -12,7 +12,7 @@ Choose the path that fits your workflow:
 
 | | Best for | Install |
 |---|---|---|
-| **[Playwright Test](#playwright-test)** | End-to-end testing | `npm i -D @playwright/test` |
+| **[Playwright Test](#playwright-test)** | End-to-end testing | `npm init playwright@latest` |
 | **[Playwright CLI](#playwright-cli)** | Coding agents (Claude Code, Copilot) | `npm i -g @playwright/cli@latest` |
 | **[Playwright MCP](#playwright-mcp)** | AI agents and LLM-driven automation | `npx @playwright/mcp@latest` |
 | **[Playwright Library](#playwright-library)** | Browser automation scripts | `npm i playwright` |
@@ -66,7 +66,7 @@ Tests run in parallel across all configured browsers, in headless mode by defaul
 
 **Auto-wait and web-first assertions.** No artificial timeouts. Playwright waits for elements to be actionable, and assertions automatically retry until conditions are met.
 
-**Locators.** Find elements with resilient selectors that mirror how users see the page:
+**Locators.** Find elements with resilient locators that mirror how users see the page:
 
 ```TypeScript
 page.getByRole('button', { name: 'Submit' })
@@ -102,11 +102,7 @@ npx playwright show-trace trace.zip
 
 <!-- TODO: screenshot of trace viewer -->
 
-**Parallelism and sharding.** Tests run in parallel by default. Shard across multiple machines for faster CI:
-
-```bash
-npx playwright test --shard=1/4
-```
+**Parallelism.** Tests run in parallel by default across all configured browsers.
 
 [Full testing documentation](https://playwright.dev/docs/intro)
 
