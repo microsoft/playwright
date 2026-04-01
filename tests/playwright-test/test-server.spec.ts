@@ -153,6 +153,34 @@ test('should list tests with testIdAttribute', async ({ startTestServer, writeFi
   expect(onProject.use.testIdAttribute).toBe('testId');
 });
 
+test('listFiles should respect grepInvert', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/39981' } }, async ({ startTestServer, writeFiles }) => {
+  await writeFiles({
+    'a.test.ts': `
+      import { test } from '@playwright/test';
+      test('foo', () => {});
+    `,
+    'b.test.ts': `
+      import { test } from '@playwright/test';
+      test('bar', () => {});
+    `,
+    'playwright.config.ts': `
+        module.exports = {
+        projects: [{
+          name: 'chromium',
+          grepInvert: /a.test.ts/,
+        }]
+      };
+      `,
+  });
+
+  const testServerConnection = await startTestServer();
+  const events = await testServerConnection.listFiles({});
+  const project = events.report.find(e => e.method === 'onProject').params.project;
+  expect(project.suites).toEqual([
+    expect.objectContaining({ title: 'b.test.ts' })
+  ]);
+});
+
 test('stdio interception', async ({ startTestServer, writeFiles }) => {
   const testServerConnection = await startTestServer();
   await testServerConnection.initialize({ interceptStdio: true });

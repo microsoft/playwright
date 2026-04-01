@@ -51,10 +51,14 @@ export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTest
     allFilesForProject.set(project, files);
   }
 
-  // Filter files based on the file filters, eliminate the empty projects.
+  // Filter files based on the file filters.
   const filesToRunByProject = new Map<FullProjectInternal, string[]>();
   for (const [project, files] of allFilesForProject) {
+    const grepInvertMatcher = project.project.grepInvert ? createTitleMatcher(project.project.grepInvert) : undefined;
     const matchedFiles = files.filter(file => {
+      if (grepInvertMatcher?.(['', project.project.name, file].join(' ')))
+        return false;
+
       if (!config.loadFileFilters.length) {
         // Avoid loading source maps.
         return true;
