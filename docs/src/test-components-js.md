@@ -184,28 +184,11 @@ test('this will work', async ({ mount }) => {
 test('this will not work', async ({ mount }) => {
   // `process` is a Node object, we can't pass it to the browser and expect it to work.
   const component = await mount(<ProcessViewer process={process}/>);
-});
-```
 
-```js
-class UserModel {
-  constructor(name) {
-    this.name = name;
-  }
-  greet() {
-    return `Hello, ${this.name}`;
-  }
-}
-
-test('this will not work', async ({ mount }) => {
   // Class instances lose their prototype methods when serialized.
   // Calling `user.greet()` in the component will fail.
-  const component = await mount(<UserCard user={new UserModel('Alice')}/>);
-});
-
-test('this will work', async ({ mount }) => {
-  // Pass a plain object instead.
-  const component = await mount(<UserCard user={{ name: 'Alice' }}/>);
+  class UserModel { greet() { return `Hello, ${this.name}`; } }
+  await mount(<UserCard user={new UserModel('Alice')}/>);
 });
 ```
 
