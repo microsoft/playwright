@@ -85,8 +85,25 @@ export const test = serverTest.extend<TestFixtures & TestOptions, WorkerFixtures
   mcpArgs: [undefined, { option: true }],
   mcpCaps: [undefined, { option: true }],
 
-  client: async ({ startClient }, use) => {
-    const { client } = await startClient();
+  client: async ({ startClient, mcpBrowser }, use) => {
+    let client: Client;
+    if (mcpBrowser === 'electron') {
+      const electronAppPath = path.join(__dirname, '../electron/electron-window-app.js');
+      ({ client } = await startClient({
+        config: {
+          allowUnrestrictedFileAccess: true,
+          browser: {
+            // browserName: 'chromium',
+            launchOptions: {
+              channel: 'electron',
+              args: [electronAppPath],
+            },
+          },
+        },
+      }));
+    } else {
+      ({ client } = await startClient());
+    }
     await use(client);
   },
 

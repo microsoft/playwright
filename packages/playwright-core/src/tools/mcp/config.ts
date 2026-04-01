@@ -163,7 +163,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   if (result.browser.isolated === undefined)
     result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
 
-  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
+  if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint && result.browser.launchOptions?.channel !== 'electron') {
     // No custom value provided, use the daemon data dir.
     const browserToken = result.browser.launchOptions?.channel ?? result.browser?.browserName;
     const userDataDir = path.resolve(daemonProfilesDir, `ud-${sessionName}-${browserToken}`);
@@ -242,6 +242,10 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
       break;
     case 'webkit':
       browserName = 'webkit';
+      break;
+    case 'electron':
+      browserName = 'chromium';
+      channel = 'electron';
       break;
   }
 
@@ -421,7 +425,7 @@ function mergeConfig(base: MergedConfig, overrides: Config): MergedConfig {
     },
   };
 
-  if (browser.browserName !== 'chromium' && browser.launchOptions)
+  if (browser.browserName !== 'chromium' && browser.launchOptions && browser.launchOptions.channel !== 'electron')
     delete browser.launchOptions.channel;
 
   return {

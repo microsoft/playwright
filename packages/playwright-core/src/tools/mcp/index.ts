@@ -16,7 +16,7 @@
 
 import { resolveConfig } from './config';
 import { filteredTools } from '../backend/tools';
-import { createBrowser } from './browserFactory';
+import { createBrowserContext } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { createServer } from '../utils/mcp/server';
 
@@ -36,27 +36,10 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
     version: packageJSON.version,
     toolSchemas: tools.map(tool => tool.schema),
     create: async (clientInfo: ClientInfo) => {
-      const browser = contextGetter ? new SimpleBrowser(await contextGetter()) : await createBrowser(config, clientInfo);
-      const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+      const context = contextGetter ? await contextGetter() : (await createBrowserContext(config, clientInfo)).browserContext;
       return new BrowserBackend(config, context, tools);
     },
     disposed: async () => { }
   };
   return createServer('api', packageJSON.version, backendFactory, false);
-}
-
-class SimpleBrowser {
-  private _context: BrowserContext;
-
-  constructor(context: BrowserContext) {
-    this._context = context;
-  }
-
-  contexts(): BrowserContext[] {
-    return [this._context];
-  }
-
-  async newContext(): Promise<BrowserContext> {
-    throw new Error('Creating a new context is not supported in SimpleBrowserContextFactory.');
-  }
 }

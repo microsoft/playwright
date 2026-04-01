@@ -19,7 +19,7 @@ import { ProgramOption } from '../../utilsBundle';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowser } from './browserFactory';
+import { createBrowser, createBrowserContext } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -121,6 +121,11 @@ export function decorateMCPCommand(command: Command) {
           version,
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
+            if (config.browser.launchOptions?.channel === 'electron') {
+              const { browserContext } = await createBrowserContext(config, clientInfo);
+              return new BrowserBackend(config, browserContext, tools);
+            }
+
             if (useSharedBrowser && clientCount === 0)
               sharedBrowser = await createBrowser(config, clientInfo);
             clientCount++;

@@ -169,7 +169,9 @@ test('dialog-dismiss', async ({ cli, server }) => {
   expect(inlineSnapshot).not.toContain('MyAlert');
 });
 
-test('dialog-accept <prompt>', async ({ cli, server }) => {
+test('dialog-accept <prompt>', async ({ cli, server, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'electron', 'Electron does not support prompt dialogs');
+
   server.setContent('/', `<button onclick="document.body.textContent = prompt('MyAlert')">Button</button>`, 'text/html');
   await cli('open', server.PREFIX);
   await cli('click', 'e2');
@@ -295,4 +297,24 @@ test('snapshot depth', async ({ cli, server }) => {
     - button "Submit" [ref=e4]
   - listitem [ref=e5]:
     - button "Cancel" [ref=e6]`);
+});
+
+test('electron', async ({ cli, mcpBrowser }) => {
+  test.skip(mcpBrowser !== 'electron', 'Electron tests only run in electron suite');
+  const electronAppPath = path.join(__dirname, '../electron/electron-window-app.js');
+  await fs.promises.writeFile(
+      test.info().outputPath('.playwright/cli.config.json'),
+      JSON.stringify({
+        browser: {
+          launchOptions: {
+            args: [electronAppPath],
+          },
+        },
+      }, null, 2)
+  );
+
+  const { output, snapshot } = await cli('open');
+  expect(output).not.toContain('### Error');
+  expect(output).toContain('### Browser');
+  expect(snapshot).toBeDefined();
 });

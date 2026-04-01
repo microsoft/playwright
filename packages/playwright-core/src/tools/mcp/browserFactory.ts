@@ -42,12 +42,31 @@ type ClientInfoEx = ClientInfo & {
 
 type BrowserWithInfo = {
   browser: playwright.Browser,
-  browserInfo: BrowserInfo
+  browserInfo: BrowserInfo,
+};
+
+type BrowserContextWithInfo = {
+  browserContext: playwright.BrowserContext,
+  browserInfo: BrowserInfo,
 };
 
 export async function createBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {
   const { browser } = await createBrowserWithInfo(config, clientInfo);
   return browser;
+}
+
+export async function createBrowserContext(config: FullConfig, clientInfo: ClientInfoEx): Promise<BrowserContextWithInfo> {
+  if (config.browser.launchOptions.channel === 'electron') {
+    const electronApp = await createElectronApp(config, clientInfo);
+    await electronApp.firstWindow();
+    return { browserContext: electronApp.context(), browserInfo: electronBrowserInfo(electronApp, config) };
+  }
+
+  const { browser, browserInfo } = await createBrowserWithInfo(config, clientInfo);
+  const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
+  if (!browserContext)
+    throw new Error('Error: unable to connect to a browser that does not have any contexts');
+  return { browserContext, browserInfo };
 }
 
 export async function createBrowserWithInfo(config: FullConfig, clientInfo: ClientInfoEx): Promise<BrowserWithInfo> {
@@ -80,6 +99,32 @@ function browserInfo(browser: playwright.Browser, config: FullConfig): BrowserIn
     launchOptions: config.browser.launchOptions,
     userDataDir: config.browser.userDataDir
   };
+}
+
+function electronBrowserInfo(electronApp: playwright.ElectronApplication, config: FullConfig): BrowserInfo {
+  return {
+    // eslint-disable-next-line no-restricted-syntax
+    guid: (electronApp as any)._guid,
+    browserName: 'electron',
+    launchOptions: config.browser.launchOptions,
+    userDataDir: undefined,
+  };
+}
+
+async function createElectronApp(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.ElectronApplication> {
+  testDebug('create browser (electron)');
+  const playwrightObject = playwright as Playwright;
+  const tracesDir = await computeTracesDir(config, clientInfo);
+  const { executablePath, args, timeout, env } = config.browser.launchOptions;
+  const electronApp = await playwrightObject._electron.launch({
+    tracesDir,
+    executablePath,
+    args,
+    timeout,
+    env: env as any,
+    ...config.browser.contextOptions,
+  });
+  return electronApp;
 }
 
 async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfoEx): Promise<playwright.Browser> {

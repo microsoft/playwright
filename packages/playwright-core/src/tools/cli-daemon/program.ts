@@ -22,16 +22,17 @@ import path from 'path';
 
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
-import { createBrowserWithInfo } from '../mcp/browserFactory';
+import { createBrowserContext } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
 import { program } from '../../utilsBundle';
 import { registry as browserRegistry } from '../../server/registry/index';
 
+
 program.argument('[session-name]', 'name of the session to create or connect to', 'default')
     .option('--headed', 'run in headed mode (non-headless)')
     .option('--extension', 'run with the extension')
-    .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
+    .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit, electron)')
     .option('--persistent', 'use a persistent browser context')
     .option('--profile <path>', 'path to the user data dir')
     .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
@@ -55,10 +56,7 @@ program.argument('[session-name]', 'name of the session to create or connect to'
       };
 
       try {
-        const { browser, browserInfo } = await createBrowserWithInfo(mcpConfig, clientInfoEx);
-        const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
-        if (!browserContext)
-          throw new Error('Error: unable to connect to a browser that does not have any contexts');
+        const { browserContext, browserInfo } = await createBrowserContext(mcpConfig, clientInfoEx);
         const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
         const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, { persistent, exitOnClose: true });
         console.log(`### Success\nDaemon listening on ${socketPath}`);

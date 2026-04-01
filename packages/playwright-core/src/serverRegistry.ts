@@ -26,7 +26,7 @@ const packageVersion = require('../package.json').version;
 
 export type BrowserInfo = {
   guid: string;
-  browserName: 'chromium' | 'firefox' | 'webkit';
+  browserName: 'chromium' | 'firefox' | 'webkit' | 'electron';
   userDataDir?: string;
   launchOptions: LaunchOptions;
 };

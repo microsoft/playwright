@@ -24,13 +24,14 @@ test('browser_navigate', async ({ client, server }) => {
     arguments: { url: server.HELLO_WORLD },
   })).toHaveResponse({
     code: `await page.goto('${server.HELLO_WORLD}');`,
-    page: `- Page URL: ${server.HELLO_WORLD}
-- Page Title: Title`,
+    page: expect.stringContaining(`- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`),
     snapshot: `- generic [active] [ref=e1]: Hello, world!`,
   });
 });
 
-test('browser_navigate blocks file:// URLs by default', async ({ client }) => {
+test('browser_navigate blocks file:// URLs by default', async ({ client, mcpBrowser }) => {
+  test.skip(mcpBrowser === 'electron', 'Electron uses its own config');
   expect(await client.callTool({
     name: 'browser_navigate',
     arguments: { url: 'file:///etc/passwd' },
@@ -46,7 +47,7 @@ test('browser_navigate allows about:, data: and javascript: protocols', async ({
     arguments: { url: 'about:blank' },
   })).toHaveResponse({
     code: `await page.goto('about:blank');`,
-    page: `- Page URL: about:blank`,
+    page: expect.stringContaining(`- Page URL: about:blank`),
     snapshot: ``,
   });
 
@@ -60,7 +61,8 @@ test('browser_navigate allows about:, data: and javascript: protocols', async ({
   });
 });
 
-test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess is true', async ({ startClient }, testInfo) => {
+test('browser_navigate can navigate to file:// URLs allowUnrestrictedFileAccess is true', async ({ startClient, mcpBrowser }, testInfo) => {
+  test.skip(mcpBrowser === 'electron', 'Electron uses its own config');
   const rootDir = testInfo.outputPath();
   const fileOutsideRoot = testInfo.outputPath('test.txt');
   await fs.writeFile(fileOutsideRoot, 'Test file content');
