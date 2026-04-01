@@ -199,8 +199,11 @@ export class CDPRelayServer {
       if (this._playwrightConnection !== ws)
         return;
       this._playwrightConnection = null;
-      this._closeExtensionConnection('Playwright client disconnected');
-      debugLogger('Playwright WebSocket closed');
+      // Keep extension connection alive so the next PW client can reconnect
+      // (multi-agent flows: LoginAgent → AccountValidationAgent use the same relay).
+      // Reset connectedTabInfo so the next client re-attaches via Target.setAutoAttach.
+      this._connectedTabInfo = undefined;
+      debugLogger('Playwright WebSocket closed, extension connection kept alive');
     });
     ws.on('error', error => {
       debugLogger('Playwright WebSocket error:', error);
@@ -248,9 +251,12 @@ export class CDPRelayServer {
     switch (method) {
       case 'forwardCDPEvent':
         const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
+        const eventMethod = params.method;
+        if (eventMethod.startsWith('Page.') || eventMethod.startsWith('Target.') || eventMethod.startsWith('Network.'))
+          debugLogger(`← Extension event: ${eventMethod} (sid=${sessionId ?? 'none'}) → PW=${!!this._playwrightConnection}`);
         this._sendToPlaywright({
           sessionId,
-          method: params.method,
+          method: eventMethod,
           params: params.params
         });
         break;
@@ -258,7 +264,7 @@ export class CDPRelayServer {
   }
 
   private async _handlePlaywrightMessage(message: CDPCommand): Promise<void> {
-    debugLogger('← Playwright:', `${message.method} (id=${message.id})`);
+    debugLogger('← Playwright:', `${message.method} (id=${message.id}), ext_pending=${this._extensionConnection?._pendingCount ?? '?'}`);
     const { id, sessionId, method, params } = message;
     try {
       const result = await this._handleCDPCommand(method, params, sessionId);
@@ -326,8 +332,18 @@ export class CDPRelayServer {
   }
 
   private _sendToPlaywright(message: CDPResponse): void {
-    debugLogger('→ Playwright:', `${message.method ?? `response(id=${message.id})`}`);
-    this._playwrightConnection?.send(JSON.stringify(message));
+    const desc = message.method ?? `response(id=${message.id})`;
+    const wsState = this._playwrightConnection?.readyState;
+    debugLogger(`→ Playwright: ${desc} (ws=${wsState})`);
+    if (!this._playwrightConnection) {
+      debugLogger(`⚠ DROP: no PW connection for ${desc}`);
+      return;
+    }
+    if (this._playwrightConnection.readyState !== ws.OPEN) {
+      debugLogger(`⚠ DROP: PW ws not OPEN (state=${wsState}) for ${desc}`);
+      return;
+    }
+    this._playwrightConnection.send(JSON.stringify(message));
   }
 }
 
@@ -341,11 +357,15 @@ type ExtensionResponse = {
 
 class ExtensionConnection {
   private readonly _ws: WebSocket;
-  private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, error: Error }>();
+  private readonly _callbacks = new Map<number, { resolve: (o: any) => void, reject: (e: Error) => void, error: Error, timer?: ReturnType<typeof setTimeout> }>();
   private _lastId = 0;
 
   onmessage?: <M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) => void;
   onclose?: (self: ExtensionConnection, reason: string) => void;
+
+  get _pendingCount(): number {
+    return this._callbacks.size;
+  }
 
   constructor(ws: WebSocket) {
     this._ws = ws;
@@ -358,10 +378,25 @@ class ExtensionConnection {
     if (this._ws.readyState !== ws.OPEN)
       throw new Error(`Unexpected WebSocket state: ${this._ws.readyState}`);
     const id = ++this._lastId;
+    const t0 = Date.now();
+    debugLogger(`→ Extension: ${method} (id=${id}), pending=${this._callbacks.size}`);
     this._ws.send(JSON.stringify({ id, method, params }));
     const error = new Error(`Protocol error: ${method}`);
     return new Promise((resolve, reject) => {
-      this._callbacks.set(id, { resolve, reject, error });
+      const timer = setTimeout(() => {
+        this._callbacks.delete(id);
+        debugLogger(`⚠ TIMEOUT: ${method} (id=${id}) after ${Date.now() - t0}ms, pending=${this._callbacks.size}`);
+        reject(new Error(`Extension command timeout: ${method} (60s). Pending callbacks: ${this._callbacks.size}`));
+      }, 60_000);
+      this._callbacks.set(id, {
+        resolve: (v: any) => {
+          debugLogger(`← Extension: ${method} (id=${id}) +${Date.now() - t0}ms`);
+          resolve(v);
+        },
+        reject,
+        error,
+        timer,
+      });
     });
   }
 
@@ -393,6 +428,8 @@ class ExtensionConnection {
     if (object.id && this._callbacks.has(object.id)) {
       const callback = this._callbacks.get(object.id)!;
       this._callbacks.delete(object.id);
+      if (callback.timer)
+        clearTimeout(callback.timer);
       if (object.error) {
         const error = callback.error;
         error.message = object.error;
@@ -419,8 +456,11 @@ class ExtensionConnection {
   }
 
   private _dispose() {
-    for (const callback of this._callbacks.values())
+    for (const callback of this._callbacks.values()) {
+      if (callback.timer)
+        clearTimeout(callback.timer);
       callback.reject(new Error('WebSocket closed'));
+    }
     this._callbacks.clear();
   }
 }
