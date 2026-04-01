@@ -766,12 +766,24 @@ export function createClock(globalObject: WindowOrWorkerGlobalScope, config: Ins
     dateNow: () => originals.raw.Date.now(),
     performanceNow: () => Math.ceil(originals.raw.performance!.now()) as EmbedderTicks,
     setTimeout: (task: () => void, timeout?: number) => {
-      const timerId = originals.bound.setTimeout(task, timeout);
-      return () => originals.bound.clearTimeout(timerId);
+      try {
+        const timerId = originals.bound.setTimeout(task, timeout);
+        return () => originals.bound.clearTimeout(timerId);
+      } catch {
+        // Firefox may throw NS_ERROR_NOT_INITIALIZED if the timer service
+        // is not available (e.g. during page teardown or frame lifecycle changes).
+        return () => {};
+      }
     },
     setInterval: (task: () => void, delay: number) => {
-      const intervalId = originals.bound.setInterval(task, delay);
-      return () => originals.bound.clearInterval(intervalId);
+      try {
+        const intervalId = originals.bound.setInterval(task, delay);
+        return () => originals.bound.clearInterval(intervalId);
+      } catch {
+        // Firefox may throw NS_ERROR_NOT_INITIALIZED if the timer service
+        // is not available (e.g. during page teardown or frame lifecycle changes).
+        return () => {};
+      }
     },
   };
 
