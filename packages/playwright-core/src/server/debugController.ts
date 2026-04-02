@@ -52,15 +52,19 @@ export class DebugController extends SdkObject {
     this._playwright = playwright;
   }
 
-  initialize(codegenId: string, sdkLanguage: Language) {
+  initialize(progress: Progress, codegenId: string, sdkLanguage: Language) {
     this._sdkLanguage = sdkLanguage;
   }
 
   dispose() {
-    this.setReportStateChanged(false);
+    this._setReportStateChanged(false);
   }
 
-  setReportStateChanged(enabled: boolean) {
+  setReportStateChanged(progress: Progress, enabled: boolean) {
+    this._setReportStateChanged(enabled);
+  }
+
+  private _setReportStateChanged(enabled: boolean) {
     if (enabled && !this._trackHierarchyListener) {
       this._trackHierarchyListener = {
         onPageOpen: () => this._emitSnapshot(false),
@@ -139,7 +143,7 @@ export class DebugController extends SdkObject {
       recorder.resume();
   }
 
-  kill() {
+  kill(progress: Progress) {
     gracefullyProcessExitDoNotHang(0);
   }
 

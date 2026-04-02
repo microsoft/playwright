@@ -136,7 +136,7 @@ export class ElectronApplication extends SdkObject {
     await this._browserContext.close({ reason: 'Application exited' });
   }
 
-  async browserWindow(page: Page): Promise<js.JSHandle<BrowserWindow>> {
+  async browserWindow(progress: Progress, page: Page): Promise<js.JSHandle<BrowserWindow>> {
     // Assume CRPage as Electron is always Chromium.
     const targetId = (page.delegate as CRPage)._targetId;
     const electronHandle = await this._nodeElectronHandlePromise;

@@ -26,6 +26,7 @@ import type { ConnectionTransport, ProtocolRequest, ProtocolResponse } from '../
 import type { Protocol } from './protocol';
 import type { RecentLogsCollector } from '../utils/debugLogger';
 import type { ProtocolLogger } from '../types';
+import type { Progress } from '@protocol/progress';
 
 
 export const ConnectionEvents = {
@@ -213,16 +214,20 @@ export class CDPSession extends SdkObject {
     })];
   }
 
-  async send(method: string, params?: any) {
+  async send(progress: Progress, method: string, params?: any) {
+    return await progress.race(this._send(method, params));
+  }
+
+  async detach(progress: Progress) {
+    return await progress.race(this._session.detach());
+  }
+
+  private async _send(method: string, params?: any) {
     return await this._session.send(method as any, params);
   }
 
-  async detach() {
-    return await this._session.detach();
-  }
-
   async attachToTarget(targetId: string) {
-    const { sessionId } = await this.send('Target.attachToTarget', { targetId, flatten: true });
+    const { sessionId } = await this._send('Target.attachToTarget', { targetId, flatten: true });
     return new CDPSession(this._session, sessionId);
   }
 

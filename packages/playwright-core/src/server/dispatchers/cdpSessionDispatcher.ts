@@ -35,11 +35,11 @@ export class CDPSessionDispatcher extends Dispatcher<CDPSession, channels.CDPSes
   }
 
   async send(params: channels.CDPSessionSendParams, progress: Progress): Promise<channels.CDPSessionSendResult> {
-    return { result: await progress.race(this._object.send(params.method as any, params.params)) };
+    return { result: await this._object.send(progress, params.method as any, params.params) };
   }
 
   async detach(_: any, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
-    await this._object.detach();
+    await this._object.detach(progress);
   }
 }

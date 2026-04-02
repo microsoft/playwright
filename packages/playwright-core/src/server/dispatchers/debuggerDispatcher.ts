@@ -55,31 +55,18 @@ export class DebuggerDispatcher extends Dispatcher<Debugger, channels.DebuggerCh
   }
 
   async requestPause(params: channels.DebuggerRequestPauseParams, progress: Progress): Promise<void> {
-    if (this._object.isPaused())
-      throw new Error('Debugger is already paused');
-    this._object.setPauseBeforeWaitingActions();
-    this._object.setPauseAt({ next: true });
+    this._object.requestPause(progress);
   }
 
   async resume(params: channels.DebuggerResumeParams, progress: Progress): Promise<void> {
-    if (!this._object.isPaused())
-      throw new Error('Debugger is not paused');
-    this._object.resume();
+    this._object.doResume(progress);
   }
 
   async next(params: channels.DebuggerNextParams, progress: Progress): Promise<void> {
-    if (!this._object.isPaused())
-      throw new Error('Debugger is not paused');
-    this._object.setPauseBeforeWaitingActions();
-    this._object.setPauseAt({ next: true });
-    this._object.resume();
+    this._object.next(progress);
   }
 
   async runTo(params: channels.DebuggerRunToParams, progress: Progress): Promise<void> {
-    if (!this._object.isPaused())
-      throw new Error('Debugger is not paused');
-    this._object.setPauseBeforeWaitingActions();
-    this._object.setPauseAt({ location: params.location });
-    this._object.resume();
+    this._object.runTo(progress, params.location);
   }
 }

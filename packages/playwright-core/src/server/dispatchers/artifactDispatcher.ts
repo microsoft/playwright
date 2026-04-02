@@ -46,13 +46,13 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async pathAfterFinished(params: channels.ArtifactPathAfterFinishedParams, progress: Progress): Promise<channels.ArtifactPathAfterFinishedResult> {
-    const path = await progress.race(this._object.localPathAfterFinished());
+    const path = await this._object.localPathAfterFinished(progress);
     return { value: path };
   }
 
   async saveAs(params: channels.ArtifactSaveAsParams, progress: Progress): Promise<channels.ArtifactSaveAsResult> {
     return await progress.race(new Promise((resolve, reject) => {
-      this._object.saveAs(async (localPath, error) => {
+      this._object.saveAs(progress, async (localPath, error) => {
         if (error) {
           reject(error);
           return;
@@ -70,7 +70,7 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
 
   async saveAsStream(params: channels.ArtifactSaveAsStreamParams, progress: Progress): Promise<channels.ArtifactSaveAsStreamResult> {
     return await progress.race(new Promise((resolve, reject) => {
-      this._object.saveAs(async (localPath, error) => {
+      this._object.saveAs(progress, async (localPath, error) => {
         if (error) {
           reject(error);
           return;
@@ -94,23 +94,23 @@ export class ArtifactDispatcher extends Dispatcher<Artifact, channels.ArtifactCh
   }
 
   async stream(params: channels.ArtifactStreamParams, progress: Progress): Promise<channels.ArtifactStreamResult> {
-    const fileName = await progress.race(this._object.localPathAfterFinished());
+    const fileName = await this._object.localPathAfterFinished(progress);
     const readable = fs.createReadStream(fileName, { highWaterMark: 1024 * 1024 });
     return { stream: new StreamDispatcher(this, readable) };
   }
 
   async failure(params: channels.ArtifactFailureParams, progress: Progress): Promise<channels.ArtifactFailureResult> {
-    const error = await progress.race(this._object.failureError());
+    const error = await this._object.failureError(progress);
     return { error: error || undefined };
   }
 
   async cancel(params: channels.ArtifactCancelParams, progress: Progress): Promise<void> {
-    await progress.race(this._object.cancel());
+    await this._object.cancel(progress);
   }
 
   async delete(params: channels.ArtifactDeleteParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
-    await progress.race(this._object.delete());
+    await this._object.delete(progress);
     this._dispose();
   }
 }
