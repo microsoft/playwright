@@ -34,7 +34,7 @@ import { SerializedFS, removeFolders  } from '../../utils/fileUtils';
 import { HarTracer } from '../../har/harTracer';
 import { SdkObject } from '../../instrumentation';
 import { Page } from '../../page';
-import { isAbortError } from '../../progress';
+import { isAbortError, nullProgress } from '../../progress';
 
 import type { SnapshotterBlob, SnapshotterDelegate } from './snapshotter';
 import type { NameValue } from '../../../utils/isomorphic/types';
@@ -93,6 +93,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   private _allResources = new Set<string>();
   private _contextCreatedEvent: trace.ContextCreatedTraceEvent;
   private _pendingHarEntries = new Set<har.Entry>();
+  private _started = false;
 
   constructor(context: BrowserContext | APIRequestContext, tracesDir: string | undefined) {
     super(context, 'tracing');
@@ -175,6 +176,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     // Tracing is 10x bigger if we include scripts in every trace.
     if (options.snapshots)
       this._harTracer.start({ omitScripts: !options.live });
+    this._started = true;
   }
 
   async startChunk(progress: Progress, options: { name?: string, title?: string } = {}): Promise<{ traceName: string }> {
@@ -217,7 +219,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
     if (this._state.options.screenshots)
       this._startScreencast();
     if (this._state.options.snapshots)
-      await this._snapshotter?.start();
+      await this._snapshotter?.start(progress);
     return { traceName: this._state.traceName };
   }
 
@@ -597,6 +599,13 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       params: { pageId: page.guid },
     };
     this._appendTraceEvent(event);
+  }
+
+  dispose(params: TracingTracingStopChunkParams) {
+    // Avoid protocol calls for the closed context.
+    if (this._started)
+      this.stopChunk(nullProgress, params).then(() => this._stop()).catch(() => {});
+    this._started = false;
   }
 
   private _onPageError(error: Error, page: Page) {

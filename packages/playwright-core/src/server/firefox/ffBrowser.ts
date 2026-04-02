@@ -204,7 +204,7 @@ export class FFBrowserContext extends BrowserContext {
     if (this._options.extraHTTPHeaders || this._options.locale)
       promises.push(this.doUpdateExtraHTTPHeaders());
     if (this._options.httpCredentials)
-      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+      promises.push(this.innerSetHTTPCredentials(this._options.httpCredentials));
     if (this._options.geolocation)
       promises.push(this.setGeolocation(this._options.geolocation));
     if (this._options.offline)

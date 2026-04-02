@@ -21,6 +21,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import stylistic from "@stylistic/eslint-plugin";
 import importRules from "eslint-plugin-import";
+import progressPlugin from "./utils/eslint-plugin-progress/index.js";
 import { fixupConfigRules } from "@eslint/compat";
 import { FlatCompat } from "@eslint/eslintrc";
 import js from "@eslint/js";
@@ -418,6 +419,18 @@ export default [
       ],
       ...noFloatingPromisesRules,
       ...noBooleanCompareRules,
+    },
+  },
+  {
+    files: [
+      "packages/playwright-core/src/server/**/*.ts",
+    ],
+    plugins: {
+      "progress": progressPlugin,
+    },
+    languageOptions: languageOptionsWithTsConfig,
+    rules: {
+      "progress/await-must-use-progress": "warn",
     },
   },
   {

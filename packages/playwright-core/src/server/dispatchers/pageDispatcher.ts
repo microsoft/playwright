@@ -31,6 +31,7 @@ import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch
 import { Recorder } from '../recorder';
 import { disposeAll } from '../disposable';
 import { VideoRecorder } from '../videoRecorder';
+import { nullProgress } from '../progress';
 
 import type { Artifact } from '../artifact';
 import type { BrowserContext } from '../browserContext';
@@ -163,7 +164,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async requestGC(params: channels.PageRequestGCParams, progress: Progress): Promise<channels.PageRequestGCResult> {
-    await progress.race(this._page.requestGC());
+    await this._page.requestGC(progress);
   }
 
   async registerLocatorHandler(params: channels.PageRegisterLocatorHandlerParams, progress: Progress): Promise<channels.PageRegisterLocatorHandlerResult> {
@@ -196,7 +197,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async addInitScript(params: channels.PageAddInitScriptParams, progress: Progress): Promise<channels.PageAddInitScriptResult> {
-    const initScript = await this._page.addInitScript(params.source);
+    const initScript = await this._page.addInitScript(progress, params.source);
     this._disposables.push(initScript);
     return { disposable: new DisposableDispatcher(this, initScript) };
   }
@@ -249,13 +250,13 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async close(params: channels.PageCloseParams, progress: Progress): Promise<void> {
     if (!params.runBeforeUnload)
       progress.metadata.potentiallyClosesScope = true;
-    await this._page.close(params);
+    await this._page.close(progress, params);
   }
 
   async updateSubscription(params: channels.PageUpdateSubscriptionParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     if (params.event === 'fileChooser')
-      await this._page.setFileChooserInterceptedBy(params.enabled, this);
+      await this._page.setFileChooserInterceptedBy(progress, params.enabled, this);
     if (params.enabled)
       this._subscriptions.add(params.event);
     else
@@ -343,7 +344,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async bringToFront(params: channels.PageBringToFrontParams, progress: Progress): Promise<void> {
-    await progress.race(this._page.bringToFront());
+    await this._page.bringToFront(progress);
   }
 
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
@@ -465,7 +466,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
     for (const uid of this._locatorHandlers)
       this._page.unregisterLocatorHandler(uid);
     this._locatorHandlers.clear();
-    this._page.setFileChooserInterceptedBy(false, this).catch(() => {});
+    this._page.setFileChooserInterceptedBy(nullProgress, false, this).catch(() => {});
     if (this._jsCoverageActive)
       (this._page.coverage as CRCoverage).stopJSCoverage().catch(() => {});
     this._jsCoverageActive = false;
@@ -502,11 +503,11 @@ export class WorkerDispatcher extends Dispatcher<Worker, channels.WorkerChannel,
   }
 
   async evaluateExpression(params: channels.WorkerEvaluateExpressionParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionResult> {
-    return { value: serializeResult(await progress.race(this._object.evaluateExpression(params.expression, params.isFunction, parseArgument(params.arg)))) };
+    return { value: serializeResult(await this._object.evaluateExpression(progress, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async evaluateExpressionHandle(params: channels.WorkerEvaluateExpressionHandleParams, progress: Progress): Promise<channels.WorkerEvaluateExpressionHandleResult> {
-    return { handle: JSHandleDispatcher.fromJSHandle(this, await progress.race(this._object.evaluateExpressionHandle(params.expression, params.isFunction, parseArgument(params.arg)))) };
+    return { handle: JSHandleDispatcher.fromJSHandle(this, await this._object.evaluateExpressionHandle(progress, params.expression, params.isFunction, parseArgument(params.arg))) };
   }
 
   async updateSubscription(params: channels.WorkerUpdateSubscriptionParams, progress: Progress): Promise<void> {

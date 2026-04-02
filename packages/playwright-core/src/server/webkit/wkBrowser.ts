@@ -231,7 +231,7 @@ export class WKBrowserContext extends BrowserContext {
     if (this._options.offline)
       promises.push(this.doUpdateOffline());
     if (this._options.httpCredentials)
-      promises.push(this.setHTTPCredentials(this._options.httpCredentials));
+      promises.push(this.innerSetHTTPCredentials(this._options.httpCredentials));
     await Promise.all(promises);
   }
 

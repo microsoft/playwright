@@ -252,7 +252,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async cookies(params: channels.BrowserContextCookiesParams, progress: Progress): Promise<channels.BrowserContextCookiesResult> {
-    return { cookies: await progress.race(this._context.cookies(params.urls)) };
+    return { cookies: await this._context.cookies(progress, params.urls) };
   }
 
   async addCookies(params: channels.BrowserContextAddCookiesParams, progress: Progress): Promise<void> {
@@ -297,11 +297,11 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async setHTTPCredentials(params: channels.BrowserContextSetHTTPCredentialsParams, progress: Progress): Promise<void> {
     // Note: this operation is deprecated, so we do not properly cleanup.
-    await progress.race(this._context.setHTTPCredentials(params.httpCredentials));
+    await this._context.setHTTPCredentials(progress, params.httpCredentials);
   }
 
   async addInitScript(params: channels.BrowserContextAddInitScriptParams, progress: Progress): Promise<channels.BrowserContextAddInitScriptResult> {
-    const initScript = await this._context.addInitScript(params.source);
+    const initScript = await this._context.addInitScript(progress, params.source);
     this._disposables.push(initScript);
     return { disposable: new DisposableDispatcher(this, initScript) };
   }
@@ -328,7 +328,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async storageState(params: channels.BrowserContextStorageStateParams, progress: Progress): Promise<channels.BrowserContextStorageStateResult> {
-    return await progress.race(this._context.storageState(progress, params.indexedDB));
+    return await this._context.storageState(progress, params.indexedDB);
   }
 
   async setStorageState(params: channels.BrowserContextSetStorageStateParams, progress: Progress): Promise<void> {
@@ -350,7 +350,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async exposeConsoleApi(params: channels.BrowserContextExposeConsoleApiParams, progress: Progress): Promise<void> {
-    await this._context.exposeConsoleApi();
+    await this._context.exposeConsoleApi(progress);
   }
 
   async pause(params: channels.BrowserContextPauseParams, progress: Progress) {
@@ -372,7 +372,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async harExport(params: channels.BrowserContextHarExportParams, progress: Progress): Promise<channels.BrowserContextHarExportResult> {
-    const artifact = await progress.race(this._context.harExport(params.harId));
+    const artifact = await this._context.harExport(progress, params.harId);
     if (!artifact)
       throw new Error('No HAR artifact. Ensure record.harPath is set.');
     return { artifact: ArtifactDispatcher.from(this, artifact) };
