@@ -94,10 +94,12 @@ export function createServer(name: string, version: string, factory: ServerBacke
   });
 
   let backendPromise: Promise<ServerBackend> | undefined;
+  let browserConnectionEnded = false;
 
   const onClose = () => {
     const p = backendPromise;
     backendPromise = undefined;
+    browserConnectionEnded = true;
     p?.then(b => backendManager.disposeBackend(b)).catch(serverDebug);
   };
   addServerListener(server, 'close', onClose);
@@ -121,7 +123,10 @@ export function createServer(name: string, version: string, factory: ServerBacke
     } : () => {};
 
     try {
+      let wasRecovery = false;
       if (!backendPromise) {
+        wasRecovery = browserConnectionEnded;
+        browserConnectionEnded = false;
         backendPromise = initializeServer(server, factory, runHeartbeat).catch(e => {
           backendPromise = undefined;
           throw e;
@@ -134,6 +139,14 @@ export function createServer(name: string, version: string, factory: ServerBacke
         await backendManager.disposeBackend(backend).catch(serverDebug);
         backendPromise = undefined;
         delete toolResult.isClose;
+      }
+
+      // Prepend recovery notice if we reconnected between tool calls
+      if (wasRecovery) {
+        toolResult.content = [
+          { type: 'text', text: '**Note:** Browser connection ended unexpectedly. A new browser has been started — previous state might be lost.' },
+          ...toolResult.content,
+        ];
       }
 
       const mergedResult = mergeTextParts(toolResult);
