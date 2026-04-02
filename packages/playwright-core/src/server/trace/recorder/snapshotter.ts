@@ -22,6 +22,7 @@ import { eventsHelper } from '../../utils/eventsHelper';
 import { mime } from '../../../utilsBundle';
 import { BrowserContext } from '../../browserContext';
 import { Page } from '../../page';
+import { nullProgress } from '../../progress';
 
 import type { SnapshotData } from './snapshotterInjected';
 import type { RegisteredListener } from '../../utils/eventsHelper';
@@ -161,9 +162,9 @@ export class Snapshotter {
     this._eventListeners.push(eventsHelper.addEventListener(page, Page.Events.FrameAttached, frame => this._annotateFrameHierarchy(frame)));
   }
 
-  private async _annotateFrameHierarchy(frame: Frame) {
-    try {
-      const frameElement = await frame.frameElement();
+  private _annotateFrameHierarchy(frame: Frame) {
+    (async () => {
+      const frameElement = await frame.frameElement(nullProgress);
       const parent = frame.parentFrame();
       if (!parent)
         return;
@@ -172,8 +173,7 @@ export class Snapshotter {
         (window as any)[snapshotStreamer].markIframe(frameElement, frameId);
       }, { snapshotStreamer: this._snapshotStreamer, frameElement, frameId: frame.guid });
       frameElement.dispose();
-    } catch (e) {
-    }
+    })().catch(() => {});
   }
 }
 

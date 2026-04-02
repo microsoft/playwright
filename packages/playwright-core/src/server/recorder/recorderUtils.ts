@@ -23,6 +23,7 @@ import type { CallMetadata } from '../instrumentation';
 import type { Page } from '../page';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus } from '@recorder/recorderTypes';
+import type { Progress } from '@protocol/progress';
 
 export function buildFullSelector(framePath: string[], selector: string) {
   return [...framePath, selector].join(' >> internal:control=enter-frame >> ');
@@ -115,23 +116,23 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
   return result;
 }
 
-export async function generateFrameSelector(frame: Frame): Promise<string[]> {
+export async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
   while (frame) {
     const parent = frame.parentFrame();
     if (!parent)
       break;
-    selectorPromises.push(generateFrameSelectorInParent(parent, frame));
+    selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame));
     frame = parent;
   }
   const result = await Promise.all(selectorPromises);
   return result.reverse();
 }
 
-async function generateFrameSelectorInParent(parent: Frame, frame: Frame): Promise<string> {
+async function generateFrameSelectorInParent(prgoress: Progress, parent: Frame, frame: Frame): Promise<string> {
   const result = await raceAgainstDeadline(async () => {
     try {
-      const frameElement = await frame.frameElement();
+      const frameElement = await frame.frameElement(prgoress);
       if (!frameElement || !parent)
         return;
       const utility = await parent.utilityContext();

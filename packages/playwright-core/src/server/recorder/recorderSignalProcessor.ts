@@ -17,6 +17,7 @@
 import { isUnderTest } from '../utils/debug';
 import { monotonicTime } from '../../utils/isomorphic/time';
 import { generateFrameSelector } from './recorderUtils';
+import { nullProgress } from '../progress';
 
 import type { Signal } from '../../../../recorder/src/actions';
 import type { Frame } from '../frames';
@@ -73,7 +74,7 @@ export class RecorderSignalProcessor {
       return;
     }
 
-    generateFrameSelector(frame).then(framePath => {
+    generateFrameSelector(nullProgress, frame).then(framePath => {
       const signalInContext: actions.SignalInContext = {
         frame: {
           pageGuid: frame._page.guid,

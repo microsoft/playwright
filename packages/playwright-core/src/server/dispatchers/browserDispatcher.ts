@@ -20,6 +20,7 @@ import { CDPSessionDispatcher } from './cdpSessionDispatcher';
 import { Dispatcher } from './dispatcher';
 import { BrowserContext } from '../browserContext';
 import { ArtifactDispatcher } from './artifactDispatcher';
+import { nullProgress } from '../progress';
 
 import type { BrowserTypeDispatcher } from './browserTypeDispatcher';
 import type { PageDispatcher } from './pageDispatcher';
@@ -96,14 +97,14 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
     if (this._options.ignoreStopAndKill)
       return;
     progress.metadata.potentiallyClosesScope = true;
-    await this._object.close(params);
+    await this._object.close(progress, params);
   }
 
   async killForTests(params: channels.BrowserKillForTestsParams, progress: Progress): Promise<void> {
     if (this._options.ignoreStopAndKill)
       return;
     progress.metadata.potentiallyClosesScope = true;
-    await this._object.killForTests();
+    await this._object.killForTests(progress);
   }
 
   async defaultUserAgentForTest(): Promise<channels.BrowserDefaultUserAgentForTestResult> {
@@ -135,14 +136,14 @@ export class BrowserDispatcher extends Dispatcher<Browser, channels.BrowserChann
   }
 
   async startServer(params: channels.BrowserStartServerParams, progress: Progress): Promise<channels.BrowserStartServerResult> {
-    return await this._object.startServer(params.title, params);
+    return await this._object.startServer(progress, params.title, params);
   }
 
   async stopServer(params: channels.BrowserStopServerParams, progress: Progress): Promise<void> {
-    await this._object.stopServer();
+    await this._object.stopServer(progress);
   }
 
   async cleanupContexts() {
-    await Promise.all(Array.from(this._isolatedContexts).map(context => context.close({ reason: 'Global context cleanup (connection terminated)' })));
+    await Promise.all(Array.from(this._isolatedContexts).map(context => context.close(nullProgress, { reason: 'Global context cleanup (connection terminated)' })));
   }
 }

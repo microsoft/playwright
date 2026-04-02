@@ -36,6 +36,7 @@ import { WKWorkers } from './wkWorkers';
 import { translatePathToWSL } from './webkit';
 import { registry } from '../registry';
 import { startAutomaticVideoRecording } from '../videoRecorder';
+import { nullProgress } from '../progress';
 
 import type { Protocol } from './protocol';
 import type { WKBrowserContext } from './wkBrowser';
@@ -195,7 +196,7 @@ export class WKPage implements PageDelegate {
     const bootstrapScript = this._calculateBootstrapScript();
     if (bootstrapScript.length)
       promises.push(session.send('Page.setBootstrapScript', { source: bootstrapScript }));
-    this._page.frames().map(frame => frame.evaluateExpression(bootstrapScript).catch(e => {}));
+    this._page.frames().map(frame => frame.evaluateExpression(nullProgress, bootstrapScript).catch(e => {}));
     if (contextOptions.bypassCSP)
       promises.push(session.send('Page.setBypassCSP', { enabled: true }));
     const emulatedSize = this._page.emulatedSize();
@@ -971,7 +972,7 @@ export class WKPage implements PageDelegate {
     ]);
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const pageProxyId = this._pageProxySession.sessionId;
     const objectId = handle._objectId;
     if (this._browserContext._browser?.options.channel === 'webkit-wsl')

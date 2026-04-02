@@ -363,10 +363,10 @@ export class WKBrowserContext extends BrowserContext {
     });
   }
 
-  async doClose(reason: string | undefined) {
+  async doClose(reason: string | undefined): Promise<void | 'close-browser'> {
     if (!this._browserContextId) {
       // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
+      return 'close-browser';
     } else {
       await this._browser._browserSession.send('Playwright.deleteContext', { browserContextId: this._browserContextId });
       this._browser._contexts.delete(this._browserContextId);

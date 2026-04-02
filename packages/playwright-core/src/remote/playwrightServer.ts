@@ -25,7 +25,7 @@ import { getPlaywrightVersion } from '../server/utils/userAgent';
 import { debugLogger, isUnderTest } from '../utils';
 import { SocksProxy } from '../server/utils/socksProxy';
 import { Browser } from '../server/browser';
-import { ProgressController } from '../server/progress';
+import { nullProgress, ProgressController } from '../server/progress';
 
 import type { AndroidDevice } from '../server/android/android';
 import type { Playwright } from '../server/playwright';
@@ -204,7 +204,7 @@ export class PlaywrightServer {
       if (this._dontReuseBrowsers.has(b))
         continue;
       if (b.options.name === browserName && b.options.channel === launchOptions.channel)
-        await b.close({ reason: 'Connection terminated' });
+        await b.close(nullProgress, { reason: 'Connection terminated' });
     }
 
     if (!browser) {
@@ -225,7 +225,7 @@ export class PlaywrightServer {
         // keep around browser so it can be reused by the next connection.
         for (const context of browser.contexts()) {
           if (!context.pages().length)
-            await context.close({ reason: 'Connection terminated' });
+            await context.close(nullProgress, { reason: 'Connection terminated' });
         }
       }
     };
@@ -259,7 +259,7 @@ export class PlaywrightServer {
     // In pre-launched mode, keep only the pre-launched browser.
     for (const b of this._playwright.allBrowsers()) {
       if (b !== browser)
-        await b.close({ reason: 'Connection terminated' });
+        await b.close(nullProgress, { reason: 'Connection terminated' });
     }
 
     return {
@@ -299,7 +299,7 @@ export class PlaywrightServer {
       socksProxy,
       denyLaunch: true,
       dispose: async () => {
-        await browser.close({ reason: 'Connection terminated' });
+        await browser.close(nullProgress, { reason: 'Connection terminated' });
         socksProxy?.close();
       },
     };

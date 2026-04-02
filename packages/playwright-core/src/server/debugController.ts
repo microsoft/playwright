@@ -79,7 +79,7 @@ export class DebugController extends SdkObject {
   }
 
   async setRecorderMode(progress: Progress, params: { mode: Mode, testIdAttributeName?: string, generateAutoExpect?: boolean }) {
-    await progress.race(this._closeBrowsersWithoutPages());
+    await this._closeBrowsersWithoutPages(progress);
     this._generateAutoExpect = !!params.generateAutoExpect;
 
     if (params.mode === 'none') {
@@ -165,14 +165,14 @@ export class DebugController extends SdkObject {
     return nonNullRecorders;
   }
 
-  private async _closeBrowsersWithoutPages() {
+  private async _closeBrowsersWithoutPages(progress: Progress) {
     for (const browser of this._playwright.allBrowsers()) {
       for (const context of browser.contexts()) {
         if (!context.pages().length)
-          await context.close({ reason: 'Browser collected' });
+          await progress.race(context.close(progress, { reason: 'Browser collected' }));
       }
       if (!browser.contexts())
-        await browser.close({ reason: 'Browser collected' });
+        await browser.close(progress, { reason: 'Browser collected' });
     }
   }
 }

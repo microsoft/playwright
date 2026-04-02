@@ -21,7 +21,7 @@ import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
 import { launchApp } from '../launchApp';
-import { ProgressController } from '../progress';
+import { nullProgress, ProgressController } from '../progress';
 import { ThrottledFile } from './throttledFile';
 import { languageSet } from '../codegen/languages';
 import { collapseActions, shouldMergeAction } from './recorderUtils';
@@ -111,7 +111,7 @@ export class RecorderApp {
 
       this._page.once('close', () => {
         this._recorder.close();
-        this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
+        this._page.browserContext.close(nullProgress, { reason: 'Recorder window closed' }).catch(() => {});
         delete (inspectedContext as any)[recorderAppSymbol];
       });
 
@@ -254,7 +254,7 @@ export class RecorderApp {
 
     recorder.on(RecorderEvent.ContextClosed, () => {
       this._throttledOutputFile?.flush();
-      this._page.browserContext.close({ reason: 'Recorder window closed' }).catch(() => {});
+      this._page.browserContext.close(nullProgress, { reason: 'Recorder window closed' }).catch(() => {});
     });
 
     recorder.on(RecorderEvent.ModeChanged, (mode: Mode) => {
@@ -397,7 +397,7 @@ function createRecorderFrontend(page: Page): RecorderFrontend {
       if (typeof prop !== 'string')
         return undefined;
       return (params: any) => {
-        page.mainFrame().evaluateExpression(((event: { method: string, params?: any }) => {
+        page.mainFrame().evaluateExpression(nullProgress, ((event: { method: string, params?: any }) => {
           window.dispatch(event);
         }).toString(), { isFunction: true }, { method: prop, params }).catch(() => {});
       };

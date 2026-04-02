@@ -26,6 +26,7 @@ import { RawKeyboardImpl, RawMouseImpl, RawTouchscreenImpl } from './bidiInput';
 import { BidiNetworkManager } from './bidiNetworkManager';
 import { BidiPDF } from './bidiPdf';
 import * as bidi from './third_party/bidiProtocol';
+import { nullProgress } from '../progress';
 
 import * as network from '../network';
 import type { RegisteredListener } from '../utils/eventsHelper';
@@ -532,8 +533,8 @@ export class BidiPage implements PageDelegate {
   private async _framePosition(frame: frames.Frame): Promise<types.Point | null> {
     if (frame === this._page.mainFrame())
       return { x: 0, y: 0 };
-    const element = await frame.frameElement();
-    const box = await element.boundingBox();
+    const element = await frame.frameElement(nullProgress);
+    const box = await element.boundingBox(nullProgress);
     if (!box)
       return null;
     const style = await element.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe as Element), {}).catch(e => 'error:notconnected' as const);
@@ -598,7 +599,7 @@ export class BidiPage implements PageDelegate {
     return quads as types.Quad[];
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
+  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, paths: string[]): Promise<void> {
     const fromContext = toBidiExecutionContext(handle._context);
     await this._session.send('input.setFiles', {
       context: this._session.sessionId,

@@ -337,7 +337,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async close(params: channels.BrowserContextCloseParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
-    await this._context.close(params);
+    await this._context.close(progress, params);
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {

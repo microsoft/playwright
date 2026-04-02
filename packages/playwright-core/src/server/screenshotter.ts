@@ -233,7 +233,7 @@ export class Screenshotter {
       try {
         await handle._waitAndScrollIntoViewIfNeeded(progress, true /* waitForVisible */);
 
-        const boundingBox = await progress.race(handle.boundingBox());
+        const boundingBox = await handle.boundingBox(progress);
         assert(boundingBox, 'Node is either not visible or not an HTMLElement');
         assert(boundingBox.width !== 0, 'Node has 0 width.');
         assert(boundingBox.height !== 0, 'Node has 0 height.');

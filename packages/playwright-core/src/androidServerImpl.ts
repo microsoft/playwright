@@ -18,7 +18,7 @@ import { PlaywrightServer } from './remote/playwrightServer';
 import { createPlaywright } from './server/playwright';
 import { createGuid } from './server/utils/crypto';
 import { ws } from './utilsBundle';
-import { ProgressController } from './server/progress';
+import { nullProgress, ProgressController } from './server/progress';
 
 import type { BrowserServer } from './client/browserType';
 import type { LaunchAndroidServerOptions } from './client/types';
@@ -58,8 +58,8 @@ export class AndroidServerLauncherImpl {
     // 3. Return the BrowserServer interface
     const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
     browserServer.wsEndpoint = () => wsEndpoint;
-    browserServer.close = () => device.close();
-    browserServer.kill = () => device.close();
+    browserServer.close = () => device.close(nullProgress);
+    browserServer.kill = () => device.close(nullProgress);
     device.on('close', () => {
       server.close();
       browserServer.emit('close');

@@ -685,7 +685,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
-    const response = request ? progress.race(request._finalRequest().internalResponse()) : null;
+    const response = request ? progress.race(request._finalRequest().response(progress)) : null;
     return response;
   }
 
@@ -709,7 +709,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
-    return request ? progress.race(request._finalRequest().internalResponse()) : null;
+    return request ? progress.race(request._finalRequest().response(progress)) : null;
   }
 
   async waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
@@ -718,8 +718,8 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
   }
 
-  async frameElement(): Promise<dom.ElementHandle> {
-    return this._page.delegate.getFrameElement(this);
+  async frameElement(progress: Progress): Promise<dom.ElementHandle> {
+    return await progress.race(this._page.delegate.getFrameElement(this));
   }
 
   context(world: types.World): Promise<dom.FrameExecutionContext> {
@@ -742,21 +742,29 @@ export class Frame extends SdkObject<FrameEventMap> {
     return this.context('utility');
   }
 
-  async evaluateExpression(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<any> {
+  async evaluateExpression(progress: Progress, expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<any> {
+    return await progress.race(this._evaluateExpression(expression, options, arg));
+  }
+
+  private async _evaluateExpression(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<any> {
     const context = await this.context(options.world ?? 'main');
     const value = await context.evaluateExpression(expression, options, arg);
     return value;
   }
 
-  async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<js.JSHandle<any>> {
+  async evaluateExpressionHandle(progress: Progress, expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<js.JSHandle<any>> {
+    return await progress.race(this._evaluateExpressionHandle(expression, options, arg));
+  }
+
+  private async _evaluateExpressionHandle(expression: string, options: { isFunction?: boolean, world?: types.World } = {}, arg?: any): Promise<js.JSHandle<any>> {
     const context = await this.context(options.world ?? 'main');
     const value = await context.evaluateExpressionHandle(expression, options, arg);
     return value;
   }
 
-  async querySelector(selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
+  async querySelector(progress: Progress, selector: string, options: types.StrictOptions): Promise<dom.ElementHandle<Element> | null> {
     this.apiLog(`    finding element using the selector "${selector}"`);
-    return this.selectors.query(selector, options);
+    return progress.race(this.selectors.query(selector, options));
   }
 
   async waitForSelector(progress: Progress, selector: string, performActionPreChecksAndLog: boolean, options: types.WaitForElementOptions, scope?: dom.ElementHandle): Promise<dom.ElementHandle<Element> | null> {
@@ -830,7 +838,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { type, eventInit }, { mainWorld: true, ...options }, scope);
   }
 
-  async evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
+  async evalOnSelector(progress: Progress, selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
+    return progress.race(this._evalOnSelector(selector, strict, expression, isFunction, arg, scope));
+  }
+
+  private async _evalOnSelector(selector: string, strict: boolean, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
       throw new Error(`Failed to find element matching selector "${selector}"`);
@@ -839,7 +851,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     return result;
   }
 
-  async evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
+  async evalOnSelectorAll(progress: Progress, selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
+    return progress.race(this._evalOnSelectorAll(selector, expression, isFunction, arg, scope));
+  }
+
+  private async _evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const arrayHandle = await this.selectors.queryArrayInMainWorld(selector, scope);
     const result = await arrayHandle.internalEvaluateExpression(expression, { isFunction }, arg);
     arrayHandle.dispose();
@@ -854,13 +870,13 @@ export class Frame extends SdkObject<FrameEventMap> {
     }, { parsed: selectors, color: color });
   }
 
-  async querySelectorAll(selector: string): Promise<dom.ElementHandle<Element>[]> {
-    return this.selectors.queryAll(selector);
+  async querySelectorAll(progress: Progress, selector: string): Promise<dom.ElementHandle<Element>[]> {
+    return progress.race(this.selectors.queryAll(selector));
   }
 
-  async queryCount(selector: string, options: any): Promise<number> {
+  async queryCount(progress: Progress, selector: string, options: any): Promise<number> {
     try {
-      return await this.selectors.queryCount(selector, options);
+      return await progress.race(this.selectors.queryCount(selector, options));
     } catch (e) {
       if (this.isNonRetriableError(e))
         throw e;
@@ -868,7 +884,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  async content(): Promise<string> {
+  async content(progress: Progress): Promise<string> {
+    return progress.race(this._content());
+  }
+
+  private async _content(): Promise<string> {
     try {
       const context = await this.utilityContext();
       return await context.evaluate(() => {
@@ -934,7 +954,15 @@ export class Frame extends SdkObject<FrameEventMap> {
     return Array.from(this._childFrames);
   }
 
-  async addScriptTag(params: {
+  async addScriptTag(progress: Progress, params: {
+    url?: string,
+    content?: string,
+    type?: string,
+  }): Promise<dom.ElementHandle> {
+    return await progress.race(this._addScriptTag(params));
+  }
+
+  private async _addScriptTag(params: {
     url?: string,
     content?: string,
     type?: string,
@@ -986,7 +1014,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     }
   }
 
-  async addStyleTag(params: { url?: string, content?: string }): Promise<dom.ElementHandle> {
+  async addStyleTag(progress: Progress, params: { url?: string, content?: string }): Promise<dom.ElementHandle> {
+    return await progress.race(this._addStyleTag(params));
+  }
+
+  private async _addStyleTag(params: { url?: string, content?: string }): Promise<dom.ElementHandle> {
     const {
       url = null,
       content = null
@@ -1228,7 +1260,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     let frame: Frame | null = element._frame;
     const result = [generated];
     while (frame?.parentFrame()) {
-      const frameElement = await progress.race(frame.frameElement());
+      const frameElement = await progress.race(frame.frameElement(progress));
       if (frameElement) {
         const generated = await progress.race(frameElement.evaluateInUtility(async ([injected, node]) => {
           return injected.generateSelectorSimple(node as unknown as Element);
@@ -1561,7 +1593,11 @@ export class Frame extends SdkObject<FrameEventMap> {
     return JSON.parse(handle.rawValue()) as R;
   }
 
-  async title(): Promise<string> {
+  async title(progress: Progress): Promise<string> {
+    return progress.race(this._title());
+  }
+
+  private async _title(): Promise<string> {
     try {
       return await this.raceAgainstEvaluationStallingEvents(async () => {
         const context = await this.utilityContext();

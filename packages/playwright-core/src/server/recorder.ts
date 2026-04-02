@@ -195,7 +195,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       });
 
       await this._context.exposeBinding(progress, '__pw_recorderElementPicked', false, async ({ frame }, elementInfo: ElementInfo) => {
-        const selectorChain = await generateFrameSelector(frame);
+        const selectorChain = await generateFrameSelector(progress, frame);
         this.emit(RecorderEvent.ElementPicked, { selector: buildFullSelector(selectorChain, elementInfo.selector), ariaSnapshot: elementInfo.ariaSnapshot }, true);
       });
 
@@ -227,11 +227,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       // Input actions that potentially lead to navigation are intercepted on the page and are
       // performed by the Playwright.
       await this._context.exposeBinding(progress, '__pw_recorderPerformAction', false,
-          (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(source.frame, action));
+          (source: BindingSource, action: actions.PerformOnRecordAction) => this._performAction(progress, source.frame, action));
 
       // Other non-essential actions are simply being recorded.
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
-          (source: BindingSource, action: actions.Action) => this._recordAction(source.frame, action));
+          (source: BindingSource, action: actions.Action) => this._recordAction(progress, source.frame, action));
 
       await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar });
     });
@@ -548,11 +548,11 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     };
   }
 
-  private async _describeFrame(frame: Frame): Promise<actions.FrameDescription> {
+  private async _describeFrame(progress: Progress, frame: Frame): Promise<actions.FrameDescription> {
     return {
       pageGuid: frame._page.guid,
       pageAlias: this._pageAliases.get(frame._page)!,
-      framePath: await generateFrameSelector(frame),
+      framePath: await generateFrameSelector(progress, frame),
     };
   }
 
@@ -560,8 +560,8 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return this._params.testIdAttributeName || this._context.selectors().testIdAttributeName() || 'data-testid';
   }
 
-  private async _createActionInContext(frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
-    const frameDescription = await this._describeFrame(frame);
+  private async _createActionInContext(progress: Progress, frame: Frame, action: actions.Action): Promise<actions.ActionInContext> {
+    const frameDescription = await this._describeFrame(progress, frame);
     const actionInContext: actions.ActionInContext = {
       frame: frameDescription,
       action,
@@ -571,16 +571,16 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
     return actionInContext;
   }
 
-  private async _performAction(frame: Frame, action: actions.PerformOnRecordAction) {
-    const actionInContext = await this._createActionInContext(frame, action);
+  private async _performAction(progress: Progress, frame: Frame, action: actions.PerformOnRecordAction) {
+    const actionInContext = await this._createActionInContext(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
     if (actionInContext.action.name !== 'openPage' && actionInContext.action.name !== 'closePage')
-      await performAction(this._pageAliases, actionInContext);
+      await performAction(progress, this._pageAliases, actionInContext);
     actionInContext.endTime = monotonicTime();
   }
 
-  private async _recordAction(frame: Frame, action: actions.Action) {
-    const actionInContext = await this._createActionInContext(frame, action);
+  private async _recordAction(progress: Progress, frame: Frame, action: actions.Action) {
+    const actionInContext = await this._createActionInContext(progress, frame, action);
     this._signalProcessor.addAction(actionInContext);
   }
 
