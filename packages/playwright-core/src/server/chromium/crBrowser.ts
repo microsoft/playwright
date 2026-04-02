@@ -559,6 +559,9 @@ export class CRBrowserContext extends BrowserContext<CREventsMap> {
       return;
     }
 
+    // Ongoing downloads cause crashes in Edge, so cancel them first.
+    await Promise.all([...this._downloads].map(download => download.cancel().catch(() => {})));
+
     await this._browser._session.send('Target.disposeBrowserContext', { browserContextId: this._browserContextId });
     this._browser._contexts.delete(this._browserContextId);
     for (const [targetId, serviceWorker] of this._browser._serviceWorkers) {
