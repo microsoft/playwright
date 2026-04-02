@@ -143,11 +143,11 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   async evaluateExpressionHandle(progress: Progress, expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
-    return await progress.race(this.internalEvaluateExpressionHandle(expression, options, arg));
+    return await progress.race(this._evaluateExpressionHandle(expression, options, arg));
   }
 
   async getProperty(progress: Progress, propertyName: string): Promise<JSHandle> {
-    return await progress.race(this.internalGetProperty(propertyName));
+    return await progress.race(this._getProperty(propertyName));
   }
 
   async getProperties(progress: Progress): Promise<Map<string, JSHandle>> {
@@ -155,7 +155,7 @@ export class JSHandle<T = any> extends SdkObject {
   }
 
   async jsonValue(progress: Progress): Promise<T> {
-    return await progress.race(this.internalJsonValue());
+    return await progress.race(this._jsonValue());
   }
 
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
@@ -170,11 +170,11 @@ export class JSHandle<T = any> extends SdkObject {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: true }, this, arg);
   }
 
-  async internalEvaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
+  private async _evaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: false }, this, arg);
   }
 
-  async internalGetProperty(propertyName: string): Promise<JSHandle> {
+  private async _getProperty(propertyName: string): Promise<JSHandle> {
     const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
       const result: any = { __proto__: null };
       result[propertyName] = object[propertyName];
@@ -196,7 +196,7 @@ export class JSHandle<T = any> extends SdkObject {
     return this._value;
   }
 
-  async internalJsonValue(): Promise<T> {
+  private async _jsonValue(): Promise<T> {
     if (!this._objectId)
       return this._value;
     const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;

@@ -71,7 +71,7 @@ export class ElectronApplicationDispatcher extends Dispatcher<ElectronApplicatio
   }
 
   async browserWindow(params: channels.ElectronApplicationBrowserWindowParams, progress: Progress): Promise<channels.ElectronApplicationBrowserWindowResult> {
-    const handle = await progress.race(this._object.browserWindow((params.page as PageDispatcher).page()));
+    const handle = await this._object.browserWindow(progress, (params.page as PageDispatcher).page());
     return { handle: JSHandleDispatcher.fromJSHandle(this, handle) };
   }
 

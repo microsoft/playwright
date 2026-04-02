@@ -144,3 +144,26 @@ export async function raceUncancellableOperationWithCleanup<T>(progress: Progres
     throw error;
   }
 }
+
+export const nullProgress: Progress = {
+  timeout: 0,
+  deadline: 0,
+  disableTimeout() { },
+  log() { },
+  race<T>(promise: Promise<T> | Promise<T>[]) {
+    const promises = Array.isArray(promise) ? promise : [promise];
+    return Promise.race(promises);
+  },
+  wait: async (timeout: number) => await new Promise<void>(f => setTimeout(f, timeout)),
+  signal: new AbortController().signal,
+  metadata: {
+    id: '',
+    startTime: 0,
+    endTime: 0,
+    type: '',
+    method: '',
+    params: {},
+    log: [],
+    internal: true,
+  }
+};
