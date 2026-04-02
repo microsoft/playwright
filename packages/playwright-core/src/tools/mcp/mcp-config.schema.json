@@ -1,0 +1,864 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/microsoft/playwright/main/packages/playwright-core/src/tools/mcp/mcp-config.schema.json",
+  "title": "Playwright MCP / CLI Configuration",
+  "description": "Schema for Playwright MCP/CLI JSON configuration files. INI format configuration files use the same options but are not validated by this schema.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URL or path to the JSON Schema for IDE validation."
+    },
+    "browser": {
+      "type": "object",
+      "properties": {
+        "browserName": {
+          "enum": [
+            "chromium",
+            "firefox",
+            "webkit"
+          ],
+          "description": "The type of browser to use."
+        },
+        "isolated": {
+          "type": "boolean",
+          "description": "Keep the browser profile in memory, do not save it to disk."
+        },
+        "userDataDir": {
+          "type": "string",
+          "description": "Path to a user data directory for browser profile persistence.\nTemporary directory is created by default."
+        },
+        "launchOptions": {
+          "type": "object",
+          "properties": {
+            "args": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "**NOTE** Use custom browser args at your own risk, as some of them may break Playwright functionality.\n\nAdditional arguments to pass to the browser instance. The list of Chromium flags can be found\nhere."
+            },
+            "artifactsDir": {
+              "type": "string",
+              "description": "If specified, artifacts (traces, videos, downloads, HAR files, etc.) are saved into this directory. The directory\nis not cleaned up when the browser closes. If not specified, a temporary directory is used and cleaned up when the\nbrowser closes."
+            },
+            "channel": {
+              "type": "string",
+              "description": "Browser distribution channel.\n\nUse \"chromium\" to opt in to new headless mode.\n\nUse \"chrome\", \"chrome-beta\", \"chrome-dev\", \"chrome-canary\", \"msedge\", \"msedge-beta\", \"msedge-dev\", or\n\"msedge-canary\" to use branded Google Chrome and Microsoft Edge."
+            },
+            "chromiumSandbox": {
+              "type": "boolean",
+              "description": "Enable Chromium sandboxing. Defaults to false."
+            },
+            "downloadsPath": {
+              "type": "string",
+              "description": "If specified, accepted downloads are downloaded into this directory. Otherwise, temporary directory is created and\nis deleted when browser is closed. In either case, the downloads are deleted when the browser context they were\ncreated in is closed."
+            },
+            "env": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "executablePath": {
+              "type": "string",
+              "description": "Path to a browser executable to run instead of the bundled one. If\nexecutablePath is\na relative path, then it is resolved relative to the current working directory. Note that Playwright only works\nwith the bundled Chromium, Firefox or WebKit, use at your own risk."
+            },
+            "firefoxUserPrefs": {
+              "type": "object",
+              "additionalProperties": {
+                "oneOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  }
+                ]
+              },
+              "description": "Firefox user preferences. Learn more about the Firefox user preferences at\nabout:config.\n\nYou can also provide a path to a custom policies.json file via\nPLAYWRIGHT_FIREFOX_POLICIES_JSON environment variable."
+            },
+            "handleSIGHUP": {
+              "type": "boolean",
+              "description": "Close the browser process on SIGHUP. Defaults to true."
+            },
+            "handleSIGINT": {
+              "type": "boolean",
+              "description": "Close the browser process on Ctrl-C. Defaults to true."
+            },
+            "handleSIGTERM": {
+              "type": "boolean",
+              "description": "Close the browser process on SIGTERM. Defaults to true."
+            },
+            "headless": {
+              "type": "boolean",
+              "description": "Whether to run browser in headless mode. More details for\nChromium and\nFirefox. Defaults to true."
+            },
+            "ignoreDefaultArgs": {
+              "oneOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              ],
+              "description": "If true, Playwright does not pass its own configurations args and only uses the ones from\nargs. If an array is given,\nthen filters out the given default arguments. Dangerous option; use with care. Defaults to false."
+            },
+            "proxy": {
+              "type": "object",
+              "properties": {
+                "server": {
+                  "type": "string",
+                  "description": "Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example http://myproxy.com:3128 or\nsocks5://myproxy.com:3128. Short form myproxy.com:3128 is considered an HTTP proxy."
+                },
+                "bypass": {
+                  "type": "string",
+                  "description": "Optional comma-separated domains to bypass proxy, for example \".com, chromium.org, .domain.com\"."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "Optional username to use if HTTP proxy requires authentication."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Optional password to use if HTTP proxy requires authentication."
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "additionalProperties": false,
+              "description": "Network proxy settings."
+            },
+            "slowMo": {
+              "type": "number",
+              "description": "Slows down Playwright operations by the specified amount of milliseconds. Useful so that you can see what is going\non."
+            },
+            "timeout": {
+              "type": "number",
+              "description": "Maximum time in milliseconds to wait for the browser instance to start. Defaults to 30000 (30 seconds). Pass 0\nto disable timeout."
+            },
+            "tracesDir": {
+              "type": "string",
+              "description": "If specified, traces are saved into this directory."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Launch options passed to browserType.launchPersistentContext().\nThis is useful for setting options like channel, headless, executablePath, etc."
+        },
+        "contextOptions": {
+          "type": "object",
+          "properties": {
+            "acceptDownloads": {
+              "type": "boolean",
+              "description": "Whether to automatically download all the attachments. Defaults to true where all the downloads are accepted."
+            },
+            "baseURL": {
+              "type": "string",
+              "description": "When using page.goto(url[, options]),\npage.route(url, handler[, options]),\npage.waitForURL(url[, options]),\npage.waitForRequest(urlOrPredicate[, options]),\nor\npage.waitForResponse(urlOrPredicate[, options])\nit takes the base URL in consideration by using the\nURL() constructor for building the corresponding URL.\nUnset by default. Examples:\n- baseURL: http://localhost:3000 and navigating to /bar.html results in http://localhost:3000/bar.html\n- baseURL: http://localhost:3000/foo/ and navigating to ./bar.html results in\n  http://localhost:3000/foo/bar.html\n- baseURL: http://localhost:3000/foo (without trailing slash) and navigating to ./bar.html results in\n  http://localhost:3000/bar.html"
+            },
+            "bypassCSP": {
+              "type": "boolean",
+              "description": "Toggles bypassing page's Content-Security-Policy. Defaults to false."
+            },
+            "clientCertificates": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "origin": {
+                    "type": "string",
+                    "description": "Exact origin that the certificate is valid for. Origin includes https protocol, a hostname and optionally a port."
+                  },
+                  "certPath": {
+                    "type": "string",
+                    "description": "Path to the file with the certificate in PEM format."
+                  },
+                  "keyPath": {
+                    "type": "string",
+                    "description": "Path to the file with the private key in PEM format."
+                  },
+                  "pfxPath": {
+                    "type": "string",
+                    "description": "Path to the PFX or PKCS12 encoded private key and certificate chain."
+                  },
+                  "passphrase": {
+                    "type": "string",
+                    "description": "Passphrase for the private key (PEM or PFX)."
+                  }
+                },
+                "required": [
+                  "origin"
+                ],
+                "additionalProperties": false
+              },
+              "description": "TLS Client Authentication allows the server to request a client certificate and verify it.\n\n**Details**\n\nAn array of client certificates to be used. Each certificate object must have either both certPath and keyPath,\na single pfxPath, or their corresponding direct value equivalents (cert and key, or pfx). Optionally,\npassphrase property should be provided if the certificate is encrypted. The origin property should be provided\nwith an exact match to the request origin that the certificate is valid for.\n\nClient certificate authentication is only active when at least one client certificate is provided. If you want to\nreject all client certificates sent by the server, you need to provide a client certificate with an origin that\ndoes not match any of the domains you plan to visit.\n\n**NOTE** When using WebKit on macOS, accessing localhost will not pick up client certificates. You can make it\nwork by replacing localhost with local.playwright."
+            },
+            "colorScheme": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "light",
+                    "dark",
+                    "no-preference"
+                  ]
+                }
+              ],
+              "description": "Emulates prefers-colors-scheme\nmedia feature, supported values are 'light' and 'dark'. See\npage.emulateMedia([options]) for more details.\nPassing null resets emulation to system defaults. Defaults to 'light'."
+            },
+            "contrast": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "no-preference",
+                    "more"
+                  ]
+                }
+              ],
+              "description": "Emulates 'prefers-contrast' media feature, supported values are 'no-preference', 'more'. See\npage.emulateMedia([options]) for more details.\nPassing null resets emulation to system defaults. Defaults to 'no-preference'."
+            },
+            "deviceScaleFactor": {
+              "type": "number",
+              "description": "Specify device scale factor (can be thought of as dpr). Defaults to 1. Learn more about\nemulating devices with device scale factor."
+            },
+            "extraHTTPHeaders": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "An object containing additional HTTP headers to be sent with every request. Defaults to none."
+            },
+            "forcedColors": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "active",
+                    "none"
+                  ]
+                }
+              ],
+              "description": "Emulates 'forced-colors' media feature, supported values are 'active', 'none'. See\npage.emulateMedia([options]) for more details.\nPassing null resets emulation to system defaults. Defaults to 'none'."
+            },
+            "geolocation": {
+              "type": "object",
+              "properties": {
+                "latitude": {
+                  "type": "number",
+                  "description": "Latitude between -90 and 90."
+                },
+                "longitude": {
+                  "type": "number",
+                  "description": "Longitude between -180 and 180."
+                },
+                "accuracy": {
+                  "type": "number",
+                  "description": "Non-negative accuracy value. Defaults to 0."
+                }
+              },
+              "required": [
+                "latitude",
+                "longitude"
+              ],
+              "additionalProperties": false
+            },
+            "hasTouch": {
+              "type": "boolean",
+              "description": "Specifies if viewport supports touch events. Defaults to false. Learn more about\nmobile emulation."
+            },
+            "httpCredentials": {
+              "type": "object",
+              "properties": {
+                "username": {
+                  "type": "string"
+                },
+                "password": {
+                  "type": "string"
+                },
+                "origin": {
+                  "type": "string",
+                  "description": "Restrain sending http credentials on specific origin (scheme://host:port)."
+                },
+                "send": {
+                  "enum": [
+                    "unauthorized",
+                    "always"
+                  ],
+                  "description": "This option only applies to the requests sent from corresponding\nAPIRequestContext and does not affect requests sent from\nthe browser. 'always' - Authorization header with basic authentication credentials will be sent with the each\nAPI request. 'unauthorized - the credentials are only sent when 401 (Unauthorized) response with\nWWW-Authenticate header is received. Defaults to 'unauthorized'."
+                }
+              },
+              "required": [
+                "username",
+                "password"
+              ],
+              "additionalProperties": false,
+              "description": "Credentials for HTTP authentication. If no\norigin is specified, the username and password are sent to any servers upon unauthorized responses."
+            },
+            "ignoreHTTPSErrors": {
+              "type": "boolean",
+              "description": "Whether to ignore HTTPS errors when sending network requests. Defaults to false."
+            },
+            "isMobile": {
+              "type": "boolean",
+              "description": "Whether the meta viewport tag is taken into account and touch events are enabled. isMobile is a part of device,\nso you don't actually need to set it manually. Defaults to false and is not supported in Firefox. Learn more\nabout mobile emulation."
+            },
+            "javaScriptEnabled": {
+              "type": "boolean",
+              "description": "Whether or not to enable JavaScript in the context. Defaults to true. Learn more about\ndisabling JavaScript."
+            },
+            "locale": {
+              "type": "string",
+              "description": "Specify user locale, for example en-GB, de-DE, etc. Locale will affect navigator.language value,\nAccept-Language request header value as well as number and date formatting rules. Defaults to the system default\nlocale. Learn more about emulation in our emulation guide."
+            },
+            "offline": {
+              "type": "boolean",
+              "description": "Whether to emulate network being offline. Defaults to false. Learn more about\nnetwork emulation."
+            },
+            "permissions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "A list of permissions to grant to all pages in this context. See\nbrowserContext.grantPermissions(permissions[, options])\nfor more details. Defaults to none."
+            },
+            "proxy": {
+              "type": "object",
+              "properties": {
+                "server": {
+                  "type": "string",
+                  "description": "Proxy to be used for all requests. HTTP and SOCKS proxies are supported, for example http://myproxy.com:3128 or\nsocks5://myproxy.com:3128. Short form myproxy.com:3128 is considered an HTTP proxy."
+                },
+                "bypass": {
+                  "type": "string",
+                  "description": "Optional comma-separated domains to bypass proxy, for example \".com, chromium.org, .domain.com\"."
+                },
+                "username": {
+                  "type": "string",
+                  "description": "Optional username to use if HTTP proxy requires authentication."
+                },
+                "password": {
+                  "type": "string",
+                  "description": "Optional password to use if HTTP proxy requires authentication."
+                }
+              },
+              "required": [
+                "server"
+              ],
+              "additionalProperties": false,
+              "description": "Network proxy settings to use with this context. Defaults to none."
+            },
+            "recordHar": {
+              "type": "object",
+              "properties": {
+                "omitContent": {
+                  "type": "boolean",
+                  "description": "Optional setting to control whether to omit request content from the HAR. Defaults to false. Deprecated, use\ncontent policy instead."
+                },
+                "content": {
+                  "enum": [
+                    "omit",
+                    "embed",
+                    "attach"
+                  ],
+                  "description": "Optional setting to control resource content management. If omit is specified, content is not persisted. If\nattach is specified, resources are persisted as separate files or entries in the ZIP archive. If embed is\nspecified, content is stored inline the HAR file as per HAR specification. Defaults to attach for .zip output\nfiles and to embed for all other file extensions."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Path on the filesystem to write the HAR file to. If the file name ends with .zip, content: 'attach' is used by\ndefault."
+                },
+                "mode": {
+                  "enum": [
+                    "full",
+                    "minimal"
+                  ],
+                  "description": "When set to minimal, only record information necessary for routing from HAR. This omits sizes, timing, page,\ncookies, security and other types of HAR information that are not used when replaying from HAR. Defaults to full."
+                },
+                "urlFilter": {
+                  "type": "string",
+                  "description": "A glob or regex pattern to filter requests that are stored in the HAR. When a\nbaseURL via the context\noptions was provided and the passed URL is a path, it gets merged via the\nnew URL() constructor. Defaults to none."
+                }
+              },
+              "required": [
+                "path"
+              ],
+              "additionalProperties": false,
+              "description": "Enables HAR recording for all pages into recordHar.path file.\nIf not specified, the HAR is not recorded. Make sure to await\nbrowserContext.close([options]) for\nthe HAR to be saved."
+            },
+            "recordVideo": {
+              "type": "object",
+              "properties": {
+                "dir": {
+                  "type": "string",
+                  "description": "Path to the directory to put videos into. If not specified, the videos will be stored in artifactsDir (see\nbrowserType.launch([options]) options)."
+                },
+                "size": {
+                  "type": "object",
+                  "properties": {
+                    "width": {
+                      "type": "number",
+                      "description": "Video frame width."
+                    },
+                    "height": {
+                      "type": "number",
+                      "description": "Video frame height."
+                    }
+                  },
+                  "required": [
+                    "width",
+                    "height"
+                  ],
+                  "additionalProperties": false,
+                  "description": "Optional dimensions of the recorded videos. If not specified the size will be equal to viewport scaled down to\nfit into 800x800. If viewport is not configured explicitly the video size defaults to 800x450. Actual picture of\neach page will be scaled down if necessary to fit the specified size."
+                },
+                "showActions": {
+                  "type": "object",
+                  "properties": {
+                    "duration": {
+                      "type": "number",
+                      "description": "How long each annotation is displayed in milliseconds. Defaults to 500."
+                    },
+                    "position": {
+                      "enum": [
+                        "top-left",
+                        "top",
+                        "top-right",
+                        "bottom-left",
+                        "bottom",
+                        "bottom-right"
+                      ],
+                      "description": "Position of the action title overlay. Defaults to \"top-right\"."
+                    },
+                    "fontSize": {
+                      "type": "number",
+                      "description": "Font size of the action title in pixels. Defaults to 24."
+                    }
+                  },
+                  "additionalProperties": false,
+                  "description": "If specified, enables visual annotations on interacted elements during video recording."
+                }
+              },
+              "additionalProperties": false,
+              "description": "Enables video recording for all pages into recordVideo.dir directory. If not specified videos are not recorded.\nMake sure to await\nbrowserContext.close([options]) for\nvideos to be saved."
+            },
+            "reducedMotion": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "no-preference",
+                    "reduce"
+                  ]
+                }
+              ],
+              "description": "Emulates 'prefers-reduced-motion' media feature, supported values are 'reduce', 'no-preference'. See\npage.emulateMedia([options]) for more details.\nPassing null resets emulation to system defaults. Defaults to 'no-preference'."
+            },
+            "screen": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number",
+                  "description": "page width in pixels."
+                },
+                "height": {
+                  "type": "number",
+                  "description": "page height in pixels."
+                }
+              },
+              "required": [
+                "width",
+                "height"
+              ],
+              "additionalProperties": false,
+              "description": "Emulates consistent window screen size available inside web page via window.screen. Is only used when the\nviewport is set."
+            },
+            "serviceWorkers": {
+              "enum": [
+                "allow",
+                "block"
+              ],
+              "description": "Whether to allow sites to register Service workers. Defaults to 'allow'.\n- 'allow': Service Workers can be\n  registered.\n- 'block': Playwright will block all registration of Service Workers."
+            },
+            "storageState": {
+              "oneOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "cookies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "value": {
+                            "type": "string"
+                          },
+                          "domain": {
+                            "type": "string",
+                            "description": "Domain and path are required. For the cookie to apply to all subdomains as well, prefix domain with a dot, like\nthis: \".example.com\""
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "Domain and path are required"
+                          },
+                          "expires": {
+                            "type": "number",
+                            "description": "Unix time in seconds."
+                          },
+                          "httpOnly": {
+                            "type": "boolean"
+                          },
+                          "secure": {
+                            "type": "boolean"
+                          },
+                          "sameSite": {
+                            "enum": [
+                              "Strict",
+                              "Lax",
+                              "None"
+                            ],
+                            "description": "sameSite flag"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "value",
+                          "domain",
+                          "path",
+                          "expires",
+                          "httpOnly",
+                          "secure",
+                          "sameSite"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "description": "Cookies to set for context"
+                    },
+                    "origins": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "origin": {
+                            "type": "string"
+                          },
+                          "localStorage": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name",
+                                "value"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "description": "localStorage to set for context"
+                          }
+                        },
+                        "required": [
+                          "origin",
+                          "localStorage"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "cookies",
+                    "origins"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Learn more about storage state and auth.\n\nPopulates context with given storage state. This option can be used to initialize context with logged-in\ninformation obtained via\nbrowserContext.storageState([options])."
+            },
+            "strictSelectors": {
+              "type": "boolean",
+              "description": "If set to true, enables strict selectors mode for this context. In the strict selectors mode all operations on\nselectors that imply single target DOM element will throw when more than one element matches the selector. This\noption does not affect any Locator APIs (Locators are always strict). Defaults to false. See\nLocator to learn more about the strict mode."
+            },
+            "timezoneId": {
+              "type": "string",
+              "description": "Changes the timezone of the context. See\nICU's metaZones.txt\nfor a list of supported timezone IDs. Defaults to the system timezone."
+            },
+            "userAgent": {
+              "type": "string",
+              "description": "Specific user agent to use in this context."
+            },
+            "videoSize": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "number",
+                  "description": "Video frame width."
+                },
+                "height": {
+                  "type": "number",
+                  "description": "Video frame height."
+                }
+              },
+              "required": [
+                "width",
+                "height"
+              ],
+              "additionalProperties": false,
+              "description": "(Deprecated)"
+            },
+            "videosPath": {
+              "type": "string",
+              "description": "(Deprecated)"
+            },
+            "viewport": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "width": {
+                      "type": "number",
+                      "description": "page width in pixels."
+                    },
+                    "height": {
+                      "type": "number",
+                      "description": "page height in pixels."
+                    }
+                  },
+                  "required": [
+                    "width",
+                    "height"
+                  ],
+                  "additionalProperties": false
+                }
+              ],
+              "description": "Emulates consistent viewport for each page. Defaults to an 1280x720 viewport. Use null to disable the consistent\nviewport emulation. Learn more about viewport emulation.\n\n**NOTE** The null value opts out from the default presets, makes viewport depend on the host window size defined\nby the operating system. It makes the execution of the tests non-deterministic."
+            }
+          },
+          "additionalProperties": false,
+          "description": "Context options for the browser context.\n\nThis is useful for settings options like viewport."
+        },
+        "cdpEndpoint": {
+          "type": "string",
+          "description": "Chrome DevTools Protocol endpoint to connect to an existing browser instance in case of Chromium family browsers."
+        },
+        "cdpHeaders": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "CDP headers to send with the connect request."
+        },
+        "cdpTimeout": {
+          "type": "number",
+          "description": "Timeout in milliseconds for connecting to CDP endpoint. Defaults to 30000 (30 seconds). Pass 0 to disable timeout."
+        },
+        "remoteEndpoint": {
+          "type": "string",
+          "description": "Remote endpoint to connect to an existing Playwright server."
+        },
+        "initPage": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to TypeScript files to add as initialization scripts for Playwright page."
+        },
+        "initScript": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Paths to JavaScript files to add as initialization scripts.\nThe scripts will be evaluated in every page before any of the page's scripts."
+        }
+      },
+      "additionalProperties": false,
+      "description": "The browser to use."
+    },
+    "extension": {
+      "type": "boolean",
+      "description": "Connect to a running browser instance (Edge/Chrome only). If specified, browser\nconfig is ignored.\nRequires the \"Playwright MCP Bridge\" browser extension to be installed."
+    },
+    "server": {
+      "type": "object",
+      "properties": {
+        "port": {
+          "type": "number",
+          "description": "The port to listen on for SSE or MCP transport."
+        },
+        "host": {
+          "type": "string",
+          "description": "The host to bind the server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces."
+        },
+        "allowedHosts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The hosts this server is allowed to serve from. Defaults to the host server is bound to.\nThis is not for CORS, but rather for the DNS rebinding protection."
+        }
+      },
+      "additionalProperties": false
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "config",
+          "core",
+          "core-navigation",
+          "core-tabs",
+          "core-input",
+          "core-install",
+          "network",
+          "pdf",
+          "storage",
+          "testing",
+          "vision",
+          "devtools"
+        ]
+      },
+      "description": "List of enabled tool capabilities. Possible values:\n  - 'core': Core browser automation features.\n  - 'pdf': PDF generation and manipulation.\n  - 'vision': Coordinate-based interactions.\n  - 'devtools': Developer tools features."
+    },
+    "saveSession": {
+      "type": "boolean",
+      "description": "Whether to save the Playwright session into the output directory."
+    },
+    "saveTrace": {
+      "type": "boolean",
+      "description": "Whether to save the Playwright trace into the output directory."
+    },
+    "sharedBrowserContext": {
+      "type": "boolean",
+      "description": "Reuse the same browser context between all connected HTTP clients."
+    },
+    "secrets": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Secrets are used to replace matching plain text in the tool responses to prevent the LLM\nfrom accidentally getting sensitive data. It is a convenience and not a security feature,\nmake sure to always examine information coming in and from the tool on the client."
+    },
+    "outputDir": {
+      "type": "string",
+      "description": "The directory to save output files."
+    },
+    "console": {
+      "type": "object",
+      "properties": {
+        "level": {
+          "enum": [
+            "error",
+            "warning",
+            "info",
+            "debug"
+          ],
+          "description": "The level of console messages to return. Each level includes the messages of more severe levels. Defaults to \"info\"."
+        }
+      },
+      "additionalProperties": false
+    },
+    "network": {
+      "type": "object",
+      "properties": {
+        "allowedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of origins to allow the browser to request. Default is to allow all. Origins matching both allowedOrigins and blockedOrigins will be blocked.\n\nSupported formats:\n- Full origin: https://example.com:8080 - matches only that origin\n- Wildcard port: http://localhost:* - matches any port on localhost with http protocol"
+        },
+        "blockedOrigins": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of origins to block the browser to request. Origins matching both allowedOrigins and blockedOrigins will be blocked.\n\nSupported formats:\n- Full origin: https://example.com:8080 - matches only that origin\n- Wildcard port: http://localhost:* - matches any port on localhost with http protocol"
+        }
+      },
+      "additionalProperties": false
+    },
+    "testIdAttribute": {
+      "type": "string",
+      "description": "Specify the attribute to use for test ids, defaults to \"data-testid\"."
+    },
+    "timeouts": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "number",
+          "description": "Configures default action timeout: https://playwright.dev/docs/api/class-page#page-set-default-timeout. Defaults to 5000ms."
+        },
+        "navigation": {
+          "type": "number",
+          "description": "Configures default navigation timeout: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout. Defaults to 60000ms."
+        },
+        "expect": {
+          "type": "number",
+          "description": "Configures default expect timeout: https://playwright.dev/docs/test-timeouts#expect-timeout. Defaults to 5000ms."
+        }
+      },
+      "additionalProperties": false
+    },
+    "imageResponses": {
+      "enum": [
+        "omit",
+        "allow"
+      ],
+      "description": "Whether to send image responses to the client. Defaults to \"allow\"."
+    },
+    "snapshot": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "enum": [
+            "none",
+            "full"
+          ],
+          "description": "When taking snapshots for responses, specifies the mode to use."
+        }
+      },
+      "additionalProperties": false
+    },
+    "allowUnrestrictedFileAccess": {
+      "type": "boolean",
+      "description": "allowUnrestrictedFileAccess acts as a guardrail to prevent the LLM from accidentally\nwandering outside its intended workspace. It is a convenience defense to catch unintended\nfile access, not a secure boundary; a deliberate attempt to reach other directories can be\neasily worked around, so always rely on client-level permissions for true security."
+    },
+    "codegen": {
+      "enum": [
+        "none",
+        "typescript"
+      ],
+      "description": "Specify the language to use for code generation."
+    }
+  },
+  "additionalProperties": false
+}

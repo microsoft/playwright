@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// JSON Schema is auto-generated from this file by utils/generate_mcp_config_schema.js.
+
 import type * as playwright from '../../..';
 
 export type ToolCapability =
@@ -52,10 +54,9 @@ export type Config = {
     userDataDir?: string;
 
     /**
-     * Launch options passed to
+     * Launch options passed to browserType.launchPersistentContext().
+     * This is useful for setting options like `channel`, `headless`, `executablePath`, etc.
      * @see https://playwright.dev/docs/api/class-browsertype#browser-type-launch-persistent-context
-     *
-     * This is useful for settings options like `channel`, `headless`, `executablePath`, etc.
      */
     launchOptions?: playwright.LaunchOptions;
 
@@ -138,6 +139,11 @@ export type Config = {
   saveSession?: boolean;
 
   /**
+   * Whether to save the Playwright trace into the output directory.
+   */
+  saveTrace?: boolean;
+
+  /**
    * Reuse the same browser context between all connected HTTP clients.
    */
   sharedBrowserContext?: boolean;
@@ -187,12 +193,12 @@ export type Config = {
   testIdAttribute?: string;
 
   timeouts?: {
-    /*
+    /**
      * Configures default action timeout: https://playwright.dev/docs/api/class-page#page-set-default-timeout. Defaults to 5000ms.
      */
     action?: number;
 
-    /*
+    /**
      * Configures default navigation timeout: https://playwright.dev/docs/api/class-page#page-set-default-navigation-timeout. Defaults to 60000ms.
      */
     navigation?: number;
@@ -204,7 +210,7 @@ export type Config = {
   };
 
   /**
-   * Whether to send image responses to the client. Can be "allow", "omit", or "auto". Defaults to "auto", which sends images if the client can display them.
+   * Whether to send image responses to the client. Defaults to "allow".
    */
   imageResponses?: 'allow' | 'omit';
 

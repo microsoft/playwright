@@ -179,13 +179,30 @@ Playwright MCP supports three profile modes:
 
 ### Configuration file
 
-For advanced configuration, use a JSON config file:
+For advanced configuration, use a JSON or INI config file:
 
 ```bash
 npx @playwright/mcp@latest --config path/to/config.json
 ```
 
-The config file supports browser options, context options, network rules, timeouts, and more. See the [Playwright MCP repository](https://github.com/microsoft/playwright-mcp/blob/main/packages/playwright-mcp/config.d.ts) for the full schema.
+The config file supports browser options, context options, network rules, timeouts, and more. See the [Playwright MCP repository](https://github.com/microsoft/playwright-mcp/blob/main/packages/playwright-mcp/config.d.ts) for the full type definition.
+
+#### JSON Schema for IDE autocompletion
+
+A JSON Schema is available for configuration files. Add `$schema` to your config file for IDE autocompletion and validation:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/playwright/main/packages/playwright-core/src/tools/mcp/mcp-config.schema.json",
+  "browser": {
+    "browserName": "chromium"
+  }
+}
+```
+
+If you are using `@playwright/cli`, the project-level config at `.playwright/cli.config.json` will be automatically associated with the schema once registered with [SchemaStore](https://www.schemastore.org/).
+
+**Note:** The JSON Schema only validates JSON config files. INI format config files use the same options but are not validated by this schema.
 
 ### Standalone server
 

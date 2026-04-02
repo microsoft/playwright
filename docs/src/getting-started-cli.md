@@ -275,6 +275,14 @@ playwright-cli --config path/to/config.json open example.com
 
 The CLI also loads `.playwright/cli.config.json` automatically if present. The config file supports browser options, context options, network rules, timeouts, and more. Run `playwright-cli --help` for the full list of options.
 
+A JSON Schema is available for IDE autocompletion. Once registered with [SchemaStore](https://www.schemastore.org/), the `.playwright/cli.config.json` file will be automatically associated in supported editors. For other file names, add `$schema` manually:
+
+```json
+{
+  "$schema": "https://raw.githubusercontent.com/microsoft/playwright/main/packages/playwright-core/src/tools/mcp/mcp-config.schema.json"
+}
+```
+
 ### Browser extension
 
 Connect to your existing browser tabs instead of launching a new browser:

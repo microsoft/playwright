@@ -632,6 +632,14 @@ onChanges.push({
   script: 'utils/generate_channels.js',
 });
 
+// Generate MCP config JSON schema.
+onChanges.push({
+  inputs: [
+    'packages/playwright-core/src/tools/mcp/config.d.ts',
+  ],
+  script: 'utils/generate_mcp_config_schema.js',
+});
+
 // Generate types.
 onChanges.push({
   inputs: [
