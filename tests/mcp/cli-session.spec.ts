@@ -379,6 +379,18 @@ workspace1:
   - data-dir: <in-memory>
   - run \`playwright-cli attach \"foobar\"\` to attach`);
   });
+
+  test('attach --cdp', async ({ cli, cdpServer, server }) => {
+    const context = await cdpServer.start();
+    await context.pages()[0].goto(server.HELLO_WORLD);
+    const { output, snapshot } = await cli('attach', `--cdp=${cdpServer.endpoint}`);
+    expect(output).toContain(`### Page
+- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`);
+    expect(snapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+    await cli('goto', 'data:text/html,<title>CDP Title</title>');
+    expect(await context.pages()[0].title()).toBe('CDP Title');
+  });
 });
 
 const version = 'v' + require('../../packages/playwright-core/package.json').version;

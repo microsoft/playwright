@@ -143,6 +143,8 @@ export class Session {
       args.push(`--profile=${cliArgs.profile}`);
     if (cliArgs.config)
       args.push(`--config=${cliArgs.config}`);
+    if (cliArgs.cdp)
+      args.push(`--cdp=${cliArgs.cdp}`);
     if (cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION)
       args.push(`--endpoint=${cliArgs.endpoint || process.env.PLAYWRIGHT_CLI_SESSION}`);
 

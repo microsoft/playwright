@@ -140,6 +140,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
 
   const daemonOverrides = configFromCLIOptions({
     endpoint: options.endpoint,
+    cdpEndpoint: options.cdp,
     config: options.config,
     browser: options.browser,
     headless: options.headed ? false : undefined,
@@ -161,7 +162,7 @@ export async function resolveCLIConfigForCLI(daemonProfilesDir: string, sessionN
   result = mergeConfig(result, daemonOverrides);
 
   if (result.browser.isolated === undefined)
-    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.extension;
+    result.browser.isolated = !options.profile && !options.persistent && !result.browser.userDataDir && !result.browser.remoteEndpoint && !result.browser.cdpEndpoint && !result.extension;
 
   if (!result.extension && !result.browser.isolated && !result.browser.userDataDir && !result.browser.remoteEndpoint) {
     // No custom value provided, use the daemon data dir.
