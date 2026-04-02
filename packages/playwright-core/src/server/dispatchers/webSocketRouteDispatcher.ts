@@ -97,7 +97,7 @@ export class WebSocketRouteDispatcher extends Dispatcher<SdkObject, channels.Web
     }
     ++data.counter;
 
-    return await target.addInitScript(`
+    return await target.addInitScript(progress, `
       (() => {
         const module = {};
         ${rawWebSocketMockSource.source}

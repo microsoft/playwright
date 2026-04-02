@@ -30,10 +30,6 @@ import type { CallMetadata } from './callMetadata';
 //   - Using `progress.race()` when awaiting other methods that do not take a Progress argument.
 //     In this case, it is important that awaited method has no side effects, for example
 //     it is a read-only browser protocol call.
-//   - In rare cases, when the awaited method does not take a Progress argument,
-//     but it does have side effects such as creating a page - a proper try/catch/finally
-//     should be used to cleanup. Whether the cleanup is awaited or not depends on the method details.
-//     For the trickiest cases, look at `raceUncancellableOperationWithCleanup()` helper method.
 export interface Progress {
   timeout: number;
   deadline: number;

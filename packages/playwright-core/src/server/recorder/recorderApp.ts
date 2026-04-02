@@ -188,7 +188,7 @@ export class RecorderApp {
   }
 
   async close() {
-    await this._page.close();
+    await this._page.close(nullProgress);
   }
 
   static showInspectorNoReply(context: BrowserContext) {
@@ -271,7 +271,7 @@ export class RecorderApp {
 
     recorder.on(RecorderEvent.ElementPicked, (elementInfo: ElementInfo, userGesture?: boolean) => {
       if (userGesture)
-        this._page.bringToFront();
+        this._page.bringToFront(nullProgress).catch(() => {});
       this._frontend.elementPicked({ elementInfo, userGesture });
     });
 

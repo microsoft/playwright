@@ -169,7 +169,7 @@ export class DebugController extends SdkObject {
     for (const browser of this._playwright.allBrowsers()) {
       for (const context of browser.contexts()) {
         if (!context.pages().length)
-          await progress.race(context.close(progress, { reason: 'Browser collected' }));
+          await context.close(progress, { reason: 'Browser collected' });
       }
       if (!browser.contexts())
         await browser.close(progress, { reason: 'Browser collected' });

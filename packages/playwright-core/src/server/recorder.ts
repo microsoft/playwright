@@ -23,7 +23,7 @@ import { Debugger } from './debugger';
 import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
 import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { stringifySelector } from '../utils/isomorphic/selectorParser';
-import { ProgressController } from './progress';
+import { nullProgress, ProgressController } from './progress';
 import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
@@ -267,7 +267,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       let pageToFocus = this._pickLocatorPage;
       if (!pageToFocus && this._context.pages().length === 1)
         pageToFocus = this._context.pages()[0];
-      pageToFocus?.bringToFront().catch(() => {});
+      pageToFocus?.bringToFront(nullProgress).catch(() => {});
     }
     await this._refreshOverlay();
   }

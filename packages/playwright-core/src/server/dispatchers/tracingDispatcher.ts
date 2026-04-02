@@ -61,7 +61,6 @@ export class TracingDispatcher extends Dispatcher<Tracing, channels.TracingChann
   }
 
   async tracingStop(params: channels.TracingTracingStopParams, progress: Progress): Promise<channels.TracingTracingStopResult> {
-    this._started = false;
     await this._object.stop(progress);
   }
 

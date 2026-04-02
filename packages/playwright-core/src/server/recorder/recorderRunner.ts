@@ -41,7 +41,7 @@ async function performActionImpl(progress: Progress, mainFrame: Frame, actionInC
     throw Error('Not reached');
 
   if (action.name === 'closePage') {
-    await mainFrame._page.close();
+    await mainFrame._page.close(progress);
     return;
   }
 

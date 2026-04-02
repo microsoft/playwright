@@ -1260,7 +1260,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     let frame: Frame | null = element._frame;
     const result = [generated];
     while (frame?.parentFrame()) {
-      const frameElement = await progress.race(frame.frameElement(progress));
+      const frameElement = await frame.frameElement(progress);
       if (frameElement) {
         const generated = await progress.race(frameElement.evaluateInUtility(async ([injected, node]) => {
           return injected.generateSelectorSimple(node as unknown as Element);

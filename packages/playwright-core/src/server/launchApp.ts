@@ -20,7 +20,7 @@ import path from 'path';
 import { isUnderTest, rewriteErrorMessage, wrapInASCIIBox } from '../utils';
 import { buildPlaywrightCLICommand, findChromiumChannelBestEffort } from './registry';
 import { registryDirectory } from './registry';
-import { ProgressController } from './progress';
+import { nullProgress, ProgressController } from './progress';
 
 import type { BrowserType } from './browserType';
 import type { CRPage } from './chromium/crPage';
@@ -77,8 +77,8 @@ export async function launchApp(browserType: BrowserType, options: {
   if (browserType.name() === 'chromium' && process.platform === 'darwin') {
     context.on('page', async (newPage: Page) => {
       if (newPage.mainFrame().url() === 'chrome://new-tab-page/') {
-        await page.bringToFront();
-        await newPage.close();
+        await page.bringToFront(nullProgress);
+        await newPage.close(nullProgress);
       }
     });
   }
@@ -108,7 +108,7 @@ export async function syncLocalStorageWithSettings(page: Page, appName: string) 
     });
 
     const settings = await fs.promises.readFile(settingsFile, 'utf-8').catch(() => ('{}'));
-    await page.addInitScript(
+    await page.addInitScript(nullProgress,
         `(${String((settings: any) => {
           // iframes w/ snapshots, etc.
           if (location && location.protocol === 'data:')

@@ -456,7 +456,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       if ((options as any).__testHookBeforeHitTarget)
         await progress.race((options as any).__testHookBeforeHitTarget());
 
-      const frameCheckResult = await progress.race(this._checkFrameIsHitTarget(progress, point));
+      const frameCheckResult = await this._checkFrameIsHitTarget(progress, point);
       if (frameCheckResult === 'error:notconnected' || ('hitTargetDescription' in frameCheckResult))
         return frameCheckResult;
       const hitPoint = frameCheckResult.framePoint;
@@ -864,7 +864,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     while (frame.parentFrame()) {
       const frameElement = await frame.frameElement(progress) as ElementHandle<Element>;
       const box = await frameElement.boundingBox(progress);
-      const style = await frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const);
+      const style = await progress.race(frameElement.evaluateInUtility(([injected, iframe]) => injected.describeIFrameStyle(iframe), {}).catch(e => 'error:notconnected' as const));
       if (!box || style === 'error:notconnected')
         return 'error:notconnected';
       if (style === 'transformed') {
@@ -885,9 +885,9 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       const element = data[i - 1].frameElement!;
       const point = data[i].pointInFrame;
       // Hit target in the parent frame should hit the child frame element.
-      const hitTargetResult = await element.evaluateInUtility(([injected, element, hitPoint]) => {
+      const hitTargetResult = await progress.race(element.evaluateInUtility(([injected, element, hitPoint]) => {
         return injected.expectHitTarget(hitPoint, element);
-      }, point);
+      }, point));
       if (hitTargetResult !== 'done')
         return hitTargetResult;
     }
