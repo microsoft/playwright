@@ -75,14 +75,6 @@ export function serializeError(error: Error | any): TestInfoErrorImpl {
 }
 
 export type Matcher = (value: string) => boolean;
-
-export type TestFileFilter = {
-  re?: RegExp;
-  exact?: string;
-  line: number | null;
-  column: number | null;
-};
-
 export type TestCaseFilter = (test: TestCase) => boolean;
 
 export function parseLocationArg(arg: string): { file: string, line: number | null, column: number | null } {
@@ -92,18 +84,6 @@ export function parseLocationArg(arg: string): { file: string, line: number | nu
     line: match ? parseInt(match[2], 10) : null,
     column: match?.[3] ? parseInt(match[3], 10) : null,
   };
-}
-
-export function createFileFiltersFromArguments(args: string[]): TestFileFilter[] {
-  return args.map(arg => {
-    const parsed = parseLocationArg(arg);
-    return { re: forceRegExp(parsed.file), line: parsed.line, column: parsed.column };
-  });
-}
-
-export function createFileMatcherFromArguments(args: string[]): Matcher {
-  const filters = createFileFiltersFromArguments(args);
-  return createFileMatcher(filters.map(filter => filter.re || filter.exact || ''));
 }
 
 export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[]): Matcher {
