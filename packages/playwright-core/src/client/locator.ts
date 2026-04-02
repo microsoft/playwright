@@ -296,10 +296,14 @@ export class Locator implements api.Locator {
   }
 
   async isHidden(options?: TimeoutOptions): Promise<boolean> {
+    if (options?.timeout !== undefined)
+      console.warn('locator.isHidden: "timeout" option is deprecated and has no effect. locator.isHidden() does not wait for the element and returns immediately.');
     return await this._frame.isHidden(this._selector, { strict: true, ...options });
   }
 
   async isVisible(options?: TimeoutOptions): Promise<boolean> {
+    if (options?.timeout !== undefined)
+      console.warn('locator.isVisible: "timeout" option is deprecated and has no effect. locator.isVisible() does not wait for the element and returns immediately.');
     return await this._frame.isVisible(this._selector, { strict: true, ...options });
   }
 

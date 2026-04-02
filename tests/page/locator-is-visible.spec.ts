@@ -103,3 +103,37 @@ it('isVisible with invalid selector should throw', async ({ page }) => {
   const error = await page.locator('hey=what').isVisible().catch(e => e);
   expect(error.message).toContain('Unknown engine "hey" while parsing selector hey=what');
 });
+
+it('isVisible should warn when deprecated timeout option is used', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33017' });
+  await page.setContent(`<div>Hi</div>`);
+  const warnings: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (msg: string) => warnings.push(msg);
+  try {
+    const visible = await page.locator('div').isVisible({ timeout: 5000 });
+    expect(visible).toBe(true);
+    expect(warnings.length).toBe(1);
+    expect(warnings[0]).toContain('timeout');
+    expect(warnings[0]).toContain('deprecated');
+  } finally {
+    console.warn = origWarn;
+  }
+});
+
+it('isHidden should warn when deprecated timeout option is used', async ({ page }) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/33017' });
+  await page.setContent(`<div>Hi</div>`);
+  const warnings: string[] = [];
+  const origWarn = console.warn;
+  console.warn = (msg: string) => warnings.push(msg);
+  try {
+    const hidden = await page.locator('div').isHidden({ timeout: 5000 });
+    expect(hidden).toBe(false);
+    expect(warnings.length).toBe(1);
+    expect(warnings[0]).toContain('timeout');
+    expect(warnings[0]).toContain('deprecated');
+  } finally {
+    console.warn = origWarn;
+  }
+});
