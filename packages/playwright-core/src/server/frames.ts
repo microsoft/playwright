@@ -685,7 +685,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
-    const response = request ? progress.race(request._finalRequest().response()) : null;
+    const response = request ? progress.race(request._finalRequest().internalResponse()) : null;
     return response;
   }
 
@@ -709,7 +709,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
-    return request ? progress.race(request._finalRequest().response()) : null;
+    return request ? progress.race(request._finalRequest().internalResponse()) : null;
   }
 
   async waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
@@ -834,14 +834,14 @@ export class Frame extends SdkObject<FrameEventMap> {
     const handle = await this.selectors.query(selector, { strict }, scope);
     if (!handle)
       throw new Error(`Failed to find element matching selector "${selector}"`);
-    const result = await handle.evaluateExpression(expression, { isFunction }, arg);
+    const result = await handle.internalEvaluateExpression(expression, { isFunction }, arg);
     handle.dispose();
     return result;
   }
 
   async evalOnSelectorAll(selector: string, expression: string, isFunction: boolean | undefined, arg: any, scope?: dom.ElementHandle): Promise<any> {
     const arrayHandle = await this.selectors.queryArrayInMainWorld(selector, scope);
-    const result = await arrayHandle.evaluateExpression(expression, { isFunction }, arg);
+    const result = await arrayHandle.internalEvaluateExpression(expression, { isFunction }, arg);
     arrayHandle.dispose();
     return result;
   }

@@ -309,7 +309,7 @@ export class HarTracer {
     // In WebKit security details and server ip are reported in Network.loadingFinished, so we populate
     // it here to not hang in case of long chunked responses, see https://github.com/microsoft/playwright/issues/21182.
     if (!this._options.omitServerIP) {
-      this._addBarrier(page || request.serviceWorker(), response.serverAddr().then(server => {
+      this._addBarrier(page || request.serviceWorker(), response.internalServerAddr().then(server => {
         if (server?.ipAddress)
           harEntry.serverIPAddress = server.ipAddress;
         if (server?.port)
@@ -317,7 +317,7 @@ export class HarTracer {
       }));
     }
     if (!this._options.omitSecurityDetails) {
-      this._addBarrier(page || request.serviceWorker(), response.securityDetails().then(details => {
+      this._addBarrier(page || request.serviceWorker(), response.internalSecurityDetails().then(details => {
         if (details)
           harEntry._securityDetails = details;
       }));
@@ -345,7 +345,7 @@ export class HarTracer {
     if (compressionCalculationBarrier)
       this._addBarrier(page || request.serviceWorker(), compressionCalculationBarrier.barrier);
 
-    const promise = response.body().then(buffer => {
+    const promise = response.internalBody().then(buffer => {
       if (this._options.omitScripts && request.resourceType() === 'script') {
         compressionCalculationBarrier?.setDecodedBodySize(0);
         return;
@@ -362,7 +362,7 @@ export class HarTracer {
     });
     this._addBarrier(page || request.serviceWorker(), promise);
 
-    this._addBarrier(page || request.serviceWorker(), response.httpVersion().then(httpVersion => {
+    this._addBarrier(page || request.serviceWorker(), response.internalHttpVersion().then(httpVersion => {
       harEntry.request.httpVersion = httpVersion;
       harEntry.response.httpVersion = httpVersion;
     }));
@@ -373,7 +373,7 @@ export class HarTracer {
     this._computeHarEntryTotalTime(harEntry);
 
     if (!this._options.omitSizes) {
-      this._addBarrier(page || request.serviceWorker(), response.sizes().then(sizes => {
+      this._addBarrier(page || request.serviceWorker(), response.internalSizes().then(sizes => {
         harEntry.response.bodySize = sizes.responseBodySize;
         harEntry.response.headersSize = sizes.responseHeadersSize;
         harEntry.response._transferSize = sizes.transferSize;
@@ -490,13 +490,13 @@ export class HarTracer {
     }
 
     this._recordRequestOverrides(harEntry, request);
-    this._addBarrier(page || request.serviceWorker(), request.rawRequestHeaders().then(headers => {
+    this._addBarrier(page || request.serviceWorker(), request.internalRawRequestHeaders().then(headers => {
       this._recordRequestHeadersAndCookies(harEntry, headers);
     }));
     // Record available headers including redirect location in case the tracing is stopped before
     // response extra info is received (in Chromium).
     this._recordResponseHeaders(harEntry, response.headers());
-    this._addBarrier(page || request.serviceWorker(), response.rawResponseHeaders().then(headers => {
+    this._addBarrier(page || request.serviceWorker(), response.internalRawResponseHeaders().then(headers => {
       this._recordResponseHeaders(harEntry, headers);
     }));
   }

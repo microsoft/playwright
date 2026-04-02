@@ -67,11 +67,11 @@ export class RequestDispatcher extends Dispatcher<Request, channels.RequestChann
   }
 
   async rawRequestHeaders(params: channels.RequestRawRequestHeadersParams, progress: Progress): Promise<channels.RequestRawRequestHeadersResult> {
-    return { headers: await progress.race(this._object.rawRequestHeaders()) };
+    return { headers: await this._object.rawRequestHeaders(progress) };
   }
 
   async response(params: channels.RequestResponseParams, progress: Progress): Promise<channels.RequestResponseResult> {
-    return { response: ResponseDispatcher.fromNullable(this._browserContextDispatcher, await progress.race(this._object.response())) };
+    return { response: ResponseDispatcher.fromNullable(this._browserContextDispatcher, await this._object.response(progress)) };
   }
 }
 
@@ -102,27 +102,27 @@ export class ResponseDispatcher extends Dispatcher<Response, channels.ResponseCh
   }
 
   async body(params: channels.ResponseBodyParams, progress: Progress): Promise<channels.ResponseBodyResult> {
-    return { binary: await progress.race(this._object.body()) };
+    return { binary: await this._object.body(progress) };
   }
 
   async securityDetails(params: channels.ResponseSecurityDetailsParams, progress: Progress): Promise<channels.ResponseSecurityDetailsResult> {
-    return { value: await progress.race(this._object.securityDetails()) || undefined };
+    return { value: await this._object.securityDetails(progress) || undefined };
   }
 
   async serverAddr(params: channels.ResponseServerAddrParams, progress: Progress): Promise<channels.ResponseServerAddrResult> {
-    return { value: await progress.race(this._object.serverAddr()) || undefined };
+    return { value: await this._object.serverAddr(progress) || undefined };
   }
 
   async rawResponseHeaders(params: channels.ResponseRawResponseHeadersParams, progress: Progress): Promise<channels.ResponseRawResponseHeadersResult> {
-    return { headers: await progress.race(this._object.rawResponseHeaders()) };
+    return { headers: await this._object.rawResponseHeaders(progress) };
   }
 
   async httpVersion(params: channels.ResponseHttpVersionParams, progress: Progress): Promise<channels.ResponseHttpVersionResult> {
-    return { value: await progress.race(this._object.httpVersion()) };
+    return { value: await this._object.httpVersion(progress) };
   }
 
   async sizes(params: channels.ResponseSizesParams, progress: Progress): Promise<channels.ResponseSizesResult> {
-    return { sizes: await progress.race(this._object.sizes()) };
+    return { sizes: await this._object.sizes(progress) };
   }
 }
 
@@ -223,28 +223,19 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
   }
 
   async fetch(params: channels.APIRequestContextFetchParams, progress: Progress): Promise<channels.APIRequestContextFetchResult> {
-    const fetchResponse = await this._object.fetch(progress, params);
-    return {
-      response: {
-        url: fetchResponse.url,
-        status: fetchResponse.status,
-        statusText: fetchResponse.statusText,
-        headers: fetchResponse.headers,
-        fetchUid: fetchResponse.fetchUid
-      }
-    };
+    const response = await this._object.fetch(progress, params);
+    return { response };
   }
 
   async fetchResponseBody(params: channels.APIRequestContextFetchResponseBodyParams, progress: Progress): Promise<channels.APIRequestContextFetchResponseBodyResult> {
-    return { binary: this._object.fetchResponses.get(params.fetchUid) };
+    return { binary: this._object.fetchResponseBody(progress, params.fetchUid) };
   }
 
   async fetchLog(params: channels.APIRequestContextFetchLogParams, progress: Progress): Promise<channels.APIRequestContextFetchLogResult> {
-    const log = this._object.fetchLog.get(params.fetchUid) || [];
-    return { log };
+    return { log: this._object.fetchLogForUid(progress, params.fetchUid) };
   }
 
   async disposeAPIResponse(params: channels.APIRequestContextDisposeAPIResponseParams, progress: Progress): Promise<void> {
-    this._object.disposeResponse(params.fetchUid);
+    this._object.disposeResponse(progress, params.fetchUid);
   }
 }

@@ -20,6 +20,7 @@ import { SdkObject } from './instrumentation';
 
 import type { Instrumentation } from './instrumentation';
 import type { Page } from './page';
+import type { Progress } from '@protocol/progress';
 
 type OnHandle = (accept: boolean, promptText?: string) => Promise<void>;
 
@@ -42,6 +43,14 @@ export class Dialog extends SdkObject {
     this._defaultValue = defaultValue || '';
   }
 
+  async accept(progress: Progress, promptText?: string) {
+    await progress.race(this._accept(promptText));
+  }
+
+  async dismiss(progress: Progress) {
+    await progress.race(this._dismiss());
+  }
+
   page() {
     return this._page;
   }
@@ -58,14 +67,14 @@ export class Dialog extends SdkObject {
     return this._defaultValue;
   }
 
-  async accept(promptText?: string) {
+  async _accept(promptText?: string) {
     assert(!this._handled, 'Cannot accept dialog which is already handled!');
     this._handled = true;
     this._page.browserContext.dialogManager._dialogWillClose(this);
     await this._onHandle(true, promptText);
   }
 
-  async dismiss() {
+  async _dismiss() {
     assert(!this._handled, 'Cannot dismiss dialog which is already handled!');
     this._handled = true;
     this._page.browserContext.dialogManager._dialogWillClose(this);
@@ -74,9 +83,9 @@ export class Dialog extends SdkObject {
 
   async _close() {
     if (this._type === 'beforeunload')
-      await this.accept();
+      await this._accept();
     else
-      await this.dismiss();
+      await this._dismiss();
   }
 }
 
@@ -128,7 +137,7 @@ export class DialogManager {
   async closeBeforeUnloadDialogs() {
     await Promise.all([...this._openedDialogs].map(async dialog => {
       if (dialog.type() === 'beforeunload')
-        await dialog.dismiss();
+        await dialog._dismiss();
     }));
   }
 }

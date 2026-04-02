@@ -43,24 +43,24 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async evaluateExpression(params: channels.JSHandleEvaluateExpressionParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionResult> {
-    const jsHandle = await progress.race(this._object.evaluateExpression(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
+    const jsHandle = await this._object.evaluateExpression(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
     return { value: serializeResult(jsHandle) };
   }
 
   async evaluateExpressionHandle(params: channels.JSHandleEvaluateExpressionHandleParams, progress: Progress): Promise<channels.JSHandleEvaluateExpressionHandleResult> {
-    const jsHandle = await progress.race(this._object.evaluateExpressionHandle(params.expression, { isFunction: params.isFunction }, parseArgument(params.arg)));
+    const jsHandle = await this._object.evaluateExpressionHandle(progress, params.expression, { isFunction: params.isFunction }, parseArgument(params.arg));
     // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
     return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
   async getProperty(params: channels.JSHandleGetPropertyParams, progress: Progress): Promise<channels.JSHandleGetPropertyResult> {
-    const jsHandle = await progress.race(this._object.getProperty(params.name));
+    const jsHandle = await this._object.getProperty(progress, params.name);
     // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
     return { handle: ElementHandleDispatcher.fromJSOrElementHandle(this.parentScope() as FrameDispatcher, jsHandle) };
   }
 
   async getPropertyList(params: channels.JSHandleGetPropertyListParams, progress: Progress): Promise<channels.JSHandleGetPropertyListResult> {
-    const map = await progress.race(this._object.getProperties());
+    const map = await this._object.getProperties(progress);
     const properties = [];
     for (const [name, value] of map) {
       // If "jsHandle" is an ElementHandle, it belongs to the same frame as "this".
@@ -70,7 +70,7 @@ export class JSHandleDispatcher<ParentScope extends JSHandleDispatcherParentScop
   }
 
   async jsonValue(params: channels.JSHandleJsonValueParams, progress: Progress): Promise<channels.JSHandleJsonValueResult> {
-    return { value: serializeResult(await progress.race(this._object.jsonValue())) };
+    return { value: serializeResult(await this._object.jsonValue(progress)) };
   }
 
   async dispose(_: any, progress: Progress) {

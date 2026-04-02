@@ -116,16 +116,18 @@ export abstract class APIRequestContext extends SdkObject {
     APIRequestContext.allInstances.add(this);
   }
 
-  protected _disposeImpl() {
-    APIRequestContext.allInstances.delete(this);
-    this.fetchResponses.clear();
-    this.fetchLog.clear();
-    this.emit(APIRequestContext.Events.Dispose);
+  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+
+  fetchResponseBody(progress: Progress, fetchUid: string): Buffer | undefined {
+    return this.fetchResponses.get(fetchUid);
   }
 
-  disposeResponse(fetchUid: string) {
-    this.fetchResponses.delete(fetchUid);
-    this.fetchLog.delete(fetchUid);
+  fetchLogForUid(progress: Progress, fetchUid: string): string[] {
+    return this.fetchLog.get(fetchUid) || [];
+  }
+
+  disposeResponse(progress: Progress, fetchUid: string) {
+    this._disposeResponse(fetchUid);
   }
 
   abstract tracing(): Tracing;
@@ -135,7 +137,18 @@ export abstract class APIRequestContext extends SdkObject {
   abstract _defaultOptions(): FetchRequestOptions;
   abstract _addCookies(cookies: channels.NetworkCookie[]): Promise<void>;
   abstract _cookies(url: URL): Promise<channels.NetworkCookie[]>;
-  abstract storageState(progress: Progress, indexedDB?: boolean): Promise<channels.APIRequestContextStorageStateResult>;
+
+  protected _disposeImpl() {
+    APIRequestContext.allInstances.delete(this);
+    this.fetchResponses.clear();
+    this.fetchLog.clear();
+    this.emit(APIRequestContext.Events.Dispose);
+  }
+
+  _disposeResponse(fetchUid: string) {
+    this.fetchResponses.delete(fetchUid);
+    this.fetchLog.delete(fetchUid);
+  }
 
   private _storeResponseBody(body: Buffer): string {
     const uid = createGuid();

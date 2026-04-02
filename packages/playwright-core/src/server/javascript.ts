@@ -21,6 +21,7 @@ import { serializeAsCallArgument } from '../utils/isomorphic/utilityScriptSerial
 import { LongStandingScope } from '../utils/isomorphic/manualPromise';
 
 import type * as dom from './dom';
+import type { Progress } from '@protocol/progress';
 import type { UtilityScript } from '@injected/utilityScript';
 
 interface TaggedAsJSHandle<T> {
@@ -137,6 +138,26 @@ export class JSHandle<T = any> extends SdkObject {
       (globalThis as any).leakedJSHandles.set(this, new Error('Leaked JSHandle'));
   }
 
+  async evaluateExpression(progress: Progress, expression: string, options: { isFunction?: boolean }, arg: any) {
+    return await progress.race(this.internalEvaluateExpression(expression, options, arg));
+  }
+
+  async evaluateExpressionHandle(progress: Progress, expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
+    return await progress.race(this.internalEvaluateExpressionHandle(expression, options, arg));
+  }
+
+  async getProperty(progress: Progress, propertyName: string): Promise<JSHandle> {
+    return await progress.race(this.internalGetProperty(propertyName));
+  }
+
+  async getProperties(progress: Progress): Promise<Map<string, JSHandle>> {
+    return await progress.race(this.internalGetProperties());
+  }
+
+  async jsonValue(progress: Progress): Promise<T> {
+    return await progress.race(this.internalJsonValue());
+  }
+
   async evaluate<R, Arg>(pageFunction: FuncOn<T, Arg, R>, arg?: Arg): Promise<R> {
     return evaluate(this._context, true /* returnByValue */, pageFunction, this, arg);
   }
@@ -145,27 +166,27 @@ export class JSHandle<T = any> extends SdkObject {
     return evaluate(this._context, false /* returnByValue */, pageFunction, this, arg);
   }
 
-  async evaluateExpression(expression: string, options: { isFunction?: boolean }, arg: any) {
+  async internalEvaluateExpression(expression: string, options: { isFunction?: boolean }, arg: any) {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: true }, this, arg);
   }
 
-  async evaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
+  async internalEvaluateExpressionHandle(expression: string, options: { isFunction?: boolean }, arg: any): Promise<JSHandle<any>> {
     return await evaluateExpression(this._context, expression, { ...options, returnByValue: false }, this, arg);
   }
 
-  async getProperty(propertyName: string): Promise<JSHandle> {
+  async internalGetProperty(propertyName: string): Promise<JSHandle> {
     const objectHandle = await this.evaluateHandle((object: any, propertyName) => {
       const result: any = { __proto__: null };
       result[propertyName] = object[propertyName];
       return result;
     }, propertyName);
-    const properties = await objectHandle.getProperties();
+    const properties = await objectHandle.internalGetProperties();
     const result = properties.get(propertyName)!;
     objectHandle.dispose();
     return result;
   }
 
-  async getProperties(): Promise<Map<string, JSHandle>> {
+  async internalGetProperties(): Promise<Map<string, JSHandle>> {
     if (!this._objectId)
       return new Map();
     return this._context.getProperties(this);
@@ -175,7 +196,7 @@ export class JSHandle<T = any> extends SdkObject {
     return this._value;
   }
 
-  async jsonValue(): Promise<T> {
+  async internalJsonValue(): Promise<T> {
     if (!this._objectId)
       return this._value;
     const script = `(utilityScript, ...args) => utilityScript.jsonValue(...args)`;
