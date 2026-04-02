@@ -451,6 +451,7 @@ class HtmlBuilder {
         outcome: test.outcome(),
         path,
         results,
+        repeatEachIndex: test.repeatEachIndex || undefined, // Do not include zero.
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
       },
       testCaseSummary: {
@@ -464,6 +465,7 @@ class HtmlBuilder {
         outcome: test.outcome(),
         path,
         ok: test.outcome() === 'expected' || test.outcome() === 'flaky',
+        repeatEachIndex: test.repeatEachIndex || undefined, // Do not include zero.
         results: results.map(result => {
           return {
             attachments: result.attachments.map(a => ({ name: a.name, contentType: a.contentType, path: a.path })),

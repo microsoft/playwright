@@ -84,6 +84,7 @@ export type TestCaseSummary = {
   duration: number;
   ok: boolean;
   results: TestResultSummary[];
+  repeatEachIndex?: number;
 };
 
 export type TestResultSummary = {
