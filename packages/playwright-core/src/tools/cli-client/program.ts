@@ -38,18 +38,22 @@ type GlobalOptions = {
   version?: boolean;
 };
 
-type OpenOptions = {
+type AttachOptions = {
+  config?: string;
   cdp?: string;
   endpoint?: string;
+  extension?: boolean | string;
+};
+
+type OpenOptions = {
   browser?: string;
   config?: string;
-  extension?: boolean;
   headed?: boolean;
   persistent?: boolean;
   profile?: string;
 };
 
-const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+const globalOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions))[] = [
   'cdp',
   'endpoint',
   'browser',
@@ -64,7 +68,7 @@ const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
   'version',
 ];
 
-const booleanOptions: (keyof (GlobalOptions & OpenOptions & { all?: boolean }))[] = [
+const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { all?: boolean }))[] = [
   'all',
   'help',
   'raw',
@@ -143,12 +147,16 @@ export async function program(options?: { embedderVersion?: string}) {
     }
     case 'attach': {
       const attachTarget = args._[1] as string | undefined;
-      if (attachTarget && (args.cdp || args.endpoint)) {
-        console.error(`Error: cannot use target name with --cdp or --endpoint`);
+      if (attachTarget && (args.cdp || args.endpoint || args.extension)) {
+        console.error(`Error: cannot use target name with --cdp, --endpoint, or --extension`);
         process.exit(1);
       }
       if (attachTarget)
         args.endpoint = attachTarget;
+      if (typeof args.extension === 'string') {
+        args.browser = args.extension;
+        args.extension = true;
+      }
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
       args.session = attachSessionName;
       await startSession(attachSessionName, registry, clientInfo, args);

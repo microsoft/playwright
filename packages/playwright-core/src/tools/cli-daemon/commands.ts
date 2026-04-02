@@ -51,7 +51,6 @@ const open = declareCommand({
   options: z.object({
     browser: z.string().optional().describe('Browser or chrome channel to use, possible values: chrome, firefox, webkit, msedge.'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
-    extension: z.boolean().optional().describe('Connect to browser extension'),
     headed: z.boolean().optional().describe('Run browser in headed mode'),
     persistent: z.boolean().optional().describe('Use persistent browser profile'),
     profile: z.string().optional().describe('Use persistent browser profile, store profile in specified directory.'),
@@ -70,6 +69,7 @@ const attach = declareCommand({
   options: z.object({
     cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL.'),
     endpoint: z.string().optional().describe('Playwright browser server endpoint to attach to.'),
+    extension: z.union([z.boolean(), z.string()]).optional().describe('Connect to browser extension, optionally specify browser name (e.g. --extension=chrome)'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
     session: z.string().optional().describe('Session name (defaults to bound browser name or "default")'),
   }),
