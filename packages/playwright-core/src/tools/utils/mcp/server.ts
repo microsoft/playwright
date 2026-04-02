@@ -95,7 +95,11 @@ export function createServer(name: string, version: string, factory: ServerBacke
 
   let backendPromise: Promise<ServerBackend> | undefined;
 
-  const onClose = () => backendPromise?.then(b => backendManager.disposeBackend(b)).catch(serverDebug);
+  const onClose = () => {
+    const p = backendPromise;
+    backendPromise = undefined;
+    p?.then(b => backendManager.disposeBackend(b)).catch(serverDebug);
+  };
   addServerListener(server, 'close', onClose);
 
   server.setRequestHandler(mcpBundle.CallToolRequestSchema, async (request, extra) => {
