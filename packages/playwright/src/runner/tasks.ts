@@ -31,7 +31,8 @@ import { detectChangedTestFiles } from './vcs';
 import { Suite } from '../common/test';
 import { createTestGroups } from '../runner/testGroups';
 import { cacheDir } from '../transform/compilationCache';
-import { createFileMatcherFromArguments, removeDirAndLogToConsole } from '../util';
+import { createTitleMatcher, forceRegExp, removeDirAndLogToConsole } from '../util';
+import { createFiltersFromArguments } from '../common/suiteUtils';
 
 import type { TestGroup } from '../runner/testGroups';
 import type { EnvByProjectId } from './dispatcher';
@@ -258,8 +259,11 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
   return {
     title: 'load tests',
     setup: async (testRun, errors, softErrors) => {
-      if (testRun.config.cliArgs.length)
-        testRun.config.loadFileFilters.push(createFileMatcherFromArguments(testRun.config.cliArgs));
+      if (testRun.config.cliArgs.length) {
+        const { testFilter, fileFilter } = createFiltersFromArguments(testRun.config.cliArgs);
+        testRun.config.loadFileFilters.push(fileFilter);
+        testRun.config.preOnlyTestFilters.push(testFilter);
+      }
 
       if (testRun.config.cliTestList) {
         const { testFilter, fileFilter } = await loadTestList(testRun.config, testRun.config.cliTestList);
@@ -274,6 +278,15 @@ export function createLoadTask(mode: 'out-of-process' | 'in-process', options: {
         // foo.spec.ts > some test
         const { testFilter } = await loadTestList(testRun.config, testRun.config.cliTestListInvert);
         testRun.config.preOnlyTestFilters.push(test => !testFilter(test));
+      }
+
+      if (testRun.config.cliGrep || testRun.config.cliGrepInvert) {
+        const grepMatcher = testRun.config.cliGrep ? createTitleMatcher(forceRegExp(testRun.config.cliGrep)) : () => true;
+        const grepInvertMatcher = testRun.config.cliGrepInvert ? createTitleMatcher(forceRegExp(testRun.config.cliGrepInvert)) : () => false;
+        testRun.config.preOnlyTestFilters.push(test => {
+          const grepTitle = test._grepTitleWithTags();
+          return !grepInvertMatcher(grepTitle) && grepMatcher(grepTitle);
+        });
       }
 
       await collectProjectsAndTestFiles(testRun, !!options.doNotRunDepsOutsideProjectFilter);

@@ -19,10 +19,10 @@ import fs from 'fs';
 import { toPosixPath } from 'playwright-core/lib/utils';
 
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
-import { createFileFiltersFromArguments, createTitleMatcher, errorWithFile, forceRegExp, parseLocationArg } from '../util';
+import { createTitleMatcher, errorWithFile, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
-import { applyRepeatEachIndex, bindFileSuiteToProject, filterByFocusedLine, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
+import { applyRepeatEachIndex, bindFileSuiteToProject, filterOnly, filterTestsRemoveEmptySuites } from '../common/suiteUtils';
 import { Suite } from '../common/test';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
@@ -34,7 +34,7 @@ import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
 import type { FullProjectInternal } from '../common/config';
 import type { FullConfigInternal } from '../common/config';
 import type { TestCase } from '../common/test';
-import type { Matcher, TestCaseFilter, TestFileFilter } from '../util';
+import type { Matcher, TestCaseFilter } from '../util';
 import type { RawSourceMap } from '../utilsBundle';
 
 
@@ -131,20 +131,13 @@ export async function createRootSuite(testRun: TestRun, errors: TestError[], sho
   const projectSuites = new Map<FullProjectInternal, Suite>();
   const filteredProjectSuites = new Map<FullProjectInternal, Suite>();
 
-  // Filter all the projects using grep, testId, file names.
+  // Filter all the projects using grep, testId, file names, etc.
   {
-    // Interpret cli parameters.
-    const cliFileFilters = createFileFiltersFromArguments(config.cliArgs);
-    const grepMatcher = config.cliGrep ? createTitleMatcher(forceRegExp(config.cliGrep)) : () => true;
-    const grepInvertMatcher = config.cliGrepInvert ? createTitleMatcher(forceRegExp(config.cliGrepInvert)) : () => false;
-    const cliTitleMatcher = (title: string) => !grepInvertMatcher(title) && grepMatcher(title);
-
-    // Filter file suites for all projects.
     for (const [project, fileSuites] of testRun.projectSuites) {
       const projectSuite = createProjectSuite(project, fileSuites);
       projectSuites.set(project, projectSuite);
 
-      const filteredProjectSuite = filterProjectSuite(projectSuite, { cliFileFilters, cliTitleMatcher, testFilters: config.preOnlyTestFilters });
+      const filteredProjectSuite = filterProjectSuite(projectSuite, config.preOnlyTestFilters);
       filteredProjectSuites.set(project, filteredProjectSuite);
     }
   }
@@ -240,21 +233,13 @@ function createProjectSuite(project: FullProjectInternal, fileSuites: Suite[]): 
   return projectSuite;
 }
 
-function filterProjectSuite(projectSuite: Suite, options: { cliFileFilters: TestFileFilter[], cliTitleMatcher?: Matcher, testFilters: TestCaseFilter[] }): Suite {
+function filterProjectSuite(projectSuite: Suite, testFilters: TestCaseFilter[]): Suite {
   // Fast path.
-  if (!options.cliFileFilters.length && !options.cliTitleMatcher && !options.testFilters.length)
+  if (!testFilters.length)
     return projectSuite;
 
   const result = projectSuite._deepClone();
-  if (options.cliFileFilters.length)
-    filterByFocusedLine(result, options.cliFileFilters);
-  filterTestsRemoveEmptySuites(result, (test: TestCase) => {
-    if (!options.testFilters.every(filter => filter(test)))
-      return false;
-    if (options.cliTitleMatcher && !options.cliTitleMatcher(test._grepTitleWithTags()))
-      return false;
-    return true;
-  });
+  filterTestsRemoveEmptySuites(result, test => testFilters.every(filter => filter(test)));
   return result;
 }
 
