@@ -297,6 +297,16 @@ test('snapshot depth', async ({ cli, server }) => {
     - button "Cancel" [ref=e6]`);
 });
 
+test('attach --cdp', async ({ cli, cdpServer, server }) => {
+  const context = await cdpServer.start();
+  await context.pages()[0].goto(server.HELLO_WORLD);
+  const { output, snapshot } = await cli('attach', `--cdp=${cdpServer.endpoint}`);
+  expect(output).toContain(`### Page
+- Page URL: ${server.HELLO_WORLD}
+- Page Title: Title`);
+  expect(snapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
+});
+
 test('eval --raw', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('eval', '--raw', '() => document.title');

@@ -39,6 +39,7 @@ type GlobalOptions = {
 };
 
 type OpenOptions = {
+  cdp?: string;
   endpoint?: string;
   browser?: string;
   config?: string;
@@ -49,6 +50,7 @@ type OpenOptions = {
 };
 
 const globalOptions: (keyof (GlobalOptions & OpenOptions))[] = [
+  'cdp',
   'endpoint',
   'browser',
   'config',
@@ -140,11 +142,15 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     case 'attach': {
-      const attachTarget = args._[1];
-      const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget;
-      args.endpoint = attachTarget;
-      args.session = attachSessionName;
-      await startSession(attachSessionName, registry, clientInfo, args);
+      if (args.cdp) {
+        await startSession(sessionName, registry, clientInfo, args);
+      } else {
+        const attachTarget = args._[1];
+        const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget;
+        args.endpoint = attachTarget;
+        args.session = attachSessionName;
+        await startSession(attachSessionName, registry, clientInfo, args);
+      }
       return;
     }
     case 'close':
