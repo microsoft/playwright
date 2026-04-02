@@ -147,7 +147,6 @@ export async function program(options?: { embedderVersion?: string}) {
         console.error(`Error: cannot use target name with --cdp or --endpoint`);
         process.exit(1);
       }
-      // --cdp and --endpoint don't use a positional name; name is only valid as endpoint
       if (attachTarget)
         args.endpoint = attachTarget;
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
