@@ -104,6 +104,37 @@ test.describe(() => {
   });
 });
 
+test('config ignoreDefaultArgs merged with persistent mode defaults', async ({ startClient, mcpBrowser }, testInfo) => {
+  test.skip(!['chrome', 'chromium', 'msedge'].includes(mcpBrowser!), 'chrome://version is Chromium-specific');
+  const config: Config = {
+    browser: {
+      userDataDir: testInfo.outputPath('user-data-dir'),
+      launchOptions: {
+        ignoreDefaultArgs: ['--password-store=basic'],
+      },
+    },
+  };
+  const { client } = await startClient({ config });
+
+  await client.callTool({
+    name: 'browser_navigate',
+    arguments: { url: 'chrome://version' },
+  });
+
+  const result = await client.callTool({
+    name: 'browser_evaluate',
+    arguments: { function: '() => document.getElementById("command_line").innerText' },
+  });
+  const commandLine = result.content[0].text;
+
+  // User-specified arg should be removed.
+  expect(commandLine).not.toContain('--password-store=basic');
+  // Persistent mode's built-in --disable-extensions should also be removed.
+  expect(commandLine).not.toContain('--disable-extensions');
+  // Other default args should still be present.
+  expect(commandLine).toContain('--use-mock-keychain');
+});
+
 test('browser_get_config returns merged config from file, env and cli', async ({ startClient }) => {
   const { client } = await startClient({
     config: {
