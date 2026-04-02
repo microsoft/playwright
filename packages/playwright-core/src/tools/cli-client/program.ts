@@ -143,8 +143,12 @@ export async function program(options?: { embedderVersion?: string}) {
     }
     case 'attach': {
       const attachTarget = args._[1] as string | undefined;
+      if (attachTarget && (args.cdp || args.endpoint)) {
+        console.error(`Error: cannot use target name with --cdp or --endpoint`);
+        process.exit(1);
+      }
       // --cdp and --endpoint don't use a positional name; name is only valid as endpoint
-      if (!args.cdp && !args.endpoint && attachTarget)
+      if (attachTarget)
         args.endpoint = attachTarget;
       const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
       args.session = attachSessionName;
