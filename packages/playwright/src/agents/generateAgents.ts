@@ -202,7 +202,7 @@ export class CopilotGenerator {
       'name': agent.name,
       'description': agent.description + examples,
       'tools': agent.tools,
-      'model': 'Claude Sonnet 4',
+      'model': 'Claude Sonnet 4.6',
       'mcp-servers': CopilotGenerator.mcpServers,
     };
     lines.push(`---`);
