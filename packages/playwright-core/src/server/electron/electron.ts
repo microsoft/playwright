@@ -34,6 +34,7 @@ import { SdkObject } from '../instrumentation';
 import * as js from '../javascript';
 import { envArrayToObject, launchProcess } from '../utils/processLauncher';
 import { WebSocketTransport } from '../transport';
+import { nullProgress } from '../progress';
 
 import type { BrowserOptions, BrowserProcess } from '../browser';
 import type { BrowserContext } from '../browserContext';
@@ -131,9 +132,9 @@ export class ElectronApplication extends SdkObject {
     return this._browserContext;
   }
 
-  async close() {
+  async close(progress: Progress) {
     // This will call BrowserContext.setCustomCloseHandler.
-    await this._browserContext.close({ reason: 'Application exited' });
+    await this._browserContext.close(progress, { reason: 'Application exited' });
   }
 
   async browserWindow(progress: Progress, page: Page): Promise<js.JSHandle<BrowserWindow>> {
@@ -223,7 +224,7 @@ export class Electron extends SdkObject {
       stdio: 'pipe',
       cwd: options.cwd,
       tempDirectories,
-      attemptToGracefullyClose: () => app!.close(),
+      attemptToGracefullyClose: () => app!.close(nullProgress),
       handleSIGINT: true,
       handleSIGTERM: true,
       handleSIGHUP: true,

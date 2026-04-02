@@ -289,7 +289,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   protected abstract doUpdateDefaultViewport(): Promise<void>;
   protected abstract doUpdateDefaultEmulatedMedia(): Promise<void>;
   protected abstract doExposePlaywrightBinding(): Promise<void>;
-  protected abstract doClose(reason: string | undefined): Promise<void>;
+  protected abstract doClose(reason: string | undefined): Promise<void | 'close-browser'>;
   protected abstract onClosePersistent(): void;
 
   async cookies(urls: string | string[] | undefined = []): Promise<channels.NetworkCookie[]> {
@@ -520,7 +520,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     this._customCloseHandler = handler;
   }
 
-  async close(options: { reason?: string }) {
+  async close(progress: Progress, options: { reason?: string }) {
     if (this._closedStatus === 'open') {
       if (options.reason)
         this._closeReason = options.reason;
@@ -536,7 +536,9 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         await this._customCloseHandler();
       } else {
         // Close the context.
-        await this.doClose(options.reason);
+        const disposition = await this.doClose(options.reason);
+        if (disposition === 'close-browser')
+          await this._browser.close(progress, { reason: options.reason });
       }
 
       // We delete downloads after context closure
@@ -616,7 +618,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
         for (const origin of originsToSave) {
           const frame = page.mainFrame();
           await frame.gotoImpl(progress, origin, {});
-          const storage: SerializedStorage = await progress.race(frame.evaluateExpression(collectScript, { world: 'utility' }));
+          const storage: SerializedStorage = await frame.evaluateExpression(progress, collectScript, { world: 'utility' });
           if (storage.localStorage.length || storage.indexedDB?.length)
             result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         }
@@ -665,7 +667,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
             const script = new (module.exports.StorageScript())(${this._browser.options.name === 'firefox'});
             return script.restore(${JSON.stringify(newOrigins.get(origin))});
           })()`;
-          await progress.race(frame.evaluateExpression(restoreScript, { world: 'utility' }));
+          await frame.evaluateExpression(progress, restoreScript, { world: 'utility' });
         }
       }
       this._origins = new Set([...newOrigins.keys()]);

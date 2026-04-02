@@ -36,6 +36,7 @@ import { platformToFontFamilies } from './defaultFontFamilies';
 import { TargetClosedError } from '../errors';
 import { isSessionClosedError } from '../protocolError';
 import { startAutomaticVideoRecording } from '../videoRecorder';
+import { nullProgress } from '../progress';
 
 import type { CRSession } from './crConnection';
 import type { Protocol } from './protocol';
@@ -308,8 +309,8 @@ export class CRPage implements PageDelegate {
     return this._sessionForHandle(handle)._getContentQuads(handle);
   }
 
-  async setInputFilePaths(handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
-    const frame = await handle.ownerFrame();
+  async setInputFilePaths(progress: Progress, handle: dom.ElementHandle<HTMLInputElement>, files: string[]): Promise<void> {
+    const frame = await handle.ownerFrame(progress);
     if (!frame)
       throw new Error('Cannot set input files to detached input element');
     const parentSession = this._sessionForFrame(frame);
@@ -1078,8 +1079,8 @@ class FrameSession {
       return null;
     if (frame === this._page.mainFrame())
       return { x: 0, y: 0 };
-    const element = await frame.frameElement();
-    const box = await element.boundingBox();
+    const element = await frame.frameElement(nullProgress);
+    const box = await element.boundingBox(nullProgress);
     return box;
   }
 

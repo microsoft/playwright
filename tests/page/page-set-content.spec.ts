@@ -16,6 +16,7 @@
  */
 
 import { test as it, expect } from './pageTest';
+import { nullProgress } from '../../packages/playwright-core/lib/server/progress';
 
 const expectedOutput = '<html><head></head><body><div>hello</div></body></html>';
 
@@ -133,7 +134,7 @@ it('should return empty content there is no iframe src', async ({ page, browserN
 it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
   it.skip(browserName === 'firefox', 'tampering with console.debug in utility world does not work');
 
-  await toImpl(page).mainFrame().evaluateExpression(String(() => {
+  await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {
     window['saved'] = console.debug.bind(console);
     console.debug = () => {};
   }), { isFunction: true, world: 'utility' });
@@ -141,7 +142,7 @@ it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
   expect(error.message).toContain('page.setContent: Timeout 1000ms exceeded');
 
   // Should recover after timeout.
-  await toImpl(page).mainFrame().evaluateExpression(String(() => {
+  await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {
     console.debug = window['saved'];
   }), { isFunction: true, world: 'utility' });
   await page.setContent(`<div>world</div>`);
@@ -151,7 +152,7 @@ it('should handle timeout properly', async ({ page, toImpl, browserName }) => {
 it('should handle timeout properly 2', async ({ page, toImpl, trace }) => {
   it.skip(trace === 'on');
 
-  await toImpl(page).mainFrame().evaluateExpression(String(() => {
+  await toImpl(page).mainFrame().evaluateExpression(nullProgress, String(() => {
     document.close = () => {
       while (true) {}
     };

@@ -507,11 +507,10 @@ export class BidiBrowserContext extends BrowserContext {
   override async clearCache(): Promise<void> {
   }
 
-  async doClose(reason: string | undefined) {
+  async doClose(reason: string | undefined): Promise<void | 'close-browser'> {
     if (!this._browserContextId) {
       // Closing persistent context should close the browser.
-      await this._browser.close({ reason });
-      return;
+      return 'close-browser';
     }
     await this._browser._browserSession.send('browser.removeUserContext', {
       userContext: this._browserContextId
