@@ -36,7 +36,7 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     .option('--persistent', 'use a persistent browser context')
     .option('--profile <path>', 'path to the user data dir')
     .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
-    .option('--cdp <endpoint>', 'connect to an existing browser via CDP endpoint URL')
+    .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
     .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
     .option('--init-workspace', 'initialize workspace')
     .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')

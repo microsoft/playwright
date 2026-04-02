@@ -65,12 +65,13 @@ const attach = declareCommand({
   description: 'Attach to a running Playwright browser',
   category: 'core',
   args: z.object({
-    name: z.string().optional().describe('Name or endpoint of the browser to attach to'),
+    name: z.string().optional().describe('Bound browser name to attach to'),
   }),
   options: z.object({
     cdp: z.string().optional().describe('Connect to an existing browser via CDP endpoint URL.'),
+    endpoint: z.string().optional().describe('Playwright browser server endpoint to attach to.'),
     config: z.string().optional().describe('Path to the configuration file, defaults to .playwright/cli.config.json'),
-    session: z.string().optional().describe('Session name alias (defaults to the attach target name)'),
+    session: z.string().optional().describe('Session name (defaults to bound browser name or "default")'),
   }),
   toolName: 'browser_snapshot',
   toolParams: () => ({ filename: '<auto>' }),

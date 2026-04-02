@@ -191,9 +191,5 @@ export function explicitSessionName(sessionName?: string): string | undefined {
 }
 
 export function resolveSessionName(sessionName?: string): string {
-  if (sessionName)
-    return sessionName;
-  if (process.env.PLAYWRIGHT_CLI_SESSION)
-    return process.env.PLAYWRIGHT_CLI_SESSION;
-  return 'default';
+  return explicitSessionName(sessionName) || 'default';
 }

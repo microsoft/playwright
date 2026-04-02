@@ -142,15 +142,13 @@ export async function program(options?: { embedderVersion?: string}) {
       return;
     }
     case 'attach': {
-      if (args.cdp) {
-        await startSession(sessionName, registry, clientInfo, args);
-      } else {
-        const attachTarget = args._[1];
-        const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget;
+      const attachTarget = args._[1] as string | undefined;
+      // --cdp and --endpoint don't use a positional name; name is only valid as endpoint
+      if (!args.cdp && !args.endpoint && attachTarget)
         args.endpoint = attachTarget;
-        args.session = attachSessionName;
-        await startSession(attachSessionName, registry, clientInfo, args);
-      }
+      const attachSessionName = explicitSessionName(args.session as string) ?? attachTarget ?? sessionName;
+      args.session = attachSessionName;
+      await startSession(attachSessionName, registry, clientInfo, args);
       return;
     }
     case 'close':
