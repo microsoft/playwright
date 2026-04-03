@@ -22,7 +22,7 @@ import { execSync, spawn } from 'child_process';
 import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
-import { createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
+import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
@@ -295,9 +295,9 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   let count = 0;
   const runningSessions = new Set<string>();
   const entries = registry.entryMap();
-  const clientKey = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
+  const key = clientKey(clientInfo);
   for (const [workspaceKey, list] of entries) {
-    if (!all && workspaceKey !== clientKey)
+    if (!all && workspaceKey !== key)
       continue;
     count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions);
   }
@@ -306,7 +306,7 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   const serverEntries = await serverRegistry.list();
   const filteredServerEntries = new Map<string, BrowserStatus[]>();
   for (const [workspaceKey, list] of serverEntries) {
-    if (!all && workspaceKey !== clientKey)
+    if (!all && workspaceKey !== key)
       continue;
     const unattached = list.filter(d => !runningSessions.has(d.title));
     if (unattached.length)

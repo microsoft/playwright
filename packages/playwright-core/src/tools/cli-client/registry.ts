@@ -28,6 +28,10 @@ export type ClientInfo = {
   workspaceDir: string | undefined;
 };
 
+export function clientKey(clientInfo: ClientInfo): string {
+  return clientInfo.workspaceDir || clientInfo.workspaceDirHash;
+}
+
 export type SessionConfig = {
   name: string;
   version: string;
@@ -58,14 +62,13 @@ export class Registry {
   }
 
   entry(clientInfo: ClientInfo, sessionName: string): SessionFile | undefined {
-    const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
+    const key = clientKey(clientInfo);
     const entries = this._files.get(key) || [];
     return entries.find(entry => entry.config.name === sessionName);
   }
 
   entries(clientInfo: ClientInfo): SessionFile[] {
-    const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
-    return this._files.get(key) || [];
+    return this._files.get(clientKey(clientInfo)) || [];
   }
 
   entryMap(): Map<string, SessionFile[]> {
@@ -77,7 +80,7 @@ export class Registry {
     if (!entry)
       throw new Error(`Could not start the session "${sessionName}"`);
 
-    const key = clientInfo.workspaceDir || clientInfo.workspaceDirHash;
+    const key = clientKey(clientInfo);
     let list = this._files.get(key);
     if (!list) {
       list = [];

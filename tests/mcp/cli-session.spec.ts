@@ -34,8 +34,8 @@ test('list', async ({ cli, server }) => {
 });
 
 test('list shows sessions when cwd has no .playwright directory', async ({ cli, server }) => {
-  // Use a temp dir outside testInfo.outputPath() so findWorkspaceDir returns undefined,
-  // meaning the registry key is workspaceDirHash instead of workspaceDir.
+  // Temp dir must have no .playwright ancestor so findWorkspaceDir returns undefined
+  // and the registry key falls back to workspaceDirHash.
   const tmpDir = await fs.promises.mkdtemp(path.join(os.tmpdir(), 'pw-no-workspace-'));
   try {
     await cli('open', server.HELLO_WORLD, { cwd: tmpDir });
