@@ -19,7 +19,7 @@ import { ProgramOption } from '../../utilsBundle';
 import * as mcpServer from '../utils/mcp/server';
 import { commaSeparatedList, dotenvFileLoader, enumParser, headerParser, numberParser, resolutionParser, resolveCLIConfigForMCP, semicolonSeparatedList } from './config';
 import { setupExitWatchdog } from './watchdog';
-import { createBrowser } from './browserFactory';
+import { createBrowser, createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
@@ -114,6 +114,7 @@ export function decorateMCPCommand(command: Command) {
         const useSharedBrowser = config.sharedBrowserContext || config.browser.isolated;
         let sharedBrowser: playwright.Browser | undefined;
         let clientCount = 0;
+        const clientNameCounters = new Map<string, number>();
 
         const factory: mcpServer.ServerBackendFactory = {
           name: 'Playwright',
@@ -121,10 +122,20 @@ export function decorateMCPCommand(command: Command) {
           version,
           toolSchemas: tools.map(tool => tool.schema),
           create: async (clientInfo: ClientInfo) => {
-            if (useSharedBrowser && clientCount === 0)
-              sharedBrowser = await createBrowser(config, clientInfo);
+            if (useSharedBrowser && clientCount === 0) {
+              const { browser, canBind } = await createBrowserWithInfo(config, clientInfo);
+              sharedBrowser = browser;
+              if (canBind)
+                await browser.bind(clientInfo.clientName, { workspaceDir: clientInfo.cwd });
+            }
             clientCount++;
-            const browser = sharedBrowser || await createBrowser(config, clientInfo);
+            const { browser, canBind } = sharedBrowser ? { browser: sharedBrowser, canBind: false } : await createBrowserWithInfo(config, clientInfo);
+            if (canBind) {
+              const count = (clientNameCounters.get(clientInfo.clientName) ?? 0) + 1;
+              clientNameCounters.set(clientInfo.clientName, count);
+              const sessionName = count > 1 ? `${clientInfo.clientName} (${count})` : clientInfo.clientName;
+              await browser.bind(sessionName, { workspaceDir: clientInfo.cwd });
+            }
             const browserContext = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
             return new BrowserBackend(config, browserContext, tools);
           },
