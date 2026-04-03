@@ -116,7 +116,7 @@ export class RawMouseImpl implements input.RawMouse {
     if (forClick) {
       // Avoid extra protocol calls related to drag and drop, because click relies on
       // move-down-up protocol commands being sent synchronously.
-      await actualMove();
+      await progress.race(actualMove());
       return;
     }
     await this._dragManager.interceptDragCausedByMove(progress, x, y, button, buttons, modifiers, actualMove);

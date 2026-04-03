@@ -194,7 +194,7 @@ export abstract class Browser extends SdkObject {
   }
 
   async killForTests(progress: Progress) {
-    await this.options.browserProcess.kill();
+    await progress.race(this.options.browserProcess.kill());
   }
 }
 

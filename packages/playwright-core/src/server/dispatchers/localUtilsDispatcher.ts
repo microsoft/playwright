@@ -85,11 +85,11 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
 
   async connect(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
     if (URL.canParse(params.endpoint))
-      return await this._connectOverWebSocket(params, progress);
-    return await this._connectOverPipe(params, progress);
+      return await this._connectOverWebSocket(progress, params);
+    return await progress.race(this._connectOverPipe(params));
   }
 
-  private async _connectOverWebSocket(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+  private async _connectOverWebSocket(progress: Progress, params: channels.LocalUtilsConnectParams): Promise<channels.LocalUtilsConnectResult> {
     const wsHeaders = {
       'User-Agent': getUserAgent(),
       'x-playwright-proxy': params.exposeNetwork ?? '',
@@ -126,7 +126,7 @@ export class LocalUtilsDispatcher extends Dispatcher<SdkObject, channels.LocalUt
     return { pipe, headers: transport.headers };
   }
 
-  private async _connectOverPipe(params: channels.LocalUtilsConnectParams, progress: Progress): Promise<channels.LocalUtilsConnectResult> {
+  private async _connectOverPipe(params: channels.LocalUtilsConnectParams): Promise<channels.LocalUtilsConnectResult> {
     const socket = await new Promise<net.Socket>((resolve, reject) => {
       const conn = net.connect(params.endpoint, () => resolve(conn));
       conn.on('error', reject);

@@ -125,7 +125,7 @@ export async function generateFrameSelector(progress: Progress, frame: Frame): P
     selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame));
     frame = parent;
   }
-  const result = await Promise.all(selectorPromises);
+  const result = await progress.race(Promise.all(selectorPromises));
   return result.reverse();
 }
 

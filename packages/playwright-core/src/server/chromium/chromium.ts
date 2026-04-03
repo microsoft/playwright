@@ -132,7 +132,7 @@ export class Chromium extends BrowserType {
       browser.on(Browser.Events.Disconnected, doCleanup);
       return browser;
     } catch (error) {
-      await doClose().catch(() => {});
+      await progress.race(doClose().catch(() => {}));
       throw error;
     }
   }
@@ -289,7 +289,7 @@ export class Chromium extends BrowserType {
         headers: headersObjectToArray(headers),
       }, disconnectFromSelenium);
     } catch (e) {
-      await disconnectFromSelenium();
+      await progress.race(disconnectFromSelenium());
       throw e;
     }
   }

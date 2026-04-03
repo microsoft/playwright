@@ -55,13 +55,34 @@ function isProgressRace(node) {
 }
 
 /**
- * Checks whether `progress` is passed as first argument to a call.
+ * Unwraps .then()/.catch()/.finally() chains to get the root call.
  */
-function passesProgressAsFirstArg(node) {
-  if (node.type !== 'CallExpression')
+function unwrapPromiseChain(node) {
+  while (node.type === 'CallExpression' &&
+         node.callee.type === 'MemberExpression' &&
+         node.callee.property.type === 'Identifier' &&
+         ['then', 'catch', 'finally'].includes(node.callee.property.name)) {
+    node = node.callee.object;
+  }
+  return node;
+}
+
+/**
+ * Checks whether a Progress-typed value is passed as first argument to a call,
+ * unwrapping any .then/.catch/.finally chains.
+ */
+function passesProgressAsFirstArg(node, services) {
+  const root = unwrapPromiseChain(node);
+  if (root.type !== 'CallExpression')
     return false;
-  const firstArg = node.arguments[0];
-  return firstArg?.type === 'Identifier' && firstArg.name === 'progress';
+  const firstArg = root.arguments[0];
+  if (!firstArg)
+    return false;
+  const checker = services.program.getTypeChecker();
+  const tsNode = services.esTreeNodeToTSNodeMap.get(firstArg);
+  const type = checker.getTypeAtLocation(tsNode);
+  const typeName = type.symbol?.name || type.aliasSymbol?.name || checker.typeToString(type);
+  return typeName === 'Progress';
 }
 
 /**
@@ -137,12 +158,15 @@ const rule = createRule({
 
         const awaited = node.argument;
 
-        // await progress.race(...) is always fine.
-        if (isProgressRace(awaited))
+        // await progress.anything(...) is always fine — calls on the progress object itself.
+        if (awaited.type === 'CallExpression' &&
+            awaited.callee.type === 'MemberExpression' &&
+            awaited.callee.object.type === 'Identifier' &&
+            awaited.callee.object.name === 'progress')
           return;
 
         // await someCall(progress, ...) is fine.
-        if (passesProgressAsFirstArg(awaited))
+        if (passesProgressAsFirstArg(awaited, services))
           return;
 
         // Check if this await is inside a progress.race() call higher up.

@@ -141,7 +141,7 @@ export abstract class BrowserType extends SdkObject {
         await browser._defaultContext!.loadDefaultContext(progress);
       return browser;
     } catch (error) {
-      await browserProcess.close().catch(() => {});
+      await progress.race(browserProcess.close().catch(() => {}));
       throw error;
     }
   }
@@ -212,7 +212,7 @@ export abstract class BrowserType extends SdkObject {
     let transport: ConnectionTransport | undefined = undefined;
     let browserProcess: BrowserProcess | undefined = undefined;
     const exitPromise = new ManualPromise();
-    const { launchedProcess, gracefullyClose, kill } = await launchProcess({
+    const { launchedProcess, gracefullyClose, kill } = await progress.race(launchProcess({
       command: prepared.executable,
       args: prepared.browserArguments,
       env: this.amendEnvironment(env, prepared.userDataDir, isPersistent, options),
@@ -241,7 +241,7 @@ export abstract class BrowserType extends SdkObject {
         if (browserProcess && browserProcess.onclose)
           browserProcess.onclose(exitCode, signal);
       },
-    });
+    }));
 
     async function closeOrKill(timeout: number): Promise<void> {
       let timer: NodeJS.Timeout;
@@ -280,7 +280,7 @@ export abstract class BrowserType extends SdkObject {
       }
       return { browserProcess, artifactsDir: prepared.artifactsDir, userDataDir: prepared.userDataDir, transport };
     } catch (error) {
-      await closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {});
+      await progress.race(closeOrKill(DEFAULT_PLAYWRIGHT_TIMEOUT).catch(() => {}));
       throw error;
     }
   }

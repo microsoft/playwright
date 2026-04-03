@@ -976,11 +976,11 @@ export class WKPage implements PageDelegate {
     const pageProxyId = this._pageProxySession.sessionId;
     const objectId = handle._objectId;
     if (this._browserContext._browser?.options.channel === 'webkit-wsl')
-      paths = await Promise.all(paths.map(path => translatePathToWSL(path)));
-    await Promise.all([
+      paths = await progress.race(Promise.all(paths.map(path => translatePathToWSL(path))));
+    await progress.race(Promise.all([
       this._pageProxySession.connection.browserSession.send('Playwright.grantFileReadAccess', { pageProxyId, paths }),
       this._session.send('DOM.setInputFiles', { objectId, paths })
-    ]);
+    ]));
   }
 
   async adoptElementHandle<T extends Node>(handle: dom.ElementHandle<T>, to: dom.FrameExecutionContext): Promise<dom.ElementHandle<T>> {

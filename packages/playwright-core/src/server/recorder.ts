@@ -233,7 +233,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       await this._context.exposeBinding(progress, '__pw_recorderRecordAction', false,
           (source: BindingSource, action: actions.Action) => this._recordAction(progress, source.frame, action));
 
-      await this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar });
+      await progress.race(this._context.extendInjectedScript(rawRecorderSource.source, { recorderMode: this._recorderMode, hideToolbar: !!this._params.hideToolbar }));
     });
 
     if (this._debugger.isPaused())
@@ -274,7 +274,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
 
   async pickLocator(progress: Progress, page: Page): Promise<string> {
     if (this._mode !== 'none')
-      await this.setMode('none');
+      await progress.race(this.setMode('none'));
 
     const selectorPromise = new ManualPromise<string>();
     let recorderChangedState = false;
@@ -304,7 +304,7 @@ export class Recorder extends EventEmitter<RecorderEventMap> implements Instrume
       eventsHelper.removeEventListeners(listeners);
       this._pickLocatorPage = undefined;
       if (!recorderChangedState)
-        await this.setMode('none');
+        await progress.race(this.setMode('none'));
     }
   }
 

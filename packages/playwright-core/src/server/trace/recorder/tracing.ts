@@ -136,7 +136,7 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
   async resetForReuse(progress: Progress) {
     // Discard previous chunk if any and ignore any errors there.
     await this.stopChunk(progress, { mode: 'discard' }).catch(() => {});
-    await this._stop();
+    await progress.race(this._stop());
     if (this._snapshotter)
       await progress.race(this._snapshotter.resetForReuse());
   }
@@ -409,8 +409,12 @@ export class Tracing extends SdkObject implements InstrumentationListener, Snaps
       this._fs.zip(entries, zipFileName);
 
     // Make sure all file operations complete.
-    const promise = progress.race(this._fs.syncAndGetError());
-    const error = await promise.catch(e => e);
+    let error: Error | undefined;
+    try {
+      await progress.race(this._fs.syncAndGetError());
+    } catch (e) {
+      error = e as Error;
+    }
 
     this._isStopping = false;
     if (this._state)

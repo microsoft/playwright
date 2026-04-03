@@ -95,15 +95,15 @@ export class DragManager {
       let expectingDrag = false;
       await progress.race(this._crPage._page.safeNonStallingEvaluateInAllFrames(`(${setupDragListeners.toString()})()`, 'utility'));
       client.on('Input.dragIntercepted', onDragIntercepted!);
-      await client.send('Input.setInterceptDrags', { enabled: true });
+      await progress.race(client.send('Input.setInterceptDrags', { enabled: true }));
       try {
         await progress.race(moveCallback());
-        expectingDrag = (await Promise.all(this._crPage._page.frames().map(async frame => {
+        expectingDrag = (await progress.race(Promise.all(this._crPage._page.frames().map(async frame => {
           return frame.nonStallingEvaluateInExistingContext('window.__cleanupDrag?.()', 'utility').catch(() => false);
-        }))).some(x => x);
+        })))).some(x => x);
       } finally {
         client.off('Input.dragIntercepted', onDragIntercepted!);
-        await client.send('Input.setInterceptDrags', { enabled: false });
+        await progress.race(client.send('Input.setInterceptDrags', { enabled: false }));
       }
       this._dragState = expectingDrag ? (await dragInterceptedPromise).data : null;
     } catch (error) {
