@@ -40,6 +40,13 @@ test('open without url opens about:blank', async ({ cli }) => {
   expect(output).toContain('- Page URL: about:blank');
 });
 
+test('tab-new with url', async ({ cli, server }) => {
+  await cli('open');
+  const { output } = await cli('tab-new', server.HELLO_WORLD);
+  expect(output).toContain(`- 0: [](about:blank)`);
+  expect(output).toContain(`- 1: (current) [Title](${server.HELLO_WORLD})`);
+});
+
 test('run-code', async ({ cli, server }) => {
   await cli('open', server.HELLO_WORLD);
   const { output } = await cli('run-code', '() => page.title()');

@@ -28,6 +28,7 @@ const browserTabs = defineTool({
     inputSchema: z.object({
       action: z.enum(['list', 'new', 'close', 'select']).describe('Operation to perform'),
       index: z.number().optional().describe('Tab index, used for close/select. If omitted for close, current tab is closed.'),
+      url: z.string().optional().describe('URL to navigate to in the new tab, used for new.'),
     }),
     type: 'action',
   },
@@ -39,7 +40,12 @@ const browserTabs = defineTool({
         break;
       }
       case 'new': {
-        await context.newTab();
+        const tab = await context.newTab();
+        if (params.url) {
+          const url = await tab.checkUrlAndNavigate(params.url);
+          response.setIncludeSnapshot();
+          response.addCode(`await page.goto('${url}');`);
+        }
         break;
       }
       case 'close': {
