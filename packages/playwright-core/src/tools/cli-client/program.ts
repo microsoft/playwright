@@ -22,7 +22,7 @@ import { execSync, spawn } from 'child_process';
 import crypto from 'crypto';
 import os from 'os';
 import path from 'path';
-import { createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
+import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
@@ -295,21 +295,22 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
   let count = 0;
   const runningSessions = new Set<string>();
   const entries = registry.entryMap();
-  for (const [workspace, list] of entries) {
-    if (!all && workspace !== clientInfo.workspaceDir)
+  const key = clientKey(clientInfo);
+  for (const [workspaceKey, list] of entries) {
+    if (!all && workspaceKey !== key)
       continue;
-    count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspace) || '/'}:` : undefined, runningSessions);
+    count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions);
   }
 
   // Filter out server entries that already have an attached session.
   const serverEntries = await serverRegistry.list();
   const filteredServerEntries = new Map<string, BrowserStatus[]>();
-  for (const [workspace, list] of serverEntries) {
-    if (!all && workspace !== clientInfo.workspaceDir)
+  for (const [workspaceKey, list] of serverEntries) {
+    if (!all && workspaceKey !== key)
       continue;
     const unattached = list.filter(d => !runningSessions.has(d.title));
     if (unattached.length)
-      filteredServerEntries.set(workspace, unattached);
+      filteredServerEntries.set(workspaceKey, unattached);
   }
 
   if (filteredServerEntries.size) {
@@ -317,8 +318,8 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
       console.log('');
     console.log('### Browser servers available for attach');
   }
-  for (const [workspace, list] of filteredServerEntries)
-    count += await gcAndPrintBrowserSessions(workspace, list);
+  for (const [workspaceKey, list] of filteredServerEntries)
+    count += await gcAndPrintBrowserSessions(workspaceKey, list);
 
   if (!count)
     console.log('  (no browsers)');
