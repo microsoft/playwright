@@ -19,12 +19,11 @@ import { debug } from '../../utilsBundle';
 import { createHttpServer, startHttpServer } from '../../server/utils/network';
 import { CDPRelayServer } from './cdpRelay';
 
-import type { ClientInfo } from '../utils/mcp/server';
 import type { FullConfig } from './config';
 
 const debugLogger = debug('pw:mcp:relay');
 
-export async function createExtensionBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+export async function createExtensionBrowser(config: FullConfig, clientName: string): Promise<playwright.Browser> {
   const httpServer = createHttpServer();
   await startHttpServer(httpServer, {});
   const relay = new CDPRelayServer(
@@ -34,6 +33,6 @@ export async function createExtensionBrowser(config: FullConfig, clientInfo: Cli
       config.browser.launchOptions.executablePath);
   debugLogger(`CDP relay server started, extension endpoint: ${relay.extensionEndpoint()}.`);
 
-  await relay.ensureExtensionConnectionForMCPContext(clientInfo);
+  await relay.ensureExtensionConnectionForMCPContext(clientName);
   return await playwright.chromium.connectOverCDP(relay.cdpEndpoint(), { isLocal: true });
 }
