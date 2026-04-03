@@ -145,15 +145,19 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
     throw new Error(`Browser is already in use for ${userDataDir}, use --isolated to run multiple instances of the same browser`);
 
   const browserType = playwright[config.browser.browserName];
+  const configIgnoreDefaultArgs = config.browser.launchOptions?.ignoreDefaultArgs;
   const launchOptions: playwright.LaunchOptions & playwright.BrowserContextOptions = {
     tracesDir,
     ...config.browser.launchOptions,
     ...config.browser.contextOptions,
     handleSIGINT: false,
     handleSIGTERM: false,
-    ignoreDefaultArgs: [
-      '--disable-extensions',
-    ],
+    ignoreDefaultArgs: configIgnoreDefaultArgs === true
+      ? true
+      : [
+        '--disable-extensions',
+        ...Array.isArray(configIgnoreDefaultArgs) ? configIgnoreDefaultArgs : [],
+      ],
   };
   try {
     const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
