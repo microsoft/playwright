@@ -88,7 +88,7 @@ export class DebugController extends SdkObject {
         promises.push(recorder.hideHighlightedSelector());
         promises.push(recorder.setMode('none'));
       }
-      await Promise.all(promises);
+      await progress.race(Promise.all(promises));
       return;
     }
 
@@ -125,7 +125,7 @@ export class DebugController extends SdkObject {
       else if (params.selector)
         promises.push(recorder.setHighlightedSelector(params.selector));
     }
-    await Promise.all(promises);
+    await progress.race(Promise.all(promises));
   }
 
   async hideHighlight(progress: Progress) {
@@ -135,7 +135,7 @@ export class DebugController extends SdkObject {
       promises.push(recorder.hideHighlightedSelector());
     // Hide all locator.highlight highlights.
     promises.push(...this._playwright.allPages().map(p => p.hideHighlight().catch(() => {})));
-    await Promise.all(promises);
+    await progress.race(Promise.all(promises));
   }
 
   async resume(progress: Progress) {

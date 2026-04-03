@@ -66,9 +66,9 @@ export class Clock {
   }
 
   async resume(progress: Progress) {
-    await this._installIfNeeded();
+    await progress.race(this._installIfNeeded());
     this._initScripts.push(await this._browserContext.addInitScript(nullProgress, `globalThis.__pwClock.controller.log('resume', ${Date.now()})`));
-    await this._evaluateInFrames(`globalThis.__pwClock.controller.resume()`);
+    await progress.race(this._evaluateInFrames(`globalThis.__pwClock.controller.resume()`));
   }
 
   async setFixedTime(time: string | number) {

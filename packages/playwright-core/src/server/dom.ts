@@ -255,10 +255,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return Math.abs(area);
     };
 
-    const [quads, metrics] = await Promise.all([
+    const [quads, metrics] = await progress.race(Promise.all([
       this._page.delegate.getContentQuads(this),
       this._page.mainFrame().utilityContext().then(utility => utility.evaluate(() => ({ width: innerWidth, height: innerHeight }))),
-    ] as const);
+    ] as const));
     if (quads === 'error:notconnected')
       return quads;
     if (!quads || !quads.length)
@@ -289,10 +289,10 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   private async _offsetPoint(progress: Progress, offset: types.Point): Promise<{ point: types.Point, box: types.Rect } | 'error:notvisible' | 'error:notconnected'> {
-    const [box, border] = await Promise.all([
+    const [box, border] = await progress.race(Promise.all([
       this.boundingBox(progress),
       this.evaluateInUtility(([injected, node]) => injected.getElementBorderWidth(node), {}).catch(e => {}),
-    ]);
+    ]));
     if (!box || !border)
       return 'error:notvisible';
     if (border === 'error:notconnected')
@@ -328,7 +328,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       if (!options.skipActionPreChecks && !options.force && !noAutoWaiting)
         await this._frame._page.performActionPreChecks(progress);
-      const result = await action(retry);
+      const result = await progress.race(action(retry));
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force || noAutoWaiting)
@@ -763,7 +763,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return { matches: result.matches, isRadio: result.isRadio };
     };
     await this._markAsTargetElement(progress);
-    const checkedState = await isChecked();
+    const checkedState = await progress.race(isChecked());
     if (checkedState.matches === state)
       return 'done';
     if (!state && checkedState.isRadio)
@@ -773,7 +773,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return result;
     if (options.trial)
       return 'done';
-    const finalState = await isChecked();
+    const finalState = await progress.race(isChecked());
     if (finalState.matches !== state)
       throw new NonRecoverableDOMError('Clicking the checkbox did not change its state');
     return 'done';

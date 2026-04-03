@@ -189,7 +189,7 @@ export class RootDispatcher extends Dispatcher<SdkObject, any, any> {
     assert(!this._initialized);
     this._initialized = true;
     return {
-      playwright: await this.createPlaywright(this, params),
+      playwright: await progress.race(this.createPlaywright(this, params)),
     };
   }
 }

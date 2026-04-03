@@ -193,7 +193,7 @@ export async function openTraceViewerApp(url: string, browserName: string, optio
     }
 
     if (!isUnderTest())
-      await syncLocalStorageWithSettings(page, 'traceviewer');
+      await progress.race(syncLocalStorageWithSettings(page, 'traceviewer'));
 
     if (isUnderTest())
       page.on('close', () => context.close(nullProgress, { reason: 'Trace viewer closed' }).catch(() => {}));

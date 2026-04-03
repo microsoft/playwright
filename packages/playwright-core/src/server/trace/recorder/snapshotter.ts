@@ -64,7 +64,7 @@ export class Snapshotter {
     this._started = true;
     if (!this._initScript)
       await this._initialize(progress);
-    await this.reset();
+    await progress.race(this.reset());
   }
 
   async reset() {
@@ -95,7 +95,7 @@ export class Snapshotter {
     const { javaScriptEnabled } = this._context._options;
     const initScriptSource = `(${frameSnapshotStreamer})("${this._snapshotStreamer}", ${javaScriptEnabled || javaScriptEnabled === undefined})`;
     this._initScript = await this._context.addInitScript(progress, initScriptSource);
-    await this._context.safeNonStallingEvaluateInAllFrames(initScriptSource, 'main');
+    await progress.race(this._context.safeNonStallingEvaluateInAllFrames(initScriptSource, 'main'));
   }
 
   dispose() {

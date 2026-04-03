@@ -208,7 +208,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
       // Note: it is important to remove the interceptor when there are no patterns,
       // because that disables the slow-path interception in the browser itself.
       if (hadMatchers)
-        await this._page.removeRequestInterceptor(this._requestInterceptor);
+        await progress.race(this._page.removeRequestInterceptor(this._requestInterceptor));
       this._interceptionUrlMatchers = [];
     } else {
       this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
@@ -348,14 +348,15 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   }
 
   async pickLocator(params: channels.PagePickLocatorParams, progress: Progress): Promise<channels.PagePickLocatorResult> {
-    const recorder = await Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true });
+    const recorder = await progress.race(Recorder.forContext(this._page.browserContext, { omitCallTracking: true, hideToolbar: true }));
     const selector = await recorder.pickLocator(progress, this._page);
     return { selector };
   }
 
   async cancelPickLocator(params: channels.PageCancelPickLocatorParams, progress: Progress): Promise<void> {
-    const recorder = await Recorder.existingForContext(this._page.browserContext);
-    await recorder?.setMode('none');
+    const recorder = await progress.race(Recorder.existingForContext(this._page.browserContext));
+    if (recorder)
+      await progress.race(recorder.setMode('none'));
   }
 
   async screencastShowOverlay(params: channels.PageScreencastShowOverlayParams): Promise<channels.PageScreencastShowOverlayResult> {
@@ -428,7 +429,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async stopJSCoverage(params: channels.PageStopJSCoverageParams, progress: Progress): Promise<channels.PageStopJSCoverageResult> {
     this._jsCoverageActive = false;
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopJSCoverage();
+    return await progress.race(coverage.stopJSCoverage());
   }
 
   async startCSSCoverage(params: channels.PageStartCSSCoverageParams, progress: Progress): Promise<void> {
@@ -440,7 +441,7 @@ export class PageDispatcher extends Dispatcher<Page, channels.PageChannel, Brows
   async stopCSSCoverage(params: channels.PageStopCSSCoverageParams, progress: Progress): Promise<channels.PageStopCSSCoverageResult> {
     this._cssCoverageActive = false;
     const coverage = this._page.coverage as CRCoverage;
-    return await coverage.stopCSSCoverage();
+    return await progress.race(coverage.stopCSSCoverage());
   }
 
   _onFrameAttached(frame: Frame) {

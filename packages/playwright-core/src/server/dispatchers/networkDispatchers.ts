@@ -147,25 +147,25 @@ export class RouteDispatcher extends Dispatcher<Route, channels.RouteChannel, Re
   async continue(params: channels.RouteContinueParams, progress: Progress): Promise<channels.RouteContinueResult> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
-    await this._object.continue({
+    await progress.race(this._object.continue({
       url: params.url,
       method: params.method,
       headers: params.headers,
       postData: params.postData,
       isFallback: params.isFallback,
-    });
+    }));
   }
 
   async fulfill(params: channels.RouteFulfillParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
-    await this._object.fulfill(params);
+    await progress.race(this._object.fulfill(params));
   }
 
   async abort(params: channels.RouteAbortParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
     this._checkNotHandled();
-    await this._object.abort(params.errorCode || 'failed');
+    await progress.race(this._object.abort(params.errorCode || 'failed'));
   }
 
   async redirectNavigationRequest(params: channels.RouteRedirectNavigationRequestParams, progress: Progress): Promise<void> {
@@ -218,7 +218,7 @@ export class APIRequestContextDispatcher extends Dispatcher<APIRequestContext, c
 
   async dispose(params: channels.APIRequestContextDisposeParams, progress: Progress): Promise<void> {
     progress.metadata.potentiallyClosesScope = true;
-    await this._object.dispose(params);
+    await progress.race(this._object.dispose(params));
     this._dispose();
   }
 

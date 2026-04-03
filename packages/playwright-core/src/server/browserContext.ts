@@ -436,7 +436,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
     if (!this.possiblyUninitializedPages().length) {
       const waitForEvent = helper.waitForEvent(progress, this, BrowserContext.Events.Page);
       // Race against BrowserContext.close
-      await Promise.race([waitForEvent.promise, this._closePromise]);
+      await progress.race(Promise.race([waitForEvent.promise, this._closePromise]));
     }
     const page = this.possiblyUninitializedPages()[0];
     if (!page)
@@ -509,7 +509,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
   async addRequestInterceptor(progress: Progress, handler: network.RouteHandler): Promise<void> {
     // Note: progress is intentionally ignored, because this operation is not cancellable and should not block in the browser anyway.
     this.requestInterceptors.push(handler);
-    await this.doUpdateRequestInterception();
+    await progress.race(this.doUpdateRequestInterception());
   }
 
   async removeRequestInterceptor(handler: network.RouteHandler): Promise<void> {
@@ -545,15 +545,15 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       this._closedStatus = 'closing';
 
       for (const harRecorder of this._harRecorders.values())
-        await harRecorder.flush();
-      await this.tracing.flush();
-      await Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose()));
+        await progress.race(harRecorder.flush());
+      await progress.race(this.tracing.flush());
+      await progress.race(Promise.all(this.pages().map(page => page.screencast.handlePageOrContextClose())));
 
       if (this._customCloseHandler) {
-        await this._customCloseHandler();
+        await progress.race(this._customCloseHandler());
       } else {
         // Close the context.
-        const disposition = await this.doClose(options.reason);
+        const disposition = await progress.race(this.doClose(options.reason));
         if (disposition === 'close-browser')
           await this._browser.close(progress, { reason: options.reason });
       }
@@ -563,7 +563,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       const promises: Promise<void>[] = [];
       promises.push(this._deleteAllDownloads());
       promises.push(this._deleteAllTempDirs());
-      await Promise.all(promises);
+      await progress.race(Promise.all(promises));
 
       // Custom handler should trigger didCloseInternal itself.
       if (!this._customCloseHandler)
@@ -616,7 +616,7 @@ export abstract class BrowserContext<EM extends EventMap = EventMap> extends Sdk
       if (!origin || !originsToSave.has(origin))
         continue;
       try {
-        const storage: SerializedStorage = await page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility');
+        const storage: SerializedStorage = await progress.race(page.mainFrame().nonStallingEvaluateInExistingContext(collectScript, 'utility'));
         if (storage.localStorage.length || storage.indexedDB?.length)
           result.origins.push({ origin, localStorage: storage.localStorage, indexedDB: storage.indexedDB });
         originsToSave.delete(origin);

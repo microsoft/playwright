@@ -345,7 +345,7 @@ export class ClientCertificatesProxy {
       await progress.race(proxy._socksProxy.listen(0, '127.0.0.1'));
       return proxy;
     } catch (error) {
-      await proxy.close();
+      await progress.race(proxy.close());
       throw error;
     }
   }

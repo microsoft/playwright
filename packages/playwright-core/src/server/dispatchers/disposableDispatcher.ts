@@ -30,7 +30,7 @@ export class DisposableDispatcher extends Dispatcher<DisposableObject, channels.
 
   async dispose(_: any, progress: Progress) {
     progress.metadata.potentiallyClosesScope = true;
-    await this._object.dispose();
+    await progress.race(this._object.dispose());
     this._dispose();
   }
 }

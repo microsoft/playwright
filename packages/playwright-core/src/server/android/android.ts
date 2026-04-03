@@ -276,7 +276,7 @@ export class AndroidDevice extends SdkObject {
 
   async launchBrowser(progress: Progress, pkg: string = 'com.android.chrome', options: channels.AndroidDeviceLaunchBrowserParams): Promise<BrowserContext> {
     debug('pw:android')('Force-stopping', pkg);
-    await this._backend.runCommand(`shell:am force-stop ${pkg}`);
+    await progress.race(this._backend.runCommand(`shell:am force-stop ${pkg}`));
     const socketName = isUnderTest() ? 'webview_devtools_remote_playwright_test' : ('playwright_' + createGuid() + '_devtools_remote');
     const commandLine = this._defaultArgs(options, socketName).join(' ');
     debug('pw:android')('Starting', pkg, commandLine);
@@ -394,21 +394,21 @@ export class AndroidDevice extends SdkObject {
 
   async push(progress: Progress, content: Buffer, path: string, mode = 0o644): Promise<void> {
     const socket = await this._open(progress, `sync:`);
-    const sendHeader = async (command: string, length: number) => {
+    const sendHeader = async (progress: Progress, command: string, length: number) => {
       const buffer = Buffer.alloc(command.length + 4);
       buffer.write(command, 0);
       buffer.writeUInt32LE(length, command.length);
       await progress.race(socket.write(buffer));
     };
-    const send = async (command: string, data: Buffer) => {
-      await sendHeader(command, data.length);
+    const send = async (progress: Progress, command: string, data: Buffer) => {
+      await sendHeader(progress, command, data.length);
       await progress.race(socket.write(data));
     };
-    await send('SEND', Buffer.from(`${path},${mode}`));
+    await send(progress, 'SEND', Buffer.from(`${path},${mode}`));
     const maxChunk = 65535;
     for (let i = 0; i < content.length; i += maxChunk)
-      await send('DATA', content.slice(i, i + maxChunk));
-    await sendHeader('DONE', (Date.now() / 1000) | 0);
+      await send(progress, 'DATA', content.slice(i, i + maxChunk));
+    await sendHeader(progress, 'DONE', (Date.now() / 1000) | 0);
     const result = await progress.race(new Promise<Buffer>(f => socket.once('data', f)));
     const code = result.slice(0, 4).toString();
     if (code !== 'OKAY')

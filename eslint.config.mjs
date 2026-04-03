@@ -430,7 +430,7 @@ export default [
     },
     languageOptions: languageOptionsWithTsConfig,
     rules: {
-      "progress/await-must-use-progress": "warn",
+      "progress/await-must-use-progress": "error",
     },
   },
   {

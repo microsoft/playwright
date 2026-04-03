@@ -224,6 +224,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context._tempDirs.push(tmpDir);
     return {
       rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
+      // eslint-disable-next-line progress/await-must-use-progress --- all elements are racing.
       writableStreams: await Promise.all(params.items.map(async item => {
         await progress.race(fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true }));
         const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));
@@ -257,7 +258,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
 
   async addCookies(params: channels.BrowserContextAddCookiesParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
-    await this._context.addCookies(params.cookies);
+    await progress.race(this._context.addCookies(params.cookies));
   }
 
   async clearCookies(params: channels.BrowserContextClearCookiesParams, progress: Progress): Promise<void> {
@@ -265,26 +266,26 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     const nameRe = params.nameRegexSource !== undefined && params.nameRegexFlags !== undefined ? new RegExp(params.nameRegexSource, params.nameRegexFlags) : undefined;
     const domainRe = params.domainRegexSource !== undefined && params.domainRegexFlags !== undefined ? new RegExp(params.domainRegexSource, params.domainRegexFlags) : undefined;
     const pathRe = params.pathRegexSource !== undefined && params.pathRegexFlags !== undefined ? new RegExp(params.pathRegexSource, params.pathRegexFlags) : undefined;
-    await this._context.clearCookies({
+    await progress.race(this._context.clearCookies({
       name: nameRe || params.name,
       domain: domainRe || params.domain,
       path: pathRe || params.path,
-    });
+    }));
   }
 
   async grantPermissions(params: channels.BrowserContextGrantPermissionsParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
-    await this._context.grantPermissions(params.permissions, params.origin);
+    await progress.race(this._context.grantPermissions(params.permissions, params.origin));
   }
 
   async clearPermissions(params: channels.BrowserContextClearPermissionsParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
-    await this._context.clearPermissions();
+    await progress.race(this._context.clearPermissions());
   }
 
   async setGeolocation(params: channels.BrowserContextSetGeolocationParams, progress: Progress): Promise<void> {
     // Note: progress is ignored because this operation is not cancellable and should not block in the browser anyway.
-    await this._context.setGeolocation(params.geolocation);
+    await progress.race(this._context.setGeolocation(params.geolocation));
   }
 
   async setExtraHTTPHeaders(params: channels.BrowserContextSetExtraHTTPHeadersParams, progress: Progress): Promise<void> {
@@ -312,7 +313,7 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
       // Note: it is important to remove the interceptor when there are no patterns,
       // because that disables the slow-path interception in the browser itself.
       if (hadMatchers)
-        await this._context.removeRequestInterceptor(this._requestInterceptor);
+        await progress.race(this._context.removeRequestInterceptor(this._requestInterceptor));
       this._interceptionUrlMatchers = [];
     } else {
       this._interceptionUrlMatchers = params.patterns.map(deserializeURLMatch);
@@ -341,12 +342,13 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async enableRecorder(params: channels.BrowserContextEnableRecorderParams, progress: Progress): Promise<void> {
-    await RecorderApp.show(this._context, params);
+    await progress.race(RecorderApp.show(this._context, params));
   }
 
   async disableRecorder(params: channels.BrowserContextDisableRecorderParams, progress: Progress): Promise<void> {
-    const recorder = await Recorder.existingForContext(this._context);
-    await recorder?.setMode('none');
+    const recorder = await progress.race(Recorder.existingForContext(this._context));
+    if (recorder)
+      await progress.race(recorder.setMode('none'));
   }
 
   async exposeConsoleApi(params: channels.BrowserContextExposeConsoleApiParams, progress: Progress): Promise<void> {
@@ -379,15 +381,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockFastForward(params: channels.BrowserContextClockFastForwardParams, progress: Progress): Promise<channels.BrowserContextClockFastForwardResult> {
-    await this._context.clock.fastForward(params.ticksString ?? params.ticksNumber ?? 0);
+    await progress.race(this._context.clock.fastForward(params.ticksString ?? params.ticksNumber ?? 0));
   }
 
   async clockInstall(params: channels.BrowserContextClockInstallParams, progress: Progress): Promise<channels.BrowserContextClockInstallResult> {
-    await this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined);
+    await progress.race(this._context.clock.install(params.timeString ?? params.timeNumber ?? undefined));
   }
 
   async clockPauseAt(params: channels.BrowserContextClockPauseAtParams, progress: Progress): Promise<channels.BrowserContextClockPauseAtResult> {
-    await this._context.clock.pauseAt(params.timeString ?? params.timeNumber ?? 0);
+    await progress.race(this._context.clock.pauseAt(params.timeString ?? params.timeNumber ?? 0));
     this._clockPaused = true;
   }
 
@@ -397,15 +399,15 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
   }
 
   async clockRunFor(params: channels.BrowserContextClockRunForParams, progress: Progress): Promise<channels.BrowserContextClockRunForResult> {
-    await this._context.clock.runFor(params.ticksString ?? params.ticksNumber ?? 0);
+    await progress.race(this._context.clock.runFor(params.ticksString ?? params.ticksNumber ?? 0));
   }
 
   async clockSetFixedTime(params: channels.BrowserContextClockSetFixedTimeParams, progress: Progress): Promise<channels.BrowserContextClockSetFixedTimeResult> {
-    await this._context.clock.setFixedTime(params.timeString ?? params.timeNumber ?? 0);
+    await progress.race(this._context.clock.setFixedTime(params.timeString ?? params.timeNumber ?? 0));
   }
 
   async clockSetSystemTime(params: channels.BrowserContextClockSetSystemTimeParams, progress: Progress): Promise<channels.BrowserContextClockSetSystemTimeResult> {
-    await this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0);
+    await progress.race(this._context.clock.setSystemTime(params.timeString ?? params.timeNumber ?? 0));
   }
 
   async updateSubscription(params: channels.BrowserContextUpdateSubscriptionParams, progress: Progress): Promise<void> {

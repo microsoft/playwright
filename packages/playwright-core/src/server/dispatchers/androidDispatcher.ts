@@ -116,7 +116,7 @@ export class AndroidDeviceDispatcher extends Dispatcher<AndroidDevice, channels.
         throw new Error('No mapping for ' + text[i] + ' found');
       keyCodes.push(code);
     }
-    await Promise.all(keyCodes.map(keyCode => this._object.send(progress, 'inputPress', { keyCode })));
+    await progress.race(Promise.all(keyCodes.map(keyCode => this._object.send(progress, 'inputPress', { keyCode }))));
   }
 
   async inputPress(params: channels.AndroidDeviceInputPressParams, progress: Progress) {

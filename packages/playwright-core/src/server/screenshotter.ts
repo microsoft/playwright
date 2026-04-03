@@ -262,7 +262,7 @@ export class Screenshotter {
         progress.log('fonts loaded');
       }
     } catch (error) {
-      await this._restorePageAfterScreenshot();
+      await progress.race(this._restorePageAfterScreenshot());
       throw error;
     }
   }
@@ -309,9 +309,9 @@ export class Screenshotter {
     try {
       const quality = format === 'jpeg' ? options.quality ?? 80 : undefined;
       const buffer = await this._page.delegate.takeScreenshot(progress, format, documentRect, viewportRect, quality, fitsViewport, options.scale || 'device');
-      await cleanupHighlight();
+      await progress.race(cleanupHighlight());
       if (shouldSetDefaultBackground)
-        await this._page.delegate.setBackgroundColor();
+        await progress.race(this._page.delegate.setBackgroundColor());
       if ((options as any).__testHookAfterScreenshot)
         await progress.race((options as any).__testHookAfterScreenshot());
       return buffer;
