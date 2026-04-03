@@ -293,6 +293,20 @@ export class Tab extends EventEmitter<TabEventsInterface> {
     await this.page.waitForLoadState(state, options).catch(e => debug('pw:tools:error')(e));
   }
 
+  async checkUrlAndNavigate(url: string): Promise<string> {
+    try {
+      new URL(url);
+    } catch (e) {
+      if (url.startsWith('localhost'))
+        url = 'http://' + url;
+      else
+        url = 'https://' + url;
+    }
+    this.context.checkUrlAllowed(url);
+    await this.navigate(url);
+    return url;
+  }
+
   async navigate(url: string) {
     await this._initializedPromise;
 

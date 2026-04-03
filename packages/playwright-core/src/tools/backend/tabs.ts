@@ -41,8 +41,11 @@ const browserTabs = defineTool({
       }
       case 'new': {
         const tab = await context.newTab();
-        if (params.url)
-          await tab.page.goto(params.url);
+        if (params.url) {
+          const url = await tab.checkUrlAndNavigate(params.url);
+          response.setIncludeSnapshot();
+          response.addCode(`await page.goto('${url}');`);
+        }
         break;
       }
       case 'close': {
