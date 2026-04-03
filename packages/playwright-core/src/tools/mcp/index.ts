@@ -40,7 +40,11 @@ export async function createConnection(userConfig: Config = {}, contextGetter?: 
       const context = config.browser.isolated ? await browser.newContext(config.browser.contextOptions) : browser.contexts()[0];
       return new BrowserBackend(config, context, tools);
     },
-    disposed: async () => { }
+    disposed: async backend => {
+      const browserContext = (backend as BrowserBackend).browserContext;
+      await browserContext.close().catch(() => { });
+      await browserContext.browser()?.close().catch(() => { });
+    }
   };
   return createServer('api', packageJSON.version, backendFactory, false);
 }
