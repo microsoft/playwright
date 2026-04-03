@@ -52,7 +52,7 @@ export class DragManager {
     return true;
   }
 
-  async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: () => Promise<void>): Promise<void> {
+  async interceptDragCausedByMove(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, moveCallback: (progress: Progress) => Promise<void>): Promise<void> {
     this._lastPosition = { x, y };
     if (this._dragState) {
       await progress.race(this._crPage._mainFrameSession._client.send('Input.dispatchDragEvent', {
@@ -65,7 +65,7 @@ export class DragManager {
       return;
     }
     if (button !== 'left')
-      return moveCallback();
+      return moveCallback(progress);
 
     const client = this._crPage._mainFrameSession._client;
     let onDragIntercepted: (payload: Protocol.Input.dragInterceptedPayload) => void;
@@ -97,7 +97,7 @@ export class DragManager {
       client.on('Input.dragIntercepted', onDragIntercepted!);
       await progress.race(client.send('Input.setInterceptDrags', { enabled: true }));
       try {
-        await progress.race(moveCallback());
+        await moveCallback(progress);
         expectingDrag = (await progress.race(Promise.all(this._crPage._page.frames().map(async frame => {
           return frame.nonStallingEvaluateInExistingContext('window.__cleanupDrag?.()', 'utility').catch(() => false);
         })))).some(x => x);

@@ -224,7 +224,6 @@ export class BrowserContextDispatcher extends Dispatcher<BrowserContext, channel
     this._context._tempDirs.push(tmpDir);
     return {
       rootDir: params.rootDirName ? new WritableStreamDispatcher(this, tempDirWithRootName) : undefined,
-      // eslint-disable-next-line progress/await-must-use-progress --- all elements are racing.
       writableStreams: await Promise.all(params.items.map(async item => {
         await progress.race(fs.promises.mkdir(path.dirname(path.join(tempDirWithRootName, item.name)), { recursive: true }));
         const file = fs.createWriteStream(path.join(tempDirWithRootName, item.name));

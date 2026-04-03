@@ -568,8 +568,10 @@ export class Page extends SdkObject<PageEventMap> {
           }
         });
         try {
+          progress.setAllowConcurrentOrNestedRaces(true);
           await progress.race(this.openScope.race(promise));
         } finally {
+          progress.setAllowConcurrentOrNestedRaces(false);
           --this._locatorHandlerRunningCounter;
         }
         progress.log(`  interception handler has finished, continuing`);
@@ -691,9 +693,9 @@ export class Page extends SdkObject<PageEventMap> {
 
   async expectScreenshot(progress: Progress, options: ExpectScreenshotOptions): Promise<{ actual?: Buffer, previous?: Buffer, diff?: Buffer, errorMessage?: string, log?: string[], timedOut?: boolean }> {
     const locator = options.locator;
-    const rafrafScreenshot = locator ? async (timeout: number) => {
+    const rafrafScreenshot = locator ? async (progress: Progress, timeout: number) => {
       return await locator.frame.rafrafTimeoutScreenshotElementWithProgress(progress, locator.selector, timeout, options || {});
-    } : async (timeout: number) => {
+    } : async (progress: Progress, timeout: number) => {
       await this.performActionPreChecks(progress);
       await this.mainFrame().rafrafTimeout(progress, timeout);
       return await this.screenshotter.screenshotPage(progress, options || {});
@@ -741,12 +743,12 @@ export class Page extends SdkObject<PageEventMap> {
         if (screenshotTimeout)
           progress.log(`waiting ${screenshotTimeout}ms before taking screenshot`);
         previous = actual;
-        actual = await progress.race(rafrafScreenshot(screenshotTimeout).catch(e => {
+        actual = await rafrafScreenshot(progress, screenshotTimeout).catch(e => {
           if (this.mainFrame().isNonRetriableError(e))
             throw e;
           progress.log(`failed to take screenshot - ` + e.message);
           return undefined;
-        }));
+        });
         if (!actual)
           continue;
         // Compare against expectation for the first iteration.
@@ -1092,13 +1094,14 @@ export async function ariaSnapshotForFrame(progress: Progress, frame: frames.Fra
 
   // Only fetch child snapshots for iframes that were actually rendered (not filtered by depth).
   const renderedIframeRefs = snapshot.iframeRefs.filter(ref => ref in snapshot.iframeDepths);
+  progress.setAllowConcurrentOrNestedRaces(true);
   const childSnapshotPromises = renderedIframeRefs.map(ref => {
     const iframeDepth = snapshot.iframeDepths[ref];
     const childDepth = options.depth ? options.depth - iframeDepth - 1 : undefined;
     return ariaSnapshotFrameRef(progress, frame, ref, { ...options, depth: childDepth });
   });
-  // eslint-disable-next-line progress/await-must-use-progress --- all promises are callbacks w/ progress.
   const childSnapshots = await Promise.all(childSnapshotPromises);
+  progress.setAllowConcurrentOrNestedRaces(false);
 
   const full = [];
   let incremental: string[] | undefined;
