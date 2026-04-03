@@ -50,19 +50,20 @@ program.argument('[session-name]', 'name of the session to create or connect to'
       setupExitWatchdog();
       const clientInfo = createClientInfo();
       const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
-      const clientInfoEx = {
+      const mcpCientInfoEx = {
         cwd: process.cwd(),
+        clientName: guessClientName(),
         sessionName,
         workspaceDir: clientInfo.workspaceDir,
       };
 
       try {
-        const { browser, browserInfo } = await createBrowserWithInfo(mcpConfig, clientInfoEx);
+        const { browser, browserInfo } = await createBrowserWithInfo(mcpConfig, mcpCientInfoEx);
         const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
         if (!browserContext)
           throw new Error('Error: unable to connect to a browser that does not have any contexts');
         const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
-        const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, { persistent, exitOnClose: true });
+        const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpCientInfoEx, { persistent, exitOnClose: true });
         console.log(`### Success\nDaemon listening on ${socketPath}`);
         console.log('<EOF>');
       } catch (error) {
@@ -73,6 +74,14 @@ program.argument('[session-name]', 'name of the session to create or connect to'
     });
 
 void program.parseAsync();
+
+function guessClientName(): string {
+  if (process.env.CLAUDECODE)
+    return 'Claude Code';
+  if (process.env.COPILOT_CLI)
+    return 'GitHub Copilot';
+  return 'playwright-cli';
+}
 
 function defaultConfigFile(): string {
   return path.resolve('.playwright', 'cli.config.json');

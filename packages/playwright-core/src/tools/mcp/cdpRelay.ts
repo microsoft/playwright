@@ -120,8 +120,9 @@ export class CDPRelayServer {
     const url = new URL('chrome-extension://mmlmfjhmonkocbjadbfplnigmagldckm/connect.html');
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
     const client = {
-      name: 'Playwright Agent',
-      version: require('../../../package.json').version,
+      name: clientInfo.clientName,
+      // Not used anymore.
+      version: undefined,
     };
     url.searchParams.set('client', JSON.stringify(client));
     url.searchParams.set('protocolVersion', process.env.PWMCP_TEST_PROTOCOL_VERSION ?? protocol.VERSION.toString());

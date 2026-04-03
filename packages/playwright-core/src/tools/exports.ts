@@ -14,11 +14,7 @@
  * limitations under the License.
  */
 
-export { createClientInfo } from './cli-client/registry';
-export { startCliDaemonServer } from './cli-daemon/daemon';
-export { logUnhandledError } from './mcp/log';
 export { setupExitWatchdog } from './mcp/watchdog';
-export { toMcpTool } from './utils/mcp/tool';
 
 export { BrowserBackend } from './backend/browserBackend';
 export { parseResponse } from './backend/response';

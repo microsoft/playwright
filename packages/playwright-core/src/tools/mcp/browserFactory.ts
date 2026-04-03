@@ -35,7 +35,7 @@ import type { ClientInfo } from '../utils/mcp/server';
 import type { Playwright } from '../../client/playwright';
 import type { BrowserInfo } from '../../serverRegistry';
 
-type ClientInfoEx = ClientInfo & {
+export type ClientInfoEx = ClientInfo & {
   sessionName?: string;
   workspaceDir?: string;
 };
