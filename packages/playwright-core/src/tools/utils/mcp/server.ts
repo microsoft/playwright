@@ -34,6 +34,7 @@ const serverDebugResponse = debug('pw:mcp:server:response');
 
 export type ClientInfo = {
   cwd: string;
+  clientName: string;
 };
 
 export type ProgressParams = { message?: string, progress?: number, total?: number };
@@ -158,6 +159,7 @@ const initializeServer = async (server: Server, factory: ServerBackendFactory, r
 
   const clientInfo: ClientInfo = {
     cwd: firstRootPath(clientRoots),
+    clientName: server.getClientVersion()?.name ?? 'Playwright MCP',
   };
 
   const backend = await backendManager.createBackend(factory, clientInfo);

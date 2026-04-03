@@ -20,6 +20,7 @@ nohup.out
 .trace
 .tmp
 .playwright-cli
+.playwright-mcp
 allure*
 blob-report
 playwright-report

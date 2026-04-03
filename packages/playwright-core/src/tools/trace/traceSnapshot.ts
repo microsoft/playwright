@@ -121,7 +121,7 @@ async function runCommandOnSnapshot(server: { url: string, stop: () => Promise<v
     outputMode: 'file',
     skillMode: true,
   }, context, browserTools);
-  await backend.initialize({ cwd: process.cwd() });
+  await backend.initialize({ cwd: process.cwd(), clientName: 'playwright-cli' });
 
   try {
     if (!browserArgs.length)

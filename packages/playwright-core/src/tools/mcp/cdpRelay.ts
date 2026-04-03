@@ -35,7 +35,6 @@ import { logUnhandledError } from './log';
 import * as protocol from './protocol';
 
 import type websocket from 'ws';
-import type { ClientInfo } from '../utils/mcp/server';
 import type { ExtensionCommand, ExtensionEvents } from './protocol';
 import type { WebSocket, WebSocketServer } from '../../utilsBundle';
 
@@ -99,11 +98,11 @@ export class CDPRelayServer {
     return `${this._wsHost}${this._extensionPath}`;
   }
 
-  async ensureExtensionConnectionForMCPContext(clientInfo: ClientInfo) {
+  async ensureExtensionConnectionForMCPContext(clientName: string) {
     debugLogger('Ensuring extension connection for MCP context');
     if (this._extensionConnection)
       return;
-    this._connectBrowser(clientInfo);
+    this._connectBrowser(clientName);
     debugLogger('Waiting for incoming extension connection');
     await Promise.race([
       this._extensionConnectionPromise,
@@ -114,14 +113,15 @@ export class CDPRelayServer {
     debugLogger('Extension connection established');
   }
 
-  private _connectBrowser(clientInfo: ClientInfo) {
+  private _connectBrowser(clientName: string) {
     const mcpRelayEndpoint = `${this._wsHost}${this._extensionPath}`;
     // Need to specify "key" in the manifest.json to make the id stable when loading from file.
     const url = new URL('chrome-extension://mmlmfjhmonkocbjadbfplnigmagldckm/connect.html');
     url.searchParams.set('mcpRelayUrl', mcpRelayEndpoint);
     const client = {
-      name: 'Playwright Agent',
-      version: require('../../../package.json').version,
+      name: clientName,
+      // Not used anymore.
+      version: undefined,
     };
     url.searchParams.set('client', JSON.stringify(client));
     url.searchParams.set('protocolVersion', process.env.PWMCP_TEST_PROTOCOL_VERSION ?? protocol.VERSION.toString());
