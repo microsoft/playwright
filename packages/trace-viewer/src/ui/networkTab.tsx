@@ -196,8 +196,8 @@ const renderCell = (entry: RenderedEntry, column: ColumnName): RenderedGridCell 
     return { body: entry.method };
   if (column === 'status') {
     return {
-      body: entry.status.code > 0 ? entry.status.code : '',
-      title: entry.status.text
+      body: entry.status.code === -1 ? 'canceled' : entry.status.code > 0 ? entry.status.code : '',
+      title: entry.status.code === -1 ? 'canceled' : entry.status.text,
     };
   }
   if (column === 'contentType')

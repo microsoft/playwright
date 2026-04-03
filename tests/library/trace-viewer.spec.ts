@@ -557,8 +557,26 @@ test('should have network request overrides', async ({ page, server, runAndTrace
   await traceViewer.selectAction('Navigate');
   await traceViewer.showNetworkTab();
   await expect(traceViewer.networkRequests).toContainText([/frame.htmlGET200text\/html/]);
-  await expect(traceViewer.networkRequests).toContainText([/style.cssGETx-unknown.*aborted/]);
+  await expect(traceViewer.networkRequests).toContainText([/style.cssGETcanceledx-unknown.*aborted/]);
   await expect(traceViewer.networkRequests).not.toContainText([/continued/]);
+});
+
+test('should show canceled status for requests canceled by navigation', async ({ page, server, runAndTrace }) => {
+  server.setRoute('/slow', (_req, _res) => {
+    // Never respond so the request stays in-flight until navigation cancels it.
+  });
+  const traceViewer = await runAndTrace(async () => {
+    await page.goto(server.PREFIX + '/empty.html');
+    const requestPromise = page.waitForRequest(server.PREFIX + '/slow');
+    page.evaluate(url => fetch(url).catch(() => {}), server.PREFIX + '/slow').catch(() => {});
+    await requestPromise;
+    // Navigate away to cancel the in-flight request.
+    await page.goto(server.PREFIX + '/empty.html?navigated=1');
+  });
+  await traceViewer.showNetworkTab();
+  const slowRequest = traceViewer.networkRequests.filter({ hasText: 'slow' });
+  await expect(slowRequest).toContainText([/GETcanceled/]);
+  await expect(slowRequest).toHaveCSS('background-color', 'rgb(242, 222, 222)');
 });
 
 test('should have network request overrides 2', async ({ page, server, runAndTrace }) => {
