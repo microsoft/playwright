@@ -118,6 +118,7 @@ export function collapseActions(actions: actions.ActionInContext[]): actions.Act
 
 export async function generateFrameSelector(progress: Progress, frame: Frame): Promise<string[]> {
   const selectorPromises: Promise<string>[] = [];
+  progress.setAllowConcurrentOrNestedRaces(true);
   while (frame) {
     const parent = frame.parentFrame();
     if (!parent)
@@ -125,7 +126,8 @@ export async function generateFrameSelector(progress: Progress, frame: Frame): P
     selectorPromises.push(generateFrameSelectorInParent(progress, parent, frame));
     frame = parent;
   }
-  const result = await progress.race(Promise.all(selectorPromises));
+  const result = await Promise.all(selectorPromises);
+  progress.setAllowConcurrentOrNestedRaces(false);
   return result.reverse();
 }
 

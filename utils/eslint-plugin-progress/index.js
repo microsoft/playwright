@@ -169,6 +169,15 @@ const rule = createRule({
         if (passesProgressAsFirstArg(awaited, services))
           return;
 
+        // Promise.all/race/allSettled/any are aggregation helpers, not async operations themselves.
+        if (awaited.type === 'CallExpression' &&
+            awaited.callee.type === 'MemberExpression' &&
+            awaited.callee.object.type === 'Identifier' &&
+            awaited.callee.object.name === 'Promise' &&
+            awaited.callee.property.type === 'Identifier' &&
+            ['all', 'race', 'allSettled', 'any'].includes(awaited.callee.property.name))
+          return;
+
         // Check if this await is inside a progress.race() call higher up.
         if (isInsideProgressRace(node))
           return;

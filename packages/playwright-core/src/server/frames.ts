@@ -166,15 +166,15 @@ export class FrameManager {
     }
   }
 
-  async waitForSignalsCreatedBy<T>(progress: Progress, waitAfter: boolean, action: () => Promise<T>): Promise<T> {
+  async waitForSignalsCreatedBy<T>(progress: Progress, waitAfter: boolean, action: (progress: Progress) => Promise<T>): Promise<T> {
     if (!waitAfter)
-      return action();
+      return action(progress);
     const barrier = new SignalBarrier(progress);
     this._signalBarriers.add(barrier);
     try {
-      const result = await progress.race(action());
+      const result = await action(progress);
       await progress.race(this._page.delegate.inputActionEpilogue());
-      await progress.race(barrier.waitFor());
+      await barrier.waitFor(progress);
       // Resolve in the next task, after all waitForNavigations.
       await new Promise<void>(makeWaitForNextTask());
       return result;
@@ -603,7 +603,8 @@ export class Frame extends SdkObject<FrameEventMap> {
   }
 
   async raceNavigationAction(progress: Progress, action: () => Promise<network.Response | null>): Promise<network.Response | null> {
-    return LongStandingScope.raceMultiple([
+    progress.setAllowConcurrentOrNestedRaces(true);
+    const result = await progress.race(LongStandingScope.raceMultiple([
       this._detachedScope,
       this._page.openScope,
     ], action().catch(e => {
@@ -615,7 +616,9 @@ export class Frame extends SdkObject<FrameEventMap> {
         }
       }
       throw e;
-    }));
+    })));
+    progress.setAllowConcurrentOrNestedRaces(false);
+    return result;
   }
 
   redirectNavigation(url: string, documentId: string, referer: string | undefined) {
@@ -689,7 +692,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = event.newDocument ? event.newDocument.request : undefined;
-    const response = request ? progress.race(request._finalRequest().response(progress)) : null;
+    const response = request ? await request._finalRequest().response(progress) : null;
     return response;
   }
 
@@ -713,7 +716,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       await helper.waitForEvent(progress, this, Frame.Events.AddLifecycle, (e: types.LifecycleEvent) => e === waitUntil).promise;
 
     const request = navigationEvent.newDocument ? navigationEvent.newDocument.request : undefined;
-    return request ? progress.race(request._finalRequest().response(progress)) : null;
+    return request ? request._finalRequest().response(progress) : null;
   }
 
   async waitForLoadState(progress: Progress, state: types.LifecycleEvent): Promise<void> {
@@ -922,6 +925,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         this._onClearLifecycle();
         tagPromise.resolve();
       });
+      progress.setAllowConcurrentOrNestedRaces(true);
       const lifecyclePromise = progress.race(tagPromise).then(() => this.waitForLoadState(progress, waitUntil));
       const contentPromise = progress.race(context.evaluate(({ html, tag }) => {
         document.open();
@@ -930,6 +934,7 @@ export class Frame extends SdkObject<FrameEventMap> {
         document.close();
       }, { html, tag }));
       await Promise.all([contentPromise, lifecyclePromise]);
+      progress.setAllowConcurrentOrNestedRaces(false);
       return null;
     }).finally(() => {
       this._page.frameManager._consoleMessageTags.delete(tag);
@@ -1210,7 +1215,7 @@ export class Frame extends SdkObject<FrameEventMap> {
 
   async dragAndDrop(progress: Progress, source: string, target: string, options: types.DragActionOptions & types.PointerActionWaitOptions) {
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, source, options, async (progress, handle) => {
-      return handle._retryPointerAction(progress, 'move and down', false, async point => {
+      return handle._retryPointerAction(progress, 'move and down', false, async (progress, point) => {
         await this._page.mouse.move(progress, point.x, point.y);
         await this._page.mouse.down(progress);
       }, {
@@ -1221,7 +1226,7 @@ export class Frame extends SdkObject<FrameEventMap> {
     }));
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
     dom.assertDone(await this._retryWithProgressIfNotConnected(progress, target, { ...options, performActionPreChecks: false }, async (progress, handle) => {
-      return handle._retryPointerAction(progress, 'move and up', false, async point => {
+      return handle._retryPointerAction(progress, 'move and up', false, async (progress, point) => {
         await this._page.mouse.move(progress, point.x, point.y, { steps: options.steps });
         await this._page.mouse.up(progress);
       }, {
@@ -1623,7 +1628,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       return;
     const context = await progress.race(this.utilityContext());
 
-    // eslint-disable-next-line progress/await-must-use-progress --- all promises are awaited with progress race.
+    progress.setAllowConcurrentOrNestedRaces(true);
     await Promise.all([
       // wait for double raf
       progress.race(context.evaluate(() => new Promise(x => {
@@ -1633,6 +1638,7 @@ export class Frame extends SdkObject<FrameEventMap> {
       }))),
       progress.wait(timeout),
     ]);
+    progress.setAllowConcurrentOrNestedRaces(false);
   }
 
   _onDetached() {
@@ -1779,9 +1785,9 @@ class SignalBarrier {
     this.retain();
   }
 
-  waitFor(): Promise<void> {
+  waitFor(progress: Progress): Promise<void> {
     this.release();
-    return this._progress.race(this._promise);
+    return progress.race(this._promise);
   }
 
   addFrameNavigation(frame: Frame) {

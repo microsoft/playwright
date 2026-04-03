@@ -39,4 +39,5 @@ export interface Progress {
   wait(timeout: number): Promise<void>; // timeout = 0 here means "wait 0 ms", not forever.
   signal: AbortSignal;
   metadata: CallMetadata;
+  setAllowConcurrentOrNestedRaces(allow: boolean): void;
 }

@@ -312,6 +312,7 @@ export abstract class APIRequestContext extends SdkObject {
     this.emit(APIRequestContext.Events.Request, requestEvent);
 
     let destroyRequest: (() => void) | undefined;
+    progress.setAllowConcurrentOrNestedRaces(true);
     const resultPromise = new Promise<SendRequestResult>((fulfill, reject) => {
       const requestConstructor: ((url: URL, options: http.RequestOptions, callback?: (res: http.IncomingMessage) => void) => http.ClientRequest)
         = (url.protocol === 'https:' ? https : http).request;
@@ -557,6 +558,8 @@ export abstract class APIRequestContext extends SdkObject {
     return progress.race(resultPromise).catch(error => {
       destroyRequest?.();
       throw error;
+    }).finally(() => {
+      progress.setAllowConcurrentOrNestedRaces(false);
     });
   }
 

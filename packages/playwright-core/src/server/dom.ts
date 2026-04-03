@@ -219,7 +219,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _waitAndScrollIntoViewIfNeeded(progress: Progress, waitForVisible: boolean): Promise<void> {
-    const result = await this._retryAction(progress, 'scroll into view', async () => {
+    const result = await this._retryAction(progress, 'scroll into view', async progress => {
       progress.log(`  waiting for element to be stable`);
       const waitResult = await progress.race(this.evaluateInUtility(async ([injected, node, { waitForVisible }]) => {
         return await injected.checkElementStates(node, waitForVisible ? ['visible', 'stable'] : ['stable']);
@@ -307,7 +307,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     };
   }
 
-  async _retryAction(progress: Progress, actionName: string, action: (retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean, skipActionPreChecks?: boolean, noAutoWaiting?: boolean }): Promise<'error:notconnected' | 'done'> {
+  async _retryAction(progress: Progress, actionName: string, action: (progress: Progress, retry: number) => Promise<PerformActionResult>, options: { trial?: boolean, force?: boolean, skipActionPreChecks?: boolean, noAutoWaiting?: boolean }): Promise<'error:notconnected' | 'done'> {
     let retry = 0;
     // We progressively wait longer between retries, up to 500ms.
     const waitTime = [0, 20, 100, 100, 500];
@@ -328,7 +328,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       }
       if (!options.skipActionPreChecks && !options.force && !noAutoWaiting)
         await this._frame._page.performActionPreChecks(progress);
-      const result = await progress.race(action(retry));
+      const result = await action(progress, retry);
       ++retry;
       if (result === 'error:notvisible') {
         if (options.force || noAutoWaiting)
@@ -370,11 +370,11 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     }
   }
 
-  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (point: types.Point) => Promise<void>,
+  async _retryPointerAction(progress: Progress, actionName: ActionName, waitForEnabled: boolean, action: (progress: Progress, point: types.Point) => Promise<void>,
     options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
     // Note: do not perform locator handlers checkpoint to avoid moving the mouse in the middle of a drag operation.
     const skipActionPreChecks = actionName === 'move and up';
-    return await this._retryAction(progress, actionName, async retry => {
+    return await this._retryAction(progress, actionName, async (progress, retry) => {
       // By default, we scroll with protocol method to reveal the action point.
       // However, that might not work to scroll from under position:sticky elements
       // that overlay the target element. To fight this, we cycle through different
@@ -394,19 +394,19 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
     progress: Progress,
     actionName: ActionName,
     waitForEnabled: boolean,
-    action: (point: types.Point) => Promise<void>,
+    action: (progress: Progress, point: types.Point) => Promise<void>,
     forceScrollOptions: ScrollIntoViewOptions | undefined,
     options: { waitAfter: boolean | 'disabled' } & types.PointerActionOptions & types.PointerActionWaitOptions,
   ): Promise<PerformActionResult> {
     const { force = false, position } = options;
 
-    const doScrollIntoView = async () => {
+    const doScrollIntoView = async (progress: Progress) => {
       if (forceScrollOptions) {
-        return await this.evaluateInUtility(([injected, node, options]) => {
+        return await progress.race(this.evaluateInUtility(([injected, node, options]) => {
           if (node.nodeType === 1 /* Node.ELEMENT_NODE */)
             (node as Node as Element).scrollIntoView(options);
           return 'done' as const;
-        }, forceScrollOptions);
+        }, forceScrollOptions));
       }
       return await this._scrollRectIntoViewIfNeeded(progress, position ? { x: position.x, y: position.y, width: 0, height: 0 } : undefined);
     };
@@ -415,7 +415,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       // Best-effort scroll to make sure any iframes containing this element are scrolled
       // into view and visible, so they are not throttled.
       // See https://github.com/microsoft/playwright/issues/27196 for an example.
-      await progress.race(doScrollIntoView().catch(() => {}));
+      await doScrollIntoView(progress).catch(() => {});
     }
 
     if ((options as any).__testHookBeforeStable)
@@ -436,7 +436,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       await progress.race((options as any).__testHookAfterStable());
 
     progress.log('  scrolling into view if needed');
-    const scrolled = await progress.race(doScrollIntoView());
+    const scrolled = await doScrollIntoView(progress);
     if (scrolled !== 'done')
       return scrolled;
     progress.log('  done scrolling');
@@ -473,14 +473,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       hitTargetInterceptionHandle = handle as any;
     }
 
-    const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async () => {
+    const actionResult = await this._page.frameManager.waitForSignalsCreatedBy(progress, options.waitAfter === true, async progress => {
       if ((options as any).__testHookBeforePointerAction)
         await progress.race((options as any).__testHookBeforePointerAction());
       let restoreModifiers: types.KeyboardModifier[] | undefined;
       if (options && options.modifiers)
         restoreModifiers = await this._page.keyboard.ensureModifiers(progress, options.modifiers);
       progress.log(`  performing ${actionName} action`);
-      await action(point);
+      await action(progress, point);
       if (restoreModifiers)
         await this._page.keyboard.ensureModifiers(progress, restoreModifiers);
       if (hitTargetInterceptionHandle) {
@@ -530,7 +530,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _hover(progress: Progress, options: types.PointerActionOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, point => this._page.mouse.move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'hover', false /* waitForEnabled */, (progress, point) => this._page.mouse.move(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async click(progress: Progress, options: { noWaitAfter?: boolean } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -540,7 +540,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _click(progress: Progress, options: { waitAfter: boolean | 'disabled' } & types.MouseClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, point => this._page.mouse.click(progress, point.x, point.y, options), options);
+    return this._retryPointerAction(progress, 'click', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, options), options);
   }
 
   async dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<void> {
@@ -550,7 +550,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _dblclick(progress: Progress, options: types.MouseMultiClickOptions & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, point => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'dblclick', true /* waitForEnabled */, (progress, point) => this._page.mouse.click(progress, point.x, point.y, { ...options, clickCount: 2 }), { ...options, waitAfter: 'disabled' });
   }
 
   async tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<void> {
@@ -560,7 +560,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   _tap(progress: Progress, options: types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, point => this._page.touchscreen.tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
+    return this._retryPointerAction(progress, 'tap', true /* waitForEnabled */, (progress, point) => this._page.touchscreen.tap(progress, point.x, point.y), { ...options, waitAfter: 'disabled' });
   }
 
   async selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[]> {
@@ -577,7 +577,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _selectOption(progress: Progress, elements: ElementHandle[], values: types.SelectOption[], options: types.CommonActionOptions): Promise<string[] | 'error:notconnected'> {
     let resultingOptions: string[] = [];
-    const result = await this._retryAction(progress, 'select option', async () => {
+    const result = await this._retryAction(progress, 'select option', async progress => {
       await this._beforeNonPointerAction(progress);
       if (!options.force)
         progress.log(`  waiting for element to be visible and enabled`);
@@ -610,7 +610,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async _fill(progress: Progress, value: string, options: types.CommonActionOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`  fill("${value}")`);
-    return await this._retryAction(progress, 'fill', async () => {
+    return await this._retryAction(progress, 'fill', async progress => {
       await this._beforeNonPointerAction(progress);
       if (!options.force)
         progress.log('  waiting for element to be visible, enabled and editable');
@@ -635,7 +635,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async selectText(progress: Progress, options: types.CommonActionOptions): Promise<void> {
-    const result = await this._retryAction(progress, 'selectText', async () => {
+    const result = await this._retryAction(progress, 'selectText', async progress => {
       if (!options.force)
         progress.log('  waiting for element to be visible');
       return await progress.race(this.evaluateInUtility(async ([injected, node, { force }]) => {
@@ -736,7 +736,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   async _press(progress: Progress, key: string, options: { delay?: number, noWaitAfter?: boolean } & types.StrictOptions): Promise<'error:notconnected' | 'done'> {
     progress.log(`elementHandle.press("${key}")`);
     await this._beforeNonPointerAction(progress);
-    return this._page.frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async () => {
+    return this._page.frameManager.waitForSignalsCreatedBy(progress, !options.noWaitAfter, async progress => {
       const result = await this._focus(progress, true /* resetSelectionIfNotFocused */);
       if (result !== 'done')
         return result;
@@ -756,14 +756,14 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
   }
 
   async _setChecked(progress: Progress, state: boolean, options: { position?: types.Point } & types.PointerActionWaitOptions): Promise<'error:notconnected' | 'done'> {
-    const isChecked = async () => {
+    const isChecked = async (progress: Progress) => {
       const result = await progress.race(this.evaluateInUtility(([injected, node]) => injected.elementState(node, 'checked'), {}));
       if (result === 'error:notconnected' || result.received === 'error:notconnected')
         throwElementIsNotAttached();
       return { matches: result.matches, isRadio: result.isRadio };
     };
     await this._markAsTargetElement(progress);
-    const checkedState = await progress.race(isChecked());
+    const checkedState = await isChecked(progress);
     if (checkedState.matches === state)
       return 'done';
     if (!state && checkedState.isRadio)
@@ -773,7 +773,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
       return result;
     if (options.trial)
       return 'done';
-    const finalState = await progress.race(isChecked());
+    const finalState = await isChecked(progress);
     if (finalState.matches !== state)
       throw new NonRecoverableDOMError('Clicking the checkbox did not change its state');
     return 'done';
@@ -837,7 +837,7 @@ export class ElementHandle<T extends Node = Node> extends js.JSHandle<T> {
 
   async waitForElementState(progress: Progress, state: 'visible' | 'hidden' | 'stable' | 'enabled' | 'disabled' | 'editable'): Promise<void> {
     const actionName = `wait for ${state}`;
-    const result = await this._retryAction(progress, actionName, async () => {
+    const result = await this._retryAction(progress, actionName, async progress => {
       return await progress.race(this.evaluateInUtility(async ([injected, node, state]) => {
         return (await injected.checkElementStates(node, [state])) || 'done';
       }, state));

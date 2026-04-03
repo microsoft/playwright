@@ -67,6 +67,9 @@ export class ProgressController {
     this._state = 'running';
     let timer: NodeJS.Timeout | undefined;
 
+    let outerProgress: string | undefined;
+    let allowConcurrent = false;
+
     const progress: Progress = {
       timeout: timeout ?? 0,
       deadline,
@@ -80,11 +83,26 @@ export class ProgressController {
         this._onCallLog?.(message);
       },
       metadata: this.metadata,
+      setAllowConcurrentOrNestedRaces: (allow: boolean) => {
+        allowConcurrent = allow;
+      },
       race: <T>(promise: Promise<T> | Promise<T>[]) => {
+        if (process.env.PW_DETECT_NESTED_PROGRESS) {
+          const innerProgress = new Error().stack;
+          if (outerProgress && !allowConcurrent && outerProgress !== innerProgress) {
+            // eslint-disable-next-line no-console
+            console.error('Cannot call race() inside another race()');
+            // eslint-disable-next-line no-console
+            console.error('<<<<<OUTER>>>>>:', outerProgress);
+            // eslint-disable-next-line no-console
+            console.error('<<<<<INNER>>>>>:', innerProgress);
+          }
+          outerProgress = innerProgress;
+        }
         const promises = Array.isArray(promise) ? promise : [promise];
         if (!promises.length)
           return Promise.resolve();
-        return Promise.race([...promises, this._forceAbortPromise]);
+        return Promise.race([...promises, this._forceAbortPromise]).finally(() => outerProgress = undefined);
       },
       wait: async (timeout: number) => {
         // Timeout = 0 here means nowait. Counter to what it typically is (wait forever).
@@ -165,5 +183,6 @@ export const nullProgress: Progress = {
     params: {},
     log: [],
     internal: true,
-  }
+  },
+  setAllowConcurrentOrNestedRaces() { },
 };

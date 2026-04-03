@@ -102,7 +102,7 @@ export class RawMouseImpl implements input.RawMouse {
   }
 
   async move(progress: Progress, x: number, y: number, button: types.MouseButton | 'none', buttons: Set<types.MouseButton>, modifiers: Set<types.KeyboardModifier>, forClick: boolean): Promise<void> {
-    const actualMove = async () => {
+    const actualMove = async (progress: Progress) => {
       await progress.race(this._client.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
         button,
@@ -116,7 +116,7 @@ export class RawMouseImpl implements input.RawMouse {
     if (forClick) {
       // Avoid extra protocol calls related to drag and drop, because click relies on
       // move-down-up protocol commands being sent synchronously.
-      await progress.race(actualMove());
+      await actualMove(progress);
       return;
     }
     await this._dragManager.interceptDragCausedByMove(progress, x, y, button, buttons, modifiers, actualMove);

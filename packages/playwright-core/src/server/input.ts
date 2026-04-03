@@ -276,6 +276,7 @@ export class Mouse {
           await progress.wait(delay);
       }
     } else {
+      progress.setAllowConcurrentOrNestedRaces(true);
       const promises = [];
       const movePromise = this.move(progress, x, y, { forClick: true, steps });
       if (steps !== undefined && steps > 1)
@@ -286,7 +287,8 @@ export class Mouse {
         promises.push(this.down(progress, { ...options, clickCount: cc }));
         promises.push(this.up(progress, { ...options, clickCount: cc }));
       }
-      await progress.race(Promise.all(promises));
+      await Promise.all(promises);
+      progress.setAllowConcurrentOrNestedRaces(false);
     }
   }
 
