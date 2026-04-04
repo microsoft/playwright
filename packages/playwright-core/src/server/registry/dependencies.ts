@@ -25,10 +25,10 @@ import { hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatfo
 import { spawnAsync } from '../utils/spawnAsync';
 import { getPlaywrightVersion } from '../utils/userAgent';
 
+import { packageJSON, binPath } from '../../package';
 import { buildPlaywrightCLICommand, registry } from '.';
 
-const BIN_DIRECTORY = path.join(__dirname, '..', '..', '..', 'bin');
-const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || require('../../../package.json').version;
+const languageBindingVersion = process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version;
 
 const dockerVersionFilePath = '/ms-playwright/.docker-info';
 export async function writeDockerVersion(dockerImageNameTemplate: string) {
@@ -78,12 +78,12 @@ export type DependencyGroup = 'chromium' | 'firefox' | 'webkit' | 'tools';
 export async function installDependenciesWindows(targets: Set<DependencyGroup>, dryRun: boolean): Promise<void> {
   if (targets.has('chromium')) {
     const command = 'powershell.exe';
-    const args = ['-ExecutionPolicy', 'Bypass', '-File', path.join(BIN_DIRECTORY, 'install_media_pack.ps1')];
+    const args = ['-ExecutionPolicy', 'Bypass', '-File', path.join(binPath, 'install_media_pack.ps1')];
     if (dryRun) {
       console.log(`${command} ${quoteProcessArgs(args).join(' ')}`); // eslint-disable-line no-console
       return;
     }
-    const { code } = await spawnAsync(command, args, { cwd: BIN_DIRECTORY, stdio: 'inherit' });
+    const { code } = await spawnAsync(command, args, { cwd: binPath, stdio: 'inherit' });
     if (code !== 0)
       throw new Error('Failed to install windows dependencies!');
   }

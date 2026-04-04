@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { getAsBooleanFromENV, msToString as milliseconds } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 
 import { markErrorsAsReported, TerminalReporter, stepSuffix } from './base';
 import { stripAnsiEscapes } from '../util';
@@ -41,7 +41,7 @@ class ListReporter extends TerminalReporter {
 
   constructor(options?: ListReporterOptions & CommonReporterOptions & TerminalReporterOptions) {
     super(options);
-    this._printSteps = getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
+    this._printSteps = serverUtils.getAsBooleanFromENV('PLAYWRIGHT_LIST_PRINT_STEPS', options?.printSteps);
   }
 
   override onBegin(suite: Suite) {
@@ -125,7 +125,7 @@ class ListReporter extends TerminalReporter {
       text = this.screen.colors.red(title);
     else
       text = title;
-    text += this.screen.colors.dim(` (${milliseconds(step.duration)})`);
+    text += this.screen.colors.dim(` (${iso.msToString(step.duration)})`);
 
     this._updateOrAppendLine(this._stepRows, step, text, prefix);
   }
@@ -218,7 +218,7 @@ class ListReporter extends TerminalReporter {
         prefix = this._testPrefix(index, this.screen.colors.red(statusMark));
         text = this.screen.colors.red(title);
       }
-      text += this._retrySuffix(result) + this.screen.colors.dim(` (${milliseconds(result.duration)})`);
+      text += this._retrySuffix(result) + this.screen.colors.dim(` (${iso.msToString(result.duration)})`);
     }
 
     this._updateOrAppendLine(this._testRows, test, text, prefix);

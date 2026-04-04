@@ -19,9 +19,10 @@ import path from 'path';
 
 import { test, expect } from '@playwright/test';
 
-import { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from '../../packages/playwright-core/lib/tools/mcp/config';
-
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
+
+const { resolveCLIConfigForCLI, resolveCLIConfigForMCP } = tools;
 
 // Empty env to isolate tests from the host environment.
 const emptyEnv = {};

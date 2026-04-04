@@ -1,6 +1,7 @@
 [*]
 ../../mcpBundle.ts
 ../../zodBundle.ts
+../../package.ts
 ../../utils
 ../../utils/isomorphic
 ../../utilsBundle.ts

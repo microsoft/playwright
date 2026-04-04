@@ -17,18 +17,19 @@
 /* eslint-disable no-console */
 
 import 'playwright-core/lib/bootstrap';
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-
-import { program } from 'playwright-core/lib/cli/program';
+import { libCli, serverUtils } from 'playwright-core/lib/coreBundle';
+import { program } from 'playwright-core/lib/utilsBundle';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 
-export { program } from 'playwright-core/lib/cli/program';
+export { program };
 
-import type { ServerBackendFactory } from 'playwright-core/lib/tools/exports';
+import type { tools } from 'playwright-core/lib/coreBundle';
 import type { TraceMode } from '../types/test';
 import type { Command } from 'playwright-core/lib/utilsBundle';
 
 const packageJSON = require('../package.json');
+
+libCli.decorateProgram(program);
 
 function addTestCommand(program: Command) {
   const command = program.command('test [test-filter...]');
@@ -51,7 +52,7 @@ function addTestCommand(program: Command) {
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
-      gracefullyProcessExitDoNotHang(1);
+      serverUtils.gracefullyProcessExitDoNotHang(1);
     }
   });
   command.addHelpText('afterAll', `
@@ -124,7 +125,7 @@ function addMergeReportsCommand(program: Command) {
       await mergeReports(dir, options);
     } catch (e) {
       console.error(e);
-      gracefullyProcessExitDoNotHang(1);
+      serverUtils.gracefullyProcessExitDoNotHang(1);
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);
@@ -145,10 +146,10 @@ function addTestMCPServerCommand(program: Command) {
   command.option('--host <host>', 'host to bind server to. Default is localhost. Use 0.0.0.0 to bind to all interfaces.');
   command.option('--port <port>', 'port to listen on for SSE transport.');
   command.action(async options => {
-    const { start, setupExitWatchdog } = await import('playwright-core/lib/tools/exports');
+    const { tools } = await import('playwright-core/lib/coreBundle');
     const { TestServerBackend, testServerBackendTools } = await import('./mcp/test/testBackend');
-    setupExitWatchdog();
-    const factory: ServerBackendFactory = {
+    tools.setupExitWatchdog();
+    const factory: tools.ServerBackendFactory = {
       name: 'Playwright Test Runner',
       nameInConfig: 'playwright-test-runner',
       version: packageJSON.version,
@@ -157,7 +158,7 @@ function addTestMCPServerCommand(program: Command) {
       disposed: async () => { }
     };
     // TODO: add all options from mcp.startHttpServer.
-    await start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
+    await tools.start(factory, { port: options.port === undefined ? undefined : +options.port, host: options.host });
   });
 }
 

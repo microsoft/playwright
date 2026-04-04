@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from 'playwright-core/lib/utils';
+import { serverUtils } from 'playwright-core/lib/coreBundle';
 
 import { expectTypes } from '../util';
 
@@ -39,7 +39,7 @@ export async function toMatchText(
     !(expected && typeof expected.test === 'function')
   ) {
     const errorMessage = `Error: ${this.utils.EXPECTED_COLOR('expected')} value must be a string or regular expression\n${this.utils.printWithType('Expected', expected, this.utils.printExpected)}`;
-    throw new Error(formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, locator: locator?.toString(), matcherName, expectation: 'expected', errorMessage }));
+    throw new Error(serverUtils.formatMatcherMessage(this.utils, { promise: this.promise, isNot: this.isNot, locator: locator?.toString(), matcherName, expectation: 'expected', errorMessage }));
   }
 
   const timeout = options.timeout ?? this.timeout;
@@ -65,13 +65,13 @@ export async function toMatchText(
     if (typeof expected === 'string') {
       printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
-        const formattedReceived = printReceivedStringContainExpectedSubstring(this.utils, receivedString, receivedString.indexOf(expected), expected.length);
+        const formattedReceived = serverUtils.printReceivedStringContainExpectedSubstring(this.utils, receivedString, receivedString.indexOf(expected), expected.length);
         printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     } else {
       printedExpected = `Expected${expectedSuffix}: not ${this.utils.printExpected(expected)}`;
       if (!errorMessage) {
-        const formattedReceived = printReceivedStringContainExpectedResult(this.utils, receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
+        const formattedReceived = serverUtils.printReceivedStringContainExpectedResult(this.utils, receivedString, typeof expected.exec === 'function' ? expected.exec(receivedString) : null);
         printedReceived = `Received${receivedSuffix}: ${formattedReceived}`;
       }
     }
@@ -83,7 +83,7 @@ export async function toMatchText(
   }
 
   const message = () => {
-    return formatMatcherMessage(this.utils, {
+    return serverUtils.formatMatcherMessage(this.utils, {
       promise: this.promise,
       isNot: this.isNot,
       matcherName,

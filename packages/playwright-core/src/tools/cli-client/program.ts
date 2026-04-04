@@ -236,8 +236,11 @@ async function runInitWorkspace(args: MinimistArgs) {
 }
 
 async function installBrowser() {
-  const { program } = require('../../cli/program');
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
+  const { libCli } = await import('../../coreBundle');
+  const { program } = await import('../../utilsBundle');
+  if (!program.version())
+    libCli.decorateProgram(program);
   program.parse(argv);
 }
 

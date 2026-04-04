@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { removeFolders } from 'playwright-core/lib/utils';
+import { serverUtils } from 'playwright-core/lib/coreBundle';
 
 import { ProcessHost } from './processHost';
 import { stdioChunkToParams } from '../common/ipc';
@@ -77,7 +77,7 @@ export class WorkerHost extends ProcessHost {
   }
 
   override async onExit() {
-    await removeFolders([this._params.artifactsDir]);
+    await serverUtils.removeFolders([this._params.artifactsDir]);
   }
 
   override async stop(didFail?: boolean) {

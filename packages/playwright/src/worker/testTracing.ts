@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { ManualPromise, SerializedFS, calculateSha1, createGuid, getPlaywrightVersion, monotonicTime } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 
 import { filteredStackTrace } from '../util';
 
@@ -27,6 +27,8 @@ import type { TestInfoErrorImpl } from '../common/ipc';
 import type { SerializedError, StackFrame } from '@protocol/channels';
 import type * as trace from '@trace/trace';
 import type EventEmitter from 'events';
+
+const { monotonicTime } = iso;
 
 export type Attachment = TestInfo['attachments'][0];
 export const testTraceEntryName = 'test.trace';
@@ -39,7 +41,7 @@ type TraceOptions = { screenshots: boolean, snapshots: boolean, sources: boolean
 export class TestTracing {
   private _testInfo: TestInfoImpl;
   private _options: TraceOptions | undefined;
-  private _liveTraceFile: { file: string, fs: SerializedFS } | undefined;
+  private _liveTraceFile: { file: string, fs: serverUtils.SerializedFS } | undefined;
   private _traceEvents: trace.TraceEvent[] = [];
   private _temporaryTraceFiles: string[] = [];
   private _artifactsDir: string;
@@ -56,7 +58,7 @@ export class TestTracing {
       type: 'context-options',
       origin: 'testRunner',
       browserName: '',
-      playwrightVersion: getPlaywrightVersion(),
+      playwrightVersion: serverUtils.getPlaywrightVersion(),
       options: {},
       platform: process.platform,
       wallTime: Date.now(),
@@ -107,7 +109,7 @@ export class TestTracing {
 
     if (!this._liveTraceFile && this._options.live) {
       // Note that trace name must start with testId for live tracing to work.
-      this._liveTraceFile = { file: path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`), fs: new SerializedFS() };
+      this._liveTraceFile = { file: path.join(this._tracesDir, `${this._testInfo.testId}-test.trace`), fs: new serverUtils.SerializedFS() };
       this._liveTraceFile.fs.mkdir(path.dirname(this._liveTraceFile.file));
       const data = this._traceEvents.map(e => JSON.stringify(e)).join('\n') + '\n';
       this._liveTraceFile.fs.writeFile(this._liveTraceFile.file, data);
@@ -139,7 +141,7 @@ export class TestTracing {
   }
 
   private _generateNextTraceRecordingPath() {
-    const file = path.join(this._artifactsDir, createGuid() + '.zip');
+    const file = path.join(this._artifactsDir, serverUtils.createGuid() + '.zip');
     this._temporaryTraceFiles.push(file);
     return file;
   }
@@ -202,7 +204,7 @@ export class TestTracing {
       }
       for (const sourceFile of sourceFiles) {
         await fs.promises.readFile(sourceFile, 'utf8').then(source => {
-          zipFile.addBuffer(Buffer.from(source), 'resources/src@' + calculateSha1(sourceFile) + '.txt');
+          zipFile.addBuffer(Buffer.from(source), 'resources/src@' + serverUtils.calculateSha1(sourceFile) + '.txt');
         }).catch(() => {});
       }
     }
@@ -220,7 +222,7 @@ export class TestTracing {
         if (content === undefined)
           continue;
 
-        const sha1 = calculateSha1(content);
+        const sha1 = serverUtils.calculateSha1(content);
         attachment.sha1 = sha1;
         delete attachment.path;
         delete attachment.base64;
@@ -346,7 +348,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
     return;
   }
 
-  const mergePromise = new ManualPromise();
+  const mergePromise = new iso.ManualPromise();
   const { yazl, yauzl } = await import('playwright-core/lib/zipBundle');
   const zipFile = new yazl.ZipFile();
   const entryNames = new Set<string>();
@@ -354,7 +356,7 @@ async function mergeTraceFiles(fileName: string, temporaryTraceFiles: string[]) 
 
   for (let i = temporaryTraceFiles.length - 1; i >= 0; --i) {
     const tempFile = temporaryTraceFiles[i];
-    const promise = new ManualPromise<void>();
+    const promise = new iso.ManualPromise<void>();
     yauzl.open(tempFile, (err, inZipFile) => {
       if (err) {
         promise.reject(err);

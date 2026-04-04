@@ -18,8 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { noColors, escapeRegExp, ManualPromise, toPosixPath } from 'playwright-core/lib/utils';
-import { parseResponse } from 'playwright-core/lib/tools/exports';
+import { iso, serverUtils, tools } from 'playwright-core/lib/coreBundle';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { terminalScreen } from '../../reporters/base';
@@ -33,7 +32,6 @@ import { resolveConfigLocation } from '../../common/configLoader';
 import type { TerminalScreen } from '../../reporters/base';
 import type { FullResultStatus, RunTestsParams } from '../../runner/testRunner';
 import type { ConfigLocation } from '../../common/config';
-import type { ClientInfo } from 'playwright-core/lib/tools/exports';
 import type { BrowserMCPRequest, BrowserMCPResponse } from './browserBackend';
 
 export type SeedFile = {
@@ -63,7 +61,7 @@ export class GeneratorJournal {
     const result: string[] = [];
     result.push(`# Plan`);
     result.push(this._plan);
-    result.push(`# Seed file: ${toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
+    result.push(`# Seed file: ${serverUtils.toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
     result.push('```ts');
     result.push(this._seed.content);
     result.push('```');
@@ -88,14 +86,14 @@ type TestRunnerAndScreen = {
 };
 
 export class TestContext {
-  private _clientInfo: ClientInfo;
+  private _clientInfo: tools.ClientInfo;
   private _testRunnerAndScreen: TestRunnerAndScreen | undefined;
   readonly computedHeaded: boolean;
   private readonly _configLocation: ConfigLocation;
   readonly rootPath: string;
   generatorJournal: GeneratorJournal | undefined;
 
-  constructor(clientInfo: ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
+  constructor(clientInfo: tools.ClientInfo, configPath: string | undefined, options?: { muteConsole?: boolean, headless?: boolean }) {
     this._clientInfo = clientInfo;
 
     this._configLocation = resolveConfigLocation(configPath || clientInfo.cwd);
@@ -129,7 +127,7 @@ export class TestContext {
 
     const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
-    const testPaused = new ManualPromise<void>();
+    const testPaused = new iso.ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
       testRunner,
@@ -181,7 +179,7 @@ export class TestContext {
   async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
-      locations: ['/' + escapeRegExp(seedFile) + '/'],
+      locations: ['/' + iso.escapeRegExp(seedFile) + '/'],
       projects: [projectName],
       timeout: 0,
       workers: 1,
@@ -261,7 +259,7 @@ export class TestContext {
     if (result.error)
       throw new Error(result.error.message);
     if (typeof request?.callTool?.arguments?.['intent'] === 'string') {
-      const response = parseResponse(result.response.callTool!);
+      const response = tools.parseResponse(result.response.callTool!);
       if (response && !response.isError && response.code)
         this.generatorJournal?.logStep(request.callTool.arguments['intent'], response.code);
     }
@@ -277,7 +275,7 @@ export function createScreen() {
   const screen = {
     ...terminalScreen,
     isTTY: false,
-    colors: noColors,
+    colors: iso.noColors,
     stdout: stdout as unknown as NodeJS.WriteStream,
     stderr: stderr as unknown as NodeJS.WriteStream,
   };

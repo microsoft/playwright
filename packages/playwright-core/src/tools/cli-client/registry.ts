@@ -19,6 +19,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { packageRoot, packageJSON } from '../../package';
+
 import type * as playwright from '../../..';
 
 export type ClientInfo = {
@@ -155,13 +157,11 @@ export const baseDaemonDir = (() => {
 })();
 
 export function createClientInfo(): ClientInfo {
-  const packageLocation = require.resolve('../../../package.json');
-  const packageJSON = require(packageLocation);
   const workspaceDir = findWorkspaceDir(process.cwd());
   const version = process.env.PLAYWRIGHT_CLI_VERSION_FOR_TEST || packageJSON.version;
 
   const hash = crypto.createHash('sha1');
-  hash.update(workspaceDir || packageLocation);
+  hash.update(workspaceDir || packageRoot);
   const workspaceDirHash = hash.digest('hex').substring(0, 16);
 
   return {

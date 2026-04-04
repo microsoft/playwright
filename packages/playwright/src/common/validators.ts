@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-import { validate } from 'playwright-core/lib/utils';
-
+import { iso } from 'playwright-core/lib/coreBundle';
 import type { TestDetailsAnnotation } from '../../types/test';
 import type { Location } from '../../types/testReporter';
-import type { JsonSchema } from 'playwright-core/lib/utils';
+
+type JsonSchema = iso.JsonSchema;
 
 const testAnnotationSchema: JsonSchema = {
   type: 'object',
@@ -54,7 +54,7 @@ type ValidTestDetails = {
 };
 
 export function validateTestDetails(details: unknown, location: Location): ValidTestDetails {
-  const errors = validate(details, testDetailsSchema, 'details');
+  const errors = iso.validate(details, testDetailsSchema, 'details');
   if (errors.length)
     throw new Error(errors.join('\n'));
 

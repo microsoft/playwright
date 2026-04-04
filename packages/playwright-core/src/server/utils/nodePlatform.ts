@@ -25,6 +25,7 @@ import { colors } from '../../utilsBundle';
 import { debugLogger } from './debugLogger';
 import { currentZone, emptyZone } from './zones';
 import { debugMode, isUnderTest } from './debug';
+import { packageRoot as coreDir } from '../../package';
 
 import type { Platform, Zone } from '../../client/platform';
 import type { Zone as ZoneImpl } from './zones';
@@ -60,8 +61,6 @@ let boxedStackPrefixes: string[] = [];
 export function setBoxedStackPrefixes(prefixes: string[]) {
   boxedStackPrefixes = prefixes;
 }
-
-const coreDir = path.dirname(require.resolve('../../../package.json'));
 
 export const nodePlatform: Platform = {
   name: 'node',

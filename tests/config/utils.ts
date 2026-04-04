@@ -22,7 +22,7 @@ import { TraceLoader } from '../../packages/playwright-core/src/utils/isomorphic
 import { TraceModel } from '../../packages/playwright-core/src/utils/isomorphic/trace/traceModel';
 import type { ActionTraceEvent, TraceEvent } from '@trace/trace';
 import { renderTitleForCall } from '../../packages/playwright-core/lib/utils/isomorphic/protocolFormatter';
-import { DirTraceLoaderBackend, extractTrace } from '../../packages/playwright-core/lib/tools/trace/traceParser';
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import type { SnapshotStorage } from '../../packages/playwright-core/src/utils/isomorphic/trace/snapshotStorage';
 
 export type BoundingBox = Awaited<ReturnType<Locator['boundingBox']>>;
@@ -167,8 +167,8 @@ export async function parseTraceRaw(file: string): Promise<{ events: any[], reso
 
 export async function parseTrace(file: string): Promise<{ snapshots: SnapshotStorage, model: TraceModel }> {
   const dir = file + '.extracted';
-  await extractTrace(file, dir);
-  const backend = new DirTraceLoaderBackend(dir);
+  await tools.extractTrace(file, dir);
+  const backend = new tools.DirTraceLoaderBackend(dir);
   const loader = new TraceLoader();
   await loader.load(backend);
   return { model: new TraceModel(dir, loader.contextEntries), snapshots: loader.storage() };

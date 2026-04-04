@@ -21,6 +21,11 @@ export { parseResponse } from './backend/response';
 export { Tab } from './backend/tab';
 export { browserTools, filteredTools } from './backend/tools';
 export { start } from './utils/mcp/server';
+export { createConnection } from './mcp/index';
+export { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from './mcp/config';
+export { isProfileLocked } from './mcp/browserFactory';
+export { compareSemver } from './utils/socketConnection';
+export { extractTrace, DirTraceLoaderBackend } from './trace/traceParser';
 
 export type { ContextConfig } from './backend/context';
 export type { CallToolRequest, CallToolResult, Tool } from './backend/tool';
@@ -29,4 +34,3 @@ export type { FullConfig } from './mcp/config';
 export type { ServerBackend } from './utils/mcp/server';
 export type { ToolSchema } from './utils/mcp/tool';
 export type { ServerBackendFactory } from './utils/mcp/server';
-export { createConnection } from './mcp/index';

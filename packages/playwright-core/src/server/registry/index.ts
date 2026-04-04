@@ -32,14 +32,15 @@ import { spawnAsync } from '../utils/spawnAsync';
 import { getEmbedderName } from '../utils/userAgent';
 import { lockfile } from '../../utilsBundle';
 import { canAccessFile, existsAsync, removeFolders } from '../utils/fileUtils';
+import { packageRoot, binPath } from '../../package';
 
 import type { DependencyGroup } from './dependencies';
 import type { HostPlatform } from '../utils/hostPlatform';
 
 export { writeDockerVersion } from './dependencies';
 
-const PACKAGE_PATH = path.join(__dirname, '..', '..', '..');
-const BIN_PATH = path.join(__dirname, '..', '..', '..', 'bin');
+const PACKAGE_PATH = packageRoot;
+const BIN_PATH = binPath;
 
 const PLAYWRIGHT_CDN_MIRRORS = [
   'https://cdn.playwright.dev/dbazure/download/playwright', // ESRP CDN
@@ -469,7 +470,7 @@ export const registryDirectory = (() => {
 
   const envDefined = getFromENV('PLAYWRIGHT_BROWSERS_PATH');
   if (envDefined === '0')
-    result = path.join(__dirname, '..', '..', '..', '.local-browsers');
+    result = path.join(packageRoot, '.local-browsers');
   else if (envDefined)
     result = envDefined;
   else

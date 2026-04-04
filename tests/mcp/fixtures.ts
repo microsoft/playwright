@@ -24,7 +24,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ListRootsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 import { TestServer } from '../config/testserver';
 import { serverFixtures } from '../config/serverFixtures';
-import { parseResponse } from '../../packages/playwright-core/lib/tools/backend/response';
+import { tools } from '../../packages/playwright-core/lib/coreBundle';
 import { commonFixtures } from '../config/commonFixtures';
 import { inheritAndCleanEnv } from '../config/utils';
 
@@ -35,7 +35,7 @@ import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { Stream } from 'stream';
 import type { ServerFixtures, ServerWorkerOptions } from '../config/serverFixtures';
 
-export { parseResponse };
+export const { parseResponse } = tools;
 
 export type TestOptions = {
   mcpArgs: string[] | undefined;
@@ -235,7 +235,7 @@ type Response = Awaited<ReturnType<Client['callTool']>>;
 
 export const expect = baseExpect.extend({
   toHaveResponse(response: Response, object: any) {
-    const parsed = parseResponse(response, test.info().outputPath());
+    const parsed = tools.parseResponse(response, test.info().outputPath());
     const text = parsed.text;
     const isNot = this.isNot;
 

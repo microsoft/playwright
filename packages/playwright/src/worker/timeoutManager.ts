@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-import { ManualPromise, monotonicTime } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import { iso } from 'playwright-core/lib/coreBundle';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 import { debugTest, formatLocation } from '../util';
 
 import type { Location } from '../../types/testReporter';
+
+const { monotonicTime } = iso;
 
 export type TimeSlot = {
   timeout: number;
@@ -48,7 +50,7 @@ type Running = {
   start: number;
   deadline: number;
   timer: NodeJS.Timeout | undefined;
-  timeoutPromise: ManualPromise<any>;
+  timeoutPromise: iso.ManualPromise<any>;
 };
 export const kMaxDeadline = 2147483647; // 2^31-1
 
@@ -95,7 +97,7 @@ export class TimeoutManager {
       start: monotonicTime(),
       deadline: kMaxDeadline,
       timer: undefined,
-      timeoutPromise: new ManualPromise(),
+      timeoutPromise: new iso.ManualPromise(),
     };
     let debugTitle = '';
     try {

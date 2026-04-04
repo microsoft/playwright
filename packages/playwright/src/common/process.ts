@@ -15,11 +15,12 @@
  */
 
 import 'playwright-core/lib/bootstrap';
-import { ManualPromise, setTimeOrigin, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
-
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { serializeError } from '../util';
 
 import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorImpl } from './ipc';
+
+type ManualPromise<T = void> = iso.ManualPromise<T>;
 
 export type ProtocolRequest = {
   id: number;
@@ -68,8 +69,8 @@ const startingEnv = { ...process.env };
 process.on('message', async (message: any) => {
   if (message.method === '__init__') {
     const { processParams, runnerParams, runnerScript } = message.params as { processParams: ProcessInitParams, runnerParams: any, runnerScript: string };
-    void startProfiling();
-    setTimeOrigin(processParams.timeOrigin);
+    void serverUtils.startProfiling();
+    iso.setTimeOrigin(processParams.timeOrigin);
     const { create } = require(runnerScript);
     processRunner = create(runnerParams) as ProcessRunner;
     processName = processParams.processName;
@@ -111,7 +112,7 @@ async function gracefullyCloseAndExit(forceExit: boolean) {
     // Meanwhile, try to gracefully shutdown.
     await processRunner?.gracefullyClose().catch(() => {});
     if (processName)
-      await stopProfiling(processName).catch(() => {});
+      await serverUtils.stopProfiling(processName).catch(() => {});
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }
@@ -138,7 +139,7 @@ const requestCallbacks = new Map<number, ManualPromise<any>>();
 async function sendRequestToParent(method: string, params?: any): Promise<any> {
   const id = ++lastId;
   sendMessageToParent({ method: '__request__', params: { id, method, params } });
-  const promise = new ManualPromise<any>();
+  const promise = new iso.ManualPromise<any>();
   requestCallbacks.set(id, promise);
   return promise;
 }

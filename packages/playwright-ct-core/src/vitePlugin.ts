@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { assert, calculateSha1, getPlaywrightVersion, isURLAvailable } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { colors, debug } from 'playwright-core/lib/utilsBundle';
 import { setExternalDependencies } from 'playwright/lib/transform/compilationCache';
 import { resolveHook } from 'playwright/lib/transform/transform';
@@ -41,7 +41,7 @@ import type { ComponentRegistry } from './viteUtils';
 const log = debug('pw:vite');
 
 let stoppableServer: any;
-const playwrightVersion = getPlaywrightVersion();
+const playwrightVersion = serverUtils.getPlaywrightVersion();
 
 export function createPlugin(): TestRunnerPlugin {
   let configDir: string;
@@ -115,7 +115,7 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
     const endpoint = resolveEndpoint(config);
     const protocol = endpoint.https ? 'https:' : 'http:';
     const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
-    if (await isURLAvailable(url, true)) {
+    if (await serverUtils.isURLAvailable(url, true)) {
       // eslint-disable-next-line no-console
       console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
       process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
@@ -136,15 +136,15 @@ export async function buildBundle(config: FullConfig, configDir: string): Promis
   let buildInfo: BuildInfo;
 
   const registerSource = injectedSource + '\n' + await fs.promises.readFile(registerSourceFile, 'utf-8');
-  const registerSourceHash = calculateSha1(registerSource);
+  const registerSourceHash = serverUtils.calculateSha1(registerSource);
 
   const { version: viteVersion, build, mergeConfig } = await import('vite');
 
   try {
     buildInfo = JSON.parse(await fs.promises.readFile(buildInfoFile, 'utf-8')) as BuildInfo;
-    assert(buildInfo.version === playwrightVersion);
-    assert(buildInfo.viteVersion === viteVersion);
-    assert(buildInfo.registerSourceHash === registerSourceHash);
+    iso.assert(buildInfo.version === playwrightVersion);
+    iso.assert(buildInfo.viteVersion === viteVersion);
+    iso.assert(buildInfo.registerSourceHash === registerSourceHash);
     buildExists = true;
   } catch (e) {
     buildInfo = {

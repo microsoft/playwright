@@ -18,7 +18,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { calculateSha1 } from 'playwright-core/lib/utils';
+import { serverUtils } from 'playwright-core/lib/coreBundle';
 import { isWorkerProcess } from '../common/globals';
 import { sourceMapSupport } from '../utilsBundle';
 
@@ -176,7 +176,7 @@ export function addToCompilationCache(payload: SerializedCompilationCache) {
 
 function calculateFilePathHash(filePath: string): string {
   // Larger file path hash allows for fewer collisions compared to content, as we only check file path collision for deleting files
-  return calculateSha1(filePath).substring(0, 10);
+  return serverUtils.calculateSha1(filePath).substring(0, 10);
 }
 
 function calculateCachePath(filePath: string, cacheFolderName: string, hashPrefix: string): string {

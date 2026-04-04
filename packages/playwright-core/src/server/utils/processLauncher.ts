@@ -20,7 +20,7 @@ import fs from 'fs';
 import * as readline from 'readline';
 
 import { removeFolders } from './fileUtils';
-import { isUnderTest } from '../../utils';
+import { isUnderTest } from './debug';
 
 export type LaunchProcessOptions = {
   command: string,

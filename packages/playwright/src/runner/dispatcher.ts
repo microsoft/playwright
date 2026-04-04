@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { ManualPromise,  eventsHelper } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
@@ -32,7 +32,8 @@ import type { AttachmentPayload, DonePayload, RunPayload, SerializedConfig, Step
 import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
-import type { RegisteredListener } from 'playwright-core/lib/utils';
+
+const { eventsHelper } = serverUtils;
 
 
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
@@ -43,7 +44,7 @@ export class Dispatcher {
   private _queue: TestGroup[] = [];
   private _workerLimitPerProjectId = new Map<string, number>();
   private _queuedOrRunningHashCount = new Map<string, number>();
-  private _finished = new ManualPromise<void>();
+  private _finished = new iso.ManualPromise<void>();
   private _isStopped = true;
 
   private _config: FullConfigInternal;
@@ -276,14 +277,14 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new iso.ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
 
   readonly job: TestGroup;
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
   private _stopCallback: () => void;
-  private _listeners: RegisteredListener[] = [];
+  private _listeners: serverUtils.RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
   private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();

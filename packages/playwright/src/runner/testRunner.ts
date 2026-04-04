@@ -18,8 +18,7 @@ import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 
-import { registry } from 'playwright-core/lib/server';
-import { ManualPromise, gracefullyProcessExitDoNotHang, setPlaywrightTestProcessEnv } from 'playwright-core/lib/utils';
+import { iso, serverUtils, sever } from 'playwright-core/lib/coreBundle';
 
 import { loadConfig } from '../common/configLoader';
 import { Watcher } from '../fsWatcher';
@@ -94,7 +93,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _ignoredProjectOutputs = new Set<string>();
   private _watchedTestDependencies = new Set<string>();
 
-  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
+  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: iso.ManualPromise<void> } | undefined;
   private _queue = Promise.resolve();
   private _globalSetup: { cleanup: () => Promise<any> } | undefined;
   private _devServer: { cleanup: () => Promise<any> } | undefined;
@@ -118,7 +117,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
   }) {
-    setPlaywrightTestProcessEnv();
+    serverUtils.setPlaywrightTestProcessEnv();
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
     this._startingEnv = { ...process.env };
@@ -136,7 +135,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   hasSomeBrowsers(): boolean {
     for (const browserName of ['chromium', 'webkit', 'firefox']) {
       try {
-        registry.findExecutable(browserName)!.executablePathOrDie('javascript');
+        sever.registry.findExecutable(browserName)!.executablePathOrDie('javascript');
         return true;
       } catch {
       }
@@ -145,8 +144,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   async installBrowsers() {
-    const executables = registry.defaultExecutables();
-    await registry.install(executables);
+    const executables = sever.registry.defaultExecutables();
+    await sever.registry.install(executables);
   }
 
   async loadConfig() {
@@ -354,7 +353,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
     const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test');
     const reporter = new InternalReporter([...configReporters, userReporter]);
-    const stop = new ManualPromise();
+    const stop = new iso.ManualPromise();
     const tasks = [
       createApplyRebaselinesTask(),
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: !!params.failOnLoadErrors, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
@@ -400,7 +399,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   async closeGracefully() {
-    gracefullyProcessExitDoNotHang(0);
+    serverUtils.gracefullyProcessExitDoNotHang(0);
   }
 
   async stop() {
@@ -457,7 +456,7 @@ async function resolveCtDirs(config: FullConfigInternal) {
 }
 
 export async function runAllTestsWithConfig(config: FullConfigInternal): Promise<FullResultStatus> {
-  setPlaywrightTestProcessEnv();
+  serverUtils.setPlaywrightTestProcessEnv();
 
   const listOnly = config.cliListOnly;
 
