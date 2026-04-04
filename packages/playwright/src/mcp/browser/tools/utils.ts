@@ -27,45 +27,52 @@ export async function waitForCompletion<R>(tab: Tab, callback: () => Promise<R>)
   tab.page.on('request', requestListener);
 
   let result: R;
-  try {
-    // Guard against stale CDP sessions (e.g., Electron renderer process swap).
-    // If the callback sends CDP commands to a dead renderer, they hang forever.
-    // Race against the navigation timeout so the agent gets an error and can retry.
-    const actionTimeout = tab.context.config.timeouts.navigation;
-    let actionTimeoutId: ReturnType<typeof setTimeout>;
-    result = await Promise.race([
-      callback(),
-      new Promise<never>((_, reject) => {
-        actionTimeoutId = setTimeout(() => reject(new Error('Action timed out waiting for completion')), actionTimeout);
-      }),
-    ]).finally(() => clearTimeout(actionTimeoutId));
-    await tab.waitForTimeout(500);
-  } finally {
-    disposeListeners();
-  }
+  // Guard against stale CDP sessions (e.g., Electron renderer process swap)
+  // or heavy page JS blocking page.evaluate(). Race the entire post-callback
+  // settlement phase against the navigation timeout so the agent gets a result.
+  const actionTimeout = tab.context.config.timeouts.navigation;
+  let actionTimeoutId: ReturnType<typeof setTimeout>;
+  const settlementPromise = (async () => {
+    try {
+      result = await callback();
+      await tab.waitForTimeout(500);
+    } finally {
+      disposeListeners();
+    }
 
-  const requestedNavigation = requests.some(request => request.isNavigationRequest());
-  if (requestedNavigation) {
-    await tab.page.mainFrame().waitForLoadState('load', { timeout: 10000 }).catch(() => {});
-    return result;
-  }
+    const requestedNavigation = requests.some(request => request.isNavigationRequest());
+    if (requestedNavigation) {
+      await tab.page.mainFrame().waitForLoadState('load', { timeout: 10000 }).catch(() => {});
+      return;
+    }
 
-  const promises: Promise<any>[] = [];
-  for (const request of requests) {
-    if (['document', 'stylesheet', 'script', 'xhr', 'fetch'].includes(request.resourceType()))
-      promises.push(request.response().then(r => r?.finished()).catch(() => {}));
-    else
-      promises.push(request.response().catch(() => {}));
-  }
-  let completionTimeoutId: ReturnType<typeof setTimeout>;
-  const timeout = new Promise<void>(resolve => {
-    completionTimeoutId = setTimeout(resolve, 5000);
-  });
-  await Promise.race([Promise.all(promises), timeout]).finally(() => clearTimeout(completionTimeoutId));
-  if (requests.length)
-    await tab.waitForTimeout(500);
+    const promises: Promise<any>[] = [];
+    for (const request of requests) {
+      if (['document', 'stylesheet', 'script', 'xhr', 'fetch'].includes(request.resourceType()))
+        promises.push(request.response().then(r => r?.finished()).catch(() => {}));
+      else
+        promises.push(request.response().catch(() => {}));
+    }
+    let completionTimeoutId: ReturnType<typeof setTimeout>;
+    const timeout = new Promise<void>(resolve => {
+      completionTimeoutId = setTimeout(resolve, 5000);
+    });
+    await Promise.race([Promise.all(promises), timeout]).finally(() => clearTimeout(completionTimeoutId));
+    if (requests.length)
+      await tab.waitForTimeout(500);
+  })();
 
-  return result;
+  await Promise.race([
+    settlementPromise,
+    new Promise<void>((_, reject) => {
+      actionTimeoutId = setTimeout(() => {
+        disposeListeners();
+        reject(new Error('Action timed out waiting for completion'));
+      }, actionTimeout);
+    }),
+  ]).finally(() => clearTimeout(actionTimeoutId));
+
+  return result!;
 }
 
 export async function callOnPageNoTrace<T>(page: playwright.Page, callback: (page: playwright.Page) => Promise<T>): Promise<T> {

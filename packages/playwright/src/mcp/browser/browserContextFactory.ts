@@ -238,10 +238,18 @@ class BaseContextFactory implements BrowserContextFactory {
           }, true);
         }
 
-        // C3: Noop window.print() — the native print dialog activates Chrome on macOS.
-        // In hidden mode, agents should use browser_pdf_save (CDP Page.printToPDF) instead.
+        // C3: Suppress native print dialog (steals focus on macOS) but log the
+        // marker that printCapture.ts listens for so CDP Page.printToPDF fires.
         // This overwrites the deferred print handler (which waits 2s and may allow activation).
-        window.print = _markNative(function print() { /* noop */ }, 'print');
+        {
+          let _lastPrintTime = 0;
+          window.print = _markNative(function print() {
+            const _now = Date.now();
+            if (_now - _lastPrintTime < 1000) return;
+            _lastPrintTime = _now;
+            console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
+          }, 'print');
+        }
       }
     });
     return {
@@ -495,10 +503,18 @@ class PersistentContextFactory implements BrowserContextFactory {
               }, true);
             }
 
-            // C3: Noop window.print() — the native print dialog activates Chrome on macOS.
-            // In hidden mode, agents should use browser_pdf_save (CDP Page.printToPDF) instead.
+            // C3: Suppress native print dialog (steals focus on macOS) but log the
+            // marker that printCapture.ts listens for so CDP Page.printToPDF fires.
             // This overwrites the deferred print handler (which waits 2s and may allow activation).
-            window.print = _markNative(function print() { /* noop */ }, 'print');
+            {
+              let _lastPrintTime = 0;
+              window.print = _markNative(function print() {
+                const _now = Date.now();
+                if (_now - _lastPrintTime < 1000) return;
+                _lastPrintTime = _now;
+                console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
+              }, 'print');
+            }
           }
         });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
