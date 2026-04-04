@@ -174,7 +174,7 @@ When Playwright Test is used to test web components, tests run in Node.js, while
 
 This however, is introducing a number of limitations:
 
-- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed.
+- You can't pass complex live objects to your component. Only plain JavaScript objects and built-in types like strings, numbers, dates etc. can be passed. Class instances are serialized across the Node/browser boundary, so prototype methods will be stripped. Use plain objects or [test stories](#test-stories) instead.
 
 ```js
 test('this will work', async ({ mount }) => {
