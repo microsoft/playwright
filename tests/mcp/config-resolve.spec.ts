@@ -15,11 +15,13 @@
  */
 
 import fs from 'fs';
+import os from 'os';
 import path from 'path';
 
 import { test, expect } from '@playwright/test';
 
 import { resolveCLIConfigForCLI, resolveCLIConfigForMCP } from '../../packages/playwright-core/lib/tools/mcp/config';
+import { outputDir } from '../../packages/playwright-core/lib/tools/backend/context';
 
 import type { Config } from '../../packages/playwright-core/src/tools/mcp/config.d';
 
@@ -462,5 +464,27 @@ test.describe('resolveCLIConfigForCLI - extension', () => {
     const config = await resolveCLI(testInfo.outputPath('profiles'), 'default', { extension: true }) as any;
     expect(config.extension).toBe(true);
     expect(config.browser.isolated).toBe(false);
+  });
+});
+
+test.describe('outputDir', () => {
+  test('uses config.outputDir when set', () => {
+    const dir = outputDir({ config: { outputDir: '/tmp/custom' }, cwd: '/some/project' } as any);
+    expect(dir).toBe(path.resolve('/tmp/custom'));
+  });
+
+  test('uses cwd-relative .playwright-mcp by default', () => {
+    const dir = outputDir({ config: {}, cwd: '/some/project' } as any);
+    expect(dir).toBe(path.resolve('/some/project', '.playwright-mcp'));
+  });
+
+  test('falls back to tmpdir when cwd is filesystem root', () => {
+    const dir = outputDir({ config: {}, cwd: '/' } as any);
+    expect(dir).toBe(path.join(os.tmpdir(), '.playwright-mcp'));
+  });
+
+  test('uses .playwright-cli subdir in skillMode', () => {
+    const dir = outputDir({ config: { skillMode: true }, cwd: '/' } as any);
+    expect(dir).toBe(path.join(os.tmpdir(), '.playwright-cli'));
   });
 });
