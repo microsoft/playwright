@@ -121,6 +121,7 @@ export class Chromium extends BrowserType {
         downloadsPath: options.downloadsPath || artifactsDir,
         tracesDir: options.tracesDir || artifactsDir,
         originalLaunchOptions: {},
+        stealthMode: (options as any).stealthMode,
         suppressFocus: (options as any).suppressFocus,
       };
       validateBrowserContextOptions(persistent, browserOptions);

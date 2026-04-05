@@ -61,6 +61,7 @@ export function decorateCommand(command: Command, version: string) {
       .option('--isolated', 'keep the browser profile in memory, do not save it to disk.')
       .option('--image-responses <mode>', 'whether to send image responses to the client. Can be "allow" or "omit", Defaults to "allow".', enumParser.bind(null, '--image-responses', ['allow', 'omit']))
       .option('--no-sandbox', 'disable the sandbox for all process types that are normally sandboxed.')
+      .option('--no-stealth', 'disable CDP stealth optimizations (Log/Network domain skipping, Runtime rapid cycle). Useful for debugging.')
       .option('--output-dir <path>', 'path to the directory for output files.')
       .option('--output-mode <mode>', 'whether to save snapshots, console messages, network logs to a file or to the standard output. Can be "file" or "stdout". Default is "stdout".', enumParser.bind(null, '--output-mode', ['file', 'stdout']))
       .option('--port <port>', 'port to listen on for SSE transport.')
@@ -90,6 +91,8 @@ export function decorateCommand(command: Command, version: string) {
 
         // normalize the --no-sandbox option: sandbox = true => nothing was passed, sandbox = false => --no-sandbox was passed.
         options.sandbox = options.sandbox === true ? undefined : false;
+        // normalize --no-stealth: stealth = true => nothing passed (default on), stealth = false => --no-stealth was passed.
+        options.stealth = options.stealth === false ? false : undefined;
 
         setupExitWatchdog();
 

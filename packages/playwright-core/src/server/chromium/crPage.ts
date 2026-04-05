@@ -87,7 +87,10 @@ export class CRPage implements PageDelegate {
     this._page = new Page(this, browserContext);
     // Create a unique utility world for this Playwright instance, just in case there
     // are multiple instances of Playwright connected to the same browser page.
-    this.utilityWorldName = `__playwright_utility_world_${this._page.guid}`;
+    // CDP Stealth: Renamed from __playwright_utility_world_ to avoid fingerprinting.
+    // The name appears in Runtime.executionContextCreated events and Error.stack sourceURL tags.
+    // Using a generic name that doesn't reveal the automation framework.
+    this.utilityWorldName = `__chrome_util_${this._page.guid}`;
     this._networkManager = new CRNetworkManager(this._page, null);
     // Sync any browser context state to the network manager. This does not talk over CDP because
     // we have not connected any sessions to the network manager yet.
@@ -489,9 +492,30 @@ class FrameSession {
           this._eventListeners.push(eventsHelper.addEventListener(this._client, 'Page.lifecycleEvent', event => this._onLifecycleEvent(event)));
         }
       }),
-      this._client.send('Log.enable', {}),
+      // CDP Stealth: Log.enable only provides browser-level warnings (network errors,
+      // deprecation notices). Console messages come from Runtime.consoleAPICalled instead.
+      // Skipping this reduces CDP domain footprint with zero functional impact on MCP tools.
+      ...(this._crPage._browserContext._browser.options.stealthMode ? [] : [this._client.send('Log.enable', {})]),
       lifecycleEventsEnabled = this._client.send('Page.setLifecycleEventsEnabled', { enabled: true }),
-      this._client.send('Runtime.enable', {}),
+      // CDP Stealth: When stealthMode is enabled, we use a rapid
+      // enable/disable cycle: enable Runtime to collect execution context events,
+      // then disable before the page resumes (runIfWaitingForDebugger).
+      // The page is paused during init (waitForDebuggerOnStart), so anti-bot scripts
+      // cannot run their detection during the brief enable window.
+      //
+      // On navigation, we re-enable briefly via Page.frameNavigated listener to
+      // collect new execution contexts, then disable again before page scripts run.
+      this._client.send('Runtime.enable', {}).then(() => {
+        if (this._crPage._browserContext._browser.options.stealthMode) {
+          // Runtime.enable completed — V8 has emitted executionContextCreated events.
+          // These events are queued as microtasks and will be processed before
+          // runIfWaitingForDebugger (which is later in the Promise.all).
+          // Schedule disable for after the microtask queue drains.
+          return Promise.resolve().then(() => {
+            return this._client._sendMayFail('Runtime.disable');
+          });
+        }
+      }),
       this._client.send('Page.addScriptToEvaluateOnNewDocument', {
         source: '',
         worldName: this._crPage.utilityWorldName,
@@ -617,6 +641,22 @@ class FrameSession {
     this._page.frameManager.frameCommittedNewDocumentNavigation(framePayload.id, framePayload.url + (framePayload.urlFragment || ''), framePayload.name || '', framePayload.loaderId, initial);
     if (!initial)
       this._firstNonInitialNavigationCommittedFulfill();
+
+    // CDP Stealth: On cross-document navigation, clear stale contexts and do a rapid
+    // Runtime.enable cycle to discover new execution contexts for the new document.
+    // This is needed because Runtime.disable stops executionContext* event emission.
+    if (this._crPage._browserContext._browser.options.stealthMode && !initial) {
+      // Clear stale contexts manually since executionContextsCleared won't fire
+      this._onExecutionContextsCleared();
+      // Rapid re-enable to collect new contexts, then disable again.
+      // The new document's scripts haven't run yet at this point (Page.frameNavigated
+      // fires at commit time, before DOMContentLoaded).
+      this._client.send('Runtime.enable', {}).then(() => {
+        return Promise.resolve().then(() => {
+          return this._client._sendMayFail('Runtime.disable');
+        });
+      }).catch(() => {});
+    }
   }
 
   _onFrameRequestedNavigation(payload: Protocol.Page.frameRequestedNavigationPayload) {

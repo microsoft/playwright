@@ -84,12 +84,21 @@ export class CRNetworkManager {
       ]);
     }
     this._sessions.set(session, sessionInfo);
-    await Promise.all([
-      session.send('Network.enable'),
-      this._updateProtocolRequestInterceptionForSession(sessionInfo, true /* initial */),
-      this._setOfflineForSession(sessionInfo, true /* initial */),
-      this._setExtraHTTPHeadersForSession(sessionInfo, true /* initial */),
-    ]);
+    // CDP Stealth: Network.enable is a passive observer. Skip it when stealthMode is on
+    // UNLESS request interception is active (routes/credentials), because Fetch.requestPaused
+    // correlates with Network.requestWillBeSent via networkId — without Network.enable,
+    // this correlation fails and requests hang.
+    const stealthMode = (this._page?.browserContext as any)?._browser?.options?.stealthMode;
+    const needsNetwork = !stealthMode || this._protocolRequestInterceptionEnabled;
+    const promises: Promise<any>[] = [];
+    if (needsNetwork)
+      promises.push(session.send('Network.enable'));
+    promises.push(
+        this._updateProtocolRequestInterceptionForSession(sessionInfo, true /* initial */),
+        this._setOfflineForSession(sessionInfo, true /* initial */),
+        this._setExtraHTTPHeadersForSession(sessionInfo, true /* initial */),
+    );
+    await Promise.all(promises);
   }
 
   removeSession(session: CRSession) {

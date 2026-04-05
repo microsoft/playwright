@@ -78,6 +78,7 @@ export type CLIOptions = {
   viewportSize?: ViewportSize;
   filterInternalUrls?: boolean;
   keepBrowserAlive?: boolean;
+  stealth?: boolean;
   suppressFocus?: boolean;
   'allowed-tools'?: string[];
 };
@@ -112,6 +113,7 @@ export const defaultConfig: FullConfig = {
     navigation: 60000,
   },
   filterInternalUrls: false,
+  stealth: true,
 };
 
 const defaultDaemonConfig = (cliOptions: CLIOptions) => mergeConfig(defaultConfig, {
@@ -155,6 +157,7 @@ export type FullConfig = Config & {
   },
   filterInternalUrls?: boolean;
   skillMode?: boolean;
+  stealth: boolean;
 };
 
 export async function resolveConfig(config: Config): Promise<FullConfig> {
@@ -312,6 +315,7 @@ export function configFromCLIOptions(cliOptions: CLIOptions): Config {
     outputDir: cliOptions.outputDir,
     filterInternalUrls: cliOptions.filterInternalUrls,
     keepBrowserAlive: cliOptions.keepBrowserAlive,
+    stealth: cliOptions.stealth,
     suppressFocus: cliOptions.suppressFocus,
     allowedTools: cliOptions['allowed-tools'],
     imageResponses: cliOptions.imageResponses,

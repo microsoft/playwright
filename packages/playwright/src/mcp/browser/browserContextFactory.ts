@@ -66,6 +66,138 @@ export function identityBrowserContextFactory(browserContext: playwright.Browser
   };
 }
 
+/**
+ * CDP Stealth: Consolidated init script that merges all stealth stubs, print override,
+ * and focus suppression into a single Page.addScriptToEvaluateOnNewDocument call.
+ * This reduces the CDP footprint from 4 separate addScript calls to 1.
+ *
+ * Must be injected via addInitScript with arg: { suppressFocus: boolean }
+ */
+function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
+  // --- Deferred print override ---
+  const DEFERRED_TIMEOUT_MS = 2000;
+  const deferred = function() {
+    console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
+    setTimeout(() => {
+      if (window.print !== deferred) {
+        console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
+        window.print();
+      } else {
+        console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
+      }
+    }, DEFERRED_TIMEOUT_MS);
+  };
+  window.print = deferred;
+
+  // --- navigator.webdriver override ---
+  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+
+  // --- Chrome stealth stubs ---
+  if ((window as any).__chromeStealth) return;
+  (window as any).__chromeStealth = true;
+
+  // Native function masking
+  const _toString = Function.prototype.toString;
+  const _nativeMap = new WeakMap<Function, string>();
+  function _markNative(fn: Function, name: string) {
+    _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
+    return fn;
+  }
+  Function.prototype.toString = function() {
+    if (_nativeMap.has(this)) return _nativeMap.get(this)!;
+    return _toString.call(this);
+  };
+  _markNative(Function.prototype.toString, 'toString');
+
+  // chrome.app stub
+  if (typeof chrome === 'undefined') (window as any).chrome = {};
+  if (!(chrome as any).app) {
+    const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
+    const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
+    const app = {
+      isInstalled: false,
+      getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
+      getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
+      installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
+      runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
+      InstallState,
+      RunningState,
+    };
+    Object.defineProperty(chrome, 'app', { value: app, writable: false, configurable: false, enumerable: true });
+  }
+
+  // chrome.csi stub
+  if (!(chrome as any).csi) {
+    (chrome as any).csi = _markNative(function csi() {
+      return { startE: Date.now(), onloadT: Date.now(), pageT: performance.now(), tran: 15 };
+    }, 'csi');
+  }
+
+  // chrome.loadTimes stub
+  if (!(chrome as any).loadTimes) {
+    (chrome as any).loadTimes = _markNative(function loadTimes() {
+      const nav: any = performance.getEntriesByType('navigation')[0] || {};
+      return {
+        commitLoadTime: (nav.responseStart || Date.now()) / 1000,
+        connectionInfo: 'h2',
+        finishDocumentLoadTime: (nav.domContentLoadedEventEnd || Date.now()) / 1000,
+        finishLoadTime: (nav.loadEventEnd || Date.now()) / 1000,
+        firstPaintAfterLoadTime: 0,
+        firstPaintTime: (nav.responseEnd || Date.now()) / 1000,
+        navigationType: 'Other',
+        npnNegotiatedProtocol: 'h2',
+        requestTime: (nav.fetchStart || Date.now()) / 1000,
+        startLoadTime: (nav.fetchStart || Date.now()) / 1000,
+        wasAlternateProtocolAvailable: false,
+        wasFetchedViaSpdy: true,
+        wasNpnNegotiated: true,
+      };
+    }, 'loadTimes');
+  }
+
+  // navigator.languages fix
+  if (navigator.languages && navigator.languages.length === 1) {
+    Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
+  }
+
+  // Notification.permission fix
+  if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+    Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
+  }
+
+  // --- Focus suppression (conditional) ---
+  if (suppressFocus) {
+    // C1: Noop window.focus()
+    window.focus = _markNative(function focus() { /* noop */ }, 'focus');
+
+    // C2: Prevent native <select> picker
+    if ((HTMLSelectElement.prototype as any).showPicker) {
+      (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
+    }
+    const _style = document.createElement('style');
+    _style.textContent = 'select { pointer-events: none !important; }';
+    (document.head || document.documentElement).appendChild(_style);
+    for (const _evt of ['mousedown', 'pointerdown'] as const) {
+      document.addEventListener(_evt, (e: Event) => {
+        const t = (e.target as HTMLElement);
+        if (t.tagName === 'SELECT' || t.closest?.('select'))
+          e.preventDefault();
+      }, true);
+    }
+
+    // C3: Suppress native print dialog, log marker for printCapture.ts
+    {
+      let _lastPrintTime = 0;
+      window.print = _markNative(function print() {
+        const _now = Date.now();
+        if (_now - _lastPrintTime < 1000) return;
+        _lastPrintTime = _now;
+        console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
+      }, 'print');
+    }
+  }
+}
+
 class BaseContextFactory implements BrowserContextFactory {
   readonly config: FullConfig;
   private _logName: string;
@@ -100,158 +232,13 @@ class BaseContextFactory implements BrowserContextFactory {
     const browser = await this._obtainBrowser(clientInfo, options);
     const browserContext = await this._doCreateContext(browser, clientInfo);
     await addInitScript(browserContext, this.config.browser.initScript);
-    // Deferred print override: prevents native print dialogs from appearing when
-    // pages call window.print() synchronously in early <script> tags, before
-    // Electron's full override (with electronAPI IPC bridge) can be injected via
-    // dom-ready. This script runs first (via CDP Page.addScriptToEvaluateOnNewDocument),
-    // captures the call, waits for Electron's override to arrive, then delegates.
-    await browserContext.addInitScript(() => {
-      const DEFERRED_TIMEOUT_MS = 2000;
-      console.log('[DeferredPrint] Init script registered, replacing window.print with deferred handler');
-      const deferred = function() {
-        console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
-        setTimeout(() => {
-          if (window.print !== deferred) {
-            // Electron's real override has replaced us — delegate to it
-            console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
-            window.print();
-          } else {
-            // Still us? Electron override never arrived — suppress silently.
-            // This is safe: the alternative was a blocking native print dialog.
-            console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
-          }
-        }, DEFERRED_TIMEOUT_MS);
-      };
-      window.print = deferred;
-    });
-    await browserContext.addInitScript(() => {
-      Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-    });
-    // Set suppress-focus flag before stealth stubs so they can read it.
-    // The flag is consumed inside the stealth stubs init script below.
-    if (this.config.suppressFocus) {
-      await browserContext.addInitScript(() => {
-        (window as any).__suppressFocus = true;
-      });
+    // CDP Stealth: In extension mode, stealth patches are delivered via the Chrome
+    // extension's content scripts (MAIN world, document_start) instead of CDP
+    // Page.addScriptToEvaluateOnNewDocument. This eliminates the addScript CDP call.
+    // In non-extension mode (Electron, standalone), we still need the CDP init script.
+    if (!this.config.extension) {
+      await browserContext.addInitScript(stealthInitScript, { suppressFocus: !!this.config.suppressFocus });
     }
-    // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
-    // navigator.languages, and Notification.permission overrides to prevent
-    // bot detection by Akamai and similar fingerprinting services.
-    // Uses addInitScript (CDP Page.addScriptToEvaluateOnNewDocument) so stubs
-    // are present before any page script runs.
-    await browserContext.addInitScript(() => {
-      if ((window as any).__chromeStealth) return;
-      (window as any).__chromeStealth = true;
-
-      // Native function masking
-      const _toString = Function.prototype.toString;
-      const _nativeMap = new WeakMap<Function, string>();
-      function _markNative(fn: Function, name: string) {
-        _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
-        return fn;
-      }
-      Function.prototype.toString = function() {
-        if (_nativeMap.has(this)) return _nativeMap.get(this)!;
-        return _toString.call(this);
-      };
-      _markNative(Function.prototype.toString, 'toString');
-
-      // chrome.app stub
-      if (typeof chrome === 'undefined') (window as any).chrome = {};
-      if (!(chrome as any).app) {
-        const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
-        const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
-        const app = {
-          isInstalled: false,
-          getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
-          getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
-          installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
-          runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
-          InstallState,
-          RunningState,
-        };
-        Object.defineProperty(chrome, 'app', { value: app, writable: false, configurable: false, enumerable: true });
-      }
-
-      // chrome.csi stub
-      if (!(chrome as any).csi) {
-        (chrome as any).csi = _markNative(function csi() {
-          return { startE: Date.now(), onloadT: Date.now(), pageT: performance.now(), tran: 15 };
-        }, 'csi');
-      }
-
-      // chrome.loadTimes stub
-      if (!(chrome as any).loadTimes) {
-        (chrome as any).loadTimes = _markNative(function loadTimes() {
-          const nav: any = performance.getEntriesByType('navigation')[0] || {};
-          return {
-            commitLoadTime: (nav.responseStart || Date.now()) / 1000,
-            connectionInfo: 'h2',
-            finishDocumentLoadTime: (nav.domContentLoadedEventEnd || Date.now()) / 1000,
-            finishLoadTime: (nav.loadEventEnd || Date.now()) / 1000,
-            firstPaintAfterLoadTime: 0,
-            firstPaintTime: (nav.responseEnd || Date.now()) / 1000,
-            navigationType: 'Other',
-            npnNegotiatedProtocol: 'h2',
-            requestTime: (nav.fetchStart || Date.now()) / 1000,
-            startLoadTime: (nav.fetchStart || Date.now()) / 1000,
-            wasAlternateProtocolAvailable: false,
-            wasFetchedViaSpdy: true,
-            wasNpnNegotiated: true,
-          };
-        }, 'loadTimes');
-      }
-
-      // navigator.languages fix
-      if (navigator.languages && navigator.languages.length === 1) {
-        Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
-      }
-
-      // Notification.permission fix
-      if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-        Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
-      }
-
-      // Layer C: suppress focus-stealing behaviors when running in background.
-      // Integrated into stealth stubs to reuse _markNative (single Function.prototype.toString override).
-      if ((window as any).__suppressFocus) {
-        // C1: Noop window.focus() — prevents JS from activating Chrome
-        window.focus = _markNative(function focus() { /* noop */ }, 'focus');
-
-        // C2: Prevent native <select> picker from activating Chrome on macOS.
-        // Three mechanisms for defense-in-depth:
-        // (a) Override showPicker() — Chrome 100+ programmatic picker API
-        if ((HTMLSelectElement.prototype as any).showPicker) {
-          (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
-        }
-        // (b) CSS pointer-events:none — blocks native picker from ANY click path.
-        //     Playwright's selectOption() works via DOM manipulation, not pointer events.
-        const _style = document.createElement('style');
-        _style.textContent = 'select { pointer-events: none !important; }';
-        (document.head || document.documentElement).appendChild(_style);
-        // (c) Capture-phase mousedown/pointerdown fallback
-        for (const _evt of ['mousedown', 'pointerdown'] as const) {
-          document.addEventListener(_evt, (e: Event) => {
-            const t = (e.target as HTMLElement);
-            if (t.tagName === 'SELECT' || t.closest?.('select'))
-              e.preventDefault();
-          }, true);
-        }
-
-        // C3: Suppress native print dialog (steals focus on macOS) but log the
-        // marker that printCapture.ts listens for so CDP Page.printToPDF fires.
-        // This overwrites the deferred print handler (which waits 2s and may allow activation).
-        {
-          let _lastPrintTime = 0;
-          window.print = _markNative(function print() {
-            const _now = Date.now();
-            if (_now - _lastPrintTime < 1000) return;
-            _lastPrintTime = _now;
-            console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
-          }, 'print');
-        }
-      }
-    });
     return {
       browserContext,
       close: () => this._closeBrowserContext(browserContext, browser)
@@ -313,6 +300,8 @@ class CdpContextFactory extends BaseContextFactory {
       timeout: this.config.browser.cdpTimeout,
       // Pass suppressFocus so Target.createTarget uses background:true
       ...(this.config.suppressFocus ? { suppressFocus: true } : {}),
+      // CDP Stealth: thread stealthMode to BrowserOptions for crPage/crNetworkManager
+      ...(this.config.stealth !== false ? { stealthMode: true } : {}),
     } as any);
   }
 
@@ -373,150 +362,15 @@ class PersistentContextFactory implements BrowserContextFactory {
           '--disable-extensions',
         ],
         assistantMode: true,
+        stealthMode: this.config.stealth !== false,
       };
       try {
         const browserContext = await browserType.launchPersistentContext(userDataDir, launchOptions);
         await addInitScript(browserContext, this.config.browser.initScript);
-        // Deferred print override: prevents native print dialogs from appearing when
-        // pages call window.print() synchronously in early <script> tags, before
-        // Electron's full override (with electronAPI IPC bridge) can be injected via
-        // dom-ready. This script runs first (via CDP Page.addScriptToEvaluateOnNewDocument),
-        // captures the call, waits for Electron's override to arrive, then delegates.
-        await browserContext.addInitScript(() => {
-          const DEFERRED_TIMEOUT_MS = 2000;
-          console.log('[DeferredPrint] Init script registered, replacing window.print with deferred handler');
-          const deferred = function() {
-            console.log('[DeferredPrint] window.print() called — deferring for ' + DEFERRED_TIMEOUT_MS + 'ms at ' + window.location.href);
-            setTimeout(() => {
-              if (window.print !== deferred) {
-                // Electron's real override has replaced us — delegate to it
-                console.log('[DeferredPrint] Electron override arrived — delegating window.print()');
-                window.print();
-              } else {
-                // Still us? Electron override never arrived — suppress silently.
-                // This is safe: the alternative was a blocking native print dialog.
-                console.log('[DeferredPrint] Electron override never arrived — suppressing silently');
-              }
-            }, DEFERRED_TIMEOUT_MS);
-          };
-          window.print = deferred;
-        });
-        // Set suppress-focus flag before stealth stubs so they can read it.
-        if (this.config.suppressFocus) {
-          await browserContext.addInitScript(() => {
-            (window as any).__suppressFocus = true;
-          });
+        // CDP Stealth: In extension mode, content scripts deliver stealth patches.
+        if (!this.config.extension) {
+          await browserContext.addInitScript(stealthInitScript, { suppressFocus: !!this.config.suppressFocus });
         }
-        // Chrome stealth stubs: inject chrome.app, chrome.csi, chrome.loadTimes,
-        // navigator.languages, and Notification.permission overrides to prevent
-        // bot detection by Akamai and similar fingerprinting services.
-        await browserContext.addInitScript(() => {
-          if ((window as any).__chromeStealth) return;
-          (window as any).__chromeStealth = true;
-
-          const _toString = Function.prototype.toString;
-          const _nativeMap = new WeakMap<Function, string>();
-          function _markNative(fn: Function, name: string) {
-            _nativeMap.set(fn, 'function ' + name + '() { [native code] }');
-            return fn;
-          }
-          Function.prototype.toString = function() {
-            if (_nativeMap.has(this)) return _nativeMap.get(this)!;
-            return _toString.call(this);
-          };
-          _markNative(Function.prototype.toString, 'toString');
-
-          if (typeof chrome === 'undefined') (window as any).chrome = {};
-          if (!(chrome as any).app) {
-            const InstallState = { DISABLED: 'disabled', INSTALLED: 'installed', NOT_INSTALLED: 'not_installed' };
-            const RunningState = { CANNOT_RUN: 'cannot_run', READY_TO_RUN: 'ready_to_run', RUNNING: 'running' };
-            const app = {
-              isInstalled: false,
-              getIsInstalled: _markNative(function getIsInstalled() { return false; }, 'getIsInstalled'),
-              getDetails: _markNative(function getDetails() { return null; }, 'getDetails'),
-              installState: _markNative(function installState(cb?: (state: string) => void) { if (cb) cb(InstallState.NOT_INSTALLED); }, 'installState'),
-              runningState: _markNative(function runningState() { return RunningState.CANNOT_RUN; }, 'runningState'),
-              InstallState,
-              RunningState,
-            };
-            Object.defineProperty(chrome, 'app', { value: app, writable: false, configurable: false, enumerable: true });
-          }
-
-          if (!(chrome as any).csi) {
-            (chrome as any).csi = _markNative(function csi() {
-              return { startE: Date.now(), onloadT: Date.now(), pageT: performance.now(), tran: 15 };
-            }, 'csi');
-          }
-
-          if (!(chrome as any).loadTimes) {
-            (chrome as any).loadTimes = _markNative(function loadTimes() {
-              const nav: any = performance.getEntriesByType('navigation')[0] || {};
-              return {
-                commitLoadTime: (nav.responseStart || Date.now()) / 1000,
-                connectionInfo: 'h2',
-                finishDocumentLoadTime: (nav.domContentLoadedEventEnd || Date.now()) / 1000,
-                finishLoadTime: (nav.loadEventEnd || Date.now()) / 1000,
-                firstPaintAfterLoadTime: 0,
-                firstPaintTime: (nav.responseEnd || Date.now()) / 1000,
-                navigationType: 'Other',
-                npnNegotiatedProtocol: 'h2',
-                requestTime: (nav.fetchStart || Date.now()) / 1000,
-                startLoadTime: (nav.fetchStart || Date.now()) / 1000,
-                wasAlternateProtocolAvailable: false,
-                wasFetchedViaSpdy: true,
-                wasNpnNegotiated: true,
-              };
-            }, 'loadTimes');
-          }
-
-          if (navigator.languages && navigator.languages.length === 1) {
-            Object.defineProperty(navigator, 'languages', { get: () => ['en-US', 'en'], configurable: true });
-          }
-
-          if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
-            Object.defineProperty(Notification, 'permission', { get: () => 'default', configurable: true });
-          }
-
-          // Layer C: suppress focus-stealing behaviors when running in background.
-          // Integrated into stealth stubs to reuse _markNative (single Function.prototype.toString override).
-          if ((window as any).__suppressFocus) {
-            // C1: Noop window.focus() — prevents JS from activating Chrome
-            window.focus = _markNative(function focus() { /* noop */ }, 'focus');
-
-            // C2: Prevent native <select> picker from activating Chrome on macOS.
-            // Three mechanisms for defense-in-depth:
-            // (a) Override showPicker() — Chrome 100+ programmatic picker API
-            if ((HTMLSelectElement.prototype as any).showPicker) {
-              (HTMLSelectElement.prototype as any).showPicker = function() { /* noop */ };
-            }
-            // (b) CSS pointer-events:none — blocks native picker from ANY click path.
-            //     Playwright's selectOption() works via DOM manipulation, not pointer events.
-            const _style = document.createElement('style');
-            _style.textContent = 'select { pointer-events: none !important; }';
-            (document.head || document.documentElement).appendChild(_style);
-            // (c) Capture-phase mousedown/pointerdown fallback
-            for (const _evt of ['mousedown', 'pointerdown'] as const) {
-              document.addEventListener(_evt, (e: Event) => {
-                const t = (e.target as HTMLElement);
-                if (t.tagName === 'SELECT' || t.closest?.('select'))
-                  e.preventDefault();
-              }, true);
-            }
-
-            // C3: Suppress native print dialog (steals focus on macOS) but log the
-            // marker that printCapture.ts listens for so CDP Page.printToPDF fires.
-            // This overwrites the deferred print handler (which waits 2s and may allow activation).
-            {
-              let _lastPrintTime = 0;
-              window.print = _markNative(function print() {
-                const _now = Date.now();
-                if (_now - _lastPrintTime < 1000) return;
-                _lastPrintTime = _now;
-                console.log('[Print Capture] window.print() intercepted at ' + window.location.href);
-              }, 'print');
-            }
-          }
-        });
         const close = () => this._closeBrowserContext(browserContext, userDataDir);
         return { browserContext, close };
       } catch (error: any) {
