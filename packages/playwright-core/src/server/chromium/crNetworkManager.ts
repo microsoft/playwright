@@ -37,6 +37,7 @@ type SessionInfo = {
   isMain?: boolean;
   workerFrame?: frames.Frame;
   eventListeners: RegisteredListener[];
+  networkEnabled?: boolean;
 };
 
 export class CRNetworkManager {
@@ -91,8 +92,10 @@ export class CRNetworkManager {
     const stealthMode = (this._page?.browserContext as any)?._browser?.options?.stealthMode;
     const needsNetwork = !stealthMode || this._protocolRequestInterceptionEnabled;
     const promises: Promise<any>[] = [];
-    if (needsNetwork)
+    if (needsNetwork) {
       promises.push(session.send('Network.enable'));
+      sessionInfo.networkEnabled = true;
+    }
     promises.push(
         this._updateProtocolRequestInterceptionForSession(sessionInfo, true /* initial */),
         this._setOfflineForSession(sessionInfo, true /* initial */),
@@ -165,6 +168,12 @@ export class CRNetworkManager {
     const enabled = this._protocolRequestInterceptionEnabled;
     if (initial && !enabled)
       return;
+    // Lazy Network.enable: if stealth mode skipped it at init but Fetch
+    // interception now needs it for requestPaused/requestWillBeSent correlation.
+    if (enabled && !info.networkEnabled) {
+      await info.session.send('Network.enable');
+      info.networkEnabled = true;
+    }
     const cachePromise = info.session.send('Network.setCacheDisabled', { cacheDisabled: enabled });
     let fetchPromise = Promise.resolve<any>(undefined);
     if (!info.workerFrame) {

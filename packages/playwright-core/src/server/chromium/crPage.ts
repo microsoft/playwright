@@ -768,7 +768,15 @@ class FrameSession {
     else
       worker.workerScriptLoaded();
     // This might fail if the target is closed before we initialize.
-    session._sendMayFail('Runtime.enable');
+    // CDP Stealth: rapid enable/disable cycle for workers (same pattern as page sessions
+    // at line 508). Worker is paused (waitForDebuggerOnStart), so anti-bot scripts cannot
+    // run detection during the brief enable window. We collect executionContextCreated
+    // (.once handler at line 763), then disable. Console/exception events are lost in
+    // stealth mode — acceptable since MCP tools never consume worker console output.
+    session._sendMayFail('Runtime.enable').then(() => {
+      if (this._crPage._browserContext._browser.options.stealthMode)
+        return Promise.resolve().then(() => session._sendMayFail('Runtime.disable'));
+    });
     // TODO: attribute workers to the right frame.
     this._crPage._networkManager.addSession(session, this._page.frameManager.frame(this._targetId) ?? undefined).catch(() => {});
     session._sendMayFail('Runtime.runIfWaitingForDebugger');

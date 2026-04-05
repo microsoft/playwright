@@ -59,7 +59,12 @@ export class CRServiceWorker extends Worker {
       this.browserContext.emit(BrowserContext.Events.Console, message);
     });
 
-    session.send('Runtime.enable', {}).catch(e => { });
+    // CDP Stealth: rapid enable/disable cycle for service workers.
+    // Same pattern as page sessions (crPage.ts:508) and web workers.
+    session.send('Runtime.enable', {}).then(() => {
+      if (this.browserContext._browser.options.stealthMode)
+        return Promise.resolve().then(() => session._sendMayFail('Runtime.disable'));
+    }).catch(e => { });
     session.send('Runtime.runIfWaitingForDebugger').catch(e => { });
     session.on('Inspector.targetReloadedAfterCrash', () => {
       // Resume service worker after restart.
