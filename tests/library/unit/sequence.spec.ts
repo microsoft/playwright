@@ -16,7 +16,8 @@
 
 
 import { test as it, expect } from '@playwright/test';
-import { findRepeatedSubsequencesForTest as findRepeatedSubsequences } from '../../../packages/playwright-core/lib/server/callLog';
+import { sever } from '../../../packages/playwright-core/lib/coreBundle';
+const { findRepeatedSubsequencesForTest: findRepeatedSubsequences } = sever;
 
 it('should return an empty array when the input is empty', () => {
   const input = [];

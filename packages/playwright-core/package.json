@@ -27,7 +27,8 @@
     "./lib/mcpBundle": "./lib/mcpBundle.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
     "./lib/zipBundle": "./lib/zipBundle.js",
-    "./lib/zodBundle": "./lib/zodBundle.js"
+    "./lib/zodBundle": "./lib/zodBundle.js",
+    "./lib/tools/cli-client/program": "./lib/tools/cli-client/program.js"
   },
   "bin": {
     "playwright-core": "cli.js"

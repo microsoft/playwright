@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { attachFrame } from 'tests/config/utils';
+import { attachFrame } from '../config/utils';
 import { browserTest as it, expect } from '../config/browserTest';
 import fs from 'fs';
 

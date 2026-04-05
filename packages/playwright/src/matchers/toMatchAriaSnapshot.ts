@@ -43,7 +43,7 @@ export async function toMatchAriaSnapshot(
 ): Promise<MatcherResult<string | RegExp, string>> {
   const matcherName = 'toMatchAriaSnapshot';
   expectTypes(receiver, ['Page', 'Locator'], matcherName);
-  const locator = receiver.constructor.name === 'Page' ? undefined : receiver as LocatorEx;
+  const locator = (receiver as any)._apiName === 'Page' ? undefined : receiver as LocatorEx;
 
   const testInfo = currentTestInfo();
   if (!testInfo)

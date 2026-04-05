@@ -14,14 +14,8 @@
  * limitations under the License.
  */
 
-export * as client from './client';
-export * as iso from './utils/isomorphic';
-export * as serverUtils from './server/utils';
-export * as libCli from './cli/program';
-export * as libCliTestStub from './cli/programWithTestStub';
-export * as inprocess from './inprocess';
-export * as oop from './outofprocess';
-export * as remote from './remote/playwrightServer';
-export * as registry from './server/registry/index';
-export * as sever from './server/index';
-export * as tools from './tools';
+import { tools } from '../coreBundle';
+import { program } from '../utilsBundle';
+
+tools.decorateCliDaemonProgram(program);
+void program.parseAsync();

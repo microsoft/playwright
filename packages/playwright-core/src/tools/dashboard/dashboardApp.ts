@@ -20,7 +20,7 @@ import net from 'net';
 import http from 'http';
 
 import { playwright } from '../../inprocess';
-import { packageRoot } from '../../package';
+import { libPath } from '../../package';
 import { HttpServer } from '../../server/utils/httpServer';
 import { makeSocketPath } from '../../server/utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
@@ -129,9 +129,9 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
   response.end(JSON.stringify({ error: 'Not found' }));
 }
 
-async function openDashboardApp(): Promise<api.Page> {
+async function innerOpenDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
-  const dashboardDir = path.join(packageRoot, 'lib/vite/dashboard');
+  const dashboardDir = libPath('vite', 'dashboard');
 
   httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     handleApiRequest(httpServer, request, response).catch(e => {
@@ -215,7 +215,7 @@ async function launchApp(appName: string) {
     gracefullyProcessExitDoNotHang(0);
   });
 
-  const image = await fs.promises.readFile(path.join(__dirname, 'appIcon.png'));
+  const image = await fs.promises.readFile(libPath('tools', 'dashboard', 'appIcon.png'));
   // This is local Playwright, so I can access private methods.
   // eslint-disable-next-line no-restricted-syntax -- it is not essential, can regress.
   await (page as any)._setDockTile?.(image);
@@ -278,9 +278,13 @@ async function acquireSingleton(): Promise<net.Server> {
   });
 }
 
-async function main() {
+export async function openDashboardApp() {
   let server: net.Server | undefined;
   process.on('exit', () => server?.close());
+  process.on('unhandledRejection', error => {
+    // eslint-disable-next-line no-console
+    console.error('Unhandled promise rejection:', error);
+  });
   const underTest = !!process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT;
   if (!underTest) {
     try {
@@ -289,7 +293,7 @@ async function main() {
       return;
     }
   }
-  const page = await openDashboardApp();
+  const page = await innerOpenDashboardApp();
   server?.on('connection', socket => {
     socket.on('data', data => {
       if (data.toString() === 'bringToFront')
@@ -297,10 +301,3 @@ async function main() {
     });
   });
 }
-
-process.on('unhandledRejection', error => {
-  // eslint-disable-next-line no-console
-  console.error('Unhandled promise rejection:', error);
-});
-
-void main();

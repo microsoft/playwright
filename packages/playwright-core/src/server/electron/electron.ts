@@ -19,6 +19,7 @@ import os from 'os';
 import path from 'path';
 import * as readline from 'readline';
 
+import { libPath } from '../../package';
 import { ManualPromise } from '../../utils';
 import { wrapInASCIIBox } from '../utils/ascii';
 import { RecentLogsCollector } from '../utils/debugLogger';
@@ -194,7 +195,7 @@ export class Electron extends SdkObject {
       }
       // Only use our own loader for non-packaged apps.
       // Packaged apps might have their own command line handling.
-      electronArguments.unshift('-r', require.resolve('./loader'));
+      electronArguments.unshift('-r', libPath('server', 'electron', 'loader.js'));
     }
     let shell = false;
     if (process.platform === 'win32') {

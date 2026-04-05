@@ -23,12 +23,13 @@ import { createBrowser, createBrowserWithInfo } from './browserFactory';
 import { BrowserBackend } from '../backend/browserBackend';
 import { filteredTools } from '../backend/tools';
 import { testDebug } from './log';
+import { packageJSON } from '../../package';
 
 import type { Command } from '../../utilsBundle';
 import type { ClientInfo } from '../utils/mcp/server';
 import type * as playwright from '../../..';
 
-const version = require('../../../package.json').version;
+const version = packageJSON.version;
 
 export function decorateMCPCommand(command: Command) {
   command

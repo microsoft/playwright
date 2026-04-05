@@ -22,9 +22,10 @@ import type http2 from 'http2';
 import type http from 'http';
 import { expect, playwrightTest as base } from '../config/browserTest';
 import type net from 'net';
-import type { BrowserContextOptions } from 'packages/playwright-test';
+import type { BrowserContextOptions } from '../../packages/playwright-test';
 import { setupSocksForwardingServer } from '../config/proxy';
-const { createHttpsServer, createHttp2Server } = require('../../packages/playwright-core/lib/utils');
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+const { createHttpsServer, createHttp2Server } = serverUtils;
 
 type TestOptions = {
   startCCServer(options?: {

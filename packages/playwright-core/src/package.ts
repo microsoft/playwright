@@ -19,3 +19,7 @@ import path from 'path';
 export const packageJSON = require('../package.json');
 export const packageRoot = path.dirname(require.resolve('../package.json'));
 export const binPath = path.join(packageRoot, 'bin');
+
+export function libPath(...parts: string[]): string {
+  return path.join(packageRoot, 'lib', ...parts);
+}

@@ -15,7 +15,9 @@
  */
 
 import { playwrightTest as it, expect } from '../config/browserTest';
-import { parseCSS, serializeSelector as serialize } from '../../packages/playwright-core/lib/utils/isomorphic/cssParser';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
+
+const { parseCSS, serializeSelector: serialize } = iso;
 
 const parse = (selector: string) => {
   return parseCSS(selector, new Set(['text', 'not', 'has', 'react', 'scope', 'right-of', 'is'])).selector;

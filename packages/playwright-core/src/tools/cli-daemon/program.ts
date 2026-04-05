@@ -20,60 +20,61 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { libPath } from '../../package';
 import { startCliDaemonServer } from './daemon';
 import { setupExitWatchdog } from '../mcp/watchdog';
 import { createBrowserWithInfo } from '../mcp/browserFactory';
 import * as configUtils from '../mcp/config';
 import { createClientInfo } from '../cli-client/registry';
-import { program } from '../../utilsBundle';
 import { registry as browserRegistry } from '../../server/registry/index';
 import { getAsBooleanFromENV } from '../../server/utils/env';
+import type { Command } from '../../utilsBundle';
 
-program.argument('[session-name]', 'name of the session to create or connect to', 'default')
-    .option('--headed', 'run in headed mode (non-headless)')
-    .option('--extension', 'run with the extension')
-    .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
-    .option('--persistent', 'use a persistent browser context')
-    .option('--profile <path>', 'path to the user data dir')
-    .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
-    .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
-    .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
-    .option('--init-workspace', 'initialize workspace')
-    .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
+export function decorateProgram(program: Command) {
+  program.argument('[session-name]', 'name of the session to create or connect to', 'default')
+      .option('--headed', 'run in headed mode (non-headless)')
+      .option('--extension', 'run with the extension')
+      .option('--browser <name>', 'browser to use (chromium, chrome, firefox, webkit)')
+      .option('--persistent', 'use a persistent browser context')
+      .option('--profile <path>', 'path to the user data dir')
+      .option('--config <path>', 'path to the config file; by default uses .playwright/cli.config.json in the project directory and ~/.playwright/cli.config.json as global config')
+      .option('--cdp <url>', 'connect to an existing browser via CDP endpoint URL')
+      .option('--endpoint <endpoint>', 'attach to a running Playwright browser endpoint')
+      .option('--init-workspace', 'initialize workspace')
+      .option('--init-skills <value>', 'install skills for the given agent type ("claude" or "agents")')
 
-    .action(async (sessionName: string, options: any) => {
-      if (options.initWorkspace) {
-        await initWorkspace(options.initSkills);
-        return;
-      }
+      .action(async (sessionName: string, options: any) => {
+        if (options.initWorkspace) {
+          await initWorkspace(options.initSkills);
+          return;
+        }
 
-      setupExitWatchdog();
-      const clientInfo = createClientInfo();
-      const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
-      const mcpClientInfo = {
-        cwd: process.cwd(),
-        clientName: guessClientName(),
-      };
+        setupExitWatchdog();
+        const clientInfo = createClientInfo();
+        const mcpConfig = await configUtils.resolveCLIConfigForCLI(clientInfo.daemonProfilesDir, sessionName, options);
+        const mcpClientInfo = {
+          cwd: process.cwd(),
+          clientName: guessClientName(),
+        };
 
-      try {
-        const { browser, browserInfo, canBind } = await createBrowserWithInfo(mcpConfig, mcpClientInfo);
-        if (canBind)
-          await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
-        const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
-        if (!browserContext)
-          throw new Error('Error: unable to connect to a browser that does not have any contexts');
-        const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
-        const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true });
-        console.log(`### Success\nDaemon listening on ${socketPath}`);
-        console.log('<EOF>');
-      } catch (error) {
-        const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
-        console.log(`### Error\n${message}`);
-        console.log('<EOF>');
-      }
-    });
-
-void program.parseAsync();
+        try {
+          const { browser, browserInfo, canBind } = await createBrowserWithInfo(mcpConfig, mcpClientInfo);
+          if (canBind)
+            await browser.bind(sessionName, { workspaceDir: clientInfo.workspaceDir });
+          const browserContext = mcpConfig.browser.isolated ? await browser.newContext(mcpConfig.browser.contextOptions) : browser.contexts()[0];
+          if (!browserContext)
+            throw new Error('Error: unable to connect to a browser that does not have any contexts');
+          const persistent = options.persistent || options.profile || mcpConfig.browser.userDataDir ? true : undefined;
+          const socketPath = await startCliDaemonServer(sessionName, browserContext, browserInfo, mcpConfig, clientInfo, mcpClientInfo, { persistent, exitOnClose: true });
+          console.log(`### Success\nDaemon listening on ${socketPath}`);
+          console.log('<EOF>');
+        } catch (error) {
+          const message = process.env.PWDEBUGIMPL ? (error as Error).stack || (error as Error).message : (error as Error).message;
+          console.log(`### Error\n${message}`);
+          console.log('<EOF>');
+        }
+      });
+}
 
 function guessClientName(): string {
   if (process.env.CLAUDECODE)
@@ -98,7 +99,7 @@ async function initWorkspace(initSkills: string | undefined) {
   console.log(`✅ Workspace initialized at \`${cwd}\`.`);
 
   if (initSkills) {
-    const skillSourceDir = path.join(__dirname, '../cli-client/skill');
+    const skillSourceDir = libPath('tools', 'cli-client', 'skill');
     const target = initSkills === 'agents' ? 'agents' : 'claude';
     const skillDestDir = path.join(cwd, `.${target}`, 'skills', 'playwright-cli');
     if (!fs.existsSync(skillSourceDir)) {

@@ -17,6 +17,7 @@
 import { execSync } from 'child_process';
 import os from 'os';
 
+import { packageJSON } from '../../package';
 import { getLinuxDistributionInfoSync } from '../utils/linuxUtils';
 
 let cachedUserAgent: string | undefined;
@@ -77,6 +78,6 @@ export function getEmbedderName(): { embedderName: string, embedderVersion: stri
 }
 
 export function getPlaywrightVersion(majorMinorOnly = false): string {
-  const version = process.env.PW_VERSION_OVERRIDE || require('./../../../package.json').version;
+  const version = process.env.PW_VERSION_OVERRIDE || packageJSON.version;
   return majorMinorOnly ? version.split('.').slice(0, 2).join('.') : version;
 }

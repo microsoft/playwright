@@ -1,6 +1,8 @@
 [*]
 ../inprocess.ts
+../package.ts
 ../server/
+../server/registry/
 ../server/utils/
 ../remote/
 ../utils/

@@ -334,7 +334,7 @@ export async function toHaveScreenshot(
     return { pass: !this.isNot, message: () => '', name: 'toHaveScreenshot', expected: nameOrOptions };
 
   expectTypes(pageOrLocator, ['Page', 'Locator'], 'toHaveScreenshot');
-  const [page, locator] = pageOrLocator.constructor.name === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
+  const [page, locator] = (pageOrLocator as any)._apiName === 'Page' ? [(pageOrLocator as PageEx), undefined] : [(pageOrLocator as Locator).page() as PageEx, pageOrLocator as Locator];
   const configOptions = testInfo._projectInternal.expect?.toHaveScreenshot || {};
   const helper = new SnapshotHelper(this, testInfo, 'toHaveScreenshot', locator, undefined, configOptions, nameOrOptions, optOptions);
   if (!helper.expectedPath.toLowerCase().endsWith('.png'))

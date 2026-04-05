@@ -22,6 +22,7 @@ import fs from 'fs';
 import net from 'net';
 import os from 'os';
 import path from 'path';
+import { libPath } from '../../package';
 import { compareSemver, SocketConnection } from '../utils/socketConnection';
 import { resolveSessionName } from './registry';
 
@@ -122,7 +123,7 @@ export class Session {
   static async startDaemon(clientInfo: ClientInfo, cliArgs: MinimistArgs) {
     await fs.promises.mkdir(clientInfo.daemonProfilesDir, { recursive: true });
 
-    const cliPath = require.resolve('../cli-daemon/program.js');
+    const cliPath = libPath('entry', 'cliDaemon.js');
     const sessionName = resolveSessionName(cliArgs.session as string);
     const errLog = path.join(clientInfo.daemonProfilesDir, sessionName + '.err');
     const err = fs.openSync(errLog, 'w');

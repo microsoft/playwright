@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-import { ManualPromise } from '../../packages/playwright-core/lib/utils/isomorphic/manualPromise';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
 import { test as it, expect } from './pageTest';
+
+const { ManualPromise } = iso;
 
 // This test is mostly for type checking, the actual tests are in the library/events.
 

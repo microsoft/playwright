@@ -1,4 +1,5 @@
 [*]
+../../package.ts
 ../../utils/isomorphic/**
 ../../server/utils/zipFile.ts
 ./*.ts

@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { libPath } from '../../../package';
 import { gracefullyProcessExitDoNotHang } from '../../../utils';
 import { isUnderTest } from '../../../utils';
 import { HttpServer } from '../../utils/httpServer';
@@ -107,7 +108,7 @@ export async function startTraceViewerServer(options?: TraceViewerServerOptions)
       response.end();
       return true;
     }
-    const absolutePath = path.join(__dirname, '..', '..', '..', 'vite', 'traceViewer', ...relativePath.split('/'));
+    const absolutePath = path.join(libPath('vite', 'traceViewer'), ...relativePath.split('/'));
     return server.serveFile(request, response, absolutePath);
   });
 

@@ -1,7 +1,8 @@
 [*]
-../
 ../../package.ts
 ../../utils/
 ../../utils/isomorphic/
-../chromium/
-../utils
+../../utilsBundle.ts
+../../zipBundle.ts
+../utils/
+./

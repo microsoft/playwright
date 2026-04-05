@@ -18,11 +18,12 @@
 import { playwrightTest as test, expect } from '../../config/browserTest';
 import http from 'http';
 import fs from 'fs';
-import { getUserAgent } from '../../../packages/playwright-core/lib/server/utils/userAgent';
-import { WebSocketTransport } from '../../../packages/playwright-core/lib/server/transport';
+import { serverUtils, sever } from '../../../packages/playwright-core/lib/coreBundle';
 import { suppressCertificateWarning } from '../../config/utils';
-import { nullProgress } from '../../../packages/playwright-core/lib/server/progress';
-import type { Frame } from '../../../packages/playwright-core/lib/server/frames';
+
+const { getUserAgent } = serverUtils;
+const { WebSocketTransport, nullProgress } = sever;
+type Frame = sever.Frame;
 
 test.skip(({ mode }) => mode === 'service2');
 

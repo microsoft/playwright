@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { libPath } from '../../package';
 import { isUnderTest } from '../utils/debug';
 import { mime } from '../../utilsBundle';
 import { syncLocalStorageWithSettings } from '../launchApp';
@@ -94,7 +95,7 @@ export class RecorderApp {
         }
 
         const uri = route.request().url().substring('https://playwright/'.length);
-        const file = require.resolve('../../vite/recorder/' + uri);
+        const file = path.join(libPath('vite', 'recorder'), uri);
         fs.promises.readFile(file).then(buffer => {
           route.fulfill({
             status: 200,
@@ -204,7 +205,8 @@ export class RecorderApp {
     const sdkLanguage = inspectedContext._browser.sdkLanguage();
     const isChromium = inspectedContext._browser.options.browserType === 'chromium';
     const headed = !!inspectedContext._browser.options.headful;
-    const recorderPlaywright = (require('../playwright').createPlaywright as typeof import('../playwright').createPlaywright)({ sdkLanguage: 'javascript', isInternalPlaywright: true });
+    const { createPlaywright } = await import('../playwright');
+    const recorderPlaywright = createPlaywright({ sdkLanguage: 'javascript', isInternalPlaywright: true });
     const { context: appContext, page } = await launchApp(recorderPlaywright.chromium, {
       sdkLanguage,
       windowSize: { width: 600, height: 600 },

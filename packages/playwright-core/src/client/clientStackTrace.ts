@@ -55,10 +55,11 @@ export function captureLibraryStackTrace(platform: Platform): { frames: StackFra
   function normalizeAPIName(name?: string): string {
     if (!name)
       return '';
-    const match = name.match(/(API|JS|CDP|[A-Z])(.*)/);
+    // (\d) is to tolerate bundler renames Locator2 instead of Locator.
+    const match = name.match(/(API|JS|CDP|[A-Z])([^\d]+)\d?\.(.*)/);
     if (!match)
       return name;
-    return match[1].toLowerCase() + match[2];
+    return match[1].toLowerCase() + match[2] + '.' + match[3];
   }
 
   // This is for the inspector so that it did not include the test runner stack frames.

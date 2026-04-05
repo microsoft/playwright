@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+// @ts-nocheck
+
 import { test as baseTest, expect } from './ui-mode-fixtures';
 import { TestServerConnection } from '../../packages/playwright/lib/isomorphic/testServerConnection';
 import { playwrightCtConfigText } from './playwright-test-fixtures';

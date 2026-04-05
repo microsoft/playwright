@@ -15,11 +15,13 @@
  */
 
 import { test } from '../playwright-test/stable-test-runner';
-import { ssim, FastStats } from '../../packages/playwright-core/src/server/utils/image_tools/stats';
-import { ImageChannel } from '../../packages/playwright-core/src/server/utils/image_tools/imageChannel';
-import { srgb2xyz, xyz2lab, colorDeltaE94 } from '../../packages/playwright-core/src/server/utils/image_tools/colorUtils';
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+
 import referenceSSIM from 'ssim.js';
 import { randomPNG, assertEqual, grayChannel } from './utils';
+
+const { ssim, FastStats, ImageChannel, srgb2xyz, xyz2lab, colorDeltaE94 } = serverUtils;
+type ImageChannel = InstanceType<typeof ImageChannel>;
 
 test('srgb to lab conversion should work', async () => {
   const srgb = [123, 81, 252];

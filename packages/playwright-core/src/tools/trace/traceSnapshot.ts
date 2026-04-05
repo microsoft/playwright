@@ -20,7 +20,7 @@ import { TraceLoader } from '../../utils/isomorphic/trace/traceLoader';
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
 import { playwright } from '../../inprocess';
-import { gracefullyCloseAll } from '../../utils';
+import { gracefullyCloseAll, HttpServer, SnapshotServer } from '../../utils';
 import { parseCommand } from '../cli-daemon/command';
 import { minimist } from '../cli-client/minimist';
 import { commands } from '../cli-daemon/commands';
@@ -82,9 +82,6 @@ export async function traceSnapshot(actionId: string, options: { name?: string, 
 }
 
 async function serveTraceSnapshot(storage: SnapshotStorage, loader: TraceLoader, pageId: string, snapshotKey: string): Promise<{ url: string, stop: () => Promise<void> }> {
-  const { SnapshotServer } = require('../../utils/isomorphic/trace/snapshotServer') as typeof import('../../utils/isomorphic/trace/snapshotServer');
-  const { HttpServer } = require('../../server/utils/httpServer') as typeof import('../../server/utils/httpServer');
-
   const snapshotServer = new SnapshotServer(storage, sha1 => loader.resourceForSha1(sha1));
   const httpServer = new HttpServer();
 

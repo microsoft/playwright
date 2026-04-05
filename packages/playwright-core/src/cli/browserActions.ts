@@ -22,7 +22,7 @@ import path from 'path';
 
 import { playwright } from '../inprocess';
 import { gracefullyProcessExitDoNotHang, ManualPromise } from '../utils';
-import { dotenv, program } from '../utilsBundle';
+import { debug, dotenv, program } from '../utilsBundle';
 
 import type { Browser } from '../client/browser';
 import type { BrowserContext } from '../client/browserContext';
@@ -267,7 +267,7 @@ async function maybeSetupTestHooks(browser: Browser, closeBrowser: () => Promise
 
   // Make sure we exit abnormally when browser crashes.
   const logs: string[] = [];
-  require('playwright-core/lib/utilsBundle').debug.log = (...args: any[]) => {
+  debug.log = (...args: any[]) => {
     const line = require('util').format(...args) + '\n';
     logs.push(line);
     // eslint-disable-next-line no-restricted-properties

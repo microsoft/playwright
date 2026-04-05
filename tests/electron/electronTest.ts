@@ -22,9 +22,12 @@ import type { ElectronApplication, Page, Electron } from '@playwright/test';
 import type { PageTestFixtures, PageWorkerFixtures } from '../page/pageTestApi';
 import type { TraceViewerFixtures } from '../config/traceViewerFixtures';
 import { traceViewerFixtures } from '../config/traceViewerFixtures';
-import { removeFolders } from '../../packages/playwright-core/lib/server/utils/fileUtils';
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
 import { inheritAndCleanEnv } from '../config/utils';
+
 export { expect } from '@playwright/test';
+
+const { removeFolders } = serverUtils;
 
 type ElectronTestFixtures = PageTestFixtures & {
   electronApp: ElectronApplication;

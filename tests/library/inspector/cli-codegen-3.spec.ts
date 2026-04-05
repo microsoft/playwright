@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import type { TestServer } from 'tests/config/testserver';
+import type { TestServer } from '../../config/testserver';
 import type { Recorder } from './inspectorTest';
 import { test, expect } from './inspectorTest';
 import type { Page } from '@playwright/test';

@@ -18,7 +18,8 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { iso, serverUtils, tools } from 'playwright-core/lib/coreBundle';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { tools } from 'playwright-core/lib/coreBundle';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { terminalScreen } from '../../reporters/base';

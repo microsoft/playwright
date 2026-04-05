@@ -16,7 +16,7 @@
 
 import MarkdownReporter from '../../packages/playwright/src/reporters/markdown';
 
-import type { MetadataWithCommitInfo } from 'playwright/src/isomorphic/types';
+import type { MetadataWithCommitInfo } from '@testIsomorphic/types';
 import type { IssueCommentEdge, Repository } from '@octokit/graphql-schema';
 
 class GHAMarkdownReporter extends MarkdownReporter {
@@ -25,14 +25,12 @@ class GHAMarkdownReporter extends MarkdownReporter {
   private core: typeof import('@actions/core');
 
   override async publishReport(report: string) {
-    // @ts-expect-error dynamic import
     this.core = await import('@actions/core');
     const token = process.env.GITHUB_TOKEN || this.core.getInput('github-token');
     if (!token) {
       this.core.setFailed('Missing "github-token" input');
       throw new Error('Missing "github-token" input');
     }
-    // @ts-expect-error dynamic import
     const { context, getOctokit } = await import('@actions/github');
     this.context = context;
     this.octokit = getOctokit(token);

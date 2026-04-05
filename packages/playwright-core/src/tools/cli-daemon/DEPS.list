@@ -1,4 +1,5 @@
 [*]
+../../package.ts
 ../utils/socketConnection.ts
 ../cli-client/registry.ts
 ../backend/

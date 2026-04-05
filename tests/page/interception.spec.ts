@@ -16,8 +16,10 @@
  */
 
 import { test as it, expect } from './pageTest';
-import { globToRegexPattern, urlMatches } from '../../packages/playwright-core/lib/utils/isomorphic/urlMatch';
+import { iso } from '../../packages/playwright-core/lib/coreBundle';
 import vm from 'vm';
+
+const { globToRegexPattern, urlMatches } = iso;
 
 it('should work with navigation @smoke', async ({ page, server }) => {
   const requests = new Map();

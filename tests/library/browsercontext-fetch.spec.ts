@@ -22,7 +22,7 @@ import { pipeline } from 'stream';
 import zlib from 'zlib';
 import { contextTest as it, expect } from '../config/browserTest';
 import { suppressCertificateWarning } from '../config/utils';
-import { kTargetClosedErrorMessage } from 'tests/config/errors';
+import { kTargetClosedErrorMessage } from '../config/errors';
 
 it.skip(({ mode }) => mode !== 'default');
 
