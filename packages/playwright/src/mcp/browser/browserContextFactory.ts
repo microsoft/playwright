@@ -90,7 +90,9 @@ function stealthInitScript({ suppressFocus }: { suppressFocus: boolean }) {
   window.print = deferred;
 
   // --- navigator.webdriver override ---
-  Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+  // Real Chrome returns false (not undefined) when automation is not active.
+  // Returning undefined is detectable: typeof navigator.webdriver === "undefined" vs "boolean".
+  Object.defineProperty(navigator, 'webdriver', { get: () => false, configurable: true });
 
   // --- Chrome stealth stubs ---
   if ((window as any).__chromeStealth) return;
