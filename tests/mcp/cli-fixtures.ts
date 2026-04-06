@@ -29,7 +29,7 @@ import type { CommonFixtures } from '../config/commonFixtures';
 export { expect } from './fixtures';
 export const test = baseTest.extend<{
   cliEnv: Record<string, string>,
-  openDashboard: () => Promise<Page>,
+  openDashboard: (options?: { cwd?: string }) => Promise<Page>,
   cli: (...args: any[]) => Promise<{
     output: string,
     error: string,
@@ -45,9 +45,9 @@ export const test = baseTest.extend<{
   },
   openDashboard: async ({ cli, waitForPort, findFreePort }, use) => {
     const dashboards = [];
-    await use(async () => {
+    await use(async (options?: { cwd?: string }) => {
       const debugPort = await findFreePort();
-      await cli('show', { env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
+      await cli('show', { cwd: options?.cwd, env: { PLAYWRIGHT_DASHBOARD_DEBUG_PORT: String(debugPort) } });
       await waitForPort(debugPort);
       const browser = await chromium.connectOverCDP(`http://127.0.0.1:${debugPort}`);
       const dashboard = browser.contexts()[0].pages()[0];
@@ -55,11 +55,13 @@ export const test = baseTest.extend<{
       return dashboard;
     });
     for (const { dashboard, browser } of dashboards) {
+      if (!browser.isConnected())
+        continue;
       await Promise.all([
         // Closing the page should close the browser.
         new Promise(r => browser.on('disconnected', r)),
         dashboard.close()
-      ]);
+      ]).catch(e => console.error('Error during dashboard close', e));
     }
   },
   cli: async ({ mcpBrowser, mcpHeadless, childProcess }, use) => {
