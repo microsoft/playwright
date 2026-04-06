@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -15,7 +14,15 @@
  * limitations under the License.
  */
 
-const { program } = require('playwright-core/lib/utilsBundle');
-const { libCli } = require('playwright-core/lib/coreBundle');
-libCli.decorateProgram(program);
-program.parse(process.argv);
+export * as iso from './utils/isomorphic';
+export * as serverUtils from './server/utils';
+export * as tools from './tools';
+export * as libCli from './cli/program';
+export * as libCliTestStub from './cli/programWithTestStub';
+export * as inprocess from './inprocess';
+export * as oop from './outofprocess';
+export * as remote from './remote/playwrightServer';
+export * as mcp from './tools/mcp/program';
+export * as cli from './tools/cli-client/program';
+export * as registry from './server/registry/index';
+export * as sever from './server/index';

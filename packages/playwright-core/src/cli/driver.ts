@@ -18,7 +18,7 @@
 
 import fs from 'fs';
 
-import * as playwright from '../..';
+import { playwright } from '../inprocess';
 import { PipeTransport } from '../server/utils/pipeTransport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';

@@ -19,7 +19,7 @@
 import { TraceLoader } from '../../utils/isomorphic/trace/traceLoader';
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';
-import * as playwright from '../../..';
+import { playwright } from '../../inprocess';
 import { gracefullyCloseAll } from '../../utils';
 import { parseCommand } from '../cli-daemon/command';
 import { minimist } from '../cli-client/minimist';

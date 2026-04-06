@@ -15,8 +15,7 @@
  */
 
 import { errors } from 'playwright-core';
-import { getPackageManagerExecCommand, monotonicTime, raceAgainstDeadline, currentZone } from 'playwright-core/lib/utils';
-
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { currentTestInfo, currentlyLoadingFileSuite, setCurrentlyLoadingFileSuite } from './globals';
 import { Suite, TestCase } from './test';
 import { expect } from '../matchers/expect';
@@ -267,10 +266,10 @@ export class TestTypeImpl {
       throw new Error(`test.step() can only be called from a test`);
     await testInfo._onUserStepBegin?.(title);
     const step = testInfo._addStep({ category: 'test.step', title, location: options.location, box: options.box });
-    return await currentZone().with('stepZone', step).run(async () => {
+    return await serverUtils.currentZone().with('stepZone', step).run(async () => {
       try {
-        let result: Awaited<ReturnType<typeof raceAgainstDeadline<T>>> | undefined = undefined;
-        result = await raceAgainstDeadline(async () => {
+        let result: Awaited<ReturnType<typeof iso.raceAgainstDeadline<T>>> | undefined = undefined;
+        result = await iso.raceAgainstDeadline(async () => {
           try {
             return await step.info._runStepBody(expectation === 'skip', body, step.location);
           } catch (e) {
@@ -280,7 +279,7 @@ export class TestTypeImpl {
               testInfo._failWithError(e);
             throw e;
           }
-        }, options.timeout ? monotonicTime() + options.timeout : 0);
+        }, options.timeout ? iso.monotonicTime() + options.timeout : 0);
         if (result.timedOut)
           throw new errors.TimeoutError(`Step timeout of ${options.timeout}ms exceeded.`);
         step.complete({});
@@ -304,7 +303,7 @@ export class TestTypeImpl {
 
 function throwIfRunningInsideJest() {
   if (process.env.JEST_WORKER_ID) {
-    const packageManagerCommand = getPackageManagerExecCommand();
+    const packageManagerCommand = serverUtils.getPackageManagerExecCommand();
     throw new Error(
         `Playwright Test needs to be invoked via '${packageManagerCommand} playwright test' and excluded from Jest test runs.\n` +
         `Creating one directory for Playwright tests and one for Jest is the recommended way of doing it.\n` +

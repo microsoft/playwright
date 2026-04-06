@@ -18,7 +18,7 @@ import fs from 'fs';
 import path from 'path';
 import { promisify } from 'util';
 
-import { monotonicTime, removeFolders } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { debug } from 'playwright-core/lib/utilsBundle';
 
 import { Dispatcher  } from './dispatcher';
@@ -41,7 +41,6 @@ import type { Task } from './taskRunner';
 import type { FullResult } from '../../types/testReporter';
 import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type { InternalReporter } from '../reporters/internalReporter';
-import type { ManualPromise } from 'playwright-core/lib/utils';
 
 const readDirAsync = promisify(fs.readdir);
 
@@ -73,8 +72,8 @@ export class TestRun {
   }
 }
 
-export async function runTasks(testRun: TestRun, tasks: Task<TestRun>[], globalTimeout?: number, cancelPromise?: ManualPromise<void>) {
-  const deadline = globalTimeout ? monotonicTime() + globalTimeout : 0;
+export async function runTasks(testRun: TestRun, tasks: Task<TestRun>[], globalTimeout?: number, cancelPromise?: iso.ManualPromise<void>) {
+  const deadline = globalTimeout ? iso.monotonicTime() + globalTimeout : 0;
   const taskRunner = new TaskRunner<TestRun>(testRun.reporter, globalTimeout || 0);
   for (const task of tasks)
     taskRunner.addTask(task);
@@ -213,7 +212,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
       const projects = filterProjects(config.projects, config.cliProjectFilter);
       projects.forEach(p => outputDirs.add(p.project.outputDir));
 
-      await Promise.all(Array.from(outputDirs).map(outputDir => removeFolders([outputDir]).then(async ([error]) => {
+      await Promise.all(Array.from(outputDirs).map(outputDir => serverUtils.removeFolders([outputDir]).then(async ([error]) => {
         if (!error)
           return;
         if ((error as any).code === 'EBUSY') {
@@ -221,7 +220,7 @@ function createRemoveOutputDirsTask(): Task<TestRun> {
           //   https://github.com/microsoft/playwright/issues/12106
           // Do a best-effort to remove all files inside of it instead.
           const entries = await readDirAsync(outputDir).catch(e => []);
-          await Promise.all(entries.map(entry => removeFolders([path.join(outputDir, entry)])));
+          await Promise.all(entries.map(entry => serverUtils.removeFolders([path.join(outputDir, entry)])));
         } else {
           throw error;
         }

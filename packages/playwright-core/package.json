@@ -23,23 +23,11 @@
     },
     "./package.json": "./package.json",
     "./lib/bootstrap": "./lib/bootstrap.js",
-    "./lib/outofprocess": "./lib/outofprocess.js",
-    "./lib/cli/program": "./lib/cli/program.js",
-    "./lib/tools/cli-client/program": "./lib/tools/cli-client/program.js",
-    "./lib/tools/mcp/program": "./lib/tools/mcp/program.js",
+    "./lib/coreBundle": "./lib/coreBundle.js",
     "./lib/mcpBundle": "./lib/mcpBundle.js",
-    "./lib/zodBundle": "./lib/zodBundle.js",
-    "./lib/tools/exports": "./lib/tools/exports.js",
-    "./lib/remote/playwrightServer": "./lib/remote/playwrightServer.js",
-    "./lib/server": "./lib/server/index.js",
-    "./lib/server/utils/image_tools/stats": "./lib/server/utils/image_tools/stats.js",
-    "./lib/server/utils/image_tools/compare": "./lib/server/utils/image_tools/compare.js",
-    "./lib/server/utils/image_tools/imageChannel": "./lib/server/utils/image_tools/imageChannel.js",
-    "./lib/server/utils/image_tools/colorUtils": "./lib/server/utils/image_tools/colorUtils.js",
-    "./lib/server/registry/index": "./lib/server/registry/index.js",
-    "./lib/utils": "./lib/utils.js",
     "./lib/utilsBundle": "./lib/utilsBundle.js",
-    "./lib/zipBundle": "./lib/zipBundle.js"
+    "./lib/zipBundle": "./lib/zipBundle.js",
+    "./lib/zodBundle": "./lib/zodBundle.js"
   },
   "bin": {
     "playwright-core": "cli.js"

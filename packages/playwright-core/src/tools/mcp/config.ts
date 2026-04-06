@@ -18,12 +18,12 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { devices } from '../../..';
+import { playwright } from '../../inprocess';
 import { dotenv } from '../../utilsBundle';
 
 import { configFromIniFile } from './configIni';
 
-import type * as playwright from '../../..';
+import type * as playwrightTypes from '../../..';
 import type { Config, ToolCapability } from './config.d';
 
 async function fileExistsAsync(resolved: string) {
@@ -247,7 +247,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
   }
 
   // Launch options
-  const launchOptions: playwright.LaunchOptions = {
+  const launchOptions: playwrightTypes.LaunchOptions = {
     channel,
     executablePath: cliOptions.executablePath,
     headless: cliOptions.headless,
@@ -270,7 +270,7 @@ function configFromCLIOptions(cliOptions: CLIOptions): Config & { configFile?: s
     throw new Error('Device emulation is not supported with cdpEndpoint.');
 
   // Context options
-  const contextOptions: playwright.BrowserContextOptions = cliOptions.device ? devices[cliOptions.device] : {};
+  const contextOptions: playwrightTypes.BrowserContextOptions = cliOptions.device ? playwright.devices[cliOptions.device] : {};
   if (cliOptions.storageState)
     contextOptions.storageState = cliOptions.storageState;
 

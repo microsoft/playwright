@@ -16,7 +16,7 @@
 
 import * as fs from 'fs';
 
-import { monotonicTime, spawnAsync } from 'playwright-core/lib/utils';
+import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 
 import type { TestRunnerPlugin } from './';
 import type { FullConfig } from '../../types/testReporter';
@@ -179,13 +179,13 @@ async function gitDiff(gitDir: string, ci?: CIInfo): Promise<string | undefined>
 
 async function runGit(command: string, cwd: string): Promise<string | undefined> {
   debug(`running "${command}"`);
-  const start = monotonicTime();
-  const result = await spawnAsync(
+  const start = iso.monotonicTime();
+  const result = await serverUtils.spawnAsync(
       command,
       [],
       { stdio: 'pipe', cwd, timeout: GIT_OPERATIONS_TIMEOUT_MS, shell: true }
   );
-  if (monotonicTime() - start > GIT_OPERATIONS_TIMEOUT_MS) {
+  if (iso.monotonicTime() - start > GIT_OPERATIONS_TIMEOUT_MS) {
     print(`timeout of ${GIT_OPERATIONS_TIMEOUT_MS}ms exceeded while running "${command}"`);
     return;
   }

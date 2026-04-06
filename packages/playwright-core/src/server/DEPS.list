@@ -1,5 +1,6 @@
 [*]
 ../generated/
+../package.ts
 ../protocol/
 ../utils
 ../utils/isomorphic/**

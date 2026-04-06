@@ -19,10 +19,12 @@ import net from 'net';
 import path from 'path';
 import os from 'os';
 
+import { packageJSON, packageRoot } from './package';
+
 // Only client depenencies with backward compatibility guarantees should be imported here.
 import type { LaunchOptions } from '../types/types';
 
-const packageVersion = require('../package.json').version;
+const packageVersion = packageJSON.version;
 
 export type BrowserInfo = {
   guid: string;
@@ -90,7 +92,7 @@ class ServerRegistry {
     await fs.promises.mkdir(this._browsersDir(), { recursive: true });
     const descriptor: BrowserDescriptor = {
       playwrightVersion: packageVersion,
-      playwrightLib: require.resolve('..'),
+      playwrightLib: packageRoot,
       title: endpoint.title,
       browser,
       endpoint: endpoint.endpoint,

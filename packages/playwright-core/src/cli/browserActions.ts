@@ -20,7 +20,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import * as playwright from '../..';
+import { playwright } from '../inprocess';
 import { gracefullyProcessExitDoNotHang, ManualPromise } from '../utils';
 import { dotenv, program } from '../utilsBundle';
 

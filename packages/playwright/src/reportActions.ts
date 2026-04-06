@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from 'playwright-core/lib/utils';
-
+import { serverUtils } from 'playwright-core/lib/coreBundle';
 import { builtInReporters, defaultReporter } from './common/config';
 import { loadConfigFromFile, loadEmptyConfigForMergeReports } from './common/configLoader';
 import { showHTMLReport } from './reporters/html';
@@ -47,7 +46,7 @@ export async function mergeReports(reportDir: string | undefined, opts: { [key: 
     reporterDescriptions = [[defaultReporter]];
   const rootDirOverride = configFile ? config.config.rootDir : undefined;
   await createMergedReport(config, dir, reporterDescriptions!, rootDirOverride);
-  gracefullyProcessExitDoNotHang(0);
+  serverUtils.gracefullyProcessExitDoNotHang(0);
 }
 
 function resolveReporterOption(reporter?: string): ReporterDescription[] | undefined {

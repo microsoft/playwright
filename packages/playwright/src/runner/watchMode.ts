@@ -18,9 +18,8 @@ import path from 'path';
 import readline from 'readline';
 import { EventEmitter } from 'stream';
 
-import { PlaywrightServer } from 'playwright-core/lib/remote/playwrightServer';
-import { ManualPromise, createGuid, eventsHelper, getPackageManagerExecCommand } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import { iso, remote, serverUtils } from 'playwright-core/lib/coreBundle';
+import { colors } from 'playwright-core/lib/utilsBundle';
 
 import { separator, terminalScreen } from '../reporters/base';
 import { enquirer } from '../utilsBundle';
@@ -99,7 +98,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
   const dirtyTestFiles = new Set<string>();
   const dirtyTestIds = new Set<string>();
-  let onDirtyTests = new ManualPromise<'changed'>();
+  let onDirtyTests = new iso.ManualPromise<'changed'>();
 
   let queue = Promise.resolve();
   const changedFiles = new Set<string>();
@@ -123,7 +122,7 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 
       if (dirtyTestIds.size > 0) {
         onDirtyTests.resolve('changed');
-        onDirtyTests = new ManualPromise();
+        onDirtyTests = new iso.ManualPromise();
       }
     });
   });
@@ -273,21 +272,21 @@ export async function runWatchModeLoop(configLocation: ConfigLocation, initialOp
 }
 
 function readKeyPress<T extends string>(handler: (text: string, key: any) => T | undefined): { dispose(): void; result: Promise<T> } {
-  const promise = new ManualPromise<T>();
+  const promise = new iso.ManualPromise<T>();
 
   const rl = readline.createInterface({ input: process.stdin, escapeCodeTimeout: 50 });
   readline.emitKeypressEvents(process.stdin, rl);
   if (process.stdin.isTTY)
     process.stdin.setRawMode(true);
 
-  const listener = eventsHelper.addEventListener(process.stdin, 'keypress', (text: string, key: any) => {
+  const listener = serverUtils.eventsHelper.addEventListener(process.stdin, 'keypress', (text: string, key: any) => {
     const result = handler(text, key);
     if (result)
       promise.resolve(result);
   });
 
   const dispose = () => {
-    eventsHelper.removeEventListeners([listener]);
+    serverUtils.eventsHelper.removeEventListeners([listener]);
     rl.close();
     if (process.stdin.isTTY)
       process.stdin.setRawMode(false);
@@ -368,12 +367,12 @@ Change settings
   });
 }
 
-let showBrowserServer: PlaywrightServer | undefined;
+let showBrowserServer: remote.PlaywrightServer | undefined;
 let connectWsEndpoint: string | undefined = undefined;
 let seq = 1;
 
 function printConfiguration(options: WatchModeOptions, title?: string) {
-  const packageManagerCommand = getPackageManagerExecCommand();
+  const packageManagerCommand = serverUtils.getPackageManagerExecCommand();
   const tokens: string[] = [];
   tokens.push(`${packageManagerCommand} playwright test`);
   if (options.projects)
@@ -419,7 +418,7 @@ ${colors.dim('Waiting for file changes. Press')} ${colors.bold('enter')} ${color
 
 async function toggleShowBrowser() {
   if (!showBrowserServer) {
-    showBrowserServer = new PlaywrightServer({ mode: 'extension', path: '/' + createGuid(), maxConnections: 1 });
+    showBrowserServer = new remote.PlaywrightServer({ mode: 'extension', path: '/' + serverUtils.createGuid(), maxConnections: 1 });
     connectWsEndpoint = await showBrowserServer.listen();
     process.stdout.write(`${colors.dim('Show & reuse browser:')} ${colors.bold('on')}\n`);
   } else {

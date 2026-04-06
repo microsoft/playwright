@@ -19,7 +19,8 @@ import path from 'path';
 import net from 'net';
 import http from 'http';
 
-import { chromium } from '../../..';
+import { playwright } from '../../inprocess';
+import { packageRoot } from '../../package';
 import { HttpServer } from '../../server/utils/httpServer';
 import { makeSocketPath } from '../../server/utils/fileUtils';
 import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
@@ -128,8 +129,7 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
 
 async function openDashboardApp(): Promise<api.Page> {
   const httpServer = new HttpServer();
-  const libDir = require.resolve('playwright-core/package.json');
-  const dashboardDir = path.join(path.dirname(libDir), 'lib/vite/dashboard');
+  const dashboardDir = path.join(packageRoot, 'lib/vite/dashboard');
 
   httpServer.routePrefix('/api/', (request: http.IncomingMessage, response: http.ServerResponse) => {
     handleApiRequest(httpServer, request, response).catch(e => {
@@ -183,7 +183,7 @@ async function openDashboardApp(): Promise<api.Page> {
 async function launchApp(appName: string) {
   const channel = findChromiumChannelBestEffort('javascript');
   const debugPort = parseInt(process.env.PLAYWRIGHT_DASHBOARD_DEBUG_PORT!, 10) || undefined;
-  const context = await chromium.launchPersistentContext('', {
+  const context = await playwright.chromium.launchPersistentContext('', {
     ignoreDefaultArgs: ['--enable-automation'],
     channel,
     headless: debugPort !== undefined,

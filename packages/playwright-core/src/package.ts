@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * Copyright (c) Microsoft Corporation.
  *
@@ -15,7 +14,8 @@
  * limitations under the License.
  */
 
-const { program } = require('playwright-core/lib/utilsBundle');
-const { libCli } = require('playwright-core/lib/coreBundle');
-libCli.decorateProgram(program);
-program.parse(process.argv);
+import path from 'path';
+
+export const packageJSON = require('../package.json');
+export const packageRoot = path.dirname(require.resolve('../package.json'));
+export const binPath = path.join(packageRoot, 'bin');

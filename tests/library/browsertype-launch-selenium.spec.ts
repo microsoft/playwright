@@ -18,7 +18,7 @@ import { playwrightTest as test, expect } from '../config/browserTest';
 import type { TestInfo } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
-import { start } from '../../packages/playwright-core/lib/outofprocess';
+import { oop } from '../../packages/playwright-core/lib/coreBundle';
 
 const chromeDriver = process.env.PWTEST_CHROMEDRIVER;
 const brokenDriver = path.join(__dirname, '..', 'assets', 'selenium-grid', 'broken-selenium-driver.js');
@@ -188,7 +188,7 @@ test('selenium grid 3.141.59 standalone chromium through run-driver', async ({ b
   });
   await waitForPort(port);
 
-  const { playwright: pw, stop } = await start({
+  const { playwright: pw, stop } = await oop.start({
     SELENIUM_REMOTE_URL: `http://127.0.0.1:${port}/wd/hub`,
   });
   const browser = await pw.chromium.launch();

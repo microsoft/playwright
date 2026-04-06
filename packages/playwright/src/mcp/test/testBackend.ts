@@ -17,8 +17,7 @@
 import EventEmitter from 'events';
 
 import { z as zod } from 'playwright-core/lib/zodBundle';
-import * as mcp from 'playwright-core/lib/tools/exports';
-import { browserTools } from 'playwright-core/lib/tools/exports';
+import { tools } from 'playwright-core/lib/coreBundle';
 
 import { TestContext } from './testContext';
 import * as testTools from './testTools.js';
@@ -26,7 +25,6 @@ import * as generatorTools from './generatorTools.js';
 import * as plannerTools from './plannerTools.js';
 
 import type { TestTool } from './testTool';
-import type { Tool } from 'playwright-core/lib/tools/exports';
 
 const typesWithIntent = ['action', 'assertion', 'input'];
 
@@ -40,10 +38,10 @@ export const testServerBackendTools: TestTool<any>[] = [
   testTools.listTests,
   testTools.runTests,
   testTools.debugTest,
-  ...browserTools.map(tool => wrapBrowserTool(tool)),
+  ...tools.browserTools.map(tool => wrapBrowserTool(tool)),
 ];
 
-export class TestServerBackend extends EventEmitter implements mcp.ServerBackend {
+export class TestServerBackend extends EventEmitter implements tools.ServerBackend {
   readonly name = 'Playwright';
   readonly version = '0.0.1';
   private _options: { muteConsole?: boolean, headless?: boolean };
@@ -56,11 +54,11 @@ export class TestServerBackend extends EventEmitter implements mcp.ServerBackend
     this._configPath = configPath;
   }
 
-  async initialize(clientInfo: mcp.ClientInfo): Promise<void> {
+  async initialize(clientInfo: tools.ClientInfo): Promise<void> {
     this._context = new TestContext(clientInfo, this._configPath, this._options);
   }
 
-  async callTool(name: string, args: mcp.CallToolRequest['params']['arguments']): Promise<mcp.CallToolResult> {
+  async callTool(name: string, args: tools.CallToolRequest['params']['arguments']): Promise<tools.CallToolResult> {
     const tool = testServerBackendTools.find(tool => tool.schema.name === name);
     if (!tool)
       throw new Error(`Tool not found: ${name}. Available tools: ${testServerBackendTools.map(tool => tool.schema.name).join(', ')}`);
@@ -76,7 +74,7 @@ export class TestServerBackend extends EventEmitter implements mcp.ServerBackend
   }
 }
 
-function wrapBrowserTool(tool: Tool): TestTool {
+function wrapBrowserTool(tool: tools.Tool): TestTool {
   const inputSchema = typesWithIntent.includes(tool.schema.type) ? (tool.schema.inputSchema as any).extend({
     intent: zod.string().describe('The intent of the call, for example the test step description plan idea')
   }) : tool.schema.inputSchema;

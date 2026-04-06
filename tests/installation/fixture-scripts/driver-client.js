@@ -15,11 +15,11 @@
  */
 
 const pw = require.resolve('playwright');
-const oop = require.resolve('playwright-core/lib/outofprocess', { paths: [pw] });
-const { start } = require(oop);
+const coreBundle = require.resolve('playwright-core/lib/coreBundle', { paths: [pw] });
+const { oop } = require(coreBundle);
 
 (async () => {
-  const { playwright, stop } = await start();
+  const { playwright, stop } = await oop.start();
   console.log(`driver PID=${playwright.driverProcess.pid}`);
   for (const browserType of ['chromium', 'firefox', 'webkit']) {
     try {

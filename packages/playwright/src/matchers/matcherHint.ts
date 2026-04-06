@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { stringifyStackFrames } from 'playwright-core/lib/utils';
+import { iso } from 'playwright-core/lib/coreBundle';
 
 import type { StackFrame } from '@protocol/channels';
 
@@ -49,7 +49,7 @@ export class ExpectError extends Error {
 
     if (customMessage)
       this.message = customMessage + '\n\n' + this.message;
-    this.stack = this.name + ': ' + this.message + '\n' + stringifyStackFrames(stackFrames).join('\n');
+    this.stack = this.name + ': ' + this.message + '\n' + iso.stringifyStackFrames(stackFrames).join('\n');
   }
 }
 

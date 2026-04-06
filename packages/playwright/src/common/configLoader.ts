@@ -17,8 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { isRegExp } from 'playwright-core/lib/utils';
-
+import { iso } from 'playwright-core/lib/coreBundle';
 import { requireOrImport, setSingleTSConfig, setTransformConfig } from '../transform/transform';
 import { errorWithFile, fileIsModule } from '../util';
 import { FullConfigInternal } from './config';
@@ -28,6 +27,8 @@ import { addToCompilationCache } from '../transform/compilationCache';
 import type { ConfigLocation } from './config';
 import type { ConfigCLIOverrides, SerializedConfig } from './ipc';
 import type { Config, Project } from '../../types/test';
+
+const { isRegExp } = iso;
 
 const kDefineConfigWasUsed = Symbol('defineConfigWasUsed');
 export const defineConfig = (...configs: any[]) => {

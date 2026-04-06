@@ -4,7 +4,7 @@
 ./*.ts
 
 [traceSnapshot.ts]
-../../..
+../../inprocess.ts
 ../../utils
 ../backend/browserBackend.ts
 ../backend/tools.ts

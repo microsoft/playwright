@@ -19,7 +19,7 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 
-import * as playwright from '../../..';
+import { playwright } from '../../inprocess';
 import { registryDirectory } from '../../server/registry/index';
 import { testDebug } from './log';
 import { outputDir } from '../backend/context';
@@ -33,15 +33,16 @@ import type { FullConfig } from './config';
 import type { ClientInfo } from '../utils/mcp/server';
 // eslint-disable-next-line no-restricted-imports
 import type { Playwright } from '../../client/playwright';
+import type * as playwrightTypes from '../../..';
 import type { BrowserInfo } from '../../serverRegistry';
 
 type BrowserWithInfo = {
-  browser: playwright.Browser,
+  browser: playwrightTypes.Browser,
   browserInfo: BrowserInfo,
   canBind: boolean,
 };
 
-export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+export async function createBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   const { browser } = await createBrowserWithInfo(config, clientInfo);
   return browser;
 }
@@ -50,7 +51,7 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
   if (config.browser.remoteEndpoint)
     return await createRemoteBrowser(config);
 
-  let browser: playwright.Browser;
+  let browser: playwrightTypes.Browser;
   let canBind = false;
   if (config.browser.cdpEndpoint) {
     browser = await createCDPBrowser(config);
@@ -69,11 +70,11 @@ export async function createBrowserWithInfo(config: FullConfig, clientInfo: Clie
 }
 
 export interface BrowserContextFactory {
-  contexts(clientInfo: ClientInfo): Promise<playwright.BrowserContext[]>;
-  createContext(clientInfo: ClientInfo): Promise<playwright.BrowserContext>;
+  contexts(clientInfo: ClientInfo): Promise<playwrightTypes.BrowserContext[]>;
+  createContext(clientInfo: ClientInfo): Promise<playwrightTypes.BrowserContext>;
 }
 
-function browserInfo(browser: playwright.Browser, config: FullConfig): BrowserInfo {
+function browserInfo(browser: playwrightTypes.Browser, config: FullConfig): BrowserInfo {
   return {
     // eslint-disable-next-line no-restricted-syntax
     guid: (browser as any)._guid,
@@ -83,7 +84,7 @@ function browserInfo(browser: playwright.Browser, config: FullConfig): BrowserIn
   };
 }
 
-async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (isolated)');
   await injectCdpPort(config.browser);
   const browserType = playwright[config.browser.browserName];
@@ -101,7 +102,7 @@ async function createIsolatedBrowser(config: FullConfig, clientInfo: ClientInfo)
   return browser;
 }
 
-async function createCDPBrowser(config: FullConfig): Promise<playwright.Browser> {
+async function createCDPBrowser(config: FullConfig): Promise<playwrightTypes.Browser> {
   testDebug('create browser (cdp)');
   const browser = await playwright.chromium.connectOverCDP(config.browser.cdpEndpoint!, {
     headers: config.browser.cdpHeaders,
@@ -135,7 +136,7 @@ async function createRemoteBrowser(config: FullConfig): Promise<BrowserWithInfo>
   return { browser, browserInfo: browserInfo(browser, config), canBind: false };
 }
 
-async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwright.Browser> {
+async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInfo): Promise<playwrightTypes.Browser> {
   testDebug('create browser (persistent)');
   await injectCdpPort(config.browser);
   const userDataDir = config.browser.userDataDir ?? await createUserDataDir(config, clientInfo);
@@ -146,7 +147,7 @@ async function createPersistentBrowser(config: FullConfig, clientInfo: ClientInf
 
   const browserType = playwright[config.browser.browserName];
   const configIgnoreDefaultArgs = config.browser.launchOptions?.ignoreDefaultArgs;
-  const launchOptions: playwright.LaunchOptions & playwright.BrowserContextOptions = {
+  const launchOptions: playwrightTypes.LaunchOptions & playwrightTypes.BrowserContextOptions = {
     tracesDir,
     ...config.browser.launchOptions,
     ...config.browser.contextOptions,

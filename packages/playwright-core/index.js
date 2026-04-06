@@ -29,4 +29,4 @@ if (major < minimumMajorNodeVersion) {
   process.exit(1);
 }
 
-module.exports = require('./lib/inprocess');
+module.exports = require('./lib/coreBundle').inprocess.playwright;

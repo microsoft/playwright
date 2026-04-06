@@ -18,8 +18,8 @@ import fs from 'fs';
 import path from 'path';
 
 
-import { MultiMap } from 'playwright-core/lib/utils';
-import { colors } from 'playwright-core/lib/utils';
+import { iso } from 'playwright-core/lib/coreBundle';
+import { colors } from 'playwright-core/lib/utilsBundle';
 import { diff } from 'playwright-core/lib/utilsBundle';
 
 import { filterProjects } from './projectUtils';
@@ -42,7 +42,7 @@ type Replacement = {
   code: string;
 };
 
-const suggestedRebaselines = new MultiMap<string, Replacement>();
+const suggestedRebaselines = new iso.MultiMap<string, Replacement>();
 
 export function addSuggestedRebaseline(location: Location, suggestedRebaseline: string) {
   suggestedRebaselines.set(location.file, { location, code: suggestedRebaseline });

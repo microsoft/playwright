@@ -14,49 +14,7 @@
  * limitations under the License.
  */
 
-export * from './utils/isomorphic/ariaSnapshot';
-export * from './utils/isomorphic/assert';
-export * from './utils/isomorphic/colors';
-export * from './utils/isomorphic/headers';
-export * from './utils/isomorphic/imageUtils';
-export * from './utils/isomorphic/jsonSchema';
-export * from './utils/isomorphic/locatorGenerators';
-export * from './utils/isomorphic/manualPromise';
-export * from './utils/isomorphic/mimeType';
-export * from './utils/isomorphic/multimap';
-export * from './utils/isomorphic/protocolFormatter';
-export * from './utils/isomorphic/protocolMetainfo';
-export * from './utils/isomorphic/rtti';
-export * from './utils/isomorphic/semaphore';
-export * from './utils/isomorphic/stackTrace';
-export * from './utils/isomorphic/stringUtils';
-export * from './utils/isomorphic/formatUtils';
-export * from './utils/isomorphic/time';
-export * from './utils/isomorphic/timeoutRunner';
-export * from './utils/isomorphic/urlMatch';
-export * from './utils/isomorphic/yaml';
-
-export * from './server/utils/ascii';
-export * from './server/utils/comparators';
-export * from './server/utils/crypto';
-export * from './server/utils/debug';
-export * from './server/utils/debugLogger';
-export * from './server/utils/env';
-export * from './server/utils/eventsHelper';
-export * from './server/utils/expectUtils';
-export * from './server/utils/fileUtils';
-export * from './server/utils/hostPlatform';
-export * from './server/utils/httpServer';
-export * from './server/utils/network';
-export * from './server/utils/nodePlatform';
-export * from './server/utils/processLauncher';
-export * from './server/utils/profiler';
-export * from './server/utils/socksProxy';
-export * from './server/utils/spawnAsync';
-export * from './server/utils/task';
-export * from './server/utils/userAgent';
-export * from './server/utils/wsServer';
-export * from './server/utils/zipFile';
-export * from './server/utils/zones';
+export * from './utils/isomorphic';
+export * from './server/utils';
 
 export { colors } from './utilsBundle';

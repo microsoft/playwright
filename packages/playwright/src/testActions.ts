@@ -17,9 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang, startProfiling, stopProfiling } from 'playwright-core/lib/utils';
-
+import { serverUtils } from 'playwright-core/lib/coreBundle';
 import { builtInReporters } from './common/config';
+
+const { gracefullyProcessExitDoNotHang } = serverUtils;
 import { loadConfigFromFile, resolveConfigLocation } from './common/configLoader';
 import { terminalScreen } from './reporters/base';
 import { filterProjects } from './runner/projectUtils';
@@ -32,7 +33,7 @@ import type { ConfigCLIOverrides } from './common/ipc';
 import type { ReporterDescription } from '../types/test';
 
 export async function runTests(args: string[], opts: { [key: string]: any }) {
-  await startProfiling();
+  await serverUtils.startProfiling();
   const cliOverrides = overridesFromOptions(opts);
 
   const config = await loadConfigFromFile(opts.config, cliOverrides, opts.deps === false);
@@ -63,7 +64,7 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
       project: opts.project || undefined,
       reporter: Array.isArray(opts.reporter) ? opts.reporter : opts.reporter ? [opts.reporter] : undefined,
     });
-    await stopProfiling('runner');
+    await serverUtils.stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
@@ -81,14 +82,14 @@ export async function runTests(args: string[], opts: { [key: string]: any }) {
           grep: opts.grep
         }
     );
-    await stopProfiling('runner');
+    await serverUtils.stopProfiling('runner');
     const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
     gracefullyProcessExitDoNotHang(exitCode);
     return;
   }
 
   const status = await runAllTestsWithConfig(config);
-  await stopProfiling('runner');
+  await serverUtils.stopProfiling('runner');
   const exitCode = status === 'interrupted' ? 130 : (status === 'passed' ? 0 : 1);
   gracefullyProcessExitDoNotHang(exitCode);
 }
