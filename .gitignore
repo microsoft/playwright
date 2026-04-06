@@ -13,6 +13,12 @@ yarn.lock
 /packages/playwright-core/src/generated
 /packages/playwright-ct-core/src/generated
 packages/*/lib/
+packages/*/src/**/*.js
+packages/*/vite.config.js
+packages/*/bundle.js
+!packages/playwright-core/src/third_party/pixelmatch.js
+!packages/playwright-core/bundles/*/src/**/*.js
+pnpm-lock.yaml
 drivers/
 .android-sdk/
 .gradle/

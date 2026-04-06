@@ -103,6 +103,13 @@ export type Config = {
    */
   extension?: boolean;
 
+  /**
+   * Enable CDP stealth optimizations to reduce bot detection surface.
+   * Skips Log.enable, Network.enable, uses rapid Runtime enable/disable cycle.
+   * Default is true (stealth on). Set to false for debugging.
+   */
+  stealth?: boolean;
+
   server?: {
     /**
      * The port to listen on for SSE or MCP transport.

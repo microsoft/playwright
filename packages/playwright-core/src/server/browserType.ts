@@ -129,6 +129,7 @@ export abstract class BrowserType extends SdkObject {
         browserLogsCollector,
         wsEndpoint: transport instanceof WebSocketTransport ? transport.wsEndpoint : undefined,
         originalLaunchOptions: options,
+        stealthMode: (options as any).stealthMode,
       };
       if (persistent)
         validateBrowserContextOptions(persistent, browserOptions);
