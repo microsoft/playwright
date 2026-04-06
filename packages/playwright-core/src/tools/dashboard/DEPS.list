@@ -6,4 +6,5 @@
 ../../server/utils/
 ../../serverRegistry.ts
 ../../utils/
+../cli-client/registry.ts
 ../utils/

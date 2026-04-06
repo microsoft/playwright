@@ -27,6 +27,7 @@ import { findChromiumChannelBestEffort, registryDirectory } from '../../server/r
 import { CDPConnection, DashboardConnection } from './dashboardController';
 import { serverRegistry } from '../../serverRegistry';
 import { connectToBrowserAcrossVersions } from '../utils/connect';
+import { createClientInfo } from '../cli-client/registry';
 
 import type * as api from '../../..';
 import type { SessionStatus } from '../../../../dashboard/src/sessionModel';
@@ -85,7 +86,8 @@ async function handleApiRequest(httpServer: HttpServer, request: http.IncomingMe
 
   if (apiPath === '/api/sessions/list' && request.method === 'GET') {
     const sessions = await loadBrowserDescriptorSessions(httpServer.wsGuid()!);
-    sendJSON(response, { sessions });
+    const clientInfo = createClientInfo();
+    sendJSON(response, { sessions, clientInfo });
     return;
   }
 

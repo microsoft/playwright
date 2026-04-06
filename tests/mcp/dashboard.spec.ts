@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+import fs from 'fs';
+import path from 'path';
+
 import { test, expect } from './cli-fixtures';
 
 test.beforeEach(({}, testInfo) => {
@@ -40,6 +43,41 @@ test('should show devtools sidebar', async ({ cli, server, openDashboard, mcpBro
   await expect(dashboard.locator('.inspector-frame')).not.toBeVisible();
   await devToolsButton.click();
   await expect(dashboard.locator('.inspector-frame')).toBeVisible();
+});
+
+test('should show current workspace sessions first', async ({ cli, server, openDashboard }) => {
+  const wsA = test.info().outputPath('workspace-a');
+  const wsB = test.info().outputPath('workspace-b');
+
+  await fs.promises.mkdir(path.join(wsA, '.playwright'), { recursive: true });
+  await fs.promises.mkdir(path.join(wsB, '.playwright'), { recursive: true });
+
+  await cli('open', server.EMPTY_PAGE, { cwd: wsA });
+  await cli('open', server.EMPTY_PAGE, { cwd: wsB });
+
+  const checkOrder = async (first: string, second: string) => {
+    const dashboard = await openDashboard({ cwd: first });
+    const workspaceGroups = dashboard.locator('.workspace-group');
+    await expect(workspaceGroups).toHaveCount(2);
+
+    // Current workspace (first) should be first and expanded.
+    await expect(workspaceGroups.nth(0).locator('.workspace-path')).toContainText(first);
+    await expect(workspaceGroups.nth(0).locator('.session-chips')).toBeVisible();
+
+    // Other workspace (second) should be second and collapsed.
+    await expect(workspaceGroups.nth(1).locator('.workspace-path')).toContainText(second);
+    await expect(workspaceGroups.nth(1).locator('.session-chips')).not.toBeVisible();
+
+    await dashboard.close();
+  };
+
+  await test.step('open dashboard in workspace A', async () => {
+    await checkOrder(wsA, wsB);
+  });
+
+  await test.step('open dashboard in workspace B', async () => {
+    await checkOrder(wsB, wsA);
+  });
 });
 
 test('should pick locator from browser', async ({ cli, server, openDashboard }) => {
