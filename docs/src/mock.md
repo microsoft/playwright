@@ -414,7 +414,7 @@ In the trace of our test we can see that the route was fulfilled from the HAR fi
 If we inspect the response we can see our new fruit was added to the JSON, which was done by manually updating the hashed `.txt` file inside the `hars` folder.
 <img src="https://github.com/microsoft/playwright/assets/13063165/db3117fc-7b02-4973-9a51-29e213261a6a" alt="trace showing response from HAR file" width="2946" height="1902" />
 
-HAR replay matches URL and HTTP method strictly. For POST requests, it also matches POST payloads strictly. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
+HAR replay matches URL and HTTP method strictly by default. For POST requests, it also matches POST payloads strictly. If an entry was recorded with [`method: Page.routeFromHAR`] or [`method: BrowserContext.routeFromHAR`] using [`option: Page.routeFromHAR.update`] / [`option: BrowserContext.routeFromHAR.update`] and a regular-expression [`option: Page.routeFromHAR.url`] / [`option: BrowserContext.routeFromHAR.url`], Playwright stores that regex in the HAR entry and uses it during replay. If multiple recordings match a request, the one with the most matching headers is picked. An entry resulting in a redirect will be followed automatically.
 
 Similar to when recording, if given HAR file name ends with `.zip`, it is considered an archive containing the HAR file along with network payloads stored as separate entries. You can also extract this archive, edit payloads or HAR log manually and point to the extracted har file. All the payloads will be resolved relative to the extracted har file on the file system.
 

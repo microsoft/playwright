@@ -609,6 +609,7 @@ export class HarTracer {
 }
 
 function createHarEntry(pageRef: string | undefined, method: string, url: URL, frameref: string | undefined, options: HarTracerOptions): har.Entry {
+  const urlFilter = options.urlFilter instanceof RegExp ? options.urlFilter : undefined;
   const harEntry: har.Entry = {
     pageref: pageRef,
     startedDateTime: new Date().toISOString(),
@@ -622,6 +623,8 @@ function createHarEntry(pageRef: string | undefined, method: string, url: URL, f
       queryString: [...url.searchParams].map(e => ({ name: e[0], value: e[1] })),
       headersSize: -1,
       bodySize: -1,
+      _urlRegexSource: urlFilter?.source,
+      _urlRegexFlags: urlFilter?.flags || undefined,
     },
     response: {
       status: -1,

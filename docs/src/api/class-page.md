@@ -3770,7 +3770,7 @@ If specified, updates the given HAR with the actual network information instead 
 * since: v1.23
 - `url` <[string]|[RegExp]>
 
-A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
+A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the pattern will be served from the HAR file. If not specified, all requests are served from the HAR file. When used together with [`option: Page.routeFromHAR.update`] and a regular expression, Playwright stores that regular expression in the HAR and uses it later when matching replayed requests.
 
 ### option: Page.routeFromHAR.updateMode
 * since: v1.32

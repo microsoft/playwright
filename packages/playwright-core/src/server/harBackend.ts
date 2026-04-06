@@ -46,21 +46,21 @@ export class HarBackend {
     headers?: HeadersArray,
     body?: Buffer
   }> {
-    let entry;
+    let result;
     try {
-      entry = await this._harFindResponse(url, method, headers, postData);
+      result = await this._harFindResponse(url, method, headers, postData);
     } catch (e) {
       return { action: 'error', message: 'HAR error: ' + e.message };
     }
 
-    if (!entry)
+    if (!result)
       return { action: 'noentry' };
 
     // If navigation is being redirected, restart it with the final url to ensure the document's url changes.
-    if (entry.request.url !== url && isNavigationRequest)
-      return { action: 'redirect', redirectURL: entry.request.url };
+    if (result.followedRedirect && isNavigationRequest)
+      return { action: 'redirect', redirectURL: result.entry.request.url };
 
-    const response = entry.response;
+    const response = result.entry.response;
     try {
       const buffer = await this._loadContent(response.content);
       return {
@@ -88,13 +88,15 @@ export class HarBackend {
     return buffer;
   }
 
-  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<har.Entry | undefined> {
+  private async _harFindResponse(url: string, method: string, headers: HeadersArray, postData: Buffer | undefined): Promise<{ entry: har.Entry, followedRedirect: boolean } | undefined> {
     const harLog = this._harFile.log;
     const visited = new Set<har.Entry>();
+    let followedRedirect = false;
     while (true) {
-      const entries: har.Entry[] = [];
+      const entries: { candidate: har.Entry, exactUrlMatch: boolean }[] = [];
       for (const candidate of harLog.entries) {
-        if (candidate.request.url !== url || candidate.request.method !== method)
+        const urlMatch = urlMatchesHarRequest(candidate.request, url);
+        if (!urlMatch || candidate.request.method !== method)
           continue;
         if (method === 'POST' && postData && candidate.request.postData) {
           const buffer = await this._loadContent(candidate.request.postData);
@@ -110,22 +112,22 @@ export class HarBackend {
               continue;
           }
         }
-        entries.push(candidate);
+        entries.push({ candidate, exactUrlMatch: urlMatch === 'exact' });
       }
 
       if (!entries.length)
         return;
 
-      let entry = entries[0];
+      let entry = entries[0].candidate;
 
       // Disambiguate using headers - then one with most matching headers wins.
       if (entries.length > 1) {
-        const list: { candidate: har.Entry, matchingHeaders: number }[] = [];
-        for (const candidate of entries) {
+        const list: { candidate: har.Entry, exactUrlMatch: boolean, matchingHeaders: number }[] = [];
+        for (const { candidate, exactUrlMatch } of entries) {
           const matchingHeaders = countMatchingHeaders(candidate.request.headers, headers);
-          list.push({ candidate, matchingHeaders });
+          list.push({ candidate, exactUrlMatch, matchingHeaders });
         }
-        list.sort((a, b) => b.matchingHeaders - a.matchingHeaders);
+        list.sort((a, b) => +b.exactUrlMatch - +a.exactUrlMatch || b.matchingHeaders - a.matchingHeaders);
         entry = list[0].candidate;
       }
 
@@ -137,6 +139,7 @@ export class HarBackend {
       // Follow redirects.
       const locationHeader = entry.response.headers.find(h => h.name.toLowerCase() === 'location');
       if (redirectStatus.includes(entry.response.status) && locationHeader) {
+        followedRedirect = true;
         const locationURL = new URL(locationHeader.value, url);
         url = locationURL.toString();
         if ((entry.response.status === 301 || entry.response.status === 302) && method === 'POST' ||
@@ -147,7 +150,7 @@ export class HarBackend {
         continue;
       }
 
-      return entry;
+      return { entry, followedRedirect };
     }
   }
 
@@ -164,6 +167,14 @@ function countMatchingHeaders(harHeaders: har.Header[], headers: HeadersArray): 
       ++matches;
   }
   return matches;
+}
+
+function urlMatchesHarRequest(request: har.Request, url: string): 'exact' | 'regex' | undefined {
+  if (request.url === url)
+    return 'exact';
+  if (!request._urlRegexSource)
+    return undefined;
+  return new RegExp(request._urlRegexSource, request._urlRegexFlags).test(url) ? 'regex' : undefined;
 }
 
 function multipartBoundary(headers: HeadersArray) {

@@ -85,6 +85,8 @@ export type Request = {
   headersSize: number;
   bodySize: number;
   comment?: string;
+  _urlRegexSource?: string;
+  _urlRegexFlags?: string;
 };
 
 export type Response = {

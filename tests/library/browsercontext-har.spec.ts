@@ -324,6 +324,30 @@ it('should round-trip har with postData', async ({ contextFactory, server }, tes
   expect(await page2.evaluate(fetchFunction, '4').catch(e => e)).toBeTruthy();
 });
 
+it('should round-trip har with regex url matching', async ({ contextFactory, server }, testInfo) => {
+  it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/27430' });
+  server.setRoute('/echo?foo=one', (req, res) => res.end('one'));
+
+  const harPath = testInfo.outputPath('regex.har');
+  const context1 = await contextFactory();
+  await context1.routeFromHAR(harPath, { update: true, url: /\/echo\?foo=.*/ });
+  const page1 = await context1.newPage();
+  await page1.goto(server.EMPTY_PAGE);
+  const fetchFunction = async (requestURL: string) => {
+    const response = await fetch(requestURL);
+    return await response.text();
+  };
+  expect(await page1.evaluate(fetchFunction, `${server.PREFIX}/echo?foo=one`)).toBe('one');
+  await context1.close();
+
+  server.reset();
+  const context2 = await contextFactory();
+  await context2.routeFromHAR(harPath, { notFound: 'fallback' });
+  const page2 = await context2.newPage();
+  await page2.goto(server.EMPTY_PAGE);
+  expect(await page2.evaluate(fetchFunction, `${server.PREFIX}/echo?foo=two`)).toBe('one');
+});
+
 it('should record overridden requests to har', async ({ contextFactory, server }, testInfo) => {
   it.info().annotations.push({ type: 'issue', description: 'https://github.com/microsoft/playwright/issues/29190' });
   server.setRoute('/echo', async (req, res) => {

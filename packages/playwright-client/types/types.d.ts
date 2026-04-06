@@ -4151,7 +4151,10 @@ export interface Page {
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
-     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
+     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file. When used
+     * together with [`update`](https://playwright.dev/docs/api/class-page#page-route-from-har-option-update) and a
+     * regular expression, Playwright stores that regular expression in the HAR and uses it later when matching replayed
+     * requests.
      */
     url?: string|RegExp;
   }): Promise<void>;
@@ -9257,7 +9260,11 @@ export interface BrowserContext {
 
     /**
      * A glob pattern, regular expression or predicate to match the request URL. Only requests with URL matching the
-     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file.
+     * pattern will be served from the HAR file. If not specified, all requests are served from the HAR file. When used
+     * together with
+     * [`update`](https://playwright.dev/docs/api/class-browsercontext#browser-context-route-from-har-option-update) and a
+     * regular expression, Playwright stores that regular expression in the HAR and uses it later when matching replayed
+     * requests.
      */
     url?: string|RegExp;
   }): Promise<void>;
