@@ -271,6 +271,29 @@ Here is how component testing works:
 
 Playwright is using [Vite](https://vitejs.dev/) to create the components bundle and serve it.
 
+## Best practices and pitfalls
+
+Component tests are most reliable when they embrace the fact that the test runs in Node.js while the mounted component runs in the browser.
+
+### Prefer mounting inside each test
+
+Keep `mount()` close to the assertions that use it. Mounting in `beforeEach` makes it harder to see which component state belongs to which test and tends to hide accidental coupling between tests.
+
+```js
+test('renders the product name', async ({ mount }) => {
+  const component = await mount(<ProductCard name="Playwright" />);
+  await expect(component).toContainText('Playwright');
+});
+```
+
+### Module mocks do not cross the Node/browser boundary
+
+Module-level mocks such as `vi.mock()` or `jest.mock()` run in the test process. The component bundle runs in the browser, so those mocks do not automatically affect what the component imports at runtime. Prefer passing test-specific behavior through [`hooksConfig`](#hooks) and configuring it in `playwright/index.{js,ts,jsx,tsx}` with `beforeMount`.
+
+### Reset browser state when a component depends on globals
+
+Component testing may reuse the browser `context` and `page` between tests as a performance optimization. If a component depends on global browser state such as `localStorage`, cookies, singleton services, or router state, reset that state in your test setup or in [`beforeMount`](#hooks) so each test starts from a known baseline.
+
 ## API reference
 
 ### props
