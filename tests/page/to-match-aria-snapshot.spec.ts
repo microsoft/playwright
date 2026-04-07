@@ -909,6 +909,21 @@ test('top-level deep-equal', { annotation: { type: 'issue', description: 'https:
 });
 
 
+test('generated snapshot includes text children when name is longer than text', { annotation: { type: 'issue', description: 'https://github.com/microsoft/playwright/issues/40079' } }, async ({ page }) => {
+  await page.setContent(`
+    <section>
+      <div role="progressbar" aria-label="Alpha Beta" aria-valuenow="7" aria-valuemin="0" aria-valuemax="10">
+        <span>Alpha</span>
+        <span>7</span>
+      </div>
+    </section>
+  `);
+  await expect(page.locator('section')).toMatchAriaSnapshot(`
+    - /children: deep-equal
+    - progressbar "Alpha Beta": Alpha 7
+  `);
+});
+
 test('treat bad regex as a string', async ({ page }) => {
   await page.setContent(`<a href="/foo">Log in</a>`);
   const error = await expect(page).toMatchAriaSnapshot(`
