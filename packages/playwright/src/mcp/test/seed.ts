@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { mkdirIfNeeded } from '@serverUtils/fileUtils';
+import { mkdirIfNeeded } from '@utils/fileUtils';
 
 import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
 

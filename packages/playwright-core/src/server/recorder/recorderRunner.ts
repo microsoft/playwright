@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { serializeExpectedTextValues } from '../../utils';
+import { serializeExpectedTextValues } from '@utils/expectUtils';
 import { toKeyboardModifiers } from '../codegen/language';
 import { buildFullSelector, mainFrameForAction } from './recorderUtils';
 import { Progress } from '../progress';

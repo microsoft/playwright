@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
+import yaml from 'yaml';
+import { parseAriaSnapshotUnsafe } from '@isomorphic/ariaSnapshot';
+import { unsafeLocatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { asLocator } from '@isomorphic/locatorGenerators';
 import { SdkObject, createInstrumentation } from './instrumentation';
-import { gracefullyProcessExitDoNotHang } from './utils/processLauncher';
 import { Recorder, RecorderEvent } from './recorder';
-import { asLocator  } from '../utils';
-import { parseAriaSnapshotUnsafe } from '../utils/isomorphic/ariaSnapshot';
-import { yaml } from '../utilsBundle';
-import { unsafeLocatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
 import { generateCode } from './codegen/language';
 import { collapseActions } from './recorder/recorderUtils';
 import { JavaScriptLanguageGenerator } from './codegen/javascript';
 
-import type { Language } from '../utils';
+import type { Language } from '@isomorphic/locatorGenerators';
 import type { BrowserContext } from './browserContext';
 import type { InstrumentationListener } from './instrumentation';
 import type { Playwright } from './playwright';

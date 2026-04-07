@@ -16,10 +16,10 @@
 
 import fs from 'fs';
 
-import { assert } from '../utils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { assert } from '@isomorphic/assert';
 import { TargetClosedError } from './errors';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type { Progress } from '@protocol/progress';
 

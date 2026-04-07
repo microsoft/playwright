@@ -17,12 +17,12 @@
 import util from 'util';
 
 import { sever } from 'playwright-core/lib/coreBundle';
-import { debug, open } from 'playwright-core/lib/utilsBundle';
-
+import debug from 'debug';
+import open from 'open';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { isUnderTest } from '@serverUtils/debug';
-import { HttpServer } from '@serverUtils/httpServer';
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+import { isUnderTest } from '@utils/debug';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { loadConfig, resolveConfigLocation } from '../common/configLoader';
 import ListReporter from '../reporters/list';
@@ -30,7 +30,7 @@ import { createReporterForTestServer } from './reporters';
 import { SigIntWatcher } from './sigIntWatcher';
 import { TestRunner, TestRunnerEvent } from './testRunner';
 
-import type { Transport } from '@serverUtils/httpServer';
+import type { Transport } from '@utils/httpServer';
 import type * as reporterTypes from '../../types/testReporter';
 import type { ConfigLocation } from '../common/config';
 import type { ConfigCLIOverrides } from '../common/ipc';

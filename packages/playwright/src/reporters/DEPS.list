@@ -1,10 +1,14 @@
 [*]
 @isomorphic/**
-@serverUtils/**
+@utils/**
 ../common/**
 ../isomorphic/**
 ../util.ts
-../utilsBundle.ts
+node_modules/colors/safe
+node_modules/get-east-asian-width
+node_modules/mime
+node_modules/open
+node_modules/yazl
 
 [merge.ts]
 ../runner/reporters.ts

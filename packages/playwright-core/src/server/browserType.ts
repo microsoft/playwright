@@ -18,21 +18,21 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import { assert } from '@isomorphic/assert';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '@isomorphic/time';
+import { debugMode } from '@utils/debug';
+import { existsAsync } from '@utils/fileUtils';
+import { envArrayToObject, launchProcess } from '@utils/processLauncher';
+import { RecentLogsCollector } from '@utils/debugLogger';
 import { normalizeProxySettings, validateBrowserContextOptions } from './browserContext';
-import { debugMode } from './utils/debug';
-import { assert } from '../utils/isomorphic/assert';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
-import { DEFAULT_PLAYWRIGHT_TIMEOUT } from '../utils/isomorphic/time';
-import { existsAsync } from './utils/fileUtils';
 import { helper } from './helper';
 import { SdkObject } from './instrumentation';
 import { PipeTransport } from './pipeTransport';
-import { envArrayToObject, launchProcess } from './utils/processLauncher';
 import { isProtocolError } from './protocolError';
 import { registry } from './registry';
 import { ClientCertificatesProxy } from './socksClientCertificatesInterceptor';
 import { WebSocketTransport } from './transport';
-import { RecentLogsCollector } from './utils/debugLogger';
 
 import type { Browser, BrowserOptions, BrowserProcess } from './browser';
 import type { BrowserContext } from './browserContext';

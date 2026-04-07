@@ -19,12 +19,11 @@ import os from 'os';
 import path from 'path';
 
 import { tools } from 'playwright-core/lib/coreBundle';
-import { debug } from 'playwright-core/lib/utilsBundle';
-
+import debug from 'debug';
 import { noColors } from '@isomorphic/colors';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { escapeRegExp } from '@isomorphic/stringUtils';
-import { toPosixPath } from '@serverUtils/fileUtils';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';

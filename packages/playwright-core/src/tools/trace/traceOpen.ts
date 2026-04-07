@@ -16,8 +16,8 @@
 
 /* eslint-disable no-console */
 
+import { msToString } from '@isomorphic/formatUtils';
 import { openTrace, loadTrace } from './traceUtils';
-import { msToString } from '../../utils/isomorphic/formatUtils';
 
 export async function traceOpen(traceFile: string) {
   await openTrace(traceFile);

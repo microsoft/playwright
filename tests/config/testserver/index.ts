@@ -24,9 +24,9 @@ import util from 'util';
 import type stream from 'stream';
 import { WebSocket, WebSocketServer } from 'ws';
 import zlib, { gzip } from 'zlib';
-import { serverUtils } from '../../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../../packages/playwright-core/lib/coreBundle';
 
-const { createHttpServer, createHttpsServer } = serverUtils;
+const { createHttpServer, createHttpsServer } = utils;
 
 const fulfillSymbol = Symbol('fulfil callback');
 const rejectSymbol = Symbol('reject callback');

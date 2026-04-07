@@ -19,12 +19,12 @@
 import fs from 'fs';
 import path from 'path';
 
+import { PipeTransport } from '@utils/pipeTransport';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { packageRoot } from '../package';
 import { playwright } from '../inprocess';
-import { PipeTransport } from '../server/utils/pipeTransport';
 import { PlaywrightServer } from '../remote/playwrightServer';
 import { DispatcherConnection, PlaywrightDispatcher, RootDispatcher, createPlaywright } from '../server';
-import { gracefullyProcessExitDoNotHang } from '../server/utils/processLauncher';
 
 import type { BrowserType } from '../client/browserType';
 import type { LaunchServerOptions } from '../client/types';

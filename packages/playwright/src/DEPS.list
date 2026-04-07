@@ -1,9 +1,12 @@
 [*]
 @isomorphic/**
-@serverUtils/**
+@utils/**
 common/
 ./util.ts
-./utilsBundle.ts
+node_modules/commander
+node_modules/debug
+node_modules/mime
+node_modules/minimatch
 
 [program.ts]
 **

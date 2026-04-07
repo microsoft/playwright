@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
+import EventEmitter from 'events';
+
+import { createGuid } from '@utils/crypto';
 import { PlaywrightServer } from './remote/playwrightServer';
 import { createPlaywright } from './server/playwright';
-import { createGuid } from './server/utils/crypto';
-import { ws } from './utilsBundle';
 import { nullProgress, ProgressController } from './server/progress';
 
 import type { BrowserServer } from './client/browserType';
 import type { LaunchAndroidServerOptions } from './client/types';
-import type { WebSocketEventEmitter } from './utilsBundle';
 
 export class AndroidServerLauncherImpl {
   async launchServer(options: LaunchAndroidServerOptions = {}): Promise<BrowserServer> {
@@ -56,7 +56,7 @@ export class AndroidServerLauncherImpl {
     const wsEndpoint = await server.listen(options.port, options.host);
 
     // 3. Return the BrowserServer interface
-    const browserServer = new ws.EventEmitter() as (BrowserServer & WebSocketEventEmitter);
+    const browserServer = new EventEmitter() as BrowserServer & EventEmitter;
     browserServer.wsEndpoint = () => wsEndpoint;
     browserServer.close = () => device.close(nullProgress);
     browserServer.kill = () => device.close(nullProgress);

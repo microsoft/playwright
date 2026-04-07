@@ -1,18 +1,16 @@
 [browserServerImpl.ts]
 remote/
 server/
-server/utils
-utils/isomorphic/
-utilsBundle.ts
+@utils/**
+@isomorphic/**
 protocol/validator.ts
 protocol/validatorPrimitives.ts
 
 [androidServerImpl.ts]
 remote/
 server/
-server/utils
-utils/isomorphic/
-utilsBundle.ts
+@utils/**
+@isomorphic/**
 
 [inProcessFactory.ts]
 **
@@ -24,9 +22,8 @@ utilsBundle.ts
 client/
 package.ts
 protocol/
-utils/
-utils/isomorphic
-server/utils
+@isomorphic/**
+@utils/**
 
 [package.ts]
 "strict"

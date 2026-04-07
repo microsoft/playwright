@@ -26,8 +26,7 @@
 
 import path from 'path';
 import fs from 'fs';
-import { json5 } from '../utilsBundle';
-
+import json5 from 'json5';
 /**
  * Typing for the parts of tsconfig that we care about
  */

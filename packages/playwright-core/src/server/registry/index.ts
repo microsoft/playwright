@@ -20,22 +20,23 @@ import os from 'os';
 import path from 'path';
 import * as util from 'util';
 
-import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
-import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
-import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
-import { calculateSha1, getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '../../utils';
-import { wrapInASCIIBox } from '../utils/ascii';
-import { debugLogger } from '../utils/debugLogger';
-import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '../utils/hostPlatform';
-import { fetchData, NET_DEFAULT_TIMEOUT } from '../utils/network';
-import { spawnAsync } from '../utils/spawnAsync';
-import { getEmbedderName } from '../utils/userAgent';
+import { wrapInASCIIBox } from '@utils/ascii';
+import { debugLogger } from '@utils/debugLogger';
+import { shortPlatform, hostPlatform, isOfficiallySupportedPlatform } from '@utils/hostPlatform';
+import { fetchData, NET_DEFAULT_TIMEOUT } from '@utils/network';
+import { spawnAsync } from '@utils/spawnAsync';
+import { getEmbedderName } from '@utils/userAgent';
+import { canAccessFile, existsAsync, removeFolders } from '@utils/fileUtils';
+import { calculateSha1 } from '@utils/crypto';
+import { getAsBooleanFromENV, getFromENV, getPackageManagerExecCommand } from '@utils/env';
 import { lockfile } from '../../utilsBundle';
-import { canAccessFile, existsAsync, removeFolders } from '../utils/fileUtils';
+import { installDependenciesLinux, installDependenciesWindows, validateDependenciesLinux, validateDependenciesWindows } from './dependencies';
+import { dockerVersion, readDockerVersionSync, transformCommandsForRoot } from './dependencies';
+import { downloadBrowserWithProgressBar, logPolitely } from './browserFetcher';
 import { packageRoot, binPath } from '../../package';
 
 import type { DependencyGroup } from './dependencies';
-import type { HostPlatform } from '../utils/hostPlatform';
+import type { HostPlatform } from '@utils/hostPlatform';
 
 export { writeDockerVersion } from './dependencies';
 

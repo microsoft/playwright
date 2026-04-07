@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { SocksProxy } from '../utils/socksProxy';
+import { SocksProxy } from '@utils/socksProxy';
+import { eventsHelper  } from '@utils/eventsHelper';
 import { GlobalAPIRequestContext } from '../fetch';
 import { AndroidDispatcher } from './androidDispatcher';
 import { AndroidDeviceDispatcher } from './androidDispatcher';
@@ -25,11 +26,10 @@ import { ElectronDispatcher } from './electronDispatcher';
 import { LocalUtilsDispatcher } from './localUtilsDispatcher';
 import { APIRequestContextDispatcher } from './networkDispatchers';
 import { SdkObject } from '../instrumentation';
-import { eventsHelper  } from '../utils/eventsHelper';
 
 import type { RootDispatcher } from './dispatcher';
-import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '../utils/socksProxy';
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { SocksSocketClosedPayload, SocksSocketDataPayload, SocksSocketRequestedPayload } from '@utils/socksProxy';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { AndroidDevice } from '../android/android';
 import type { Browser } from '../browser';
 import type { Playwright } from '../playwright';

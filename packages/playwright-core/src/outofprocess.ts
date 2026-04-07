@@ -17,11 +17,11 @@
 import * as childProcess from 'child_process';
 import path from 'path';
 
+import { PipeTransport } from '@utils/pipeTransport';
+import { nodePlatform } from '@utils/nodePlatform';
 import { Connection } from './client/connection';
 import { packageRoot } from './package';
-import { PipeTransport } from './server/utils/pipeTransport';
 import { ManualPromise } from './utils/isomorphic/manualPromise';
-import { nodePlatform } from './server/utils/nodePlatform';
 
 import type { Playwright } from './client/playwright';
 

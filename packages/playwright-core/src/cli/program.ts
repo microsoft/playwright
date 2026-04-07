@@ -17,10 +17,11 @@
 /* eslint-disable no-console */
 
 import '../bootstrap';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { getPackageManagerExecCommand } from '@utils/env';
 import { packageJSON } from '../package';
-import { gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import { addTraceCommands } from '../tools/trace/traceCli';
-import { program } from '../utilsBundle';
 import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
 import { markDockerImage } from './installActions';
 import { open, codegen } from './browserActions';

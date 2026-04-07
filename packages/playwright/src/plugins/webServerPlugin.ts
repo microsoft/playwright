@@ -16,13 +16,13 @@
 import net from 'net';
 import path from 'path';
 
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 import { raceAgainstDeadline } from '@isomorphic/timeoutRunner';
-import { isURLAvailable } from '@serverUtils/network';
-import { launchProcess } from '@serverUtils/processLauncher';
+import { isURLAvailable } from '@utils/network';
+import { launchProcess } from '@utils/processLauncher';
 
 import type { TestRunnerPlugin } from '.';
 import type { FullConfig } from '../../types/testReporter';

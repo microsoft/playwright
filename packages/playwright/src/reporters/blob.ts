@@ -18,13 +18,12 @@ import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
 
-import { mime } from 'playwright-core/lib/utilsBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
-
+import mime from 'mime';
+import * as yazl from 'yazl';
 import { ManualPromise } from '@isomorphic/manualPromise';
-import { calculateSha1, createGuid } from '@serverUtils/crypto';
-import { removeFolders, sanitizeForFilePath } from '@serverUtils/fileUtils';
-import { getUserAgent } from '@serverUtils/userAgent';
+import { calculateSha1, createGuid } from '@utils/crypto';
+import { removeFolders, sanitizeForFilePath } from '@utils/fileUtils';
+import { getUserAgent } from '@utils/userAgent';
 
 import { resolveOutputFile, CommonReporterOptions } from './base';
 import { TeleReporterEmitter } from './teleEmitter';

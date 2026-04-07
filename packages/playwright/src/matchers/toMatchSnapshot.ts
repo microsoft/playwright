@@ -17,12 +17,11 @@
 import fs from 'fs';
 import path from 'path';
 
-import { colors } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
 import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { isString } from '@isomorphic/stringUtils';
-import { compareBuffersOrStrings, getComparator } from '@serverUtils/comparators';
-import { callLogText, formatMatcherMessage } from '@serverUtils/expectUtils';
+import { compareBuffersOrStrings, getComparator } from '@utils/comparators';
+import { callLogText, formatMatcherMessage } from '@utils/expectUtils';
 
 import { addSuffixToFilePath, expectTypes } from '../util';
 import { currentTestInfo } from '../common/globals';
@@ -33,7 +32,7 @@ import type { FullProjectInternal } from '../common/config';
 import type { TestInfoImpl, TestStepInfoImpl } from '../worker/testInfo';
 import type { Locator, Page } from 'playwright-core';
 import type { ExpectScreenshotOptions, Page as PageEx } from 'playwright-core/lib/client/page';
-import type { Comparator, ImageComparatorOptions } from '@serverUtils/comparators';
+import type { Comparator, ImageComparatorOptions } from '@utils/comparators';
 
 type NameOrSegments = string | string[];
 

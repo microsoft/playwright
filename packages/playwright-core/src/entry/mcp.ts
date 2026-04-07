@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { program } from '../utilsBundle';
-import { tools, serverUtils } from '../coreBundle';
+import { program } from 'commander';
+import { tools, utils } from '../coreBundle';
 import { packageJSON } from '../package';
 
 const p = program.version('Version ' + packageJSON.version).name('Playwright MCP');
@@ -23,5 +23,5 @@ tools.decorateMCPCommand(p);
 program.parseAsync(process.argv).catch(e => {
   // eslint-disable-next-line no-console
   console.error(e.message);
-  serverUtils.gracefullyProcessExitDoNotHang(1);
+  utils.gracefullyProcessExitDoNotHang(1);
 });

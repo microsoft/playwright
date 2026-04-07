@@ -16,8 +16,8 @@
 
 import fs from 'fs';
 
+import { isUnderTest } from '@utils/debug';
 import * as js from './javascript';
-import { isUnderTest } from '../utils';
 import { prepareFilesForUpload } from './fileUploadUtils';
 import * as rawInjectedScriptSource from '../generated/injectedScriptSource';
 

@@ -14,11 +14,15 @@
  * limitations under the License.
  */
 
-import { assert, calculateSha1, monotonicTime } from '../../utils';
-import { getPlaywrightVersion, isTextualMimeType, urlMatches } from '../../utils';
-import { eventsHelper } from '../utils/eventsHelper';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
-import { mime } from '../../utilsBundle';
+import mime from 'mime';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { eventsHelper } from '@utils/eventsHelper';
+import { assert } from '@isomorphic/assert';
+import { calculateSha1 } from '@utils/crypto';
+import { monotonicTime } from '@isomorphic/time';
+import { getPlaywrightVersion } from '@utils/userAgent';
+import { isTextualMimeType } from '@isomorphic/mimeType';
+import { urlMatches } from '@isomorphic/urlMatch';
 import { BrowserContext } from '../browserContext';
 import { APIRequestContext } from '../fetch';
 import { Frame } from '../frames';
@@ -26,7 +30,7 @@ import { helper } from '../helper';
 import * as network from '../network';
 import { nullProgress } from '../progress';
 
-import type { RegisteredListener } from '../utils/eventsHelper';
+import type { RegisteredListener } from '@utils/eventsHelper';
 import type { APIRequestEvent, APIRequestFinishedEvent } from '../fetch';
 import type { Page } from '../page';
 import type { Worker } from '../page';

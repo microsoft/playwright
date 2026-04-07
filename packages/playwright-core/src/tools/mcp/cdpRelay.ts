@@ -26,9 +26,10 @@ import { spawn } from 'child_process';
 import http from 'http';
 import os from 'os';
 
-import { debug, ws, wsServer } from '../../utilsBundle';
+import debug from 'debug';
+import ws, { WebSocketServer as wsServer } from 'ws';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { registry } from '../../server/registry/index';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import { addressToString } from '../utils/mcp/http';
 import { logUnhandledError } from './log';

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { colors, debug } from 'playwright-core/lib/utilsBundle';
-
+import colors from 'colors/safe';
+import debug from 'debug';
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { monotonicTime } from '@isomorphic/time';
 

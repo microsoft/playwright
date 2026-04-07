@@ -3,9 +3,9 @@
 ../package.ts
 ../server/
 ../server/registry/
-../server/utils/
+@utils/**
 ../remote/
-../utils/
+../utils/**
 ../utilsBundle.ts
 ../client/
 ../server/trace/viewer/
@@ -14,3 +14,6 @@
 ./browserActions.ts
 ./installActions.ts
 ../bootstrap.ts
+node_modules/commander
+node_modules/debug
+node_modules/dotenv

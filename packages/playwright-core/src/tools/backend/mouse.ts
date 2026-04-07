@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-import { z } from '../../zodBundle';
-import { formatObjectOrVoid } from '../../utils/isomorphic/stringUtils';
+import * as z from 'zod';
+import { formatObjectOrVoid } from '@isomorphic/stringUtils';
 import { defineTabTool } from './tool';
 
 const mouseMove = defineTabTool({

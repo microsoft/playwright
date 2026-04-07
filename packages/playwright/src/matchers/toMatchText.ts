@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from '@serverUtils/expectUtils';
+import { formatMatcherMessage, printReceivedStringContainExpectedResult, printReceivedStringContainExpectedSubstring } from '@utils/expectUtils';
 
 import { expectTypes } from '../util';
 

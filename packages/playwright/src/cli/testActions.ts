@@ -17,8 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
-import { startProfiling, stopProfiling } from '@serverUtils/profiler';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
+import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { builtInReporters } from '../common/config';
 import { loadConfigFromFile, resolveConfigLocation } from '../common/configLoader';

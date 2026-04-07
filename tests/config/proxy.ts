@@ -18,12 +18,12 @@ import type { IncomingMessage } from 'http';
 import type { ProxyServer } from '../third_party/proxy';
 import { createProxy } from '../third_party/proxy';
 import net from 'net';
-import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { utils } from '../../packages/playwright-core/lib/coreBundle';
 
-type SocksSocketClosedPayload = serverUtils.SocksSocketClosedPayload;
-type SocksSocketDataPayload = serverUtils.SocksSocketDataPayload;
-type SocksSocketRequestedPayload = serverUtils.SocksSocketRequestedPayload;
-const { SocksProxy } = serverUtils;
+type SocksSocketClosedPayload = utils.SocksSocketClosedPayload;
+type SocksSocketDataPayload = utils.SocksSocketDataPayload;
+type SocksSocketRequestedPayload = utils.SocksSocketRequestedPayload;
+const { SocksProxy } = utils;
 
 // Certain browsers perform telemetry requests which we want to ignore.
 const kConnectHostsToIgnore = new Set([

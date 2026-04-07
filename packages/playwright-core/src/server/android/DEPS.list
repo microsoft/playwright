@@ -1,8 +1,9 @@
 [*]
 ../
 ../../protocol/
-../../utils/isomorphic/
+@isomorphic/**
 ../../utilsBundle.ts
 ../chromium/
 ../utils
 ../registry/
+node_modules/debug

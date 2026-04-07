@@ -17,8 +17,8 @@
 import { captureRawStack } from '@isomorphic/stackTrace';
 import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
 import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
-import { createGuid } from '@serverUtils/crypto';
-import { currentZone } from '@serverUtils/zones';
+import { createGuid } from '@utils/crypto';
+import { currentZone } from '@utils/zones';
 
 import { ExpectError, isJestError } from './matcherHint';
 import {

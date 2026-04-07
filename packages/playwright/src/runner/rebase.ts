@@ -17,7 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { colors, diff } from 'playwright-core/lib/utilsBundle';
+import colors from 'colors/safe';
+import * as diff from 'diff';
 import { MultiMap } from '@isomorphic/multimap';
 
 import { filterProjects } from './projectUtils';

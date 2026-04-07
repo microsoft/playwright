@@ -18,16 +18,17 @@ import fs from 'fs';
 import path from 'path';
 import { Transform } from 'stream';
 
-import { colors, mime, open } from 'playwright-core/lib/utilsBundle';
-import { yazl } from 'playwright-core/lib/zipBundle';
-
+import colors from 'colors/safe';
+import mime from 'mime';
+import open from 'open';
+import * as yazl from 'yazl';
 import { assert } from '@isomorphic/assert';
 import { MultiMap } from '@isomorphic/multimap';
-import { calculateSha1 } from '@serverUtils/crypto';
-import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@serverUtils/fileUtils';
-import { getPackageManagerExecCommand } from '@serverUtils/env';
-import { HttpServer } from '@serverUtils/httpServer';
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+import { calculateSha1 } from '@utils/crypto';
+import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@utils/fileUtils';
+import { getPackageManagerExecCommand } from '@utils/env';
+import { HttpServer } from '@utils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
@@ -38,7 +39,7 @@ import type { HtmlReporterOptions as HtmlReporterConfigOptions, Metadata, TestAn
 import type * as api from '../../types/testReporter';
 import type { HTMLReport, HTMLReportOptions, Location, Stats, TestAttachment, TestCase, TestCaseSummary, TestFile, TestFileSummary, TestResult, TestStep } from '@html-reporter/types';
 import type { TransformCallback } from 'stream';
-import type { ZipFile } from 'playwright-core/lib/zipBundle';
+import type { ZipFile } from 'playwright-core/lib/utilsBundle';
 
 type TestEntry = {
   testCase: TestCase;
@@ -265,7 +266,7 @@ class HtmlBuilder {
   private _options: HTMLReportOptions;
   private _doNotInlineAssets: boolean;
 
-  constructor(yazl: typeof import('playwright-core/lib/zipBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
+  constructor(yazl: typeof import('playwright-core/lib/utilsBundle').yazl, config: api.FullConfig, outputDir: string, attachmentsBaseURL: string, doNotInlineAssets: boolean, options: HTMLReportOptions) {
     this._dataZipFile = new yazl.ZipFile();
     this._config = config;
     this._reportFolder = outputDir;

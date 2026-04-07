@@ -17,31 +17,32 @@
 import EventEmitter from 'events';
 import fs from 'fs';
 
-import { isUnderTest } from '../utils';
+import { locatorOrSelectorAsSelector } from '@isomorphic/locatorParser';
+import { stringifySelector } from '@isomorphic/selectorParser';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { isUnderTest } from '@utils/debug';
+import { eventsHelper } from '@utils/eventsHelper';
+import { monotonicTime } from '@isomorphic/time';
 import { BrowserContext } from './browserContext';
 import { Debugger } from './debugger';
 import { buildFullSelector, generateFrameSelector, metadataToCallLog } from './recorder/recorderUtils';
-import { locatorOrSelectorAsSelector } from '../utils/isomorphic/locatorParser';
-import { stringifySelector } from '../utils/isomorphic/selectorParser';
 import { nullProgress, ProgressController } from './progress';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import { RecorderSignalProcessor } from './recorder/recorderSignalProcessor';
 import * as rawRecorderSource from './../generated/pollingRecorderSource';
-import { eventsHelper, monotonicTime } from './../utils';
 import { Frame } from './frames';
 import { Page } from './page';
 import { performAction } from './recorder/recorderRunner';
 
 import type { Language } from './codegen/types';
 import type { CallMetadata, InstrumentationListener, SdkObject } from './instrumentation';
-import type { Point } from '../utils/isomorphic/types';
+import type { Point } from '@isomorphic/types';
 import type { AriaTemplateNode } from '@isomorphic/ariaSnapshot';
 import type { Progress } from './progress';
 import type * as channels from '@protocol/channels';
 import type * as actions from '@recorder/actions';
 import type { CallLog, CallLogStatus, ElementInfo, Mode, OverlayState, Source, UIState } from '@recorder/recorderTypes';
-import type { RegisteredListener } from '../utils';
+import type { RegisteredListener } from '@utils/eventsHelper';
 
 const recorderSymbol = Symbol('recorderSymbol');
 

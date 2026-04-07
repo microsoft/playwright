@@ -19,9 +19,8 @@
 import 'playwright-core/lib/bootstrap';
 
 import { libCli, tools } from 'playwright-core/lib/coreBundle';
-import { program } from 'playwright-core/lib/utilsBundle';
-
-import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+import { program } from 'commander';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 import { runTests, clearCache, runTestServerAction } from './cli/testActions';
 import { showReport, mergeReports } from './cli/reportActions';

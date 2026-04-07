@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils';
+import { assert } from '@isomorphic/assert';
 import * as keyboardLayout from './usKeyboardLayout';
 import { NonRecoverableDOMError } from './dom';
 

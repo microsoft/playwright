@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-import { assert } from '../utils';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { assert } from '@isomorphic/assert';
 import { BrowserContext } from './browserContext';
 import { APIRequestContext } from './fetch';
 import { SdkObject } from './instrumentation';
-import { ManualPromise } from '../utils/isomorphic/manualPromise';
 
 import type * as contexts from './browserContext';
 import type * as frames from './frames';
 import type * as pages from './page';
 import type * as types from './types';
 import type { NormalizedContinueOverrides } from './types';
-import type { HeadersArray, NameValue } from '../utils/isomorphic/types';
+import type { HeadersArray, NameValue } from '@isomorphic/types';
 import type * as channels from '@protocol/channels';
 import type { Progress } from '@protocol/progress';
 

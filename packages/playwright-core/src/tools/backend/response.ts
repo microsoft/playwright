@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { debug } from '../../utilsBundle';
+import debug from 'debug';
 import { renderModalStates } from './tab';
 import { scaleImageToFitMessage } from './screenshot';
 

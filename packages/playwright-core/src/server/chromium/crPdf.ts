@@ -15,8 +15,8 @@
  * limitations under the License.
  */
 
+import { assert } from '@isomorphic/assert';
 import { readProtocolStream } from './crProtocolHelper';
-import { assert } from '../../utils';
 
 import type { CRSession } from './crConnection';
 import type * as channels from '@protocol/channels';

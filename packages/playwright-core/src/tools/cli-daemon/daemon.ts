@@ -18,9 +18,9 @@ import fs from 'fs';
 import net from 'net';
 import path from 'path';
 
-import { decorateServer } from '../../server/utils/network';
-import { makeSocketPath } from '../../server/utils/fileUtils';
-import { gracefullyProcessExitDoNotHang } from '../../server/utils/processLauncher';
+import { decorateServer } from '@utils/network';
+import { makeSocketPath } from '@utils/fileUtils';
+import { gracefullyProcessExitDoNotHang } from '@utils/processLauncher';
 
 import { BrowserBackend } from '../backend/browserBackend';
 import { browserTools } from '../backend/tools';

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-import { debug } from '../../utilsBundle';
-
+import debug from 'debug';
 const errorDebug = debug('pw:mcp:error');
 
 export function logUnhandledError(error: unknown) {

@@ -16,8 +16,8 @@
 
 import path from 'path';
 
-import { calculateSha1 } from '@serverUtils/crypto';
-import { toPosixPath } from '@serverUtils/fileUtils';
+import { calculateSha1 } from '@utils/crypto';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { createFileMatcher, forceRegExp, parseLocationArg } from '../util';
 

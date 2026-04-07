@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
+import { deserializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { eventsHelper } from '@utils/eventsHelper';
 import { Page } from '../page';
 import { Dispatcher } from './dispatcher';
 import { PageDispatcher } from './pageDispatcher';
 import * as rawWebSocketMockSource from '../../generated/webSocketMockSource';
 import { SdkObject } from '../instrumentation';
-import { deserializeURLMatch, urlMatches } from '../../utils/isomorphic/urlMatch';
-import { eventsHelper } from '../utils/eventsHelper';
 
 import type { BrowserContextDispatcher } from './browserContextDispatcher';
 import type { BrowserContext } from '../browserContext';

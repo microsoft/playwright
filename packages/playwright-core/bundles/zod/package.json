@@ -1,8 +1,0 @@
-{
-  "name": "zod-bundle",
-  "version": "0.0.1",
-  "private": true,
-  "dependencies": {
-    "zod": "^4.3.6"
-  }
-}

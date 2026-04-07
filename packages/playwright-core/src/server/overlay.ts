@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { createGuid, debugLogger, escapeHTML } from '../utils';
+import { createGuid } from '@utils/crypto';
+import { debugLogger } from '@utils/debugLogger';
+import { escapeHTML } from '@isomorphic/stringUtils';
 import { Page } from './page';
 
 export class Overlay {

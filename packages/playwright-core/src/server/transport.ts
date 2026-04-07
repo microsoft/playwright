@@ -15,10 +15,9 @@
  * limitations under the License.
  */
 
-import { makeWaitForNextTask } from '../utils';
-import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from './utils/happyEyeballs';
-import { ws } from '../utilsBundle';
-
+import ws from 'ws';
+import { httpHappyEyeballsAgent, httpsHappyEyeballsAgent } from '@utils/happyEyeballs';
+import { makeWaitForNextTask } from '@utils/task';
 import type { WebSocket } from '../utilsBundle';
 import type { Progress } from './progress';
 import type { HeadersArray } from './types';

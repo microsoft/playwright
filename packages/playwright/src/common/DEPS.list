@@ -1,6 +1,6 @@
 [*]
 @isomorphic/**
-@serverUtils/**
+@utils/**
 ../util.ts
 ../transform
 ../isomorphic/teleReceiver.ts

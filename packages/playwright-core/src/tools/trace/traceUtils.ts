@@ -17,9 +17,9 @@
 import fs from 'fs';
 import path from 'path';
 
-import { TraceModel, buildActionTree } from '../../utils/isomorphic/trace/traceModel';
-import { TraceLoader } from '../../utils/isomorphic/trace/traceLoader';
-import { renderTitleForCall } from '../../utils/isomorphic/protocolFormatter';
+import { TraceModel, buildActionTree } from '@isomorphic/trace/traceModel';
+import { TraceLoader } from '@isomorphic/trace/traceLoader';
+import { renderTitleForCall } from '@isomorphic/protocolFormatter';
 import { DirTraceLoaderBackend, extractTrace } from './traceParser';
 
 import type { ActionTraceEventInContext } from '@isomorphic/trace/traceModel';

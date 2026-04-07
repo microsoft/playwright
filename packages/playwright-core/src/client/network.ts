@@ -14,29 +14,29 @@
  * limitations under the License.
  */
 
-import { ChannelOwner } from './channelOwner';
-import { isTargetClosedError } from './errors';
-import { Events } from './events';
-import { APIResponse } from './fetch';
-import { Frame } from './frame';
-import { Waiter } from './waiter';
+import { assert } from '@isomorphic/assert';
+import { headersObjectToArray } from '@isomorphic/headers';
+import { serializeURLMatch, urlMatches } from '@isomorphic/urlMatch';
+import { LongStandingScope, ManualPromise } from '@isomorphic/manualPromise';
+import { MultiMap } from '@isomorphic/multimap';
+import { isString } from '@isomorphic/rtti';
+import { rewriteErrorMessage } from '@isomorphic/stackTrace';
+import { getMimeTypeForPath } from '@isomorphic/mimeType';
 import { Worker } from './worker';
-import { assert } from '../utils/isomorphic/assert';
-import { headersObjectToArray } from '../utils/isomorphic/headers';
-import { serializeURLMatch, urlMatches } from '../utils/isomorphic/urlMatch';
-import { LongStandingScope, ManualPromise } from '../utils/isomorphic/manualPromise';
-import { MultiMap } from '../utils/isomorphic/multimap';
-import { isString } from '../utils/isomorphic/rtti';
-import { rewriteErrorMessage } from '../utils/isomorphic/stackTrace';
-import { getMimeTypeForPath } from '../utils/isomorphic/mimeType';
+import { Waiter } from './waiter';
+import { Frame } from './frame';
+import { APIResponse } from './fetch';
+import { Events } from './events';
+import { isTargetClosedError } from './errors';
+import { ChannelOwner } from './channelOwner';
 
 import type { BrowserContext } from './browserContext';
 import type { Page } from './page';
 import type { Headers, RemoteAddr, SecurityDetails, WaitForEventOptions } from './types';
 import type { Serializable } from '../../types/structs';
 import type * as api from '../../types/types';
-import type { HeadersArray } from '../utils/isomorphic/types';
-import type { URLMatch } from '../utils/isomorphic/urlMatch';
+import type { HeadersArray } from '@isomorphic/types';
+import type { URLMatch } from '@isomorphic/urlMatch';
 import type * as channels from '@protocol/channels';
 import type { Platform, Zone } from './platform';
 

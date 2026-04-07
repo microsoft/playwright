@@ -1,9 +1,12 @@
 [*]
 @isomorphic/**
-@serverUtils/**
+@utils/**
 ../../reporters
 ../../runner
 ../../transform
 ../../util
 ../../common
 ../../util.ts
+node_modules/@modelcontextprotocol/sdk/types.js
+node_modules/debug
+node_modules/zod

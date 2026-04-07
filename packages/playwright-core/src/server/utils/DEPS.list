@@ -1,11 +1,20 @@
 [*]
-../../mcpBundle.ts
-../../zodBundle.ts
 ../../package.ts
 ../../utils
-../../utils/isomorphic
+@isomorphic/**
 ../../utilsBundle.ts
-../../zipBundle.ts
+node_modules/colors/safe
+node_modules/debug
+node_modules/diff
+node_modules/https-proxy-agent
+node_modules/jpeg-js
+node_modules/mime
+node_modules/pngjs
+node_modules/proxy-from-env
+node_modules/socks-proxy-agent
+node_modules/ws
+node_modules/yauzl
+node_modules/yazl
 
 [comparators.ts]
 ./image_tools

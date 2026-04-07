@@ -16,7 +16,7 @@
 
 import path from 'path';
 
-import { createGuid } from '@serverUtils/crypto';
+import { createGuid } from '@utils/crypto';
 
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 

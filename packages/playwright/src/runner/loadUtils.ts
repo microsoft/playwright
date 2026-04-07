@@ -17,10 +17,10 @@
 import path from 'path';
 import fs from 'fs';
 
-import { toPosixPath } from '@serverUtils/fileUtils';
+import sourceMapSupport from 'source-map-support';
+import { toPosixPath } from '@utils/fileUtils';
 
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
-import { sourceMapSupport } from '../utilsBundle';
 import { createTitleMatcher, errorWithFile, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
@@ -29,7 +29,7 @@ import { Suite } from '../common/test';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
 
-import type { RawSourceMap } from '../utilsBundle';
+import type { RawSourceMap } from 'playwright-core/lib/utilsBundle';
 import type { TestRun } from './tasks';
 import type { TestGroup } from './testGroups';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';

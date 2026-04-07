@@ -18,7 +18,7 @@ import 'playwright-core/lib/bootstrap';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { setTimeOrigin } from '@isomorphic/time';
-import { startProfiling, stopProfiling } from '@serverUtils/profiler';
+import { startProfiling, stopProfiling } from '@utils/profiler';
 
 import { serializeError } from '../util';
 

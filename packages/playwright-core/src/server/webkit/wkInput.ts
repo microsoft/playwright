@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { isString } from '../../utils';
+import { isString } from '@isomorphic/stringUtils';
 import * as input from '../input';
 import { macEditingCommands } from '../macEditingCommands';
 

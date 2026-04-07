@@ -18,10 +18,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
+import * as yazl from 'yazl';
+import { ManualPromise } from '@isomorphic/manualPromise';
 import { calculateSha1 } from './crypto';
-
-import { yazl } from '../../zipBundle';
-import { ManualPromise } from '../../utils/isomorphic/manualPromise';
 
 import type { EventEmitter } from 'events';
 

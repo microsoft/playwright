@@ -5,8 +5,8 @@
 ../backend/
 ../mcp/
 ../../utilsBundle.ts
-../../utils/
-../../zodBundle.ts
+../../utils/**
 ../../server/registry/index.ts
-../../server/utils/
+@utils/**
 ../../serverRegistry.ts
+node_modules/zod

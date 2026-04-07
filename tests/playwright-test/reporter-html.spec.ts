@@ -19,12 +19,12 @@ import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
-import { iso, serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+import { iso, utils } from '../../packages/playwright-core/lib/coreBundle';
 
-type HttpServer = serverUtils.HttpServer;
+type HttpServer = utils.HttpServer;
 
 const { msToString } = iso;
-const { spawnAsync } = serverUtils;
+const { spawnAsync } = utils;
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {

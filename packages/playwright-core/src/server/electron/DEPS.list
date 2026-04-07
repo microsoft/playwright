@@ -1,7 +1,7 @@
 [*]
 ../
 ../../package.ts
-../../utils/
-../../utils/isomorphic/
+../../utils/**
+@isomorphic/**
 ../chromium/
 ../utils
