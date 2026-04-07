@@ -19,7 +19,13 @@
  *
  * Endpoints:
  * - /cdp/guid - Full CDP interface for Playwright MCP
- * - /extension/guid - Extension connection for chrome.debugger forwarding
+ * - /extension/guid - Extension connection that exposes a thin chrome.* RPC.
+ *
+ * The relay owns CDP session management: it asks the extension for the user's
+ * tab pick (extension.selectTab), then attaches the debugger and dispatches
+ * Target.attachedToTarget events to Playwright. Additional tabs are created
+ * either by Playwright (Target.createTarget → chrome.tabs.create) or by the
+ * controlled tabs themselves (chrome.tabs.onCreated event from the extension).
  */
 
 import { spawn } from 'child_process';
@@ -57,6 +63,12 @@ type CDPResponse = {
   error?: { code?: number; message: string };
 };
 
+type TabSession = {
+  tabId: number;
+  sessionId: string;
+  targetInfo: any;
+};
+
 export class CDPRelayServer {
   private _wsHost: string;
   private _browserChannel: string;
@@ -67,11 +79,9 @@ export class CDPRelayServer {
   private _wss: WebSocketServer;
   private _playwrightConnection: WebSocket | null = null;
   private _extensionConnection: ExtensionConnection | null = null;
-  private _connectedTabInfo: {
-    targetInfo: any;
-    // Page sessionId that should be used by this connection.
-    sessionId: string;
-  } | undefined;
+  // sessionId → TabSession (sessions known to the Playwright client).
+  private _tabSessions = new Map<string, TabSession>();
+  private _tabIdToSessionId = new Map<number, string>();
   private _nextSessionId: number = 1;
   private _extensionConnectionPromise!: ManualPromise<void>;
 
@@ -213,7 +223,8 @@ export class CDPRelayServer {
   }
 
   private _resetExtensionConnection() {
-    this._connectedTabInfo = undefined;
+    this._tabSessions.clear();
+    this._tabIdToSessionId.clear();
     this._extensionConnection = null;
     this._extensionConnectionPromise = new ManualPromise();
     void this._extensionConnectionPromise.catch(logUnhandledError);
@@ -244,15 +255,82 @@ export class CDPRelayServer {
 
   private _handleExtensionMessage<M extends keyof ExtensionEvents>(method: M, params: ExtensionEvents[M]['params']) {
     switch (method) {
-      case 'forwardCDPEvent':
-        const sessionId = params.sessionId || this._connectedTabInfo?.sessionId;
+      case 'chrome.debugger.onEvent': {
+        const [source, cdpMethod, cdpParams] = params as ExtensionEvents['chrome.debugger.onEvent']['params'];
+        if (source.tabId === undefined)
+          return;
+        const tabSessionId = this._tabIdToSessionId.get(source.tabId);
+        if (!tabSessionId)
+          return;
+        // Top-level CDP events for the tab use the tab's relay sessionId.
+        // Child CDP sessions (workers, oopifs) keep their own sessionId.
+        const sessionId = source.sessionId || tabSessionId;
         this._sendToPlaywright({
           sessionId,
-          method: params.method,
-          params: params.params
+          method: cdpMethod,
+          params: cdpParams,
         });
         break;
+      }
+      case 'chrome.debugger.onDetach': {
+        const [source] = params as ExtensionEvents['chrome.debugger.onDetach']['params'];
+        if (source.tabId !== undefined)
+          this._detachTab(source.tabId);
+        break;
+      }
+      case 'chrome.tabs.onCreated': {
+        const [tab] = params as ExtensionEvents['chrome.tabs.onCreated']['params'];
+        // A controlled tab opened a popup. Attach to it.
+        if (tab.id !== undefined)
+          void this._attachTab(tab.id).catch(logUnhandledError);
+        break;
+      }
+      case 'chrome.tabs.onRemoved': {
+        const [tabId] = params as ExtensionEvents['chrome.tabs.onRemoved']['params'];
+        this._detachTab(tabId);
+        break;
+      }
     }
+  }
+
+  private async _attachTab(tabId: number): Promise<TabSession> {
+    if (this._tabIdToSessionId.has(tabId))
+      return this._tabSessions.get(this._tabIdToSessionId.get(tabId)!)!;
+    if (!this._extensionConnection)
+      throw new Error('Extension not connected');
+    await this._extensionConnection.send('chrome.debugger.attach', [{ tabId }, '1.3']);
+    const result = await this._extensionConnection.send('chrome.debugger.sendCommand', [
+      { tabId },
+      'Target.getTargetInfo',
+    ]);
+    const targetInfo = result?.targetInfo;
+    const sessionId = `pw-tab-${this._nextSessionId++}`;
+    const tabSession: TabSession = { tabId, sessionId, targetInfo };
+    this._tabSessions.set(sessionId, tabSession);
+    this._tabIdToSessionId.set(tabId, sessionId);
+    debugLogger(`Attached tab ${tabId} as session ${sessionId}`);
+    this._sendToPlaywright({
+      method: 'Target.attachedToTarget',
+      params: {
+        sessionId,
+        targetInfo: { ...targetInfo, attached: true },
+        waitingForDebugger: false,
+      },
+    });
+    return tabSession;
+  }
+
+  private _detachTab(tabId: number): void {
+    const sessionId = this._tabIdToSessionId.get(tabId);
+    if (!sessionId)
+      return;
+    this._tabIdToSessionId.delete(tabId);
+    this._tabSessions.delete(sessionId);
+    debugLogger(`Detached tab ${tabId} (session ${sessionId})`);
+    this._sendToPlaywright({
+      method: 'Target.detachedFromTarget',
+      params: { sessionId },
+    });
   }
 
   private async _handlePlaywrightMessage(message: CDPCommand): Promise<void> {
@@ -287,28 +365,26 @@ export class CDPRelayServer {
         // Forward child session handling.
         if (sessionId)
           break;
-        // Simulate auto-attach behavior with real target info
-        const { targetInfo } = await this._extensionConnection!.send('attachToTab', { });
-        this._connectedTabInfo = {
-          targetInfo,
-          sessionId: `pw-tab-${this._nextSessionId++}`,
-        };
-        debugLogger('Simulating auto-attach');
-        this._sendToPlaywright({
-          method: 'Target.attachedToTarget',
-          params: {
-            sessionId: this._connectedTabInfo.sessionId,
-            targetInfo: {
-              ...this._connectedTabInfo.targetInfo,
-              attached: true,
-            },
-            waitingForDebugger: false
-          }
-        });
+        // Ask the user to pick the initial tab via the connect UI, then attach.
+        if (!this._extensionConnection)
+          throw new Error('Extension not connected');
+        const { tabId } = await this._extensionConnection.send('extension.selectTab', []);
+        await this._attachTab(tabId);
         return { };
       }
+      case 'Target.createTarget': {
+        if (!this._extensionConnection)
+          throw new Error('Extension not connected');
+        const tab = await this._extensionConnection.send('chrome.tabs.create', [{ url: params?.url }]);
+        if (tab?.id === undefined)
+          throw new Error('Failed to create tab');
+        const tabSession = await this._attachTab(tab.id);
+        return { targetId: tabSession.targetInfo?.targetId };
+      }
       case 'Target.getTargetInfo': {
-        return this._connectedTabInfo?.targetInfo;
+        if (sessionId)
+          return this._tabSessions.get(sessionId)?.targetInfo;
+        return this._tabSessions.values().next().value?.targetInfo;
       }
     }
     return await this._forwardToExtension(method, params, sessionId);
@@ -317,10 +393,26 @@ export class CDPRelayServer {
   private async _forwardToExtension(method: string, params: any, sessionId: string | undefined): Promise<any> {
     if (!this._extensionConnection)
       throw new Error('Extension not connected');
-    // Top level sessionId is only passed between the relay and the client.
-    if (this._connectedTabInfo?.sessionId === sessionId)
-      sessionId = undefined;
-    return await this._extensionConnection.send('forwardCDPCommand', { sessionId, method, params });
+    // Resolve the relay sessionId to a tabId. Child CDP sessions pass through unchanged.
+    let tabId: number | undefined;
+    let cdpSessionId: string | undefined = sessionId;
+    if (sessionId && this._tabSessions.has(sessionId)) {
+      tabId = this._tabSessions.get(sessionId)!.tabId;
+      cdpSessionId = undefined;
+    }
+    if (tabId === undefined) {
+      // No relay tab session — fall back to the only tab if there is one.
+      const first = this._tabSessions.values().next().value;
+      if (first)
+        tabId = first.tabId;
+    }
+    if (tabId === undefined)
+      throw new Error('No tab is connected');
+    return await this._extensionConnection.send('chrome.debugger.sendCommand', [
+      { tabId, sessionId: cdpSessionId },
+      method,
+      params,
+    ]);
   }
 
   private _sendToPlaywright(message: CDPResponse): void {
@@ -352,7 +444,7 @@ class ExtensionConnection {
     this._ws.on('error', this._onError.bind(this));
   }
 
-  async send<M extends keyof ExtensionCommand>(method: M, params: ExtensionCommand[M]['params']): Promise<any> {
+  async send<M extends keyof ExtensionCommand>(method: M, params: ExtensionCommand[M]['params']): Promise<ExtensionCommand[M]['result']> {
     if (this._ws.readyState !== ws.OPEN)
       throw new Error(`Unexpected WebSocket state: ${this._ws.readyState}`);
     const id = ++this._lastId;
