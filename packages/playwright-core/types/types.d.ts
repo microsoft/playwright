@@ -3002,6 +3002,15 @@ export interface Page {
     checked?: boolean;
 
     /**
+     * Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+     * default, matching is case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-exact) to control this behavior.
+     *
+     * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+     */
+    description?: string|RegExp;
+
+    /**
      * An attribute that is usually set by `aria-disabled` or `disabled`.
      *
      * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
@@ -3011,9 +3020,9 @@ export interface Page {
     disabled?: boolean;
 
     /**
-     * Whether [`name`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-name) is matched exactly:
-     * case-sensitive and whole-string. Defaults to false. Ignored when
-     * [`name`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-name) is a regular expression. Note
+     * Whether [`name`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-name) and
+     * [`description`](https://playwright.dev/docs/api/class-page#page-get-by-role-option-description) are matched
+     * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
      * that exact match still trims whitespace.
      */
     exact?: boolean;
@@ -6822,6 +6831,15 @@ export interface Frame {
     checked?: boolean;
 
     /**
+     * Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+     * default, matching is case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-exact) to control this behavior.
+     *
+     * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+     */
+    description?: string|RegExp;
+
+    /**
      * An attribute that is usually set by `aria-disabled` or `disabled`.
      *
      * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
@@ -6831,9 +6849,9 @@ export interface Frame {
     disabled?: boolean;
 
     /**
-     * Whether [`name`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-name) is matched exactly:
-     * case-sensitive and whole-string. Defaults to false. Ignored when
-     * [`name`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-name) is a regular expression. Note
+     * Whether [`name`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-name) and
+     * [`description`](https://playwright.dev/docs/api/class-frame#frame-get-by-role-option-description) are matched
+     * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
      * that exact match still trims whitespace.
      */
     exact?: boolean;
@@ -13722,6 +13740,15 @@ export interface Locator {
     checked?: boolean;
 
     /**
+     * Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+     * default, matching is case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-exact) to control this behavior.
+     *
+     * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+     */
+    description?: string|RegExp;
+
+    /**
      * An attribute that is usually set by `aria-disabled` or `disabled`.
      *
      * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
@@ -13731,10 +13758,10 @@ export interface Locator {
     disabled?: boolean;
 
     /**
-     * Whether [`name`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-name) is matched exactly:
-     * case-sensitive and whole-string. Defaults to false. Ignored when
-     * [`name`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-name) is a regular expression.
-     * Note that exact match still trims whitespace.
+     * Whether [`name`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-name) and
+     * [`description`](https://playwright.dev/docs/api/class-locator#locator-get-by-role-option-description) are matched
+     * exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular expression. Note
+     * that exact match still trims whitespace.
      */
     exact?: boolean;
 
@@ -20418,6 +20445,16 @@ export interface FrameLocator {
     checked?: boolean;
 
     /**
+     * Option to match the [accessible description](https://w3c.github.io/accname/#dfn-accessible-description). By
+     * default, matching is case-insensitive and searches for a substring, use
+     * [`exact`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-exact) to control
+     * this behavior.
+     *
+     * Learn more about [accessible description](https://w3c.github.io/accname/#dfn-accessible-description).
+     */
+    description?: string|RegExp;
+
+    /**
      * An attribute that is usually set by `aria-disabled` or `disabled`.
      *
      * **NOTE** Unlike most other attributes, `disabled` is inherited through the DOM hierarchy. Learn more about
@@ -20427,9 +20464,9 @@ export interface FrameLocator {
     disabled?: boolean;
 
     /**
-     * Whether [`name`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-name) is
-     * matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when
-     * [`name`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-name) is a regular
+     * Whether [`name`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-name) and
+     * [`description`](https://playwright.dev/docs/api/class-framelocator#frame-locator-get-by-role-option-description)
+     * are matched exactly: case-sensitive and whole-string. Defaults to false. Ignored when the value is a regular
      * expression. Note that exact match still trims whitespace.
      */
     exact?: boolean;
