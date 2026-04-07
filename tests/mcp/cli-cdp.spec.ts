@@ -35,3 +35,27 @@ browser.isolated=false
   const { inlineSnapshot } = await cli('snapshot');
   expect(inlineSnapshot).toContain(`- generic [active] [ref=e1]: Hello, world!`);
 });
+
+test('list system browsers', async ({ playwright, cli }) => {
+  const userDataDir = test.info().outputPath('user-data-dir');
+  const browserContext = await playwright.chromium.launchPersistentContext(userDataDir, { channel: 'chrome' });
+
+  const { output } = await cli('list', { env: { PWTEST_DEFAULT_USER_DATA_DIR: userDataDir } });
+  expect(output).toContain(userDataDir);
+  expect(output).toContain('cdp port: unavailable');
+  expect(output).toContain('chrome://inspect/#remote-debugging');
+
+  await browserContext.close();
+});
+
+test('list system browsers with enabled CDP', async ({ playwright, cli }) => {
+  const userDataDir = test.info().outputPath('user-data-dir');
+  const browserContext = await playwright.chromium.launchPersistentContext(userDataDir, { channel: 'chrome', args: ['--remote-debugging-port=0'] });
+
+  const { output } = await cli('list', { env: { PWTEST_DEFAULT_USER_DATA_DIR: userDataDir } });
+  expect(output).toContain(userDataDir);
+  expect(output).toMatch(/cdp port: :\d+/);
+  expect(output).toContain(`to connect, run: playwright-cli attach --cdp ws://localhost:`);
+
+  await browserContext.close();
+});

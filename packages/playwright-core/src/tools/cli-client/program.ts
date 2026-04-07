@@ -307,8 +307,8 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
     count += await gcAndPrintSessions(clientInfo, list.map(entry => new Session(entry)), all ? `${path.relative(process.cwd(), workspaceKey) || '/'}:` : undefined, runningSessions, runningUserDataDirs);
   }
 
-  const { registry: browserRegistry } = await import('../../server/registry/index');
-  const systemBrowsers = await browserRegistry.systemBrowsers();
+  const { registry: browserRegistry } = await import('../../coreBundle.js');
+  const systemBrowsers = await browserRegistry.registry.systemBrowsers();
   const runningSystemBrowsers = systemBrowsers.filter(b => b.running && !runningUserDataDirs.has(b.userDataDir));
   if (runningSystemBrowsers.length) {
     if (count)
@@ -322,10 +322,10 @@ async function listSessions(registry: Registry, clientInfo: ClientInfo, all: boo
       text.push(`  - user-data-dir: ${browser.userDataDir}`); // TODO: escape spaces in path
       text.push(`  - headed: true`);
       if (browser.devToolsPort) {
-        text.push(`  - cdp-port: ${browser.devToolsPort}`);
+        text.push(`  - cdp port: :${browser.devToolsPort}`);
         text.push(`  - to connect, run: playwright-cli attach --cdp ws://localhost:${browser.devToolsPort}/devtools/browser --profile '${browser.userDataDir}' --headed`);
       } else {
-        text.push(`  - cdp-port: unavailable`);
+        text.push(`  - cdp port: unavailable`);
         text.push(`  - to enable connecting, enable CDP under ${browser.channel === 'msedge' ? 'edge' : 'chrome'}://inspect/#remote-debugging`);
       }
       console.log(text.join('\n'));

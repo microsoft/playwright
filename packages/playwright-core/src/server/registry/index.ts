@@ -1033,6 +1033,8 @@ export class Registry {
   private _resolveUserDataDir(userDataDirs?: Partial<Record<'linux' | 'darwin' | 'win32', string>>): string | undefined {
     if (!userDataDirs)
       return undefined;
+    if (process.env.PWTEST_DEFAULT_USER_DATA_DIR)
+      return process.env.PWTEST_DEFAULT_USER_DATA_DIR;
     const suffix = userDataDirs[process.platform as 'linux' | 'darwin' | 'win32'];
     if (!suffix)
       return undefined;
