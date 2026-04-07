@@ -55,6 +55,7 @@ export class TestTypeImpl {
     test.skip = wrapFunctionWithLocation(this._modifier.bind(this, 'skip'));
     test.fixme = wrapFunctionWithLocation(this._modifier.bind(this, 'fixme'));
     test.fail = wrapFunctionWithLocation(this._modifier.bind(this, 'fail'));
+    test.abort = wrapFunctionWithLocation(this._abort.bind(this));
     test.fail.only = wrapFunctionWithLocation(this._createTest.bind(this, 'fail.only'));
     test.slow = wrapFunctionWithLocation(this._modifier.bind(this, 'slow'));
     test.setTimeout = wrapFunctionWithLocation(this._setTimeout.bind(this));
@@ -238,6 +239,13 @@ export class TestTypeImpl {
     if (typeof modifierArgs[0] === 'function')
       throw new Error(`test.${type}() with a function can only be called inside describe block`);
     testInfo._modifier(type, location, modifierArgs as [any, any]);
+  }
+
+  private _abort(location: Location, message?: string) {
+    const testInfo = currentTestInfo();
+    if (!testInfo)
+      throw new Error(`test.abort() can only be called inside a test or fixture`);
+    testInfo._abort(location, message);
   }
 
   private _setTimeout(location: Location, timeout: number) {

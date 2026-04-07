@@ -396,6 +396,11 @@ export class TestInfoImpl implements TestInfo {
     return step;
   }
 
+  _abort(location: Location, message: string | undefined) {
+    this.annotations.push({ type: 'abort', description: message, location });
+    throw new TestAbortError('Test aborted' + (message ? ': ' + message : ''));
+  }
+
   _interrupt() {
     // Mark as interrupted so we can ignore TimeoutError thrown by interrupt() call.
     this._interruptedPromise.resolve();
@@ -709,6 +714,9 @@ export class TestStepInfoImpl implements TestStepInfo {
 }
 
 export class TestSkipError extends Error {
+}
+
+export class TestAbortError extends Error {
 }
 
 export class StepSkipError extends Error {
