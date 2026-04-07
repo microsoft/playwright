@@ -511,7 +511,7 @@ export function computeMatcherTitleSuffix(matcherName: string, receiver: any, ar
     const title = toHaveScreenshotStepTitle(...args);
     return { short: title ? `(${title})` : '' };
   }
-  if (receiver && typeof receiver === 'object' && receiver.constructor?.name === 'Locator') {
+  if (receiver && typeof receiver === 'object' && (receiver as any)._apiName === 'Locator') {
     try {
       return { long: ' ' + iso.asLocatorDescription('javascript', (receiver as LocatorEx)._selector) };
     } catch {

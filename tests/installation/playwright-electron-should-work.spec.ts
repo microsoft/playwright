@@ -15,7 +15,7 @@
  */
 import { test } from './npmTest';
 import fs from 'fs';
-import { expect } from 'packages/playwright-test';
+import { expect } from '../../packages/playwright-test';
 import path from 'path';
 
 test('electron should work', async ({ exec, tsc, writeFiles }) => {

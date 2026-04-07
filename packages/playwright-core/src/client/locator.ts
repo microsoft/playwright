@@ -40,6 +40,7 @@ export type LocatorOptions = {
 export class Locator implements api.Locator {
   _frame: Frame;
   _selector: string;
+  _apiName = 'Locator';
 
   constructor(frame: Frame, selector: string, options?: LocatorOptions) {
     this._frame = frame;

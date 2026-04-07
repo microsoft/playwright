@@ -19,18 +19,18 @@
 const fs = require('fs')
 const path = require('path')
 
-const { generateHelp, generateReadme, generateHelpJSON } = require('../packages/playwright-core/lib/tools/cli-daemon/helpGenerator.js');
+const { tools } = require('../packages/playwright-core/lib/coreBundle');
 
 if (process.argv[2] === '--readme') {
-  console.log(generateReadme());
+  console.log(tools.generateReadme());
   process.exit(0);
 }
 
 if (process.argv[2] === '--print') {
-  console.log(generateHelp());
+  console.log(tools.generateHelp());
   process.exit(0);
 }
 
 const fileName = path.resolve(__dirname, '../packages/playwright-core/lib/tools/cli-client/help.json');
 console.log('Writing ', path.relative(process.cwd(), fileName));
-fs.writeFileSync(fileName, JSON.stringify(generateHelpJSON(), null, 2));
+fs.writeFileSync(fileName, JSON.stringify(tools.generateHelpJSON(), null, 2));

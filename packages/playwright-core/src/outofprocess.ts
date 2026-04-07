@@ -18,6 +18,7 @@ import * as childProcess from 'child_process';
 import path from 'path';
 
 import { Connection } from './client/connection';
+import { packageRoot } from './package';
 import { PipeTransport } from './server/utils/pipeTransport';
 import { ManualPromise } from './utils/isomorphic/manualPromise';
 import { nodePlatform } from './server/utils/nodePlatform';
@@ -38,7 +39,7 @@ class PlaywrightClient {
   private _closePromise = new ManualPromise<void>();
 
   constructor(env: any) {
-    this._driverProcess = childProcess.fork(path.join(__dirname, '..', 'cli.js'), ['run-driver'], {
+    this._driverProcess = childProcess.fork(path.join(packageRoot, 'cli.js'), ['run-driver'], {
       stdio: 'pipe',
       detached: true,
       env: {

@@ -79,6 +79,7 @@ export type ExpectScreenshotOptions = Omit<channels.PageExpectScreenshotOptions,
 export class Page extends ChannelOwner<channels.PageChannel> implements api.Page {
   private _browserContext: BrowserContext;
   _ownedContext: BrowserContext | undefined;
+  _apiName = 'Page';
 
   private _mainFrame: Frame;
   private _frames = new Set<Frame>();

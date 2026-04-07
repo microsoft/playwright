@@ -304,6 +304,7 @@ export class APIResponse implements api.APIResponse {
   private readonly _initializer: channels.APIResponse;
   private readonly _headers: RawHeaders;
   readonly _request: APIRequestContext;
+  _apiName = 'APIResponse';
 
   constructor(context: APIRequestContext, initializer: channels.APIResponse) {
     this._request = context;

@@ -18,7 +18,7 @@ import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils, sever } from 'playwright-core/lib/coreBundle';
+import { iso, serverUtils, registry } from 'playwright-core/lib/coreBundle';
 
 import { loadConfig } from '../common/configLoader';
 import { Watcher } from '../fsWatcher';
@@ -135,7 +135,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   hasSomeBrowsers(): boolean {
     for (const browserName of ['chromium', 'webkit', 'firefox']) {
       try {
-        sever.registry.findExecutable(browserName)!.executablePathOrDie('javascript');
+        registry.registry.findExecutable(browserName)!.executablePathOrDie('javascript');
         return true;
       } catch {
       }
@@ -144,8 +144,8 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   async installBrowsers() {
-    const executables = sever.registry.defaultExecutables();
-    await sever.registry.install(executables);
+    const executables = registry.registry.defaultExecutables();
+    await registry.registry.install(executables);
   }
 
   async loadConfig() {

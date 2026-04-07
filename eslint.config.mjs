@@ -60,6 +60,7 @@ const ignores = [
   "test-results/",
   "tests/assets/",
   "tests/components/",
+  "tests/config/ghaMarkdownReporter.ts",
   "tests/installation/fixture-scripts/",
   "tests/third_party/",
   "utils/",
@@ -357,15 +358,63 @@ export default [
     },
   },
   {
-    files: ["packages/playwright-core/src/tools/**/*.ts"],
+    files: ["packages/playwright-core/src/**/*.ts"],
+    ignores: [
+      "packages/playwright-core/src/entry/**",
+    ],
     rules: {
       "no-restricted-imports": [
         "error",
         {
           patterns: [{
-            group: ["**/client", "**/client/**"],
-            message: "tools/ must not import from client/",
+            group: ["**/coreBundle"],
+            message: "coreBundle can only be imported from entry/ files. Use direct imports instead.",
           }],
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/playwright-core/src/**/*.ts"],
+    ignores: [
+      "packages/playwright-core/src/package.ts",
+      "packages/playwright-core/src/cli/programWithTestStub.ts",
+    ],
+    rules: {
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "exit",
+          message:
+            "Please use gracefullyProcessExitDoNotHang function to exit the process.",
+        },
+        { object: "process", property: "stdout" },
+        { object: "process", property: "stderr" },
+        {
+          object: "require",
+          property: "resolve",
+          message: "Use libPath() from package.ts instead of require.resolve.",
+        },
+      ],
+    },
+  },
+  {
+    files: ["packages/playwright-core/src/tools/**/*.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["**/client", "**/client/**"],
+              message: "tools/ must not import from client/",
+            },
+            {
+              group: ["**/coreBundle"],
+              message: "coreBundle can only be imported from entry/ files. Use direct imports instead.",
+            },
+          ],
         },
       ],
       "no-restricted-syntax": [

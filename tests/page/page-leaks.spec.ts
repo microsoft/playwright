@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-import { nullProgress } from '../../packages/playwright-core/lib/server/progress';
-import { MultiMap } from '../../packages/playwright-core/lib/utils/isomorphic/multimap';
+import { iso, sever } from '../../packages/playwright-core/lib/coreBundle';
+const { nullProgress } = sever;
 import { test, expect } from './pageTest';
+
+const { MultiMap } = iso;
 
 function leakedJSHandles(): string {
   const map = new MultiMap();

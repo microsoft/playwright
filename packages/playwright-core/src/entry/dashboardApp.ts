@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 
-import { program } from '../../utilsBundle';
-import { decorateMCPCommand } from './program';
+import { tools } from '../coreBundle';
 
-const packageJSON = require('../../../package.json');
-const p = program.version('Version ' + packageJSON.version).name('Playwright MCP');
-decorateMCPCommand(p);
-void program.parseAsync(process.argv);
+tools.openDashboardApp();

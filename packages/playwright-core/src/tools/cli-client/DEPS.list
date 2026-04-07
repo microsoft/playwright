@@ -3,11 +3,13 @@
 ./minimist.ts
 ./session.ts
 ./registry.ts
+../../package.ts
 ../../serverRegistry.ts
 
 [session.ts]
 "strict"
 ./minimist.ts
+../../package.ts
 ../utils/socketConnection.ts
 ./registry.ts
 

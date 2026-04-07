@@ -17,6 +17,7 @@
 /* eslint-disable no-console */
 
 import '../bootstrap';
+import { packageJSON } from '../package';
 import { gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import { addTraceCommands } from '../tools/trace/traceCli';
 import { program } from '../utilsBundle';
@@ -25,7 +26,6 @@ import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewe
 import type { Command } from '../utilsBundle';
 
 export function decorateProgram(program: Command) {
-  const packageJSON = require('../../package.json');
 
   program
       .version('Version ' + (process.env.PW_CLI_DISPLAY_VERSION || packageJSON.version))

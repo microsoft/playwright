@@ -18,10 +18,13 @@ import fs from 'fs';
 import path from 'path';
 import url from 'url';
 import { test as baseTest, expect as baseExpect, createImage } from './playwright-test-fixtures';
-import type { HttpServer } from '../../packages/playwright-core/lib/server/utils/httpServer';
 import { startHtmlReportServer } from '../../packages/playwright/lib/reporters/html';
-import { msToString } from '../../packages/playwright-core/src/utils/isomorphic/formatUtils';
-const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
+import { iso, serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+
+type HttpServer = serverUtils.HttpServer;
+
+const { msToString } = iso;
+const { spawnAsync } = serverUtils;
 
 const test = baseTest.extend<{ showReport: (reportFolder?: string) => Promise<void> }>({
   showReport: async ({ page }, use, testInfo) => {

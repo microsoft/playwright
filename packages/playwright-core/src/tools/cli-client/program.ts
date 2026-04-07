@@ -24,6 +24,7 @@ import os from 'os';
 import path from 'path';
 import { clientKey, createClientInfo, explicitSessionName, Registry, resolveSessionName } from './registry';
 import { Session, renderResolvedConfig } from './session';
+import { libPath } from '../../package';
 import { serverRegistry } from '../../serverRegistry';
 import { minimist } from './minimist';
 
@@ -77,7 +78,7 @@ const booleanOptions: (keyof (GlobalOptions & OpenOptions & AttachOptions & { al
 
 export async function program(options?: { embedderVersion?: string}) {
   const clientInfo = createClientInfo();
-  const help = require('./help.json');
+  const help = require(libPath('tools', 'cli-client', 'help.json'));
 
   const argv = process.argv.slice(2);
   const boolean = [...help.booleanOptions, ...booleanOptions];
@@ -178,7 +179,7 @@ export async function program(options?: { embedderVersion?: string}) {
       await installBrowser();
       return;
     case 'show': {
-      const daemonScript = require.resolve('../dashboard/dashboardApp.js');
+      const daemonScript = libPath('entry', 'dashboardApp.js');
       const child = spawn(process.execPath, [daemonScript], {
         detached: true,
         stdio: 'ignore',
@@ -219,7 +220,7 @@ async function runInSession(entry: SessionFile, clientInfo: ClientInfo, args: Mi
 }
 
 async function runInitWorkspace(args: MinimistArgs) {
-  const cliPath = require.resolve('../cli-daemon/program.js');
+  const cliPath = libPath('entry', 'cliDaemon.js');
   const daemonArgs: string[] = [cliPath, '--init-workspace', ...(args.skills ? ['--init-skills', String(args.skills)] : [])];
   await new Promise<void>((resolve, reject) => {
     const child = spawn(process.execPath, daemonArgs, {
@@ -237,8 +238,8 @@ async function runInitWorkspace(args: MinimistArgs) {
 
 async function installBrowser() {
   const argv = process.argv.map(arg => arg === 'install-browser' ? 'install' : arg);
-  const { libCli } = await import('../../coreBundle');
-  const { program } = await import('../../utilsBundle');
+  const { libCli } = await import('../../coreBundle.js');
+  const { program } = await import('../../utilsBundle.js');
   if (!program.version())
     libCli.decorateProgram(program);
   program.parse(argv);

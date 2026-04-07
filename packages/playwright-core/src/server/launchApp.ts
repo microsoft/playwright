@@ -17,6 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
+import { libPath } from '../package';
 import { isUnderTest, rewriteErrorMessage, wrapInASCIIBox } from '../utils';
 import { buildPlaywrightCLICommand, findChromiumChannelBestEffort } from './registry';
 import { registryDirectory } from './registry';
@@ -88,7 +89,7 @@ export async function launchApp(browserType: BrowserType, options: {
 }
 
 async function installAppIcon(page: Page) {
-  const icon = await fs.promises.readFile(require.resolve('./chromium/appIcon.png'));
+  const icon = await fs.promises.readFile(libPath('server', 'chromium', 'appIcon.png'));
   const crPage = page.delegate as CRPage;
   await crPage._mainFrameSession._client.send('Browser.setDockTile', {
     image: icon.toString('base64')

@@ -3,5 +3,6 @@
 ../../utils/
 ../../registry/
 ../../../generated/
+../../../package.ts
 ../../../utils/
 ../../../utilsBundle.ts

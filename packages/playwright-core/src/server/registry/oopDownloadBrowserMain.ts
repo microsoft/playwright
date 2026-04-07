@@ -125,21 +125,23 @@ async function main(options: DownloadParams) {
   await fs.promises.writeFile(browserDirectoryToMarkerFilePath(options.browserDirectory), '');
 }
 
-process.on('message', async message => {
-  const { method, params } = message as any;
-  if (method === 'download') {
-    try {
-      await main(params);
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(0);
-    } catch (e) {
-      // eslint-disable-next-line no-console
-      console.error(e);
-      // eslint-disable-next-line no-restricted-properties
-      process.exit(1);
+export function runOopDownloadBrowserMain() {
+  process.on('message', async message => {
+    const { method, params } = message as any;
+    if (method === 'download') {
+      try {
+        await main(params);
+        // eslint-disable-next-line no-restricted-properties
+        process.exit(0);
+      } catch (e) {
+        // eslint-disable-next-line no-console
+        console.error(e);
+        // eslint-disable-next-line no-restricted-properties
+        process.exit(1);
+      }
     }
-  }
-});
+  });
 
-// eslint-disable-next-line no-restricted-properties
-process.on('disconnect', () => { process.exit(0); });
+  // eslint-disable-next-line no-restricted-properties
+  process.on('disconnect', () => { process.exit(0); });
+}

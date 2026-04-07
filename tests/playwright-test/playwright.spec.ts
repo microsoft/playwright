@@ -18,9 +18,9 @@ import { test, expect, parseTestRunnerOutput } from './playwright-test-fixtures'
 import fs from 'fs';
 import path from 'path';
 import { spawnSync } from 'child_process';
-import { registry } from '../../packages/playwright-core/lib/server';
+import { registry } from '../../packages/playwright-core/lib/coreBundle';
 
-const ffmpeg = registry.findExecutable('ffmpeg')!.executablePath();
+const ffmpeg = registry.registry.findExecutable('ffmpeg')!.executablePath();
 
 export class VideoPlayer {
   videoWidth: number;

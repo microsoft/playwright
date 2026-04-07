@@ -15,8 +15,11 @@
  */
 
 import { test as it, expect } from '@playwright/test';
-import { validate } from '../../../packages/playwright-core/lib/utils/isomorphic/jsonSchema';
-import type { JsonSchema } from '../../../packages/playwright-core/src/utils/isomorphic/jsonSchema';
+import type { iso } from '../../../packages/playwright-core/lib/coreBundle';
+import { iso as _iso } from '../../../packages/playwright-core/lib/coreBundle';
+
+const { validate } = _iso;
+type JsonSchema = iso.JsonSchema;
 
 it('should validate string type', () => {
   expect(validate('hello', { type: 'string' }, '$')).toEqual([]);

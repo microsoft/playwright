@@ -19,7 +19,8 @@ import { devices } from '@playwright/test';
 import { contextTest as it, expect } from '../config/browserTest';
 import { browserTest } from '../config/browserTest';
 import { verifyViewport } from '../config/utils';
-import { deviceDescriptors } from 'packages/playwright-core/lib/server/deviceDescriptors';
+import { sever } from '../../packages/playwright-core/lib/coreBundle';
+const { deviceDescriptors } = sever;
 
 it('should get the proper default viewport size', async ({ page, server }) => {
   await verifyViewport(page, 1280, 720);

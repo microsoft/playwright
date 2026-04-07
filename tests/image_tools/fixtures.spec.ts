@@ -16,9 +16,11 @@
 
 import { test, expect } from '../playwright-test/stable-test-runner';
 import { PNG } from 'playwright-core/lib/utilsBundle';
-import { compare } from '../../packages/playwright-core/src/server/utils/image_tools/compare';
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
 import fs from 'fs';
 import path from 'path';
+
+const { compare } = serverUtils;
 
 function listFixtures(root: string, fixtures: Set<string> = new Set()) {
   for (const item of fs.readdirSync(root, { withFileTypes: true })) {

@@ -14,19 +14,21 @@
  * limitations under the License.
  */
 
-export type {  BrowserInfo, Executable } from './registry';
-export {
-  Registry,
-  installBrowsersForNpmInstall,
-  registry,
-  registryDirectory,
-  writeDockerVersion } from './registry';
-
-export { DispatcherConnection, RootDispatcher } from './dispatchers/dispatcher';
+export { Browser } from './browser';
+export { BrowserContext } from './browserContext';
+export { findRepeatedSubsequencesForTest } from './callLog';
+export { deviceDescriptors } from './deviceDescriptors';
+export { DispatcherConnection, RootDispatcher, setMaxDispatchersForTest } from './dispatchers/dispatcher';
+export { RequestDispatcher, ResponseDispatcher } from './dispatchers/networkDispatchers';
 export { PlaywrightDispatcher } from './dispatchers/playwrightDispatcher';
+export { Request, Response } from './network';
+export { Page } from './page';
 export { createPlaywright } from './playwright';
+export { nullProgress } from './progress';
+export { WebSocketTransport } from './transport';
 
 export type { DispatcherScope } from './dispatchers/dispatcher';
+export type { Frame } from './frames';
 export type { Playwright } from './playwright';
 export type { TraceViewerRedirectOptions, TraceViewerServerOptions } from './trace/viewer/traceViewer';
 export { installRootRedirect, openTraceInBrowser, openTraceViewerApp, startTraceViewerServer, runTraceViewerApp } from './trace/viewer/traceViewer';

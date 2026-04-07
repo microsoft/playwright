@@ -36,3 +36,7 @@ export * from './userAgent';
 export * from './wsServer';
 export * from './zipFile';
 export * from './zones';
+export * from './image_tools/colorUtils';
+export * from './image_tools/compare';
+export * from './image_tools/imageChannel';
+export * from './image_tools/stats';

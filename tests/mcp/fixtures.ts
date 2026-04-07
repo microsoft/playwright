@@ -290,7 +290,7 @@ export const expect = baseExpect.extend({
   },
 });
 
-export const mcpServerPath = [require.resolve('../../packages/playwright-core/lib/tools/mcp/cli-stub.js')];
+export const mcpServerPath = [require.resolve('../../packages/playwright-core/lib/entry/mcp.js')];
 export const testMcpServerPath = [require.resolve('../../packages/playwright-test/cli.js'), 'run-test-mcp-server'];
 
 type Files = { [key: string]: string | Buffer };

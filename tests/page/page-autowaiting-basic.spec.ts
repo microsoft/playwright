@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { stripAnsi } from 'tests/config/utils';
+import { stripAnsi } from '../config/utils';
 import type { TestServer } from '../config/testserver';
 import { test as it, expect } from './pageTest';
 

@@ -20,7 +20,7 @@ import { assert, createGuid, debugLogger, mkdirIfNeeded, monotonicTime } from '.
 import { launchProcess } from './utils/processLauncher';
 import { jpegjs } from '../utilsBundle';
 import { Artifact } from './artifact';
-import { registry } from '.';
+import { registry } from './registry';
 
 import type * as types from './types';
 import type { ChildProcess } from 'child_process';

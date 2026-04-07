@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-import { getComparator } from '../../packages/playwright-core/lib/server/utils/comparators';
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+
+const { getComparator } = serverUtils;
 
 const pngComparator = getComparator('image/png');
 type ComparatorResult = { diff?: Buffer; errorMessage: string; } | null;

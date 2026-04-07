@@ -168,12 +168,13 @@ export function errorWithFile(file: string, message: string) {
   return new Error(`${relativeFilePath(file)}: ${message}`);
 }
 
-export function expectTypes(receiver: any, types: string[], matcherName: string) {
-  if (typeof receiver !== 'object' || !types.includes(receiver.constructor.name)) {
+export function expectTypes(receiver: any, types: ('APIResponse' | 'Page' | 'Locator')[], matcherName: string) {
+  if (typeof receiver !== 'object' || !types.includes(receiver._apiName)) {
+    const receiverString = typeof receiver === 'object' && receiver !== null ? `${receiver.constructor.name} ${util.inspect(receiver)}` : String(receiver);
     const commaSeparated = types.slice();
     const lastType = commaSeparated.pop();
     const typesString = commaSeparated.length ? commaSeparated.join(', ') + ' or ' + lastType : lastType;
-    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}`);
+    throw new Error(`${matcherName} can be only used with ${typesString} object${types.length > 1 ? 's' : ''}, was called with ${receiverString}`);
   }
 }
 

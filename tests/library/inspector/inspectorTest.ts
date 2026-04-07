@@ -46,7 +46,8 @@ const codegenLang2Id: Map<string, string> = new Map([
 ]);
 const codegenLangId2lang = new Map([...codegenLang2Id.entries()].map(([lang, langId]) => [langId, lang]));
 
-const playwrightToAutomateInspector = require('../../../packages/playwright-core/lib/inprocess').playwright;
+import { inprocess } from '../../../packages/playwright-core/lib/coreBundle';
+const playwrightToAutomateInspector = inprocess.playwright;
 
 export const test = contextTest.extend<CLITestArgs>({
   recorderPageGetter: async ({ context, toImpl, mode, headless }, run, testInfo) => {

@@ -14,20 +14,19 @@
  * limitations under the License.
  */
 
-import { oop } from '../../packages/playwright-core/lib/coreBundle';
-import type { Playwright } from '../../packages/playwright-core/lib/client/playwright';
+import { oop, client } from '../../packages/playwright-core/lib/coreBundle';
 
 export type TestModeName = 'default' | 'driver' | 'service' | 'service2' | 'wsl';
 
 const { start } = oop;
 
 interface TestMode {
-  setup(): Promise<Playwright>;
+  setup(): Promise<client.Playwright>;
   teardown(): Promise<void>;
 }
 
 export class DriverTestMode implements TestMode {
-  private _impl: { playwright: Playwright; stop: () => Promise<void>; };
+  private _impl: { playwright: client.Playwright; stop: () => Promise<void>; };
 
   async setup() {
     this._impl = await start({

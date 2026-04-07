@@ -385,10 +385,11 @@ steps.push(new ProgramStep({
 
 class EsbuildStep extends Step {
   /** @type {import('esbuild').BuildOptions} */
-  constructor(options) {
+  constructor(options, watchPaths = []) {
     // Starting esbuild steps in parallel showed longer overall time.
     super({ concurrent: false });
     this._options = options;
+    this._watchPaths = watchPaths;
   }
 
   /** @override */
@@ -410,7 +411,7 @@ class EsbuildStep extends Step {
     this._context = await context(this._options);
     disposables.push(() => this._context?.dispose());
 
-    const watcher = chokidar.watch(this._options.entryPoints);
+    const watcher = chokidar.watch([...this._options.entryPoints, ...(this._watchPaths || [])]);
     await new Promise(x => watcher.once('ready', x));
     watcher.on('all', () => this._rebuild());
 
@@ -481,6 +482,8 @@ for (const pkg of workspace.packages()) {
   // playwright-client is built as a bundle.
   if (['@playwright/client'].includes(pkg.name))
     continue;
+  if (pkg.name === 'playwright-core')
+    continue;
 
   steps.push(new EsbuildStep({
     entryPoints: [path.join(pkg.path, 'src/**/*.ts')],
@@ -491,6 +494,100 @@ for (const pkg of workspace.packages()) {
     plugins: [dynamicImportToRequirePlugin],
   }));
 }
+
+// Build playwright-core exported entry points.
+steps.push(new EsbuildStep({
+  entryPoints: [
+    // Performance analysis tool.
+    filePath('packages/playwright-core/src/bootstrap.ts'),
+
+    // Entry points for oop execution.
+    filePath('packages/playwright-core/src/entry/cliDaemon.ts'),
+    filePath('packages/playwright-core/src/entry/dashboardApp.ts'),
+    filePath('packages/playwright-core/src/entry/mcp.ts'),
+    filePath('packages/playwright-core/src/entry/oopBrowserDownload.ts'),
+
+    // CLI client tools, should be a separate bundle.
+    filePath('packages/playwright-core/src/tools/cli-client/*.ts'),
+    filePath('packages/playwright-core/src/package.ts'),
+    filePath('packages/playwright-core/src/serverRegistry.ts'),
+    filePath('packages/playwright-core/src/tools/utils/socketConnection.ts'),
+
+    // Bundle entry points otherwise inlined in coreBundle, figure this out.
+    filePath('packages/playwright-core/src/utilsBundle.ts'),
+    filePath('packages/playwright-core/src/mcpBundle.ts'),
+    filePath('packages/playwright-core/src/zodBundle.ts'),
+    filePath('packages/playwright-core/src/zipBundle.ts'),
+  ],
+  outdir: filePath('packages/playwright-core/lib'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+}));
+
+const playwrightCoreSrc = filePath('packages/playwright-core/src');
+
+// Build playwright-core as a single bundle.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/coreBundle.ts')],
+  outfile: filePath('packages/playwright-core/lib/coreBundle.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: [
+    './utilsBundleImpl',
+    './utilsBundleImpl/*',
+    './mcpBundleImpl',
+    './zodBundleImpl',
+    './zipBundleImpl',
+    '../../api.json',
+    './help.json',
+    // TODO: await import plugin is incompatible with esbuild, remove it
+    'electron',
+    'electron/*',
+    'chromium-bidi',
+    'chromium-bidi/*',
+    'mitt',
+  ],
+  plugins: [dynamicImportToRequirePlugin],
+}, [playwrightCoreSrc]));
+
+function assertCoreBundleHasNoNodeModules() {
+  const bundlePath = filePath('packages/playwright-core/lib/coreBundle.js');
+  const contents = fs.readFileSync(bundlePath, 'utf8');
+  const lines = contents.split('\n');
+  const offenders = [];
+  for (let i = 0; i < lines.length; i++) {
+    const idx = lines[i].indexOf('node_modules/');
+    if (idx !== -1)
+      offenders.push(`  ${bundlePath}:${i + 1}: ${lines[i].slice(Math.max(0, idx - 10), idx + 80)}`);
+  }
+  if (offenders.length) {
+    console.error(`\n==== coreBundle.js contains 'node_modules/' references (${offenders.length} lines) ====`);
+    console.error(offenders.slice(0, 20).join('\n'));
+    if (offenders.length > 20)
+      console.error(`  ... and ${offenders.length - 20} more`);
+    console.error('Mark the offending package as external in the coreBundle esbuild config (utils/build/build.js).');
+    process.exit(1);
+  }
+  console.log('==== coreBundle.js: no node_modules/ references');
+}
+
+steps.push(new CustomCallbackStep(assertCoreBundleHasNoNodeModules));
+
+// Build the Electron preload loader as a standalone CJS file. It runs inside
+// the Electron process (via `electron -r loader.js`) and must not depend on
+// coreBundle. `electron` is resolved at runtime by the Electron process.
+steps.push(new EsbuildStep({
+  bundle: true,
+  entryPoints: [filePath('packages/playwright-core/src/server/electron/loader.ts')],
+  outfile: filePath('packages/playwright-core/lib/server/electron/loader.js'),
+  sourcemap: withSourceMaps ? 'linked' : false,
+  platform: 'node',
+  format: 'cjs',
+  external: ['electron'],
+}, [playwrightCoreSrc]));
 
 function copyXdgOpen() {
   const outdir = filePath('packages/playwright-core/lib/utilsBundleImpl');

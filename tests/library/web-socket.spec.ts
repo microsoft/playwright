@@ -17,7 +17,7 @@
 
 import { kTargetClosedErrorMessage } from '../config/errors';
 import { contextTest as it, expect } from '../config/browserTest';
-import { Server as WebSocketServer } from 'ws';
+import { WebSocketServer, type WebSocket as WsSocket } from 'ws';
 
 it('should work @smoke', async ({ page, server }) => {
   server.sendOnWebSocketConnection('incoming');
@@ -206,7 +206,7 @@ it('should turn off when offline', async ({ page }) => {
   const webSocketServer = new WebSocketServer();
   const address = webSocketServer.address();
   const [socket, wsHandle] = await Promise.all([
-    new Promise<import('ws')>(x => webSocketServer.once('connection', x)),
+    new Promise<WsSocket>(x => webSocketServer.once('connection', x)),
     page.evaluateHandle(async address => {
       const ws = new WebSocket(`ws://${address}/`);
       await new Promise(x => ws.onopen = x);

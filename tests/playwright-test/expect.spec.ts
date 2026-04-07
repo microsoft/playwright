@@ -16,7 +16,8 @@
 
 import path from 'path';
 import { test, expect, parseTestRunnerOutput, stripAnsi } from './playwright-test-fixtures';
-const { spawnAsync } = require('../../packages/playwright-core/lib/utils');
+import { serverUtils } from '../../packages/playwright-core/lib/coreBundle';
+const { spawnAsync } = serverUtils;
 
 test('should not expand huge arrays', async ({ runInlineTest }) => {
   const result = await runInlineTest({
