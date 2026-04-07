@@ -21,15 +21,15 @@ import url from 'url';
 
 import crypto from 'crypto';
 
-import { loadTsConfig } from '../third_party/tsconfig-loader';
+import { loadTsConfig } from './tsconfig-loader';
 import { createFileMatcher, debugTest, fileIsModule, resolveImportSpecifierAfterMapping } from '../util';
 import { sourceMapSupport } from '../utilsBundle';
 import { belongsToNodeModules, currentFileDepsCollector, getFromCompilationCache, installSourceMapSupport } from './compilationCache';
-import { addHook } from '../third_party/pirates';
+import { addHook } from './pirates';
 
 import type { BabelPlugin, BabelTransformFunction } from './babelBundle';
 import type { Location } from '../../types/testReporter';
-import type { LoadedTsConfig } from '../third_party/tsconfig-loader';
+import type { LoadedTsConfig } from './tsconfig-loader';
 import type { Matcher } from '../util';
 
 
