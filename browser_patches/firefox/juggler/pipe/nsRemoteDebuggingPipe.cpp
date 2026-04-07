@@ -182,10 +182,14 @@ void nsRemoteDebuggingPipe::ReaderLoop() {
       ++end;
       start = end;
     }
-    if (start != 0 && start < line.size()) {
-      memmove(line.data(), line.data() + start, line.size() - start);
+    if (start != 0) {
+      if (start >= line.size()) {
+        line.clear();
+      } else {
+        memmove(line.data(), line.data() + start, line.size() - start);
+        line.resize(line.size() - start);
+      }
     }
-    line.resize(line.size() - start);
   }
 }
 
