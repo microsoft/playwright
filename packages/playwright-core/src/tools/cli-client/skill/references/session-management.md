@@ -116,6 +116,25 @@ playwright-cli snapshot
 playwright-cli close  # Stops default browser
 ```
 
+## System Browsers
+
+Detect and attach to existing system browser instances:
+
+```bash
+# List all browsers, including system browsers
+> playwright-cli list
+- chrome:
+  - status: running
+  - browser-type: chrome
+  - user-data-dir: ~/Library/Application Support/Google/Chrome
+  - headed: true
+  - cdp port: unavailable
+  - to enable connecting, enable CDP under chrome://inspect/#remote-debugging
+# After user enabled CDP via chrome://inspect/#remote-debugging:
+> playwright-cli list
+> playwright-cli attach ... # see "to connect" instructions in list output
+```
+
 ## Browser Session Configuration
 
 Configure a browser session with specific settings when opening:

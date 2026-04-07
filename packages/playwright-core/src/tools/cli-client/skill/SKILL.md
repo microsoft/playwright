@@ -191,6 +191,12 @@ playwright-cli open --profile=/path/to/profile
 # Connect to browser via extension
 playwright-cli attach --extension
 
+# Connect to system browser
+playwright-cli list
+# ask user to enable CDP via chrome://inspect/#remote-debugging
+playwright-cli list
+playwright-cli attach # see list output for instructions
+
 # Start with config file
 playwright-cli open --config=my-config.json
 
