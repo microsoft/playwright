@@ -17,7 +17,7 @@
 import fs from 'fs';
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { mkdirIfNeeded } from '@serverUtils/fileUtils';
 
 import { collectFilesForProject, findTopLevelProjects } from '../../runner/projectUtils';
 
@@ -47,7 +47,7 @@ export async function ensureSeedFile(project: FullProjectInternal) {
   if (seedFile)
     return seedFile;
   const seedFilePath = defaultSeedFile(project);
-  await serverUtils.mkdirIfNeeded(seedFilePath);
+  await mkdirIfNeeded(seedFilePath);
   await fs.promises.writeFile(seedFilePath, seedFileContent);
   return seedFilePath;
 }

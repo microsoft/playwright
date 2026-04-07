@@ -18,9 +18,13 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { tools } from 'playwright-core/lib/coreBundle';
 import { debug } from 'playwright-core/lib/utilsBundle';
+
+import { noColors } from '@isomorphic/colors';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { escapeRegExp } from '@isomorphic/stringUtils';
+import { toPosixPath } from '@serverUtils/fileUtils';
 
 import { terminalScreen } from '../../reporters/base';
 import ListReporter from '../../reporters/list';
@@ -62,7 +66,7 @@ export class GeneratorJournal {
     const result: string[] = [];
     result.push(`# Plan`);
     result.push(this._plan);
-    result.push(`# Seed file: ${serverUtils.toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
+    result.push(`# Seed file: ${toPosixPath(path.relative(this._rootPath, this._seed.file))}`);
     result.push('```ts');
     result.push(this._seed.content);
     result.push('```');
@@ -128,7 +132,7 @@ export class TestContext {
 
     const testRunner = new TestRunner(this._configLocation, {});
     await testRunner.initialize({});
-    const testPaused = new iso.ManualPromise<void>();
+    const testPaused = new ManualPromise<void>();
     const testRunnerAndScreen: TestRunnerAndScreen = {
       ...createScreen(),
       testRunner,
@@ -180,7 +184,7 @@ export class TestContext {
   async runSeedTest(seedFile: string, projectName: string): Promise<{ output: string, status: FullResultStatus | 'paused' }> {
     const result = await this.runTestsWithGlobalSetupAndPossiblePause({
       headed: this.computedHeaded,
-      locations: ['/' + iso.escapeRegExp(seedFile) + '/'],
+      locations: ['/' + escapeRegExp(seedFile) + '/'],
       projects: [projectName],
       timeout: 0,
       workers: 1,
@@ -276,7 +280,7 @@ export function createScreen() {
   const screen = {
     ...terminalScreen,
     isTTY: false,
-    colors: iso.noColors,
+    colors: noColors,
     stdout: stdout as unknown as NodeJS.WriteStream,
     stderr: stderr as unknown as NodeJS.WriteStream,
   };

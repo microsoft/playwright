@@ -1,7 +1,8 @@
 [*]
+@isomorphic/**
+@serverUtils/**
 ../common/
 ../transform/
 ../util.ts
-../utilBundle.ts
 ../matchers/**
 ../isomorphic/util.ts

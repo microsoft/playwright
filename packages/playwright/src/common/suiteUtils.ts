@@ -16,7 +16,9 @@
 
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { calculateSha1 } from '@serverUtils/crypto';
+import { toPosixPath } from '@serverUtils/fileUtils';
+
 import { createFileMatcher, forceRegExp, parseLocationArg } from '../util';
 
 import type { FullProjectInternal } from './config';
@@ -33,7 +35,7 @@ export function filterTestsRemoveEmptySuites(suite: Suite, filter: TestCaseFilte
 
 export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suite): Suite {
   const relativeFile = path.relative(project.project.testDir, suite.location!.file);
-  const fileId = serverUtils.calculateSha1(serverUtils.toPosixPath(relativeFile)).slice(0, 20);
+  const fileId = calculateSha1(toPosixPath(relativeFile)).slice(0, 20);
 
   // Clone suite.
   const result = suite._deepClone();
@@ -44,8 +46,8 @@ export function bindFileSuiteToProject(project: FullProjectInternal, suite: Suit
     suite._fileId = fileId;
     // At the point of the query, suite is not yet attached to the project, so we only get file, describe and test titles.
     const [file, ...titles] = test.titlePath();
-    const testIdExpression = `[project=${project.id}]${serverUtils.toPosixPath(file)}\x1e${titles.join('\x1e')}`;
-    const testId = fileId + '-' + serverUtils.calculateSha1(testIdExpression).slice(0, 20);
+    const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')}`;
+    const testId = fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
     test.id = testId;
     test._projectId = project.id;
 
@@ -80,8 +82,8 @@ export function applyRepeatEachIndex(project: FullProjectInternal, fileSuite: Su
   fileSuite.forEachTest((test, suite) => {
     if (repeatEachIndex) {
       const [file, ...titles] = test.titlePath();
-      const testIdExpression = `[project=${project.id}]${serverUtils.toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
-      const testId = suite._fileId + '-' + serverUtils.calculateSha1(testIdExpression).slice(0, 20);
+      const testIdExpression = `[project=${project.id}]${toPosixPath(file)}\x1e${titles.join('\x1e')} (repeat:${repeatEachIndex})`;
+      const testId = suite._fileId + '-' + calculateSha1(testIdExpression).slice(0, 20);
       test.id = testId;
       test.repeatEachIndex = repeatEachIndex;
 

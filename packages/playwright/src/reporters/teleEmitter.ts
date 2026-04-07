@@ -16,7 +16,7 @@
 
 import path from 'path';
 
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+import { createGuid } from '@serverUtils/crypto';
 
 import { serializeRegexPatterns } from '../isomorphic/teleReceiver';
 
@@ -62,7 +62,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onTestBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult): void {
-    (result as any)[this._idSymbol] = serverUtils.createGuid();
+    (result as any)[this._idSymbol] = createGuid();
     this._messageSink({
       method: 'onTestBegin',
       params: {
@@ -109,7 +109,7 @@ export class TeleReporterEmitter implements ReporterV2 {
   }
 
   onStepBegin(test: reporterTypes.TestCase, result: reporterTypes.TestResult, step: reporterTypes.TestStep): void {
-    (step as any)[this._idSymbol] = serverUtils.createGuid();
+    (step as any)[this._idSymbol] = createGuid();
     this._messageSink({
       method: 'onStepBegin',
       params: {

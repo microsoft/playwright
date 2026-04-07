@@ -15,6 +15,7 @@
  */
 
 import fs from 'fs';
+
 import { yaml } from 'playwright-core/lib/utilsBundle';
 
 type AgentSpecHeader = {

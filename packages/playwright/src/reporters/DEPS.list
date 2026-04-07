@@ -1,4 +1,6 @@
 [*]
+@isomorphic/**
+@serverUtils/**
 ../common/**
 ../isomorphic/**
 ../util.ts

@@ -16,9 +16,11 @@
 
 import path from 'path';
 import fs from 'fs';
-import { serverUtils } from 'playwright-core/lib/coreBundle';
+
+import { toPosixPath } from '@serverUtils/fileUtils';
 
 import { InProcessLoaderHost, OutOfProcessLoaderHost } from './loaderHost';
+import { sourceMapSupport } from '../utilsBundle';
 import { createTitleMatcher, errorWithFile, parseLocationArg } from '../util';
 import { buildProjectsClosure, collectFilesForProject, filterProjects } from './projectUtils';
 import {  createTestGroups, filterForShard } from './testGroups';
@@ -26,8 +28,8 @@ import { applyRepeatEachIndex, bindFileSuiteToProject, filterOnly, filterTestsRe
 import { Suite } from '../common/test';
 import { dependenciesForTestFile } from '../transform/compilationCache';
 import { requireOrImport } from '../transform/transform';
-import { sourceMapSupport } from '../utilsBundle';
 
+import type { RawSourceMap } from '../utilsBundle';
 import type { TestRun } from './tasks';
 import type { TestGroup } from './testGroups';
 import type { FullConfig, Reporter, TestError } from '../../types/testReporter';
@@ -35,7 +37,6 @@ import type { FullProjectInternal } from '../common/config';
 import type { FullConfigInternal } from '../common/config';
 import type { TestCase } from '../common/test';
 import type { Matcher, TestCaseFilter } from '../util';
-import type { RawSourceMap } from '../utilsBundle';
 
 
 export async function collectProjectsAndTestFiles(testRun: TestRun, doNotRunTestsOutsideProjectFilter: boolean) {
@@ -351,20 +352,20 @@ export async function loadTestList(config: FullConfigInternal, filePath: string)
         project = tokens[0].substring(1, tokens[0].length - 1);
         tokens.shift();
       }
-      return { project, file: serverUtils.toPosixPath(parseLocationArg(tokens[0]).file), titlePath: tokens.slice(1) };
+      return { project, file: toPosixPath(parseLocationArg(tokens[0]).file), titlePath: tokens.slice(1) };
     });
     const testFilter = (test: TestCase) => descriptions.some(d => {
       // Note: there is no root yet at the time of filtering.
       const [projectName, , ...titles] = test.titlePath();
       if (d.project !== undefined && d.project !== projectName)
         return false;
-      const relativeFile = serverUtils.toPosixPath(path.relative(config.config.rootDir, test.location.file));
+      const relativeFile = toPosixPath(path.relative(config.config.rootDir, test.location.file));
       if (relativeFile !== d.file)
         return false;
       return d.titlePath.length <= titles.length && d.titlePath.every((_, index) => titles[index] === d.titlePath[index]);
     });
     const fileFilter = (file: string) => {
-      const relativeFile = serverUtils.toPosixPath(path.relative(config.config.rootDir, file));
+      const relativeFile = toPosixPath(path.relative(config.config.rootDir, file));
       return descriptions.some(d => d.file === relativeFile);
     };
     return { testFilter, fileFilter };

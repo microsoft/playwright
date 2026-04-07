@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { colors } from 'playwright-core/lib/utilsBundle';
+
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { eventsHelper } from '@serverUtils/eventsHelper';
 
 import { addSuggestedRebaseline } from './rebase';
 import { WorkerHost } from './workerHost';
@@ -23,6 +25,7 @@ import { serializeConfig } from '../common/ipc';
 import { addLocationAndSnippetToError } from '../reporters/internalReporter';
 import { serializeError } from '../util';
 
+import type { RegisteredListener } from '@serverUtils/eventsHelper';
 import type { FailureTracker } from './failureTracker';
 import type { ProcessExitData } from './processHost';
 import type { TestGroup } from './testGroups';
@@ -33,9 +36,6 @@ import type { Suite } from '../common/test';
 import type { TestCase } from '../common/test';
 import type { ReporterV2 } from '../reporters/reporterV2';
 
-const { eventsHelper } = serverUtils;
-
-
 export type EnvByProjectId = Map<string, Record<string, string | undefined>>;
 
 export class Dispatcher {
@@ -44,7 +44,7 @@ export class Dispatcher {
   private _queue: TestGroup[] = [];
   private _workerLimitPerProjectId = new Map<string, number>();
   private _queuedOrRunningHashCount = new Map<string, number>();
-  private _finished = new iso.ManualPromise<void>();
+  private _finished = new ManualPromise<void>();
   private _isStopped = true;
 
   private _config: FullConfigInternal;
@@ -277,14 +277,14 @@ export class Dispatcher {
 }
 
 class JobDispatcher {
-  jobResult = new iso.ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
+  jobResult = new ManualPromise<{ newJob?: TestGroup, didFail: boolean }>();
 
   readonly job: TestGroup;
   private _config: FullConfigInternal;
   private _reporter: ReporterV2;
   private _failureTracker: FailureTracker;
   private _stopCallback: () => void;
-  private _listeners: serverUtils.RegisteredListener[] = [];
+  private _listeners: RegisteredListener[] = [];
   private _failedTests = new Set<TestCase>();
   private _failedWithNonRetriableError = new Set<TestCase|Suite>();
   private _remainingByTestId = new Map<string, TestCase>();

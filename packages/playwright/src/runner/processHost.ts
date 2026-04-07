@@ -17,8 +17,10 @@
 import child_process from 'child_process';
 import { EventEmitter } from 'events';
 
-import { iso } from 'playwright-core/lib/coreBundle';
 import { debug } from 'playwright-core/lib/utilsBundle';
+
+import { assert } from '@isomorphic/assert';
+import { timeOrigin } from '@isomorphic/time';
 
 import type { EnvProducedPayload, ProcessInitParams } from '../common/ipc';
 import type { ProtocolRequest, ProtocolResponse } from '../common/process';
@@ -50,7 +52,7 @@ export class ProcessHost extends EventEmitter {
   }
 
   async startRunner(runnerParams: any, options: { onStdOut?: (chunk: Buffer | string) => void, onStdErr?: (chunk: Buffer | string) => void } = {}): Promise<ProcessExitData | undefined> {
-    iso.assert(!this.process, 'Internal error: starting the same process twice');
+    assert(!this.process, 'Internal error: starting the same process twice');
     this.process = child_process.fork(this._entryScript, {
       // Note: we pass detached:false, so that workers are in the same process group.
       // This way Ctrl+C or a kill command can shutdown all workers in case they misbehave.
@@ -127,7 +129,7 @@ export class ProcessHost extends EventEmitter {
 
     const processParams: ProcessInitParams = {
       processName: this._processName,
-      timeOrigin: iso.timeOrigin(),
+      timeOrigin: timeOrigin(),
     };
 
     this.send({

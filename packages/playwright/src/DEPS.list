@@ -1,6 +1,8 @@
 [*]
+@isomorphic/**
+@serverUtils/**
 common/
-./utils.ts
+./util.ts
 ./utilsBundle.ts
 
 [program.ts]

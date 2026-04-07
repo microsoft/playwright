@@ -16,8 +16,12 @@
 
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { colors as realColors } from 'playwright-core/lib/utilsBundle';
+
+import { noColors } from '@isomorphic/colors';
+import { msToString } from '@isomorphic/formatUtils';
+import { parseErrorStack } from '@isomorphic/stackTrace';
+import { getPackageManagerExecCommand } from '@serverUtils/env';
 
 import { ansiRegex, resolveReporterOutputPath, stripAnsiEscapes } from '../util';
 import { getEastAsianWidth } from '../utilsBundle';
@@ -110,7 +114,7 @@ export const terminalScreen: TerminalScreen = (() => {
   else if (process.env.DEBUG_COLORS || process.env.FORCE_COLOR)
     useColors = true;
 
-  const colors = useColors ? realColors : iso.noColors;
+  const colors = useColors ? realColors : noColors;
   return {
     resolveFiles: 'cwd',
     isTTY,
@@ -259,7 +263,7 @@ export class TerminalReporter implements ReporterV2 {
     if (didNotRun)
       tokens.push(this.screen.colors.yellow(`  ${didNotRun} did not run`));
     if (expected)
-      tokens.push(this.screen.colors.green(`  ${expected} passed`) + this.screen.colors.dim(` (${iso.msToString(this.result.duration)})`));
+      tokens.push(this.screen.colors.green(`  ${expected} passed`) + this.screen.colors.dim(` (${msToString(this.result.duration)})`));
     if (fatalErrors.length && expected + unexpected.length + interrupted.length + flaky.length > 0)
       tokens.push(this.screen.colors.red(`  ${fatalErrors.length === 1 ? '1 error was not a part of any test' : fatalErrors.length + ' errors were not a part of any test'}, see above for details`));
 
@@ -327,7 +331,7 @@ export class TerminalReporter implements ReporterV2 {
   private _printSlowTests() {
     const slowTests = this.getSlowTests();
     slowTests.forEach(([file, duration]) => {
-      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${iso.msToString(duration)})`));
+      this.writeLine(this.screen.colors.yellow('  Slow test file: ') + file + this.screen.colors.yellow(` (${msToString(duration)})`));
     });
     if (slowTests.length)
       this.writeLine(this.screen.colors.yellow('  Consider running tests from slow files in parallel. See: https://playwright.dev/docs/test-parallel'));
@@ -436,7 +440,7 @@ export function formatFailure(screen: Screen, config: FullConfig, test: TestCase
         resultLines.push(screen.colors.dim(`    ${relativePath}`));
         // Make this extensible
         if (attachment.name === 'trace') {
-          const packageManagerCommand = serverUtils.getPackageManagerExecCommand();
+          const packageManagerCommand = getPackageManagerExecCommand();
           resultLines.push(screen.colors.dim(`    Usage:`));
           resultLines.push('');
           resultLines.push(screen.colors.dim(`        ${packageManagerCommand} playwright show-trace ${quotePathIfNeeded(relativePath)}`));
@@ -612,7 +616,7 @@ export function prepareErrorStack(stack: string): {
   stackLines: string[];
   location?: Location;
 } {
-  return iso.parseErrorStack(stack, path.sep, !!process.env.PWDEBUGIMPL);
+  return parseErrorStack(stack, path.sep, !!process.env.PWDEBUGIMPL);
 }
 
 function characterWidth(c: string) {
