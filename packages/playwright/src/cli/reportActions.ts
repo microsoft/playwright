@@ -18,12 +18,12 @@ import fs from 'fs';
 import path from 'path';
 
 import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
-import { builtInReporters, defaultReporter } from './common/config';
-import { loadConfigFromFile, loadEmptyConfigForMergeReports } from './common/configLoader';
-import { showHTMLReport } from './reporters/html';
-import { createMergedReport } from './reporters/merge';
+import { builtInReporters, defaultReporter } from '../common/config';
+import { loadConfigFromFile, loadEmptyConfigForMergeReports } from '../common/configLoader';
+import { showHTMLReport } from '../reporters/html';
+import { createMergedReport } from '../reporters/merge';
 
-import type { ReporterDescription } from '../types/test';
+import type { ReporterDescription } from '../../types/test';
 
 export async function showReport(report: string | undefined, host: string, port: number) {
   await showHTMLReport(report, host, port);

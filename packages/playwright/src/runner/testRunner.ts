@@ -25,7 +25,7 @@ import { setPlaywrightTestProcessEnv } from '@serverUtils/env';
 import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
 
 import { loadConfig } from '../common/configLoader';
-import { Watcher } from '../fsWatcher';
+import { FSWatcher } from './fsWatcher';
 import { baseFullConfig } from '../isomorphic/teleReceiver';
 import { addGitCommitInfoPlugin } from '../plugins/gitCommitInfoPlugin';
 import { webServerPluginsForConfig } from '../plugins/webServerPlugin';
@@ -34,7 +34,7 @@ import { InternalReporter } from '../reporters/internalReporter';
 import { affectedTestFiles, collectAffectedTestFiles, dependenciesForTestFile } from '../transform/compilationCache';
 import { serializeError } from '../util';
 import { createErrorCollectingReporter, createReporters } from './reporters';
-import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, createStartDevServerTask, runTasks, runTasksDeferCleanup } from './tasks';
+import { TestRun, createApplyRebaselinesTask, createClearCacheTask, createGlobalSetupTasks, createListFilesTask, createLoadTask, createPluginSetupTasks, createReportBeginTask, createRunTestsTasks, runTasks, runTasksDeferCleanup } from './tasks';
 import { LastRunReporter } from './lastRun';
 
 import type * as reporterTypes from '../../types/testReporter';
@@ -92,7 +92,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   readonly configLocation: ConfigLocation;
   private _configCLIOverrides: ConfigCLIOverrides;
 
-  private _watcher: Watcher;
+  private _watcher: FSWatcher;
   private _watchedProjectDirs = new Set<string>();
   private _ignoredProjectOutputs = new Set<string>();
   private _watchedTestDependencies = new Set<string>();
@@ -100,7 +100,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _queue = Promise.resolve();
   private _globalSetup: { cleanup: () => Promise<any> } | undefined;
-  private _devServer: { cleanup: () => Promise<any> } | undefined;
   private _plugins: TestRunnerPluginRegistration[] | undefined;
   private _watchTestDirs = false;
   private _populateDependenciesOnList = false;
@@ -110,7 +109,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     super();
     this.configLocation = configLocation;
     this._configCLIOverrides = configCLIOverrides;
-    this._watcher = new Watcher(events => {
+    this._watcher = new FSWatcher(events => {
       const collector = new Set<string>();
       events.forEach(f => collectAffectedTestFiles(f.file, collector));
       this.emit(TestRunnerEvent.TestFilesChanged, [...collector]);
@@ -188,33 +187,6 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     const globalSetup = this._globalSetup;
     const status = await globalSetup?.cleanup();
     this._globalSetup = undefined;
-    return { status };
-  }
-
-  async startDevServer(userReporter: AnyReporter, mode: 'in-process' | 'out-of-process'): Promise<{ status: FullResultStatus }> {
-    await this.stopDevServer();
-
-    const reporter = new InternalReporter([userReporter]);
-    const config = await this._loadConfigOrReportError(reporter);
-    if (!config)
-      return { status: 'failed' };
-
-    const { status, cleanup } = await runTasksDeferCleanup(new TestRun(config, reporter), [
-      ...createPluginSetupTasks(config),
-      createLoadTask(mode, { failOnLoadErrors: true, filterOnly: false }),
-      createStartDevServerTask(),
-    ]);
-    if (status !== 'passed')
-      await cleanup();
-    else
-      this._devServer = { cleanup };
-    return { status };
-  }
-
-  async stopDevServer(): Promise<{ status: FullResultStatus }> {
-    const devServer = this._devServer;
-    const status = await devServer?.cleanup();
-    this._devServer = undefined;
     return { status };
   }
 

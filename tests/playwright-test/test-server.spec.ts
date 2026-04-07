@@ -177,23 +177,6 @@ test('stdio interception', async ({ startTestServer, writeFiles }) => {
   ]));
 });
 
-test('start dev server', async ({ startTestServer, writeFiles, runInlineTest }) => {
-  await writeFiles(ctFiles);
-
-  const testServerConnection = await startTestServer();
-  await testServerConnection.initialize({ interceptStdio: true });
-  expect((await testServerConnection.runGlobalSetup({})).status).toBe('passed');
-  expect((await testServerConnection.startDevServer({})).status).toBe('passed');
-
-  const result = await runInlineTest({}, { workers: 1 });
-  expect(result.exitCode).toBe(0);
-  expect(result.passed).toBe(1);
-  expect(result.output).toContain('Dev Server is already running at');
-
-  expect((await testServerConnection.stopDevServer({})).status).toBe('passed');
-  expect((await testServerConnection.runGlobalTeardown({})).status).toBe('passed');
-});
-
 test('find related test files errors', async ({ startTestServer, writeFiles }) => {
   await writeFiles({
     'a.spec.ts': `

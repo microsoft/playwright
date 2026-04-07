@@ -98,7 +98,6 @@ export class TestServerDispatcher implements TestServerInterface {
   private _closeOnDisconnect = false;
   private _testRunner: TestRunner;
   private _globalSetupReport: ReportEntry[] | undefined;
-  private _devServerReport: ReportEntry[] | undefined;
   readonly _dispatchEvent: TestServerInterfaceEventEmitters['dispatchEvent'];
 
   constructor(configLocation: ConfigLocation, configCLIOverrides: ConfigCLIOverrides) {
@@ -171,21 +170,6 @@ export class TestServerDispatcher implements TestServerInterface {
     const { status } = await this._testRunner.runGlobalTeardown();
     const report = this._globalSetupReport || [];
     this._globalSetupReport = undefined;
-    return { status, report };
-  }
-
-  async startDevServer(params: Parameters<TestServerInterface['startDevServer']>[0]): ReturnType<TestServerInterface['startDevServer']> {
-    await this.stopDevServer({});
-
-    const { reporter, report } = await this._collectingReporter();
-    const { status } = await this._testRunner.startDevServer(reporter, 'out-of-process');
-    return { report, status };
-  }
-
-  async stopDevServer(params: Parameters<TestServerInterface['stopDevServer']>[0]): ReturnType<TestServerInterface['stopDevServer']> {
-    const { status } = await this._testRunner.stopDevServer();
-    const report = this._devServerReport || [];
-    this._devServerReport = undefined;
     return { status, report };
   }
 

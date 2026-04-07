@@ -442,26 +442,3 @@ function createRunTestsTask(): Task<TestRun> {
     },
   };
 }
-
-export function createStartDevServerTask(): Task<TestRun> {
-  return {
-    title: 'start dev server',
-    setup: async ({ config }, errors, softErrors) => {
-      if (config.plugins.some(plugin => !!plugin.devServerCleanup)) {
-        errors.push({ message: `DevServer is already running` });
-        return;
-      }
-      for (const plugin of config.plugins)
-        plugin.devServerCleanup = await plugin.instance?.startDevServer?.();
-      if (!config.plugins.some(plugin => !!plugin.devServerCleanup))
-        errors.push({ message: `DevServer is not available in the package you are using. Did you mean to use component testing?` });
-    },
-
-    teardown: async ({ config }) => {
-      for (const plugin of config.plugins) {
-        await plugin.devServerCleanup?.();
-        plugin.devServerCleanup = undefined;
-      }
-    },
-  };
-}

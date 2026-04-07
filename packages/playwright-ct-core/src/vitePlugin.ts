@@ -24,9 +24,8 @@ import { resolveHook } from 'playwright/lib/transform/transform';
 import { removeDirAndLogToConsole } from 'playwright/lib/util';
 import { stoppable } from 'playwright/lib/utilsBundle';
 
-import { runDevServer } from './devServer';
 import { source as injectedSource } from './generated/indexSource';
-import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, resolveEndpoint, transformIndexFile } from './viteUtils';
+import { createConfig, frameworkConfig, hasJSComponents, populateComponentsFromTests, resolveDirs, transformIndexFile } from './viteUtils';
 
 import type http from 'http';
 import type { AddressInfo } from 'net';
@@ -80,10 +79,6 @@ export function createPlugin(): TestRunnerPlugin {
       await buildBundle(config, configDir);
     },
 
-    startDevServer: async () => {
-      return await runDevServer(config);
-    },
-
     clearCache: async () => {
       const configDir = config.configFile ? path.dirname(config.configFile) : config.rootDir;
       const dirs = await resolveDirs(configDir, config);
@@ -110,19 +105,6 @@ type BuildInfo = {
 
 export async function buildBundle(config: FullConfig, configDir: string): Promise<{ buildInfo: BuildInfo, viteConfig: Record<string, any> } | null> {
   const { registerSourceFile, frameworkPluginFactory } = frameworkConfig(config);
-  {
-    // Detect a running dev server and use it if available.
-    const endpoint = resolveEndpoint(config);
-    const protocol = endpoint.https ? 'https:' : 'http:';
-    const url = new URL(`${protocol}//${endpoint.host}:${endpoint.port}`);
-    if (await serverUtils.isURLAvailable(url, true)) {
-      // eslint-disable-next-line no-console
-      console.log(`Dev Server is already running at ${url.toString()}, using it.\n`);
-      process.env.PLAYWRIGHT_TEST_BASE_URL = url.toString();
-      return null;
-    }
-  }
-
   const dirs = await resolveDirs(configDir, config);
   if (!dirs) {
     // eslint-disable-next-line no-console

@@ -41,9 +41,9 @@ test('should print dependencies in CJS mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      import { fileDependenciesForTest } from 'playwright/lib/transform/compilationCache';
       export default () => {
-        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+        console.log('###' + JSON.stringify(fileDependenciesForTest()) + '###');
       };
     `
   }, {});
@@ -80,9 +80,9 @@ test('should print dependencies in ESM mode', async ({ runInlineTest }) => {
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      import { fileDependenciesForTest } from 'playwright/lib/transform/compilationCache';
       export default () => {
-        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+        console.log('###' + JSON.stringify(fileDependenciesForTest()) + '###');
       };
     `
   }, {});
@@ -119,9 +119,9 @@ test('should print dependencies in mixed CJS/ESM mode 1', async ({ runInlineTest
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      import { fileDependenciesForTest } from 'playwright/lib/transform/compilationCache';
       export default () => {
-        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+        console.log('###' + JSON.stringify(fileDependenciesForTest()) + '###');
       };
     `
   }, {});
@@ -157,9 +157,9 @@ test('should print dependencies in mixed CJS/ESM mode 2', async ({ runInlineTest
       test('passes', () => {});
     `,
     'globalTeardown.ts': `
-      import { fileDependencies } from 'playwright/lib/internalsForTest';
+      import { fileDependenciesForTest } from 'playwright/lib/transform/compilationCache';
       export default () => {
-        console.log('###' + JSON.stringify(fileDependencies()) + '###');
+        console.log('###' + JSON.stringify(fileDependenciesForTest()) + '###');
       };
     `
   }, {});
