@@ -454,23 +454,48 @@ class CustomCallbackStep extends Step {
   }
 }
 
-// Plugin to convert dynamic import() of relative paths to require().
-// esbuild preserves dynamic import() even in CJS format, but we want
-// all local imports to use require() for consistency.
+// Single onLoad plugin that does two source-level rewrites:
+//
+// 1. `await import('./rel')` → `require('./rel')`. esbuild preserves dynamic
+//    import() even in CJS format; we want local imports to use require()
+//    uniformly.
+//
+// 2. `import { X } from '@isomorphic/foo'` / `'@serverUtils/bar'` →
+//    `const { X } = require('playwright-core/lib/coreBundle').iso`
+//    (same for serverUtils). Per-file esbuild (bundle:false) can't follow
+//    path aliases to files outside the emitted tree, so we translate these
+//    at source-load time into coreBundle namespace access. Bundled outputs
+//    (transform/) use esbuild's `alias` option instead.
+//
+// Both rewrites must live in the SAME plugin because esbuild only runs one
+// onLoad handler per file; the first plugin that returns contents wins.
 const dynamicImportToRequirePlugin = {
   name: 'dynamic-import-to-require',
   setup(build) {
     build.onLoad({ filter: /\.ts$/ }, async (args) => {
-      const contents = await fs.promises.readFile(args.path, 'utf8');
-      if (!contents.includes('await import('))
+      let contents = await fs.promises.readFile(args.path, 'utf8');
+      const hasAwaitImport = contents.includes('await import(');
+      const isPlaywrightSrc = args.path.includes(`${path.sep}playwright${path.sep}src${path.sep}`);
+      const hasAlias = isPlaywrightSrc && (contents.includes("'@isomorphic/") || contents.includes("'@serverUtils/"));
+      if (!hasAwaitImport && !hasAlias)
         return undefined;
-      return {
-        contents: contents.replace(
+      if (hasAwaitImport) {
+        contents = contents.replace(
             /\bawait import\((['"]\..*?['"])\)/g,
             (_, specifier) => `require(${specifier})`
-        ),
-        loader: 'ts',
-      };
+        );
+      }
+      if (hasAlias) {
+        contents = contents.replace(
+            /import\s*\{([^}]*)\}\s*from\s*'@isomorphic\/[^']+';?/g,
+            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').iso;`
+        );
+        contents = contents.replace(
+            /import\s*\{([^}]*)\}\s*from\s*'@serverUtils\/[^']+';?/g,
+            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').serverUtils;`
+        );
+      }
+      return { contents, loader: 'ts' };
     });
   }
 };

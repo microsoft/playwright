@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { captureRawStack } from '@isomorphic/stackTrace';
+import { escapeWithQuotes, isString } from '@isomorphic/stringUtils';
+import { pollAgainstDeadline } from '@isomorphic/timeoutRunner';
+import { createGuid } from '@serverUtils/crypto';
+import { currentZone } from '@serverUtils/zones';
 
 import { ExpectError, isJestError } from './matcherHint';
 import {
@@ -78,7 +82,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
   const expectInstance: Expect<{}> = new Proxy(expectLibrary, {
     apply: function(target: any, thisArg: any, argumentsList: [unknown, ExpectMessage?]) {
       const [actual, messageOrOptions] = argumentsList;
-      const message = iso.isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
+      const message = isString(messageOrOptions) ? messageOrOptions : messageOrOptions?.message || info.message;
       const newInfo = { ...info, message };
       if (newInfo.poll) {
         if (typeof actual !== 'function')
@@ -94,7 +98,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 
       if (property === 'extend') {
         return (matchers: any) => {
-          const qualifier = [...prefix, serverUtils.createGuid()];
+          const qualifier = [...prefix, createGuid()];
 
           const wrappedMatchers: any = {};
           for (const [name, matcher] of Object.entries(matchers)) {
@@ -119,7 +123,7 @@ function createExpect(info: ExpectMetaInfo, prefix: string[], userMatchers: Reco
 
       if (property === 'poll') {
         return (actual: unknown, messageOrOptions?: ExpectMessage & { timeout?: number, intervals?: number[] }) => {
-          const poll = iso.isString(messageOrOptions) ? {} : messageOrOptions || {};
+          const poll = isString(messageOrOptions) ? {} : messageOrOptions || {};
           return configure({ _poll: poll })(actual, messageOrOptions) as any;
         };
       }
@@ -299,13 +303,13 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       const customMessage = this._info.message || '';
       const suffixes = computeMatcherTitleSuffix(matcherName, this._actual, args);
       const defaultTitle = `${this._info.poll ? 'poll ' : ''}${this._info.isSoft ? 'soft ' : ''}${this._info.isNot ? 'not ' : ''}${matcherName}${suffixes.short || ''}`;
-      const shortTitle = customMessage || `Expect ${iso.escapeWithQuotes(defaultTitle, '"')}`;
+      const shortTitle = customMessage || `Expect ${escapeWithQuotes(defaultTitle, '"')}`;
       const longTitle = shortTitle + (suffixes.long || '');
       const apiName = `expect${this._info.poll ? '.poll ' : ''}${this._info.isSoft ? '.soft ' : ''}${this._info.isNot ? '.not' : ''}.${matcherName}${suffixes.short || ''}`;
 
       // This looks like it is unnecessary, but it isn't - we need to filter
       // out all the frames that belong to the test runner from caught runtime errors.
-      const stackFrames = filteredStackTrace(iso.captureRawStack());
+      const stackFrames = filteredStackTrace(captureRawStack());
 
       // toPass and poll matchers can contain other steps, expects and API calls,
       // so they behave like a retriable step.
@@ -346,7 +350,7 @@ class ExpectMetaInfoProxyHandler implements ProxyHandler<any> {
       try {
         setMatcherCallContext({ expectInfo: this._info, testInfo, step: step.info });
         const callback = () => matcher.call(target, ...args);
-        const result = serverUtils.currentZone().with('stepZone', step).run(callback);
+        const result = currentZone().with('stepZone', step).run(callback);
         if (result instanceof Promise)
           return result.then(finalizer).catch(reportStepError);
         finalizer();
@@ -364,7 +368,7 @@ async function pollMatcher(qualifiedMatcherName: string, info: ExpectMetaInfo, p
   const timeout = poll.timeout ?? info.timeout ?? testInfo?._projectInternal?.expect?.timeout ?? defaultExpectTimeout;
   const { deadline, timeoutMessage } = testInfo ? testInfo._deadlineForMatcher(timeout) : TestInfoImpl._defaultDeadlineForMatcher(timeout);
 
-  const result = await iso.pollAgainstDeadline<Error|undefined>(async () => {
+  const result = await pollAgainstDeadline<Error|undefined>(async () => {
     if (testInfo && currentTestInfo() !== testInfo)
       return { continuePolling: false, result: undefined };
 

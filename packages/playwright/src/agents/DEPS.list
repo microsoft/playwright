@@ -1,4 +1,5 @@
 [*]
+@serverUtils/**
 ../mcp/sdk/
 ../mcp/test/
 ../common/

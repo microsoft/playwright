@@ -17,8 +17,12 @@
 /* eslint-disable no-console */
 
 import 'playwright-core/lib/bootstrap';
-import { libCli, serverUtils } from 'playwright-core/lib/coreBundle';
+
+import { libCli } from 'playwright-core/lib/coreBundle';
 import { program } from 'playwright-core/lib/utilsBundle';
+
+import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
+
 import { builtInReporters, defaultReporter, defaultTimeout } from './common/config';
 
 export { program };
@@ -52,7 +56,7 @@ function addTestCommand(program: Command) {
       await runTests(args, opts);
     } catch (e) {
       console.error(e);
-      serverUtils.gracefullyProcessExitDoNotHang(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.addHelpText('afterAll', `
@@ -125,7 +129,7 @@ function addMergeReportsCommand(program: Command) {
       await mergeReports(dir, options);
     } catch (e) {
       console.error(e);
-      serverUtils.gracefullyProcessExitDoNotHang(1);
+      gracefullyProcessExitDoNotHang(1);
     }
   });
   command.option('-c, --config <file>', `Configuration file. Can be used to specify additional configuration for the output report.`);

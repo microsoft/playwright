@@ -18,7 +18,11 @@ import EventEmitter from 'events';
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils, registry } from 'playwright-core/lib/coreBundle';
+import { registry } from 'playwright-core/lib/coreBundle';
+
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { setPlaywrightTestProcessEnv } from '@serverUtils/env';
+import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
 
 import { loadConfig } from '../common/configLoader';
 import { Watcher } from '../fsWatcher';
@@ -93,7 +97,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   private _ignoredProjectOutputs = new Set<string>();
   private _watchedTestDependencies = new Set<string>();
 
-  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: iso.ManualPromise<void> } | undefined;
+  private _testRun: { run: Promise<reporterTypes.FullResult['status']>, stop: ManualPromise<void> } | undefined;
   private _queue = Promise.resolve();
   private _globalSetup: { cleanup: () => Promise<any> } | undefined;
   private _devServer: { cleanup: () => Promise<any> } | undefined;
@@ -117,7 +121,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
     watchTestDirs?: boolean;
     populateDependenciesOnList?: boolean;
   }) {
-    serverUtils.setPlaywrightTestProcessEnv();
+    setPlaywrightTestProcessEnv();
     this._watchTestDirs = !!params.watchTestDirs;
     this._populateDependenciesOnList = !!params.populateDependenciesOnList;
     this._startingEnv = { ...process.env };
@@ -353,7 +357,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
 
     const configReporters = params.disableConfigReporters ? [] : await createReporters(config, 'test');
     const reporter = new InternalReporter([...configReporters, userReporter]);
-    const stop = new iso.ManualPromise();
+    const stop = new ManualPromise();
     const tasks = [
       createApplyRebaselinesTask(),
       createLoadTask('out-of-process', { filterOnly: true, failOnLoadErrors: !!params.failOnLoadErrors, doNotRunDepsOutsideProjectFilter: params.doNotRunDepsOutsideProjectFilter }),
@@ -399,7 +403,7 @@ export class TestRunner extends EventEmitter<TestRunnerEventMap> {
   }
 
   async closeGracefully() {
-    serverUtils.gracefullyProcessExitDoNotHang(0);
+    gracefullyProcessExitDoNotHang(0);
   }
 
   async stop() {
@@ -456,7 +460,7 @@ async function resolveCtDirs(config: FullConfigInternal) {
 }
 
 export async function runAllTestsWithConfig(config: FullConfigInternal): Promise<FullResultStatus> {
-  serverUtils.setPlaywrightTestProcessEnv();
+  setPlaywrightTestProcessEnv();
 
   const listOnly = config.cliListOnly;
 

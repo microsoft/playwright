@@ -17,7 +17,13 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { captureRawStack, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
+import { monotonicTime } from '@isomorphic/time';
+import { createGuid } from '@serverUtils/crypto';
+import { sanitizeForFilePath } from '@serverUtils/fileUtils';
+import { currentZone } from '@serverUtils/zones';
 
 import { TimeoutManager, TimeoutManagerError, kMaxDeadline } from './timeoutManager';
 import { addSuffixToFilePath, filteredStackTrace, getContainedPath, normalizeAndSaveAttachment, sanitizeFilePathBeforeExtension, trimLongString, windowsFilesystemFriendlyLength } from '../util';
@@ -32,8 +38,6 @@ import type { FullConfigInternal, FullProjectInternal } from '../common/config';
 import type * as ipc from '../common/ipc';
 import type { TestCase } from '../common/test';
 import type { StackFrame } from '@protocol/channels';
-
-const { monotonicTime } = iso;
 
 export type TestStepCategory = 'expect' | 'fixture' | 'hook' | 'pw:api' | 'test.step' | 'test.attach';
 
@@ -91,7 +95,7 @@ export class TestInfoImpl implements TestInfo {
   readonly _tracing: TestTracing;
   readonly _uniqueSymbol;
 
-  private _interruptedPromise = new iso.ManualPromise<void>();
+  private _interruptedPromise = new ManualPromise<void>();
   _lastStepId = 0;
   private readonly _requireFile: string;
   readonly _projectInternal: FullProjectInternal;
@@ -213,9 +217,9 @@ export class TestInfoImpl implements TestInfo {
       const sanitizedRelativePath = relativeTestFilePath.replace(process.platform === 'win32' ? new RegExp('\\\\', 'g') : new RegExp('/', 'g'), '-');
       const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
 
-      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + serverUtils.sanitizeForFilePath(fullTitleWithoutSpec), windowsFilesystemFriendlyLength);
+      let testOutputDir = trimLongString(sanitizedRelativePath + '-' + sanitizeForFilePath(fullTitleWithoutSpec), windowsFilesystemFriendlyLength);
       if (projectInternal.id)
-        testOutputDir += '-' + serverUtils.sanitizeForFilePath(projectInternal.id);
+        testOutputDir += '-' + sanitizeForFilePath(projectInternal.id);
       if (this.retry)
         testOutputDir += '-retry' + this.retry;
       if (this.repeatEachIndex)
@@ -288,7 +292,7 @@ export class TestInfoImpl implements TestInfo {
   }
 
   private _parentStep() {
-    return serverUtils.currentZone().data<TestStepInternal>('stepZone') ?? this._findLastPredefinedStep(this._steps);
+    return currentZone().data<TestStepInternal>('stepZone') ?? this._findLastPredefinedStep(this._steps);
   }
 
   _addStep(data: Readonly<TestStepData>, parentStep?: TestStepInternal): TestStepInternal {
@@ -302,7 +306,7 @@ export class TestInfoImpl implements TestInfo {
         parentStep = this._parentStep();
     }
 
-    const filteredStack = filteredStackTrace(iso.captureRawStack());
+    const filteredStack = filteredStackTrace(captureRawStack());
     let boxedStack = parentStep?.boxedStack;
     let location = data.location;
     if (!boxedStack && data.box) {
@@ -330,7 +334,7 @@ export class TestInfoImpl implements TestInfo {
             (result.error as any)[stepSymbol] = step;
           const error = testInfoError(result.error);
           if (step.boxedStack)
-            error.stack = `${error.message}\n${iso.stringifyStackFrames(step.boxedStack).join('\n')}`;
+            error.stack = `${error.message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
           step.error = error;
         }
 
@@ -416,7 +420,7 @@ export class TestInfoImpl implements TestInfo {
     const serialized = testInfoError(error);
     const step: TestStepInternal | undefined = typeof error === 'object' ? (error as any)?.[stepSymbol] : undefined;
     if (step && step.boxedStack)
-      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${iso.stringifyStackFrames(step.boxedStack).join('\n')}`;
+      serialized.stack = `${(error as Error).name}: ${(error as Error).message}\n${stringifyStackFrames(step.boxedStack).join('\n')}`;
     this.errors.push(serialized);
     this._tracing.appendForError(serialized);
   }
@@ -493,7 +497,7 @@ export class TestInfoImpl implements TestInfo {
 
   async attach(name: string, options: { path?: string, body?: string | Buffer, contentType?: string } = {}) {
     const step = this._addStep({
-      title: `Attach ${iso.escapeWithQuotes(name, '"')}`,
+      title: `Attach ${escapeWithQuotes(name, '"')}`,
       category: 'test.attach',
     });
     this._attach(
@@ -513,8 +517,8 @@ export class TestInfoImpl implements TestInfo {
     if (step) {
       step.attachmentIndices.push(index);
     } else {
-      const stepId = `attach@${serverUtils.createGuid()}`;
-      this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${iso.escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
+      const stepId = `attach@${createGuid()}`;
+      this._tracing.appendBeforeActionForStep({ stepId, title: `Attach ${escapeWithQuotes(attachment.name, '"')}`, category: 'test.attach', stack: [] });
       this._tracing.appendAfterActionForStep(stepId, undefined, [attachment]);
     }
 
@@ -544,7 +548,7 @@ export class TestInfoImpl implements TestInfo {
 
   _fsSanitizedTestName() {
     const fullTitleWithoutSpec = this.titlePath.slice(1).join(' ');
-    return serverUtils.sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
+    return sanitizeForFilePath(trimLongString(fullTitleWithoutSpec));
   }
 
   _resolveSnapshotPaths(kind: 'snapshot' | 'screenshot' | 'aria', name: string | string[] | undefined, updateSnapshotIndex: 'updateSnapshotIndex' | 'dontUpdateSnapshotIndex', anonymousExtension?: string) {
@@ -612,7 +616,7 @@ export class TestInfoImpl implements TestInfo {
   _applyPathTemplate(template: string, nameArgument: string, ext: string) {
     const relativeTestFilePath = path.relative(this.project.testDir, this._requireFile);
     const parsedRelativeTestFilePath = path.parse(relativeTestFilePath);
-    const projectNamePathSegment = serverUtils.sanitizeForFilePath(this.project.name);
+    const projectNamePathSegment = sanitizeForFilePath(this.project.name);
 
     const snapshotPath = template
         .replace(/\{(.)?testDir\}/g, '$1' + this.project.testDir)

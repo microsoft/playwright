@@ -16,7 +16,8 @@
 
 import path from 'path';
 
-import { iso } from 'playwright-core/lib/coreBundle';
+import { noColors } from '@isomorphic/colors';
+import { msToString } from '@isomorphic/formatUtils';
 
 import { TerminalReporter, formatResultFailure, formatRetry } from './base';
 import { stripAnsiEscapes } from '../util';
@@ -66,7 +67,7 @@ export class GitHubReporter extends TerminalReporter {
 
   constructor(options: { omitFailures?: boolean } = {}) {
     super(options);
-    this.screen = { ...this.screen, colors: iso.noColors };
+    this.screen = { ...this.screen, colors: noColors };
   }
 
   printsToStdio() {
@@ -95,7 +96,7 @@ export class GitHubReporter extends TerminalReporter {
   private _printSlowTestAnnotations() {
     this.getSlowTests().forEach(([file, duration]) => {
       const filePath = workspaceRelativePath(path.join(process.cwd(), file));
-      this.githubLogger.warning(`${filePath} took ${iso.msToString(duration)}`, {
+      this.githubLogger.warning(`${filePath} took ${msToString(duration)}`, {
         title: 'Slow Test',
         file: filePath,
       });

@@ -15,12 +15,14 @@
  */
 
 import 'playwright-core/lib/bootstrap';
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { setTimeOrigin } from '@isomorphic/time';
+import { startProfiling, stopProfiling } from '@serverUtils/profiler';
+
 import { serializeError } from '../util';
 
 import type { EnvProducedPayload, ProcessInitParams, TestInfoErrorImpl } from './ipc';
-
-type ManualPromise<T = void> = iso.ManualPromise<T>;
 
 export type ProtocolRequest = {
   id: number;
@@ -70,8 +72,8 @@ export function startProcessRunner(create: (params: any) => ProcessRunner) {
   process.on('message', async (message: any) => {
     if (message.method === '__init__') {
       const { processParams, runnerParams } = message.params as { processParams: ProcessInitParams, runnerParams: any };
-      void serverUtils.startProfiling();
-      iso.setTimeOrigin(processParams.timeOrigin);
+      void startProfiling();
+      setTimeOrigin(processParams.timeOrigin);
       processRunner = create(runnerParams);
       processName = processParams.processName;
       return;
@@ -113,7 +115,7 @@ async function gracefullyCloseAndExit(forceExit: boolean) {
     // Meanwhile, try to gracefully shutdown.
     await processRunner?.gracefullyClose().catch(() => {});
     if (processName)
-      await serverUtils.stopProfiling(processName).catch(() => {});
+      await stopProfiling(processName).catch(() => {});
     // eslint-disable-next-line no-restricted-properties
     process.exit(0);
   }
@@ -140,7 +142,7 @@ const requestCallbacks = new Map<number, ManualPromise<any>>();
 async function sendRequestToParent(method: string, params?: any): Promise<any> {
   const id = ++lastId;
   sendMessageToParent({ method: '__request__', params: { id, method, params } });
-  const promise = new iso.ManualPromise<any>();
+  const promise = new ManualPromise<any>();
   requestCallbacks.set(id, promise);
   return promise;
 }

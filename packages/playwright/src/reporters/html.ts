@@ -18,11 +18,15 @@ import fs from 'fs';
 import path from 'path';
 import { Transform } from 'stream';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
-import { colors } from 'playwright-core/lib/utilsBundle';
+import { colors, mime, open } from 'playwright-core/lib/utilsBundle';
 
-import { open } from 'playwright-core/lib/utilsBundle';
-import { mime } from 'playwright-core/lib/utilsBundle';
+import { assert } from '@isomorphic/assert';
+import { MultiMap } from '@isomorphic/multimap';
+import { calculateSha1 } from '@serverUtils/crypto';
+import { copyFileAndMakeWritable, removeFolders, sanitizeForFilePath, toPosixPath } from '@serverUtils/fileUtils';
+import { getPackageManagerExecCommand } from '@serverUtils/env';
+import { HttpServer } from '@serverUtils/httpServer';
+import { gracefullyProcessExitDoNotHang } from '@serverUtils/processLauncher';
 
 import { CommonReporterOptions, formatError, formatResultFailure, internalScreen } from './base';
 import { codeFrameColumns } from '../transform/babelBundle';
@@ -141,7 +145,7 @@ class HtmlReporter implements ReporterV2 {
 
   async onEnd(result: api.FullResult) {
     const projectSuites = this.suite.suites;
-    await serverUtils.removeFolders([this._outputFolder]);
+    await removeFolders([this._outputFolder]);
     const noSnippets = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_SNIPPETS') ?? this._options.noSnippets;
     const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
     const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
@@ -164,7 +168,7 @@ class HtmlReporter implements ReporterV2 {
     if (shouldOpen) {
       await showHTMLReport(this._outputFolder, this._host, this._port, singleTestId);
     } else if (this._options._mode === 'test' && !!process.stdin.isTTY) {
-      const packageManagerCommand = serverUtils.getPackageManagerExecCommand();
+      const packageManagerCommand = getPackageManagerExecCommand();
       const relativeReportPath = this._outputFolder === standaloneDefaultFolder() ? '' : ' ' + path.relative(process.cwd(), this._outputFolder);
       const hostArg = this._host ? ` --host ${this._host}` : '';
       const portArg = this._port ? ` --port ${this._port}` : '';
@@ -211,10 +215,10 @@ function standaloneDefaultFolder(): string {
 export async function showHTMLReport(reportFolder: string | undefined, host: string = 'localhost', port?: number, testId?: string) {
   const folder = reportFolder ?? standaloneDefaultFolder();
   try {
-    iso.assert(fs.statSync(folder).isDirectory());
+    assert(fs.statSync(folder).isDirectory());
   } catch (e) {
     writeLine(colors.red(`No report found at "${folder}"`));
-    serverUtils.gracefullyProcessExitDoNotHang(1);
+    gracefullyProcessExitDoNotHang(1);
     return;
   }
   const server = startHtmlReportServer(folder);
@@ -229,8 +233,8 @@ export async function showHTMLReport(reportFolder: string | undefined, host: str
   await new Promise(() => {});
 }
 
-export function startHtmlReportServer(folder: string): serverUtils.HttpServer {
-  const server = new serverUtils.HttpServer();
+export function startHtmlReportServer(folder: string): HttpServer {
+  const server = new HttpServer();
   server.routePrefix('/', (request, response) => {
     let relativePath = new URL('http://localhost' + request.url).pathname;
     if (relativePath.startsWith('/trace/file')) {
@@ -254,7 +258,7 @@ type DataMap = Map<string, { testFile: TestFile, testFileSummary: TestFileSummar
 class HtmlBuilder {
   private _config: api.FullConfig;
   private _reportFolder: string;
-  private _stepsInFile = new iso.MultiMap<string, TestStep>();
+  private _stepsInFile = new MultiMap<string, TestStep>();
   private _dataZipFile: ZipFile;
   private _hasTraces = false;
   private _attachmentsBaseURL: string;
@@ -351,12 +355,12 @@ class HtmlBuilder {
       for (const file of fs.readdirSync(traceViewerFolder)) {
         if (file.endsWith('.map') || file.includes('watch') || file.includes('assets'))
           continue;
-        await serverUtils.copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
+        await copyFileAndMakeWritable(path.join(traceViewerFolder, file), path.join(traceViewerTargetFolder, file));
       }
       for (const file of fs.readdirSync(path.join(traceViewerFolder, 'assets'))) {
         if (file.endsWith('.map') || file.includes('xtermModule'))
           continue;
-        await serverUtils.copyFileAndMakeWritable(path.join(traceViewerFolder, 'assets', file), path.join(traceViewerAssetsTargetFolder, file));
+        await copyFileAndMakeWritable(path.join(traceViewerFolder, 'assets', file), path.join(traceViewerAssetsTargetFolder, file));
       }
     }
 
@@ -405,7 +409,7 @@ class HtmlBuilder {
   }
 
   private _createEntryForSuite(data: DataMap, projectName: string, suite: api.Suite, fileName: string, deep: boolean) {
-    const fileId = serverUtils.calculateSha1(fileName).slice(0, 20);
+    const fileId = calculateSha1(fileName).slice(0, 20);
     let fileEntry = data.get(fileId);
     if (!fileEntry) {
       fileEntry = {
@@ -500,7 +504,7 @@ class HtmlBuilder {
         let fileName = a.path;
         try {
           const buffer = fs.readFileSync(a.path);
-          const sha1 = serverUtils.calculateSha1(buffer) + path.extname(a.path);
+          const sha1 = calculateSha1(buffer) + path.extname(a.path);
           fileName = this._attachmentsBaseURL + sha1;
           fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
           fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), buffer);
@@ -531,8 +535,8 @@ class HtmlBuilder {
         }
 
         fs.mkdirSync(path.join(this._reportFolder, 'data'), { recursive: true });
-        const extension = serverUtils.sanitizeForFilePath(path.extname(a.name).replace(/^\./, '')) || mime.getExtension(a.contentType) || 'dat';
-        const sha1 = serverUtils.calculateSha1(a.body) + '.' + extension;
+        const extension = sanitizeForFilePath(path.extname(a.name).replace(/^\./, '')) || mime.getExtension(a.contentType) || 'dat';
+        const sha1 = calculateSha1(a.body) + '.' + extension;
         fs.writeFileSync(path.join(this._reportFolder, 'data', sha1), a.body);
         return {
           name: a.name,
@@ -615,7 +619,7 @@ class HtmlBuilder {
   private _relativeLocation(location: api.Location | undefined): api.Location | undefined {
     if (!location)
       return undefined;
-    const file = serverUtils.toPosixPath(path.relative(this._config.rootDir, location.file));
+    const file = toPosixPath(path.relative(this._config.rootDir, location.file));
     return {
       file,
       line: location.line,
@@ -711,7 +715,7 @@ function dedupeSteps(steps: api.TestStep[]) {
   return result;
 }
 
-function createSnippets(stepsInFile: iso.MultiMap<string, TestStep>) {
+function createSnippets(stepsInFile: MultiMap<string, TestStep>) {
   for (const file of stepsInFile.keys()) {
     let source: string;
     try {

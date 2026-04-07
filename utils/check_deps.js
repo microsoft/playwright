@@ -29,6 +29,7 @@ const packages = new Map();
 packages.set('web', packagesDir + '/web/src/');
 packages.set('injected', packagesDir + '/injected/src/');
 packages.set('isomorphic', packagesDir + '/playwright-core/src/utils/isomorphic/');
+packages.set('serverUtils', packagesDir + '/playwright-core/src/server/utils/');
 packages.set('testIsomorphic', packagesDir + '/playwright/src/isomorphic/');
 
 const peerDependencies = ['electron', 'react', 'react-dom', 'react-dom/client', '@zip.js/zip.js', 'zod', 'zod/v3'];

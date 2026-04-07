@@ -16,7 +16,7 @@
 
 import fs from 'fs';
 
-import { iso } from 'playwright-core/lib/coreBundle';
+import { monotonicTime } from '@isomorphic/time';
 
 import { internalScreen, prepareErrorStack, relativeFilePath } from './base';
 import { Multiplexer } from './multiplexer';
@@ -46,7 +46,7 @@ export class InternalReporter implements ReporterV2 {
   onConfigure(config: FullConfig) {
     this._config = config;
     this._startTime = new Date();
-    this._monotonicStartTime = iso.monotonicTime();
+    this._monotonicStartTime = monotonicTime();
     this._reporter.onConfigure?.(config);
   }
 
@@ -85,7 +85,7 @@ export class InternalReporter implements ReporterV2 {
     return await this._reporter.onEnd?.({
       ...result,
       startTime: this._startTime!,
-      duration: iso.monotonicTime() - this._monotonicStartTime!,
+      duration: monotonicTime() - this._monotonicStartTime!,
     });
   }
 

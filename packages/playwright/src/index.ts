@@ -18,7 +18,14 @@ import fs from 'fs';
 import path from 'path';
 
 import * as playwrightLibrary from 'playwright-core';
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { asLocatorDescription } from '@isomorphic/locatorGenerators';
+import { getActionGroup, renderTitleForCall } from '@isomorphic/protocolFormatter';
+import { escapeHTML } from '@isomorphic/stringUtils';
+import { jsonStringifyForceASCII } from '@serverUtils/ascii';
+import { createGuid } from '@serverUtils/crypto';
+import { debugMode } from '@serverUtils/debug';
+import { setBoxedStackPrefixes } from '@serverUtils/nodePlatform';
+import { currentZone } from '@serverUtils/zones';
 import { buildErrorContext } from './errorContext';
 import { currentTestInfo } from './common/globals';
 import { rootTestType } from './common/testType';
@@ -39,7 +46,7 @@ import type { BrowserContext, BrowserContextOptions, LaunchOptions, Page, Tracin
 export { expect } from './matchers/expect';
 export const _baseTest: TestType<{}, {}> = rootTestType.test;
 
-serverUtils.setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
+setBoxedStackPrefixes([path.dirname(require.resolve('../package.json'))]);
 
 if ((process as any)['__pw_initiator__']) {
   const originalStackTraceLimit = Error.stackTraceLimit;
@@ -111,7 +118,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         exposeNetwork: connectOptions.exposeNetwork,
         headers: {
           // HTTP headers are ASCII only (not UTF-8).
-          'x-playwright-launch-options': serverUtils.jsonStringifyForceASCII(_browserOptions),
+          'x-playwright-launch-options': jsonStringifyForceASCII(_browserOptions),
           ...connectOptions.headers,
         },
       });
@@ -238,7 +245,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
       playwrightLibrary.selectors.setTestIdAttribute(testIdAttribute);
     testInfo.snapshotSuffix = process.platform;
     testInfo._onCustomMessageCallback = () => Promise.reject(new Error('Only tests that use default Playwright context or page fixture support test_debug'));
-    if (serverUtils.debugMode() === 'inspector')
+    if (debugMode() === 'inspector')
       (testInfo as TestInfoImpl)._setIgnoreTimeouts(true);
 
     playwright._defaultContextTimeout = actionTimeout || 0;
@@ -265,7 +272,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
         // Some special calls do not get into steps.
         if (!testInfo || data.apiName.includes('setTestIdAttribute') || data.apiName === 'tracing.groupEnd')
           return;
-        const zone = serverUtils.currentZone().data<TestStepInternal>('stepZone');
+        const zone = currentZone().data<TestStepInternal>('stepZone');
         const isExpectCall = data.apiName === 'locator._expect' || data.apiName === 'frame._expect' || data.apiName === 'page._expectScreenshot';
         if (zone && zone.category === 'expect' && isExpectCall) {
           // Display the internal locator._expect call under the name of the enclosing expect call,
@@ -285,7 +292,7 @@ const playwrightFixtures: Fixtures<TestFixtures, WorkerFixtures> = ({
           title: renderTitle(channel.type, channel.method, channel.params, data.title),
           apiName: data.apiName,
           params: channel.params,
-          group: iso.getActionGroup({ type: channel.type, method: channel.method }),
+          group: getActionGroup({ type: channel.type, method: channel.method }),
         }, tracingGroupSteps[tracingGroupSteps.length - 1]);
         data.userData = step;
         data.stepId = step.stepId;
@@ -642,7 +649,7 @@ class SnapshotRecorder {
       return;
     (page as any)[this.testInfo._uniqueSymbol] = true;
     try {
-      const path = temporary ? this._createTemporaryArtifact(serverUtils.createGuid() + this._extension) : this._createAttachmentPath();
+      const path = temporary ? this._createTemporaryArtifact(createGuid() + this._extension) : this._createAttachmentPath();
       await this._doSnapshot(page, path);
       if (temporary)
         this._temporary.push(path);
@@ -850,15 +857,15 @@ function createTestOverlay(parts: string[], position: string, fontSize: number) 
   };
   const posStyle = positionStyles[position] ?? positionStyles['top-left'];
   return `<div style="white-space: nowrap; font-size: ${fontSize}px; padding: 3px 6px; background: rgba(0,0,0,0.5); color: white; border-radius: 4px; position: absolute; ${posStyle}">
-    ${parts.map(p => `<div>${iso.escapeHTML(p)}</div>`).join('')}
+    ${parts.map(p => `<div>${escapeHTML(p)}</div>`).join('')}
   </div>`;
 }
 
 function renderTitle(type: string, method: string, params: Record<string, string> | undefined, title?: string) {
-  const prefix = iso.renderTitleForCall({ title, type, method, params });
+  const prefix = renderTitleForCall({ title, type, method, params });
   let selector;
   if (params?.['selector'] && typeof params.selector === 'string')
-    selector = iso.asLocatorDescription('javascript', params.selector);
+    selector = asLocatorDescription('javascript', params.selector);
   return prefix + (selector ? ` ${selector}` : '');
 }
 

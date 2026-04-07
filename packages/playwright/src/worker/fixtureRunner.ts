@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { iso } from 'playwright-core/lib/coreBundle';
+import { ManualPromise } from '@isomorphic/manualPromise';
+import { escapeWithQuotes } from '@isomorphic/stringUtils';
 
 import { fixtureParameterNames } from '../common/fixtures';
 import { filterStackFile, formatLocation } from '../util';
@@ -31,7 +32,7 @@ class Fixture {
   value: any;
   failed = false;
 
-  private _useFuncFinished: iso.ManualPromise<void> | undefined;
+  private _useFuncFinished: ManualPromise<void> | undefined;
   private _selfTeardownComplete: Promise<void> | undefined;
   private _setupDescription: FixtureDescription;
   private _teardownDescription: FixtureDescription;
@@ -46,7 +47,7 @@ class Fixture {
     const isUserFixture = this.registration.location && filterStackFile(this.registration.location.file);
     const title = this.registration.customTitle || this.registration.name;
     const location = isUserFixture ? this.registration.location : undefined;
-    this._stepInfo = { title: `Fixture ${iso.escapeWithQuotes(title, '"')}`, category: 'fixture', location };
+    this._stepInfo = { title: `Fixture ${escapeWithQuotes(title, '"')}`, category: 'fixture', location };
     if (this.registration.box === 'self')
       this._stepInfo = undefined;
     else if (this.registration.box)
@@ -104,13 +105,13 @@ class Fixture {
     }
 
     let called = false;
-    const useFuncStarted = new iso.ManualPromise<void>();
+    const useFuncStarted = new ManualPromise<void>();
     const useFunc = async (value: any) => {
       if (called)
         throw new Error(`Cannot provide fixture value for the second time`);
       called = true;
       this.value = value;
-      this._useFuncFinished = new iso.ManualPromise<void>();
+      this._useFuncFinished = new ManualPromise<void>();
       useFuncStarted.resolve();
       await this._useFuncFinished;
     };

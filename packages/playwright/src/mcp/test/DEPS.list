@@ -1,4 +1,6 @@
 [*]
+@isomorphic/**
+@serverUtils/**
 ../../reporters
 ../../runner
 ../../transform

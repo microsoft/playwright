@@ -14,7 +14,8 @@
  * limitations under the License.
  */
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { isRegExp } from '@isomorphic/rtti';
+import { formatMatcherMessage } from '@serverUtils/expectUtils';
 
 import { expectTypes } from '../util';
 
@@ -61,7 +62,7 @@ export async function toEqual<T>(
   } else if (Array.isArray(expected) && Array.isArray(received)) {
     const normalizedExpected = expected.map((exp, index) => {
       const rec = received[index];
-      if (iso.isRegExp(exp))
+      if (isRegExp(exp))
         return exp.test(rec) ? rec : exp;
 
       return exp;
@@ -83,7 +84,7 @@ export async function toEqual<T>(
     );
   }
   const message = () => {
-    return serverUtils.formatMatcherMessage(this.utils, {
+    return formatMatcherMessage(this.utils, {
       isNot: this.isNot,
       promise: this.promise,
       matcherName,

@@ -19,15 +19,19 @@ import path from 'path';
 import url from 'url';
 import util from 'util';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
 import { debug, mime, minimatch } from 'playwright-core/lib/utilsBundle';
 
+import { calculateSha1 } from '@serverUtils/crypto';
+import { sanitizeForFilePath } from '@serverUtils/fileUtils';
+import { isRegExp } from '@isomorphic/rtti';
+import { parseStackFrame, stringifyStackFrames } from '@isomorphic/stackTrace';
+import { ansiRegex, isString, stripAnsiEscapes } from '@isomorphic/stringUtils';
+
+import type { RawStack } from '@isomorphic/stackTrace';
 import type { Location } from './../types/testReporter';
 import type { TestInfoErrorImpl } from './common/ipc';
 import type { StackFrame } from '@protocol/channels';
 import type { TestCase } from './common/test';
-
-type RawStack = iso.RawStack;
 
 const PLAYWRIGHT_TEST_PATH = path.join(__dirname, '..');
 const PLAYWRIGHT_CORE_PATH = path.dirname(require.resolve('playwright-core/package.json'));
@@ -38,7 +42,7 @@ export function filterStackTrace(e: Error): { message: string, stack: string, ca
   if (process.env.PWDEBUGIMPL)
     return { message: name + e.message, stack: e.stack || '', cause };
 
-  const stackLines = iso.stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
+  const stackLines = stringifyStackFrames(filteredStackTrace(e.stack?.split('\n') || []));
   return {
     message: name + e.message,
     stack: `${name}${e.message}${stackLines.map(line => '\n' + line).join('')}`,
@@ -57,7 +61,7 @@ export function filterStackFile(file: string) {
 export function filteredStackTrace(rawStack: RawStack): StackFrame[] {
   const frames: StackFrame[] = [];
   for (const line of rawStack) {
-    const frame = iso.parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
+    const frame = parseStackFrame(line, path.sep, !!process.env.PWDEBUGIMPL);
     if (!frame || !frame.file)
       continue;
     if (!filterStackFile(frame.file))
@@ -91,7 +95,7 @@ export function createFileMatcher(patterns: string | RegExp | (string | RegExp)[
   const reList: RegExp[] = [];
   const filePatterns: string[] = [];
   for (const pattern of Array.isArray(patterns) ? patterns : [patterns]) {
-    if (iso.isRegExp(pattern)) {
+    if (isRegExp(pattern)) {
       reList.push(pattern);
     } else {
       if (!pattern.startsWith('**/'))
@@ -183,7 +187,7 @@ export const windowsFilesystemFriendlyLength = 60;
 export function trimLongString(s: string, length = 100) {
   if (s.length <= length)
     return s;
-  const hash = serverUtils.calculateSha1(s);
+  const hash = calculateSha1(s);
   const middle = `-${hash.substring(0, 5)}-`;
   const start = Math.floor((length - middle.length) / 2);
   const end = length - middle.length - start;
@@ -199,7 +203,7 @@ export function addSuffixToFilePath(filePath: string, suffix: string): string {
 export function sanitizeFilePathBeforeExtension(filePath: string, ext?: string): string {
   ext ??= path.extname(filePath);
   const base = filePath.substring(0, filePath.length - ext.length);
-  return serverUtils.sanitizeForFilePath(base) + ext;
+  return sanitizeForFilePath(base) + ext;
 }
 
 /**
@@ -252,12 +256,12 @@ export async function normalizeAndSaveAttachment(outputPath: string, name: strin
   if ((options.path !== undefined ? 1 : 0) + (options.body !== undefined ? 1 : 0) !== 1)
     throw new Error(`Exactly one of "path" and "body" must be specified`);
   if (options.path !== undefined) {
-    const hash = serverUtils.calculateSha1(options.path);
+    const hash = calculateSha1(options.path);
 
-    if (!iso.isString(name))
+    if (!isString(name))
       throw new Error('"name" should be string.');
 
-    const sanitizedNamePrefix = serverUtils.sanitizeForFilePath(name) + '-';
+    const sanitizedNamePrefix = sanitizeForFilePath(name) + '-';
     const dest = path.join(outputPath, 'attachments', sanitizedNamePrefix + hash + path.extname(options.path));
     await fs.promises.mkdir(path.dirname(dest), { recursive: true });
     await fs.promises.copyFile(options.path, dest);
@@ -396,4 +400,4 @@ export async function removeDirAndLogToConsole(dir: string) {
   }
 }
 
-export const { ansiRegex, stripAnsiEscapes } = iso;
+export { ansiRegex, stripAnsiEscapes };

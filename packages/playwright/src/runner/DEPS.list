@@ -1,4 +1,6 @@
 [*]
+@isomorphic/**
+@serverUtils/**
 ../../types.ts
 ../common/
 ../reporters/

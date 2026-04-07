@@ -17,7 +17,8 @@
 import fs from 'fs';
 import path from 'path';
 
-import { iso, serverUtils } from 'playwright-core/lib/coreBundle';
+import { MultiMap } from '@isomorphic/multimap';
+import { toPosixPath } from '@serverUtils/fileUtils';
 
 import { formatError, nonTerminalScreen, prepareErrorStack, resolveOutputFile, CommonReporterOptions } from './base';
 import { getProjectId } from '../common/config';
@@ -25,8 +26,6 @@ import { getProjectId } from '../common/config';
 import type { ReporterV2 } from './reporterV2';
 import type { JsonReporterOptions } from '../../types/test';
 import type { FullConfig, FullResult, JSONReport, JSONReportError, JSONReportSpec, JSONReportSuite, JSONReportTest, JSONReportTestResult, JSONReportTestStep, Location, Suite, TestCase, TestError, TestResult, TestStep } from '../../types/testReporter';
-
-const { toPosixPath } = serverUtils;
 
 class JSONReporter implements ReporterV2 {
   config!: FullConfig;
@@ -99,7 +98,7 @@ class JSONReporter implements ReporterV2 {
   }
 
   private _mergeSuites(suites: Suite[]): JSONReportSuite[] {
-    const fileSuites = new iso.MultiMap<string, JSONReportSuite>();
+    const fileSuites = new MultiMap<string, JSONReportSuite>();
     for (const projectSuite of suites) {
       const projectId = getProjectId(projectSuite.project()!);
       const projectName = projectSuite.project()!.name;
