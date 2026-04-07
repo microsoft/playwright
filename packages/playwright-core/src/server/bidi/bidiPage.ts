@@ -294,7 +294,8 @@ export class BidiPage implements PageDelegate {
     const callFrame = params.stackTrace?.callFrames[0];
     const location = callFrame ?? { url: '', lineNumber: 1, columnNumber: 1 };
     const type = entry.method === 'warn' ? 'warning' : entry.method;
-    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, undefined, params.timestamp);
+    const text = (entry.method === 'timeLog' || entry.method === 'timeEnd') && entry.text ? entry.text : undefined;
+    this._page.addConsoleMessage(null, type, entry.args.map(arg => createHandle(context, arg)), location, text, params.timestamp);
   }
 
   private async _onFileDialogOpened(params: bidi.Input.FileDialogInfo) {

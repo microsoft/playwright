@@ -91,8 +91,8 @@ it('should work for different console API calls', async ({ page }) => {
   ]);
 });
 
-it('should format the message correctly with time/timeLog/timeEnd', async ({ page, browserName }) => {
-  it.fixme(browserName === 'firefox', 'https://github.com/microsoft/playwright/issues/10580');
+it('should format the message correctly with time/timeLog/timeEnd', async ({ page, browserName, isBidi }) => {
+  it.fixme(browserName === 'firefox' && !isBidi, 'https://github.com/microsoft/playwright/issues/10580');
   const messages = [];
   page.on('console', msg => messages.push(msg));
   await page.evaluate(async () => {
@@ -107,6 +107,8 @@ it('should format the message correctly with time/timeLog/timeEnd', async ({ pag
     expect(messages[0].type()).toBe('timeEnd');
   else if (browserName === 'chromium')
     expect(messages[0].type()).toBe('log');
+  else if (browserName === 'firefox')
+    expect(messages[0].type()).toBe('timeLog');
   expect(messages[1].type()).toBe('timeEnd');
 
   // WebKit has a space before the unit: https://bugs.webkit.org/show_bug.cgi?id=233556
