@@ -21,6 +21,13 @@ import { packageJSON } from '../package';
 import { gracefullyProcessExitDoNotHang, getPackageManagerExecCommand } from '../utils';
 import { addTraceCommands } from '../tools/trace/traceCli';
 import { program } from '../utilsBundle';
+import { runDriver, runServer, printApiJson, launchBrowserServer } from './driver';
+import { markDockerImage } from './installActions';
+import { open, codegen } from './browserActions';
+import { installBrowsers, uninstallBrowsers, installDeps } from './installActions';
+import { runTraceInBrowser, runTraceViewerApp } from '../server/trace/viewer/traceViewer';
+import { screenshot, pdf } from './browserActions';
+import { program as cliProgram } from '../tools/cli-client/program';
 
 import type { TraceViewerServerOptions } from '../server/trace/viewer/traceViewer';
 import type { Command } from '../utilsBundle';
@@ -36,13 +43,11 @@ export function decorateProgram(program: Command) {
       .description('mark docker image')
       .allowUnknownOption(true)
       .action(async function(dockerImageNameTemplate) {
-        const { markDockerImage } = await import('./installActions');
         markDockerImage(dockerImageNameTemplate).catch(logErrorAndExit);
       });
 
   commandWithOpenOptions('open [url]', 'open page in browser specified via -b, --browser', [])
       .action(async function(url, options) {
-        const { open } = await import('./browserActions');
         open(options, url).catch(logErrorAndExit);
       })
       .addHelpText('afterAll', `
@@ -57,7 +62,6 @@ export function decorateProgram(program: Command) {
         ['--target <language>', `language to generate, one of javascript, playwright-test, python, python-async, python-pytest, csharp, csharp-mstest, csharp-nunit, java, java-junit`, codegenId()],
         ['--test-id-attribute <attributeName>', 'use the specified attribute to generate data test ID selectors'],
       ]).action(async function(url, options) {
-    const { codegen } = await import('./browserActions');
     await codegen(options, url);
   }).addHelpText('afterAll', `
   Examples:
@@ -77,7 +81,6 @@ export function decorateProgram(program: Command) {
       .option('--no-shell', 'do not install chromium headless shell')
       .action(async function(args: string[], options: { withDeps?: boolean, force?: boolean, dryRun?: boolean, list?: boolean, shell?: boolean, noShell?: boolean, onlyShell?: boolean }) {
         try {
-          const { installBrowsers } = await import('./installActions');
           await installBrowsers(args, options);
         } catch (e) {
           console.log(`Failed to install browsers\n${e}`);
@@ -97,7 +100,6 @@ export function decorateProgram(program: Command) {
       .description('Removes browsers used by this installation of Playwright from the system (chromium, firefox, webkit, ffmpeg). This does not include branded channels.')
       .option('--all', 'Removes all browsers used by any Playwright installation from the system.')
       .action(async (options: { all?: boolean }) => {
-        const { uninstallBrowsers } = await import('./installActions');
         uninstallBrowsers(options).catch(logErrorAndExit);
       });
 
@@ -107,7 +109,6 @@ export function decorateProgram(program: Command) {
       .option('--dry-run', 'Do not execute installation commands, only print them')
       .action(async function(args: string[], options: { dryRun?: boolean }) {
         try {
-          const { installDeps } = await import('./installActions');
           await installDeps(args, options);
         } catch (e) {
           console.log(`Failed to install browser dependencies\n${e}`);
@@ -130,7 +131,6 @@ export function decorateProgram(program: Command) {
   for (const { alias, name, type } of browsers) {
     commandWithOpenOptions(`${alias} [url]`, `open page in ${name}`, [])
         .action(async function(url, options) {
-          const { open } = await import('./browserActions');
           open({ ...options, browser: type }, url).catch(logErrorAndExit);
         }).addHelpText('afterAll', `
   Examples:
@@ -144,7 +144,6 @@ export function decorateProgram(program: Command) {
         ['--wait-for-timeout <timeout>', 'wait for timeout in milliseconds before taking a screenshot'],
         ['--full-page', 'whether to take a full page screenshot (entire scrollable area)'],
       ]).action(async function(url, filename, command) {
-    const { screenshot } = await import('./browserActions');
     screenshot(command, command, url, filename).catch(logErrorAndExit);
   }).addHelpText('afterAll', `
   Examples:
@@ -157,7 +156,6 @@ export function decorateProgram(program: Command) {
         ['--wait-for-selector <selector>', 'wait for given selector before saving as pdf'],
         ['--wait-for-timeout <timeout>', 'wait for given timeout in milliseconds before saving as pdf'],
       ]).action(async function(url, filename, options) {
-    const { pdf } = await import('./browserActions');
     pdf(options, options, url, filename).catch(logErrorAndExit);
   }).addHelpText('afterAll', `
   Examples:
@@ -167,7 +165,6 @@ export function decorateProgram(program: Command) {
   program
       .command('run-driver', { hidden: true })
       .action(async function(options) {
-        const { runDriver } = await import('./driver');
         runDriver();
       });
 
@@ -180,7 +177,6 @@ export function decorateProgram(program: Command) {
       .option('--mode <mode>', 'Server mode, either "default" or "extension"')
       .option('--artifacts-dir <artifactsDir>', 'Artifacts directory')
       .action(async function(options) {
-        const { runServer } = await import('./driver');
         runServer({
           port: options.port ? +options.port : undefined,
           host: options.host,
@@ -194,7 +190,6 @@ export function decorateProgram(program: Command) {
   program
       .command('print-api-json', { hidden: true })
       .action(async function(options) {
-        const { printApiJson } = await import('./driver');
         printApiJson();
       });
 
@@ -203,7 +198,6 @@ export function decorateProgram(program: Command) {
       .requiredOption('--browser <browserName>', 'Browser name, one of "chromium", "firefox" or "webkit"')
       .option('--config <path-to-config-file>', 'JSON file with launchServer options')
       .action(async function(options) {
-        const { launchBrowserServer } = await import('./driver');
         launchBrowserServer(options.browser, options.config);
       });
 
@@ -228,7 +222,6 @@ export function decorateProgram(program: Command) {
           isServer: !!options.stdin,
         };
 
-        const { runTraceInBrowser, runTraceViewerApp } = await import('../server/trace/viewer/traceViewer');
         if (options.port !== undefined || options.host !== undefined)
           runTraceInBrowser(trace, openOptions).catch(logErrorAndExit);
         else
@@ -246,7 +239,6 @@ export function decorateProgram(program: Command) {
       .allowExcessArguments(true)
       .allowUnknownOption(true)
       .action(async options => {
-        const { program: cliProgram } = await import('../tools/cli-client/program');
         process.argv.splice(process.argv.indexOf('cli'), 1);
         cliProgram().catch(logErrorAndExit);
       });

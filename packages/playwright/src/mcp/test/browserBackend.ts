@@ -42,7 +42,7 @@ export function createCustomMessageHandler(testInfo: TestInfoImpl, context: play
 
   return async (data: BrowserMCPRequest): Promise<BrowserMCPResponse> => {
     if (!tools)
-      ({ tools } = await import('playwright-core/lib/coreBundle'));
+      ({ tools } = require('playwright-core/lib/coreBundle') as typeof import('playwright-core/lib/coreBundle'));
     const toolList = tools.filteredTools(config);
     if (data.initialize) {
       if (backend)

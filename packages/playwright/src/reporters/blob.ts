@@ -19,6 +19,7 @@ import path from 'path';
 import { Readable } from 'stream';
 
 import { mime } from 'playwright-core/lib/utilsBundle';
+import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { ManualPromise } from '@isomorphic/manualPromise';
 import { calculateSha1, createGuid } from '@serverUtils/crypto';
@@ -78,7 +79,6 @@ export class BlobReporter extends TeleReporterEmitter {
 
     const zipFileName = await this._prepareOutputFile();
 
-    const { yazl } = await import('playwright-core/lib/zipBundle');
     const zipFile = new yazl.ZipFile();
     const zipFinishPromise = new ManualPromise<undefined>();
     const finishPromise = zipFinishPromise.catch(e => {

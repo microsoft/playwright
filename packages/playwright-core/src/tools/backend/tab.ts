@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-import url from 'url';
-
 import { EventEmitter } from 'events';
 import { asLocator } from '../../utils/isomorphic/locatorGenerators';
 import { locatorOrSelectorAsSelector } from '../../utils/isomorphic/locatorParser';
@@ -170,7 +168,7 @@ export class Tab extends EventEmitter<TabEventsInterface> {
       this._requests.push(request);
     for (const initPage of this.context.config.browser?.initPage || []) {
       try {
-        const { default: func } = await import(url.pathToFileURL(initPage).href);
+        const { default: func } = require(initPage);
         await func({ page: this.page });
       } catch (e) {
         debug('pw:tools:error')(e);

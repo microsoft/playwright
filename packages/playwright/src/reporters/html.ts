@@ -19,6 +19,7 @@ import path from 'path';
 import { Transform } from 'stream';
 
 import { colors, mime, open } from 'playwright-core/lib/utilsBundle';
+import { yazl } from 'playwright-core/lib/zipBundle';
 
 import { assert } from '@isomorphic/assert';
 import { MultiMap } from '@isomorphic/multimap';
@@ -150,7 +151,6 @@ class HtmlReporter implements ReporterV2 {
     const noCopyPrompt = parseBooleanEnvVar('PLAYWRIGHT_HTML_NO_COPY_PROMPT') ?? this._options.noCopyPrompt;
     const doNotInlineAssets = parseBooleanEnvVar('PLAYWRIGHT_HTML_DO_NOT_INLINE_ASSETS') ?? this._options.doNotInlineAssets ?? false;
 
-    const { yazl } = await import('playwright-core/lib/zipBundle');
     const builder = new HtmlBuilder(yazl, this.config, this._outputFolder, this._attachmentsBaseURL, doNotInlineAssets, {
       title: process.env.PLAYWRIGHT_HTML_TITLE || this._options.title,
       noSnippets,

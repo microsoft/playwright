@@ -474,27 +474,18 @@ const dynamicImportToRequirePlugin = {
   setup(build) {
     build.onLoad({ filter: /\.ts$/ }, async (args) => {
       let contents = await fs.promises.readFile(args.path, 'utf8');
-      const hasAwaitImport = contents.includes('await import(');
       const isPlaywrightSrc = args.path.includes(`${path.sep}playwright${path.sep}src${path.sep}`);
       const hasAlias = isPlaywrightSrc && (contents.includes("'@isomorphic/") || contents.includes("'@serverUtils/"));
-      if (!hasAwaitImport && !hasAlias)
+      if (!hasAlias)
         return undefined;
-      if (hasAwaitImport) {
-        contents = contents.replace(
-            /\bawait import\((['"]\..*?['"])\)/g,
-            (_, specifier) => `require(${specifier})`
-        );
-      }
-      if (hasAlias) {
-        contents = contents.replace(
-            /import\s*\{([^}]*)\}\s*from\s*'@isomorphic\/[^']+';?/g,
-            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').iso;`
-        );
-        contents = contents.replace(
-            /import\s*\{([^}]*)\}\s*from\s*'@serverUtils\/[^']+';?/g,
-            (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').serverUtils;`
-        );
-      }
+      contents = contents.replace(
+          /import\s*\{([^}]*)\}\s*from\s*'@isomorphic\/[^']+';?/g,
+          (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').iso;`
+      );
+      contents = contents.replace(
+          /import\s*\{([^}]*)\}\s*from\s*'@serverUtils\/[^']+';?/g,
+          (_, names) => `const {${names}} = require('playwright-core/lib/coreBundle').serverUtils;`
+      );
       return { contents, loader: 'ts' };
     });
   }
