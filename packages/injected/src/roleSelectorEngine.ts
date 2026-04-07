@@ -26,9 +26,9 @@ import type { SelectorEngine, SelectorRoot } from './selectorEngine';
 type RoleEngineOptions = {
   role: string;
   description?: string | RegExp;
-  descriptionOp?: '='|'*='|'|='|'^='|'$='|'~=';
+  descriptionOp?: Exclude<AttributeSelectorOperator, '<truthy>'>;
   name?: string | RegExp;
-  nameOp?: '='|'*='|'|='|'^='|'$='|'~=';
+  nameOp?: Exclude<AttributeSelectorOperator, '<truthy>'>;
   exact?: boolean;
   checked?: boolean | 'mixed';
   pressed?: boolean | 'mixed';
